@@ -1,0 +1,63 @@
+<script lang="ts">
+	import { mdiDotsVertical, mdiWater } from '@mdi/js';
+	import { subSeconds } from 'date-fns';
+	import {
+		Avatar,
+		Button,
+		Card,
+		Collapse,
+		Duration,
+		ExpansionPanel,
+		Header,
+		Icon
+	} from 'svelte-ux';
+
+	export let title: string = 'New Card';
+	export let counterStartTime: Date | null = new Date();
+	export let value: number = 0.0;
+	export let optimal: number | null = value;
+	export let notation: string = '°c';
+	export let icon: any = null;
+</script>
+
+<Card>
+	<Header slot="header" class="gap-0">
+		<div slot="title" class="text-nowrap text-xl font-medium">{title}</div>
+		<div slot="avatar">
+			<Avatar class="bg-accent-500 text-white font-bold mr-4">
+				{#if icon}
+					<Icon data={icon} />
+				{/if}
+			</Avatar>
+		</div>
+		<div slot="subheading" class="text-sm text-gray-500">
+			{#if counterStartTime}
+				Last Update <Duration start={subSeconds(counterStartTime, 0)} totalUnits={1} /> ago
+			{/if}
+		</div>
+		<div slot="actions">
+			<Button icon={mdiDotsVertical} />
+		</div>
+	</Header>
+	<div slot="contents" class="mb-2">
+		{#if optimal}
+			<Collapse>
+				<div slot="trigger" class="flex-1 px-3 py-3 border-t">
+					<h1 class="text-4xl text-gray-700">{value}{notation}</h1>
+				</div>
+				<div class="grid grid-cols-2 text-center">
+					<div class="border-t border-r">
+						<h3 class="font-medium">Optimal</h3>
+						<p class="text-gray-700">{optimal}{notation}</p>
+					</div>
+					<div class="border-t">
+						<h3 class="font-medium">Difference</h3>
+						<p class="text-gray-700">{(value - optimal).toFixed(2)}{notation}</p>
+					</div>
+				</div>
+			</Collapse>
+		{:else}
+			<h1 class="text-4xl text-gray-700">{value}{notation}</h1>
+		{/if}
+	</div>
+</Card>

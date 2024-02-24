@@ -1,0 +1,52 @@
+#cloud {
+    background: rgba(255, 255, 255);
+    width: 75px; 
+    height: 25px;
+    border-radius: 37.5px;	
+    box-shadow: 10px 10px rgba(0,0,0,0.2);
+    animation: move 3s infinite;
+    margin-top: 20px;
+    margin-left: 38px;
+  }
+  
+  #cloud:after {
+    content: '';
+    background: rgba(255, 255, 255);
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    top: -12.5px;
+    left: 12.5px;
+  }
+
+  #cloud:after {
+    content: '';
+    background: rgb(236, 233, 13);
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    top: -22px;
+    left: 5px;
+  }
+  
+  #cloud:before {
+    content: '';
+    background: rgba(255, 255, 255);
+    position: absolute;
+    width: 42.5px;
+    height: 37.5px;
+    border-radius: 50%;
+    top: -22.5px;
+    right: 10px;
+  }
+  
+  @keyframes move {
+    0% {
+      transform: translatex(0);
+    }
+    50% {
+      transform: translatex(-40px);
+    }
+  }
