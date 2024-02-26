@@ -24,7 +24,9 @@
 		}).addTo(map);
 
 		//Heatmap layer
-		var heat = L.heatLayer(heatMapLatLngs, { radius: 25 }).addTo(map); // [[32.14098326096874, 131.38520548442474, 0.8]]
+		if (heatMapLatLngs && heatMapLatLngs.length > 0) {
+			var heat = L.heatLayer(heatMapLatLngs, { radius: 25 }).addTo(map); // [[32.14098326096874, 131.38520548442474, 0.8]]
+		}
 
 		if (disableZoom) {
 			map.dragging.disable();

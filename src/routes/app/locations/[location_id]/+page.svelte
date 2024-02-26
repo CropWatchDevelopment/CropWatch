@@ -73,9 +73,15 @@
 </h1>
 
 <div class="grid grid-cols-3 gap-2">
-	<CwStatCard title='Anomalous Sensors' counterStartTime={null} value={0} notation=" Problems" />
-	<CwStatCard title='Outdoor Temp' counterStartTime={null} value={14} optimal={null} />
-	<CwStatCard title='Outdoor Humidity' counterStartTime={null} value={34} notation="%" optimal={null} />
+	<CwStatCard title="Anomalous Sensors" counterStartTime={null} value={0} notation=" Problems" />
+	<CwStatCard title="Outdoor Temp" counterStartTime={null} value={14} optimal={null} />
+	<CwStatCard
+		title="Outdoor Humidity"
+		counterStartTime={null}
+		value={34}
+		notation="%"
+		optimal={null}
+	/>
 </div>
 
 <Card class="my-2">
@@ -128,75 +134,77 @@
 		bind:offsetHeight={mapHeight}
 		bind:offsetWidth={mapWidth}
 	>
-		<Leaflet
-			{view}
-			{zoom}
-			disableZoom={true}
-			width={mapWidth}
-			height={mapHeight}
-			heatMapLatLngs={data.sensors?.map((s) => [
-				s.cw_devices.lat,
-				s.cw_devices.long,
-				s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC
-			])}
-		>
-			{#await data.sensors}
-				<ProgressCircle />
-			{:then sensors}
-				{#each sensors as sensor}
-					<Marker
-						latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
-						width={40}
-						height={40}
-						bind:popupOpen={mapPopupOpen}
-					>
-						<Icon data={mdiMapMarker} classes={{ root: 'text-red-900' }} />
-						<div slot="popup">
-							<Card>
-								<Header slot="header" class="gap-0">
-									<div slot="title" class="text-nowrap text-xl font-medium">
-										{sensor.cw_devices.name}
+		{#if data.sensors && data.sensors.length > 0}
+			<Leaflet
+				{view}
+				{zoom}
+				disableZoom={false}
+				width={mapWidth}
+				height={mapHeight}
+				heatMapLatLngs={data.sensors?.map((s) => s.cw_devices!==null ? [
+					s.cw_devices.lat,
+					s.cw_devices.long,
+					s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC
+				] : [])}
+			>
+				{#await data.sensors}
+					<ProgressCircle />
+				{:then sensors}
+					{#each sensors as sensor}
+						<Marker
+							latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
+							width={40}
+							height={40}
+							bind:popupOpen={mapPopupOpen}
+						>
+							<Icon data={mdiMapMarker} classes={{ root: 'text-red-900' }} />
+							<div slot="popup">
+								<Card>
+									<Header slot="header" class="gap-0">
+										<div slot="title" class="text-nowrap text-xl font-medium">
+											{sensor.cw_devices.name}
+										</div>
+										<div slot="avatar">
+											<Avatar class="bg-accent-500 text-white font-bold mr-4">
+												<Icon data={mdiMagnifyScan} />
+											</Avatar>
+										</div>
+									</Header>
+									<div slot="contents" class="grid grid-cols-2 gap-2">
+										<CwStatCard
+											title="Temperature"
+											icon={mdiThermometer}
+											value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC}
+											optimal={null}
+											counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
+										/>
+										<CwStatCard
+											title="Moisture"
+											icon={mdiWater}
+											value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_moisture}
+											notation="%"
+											optimal={null}
+											counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
+										/>
 									</div>
-									<div slot="avatar">
-										<Avatar class="bg-accent-500 text-white font-bold mr-4">
-											<Icon data={mdiMagnifyScan} />
-										</Avatar>
+									<div slot="actions">
+										<Button variant="fill" on:click={() => (mapPopupOpen = false)}>Close</Button>
+										<Button
+											variant="fill-light"
+											color="blue"
+											icon={mdiEye}
+											on:click={() =>
+												goto(`/app/locations/${$page.params.location_id}/${sensor.dev_eui}`)}
+											>View Details</Button
+										>
 									</div>
-								</Header>
-								<div slot="contents" class="grid grid-cols-2 gap-2">
-									<CwStatCard
-										title="Temperature"
-										icon={mdiThermometer}
-										value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC}
-										optimal={null}
-										counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
-									/>
-									<CwStatCard
-										title="Moisture"
-										icon={mdiWater}
-										value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_moisture}
-										notation="%"
-										optimal={null}
-										counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
-									/>
-								</div>
-								<div slot="actions">
-									<Button variant="fill" on:click={() => (mapPopupOpen = false)}>Close</Button>
-									<Button
-										variant="fill-light"
-										color="blue"
-										icon={mdiEye}
-										on:click={() =>
-											goto(`/app/locations/${$page.params.location_id}/${sensor.dev_eui}`)}
-										>View Details</Button
-									>
-								</div>
-							</Card>
-						</div>
-					</Marker>
-				{/each}
-			{/await}
-		</Leaflet>
+								</Card>
+							</div>
+						</Marker>
+					{/each}
+				{/await}
+			</Leaflet>
+		{/if}
 	</div>
 </Card>
 
