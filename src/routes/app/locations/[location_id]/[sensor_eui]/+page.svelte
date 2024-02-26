@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CwBadge from '$lib/components/badge/CWBadge.svelte';
-	import { Avatar, Badge, Button, Card, Duration, Header, Tabs } from 'svelte-ux';
-	import { mdiArrowLeft } from '@mdi/js';
+	import { Avatar, Badge, Button, Card, Duration, Header, ProgressCircle, Tabs } from 'svelte-ux';
+	import { mdiArrowLeft, mdiChevronLeft } from '@mdi/js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Details from './details/Details.svelte';
@@ -29,15 +29,20 @@
 	$: sensorDataState.set(data.sensor.error ? [] : data.sensor.data);
 </script>
 
-<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4">
+<!-- <h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4">
 	<p>
 		<Button
 			size="lg"
 			icon={mdiArrowLeft}
 			on:click={() => goto(`/app/locations/${$page.params.location_id}`)}
 		/>
-		CW-SS-THEPNPK
+		
 	</p>
+</h1> -->
+
+<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4">
+	<Button icon={mdiChevronLeft} size="lg" on:click={() => goto(`/app/locations/${$page.params.location_id}`)} />
+	CW-SS-THEPNPK
 </h1>
 
 <div class="grid grid-cols-3 grid-flow-row my-4">

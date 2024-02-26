@@ -72,17 +72,18 @@
 	{/await}
 </h1>
 
-<div class="grid grid-cols-3 gap-2">
-	<CwStatCard title="Anomalous Sensors" counterStartTime={null} value={0} notation=" Problems" />
-	<CwStatCard title="Outdoor Temp" counterStartTime={null} value={14} optimal={null} />
-	<CwStatCard
-		title="Outdoor Humidity"
-		counterStartTime={null}
-		value={34}
-		notation="%"
-		optimal={null}
+<div class="my-4">
+	<WeatherWidget
+		TemperatureC={data.weatherJSON.properties.timeseries.at(0).data.instant.details.air_temperature}
+		Humidity={data.weatherJSON.properties.timeseries.at(0).data.instant.details.relative_humidity}
+		WindSpeed={data.weatherJSON.properties.timeseries.at(0).data.instant.details.wind_speed}
+		WindDirection={data.weatherJSON.properties.timeseries.at(0).data.instant.details.wind_from_direction}
+		Pressure={data.weatherJSON.properties.timeseries.at(0).data.instant.details.air_pressure_at_sea_level}
+		UVI={data.weatherJSON.properties.timeseries.at(0).data.instant.details.ultraviolet_index_clear_sky}
 	/>
 </div>
+
+
 
 <Card class="my-2">
 	<Header slot="header" class="gap-0">
@@ -138,14 +139,14 @@
 			<Leaflet
 				{view}
 				{zoom}
-				disableZoom={false}
+				disableZoom={true}
 				width={mapWidth}
 				height={mapHeight}
-				heatMapLatLngs={data.sensors?.map((s) => s.cw_devices!==null ? [
-					s.cw_devices.lat,
-					s.cw_devices.long,
-					s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC
-				] : [])}
+				heatMapLatLngs={data.sensors?.map((s) =>
+					s.cw_devices !== null
+						? [s.cw_devices.lat, s.cw_devices.long, s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC]
+						: []
+				)}
 			>
 				{#await data.sensors}
 					<ProgressCircle />

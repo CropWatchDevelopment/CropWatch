@@ -9,7 +9,14 @@
 		Duration,
 		ExpansionPanel,
 		Header,
-		Icon
+		Icon,
+
+		Menu,
+
+		MenuItem,
+
+		Toggle
+
 	} from 'svelte-ux';
 
 	export let title: string = 'New Card';
@@ -22,7 +29,7 @@
 
 <Card>
 	<Header slot="header" class="gap-0">
-		<div slot="title" class="text-nowrap text-xl font-medium">{title}</div>
+		<div slot="title" class="text-nowrap text-md md:text-md lg:text-xl font-medium">{title}</div>
 		<div slot="avatar">
 			<Avatar class="bg-accent-500 text-white font-bold mr-4">
 				{#if icon}
@@ -36,16 +43,23 @@
 			{/if}
 		</div>
 		<div slot="actions">
-			<Button icon={mdiDotsVertical} />
+			<Toggle let:on={open} let:toggle>
+				<Button on:click={toggle}>
+				  <Icon data={mdiDotsVertical} />
+				  <Menu {open} on:close={toggle}>
+					<slot name="headerMore" />
+				  </Menu>
+				</Button>
+			  </Toggle>
 		</div>
 	</Header>
 	<div slot="contents" class="mb-2">
 		{#if optimal}
 			<Collapse>
 				<div slot="trigger" class="flex-1 px-3 py-3 border-t">
-					<h1 class="text-4xl text-gray-700">{value}{notation}</h1>
+					<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700">{value}{notation}</h1>
 				</div>
-				<div class="grid grid-cols-2 text-center">
+				<div class="grid grid-cols-2 text-center md:text-md">
 					<div class="border-t border-r">
 						<h3 class="font-medium">Optimal</h3>
 						<p class="text-gray-700">{optimal}{notation}</p>

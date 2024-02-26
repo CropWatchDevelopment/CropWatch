@@ -28,6 +28,11 @@
 				classes: {
 					root: 'text-sm text-gray-400 pl-6 py-2 hover:text-white hover:bg-gray-300/10 [&:where(.is-active)]:text-sky-400 [&:where(.is-active)]:bg-gray-500/10'
 				}
+			},
+			Card: {
+				classes: {
+					root: 'bg-gradient-to-r from-cyan-100 to-blue-200'
+				}
 			}
 		}
 	});

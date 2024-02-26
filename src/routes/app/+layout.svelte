@@ -53,14 +53,14 @@
 	<Header />
 
 	<main class="scroll-smooth isolate">
-		<div
+		<!-- <div
 			class="[@media(min-height:900px)]:sticky top-0 z-[60] bg-surface-200/90 backdrop-blur px-5 py-4 [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)calc(100%-4px),rgba(0,0,0,0))]"
 		>
 			<div class="flex gap-2 mt-3">
 				<Breadcrumb {items} />
 			</div>
 			<div class="text-2xl font-bold">Breadcrumb</div>
-		</div>
+		</div> -->
 		<div class="p-2">
 			<slot />
 		</div>
