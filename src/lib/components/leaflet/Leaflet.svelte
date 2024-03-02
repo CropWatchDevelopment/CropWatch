@@ -11,7 +11,7 @@
 	export let disableZoom: boolean = false;
 	export let width: number = 100;
 	export let height: number = 100;
-	export let heatMapLatLngs: IHeatMapPoint[] = [];
+	export let heatMapLatLngs: [[number, number, number]] | [] = [];
 
 	let map: L.Map | undefined;
 	let mapElement: HTMLDivElement;
@@ -24,8 +24,8 @@
 		}).addTo(map);
 
 		//Heatmap layer
-		if (heatMapLatLngs && heatMapLatLngs.length > 0) {
-			var heat = L.heatLayer(heatMapLatLngs, { radius: 25 }).addTo(map); // [[32.14098326096874, 131.38520548442474, 0.8]]
+		if (heatMapLatLngs instanceof Array) {
+			L.heatLayer(heatMapLatLngs, { radius: 15 }).addTo(map);
 		}
 
 		if (disableZoom) {
@@ -52,7 +52,7 @@
 		if (bounds) {
 			map.fitBounds(bounds);
 		} else if (view && zoom) {
-			map.setView(view, zoom);
+			if (view[0] && view[1]) map.setView(view, zoom);
 		}
 	}
 </script>

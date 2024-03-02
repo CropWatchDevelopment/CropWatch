@@ -40,9 +40,9 @@
 	</p>
 </h1> -->
 
-<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4">
-	<Button icon={mdiChevronLeft} size="lg" on:click={() => goto(`/app/locations/${$page.params.location_id}`)} />
-	CW-SS-THEPNPK
+<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4 gap-3">
+	<Button variant="outline" icon={mdiChevronLeft} size="lg" on:click={() => goto(`/app/locations/${$page.params.location_id}`)} />
+	<p class="my-auto">CW-SS-THEPNPK</p>
 </h1>
 
 <div class="grid grid-cols-3 grid-flow-row my-4">

@@ -5,6 +5,7 @@
 	import {
 		mdiCalendar,
 		mdiChevronLeft,
+		mdiDevices,
 		mdiDotsVertical,
 		mdiEye,
 		mdiMagnifyScan,
@@ -22,6 +23,7 @@
 		Icon,
 		Menu,
 		MenuItem,
+		MultiSelect,
 		ProgressCircle,
 		Toggle
 	} from 'svelte-ux';
@@ -34,10 +36,11 @@
 	import CwStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import Calendar from '@event-calendar/core';
 	import TimeGrid from '@event-calendar/day-grid';
+	import { DeviceIntToEnglish, DeviceIntType } from '$lib/helpers/DeviceTypeToName';
 
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
-	let zoom: number | undefined = 20;
+	let zoom: number | undefined = 19;
 	let mapWidth: number = 100;
 	let mapHeight: number = 100;
 	let mapPopupOpen: boolean = false;
@@ -63,8 +66,13 @@
 	view = [data.location.latitude, data.location.longitude];
 </script>
 
-<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4">
-	<Button icon={mdiChevronLeft} size="lg" on:click={() => goto(`/app/locations`)} />
+<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4 gap-3">
+	<Button
+		variant="outline"
+		icon={mdiChevronLeft}
+		size="lg"
+		on:click={() => goto(`/app/locations`)}
+	/>
 	{#await data.location}
 		<ProgressCircle />
 	{:then location}
@@ -77,13 +85,14 @@
 		TemperatureC={data.weatherJSON.properties.timeseries.at(0).data.instant.details.air_temperature}
 		Humidity={data.weatherJSON.properties.timeseries.at(0).data.instant.details.relative_humidity}
 		WindSpeed={data.weatherJSON.properties.timeseries.at(0).data.instant.details.wind_speed}
-		WindDirection={data.weatherJSON.properties.timeseries.at(0).data.instant.details.wind_from_direction}
-		Pressure={data.weatherJSON.properties.timeseries.at(0).data.instant.details.air_pressure_at_sea_level}
-		UVI={data.weatherJSON.properties.timeseries.at(0).data.instant.details.ultraviolet_index_clear_sky}
+		WindDirection={data.weatherJSON.properties.timeseries.at(0).data.instant.details
+			.wind_from_direction}
+		Pressure={data.weatherJSON.properties.timeseries.at(0).data.instant.details
+			.air_pressure_at_sea_level}
+		UVI={data.weatherJSON.properties.timeseries.at(0).data.instant.details
+			.ultraviolet_index_clear_sky}
 	/>
 </div>
-
-
 
 <Card class="my-2">
 	<Header slot="header" class="gap-0">
@@ -110,104 +119,143 @@
 	</div>
 </Card>
 
-<Card class="my-2">
-	<Header slot="header" class="gap-0">
-		<div slot="title" class="text-nowrap text-xl font-medium">Overview Map</div>
-		<div slot="avatar">
-			<Avatar class="bg-accent-500 text-white font-bold mr-4">
-				<Icon data={mdiMapMarker} />
-			</Avatar>
-		</div>
-		<div slot="actions">
-			<Toggle let:on={open} let:toggle>
-				<Button icon={mdiDotsVertical} on:click={toggle}>
-					<Menu {open} on:close={toggle}>
-						<MenuItem icon={mdiPlus}>Add Device</MenuItem>
-					</Menu>
-				</Button>
-			</Toggle>
-		</div>
-	</Header>
+<div class="grid grid-cols-1 md:grid-cols-12 grid-flow-row gap-4">
+	<Card class="col-span-12 lg:col-span-8">
+		<Header slot="header" class="gap-0">
+			<div slot="title" class="text-nowrap text-xl font-medium">Overview Map</div>
+			<div slot="avatar">
+				<Avatar class="bg-accent-500 text-white font-bold mr-4">
+					<Icon data={mdiMapMarker} />
+				</Avatar>
+			</div>
+		</Header>
 
-	<div
-		class="w-full min-h-96"
-		slot="contents"
-		bind:offsetHeight={mapHeight}
-		bind:offsetWidth={mapWidth}
-	>
-		{#if data.sensors && data.sensors.length > 0}
-			<Leaflet
-				{view}
-				{zoom}
-				disableZoom={true}
-				width={mapWidth}
-				height={mapHeight}
-				heatMapLatLngs={data.sensors?.map((s) =>
-					s.cw_devices !== null
-						? [s.cw_devices.lat, s.cw_devices.long, s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC]
-						: []
-				)}
-			>
-				{#await data.sensors}
-					<ProgressCircle />
-				{:then sensors}
-					{#each sensors as sensor}
-						<Marker
-							latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
-							width={40}
-							height={40}
-							bind:popupOpen={mapPopupOpen}
-						>
-							<Icon data={mdiMapMarker} classes={{ root: 'text-red-900' }} />
-							<div slot="popup">
-								<Card>
-									<Header slot="header" class="gap-0">
-										<div slot="title" class="text-nowrap text-xl font-medium">
-											{sensor.cw_devices.name}
-										</div>
-										<div slot="avatar">
-											<Avatar class="bg-accent-500 text-white font-bold mr-4">
-												<Icon data={mdiMagnifyScan} />
-											</Avatar>
-										</div>
-									</Header>
-									<div slot="contents" class="grid grid-cols-2 gap-2">
-										<CwStatCard
-											title="Temperature"
-											icon={mdiThermometer}
-											value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC}
-											optimal={null}
-											counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
-										/>
-										<CwStatCard
-											title="Moisture"
-											icon={mdiWater}
-											value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_moisture}
-											notation="%"
-											optimal={null}
-											counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
-										/>
-									</div>
-									<div slot="actions">
-										<Button variant="fill" on:click={() => (mapPopupOpen = false)}>Close</Button>
-										<Button
-											variant="fill-light"
-											color="blue"
-											icon={mdiEye}
-											on:click={() =>
-												goto(`/app/locations/${$page.params.location_id}/${sensor.dev_eui}`)}
-											>View Details</Button
+		<div slot="contents">
+			<div class="w-full min-h-96" bind:offsetHeight={mapHeight} bind:offsetWidth={mapWidth}>
+				{#if data.sensors && data.sensors.length > 0}
+					<!-- <pre>{JSON.stringify(data.sensors, null, 4)}</pre> -->
+					{#await data.sensors}
+						<ProgressCircle />
+					{:then sensors}
+						{#if sensors}
+							<Leaflet
+								{view}
+								{zoom}
+								disableZoom={true}
+								width={mapWidth}
+								height={mapHeight}
+								heatMapLatLngs={sensors
+									?.filter((i) => i.cw_devices.type < 5)
+									.map((s) => {
+										return [
+											s.cw_devices.lat,
+											s.cw_devices.long,
+											s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC
+										];
+									})}
+							>
+								{#each sensors as sensor}
+									{#if sensor.cw_devices.lat && sensor.cw_devices.long}
+										<Marker
+											latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
+											width={40}
+											height={40}
+											bind:popupOpen={mapPopupOpen}
 										>
-									</div>
-								</Card>
-							</div>
-						</Marker>
-					{/each}
-				{/await}
-			</Leaflet>
-		{/if}
-	</div>
-</Card>
+											<Icon data={mdiMapMarker} classes={{ root: 'text-red-900' }} />
+											<!-- <div slot="popup">
+												<Card>
+													<Header slot="header" class="gap-0">
+														<div slot="title" class="text-nowrap text-xl font-medium">
+															{sensor.cw_devices.name}
+														</div>
+														<div slot="avatar">
+															<Avatar class="bg-accent-500 text-white font-bold mr-4">
+																<Icon data={mdiMagnifyScan} />
+															</Avatar>
+														</div>
+													</Header>
+													<div slot="contents" class="grid grid-cols-2 gap-2">
+														{#if sensor.cw_devices.type == 3 || sensor.cw_devices.type == 4}
+															<CwStatCard
+																title="Temperature"
+																icon={mdiThermometer}
+																value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC}
+																optimal={null}
+																counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
+															/>
+															<CwStatCard
+																title="Moisture"
+																icon={mdiWater}
+																value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_moisture}
+																notation="%"
+																optimal={null}
+																counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
+															/>
+														{/if}
+													</div>
+													<div slot="actions">
+														<Button variant="fill" on:click={() => (mapPopupOpen = false)}
+															>Close</Button
+														>
+														<Button
+															variant="fill-light"
+															color="blue"
+															icon={mdiEye}
+															on:click={() =>
+																goto(
+																	`/app/locations/${$page.params.location_id}/device-type/${DeviceIntType(sensor.cw_devices.type)}/${sensor.dev_eui}`
+																)}>View Details</Button
+														>
+													</div>
+												</Card>
+											</div> -->
+										</Marker>
+									{/if}
+								{/each}
+							</Leaflet>
+						{/if}
+					{/await}
+				{/if}
+			</div>
+		</div>
+	</Card>
+	<Card class="col-span-12 lg:col-span-4">
+		<Header title="Device Quick View" slot="header">
+			<div slot="avatar">
+				<Avatar class="bg-accent-500 text-white font-bold mr-4">
+					<Icon data={mdiDevices} />
+				</Avatar>
+			</div>
+			<div slot="actions">
+				<Toggle let:on={open} let:toggle>
+					<Button icon={mdiDotsVertical} on:click={toggle}>
+						<Menu {open} on:close={toggle}>
+							<MenuItem icon={mdiPlus}>Add Device</MenuItem>
+						</Menu>
+					</Button>
+				</Toggle>
+			</div>
+		</Header>
+		<div slot="contents" class="flex flex-col max-h-[360px] overflow-auto">
+			<MultiSelect
+				options={data.sensors
+					? data.sensors?.map((m) => {
+							return {
+								name: `${DeviceIntToEnglish(m.cw_devices.type)} - (${m.cw_devices.dev_eui})`,
+								value: m.cw_devices.dev_eui
+							};
+						})
+					: []}
+				inlineSearch
+			>
+				<div slot="actions">
+					<Button color="primary" icon={mdiPlus}>Add item</Button>
+				</div>
+			</MultiSelect>
+		</div>
+	</Card>
+</div>
 
 <Card id="list" class="grid-flow-row col-span-2 justify-start my-2" title="Location List">
 	<Header title="Your Locations" slot="header" class="gap-0">
