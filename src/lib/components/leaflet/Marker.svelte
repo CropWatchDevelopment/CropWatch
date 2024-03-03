@@ -7,7 +7,7 @@
 	export let width: number;
 	export let height: number;
 	export let latLng: L.LatLngExpression;
-	export let popupOpen: boolean = false;
+	// export let popupOpen: boolean = false;
 
 	let marker: L.Marker | undefined;
 	let markerElement: HTMLDivElement;
@@ -29,9 +29,9 @@
 				iconSize: L.point(width, height)
 			});
 			marker = L.marker(latLng, { icon }).addTo(map);
-			marker.on('click', (e) => {
-				popupOpen = !popupOpen;
-			});
+			// marker.on('click', (e) => {
+			// 	popupOpen = !popupOpen;
+			// });
 		}
 	});
 
@@ -50,7 +50,3 @@
 		<slot />
 	{/if}
 </div>
-
-<Dialog bind:open={popupOpen}>
-	<slot name="popup" />
-</Dialog>

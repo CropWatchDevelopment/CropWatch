@@ -31,7 +31,7 @@
 			},
 			Card: {
 				classes: {
-					root: 'bg-gradient-to-r from-cyan-100 to-blue-200'
+					// root: 'bg-'
 				}
 			}
 		}

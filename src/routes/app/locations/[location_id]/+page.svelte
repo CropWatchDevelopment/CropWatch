@@ -37,6 +37,8 @@
 	import Calendar from '@event-calendar/core';
 	import TimeGrid from '@event-calendar/day-grid';
 	import { DeviceIntToEnglish, DeviceIntType } from '$lib/helpers/DeviceTypeToName';
+	import AddDevice from '$lib/components/AddDevice/AddDevice.svelte';
+	import StatsQuickView from '$lib/components/StatsQuickViewModal/StatsQuickView.svelte';
 
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
@@ -145,8 +147,9 @@
 								width={mapWidth}
 								height={mapHeight}
 								heatMapLatLngs={sensors
-									?.filter((i) => i.cw_devices.type < 5)
+									?.filter((i) => i.cw_devices.type === 3 || i.cw_devices.type === 4)
 									.map((s) => {
+										if (s.cw_devices.cw_ss_tmepnpk.length > 0)
 										return [
 											s.cw_devices.lat,
 											s.cw_devices.long,
@@ -160,56 +163,8 @@
 											latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
 											width={40}
 											height={40}
-											bind:popupOpen={mapPopupOpen}
 										>
-											<Icon data={mdiMapMarker} classes={{ root: 'text-red-900' }} />
-											<!-- <div slot="popup">
-												<Card>
-													<Header slot="header" class="gap-0">
-														<div slot="title" class="text-nowrap text-xl font-medium">
-															{sensor.cw_devices.name}
-														</div>
-														<div slot="avatar">
-															<Avatar class="bg-accent-500 text-white font-bold mr-4">
-																<Icon data={mdiMagnifyScan} />
-															</Avatar>
-														</div>
-													</Header>
-													<div slot="contents" class="grid grid-cols-2 gap-2">
-														{#if sensor.cw_devices.type == 3 || sensor.cw_devices.type == 4}
-															<CwStatCard
-																title="Temperature"
-																icon={mdiThermometer}
-																value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC}
-																optimal={null}
-																counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
-															/>
-															<CwStatCard
-																title="Moisture"
-																icon={mdiWater}
-																value={sensor.cw_devices.cw_ss_tmepnpk[0].soil_moisture}
-																notation="%"
-																optimal={null}
-																counterStartTime={sensor.cw_devices.cw_ss_tmepnpk[0].created_at}
-															/>
-														{/if}
-													</div>
-													<div slot="actions">
-														<Button variant="fill" on:click={() => (mapPopupOpen = false)}
-															>Close</Button
-														>
-														<Button
-															variant="fill-light"
-															color="blue"
-															icon={mdiEye}
-															on:click={() =>
-																goto(
-																	`/app/locations/${$page.params.location_id}/device-type/${DeviceIntType(sensor.cw_devices.type)}/${sensor.dev_eui}`
-																)}>View Details</Button
-														>
-													</div>
-												</Card>
-											</div> -->
+											<StatsQuickView {sensor} />
 										</Marker>
 									{/if}
 								{/each}
@@ -250,7 +205,7 @@
 				inlineSearch
 			>
 				<div slot="actions">
-					<Button color="primary" icon={mdiPlus}>Add item</Button>
+					<AddDevice {data} />
 				</div>
 			</MultiSelect>
 		</div>

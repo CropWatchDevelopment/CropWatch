@@ -10,7 +10,8 @@ export const DeviceIntType = (dev_int_type: number): string => {
             return 'CW-air-thvd';
             break;
         case 3:
-            return 'CW-L1';
+            // return 'CW-L1';
+            return 'CW-SS-TMEPNPK';
             break;
         case 4:
             return 'CW-SS-TMEPNPK';
