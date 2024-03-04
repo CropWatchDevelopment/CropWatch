@@ -5,6 +5,7 @@
 	import {
 		mdiArrowDown,
 		mdiArrowLeft,
+		mdiChevronLeft,
 		mdiDotsVertical,
 		mdiExclamation,
 		mdiExpandAll,
@@ -54,10 +55,9 @@
 	data = data;
 </script>
 
-<h1>
-	<Button icon={mdiArrowLeft} on:click={() => goto(`/app/locations/${$page.params.location_id}`)}
-	></Button>
-	メーター詳細 XYZ
+<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4 gap-3">
+	<Button variant="outline" icon={mdiChevronLeft} size="lg" on:click={() => goto(`/app/locations/${$page.params.location_id}`)} />
+	<p class="my-auto">Water Sensor</p>
 </h1>
 
 <div class="grid grid-flow-col grid-cols-5 py-4 gap-4">
