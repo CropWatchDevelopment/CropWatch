@@ -54,6 +54,7 @@
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.39.6",
+		"@sveltejs/adapter-vercel": "^5.1.0",
 		"dotenv": "16.4.2"
 	}
 }
