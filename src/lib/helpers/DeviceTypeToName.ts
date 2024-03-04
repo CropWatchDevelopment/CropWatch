@@ -1,10 +1,10 @@
 export const DeviceIntType = (dev_int_type: number): string => {
     switch (dev_int_type) {
         case 0:
-                return '?';
+            return '?';
             break;
         case 1:
-                return 'EM500-co2';
+            return 'EM500-co2';
             break;
         case 2:
             return 'CW-air-thvd';
@@ -19,7 +19,9 @@ export const DeviceIntType = (dev_int_type: number): string => {
         case 5:
             return 'CW-Pulse';
             break;
-
+        case 6:
+            return 'CO2-Sensor';
+            break;
         default:
             return '?';
     }
@@ -28,10 +30,10 @@ export const DeviceIntType = (dev_int_type: number): string => {
 export const DeviceIntToEnglish = (dev_int_type: number): string => {
     switch (dev_int_type) {
         case 0:
-                return '?';
+            return '?';
             break;
         case 1:
-                return 'CO² Sensor';
+            return 'CO² Sensor';
             break;
         case 2:
             return 'Temp/Humidity/Dew/VPD Sensor';
@@ -45,7 +47,9 @@ export const DeviceIntToEnglish = (dev_int_type: number): string => {
         case 5:
             return 'Meter Pulse Sensor';
             break;
-
+        case 6:
+            return 'CO² Sensor';
+            break;
         default:
             return '?';
     }

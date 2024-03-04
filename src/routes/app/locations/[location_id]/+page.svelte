@@ -39,6 +39,7 @@
 	import { DeviceIntToEnglish, DeviceIntType } from '$lib/helpers/DeviceTypeToName';
 	import AddDevice from '$lib/components/AddDevice/AddDevice.svelte';
 	import StatsQuickView from '$lib/components/StatsQuickViewModal/StatsQuickView.svelte';
+	import DeviceSelect from '$lib/components/DeviceSelect/DeviceSelect.svelte';
 
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
@@ -175,7 +176,8 @@
 			</div>
 		</div>
 	</Card>
-	<Card class="col-span-12 lg:col-span-4">
+	<DeviceSelect devices={data.sensors} />
+	<!-- <Card class="col-span-12 lg:col-span-4">
 		<Header title="Device Quick View" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-accent-500 text-white font-bold mr-4">
@@ -192,8 +194,8 @@
 				</Toggle>
 			</div>
 		</Header>
-		<div slot="contents" class="flex flex-col max-h-[360px] overflow-auto">
-			<MultiSelect
+		<div slot="contents" class="flex flex-col max-h-[360px] overflow-auto"> -->
+			<!-- <MultiSelect
 				options={data.sensors
 					? data.sensors?.map((m) => {
 							return {
@@ -202,14 +204,16 @@
 							};
 						})
 					: []}
+				on:change={(change) => { console.log(change) }}
 				inlineSearch
 			>
 				<div slot="actions">
 					<AddDevice {data} />
 				</div>
-			</MultiSelect>
-		</div>
-	</Card>
+			</MultiSelect> -->
+			
+		<!-- </div>
+	</Card> -->
 </div>
 
 <Card id="list" class="grid-flow-row col-span-2 justify-start my-2" title="Location List">
