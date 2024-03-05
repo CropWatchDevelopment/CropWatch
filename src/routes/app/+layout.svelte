@@ -20,7 +20,7 @@
 		<NavItem path="/" text="Home" icon={mdiHome} currentUrl={$page.url} class="mt-2" />
 
 		<NavItem
-			path="/"
+			path="/app/dashboard"
 			text="Dashboard"
 			icon={mdiViewDashboard}
 			currentUrl={$page.url}

@@ -47,7 +47,7 @@
 	</Header>
 	<div slot="contents">
 		<ol>
-			{#await data.locations.data}
+			{#await data.locations}
 				<ProgressCircle />
 			{:then locations}
 				{#each locations as location}
