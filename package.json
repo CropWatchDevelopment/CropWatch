@@ -55,6 +55,8 @@
 	"dependencies": {
 		"@supabase/supabase-js": "^2.39.6",
 		"@sveltejs/adapter-vercel": "^5.1.0",
-		"dotenv": "16.4.2"
+		"dotenv": "16.4.2",
+		"gridjs": "^6.2.0",
+		"gridjs-svelte": "^2.1.1"
 	}
 }

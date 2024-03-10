@@ -1,9 +1,35 @@
-<script>
-	import { mdiCheck, mdiStar, mdiViewDashboard } from '@mdi/js';
-	import { Avatar, Card, Header, Icon } from 'svelte-ux';
+<script lang="ts">
+	import {
+		mdiCheck,
+		mdiCheckCircleOutline,
+		mdiCheckboxMarkedCircle,
+		mdiCloseCircle,
+		mdiHandFrontLeft,
+		mdiHandFrontRight,
+		mdiStar,
+		mdiViewDashboard
+	} from '@mdi/js';
+	import { Avatar, Button, ButtonGroup, Card, Header, Icon } from 'svelte-ux';
 	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 	import { Arc, Chart, Group, LinearGradient, Svg, Text } from 'layerchart';
+	import Grid from 'gridjs-svelte';
+	import { onMount } from 'svelte';
+
+	let dominant_hand: 'left' | 'right' = 'right';
+	const changeHand = (hand: 'left' | 'right') => {
+		dominant_hand = hand;
+		localStorage.setItem('dominant_hand', dominant_hand);
+	};
+
+	const data = [
+		{ name: 'John', email: 'john@example.com' },
+		{ name: 'Mark', email: 'mark@gmail.com' }
+	];
+
+	onMount(() => {
+		dominant_hand = localStorage.getItem('dominant_hand') ?? 'right';
+	});
 </script>
 
 <h1
@@ -14,16 +40,63 @@
 	Dashboard
 </h1>
 
-<div class="grid grid-flow-col grid-cols-1 md:grid-cols-3 gap-5">
-	<CWStatCard counterStartTime={null} />
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+	<CWStatCard title="Attention Required" value={0} notation="" counterStartTime={null} />
 	<CWStatCard counterStartTime={null} />
 	<CWStatCard counterStartTime={null} />
 </div>
 
-<div class="grid grid-flow-col grid-cols-1 md:grid-cols-12 gap-5 mt-5">
-	<Card class="grid col-span-8">a</Card>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5 mt-5">
+	<Card class="grid md:col-span-8">
+		<div class="flex flex-row col-span-12 visible md:invisible border-b">
+			<Button
+				classes={{ root: 'ml-1 w-1/2' }}
+				color={dominant_hand == 'left' ? 'success' : 'danger'}
+				variant={dominant_hand == 'left' ? 'fill-light' : 'default'}
+				on:click={() => changeHand('left')}
+				icon={mdiHandFrontLeft}
+				>
+				Left Hand
+				</Button
+			>
+			<span class="flex-1" />
+			<Button
+				classes={{ root: 'w-1/2' }}
+				color={dominant_hand == 'right' ? 'success' : 'danger'}
+				variant={dominant_hand == 'right' ? 'fill-light' : 'default'}
+				on:click={() => changeHand('right')} icon={mdiHandFrontRight}>Right Hand</Button
+			>
+		</div>
+		<div class="col-span-12">
+			<ol class="grid col-span-5 p-2">
+				<li class="border-b mb-1">
+					<span class="float-{dominant_hand == 'left' ? 'right' : 'left'}">
+						<Icon class="text-success-500" data={mdiCheckCircleOutline} />
+						YES
+					</span>
+					<Button variant="fill-outline" classes={{ root: `float-${dominant_hand}` }}>Watered Plants</Button>
+				</li>
 
-	<Card class="w-full col-span-4">
+				<li class="border-b mb-1">
+					<span class="float-{dominant_hand == 'left' ? 'right' : 'left'}">
+						<Icon class="text-danger-500" data={mdiCloseCircle} />
+						No
+					</span>
+					<Button variant="fill-outline" classes={{ root: `float-${dominant_hand}` }}>Opened Roof Plants</Button>
+				</li>
+
+				<li class="border-b mb-1">
+					<span class="float-{dominant_hand == 'left' ? 'right' : 'left'}">
+						<Icon class="text-danger-500" data={mdiCloseCircle} />
+						No
+					</span>
+					<Button variant="fill-outline" classes={{ root: `float-${dominant_hand}` }}>Check weeds</Button>
+				</li>
+			</ol>
+		</div>
+	</Card>
+
+	<Card class="w-full md:col-span-4">
 		<div class="h-[220px]">
 			<Chart>
 				<Svg>
@@ -56,3 +129,11 @@
 		</div>
 	</Card>
 </div>
+
+<Card class="mt-10">
+	<Grid {data} fixedHeader={true} search={true} sort={true} />
+</Card>
+
+<style global>
+	@import 'https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css';
+</style>
