@@ -12,7 +12,17 @@
 		mdiStar,
 		mdiViewDashboard
 	} from '@mdi/js';
-	import { Avatar, Button, ButtonGroup, Card, Header, Icon, Menu, Progress, Toggle } from 'svelte-ux';
+	import {
+		Avatar,
+		Button,
+		ButtonGroup,
+		Card,
+		Header,
+		Icon,
+		Menu,
+		Progress,
+		Toggle
+	} from 'svelte-ux';
 	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 	import { Arc, Chart, Group, LinearGradient, Svg, Text } from 'layerchart';
@@ -37,12 +47,15 @@
 </script>
 
 <h1
-	class="text-lg font-bold border-b mb-4 w-full text-white relative"
-	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100vw; height: 120px;"
+    class="flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
+    style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100vw; height: 120px;"
 >
-	<Icon data={mdiViewDashboard} />
-	Dashboard
+    <div class="flex items-center space-x-2 ml-2"> <!-- Adjust space-x-2 as needed -->
+        <Icon data={mdiViewDashboard} />
+        <span>Dashboard</span>
+    </div>
 </h1>
+
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 	<CWStatCard title="Attention Required" value={0} notation="" counterStartTime={null}>
@@ -64,7 +77,12 @@
 
 <div class="grid grid-cols-1 md:grid-cols-12 gap-5 mt-5">
 	<Card class="grid md:col-span-8">
-		<Header title="Quick Task View" class="w-full col-span-12" subheading="Subheading" slot="header">
+		<Header
+			title="Quick Task View"
+			class="w-full col-span-12"
+			subheading="Subheading"
+			slot="header"
+		>
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiCalendarCheck} />
@@ -73,12 +91,12 @@
 			<div slot="actions">
 				<Toggle let:on={open} let:toggle>
 					<Button on:click={toggle}>
-					  <Icon data={mdiDotsVertical} />
-					  <Menu {open} on:close={toggle}>
-						<Feedback />
-					  </Menu>
+						<Icon data={mdiDotsVertical} />
+						<Menu {open} on:close={toggle}>
+							<Feedback />
+						</Menu>
 					</Button>
-				  </Toggle>
+				</Toggle>
 			</div>
 		</Header>
 		<div class="flex flex-row col-span-12 md:hidden border-b">
