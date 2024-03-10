@@ -133,45 +133,49 @@
 		<div slot="contents">
 			<div class="w-full min-h-96" bind:offsetHeight={mapHeight} bind:offsetWidth={mapWidth}>
 				{#await data.streamed.sensors}
-				<ProgressCircle />
+					<ProgressCircle />
 				{:then sensors}
-				<!-- <pre>{JSON.stringify(sensors, null, 2)}</pre> -->
-						{#if sensors}
-							<Leaflet
-								{view}
-								{zoom}
-								disableZoom={true}
-								width={mapWidth}
-								height={mapHeight}
-								heatMapLatLngs={sensors
-									?.filter((i) => i.cw_devices.type === 3 || i.cw_devices.type === 4)
-									.map((s) => {
-										if (s.cw_devices.cw_ss_tmepnpk.length > 0)
+					<!-- <pre>{JSON.stringify(sensors, null, 2)}</pre> -->
+					{#if sensors}
+						<Leaflet
+							{view}
+							{zoom}
+							disableZoom={true}
+							width={mapWidth}
+							height={mapHeight}
+							heatMapLatLngs={sensors
+								?.filter((i) => i.cw_devices.type === 3 || i.cw_devices.type === 4)
+								.map((s) => {
+									if (s.cw_devices.cw_ss_tmepnpk.length > 0)
 										return [
 											s.cw_devices.lat,
 											s.cw_devices.long,
 											s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC
 										];
-									})}
-							>
-								{#each sensors as sensor}
-									{#if sensor.cw_devices.lat && sensor.cw_devices.long}
-										<Marker
-											latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
-											width={40}
-											height={40}
-										>
-											<StatsQuickView sensor={sensor.cw_devices} />
-										</Marker>
-									{/if}
-								{/each}
-							</Leaflet>
-						{/if}
-					{/await}
+								})}
+						>
+							{#each sensors as sensor}
+								{#if sensor.cw_devices.lat && sensor.cw_devices.long}
+									<Marker
+										latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
+										width={40}
+										height={40}
+									>
+										<StatsQuickView sensor={sensor.cw_devices} />
+									</Marker>
+								{/if}
+							{/each}
+						</Leaflet>
+					{/if}
+				{/await}
 			</div>
 		</div>
 	</Card>
-	<DeviceSelect devices={data.sensors} />
+	{#await data.streamed.sensors}
+		<ProgressCircle />
+	{:then sensors}
+		<DeviceSelect {sensors} />
+	{/await}
 </div>
 
 <Card id="list" class="grid-flow-row col-span-2 justify-start my-2" title="Location List">

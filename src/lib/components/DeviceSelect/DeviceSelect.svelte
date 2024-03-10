@@ -1,4 +1,4 @@
-<!-- <script lang="ts">
+<script lang="ts">
 	import {
 		mdiCloseCircleOutline,
 		mdiCompare,
@@ -20,10 +20,9 @@
 		Toggle
 	} from 'svelte-ux';
 	import AddDevice from '../AddDevice/AddDevice.svelte';
-	import { Tooltip } from 'layerchart';
 
-	export let devices = [];
-	$: devicesView = devices;
+	export let sensors = [];
+	$: devicesView = sensors;
 	let value: string = '';
 	let group = [];
 </script>
@@ -51,8 +50,8 @@
 			bind:value
 			on:change={(e) => {
 				e.detail.value == null
-					? (devicesView = devices)
-					: (devicesView = devices.filter((d) => d.cw_devices.name.includes(e.detail.value)));
+					? (devicesView = sensors)
+					: (devicesView = sensors.filter((d) => d.cw_devices.name.includes(e.detail.value)));
 			}}
 			icon={mdiMagnify}
 		>
@@ -61,7 +60,7 @@
 					icon={mdiCloseCircleOutline}
 					on:click={() => {
 						value = '';
-						devicesView = devices;
+						devicesView = sensors;
 					}}
 					class="text-surface-content/50 p-2"
 				/>
@@ -76,7 +75,7 @@
 						disabled={group.length == 0
 							? false
 							: device.cw_devices.type !=
-								devices.find((d) => d.dev_eui == group[0]).cw_devices.type}
+								sensors.find((d) => d.dev_eui == group[0]).cw_devices.type}
 					>
 						{device.cw_devices.name}
 					</Checkbox>
@@ -99,4 +98,4 @@
 			>
 		</div>
 	</div>
-</Card> -->
+</Card>

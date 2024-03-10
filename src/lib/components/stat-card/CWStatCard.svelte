@@ -66,7 +66,7 @@
 					</div>
 					<div class="border-t">
 						<h3 class="font-medium">Difference</h3>
-						<p class="text-gray-700">{(value - optimal) > 0 ? '+' : '-'}{(value - optimal).toFixed(2)}{notation}</p>
+						<p class="text-gray-700">{(value - optimal) > 0 ? '+' : ''}{(value - optimal).toFixed(2)}{notation}</p>
 					</div>
 				</div>
 			</Collapse>

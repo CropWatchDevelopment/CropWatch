@@ -37,7 +37,7 @@ async function load_AllSensors(supabase: SupabaseClient, location_id: number) {
         .from('cw_device_locations')
         .select('*, cw_devices(*, cw_ss_tmepnpk(*), seeed_co2_lorawan_uplinks(*))')
         .eq('location_id', location_id)
-        .order('created_at', { referencedTable: 'cw_devices.cw_ss_tmepnpk', ascending: false })
+        .order('created_at', { referencedTable: 'cw_devices.seeed_co2_lorawan_uplinks', ascending: false })
         .limit(1, { referencedTable: 'cw_devices.cw_ss_tmepnpk' })
         .limit(1, { referencedTable: 'cw_devices.seeed_co2_lorawan_uplinks' })
         ;

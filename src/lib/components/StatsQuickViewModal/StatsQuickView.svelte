@@ -57,21 +57,30 @@
 				optimal={26}
 			/>
 		</div>
-	{:else if sensor.type == 2}
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-2 m-2">
+	{:else if sensor.type == 6}
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-2 m-2">
 			<CwStatCard
 				title="Air Temperature"
-				counterStartTime={sensor.cw_ss_tmepnpk[0].created_at}
-				value={sensor.cw_ss_tmepnpk[0].soil_temperatureC}
+				counterStartTime={sensor.seeed_co2_lorawan_uplinks[0].created_at}
+				value={sensor.seeed_co2_lorawan_uplinks[0].temperature}
 				icon={mdiThermometer}
-				optimal={19}
+				optimal={23.88}
+			/>
+			<CwStatCard
+				title="Air Humidity"
+				counterStartTime={sensor.seeed_co2_lorawan_uplinks[0].created_at}
+				value={sensor.seeed_co2_lorawan_uplinks[0].humidity}
+				icon={mdiWater}
+				optimal={75}
+				notation="%"
 			/>
 			<CwStatCard
 				title="CO²"
-				counterStartTime={sensor.cw_ss_tmepnpk[0].created_at}
-				value={sensor.cw_ss_tmepnpk[0].soil_moisture}
+				counterStartTime={sensor.seeed_co2_lorawan_uplinks[0].created_at}
+				value={sensor.seeed_co2_lorawan_uplinks[0].co2_level}
 				icon={mdiWater}
-				optimal={26}
+				optimal={800}
+				notation="PPM"
 			/>
 		</div>
 	{:else}
