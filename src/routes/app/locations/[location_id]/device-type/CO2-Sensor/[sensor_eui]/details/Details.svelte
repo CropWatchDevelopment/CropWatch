@@ -123,7 +123,7 @@
 	</Card>
 
 	<Card>
-		<Header title="Temperature History" subheading="Temp Over time" slot="header">
+		<Header title="Humidity History" subheading="Temp Over time" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiWater} />

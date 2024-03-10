@@ -1,93 +1,58 @@
 <script>
-	import { mdiCheck, mdiViewDashboard } from '@mdi/js';
+	import { mdiCheck, mdiStar, mdiViewDashboard } from '@mdi/js';
 	import { Avatar, Card, Header, Icon } from 'svelte-ux';
+	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
+	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
+	import { Arc, Chart, Group, LinearGradient, Svg, Text } from 'layerchart';
 </script>
 
-<h1 class="text-lg font-bold border-b mb-4">
+<h1
+	class="text-lg font-bold border-b mb-4 w-full text-white relative"
+	style="left:-8px; top:-8px; background-image:url({backgroundImg}); height: 120px;"
+>
 	<Icon data={mdiViewDashboard} />
 	Dashboard
 </h1>
 
-<div class="grid grid-flow-col gap-2 mb-4">
-	<Card>
-		<Header title="Locations With Alerts" subheading="Required to view" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiCheck} />
-				</Avatar>
-			</div>
-		</Header>
-		<div slot="contents">
-			<p class="text-5xl text-center">0</p>
-		</div>
-	</Card>
-
-	<Card>
-		<Header title="Sensors that require attention" subheading="Required to view" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiCheck} />
-				</Avatar>
-			</div>
-		</Header>
-		<div slot="contents">
-			<p class="text-5xl text-center">0</p>
-		</div>
-	</Card>
+<div class="grid grid-flow-col grid-cols-1 md:grid-cols-3 gap-5">
+	<CWStatCard counterStartTime={null} />
+	<CWStatCard counterStartTime={null} />
+	<CWStatCard counterStartTime={null} />
 </div>
 
-<div class="grid grid-flow-col gap-4 mb-4">
-	<Card>
-		<Header title="Soil Too Dry/Wet" subheading="Required to view" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiCheck} />
-				</Avatar>
-			</div>
-		</Header>
-		<div slot="contents">
-			<p class="text-5xl text-center">0</p>
-		</div>
-	</Card>
+<div class="grid grid-flow-col grid-cols-1 md:grid-cols-12 gap-5 mt-5">
+	<Card class="grid col-span-8">a</Card>
 
-	<Card>
-		<Header title="Soil too Hot/Cold" subheading="Required to view" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiCheck} />
-				</Avatar>
-			</div>
-		</Header>
-		<div slot="contents">
-			<p class="text-5xl text-center">0</p>
-		</div>
-	</Card>
-
-	<Card>
-		<Header title="Soil Sensors require attention" subheading="Required to view" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiCheck} />
-				</Avatar>
-			</div>
-		</Header>
-		<div slot="contents">
-			<p class="text-5xl text-center">0</p>
-		</div>
-	</Card>
-</div>
-
-<div class="grid grid-flow-col grid-cols-2 h-full">
-	<Card>
-		<Header title="Today's Schedule" subheading="Schedule" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiCheck} />
-				</Avatar>
-			</div>
-		</Header>
-		<div slot="contents">
-			<p class="text-5xl text-center">0</p>
+	<Card class="w-full col-span-4">
+		<div class="h-[220px]">
+			<Chart>
+				<Svg>
+					<Group center>
+						<Group y={16}>
+							<LinearGradient class="from-secondary to-primary" let:url>
+								<Arc
+									value={60}
+									range={[-120, 120]}
+									outerRadius={60}
+									innerRadius={50}
+									cornerRadius={5}
+									spring
+									let:value
+									fill={url}
+									track={{ class: 'fill-none stroke-surface-content/10' }}
+								>
+									<Text
+										value={Math.round(value) + '%'}
+										textAnchor="middle"
+										verticalAnchor="middle"
+										class="text-3xl tabular-nums"
+									/>
+								</Arc>
+							</LinearGradient>
+						</Group>
+					</Group>
+				</Svg>
+			</Chart>
 		</div>
 	</Card>
 </div>
