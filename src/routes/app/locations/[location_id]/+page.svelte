@@ -33,11 +33,8 @@
 	import WeatherChart from '$lib/components/charts/highcharts/weatherChart/WeatherChart.svelte';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import WeatherWidget from '$lib/components/weatherWidget/WeatherWidget.svelte';
-	import CwStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import Calendar from '@event-calendar/core';
 	import TimeGrid from '@event-calendar/day-grid';
-	import { DeviceIntToEnglish, DeviceIntType } from '$lib/helpers/DeviceTypeToName';
-	import AddDevice from '$lib/components/AddDevice/AddDevice.svelte';
 	import StatsQuickView from '$lib/components/StatsQuickViewModal/StatsQuickView.svelte';
 	import DeviceSelect from '$lib/components/DeviceSelect/DeviceSelect.svelte';
 
@@ -135,11 +132,10 @@
 
 		<div slot="contents">
 			<div class="w-full min-h-96" bind:offsetHeight={mapHeight} bind:offsetWidth={mapWidth}>
-				{#if data.sensors && data.sensors.length > 0}
-					<!-- <pre>{JSON.stringify(data.sensors, null, 4)}</pre> -->
-					{#await data.sensors}
-						<ProgressCircle />
-					{:then sensors}
+				{#await data.streamed.sensors}
+				<ProgressCircle />
+				{:then sensors}
+				<!-- <pre>{JSON.stringify(sensors, null, 2)}</pre> -->
 						{#if sensors}
 							<Leaflet
 								{view}
@@ -165,55 +161,17 @@
 											width={40}
 											height={40}
 										>
-											<StatsQuickView {sensor} />
+											<StatsQuickView sensor={sensor.cw_devices} />
 										</Marker>
 									{/if}
 								{/each}
 							</Leaflet>
 						{/if}
 					{/await}
-				{/if}
 			</div>
 		</div>
 	</Card>
 	<DeviceSelect devices={data.sensors} />
-	<!-- <Card class="col-span-12 lg:col-span-4">
-		<Header title="Device Quick View" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-accent-500 text-white font-bold mr-4">
-					<Icon data={mdiDevices} />
-				</Avatar>
-			</div>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button icon={mdiDotsVertical} on:click={toggle}>
-						<Menu {open} on:close={toggle}>
-							<MenuItem icon={mdiPlus}>Add Device</MenuItem>
-						</Menu>
-					</Button>
-				</Toggle>
-			</div>
-		</Header>
-		<div slot="contents" class="flex flex-col max-h-[360px] overflow-auto"> -->
-			<!-- <MultiSelect
-				options={data.sensors
-					? data.sensors?.map((m) => {
-							return {
-								name: `${DeviceIntToEnglish(m.cw_devices.type)} - (${m.cw_devices.dev_eui})`,
-								value: m.cw_devices.dev_eui
-							};
-						})
-					: []}
-				on:change={(change) => { console.log(change) }}
-				inlineSearch
-			>
-				<div slot="actions">
-					<AddDevice {data} />
-				</div>
-			</MultiSelect> -->
-			
-		<!-- </div>
-	</Card> -->
 </div>
 
 <Card id="list" class="grid-flow-row col-span-2 justify-start my-2" title="Location List">

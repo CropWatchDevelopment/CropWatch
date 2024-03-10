@@ -10,7 +10,9 @@ export async function load({ params, locals: { supabase, getSession } }) {
 
     return {
         location: await checkLocationOwner(supabase, +params.location_id, user_id),
-        sensors: await loadAllSensors(supabase, +params.location_id),
+        streamed: {
+            sensors: load_AllSensors(supabase, +params.location_id),
+        },
         weatherJSON: await getWeatherAPIData(),
     };
 }
@@ -22,7 +24,6 @@ async function checkLocationOwner(supabase: SupabaseClient, id: number, user_id:
         .eq('cw_location_owners.user_id', user_id)
         .eq('location_id', id)
         .single();
-    console.log('ss from db', data);
 
     if (error) {
         console.error(error);
@@ -31,13 +32,15 @@ async function checkLocationOwner(supabase: SupabaseClient, id: number, user_id:
     return data;
 }
 
-async function loadAllSensors(supabase: SupabaseClient, location_id: number) {
+async function load_AllSensors(supabase: SupabaseClient, location_id: number) {
     const { data, error } = await supabase
         .from('cw_device_locations')
-        .select('*, cw_devices(*, cw_ss_tmepnpk(*))')
+        .select('*, cw_devices(*, cw_ss_tmepnpk(*), seeed_co2_lorawan_uplinks(*))')
         .eq('location_id', location_id)
         .order('created_at', { referencedTable: 'cw_devices.cw_ss_tmepnpk', ascending: false })
         .limit(1, { referencedTable: 'cw_devices.cw_ss_tmepnpk' })
+        .limit(1, { referencedTable: 'cw_devices.seeed_co2_lorawan_uplinks' })
+        ;
     return data;
 }
 

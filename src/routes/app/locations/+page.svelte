@@ -25,7 +25,6 @@
 	export let data: PageData;
 
 	let zoom: number | undefined = 20;
-
 </script>
 
 <Card id="list" class="grid-flow-row col-span-2 mr-4 justify-start" title="Location List">
@@ -50,24 +49,29 @@
 			{#await data.locations}
 				<ProgressCircle />
 			{:then locations}
-				{#each locations as location}
-					<ListItem title={location.cw_locations.name}>
-						<div slot="avatar">
-							<Icon data={mdiMapMarker} />
-						</div>
-						<div slot="actions">
-							<Button
-								icon={mdiChevronRight}
-								variant="fill-light"
-								color="accent"
-								class="p-2 text-black/50"
-								on:click={() => goto(`locations/${location.cw_locations.location_id}`)}
-							/>
-						</div>
-					</ListItem>
-				{/each}
+				{#if locations}
+					{#each locations as location}
+						{#if location && location.cw_locations}
+							<ListItem title={location.cw_locations.name}>
+								<div slot="avatar">
+									<Icon data={mdiMapMarker} />
+								</div>
+								<div slot="actions">
+									<Button
+										icon={mdiChevronRight}
+										variant="fill-light"
+										color="accent"
+										class="p-2 text-black/50"
+										on:click={() => goto(`locations/${location.cw_locations.location_id}`)}
+									/>
+								</div>
+							</ListItem>
+						{:else}
+							<li>You don't have any locations yet</li>
+						{/if}
+					{/each}
+				{/if}
 			{/await}
 		</ol>
 	</div>
 </Card>
-

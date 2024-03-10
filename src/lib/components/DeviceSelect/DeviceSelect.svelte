@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import {
 		mdiCloseCircleOutline,
 		mdiCompare,
@@ -99,4 +99,4 @@
 			>
 		</div>
 	</div>
-</Card>
+</Card> -->
