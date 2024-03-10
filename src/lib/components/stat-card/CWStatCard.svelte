@@ -10,13 +10,9 @@
 		ExpansionPanel,
 		Header,
 		Icon,
-
 		Menu,
-
 		MenuItem,
-
 		Toggle
-
 	} from 'svelte-ux';
 
 	export let title: string = 'New Card';
@@ -45,12 +41,12 @@
 		<div slot="actions">
 			<Toggle let:on={open} let:toggle>
 				<Button on:click={toggle}>
-				  <Icon data={mdiDotsVertical} />
-				  <Menu {open} on:close={toggle}>
-					<slot name="headerMore" />
-				  </Menu>
+					<Icon data={mdiDotsVertical} />
+					<Menu {open} on:close={toggle}>
+						<slot name="headerMore" />
+					</Menu>
 				</Button>
-			  </Toggle>
+			</Toggle>
 		</div>
 	</Header>
 	<div slot="contents" class="mb-2">
@@ -66,7 +62,9 @@
 					</div>
 					<div class="border-t">
 						<h3 class="font-medium">Difference</h3>
-						<p class="text-gray-700">{(value - optimal) > 0 ? '+' : ''}{(value - optimal).toFixed(2)}{notation}</p>
+						<p class="text-gray-700">
+							{value - optimal > 0 ? '+' : ''}{(value - optimal).toFixed(2)}{notation}
+						</p>
 					</div>
 				</div>
 			</Collapse>
