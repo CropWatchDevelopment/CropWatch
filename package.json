@@ -57,6 +57,7 @@
 		"@sveltejs/adapter-vercel": "^5.1.0",
 		"dotenv": "16.4.2",
 		"gridjs": "^6.2.0",
-		"gridjs-svelte": "^2.1.1"
+		"gridjs-svelte": "^2.1.1",
+		"moment": "^2.30.1"
 	}
 }
