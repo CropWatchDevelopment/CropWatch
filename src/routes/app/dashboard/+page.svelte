@@ -30,9 +30,10 @@
 	import { onMount } from 'svelte';
 	import moment from 'moment';
 	import Feedback from '$lib/components/feedbackDialog/Feedback.svelte';
-	import { h, PluginPosition } from "gridjs";
+	import { h, PluginPosition, html } from "gridjs";
 
 	export let data;
+	console.log(data);
 
 	let dominant_hand: 'left' | 'right' = 'right';
 	const changeHand = (hand: 'left' | 'right') => {
@@ -40,29 +41,10 @@
 		localStorage.setItem('dominant_hand', dominant_hand);
 	};
 
-	const columns = [
-		{
-			name: 'Status',
-			formatter: (cell, row) => {
-				debugger;
-				return h('span', {
-					class: `text-${row.cells[0].data == 'Yes' ? 'success' : 'danger'}-500`
-				}, row.cells[0].data);
-			}
-		},
-		'Name',
-		'Email',
-		{
-			name: 'Action',
-			formatter: (cell, row) => {
-				return h('button', {
-					onClick: () => {
-						alert(`Editing "${row.cells[0].data}" "${row.cells[1].data}"`)
-					}
-				}, 'Edit');
-			}
-		}
-	]
+
+
+
+
 
 	onMount(() => {
 		dominant_hand = localStorage.getItem('dominant_hand') ?? 'right';
@@ -215,18 +197,8 @@
 </div>
 
 <Card class="mt-10">
-	{#await data.sensors}
-		loading
-	{:then sensorData} 
-		<pre>{JSON.stringify(sensorData.data, null, 2)}</pre>
-		<Grid {columns} data={sensorData.data.map(s => {
-			return {
-				active: moment(s.created_at).isAfter(moment().subtract(s.cw_devices.upload_interval, 'minutes')),
-				name: s.cw_devices.name,
-				created_at: s.created_at,
-			}
-		})} fixedHeader={true} search={true} sort={true} />
-	{/await}
+		<pre>{JSON.stringify(data.sensors, null, 2)}</pre>
+		<!-- <Grid {columns} data={gridData} fixedHeader={true} search={true} sort={true} /> -->
 </Card>
 
 <style global>
