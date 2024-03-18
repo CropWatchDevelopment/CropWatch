@@ -17,6 +17,8 @@
 		Button,
 		ButtonGroup,
 		Card,
+		Duration,
+		DurationUnits,
 		Header,
 		Icon,
 		Menu,
@@ -30,7 +32,7 @@
 	import { onMount } from 'svelte';
 	import moment from 'moment';
 	import Feedback from '$lib/components/feedbackDialog/Feedback.svelte';
-	import { h, PluginPosition, html } from "gridjs";
+	import { h, PluginPosition, html } from 'gridjs';
 
 	export let data;
 	console.log(data);
@@ -41,26 +43,32 @@
 		localStorage.setItem('dominant_hand', dominant_hand);
 	};
 
-
-
-
-
+	const columns = [
+		{ name: 'active' },
+		{ name: 'name' },
+		{ name: 'Last Seen', formatter: (cell, row) => h('Duration', {start: new Date()}) },
+		{ name: 'Primary Data' },
+		{
+			name: 'view',
+			formatter: (cell, row) => h('button', { onClick: () => console.log(cell) }, 'View'),
+		}
+	];
 
 	onMount(() => {
 		dominant_hand = localStorage.getItem('dominant_hand') ?? 'right';
 	});
 </script>
-
+<Duration start={new Date()} totalUnits={2} minUnits={DurationUnits.Second} />
 <h1
-    class="flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
-    style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100vw; height: 120px;"
+	class="flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
+	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100vw; height: 120px;"
 >
-    <div class="flex items-center space-x-2 ml-2"> <!-- Adjust space-x-2 as needed -->
-        <Icon data={mdiViewDashboard} />
-        <span>Dashboard</span>
-    </div>
+	<div class="flex items-center space-x-2 ml-2">
+		<!-- Adjust space-x-2 as needed -->
+		<Icon data={mdiViewDashboard} />
+		<span>Dashboard</span>
+	</div>
 </h1>
-
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 	<CWStatCard title="Attention Required" value={0} notation="" counterStartTime={null}>
@@ -197,8 +205,7 @@
 </div>
 
 <Card class="mt-10">
-		<pre>{JSON.stringify(data.sensors, null, 2)}</pre>
-		<!-- <Grid {columns} data={gridData} fixedHeader={true} search={true} sort={true} /> -->
+	<Grid data={data.sensors} {columns} fixedHeader={true} search={true} sort={true} pagination={{ enabled: true, limit: 3 }} />
 </Card>
 
 <style global>
