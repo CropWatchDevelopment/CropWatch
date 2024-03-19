@@ -26,7 +26,7 @@ export async function load({ params, locals: { supabase, getSession } }) {
         const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
 
         // Extract additional sensor data, e.g., temperature, and format it
-        const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data] ?? 'N/A';
+        const primaryData = 2; //sensor.data[sensor.cw_devices.cw_device_type.primary_data] ? sensor.data[sensor.cw_devices.cw_device_type.primary_data] : 'N/A';
 
         // Here, you can add more sensor data as needed
         // const otherSensorData = ...

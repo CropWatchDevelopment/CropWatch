@@ -58,7 +58,7 @@
 		dominant_hand = localStorage.getItem('dominant_hand') ?? 'right';
 	});
 </script>
-<Duration start={new Date()} totalUnits={2} minUnits={DurationUnits.Second} />
+
 <h1
 	class="flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
 	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100vw; height: 120px;"
@@ -205,7 +205,7 @@
 </div>
 
 <Card class="mt-10">
-	<Grid data={data.sensors} {columns} fixedHeader={true} search={true} sort={true} pagination={{ enabled: true, limit: 3 }} />
+	<Grid data={data.sensors} {columns} fixedHeader={true} search={true} sort={true} pagination={{ enabled: true, limit: 5 }} />
 </Card>
 
 <style global>
