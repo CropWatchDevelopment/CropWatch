@@ -35,7 +35,7 @@
 			class="mt-2"
 		/>
 
-		<NavItem path="/" text="My Devices" icon={mdiDevices} currentUrl={$page.url} class="mt-2" />
+		<NavItem path="/app/devices" text="My Devices" icon={mdiDevices} currentUrl={$page.url} class="mt-2" />
 
 		<NavItem path="/" text="Data Rules" icon={mdiFunction} currentUrl={$page.url} class="mt-2" />
 

@@ -35,37 +35,17 @@
 	import { h, PluginPosition, html } from 'gridjs';
 	import { SvelteWrapper } from 'gridjs-svelte/plugins';
 	import CwTable from '$lib/components/table/CWTable.svelte';
+	import { browser } from '$app/environment';
 
 	export let data;
-	console.log(data);
+
+	
 
 	let dominant_hand: 'left' | 'right' = 'right';
 	const changeHand = (hand: 'left' | 'right') => {
 		dominant_hand = hand;
 		localStorage.setItem('dominant_hand', dominant_hand);
 	};
-
-	// const columns = [
-	// 	{ name: 'active' },
-	// 	{ name: 'name' },
-	// 	{ name: 'Location' },
-	// 	{
-	// 		name: 'Last Seen',
-	// 		formatter: (cell, row) => {
-	// 			const date = moment(cell);
-	// 			return date.fromNow();
-	// 		}
-	// 	},
-	// 	{
-	// 		name: 'Dev eui',
-	// 		formatter: (cell) => html(`<i>${cell}</i>`)
-	// 	},
-	// 	{ name: 'Primary Data' },
-	// 	{
-	// 		name: 'view',
-	// 		formatter: (cell, row) => h('button', { onClick: () => console.log(cell) }, 'View')
-	// 	}
-	// ];
 
 	onMount(() => {
 		dominant_hand = localStorage.getItem('dominant_hand') ?? 'right';
@@ -226,8 +206,14 @@
 		sort={true}
 		pagination={{ enabled: true, limit: 10 }}
 	/> -->
-	<CwTable data={data.sensors}>
-	</CwTable>
+	{#await data.sensors}
+		<div>Loading...</div>
+	{:then sensorData}
+		<CwTable data={sensorData} />
+	{:catch error}
+		<div>Error: {error.message}</div>
+	{/await}
+
 </Card>
 
 <style global>

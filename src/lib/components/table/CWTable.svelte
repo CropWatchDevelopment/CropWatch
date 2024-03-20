@@ -7,6 +7,7 @@
 
 	// Accept any array of objects as generic data
 	export let data: Array<Record<string, any>> = [];
+	console.log(data);
 
 	// Ensure headers are generated from the keys of the objects. We use a reactive statement to update headers if data changes.
 	$: headers =
@@ -44,12 +45,10 @@
 									minUnits={DurationUnits.Second}
 								/>
 							</td>
-							<!-- {:else if header == 'name'}
-						<td>
-							<Tooltip title={row['devEui']}>
-								{row[header]}<CopyButton value={row['devEui']} size="sm" />
-							</Tooltip>
-						</td> -->
+						{:else if header == 'locationName'}
+							<td>
+								{row.locationName}
+							</td>
 						{:else if header == 'devEui'}
 							<td>
 								<Tooltip title="Copy Dev EUI" }>
