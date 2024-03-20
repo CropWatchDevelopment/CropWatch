@@ -38,7 +38,7 @@
 				{#each headers as header}
 					{#if header != 'model' && header != 'Location'}
 						{#if header == 'lastSeen'}
-							<td>
+							<td data-label="Last Seen">
 								<Duration
 									start={new Date(row.lastSeen)}
 									totalUnits={2}
@@ -46,17 +46,17 @@
 								/>
 							</td>
 						{:else if header == 'locationName'}
-							<td>
+							<td data-label="Location Name">
 								{row.locationName}
 							</td>
 						{:else if header == 'devEui'}
-							<td>
+							<td data-label="DEV Eui">
 								<Tooltip title="Copy Dev EUI" }>
 									{row[header]}<CopyButton value={row['devEui']} size="sm" />
 								</Tooltip>
 							</td>
 						{:else if header == 'url'}
-							<td class="flex flex-row gap-2 justify-center">
+							<td class="flex flex-row gap-2 justify-center" data-label="Actions">
 								{#if row.Location?.cw_locations?.location_id}
 									<Tooltip title="View device details">
 										<Button
@@ -84,7 +84,7 @@
 								{/if}
 							</td>
 						{:else}
-							<td>
+							<td data-label={header}>
 								{row[header]}
 							</td>
 						{/if}
@@ -174,7 +174,7 @@
 		}
 
 		table td {
-			/* border-bottom: 1px solid #ddd; */
+			border-bottom: 1px solid #ddd;
 			display: block;
 			font-size: 0.8em;
 			text-align: right;
