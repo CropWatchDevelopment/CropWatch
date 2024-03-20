@@ -33,6 +33,7 @@
 	import moment from 'moment';
 	import Feedback from '$lib/components/feedbackDialog/Feedback.svelte';
 	import { h, PluginPosition, html } from 'gridjs';
+	import { SvelteWrapper } from 'gridjs-svelte/plugins';
 
 	export let data;
 	console.log(data);
@@ -46,11 +47,21 @@
 	const columns = [
 		{ name: 'active' },
 		{ name: 'name' },
-		{ name: 'Last Seen', formatter: (cell, row) => h('Duration', {start: new Date()}) },
+		{
+			name: 'Last Seen',
+			formatter: (cell, row) => {
+				const date = moment(cell);
+				return date.fromNow();
+			}
+		},
+		{
+			name: 'Dev eui',
+			formatter: (cell) => html(`<i>${cell}</i>`)
+		},
 		{ name: 'Primary Data' },
 		{
 			name: 'view',
-			formatter: (cell, row) => h('button', { onClick: () => console.log(cell) }, 'View'),
+			formatter: (cell, row) => h('button', { onClick: () => console.log(cell) }, 'View')
 		}
 	];
 
@@ -205,7 +216,14 @@
 </div>
 
 <Card class="mt-10">
-	<Grid data={data.sensors} {columns} fixedHeader={true} search={true} sort={true} pagination={{ enabled: true, limit: 5 }} />
+	<Grid
+		data={data.sensors}
+		{columns}
+		fixedHeader={true}
+		search={true}
+		sort={true}
+		pagination={{ enabled: true, limit: 10 }}
+	/>
 </Card>
 
 <style global>

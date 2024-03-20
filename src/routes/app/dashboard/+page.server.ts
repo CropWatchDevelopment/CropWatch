@@ -25,15 +25,17 @@ export async function load({ params, locals: { supabase, getSession } }) {
         // Extracting the created_at timestamp from sensor data if available, otherwise from the device type
         const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
 
+        const devEui = sensor.cw_devices.dev_eui;
+
         // Extract additional sensor data, e.g., temperature, and format it
-        const primaryData = 2; //sensor.data[sensor.cw_devices.cw_device_type.primary_data] ? sensor.data[sensor.cw_devices.cw_device_type.primary_data] : 'N/A';
+        const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data] ? sensor.data[sensor.cw_devices.cw_device_type.primary_data] : 'N/A';
 
         // Here, you can add more sensor data as needed
         // const otherSensorData = ...
 
         let active = '⚪';
         if (sensor.cw_devices.upload_interval > 0) {
-            if (moment(lastSeen).isBefore(moment().utc().add(sensor.cw_devices.upload_interval, 'minutes'))) {
+            if (moment(lastSeen).add(sensor.cw_devices.upload_interval, 'minutes').isAfter(moment().utc())) {
                 active = '🟢';
             } else {
                 active = '🔴';
@@ -42,7 +44,7 @@ export async function load({ params, locals: { supabase, getSession } }) {
 
         const url = sensor.cw_devices.cw_device_type.device_app;
 
-        return { active, name, lastSeen, primaryData, url, /*, otherSensorData */ };
+        return { active, name, devEui, lastSeen, primaryData, url, /*, otherSensorData */ };
     });
 
     return {
