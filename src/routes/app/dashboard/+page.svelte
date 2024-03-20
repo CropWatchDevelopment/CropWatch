@@ -34,6 +34,7 @@
 	import Feedback from '$lib/components/feedbackDialog/Feedback.svelte';
 	import { h, PluginPosition, html } from 'gridjs';
 	import { SvelteWrapper } from 'gridjs-svelte/plugins';
+	import CwTable from '$lib/components/table/CWTable.svelte';
 
 	export let data;
 	console.log(data);
@@ -47,6 +48,7 @@
 	const columns = [
 		{ name: 'active' },
 		{ name: 'name' },
+		{ name: 'Location' },
 		{
 			name: 'Last Seen',
 			formatter: (cell, row) => {
@@ -72,7 +74,7 @@
 
 <h1
 	class="flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
-	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100vw; height: 120px;"
+	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 120px;"
 >
 	<div class="flex items-center space-x-2 ml-2">
 		<!-- Adjust space-x-2 as needed -->
@@ -224,6 +226,9 @@
 		sort={true}
 		pagination={{ enabled: true, limit: 10 }}
 	/>
+
+	<!-- <CwTable data={data.sensors} /> -->
+
 </Card>
 
 <style global>

@@ -26,6 +26,8 @@ export async function load({ params, locals: { supabase, getSession } }) {
         const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
 
         const devEui = sensor.cw_devices.dev_eui;
+        console.log('-----------------------------------------------------',sensor.cw_devices.cw_device_locations)
+        const Location = sensor.cw_devices.cw_device_locations;
 
         // Extract additional sensor data, e.g., temperature, and format it
         const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data] ? sensor.data[sensor.cw_devices.cw_device_type.primary_data] : 'N/A';
@@ -44,7 +46,7 @@ export async function load({ params, locals: { supabase, getSession } }) {
 
         const url = sensor.cw_devices.cw_device_type.device_app;
 
-        return { active, name, devEui, lastSeen, primaryData, url, /*, otherSensorData */ };
+        return { active, name, Location, devEui, lastSeen, primaryData, url, /*, otherSensorData */ };
     });
 
     return {
@@ -53,7 +55,7 @@ export async function load({ params, locals: { supabase, getSession } }) {
 }
 
 async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
-    const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_type(*))').eq('user_id', user_id);
+    const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(*, cw_locations(id, name, latitude, longitude)), cw_device_type(*))').eq('user_id', user_id);
     if (!data) {
         console.log(error);
         return [];
@@ -64,6 +66,16 @@ async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
 
 async function getDataForSensor(supabase: SupabaseClient, data_table: string) {
     const { data, error } = await supabase.from(data_table).select('*').order('created_at', { ascending: false }).limit(1).single();
+    if (!data) {
+        console.log(error);
+        return [];
+    } else {
+        return data;
+    }
+}
+
+async function getDeviceLocation(supabase: SupabaseClient, deviceId: string) {
+    const { data, error } = await supabase.from('cw_device_locations').select('*').order('created_at', { ascending: false }).limit(1).single();
     if (!data) {
         console.log(error);
         return [];

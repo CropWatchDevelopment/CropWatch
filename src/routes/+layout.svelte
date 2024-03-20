@@ -29,9 +29,17 @@
 					root: 'text-sm text-gray-400 pl-6 py-2 hover:text-white hover:bg-gray-300/10 [&:where(.is-active)]:text-sky-400 [&:where(.is-active)]:bg-gray-500/10'
 				}
 			},
-			Card: {
+			ListItem: {
 				classes: {
-					// root: 'bg-'
+					root: 'bg-white mb-1 text-sm text-primary-400 pl-6 py-2 hover:text-white hover:bg-gray-300/10 [&:where(.is-active)]:text-sky-400 [&:where(.is-active)]:bg-gray-500/10'
+				}
+			},
+			Card: {
+				// classes: 'bg-white shadow-md'
+			},
+			Table: {
+				classes: {
+					container: 'bg-white shadow-md'
 				}
 			}
 		}

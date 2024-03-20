@@ -110,7 +110,7 @@ devDependencies:
     specifier: ^3.4.3
     version: 3.6.4(postcss-load-config@5.0.3)(postcss@8.4.35)(svelte@4.2.11)
   svelte-ux:
-    specifier: latest
+    specifier: ^0.60.2
     version: 0.60.2(postcss-load-config@5.0.3)(postcss@8.4.35)(svelte@4.2.11)
   svelvet:
     specifier: ^10.0.2
