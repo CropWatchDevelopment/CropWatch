@@ -11,7 +11,7 @@ export async function load({ params, locals: { supabase, getSession } }) {
     for (let i = 0; i < sensors.length; i++) {
         const data_table = sensors[i].cw_devices.cw_device_type.data_table;
         if (data_table) {
-            const dev_data = await getDataForSensor(supabase, data_table);
+            const dev_data = await getDataForSensor(supabase, data_table, sensors[i].cw_devices.dev_eui);
             sensors[i].data = Object.assign({}, sensors[i], dev_data);
         }
     }
@@ -26,11 +26,15 @@ export async function load({ params, locals: { supabase, getSession } }) {
         const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
 
         const devEui = sensor.cw_devices.dev_eui;
-        console.log('-----------------------------------------------------',sensor.cw_devices.cw_device_locations)
-        const Location = sensor.cw_devices.cw_device_locations;
+
+        const Location = sensor.cw_devices?.cw_device_locations;
+
+        const model = sensor.cw_devices.cw_device_type.id;
 
         // Extract additional sensor data, e.g., temperature, and format it
-        const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data] ? sensor.data[sensor.cw_devices.cw_device_type.primary_data] : 'N/A';
+        const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data] ?
+            `${sensor.data[sensor.cw_devices.cw_device_type.primary_data]}${sensor.cw_devices.cw_device_type.primary_data_notation}` :
+            'N/A';
 
         // Here, you can add more sensor data as needed
         // const otherSensorData = ...
@@ -46,7 +50,7 @@ export async function load({ params, locals: { supabase, getSession } }) {
 
         const url = sensor.cw_devices.cw_device_type.device_app;
 
-        return { active, name, Location, devEui, lastSeen, primaryData, url, /*, otherSensorData */ };
+        return { active, name, Location, devEui, lastSeen, model, primaryData, url, /*, otherSensorData */ };
     });
 
     return {
@@ -55,7 +59,8 @@ export async function load({ params, locals: { supabase, getSession } }) {
 }
 
 async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
-    const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(*, cw_locations(id, name, latitude, longitude)), cw_device_type(*))').eq('user_id', user_id);
+    // const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(*, cw_locations(id, name, latitude, longitude)), cw_device_type(*))').eq('user_id', user_id);
+    const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(id, cw_locations(*)), cw_device_type(*))').eq('user_id', user_id);
     if (!data) {
         console.log(error);
         return [];
@@ -64,8 +69,8 @@ async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
     }
 }
 
-async function getDataForSensor(supabase: SupabaseClient, data_table: string) {
-    const { data, error } = await supabase.from(data_table).select('*').order('created_at', { ascending: false }).limit(1).single();
+async function getDataForSensor(supabase: SupabaseClient, data_table: string, dev_eui: string) {
+    const { data, error } = await supabase.from(data_table).select('*').eq('dev_eui', dev_eui).order('created_at', { ascending: false }).limit(1).single();
     if (!data) {
         console.log(error);
         return [];

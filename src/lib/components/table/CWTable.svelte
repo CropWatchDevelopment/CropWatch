@@ -1,119 +1,102 @@
 <script lang="ts">
-	import { mdiArrowRight } from '@mdi/js';
+	import { goto } from '$app/navigation';
+	import { DeviceIntType } from '$lib/helpers/DeviceTypeToName';
+	import { mdiDevices, mdiEye, mdiLock, mdiMapMarker } from '@mdi/js';
 	import { createEventDispatcher } from 'svelte';
-	import { Button, Table, Icon, Pagination, paginationStore, Paginate, tableOrderStore } from 'svelte-ux';
+	import { Button, CopyButton, Duration, DurationUnits, Icon, Tooltip } from 'svelte-ux';
 
-	export let rows: [] = [];
+	// Accept any array of objects as generic data
+	export let data: Array<Record<string, any>> = [];
+
+	// Ensure headers are generated from the keys of the objects. We use a reactive statement to update headers if data changes.
+	$: headers =
+		data.length > 0
+			? Object.keys(data[0]).filter((key) => key !== 'component' && key !== 'Location')
+			: [];
 
 	const dispatch = createEventDispatcher();
-	const onHover = (row) => {
-		dispatch('Hover', {
-			row: row
-		});
-	};
 
-	const pagination = paginationStore();
-	pagination.setTotal(100);
-
-	const order = tableOrderStore({ initialBy: 'calories', initialDirection: 'desc' });
-
-	const data = [
-    { id: 1, name: 'Cupcake', calories: 305, fat: 3.7, carbs: 67, protein: 4.3 },
-    { id: 2, name: 'Donut', calories: 452, fat: 25.0, carbs: 51, protein: 4.9 },
-    { id: 3, name: 'Eclair', calories: 262, fat: 16.0, carbs: 24, protein: 6.0 },
-    { id: 4, name: 'Frozen yogurt', calories: 159, fat: 6.0, carbs: 24, protein: 4.0 },
-    { id: 5, name: 'Gingerbread', calories: 356, fat: 16.0, carbs: 49, protein: 3.9 },
-    { id: 6, name: 'Honeycomb', calories: 408, fat: 3.2, carbs: 87, protein: 6.5 },
-    { id: 7, name: 'Ice cream sandwich', calories: 237, fat: 9.0, carbs: 37, protein: 4.3 },
-    { id: 8, name: 'Jelly Bean', calories: 375, fat: 0.0, carbs: 94, protein: 0.0 },
-    { id: 9, name: 'KitKat', calories: 518, fat: 26.0, carbs: 65, protein: 7.0 },
-    { id: 10, name: 'Lollipop', calories: 392, fat: 0.2, carbs: 98, protein: 0.0 },
-    { id: 11, name: 'Marshmallow', calories: 318, fat: 0.0, carbs: 81, protein: 2.0 },
-    { id: 12, name: 'Nougat', calories: 360, fat: 19.0, carbs: 9, protein: 37.0 },
-    { id: 13, name: 'Oreo', calories: 437, fat: 18.0, carbs: 63, protein: 4.0 },
-  ];
+	function onHover(item) {
+		dispatch('hover', { item });
+	}
 </script>
 
-<!-- <table class={`${$$props.class}`}>
+<table class={$$props.class}>
 	<thead>
 		<tr>
 			{#each headers as header}
-				<th scope="col">{header}</th>
+				{#if header != 'model' && header != 'Location'}
+					<th scope="col">{header}</th>
+				{/if}
 			{/each}
 		</tr>
 	</thead>
 	<tbody>
-		{#each rows as row}
-			<tr on:mousemove={(e) => onHover(row)}>
-				{#each Object.keys(row) as key}
-					<td>
-						{#if typeof row[key] === 'object' && row[key].type === 'button'}
-							<Button variant="fill" icon={mdiArrowRight} on:click={row[key].click}>{row[key].text}</Button>
+		{#each data as row, rowIndex}
+			<tr on:mousemove={() => onHover(row)}>
+				{#each headers as header}
+					{#if header != 'model' && header != 'Location'}
+						{#if header == 'lastSeen'}
+							<td>
+								<Duration
+									start={new Date(row.lastSeen)}
+									totalUnits={2}
+									minUnits={DurationUnits.Second}
+								/>
+							</td>
+							<!-- {:else if header == 'name'}
+						<td>
+							<Tooltip title={row['devEui']}>
+								{row[header]}<CopyButton value={row['devEui']} size="sm" />
+							</Tooltip>
+						</td> -->
+						{:else if header == 'devEui'}
+							<td>
+								<Tooltip title="Copy Dev EUI" }>
+									{row[header]}<CopyButton value={row['devEui']} size="sm" />
+								</Tooltip>
+							</td>
+						{:else if header == 'url'}
+							<td class="flex flex-row gap-2 justify-center">
+								{#if row.Location?.cw_locations?.location_id}
+									<Tooltip title="View device details">
+										<Button
+											variant="outline"
+											icon={mdiDevices}
+											on:click={() =>
+												goto(
+													`/app/locations/${row.Location?.cw_locations?.location_id}/device-type/${DeviceIntType(row.model)}/${row.devEui}`
+												)}
+										/>
+									</Tooltip>
+
+									<Tooltip title="View Location of device">
+										<Button
+											variant="outline"
+											icon={mdiMapMarker}
+											on:click={() =>
+												goto(`/app/locations/${row.Location?.cw_locations?.location_id}/`)}
+										/>
+									</Tooltip>
+								{:else}
+									<Tooltip title="Not available or no permission">
+										<Icon data={mdiLock} />
+									</Tooltip>
+								{/if}
+							</td>
 						{:else}
-							{row[key]}
+							<td>
+								{row[header]}
+							</td>
 						{/if}
-					</td>
+					{/if}
 				{/each}
 			</tr>
 		{/each}
 	</tbody>
-</table> -->
+</table>
 
-<Paginate
-  items={data.sort($order.handler)}
-  perPage={5}
-  let:pageItems
-  let:pagination
->
-  <Table
-    data={pageItems}
-    columns={[
-      {
-        name: "name",
-        align: "left",
-      },
-      {
-        name: "calories",
-        align: "right",
-        format: "integer",
-      },
-      {
-        name: "fat",
-        align: "right",
-        format: "integer",
-      },
-      {
-        name: "carbs",
-        align: "right",
-        format: "integer",
-      },
-      {
-        name: "protein",
-        align: "right",
-        format: "integer",
-      },
-    ]}
-    orderBy={$order.by}
-    orderDirection={$order.direction}
-    on:headerClick={(e) => {
-      //Switch back to page 1 when sorting
-      pagination.setPage(1);
-      order.onHeaderClick(e);
-    }}
-  />
-  <Pagination
-    {pagination}
-    perPageOptions={[5, 10, 25, 100]}
-    show={["perPage", "pagination", "prevPage", "nextPage"]}
-    classes={{
-      root: "border-t py-1 mt-2",
-      perPage: "flex-1 text-right",
-      pagination: "px-8",
-    }}
-  />
-</Paginate>
-
-<!-- <style>
+<style>
 	table {
 		table-layout: fixed;
 		border: 1px solid #ccc;
@@ -121,7 +104,7 @@
 		border-radius: 20px;
 		margin: 0;
 		padding: 0;
-		width: 100%;
+		/* width: 100%; */
 		table-layout: fixed;
 	}
 
@@ -213,4 +196,4 @@
 	.break:before {
 		word-wrap: break-word;
 	}
-</style> -->
+</style>

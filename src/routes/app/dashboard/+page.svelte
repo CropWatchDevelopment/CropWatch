@@ -45,27 +45,27 @@
 		localStorage.setItem('dominant_hand', dominant_hand);
 	};
 
-	const columns = [
-		{ name: 'active' },
-		{ name: 'name' },
-		{ name: 'Location' },
-		{
-			name: 'Last Seen',
-			formatter: (cell, row) => {
-				const date = moment(cell);
-				return date.fromNow();
-			}
-		},
-		{
-			name: 'Dev eui',
-			formatter: (cell) => html(`<i>${cell}</i>`)
-		},
-		{ name: 'Primary Data' },
-		{
-			name: 'view',
-			formatter: (cell, row) => h('button', { onClick: () => console.log(cell) }, 'View')
-		}
-	];
+	// const columns = [
+	// 	{ name: 'active' },
+	// 	{ name: 'name' },
+	// 	{ name: 'Location' },
+	// 	{
+	// 		name: 'Last Seen',
+	// 		formatter: (cell, row) => {
+	// 			const date = moment(cell);
+	// 			return date.fromNow();
+	// 		}
+	// 	},
+	// 	{
+	// 		name: 'Dev eui',
+	// 		formatter: (cell) => html(`<i>${cell}</i>`)
+	// 	},
+	// 	{ name: 'Primary Data' },
+	// 	{
+	// 		name: 'view',
+	// 		formatter: (cell, row) => h('button', { onClick: () => console.log(cell) }, 'View')
+	// 	}
+	// ];
 
 	onMount(() => {
 		dominant_hand = localStorage.getItem('dominant_hand') ?? 'right';
@@ -218,17 +218,16 @@
 </div>
 
 <Card class="mt-10">
-	<Grid
+	<!-- <Grid
 		data={data.sensors}
 		{columns}
 		fixedHeader={true}
 		search={true}
 		sort={true}
 		pagination={{ enabled: true, limit: 10 }}
-	/>
-
-	<!-- <CwTable data={data.sensors} /> -->
-
+	/> -->
+	<CwTable data={data.sensors}>
+	</CwTable>
 </Card>
 
 <style global>
