@@ -6,9 +6,15 @@ export async function load({ fetch, locals: { supabase, getSession } }) {
     const user_id = session?.user.id;
 
     const deviceTableResponse = await fetch('/api/device-table', {method: 'GET'});
-    const res = await deviceTableResponse.json();
+    const devices = await deviceTableResponse.json();
+
+    let online: number[] = devices.filter(x => x.active == '🟢') ?? [];
+    let offline: number[] = devices.filter(x => x.active == '🔴') ?? [];
 
     return {
-        sensors: res,
+        sensors: devices,
+        online,
+        offline,
+
     }
 }

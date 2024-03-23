@@ -4,7 +4,7 @@ export const DeviceIntType = (dev_int_type: number): string => {
             return '?';
             break;
         case 1:
-            return 'EM500-co2';
+            return 'CO2-Sensor';
             break;
         case 2:
             return 'CW-air-thvd';

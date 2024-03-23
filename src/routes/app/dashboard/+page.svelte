@@ -22,6 +22,7 @@
 		Header,
 		Icon,
 		Menu,
+		MenuItem,
 		Progress,
 		Toggle
 	} from 'svelte-ux';
@@ -36,10 +37,10 @@
 	import { SvelteWrapper } from 'gridjs-svelte/plugins';
 	import CwTable from '$lib/components/table/CWTable.svelte';
 	import { browser } from '$app/environment';
+	import { openFeedback } from '$lib/stores/feedback.store.js';
 
 	export let data;
-
-	
+	console.log(data);
 
 	let dominant_hand: 'left' | 'right' = 'right';
 	const changeHand = (hand: 'left' | 'right') => {
@@ -64,19 +65,25 @@
 </h1>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-	<CWStatCard title="Attention Required" value={0} notation="" counterStartTime={null}>
-		<div slot="headerMore">
-			<Feedback />
-		</div>
-	</CWStatCard>
-	<CWStatCard title="Remaining Daily Tasks" value={2} notation=" Tasks" counterStartTime={null}
+	<Card>
+		<Header title="Device Status" subheading="Subheading" slot="header">
+			<div slot="avatar">
+				<Avatar class="bg-primary text-primary-content font-bold">A</Avatar>
+			</div>
+		</Header>
+		<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
+			{data.online.length} / {data.online.length + data.offline.length} Online
+		</h1>
+	</Card>
+
+	<CWStatCard title="Gateways Online" value={3} notation=" Online" counterStartTime={null}
 		><div slot="headerMore">
-			<Feedback />
+			<MenuItem on:click={() => (openFeedback())}>Give Feedback</MenuItem>
 		</div>
 	</CWStatCard>
 	<CWStatCard counterStartTime={null}
 		><div slot="headerMore">
-			<Feedback />
+			<MenuItem on:click={() => (openFeedback())}>Give Feedback</MenuItem>
 		</div>
 	</CWStatCard>
 </div>
@@ -99,7 +106,7 @@
 					<Button on:click={toggle}>
 						<Icon data={mdiDotsVertical} />
 						<Menu {open} on:close={toggle}>
-							<Feedback />
+							<MenuItem on:click={() => (openFeedback())}>Give Feedback</MenuItem>
 						</Menu>
 					</Button>
 				</Toggle>
@@ -213,7 +220,6 @@
 	{:catch error}
 		<div>Error: {error.message}</div>
 	{/await}
-
 </Card>
 
 <style global>

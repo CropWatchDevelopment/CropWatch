@@ -1,5 +1,5 @@
 <script>
-	import { AppLayout, Breadcrumb, ListItem, NavItem } from 'svelte-ux';
+	import { AppLayout, Breadcrumb, Button, Dialog, ListItem, NavItem, TextField } from 'svelte-ux';
 	import Header from '$lib/components/core/header/Header.svelte';
 	import {
 		mdiCog,
@@ -11,8 +11,10 @@
 		mdiViewDashboard
 	} from '@mdi/js';
 	import { page } from '$app/stores';
+	import { closeFeedback, feedbackOpenState, openFeedback } from '$lib/stores/feedback.store';
+	import { get } from 'svelte/store';
 
-	let items = ['First', 'Second', 'Third'];
+	$: feedbackDialogOpen = $feedbackOpenState;
 </script>
 
 <AppLayout areas="'header header' 'aside main'">
@@ -66,6 +68,24 @@
 		</div>
 	</main>
 </AppLayout>
+
+<Dialog open={feedbackDialogOpen} persistent>
+    <div slot="title">Have Feedback about this page?</div>
+    <div class="flex flex-row gap-2 mb-2 p-4">
+        <Button variant="outline">😭</Button>
+        <Button variant="outline">😢</Button>
+        <Button variant="outline">😞</Button>
+        <Button variant="outline">🫤</Button>
+        <Button variant="outline">😊</Button>
+        <Button variant="outline">😀</Button>
+        <Button variant="outline">😁</Button>
+    </div>
+    <TextField label="Comment" multiline classes={{ root: 'p-4' }} />
+    <div slot="actions">
+        <Button variant="fill" color="primary" on:click={() => (closeFeedback())}>Close</Button>
+        <Button variant="fill" color="primary">Submit Feedback</Button>
+    </div>
+</Dialog>
 
 <style>
 	#primary_nav {

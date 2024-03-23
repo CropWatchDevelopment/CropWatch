@@ -85,7 +85,7 @@
 							</td>
 						{:else}
 							<td data-label={header}>
-								{row[header]}
+								<b>{row[header]}</b>
 							</td>
 						{/if}
 					{/if}
