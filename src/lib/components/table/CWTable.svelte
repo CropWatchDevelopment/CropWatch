@@ -20,6 +20,11 @@
 	function onHover(item) {
 		dispatch('hover', { item });
 	}
+
+	async function getLatestData() {
+		const deviceTableResponse = await fetch('/api/latest-data?store=cw-ss-tmepnpk', {method: 'GET'});
+    	const devices = await deviceTableResponse.json();
+	}
 </script>
 
 <table class={$$props.class}>
@@ -52,12 +57,16 @@
 							</td>
 						{:else if header == 'devEui'}
 							<td data-label="DEV Eui">
-								<Tooltip title="Copy Dev EUI" }>
+								<Tooltip title="Copy Dev EUI">
 									{row[header]}<CopyButton value={row['devEui']} size="sm" />
 								</Tooltip>
 							</td>
+							{:else if header == 'data'}
+							<td data-label="Data">
+									<b>{row[header][row[header].cw_devices.cw_device_type.primary_data] ?? 'N/A'}</b>
+							</td>
 						{:else if header == 'url'}
-							<td class="flex flex-row gap-2 justify-center" data-label="Actions">
+							<!-- <td class="flex flex-row gap-2 justify-center" data-label="Actions">
 								{#if row.Location?.cw_locations?.location_id}
 									<Tooltip title="View device details">
 										<Button
@@ -83,9 +92,10 @@
 										<Icon data={mdiLock} />
 									</Tooltip>
 								{/if}
-							</td>
+							</td> -->
 						{:else}
 							<td data-label={header}>
+								
 								<b>{row[header]}</b>
 							</td>
 						{/if}
