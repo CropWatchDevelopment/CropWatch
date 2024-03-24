@@ -1,6 +1,6 @@
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { json, redirect } from '@sveltejs/kit'
-// import moment from 'moment';
+import moment from 'moment';
 
 export async function GET({ locals: { supabase, getSession } }: { locals: { supabase: SupabaseClient, getSession: () => Promise<Session | null> } }) {
     const session = await getSession();
@@ -11,51 +11,51 @@ export async function GET({ locals: { supabase, getSession } }: { locals: { supa
     for (let i = 0; i < sensors.length; i++) {
         const data_table = sensors[i].cw_devices.cw_device_type.data_table;
         if (data_table) {
-            const dev_data = await getDataForSensor(supabase, data_table, sensors[i].cw_devices.dev_eui);
-            sensors[i].data = Object.assign({}, sensors[i], dev_data);
+            // const dev_data = await getDataForSensor(supabase, data_table, sensors[i].cw_devices.dev_eui);
+            // sensors[i].data = Object.assign({}, sensors[i], dev_data);
         }
     }
 
     // Transform the data for Grid.js
-    const transformedData = sensors.map(sensor => {
-        // Extracting the sensor's name
-        const name = sensor.cw_devices.name;
+    // const transformedData = sensors.map(sensor => {
+    //     // Extracting the sensor's name
+    //     const name = sensor.cw_devices.name;
 
-        // Extracting the created_at timestamp from sensor data if available, otherwise from the device type
-        const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
+    //     // Extracting the created_at timestamp from sensor data if available, otherwise from the device type
+    //     const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
 
-        const devEui = sensor.cw_devices.dev_eui;
+    //     const devEui = sensor.cw_devices.dev_eui;
 
-        const Location = sensor.cw_devices?.cw_device_locations;
+    //     const Location = sensor.cw_devices?.cw_device_locations;
 
-        const model = sensor.cw_devices.cw_device_type.id;
+    //     const model = sensor.cw_devices.cw_device_type.id;
 
-        // Extract additional sensor data, e.g., temperature, and format it
-        const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data] ?
-            `${sensor.data[sensor.cw_devices.cw_device_type.primary_data]}${sensor.cw_devices.cw_device_type.primary_data_notation}` :
-            'N/A';
+    //     // Extract additional sensor data, e.g., temperature, and format it
+    //     const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data] ?
+    //         `${sensor.data[sensor.cw_devices.cw_device_type.primary_data]}${sensor.cw_devices.cw_device_type.primary_data_notation}` :
+    //         'N/A';
 
-        // Here, you can add more sensor data as needed
-        // const otherSensorData = ...
+    //     // Here, you can add more sensor data as needed
+    //     // const otherSensorData = ...
 
-        let active = '⚪';
-        if (sensor.cw_devices.upload_interval > 0) {
-            // if (moment(lastSeen).add(sensor.cw_devices.upload_interval, 'minutes').isAfter(moment().utc())) {
-            //     active = '🟢';
-            // } else {
-            //     active = '🔴';
-            // }
-            active = '🟢';
-        }
+    //     let active = '⚪';
+    //     if (sensor.cw_devices.upload_interval > 0) {
+    //         if (moment(lastSeen).add(sensor.cw_devices.upload_interval, 'minutes').isAfter(moment().utc())) {
+    //             active = '🟢';
+    //         } else {
+    //             active = '🔴';
+    //         }
+    //     }
 
-        const url = sensor.cw_devices.cw_device_type.device_app;
+    //     const url = sensor.cw_devices.cw_device_type.device_app;
 
-        const locationName = Location?.cw_locations?.name ?? 'N/A';
+    //     const locationName = Location?.cw_locations?.name ?? 'N/A';
 
-        return { active, name, locationName, Location, devEui, lastSeen, model, primaryData, url };
-    });
+    //     return { active, name, locationName, Location, devEui, lastSeen, model, primaryData, url };
+    // });
 
-    return json(transformedData);
+    // return json(transformedData);
+    return json([])
 }
 
 async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
