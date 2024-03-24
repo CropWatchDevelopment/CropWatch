@@ -24,6 +24,7 @@
 	let currentTab: number = 1;
 
 	export let data;
+	let sensor = data.sensor;
 
 	$: console.log('page data', data.sensor.data);
 	$: sensorDataState.set(data.sensor.error ? [] : data.sensor.data);
@@ -48,7 +49,7 @@
 <div class="grid grid-cols-3 grid-flow-row my-4">
 	<div class="flex flex-col">
 		<p class="mb-1 text-gray-600">Serial Number</p>
-		<p class="text-sm">3234313765327904</p>
+		<p class="text-sm">{$page.params.sensor_eui}</p>
 	</div>
 
 	<div class="flex flex-col">
@@ -83,7 +84,7 @@
 		{:else if value === 2}
 			<History />
 		{:else if value === 3}
-			<Rules />
+			<Rules {sensor} />
 		{:else if value === 4}
 			<Notifications />
 		{:else if value === 5}

@@ -1,53 +1,80 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { mdiPlus } from '@mdi/js';
-	import { Button } from 'svelte-ux';
+	import { mdiFloppy, mdiFunction, mdiPlus, mdiTrashCan } from '@mdi/js';
+	import { Button, NumberStepper, SelectField } from 'svelte-ux';
 	import { Svelvet, Node, Anchor, Edge, Controls } from 'svelvet';
 
-	let divWidth: number = 300;
-	let ifs: any[] = [{
-		id: uuidv4(),
-		label: 'new IF',
-		inputs: 1,
-		outputs: 2,
-	}];
-	$: console.log(divWidth);
+	export let sensor;
 
-	const onNewIf = () => {
-		
-		ifs.push({});
-		ifs = ifs;
+	let latestData = sensor.data.at(-1);
+	let dataKeys = Object.keys(latestData);
+
+	let rules = [];
+	let sendMethod = 1;
+
+	function addRule() {
+		rules = [...rules, { id: uuidv4(), label: 'new Rule' }];
+	}
+
+	function removeRule(id) {
+		rules = rules.filter((rule) => rule.id !== id);
+	}
+
+	function updateRuleLabel(id, label) {
+		rules = rules.map((rule) => {
+			if (rule.id === id) {
+				return { ...rule, label };
+			}
+			return rule;
+		});
 	}
 
 	function uuidv4() {
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
-    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-  );
-}
+		return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
+			(c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+		);
+	}
 </script>
 
 <h1 class="text-4xl font-semibold text-slate-700 mb-4">Sensor Rules</h1>
-<div class="mr-4" bind:offsetWidth={divWidth}>
-	<Svelvet height={500} theme="dark" zoom={0.5} minimap>
-		<Node
-			label="This Sensor"
-			position={{ x: divWidth / 2, y: -200 }}
-			locked={true}
-			inputs={0}
-			outputs={1}
-			TD
-		/>
-		{#each ifs as i}
-		<Node id={i.id} label={i.label} inputs={i.inputs} outputs={i.outputs} TD />
-		{/each}
-		<Controls slot="controls" horizontal />
-	</Svelvet>
-	<Button on:click={() => onNewIf()} icon={mdiPlus}>New IF</Button>
-</div>
 
+<h2>Rules</h2>
 
+{#each rules as rule (rule.id)}
+	<div class="flex flex-row gap-4 mb-2">
+		<SelectField
+			options={dataKeys.map((v) => {
+				return { label: v, value: v };
+			})}
+			icon={mdiFunction}
+			rounded
+		>
+			<div slot="append" on:click|stopPropagation class="flex items-center">
+				<select
+					class="appearance-none bg-surface-content/5 border rounded-full mr-2 px-4"
+					style="text-align-last: center;"
+				>
+					<!-- <option /> -->
+					<option>{'='}</option>
+					<option>{'!='}</option>
+					<option>{'>'}</option>
+					<option>{'>='}</option>
+					<option>{'<'}</option>
+					<option>{'<='}</option>
+				</select>
+			</div>
+		</SelectField>
 
+		<NumberStepper />
 
+		<SelectField options={[{value: 1, label: 'E-Mail'}]} value={sendMethod} clearable={false} />
+
+		<Button on:click={() => removeRule(rule.id)} color="success" icon={mdiFloppy} />
+		<Button on:click={() => removeRule(rule.id)} color="danger" icon={mdiTrashCan} />
+	</div>
+{/each}
+
+<Button variant="fill-outline" on:click={addRule} icon={mdiPlus}>Add Rule</Button>
 
 <style>
 	:root[svelvet-theme='custom-theme'] {

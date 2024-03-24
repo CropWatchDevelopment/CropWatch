@@ -1,27 +1,58 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { sensorDataState } from '$lib/stores/CW-SS-TMEPNPK';
 	import { mdiCalendarRange, mdiDotsVertical, mdiDownload, mdiHistory } from '@mdi/js';
-	import { Avatar, Button, Card, DateRangeField, Header, Icon, ListItem, Menu, MenuItem, PeriodType, Toggle } from 'svelte-ux';
+	import moment from 'moment';
+	import {
+		Avatar,
+		Button,
+		Card,
+		DateRangeField,
+		Header,
+		Icon,
+		ListItem,
+		Menu,
+		MenuItem,
+		PeriodType,
+		Toggle
+	} from 'svelte-ux';
 	import type { DateRange } from 'svelte-ux/utils/dateRange';
 
 	let selectedDateRange: DateRange = {
-		from: new Date(),
-		to: new Date(),
+		from: moment().startOf('day').toDate(),
+		to: moment().endOf('day').toDate(),
 		periodType: PeriodType.Day
 	};
-    $: data = $sensorDataState;
+	$: data = $sensorDataState;
+
+	const download = async () => {
+		try {
+			const response = await fetch(`/api/tmepnpk-data?dev_eui=${$page.params.sensor_eui}&from=${selectedDateRange.from}&to=${selectedDateRange.to}`);
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = 'data.csv';
+			link.click();
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error('Error downloading file:', error);
+		}
+	};
 </script>
 
 <div class="m-4">
 	<h2>History list</h2>
 
-	<ol class="mt-2">
-		<DateRangeField bind:value={selectedDateRange} stepper icon={mdiCalendarRange} />
-
-        <ol>
-            {#each data as uplink}
-                <ListItem title={uplink.soil_temperatureC} subheading="Subheading" />
-            {/each}
-        </ol>
-	</ol>
+	<div class="grid grid-cols-2 gap-4">
+		<DateRangeField bind:value={selectedDateRange} icon={mdiCalendarRange} />
+		<Button variant="outline" icon={mdiDownload} on:click={() => download()}>Download</Button>
+	</div>
+	<!-- <ol class="mt-2">
+		<ol>
+			{#each data as uplink}
+				<ListItem title={uplink.soil_temperatureC} subheading="Subheading" />
+			{/each}
+		</ol>
+	</ol> -->
 </div>

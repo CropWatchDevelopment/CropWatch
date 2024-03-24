@@ -39,6 +39,7 @@
 					{#if header != 'model' && header != 'Location'}
 						{#if header == 'lastSeen'}
 							<td data-label="Last Seen">
+								<!-- <Tooltip title={`Expect Data Every ${} Minutes`} -->
 								<Duration
 									start={new Date(row.lastSeen)}
 									totalUnits={2}
