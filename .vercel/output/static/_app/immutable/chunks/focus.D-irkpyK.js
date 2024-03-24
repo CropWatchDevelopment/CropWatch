@@ -1,1 +1,0 @@
-import{N as r}from"./scheduler.DJbgeZ86.js";function f(t,e={restoreFocus:!1,disabled:!1}){if(!e.disabled){let s=document.activeElement;return t.tabIndex=-1,r().then(()=>{t.focus()}),{destroy(){!e.disabled&&e.restoreFocus&&s instanceof HTMLElement&&s.focus()}}}return{}}export{f};
