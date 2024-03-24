@@ -6,16 +6,89 @@
 	import CwTable from '$lib/components/table/CWTable.svelte';
 	import { openFeedback } from '$lib/stores/feedback.store.js';
 	import { onMount } from 'svelte';
+	import moment from 'moment';
+	import { supabase } from '$lib/supabaseClient';
 
 	export let data;
 
-	let devices = null;
+	let sensors = null;
+	let gridData = null;
+
+	async function getDataForSensor(data_table: string, dev_eui: string) {
+		debugger;
+		try {
+			const { data, error } = await supabase
+				.from(data_table)
+				.select('*')
+				.eq('dev_eui', dev_eui)
+				.order('created_at', { ascending: false })
+				.limit(1)
+				.maybeSingle();
+			if (!data) {
+				console.error('getDataForSensor', error);
+				return [];
+			} else {
+				return data;
+			}
+		} catch (error) {
+			return [];
+		}
+	}
 
 	onMount(async () => {
+		const deviceTableResponse = await fetch('/api/device-table', { method: 'GET' });
+		sensors = await deviceTableResponse.json();
 
-		const deviceTableResponse = await fetch('/api/device-table', {method: 'GET'});
-		devices = await deviceTableResponse.json();
+		for (let i = 0; i < sensors.length; i++) {
+			const data_table = sensors[i].cw_devices.cw_device_type.data_table;
+			if (data_table) {
+				const dev_data = await getDataForSensor(
+					data_table,
+					sensors[i].cw_devices.dev_eui
+				);
+				sensors[i].data = Object.assign({}, sensors[i], dev_data);
+			}
+		}
 
+		const transformedData = sensors.map((sensor) => {
+			// Extracting the sensor's name
+			const name = sensor.cw_devices.name;
+
+			// Extracting the created_at timestamp from sensor data if available, otherwise from the device type
+			const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
+
+			const devEui = sensor.cw_devices.dev_eui;
+
+			const Location = sensor.cw_devices?.cw_device_locations;
+
+			const model = sensor.cw_devices.cw_device_type.id;
+
+			// Extract additional sensor data, e.g., temperature, and format it
+			const primaryData = sensor.data[sensor.cw_devices.cw_device_type.primary_data]
+				? `${sensor.data[sensor.cw_devices.cw_device_type.primary_data]}${sensor.cw_devices.cw_device_type.primary_data_notation}`
+				: 'N/A';
+
+			// Here, you can add more sensor data as needed
+			// const otherSensorData = ...
+
+			let active = '⚪';
+			if (sensor.cw_devices.upload_interval > 0) {
+				if (
+					moment(lastSeen).add(sensor.cw_devices.upload_interval, 'minutes').isAfter(moment().utc())
+				) {
+					active = '🟢';
+				} else {
+					active = '🔴';
+				}
+			}
+
+			const url = sensor.cw_devices.cw_device_type.device_app;
+
+			const locationName = Location?.cw_locations?.name ?? 'N/A';
+
+			return { active, name, locationName, Location, devEui, lastSeen, model, primaryData, url };
+		});
+		gridData = transformedData;
 	});
 </script>
 
@@ -57,9 +130,9 @@
 </div>
 
 <Card class="mt-10">
-	{#if devices}
-		<CwTable data={devices} />
-		{/if}
+	{#if gridData}
+		<CwTable data={gridData} />
+	{/if}
 </Card>
 
 <style global>
