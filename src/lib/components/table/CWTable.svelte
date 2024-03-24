@@ -62,7 +62,7 @@
 									<b>{row[header][row[header].cw_devices.cw_device_type.primary_data] ?? 'N/A'}</b>
 							</td>
 						{:else if header == 'url'}
-							<!-- <td class="flex flex-row gap-2 justify-center" data-label="Actions">
+							<td class="flex flex-row gap-2 justify-center" data-label="Actions">
 								{#if row.Location?.cw_locations?.location_id}
 									<Tooltip title="View device details">
 										<Button
@@ -88,7 +88,7 @@
 										<Icon data={mdiLock} />
 									</Tooltip>
 								{/if}
-							</td> -->
+							</td>
 						{:else}
 							<td data-label={header}>
 								
