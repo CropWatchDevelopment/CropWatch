@@ -2,7 +2,7 @@ import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { json, redirect, type RequestEvent } from '@sveltejs/kit'
 import moment from 'moment';
 
-export async function GET({ request, response, locals: { supabase, getSession } }: { locals: { supabase: SupabaseClient, getSession: () => Promise<Session | null> } }) {
+export async function GET({ locals: { supabase, getSession } }: { locals: { supabase: SupabaseClient, getSession: () => Promise<Session | null> } }) {
     const session = await getSession();
     if (!session) throw redirect(304, '/auth/login');
     const user_id = session?.user.id;
@@ -15,7 +15,6 @@ export async function GET({ request, response, locals: { supabase, getSession } 
             sensors[i].data = Object.assign({}, sensors[i], dev_data);
         }
     }
-    console.log(sensors);
 
     // Transform the data for Grid.js
     const transformedData = sensors.map(sensor => {
@@ -72,7 +71,7 @@ async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
 
 async function getDataForSensor(supabase: SupabaseClient, data_table: string, dev_eui: string) {
     try {
-        const { data, error } = await supabase.from(data_table).select('*').eq('dev_eui', dev_eui).order('created_at', { ascending: false }).limit(1).single();
+        const { data, error } = await supabase.from(data_table).select('*').eq('dev_eui', dev_eui).order('created_at', { ascending: false }).limit(1).maybeSingle();
         if (!data) {
             console.error('getDataForSensor', error);
             return [];
