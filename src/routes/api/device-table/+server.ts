@@ -11,8 +11,8 @@ export async function GET({ locals: { supabase, getSession } }: { locals: { supa
     for (let i = 0; i < sensors.length; i++) {
         const data_table = sensors[i].cw_devices.cw_device_type.data_table;
         if (data_table) {
-            // const dev_data = await getDataForSensor(supabase, data_table, sensors[i].cw_devices.dev_eui);
-            // sensors[i].data = Object.assign({}, sensors[i], dev_data);
+            const dev_data = await getDataForSensor(supabase, data_table, sensors[i].cw_devices.dev_eui);
+            sensors[i].data = Object.assign({}, sensors[i], dev_data);
         }
     }
 
