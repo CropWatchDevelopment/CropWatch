@@ -63,7 +63,7 @@ async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
     // const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(*, cw_locations(id, name, latitude, longitude)), cw_device_type(*))').eq('user_id', user_id);
     const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(id, cw_locations(*)), cw_device_type(*))').eq('user_id', user_id);
     if (!data) {
-        console.log(error);
+        console.error('getAllSensorsForUser', error);
         return [];
     } else {
         return data;
@@ -71,11 +71,15 @@ async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
 }
 
 async function getDataForSensor(supabase: SupabaseClient, data_table: string, dev_eui: string) {
-    const { data, error } = await supabase.from(data_table).select('*').eq('dev_eui', dev_eui).order('created_at', { ascending: false }).limit(1).single();
-    if (!data) {
-        console.log(error);
+    try {
+        const { data, error } = await supabase.from(data_table).select('*').eq('dev_eui', dev_eui).order('created_at', { ascending: false }).limit(1).single();
+        if (!data) {
+            console.error('getDataForSensor', error);
+            return [];
+        } else {
+            return data;
+        }
+    } catch (error) {
         return [];
-    } else {
-        return data;
     }
 }
