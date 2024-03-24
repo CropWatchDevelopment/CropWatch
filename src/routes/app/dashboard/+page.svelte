@@ -5,8 +5,18 @@
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 	import CwTable from '$lib/components/table/CWTable.svelte';
 	import { openFeedback } from '$lib/stores/feedback.store.js';
+	import { onMount } from 'svelte';
 
 	export let data;
+
+	let devices = null;
+
+	onMount(async () => {
+
+		const deviceTableResponse = await fetch('/api/device-table', {method: 'GET'});
+		devices = await deviceTableResponse.json();
+
+	});
 </script>
 
 <h1
@@ -47,13 +57,9 @@
 </div>
 
 <Card class="mt-10">
-	{#await data.sensors}
-		<div>Loading...</div>
-	{:then sensorData}
-		<CwTable data={sensorData} />
-	{:catch error}
-		<div>Error: {error.message}</div>
-	{/await}
+	{#if devices}
+		<CwTable data={devices} />
+		{/if}
 </Card>
 
 <style global>

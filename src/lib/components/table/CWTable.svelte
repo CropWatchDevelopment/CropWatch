@@ -21,10 +21,6 @@
 		dispatch('hover', { item });
 	}
 
-	async function getLatestData() {
-		const deviceTableResponse = await fetch('/api/latest-data?store=cw-ss-tmepnpk', {method: 'GET'});
-    	const devices = await deviceTableResponse.json();
-	}
 </script>
 
 <table class={$$props.class}>

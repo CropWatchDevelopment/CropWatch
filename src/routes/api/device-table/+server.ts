@@ -8,13 +8,13 @@ export async function GET({ locals: { supabase, getSession } }: { locals: { supa
     const user_id = session?.user.id;
 
     const sensors = await getAllSensorsForUser(supabase, user_id);
-    for (let i = 0; i < sensors.length; i++) {
-        const data_table = sensors[i].cw_devices.cw_device_type.data_table;
-        if (data_table) {
-            const dev_data = await getDataForSensor(supabase, data_table, sensors[i].cw_devices.dev_eui);
-            sensors[i].data = Object.assign({}, sensors[i], dev_data);
-        }
-    }
+    // for (let i = 0; i < sensors.length; i++) {
+    //     const data_table = sensors[i].cw_devices.cw_device_type.data_table;
+    //     if (data_table) {
+    //         const dev_data = await getDataForSensor(supabase, data_table, sensors[i].cw_devices.dev_eui);
+    //         sensors[i].data = Object.assign({}, sensors[i], dev_data);
+    //     }
+    // }
 
     // Transform the data for Grid.js
     // const transformedData = sensors.map(sensor => {
@@ -60,7 +60,6 @@ export async function GET({ locals: { supabase, getSession } }: { locals: { supa
 
 async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
     try {
-        // const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(*, cw_locations(id, name, latitude, longitude)), cw_device_type(*))').eq('user_id', user_id);
         const { data, error } = await supabase.from('cw_device_owners').select('*, cw_devices(*, cw_device_locations(id, cw_locations(*)), cw_device_type(*))').eq('user_id', user_id);
         if (!data) {
             console.error('getAllSensorsForUser', error);
