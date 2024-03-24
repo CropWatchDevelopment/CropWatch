@@ -55,7 +55,7 @@ export async function GET({ locals: { supabase, getSession } }: { locals: { supa
     // });
 
     // return json(transformedData);
-    return json([])
+    return json(sensors)
 }
 
 async function getAllSensorsForUser(supabase: SupabaseClient, user_id: string) {
