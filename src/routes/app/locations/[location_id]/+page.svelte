@@ -41,7 +41,7 @@
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
 	let zoom: number | undefined = 19;
-	let mapWidth: number = 100;
+	let mapWidth: number = 150;
 	let mapHeight: number = 100;
 	let mapPopupOpen: boolean = false;
 
@@ -94,7 +94,7 @@
 	/>
 </div>
 
-<Card class="my-2">
+<!-- <Card class="my-2">
 	<Header slot="header" class="gap-0">
 		<div slot="title" class="text-nowrap text-xl font-medium">Weather</div>
 		<div slot="avatar">
@@ -108,16 +108,11 @@
 	</Header>
 	<div slot="contents">
 		<div class="relative mb-4 overflow-hidden">
-			{#await data.weatherJSON}
-				<ProgressCircle />
-			{:then weather}
-				<WeatherChart WeatherJSON={weather} />
-			{:catch error}
-				<pre>No Weather source currently available!</pre>
-			{/await}
+			
+
 		</div>
 	</div>
-</Card>
+</Card> -->
 
 <div class="grid grid-cols-1 md:grid-cols-12 grid-flow-row gap-4">
 	<Card class="col-span-12 lg:col-span-8">
@@ -155,7 +150,7 @@
 								})}
 						>
 							{#each sensors as sensor}
-								{#if sensor.cw_devices.lat && sensor.cw_devices.long}
+								{#if sensor && sensor.cw_devices && sensor.cw_devices.lat && sensor.cw_devices.long}
 									<Marker
 										latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
 										width={40}
