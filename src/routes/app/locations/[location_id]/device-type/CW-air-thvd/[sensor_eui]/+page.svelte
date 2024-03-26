@@ -13,7 +13,7 @@
 	import { page } from '$app/stores';
 
 	export let data;
-	console.log('Data from the co2 root page', data);
+	console.log('Data from the THVPD root page', data);
 
 	let userAvailableTabs = [
 		{ label: 'Dashboard', value: 1 },
@@ -33,7 +33,7 @@
 		size="lg"
 		on:click={() => goto(`/app/locations/${$page.params.location_id}`)}
 	/>
-	<p class="my-auto">CO² Sensor</p>
+	<p class="my-auto">Temperature Sensor</p>
 </h1>
 
 <div class="grid grid-cols-3 grid-flow-row my-4">
@@ -45,7 +45,7 @@
 	<div class="flex flex-col">
 		<p class="mb-1 text-gray-600">Last Update</p>
 		<p class="text-sm">
-			{new Date(data.sensor.data?.at(0).created_at).toLocaleTimeString()}
+			{new Date(data?.sensor?.data?.at(0).created_at).toLocaleTimeString()}
 			<small
 				>(<Duration start={subSeconds(data.sensor.data?.at(0).created_at, 0)} totalUnits={1} /> ago)</small
 			>
