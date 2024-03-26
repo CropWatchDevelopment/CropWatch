@@ -29,7 +29,7 @@
     let latestTime = moment(latestData.created_at);
 
 	// Calculate the maximum hours difference between the earliest and latest data points
-    let maxHours = latestTime.diff(earliestTime, 'hours');
+    let maxHours = latestTime.diff(earliestTime, 'minutes');
 
 	// Use the maximum hours as the range to ensure all data points are considered
     // The range is set from 0 to maxHours to cover the full range of your data
@@ -38,11 +38,10 @@
 	$: TempData = sensor.sensor.data.filter((f) => {
 		const createdAt = moment(f.created_at);
         return isWithinInterval(createdAt.toDate(), {
-			start: moment().subtract(value[0], 'hours').toDate(), // More hours ago, based on the maxHours
-            end: moment().subtract(value[1], 'hours').toDate() // Fewer hours ago, more recent
+			start: moment().subtract(value[0], 'minutes').toDate(), // More hours ago, based on the maxHours
+            end: moment().subtract(value[1], 'minutes').toDate() // Fewer hours ago, more recent
         });
     });
-	debugger;
 </script>
 
 <div class="grid grid-cols-1 mt-10 gap-4 mb-2">

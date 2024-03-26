@@ -11,6 +11,10 @@
 	import { mdiChevronLeft } from '@mdi/js';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { supabase } from '$lib/supabaseClient';
+	import { onDestroy, onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 
 	export let data;
 	console.log('Data from the THVPD root page', data);
@@ -24,6 +28,30 @@
 		{ label: 'Permissions', value: 6 }
 	];
 	let currentTab: number = 1;
+	let channels: RealtimeChannel;
+
+	onMount(() => {
+		if (browser) {
+			channels = supabase
+				.channel('custom-insert-channel')
+				.on(
+					'postgres_changes',
+					{ event: 'INSERT', schema: 'public', table: 'cw_air_thvd', filter: `dev_eui=eq.${$page.params.sensor_eui}`},
+					(payload) => {
+						console.log('Change received!', payload);
+						data.sensor.data.unshift(payload.new);
+						data.sensor.data.pop();
+						data.sensor.data = [...data.sensor.data];
+					}
+				)
+				.subscribe();
+		}
+	});
+
+	onDestroy(() => {
+		if(channels)
+		channels.unsubscribe();
+	});
 </script>
 
 <h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4 gap-3">
