@@ -1,9 +1,27 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { DeviceIntType } from '$lib/helpers/DeviceTypeToName';
-	import { mdiDevices, mdiEye, mdiLock, mdiMapMarker } from '@mdi/js';
+	import {
+		mdiClose,
+		mdiDevices,
+		mdiEye,
+		mdiFloppy,
+		mdiLock,
+		mdiMapMarker,
+		mdiPencil
+	} from '@mdi/js';
 	import { createEventDispatcher, onMount } from 'svelte';
-	import { Button, CopyButton, Duration, DurationUnits, Icon, Tooltip } from 'svelte-ux';
+	import {
+		Button,
+		CopyButton,
+		Dialog,
+		Duration,
+		DurationUnits,
+		Icon,
+		TextField,
+		Toggle,
+		Tooltip
+	} from 'svelte-ux';
 
 	// Accept any array of objects as generic data
 	export let data: Array<Record<string, any>> = [];
@@ -25,13 +43,13 @@
 	let sortOrder = 'asc'; // 'asc' for ascending, 'desc' for descending
 
 	const columnConfig = [
-        { key: 'devEui', title: 'DEV Eui' },
-        { key: 'locationName', title: 'Location Name' },
-        { key: 'lastSeen', title: 'Last Seen' },
-        { key: 'data', title: 'Data' },
-        { key: 'url', title: 'Actions' },
-        // Add other columns as needed
-    ];
+		{ key: 'devEui', title: 'DEV Eui' },
+		{ key: 'locationName', title: 'Location Name' },
+		{ key: 'lastSeen', title: 'Last Seen' },
+		{ key: 'data', title: 'Data' },
+		{ key: 'url', title: 'Actions' }
+		// Add other columns as needed
+	];
 
 	function toggleSort(column) {
 		if (sortColumn === column) {
@@ -108,12 +126,29 @@
 							<td data-label="Location Name">
 								{row.locationName}
 							</td>
-						{:else if header == 'devEui'}
+						{:else if header == 'name'}
+							<td data-label="name">
+								{row.name}
+								<Toggle let:on={open} let:toggle>
+									<Button icon={mdiPencil} on:click={toggle}></Button>
+									<Dialog {open} persistent>
+										<div class="p-2">
+											<h1 class="my-2">Update Device Name</h1>
+											<TextField label="Device Name" placeholder="Enter Name Here" />
+											<div class="flex justify-between gap-2 mt-1">
+												<Button variant="fill-light" color="danger" icon={mdiClose} on:click={toggle}>Close</Button>
+												<Button variant="fill-light" color="success" icon={mdiFloppy} on:click={toggle}>Save</Button>
+											</div>
+										</div>
+									</Dialog>
+								</Toggle>
+							</td>
+							<!-- {:else if header == 'devEui'}
 							<td data-label="DEV Eui">
 								<Tooltip title="Copy Dev EUI">
 									{row[header]}<CopyButton value={row['devEui']} size="sm" />
 								</Tooltip>
-							</td>
+							</td> -->
 						{:else if header == 'data'}
 							<td data-label="Data">
 								<b>{row[header][row[header].cw_devices.cw_device_type.primary_data] ?? 'N/A'}</b>

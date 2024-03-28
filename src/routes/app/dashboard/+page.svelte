@@ -71,7 +71,7 @@
 			// Extracting the created_at timestamp from sensor data if available, otherwise from the device type
 			const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
 
-			const devEui = sensor.cw_devices.dev_eui;
+			// const devEui = sensor.cw_devices.dev_eui;
 
 			const Location = sensor.cw_devices?.cw_device_locations;
 
@@ -100,7 +100,7 @@
 
 			const locationName = Location?.cw_locations?.name ?? 'N/A';
 
-			return { active, name, locationName, Location, devEui, lastSeen, model, primaryData, url };
+			return { active, name, locationName, Location, lastSeen, model, primaryData, url };
 		});
 		gridData = transformedData;
 	});
