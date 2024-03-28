@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { mdiFloppy, mdiFunction, mdiPlus, mdiTrashCan } from '@mdi/js';
-	import { Button, NumberStepper, SelectField } from 'svelte-ux';
-	import { Svelvet, Node, Anchor, Edge, Controls } from 'svelvet';
+	import { mdiFloppy, mdiFunction, mdiGateAnd, mdiOrbit, mdiPlus, mdiTrashCan } from '@mdi/js';
+	import { Button, Icon, NumberStepper, SelectField, Tooltip } from 'svelte-ux';
 
 	export let sensor;
 
@@ -36,12 +35,10 @@
 	}
 </script>
 
-<h1 class="text-4xl font-semibold text-slate-700 mb-4">Sensor Rules</h1>
-
-<h2>Rules</h2>
+<h1 class="text-4xl font-semibold text-slate-700 mb-4"><Icon data={mdiFunction} />  Sensor Rules</h1>
 
 {#each rules as rule (rule.id)}
-	<div class="flex flex-row gap-4 mb-2">
+	<div class="grid grid-col grid-cols-1 lg:grid-cols-6 gap-4 mb-2">
 		<SelectField
 			options={dataKeys.map((v) => {
 				return { label: v, value: v };
@@ -49,28 +46,38 @@
 			icon={mdiFunction}
 			rounded
 		>
-			<div slot="append" on:click|stopPropagation class="flex items-center">
-				<select
-					class="appearance-none bg-surface-content/5 border rounded-full mr-2 px-4"
-					style="text-align-last: center;"
-				>
-					<!-- <option /> -->
-					<option>{'='}</option>
-					<option>{'!='}</option>
-					<option>{'>'}</option>
-					<option>{'>='}</option>
-					<option>{'<'}</option>
-					<option>{'<='}</option>
-				</select>
-			</div>
 		</SelectField>
 
-		<NumberStepper />
+		<SelectField
+			options={[
+					{ label: '=', value: '=' },
+					{ label: '!=', value: '!=' },
+					{ label: '>', value: '>' },
+					{ label: '>=', value: '>=' },
+					{ label: '<', value: '<' },
+					{ label: '<=', value: '<=' }
+				]}
+			
+			rounded
+		></SelectField>
 
-		<SelectField options={[{value: 1, label: 'E-Mail'}]} value={sendMethod} clearable={false} />
+		<NumberStepper class="w-full" />
 
-		<Button on:click={() => removeRule(rule.id)} color="success" icon={mdiFloppy} />
-		<Button on:click={() => removeRule(rule.id)} color="danger" icon={mdiTrashCan} />
+		<SelectField options={[
+			{ value: 1, label: 'E-Mail' },
+			{ value: 2, label: 'WellWatch Alert', disabled: true},
+			{ value: 3, label: 'SMS' },
+			{ value: 4, label: 'Line' },
+			{ value: 5, label: 'Webhook' }
+		]} value={sendMethod} clearable={false} />
+
+		<div class="flex flex-row">
+			<Tooltip title="Add an AND rule">
+				<Button on:click={() => removeRule(rule.id)} color="success" icon={mdiGateAnd} />
+			</Tooltip>
+			<Button on:click={() => removeRule(rule.id)} color="success" icon={mdiFloppy} />
+			<Button on:click={() => removeRule(rule.id)} color="danger" icon={mdiTrashCan} />
+		</div>
 	</div>
 {/each}
 

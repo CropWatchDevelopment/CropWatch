@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { mdiBattery, mdiDotsVertical, mdiListStatus, mdiRadioTower, mdiViewDashboard } from '@mdi/js';
+	import {
+	mdiAlert,
+		mdiBattery,
+		mdiDotsVertical,
+		mdiListStatus,
+		mdiRadioTower,
+		mdiViewDashboard
+	} from '@mdi/js';
 	import {
 		Avatar,
 		Button,
@@ -109,9 +116,9 @@
 	</div>
 </h1>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-5">
 	<Card>
-		<Header title="Device Status" subheading="Subheading" slot="header">
+		<Header title="Device Status" subheading="Reporting devices" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiListStatus} />
@@ -135,13 +142,40 @@
 		</h1>
 	</Card>
 
-	<CWStatCard title="Gateways Online" icon={mdiRadioTower} value={3} notation=" Online" counterStartTime={null}
+	<CWStatCard
+		title="Gateways Online"
+		icon={mdiRadioTower}
+		value={3}
+		notation=" Online"
+		counterStartTime={null}
 		><div slot="headerMore">
 			<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
 		</div>
 	</CWStatCard>
 	<Card>
-		<Header title="Device Status" subheading="Subheading" slot="header">
+		<Header title="Notifications" subheading="no new notifications" slot="header">
+			<div slot="avatar">
+				<Avatar class="bg-primary text-primary-content font-bold">
+					<Icon data={mdiAlert} />
+				</Avatar>
+			</div>
+			<div slot="actions">
+				<Toggle let:on={open} let:toggle>
+					<Button on:click={toggle}>
+						<Icon data={mdiDotsVertical} />
+						<Menu {open} on:close={toggle}>
+							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
+						</Menu>
+					</Button>
+				</Toggle>
+			</div>
+		</Header>
+		<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
+			0
+		</h1>
+	</Card>
+	<Card>
+		<Header title="Battery Levels" subheading="Devices that Require new batteries" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiBattery} />
