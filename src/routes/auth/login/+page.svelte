@@ -3,6 +3,7 @@
 	import cropwatchWithText from '$lib/images/cropwatchText.png';
 	import { Button, Switch, TextField, Tooltip } from 'svelte-ux';
 	import type { PageData } from './$types';
+	import { onMount } from 'svelte';
 
 	export let data: PageData;
 	let { supabase } = data;
@@ -10,6 +11,7 @@
 	let email: string = '';
 	let password: string = '';
 	let loggingIn: boolean = false;
+	let rememberMe: boolean = false;
 
 	const handleSignIn = async () => {
 		const { data, error } = await supabase.auth.signInWithPassword({
@@ -17,7 +19,11 @@
 			password
 		});
 		if (!error) {
-			goto('/app/locations');
+			if (rememberMe) {
+				localStorage.setItem('email', email);
+				localStorage.setItem('pw', password);
+			}
+			goto('/app/dashboard');
 		} else {
 			alert(error);
 			loggingIn = false;
@@ -27,6 +33,15 @@
 	const onLogin = async () => {
 		loggingIn = true;
 	};
+
+	onMount(() => {
+		const hasRememberMe = localStorage.getItem('rememberMe');
+		if (hasRememberMe) {
+			rememberMe = true;
+			email = localStorage.getItem('email') || '';
+			password = localStorage.getItem('pw') || '';
+		}
+	});
 </script>
 
 <div id="login-background">
@@ -85,13 +100,19 @@
 							<Tooltip title="This feature is disabled, but will be activated soon!">
 								<Switch
 									name="rememberMe"
-									disabled
+									id="remember"
+									bind:checked={rememberMe}
 									classes={{
 										switch: 'bg-white border-gray-400 data-[checked=true]:bg-blue-600',
 										toggle: 'data-[checked=false]:bg-blue-600 data-[checked=true]:bg-white'
 									}}
+									on:change={(e) => {
+										localStorage.setItem('rememberMe', e.detail);
+									}}
 								/>
-								<label for="remember" class="text-sm text-gray-900"> &nbsp; Remember me </label>
+								<label for="remember" class="text-sm text-gray-900 mt-5">
+									&nbsp; Remember me
+								</label>
 							</Tooltip>
 						</div>
 

@@ -18,7 +18,6 @@
 		ProgressCircle,
 		Toggle
 	} from 'svelte-ux';
-	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 	import CwTable from '$lib/components/table/CWTable.svelte';
 	import { openFeedback } from '$lib/stores/feedback.store.js';

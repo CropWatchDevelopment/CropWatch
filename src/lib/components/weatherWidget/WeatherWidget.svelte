@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { Card, Icon } from 'svelte-ux';
 	import SunnySky from '$lib/images/sunnySky.jpg';
 	import OvercastSky from '$lib/images/overcastSky.jpg';
@@ -15,7 +15,7 @@
 </script>
 
 <div class="flex flex-col items-center justify-center">
-	<!-- Component Start -->
+
 	<div class="w-full p-5 rounded-xl z-20" style="background-image: URL({OvercastSky})">
 		<div class="flex justify-between">
 			<div class="flex flex-col">
@@ -23,16 +23,6 @@
 				<span class="font-semibold mt-1 text-gray-500">西都市,宮崎</span>
 			</div>
 			
-			<!-- <svg
-				class="h-24 w-24 fill-current text-yellow-400"
-				xmlns="http://www.w3.org/2000/svg"
-				height="24"
-				viewBox="0 0 24 24"
-				width="24"
-				><path d="M0 0h24v24H0V0z" fill="none" /><path
-					d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79zM1 10.5h3v2H1zM11 .55h2V3.5h-2zm8.04 2.495l1.408 1.407-1.79 1.79-1.407-1.408zm-1.8 15.115l1.79 1.8 1.41-1.41-1.8-1.79zM20 10.5h3v2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm-1 4h2v2.95h-2zm-7.45-.96l1.41 1.41 1.79-1.8-1.41-1.41z"
-				/></svg
-			> -->
 		</div>
 		<div class="flex justify-between mt-3">
 			<div class="flex flex-col items-center">
@@ -65,5 +55,95 @@
 		</div>
 	</div>
 
-	<!-- Component End  -->
-</div>
+</div> -->
+
+<script>
+	import { mdiThermometer, mdiWaterPercent, mdiBrightness7, mdiWeatherWindy, mdiGauge, mdiWeatherRainy, mdiWeatherSunnyAlert } from '@mdi/js';
+	import { Icon, Card } from 'svelte-ux';
+  
+	const environmentalData = {
+	  temperature: 24,
+	  humidity: 65,
+	  lux: 45000,
+	  uv: 5,
+	  pressure: 1015,
+	  windSpeed: 12,
+	  windDirection: 'NW',
+	  rainfall: 2.5
+	};
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <div class="dashboard container mx-auto max-w-full">
+	<h2 class="text-2xl font-bold">Outdoor Environmental Data</h2>
+  
+	<div class="single-line-layout gap-2 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 overflow-x-auto">
+	  <Card class="data-item flex items-center p-4 rounded-lg shadow-md">
+		<Icon data={mdiThermometer} size="32" color="#ff6347" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">Temperature</div>
+		  <div class="data-value">{environmentalData.temperature}°C</div>
+		</div>
+	  </Card>
+	  <Card class="data-item flex items-center md:mb-0 p-4 rounded-lg shadow-md">
+		<Icon data={mdiWaterPercent} size="32" color="#00bfff" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">Humidity</div>
+		  <div class="data-value">{environmentalData.humidity}%</div>
+		</div>
+	  </Card>
+	  <Card class="data-item flex items-center md:mb-0 p-4 rounded-lg shadow-md">
+		<Icon data={mdiBrightness7} size="32" color="#ffd700" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">Lux</div>
+		  <div class="data-value">{environmentalData.lux} lux</div>
+		</div>
+	  </Card>
+	  <Card class="data-item flex items-center md:mb-0 p-4 rounded-lg shadow-md">
+		<Icon data={mdiWeatherSunnyAlert} size="32" color="#8b008b" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">UV</div>
+		  <div class="data-value">{environmentalData.uv}</div>
+		</div>
+	  </Card>
+	  <Card class="data-item flex items-center md:mb-0 p-4 rounded-lg shadow-md">
+		<Icon data={mdiGauge} size="32" color="#008000" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">Pressure</div>
+		  <div class="data-value">{environmentalData.pressure} hPa</div>
+		</div>
+	  </Card>
+	  <Card class="data-item flex items-center md:mb-0 p-4 rounded-lg shadow-md">
+		<Icon data={mdiWeatherWindy} size="32" color="#708090" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">Wind Speed</div>
+		  <div class="data-value">{environmentalData.windSpeed} km/h</div>
+		</div>
+	  </Card>
+	  <Card class="data-item flex items-center md:mb-0 p-4 rounded-lg shadow-md">
+		<Icon data={mdiWeatherWindy} size="32" color="#708090" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">Wind Direction</div>
+		  <div class="data-value">{environmentalData.windDirection}</div>
+		</div>
+	  </Card>
+	  <Card class="data-item flex items-center mb-4 md:mb-0 p-4 rounded-lg shadow-md">
+		<Icon data={mdiWeatherRainy} size="32" color="#4169e1" />
+		<div class="ml-2">
+		  <div class="data-label font-bold">Rainfall</div>
+		  <div class="data-value">{environmentalData.rainfall} mm</div>
+		</div>
+	  </Card>
+	</div>
+  </div>

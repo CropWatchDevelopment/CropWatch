@@ -38,6 +38,7 @@
 	import StatsQuickView from '$lib/components/StatsQuickViewModal/StatsQuickView.svelte';
 	import DeviceSelect from '$lib/components/DeviceSelect/DeviceSelect.svelte';
 	import TempMarker from '$lib/components/leaflet/TempMarker.svelte';
+	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
@@ -67,7 +68,10 @@
 	view = [data.location.latitude, data.location.longitude];
 </script>
 
-<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4 gap-3">
+<h1
+	class="mb-2 flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
+	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 100px;"
+>
 	<Button
 		variant="outline"
 		icon={mdiChevronLeft}
@@ -77,7 +81,7 @@
 	{#await data.location}
 		<ProgressCircle />
 	{:then location}
-		<p class="my-auto">{location.name}</p>
+		<p class="my-auto ml-2">{location.name}</p>
 	{/await}
 </h1>
 

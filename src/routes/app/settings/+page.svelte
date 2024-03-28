@@ -1,6 +1,6 @@
 <script>
-	import { mdiTemperatureCelsius, mdiTemperatureFahrenheit, mdiTemperatureKelvin } from '@mdi/js';
-	import { SelectField, ThemeSwitch } from 'svelte-ux';
+	import { mdiTemperatureCelsius, mdiTemperatureFahrenheit, mdiTemperatureKelvin, mdiTrashCan } from '@mdi/js';
+	import { Button, SelectField, ThemeSwitch } from 'svelte-ux';
 </script>
 
 <h1 class="text-lg font-bold border-b">User Interface Settings</h1>
@@ -50,4 +50,11 @@
 		]}
 		on:change={(e) => console.log('on:change', e.detail)}
 	/>
+
+	<h1>Login Page:</h1>
+	<Button icon={mdiTrashCan} variant="fill-outline" color="danger" on:click={() => { 
+		localStorage.removeItem('email');
+		localStorage.removeItem('password');
+		localStorage.removeItem('rememberMe');
+	 }}>Forget Me!</Button>
 </div>

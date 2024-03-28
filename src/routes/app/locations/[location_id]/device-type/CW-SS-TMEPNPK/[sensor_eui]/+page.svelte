@@ -12,6 +12,7 @@
 	import Permissions from './permissions/Permissions.svelte';
 	import { sensorDataState } from '$lib/stores/CW-SS-TMEPNPK';
 	import { subSeconds } from 'date-fns';
+	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 
 	let userAvailableTabs = [
 		{ label: 'Dashboard', value: 1 },
@@ -30,19 +31,17 @@
 	$: sensorDataState.set(data.sensor.error ? [] : data.sensor.data);
 </script>
 
-<!-- <h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4">
-	<p>
-		<Button
-			size="lg"
-			icon={mdiArrowLeft}
-			on:click={() => goto(`/app/locations/${$page.params.location_id}`)}
-		/>
-		
-	</p>
-</h1> -->
-
-<h1 class="flex flex-row text-4xl font-semibold text-slate-700 mb-4 gap-3">
-	<Button variant="outline" icon={mdiChevronLeft} size="lg" on:click={() => goto(`/app/locations/${$page.params.location_id}`)} />
+<h1
+	class="mb-2 flex items-center text-2xl font-bold border-b w-full text-white relative"
+	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 100px;"
+>
+	<Button
+		variant="fill-light"
+		icon={mdiChevronLeft}
+		size="lg"
+		on:click={() => goto(`/app/locations/${$page.params.location_id}`)}
+	/>
+	<p class="my-auto ml-2"></p>
 	<p class="my-auto">CW-SS-THEPNPK</p>
 </h1>
 
