@@ -35,11 +35,12 @@ async function checkLocationOwner(supabase: SupabaseClient, id: number, user_id:
 async function load_AllSensors(supabase: SupabaseClient, location_id: number) {
     const { data, error } = await supabase
         .from('cw_device_locations')
-        .select('*, cw_devices(*, cw_ss_tmepnpk(*), seeed_co2_lorawan_uplinks(*))')
+        .select('*, cw_devices(*, cw_ss_tmepnpk(*), cw_air_thvd(*), seeed_co2_lorawan_uplinks(*))')
         .eq('location_id', location_id)
         .order('created_at', { referencedTable: 'cw_devices.seeed_co2_lorawan_uplinks', ascending: false })
         .limit(1, { referencedTable: 'cw_devices.cw_ss_tmepnpk' })
         .limit(1, { referencedTable: 'cw_devices.seeed_co2_lorawan_uplinks' })
+        .limit(1, { referencedTable: 'cw_devices.cw_air_thvd' })
         ;
     return data;
 }

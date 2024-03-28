@@ -37,6 +37,7 @@
 	import TimeGrid from '@event-calendar/day-grid';
 	import StatsQuickView from '$lib/components/StatsQuickViewModal/StatsQuickView.svelte';
 	import DeviceSelect from '$lib/components/DeviceSelect/DeviceSelect.svelte';
+	import TempMarker from '$lib/components/leaflet/TempMarker.svelte';
 
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
@@ -81,6 +82,7 @@
 </h1>
 
 <div class="my-4">
+	{#if data.weatherJSON}
 	<WeatherWidget
 		TemperatureC={data.weatherJSON.properties.timeseries.at(0).data.instant.details.air_temperature}
 		Humidity={data.weatherJSON.properties.timeseries.at(0).data.instant.details.relative_humidity}
@@ -92,27 +94,8 @@
 		UVI={data.weatherJSON.properties.timeseries.at(0).data.instant.details
 			.ultraviolet_index_clear_sky}
 	/>
+	{/if}
 </div>
-
-<!-- <Card class="my-2">
-	<Header slot="header" class="gap-0">
-		<div slot="title" class="text-nowrap text-xl font-medium">Weather</div>
-		<div slot="avatar">
-			<Avatar class="bg-accent-500 text-white font-bold mr-4">
-				<Icon data={mdiWeatherSunny} />
-			</Avatar>
-		</div>
-		<div slot="actions">
-			<Button icon={mdiDotsVertical} />
-		</div>
-	</Header>
-	<div slot="contents">
-		<div class="relative mb-4 overflow-hidden">
-			
-
-		</div>
-	</div>
-</Card> -->
 
 <div class="grid grid-cols-1 md:grid-cols-12 grid-flow-row gap-4">
 	<Card class="col-span-12 lg:col-span-8">
@@ -157,7 +140,14 @@
 										height={40}
 									>
 										<StatsQuickView sensor={sensor.cw_devices} />
+										{sensor.cw_devices.type}
+										{#if sensor.cw_devices.type == 2}
+											<TempMarker
+												latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
+												temp={sensor.cw_devices.cw_air_thvd.temperatureC} />
+										{/if}
 									</Marker>
+									
 								{/if}
 							{/each}
 						</Leaflet>

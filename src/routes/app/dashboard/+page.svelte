@@ -32,7 +32,6 @@
 	let gridData = null;
 
 	async function getDataForSensor(data_table: string, dev_eui: string) {
-		debugger;
 		try {
 			const { data, error } = await supabase
 				.from(data_table)
@@ -118,7 +117,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
 	<Card>
-		<Header title="Device Status" subheading="Reporting devices" slot="header">
+		<Header title="Device Status" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiListStatus} />
@@ -135,25 +134,38 @@
 				</Toggle>
 			</div>
 		</Header>
-		<h1 class="mb-2 text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
+		<p class="mb-2 text-sm md:text-xs lg:text-4xl text-gray-700" slot="contents">
 			{#if gridData}
-				{gridData.filter((sensor) => sensor.active === '🟢').length} / {gridData.length} Online
+				{gridData.filter((sensor) => sensor.active === '🟢').length} / {gridData.length} UP
 			{/if}
+		</p>
+	</Card>
+
+	<Card>
+		<Header title="Gateways Online" subheading="" slot="header">
+			<div slot="avatar">
+				<Avatar class="bg-primary text-primary-content font-bold">
+					<Icon data={mdiRadioTower} />
+				</Avatar>
+			</div>
+			<div slot="actions">
+				<Toggle let:on={open} let:toggle>
+					<Button on:click={toggle}>
+						<Icon data={mdiDotsVertical} />
+						<Menu {open} on:close={toggle}>
+							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
+						</Menu>
+					</Button>
+				</Toggle>
+			</div>
+		</Header>
+		<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
+			3 /3 UP
 		</h1>
 	</Card>
 
-	<CWStatCard
-		title="Gateways Online"
-		icon={mdiRadioTower}
-		value={3}
-		notation=" Online"
-		counterStartTime={null}
-		><div slot="headerMore">
-			<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
-		</div>
-	</CWStatCard>
 	<Card>
-		<Header title="Notifications" subheading="no new notifications" slot="header">
+		<Header title="Notifications" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiAlert} />
@@ -194,7 +206,7 @@
 		</Header>
 		<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
 			{#if gridData}
-				0 / {gridData.length} Low Battery
+				0 / {gridData.length} Low
 			{/if}
 		</h1>
 	</Card>

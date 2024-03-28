@@ -25,7 +25,7 @@
 
 <Card>
 	<Header slot="header" class="gap-0">
-		<div slot="title" class="text-nowrap text-md md:text-md lg:text-xl font-medium">{title}</div>
+		<div slot="title" class="text-md md:text-md lg:text-xl font-medium">{title}</div>
 		<div slot="avatar">
 			<Avatar class="bg-accent-500 text-white font-bold mr-4">
 				{#if icon}
