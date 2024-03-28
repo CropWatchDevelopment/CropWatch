@@ -99,7 +99,7 @@
 	<thead>
 		<tr>
 			{#each headers as header}
-				{#if header != 'model' && header != 'Location'}
+				{#if header != 'model' && header != 'Location' && header != 'devEui'}
 					<th scope="col" on:click={() => toggleSort(header)} style="cursor: pointer;">
 						{header}
 						{sortColumn === header ? (sortOrder === 'asc' ? ' 🔼' : ' 🔽') : ''}
@@ -112,7 +112,7 @@
 		{#each sortedData as row, rowIndex}
 			<tr on:mousemove={() => onHover(row)}>
 				{#each headers as header}
-					{#if header != 'model' && header != 'Location'}
+					{#if header != 'model' && header != 'Location' && header != 'devEui'}
 						{#if header == 'lastSeen'}
 							<td data-label="Last Seen">
 								<!-- <Tooltip title={`Expect Data Every ${} Minutes`} -->
@@ -143,28 +143,25 @@
 									</Dialog>
 								</Toggle>
 							</td>
-							<!-- {:else if header == 'devEui'}
-							<td data-label="DEV Eui">
-								<Tooltip title="Copy Dev EUI">
-									{row[header]}<CopyButton value={row['devEui']} size="sm" />
-								</Tooltip>
-							</td> -->
+							
 						{:else if header == 'data'}
 							<td data-label="Data">
 								<b>{row[header][row[header].cw_devices.cw_device_type.primary_data] ?? 'N/A'}</b>
 							</td>
+
 						{:else if header == 'url'}
 							<td class="flex flex-row gap-2 justify-center" data-label="Actions">
 								{#if row.Location?.cw_locations?.location_id}
 									<Tooltip title="View device details">
 										<Button
 											variant="outline"
-											icon={mdiDevices}
+											icon={mdiEye}
 											on:click={() =>
 												goto(
 													`/app/locations/${row.Location?.cw_locations?.location_id}/device-type/${DeviceIntType(row.model)}/${row.devEui}`
 												)}
 										/>
+										
 									</Tooltip>
 
 									<Tooltip title="View Location of device">
@@ -182,6 +179,7 @@
 								{/if}
 							</td>
 						{:else}
+						
 							<td data-label={header}>
 								<b>{row[header]}</b>
 							</td>

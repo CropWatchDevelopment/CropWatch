@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-	mdiAlert,
+		mdiAlert,
 		mdiBattery,
 		mdiDotsVertical,
 		mdiListStatus,
@@ -70,7 +70,7 @@
 			// Extracting the created_at timestamp from sensor data if available, otherwise from the device type
 			const lastSeen = sensor.data?.created_at ?? sensor.cw_devices.cw_device_type.created_at;
 
-			// const devEui = sensor.cw_devices.dev_eui;
+			const devEui = sensor.cw_devices.dev_eui;
 
 			const Location = sensor.cw_devices?.cw_device_locations;
 
@@ -99,7 +99,7 @@
 
 			const locationName = Location?.cw_locations?.name ?? 'N/A';
 
-			return { active, name, locationName, Location, lastSeen, model, primaryData, url };
+			return { active, name, locationName, devEui, Location, lastSeen, model, primaryData, url };
 		});
 		gridData = transformedData;
 	});
@@ -107,7 +107,7 @@
 
 <h1
 	class="mb-2 flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
-	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 120px;"
+	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 100px;"
 >
 	<div class="flex items-center space-x-2 ml-2">
 		<Icon data={mdiViewDashboard} />
@@ -116,54 +116,6 @@
 </h1>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-	<Card>
-		<Header title="Device Status" subheading="" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiListStatus} />
-				</Avatar>
-			</div>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button on:click={toggle}>
-						<Icon data={mdiDotsVertical} />
-						<Menu {open} on:close={toggle}>
-							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
-						</Menu>
-					</Button>
-				</Toggle>
-			</div>
-		</Header>
-		<p class="mb-2 text-sm md:text-xs lg:text-4xl text-gray-700" slot="contents">
-			{#if gridData}
-				{gridData.filter((sensor) => sensor.active === '🟢').length} / {gridData.length} UP
-			{/if}
-		</p>
-	</Card>
-
-	<Card>
-		<Header title="Gateways Online" subheading="" slot="header">
-			<div slot="avatar">
-				<Avatar class="bg-primary text-primary-content font-bold">
-					<Icon data={mdiRadioTower} />
-				</Avatar>
-			</div>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button on:click={toggle}>
-						<Icon data={mdiDotsVertical} />
-						<Menu {open} on:close={toggle}>
-							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
-						</Menu>
-					</Button>
-				</Toggle>
-			</div>
-		</Header>
-		<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
-			3 /3 UP
-		</h1>
-	</Card>
-
 	<Card>
 		<Header title="Notifications" subheading="" slot="header">
 			<div slot="avatar">
@@ -182,12 +134,55 @@
 				</Toggle>
 			</div>
 		</Header>
-		<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
-			0
-		</h1>
+		<h1 class="text-xs md:text-2xl lg:text-2xl text-gray-700" slot="contents">🟢 0</h1>
 	</Card>
 	<Card>
-		<Header title="Battery Levels" subheading="" slot="header">
+		<Header title="Devices" subheading="" slot="header">
+			<div slot="avatar">
+				<Avatar class="bg-primary text-primary-content font-bold">
+					<Icon data={mdiListStatus} />
+				</Avatar>
+			</div>
+			<div slot="actions">
+				<Toggle let:on={open} let:toggle>
+					<Button on:click={toggle}>
+						<Icon data={mdiDotsVertical} />
+						<Menu {open} on:close={toggle}>
+							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
+						</Menu>
+					</Button>
+				</Toggle>
+			</div>
+		</Header>
+		<p class="mb-2 text-xs md:text-xs lg:text-2xl text-gray-700" slot="contents">
+			{#if gridData}
+				🟢 {gridData.filter((sensor) => sensor.active === '🟢').length} / {gridData.length}
+			{/if}
+		</p>
+	</Card>
+
+	<Card>
+		<Header title="Gateways" subheading="" slot="header">
+			<div slot="avatar">
+				<Avatar class="bg-primary text-primary-content font-bold">
+					<Icon data={mdiRadioTower} />
+				</Avatar>
+			</div>
+			<div slot="actions">
+				<Toggle let:on={open} let:toggle>
+					<Button on:click={toggle}>
+						<Icon data={mdiDotsVertical} />
+						<Menu {open} on:close={toggle}>
+							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
+						</Menu>
+					</Button>
+				</Toggle>
+			</div>
+		</Header>
+		<h1 class="text-4xl md:text-2xl lg:text-2xl text-gray-700" slot="contents">🟢 3 /3</h1>
+	</Card>
+	<Card>
+		<Header title="Low Battery" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiBattery} />
@@ -204,9 +199,9 @@
 				</Toggle>
 			</div>
 		</Header>
-		<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700" slot="contents">
+		<h1 class="text-xs md:text-2xl lg:text-2xl text-gray-700" slot="contents">
 			{#if gridData}
-				0 / {gridData.length} Low
+				🟢 0 / {gridData.length}
 			{/if}
 		</h1>
 	</Card>

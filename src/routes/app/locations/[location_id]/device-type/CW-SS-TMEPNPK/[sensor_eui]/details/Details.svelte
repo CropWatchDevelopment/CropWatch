@@ -19,7 +19,7 @@
 <div class="grid grid-cols-2 mt-10 gap-4 mb-2">
 	<CWStatCard
 		icon={mdiThermometer}
-		title="Temperature"
+		title="Soil Temperature"
 		value={$sensorDataState.at(0)?.soil_temperatureC}
 		optimal={24.33}
 		notation="°c"
@@ -27,7 +27,7 @@
 	/>
 	<CWStatCard
 		icon={mdiWater}
-		title="Moisture"
+		title="Soil Moisture"
 		value={$sensorDataState.at(0)?.soil_moisture}
 		optimal={25}
 		notation="%"
@@ -70,6 +70,25 @@
 	</Card>
 </div>
 
+<div class="grid grid-cols-2 mt-2 gap-4 mb-2">
+	<CWStatCard
+		icon={mdiBeaker}
+		title="Soil pH"
+		value={$sensorDataState.at(0)?.soil_PH}
+		optimal={5.6}
+		notation="pH"
+		counterStartTime={latestCollected_Time}
+	/>
+	<CWStatCard
+		icon={mdiShaker}
+		title="Soil EC"
+		value={$sensorDataState.at(0)?.soil_EC}
+		optimal={1300}
+		notation="µs/cm"
+		counterStartTime={latestCollected_Time}
+	/>
+</div>
+
 <div class="grid grid-cols-1 md:grid-cols-3 mt-2 gap-4 mb-2">
 	<CWStatCard
 		title="Soil N"
@@ -94,24 +113,6 @@
 	/>
 </div>
 
-<div class="grid grid-cols-2 mt-2 gap-4 mb-2">
-	<CWStatCard
-		icon={mdiBeaker}
-		title="Soil pH"
-		value={$sensorDataState.at(0)?.soil_PH}
-		optimal={5.6}
-		notation="pH"
-		counterStartTime={latestCollected_Time}
-	/>
-	<CWStatCard
-		icon={mdiShaker}
-		title="Soil EC"
-		value={$sensorDataState.at(0)?.soil_EC}
-		optimal={1300}
-		notation="µs/cm"
-		counterStartTime={latestCollected_Time}
-	/>
-</div>
 
 <Card>
 	<Header title={'Soil NPK Map'} slot="header" class="gap-0">
