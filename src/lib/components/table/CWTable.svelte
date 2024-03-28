@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { DeviceIntType } from '$lib/helpers/DeviceTypeToName';
 	import { mdiDevices, mdiEye, mdiLock, mdiMapMarker } from '@mdi/js';
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { Button, CopyButton, Duration, DurationUnits, Icon, Tooltip } from 'svelte-ux';
 
 	// Accept any array of objects as generic data
@@ -21,6 +21,60 @@
 		dispatch('hover', { item });
 	}
 
+	let sortColumn = null;
+	let sortOrder = 'asc'; // 'asc' for ascending, 'desc' for descending
+
+	const columnConfig = [
+        { key: 'devEui', title: 'DEV Eui' },
+        { key: 'locationName', title: 'Location Name' },
+        { key: 'lastSeen', title: 'Last Seen' },
+        { key: 'data', title: 'Data' },
+        { key: 'url', title: 'Actions' },
+        // Add other columns as needed
+    ];
+
+	function toggleSort(column) {
+		if (sortColumn === column) {
+			sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+		} else {
+			sortColumn = column;
+			sortOrder = 'asc';
+		}
+	}
+
+	$: sortedData = data.slice().sort((a, b) => {
+		if (!sortColumn) return 0;
+
+		// Handle null and false explicitly
+		const aValue = a[sortColumn];
+		const bValue = b[sortColumn];
+		const isANullOrFalse = aValue === null || aValue === false;
+		const isBNullOrFalse = bValue === null || bValue === false;
+
+		if (isANullOrFalse && !isBNullOrFalse) return -1;
+		if (!isANullOrFalse && isBNullOrFalse) return 1;
+
+		// Normal comparison for non-null/false values
+		if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+		if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+
+		return 0;
+	});
+
+	$: {
+		if (sortColumn && sortOrder) {
+			localStorage.setItem('sortingState', JSON.stringify({ sortColumn, sortOrder }));
+		}
+
+		onMount(() => {
+			const savedState = localStorage.getItem('sortingState');
+			if (savedState) {
+				const { sortColumn: loadedSortColumn, sortOrder: loadedSortOrder } = JSON.parse(savedState);
+				sortColumn = loadedSortColumn;
+				sortOrder = loadedSortOrder;
+			}
+		});
+	}
 </script>
 
 <table class={$$props.class}>
@@ -28,13 +82,16 @@
 		<tr>
 			{#each headers as header}
 				{#if header != 'model' && header != 'Location'}
-					<th scope="col">{header}</th>
+					<th scope="col" on:click={() => toggleSort(header)} style="cursor: pointer;">
+						{header}
+						{sortColumn === header ? (sortOrder === 'asc' ? ' 🔼' : ' 🔽') : ''}
+					</th>
 				{/if}
 			{/each}
 		</tr>
 	</thead>
 	<tbody>
-		{#each data as row, rowIndex}
+		{#each sortedData as row, rowIndex}
 			<tr on:mousemove={() => onHover(row)}>
 				{#each headers as header}
 					{#if header != 'model' && header != 'Location'}
@@ -57,9 +114,9 @@
 									{row[header]}<CopyButton value={row['devEui']} size="sm" />
 								</Tooltip>
 							</td>
-							{:else if header == 'data'}
+						{:else if header == 'data'}
 							<td data-label="Data">
-									<b>{row[header][row[header].cw_devices.cw_device_type.primary_data] ?? 'N/A'}</b>
+								<b>{row[header][row[header].cw_devices.cw_device_type.primary_data] ?? 'N/A'}</b>
 							</td>
 						{:else if header == 'url'}
 							<td class="flex flex-row gap-2 justify-center" data-label="Actions">
@@ -91,7 +148,6 @@
 							</td>
 						{:else}
 							<td data-label={header}>
-								
 								<b>{row[header]}</b>
 							</td>
 						{/if}
