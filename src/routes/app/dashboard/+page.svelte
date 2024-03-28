@@ -175,7 +175,7 @@
 		</h1>
 	</Card>
 	<Card>
-		<Header title="Battery Levels" subheading="Devices that Require new batteries" slot="header">
+		<Header title="Battery Levels" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiBattery} />
