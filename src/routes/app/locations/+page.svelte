@@ -1,22 +1,13 @@
 <script lang="ts">
 	import {
-		mdiCalendar,
 		mdiChevronRight,
-		mdiDotsVertical,
 		mdiMapMarker,
-		mdiMapSearch,
 		mdiPlus
 	} from '@mdi/js';
 	import {
 		Button,
 		ListItem,
 		Icon,
-		Card,
-		Header,
-		Avatar,
-		Toggle,
-		Menu,
-		MenuItem,
 		ProgressCircle
 	} from 'svelte-ux';
 	import { goto } from '$app/navigation';
@@ -28,7 +19,7 @@
 	let zoom: number | undefined = 20;
 </script>
 
-<h1 class="mb-2 flex items-center justify-between text-2xl font-bold border-b mb-4 w-full text-white relative" style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 100px;">
+<h1 class="mb-2 flex items-center justify-between text-2xl font-bold border-b w-full text-white relative" style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 100px;">
 	<p class="my-auto ml-2">All Locations</p>
 	<Button
 		icon={mdiPlus}

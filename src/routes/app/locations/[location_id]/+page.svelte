@@ -39,6 +39,7 @@
 	import DeviceSelect from '$lib/components/DeviceSelect/DeviceSelect.svelte';
 	import TempMarker from '$lib/components/leaflet/TempMarker.svelte';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
+	import moment from 'moment';
 
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
@@ -51,17 +52,45 @@
 	let options = {
 		view: 'dayGridMonth',
 		date: new Date(),
-		events: [],
+		events: [
+			{"id":"event-0","title":"🌤️ 7°C, Rain: 0mm","editable":false,"allDay":true,"backgroundColor":"#a90f0f","start":"2024-03-01T00:00:00.000Z","end":"2024-03-01T00:00:00.000Z"}
+		],
 		locale: 'ja-jp'
 	};
-	options.events.push({
-		id: 'a',
-		title: `Rainfall Total: 34mm`,
-		editable: false,
-		allDay: true,
-		backgroundColor: '#a90f0f',
-		start: new Date(),
-		end: new Date()
+
+	let displayCalendar = false;
+
+	fetch(
+		`https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.41&start_date=${moment().startOf('month').format('YYYY-MM-DD')}&end_date=${moment().endOf('day').format('YYYY-MM-DD')}&daily=weather_code,temperature_2m_mean,rain_sum`
+	).then(async (r) => {
+		const apiResponse = await r.json();
+
+		for (let index = 0; index < apiResponse.daily.time.length; index++) {
+			const date = apiResponse.daily.time[index];
+			const tempEvent = {
+				id: `event-${index}`,
+				title: `🌡️ Temp ${apiResponse.daily.temperature_2m_mean[index]}°C`, // Replace the emoji based on weather_code or your preferences
+				editable: false,
+				allDay: true,
+				backgroundColor: '#a90f0f',
+				start: new Date(date),
+				end: new Date(date)
+			};
+			const rainEvent = {
+				id: `event-${index}`,
+				title: `🌧️ Rain: ${apiResponse.daily.rain_sum[index]}mm`, // Replace the emoji based on weather_code or your preferences
+				editable: false,
+				allDay: true,
+				backgroundColor: 'blue',
+				start: new Date(date),
+				end: new Date(date)
+			};
+			options.events.push(tempEvent);
+			options.events.push(rainEvent);
+			options = options;
+		}
+		options = options;
+		displayCalendar = true;
 	});
 
 	$: console.log(data);
@@ -87,17 +116,7 @@
 
 <div class="my-4">
 	{#if data.weatherJSON}
-	<WeatherWidget
-		TemperatureC={data.weatherJSON.properties.timeseries.at(0).data.instant.details.air_temperature}
-		Humidity={data.weatherJSON.properties.timeseries.at(0).data.instant.details.relative_humidity}
-		WindSpeed={data.weatherJSON.properties.timeseries.at(0).data.instant.details.wind_speed}
-		WindDirection={data.weatherJSON.properties.timeseries.at(0).data.instant.details
-			.wind_from_direction}
-		Pressure={data.weatherJSON.properties.timeseries.at(0).data.instant.details
-			.air_pressure_at_sea_level}
-		UVI={data.weatherJSON.properties.timeseries.at(0).data.instant.details
-			.ultraviolet_index_clear_sky}
-	/>
+		<WeatherWidget environmentalData={data.weatherJSON} />
 	{/if}
 </div>
 
@@ -148,10 +167,10 @@
 										{#if sensor.cw_devices.type == 2}
 											<TempMarker
 												latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
-												temp={sensor.cw_devices.cw_air_thvd.temperatureC} />
+												temp={sensor.cw_devices.cw_air_thvd.temperatureC}
+											/>
 										{/if}
 									</Marker>
-									
 								{/if}
 							{/each}
 						</Leaflet>
@@ -185,6 +204,8 @@
 		</div>
 	</Header>
 	<div slot="contents">
+		{#if displayCalendar}
 		<Calendar {plugins} {options} />
+		{/if}
 	</div>
 </Card>
