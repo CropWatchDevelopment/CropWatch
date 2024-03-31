@@ -80,7 +80,7 @@
 				&nbsp; Loading Content...
 			</div>
 		{:else}
-			<div class="p-2">
+			<div>
 				<slot />
 			</div>
 		{/if}

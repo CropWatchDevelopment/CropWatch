@@ -98,8 +98,8 @@
 </script>
 
 <h1
-	class="mb-2 flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
-	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 100px;"
+	class="mb-2 flex items-center text-2xl font-bold border-b w-full text-white relative"
+	style="background-image:url({backgroundImg}); width:100%; height: 100px;"
 >
 	<Button
 		variant="outline"
