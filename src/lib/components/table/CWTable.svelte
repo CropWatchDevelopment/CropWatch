@@ -154,8 +154,10 @@
 								{#if row.Location?.cw_locations?.location_id}
 									<Tooltip title="View device details">
 										<Button
+											classes={{root: "mr-4"}}
 											variant="outline"
 											icon={mdiEye}
+											size="sm"
 											on:click={() =>
 												goto(
 													`/app/locations/${row.Location?.cw_locations?.location_id}/device-type/${DeviceIntType(row.model)}/${row.devEui}`
@@ -168,6 +170,7 @@
 										<Button
 											variant="outline"
 											icon={mdiMapMarker}
+											size="sm"
 											on:click={() =>
 												goto(`/app/locations/${row.Location?.cw_locations?.location_id}/`)}
 										/>

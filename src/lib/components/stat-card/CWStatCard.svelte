@@ -25,7 +25,7 @@
 
 <Card>
 	<Header slot="header" class="gap-0">
-		<div slot="title" class="text-md md:text-md lg:text-xl font-medium">{title}</div>
+		<h1 slot="title" class="text-lg">{title}</h1>
 		<div slot="avatar">
 			<Avatar class="bg-accent-500 text-white font-bold mr-4">
 				{#if icon}
@@ -33,27 +33,12 @@
 				{/if}
 			</Avatar>
 		</div>
-		<div slot="subheading" class="text-sm text-gray-500">
-			{#if counterStartTime}
-				Last Update <Duration start={subSeconds(counterStartTime, 0)} totalUnits={1} /> ago
-			{/if}
-		</div>
-		<div slot="actions">
-			<Toggle let:on={open} let:toggle>
-				<Button on:click={toggle}>
-					<Icon data={mdiDotsVertical} />
-					<Menu {open} on:close={toggle}>
-						<slot name="headerMore" />
-					</Menu>
-				</Button>
-			</Toggle>
-		</div>
 	</Header>
 	<div slot="contents" class="mb-2">
 		{#if optimal}
 			<Collapse>
 				<div slot="trigger" class="flex-1 px-3 py-3 border-t">
-					<h1 class="text-4xl md:text-2xl lg:text-4xl text-gray-700">{value}{notation}</h1>
+					<h1 class="text-2xl font-medium md:text-2xl lg:pb-3 lg:text-2xl text-gray-700">{value}{notation}</h1>
 				</div>
 				<div class="grid grid-cols-2 text-center md:text-md">
 					<div class="border-t border-r">

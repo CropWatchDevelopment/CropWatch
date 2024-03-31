@@ -2,9 +2,9 @@
 	import { subSeconds } from 'date-fns';
 	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import LineChart from '$lib/components/charts/highcharts/lineChart/LineChart.svelte';
-	import { Card, Duration, Header } from 'svelte-ux';
+	import { Avatar, Card, Duration, Header, Icon } from 'svelte-ux';
 	import { sensorDataState } from '$lib/stores/CW-SS-TMEPNPK';
-	import { mdiBeaker, mdiShaker, mdiThermometer, mdiWater } from '@mdi/js';
+	import { mdiBeaker, mdiChartAreaspline, mdiShaker, mdiThermometer, mdiWater } from '@mdi/js';
 	import RadarChart from '$lib/components/charts/highcharts/highcharts-radarchart/RadarChart.svelte';
 
 	$: console.log(
@@ -13,10 +13,9 @@
 	);
 	$: latest = $sensorDataState.at(0);
 	$: latestCollected_Time = latest?.created_at;
-
 </script>
 
-<div class="grid grid-cols-2 mt-10 gap-4 mb-2">
+<div class="grid grid-cols-1 md:grid-cols-2 mt-10 gap-4 mb-2">
 	<CWStatCard
 		icon={mdiThermometer}
 		title="Soil Temperature"
@@ -37,10 +36,10 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
 	<Card>
-		<Header title={'Soil Temperature'} slot="header" class="gap-0">
-			<div slot="subheading">
-				Last Update <Duration start={subSeconds(latestCollected_Time, 0)} totalUnits={1} /> ago
-			</div>
+		<Header title={'Daily Soil Temperature'} slot="header" class="gap-0">
+			<Avatar slot="avatar" class="bg-accent-500 text-white font-bold mr-4">
+				<Icon data={mdiChartAreaspline} />
+			</Avatar>
 		</Header>
 		<LineChart
 			seriesData={$sensorDataState.map((vals) => {
@@ -52,10 +51,10 @@
 		/>
 	</Card>
 	<Card>
-		<Header title={'Soil Moisture'} slot="header" class="gap-0">
-			<div slot="subheading">
-				Last Update <Duration start={subSeconds(latestCollected_Time, 0)} totalUnits={1} /> ago
-			</div>
+		<Header title={'Daily Soil Moisture'} slot="header" class="gap-0">
+			<Avatar slot="avatar" class="bg-accent-500 text-white font-bold mr-4">
+				<Icon data={mdiChartAreaspline} />
+			</Avatar>
 		</Header>
 		<div class="flex flex-row">
 			<LineChart
@@ -70,7 +69,7 @@
 	</Card>
 </div>
 
-<div class="grid grid-cols-2 mt-2 gap-4 mb-2">
+<div class="grid grid-cols-1 md:grid-cols-2 mt-2 gap-4 mb-2">
 	<CWStatCard
 		icon={mdiBeaker}
 		title="Soil pH"
@@ -113,14 +112,13 @@
 	/>
 </div>
 
-
 <Card>
-	<Header title={'Soil NPK Map'} slot="header" class="gap-0">
-		<div slot="subheading">
-			Last Update <Duration start={subSeconds(latestCollected_Time, 0)} totalUnits={1} /> ago
-		</div>
-	</Header>
-	<RadarChart N={$sensorDataState.at(0)?.soil_N} P={$sensorDataState.at(0)?.soil_P} K={$sensorDataState.at(0)?.soil_K} />
+	<Header title={'Soil NPK Map'} slot="header" class="gap-0" />
+	<RadarChart
+		N={$sensorDataState.at(0)?.soil_N}
+		P={$sensorDataState.at(0)?.soil_P}
+		K={$sensorDataState.at(0)?.soil_K}
+	/>
 </Card>
 
 <!-- <div class="h-[300px] p-4 border rounded">

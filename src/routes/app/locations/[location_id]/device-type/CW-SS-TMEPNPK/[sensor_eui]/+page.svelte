@@ -13,6 +13,7 @@
 	import { sensorDataState } from '$lib/stores/CW-SS-TMEPNPK';
 	import { subSeconds } from 'date-fns';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
+	import moment from 'moment';
 
 	let userAvailableTabs = [
 		{ label: 'Dashboard', value: 1 },
@@ -45,16 +46,16 @@
 	<p class="my-auto">CW-SS-THEPNPK</p>
 </h1>
 
-<div class="grid grid-cols-3 grid-flow-row my-4">
-	<div class="flex flex-col">
+<div class="grid grid-cols-4 grid-flow-row my-4">
+	<!-- <div class="flex flex-col">
 		<p class="mb-1 text-gray-600">Serial Number</p>
 		<p class="text-sm">{$page.params.sensor_eui}</p>
-	</div>
+	</div> -->
 
-	<div class="flex flex-col">
-		<p class="mb-1 text-gray-600">Last Update</p>
+	<div class="flex flex-col w-ful col-span-3">
+		<p class="text-gray-600">Last Update: </p>
 		<p class="text-sm">
-			{new Date(data.sensor.data?.at(0).created_at).toLocaleTimeString()}
+			{moment(data.sensor.data?.at(0).created_at).format('MMM DD YYYY HH:MM:SS a')}
 			<small
 				>(<Duration start={subSeconds(data.sensor.data?.at(0).created_at, 0)} totalUnits={1} /> ago)</small
 			>

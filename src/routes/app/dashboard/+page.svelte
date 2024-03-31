@@ -105,7 +105,7 @@
 </script>
 
 <h1
-	class="mb-2 flex items-center text-2xl font-bold border-b mb-4 w-full text-white relative"
+	class="mb-2 flex items-center text-2xl font-bold border-b w-full text-white relative"
 	style="left:-8px; top:-8px; background-image:url({backgroundImg}); width:100%; height: 100px;"
 >
 	<div class="flex items-center space-x-2 ml-2">
@@ -114,103 +114,75 @@
 	</div>
 </h1>
 
-<div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-	<Card>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
 		<Header title="Notifications" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiAlert} />
 				</Avatar>
 			</div>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button on:click={toggle}>
-						<Icon data={mdiDotsVertical} />
-						<Menu {open} on:close={toggle}>
-							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
-						</Menu>
-					</Button>
-				</Toggle>
-			</div>
 		</Header>
-		<h1 class="text-xs md:text-2xl lg:text-2xl text-gray-700" slot="contents">🟢 0</h1>
+		<div slot="contents" class="flex h-full">
+			<h1 class="text-lg md:text-2xl lg:pb-3 lg:text-2xl text-gray-700 w-full my-auto text-right lg:text-left">🟢 0</h1>
+		</div>
 	</Card>
-	<Card>
+
+	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
 		<Header title="Devices" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiListStatus} />
 				</Avatar>
 			</div>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button on:click={toggle}>
-						<Icon data={mdiDotsVertical} />
-						<Menu {open} on:close={toggle}>
-							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
-						</Menu>
-					</Button>
-				</Toggle>
-			</div>
 		</Header>
-		<p class="mb-2 text-xs md:text-xs lg:text-2xl text-gray-700" slot="contents">
-			{#if gridData}
-				🟢 {gridData.filter((sensor) => sensor.active === '🟢').length} / {gridData.length}
-			{/if}
-		</p>
+		<div slot="contents" class="flex h-full">
+			<h1 class="text-lg md:text-2xl lg:pb-3 lg:text-2xl text-gray-700 w-full my-auto text-right lg:text-left">
+				{#if gridData}
+					🟢 {gridData.filter((sensor) => sensor.active === '🟢').length} / {gridData.length}
+				{/if}
+			</h1>
+		</div>
 	</Card>
 
-	<Card>
+	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
 		<Header title="Gateways" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiRadioTower} />
 				</Avatar>
 			</div>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button on:click={toggle}>
-						<Icon data={mdiDotsVertical} />
-						<Menu {open} on:close={toggle}>
-							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
-						</Menu>
-					</Button>
-				</Toggle>
-			</div>
 		</Header>
-		<h1 class="text-4xl md:text-2xl lg:text-2xl text-gray-700" slot="contents">🟢 3 /3</h1>
+
+		<div slot="contents" class="flex h-full">
+			<h1 class="text-lg md:text-2xl lg:pb-3 lg:text-2xl text-gray-700 w-full my-auto text-right lg:text-left">
+				🟢 3 /3
+			</h1>
+		</div>
 	</Card>
-	<Card>
+	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
 		<Header title="Low Battery" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiBattery} />
 				</Avatar>
 			</div>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button on:click={toggle}>
-						<Icon data={mdiDotsVertical} />
-						<Menu {open} on:close={toggle}>
-							<MenuItem on:click={() => openFeedback()}>Give Feedback</MenuItem>
-						</Menu>
-					</Button>
-				</Toggle>
-			</div>
 		</Header>
-		<h1 class="text-xs md:text-2xl lg:text-2xl text-gray-700" slot="contents">
-			{#if gridData}
-				🟢 0 / {gridData.length}
-			{/if}
-		</h1>
+		<div slot="contents" class="flex h-full">
+			<h1 class="text-lg md:text-2xl lg:pb-3 lg:text-2xl text-gray-700 w-full my-auto text-right lg:text-left">
+				{#if gridData}
+					🟢 0 / {gridData.length}
+				{/if}
+			</h1>
+		</div>
 	</Card>
 </div>
 
-<Card class="mt-10">
+<Card class="mt-2">
 	{#if gridData}
 		<CwTable data={gridData} />
 	{:else}
-		<div class="mx-auto">
+		<div class="mx-auto p-5">
 			<ProgressCircle />
 			<p>Loading...</p>
 		</div>

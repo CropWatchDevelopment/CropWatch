@@ -14,6 +14,7 @@
 		mdiCog,
 		mdiDevices,
 		mdiFunction,
+		mdiGithub,
 		mdiHome,
 		mdiMap,
 		mdiShieldLock,
@@ -57,7 +58,10 @@
 		<NavItem path="/" text="Data Rules" icon={mdiFunction} currentUrl={$page.url} class="mt-2" />
 
 		<NavItem path="/" text="Permissions" icon={mdiShieldLock} currentUrl={$page.url} class="mt-2" />
+		
+		<NavItem path="/app/change-log" text="Change Log" icon={mdiGithub} currentUrl={$page.url} class="mt-2" />
 
+		<span class="flex flex-1" />
 		<NavItem
 			path="/app/settings"
 			text="Settings"
