@@ -19,10 +19,33 @@
 			children: []
 		}
 	];
+
+	let root = [
+		{
+			name: 'Root',
+			children: []
+		}
+	];
+
+	const onAdd = () => {
+		root.push({
+			id: uuidv4(),
+			children: []
+		});
+		root = root;
+	};
 </script>
 
 <h1 class="text-4xl font-semibold text-slate-700 mb-4"><Icon data={mdiFunction} /> Sensor Rules</h1>
 
-<SubRule {rule} {latestData} />
+{#each root as topRule}
+	<SubRule {...topRule} {latestData} />
+{/each}
 
-<pre>{JSON.stringify(rule, null, 2)}</pre>
+<Button
+	on:click={() => {
+		onAdd();
+	}}>Add Top Level Rule</Button
+>
+
+<pre>{JSON.stringify(root, null, 2)}</pre>
