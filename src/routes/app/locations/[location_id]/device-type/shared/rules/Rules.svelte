@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { mdiFunction } from '@mdi/js';
-	import { Button, Icon, MenuItem, NumberStepper, SelectField, Tooltip, cls } from 'svelte-ux';
+	import { mdiFloppy, mdiFunction } from '@mdi/js';
+	import { Button, Icon } from 'svelte-ux';
 	import SubRule from './SubRule.svelte';
 
 	export let sensor;
-
 	let latestData = sensor.data.at(-1);
 
 	function uuidv4() {
@@ -13,23 +12,22 @@
 		);
 	}
 
-	$: rule = [
-		{
-			id: uuidv4(),
-			children: []
-		}
-	];
-
 	let root = [
 		{
-			name: 'Root',
+			name: 'Base Rule',
+			id: uuidv4(),
+			subject: 'soil_N',
+			action: 1,
 			children: []
 		}
 	];
 
 	const onAdd = () => {
 		root.push({
+			name: uuidv4(),
 			id: uuidv4(),
+			subject: '',
+			action: 2,
 			children: []
 		});
 		root = root;
@@ -38,9 +36,9 @@
 
 <h1 class="text-4xl font-semibold text-slate-700 mb-4"><Icon data={mdiFunction} /> Sensor Rules</h1>
 
-{#each root as topRule}
-	<SubRule {...topRule} {latestData} />
-{/each}
+
+
+<SubRule bind:root {latestData} />
 
 <Button
 	on:click={() => {
@@ -48,4 +46,5 @@
 	}}>Add Top Level Rule</Button
 >
 
-<pre>{JSON.stringify(root, null, 2)}</pre>
+<Button on:click={() => {}} color="success" icon={mdiFloppy} />
+

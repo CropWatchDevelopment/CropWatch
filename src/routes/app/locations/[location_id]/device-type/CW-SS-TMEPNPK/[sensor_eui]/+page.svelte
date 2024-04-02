@@ -6,7 +6,6 @@
 	import { page } from '$app/stores';
 	import Details from './details/Details.svelte';
 	import History from './history/History.svelte';
-	import Rules from './rules/Rules.svelte';
 	import Notifications from './notifications/Notifications.svelte';
 	import Settings from './settings/Settings.svelte';
 	import Permissions from './permissions/Permissions.svelte';
@@ -14,6 +13,7 @@
 	import { subSeconds } from 'date-fns';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 	import moment from 'moment';
+	import Rules from '../../shared/rules/Rules.svelte';
 
 	let userAvailableTabs = [
 		{ label: 'Dashboard', value: 1 },
