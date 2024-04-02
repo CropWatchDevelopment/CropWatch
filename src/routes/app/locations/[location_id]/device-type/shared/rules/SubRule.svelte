@@ -2,9 +2,11 @@
 	import {
 		mdiAmpersand,
 		mdiArrowBottomRight,
+		mdiArrowRight,
 		mdiEmail,
 		mdiFloppy,
 		mdiFunction,
+		mdiGateAnd,
 		mdiMessageProcessing,
 		mdiPhone,
 		mdiPlus,
@@ -12,13 +14,20 @@
 		mdiWatchVibrate,
 		mdiWeb
 	} from '@mdi/js';
-	import { Button, Card, Icon, MenuItem, NumberStepper, SelectField, Tooltip, cls } from 'svelte-ux';
+	import {
+		Button,
+		Card,
+		Icon,
+		MenuItem,
+		NumberStepper,
+		SelectField,
+		Tooltip,
+		cls
+	} from 'svelte-ux';
 
 	export let indent = 0;
 	export let latestData;
-	export let root: any[] = [];
-
-	let number: number = 0;
+	export let root;
 
 	let dataKeys = Object.keys(latestData);
 
@@ -29,82 +38,83 @@
 	}
 
 	const onAdd = () => {
-		root.push({
+		root.children.push({
 			name: uuidv4(),
 			id: uuidv4(),
 			subject: '',
+			operator: '=',
+			threshold_value: 0,
+			action: 'email',
 			children: []
 		});
 		root = root;
 	};
+
+	const onDelete = (i) => {
+		root.children.splice(i, 1);
+		root = root;
+	};
 </script>
 
-<pre>subRule {JSON.stringify(root, null, 2)}</pre>
+<SelectField
+	bind:value={root.subject}
+	options={dataKeys.map((v) => {
+		return { label: v, value: v };
+	})}
+	icon={mdiFunction}
+	rounded
+></SelectField>
 
-<div class="grid grid-col grid-cols-1 lg:grid-cols-5 gap-4 mb-2">
-	<div class="flex flex-row border-l-2">
-		<Icon data={mdiArrowBottomRight} class="mr-2" />
-		<input type="text" value={root.id} class="w-full" />
-		<SelectField
-			options={dataKeys.map((v) => {
-				return { label: v, value: v };
-			})}
-			icon={mdiFunction}
-			rounded
-		></SelectField>
+<SelectField
+	bind:value={root.operator}
+	options={[
+		{ label: '=', value: '=' },
+		{ label: '!=', value: '!=' },
+		{ label: '>', value: '>' },
+		{ label: '>=', value: '>=' },
+		{ label: '<', value: '<' },
+		{ label: '<=', value: '<=' }
+	]}
+	rounded
+></SelectField>
+
+<NumberStepper bind:value={root.threshold_value} class="w-full" />
+
+<SelectField
+	bind:value={root.action}
+	options={[
+		{ value: 1, label: 'E-Mail', icon: mdiEmail },
+		{ value: 2, label: 'WellWatch Alert', icon: mdiWatchVibrate },
+		{ value: 3, label: 'SMS', icon: mdiMessageProcessing },
+		{ value: 4, label: 'Line', icon: mdiPhone },
+		{ value: 5, label: 'Webhook', icon: mdiWeb }
+	]}
+	activeOptionIcon={true}
+>
+	<div slot="option" let:option let:index let:selected let:highlightIndex>
+		<MenuItem
+			class={cls(
+				index === highlightIndex && 'bg-surface-content/5',
+				option === selected && 'font-semibold',
+				option.group ? 'px-4' : 'px-2'
+			)}
+			scrollIntoView={index === highlightIndex}
+			icon={{ data: option.icon, style: 'color: #0000FF;' }}
+		>
+			{option.label}
+		</MenuItem>
 	</div>
+</SelectField>
 
-	<SelectField
-		options={[
-			{ label: '=', value: '=' },
-			{ label: '!=', value: '!=' },
-			{ label: '>', value: '>' },
-			{ label: '>=', value: '>=' },
-			{ label: '<', value: '<' },
-			{ label: '<=', value: '<=' }
-		]}
-		rounded
-	></SelectField>
+<Tooltip title="Add an AND rule">
+	<Button on:click={() => onAdd()} color="success" icon={mdiAmpersand} />
+</Tooltip>
 
-	<NumberStepper class="w-full" />
-
-	<SelectField
-		bind:value={number}
-
-		options={[
-			{ value: 1, label: 'E-Mail', icon: mdiEmail },
-			{ value: 2, label: 'WellWatch Alert', icon: mdiWatchVibrate },
-			{ value: 3, label: 'SMS', icon: mdiMessageProcessing },
-			{ value: 4, label: 'Line', icon: mdiPhone },
-			{ value: 5, label: 'Webhook', icon: mdiWeb }
-		]}
-		activeOptionIcon={true}
-	>
-		<div slot="option" let:option let:index let:selected let:highlightIndex>
-			<MenuItem
-				class={cls(
-					index === highlightIndex && 'bg-surface-content/5',
-					option === selected && 'font-semibold',
-					option.group ? 'px-4' : 'px-2'
-				)}
-				scrollIntoView={index === highlightIndex}
-				icon={{ data: option.icon, style: 'color: #0000FF;' }}
-			>
-				{option.label}
-			</MenuItem>
-		</div>
-	</SelectField>
-
-	<div class="flex flex-row">
-		<Tooltip title="Add an AND rule">
-			<Button on:click={() => onAdd()} color="success" icon={mdiAmpersand} />
-		</Tooltip>
-		<Button on:click={() => {}} color="danger" icon={mdiTrashCan} />
-	</div>
+<div class="flex flex-row">
+	{#each root.children as singleRule, i}
+		<Icon data={mdiArrowRight} class="mr-2" />
+		<Icon data={mdiGateAnd} class="mr-2" />
+		<svelte:self bind:root={singleRule} {latestData} />
+		<Button on:click={() => onDelete(i)} color="success" icon={mdiTrashCan} />
+	{/each}
 </div>
-
-{#each root as child}
-	<div class="ml-{indent}">
-		<svelte:self bind:root={child.children} {latestData} indent={indent + 5} />
-	</div>
-{/each}

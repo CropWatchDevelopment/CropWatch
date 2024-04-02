@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { mdiFloppy, mdiFunction } from '@mdi/js';
+	import { mdiFloppy, mdiFunction, mdiGateOr, mdiTrashCan } from '@mdi/js';
 	import { Button, Icon } from 'svelte-ux';
 	import SubRule from './SubRule.svelte';
 
@@ -12,33 +12,36 @@
 		);
 	}
 
-	let root = [
-		{
-			name: 'Base Rule',
-			id: uuidv4(),
-			subject: 'soil_N',
-			action: 1,
-			children: []
-		}
-	];
+	let root = [];
 
 	const onAdd = () => {
 		root.push({
 			name: uuidv4(),
 			id: uuidv4(),
 			subject: '',
-			action: 2,
+			operator: '=',
+			threshold_value: 0,
+			action: 'email',
 			children: []
 		});
+		root = root;
+	};
+
+	const onDelete = (i) => {
+		root.splice(i, 1);
 		root = root;
 	};
 </script>
 
 <h1 class="text-4xl font-semibold text-slate-700 mb-4"><Icon data={mdiFunction} /> Sensor Rules</h1>
 
-
-
-<SubRule bind:root {latestData} />
+{#each root as singleRule, i}
+	<div class="flex flex-row">
+		<Icon data={mdiGateOr} class="mr-2" />
+		<SubRule bind:root={singleRule} {latestData} />
+		<Button on:click={() => onDelete(i)} color="success" icon={mdiTrashCan} />
+	</div>
+{/each}
 
 <Button
 	on:click={() => {
@@ -48,3 +51,4 @@
 
 <Button on:click={() => {}} color="success" icon={mdiFloppy} />
 
+<pre>{JSON.stringify(root, null, 2)}</pre>
