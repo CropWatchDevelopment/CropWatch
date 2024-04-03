@@ -42,10 +42,12 @@ Link : https://app.CropWatch.io
 - [ ] [Real-Time Updates]()
 
 # List of Tools & Packages Used:
-- [https://svelte-ux.techniq.dev/](https://github.com/techniq/svelte-ux)
+- [Svelte-UX](https://github.com/techniq/svelte-ux)
+- [LayerChart](https://github.com/techniq/layerchart)
+- [Supabase](https://github.com/supabase/supabase)
 
 # We are creating `community pages` Here:
-<Coming soon...>
+##Coming soon...
 
 # Contribute
 
