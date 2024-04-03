@@ -1,10 +1,8 @@
 <script>
 	import {
 		AppLayout,
-		Breadcrumb,
 		Button,
 		Dialog,
-		ListItem,
 		NavItem,
 		ProgressCircle,
 		TextField
@@ -22,9 +20,16 @@
 	} from '@mdi/js';
 	import { navigating, page } from '$app/stores';
 	import { closeFeedback, feedbackOpenState, openFeedback } from '$lib/stores/feedback.store';
-	import { get } from 'svelte/store';
 
 	$: feedbackDialogOpen = $feedbackOpenState;
+
+	export let data;
+
+	let { supabase, session } = data;
+	$: ({ supabase, session } = data);
+
+	let username = session.user?.user_metadata.full_name || session.user?.email;
+
 </script>
 
 <AppLayout areas="'header header' 'aside main'">
@@ -71,7 +76,7 @@
 		/>
 	</nav>
 
-	<Header />
+	<Header {username}/>
 
 	<main class="scroll-smooth isolate">
 		{#if $navigating}

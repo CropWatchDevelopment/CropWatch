@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import {
 		AppBar,
 		Avatar,
@@ -23,6 +23,8 @@
 	import { authState } from '$lib/stores/auth.store';
 	import { alertState } from '$lib/stores/alert.store';
 	import cropWatchSVG from '$lib/images/cropwatch.svg';
+
+	export let username;
 
 	const logout = async () => {
 		$authState?.signOut().then((error) => {
@@ -78,7 +80,9 @@
 						>
 					</ResponsiveMenu>
 					<div class="grid grid-col grid-rows-2 mx-3">
-						<small>Kevin Cantrell</small>
+						<small>
+							<small>{username}</small>
+						</small>
 						<small>Administrator</small>
 					</div>
 					<Icon data={mdiDotsVertical} />
