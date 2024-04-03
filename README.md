@@ -1,14 +1,65 @@
-# create-svelte-ux-demo
+<h1 align="center">CropWatch Web UI</h1>
+<p align="center"><i>Our PWA Web Application for viewing and controlling your farm from anywhere and everwhere.</i></p>
+<div align="center">
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+</div>
+<br>
+<p align="center"><i>Loved the project? Please visit our <a href="https://CropWatch.io">Website</a></i></p>
+<br>
+This repo aims to host a UI that everyone can update and add to so that we can make farming as easy as possible through the use of technology.
 
-```bash
-npm run dev
+If you are intersted, will create a PR for to add your `README` profile here.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+If you like this Repo, Please click the :star:
 
-You will learn the rest on the Home page of the demo app.
+List of `CropWatch UI` categories mentioned below
 
-More info on: https://svelte-ux.techniq.dev/
+## Contents
+  - [Github README PROFILE CATEGORY](#github-readme-profile-category)
+  - [List out `Awesome README Profile` Tools](#list-out-awesome-readme-profile-tools)
+  - [List out `Awesome README Profile` Articles](#list-out-awesome-readme-profile-articles)
+  - [Contribute](#contribute)
+
+## Website
+
+Link : https://app.CropWatch.io
+
+<a href="https://app.CropWatch.io"><img src="https://app.cropwatch.io/_app/immutable/assets/cropwatchText.DtMOKhKF.png" alt="CropWatch UI Repo" /></a>
+
+
+## Github README PROFILE CATEGORY
+
+- [ ] [Dashboard]()
+- [ ] [Locations]()
+- [ ] [Location Details]()
+- [ ] [Sensor Details]()
+- [ ] [Sensor Rules]()
+- [ ] [Sensor Settings]()
+- [ ] [Sensor Compare]()
+- [ ] [Many Many Sensor Pages...]()
+- [ ] [Settings Page with notations]()
+- [ ] [Push Notifications]()
+- [ ] [Real-Time Updates]()
+
+# List of Tools & Packages Used:
+- [https://svelte-ux.techniq.dev/](https://github.com/techniq/svelte-ux)
+
+# List out `Awesome README Profile` Articles
+
+# Contribute
+
+Contributions are always welcome! Please create a PR to add Github Profile.
+
+# Issues
+
+I Love knowing when something is wrong, that way there I can fix it ASAP, however!
+Please take care when submitting an issue, be clear about what is wrong, what you did to make it happen
+and if possible include your device, and browser that it happened on.
+
+## :pencil: License
+
+This project is licensed under [MIT](https://opensource.org/licenses/MIT) license.
+
+## :man_astronaut: Show your support
+
+Give a ⭐️ if this project helped you!
