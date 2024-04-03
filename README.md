@@ -24,8 +24,7 @@ List of `CropWatch UI` categories mentioned below
 
 Link : https://app.CropWatch.io
 
-<a href="https://app.CropWatch.io"><img src="https://app.cropwatch.io/_app/immutable/assets/cropwatchText.DtMOKhKF.png" alt="CropWatch UI Repo" /></a>
-
+<a href="https://app.CropWatch.io"><img src="https://github.com/CropWatchDevelopment/CropWatch/blob/master/github/.xdp-DashboardImg.png" alt="CropWatch UI Repo" /></a>
 
 ## Github README PROFILE CATEGORY
 
