@@ -1,7 +1,7 @@
 <h1 align="center">CropWatch Web UI</h1>
 <p align="center"><i>Our PWA Web Application for viewing and controlling your farm from anywhere and everwhere.</i></p>
 <div align="center">
-[![Known Vulnerabilities](https://snyk.io/test/github/{username}/{repo}/badge.svg)]
+[![Known Vulnerabilities](https://snyk.io/test/github/cropwatchdevelopment/cropwatch/badge.svg)]
 [![CircleCI](https://circleci.com/gh/CropWatch/CropWatch UI.svg?style=svg&circle-token=CCIPRJ_Nexgtrn5p8fSy3Sx8sHnR_c27643788cac1b71f91861ec8b81f34d2060fd62)](https://app.circleci.com/pipelines/circleci/27p8uxyD17tRZhmjhoWP9P/N7Kp3yEt2NpCqi45cgs5G1)
 </div>
 <br>
