@@ -22,6 +22,7 @@
 			operator: '=',
 			threshold_value: 0,
 			action: 'email',
+			action_recipient: [],
 			children: []
 		});
 		root = root;
@@ -30,6 +31,10 @@
 	const onDelete = (i) => {
 		root.splice(i, 1);
 		root = root;
+	};
+
+	const SaveRule = () => {
+		console.log(root);
 	};
 </script>
 
