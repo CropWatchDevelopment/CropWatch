@@ -28,14 +28,14 @@ Link : https://app.CropWatch.io
 
 ## Github README PROFILE CATEGORY
 
-- [ ] [Dashboard]()
-- [ ] [Locations]()
-- [ ] [Location Details]()
+- [x] [Dashboard]()
+- [x] [Locations]()
+- [x] [Location Details]()
 - [ ] [Sensor Details]()
 - [ ] [Sensor Rules]()
 - [ ] [Sensor Settings]()
 - [ ] [Sensor Compare]()
-- [ ] [Many Many Sensor Pages...]()
+- [-] [Many Many Sensor Pages...]()
 - [ ] [Settings Page with notations]()
 - [ ] [Push Notifications]()
 - [ ] [Real-Time Updates]()
