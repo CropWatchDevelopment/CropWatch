@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { mdiFloppy, mdiFunction, mdiGateOr, mdiTrashCan } from '@mdi/js';
-	import { Button, Icon } from 'svelte-ux';
+	import { mdiFloppy, mdiFunction, mdiGateOr, mdiPlus, mdiTrashCan } from '@mdi/js';
+	import { Avatar, Button, Card, Header, Icon, TextField } from 'svelte-ux';
 	import SubRule from './SubRule.svelte';
 
 	export let sensor;
@@ -16,8 +16,8 @@
 
 	const onAdd = () => {
 		root.push({
-			name: uuidv4(),
 			id: uuidv4(),
+			parent_id: null,
 			subject: '',
 			operator: '=',
 			threshold_value: 0,
@@ -33,22 +33,34 @@
 	};
 </script>
 
-<h1 class="text-4xl font-semibold text-slate-700 mb-4"><Icon data={mdiFunction} /> Sensor Rules</h1>
+<form>
+	<Card>
+		<Header title="Add Sensor Rule" subheading="List of rules for this sensor" slot="header">
+			<div slot="avatar">
+				<Avatar class="bg-primary text-primary-content font-bold">
+					<Icon data={mdiFunction} />
+				</Avatar>
+			</div>
+		</Header>
+		<TextField label="Rule Name" />
+		{#each root as singleRule, i}
+			<SubRule bind:root={singleRule} {latestData}>
+				<Icon slot="pre" data={mdiGateOr} classes={{ root: 'my-auto' }} />
+				<Button slot="post" on:click={() => onDelete(i)} color="success" icon={mdiTrashCan} />
+			</SubRule>
+		{/each}
 
-{#each root as singleRule, i}
-	<div class="flex flex-row">
-		<Icon data={mdiGateOr} class="mr-2" />
-		<SubRule bind:root={singleRule} {latestData} />
-		<Button on:click={() => onDelete(i)} color="success" icon={mdiTrashCan} />
-	</div>
-{/each}
+		<div slot="actions">
+			<Button
+			variant="fill-outline"
+			icon={mdiPlus}
+				on:click={() => {
+					onAdd();
+				}}>Add Top Level Rule</Button
+			>
 
-<Button
-	on:click={() => {
-		onAdd();
-	}}>Add Top Level Rule</Button
->
-
-<Button on:click={() => {}} color="success" icon={mdiFloppy} />
-
+			<Button variant="fill-outline" on:click={() => {}} color="success" icon={mdiFloppy}> Save</Button>
+		</div>
+	</Card>
+</form>
 <pre>{JSON.stringify(root, null, 2)}</pre>
