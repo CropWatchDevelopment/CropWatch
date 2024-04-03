@@ -44,7 +44,8 @@ Link : https://app.CropWatch.io
 # List of Tools & Packages Used:
 - [https://svelte-ux.techniq.dev/](https://github.com/techniq/svelte-ux)
 
-# List out `Awesome README Profile` Articles
+# We are creating `community pages` Here:
+<Coming soon...>
 
 # Contribute
 
