@@ -40,14 +40,12 @@
 
 	const onAdd = () => {
 		root.children.push({
-			id: uuidv4(),
-			parent_id: root.id,
+			rule_id: uuidv4(),
+			parent_id: root.rule_id,
 			ruleGroupId: root.ruleGroupId,
 			subject: '',
 			operator: '=',
 			threshold_value: 0,
-			action: 'email',
-			action_recipient: [],
 			children: []
 		});
 		root = root;

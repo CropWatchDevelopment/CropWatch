@@ -27,6 +27,7 @@
 	} from 'svelte-ux';
 	import SubRule from './SubRule.svelte';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 
 	export let sensor;
 	let latestData = sensor.data.at(-1);
@@ -56,6 +57,7 @@
 
 	const onAdd = () => {
 		ruleGroup.root.push({
+			rule_id: uuidv4(),
 			ruleGroupId: ruleGroupId,
 			parent_id: null,
 			subject: '',
@@ -82,6 +84,19 @@
 		});
 		console.log('Insertion Result', result);
 	};
+
+	onMount(() => {
+		fetch(`/api/rules?dev_eui=${$page.params.sensor_eui}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				ruleGroup = data;
+			});
+	});
 </script>
 
 <form>

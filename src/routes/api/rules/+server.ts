@@ -2,7 +2,26 @@
 
 // src/routes/api/protected-route/+server.ts
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
-import { json, error } from '@sveltejs/kit'
+import { json, error } from '@sveltejs/kit';
+
+export const GET = async ({ url, locals: { supabase, getSession } }) => {
+    const session = await getSession();
+    if (!session) {
+        // the user is not signed in
+        throw error(401, { message: 'Unauthorized' })
+    }
+
+    
+    let dev_eui = url.searchParams.get('dev_eui');
+
+    const { data, error } = await supabase.from('cw_rule_criteria')
+    .select('*, cw_rules(*)')
+    .eq('cw_rules.dev_eui', dev_eui);
+
+    console.log(data, error);
+
+    return json(data);
+}
 
 export const POST = async ({ request, locals: { supabase, getSession } }) => {
     const session = await getSession();
@@ -20,7 +39,7 @@ export const POST = async ({ request, locals: { supabase, getSession } }) => {
     await saveRule(jsonData.ruleGroup, supabase);
     await insertCriteria(jsonData.ruleGroup.root, supabase);
 
-    return json({ });
+    return json({});
 }
 
 function insertCriteria(criteriaArray, supabase) {
@@ -62,8 +81,8 @@ async function saveCriteria(criteria, supabase) {
         trigger_value: criteria.threshold_value,
         reset_value: criteria.reset_value,
         ruleGroupId: criteria.ruleGroupId,
-        parentId: criteria.parentId,
-        
+        parent_id: criteria.parent_id,
+
     });
     if (error) {
         console.log('Failed to insert rule criteria', error);
