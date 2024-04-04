@@ -1,17 +1,73 @@
 
 
 // src/routes/api/protected-route/+server.ts
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { json, error } from '@sveltejs/kit'
 
-export const POST = async ({request, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  const formData = await request.formData();
-  console.log(session, formData);
-  if (!session) {
-    // the user is not signed in
-    throw error(401, { message: 'Unauthorized' })
-  }
-  
-  
+export const POST = async ({ request, locals: { supabase, getSession } }) => {
+    const session = await getSession();
+    if (!session) {
+        // the user is not signed in
+        throw error(401, { message: 'Unauthorized' })
+    }
+
+    const jsonData = await request.json();
+    console.log('Raw JSON', jsonData);
+    if (jsonData.ruleGroup === null) {
+        return error(400, { message: 'Bad Request' });
+    }
+
+    await saveRule(jsonData.ruleGroup, supabase);
+    await insertCriteria(jsonData.ruleGroup.root, supabase);
+
+    return json({ });
 }
 
+function insertCriteria(criteriaArray, supabase) {
+    // Iterate over each criteria object in the array
+    criteriaArray.forEach(criteria => {
+        // Log the current criteria details
+        // console.log(`ID: ${criteria.id}, Subject: ${criteria.subject}, Operator: ${criteria.operator}, Threshold: ${criteria.threshold_value}`);
+        saveCriteria(criteria, supabase);
+        // If the current criteria has children, recursively call this function on the children array
+        if (criteria.children && criteria.children.length > 0) {
+            insertCriteria(criteria.children, supabase);
+        }
+    });
+}
+
+async function saveRule(rule, supabase) {
+    const { data, error } = await supabase.from('cw_rules').insert({
+        dev_eui: rule.dev_eui,
+        name: rule.ruleName,
+        action: rule.action,
+        action_recipient: rule.action_recipient.join(),
+        is_triggered: false,
+        last_triggered: null,
+        ruleGroupId: rule.groupId,
+    });
+    if (error) {
+        console.log('Failed to insert rule criteria', error);
+        return false;
+    }
+    console.log('Rule Insert SUCCESS');
+    return true;
+}
+
+async function saveCriteria(criteria, supabase) {
+    console.log('criteria to save:', criteria);
+    const { data, error } = await supabase.from('cw_rule_criteria').insert({
+        subject: criteria.subject,
+        operator: criteria.operator,
+        trigger_value: criteria.threshold_value,
+        reset_value: criteria.reset_value,
+        ruleGroupId: criteria.ruleGroupId,
+        parentId: criteria.parentId,
+        
+    });
+    if (error) {
+        console.log('Failed to insert rule criteria', error);
+        return false;
+    }
+    return true;
+}
