@@ -23,6 +23,12 @@ Link : https://app.CropWatch.io
 
 <a href="https://app.CropWatch.io"><img src="https://github.com/CropWatchDevelopment/CropWatch/blob/master/github/.xdp-DashboardImg.png" alt="CropWatch UI Repo" /></a>
 
+# Environments
+- [UAT](https://crop-watch-i2xiyd6mo-crop-watch-team.vercel.app/)
+- [PROD](https://app.cropwatch.io)
+- [QA](https://app-qa.cropwatch.io)
+- [DEV](http://localhost:5173)
+
 ## Github README PROFILE CATEGORY
 
 - [x] [Dashboard]()
