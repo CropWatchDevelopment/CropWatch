@@ -25,7 +25,7 @@
 
 		//Heatmap layer
 		if (heatMapLatLngs instanceof Array) {
-			L.heatLayer(heatMapLatLngs, { radius: 15 }).addTo(map);
+			L.heatLayer(heatMapLatLngs, { radius: 30 }).addTo(map);
 		}
 
 		if (disableZoom) {
