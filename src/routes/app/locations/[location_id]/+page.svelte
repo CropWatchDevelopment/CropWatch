@@ -151,7 +151,7 @@
 										return [
 											s.cw_devices.lat,
 											s.cw_devices.long,
-											s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC
+											(s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC/zoom)
 										];
 								})}
 						>
@@ -163,7 +163,6 @@
 										height={40}
 									>
 										<StatsQuickView sensor={sensor.cw_devices} />
-										{sensor.cw_devices.type}
 										{#if sensor.cw_devices.type == 2}
 											<TempMarker
 												latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
