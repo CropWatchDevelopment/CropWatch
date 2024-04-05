@@ -11,12 +11,12 @@ export const GET = async ({ url, locals: { supabase, getSession } }) => {
         throw error(401, { message: 'Unauthorized' })
     }
 
-    
+
     let dev_eui = url.searchParams.get('dev_eui');
 
     const { data, error } = await supabase.from('cw_rules')
-    .select('*, cw_rule_criteria(*)')
-    .eq('dev_eui', dev_eui);
+        .select('*, cw_rule_criteria(*)')
+        .eq('dev_eui', dev_eui);
 
     console.log(data, error);
 
@@ -41,6 +41,51 @@ export const POST = async ({ request, locals: { supabase, getSession } }) => {
 
     return json({});
 }
+
+export const DELETE = async ({ url, locals: { supabase, getSession } }) => {
+    const session = await getSession();
+    if (!session) {
+        // the user is not signed in
+        throw error(401, { message: 'Unauthorized' })
+    }
+
+    let ruleId = url.searchParams.get('rule_id');
+
+    if (ruleId === null) {
+        return error(400, { message: 'Bad Request' });
+    }
+
+    const { data, error } = await supabase.from('cw_rules').delete().eq('id', ruleId);
+    console.log(data, error);
+
+    return json({ data, error }, { status: 200 });
+}
+
+export const PUT = async ({ url, request, locals: { supabase, getSession } }) => {
+    const session = await getSession();
+    if (!session) {
+        // the user is not signed in
+        throw error(401, { message: 'Unauthorized' })
+    }
+
+    let ruleId = url.searchParams.get('rule_id');
+    const jsonData = await request.json();
+
+    if (jsonData === null || ruleId === null) {
+        return error(400, { message: 'Bad Request' });
+    }
+
+    const { data, error } = await supabase.from('cw_rules')
+        .update({
+            is_triggered: jsonData.reset,
+        })
+        .eq('id', ruleId)
+        .select();
+
+    return json({ data, error }, { status: (data && data.length > 0) ? 201 : 401 });
+}
+
+
 
 function insertCriteria(criteriaArray, supabase) {
     // Iterate over each criteria object in the array

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		mdiEmail,
+		mdiEye,
 		mdiFloppy,
 		mdiFunction,
 		mdiGateOr,
@@ -31,11 +32,11 @@
 	import SubRule from './SubRule.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import moment from 'moment';
+	import { toast } from '@zerodevx/svelte-toast';
 
 	export let sensor;
 	let latestData = sensor.data.at(-1);
-	let loadedRules = null;
+	let ruleData;
 
 	function uuidv4() {
 		return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
@@ -89,6 +90,17 @@
 		console.log('Insertion Result', result);
 	};
 
+	const deleteRule = async (id: number) => {
+		const result = await fetch(`/api/rules?rule_id=${id}`, { method: 'DELETE' });
+		if (result.status === 200) {
+			console.log('Rule deleted successfully');
+			toast.push('Rule deleted successfully');
+		} else {
+			console.error('Failed to delete rule');
+			toast.push('Rule deleted Failed!');
+		}
+	};
+
 	onMount(() => {
 		fetch(`/api/rules?dev_eui=${$page.params.sensor_eui}`, {
 			method: 'GET',
@@ -98,7 +110,7 @@
 		})
 			.then((res) => res.json())
 			.then((data) => {
-				loadedRules = data;
+				ruleData = data;
 			});
 	});
 </script>
@@ -209,41 +221,6 @@
 		</div>
 	</Header>
 </Card>
-{#if loadedRules}
-	{#each loadedRules as rule}
-		<ListItem
-			title={rule.name}
-			subheading={`Last Triggered: ${loadedRules.last_triggered ? moment(loadedRules.last_triggered) : 'Never'}`}
-		>
-			<div slot="actions">
-				<Toggle let:on={open} let:toggle>
-					<Button icon={mdiTrashCan} on:click={toggle} color="danger">Delete</Button>
-					<Dialog {open} on:close={toggle}>
-						<div slot="title">Are you sure?</div>
-						<div class="px-6 py-3">
-							This will permanently delete the item and can not be undone.
-						</div>
-						<div slot="actions">
-							<Button
-								on:click={() => {
-									console.log('Deleting item...');
-								}}
-								variant="fill"
-								color="danger"
-							>
-								Yes, delete item
-							</Button>
-							<Button>Cancel</Button>
-						</div>
-					</Dialog>
-				</Toggle>
-				<Button variant="fill" color="primary" icon={mdiPencil} on:click={() => {
-					ruleGroup = rule;
-				}}>Edit</Button>
-			</div>
-		</ListItem>
-	{/each}
-{/if}
 
 <Dialog open={emailDialogOpen}>
 	<div slot="title">Are you sure you want to do that?</div>
