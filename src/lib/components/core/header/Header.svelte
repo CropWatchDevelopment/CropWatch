@@ -23,6 +23,7 @@
 	import { authState } from '$lib/stores/auth.store';
 	import { alertState } from '$lib/stores/alert.store';
 	import cropWatchSVG from '$lib/images/cropwatch.svg';
+	import { _ } from 'svelte-i18n';
 
 	export let username;
 
@@ -36,8 +37,8 @@
 <AppBar class="bg-emerald-700 text-white elevation-10">
 	<div slot="title" class="flex">
 		<img src={cropWatchSVG} class="mr-3 h-6 sm:h-9" alt="CropWatch Company Icon" />
-		<span class="hidden md:inline-block translate-y-1/4">CropWatch&nbsp;</span>
-		<span class="translate-y-1/4 hidden md:inline-block">Farming</span>
+		<span class="hidden md:inline-block translate-y-1/4">{$_('header_title')}</span>
+		<!-- <span class="translate-y-1/4 hidden md:inline-block">Farming</span> -->
 	</div>
 
 	<div slot="actions" class="flex gap-1 md:gap-3">
