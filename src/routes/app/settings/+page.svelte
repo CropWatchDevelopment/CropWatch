@@ -6,13 +6,13 @@
 		mdiTrashCan
 	} from '@mdi/js';
 	import { Button, SelectField, ThemeSwitch } from 'svelte-ux';
-	import { locale, locales } from 'svelte-i18n';
+	import { _, locale, locales } from 'svelte-i18n';
 </script>
 
-<h1 class="text-lg font-bold border-b">User Interface Settings</h1>
+<h1 class="text-lg font-bold border-b">{$_('settings.title')}</h1>
 
 <div class="flex flex-col gap-2">
-	<h1>Dark / Light Theme</h1>
+	<h1>{$_('settings.theme')}</h1>
 	<ThemeSwitch />
 
 	<h1>Temperature Notation</h1>

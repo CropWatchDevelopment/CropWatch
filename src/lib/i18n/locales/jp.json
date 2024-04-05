@@ -10,6 +10,21 @@
     "change_log": "変更ログ"
   },
   "dashboard": {
-    "title": "ダッシュボード"
+    "title": "ダッシュボード",
+    "notifications": "通知",
+    "devices": "デバイス",
+    "gateways": "ゲートウェイ",
+    "low_battery": "バッテリー残量低下"
+  },
+  "header_no_alerts": "No Alerts",
+  "header": {
+    "logout": "ログアウト",
+    "alerts": "Alertsu",
+    "user_management": "Usa Management",
+    "settings": "設定"
+  },
+  "settings": {
+    "theme": "明るい/暗いテーマ",
+    "title": "ユーザーインターフェース設定"
   }
 }

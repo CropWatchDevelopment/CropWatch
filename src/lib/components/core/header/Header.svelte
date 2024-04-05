@@ -42,7 +42,7 @@
 	</div>
 
 	<div slot="actions" class="flex gap-1 md:gap-3">
-		<Tooltip title="Alerts" placement="left" offset={2}>
+		<Tooltip title={$_('header.alerts')} placement="left" offset={2}>
 			<Toggle let:on={open} let:toggle>
 				<Button
 					on:click={toggle}
@@ -55,7 +55,7 @@
 					<Menu {open} on:close={toggle}>
 						{#if $alertState.length === 0}
 							<MenuItem>
-								<Icon data={mdiCheckCircle} style="color:green;" /> No new Alerts
+								<Icon data={mdiCheckCircle} style="color:green;" /> {$_('header_no_alerts')}
 							</MenuItem>
 						{/if}
 					</Menu>
@@ -63,21 +63,24 @@
 			</Toggle>
 		</Tooltip>
 
-		<Tooltip title="User Management" placement="left" offset={2}>
+		<Tooltip title={$_('header.user_management')} placement="left" offset={2}>
 			<Toggle let:on={open} let:toggle let:toggleOff>
 				<Button on:click={toggle}>
 					<Avatar class="bg-slate-100 text-emerald-700 font-bold">
 						<Icon data={mdiAccount} size="35" />
 					</Avatar>
 					<ResponsiveMenu {open} on:close={toggleOff}>
-						<MenuItem icon={mdiCog} classes={{ root: 'p-4' }} on:click={toggleOff}
-							>Settings</MenuItem
+						<MenuItem icon={mdiCog} classes={{ root: 'p-4' }} on:click={() => {
+							toggleOff;
+							goto('/app/settings');
+						}}
+							>{$_('header.settings')}</MenuItem
 						>
 						<MenuItem
 							icon={mdiLock}
 							classes={{ root: 'p-4' }}
 							on:click={toggleOff}
-							on:click={() => logout()}>Logout</MenuItem
+							on:click={() => logout()}>{$_('header.logout')}</MenuItem
 						>
 					</ResponsiveMenu>
 					<div class="grid grid-col grid-rows-2 mx-3">

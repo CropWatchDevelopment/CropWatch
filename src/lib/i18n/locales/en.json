@@ -10,6 +10,21 @@
     "change_log": "Change Log"
   },
   "dashboard": {
-    "title": "Dashboard"
+    "title": "Dashboard",
+    "notifications": "Notifications",
+    "devices": "Devices",
+    "gateways": "Gateways",
+    "low_battery": "Low Battery"
+  },
+  "header_no_alerts": "No New Alerts",
+  "header": {
+    "logout": "Logout",
+    "alerts": "Alerts",
+    "user_management": "User Management",
+    "settings": "Settings"
+  },
+  "settings": {
+    "theme": "Dark / Light Theme",
+    "title": "User Interface Settings"
   }
 }
