@@ -14,9 +14,9 @@ export const GET = async ({ url, locals: { supabase, getSession } }) => {
     
     let dev_eui = url.searchParams.get('dev_eui');
 
-    const { data, error } = await supabase.from('cw_rule_criteria')
-    .select('*, cw_rules(*)')
-    .eq('cw_rules.dev_eui', dev_eui);
+    const { data, error } = await supabase.from('cw_rules')
+    .select('*, cw_rule_criteria(*)')
+    .eq('dev_eui', dev_eui);
 
     console.log(data, error);
 
@@ -36,7 +36,7 @@ export const POST = async ({ request, locals: { supabase, getSession } }) => {
         return error(400, { message: 'Bad Request' });
     }
 
-    await saveRule(jsonData.ruleGroup, supabase);
+    await saveRule(jsonData.ruleGroup, supabase, session);
     await insertCriteria(jsonData.ruleGroup.root, supabase);
 
     return json({});
@@ -55,8 +55,9 @@ function insertCriteria(criteriaArray, supabase) {
     });
 }
 
-async function saveRule(rule, supabase) {
+async function saveRule(rule, supabase, session: Session) {
     const { data, error } = await supabase.from('cw_rules').insert({
+        profile_id: session.user.id,
         dev_eui: rule.dev_eui,
         name: rule.ruleName,
         action: rule.action,
