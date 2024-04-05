@@ -21,7 +21,9 @@
     "logout": "Logout",
     "alerts": "Alerts",
     "user_management": "User Management",
-    "settings": "Settings"
+    "settings": "Settings",
+    "admin": "Administrator",
+    "home": "Home"
   },
   "settings": {
     "theme": "Dark / Light Theme",

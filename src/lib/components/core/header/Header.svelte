@@ -87,7 +87,7 @@
 						<small>
 							<small>{username}</small>
 						</small>
-						<small>Administrator</small>
+						<small>{$_('header.admin')}</small>
 					</div>
 					<Icon data={mdiDotsVertical} />
 				</Button>

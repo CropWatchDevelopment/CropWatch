@@ -32,7 +32,7 @@
 
 <AppLayout areas="'header header' 'aside main'">
 	<nav id="primary_nav" slot="nav" class="nav">
-		<NavItem path="/" text="Home" icon={mdiHome} currentUrl={$page.url} class="mt-2" />
+		<NavItem path="/" text={$_('header.home')} icon={mdiHome} currentUrl={$page.url} class="mt-2" />
 
 		<NavItem
 			path="/app/dashboard"
