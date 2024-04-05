@@ -60,7 +60,7 @@
 			class="mt-2"
 		/>
 
-		<NavItem path="/" text="Data Rules" icon={mdiFunction} currentUrl={$page.url} class="mt-2" />
+		<NavItem path="/app/all-rules" text="Sensor Rules" icon={mdiFunction} currentUrl={$page.url} class="mt-2" />
 
 		<NavItem path="/" text="Permissions" icon={mdiShieldLock} currentUrl={$page.url} class="mt-2" />
 		
