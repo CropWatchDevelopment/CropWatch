@@ -19,9 +19,7 @@
 		mdiViewDashboard
 	} from '@mdi/js';
 	import { navigating, page } from '$app/stores';
-	import { closeFeedback, feedbackOpenState, openFeedback } from '$lib/stores/feedback.store';
-
-	$: feedbackDialogOpen = $feedbackOpenState;
+	import { _, isLoading } from 'svelte-i18n'
 
 	export let data;
 
@@ -38,7 +36,7 @@
 
 		<NavItem
 			path="/app/dashboard"
-			text="Dashboard"
+			text={$_('sidebar.dashboard')}
 			icon={mdiViewDashboard}
 			currentUrl={$page.url}
 			class="mt-2"
@@ -46,7 +44,7 @@
 
 		<NavItem
 			path="/app/locations"
-			text="My Locations"
+			text={$_('sidebar.my_locations')}
 			icon={mdiMap}
 			currentUrl={$page.url}
 			class="mt-2"
@@ -54,22 +52,22 @@
 
 		<NavItem
 			path="/app/devices"
-			text="My Devices"
+			text={$_('sidebar.all_devices')}
 			icon={mdiDevices}
 			currentUrl={$page.url}
-			class="mt-2"
+			class="mt-2" 
 		/>
 
-		<NavItem path="/app/all-rules" text="Sensor Rules" icon={mdiFunction} currentUrl={$page.url} class="mt-2" />
+		<NavItem path="/app/all-rules" text={$_('sidebar.sensor_rules')} icon={mdiFunction} currentUrl={$page.url} class="mt-2" />
 
-		<NavItem path="/" text="Permissions" icon={mdiShieldLock} currentUrl={$page.url} class="mt-2" />
+		<NavItem path="/" text={$_('sidebar.permissions')} icon={mdiShieldLock} currentUrl={$page.url} class="mt-2" />
 		
-		<NavItem path="/app/change-log" text="Change Log" icon={mdiGithub} currentUrl={$page.url} class="mt-2" />
+		<NavItem path="/app/change-log" text={$_('sidebar.change_log')} icon={mdiGithub} currentUrl={$page.url} class="mt-2" />
 
 		<span class="flex flex-1" />
 		<NavItem
 			path="/app/settings"
-			text="Settings"
+			text={$_('sidebar.settings')}
 			icon={mdiCog}
 			currentUrl={$page.url}
 			class="mt-2"
@@ -79,10 +77,14 @@
 	<Header {username}/>
 
 	<main class="scroll-smooth isolate">
-		{#if $navigating}
+		{#if $navigating || $isLoading}
 			<div class="flex items-center justify-center h-full">
 				<ProgressCircle />
-				&nbsp; Loading Content...
+				{#if $isLoading}
+					&nbsp; Loading Translations...
+				{:else}
+					&nbsp; Loading Content...
+				{/if}
 			</div>
 		{:else}
 			<div>
@@ -91,24 +93,6 @@
 		{/if}
 	</main>
 </AppLayout>
-
-<Dialog open={feedbackDialogOpen} persistent>
-	<div slot="title">Have Feedback about this page?</div>
-	<div class="flex flex-row gap-2 mb-2 p-4">
-		<Button variant="outline">😭</Button>
-		<Button variant="outline">😢</Button>
-		<Button variant="outline">😞</Button>
-		<Button variant="outline">🫤</Button>
-		<Button variant="outline">😊</Button>
-		<Button variant="outline">😀</Button>
-		<Button variant="outline">😁</Button>
-	</div>
-	<TextField label="Comment" multiline classes={{ root: 'p-4' }} />
-	<div slot="actions">
-		<Button variant="fill" color="primary" on:click={() => closeFeedback()}>Close</Button>
-		<Button variant="fill" color="primary">Submit Feedback</Button>
-	</div>
-</Dialog>
 
 <style>
 	#primary_nav {

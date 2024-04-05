@@ -24,6 +24,7 @@
 	import { onMount } from 'svelte';
 	import moment from 'moment';
 	import { supabase } from '$lib/supabaseClient';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 
@@ -110,7 +111,7 @@
 >
 	<div class="flex items-center space-x-2 ml-2">
 		<Icon data={mdiViewDashboard} />
-		<span>Dashboard</span>
+		<span>{$_('dashboard.title')}</span>
 	</div>
 </h1>
 

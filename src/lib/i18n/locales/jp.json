@@ -1,0 +1,15 @@
+{
+  "header_title": "クロップウオッチ 農業",
+  "sidebar": {
+    "dashboard": "ダッシュボード",
+    "my_locations": "私の場所",
+    "all_devices": "私のデバイス",
+    "settings": "設定",
+    "sensor_rules": "ルール",
+    "permissions": "権限",
+    "change_log": "変更ログ"
+  },
+  "dashboard": {
+    "title": "ダッシュボード"
+  }
+}

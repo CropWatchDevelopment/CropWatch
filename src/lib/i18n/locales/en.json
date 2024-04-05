@@ -1,4 +1,15 @@
 {
-  "hello": "world",
-  "header_title": "CropWatch Farming"
+  "header_title": "CropWatch Farming",
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "my_locations": "My Locations",
+    "all_devices": "My Devices",
+    "settings": "Settings",
+    "sensor_rules": "Sensor Rules",
+    "permissions": "Permissions",
+    "change_log": "Change Log"
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  }
 }
