@@ -12,9 +12,9 @@
   "dashboard": {
     "title": "ダッシュボード",
     "notifications": "通知",
-    "devices": "デバイス",
-    "gateways": "ゲートウェイ",
-    "low_battery": "バッテリー残量低下"
+    "devices": "デバイス稼働状況",
+    "gateways": "ゲートウェイ稼働状況",
+    "low_battery": "バッテリー交換"
   },
   "header_no_alerts": "No Alerts",
   "header": {
@@ -54,13 +54,13 @@
   },
   "all_locations": {
     "no_locations_message": "You have not setup any locations yet",
-    "title": "All Locations"
+    "title": "全ての場所"
   },
   "app": {
     "loading_message": "Loading Content...",
     "loading_translations_message": "Loading Translations"
   },
   "location": {
-    "map_card_title": "overview map in japanese"
+    "map_card_title": "エリアマップ"
   }
 }
