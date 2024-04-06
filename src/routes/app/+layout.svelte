@@ -81,9 +81,9 @@
 			<div class="flex items-center justify-center h-full">
 				<ProgressCircle />
 				{#if $isLoading}
-					&nbsp; Loading Translations...
+					&nbsp; {$_('app.loading_translations_message')}
 				{:else}
-					&nbsp; Loading Content...
+					&nbsp; {$_('app.loading_message')}
 				{/if}
 			</div>
 		{:else}

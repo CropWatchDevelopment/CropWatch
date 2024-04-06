@@ -9,6 +9,8 @@
 		mdiExclamationThick,
 		mdiEye,
 		mdiFunction,
+		mdiPencil,
+		mdiRestart,
 		mdiRestore,
 		mdiTrashCan
 	} from '@mdi/js';
@@ -16,6 +18,7 @@
 	import { Avatar, Button, Dialog, Icon, ListItem, TextField, Toggle, Tooltip } from 'svelte-ux';
 	import { toast } from '@zerodevx/svelte-toast';
 	import moment from 'moment';
+	import { _ } from 'svelte-i18n';
 
 	// $: page.set({ ...page, title: "All Configured Rules" });
 	export let data;
@@ -49,14 +52,14 @@
 	style="background-image:url({backgroundImg}); width:100%; height: 100px;"
 >
 	<p class="my-auto ml-2"></p>
-	<p class="my-auto"><Icon data={mdiFunction} /> All Configured Rules</p>
+	<p class="my-auto"><Icon data={mdiFunction} />{$_('all_rules.title')}</p>
 </h1>
 
 <ul>
 	{#each data.rules as rule}
 		<ListItem
 			title={rule.name}
-			subheading={`Last Triggered: ${rule.last_triggered ? moment(rule.last_triggered) : 'Never'}`}
+			subheading={`${$_('all_rules.last_triggered')}: ${rule.last_triggered ? moment(rule.last_triggered) : $_('all_rules.last_triggered_timeName')}`}
 		>
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
@@ -68,45 +71,44 @@
 			</div>
 			<div slot="actions" class="flex gap-4">
 				{#if rule.is_triggered}
-					<Tooltip title="Reset Rule">
+
 						<Toggle let:on={open} let:toggle>
-							<Tooltip title="Delete Rule">
-								<Button icon={mdiRestore} on:click={toggle} color="success" />
+							<Tooltip title={$_('all_rules.tooltip.resetRule')}>
+								<Button icon={mdiRestart} on:click={toggle} color="success" />
 							</Tooltip>
 							<Dialog {open} on:close={toggle}>
-								<div slot="title">Are you sure?</div>
-								<div class="px-6 py-3">Do you want to RESET this rule?</div>
+								<div slot="title">{$_('all_rules.dialog.areYouSure')}</div>
+								<div class="px-6 py-3">{$_('all_rules.dialog.ruleResetText')}</div>
 								<div slot="actions">
 									<Button on:click={async () => resetRule(rule.id)} variant="fill" color="info">
-										Yes, RESET rule
+										{$_('all_rules.dialog.yes_reset_button')}
 									</Button>
-									<Button>Cancel</Button>
+									<Button>{$_('all_rules.dialog.cancle')}</Button>
 								</div>
 							</Dialog>
 						</Toggle>
-					</Tooltip>
 				{/if}
-				<Tooltip title="Download Full Rule-Alert History (coming soon!)">
+				<Tooltip title={$_('all_rules.downloadIconTooltip')}>
 					<Button variant="fill-light" icon={mdiDownload} color="info" />
 				</Tooltip>
-				<Tooltip title="View Device">
-					<Button variant="fill-light" icon={mdiEye} on:click={() => goto(``)} color="info" />
+				<Tooltip title={$_('all_rules.ViewDeviceIconTooltip')}>
+					<Button variant="fill-light" icon={mdiPencil} on:click={() => goto(``)} color="info" />
 				</Tooltip>
 				<Toggle let:on={open} let:toggle>
-					<Tooltip title="Delete Rule">
+					<Tooltip title={$_('all_rules.deleteIconTooltip')}>
 						<Button icon={mdiTrashCan} on:click={toggle} color="danger" />
 					</Tooltip>
 					<Dialog {open} on:close={toggle}>
-						<div slot="title">Are you sure?</div>
+						<div slot="title">{$_('all_rules.delete_dialog.areYouSure')}</div>
 						<div class="px-6 py-3">
-							This will permanently delete the item and can not be undone.
+							{$_('all_rules.delete_dialog.caption')}
 							<TextField label="Type: DELETE to enable delete button" on:change={(e) => { deleteConfirm = e.detail.value.toString(); }} />
 						</div>
 						<div slot="actions">
 							<Button disabled={deleteConfirm !== 'DELETE'} on:click={async () => deleteRule(rule.id)} variant="fill" color="danger">
-								Yes, delete item
+								{$_('all_rules.delete_dialog.yes_button_text')}
 							</Button>
-							<Button>Cancel</Button>
+							<Button>{$_('all_rules.delete_dialog.cancle')}</Button>
 						</div>
 					</Dialog>
 				</Toggle>

@@ -13,6 +13,7 @@
 	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
+	import { _ } from 'svelte-i18n';
 
 	export let data: PageData;
 
@@ -20,7 +21,7 @@
 </script>
 
 <h1 class="mb-2 flex items-center justify-between text-2xl font-bold border-b w-full text-white relative" style="background-image:url({backgroundImg}); width:100%; height: 100px;">
-	<p class="my-auto ml-2">All Locations</p>
+	<p class="my-auto ml-2">{$_('all_locations.title')}</p>
 	<Button
 		icon={mdiPlus}
 		variant="fill-light"
@@ -52,7 +53,7 @@
 						</div>
 					</ListItem>
 				{:else}
-					<li>You don't have any locations yet</li>
+					<li>{$_('all_locations.no_locations_message')}</li>
 				{/if}
 			{/each}
 		{/if}

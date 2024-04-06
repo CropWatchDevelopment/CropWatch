@@ -7,6 +7,8 @@
 		Menu,
 		MenuItem,
 		ResponsiveMenu,
+		ThemeSelect,
+		ThemeSwitch,
 		Toggle,
 		Tooltip
 	} from 'svelte-ux';
@@ -24,6 +26,7 @@
 	import { alertState } from '$lib/stores/alert.store';
 	import cropWatchSVG from '$lib/images/cropwatch.svg';
 	import { _ } from 'svelte-i18n';
+	import LanguageSelect from '$lib/components/LanguageSelect.svelte';
 
 	export let username;
 
@@ -55,7 +58,8 @@
 					<Menu {open} on:close={toggle}>
 						{#if $alertState.length === 0}
 							<MenuItem>
-								<Icon data={mdiCheckCircle} style="color:green;" /> {$_('header_no_alerts')}
+								<Icon data={mdiCheckCircle} style="color:green;" />
+								{$_('header_no_alerts')}
 							</MenuItem>
 						{/if}
 					</Menu>
@@ -70,11 +74,13 @@
 						<Icon data={mdiAccount} size="35" />
 					</Avatar>
 					<ResponsiveMenu {open} on:close={toggleOff}>
-						<MenuItem icon={mdiCog} classes={{ root: 'p-4' }} on:click={() => {
-							toggleOff;
-							goto('/app/settings');
-						}}
-							>{$_('header.settings')}</MenuItem
+						<MenuItem
+							icon={mdiCog}
+							classes={{ root: 'p-4' }}
+							on:click={() => {
+								toggleOff;
+								goto('/app/settings');
+							}}>{$_('header.settings')}</MenuItem
 						>
 						<MenuItem
 							icon={mdiLock}
@@ -93,5 +99,11 @@
 				</Button>
 			</Toggle>
 		</Tooltip>
+
+		<div class="border-r border-primary-content/20 pr-2 grid grid-cols-2 items-center">
+			<LanguageSelect />
+
+			<ThemeSelect keyboardShortcuts />
+		</div>
 	</div>
 </AppBar>

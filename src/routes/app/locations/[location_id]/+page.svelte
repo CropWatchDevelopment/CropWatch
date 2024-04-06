@@ -40,6 +40,7 @@
 	import TempMarker from '$lib/components/leaflet/TempMarker.svelte';
 	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
 	import moment from 'moment';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
@@ -123,7 +124,7 @@
 <div class="grid grid-cols-1 md:grid-cols-12 grid-flow-row gap-4">
 	<Card class="col-span-12 lg:col-span-8">
 		<Header slot="header" class="gap-0">
-			<div slot="title" class="text-nowrap text-xl font-medium">Overview Map</div>
+			<div slot="title" class="text-nowrap text-xl font-medium">{$_('location.map_card_title')}</div>
 			<div slot="avatar">
 				<Avatar class="bg-accent-500 text-white font-bold mr-4">
 					<Icon data={mdiMapMarker} />

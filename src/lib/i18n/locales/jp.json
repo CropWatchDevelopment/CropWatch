@@ -2,10 +2,10 @@
   "header_title": "クロップウオッチ 農業",
   "sidebar": {
     "dashboard": "ダッシュボード",
-    "my_locations": "私の場所",
-    "all_devices": "私のデバイス",
+    "my_locations": "設置場所",
+    "all_devices": "デバイス一覧",
     "settings": "設定",
-    "sensor_rules": "ルール",
+    "sensor_rules": "ルール設定一覧",
     "permissions": "権限",
     "change_log": "変更ログ"
   },
@@ -23,10 +23,44 @@
     "user_management": "Usa Management",
     "settings": "設定",
     "admin": "管理者",
-    "home": "家"
+    "home": "ホーム"
   },
   "settings": {
     "theme": "明るい/暗いテーマ",
     "title": "ユーザーインターフェース設定"
+  },
+  "all_rules": {
+    "title": "ルール設定一覧",
+    "last_triggered": "最終トリガー",
+    "dialog": {
+      "areYouSure": "本当によろしいですか？",
+      "ruleResetText": "このルールをリセットしますか？",
+      "yes_reset_button": "はい、リセットする",
+      "cancle": "キャンセル"
+    },
+    "downloadIconTooltip": "全てのイベント履歴をダウンロードする(coming soon!)",
+    "ViewDeviceIconTooltip": "編集",
+    "deleteIconTooltip": "削除",
+    "delete_dialog": {
+      "areYouSure": "このルールを削除します。よろしいですか?",
+      "caption": "一度削除すると復元できません。",
+      "cancle": "キャンセル",
+      "yes_button_text": "はい、削除する"
+    },
+    "last_triggered_timeName": "一度もなし",
+    "tooltip": {
+      "resetRule": "リセット"
+    }
+  },
+  "all_locations": {
+    "no_locations_message": "You have not setup any locations yet",
+    "title": "All Locations"
+  },
+  "app": {
+    "loading_message": "Loading Content...",
+    "loading_translations_message": "Loading Translations"
+  },
+  "location": {
+    "map_card_title": "overview map in japanese"
   }
 }

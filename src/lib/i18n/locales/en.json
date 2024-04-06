@@ -28,5 +28,39 @@
   "settings": {
     "theme": "Dark / Light Theme",
     "title": "User Interface Settings"
+  },
+  "all_rules": {
+    "title": "All Configured Rules",
+    "last_triggered": "Last Triggered",
+    "dialog": {
+      "areYouSure": "Are you sure?",
+      "ruleResetText": "Do you want to RESET this rule?",
+      "yes_reset_button": "Yes, Reset Rule",
+      "cancle": "Cancel"
+    },
+    "downloadIconTooltip": "Download Event History (coming soon!)",
+    "ViewDeviceIconTooltip": "Edit",
+    "deleteIconTooltip": "Delete",
+    "delete_dialog": {
+      "areYouSure": "Are you sure?",
+      "caption": "This will permanently delete the item and can not be undone.",
+      "yes_button_text": "Yes, Delete Rule",
+      "cancle": "Cancle"
+    },
+    "last_triggered_timeName": "Never",
+    "tooltip": {
+      "resetRule": "Reset"
+    }
+  },
+  "all_locations": {
+    "no_locations_message": "You have not setup any locations yet",
+    "title": "All Locations"
+  },
+  "app": {
+    "loading_message": "Loading Content...",
+    "loading_translations_message": "Loading Translations..."
+  },
+  "location": {
+    "map_card_title": "Overview Map"
   }
 }
