@@ -3,10 +3,10 @@
 	import { Button, Duration, Tabs } from 'svelte-ux';
 	import Details from './details/Details.svelte';
 	import History from './history/History.svelte';
-	import Rules from './rules/Rules.svelte';
 	import Notifications from './notifications/Notifications.svelte';
 	import Settings from './settings/Settings.svelte';
 	import Permissions from './permissions/Permissions.svelte';
+	import Rules from '../../shared/rules/Rules.svelte';
 	import { subSeconds } from 'date-fns';
 	import { mdiChevronLeft } from '@mdi/js';
 	import { goto } from '$app/navigation';
@@ -14,7 +14,7 @@
 	import { supabase } from '$lib/supabaseClient';
 	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	export let data;
 	console.log('Data from the THVPD root page', data);
@@ -36,7 +36,12 @@
 				.channel('custom-insert-channel')
 				.on(
 					'postgres_changes',
-					{ event: 'INSERT', schema: 'public', table: 'cw_air_thvd', filter: `dev_eui=eq.${$page.params.sensor_eui}`},
+					{
+						event: 'INSERT',
+						schema: 'public',
+						table: 'cw_air_thvd',
+						filter: `dev_eui=eq.${$page.params.sensor_eui}`
+					},
 					(payload) => {
 						console.log('Change received!', payload);
 						data.sensor.data.unshift(payload.new);
@@ -49,8 +54,7 @@
 	});
 
 	onDestroy(() => {
-		if(channels)
-		channels.unsubscribe();
+		if (channels) channels.unsubscribe();
 	});
 </script>
 
@@ -110,7 +114,11 @@
 				<History {sensor} />
 			{/await}
 		{:else if value === 3}
-			<Rules />
+			{#await data}
+				loading...
+			{:then sensor}
+				<Rules sensor={sensor.sensor} />
+			{/await}
 		{:else if value === 4}
 			<Notifications />
 		{:else if value === 5}

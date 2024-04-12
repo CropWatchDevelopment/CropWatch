@@ -43,7 +43,7 @@
 	});
 </script>
 
-<div bind:this={markerElement} style="z-index: 1000000;">
+<div bind:this={markerElement}>
 	<Chart>
 		<Svg>
 			<Group center>

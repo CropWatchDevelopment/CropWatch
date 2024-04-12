@@ -101,16 +101,21 @@ function insertCriteria(criteriaArray, supabase) {
 }
 
 async function saveRule(rule, supabase, session: Session) {
-    const { data, error } = await supabase.from('cw_rules').insert({
+    const aboutToInsert = {
         profile_id: session.user.id,
         dev_eui: rule.dev_eui,
         name: rule.ruleName,
-        action: rule.action,
+        babylon_notifier_type: 1,
         action_recipient: rule.action_recipient.join(),
         is_triggered: false,
         last_triggered: null,
         ruleGroupId: rule.groupId,
-    });
+    };
+
+    console.log('about to insert:', aboutToInsert);
+    
+    
+    const { data, error } = await supabase.from('cw_rules').insert();
     if (error) {
         console.log('Failed to insert rule criteria', error);
         return false;
