@@ -9,7 +9,7 @@ export async function load({ params }) {
         sensor: await supabase.from('cw_air_thvd')
         .select('*')
         .eq('dev_eui', params.sensor_eui)
-        // .gte('created_at', moment().subtract(1, 'days').toISOString())
+        .gte('created_at', moment().subtract(1, 'days').toISOString())
         .order('created_at', { ascending: false })
     };
 }

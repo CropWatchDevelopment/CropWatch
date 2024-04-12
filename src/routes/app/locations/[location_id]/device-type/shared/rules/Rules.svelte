@@ -35,6 +35,7 @@
 	import { toast } from '@zerodevx/svelte-toast';
 
 	export let sensor;
+	debugger;
 	let latestData = sensor.data.at(-1);
 	let ruleData;
 

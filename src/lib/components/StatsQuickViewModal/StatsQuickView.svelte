@@ -10,13 +10,9 @@
 	let open: boolean = false;
 </script>
 
-{#if sensor.type == 5}
-	<Icon data={mdiMeterGas} size="3em" class="text-blue-700" on:click={() => (open = true)} />
-{:else if sensor.type == 4 || sensor.type == 3}
-	<Icon data={mdiThermometer} size="3em" class="text-orange-900" on:click={() => (open = true)} />
-{:else}
-	<Icon data={mdiMapMarker} size="3em" class="text-slate-900" on:click={() => (open = true)} />
-{/if}
+<Icon data={mdiThermometer} size="3em" class="text-orange-900" on:click={() => {
+	open = true;
+}} />
 
 <Dialog bind:open>
 	<div slot="title">{DeviceIntToEnglish(sensor.type)}</div>
@@ -83,10 +79,27 @@
 				notation="PPM"
 			/>
 		</div>
+	{:else if sensor.type == 2}
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-2 m-2">
+			<CwStatCard
+				title="Air Temperature"
+				counterStartTime={sensor.cw_air_thvd[0].created_at}
+				value={sensor.cw_air_thvd[0].temperatureC}
+				icon={mdiThermometer}
+				optimal={23.88}
+			/>
+			<CwStatCard
+				title="Air Humidity"
+				counterStartTime={sensor.cw_air_thvd[0].created_at}
+				value={sensor.cw_air_thvd[0].humidity}
+				icon={mdiThermometer}
+				optimal={23.88}
+			/>
+		</div>
 	{:else}
-		<pre>
-			{JSON.stringify(sensor,null, 2)}
-		</pre>
+		<!-- <pre>
+			{JSON.stringify(sensor, null, 2)}
+		</pre> -->
 	{/if}
 
 	<div slot="actions">
