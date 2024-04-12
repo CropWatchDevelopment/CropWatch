@@ -36,7 +36,12 @@
 				.channel('custom-insert-channel')
 				.on(
 					'postgres_changes',
-					{ event: 'INSERT', schema: 'public', table: 'cw_air_thvd', filter: `dev_eui=eq.${$page.params.sensor_eui}`},
+					{
+						event: 'INSERT',
+						schema: 'public',
+						table: 'cw_air_thvd',
+						filter: `dev_eui=eq.${$page.params.sensor_eui}`
+					},
 					(payload) => {
 						console.log('Change received!', payload);
 						data.sensor.data.unshift(payload.new);
@@ -49,8 +54,7 @@
 	});
 
 	onDestroy(() => {
-		if(channels)
-		channels.unsubscribe();
+		if (channels) channels.unsubscribe();
 	});
 </script>
 
@@ -110,7 +114,11 @@
 				<History {sensor} />
 			{/await}
 		{:else if value === 3}
-			<Rules {sensor} />
+			{#await data}
+				loading...
+			{:then sensor}
+				<Rules sensor={sensor.sensor} />
+			{/await}
 		{:else if value === 4}
 			<Notifications />
 		{:else if value === 5}

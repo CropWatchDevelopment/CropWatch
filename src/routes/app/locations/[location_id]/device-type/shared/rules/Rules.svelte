@@ -35,7 +35,6 @@
 	import { toast } from '@zerodevx/svelte-toast';
 
 	export let sensor;
-	debugger;
 	let latestData = sensor.data.at(-1);
 	let ruleData;
 
@@ -52,7 +51,7 @@
 		groupId: ruleGroupId,
 		dev_eui: $page.params.sensor_eui,
 		ruleName: '',
-		action: 1,
+		babylon_notifier_type: 1,
 		action_recipient: []
 	};
 	let emailDialogOpen: boolean = false;
@@ -64,6 +63,7 @@
 	const onAdd = () => {
 		ruleGroup.root.push({
 			rule_id: uuidv4(),
+			dev_eui: $page.params.sensor_eui,
 			ruleGroupId: ruleGroupId,
 			parent_id: null,
 			subject: '',
@@ -80,7 +80,7 @@
 	};
 
 	const SaveRule = async () => {
-		console.log('about to post:', ruleGroup);
+		console.log('about to post:', JSON.stringify(ruleGroup));
 		let result = await fetch('/api/rules', {
 			method: 'POST',
 			headers: {
@@ -129,7 +129,7 @@
 			<div class="flex flex-row gap-1">
 				<TextField bind:value={ruleGroup.ruleName} label="Rule Name" />
 				<SelectField
-					bind:value={ruleGroup.action}
+					bind:value={ruleGroup.babylon_notifier_type}
 					options={[
 						{ value: 1, label: 'E-Mail', icon: mdiEmail },
 						{ value: 2, label: 'WellWatch Alert', icon: mdiWatchVibrate },
@@ -154,15 +154,15 @@
 					</div>
 				</SelectField>
 
-				{#if ruleGroup.action === 5}
+				{#if ruleGroup.babylon_notifier_type === 5}
 					<TextField bind:value={ruleGroup.action_recipient} />
-				{:else if ruleGroup.action === 4}
+				{:else if ruleGroup.babylon_notifier_type === 4}
 					<TextField bind:value={ruleGroup.action_recipient} />
-				{:else if ruleGroup.action === 3}
+				{:else if ruleGroup.babylon_notifier_type === 3}
 					<TextField mask="+1 (___) ___-____" replace="_" bind:value={ruleGroup.action_recipient} />
-				{:else if ruleGroup.action === 2}
-					<TextField bind:value={ruleGroup.action_recipient} />
-				{:else if ruleGroup.action === 1}
+				{:else if ruleGroup.babylon_notifier_type === 2}
+					<TextField bind:value={ruleGroup.babylon_notifier_type} />
+				{:else if ruleGroup.babylon_notifier_type === 1}
 					<ToggleButton let:on={open} let:toggleOff transition={false}>
 						{ruleGroup.action_recipient.length} selected
 						<MultiSelectMenu
