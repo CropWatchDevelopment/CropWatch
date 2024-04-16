@@ -109,6 +109,17 @@
     "Humidity Over Time": "時系列相対湿度データ",
     "Dew Point History": "露点",
     "Dew Point Over Time": "時系列露点データ",
-    "Relative Humidity History": "相対湿度"
+    "Relative Humidity History": "相対湿度",
+    "Soil Temperature": "土壌温度",
+    "Soil Moisture": "土壌水分量",
+    "Soil Temperature History": "時系列土壌温度",
+    "Soil Moisture History": "時系列土壌水分量",
+    "Soil pH": "土壌pH",
+    "Soil EC": "土壌EC",
+    "Soil N": "土壌窒素",
+    "P": "リン酸",
+    "N": "窒素",
+    "K": "カリウム",
+    "NPK Map": "NPK マップ"
   }
 }

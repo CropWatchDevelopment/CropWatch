@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	import { subSeconds } from 'date-fns';
 	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import LineChart from '$lib/components/charts/highcharts/lineChart/LineChart.svelte';
@@ -18,7 +19,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 mt-10 gap-4 mb-2">
 	<CWStatCard
 		icon={mdiThermometer}
-		title="Soil Temperature"
+		title="{$_('Detail.Soil Temperature')}"
 		value={$sensorDataState.at(0)?.soil_temperatureC}
 		optimal={24.33}
 		notation="°c"
@@ -26,7 +27,7 @@
 	/>
 	<CWStatCard
 		icon={mdiWater}
-		title="Soil Moisture"
+		title="{$_('Detail.Soil Moisture')}"
 		value={$sensorDataState.at(0)?.soil_moisture}
 		optimal={25}
 		notation="%"
@@ -36,7 +37,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
 	<Card>
-		<Header title={'Daily Soil Temperature'} slot="header" class="gap-0">
+		<Header title={$_('Detail.Soil Temperature History')} slot="header" class="gap-0">
 			<Avatar slot="avatar" class="bg-accent-500 text-white font-bold mr-4">
 				<Icon data={mdiChartAreaspline} />
 			</Avatar>
@@ -51,7 +52,7 @@
 		/>
 	</Card>
 	<Card>
-		<Header title={'Daily Soil Moisture'} slot="header" class="gap-0">
+		<Header title={$_('Detail.Soil Moisture History')} slot="header" class="gap-0">
 			<Avatar slot="avatar" class="bg-accent-500 text-white font-bold mr-4">
 				<Icon data={mdiChartAreaspline} />
 			</Avatar>
@@ -72,7 +73,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 mt-2 gap-4 mb-2">
 	<CWStatCard
 		icon={mdiBeaker}
-		title="Soil pH"
+		title="{$_('Detail.Soil pH')}"
 		value={$sensorDataState.at(0)?.soil_PH}
 		optimal={5.6}
 		notation="pH"
@@ -80,7 +81,7 @@
 	/>
 	<CWStatCard
 		icon={mdiShaker}
-		title="Soil EC"
+		title="{$_('Detail.Soil EC')}"
 		value={$sensorDataState.at(0)?.soil_EC}
 		optimal={1300}
 		notation="µs/cm"
@@ -90,21 +91,21 @@
 
 <div class="grid grid-cols-1 md:grid-cols-3 mt-2 gap-4 mb-2">
 	<CWStatCard
-		title="Soil N"
+		title="{$_('Detail.N')}"
 		value={$sensorDataState.at(0)?.soil_N}
 		optimal={25}
 		notation="mg/kg"
 		counterStartTime={latestCollected_Time}
 	/>
 	<CWStatCard
-		title="Soil P"
+		title="{$_('Detail.P')}"
 		value={$sensorDataState.at(0)?.soil_P}
 		optimal={25}
 		notation="mg/kg"
 		counterStartTime={latestCollected_Time}
 	/>
 	<CWStatCard
-		title="Soil K"
+		title="{$_('Detail.K')}"
 		value={$sensorDataState.at(0)?.soil_K}
 		optimal={25}
 		notation="mg/kg"
@@ -113,7 +114,7 @@
 </div>
 
 <Card>
-	<Header title={'Soil NPK Map'} slot="header" class="gap-0" />
+	<Header title={$_('Detail.NPK Map')} slot="header" class="gap-0" />
 	<RadarChart
 		N={$sensorDataState.at(0)?.soil_N}
 		P={$sensorDataState.at(0)?.soil_P}

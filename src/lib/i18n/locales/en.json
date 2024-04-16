@@ -110,6 +110,18 @@
     "Humidity Over Time": "Relative Humidity Over Time",
     "Dew Point History": "Dew Point History",
     "Dew Point Over Time": "Dew Point Over Time",
-    "Relative Humidity History": "Relative Humidity History"
+    "Relative Humidity History": "Relative Humidity History",
+    "Soil Temperature": "Soil Temperature",
+    "Soil Moisture": "Soil Moisture",
+    "Soil Temperature History": "Soil Temperature History",
+    "Soil Moisture History": "Soil Moisture History",
+    "Soil pH": "Soil pH",
+    "Soil EC": "Soil EC",
+    "Soil N": "Soil N",
+    "Soil P": "Soil P",
+    "P": "P",
+    "N": "N",
+    "K": "K",
+    "NPK Map": "NPK Map"
   }
 }
