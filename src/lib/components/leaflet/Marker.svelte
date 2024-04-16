@@ -1,8 +1,7 @@
 <script lang="ts">
 	import L from 'leaflet';
 	import 'leaflet/dist/leaflet.css';
-	import { createEventDispatcher, getContext, onDestroy, onMount, setContext } from 'svelte';
-	import { Dialog } from 'svelte-ux';
+	import { getContext, onDestroy, onMount, setContext } from 'svelte';
 
 	export let width: number;
 	export let height: number;
@@ -12,7 +11,6 @@
 	let marker: L.Marker | undefined;
 	let markerElement: HTMLDivElement;
 
-	const dispatch = createEventDispatcher();
 
 	const { getMap }: { getMap: () => L.Map | undefined } = getContext('map');
 	const map = getMap();
@@ -29,9 +27,6 @@
 				iconSize: L.point(width, height)
 			});
 			marker = L.marker(latLng, { icon }).addTo(map);
-			// marker.on('click', (e) => {
-			// 	popupOpen = !popupOpen;
-			// });
 		}
 	});
 
@@ -45,7 +40,7 @@
 	});
 </script>
 
-<div bind:this={markerElement} style="z-index: 1000000;">
+<div bind:this={markerElement}>
 	{#if marker}
 		<slot />
 	{/if}

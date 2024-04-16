@@ -164,12 +164,6 @@
 										height={40}
 									>
 										<StatsQuickView sensor={sensor.cw_devices} />
-										{#if sensor.cw_devices.type == 2}
-											<TempMarker
-												latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
-												temp={sensor.cw_devices.cw_air_thvd.temperatureC}
-											/>
-										{/if}
 									</Marker>
 								{/if}
 							{/each}
