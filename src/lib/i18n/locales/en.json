@@ -123,5 +123,17 @@
     "N": "N",
     "K": "K",
     "NPK Map": "NPK Map"
+  },
+  "detail": {
+    "CO2": "CO²",
+    "Air Temperature": "Air Temperature",
+    "Relative Humidity": "Relative Humidity",
+    "CO2 History": "CO²  History",
+    "CO2 Over Time": "CO² Over Time",
+    "Temperature History": "Temperature History",
+    "Air Temperature History": "Air Temperature History",
+    "Air Temperature Over Time": "Air Temperature Over Time",
+    "Humidity History": "Relative Humidity History",
+    "Relative Humidity Over Time": "Relative Humidity Over Time"
   }
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	import { format, isWithinInterval, subSeconds } from 'date-fns';
 	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import { mdiGauge, mdiMoleculeCo2, mdiThermometer, mdiWater } from '@mdi/js';
@@ -47,7 +48,7 @@
 <div class="grid grid-cols-{latestData.pressure !== null ? 4 : 3} mt-10 gap-4 mb-2">
 	<CWStatCard
 		icon={mdiMoleculeCo2}
-		title="CO²"
+		title="{$_('detail.CO2')}"
 		value={latestData.co2_level}
 		optimal={24.33}
 		notation=" PPM"
@@ -55,7 +56,7 @@
 	/>
 	<CWStatCard
 		icon={mdiThermometer}
-		title="Temperature"
+		title="{$_('detail.Air Temperature')}"
 		value={latestData.temperature}
 		optimal={24.33}
 		notation="°c"
@@ -63,7 +64,7 @@
 	/>
 	<CWStatCard
 		icon={mdiWater}
-		title="Humidity"
+		title="{$_('detail.Relative Humidity')}"
 		value={latestData.humidity}
 		optimal={25}
 		notation="%"
@@ -82,7 +83,7 @@
 </div>
 
 <Card>
-	<Header title="CO² History" subheading="CO² Over time" slot="header">
+	<Header title="{$_('detail.CO2 History')}" subheading="{$_('detail.CO2 Over Time')}" slot="header">
 		<div slot="avatar">
 			<Avatar class="bg-primary text-primary-content font-bold">
 				<Icon data={mdiMoleculeCo2} />
@@ -120,7 +121,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
 	<Card>
-		<Header title="Temperature History" subheading="Temp Over time" slot="header">
+		<Header title="{$_('detail.Air Temperature History')}" subheading="{$_('detail.Air Temperature Over Time')}" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiThermometer} />
@@ -158,7 +159,7 @@
 	</Card>
 
 	<Card>
-		<Header title="Humidity History" subheading="Temp Over time" slot="header">
+		<Header title="{$_('detail.Humidity History')}" subheading="{$_('detail.Relative Humidity Over Time')}" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiWater} />

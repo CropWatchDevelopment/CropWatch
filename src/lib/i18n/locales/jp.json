@@ -121,5 +121,16 @@
     "N": "窒素",
     "K": "カリウム",
     "NPK Map": "NPK マップ"
+  },
+  "detail": {
+    "CO2": "CO²",
+    "Air Temperature": "温度",
+    "Relative Humidity": "相対湿度",
+    "CO2 History": "CO²",
+    "CO2 Over Time": "時系列CO²",
+    "Air Temperature History": " 温度",
+    "Air Temperature Over Time": "時系列温度",
+    "Humidity History": "相対湿度",
+    "Relative Humidity Over Time": "時系列相対湿度"
   }
 }
