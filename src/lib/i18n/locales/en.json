@@ -1,0 +1,139 @@
+{
+  "header_title": "CropWatch Farming",
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "my_locations": "My Locations",
+    "all_devices": "My Devices",
+    "settings": "Settings",
+    "sensor_rules": "Sensor Rules",
+    "permissions": "Permissions",
+    "change_log": "Change Log"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "notifications": "Notifications",
+    "devices": "Devices",
+    "gateways": "Gateways",
+    "low_battery": "Low Battery"
+  },
+  "header_no_alerts": "No New Alerts",
+  "header": {
+    "logout": "Logout",
+    "alerts": "Alerts",
+    "user_management": "User Management",
+    "settings": "Settings",
+    "admin": "Administrator",
+    "home": "Home"
+  },
+  "settings": {
+    "theme": "Dark / Light Theme",
+    "title": "User Interface Settings"
+  },
+  "all_rules": {
+    "title": "All Configured Rules",
+    "last_triggered": "Last Triggered",
+    "dialog": {
+      "areYouSure": "Are you sure?",
+      "ruleResetText": "Do you want to RESET this rule?",
+      "yes_reset_button": "Yes, Reset Rule",
+      "cancle": "Cancel"
+    },
+    "downloadIconTooltip": "Download Event History (coming soon!)",
+    "ViewDeviceIconTooltip": "Edit",
+    "deleteIconTooltip": "Delete",
+    "delete_dialog": {
+      "areYouSure": "Are you sure?",
+      "caption": "This will permanently delete the item and can not be undone.",
+      "yes_button_text": "Yes, Delete Rule",
+      "cancle": "Cancle"
+    },
+    "last_triggered_timeName": "Never",
+    "tooltip": {
+      "resetRule": "Reset"
+    }
+  },
+  "all_locations": {
+    "no_locations_message": "You have not setup any locations yet",
+    "title": "All Locations"
+  },
+  "app": {
+    "loading_message": "Loading Content...",
+    "loading_translations_message": "Loading Translations..."
+  },
+  "location": {
+    "map_card_title": "Overview Map"
+  },
+  "weather widget": {
+    "title": "Outdoor Weather",
+    "temp": "Temperature",
+    "Humidity": "Humidity",
+    "Rainfall": "Rainfall",
+    "Wind Speed": "Wind Speed",
+    "Direction": "Direction",
+    "Wind Direction": "Wind Direction",
+    "Pressure": "Pressure",
+    "Lux": "Lux",
+    "UV": "UV"
+  },
+  "DeviceSelect": {
+    "Device Quick View": "Device Quick View",
+    "Add Device": "Add Device"
+  },
+  "My Location": {
+    "Calendar": "Calendar Memo"
+  },
+  "Calendar": {
+    "Log": "Calendar Log"
+  },
+  "All Devices": {
+    "All Devices": "All Devices",
+    "All Devices in your account": "All Devices in your account"
+  },
+  "Device Quick View": {
+    "Add Device": "Add Device"
+  },
+  "icon sensor": {
+    "Air Temperature": "Air Temperature",
+    "Soil Moisture": "Soil Moisture",
+    "Soil Temperature": "Soil Temperature",
+    "Air Humidity": "Air Humidity",
+    "View Details": "View Details",
+    "Close": "Close"
+  },
+  "Detail": {
+    "Air Temperature": "Air Temperature",
+    "Relative Humidity": "Relative Humidity",
+    "VPD": "VPD",
+    "Dew Point": "Dew Point",
+    "Temperature History": "Air Temperature History",
+    "Air Temperature Over Time": "Air Temperature Over Time",
+    "Humidity Over Time": "Relative Humidity Over Time",
+    "Dew Point History": "Dew Point History",
+    "Dew Point Over Time": "Dew Point Over Time",
+    "Relative Humidity History": "Relative Humidity History",
+    "Soil Temperature": "Soil Temperature",
+    "Soil Moisture": "Soil Moisture",
+    "Soil Temperature History": "Soil Temperature History",
+    "Soil Moisture History": "Soil Moisture History",
+    "Soil pH": "Soil pH",
+    "Soil EC": "Soil EC",
+    "Soil N": "Soil N",
+    "Soil P": "Soil P",
+    "P": "P",
+    "N": "N",
+    "K": "K",
+    "NPK Map": "NPK Map"
+  },
+  "detail": {
+    "CO2": "CO²",
+    "Air Temperature": "Air Temperature",
+    "Relative Humidity": "Relative Humidity",
+    "CO2 History": "CO²  History",
+    "CO2 Over Time": "CO² Over Time",
+    "Temperature History": "Temperature History",
+    "Air Temperature History": "Air Temperature History",
+    "Air Temperature Over Time": "Air Temperature Over Time",
+    "Humidity History": "Relative Humidity History",
+    "Relative Humidity Over Time": "Relative Humidity Over Time"
+  }
+}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	import { format, isWithinInterval, subSeconds } from 'date-fns';
 	import CWStatCard from '$lib/components/stat-card/CWStatCard.svelte';
 	import { mdiGauge, mdiMoleculeCo2, mdiThermometer, mdiWater } from '@mdi/js';
@@ -47,7 +48,7 @@
 <div class="grid grid-cols-1 mt-10 gap-4 mb-2">
 	<CWStatCard
 		icon={mdiMoleculeCo2}
-		title="Temperature"
+		title="{$_('Detail.Air Temperature')}"
 		value={latestData.temperatureC}
 		optimal={24.33}
 		notation="°c"
@@ -55,7 +56,7 @@
 	/>
 	<CWStatCard
 		icon={mdiThermometer}
-		title="Humidity"
+		title="{$_('Detail.Relative Humidity')}"
 		value={latestData.humidity}
 		optimal={24.33}
 		notation="%"
@@ -63,16 +64,16 @@
 	/>
 	<CWStatCard
 		icon={mdiWater}
-		title="VPD"
+		title="{$_('Detail.VPD')}"
 		value={latestData.vpd}
 		optimal={25}
-		notation="%"
+		notation="kPa"
 		counterStartTime={subSeconds(sensor.sensor.data?.at(0).created_at, 0)}
 	/>
 	{#if latestData.dew !== null}
 		<CWStatCard
 			icon={mdiGauge}
-			title="Dew Point"
+			title="{$_('Detail.Dew Point')}"
 			value={latestData.dewPointC}
 			optimal={25}
 			notation="°c"
@@ -82,7 +83,7 @@
 </div>
 
 <Card>
-	<Header title="Temperature History" subheading="Temperature Over time" slot="header">
+	<Header title="{$_('Detail.Temperature History')}" subheading="{$_('Detail.Air Temperature Over Time')}" slot="header">
 		<div slot="avatar">
 			<Avatar class="bg-primary text-primary-content font-bold">
 				<Icon data={mdiMoleculeCo2} />
@@ -120,7 +121,7 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
 	<Card>
-		<Header title="Humidity History" subheading="Humidity Over time" slot="header">
+		<Header title="{$_('Detail.Relative Humidity History')}" subheading="{$_('Detail.Humidity Over Time')}" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiThermometer} />
@@ -158,7 +159,7 @@
 	</Card>
 
 	<Card>
-		<Header title="Dew Point History" subheading="Dew Point Over time" slot="header">
+		<Header title="{$_('Detail.Dew Point History')}" subheading="{$_('Detail.Dew Point Over Time')}" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiWater} />

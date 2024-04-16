@@ -3,6 +3,7 @@ import { type Handle, redirect, error } from '@sveltejs/kit'
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public'
 import { createSupabaseServerClient } from '@supabase/auth-helpers-sveltekit'
 import { sequence } from '@sveltejs/kit/hooks'
+import { locale } from 'svelte-i18n'
 
 async function supabase({ event, resolve }) {
   event.locals.supabase = createSupabaseServerClient({
@@ -52,4 +53,12 @@ async function authorization({ event, resolve }) {
   return resolve(event)
 }
 
-export const handle: Handle = sequence(supabase, authorization)
+const setLocale: Handle = async ({ event, resolve }) => {
+  const lang = event.request.headers.get('accept-language')?.split(',')[0];
+  if (lang) {
+    locale.set(lang);
+  }
+  return resolve(event);
+};
+
+export const handle: Handle = sequence(supabase, authorization, setLocale);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { DeviceIntToEnglish, DeviceIntType } from '$lib/helpers/DeviceTypeToName';
@@ -22,14 +23,14 @@
 	{:else if sensor.type == 4}
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-2 m-2">
 			<CwStatCard
-				title="Temperature"
+				title="{$_('icon sensor.Soil Temperature')}"
 				counterStartTime={sensor.cw_ss_tmepnpk[0].created_at}
 				value={sensor.cw_ss_tmepnpk[0].soil_temperatureC}
 				icon={mdiThermometer}
 				optimal={19}
 			/>
 			<CwStatCard
-				title="Soil Moisture"
+				title="{$_('icon sensor.Soil Moisture')}l "
 				counterStartTime={sensor.cw_ss_tmepnpk[0].created_at}
 				value={sensor.cw_ss_tmepnpk[0].soil_moisture}
 				icon={mdiWater}
@@ -39,14 +40,14 @@
 	{:else if sensor.type == 3}
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-2 m-2">
 			<CwStatCard
-				title="Temperature"
+				title="{$_('icon sensor.Soil Temperature')}"
 				counterStartTime={sensor.cw_ss_tmepnpk[0].created_at}
 				value={sensor.cw_ss_tmepnpk[0].soil_temperatureC}
 				icon={mdiThermometer}
 				optimal={19}
 			/>
 			<CwStatCard
-				title="Soil Moisture"
+				title="{$_('icon sensor.Soil Moisture')}"
 				counterStartTime={sensor.cw_ss_tmepnpk[0].created_at}
 				value={sensor.cw_ss_tmepnpk[0].soil_moisture}
 				icon={mdiWater}
@@ -56,14 +57,14 @@
 	{:else if sensor.type == 6}
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-2 m-2">
 			<CwStatCard
-				title="Air Temperature"
+				title="{$_('icon sensor.Air Temperature')}"
 				counterStartTime={sensor.seeed_co2_lorawan_uplinks[0].created_at}
 				value={sensor.seeed_co2_lorawan_uplinks[0].temperature}
 				icon={mdiThermometer}
 				optimal={23.88}
 			/>
 			<CwStatCard
-				title="Air Humidity"
+				title="{$_('icon sensor.Air Humidity')}"
 				counterStartTime={sensor.seeed_co2_lorawan_uplinks[0].created_at}
 				value={sensor.seeed_co2_lorawan_uplinks[0].humidity}
 				icon={mdiWater}
@@ -82,18 +83,17 @@
 	{:else if sensor.type == 2}
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-2 m-2">
 			<CwStatCard
-				title="Air Temperature"
+				title="{$_('icon sensor.Air Temperature')}"
 				counterStartTime={sensor.cw_air_thvd[0].created_at}
 				value={sensor.cw_air_thvd[0].temperatureC}
 				icon={mdiThermometer}
-				optimal={23.88}
 			/>
 			<CwStatCard
-				title="Air Humidity"
+				title="{$_('icon sensor.Air Humidity')}"
 				counterStartTime={sensor.cw_air_thvd[0].created_at}
 				value={sensor.cw_air_thvd[0].humidity}
 				icon={mdiThermometer}
-				optimal={23.88}
+				notation="%"
 			/>
 		</div>
 	{:else}
@@ -103,7 +103,7 @@
 	{/if}
 
 	<div slot="actions">
-		<Button variant="fill" color="primary">Close</Button>
+		<Button variant="fill" color="primary">{$_('icon sensor.Close')}</Button>
 		<Button
 			variant="fill-light"
 			color="accent"
@@ -111,7 +111,7 @@
 			on:click={() =>
 				goto(
 					`/app/locations/${$page.params.location_id}/device-type/${DeviceIntType(sensor.type)}/${sensor.dev_eui}`
-				)}>View Details</Button
+				)}>{$_('icon sensor.View Details')}</Button
 		>
 	</div>
 </Dialog>

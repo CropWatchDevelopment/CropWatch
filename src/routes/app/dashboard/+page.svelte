@@ -24,6 +24,7 @@
 	import { onMount } from 'svelte';
 	import moment from 'moment';
 	import { supabase } from '$lib/supabaseClient';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 
@@ -110,13 +111,13 @@
 >
 	<div class="flex items-center space-x-2 ml-2">
 		<Icon data={mdiViewDashboard} />
-		<span>Dashboard</span>
+		<span>{$_('dashboard.title')}</span>
 	</div>
 </h1>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
 	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
-		<Header title="Notifications" subheading="" slot="header">
+		<Header title={$_('dashboard.notifications')} subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiAlert} />
@@ -129,7 +130,7 @@
 	</Card>
 
 	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
-		<Header title="Devices" subheading="" slot="header">
+		<Header title={$_('dashboard.devices')} subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiListStatus} />
@@ -146,7 +147,7 @@
 	</Card>
 
 	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
-		<Header title="Gateways" subheading="" slot="header">
+		<Header title="{$_('dashboard.gateways')}" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiRadioTower} />
@@ -161,7 +162,7 @@
 		</div>
 	</Card>
 	<Card class="flex flex-row md:flex md:flex-row lg:flex-col">
-		<Header title="Low Battery" subheading="" slot="header">
+		<Header title="{$_('dashboard.low_battery')}" subheading="" slot="header">
 			<div slot="avatar">
 				<Avatar class="bg-primary text-primary-content font-bold">
 					<Icon data={mdiBattery} />

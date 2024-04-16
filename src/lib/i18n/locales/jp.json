@@ -1,0 +1,136 @@
+{
+  "header_title": "クロップウオッチ 農業",
+  "sidebar": {
+    "dashboard": "ダッシュボード",
+    "my_locations": "設置場所一覧",
+    "all_devices": "デバイス一覧",
+    "settings": "設定",
+    "sensor_rules": "ルール設定一覧",
+    "permissions": "権限",
+    "change_log": "変更ログ"
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "notifications": "通知",
+    "devices": "デバイス稼働状況",
+    "gateways": "ゲートウェイ稼働状況",
+    "low_battery": "バッテリー交換"
+  },
+  "header_no_alerts": "No Alerts",
+  "header": {
+    "logout": "ログアウト",
+    "alerts": "Alertsu",
+    "user_management": "Usa Management",
+    "settings": "設定",
+    "admin": "管理者",
+    "home": "ホーム"
+  },
+  "settings": {
+    "theme": "明るい/暗いテーマ",
+    "title": "ユーザーインターフェース設定"
+  },
+  "all_rules": {
+    "title": "全てのルール設定",
+    "last_triggered": "最終トリガー",
+    "dialog": {
+      "areYouSure": "本当によろしいですか？",
+      "ruleResetText": "このルールをリセットしますか？",
+      "yes_reset_button": "はい、リセットする",
+      "cancle": "キャンセル"
+    },
+    "downloadIconTooltip": "全てのイベント履歴をダウンロードする(coming soon!)",
+    "ViewDeviceIconTooltip": "編集",
+    "deleteIconTooltip": "削除",
+    "delete_dialog": {
+      "areYouSure": "このルールを削除します。よろしいですか?",
+      "caption": "一度削除すると復元できません。",
+      "cancle": "キャンセル",
+      "yes_button_text": "はい、削除する"
+    },
+    "last_triggered_timeName": "一度もなし",
+    "tooltip": {
+      "resetRule": "リセット"
+    }
+  },
+  "all_locations": {
+    "no_locations_message": "You have not setup any locations yet",
+    "title": "全ての設置場所"
+  },
+  "app": {
+    "loading_message": "Loading Content...",
+    "loading_translations_message": "Loading Translations"
+  },
+  "location": {
+    "map_card_title": "エリアマップ"
+  },
+  "weather widget": {
+    "title": "天気",
+    "temp": "温度",
+    "Humidity": "湿度",
+    "Rainfall": "雨量",
+    "Wind Speed": "風速",
+    "Direction": "風向",
+    "Wind Direction": "風向",
+    "Pressure": "気圧",
+    "Lux": "照度",
+    "UV": "紫外線"
+  },
+  "DeviceSelect": {
+    "Device Quick View": "デバイスクイック表示"
+  },
+  "My Location": {
+    "Calendar": "カレンダーログ"
+  },
+  "Calendar": {
+    "Log": "カレンダーログ"
+  },
+  "All Devices": {
+    "All Devices": "全てのデバイス",
+    "All Devices in your account": "アカウント内にある全てのデバイス"
+  },
+  "Device Quick View": {
+    "Add Device": "デバイスの追加"
+  },
+  "icon sensor": {
+    "Air Temperature": "温度",
+    "Soil Moisture": "土壌水分量",
+    "Soil Temperature": "土壌温度",
+    "Air Humidity": "相対湿度",
+    "View Details": "詳細を見る",
+    "Close": "閉じる"
+  },
+  "Detail": {
+    "Air Temperature": "温度",
+    "Relative Humidity": "相対湿度",
+    "VPD": "飽差",
+    "Dew Point": "露点",
+    "Temperature History": "温度",
+    "Air Temperature Over Time": "時系列温度データ",
+    "Humidity Over Time": "時系列相対湿度データ",
+    "Dew Point History": "露点",
+    "Dew Point Over Time": "時系列露点データ",
+    "Relative Humidity History": "相対湿度",
+    "Soil Temperature": "土壌温度",
+    "Soil Moisture": "土壌水分量",
+    "Soil Temperature History": "時系列土壌温度",
+    "Soil Moisture History": "時系列土壌水分量",
+    "Soil pH": "土壌pH",
+    "Soil EC": "土壌EC",
+    "Soil N": "土壌窒素",
+    "P": "リン酸",
+    "N": "窒素",
+    "K": "カリウム",
+    "NPK Map": "NPK マップ"
+  },
+  "detail": {
+    "CO2": "CO²",
+    "Air Temperature": "温度",
+    "Relative Humidity": "相対湿度",
+    "CO2 History": "CO²",
+    "CO2 Over Time": "時系列CO²",
+    "Air Temperature History": " 温度",
+    "Air Temperature Over Time": "時系列温度",
+    "Humidity History": "相対湿度",
+    "Relative Humidity Over Time": "時系列相対湿度"
+  }
+}

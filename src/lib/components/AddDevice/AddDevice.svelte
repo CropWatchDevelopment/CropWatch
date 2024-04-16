@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	import { applyAction, enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import { supabase } from '$lib/supabaseClient';
@@ -35,7 +36,7 @@
 	}
 </script>
 
-<Button variant="fill" icon={mdiPlus} on:click={() => (open = true)}>Add Device</Button>
+<Button variant="fill" icon={mdiPlus} on:click={() => (open = true)}>{$_('Device Quick View.Add Device')}</Button>
 <Dialog bind:open persistent={true}>
 	<div slot="title" class="p-4">
 		<Icon data={mdiPlus} />

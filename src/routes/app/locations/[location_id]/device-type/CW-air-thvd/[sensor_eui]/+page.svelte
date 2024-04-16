@@ -20,12 +20,12 @@
 	console.log('Data from the THVPD root page', data);
 
 	let userAvailableTabs = [
-		{ label: 'Dashboard', value: 1 },
-		{ label: 'History', value: 2 },
-		{ label: 'Rules', value: 3 },
-		{ label: 'Notifications', value: 4 },
-		{ label: 'Settings', value: 5 },
-		{ label: 'Permissions', value: 6 }
+		{ label: 'ダッシュボード', value: 1 },
+		{ label: '履歴', value: 2 },
+		{ label: 'ルール', value: 3 },
+		{ label: '通知', value: 4 },
+		{ label: '設定', value: 5 },
+		{ label: '権限', value: 6 }
 	];
 	let currentTab: number = 1;
 	let channels: RealtimeChannel;
@@ -65,7 +65,7 @@
 		size="lg"
 		on:click={() => goto(`/app/locations/${$page.params.location_id}`)}
 	/>
-	<p class="my-auto">Temperature Sensor</p>
+	<p class="my-auto">CW-AIR-THVD</p>
 </h1>
 
 <div class="grid grid-cols-3 grid-flow-row my-4">
