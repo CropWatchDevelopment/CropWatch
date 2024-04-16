@@ -1,4 +1,5 @@
 <script lang="ts">
+	import{_}from 'svelte-i18n';
 	import {
 		mdiCloseCircleOutline,
 		mdiCompare,
@@ -28,7 +29,7 @@
 </script>
 
 <Card class="col-span-12 lg:col-span-4">
-	<Header title="Device Quick View" slot="header">
+	<Header title="{$_('DeviceSelect.Device Quick View')}" slot="header">
 		<div slot="avatar">
 			<Avatar class="bg-accent-500 text-white font-bold mr-4">
 				<Icon data={mdiDevices} />
@@ -38,7 +39,7 @@
 			<Toggle let:on={open} let:toggle>
 				<Button icon={mdiDotsVertical} on:click={toggle}>
 					<Menu {open} on:close={toggle}>
-						<MenuItem icon={mdiPlus}>Add Device</MenuItem>
+						<MenuItem icon={mdiPlus}>{$_('Device Quick View.Add Device')}</MenuItem>
 					</Menu>
 				</Button>
 			</Toggle>

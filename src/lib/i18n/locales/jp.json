@@ -2,7 +2,7 @@
   "header_title": "クロップウオッチ 農業",
   "sidebar": {
     "dashboard": "ダッシュボード",
-    "my_locations": "設置場所",
+    "my_locations": "設置場所一覧",
     "all_devices": "デバイス一覧",
     "settings": "設定",
     "sensor_rules": "ルール設定一覧",
@@ -30,7 +30,7 @@
     "title": "ユーザーインターフェース設定"
   },
   "all_rules": {
-    "title": "ルール設定一覧",
+    "title": "全てのルール設定",
     "last_triggered": "最終トリガー",
     "dialog": {
       "areYouSure": "本当によろしいですか？",
@@ -54,7 +54,7 @@
   },
   "all_locations": {
     "no_locations_message": "You have not setup any locations yet",
-    "title": "全ての場所"
+    "title": "全ての設置場所"
   },
   "app": {
     "loading_message": "Loading Content...",
@@ -62,5 +62,53 @@
   },
   "location": {
     "map_card_title": "エリアマップ"
+  },
+  "weather widget": {
+    "title": "天気",
+    "temp": "温度",
+    "Humidity": "湿度",
+    "Rainfall": "雨量",
+    "Wind Speed": "風速",
+    "Direction": "風向",
+    "Wind Direction": "風向",
+    "Pressure": "気圧",
+    "Lux": "照度",
+    "UV": "紫外線"
+  },
+  "DeviceSelect": {
+    "Device Quick View": "デバイスクイック表示"
+  },
+  "My Location": {
+    "Calendar": "カレンダーログ"
+  },
+  "Calendar": {
+    "Log": "カレンダーログ"
+  },
+  "All Devices": {
+    "All Devices": "全てのデバイス",
+    "All Devices in your account": "アカウント内にある全てのデバイス"
+  },
+  "Device Quick View": {
+    "Add Device": "デバイスの追加"
+  },
+  "icon sensor": {
+    "Air Temperature": "温度",
+    "Soil Moisture": "土壌水分量",
+    "Soil Temperature": "土壌温度",
+    "Air Humidity": "相対湿度",
+    "View Details": "詳細を見る",
+    "Close": "閉じる"
+  },
+  "Detail": {
+    "Air Temperature": "温度",
+    "Relative Humidity": "相対湿度",
+    "VPD": "飽差",
+    "Dew Point": "露点",
+    "Temperature History": "温度",
+    "Air Temperature Over Time": "時系列温度データ",
+    "Humidity Over Time": "時系列相対湿度データ",
+    "Dew Point History": "露点",
+    "Dew Point Over Time": "時系列露点データ",
+    "Relative Humidity History": "相対湿度"
   }
 }

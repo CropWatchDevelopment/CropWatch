@@ -36,16 +36,16 @@ export const DeviceIntToEnglish = (dev_int_type: number): string => {
             return 'CO² Sensor';
             break;
         case 2:
-            return 'Temp/Humidity/Dew/VPD Sensor';
+            return 'CW-AIR-THVD';
             break;
         case 3:
             return 'CropWatch Legacy Box';
             break;
         case 4:
-            return 'CropWatch Soil Sensor V2';
+            return 'CW-SS-TMEPNPK';
             break;
         case 5:
-            return 'Meter Pulse Sensor';
+            return 'CW-PULSEMeter';
             break;
         case 6:
             return 'CO² Sensor';

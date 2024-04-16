@@ -181,7 +181,7 @@
 </div>
 
 <Card id="list" class="grid-flow-row col-span-2 justify-start my-2" title="Location List">
-	<Header title="Your Locations" slot="header" class="gap-0">
+	<Header title="{$_('Calendar.Log')}" slot="header" class="gap-0">
 		<div slot="avatar">
 			<Avatar class="bg-accent-500 text-white font-bold mr-4">
 				<Icon data={mdiCalendar} />

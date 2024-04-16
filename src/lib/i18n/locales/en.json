@@ -62,5 +62,54 @@
   },
   "location": {
     "map_card_title": "Overview Map"
+  },
+  "weather widget": {
+    "title": "Outdoor Weather",
+    "temp": "Temperature",
+    "Humidity": "Humidity",
+    "Rainfall": "Rainfall",
+    "Wind Speed": "Wind Speed",
+    "Direction": "Direction",
+    "Wind Direction": "Wind Direction",
+    "Pressure": "Pressure",
+    "Lux": "Lux",
+    "UV": "UV"
+  },
+  "DeviceSelect": {
+    "Device Quick View": "Device Quick View",
+    "Add Device": "Add Device"
+  },
+  "My Location": {
+    "Calendar": "Calendar Memo"
+  },
+  "Calendar": {
+    "Log": "Calendar Log"
+  },
+  "All Devices": {
+    "All Devices": "All Devices",
+    "All Devices in your account": "All Devices in your account"
+  },
+  "Device Quick View": {
+    "Add Device": "Add Device"
+  },
+  "icon sensor": {
+    "Air Temperature": "Air Temperature",
+    "Soil Moisture": "Soil Moisture",
+    "Soil Temperature": "Soil Temperature",
+    "Air Humidity": "Air Humidity",
+    "View Details": "View Details",
+    "Close": "Close"
+  },
+  "Detail": {
+    "Air Temperature": "Air Temperature",
+    "Relative Humidity": "Relative Humidity",
+    "VPD": "VPD",
+    "Dew Point": "Dew Point",
+    "Temperature History": "Air Temperature History",
+    "Air Temperature Over Time": "Air Temperature Over Time",
+    "Humidity Over Time": "Relative Humidity Over Time",
+    "Dew Point History": "Dew Point History",
+    "Dew Point Over Time": "Dew Point Over Time",
+    "Relative Humidity History": "Relative Humidity History"
   }
 }
