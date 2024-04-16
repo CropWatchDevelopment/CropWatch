@@ -1,71 +1,97 @@
-<script lang="ts">
+<script>
+	import { enhance } from '$app/forms';
+	import { invalidate, invalidateAll, goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { settings } from 'svelte-ux';
-	import { authState } from '$lib/stores/auth.store.js';
-	import { goto, invalidate } from '$app/navigation';
-	import '../app.postcss';
+	import { _, isLoading } from 'svelte-i18n';
 
 	export let data;
 
-	let { supabase, session } = data;
-	$: ({ supabase, session } = data);
+	$: ({ supabase } = data);
 
-	settings({
-		themes: {
-			light: ['light', 'winter'],
-			dark: ['dark', 'black', 'dracula']
-		},
-		components: {
-			AppBar: {
-				classes: 'bg-primary text-white shadow-md'
-			},
-			AppLayout: {
-				classes: {
-					nav: 'bg-neutral-800'
-				}
-			},
-			NavItem: {
-				classes: {
-					root: 'text-sm text-gray-400 pl-6 py-2 hover:text-white hover:bg-gray-300/10 [&:where(.is-active)]:text-sky-400 [&:where(.is-active)]:bg-gray-500/10'
-				}
-			},
-			ListItem: {
-				classes: {
-					root: 'bg-white mb-1 text-sm text-primary-400 pl-6 py-2 hover:text-white hover:bg-gray-300/10 [&:where(.is-active)]:text-sky-400 [&:where(.is-active)]:bg-gray-500/10'
-				}
-			},
-			Card: {
-				// classes: 'bg-white shadow-md'
-			},
-			Table: {
-				classes: {
-					container: 'bg-white shadow-md'
-				}
-			}
-		}
-	});
-
-	onMount(() => {
+	onMount(async () => {
 		const {
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((event, _session) => {
-			console.log('auth state change', event);
-			if (event == 'SIGNED_OUT') {
-				authState.set(null);
-				goto('/auth/login');
-			}
-			if (event == 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
-				authState.set(data.supabase.auth);
-			}
-			if (_session?.expires_at !== session?.expires_at) {
-				invalidate('supabase:auth');
-			}
+			// If you want to fain grain which routes should rerun their load function
+			// when onAuthStateChange changges
+			// use invalidate('supabase:auth')
+			// which is linked to +layout.js depends('supabase:auth').
+			// This should mainly concern all routes
+			//that should be accesible only for logged in user.
+			// Otherwise use invalidateAll()
+			// which will rerun every load function of you app.
+			invalidate('supabase:auth');
+			invalidateAll();
 		});
-
 		return () => subscription.unsubscribe();
 	});
+
+	const submitLogout = async ({ cancel }) => {
+		debugger;
+		const { error } = await data.supabase.auth.signOut();
+		if (error) {
+			console.log(error);
+		}
+		cancel();
+		await goto('/');
+	};
 </script>
 
-<main>
-	<slot />
-</main>
+<div class="app">
+	<h1>{$_('header.home')}</h1>
+	<span id="auth_header">
+		{#if !data.session}
+			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
+		{:else}
+			<a href="/user_profile">User profile</a>
+			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
+				<button type="submit">Logout</button>
+			</form>
+		{/if}
+		<a href="/auth/user_profile">profile</a>
+	</span>
+	<main>
+		<slot />
+	</main>
+
+	<footer>
+		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
+	</footer>
+</div>
+
+<style>
+	.app {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+	}
+
+	main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		padding: 1rem;
+		width: 100%;
+		max-width: 64rem;
+		margin: 0 auto;
+		box-sizing: border-box;
+	}
+
+	footer {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		padding: 12px;
+	}
+
+	footer a {
+		font-weight: bold;
+	}
+
+	@media (min-width: 480px) {
+		footer {
+			padding: 12px 0;
+		}
+	}
+</style>
