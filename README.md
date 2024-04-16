@@ -55,6 +55,11 @@ Link : https://app.CropWatch.io
 
 Contributions are always welcome! Please create a PR to add Github Profile.
 
+# Debugging Server Side code using VSCode:
+Press: Ctrl + Shift + P, Then choose "Debug: JavaScript Debug terminal" from the prompt.
+In the terminal box that opens, type: pnpm dev
+Set your break-point and run the code!
+
 # Issues
 
 I Love knowing when something is wrong, that way there I can fix it ASAP, however!
