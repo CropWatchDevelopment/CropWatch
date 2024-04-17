@@ -43,6 +43,9 @@ devDependencies:
   '@typescript-eslint/parser':
     specifier: ^7.0.0
     version: 7.7.0(eslint@8.57.0)(typescript@5.4.5)
+  '@zerodevx/svelte-toast':
+    specifier: ^0.9.5
+    version: 0.9.5(svelte@4.2.14)
   eslint:
     specifier: ^8.56.0
     version: 8.57.0
@@ -52,6 +55,9 @@ devDependencies:
   eslint-plugin-svelte:
     specifier: ^2.35.1
     version: 2.37.0(eslint@8.57.0)(svelte@4.2.14)
+  moment:
+    specifier: ^2.30.1
+    version: 2.30.1
   prettier:
     specifier: ^3.1.1
     version: 3.2.5
@@ -1172,6 +1178,14 @@ packages:
       pretty-format: 29.7.0
     dev: true
 
+  /@zerodevx/svelte-toast@0.9.5(svelte@4.2.14):
+    resolution: {integrity: sha512-JLeB/oRdJfT+dz9A5bgd3Z7TuQnBQbeUtXrGIrNWMGqWbabpepBF2KxtWVhL2qtxpRqhae2f6NAOzH7xs4jUSw==}
+    peerDependencies:
+      svelte: ^3.57.0 || ^4.0.0
+    dependencies:
+      svelte: 4.2.14
+    dev: true
+
   /acorn-jsx@5.3.2(acorn@8.11.3):
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -2191,6 +2205,10 @@ packages:
       pathe: 1.1.2
       pkg-types: 1.0.3
       ufo: 1.5.3
+    dev: true
+
+  /moment@2.30.1:
+    resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
     dev: true
 
   /mri@1.2.0:

@@ -9,7 +9,7 @@ export const actions = {
 
         const { data, error: err } = await locals.supabase.auth.resetPasswordForEmail(
             email, 
-            {redirectTo: '/update_password'}
+            {redirectTo: '/update-password'}
         )
 
         if (err) {
@@ -23,7 +23,7 @@ export const actions = {
             })
         }
 
-        redirect(303, "/auth/check_email");
+        redirect(303, "/auth/check-email");
     },
 }
 

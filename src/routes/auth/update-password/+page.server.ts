@@ -15,20 +15,19 @@ export const actions = {
             if (err instanceof AuthApiError && err.status >= 400 && err.status < 500) {
                 return fail(400, {
                     error: "invalidCredentials", invalid: true, message: err.message
-                })
+                });
             }
             return fail(500, {
                 error: "Server error. Please try again later.",
-            })
+            });
         }
 
-        redirect(303, "/user_profile");
+        redirect(303, "/auth/user-profile");
     },
 }
 
 export async function load({locals: { safeGetSession } }) {
     const session = await safeGetSession();
-    // if the user is not logged in redirect back to the home page
     if (!session) {
         redirect(303, '/');
     }

@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { locale } from 'svelte-i18n';
+import type { Database } from './database.types';
 
 const setLocale: Handle = async ({ event, resolve }) => {
   const lang = event.request.headers.get('accept-language')?.split(',')[0];
@@ -13,7 +14,7 @@ const setLocale: Handle = async ({ event, resolve }) => {
 };
 
 const handleSB: Handle = async ({ event, resolve }) => {
-  event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+  event.locals.supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       get: (key) => event.cookies.get(key),
       /**
