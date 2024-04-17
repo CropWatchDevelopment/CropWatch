@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { _, isLoading } from 'svelte-i18n';
 	import { SvelteToast } from '@zerodevx/svelte-toast';
+	import "../app.css";
 
 	export let data;
 
@@ -37,6 +38,20 @@
 </script>
 
 <SvelteToast />
+<div class="">
+	<nav>
+		{#if !data.session}
+			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
+		{:else}
+			<a href="/">Home</a> /
+			<a href="/auth/user-profile">User profile</a> /
+			<a href="/app/devices">devices</a>
+			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
+				<button type="submit">Logout</button>
+			</form>
+		{/if}
+	</nav>
+</div>
 <div class="app">
 	<h1>{$_('header.home')}</h1>
 	<span id="auth_header">
