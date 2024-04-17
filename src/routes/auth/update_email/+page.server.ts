@@ -26,8 +26,8 @@ export const actions = {
     },
 }
 
-export async function load({locals: { getSession } }) {
-    const session = await getSession();
+export async function load({locals: { safeGetSession } }) {
+    const session = await safeGetSession();
     // if the user is not logged in redirect back to the home page
     if (!session) {
         redirect(303, '/');

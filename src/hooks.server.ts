@@ -32,37 +32,30 @@ const handleSB: Handle = async ({ event, resolve }) => {
   })
 
   /**
-   * a little helper that is written for convenience so that instead
-   * of calling `const { data: { session } } = await supabase.auth.getSession()`
-   * you just call this `await getSession()`
-   */
-  event.locals.getSession = async () => {
-    /**
-     * getUser will guarantee that the stored session is valid,
-     * and calling getSession immediately after 
-     * will leave no room for anyone to modify the stored session. 
+     * Unlike `supabase.auth.getSession`, which is unsafe on the server because it
+     * doesn't validate the JWT, this function validates the JWT by first calling
+     * `getUser` and aborts early if the JWT signature is invalid.
      */
-    const { data: getUserData, error: err } = await event.locals.supabase.auth.getUser()
-
-    let {
-      data: { session },
-    } = await event.locals.supabase.auth.getSession()
-
-    // solving the case if the user was deleted from the database but the browser still has a cookie/loggedin user
-    // +lauout.server.js will delete the cookie if the session is null
-    if (getUserData.user == null) {
-      session = null
+  event.locals.safeGetSession = async () => {
+    const {
+      data: { user },
+      error,
+    } = await event.locals.supabase.auth.getUser()
+    if (error) {
+      return { session: null, user: null }
     }
 
-    return session
+    const {
+      data: { session },
+    } = await event.locals.supabase.auth.getSession()
+    return { session, user }
   }
-
 
   return resolve(event, {
     filterSerializedResponseHeaders(name) {
       return name === 'content-range'
     },
-  })
+  });
 }
 
 export const handle = sequence(setLocale, handleSB);

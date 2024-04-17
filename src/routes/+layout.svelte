@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidate, invalidateAll, goto } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -8,7 +8,7 @@
 
 	$: ({ supabase } = data);
 
-	onMount(async () => {
+	onMount(() => {
 		const {
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((event, _session) => {
@@ -26,13 +26,11 @@
 		return () => subscription.unsubscribe();
 	});
 
-	const submitLogout = async ({ cancel }) => {
-		debugger;
+	const submitLogout = async (): Promise<void> => {
 		const { error } = await data.supabase.auth.signOut();
 		if (error) {
 			console.log(error);
 		}
-		cancel();
 		await goto('/');
 	};
 </script>
