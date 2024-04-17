@@ -44,7 +44,8 @@
 			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
 		{:else}
 			<a href="/">Home</a> /
-			<a href="/auth/user-profile">User profile</a>
+			<a href="/auth/user-profile">User profile</a> /
+			<a href="/app/devices">devices</a>
 			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
 				<button type="submit">Logout</button>
 			</form>
