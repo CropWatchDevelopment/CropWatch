@@ -38,9 +38,10 @@
 </script>
 
 <SvelteToast />
-<div class="">
+<div class="bg-primary text-surface-300 py-10">
 	<nav>
-		{#if !data.session}
+		<!-- {#if !data.session}
+			<p>test</p>
 			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
 		{:else}
 			<a href="/">Home</a> /
@@ -49,7 +50,7 @@
 			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
 				<button type="submit">Logout</button>
 			</form>
-		{/if}
+		{/if} -->
 	</nav>
 </div>
 <div class="app">
@@ -86,7 +87,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		padding: 1rem;
+		padding: 0rem;
 		width: 100%;
 		max-width: 64rem;
 		margin: 0 auto;
