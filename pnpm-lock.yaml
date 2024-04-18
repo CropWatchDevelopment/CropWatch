@@ -79,6 +79,9 @@ devDependencies:
   svelte-check:
     specifier: ^3.6.0
     version: 3.6.9(postcss@8.4.38)(svelte@4.2.14)
+  svelte-grid:
+    specifier: ^5.1.2
+    version: 5.1.2
   sveltekit-i18n:
     specifier: ^2.4.2
     version: 2.4.2(svelte@4.2.14)
@@ -3271,6 +3274,10 @@ packages:
       postcss: 8.4.38
       postcss-scss: 4.0.9(postcss@8.4.38)
       svelte: 4.2.14
+    dev: true
+
+  /svelte-grid@5.1.2:
+    resolution: {integrity: sha512-Suwgb+L3LALhTyA7z4vn87UOJ+xBY6EeKa6MdWqDv/lZOtQgIZ21ry/I6txIn9IC0p8of4AiOXupkSMcZ+DEug==}
     dev: true
 
   /svelte-hmr@0.16.0(svelte@4.2.14):
