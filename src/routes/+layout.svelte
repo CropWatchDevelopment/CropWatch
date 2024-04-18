@@ -45,7 +45,8 @@
 		{:else}
 			<a href="/">Home</a> /
 			<a href="/auth/user-profile">User profile</a> /
-			<a href="/app/devices">devices</a>
+			<a href="/app/devices">Devices</a> /
+			<a href="/app/locations">Locations</a>
 			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
 				<button type="submit">Logout</button>
 			</form>
