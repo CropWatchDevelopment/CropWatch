@@ -132,5 +132,16 @@
     "Air Temperature Over Time": "時系列温度",
     "Humidity History": "相対湿度",
     "Relative Humidity Over Time": "時系列相対湿度"
+  },
+  "login": {
+    "title": "アカウントにログインする",
+    "Email": "Eメールアドレス",
+    "Password": "パスワード",
+    "email": "eメール",
+    "enter_password": "パスワードを入力",
+    "forgot_password": "パスワードをお忘れですか？",
+    "login": "ログイン",
+    "dont_have_an_account": "アカウントがありませんか？",
+    "register_now": "新規登録"
   }
 }
