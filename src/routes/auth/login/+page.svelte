@@ -4,6 +4,7 @@
 	import { Button, Switch, TextField, Tooltip } from 'svelte-ux';
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	export let data: PageData;
 	let { supabase } = data;
@@ -51,7 +52,7 @@
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
 					<img class="mx-auto h-10 w-auto" src={cropwatchWithText} alt="CropWatch" />
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-						Log in to your account
+						{$_('login.title')}
 					</h2>
 				</div>
 				<p class="text-center text-sm text-gray-400">
@@ -61,11 +62,11 @@
 				<form class="" action="?login" method="POST">
 					<div class="mb-3">
 						<label for="email" class="block text-sm font-medium leading-6 text-gray-900"
-							>Email address</label
+							>{$_('login.Email')}</label
 						>
 						<div class="mt-2">
 							<TextField
-								label="email"
+								label={$_('login.email')}
 								id="email"
 								name="email"
 								type="email"
@@ -79,12 +80,12 @@
 
 					<div class="mb-2">
 						<label for="password" class="block text-sm font-medium leading-6 text-gray-900"
-							>Password</label
+							>{$_('login.Password')}</label
 						>
 						<div class="mt-2">
 							<TextField
 								id="password"
-								label="Enter Password"
+								label={$_('login.enter_password')}
 								placeholder="****************"
 								name="password"
 								type="password"
@@ -97,30 +98,26 @@
 
 					<div class="flex items-center justify-between">
 						<div class="flex items-center">
-							<Tooltip title="This feature is disabled, but will be activated soon!">
-								<Switch
-									name="rememberMe"
-									id="remember"
-									bind:checked={rememberMe}
-									classes={{
-										switch: 'bg-white border-gray-400 data-[checked=true]:bg-blue-600',
-										toggle: 'data-[checked=false]:bg-blue-600 data-[checked=true]:bg-white'
-									}}
-									on:change={(e) => {
-										localStorage.setItem('rememberMe', e.detail);
-									}}
-								/>
-								<label for="remember" class="text-sm text-gray-900 mt-5">
-									&nbsp; Remember me
-								</label>
-							</Tooltip>
+							<Switch
+								name="rememberMe"
+								id="remember"
+								bind:checked={rememberMe}
+								classes={{
+									switch: 'bg-white border-gray-400 data-[checked=true]:bg-blue-600',
+									toggle: 'data-[checked=false]:bg-blue-600 data-[checked=true]:bg-white'
+								}}
+								on:change={(e) => {
+									localStorage.setItem('rememberMe', e.detail);
+								}}
+							/>
+							<label for="remember" class="text-sm text-gray-900 mt-5"> &nbsp; {$_('login.remember_me')} </label>
 						</div>
 
 						<div class="text-sm leading-6">
 							<a
 								href="forgot-password"
 								class="font-semibold text-sm text-blue-400 hover:text-indigo-500"
-								>Forgot password?</a
+								>{$_('login.forgot_password')}</a
 							>
 						</div>
 					</div>
@@ -135,7 +132,7 @@
 							type="button"
 							on:click={() => handleSignIn()}
 							class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-							>Login</Button
+							>{$_('login.login')}</Button
 						>
 					</div>
 				</form>
@@ -143,9 +140,9 @@
 				<div>
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
-							<p>Don't have an account?</p>
+							<p>{$_('login.dont_have_an_account')}</p>
 							<a class="blue-100" href="register"
-								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">Register Now</u></a
+								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.register_now')}</u></a
 							>
 						</div>
 					</div>

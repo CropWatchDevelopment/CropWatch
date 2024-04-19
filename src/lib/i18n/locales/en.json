@@ -135,5 +135,16 @@
     "Air Temperature Over Time": "Air Temperature Over Time",
     "Humidity History": "Relative Humidity History",
     "Relative Humidity Over Time": "Relative Humidity Over Time"
+  },
+  "login": {
+    "title": "Log in to your account",
+    "Email": "Email address",
+    "Password": "Password",
+    "email": "email",
+    "enter_password": "Enter Password",
+    "forgot_password": "Forgot Password?",
+    "login": "Login",
+    "dont_have_an_account": "Don't have an acount?",
+    "register_now": "Register Now"
   }
 }
