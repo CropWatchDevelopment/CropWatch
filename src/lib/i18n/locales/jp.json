@@ -142,6 +142,7 @@
     "forgot_password": "パスワードをお忘れですか？",
     "login": "ログイン",
     "dont_have_an_account": "アカウントがありませんか？",
-    "register_now": "新規登録"
+    "register_now": "新規登録",
+    "remember_me": "パスワードを保持する"
   }
 }

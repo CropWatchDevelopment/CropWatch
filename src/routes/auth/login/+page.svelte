@@ -55,10 +55,7 @@
 						{$_('login.title')}
 					</h2>
 				</div>
-				<p class="text-center text-sm text-gray-400">
-					The login page prioritizes user security, offering a seamless experiance that ensures
-					quick and convienient access to the system's array of benifits.
-				</p>
+
 				<form class="" action="?login" method="POST">
 					<div class="mb-3">
 						<label for="email" class="block text-sm font-medium leading-6 text-gray-900"

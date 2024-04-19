@@ -145,6 +145,7 @@
     "forgot_password": "Forgot Password?",
     "login": "Login",
     "dont_have_an_account": "Don't have an acount?",
-    "register_now": "Register Now"
+    "register_now": "Register Now",
+    "remember_me": "Remember Me"
   }
 }
