@@ -17,13 +17,12 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
         },
         xAxis: {
             type: 'datetime',
-            // title: {
-            //     enabled: true,
-            //     text: 'Hours of the Day'
-            // },
-
+            title: {
+                enabled: true,
+                text: 'Month/Day'
+            },
             labels: {
-                formatter: function() {
+                formatter: function(): any {
                     return moment(this.value).format('MMM-DD').toString();
                 },
             }
