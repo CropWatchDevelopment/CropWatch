@@ -1,6 +1,7 @@
 import Highcharts from 'highcharts';
+import moment from 'moment';
 
-export const HighChartsTimeSeriesChart = (data: any, name: string = '') => {
+export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
     return {
         chart: {
             zoomType: 'x'
@@ -15,15 +16,51 @@ export const HighChartsTimeSeriesChart = (data: any, name: string = '') => {
             align: 'left'
         },
         xAxis: {
-            type: 'created_at'
-        },
-        yAxis: {
-            title: {
-                text: 'Exchange rate'
+            type: 'datetime',
+            labels: {
+                format: '{value:%Y-%m-%d}',
+            },
+            dateTimeLabelFormats: {
+                day: '%e of %b'
             }
         },
+        yAxis: [{ // Primary yAxis
+            labels: {
+                format: '{value}°C',
+                style: {
+                    color: 'red'
+                }
+            },
+            title: {
+                text: 'Temperature',
+                style: {
+                    color: 'red'
+                }
+            }
+        }, { // Secondary yAxis
+            title: {
+                text: 'Humidity',
+                style: {
+                    color: 'blue'
+                }
+            },
+            labels: {
+                format: '{value} %',
+                style: {
+                    color: 'blue'
+                }
+            },
+            opposite: true
+        }],
         legend: {
             enabled: false
+        },
+        tooltip: {
+            borderColor: '#2c3e50',
+            shared: true,
+            formatter: function () {
+                return '<b>Time: '+ moment(this.x).format('hh:mm a').toString() +'</b><br/>'+name+': '+ this.y;
+            }
         },
         plotOptions: {
             area: {
@@ -51,11 +88,6 @@ export const HighChartsTimeSeriesChart = (data: any, name: string = '') => {
                 threshold: null
             }
         },
-
-        series: [{
-            type: 'area',
-            name: name,
-            data: data
-        }]
+        series: data,
     };
 };
