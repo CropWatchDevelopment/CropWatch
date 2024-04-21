@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { PUBLIC_SITE_BASE } from '$env/static/public';
 	import { locationStore } from '$lib/stores/location.store';
 
 	let loading: boolean = true;
 
 	if (browser)
-		fetch(`${PUBLIC_SITE_BASE}/api/v1/locations`)
+		fetch(`/api/v1/locations`)
 			.then((res) => res.json())
 			.then((data) => {
 				console.log(data);
