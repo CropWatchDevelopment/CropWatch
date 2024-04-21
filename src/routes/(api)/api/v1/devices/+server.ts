@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
 
   const query = new URLSearchParams(url.search);
   const startingPage = query.get('pageNumber') || 0;
-  const itemsPerPage = query.get('itemsPerPage') || 10;
+  const itemsPerPage = query.get('itemsPerPage') || 50;
 
   const { data, error } = await supabase
     .from('cw_device_owners')

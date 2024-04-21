@@ -28,7 +28,6 @@
 		{#each devices as device}
 			{#each device as dev}
 				<li>
-					<pre>{JSON.stringify(dev, null, 2)}</pre>
 					<a href="/app/devices/{dev.dev_eui}/data">View Data of device: {dev.cw_devices.name}</a>
 				</li>
 			{/each}
