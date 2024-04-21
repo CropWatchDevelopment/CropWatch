@@ -17,11 +17,15 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
         },
         xAxis: {
             type: 'datetime',
+            // title: {
+            //     enabled: true,
+            //     text: 'Hours of the Day'
+            // },
+
             labels: {
-                format: '{value:%Y-%m-%d}',
-            },
-            dateTimeLabelFormats: {
-                day: '%e of %b'
+                formatter: function() {
+                    return moment(this.value).format('MMM-DD').toString();
+                },
             }
         },
         yAxis: [{ // Primary yAxis
@@ -59,7 +63,7 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
             borderColor: '#2c3e50',
             shared: true,
             formatter: function () {
-                return '<b>Time: '+ moment(this.x).format('hh:mm a').toString() +'</b><br/>'+name+': '+ this.y;
+                return '<b>Time: ' + moment(this.x).format('hh:mm a').toString() + '</b><br/>' + name + ': ' + this.y + '°C';
             }
         },
         plotOptions: {

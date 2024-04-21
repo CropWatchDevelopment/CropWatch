@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     .from(dataTable)
     .select('*')
     .eq('dev_eui', dev_eui)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: true })
     .range(+startingPage, +itemsPerPage)
     ;
   return new Response(

@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
+	import moment from 'moment';
 
 	let config: any = [];
 
