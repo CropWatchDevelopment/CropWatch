@@ -7,7 +7,25 @@
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
 	import { supabase } from '$lib/supabaseClient';
 
-	let config: any = [];
+	$: config = HighChartsTimeSeriesChart(
+		[
+			{
+				type: 'line',
+				yAxis: 0,
+				name: 'Temperature',
+				color: 'red',
+				data: []
+			},
+			{
+				type: 'line',
+				yAxis: 1,
+				name: 'Humidity',
+				color: 'blue',
+				data: []
+			}
+		],
+		'Temperature'
+	);
 	let currentTemp: number = 0;
 	let currentHumidity: number = 0;
 	let tempData: any = [];
@@ -55,8 +73,8 @@
 				.then((res) => res.json())
 				.then((data) => {
 					console.log(data);
-					currentHumidity = data[0].humidity;
-					currentTemp = data[0].temperatureC;
+					currentHumidity = data.at(-1).humidity;
+					currentTemp = data.at(-1).temperatureC;
 					tempData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC]);
 					humidityData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity]);
 					config = HighChartsTimeSeriesChart(
@@ -84,11 +102,11 @@
 				});
 	});
 
-    onDestroy(() => {
-        if(browser && channels) {
-            channels.unsubscribe();
-        }
-    });
+	onDestroy(() => {
+		if (browser && channels) {
+			channels.unsubscribe();
+		}
+	});
 </script>
 
 <div>
