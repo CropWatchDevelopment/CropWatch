@@ -10,7 +10,6 @@ export async function load({ params }) {
         .select('*')
         .eq('dev_eui', params.sensor_eui)
         .gte('created_at', moment().subtract(1, 'days').toISOString())
-        .limit(30)
         .order('created_at', { ascending: false })
     };
 }
