@@ -42,7 +42,11 @@
 					currentHumidity = payload.new.humidity;
 					currentTemp = payload.new.temperatureC;
 					tempData.push([new Date(payload.new.created_at).valueOf(), payload.new.temperatureC]);
+					tempData.pop();
+
 					humidityData.push([new Date(payload.new.created_at).valueOf(), payload.new.humidity]);
+					humidityData.pop();
+					
 					config = HighChartsTimeSeriesChart(
 						[
 							{

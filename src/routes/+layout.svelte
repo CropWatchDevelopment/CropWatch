@@ -6,25 +6,25 @@
 	import { SvelteToast } from '@zerodevx/svelte-toast';
 
 	export let data;
-
-	$: ({ supabase } = data);
+	$: ({ session, supabase } = data);
 
 	onMount(() => {
-		const {
-			data: { subscription }
-		} = supabase.auth.onAuthStateChange((event, _session) => {
-			// If you want to fain grain which routes should rerun their load function
-			// when onAuthStateChange changges
-			// use invalidate('supabase:auth')
-			// which is linked to +layout.js depends('supabase:auth').
-			// This should mainly concern all routes
-			//that should be accesible only for logged in user.
-			// Otherwise use invalidateAll()
-			// which will rerun every load function of you app.
-			invalidate('supabase:auth');
-			invalidateAll();
+		const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
+			if (!newSession) {
+				/**
+				 * Queue this as a task so the navigation won't prevent the
+				 * triggering function from completing
+				 */
+				setTimeout(() => {
+					goto('/', { invalidateAll: true });
+				});
+			}
+			if (newSession?.expires_at !== session?.expires_at) {
+				invalidate('supabase:auth');
+			}
 		});
-		return () => subscription.unsubscribe();
+
+		return () => data.subscription.unsubscribe();
 	});
 
 	const submitLogout = async (): Promise<void> => {
@@ -74,6 +74,7 @@
 		flex-direction: column;
 		padding: 1rem;
 		width: 100%;
+		max-width: 64rem;
 		margin: 0 auto;
 		box-sizing: border-box;
 	}

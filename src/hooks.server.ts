@@ -39,16 +39,25 @@ const handleSB: Handle = async ({ event, resolve }) => {
      */
   event.locals.safeGetSession = async () => {
     const {
-      data: { user },
-      error,
-    } = await event.locals.supabase.auth.getUser()
-    if (error) {
+      data: { session },
+    } = await event.locals.supabase.auth.getSession()
+    if (!session) {
       return { session: null, user: null }
     }
 
     const {
-      data: { session },
-    } = await event.locals.supabase.auth.getSession()
+      data: { user },
+      error,
+    } = await event.locals.supabase.auth.getUser()
+    if (error) {
+      // JWT validation has failed
+      return { session: null, user: null }
+    }
+
+    // if(session) {
+    //   delete session.user // Here!
+    // }
+
     return { session, user }
   }
 

@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import Highcharts from 'highcharts';
 import moment from 'moment';
 
@@ -11,7 +12,7 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
             align: 'left'
         },
         subtitle: {
-            text: document.ontouchstart === undefined ?
+            text: browser && document.ontouchstart === undefined ?
                 'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in',
             align: 'left'
         },
@@ -22,7 +23,7 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                 text: 'Month/Day'
             },
             labels: {
-                formatter: function(): any {
+                formatter: function (): any {
                     return moment(this.value).format('MMM-DD').toString();
                 },
             }
@@ -39,7 +40,19 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                 style: {
                     color: 'red'
                 }
-            }
+            },
+            plotLines: [{
+                value: 0, // This is the specific point on the y-axis
+                color: 'red',
+                width: 2,
+                label: {
+                    text: 'ALERT RULE 1 (Temperature > 0°C)',
+                    style: {
+                        fontWeight: 'bold', // Makes the label text bold
+                        color: 'red',
+                    },
+                }
+            }],
         }, { // Secondary yAxis
             title: {
                 text: 'Humidity',
@@ -61,8 +74,18 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
         tooltip: {
             borderColor: '#2c3e50',
             shared: true,
-            formatter: function () {
-                return '<b>Time: ' + moment(this.x).format('hh:mm a').toString() + '</b><br/>' + name + ': ' + this.y + '°C';
+            formatter: function (): any {
+                var s = '<b>Time: ' + moment(this.x).format('hh:mm a').toString() + '</b><br/>';
+                this.points.forEach(point => {
+                    s += point.series.name + ': ' + point.y;
+                    if (point.series.yAxis.opposite) {
+                        s += ' %'; // Assuming humidity values are formatted as percentages
+                    } else {
+                        s += '°C'; // Assuming temperature values are formatted in Celsius
+                    }
+                    s += '<br/>';
+                });
+                return s;
             }
         },
         plotOptions: {
@@ -75,8 +98,8 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                         y2: 1
                     },
                     stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                        [0, browser ? Highcharts.getOptions().colors[0] : 'green'],
+                        [1, browser ? Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba') : 'green']
                     ]
                 },
                 marker: {
