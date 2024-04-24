@@ -16,8 +16,29 @@
 	</div>
 </section> -->
 <section>
-	<div class="bg-neutral p-2 h-screen" >
-		
+	<div class="bg-neutral p-4 h-screen" >
+		<!-- BELL -->
+		<div class="py-1  my-5">
+			<div class="flex justify-end w-full h-7">
+				<img src="/icons/UI/cw-bell.png" alt="" >
+			</div>
+		</div>
+
+
+		<!-- TITLE and Filter -->
+		<div class="flex justify-between mb-6">
+			
+			<!-- TITLE -->
+			<h2 class=" font-light text-2xl text-surface-100">Dashboard</h2>
+
+			<!-- Filter -->
+			<div class="flex align-baseline justify-center items-center">
+				<div class="w-4">
+					<img src="/icons/UI/cw_filter_button.png" alt="">
+				</div>
+				<p class="text-surface-100 px-1">Filter</p>
+			</div>
+		</div>
 		<!-- ONE CARD -->
 		<div class="bg-white p-3 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 			<div class="w-full h-20">
@@ -28,13 +49,18 @@
 				/>
 			</div>
 			<div class="pl-2 pt-2">
-				<h2 class="text-xl">Takasue's GreenHouse</h2>
+				<h2 class="text-xl my-3">Takasue's GreenHouse</h2>
 				<div class="flex">
 					<p class="basis-1/3"></p>
-					<p class="basis-1/3">Temperature</p>
-					<p class="basis-1/3">Humidity</p>
+					<div class="basis-1/3 text-xs flex">
+						<img src="/icons/UI/cw_thermometer.png" alt="" class="w-4">
+						<p>Temperature</p>	
+					</div>
+					<div class="basis-1/3 text-xs flex">
+						<img src="/icons/UI/cw_moisture.png" alt="" class="w-4">
+						<p>Humidity</p>	</div>
 				</div>
-				<div class="">
+				<div class="text-sm">
 					<Card
 						class="divide-y bg-[#F7FAFF] border-[#FBFBFB] border-[0.1em] rounded-md elevation-none my-2"
 					>
@@ -42,7 +68,12 @@
 							<!-- Outside -->
 							<div slot="trigger" class="flex-1 px-3 py-2">
 								<div class="flex text-center">
-									<p class="basis-1/3">Sensor 1</p>
+									<div class="basis-1/3 flex items-center space-x-2">
+										<div class="w-2">
+											<img src="/icons/UI/cw_active.png" alt="">
+										</div>
+										<p>Sensor 1</p>
+									</div>
 									<p class="basis-1/3">25ºC</p>
 									<p class="basis-1/3">34%</p>
 								</div>
@@ -93,7 +124,12 @@
 						<Collapse>
 							<div slot="trigger" class="flex-1 px-3 py-2">
 								<div class="flex text-center">
-									<p class="basis-1/3">Sensor 1</p>
+									<div class="basis-1/3 flex items-center space-x-2">
+										<div class="w-2">
+											<img src="/icons/UI/cw_active.png" alt="">
+										</div>
+										<p>Sensor 1</p>
+									</div>
 									<p class="basis-1/3">25ºC</p>
 									<p class="basis-1/3">34%</p>
 								</div>
