@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { Card, Collapse } from 'svelte-ux';
+	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
+import { Card, Collapse } from 'svelte-ux';
+	export let data;
+	const {locations, weatherJSON} = data;
+	console.log("Data from Server:", data.locations)
+	console.log("Data from Server:", data.weatherJSON)
 </script>
 
 <svelte:head>
@@ -16,6 +21,10 @@
 	</div>
 </section> -->
 <section>
+	<!-- JSON -->
+	<div>
+		{JSON.stringify(data.locations)}
+	</div>
 	<div class="bg-neutral p-4 h-screen" >
 		<!-- BELL -->
 		<div class="py-1  my-5">
@@ -39,6 +48,10 @@
 				<p class="text-surface-100 px-1">Filter</p>
 			</div>
 		</div>
+		<!-- CARDS -->
+		{#each locations as location}
+			<DashboardCard locationName={location.cw_locations.name}/>
+		{/each}
 		<!-- ONE CARD -->
 		<div class="bg-white p-3 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 			<div class="w-full h-20">
