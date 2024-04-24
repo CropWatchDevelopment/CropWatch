@@ -46,7 +46,7 @@
 
 					humidityData.push([new Date(payload.new.created_at).valueOf(), payload.new.humidity]);
 					humidityData.pop();
-					
+
 					config = HighChartsTimeSeriesChart(
 						[
 							{
@@ -115,6 +115,9 @@
 
 <div>
 	<h1>Device Data</h1>
+	<nav>
+		<a href="rules">Sensor Rules</a>
+	</nav>
 	<p>Current Temp: {currentTemp}</p>
 	<p>Current Humidity: {currentHumidity}</p>
 </div>
