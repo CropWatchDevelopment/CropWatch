@@ -7,16 +7,18 @@
 	<meta name="description" content="CropWatch" />
 </svelte:head>
 
-<section>
+<!-- <section>
 	<div class="bg-surface-100 w-full p-4">
 		<h1 class="text-3xl my-8 w-3/4">Get real time data from your crops</h1>
 		<h2 class="my-10 text-xl w-3/4">
 			Knowing what your crops need is not easy. Making it accessible to you is our job.
 		</h2>
 	</div>
-</section>
+</section> -->
 <section>
-	<div class="bg-black p-2">
+	<div class="bg-neutral p-2 h-screen" >
+		
+		<!-- ONE CARD -->
 		<div class="bg-white p-3 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 			<div class="w-full h-20">
 				<img

@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { _, isLoading } from 'svelte-i18n';
 	import { SvelteToast } from '@zerodevx/svelte-toast';
-	import "../app.css";
+	import '../app.css';
 
 	export let data;
 
@@ -38,7 +38,7 @@
 </script>
 
 <SvelteToast />
-<div class="bg-primary text-surface-300 py-10">
+<div class="bg-primary text-surface-300 py-2">
 	<nav>
 		<!-- {#if !data.session}
 			<p>test</p>
@@ -51,19 +51,52 @@
 				<button type="submit">Logout</button>
 			</form>
 		{/if} -->
-	</nav>
-</div>
-<div class="app">
-	<h1>{$_('header.home')}</h1>
-	<span id="auth_header">
+
+		<div class="flex justify-between px-4 items-center">
+
+			<!-- HOME/LOGO BUTTON -->
+			<div class="w-32">
+				<img src="/icons/UI/cw_Logo.png" alt="">	
+			</div>
+			
+			<!-- HAMBURGER ICON -->
+			<div class="w-14">
+				<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"
+				><defs
+				><style>
+						.cls-1 {
+							fill: #0dbf34;
+						}
+						</style></defs
+				><title>cw</title><rect
+				class="cls-1"
+				x="27.92"
+				y="66.2"
+				width="244.15"
+				height="35.66"
+				/><rect class="cls-1" x="27.96" y="132.19" width="244.15" height="35.66" /><rect
+				class="cls-1"
+				x="27.96"
+				y="198.18"
+				width="244.15"
+				height="35.66"
+				/></svg
+				>
+			</div>
+		</div>
+		</nav>
+	</div>
+	<div class="app">
+		<!-- <h1>{$_('header.home')}</h1> -->
+		<span id="auth_header">
 		{#if !data.session}
 			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
 		{:else}
-			<a href="/">Home</a> /
+			<!-- <a href="/">Home</a> /
 			<a href="/auth/user-profile">User profile</a> /
-			<a href="/app/devices">devices</a>
+			<a href="/app/devices">devices</a> -->
 			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
-				<button type="submit">Logout</button>
+				<!-- <button type="submit">Logout</button> -->
 			</form>
 		{/if}
 	</span>
