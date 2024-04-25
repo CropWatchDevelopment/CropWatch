@@ -21,5 +21,9 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
     error,
     {
       status: 200,
+      statusText: 'OK',
+        headers: {
+          'Content-Type': 'application/json',
+        }
     });
 }

@@ -1,5 +1,12 @@
 <script>
+	import { onMount } from "svelte";
 
+
+	onMount(async () => {
+		const response = await fetch('/api/v1/dashboard');
+		const data = await response.json();
+		console.log(data);
+	});
 </script>
 
 <svelte:head>

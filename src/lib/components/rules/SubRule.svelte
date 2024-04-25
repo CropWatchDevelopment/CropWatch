@@ -39,12 +39,12 @@
 Reset when {root.subject} goes back to: <input type="number" bind:value={root.reset_value} />
 
 
-<div class="flex flex-col">
-	<!-- {#each root.children as singleRule, i}
+<!-- <div class="flex flex-col">
+	{#each root.children as singleRule, i}
 		<span class="ml-5">
 			<svelte:self bind:root={singleRule} {latestData}>
 				<button slot="post" on:click={() => onDelete(i)} color="success">Delete</button>
 			</svelte:self>
 		</span>
-	{/each} -->
-</div>
+	{/each}
+</div> -->

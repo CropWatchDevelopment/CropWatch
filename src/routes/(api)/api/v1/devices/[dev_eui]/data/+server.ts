@@ -33,6 +33,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     error,
     {
       status: error ? 500 : 200,
+      statusText: 'OK',
       headers: {
         'Content-Type': 'application/json',
       }
@@ -59,6 +60,10 @@ async function getDeviceDataTable(dev_eui: string, session: any, supabase: any) 
       JSON.stringify(error),
       {
         status: 500,
+        statusText: 'Server Error',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
   }
 }

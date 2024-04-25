@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import type { Tables } from '../../../database.types';
 	import SubRule from './SubRule.svelte';
+	import { enhance } from '$app/forms';
 
 	export let existingRule: Tables<'cw_rules'> | undefined = undefined;
 	const isNew: boolean = existingRule ? true : false;
@@ -40,15 +41,19 @@
 
 <h1>Edit Rule</h1>
 
-<form>
+<form method="post" action="/api/v1/devices/{$page.params.dev_eui}/rules" use:enhance>
+	<input type="hidden" id="ruleGroupId" name="ruleGroupId" bind:value={ruleGroup.groupId} />
 	<div>
 		<label for="name">Name</label>
 		<input type="text" id="name" name="name" required bind:value={ruleGroup.ruleName} />
 		<label for="type">Notification Type</label>
-		<select bind:value={ruleGroup.babylon_notifier_type}>
+		<select name="babylon_notifier_type" bind:value={ruleGroup.babylon_notifier_type}>
 			<option value={1}>Email</option>
 			<option value={2}>SMS</option>
 		</select>
+
+		<label for="action_recipient">Recipient</label>
+		<input type="text" id="action_recipient" name="action_recipient" required bind:value={ruleGroup.action_recipient} />
 	</div>
 	<div>
 		{#await dataItem}
