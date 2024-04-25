@@ -33,6 +33,9 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     error,
     {
       status: error ? 500 : 200,
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
 }
 
