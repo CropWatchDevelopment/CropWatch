@@ -3,8 +3,9 @@
 import { Card, Collapse } from 'svelte-ux';
 	export let data;
 	const {locations, weatherJSON} = data;
-	console.log("Data from Server:", data.locations)
-	console.log("Data from Server:", data.weatherJSON)
+
+	// console.log("Data from Server:", data.locations)
+	// console.log("Data from Server WEATHER:", weatherJSON.properties.timeseries.slice(-1)[0].data.instant)
 </script>
 
 <svelte:head>
@@ -23,7 +24,8 @@ import { Card, Collapse } from 'svelte-ux';
 <section>
 	<!-- JSON -->
 	<div>
-		{JSON.stringify(data.locations)}
+		<!-- {JSON.stringify(data.locations)} -->
+		<!-- {JSON.stringify(data.weatherJSON)} -->
 	</div>
 	<div class="bg-neutral p-4 h-screen" >
 		<!-- BELL -->
@@ -50,7 +52,7 @@ import { Card, Collapse } from 'svelte-ux';
 		</div>
 		<!-- CARDS -->
 		{#each locations as location}
-			<DashboardCard locationName={location.cw_locations.name}/>
+			<DashboardCard data={location} />
 		{/each}
 		<!-- ONE CARD -->
 		<div class="bg-white p-3 rounded-2xl border-[#D2D2D2] border-[0.1em]">

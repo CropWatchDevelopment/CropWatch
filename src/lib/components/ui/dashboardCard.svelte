@@ -1,14 +1,31 @@
 <script lang="ts">
     import { Card, Collapse } from 'svelte-ux';
-    export let locationName = 'Location Name'
+    // export let locationName = 'Location Name'
+    export let data;
+    const locationName = data.cw_locations.name;
+    const temperature = data.cw_locations.weatherJSON.temperature;
+    const rainfall = data.cw_locations.weatherJSON.rainfall;
+    const humidity = data.cw_locations.weatherJSON.humidity;
+    const windSpeed = data.cw_locations.weatherJSON.windSpeed;
+
 </script>
 <div class="bg-white p-3 rounded-2xl border-[#D2D2D2] border-[0.1em]">
-    <div class="w-full h-20">
+    <div class="w-full h-20 relative rounded-2xl ">
         <img
-            src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs"
-            alt=""
-            class="object-cover rounded-2xl w-full h-full"
+        src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs"
+        alt=""
+        class="object-cover  w-full h-full absolute top-0 rounded-2xl"
         />
+        <div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
+        <div class="absolute top-4 text-[0.5em] text-surface-100 drop-shadow-md right-3 space-y-1">
+            <!-- <p>Temperature:{temperature}</p> -->
+            <p>Rainfall: {rainfall}%</p>
+            <p>Humidity: {humidity}%</p>
+            <p>Windspeed: {windSpeed} km/h</p>
+        </div>
+        <div class="absolute left-3 top-5">
+            <p class="text-surface-100 text-3xl text-shadow">{temperature}<span class="text-xl text-gray-100">ºC</span></p>
+        </div>
     </div>
     <div class="pl-2 pt-2">
         <h2 class="text-xl my-3">{locationName}</h2>
@@ -106,3 +123,8 @@
         </div>
     </div>
 </div>
+<style>
+    .text-shadow{
+        text-shadow: 0px 1px 5px gray;
+    }
+</style>
