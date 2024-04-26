@@ -56,7 +56,9 @@
 
 			<!-- HOME/LOGO BUTTON -->
 			<div class="w-32">
-				<img src="/icons/UI/cw_Logo.png" alt="">	
+				<a href="/">
+					<img src="/icons/UI/cw_Logo.png" alt="">	
+				</a>
 			</div>
 			
 			<!-- HAMBURGER ICON -->

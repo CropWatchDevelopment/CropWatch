@@ -13,24 +13,26 @@ export async function load({ params, locals: { supabase, getSession } }) {
     let {data, error} = await supabase.from('cw_location_owners').select(`cw_locations(*)`).eq('user_id', session?.user.id)
     // console.log(data, error)
     const locations = await updateLocations(data, supabase, user_id)
+    console.log("LOCATIONS\n",locations)
+
+
     return {
-            locations: locations,
-            weatherJSON: await getWeatherAPIData(),
+        locations: locations,
+        weatherJSON: await getWeatherAPIData(),
+        // sensor: await supabase.from('cw_ss_tmepnpk').select('*').eq('dev_eui', params.sensor_eui).order('created_at', { ascending: false }).limit(100),
     };
 }
 
 async function updateLocations(locations, supabase, user_id){
     for (var location of locations){
         // const loc = await checkLocationOwner(supabase, location.location_id, user_id)
-        const streamed =  {
-            sensors: load_AllSensors(supabase, location.location_id),
-        }
-        console.log("STREAMED", streamed)
+        const streamed = await load_AllSensors(supabase, location.location_id)
+        console.log("STREAMED \n", streamed)
         const weatherJSON = await getWeatherAPIData()
-        console.log("WEATHER JSON", weatherJSON)
+        console.log("WEATHER JSON\n", weatherJSON)
         location.cw_locations.weatherJSON = weatherJSON
-        return locations
     }
+    return locations
 }
 async function checkLocationOwner(supabase: SupabaseClient, id: number, user_id: string) {
     const { data, error } = await supabase
