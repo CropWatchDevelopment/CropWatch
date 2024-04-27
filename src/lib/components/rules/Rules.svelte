@@ -2,7 +2,6 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { uuidv4 } from '$lib/utilities/uuidv4';
-	import { onMount } from 'svelte';
 	import type { Tables } from '../../../database.types';
 	import SubRule from './SubRule.svelte';
 	import { applyAction, deserialize, enhance } from '$app/forms';
@@ -41,10 +40,11 @@
 			body: data
 		});
 
-
 		const promises = ruleGroup.cw_rule_criteria.map(async (criteria) => {
+			debugger;
+			criteria.ruleGroupId = ruleGroup.groupId;
 			const criteriaData = JSON.stringify(criteria);
-			return fetch(`/api/v1/devices/${$page.params.dev_eui}/rules/criteria/${criteria.id || ''}`, {
+			return fetch(`/api/v1/devices/${$page.params.dev_eui}/rules/criteria/${criteria.id || -1}`, {
 				method: criteria.id ? 'PUT' : 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -76,12 +76,12 @@
 		if (result === 200) {
 			// rerun all `load` functions, following the successful update
 			toast.push('Rule Updated Successfully!', {
-					theme: {
-						'--toastBackground': 'cyan',
-						'--toastColor': 'black'
-					}
-				});
-				dialogOpen = false;
+				theme: {
+					'--toastBackground': 'cyan',
+					'--toastColor': 'black'
+				}
+			});
+			dialogOpen = false;
 			await invalidateAll();
 		}
 
@@ -97,6 +97,7 @@
 	on:submit|preventDefault={handleSubmit}
 >
 	<input type="hidden" id="ruleGroupId" name="ruleGroupId" bind:value={ruleGroup.groupId} />
+	<input type="hidden" id="dev_eui" name="dev_eui" bind:value={$page.params.dev_eui} />
 	<div>
 		<label for="name">Name</label>
 		<input type="text" id="name" name="name" required bind:value={ruleGroup.ruleName} />
