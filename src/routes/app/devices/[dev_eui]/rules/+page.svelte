@@ -15,7 +15,7 @@
 </script>
 
 <h1>RULES</h1>
-<button on:click={() => openDialog = true}>Create New Rule</button>
+<button on:click={() => (openDialog = true)}>Create New Rule</button>
 
 {#await rules}
 	<p>Loading Rules...</p>
@@ -36,12 +36,13 @@
 
 <dialog open={openDialog}>
 	{#if selectedRule}
-		<Rules existingRule={selectedRule} />
+	{JSON.stringify(selectedRule)}
+		<Rules existingRule={selectedRule} bind:dialogOpen={openDialog} />
 	{:else}
-		<Rules existingRule={undefined} />
+		<Rules existingRule={undefined} bind:dialogOpen={openDialog}/>
 	{/if}
 	<button
-        type="button"
+		type="button"
 		on:click={() => {
 			selectedRule = undefined;
 			openDialog = false;
