@@ -78,3 +78,24 @@ export const PUT: RequestHandler = async ({ url, params, request, locals: { supa
       statusText: 'OK',
     });
 }
+
+export const DELETE: RequestHandler = async ({ url, params, request, locals: { supabase, safeGetSession } }) => {
+  const { session } = await safeGetSession();
+  if (!session) {
+    throw redirect(303, '/auth/unauthorized');
+  }
+  const id = url.searchParams.get('rule-id');
+  const { data, error } = await supabase
+    .from('cw_rules')
+    .delete()
+    .eq('id', id)
+    .eq('profile_id', session.user.id)
+    .select()
+
+  return new Response(
+    data ?? error,
+    {
+      status: 200,
+      statusText: 'OK',
+    });
+}

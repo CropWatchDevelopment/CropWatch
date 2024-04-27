@@ -3,12 +3,34 @@
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
 	import Rules from '$lib/components/rules/Rules.svelte';
+	import { toast } from '@zerodevx/svelte-toast';
 
 	const rules: Promise<Tables<'cw_rules'>[]> = browser
 		? fetch(`/api/v1/devices/${$page.params.dev_eui}/rules`, { method: 'GET' }).then((r) =>
 				r.json()
 			)
 		: Promise.resolve([]);
+	const deleteRule = (id: number) => {
+		fetch(`/api/v1/devices/${$page.params.dev_eui}/rules?rule-id=${id}`, {
+			method: 'DELETE',
+		}).then(r => {
+			if (r.ok) {
+				toast.push(`Rule Deleted Successfully`, {
+					theme: {
+						'--toastBackground': 'green',
+						'--toastColor': 'black'
+					}
+				});
+			} else {
+				toast.push(`Failed to delete Rule`, {
+					theme: {
+						'--toastBackground': 'red',
+						'--toastColor': 'black'
+					}
+				});
+			}
+		})
+	}
 
 	let selectedRule: Tables<'cw_rules'> | undefined = undefined;
 	let openDialog: boolean = false;
@@ -22,13 +44,13 @@
 {:then allRules}
 	<ul>
 		{#each allRules as rule}
-			<li
-				on:click={() => {
+			<li>
+				{rule.name}
+				<button on:click={() => {
 					selectedRule = rule;
 					openDialog = true;
-				}}
-			>
-				{rule.name}
+				}}>Edit</button>
+				<button on:click={() => deleteRule(rule.id)}>Delete</button>
 			</li>
 		{/each}
 	</ul>
