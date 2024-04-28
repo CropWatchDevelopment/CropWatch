@@ -12,8 +12,8 @@
 		: Promise.resolve([]);
 	const deleteRule = (id: number) => {
 		fetch(`/api/v1/devices/${$page.params.dev_eui}/rules?rule-id=${id}`, {
-			method: 'DELETE',
-		}).then(r => {
+			method: 'DELETE'
+		}).then((r) => {
 			if (r.ok) {
 				toast.push(`Rule Deleted Successfully`, {
 					theme: {
@@ -29,8 +29,8 @@
 					}
 				});
 			}
-		})
-	}
+		});
+	};
 
 	let selectedRule: Tables<'cw_rules'> | undefined = undefined;
 	let openDialog: boolean = false;
@@ -46,10 +46,12 @@
 		{#each allRules as rule}
 			<li>
 				{rule.name}
-				<button on:click={() => {
-					selectedRule = rule;
-					openDialog = true;
-				}}>Edit</button>
+				<button
+					on:click={() => {
+						selectedRule = rule;
+						openDialog = true;
+					}}>Edit</button
+				>
 				<button on:click={() => deleteRule(rule.id)}>Delete</button>
 			</li>
 		{/each}
@@ -58,10 +60,10 @@
 
 <dialog open={openDialog}>
 	{#if selectedRule}
-	{JSON.stringify(selectedRule)}
+		{JSON.stringify(selectedRule)}
 		<Rules existingRule={selectedRule} bind:dialogOpen={openDialog} />
 	{:else}
-		<Rules existingRule={undefined} bind:dialogOpen={openDialog}/>
+		<Rules existingRule={undefined} bind:dialogOpen={openDialog} />
 	{/if}
 	<button
 		type="button"

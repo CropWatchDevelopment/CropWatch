@@ -40,6 +40,7 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                 style: {
                     color: 'red'
                 }
+<<<<<<< HEAD
             },
             plotLines: [{
                 value: 0, // This is the specific point on the y-axis
@@ -53,6 +54,9 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                     },
                 }
             }],
+=======
+            }
+>>>>>>> origin/develop
         }, { // Secondary yAxis
             title: {
                 text: 'Humidity',
@@ -74,6 +78,7 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
         tooltip: {
             borderColor: '#2c3e50',
             shared: true,
+<<<<<<< HEAD
             formatter: function (): any {
                 var s = '<b>Time: ' + moment(this.x).format('hh:mm a').toString() + '</b><br/>';
                 this.points.forEach(point => {
@@ -86,6 +91,10 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                     s += '<br/>';
                 });
                 return s;
+=======
+            formatter: function () {
+                return '<b>Time: ' + moment(this.x).format('hh:mm a').toString() + '</b><br/>' + name + ': ' + this.y + '°C';
+>>>>>>> origin/develop
             }
         },
         plotOptions: {
@@ -98,8 +107,13 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                         y2: 1
                     },
                     stops: [
+<<<<<<< HEAD
                         [0, browser ? Highcharts.getOptions().colors[0] : 'green'],
                         [1, browser ? Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba') : 'green']
+=======
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+>>>>>>> origin/develop
                     ]
                 },
                 marker: {
