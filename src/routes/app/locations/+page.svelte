@@ -1,61 +1,30 @@
 <script lang="ts">
-	import {
-		mdiChevronRight,
-		mdiMapMarker,
-		mdiPlus
-	} from '@mdi/js';
-	import {
-		Button,
-		ListItem,
-		Icon,
-		ProgressCircle
-	} from 'svelte-ux';
-	import { goto } from '$app/navigation';
-	import type { PageData } from './$types';
-	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
-	import { _ } from 'svelte-i18n';
+	import { browser } from '$app/environment';
+	import { locationStore } from '$lib/stores/location.store';
 
-	export let data: PageData;
+	let loading: boolean = true;
 
-	let zoom: number | undefined = 20;
+	if (browser)
+		fetch(`/api/v1/locations`)
+			.then((res) => res.json())
+			.then((data) => {
+				console.log(data);
+				locationStore.add(data);
+			})
+			.catch((err) => {
+				console.log(err);
+			});
 </script>
 
-<h1 class="mb-2 flex items-center justify-between text-2xl font-bold border-b w-full text-white relative" style="background-image:url({backgroundImg}); width:100%; height: 100px;">
-	<p class="my-auto ml-2">{$_('all_locations.title')}</p>
-	<Button
-		icon={mdiPlus}
-		variant="fill-light"
-		color=""
-		class="p-2 text-black/50"
-		on:click={() => console.log('Add button clicked')}
-	/>
-</h1>
+<svelte:head>
+	<title>Home</title>
+	<meta name="description" content="CropWatch" />
+</svelte:head>
 
-<ol>
-	{#await data.locations}
-		<ProgressCircle />
-	{:then locations}
-		{#if locations}
-			{#each locations as location}
-				{#if location && location.cw_locations}
-					<ListItem title={location.cw_locations.name}>
-						<div slot="avatar">
-							<Icon data={mdiMapMarker} />
-						</div>
-						<div slot="actions">
-							<Button
-								icon={mdiChevronRight}
-								variant="fill-light"
-								color="accent"
-								class="p-2 text-black/50"
-								on:click={() => goto(`locations/${location.cw_locations.location_id}`)}
-							/>
-						</div>
-					</ListItem>
-				{:else}
-					<li>{$_('all_locations.no_locations_message')}</li>
-				{/if}
-			{/each}
-		{/if}
-	{/await}
-</ol>
+<h1>Locations</h1>
+
+<ul>
+	{#each $locationStore as device}
+		<li>{JSON.stringify(device, null, 2)}</li>
+	{/each}
+</ul>

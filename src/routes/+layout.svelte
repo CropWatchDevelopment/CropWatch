@@ -1,71 +1,99 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { invalidate, invalidateAll, goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { settings } from 'svelte-ux';
-	import { authState } from '$lib/stores/auth.store.js';
-	import { goto, invalidate } from '$app/navigation';
-	import '../app.postcss';
+	import { _, isLoading } from 'svelte-i18n';
+	import { SvelteToast } from '@zerodevx/svelte-toast';
 
 	export let data;
-
-	let { supabase, session } = data;
-	$: ({ supabase, session } = data);
-
-	settings({
-		themes: {
-			light: ['light', 'winter'],
-			dark: ['dark', 'black', 'dracula']
-		},
-		components: {
-			AppBar: {
-				classes: 'bg-primary text-white shadow-md'
-			},
-			AppLayout: {
-				classes: {
-					nav: 'bg-neutral-800'
-				}
-			},
-			NavItem: {
-				classes: {
-					root: 'text-sm text-gray-400 pl-6 py-2 hover:text-white hover:bg-gray-300/10 [&:where(.is-active)]:text-sky-400 [&:where(.is-active)]:bg-gray-500/10'
-				}
-			},
-			ListItem: {
-				classes: {
-					root: 'bg-white mb-1 text-sm text-primary-400 pl-6 py-2 hover:text-white hover:bg-gray-300/10 [&:where(.is-active)]:text-sky-400 [&:where(.is-active)]:bg-gray-500/10'
-				}
-			},
-			Card: {
-				// classes: 'bg-white shadow-md'
-			},
-			Table: {
-				classes: {
-					container: 'bg-white shadow-md'
-				}
-			}
-		}
-	});
+	$: ({ session, supabase } = data);
 
 	onMount(() => {
-		const {
-			data: { subscription }
-		} = supabase.auth.onAuthStateChange((event, _session) => {
-			console.log('auth state change', event);
-			if (event == 'SIGNED_OUT') {
-				authState.set(null);
-				goto('/auth/login');
+		const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
+			if (!newSession) {
+				/**
+				 * Queue this as a task so the navigation won't prevent the
+				 * triggering function from completing
+				 */
+				setTimeout(() => {
+					goto('/', { invalidateAll: true });
+				});
 			}
-			if (event == 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
-				authState.set(data.supabase.auth);
-			}
-			if (_session?.expires_at !== session?.expires_at) {
+			if (newSession?.expires_at !== session?.expires_at) {
 				invalidate('supabase:auth');
 			}
 		});
 
-		return () => subscription.unsubscribe();
+		return () => data.subscription.unsubscribe();
 	});
+
+	const submitLogout = async (): Promise<void> => {
+		const { error } = await data.supabase.auth.signOut();
+		if (error) {
+			console.log(error);
+		}
+		await goto('/');
+	};
 </script>
 
-<main>
-	<slot />
-</main>
+<SvelteToast />
+<div class="app">
+	<h1>{$_('header.home')}</h1>
+	<span id="auth_header">
+		{#if !data.session}
+			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
+		{:else}
+			<a href="/">Home</a> /
+			<a href="/auth/user-profile">User profile</a> /
+			<a href="/app/devices">Devices</a> /
+			<a href="/app/locations">Locations</a>
+			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
+				<button type="submit">Logout</button>
+			</form>
+		{/if}
+	</span>
+	<main>
+		<slot />
+	</main>
+
+	<footer>
+		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
+	</footer>
+</div>
+
+<style>
+	.app {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+	}
+
+	main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		padding: 1rem;
+		width: 100%;
+		max-width: 64rem;
+		margin: 0 auto;
+		box-sizing: border-box;
+	}
+
+	footer {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		padding: 12px;
+	}
+
+	footer a {
+		font-weight: bold;
+	}
+
+	@media (min-width: 480px) {
+		footer {
+			padding: 12px 0;
+		}
+	}
+</style>
