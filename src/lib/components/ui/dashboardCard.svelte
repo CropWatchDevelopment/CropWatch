@@ -8,6 +8,15 @@
 	const rainfall = data.weatherJSON.rainfall;
 	const humidity = data.weatherJSON.humidity;
 	const windSpeed = data.weatherJSON.windSpeed;
+
+	const loadDeviceDataFor = (device) => {
+		fetch(`/api/v1/devices/${device.dev_eui}/data?page=1&count=1`)
+			.then((res) => res.json())
+			.then((data) => {
+				device.data = data[0];
+				data = data;
+			});
+	};
 </script>
 
 <div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
@@ -47,22 +56,31 @@
 		</div>
 		<div class="text-sm">
 			{#each data.devices as device}
-			<!-- {JSON.stringify(device, null, 2)} -->
+				<!-- {JSON.stringify(device, null, 2)} -->
 				<Card
 					class="divide-y bg-[#F7FAFF] border-[#FBFBFB] border-[0.1em] rounded-md elevation-none my-2"
 				>
-					<Collapse>
+					<Collapse let:open on:change={() => loadDeviceDataFor(device)}>
 						<!-- Outside -->
 						<div slot="trigger" class="flex-1 px-3 py-2">
 							<div class="flex text-center">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
-										<img src={device.isPastDue ? "/icons/UI/cw_inactive_circle.png" : "/icons/UI/cw_active.png"} alt="" />
+										<img
+											src={device.isPastDue
+												? '/icons/UI/cw_inactive_circle.png'
+												: '/icons/UI/cw_active.png'}
+											alt=""
+										/>
 									</div>
 									<p>{device.cw_devices.name}</p>
 								</div>
-								<p class="basis-1/3">{device.cw_devices.primary_data}{device.cw_devices.primary_data_notation}</p>
-								<p class="basis-1/3">{device.cw_devices.secondary_data}{device.cw_devices.secondary_data_notation}</p>
+								<p class="basis-1/3">
+									{device.cw_devices.primary_data}{device.cw_devices.primary_data_notation}
+								</p>
+								<p class="basis-1/3">
+									{device.cw_devices.secondary_data}{device.cw_devices.secondary_data_notation}
+								</p>
 							</div>
 						</div>
 						<!-- Inside -->
@@ -70,7 +88,15 @@
 							<div class="flex px-3 mt-3">
 								<h3 class="text-lg basis-1/3 font-medium mb-2">Details</h3>
 							</div>
-							<div class="px-3 pb-3 flex text-left">
+							{#if device.data}
+								{#each Object.keys(device.data) as dataPointKey}
+								<div class="px-3 pb-3 flex text-left">
+									<p class="basis-1/2 text-sm">{dataPointKey}</p>
+									<p class="basis-1/2 text-sm">{device.data[dataPointKey]}</p>
+								</div>
+								{/each}
+							{/if}
+							<!-- <div class="px-3 pb-3 flex text-left">
 								<p class="basis-1/2 text-sm">Temperature</p>
 								<p class="basis-1/2 text-sm">27ºC</p>
 							</div>
@@ -86,8 +112,6 @@
 								<p class="basis-1/2 text-sm">EC</p>
 								<p class="basis-1/2 text-sm">7.6</p>
 							</div>
-
-							<!-- NPK -->
 							<div class="mt-4">
 								<div class="px-3 pb-3 flex text-left">
 									<p class="basis-1/2 text-sm">N</p>
@@ -101,7 +125,7 @@
 									<p class="basis-1/2 text-sm">K</p>
 									<p class="basis-1/2 text-sm">7.6</p>
 								</div>
-							</div>
+							</div> -->
 						</div>
 					</Collapse>
 				</Card>

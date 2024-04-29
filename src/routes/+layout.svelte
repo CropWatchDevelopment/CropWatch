@@ -89,7 +89,7 @@
 		</div>
 		</nav>
 	</div>
-	<div class="app">
+	<div class="app bg-neutral">
 		<!-- <h1>{$_('header.home')}</h1> -->
 		<span id="auth_header">
 		{#if !data.session}
@@ -103,7 +103,7 @@
 			</form>
 		{/if}
 	</span>
-	<main class="bg-neutral">
+	<main>
 		<slot />
 	</main>
 </div>

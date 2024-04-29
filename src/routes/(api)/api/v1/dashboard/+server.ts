@@ -26,6 +26,8 @@ export const GET: RequestHandler = async ({ url, fetch, locals: { supabase, safe
                 const { data, error } = await supabase
                     .from(data_table)
                     .select(queryString)
+                    .eq('dev_eui', dil.cw_devices.dev_eui)
+                    .order('created_at', { ascending: false })
                     .limit(1)
                     .single();
 
