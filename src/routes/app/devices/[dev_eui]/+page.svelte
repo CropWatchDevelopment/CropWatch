@@ -21,16 +21,8 @@
 
 <h1>Devices</h1>
 
-{#await $deviceStore}
-	<p>loading...</p>
-{:then devices}
-	<ul>
-		{#each devices as device}
-			{#each device as dev}
-				<li>
-					<a href="/app/devices/{dev.dev_eui}/data">View Data of device: {dev.cw_devices.name}</a>
-				</li>
-			{/each}
-		{/each}
-	</ul>
-{/await}
+<ul>
+	{#each $deviceStore as device}
+		<li>{JSON.stringify(device, null, 2)}</li>
+	{/each}
+</ul>

@@ -1,11 +1,15 @@
 <script lang="ts">
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
-import { Card, Collapse } from 'svelte-ux';
+	import { Card, Collapse } from 'svelte-ux';
 	export let data;
-	const {locations, weatherJSON} = data;
+	const { locations, weatherJSON } = data;
+	import { onMount } from 'svelte';
 
-	// console.log("Data from Server:", data.locations)
-	// console.log("Data from Server WEATHER:", weatherJSON.properties.timeseries.slice(-1)[0].data.instant)
+	onMount(async () => {
+		const response = await fetch('/api/v1/dashboard');
+		const data = await response.json();
+		console.log(data);
+	});
 </script>
 
 <svelte:head>
@@ -27,25 +31,23 @@ import { Card, Collapse } from 'svelte-ux';
 		<!-- {JSON.stringify(data.locations)} -->
 		<!-- {JSON.stringify(data.weatherJSON)} -->
 	</div>
-	<div class="bg-neutral p-4 h-screen" >
+	<div class="bg-neutral p-4 h-screen">
 		<!-- BELL -->
-		<div class="py-1  my-5">
+		<div class="py-1 my-5">
 			<div class="flex justify-end w-full h-7">
-				<img src="/icons/UI/cw-bell.png" alt="" >
+				<img src="/icons/UI/cw-bell.png" alt="" />
 			</div>
 		</div>
 
-
 		<!-- TITLE and Filter -->
 		<div class="flex justify-between mb-6">
-			
 			<!-- TITLE -->
 			<h2 class=" font-light text-2xl text-surface-100">Dashboard</h2>
 
 			<!-- Filter -->
 			<div class="flex align-baseline justify-center items-center">
 				<div class="w-4">
-					<img src="/icons/UI/cw_filter_button.png" alt="">
+					<img src="/icons/UI/cw_filter_button.png" alt="" />
 				</div>
 				<p class="text-surface-100 px-1">Filter</p>
 			</div>
@@ -68,12 +70,13 @@ import { Card, Collapse } from 'svelte-ux';
 				<div class="flex">
 					<p class="basis-1/3"></p>
 					<div class="basis-1/3 text-xs flex">
-						<img src="/icons/UI/cw_thermometer.png" alt="" class="w-4">
-						<p>Temperature</p>	
+						<img src="/icons/UI/cw_thermometer.png" alt="" class="w-4" />
+						<p>Temperature</p>
 					</div>
 					<div class="basis-1/3 text-xs flex">
-						<img src="/icons/UI/cw_moisture.png" alt="" class="w-4">
-						<p>Humidity</p>	</div>
+						<img src="/icons/UI/cw_moisture.png" alt="" class="w-4" />
+						<p>Humidity</p>
+					</div>
 				</div>
 				<div class="text-sm">
 					<Card
@@ -85,7 +88,7 @@ import { Card, Collapse } from 'svelte-ux';
 								<div class="flex text-center">
 									<div class="basis-1/3 flex items-center space-x-2">
 										<div class="w-2">
-											<img src="/icons/UI/cw_active.png" alt="">
+											<img src="/icons/UI/cw_active.png" alt="" />
 										</div>
 										<p>Sensor 1</p>
 									</div>
@@ -141,7 +144,7 @@ import { Card, Collapse } from 'svelte-ux';
 								<div class="flex text-center">
 									<div class="basis-1/3 flex items-center space-x-2">
 										<div class="w-2">
-											<img src="/icons/UI/cw_active.png" alt="">
+											<img src="/icons/UI/cw_active.png" alt="" />
 										</div>
 										<p>Sensor 1</p>
 									</div>

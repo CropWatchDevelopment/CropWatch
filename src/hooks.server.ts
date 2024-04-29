@@ -13,15 +13,32 @@ async function supabase({ event, resolve }) {
   })
 
   /**
-   * a little helper that is written for convenience so that instead
-   * of calling `const { data: { session } } = await supabase.auth.getSession()`
-   * you just call this `await getSession()`
-   */
-  event.locals.getSession = async () => {
+     * Unlike `supabase.auth.getSession`, which is unsafe on the server because it
+     * doesn't validate the JWT, this function validates the JWT by first calling
+     * `getUser` and aborts early if the JWT signature is invalid.
+     */
+  event.locals.safeGetSession = async () => {
     const {
       data: { session },
     } = await event.locals.supabase.auth.getSession()
-    return session
+    if (!session) {
+      return { session: null, user: null }
+    }
+
+    const {
+      data: { user },
+      error,
+    } = await event.locals.supabase.auth.getUser()
+    if (error) {
+      // JWT validation has failed
+      return { session: null, user: null }
+    }
+
+    // if(session) {
+    //   delete session.user // Here!
+    // }
+
+    return { session, user }
   }
 
   return resolve(event, {
