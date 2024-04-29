@@ -1,4 +1,5 @@
 import { redirect, type RequestHandler } from "@sveltejs/kit";
+import moment from "moment";
 
 export const GET: RequestHandler = async ({ url, fetch, locals: { supabase, safeGetSession } }) => {
     const { session } = await safeGetSession();
@@ -19,25 +20,39 @@ export const GET: RequestHandler = async ({ url, fetch, locals: { supabase, safe
             for (let dil of devicesInLocation) {
                 const data_table = dil.cw_devices.cw_device_type.data_table;
                 const primaryData = dil.cw_devices.cw_device_type.primary_data;
+                const secondaryData = dil.cw_devices.cw_device_type.secondary_data;
 
+                const queryString = `created_at, ${primaryData}${(secondaryData != null && secondaryData != '') ? ',' + secondaryData : ''}`;
                 const { data, error } = await supabase
                     .from(data_table)
-                    .select(`created_at, ${primaryData}`)
+                    .select(queryString)
                     .limit(1)
                     .single();
+
+                if (error) {
+                    console.error(error);
+                    continue;
+                }
+                if (data) {
+                    dil.cw_devices.primary_data = data[primaryData];
+                    dil.cw_devices.primary_data_notation = dil.cw_devices.cw_device_type.primary_data_notation;
+                    dil.cw_devices.secondary_data = data[secondaryData];
+                    dil.cw_devices.secondary_data_notation = dil.cw_devices.cw_device_type.secondary_data_notation;
+                    dil.cw_devices.isPastDue = (dil.cw_devices.upload_interval && moment().diff(moment(data.created_at), 'minutes') > dil.cw_devices.upload_interval) ? false : true;
+                }
 
                 dashboardResponse.push({
                     lastReceived: data.created_at,
                     sensorName: dil.cw_devices.name,
-                    sensorPrimaryData: data,
-                    sensorSecondaryData: null,
+                    devices: devicesInLocation,
                     locationName: locationItem.cw_locations.name,
-                })
+                    lat: locationItem.cw_locations.latitude,
+                    lng: locationItem.cw_locations.longitude,
 
-                console.log(data, error);
+                });
             }
         }
-        console.log(dashboardResponse)
+
         return new Response(JSON.stringify(dashboardResponse),
             {
                 status: 200,

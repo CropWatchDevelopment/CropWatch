@@ -3,71 +3,39 @@ import { redirect } from "@sveltejs/kit";
 
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ params, locals: { supabase, getSession } }) {
-    let session = await getSession();
+export async function load({ params, fetch, locals: { supabase, safeGetSession } }) {
+    let session = await safeGetSession();
     console.log(session)
-    // if (!session) throw redirect(304, '/auth/login');
-    // const user_id = session?.user.id;
-    const user_id = 'e7ab491a-0d92-4d86-9a69-f73f268d7524'
+    if (!session) throw redirect(304, '/auth/login');
+    const user_id = session?.user.id;
 
-    let {data, error} = await supabase.from('cw_location_owners').select(`cw_locations(*)`).eq('user_id', session?.user.id)
     // console.log(data, error)
-    const locations = await updateLocations(data, supabase, user_id)
-    console.log("LOCATIONS\n",locations)
+    const locationsRequest = await fetch(`/api/v1/dashboard`);
+    const locationsData = await locationsRequest.json();
+    const locations = await updateLocations(locationsData, supabase, user_id)
+
+    console.log("LOCATIONS\n", locations)
 
 
     return {
         locations: locations,
-        weatherJSON: await getWeatherAPIData(),
+        // weatherJSON: await getWeatherAPIData(),
         // sensor: await supabase.from('cw_ss_tmepnpk').select('*').eq('dev_eui', params.sensor_eui).order('created_at', { ascending: false }).limit(100),
     };
 }
 
-async function updateLocations(locations, supabase, user_id){
-    for (var location of locations){
-        // const loc = await checkLocationOwner(supabase, location.location_id, user_id)
-        const streamed = await load_AllSensors(supabase, location.location_id)
-        console.log("STREAMED \n", streamed)
-        const weatherJSON = await getWeatherAPIData()
-        console.log("WEATHER JSON\n", weatherJSON)
-        location.cw_locations.weatherJSON = weatherJSON
+async function updateLocations(locations, supabase, user_id) {
+    for (var location of locations) {
+        const weatherJSON = await getWeatherAPIData(location.lat, location.lng);
+        location.weatherJSON = weatherJSON
     }
     return locations
 }
-async function checkLocationOwner(supabase: SupabaseClient, id: number, user_id: string) {
-    const { data, error } = await supabase
-        .from('cw_locations')
-        .select('*, cw_location_owners(id, user_id), cw_device_locations(*, cw_devices(*, cw_ss_tmepnpk(soil_moisture, soil_temperatureC)))')
-        .eq('cw_location_owners.user_id', user_id)
-        .eq('location_id', id)
-        .single();
 
-    if (error) {
-        console.error(error);
-        throw redirect(304, '/auth/login');
-    }
-    return data;
-}
-
-async function load_AllSensors(supabase: SupabaseClient, location_id: number) {
-    const { data, error } = await supabase
-        .from('cw_device_locations')
-        .select('*, cw_devices(*, cw_ss_tmepnpk(*), cw_air_thvd(*), seeed_co2_lorawan_uplinks(*))')
-        .eq('location_id', location_id)
-        .order('created_at', { referencedTable: 'cw_devices.seeed_co2_lorawan_uplinks', ascending: false })
-        .order('created_at', { referencedTable: 'cw_devices.cw_air_thvd', ascending: false })
-        .order('created_at', { referencedTable: 'cw_devices.cw_ss_tmepnpk', ascending: false })
-        .limit(1, { referencedTable: 'cw_devices.cw_ss_tmepnpk' })
-        .limit(1, { referencedTable: 'cw_devices.seeed_co2_lorawan_uplinks' })
-        .limit(1, { referencedTable: 'cw_devices.cw_air_thvd' })
-        ;
-    return data;
-}
-
-async function getWeatherAPIData() {
+async function getWeatherAPIData(lat: number, lng: number) {
     try {
         const weatherRequest = await fetch(
-            'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max'
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
         );
         const weatherJSON = await weatherRequest.json();
         const result = convertApiResponseToResultIncludingLux(weatherJSON);
@@ -80,7 +48,7 @@ async function getWeatherAPIData() {
 
 function convertApiResponseToResultIncludingLux(apiResponse) {
     // Helper function to convert wind direction from degrees to cardinal directions
-    const degreesToDirection = deg => {
+    const degreesToDirection = (deg: number) => {
         if (deg >= 337.5 || deg < 22.5) {
             return 'N';
         } else if (deg >= 22.5 && deg < 67.5) {
@@ -104,7 +72,7 @@ function convertApiResponseToResultIncludingLux(apiResponse) {
 
     // Assuming a basic conversion for cloud cover to lux as a placeholder
     // Note: This is a simplistic approach and not scientifically accurate
-    const cloudCoverToLux = cloudCover => {
+    const cloudCoverToLux = (cloudCover: number) => {
         // Assuming a maximum lux of 100,000 for clear sky conditions and subtracting based on cloud cover percentage
         return Math.max(0, 100000 - (cloudCover * 1000));
     };
@@ -126,25 +94,25 @@ function convertApiResponseToResultIncludingLux(apiResponse) {
 
 
 
-/*
-RLS:
+// /*
+// RLS:
 
-CREATE POLICY user_owns_location
-ON public.cw_locations
-FOR SELECT
-USING (
-    EXISTS (
-        SELECT 1
-        FROM public.cw_location_owners
-        WHERE
-            public.cw_location_owners.location_id = public.cw_locations.location_id
-            AND public.cw_location_owners.user_id = auth.uid() -- Replace `current_user_id()` with your method of obtaining the current user's ID, often `auth.uid()`
-            AND public.cw_location_owners.is_active = true
-    )
-);
-
-
+// CREATE POLICY user_owns_location
+// ON public.cw_locations
+// FOR SELECT
+// USING (
+//     EXISTS (
+//         SELECT 1
+//         FROM public.cw_location_owners
+//         WHERE
+//             public.cw_location_owners.location_id = public.cw_locations.location_id
+//             AND public.cw_location_owners.user_id = auth.uid() -- Replace `current_user_id()` with your method of obtaining the current user's ID, often `auth.uid()`
+//             AND public.cw_location_owners.is_active = true
+//     )
+// );
 
 
 
-*/
+
+
+// */

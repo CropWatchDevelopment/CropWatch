@@ -39,7 +39,7 @@
 
 <SvelteToast />
 <div class="bg-primary text-surface-300 py-2">
-	<nav>
+	<nav class="static">
 		<!-- {#if !data.session}
 			<p>test</p>
 			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
@@ -103,13 +103,9 @@
 			</form>
 		{/if}
 	</span>
-	<main>
+	<main class="bg-neutral">
 		<slot />
 	</main>
-
-	<footer>
-		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
-	</footer>
 </div>
 
 <style>
