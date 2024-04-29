@@ -1,40 +1,29 @@
-// src/routes/+layout.js
+// src/routes/+layout.ts
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public'
-import { combineChunks, createBrowserClient, isBrowser, parse } from '@supabase/ssr'
+import { createSupabaseLoadClient } from '@supabase/auth-helpers-sveltekit'
+import type { Database } from '../DatabaseDefinitions'
+import { browser } from '$app/environment'
 import '$lib/i18n' // Import to initialize. Important :)
 import { locale, waitLocale } from 'svelte-i18n';
-import { browser } from '$app/environment';
 
 export const load = async ({ fetch, data, depends }) => {
-  depends('supabase:auth');
+  depends('supabase:auth')
 
-  if (browser) {
-    locale.set(window.navigator.language);
-  }
-  await waitLocale();
-
-  const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-    global: {
-      fetch,
-    },
-    cookies: {
-      get(key) {
-        if (!isBrowser()) {
-          return JSON.stringify(data.session)
-        }
-
-        const cookie = combineChunks(key, (name) => {
-          const cookies = parse(document.cookie)
-          return cookies[name]
-        })
-        return cookie
-      },
-    },
+  const supabase = createSupabaseLoadClient<Database>({
+    supabaseUrl: PUBLIC_SUPABASE_URL,
+    supabaseKey: PUBLIC_SUPABASE_ANON_KEY,
+    event: { fetch },
+    serverSession: data.session,
   })
 
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
+  if (browser) {
+    locale.set(window.navigator.language);
+  }
+  await waitLocale();
 
   return { supabase, session }
 }

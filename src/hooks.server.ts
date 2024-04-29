@@ -1,35 +1,15 @@
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createServerClient } from '@supabase/ssr';
-import type { Handle } from '@sveltejs/kit';
-import { sequence } from '@sveltejs/kit/hooks';
-import { locale } from 'svelte-i18n';
-import type { Database } from './database.types';
+// src/hooks.server.ts
+import { type Handle, redirect, error } from '@sveltejs/kit'
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public'
+import { createSupabaseServerClient } from '@supabase/auth-helpers-sveltekit'
+import { sequence } from '@sveltejs/kit/hooks'
+import { locale } from 'svelte-i18n'
 
-const setLocale: Handle = async ({ event, resolve }) => {
-  const lang = event.request.headers.get('accept-language')?.split(',')[0];
-  if (lang) {
-    locale.set(lang);
-  }
-  return resolve(event);
-};
-
-const handleSB: Handle = async ({ event, resolve }) => {
-  event.locals.supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-    cookies: {
-      get: (key) => event.cookies.get(key),
-      /**
-       * Note: You have to add the `path` variable to the
-       * set and remove method due to sveltekit's cookie API
-       * requiring this to be set, setting the path to '/'
-       * will replicate previous/standard behaviour (https://kit.svelte.dev/docs/types#public-types-cookies)
-       */
-      set: (key, value, options) => {
-        event.cookies.set(key, value, { ...options, path: '/' })
-      },
-      remove: (key, options) => {
-        event.cookies.delete(key, { ...options, path: '/' })
-      },
-    },
+async function supabase({ event, resolve }) {
+  event.locals.supabase = createSupabaseServerClient({
+    supabaseUrl: PUBLIC_SUPABASE_URL,
+    supabaseKey: PUBLIC_SUPABASE_ANON_KEY,
+    event,
   })
 
   /**
@@ -65,7 +45,37 @@ const handleSB: Handle = async ({ event, resolve }) => {
     filterSerializedResponseHeaders(name) {
       return name === 'content-range'
     },
-  });
+  })
 }
 
-export const handle = sequence(setLocale, handleSB);
+async function authorization({ event, resolve }) {
+  // protect requests to all routes that start with /protected-routes
+  if (event.url.pathname.startsWith('/app') && event.request.method === 'GET') {
+    const session = await event.locals.getSession()
+    if (!session) {
+      // the user is not signed in
+      throw redirect(303, '/auth/login')
+    }
+  }
+
+  // protect POST requests to all routes that start with /protected-posts
+  if (event.url.pathname.startsWith('/app') && event.request.method === 'POST') {
+    const session = await event.locals.getSession()
+    if (!session) {
+      // the user is not signed in
+      throw error(400, '/auth/login')
+    }
+  }
+
+  return resolve(event)
+}
+
+const setLocale: Handle = async ({ event, resolve }) => {
+  const lang = event.request.headers.get('accept-language')?.split(',')[0];
+  if (lang) {
+    locale.set(lang);
+  }
+  return resolve(event);
+};
+
+export const handle: Handle = sequence(supabase, authorization, setLocale);
