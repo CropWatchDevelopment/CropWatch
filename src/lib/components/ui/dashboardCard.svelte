@@ -1,22 +1,33 @@
 <script lang="ts">
-	import { Card, Collapse } from 'svelte-ux';
-	// export let locationName = 'Location Name'
+	import { onMount } from 'svelte';
+	import { Card, Collapse, stringify } from 'svelte-ux';
+	import { writable } from 'svelte/store';
+
 	export let data;
 	const locationId = data.location_id;
-	const locationName = data.locationName;
-	const temperature = data.weatherJSON.temperature;
-	const rainfall = data.weatherJSON.rainfall;
-	const humidity = data.weatherJSON.humidity;
-	const windSpeed = data.weatherJSON.windSpeed;
+	const locationName: string = data.cw_locations.name ?? '--';
+	const temperature: number = data.weatherJSON.temperature ?? 0;
+	const rainfall: number = data.weatherJSON.rainfall ?? 0;
+	const humidity: number = data.weatherJSON.humidity ?? 0;
+	const windSpeed: number = data.weatherJSON.windSpeed ?? 0;
+	const devices = writable([]);
 
-	const loadDeviceDataFor = (device) => {
-		fetch(`/api/v1/devices/${device.dev_eui}/data?page=1&count=1`)
+	const loadDeviceDataFor = async (device) => {
+		return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=1&count=1`)
 			.then((res) => res.json())
 			.then((data) => {
-				device.data = data[0];
-				data = data;
+				return data;
 			});
 	};
+
+	onMount(async () => {
+		const response = await fetch(`/api/v1/locations/${locationId}/devices`);
+		const devicesFromApi = await response.json();
+		for (let device of devicesFromApi) {
+			device.data = await loadDeviceDataFor(device);
+		}
+		devices.set(devicesFromApi);
+	});
 </script>
 
 <div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
@@ -30,7 +41,6 @@
 		</a>
 		<div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
 		<div class="absolute top-4 text-[0.5em] text-surface-100 drop-shadow-md right-3 space-y-1">
-			<!-- <p>Temperature:{temperature}</p> -->
 			<p>Rainfall: {rainfall}%</p>
 			<p>Humidity: {humidity}%</p>
 			<p>Windspeed: {windSpeed} km/h</p>
@@ -42,7 +52,7 @@
 		</div>
 	</div>
 	<div class="pl-2 pt-2">
-		<h2 class="text-xl my-3">{locationName}</h2>
+		<h2 class="text-xl my-3">{locationName ?? '--'}</h2>
 		<div class="flex">
 			<p class="basis-1/3"></p>
 			<div class="basis-1/3 text-xs flex">
@@ -55,12 +65,11 @@
 			</div>
 		</div>
 		<div class="text-sm">
-			{#each data.devices as device}
-				<!-- {JSON.stringify(device, null, 2)} -->
+			{#each $devices as device}
 				<Card
 					class="divide-y bg-[#F7FAFF] border-[#FBFBFB] border-[0.1em] rounded-md elevation-none my-2"
 				>
-					<Collapse let:open on:change={() => loadDeviceDataFor(device)}>
+					<Collapse>
 						<!-- Outside -->
 						<div slot="trigger" class="flex-1 px-3 py-2">
 							<div class="flex text-center">
@@ -76,10 +85,14 @@
 									<p>{device.cw_devices.name}</p>
 								</div>
 								<p class="basis-1/3">
-									{device.cw_devices.primary_data}{device.cw_devices.primary_data_notation}
+									{#if device.data && device.data.primaryData && device.data.primary_data_notation}
+										{device.data[device.data.primaryData]}{device.data.primary_data_notation}
+									{/if}
 								</p>
 								<p class="basis-1/3">
-									{device.cw_devices.secondary_data}{device.cw_devices.secondary_data_notation}
+									{#if device.data && device.data.secondaryData && device.data.secondary_data_notation}
+										{device.data[device.data.secondaryData]}{device.data.secondary_data_notation}
+									{/if}
 								</p>
 							</div>
 						</div>
@@ -90,42 +103,12 @@
 							</div>
 							{#if device.data}
 								{#each Object.keys(device.data) as dataPointKey}
-								<div class="px-3 pb-3 flex text-left">
-									<p class="basis-1/2 text-sm">{dataPointKey}</p>
-									<p class="basis-1/2 text-sm">{device.data[dataPointKey]}</p>
-								</div>
+									<div class="px-3 pb-3 flex text-left">
+										<p class="basis-1/2 text-sm">{dataPointKey}</p>
+										<p class="basis-1/2 text-sm">{device.data[dataPointKey]}</p>
+									</div>
 								{/each}
 							{/if}
-							<!-- <div class="px-3 pb-3 flex text-left">
-								<p class="basis-1/2 text-sm">Temperature</p>
-								<p class="basis-1/2 text-sm">27ºC</p>
-							</div>
-							<div class="px-3 pb-3 flex text-left">
-								<p class="basis-1/2 text-sm">Moisture</p>
-								<p class="basis-1/2 text-sm">23%</p>
-							</div>
-							<div class="px-3 pb-3 flex text-left">
-								<p class="basis-1/2 text-sm">pH</p>
-								<p class="basis-1/2 text-sm">3.4</p>
-							</div>
-							<div class="px-3 pb-3 flex text-left">
-								<p class="basis-1/2 text-sm">EC</p>
-								<p class="basis-1/2 text-sm">7.6</p>
-							</div>
-							<div class="mt-4">
-								<div class="px-3 pb-3 flex text-left">
-									<p class="basis-1/2 text-sm">N</p>
-									<p class="basis-1/2 text-sm">23%</p>
-								</div>
-								<div class="px-3 pb-3 flex text-left">
-									<p class="basis-1/2 text-sm">P</p>
-									<p class="basis-1/2 text-sm">3.4</p>
-								</div>
-								<div class="px-3 pb-3 flex text-left">
-									<p class="basis-1/2 text-sm">K</p>
-									<p class="basis-1/2 text-sm">7.6</p>
-								</div>
-							</div> -->
 						</div>
 					</Collapse>
 				</Card>

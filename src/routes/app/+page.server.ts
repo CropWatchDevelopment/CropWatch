@@ -9,12 +9,14 @@ export async function load({ params, fetch, locals: { supabase, safeGetSession }
     const user_id = session?.user.id;
 
     // console.log(data, error)
-    const locationsRequest = await fetch(`/api/v1/dashboard`);
+    // const locationsRequest = await fetch(`/api/v1/dashboard`);
+    const locationsRequest = await fetch(`/api/v1/locations`);
     const locationsData = await locationsRequest.json();
-    const locations = await updateLocations(locationsData, supabase, user_id)
+    const locations = await updateLocations(locationsData, supabase, user_id);
 
-    console.log("LOCATIONS\n", locations)
-
+    for(var location of locations){
+        location.weatherJSON = await getWeatherAPIData(location.cw_locations.latitude, location.cw_locations.longitude);
+    }
 
     return {
         locations: locations,

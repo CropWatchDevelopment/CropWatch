@@ -38,8 +38,8 @@
 </script>
 
 <SvelteToast />
-<div class="bg-primary text-surface-300 py-2">
-	<nav class="static">
+<div class="bg-primary text-surface-300 py-2 static">
+	<nav>
 		<!-- {#if !data.session}
 			<p>test</p>
 			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
@@ -54,55 +54,58 @@
 		{/if} -->
 
 		<div class="flex justify-between px-4 items-center">
-
 			<!-- HOME/LOGO BUTTON -->
 			<div class="w-32">
 				<a href="/">
-					<img src="/icons/UI/cw_Logo.png" alt="">	
+					<img src="/icons/UI/cw_Logo.png" alt="" />
 				</a>
 			</div>
-			
+
 			<!-- HAMBURGER ICON -->
 			<div class="w-14">
-				<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"
-				><defs
-				><style>
-						.cls-1 {
-							fill: #0dbf34;
-						}
+				<svg
+					id="Layer_1"
+					data-name="Layer 1"
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 300 300"
+					><defs
+						><style>
+							.cls-1 {
+								fill: #0dbf34;
+							}
 						</style></defs
-				><title>cw</title><rect
-				class="cls-1"
-				x="27.92"
-				y="66.2"
-				width="244.15"
-				height="35.66"
-				/><rect class="cls-1" x="27.96" y="132.19" width="244.15" height="35.66" /><rect
-				class="cls-1"
-				x="27.96"
-				y="198.18"
-				width="244.15"
-				height="35.66"
-				/></svg
+					><title>cw</title><rect
+						class="cls-1"
+						x="27.92"
+						y="66.2"
+						width="244.15"
+						height="35.66"
+					/><rect class="cls-1" x="27.96" y="132.19" width="244.15" height="35.66" /><rect
+						class="cls-1"
+						x="27.96"
+						y="198.18"
+						width="244.15"
+						height="35.66"
+					/></svg
 				>
 			</div>
 		</div>
-		</nav>
-	</div>
-	<div class="app bg-neutral">
-		<!-- <h1>{$_('header.home')}</h1> -->
-		<span id="auth_header">
+	</nav>
+</div>
+<div class="app bg-neutral">
+	<!-- <h1>{$_('header.home')}</h1>
+	<span id="auth_header">
 		{#if !data.session}
 			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
 		{:else}
-			<!-- <a href="/">Home</a> /
+			<a href="/">Home</a> /
 			<a href="/auth/user-profile">User profile</a> /
-			<a href="/app/devices">devices</a> -->
+			<a href="/app/devices">devices</a>
 			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
-				<!-- <button type="submit">Logout</button> -->
+				<button type="submit">Logout</button>
 			</form>
 		{/if}
-	</span>
+	</span> -->
 	<main>
 		<slot />
 	</main>

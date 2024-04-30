@@ -6,9 +6,9 @@
 	import { onMount } from 'svelte';
 
 	onMount(async () => {
-		const response = await fetch('/api/v1/dashboard');
-		const data = await response.json();
-		console.log('loaded data', data);
+		// const response = await fetch('/api/v1/dashboard');
+		// const data = await response.json();
+		// console.log('loaded data', data);
 	});
 </script>
 

@@ -19,15 +19,24 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
       });
   }
 
-  let dataTable = await getDeviceDataTable(dev_eui, session, supabase);
+  let deviceType = await getDeviceDataTable(dev_eui, session, supabase);
 
   const { data, error } = await supabase
-    .from(dataTable)
+    .from(deviceType.data_table)
     .select('*')
     .eq('dev_eui', dev_eui)
     .order('created_at', { ascending: true })
     .range(+startingPage, +itemsPerPage)
-    ;
+    .limit(1)
+    .single();
+
+  if (data) {
+    data.primaryData = deviceType.primary_data;
+    data.secondaryData = deviceType.secondary_data;
+    data.primary_data_notation = deviceType.primary_data_notation;
+    data.secondary_data_notation = deviceType.secondary_data_notation;
+  }
+
   return new Response(
     JSON.stringify(data) ||
     error,
@@ -53,7 +62,7 @@ async function getDeviceDataTable(dev_eui: string, session: any, supabase: any) 
     if (error) {
       return null;
     } else {
-      return data.cw_devices.cw_device_type.data_table;
+      return data.cw_devices.cw_device_type;
     }
   } catch (error) {
     return new Response(
