@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Card, Collapse, stringify } from 'svelte-ux';
+	import { Card, Collapse, ProgressCircle, stringify } from 'svelte-ux';
 	import { writable } from 'svelte/store';
 
 	export let data;
@@ -10,6 +10,7 @@
 	const rainfall: number = data.weatherJSON.rainfall ?? 0;
 	const humidity: number = data.weatherJSON.humidity ?? 0;
 	const windSpeed: number = data.weatherJSON.windSpeed ?? 0;
+	let loading = true;
 	const devices = writable([]);
 
 	const loadDeviceDataFor = async (device) => {
@@ -27,12 +28,13 @@
 			device.data = await loadDeviceDataFor(device);
 		}
 		devices.set(devicesFromApi);
+		loading = false;
 	});
 </script>
 
 <div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 	<div class="w-full h-20 relative rounded-2xl">
-		<a href="/locations/{locationId}">
+		<a href="/app/locations/{locationId}">
 			<img
 				src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs"
 				alt=""
@@ -64,7 +66,10 @@
 				<p>Secondary Data</p>
 			</div>
 		</div>
-		<div class="text-sm">
+		<div class="flex flex-col text-sm">
+			{#if $devices.length === 0 && loading}
+				<ProgressCircle class="flex self-center" />
+			{/if}
 			{#each $devices as device}
 				<Card
 					class="divide-y bg-[#F7FAFF] border-[#FBFBFB] border-[0.1em] rounded-md elevation-none my-2"
@@ -87,11 +92,15 @@
 								<p class="basis-1/3">
 									{#if device.data && device.data.primaryData && device.data.primary_data_notation}
 										{device.data[device.data.primaryData]}{device.data.primary_data_notation}
+									{:else}
+										N/A
 									{/if}
 								</p>
 								<p class="basis-1/3">
 									{#if device.data && device.data.secondaryData && device.data.secondary_data_notation}
 										{device.data[device.data.secondaryData]}{device.data.secondary_data_notation}
+									{:else}
+										N/A
 									{/if}
 								</p>
 							</div>
@@ -108,6 +117,8 @@
 										<p class="basis-1/2 text-sm">{device.data[dataPointKey]}</p>
 									</div>
 								{/each}
+							{:else}
+								<ProgressCircle />
 							{/if}
 						</div>
 					</Collapse>
