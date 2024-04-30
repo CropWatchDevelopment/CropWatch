@@ -7,7 +7,13 @@
 	import { ProgressCircle } from 'svelte-ux';
 	import type { Tables } from '../../../../database.types';
 
-	const location: Promise<Tables<'cw_locations'>[]> = browser
+	const location: Promise<Tables<'cw_locations'>> = browser
+		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
+				r.json()
+			)
+		: Promise.resolve([]);
+
+	const locationDevices: Promise<Tables<'cw_devices'>[]> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}/devices`, { method: 'GET' }).then((r) =>
 				r.json()
 			)
@@ -24,5 +30,11 @@
 		<ProgressCircle />
 	{:then loc}
 		<pre>{JSON.stringify(loc, null, 2)}</pre>
+	{/await}
+
+	{#await locationDevices}
+		<ProgressCircle />
+	{:then devices}
+		<pre>{JSON.stringify(devices, null, 2)}</pre>
 	{/await}
 </div>
