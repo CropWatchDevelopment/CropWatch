@@ -40,6 +40,7 @@
 		"layerchart": "^0.31.1",
 		"leaflet": "^1.9.4",
 		"moment": "^2.30.1",
+		"ol": "^9.1.0",
 		"plotly.js-dist-min": "^2.31.1",
 		"postcss": "^8.4.24",
 		"postcss-load-config": "^5.0.0",
