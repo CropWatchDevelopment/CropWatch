@@ -116,7 +116,7 @@
 <div>
 	<h1>Device Data</h1>
 	<nav>
-		<a href="rules">Sensor Rules</a>
+		<a href="rules" class="text-surface-100">View Sensor Rules</a>
 	</nav>
 	<p>Current Temp: {currentTemp}</p>
 	<p>Current Humidity: {currentHumidity}</p>
