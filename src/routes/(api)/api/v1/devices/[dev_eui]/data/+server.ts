@@ -24,7 +24,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     .from(deviceType.data_table)
     .select('*')
     .eq('dev_eui', dev_eui)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .range(startingPage, startingPage + itemsPerPage - 1);
 
   // Conditionally apply `.single()` if itemsPerPage is 1

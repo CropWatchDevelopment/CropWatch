@@ -5,7 +5,9 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
-	import { supabase } from '$lib/supabaseClient';
+	import { HighchartsDataFactory } from '$lib/highcharts-dto/highcharts-dto-Selector';
+	import Back from '$lib/components/ui/Back.svelte';
+	import { Card } from 'svelte-ux';
 
 	$: config = HighChartsTimeSeriesChart(
 		[
@@ -28,97 +30,79 @@
 	);
 	let currentTemp: number = 0;
 	let currentHumidity: number = 0;
-	let tempData: any = [];
-	let humidityData: any = [];
 
-	const channels = supabase
-		.channel('custom-insert-channel')
-		.on(
-			'postgres_changes',
-			{ event: 'INSERT', schema: 'public', table: 'cw_air_thvd' },
-			(payload) => {
-				console.log('Change received!', payload);
-				if (browser && payload.new.dev_eui === $page.params.dev_eui) {
-					currentHumidity = payload.new.humidity;
-					currentTemp = payload.new.temperatureC;
-					tempData.push([new Date(payload.new.created_at).valueOf(), payload.new.temperatureC]);
-					tempData.pop();
+	let sensorName = '';
 
-					humidityData.push([new Date(payload.new.created_at).valueOf(), payload.new.humidity]);
-					humidityData.pop();
-
-					config = HighChartsTimeSeriesChart(
-						[
-							{
-								type: 'line',
-								yAxis: 0,
-								name: 'Temperature',
-								color: 'red',
-								data: tempData
-							},
-							{
-								type: 'line',
-								yAxis: 1,
-								name: 'Humidity',
-								color: 'blue',
-								data: humidityData
-							}
-						],
-						'Temperature'
-					);
-				}
-			}
-		)
-		.subscribe();
 
 	onMount(async () => {
 		if (browser)
-			await fetch(`/api/v1/devices/${$page.params.dev_eui}/data?=page=0&count=1000`)
+			await fetch(
+				`/api/v1/devices/${$page.params.dev_eui}/data?=page=0&count=${window.screen.width < 768 ? 60 : 500}`
+			)
 				.then((res) => res.json())
-				.then((data) => {
-					console.log(data);
+				.then(async (data) => {
 					currentHumidity = data.at(-1).humidity;
 					currentTemp = data.at(-1).temperatureC;
-					tempData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC]);
-					humidityData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity]);
-					config = HighChartsTimeSeriesChart(
-						[
-							{
+					// const ddd = cw_ss_tme_HighchartsData(data);
+					const device_type = await fetch(`/api/v1/devices/${$page.params.dev_eui}/type`).then((res) =>
+						res.json()
+					);
+
+					sensorName = device_type.name;
+					const ddd = HighchartsDataFactory.create(device_type.cw_device_type.data_table, data);
+					// tempData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC]);
+					// humidityData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity]);
+					const bbb = ddd.getHighchartsData();
+					const ccc = [
+							...Object.keys(bbb).map((key, i) => ({
 								type: 'line',
 								yAxis: 0,
-								name: 'Temperature',
-								color: 'red',
-								data: tempData
-							},
-							{
-								type: 'line',
-								yAxis: 1,
-								name: 'Humidity',
-								color: 'blue',
-								data: humidityData
-							}
-						],
+								name: key.replace('_', ' ').toUpperCase(),
+								color: getRandomColor(),
+								data: bbb[key]
+							}))
+						];
+						console.log(ccc)
+					config = HighChartsTimeSeriesChart(
+						ccc,
 						'Temperature'
 					);
+					console.log(config)
 				})
 				.catch((err) => {
 					console.log(err);
 				});
 	});
 
+	function getRandomColor() {
+		const r = Math.floor(Math.random() * 256);
+		const g = Math.floor(Math.random() * 256);
+		const b = Math.floor(Math.random() * 256);
+		return `rgb(${r},${g},${b})`;
+	}
+
 	onDestroy(() => {
-		if (browser && channels) {
-			channels.unsubscribe();
-		}
+		// if (browser && channels) {
+		// 	channels.unsubscribe();
+		// }
 	});
 </script>
 
 <div>
-	<h1>Device Data</h1>
+	<div class="flex flex-row">
+		<Back />
+		<h2 class="self-center ml-2 font font-light text-2xl text-surface-100">{sensorName}</h2>
+	</div>
 	<nav>
 		<a href="rules" class="text-surface-100">View Sensor Rules</a>
 	</nav>
-	<p>Current Temp: {currentTemp}</p>
-	<p>Current Humidity: {currentHumidity}</p>
+	<div class="grid grid-cols-2 grid-flow-col gap-2 w-full mb-2">
+		<Card>
+			<p>Current Temp: {currentTemp}</p>
+		</Card>
+		<Card>
+			<p>Current Humidity: {currentHumidity}</p>
+		</Card>
+	</div>
 </div>
 <div class="chart" use:Highcharts={config} />

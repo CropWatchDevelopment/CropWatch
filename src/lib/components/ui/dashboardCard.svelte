@@ -14,7 +14,7 @@
 	const devices = writable([]);
 
 	const loadDeviceDataFor = async (device) => {
-		return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=1&count=1`)
+		return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`)
 			.then((res) => res.json())
 			.then((data) => {
 				return data;
