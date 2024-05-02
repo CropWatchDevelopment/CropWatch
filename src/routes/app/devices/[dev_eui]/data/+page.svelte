@@ -30,8 +30,9 @@
 	);
 	let currentTemp: number = 0;
 	let currentHumidity: number = 0;
-
-	let sensorName = '';
+	let sensorName: string = '';
+	let dataPoints: any[] = [];
+	let bbb;
 
 
 	onMount(async () => {
@@ -43,16 +44,14 @@
 				.then(async (data) => {
 					currentHumidity = data.at(-1).humidity;
 					currentTemp = data.at(-1).temperatureC;
-					// const ddd = cw_ss_tme_HighchartsData(data);
 					const device_type = await fetch(`/api/v1/devices/${$page.params.dev_eui}/type`).then((res) =>
 						res.json()
 					);
 
 					sensorName = device_type.name;
 					const ddd = HighchartsDataFactory.create(device_type.cw_device_type.data_table, data);
-					// tempData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC]);
-					// humidityData = data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity]);
 					const bbb = ddd.getHighchartsData();
+					dataPoints = bbb;
 					const ccc = [
 							...Object.keys(bbb).map((key, i) => ({
 								type: 'line',
@@ -96,13 +95,12 @@
 	<nav>
 		<a href="rules" class="text-surface-100">View Sensor Rules</a>
 	</nav>
-	<div class="grid grid-cols-2 grid-flow-col gap-2 w-full mb-2">
+	<div class="grid grid-cols-{Object.keys(dataPoints).length} grid-flow-col gap-2 w-full mb-2">
+		{#each Object.keys(dataPoints) as key}
 		<Card>
-			<p>Current Temp: {currentTemp}</p>
+			<p>{key} : {dataPoints[key][0][1]}</p>
 		</Card>
-		<Card>
-			<p>Current Humidity: {currentHumidity}</p>
-		</Card>
+		{/each}
 	</div>
 </div>
 <div class="chart" use:Highcharts={config} />

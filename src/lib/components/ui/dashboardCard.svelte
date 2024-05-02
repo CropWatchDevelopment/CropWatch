@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { HighchartsDataFactory } from '$lib/highcharts-dto/highcharts-dto-Selector';
 	import { onMount } from 'svelte';
 	import { Card, Collapse, ProgressCircle, stringify } from 'svelte-ux';
 	import { writable } from 'svelte/store';
@@ -25,7 +26,15 @@
 		const response = await fetch(`/api/v1/locations/${locationId}/devices`);
 		const devicesFromApi = await response.json();
 		for (let device of devicesFromApi) {
-			device.data = await loadDeviceDataFor(device);
+
+			debugger;
+			const device_type = await fetch(`/api/v1/devices/${device.dev_eui}/type`).then((res) =>
+				res.json()
+			);
+			const ddd = HighchartsDataFactory.create(device_type.cw_device_type.data_table, await loadDeviceDataFor(device));
+			if(ddd) {
+				device.data = ddd.getHighchartsData();
+			}
 		}
 		devices.set(devicesFromApi);
 		loading = false;

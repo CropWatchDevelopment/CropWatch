@@ -5,6 +5,8 @@
 	import { _, isLoading } from 'svelte-i18n';
 	import { SvelteToast } from '@zerodevx/svelte-toast';
 	import '../app.css';
+	import { ProgressCircle } from 'svelte-ux';
+	import { navigating } from '$app/stores';
 
 	export let data;
 	$: ({ session, supabase } = data);
@@ -106,9 +108,20 @@
 			</form>
 		{/if}
 	</span> -->
-	<main>
-		<slot />
-	</main>
+	{#if $navigating || $isLoading}
+		<div class="flex items-center justify-center h-full">
+			<ProgressCircle />
+			{#if $isLoading}
+				&nbsp; {$_('app.loading_translations_message')}
+			{:else}
+				&nbsp; {$_('app.loading_message')}
+			{/if}
+		</div>
+	{:else}
+		<main>
+			<slot />
+		</main>
+	{/if}
 </div>
 
 <style>
