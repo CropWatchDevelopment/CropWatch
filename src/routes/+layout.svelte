@@ -40,19 +40,6 @@
 <SvelteToast />
 <div class="bg-primary text-surface-300 py-2 static">
 	<nav>
-		<!-- {#if !data.session}
-			<p>test</p>
-			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
-		{:else}
-			<a href="/">Home</a> /
-			<a href="/auth/user-profile">User profile</a> /
-			<a href="/app/devices">Devices</a> /
-			<a href="/app/locations">Locations</a>
-			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
-				<button type="submit">Logout</button>
-			</form>
-		{/if} -->
-
 		<div class="flex justify-between px-4 items-center">
 			<!-- HOME/LOGO BUTTON -->
 			<div class="w-32">
@@ -92,7 +79,7 @@
 		</div>
 	</nav>
 </div>
-<div class="app bg-neutral">
+<div class="app background-gradient">
 	<!-- <h1>{$_('header.home')}</h1>
 	<span id="auth_header">
 		{#if !data.session}
@@ -112,6 +99,11 @@
 </div>
 
 <style>
+	.background-gradient {
+		background: rgb(19, 32, 23);
+		background: linear-gradient(180deg, rgba(19, 32, 23, 1) 0%, rgba(126, 140, 126, 1) 100%);
+	}
+
 	.app {
 		display: flex;
 		flex-direction: column;

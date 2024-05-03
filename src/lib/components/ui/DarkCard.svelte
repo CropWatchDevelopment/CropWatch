@@ -1,12 +1,12 @@
-<script>
+<script lang="ts">
 	export let title;
 	export let value;
 	export let optimalValue;
 	export let unit;
 
-	const differenceValue = value - optimalValue;
+	const differenceValue = (value - optimalValue).toFixed(2);
 
-	function checkValue(value) {
+	function checkValue(value: number) {
 		if (value > 0) {
 			return 'greater';
 		} else if (value == 0) {
@@ -17,15 +17,13 @@
 	}
 </script>
 
-<div
-	class="bg-[#34393f] bg-opacity-50 rounded-xl py-5 px-12 text-surface-100 my-3"
->
-{#if title}
-	<div class="flex justify-between items-center">
-		<p class="text-lg">{title}</p>
-		<p class="text-3xl">{value}<span class="text-2xl">{unit}</span></p>
-	</div>
-    {/if}
+<div class="bg-[#34393f] bg-opacity-50 rounded-xl py-5 px-6 text-surface-100 my-3">
+	{#if title}
+		<div class="flex justify-between items-center">
+			<p class="text-lg">{title}</p>
+			{#if value && unit}<p class="text-3xl">{value}<span class="text-2xl">{unit}</span></p>{/if}
+		</div>
+	{/if}
 	{#if optimalValue}
 		<div class="mt-4 text-[#C3C3C3] space-y-1 text-left">
 			<div class="flex justify-between">
@@ -46,6 +44,7 @@
 			</div>
 		</div>
 	{/if}
+	<slot />
 </div>
 
 <style>

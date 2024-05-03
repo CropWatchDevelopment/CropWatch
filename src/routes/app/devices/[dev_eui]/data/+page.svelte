@@ -1,4 +1,18 @@
 <script lang="ts">
+	import SensorPicker from "$lib/components/ui/SensorPicker.svelte";
+	export let data;
+	const sensorType = data.sensorType.cw_device_type.data_table;
+	const sensorName = data.sensorType.name;
+
+	console.log(data)
+</script>
+
+
+<SensorPicker data={data.data} {sensorType} {sensorName} />
+
+
+
+<!-- <script lang="ts">
 	import Highcharts from '$lib/actions/highcharts.action';
 
 	import { browser } from '$app/environment';
@@ -105,4 +119,4 @@
 		</Card>
 	</div>
 </div>
-<div class="chart" use:Highcharts={config} />
+<div class="chart" use:Highcharts={config} /> -->

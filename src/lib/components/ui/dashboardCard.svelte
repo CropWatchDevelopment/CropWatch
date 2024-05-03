@@ -42,7 +42,7 @@
 			/>
 		</a>
 		<div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
-		<div class="absolute top-4 text-[0.5em] text-surface-100 drop-shadow-md right-3 space-y-1">
+		<div class="absolute top-4 text-[0.65em] text-surface-100 drop-shadow-md right-3 space-y-1">
 			<p>Rainfall: {rainfall}%</p>
 			<p>Humidity: {humidity}%</p>
 			<p>Windspeed: {windSpeed} km/h</p>
