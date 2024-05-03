@@ -1,5 +1,5 @@
 {
-	"name": "cropwatch-userInterface",
+	"name": "cropwatchui",
 	"version": "0.0.1",
 	"private": true,
 	"type": "module",
@@ -8,6 +8,8 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"test": "npm run test:integration && npm run test:unit",
+		"updateDevTypes": "supabase gen types typescript --project-id xendbqklkiuwivdgknvg > database.types.ts",
+		"updateProdTypes": "supabase gen types typescript --project-id dpaoqrcfswnzknixwkll > database.types.ts",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --plugin-search-dir . --check . && eslint .",
