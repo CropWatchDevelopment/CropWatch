@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { _, isLoading } from 'svelte-i18n';
 	import { SvelteToast } from '@zerodevx/svelte-toast';
+	import cw_LogoImage from '$lib/images/UI/cw_Logo.png';
 	import '../app.css';
 
 	export let data;
@@ -44,7 +45,7 @@
 			<!-- HOME/LOGO BUTTON -->
 			<div class="w-32">
 				<a href="/">
-					<img src="/icons/UI/cw_Logo.png" alt="" />
+					<img src={cw_LogoImage} alt="" />
 				</a>
 			</div>
 
