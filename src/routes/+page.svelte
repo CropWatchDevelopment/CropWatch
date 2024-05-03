@@ -1,7 +1,8 @@
 <script>
+	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
 
-    goto('/auth/login');
+    if(browser) goto('/auth/login');
 </script>
 
 
