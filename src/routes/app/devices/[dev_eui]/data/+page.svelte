@@ -2,7 +2,7 @@
 	import Highcharts from '$lib/actions/highcharts.action';
 
 	import { browser } from '$app/environment';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
 	import { HighchartsDataFactory } from '$lib/highcharts-dto/highcharts-dto-Selector';
@@ -49,16 +49,16 @@
 					);
 
 					sensorName = device_type.name;
-					const ddd = HighchartsDataFactory.create(device_type.cw_device_type.data_table, data);
-					const bbb = ddd.getHighchartsData();
-					dataPoints = bbb;
+					const highchartsDataFactory = HighchartsDataFactory.create(device_type.cw_device_type.data_table, data);
+					const dataForHighchartsUse = highchartsDataFactory.getHighchartsData();
+					dataPoints = dataForHighchartsUse;
 					const ccc = [
-							...Object.keys(bbb).map((key, i) => ({
+							...Object.keys(dataForHighchartsUse).map((key, i) => ({
 								type: 'line',
 								yAxis: 0,
 								name: key.replace('_', ' ').toUpperCase(),
 								color: getRandomColor(),
-								data: bbb[key]
+								data: dataForHighchartsUse[key]
 							}))
 						];
 						console.log(ccc)
@@ -80,11 +80,6 @@
 		return `rgb(${r},${g},${b})`;
 	}
 
-	onDestroy(() => {
-		// if (browser && channels) {
-		// 	channels.unsubscribe();
-		// }
-	});
 </script>
 
 <div>

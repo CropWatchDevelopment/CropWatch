@@ -12,6 +12,8 @@ export class HighchartsDataFactory {
                 return new CWAirTHVDHighcharts(data as Tables<'cw_air_thvd'>[]);
             case 'cw_ss_tme':
                 return new CWSS_TMEHighcharts(data as Tables<'cw_ss_tme'>[]);
+            case 'seeed_sensecap_s2120':
+                return new SEED_SENSECAP_S2120(data as Tables<'seeed_sensecap_s2120'>[]);
             default:
                 throw new Error("Invalid table type provided");
         }
