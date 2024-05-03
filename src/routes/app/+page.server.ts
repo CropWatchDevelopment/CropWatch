@@ -1,10 +1,10 @@
 import { redirect } from "@sveltejs/kit";
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ params, fetch, locals: { supabase, safeGetSession } }) {
+export async function load({ fetch, locals: { supabase, safeGetSession } }) {
     let session = await safeGetSession();
     console.log(session)
-    if (!session) throw redirect(304, '/auth/login');
+    if (!session || !session?.user) throw redirect(304, 'auth/login');
     const user_id = session?.user.id;
 
     // console.log(data, error)

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import Sensor1 from "./sensors/Sensor1.svelte";
+	import Back from '$lib/components/ui/Back.svelte';
+import Sensor1 from "./sensors/Sensor1.svelte";
     export let sensorType = "NS";
     export let sensorName = "NS";
     export let data;
@@ -10,6 +11,7 @@
     {:else if sensorType == "Type 2"}
     <p>Displaying sensor 2</p>
     {:else}
+    <Back />
     <p>No sensor was specified</p>
     {/if}
 </div>
