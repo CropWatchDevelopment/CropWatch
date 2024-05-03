@@ -1,13 +1,44 @@
 <script>
-    export let title = "title";
-    export let temperature = 24
-    export let data
+    export let title;
+    export let value;
+    export let optimalValue;
+
+    const differenceValue =  value - optimalValue;
+
+    function checkValue (value) {
+        if (value > 0){
+            return 'greater'
+        } else if (value == 0){
+            return 'equal'
+        } else {
+            return 'less'
+        }
+    }
+
 </script>
 <div class="bg-[#34393f] bg-opacity-50 rounded-lg p-2 text-surface-100" >
-    {#if data.soilTemperature}
     <div class="flex justify-between">
-        <p class="text-sm">Soil Temperature</p>
-        <p class="text-lg">{data.soilTemperature}</p>
+        <p class="text-sm">{title}</p>
+        <p class="text-lg">{value}</p>
+    </div>
+    {#if optimalValue}
+    <div>
+        <div class="flex justify-between">
+            <p class="text-sm">Optimal</p>
+            <p class="text-lg" >{optimalValue}</p>
+        </div>
+        <div class="flex justify-between">
+            <p class="text-sm">Difference</p>
+            <p class="text-lg {checkValue(differenceValue) == 'greater' ? 'greater':(checkValue(differenceValue) == 'equal' ? '' : 'less')}">{differenceValue > 0 ? '+' : ''}{differenceValue}</p>
+        </div>
     </div>
     {/if}
 </div>
+<style>
+    .greater{
+        color: greenyellow;
+    }
+    .less{
+        color: red;
+    }
+</style>
