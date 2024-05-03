@@ -29,7 +29,7 @@
 <!-- This component will receive as one of the props a sensorName -->
 <!-- Depending on the sensorName will display a component that contains info corresponding to it -->
 
-<div class="relative px-4 bg-gradient-to-b from-[#132017] to-[#7F8D7F]">
+<div class="relative px-4 bg-gradient-to-b from-[#132017] to-[#7F8D7F] h-screen">
     <Date/>
     <div class="mt-8 flex justify-between">
         <Back />
