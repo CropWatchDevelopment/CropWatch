@@ -27,7 +27,7 @@
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative h-screen px-4">
 	<Date />
 	<div class="mt-8 flex justify-between">
-		<Back />
+		<Back previousPage={'/app'} />
 		<NotificationsBell />
 	</div>
 	{#await location}
