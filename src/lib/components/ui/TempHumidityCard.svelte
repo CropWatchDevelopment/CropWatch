@@ -8,7 +8,7 @@
     function computeColor(temp) {
         // Temperature range from -40 to +150
         const minTemp = -40;
-        const maxTemp = 150;
+        const maxTemp = 85;
         
         // Normalize temperature to a 0-1 scale
         const normalized = (temp - minTemp) / (maxTemp - minTemp);
