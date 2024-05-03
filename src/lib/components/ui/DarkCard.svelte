@@ -2,6 +2,7 @@
     export let title;
     export let value;
     export let optimalValue;
+    export let unit;
 
     const differenceValue =  value - optimalValue;
 
@@ -16,29 +17,29 @@
     }
 
 </script>
-<div class="bg-[#34393f] bg-opacity-50 rounded-lg p-2 text-surface-100" >
-    <div class="flex justify-between">
-        <p class="text-sm">{title}</p>
-        <p class="text-lg">{value}</p>
+<div class="bg-[#34393f] bg-opacity-50 rounded-xl py-5 px-12 text-surface-100" >
+    <div class="flex justify-between items-center">
+        <p class="text-lg">{title}</p>
+        <p class="text-3xl">{value}<span class="text-2xl">{unit}</span></p>
     </div>
     {#if optimalValue}
-    <div>
+    <div class="mt-4 text-[#C3C3C3] space-y-1 text-left">
         <div class="flex justify-between">
             <p class="text-sm">Optimal</p>
-            <p class="text-lg" >{optimalValue}</p>
+            <p class="text-sm" >{optimalValue}<span class="text-xs">{unit}</span></p>
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between ">
             <p class="text-sm">Difference</p>
-            <p class="text-lg {checkValue(differenceValue) == 'greater' ? 'greater':(checkValue(differenceValue) == 'equal' ? '' : 'less')}">{differenceValue > 0 ? '+' : ''}{differenceValue}</p>
+            <p class="text-sm {checkValue(differenceValue) == 'greater' ? 'greater':(checkValue(differenceValue) == 'equal' ? '' : 'less')}">{differenceValue > 0 ? '+' : ''}{differenceValue}<span class="text-xs">{unit}</span></p>
         </div>
     </div>
     {/if}
 </div>
 <style>
     .greater{
-        color: greenyellow;
+        color: #5BF7AC;
     }
     .less{
-        color: red;
+        color: #FE5E5E;
     }
 </style>
