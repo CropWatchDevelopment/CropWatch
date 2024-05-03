@@ -1,6 +1,5 @@
 import { redirect } from "@sveltejs/kit";
 
-
 /** @type {import('./$types').PageLoad} */
 export async function load({ params, fetch, locals: { supabase, safeGetSession } }) {
     let session = await safeGetSession();

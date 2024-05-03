@@ -5,26 +5,33 @@ import moment from 'moment';
 export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
     return {
         chart: {
-            zoomType: 'x'
+            zoomType: 'x',
+            backgroundColor: 'transparent',
         },
         title: {
             text: name,
             align: 'left'
         },
         subtitle: {
-            text: browser && document.ontouchstart === undefined ?
-                'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in',
+            // text: browser && document.ontouchstart === undefined ?
+            //     'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in',
             align: 'left'
         },
         xAxis: {
             type: 'datetime',
             title: {
                 enabled: true,
-                text: 'Month/Day'
+                text: 'Month/Day',
+                style: {
+                    color: 'white',
+                },
             },
             labels: {
                 formatter: function (): any {
                     return moment(this.value).format('MMM-DD').toString();
+                },
+                style: {
+                    color: 'white',
                 },
             }
         },
@@ -36,20 +43,20 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                 }
             },
             title: {
-                text: 'Temperature',
+                text: '',
                 style: {
                     color: 'red'
                 }
             },
             plotLines: [{
                 value: 0, // This is the specific point on the y-axis
-                color: 'red',
+                color: 'lightred',
                 width: 2,
                 label: {
                     text: 'ALERT RULE 1 (Temperature > 0°C)',
                     style: {
                         fontWeight: 'bold', // Makes the label text bold
-                        color: 'red',
+                        color: 'lightred',
                     },
                 }
             }],
@@ -57,13 +64,13 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
             title: {
                 text: 'Humidity',
                 style: {
-                    color: 'blue'
+                    color: 'lightblue'
                 }
             },
             labels: {
                 format: '{value} %',
                 style: {
-                    color: 'blue'
+                    color: 'lightblue'
                 }
             },
             opposite: true
