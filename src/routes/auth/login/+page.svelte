@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { json } from '@sveltejs/kit';
 	import { toast } from '@zerodevx/svelte-toast';
 	export let form;
 </script>
