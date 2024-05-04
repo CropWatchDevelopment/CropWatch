@@ -39,19 +39,24 @@
 		method="POST"
 		use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 			return async ({ result, update }) => {
-				if (result.status && result.status < 400) {
+				if (result) {
 					update();
+					debugger;
+					if(permissions) {
+						permissions.push(result);
+						permissions = permissions;
+					}
 					//reload page
-					location.reload();
 					toast.push('User Permission Added Successfully!', {
 						theme: {
-							'--toastBackground': 'success',
+							'--toastBackground': 'green',
 							'--toastColor': 'black'
 						}
 					});
 				} else {
+					debugger;
 					toast.push(
-						form?.message ??
+						result.statusText ??
 							'Failed to add User Permission, does the user exist and have a setup account?',
 						{
 							theme: {

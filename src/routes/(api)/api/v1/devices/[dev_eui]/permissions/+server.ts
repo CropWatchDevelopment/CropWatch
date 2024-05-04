@@ -63,10 +63,16 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
     const { data, error } = await supabase
         .from('cw_device_owners')
         .insert(dbItem)
-        .select();
+        .select()
+        .single();
+    if(data) {
+        data.profiles = {
+            email: formData.get('email'),
+        }
+    }
 
     return new Response(
-        data ?? error,
+        JSON.stringify(data) ?? JSON.stringify(error),
         {
             status: data ? 200 : 500,
             statusText: data ? 'OK' : 'Internal Server Error',
