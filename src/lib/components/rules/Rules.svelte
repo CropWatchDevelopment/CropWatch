@@ -179,5 +179,3 @@
 		class="w-full">{isNew ? 'Create' : 'Update'}</Button
 	>
 </form>
-
-<pre>{JSON.stringify(ruleGroup, null, 2)}</pre>
