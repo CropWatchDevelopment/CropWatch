@@ -12,5 +12,5 @@
 		<img src={RulesImage} alt="Rules" class="w-6 h-6 mr-2" />
 		Rules and Custom Alerts
 	</Button>
-	<Button classes={{ root: 'w-full' }} size="lg" icon={mdiLock} variant="fill">Permissions</Button>
+	<Button classes={{ root: 'w-full' }} size="lg" icon={mdiLock} variant="fill" on:click={() => goto('permissions')}>Permissions</Button>
 </div>

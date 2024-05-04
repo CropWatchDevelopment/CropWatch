@@ -121,12 +121,12 @@
 	<input type="hidden" id="dev_eui" name="dev_eui" bind:value={$page.params.dev_eui} />
 	<div class="mx-4 flex flex-col gap-4">
 		<div>
-			<label for="name" class="text-white">Rule Name:</label>
+			<label for="name" class="text-surface-100">Rule Name:</label>
 			<TextField label="Name" id="name" name="name" required bind:value={ruleGroup.ruleName} />
 		</div>
 
 		<div>
-			<label for="type" class="text-white">Notification Type:</label>
+			<label for="type" class="text-surface-100">Notification Type:</label>
 			<SelectField
 				bind:value={ruleGroup.babylon_notifier_type}
 				name="babylon_notifier_type"
@@ -139,7 +139,7 @@
 		</div>
 
 		<div>
-			<label for="action_recipient" class="text-white">Recipient(s):</label>
+			<label for="action_recipient" class="text-surface-100">Recipient(s):</label>
 			<TextField
 				label="Name"
 				id="action_recipient"
@@ -150,12 +150,12 @@
 		</div>
 	</div>
 	<div class="m-4">
-		<p class="text-white">{$_('rules.rule_criteria')}:</p>
+		<p class="text-surface-100">{$_('rules.rule_criteria')}:</p>
 		{#await dataItem}
 			loading data items
 		{:then dataItem}
 			{#if ruleGroup.cw_rule_criteria.length == 0}
-				<p class="text-white text-center">{$_('rules.no_rule_criteria')}</p>
+				<p class="text-surface-100 text-center">{$_('rules.no_rule_criteria')}</p>
 			{:else}
 				{#each ruleGroup.cw_rule_criteria as singleRule, i}
 					<SubRule bind:root={singleRule} dataItem={dataItem}>

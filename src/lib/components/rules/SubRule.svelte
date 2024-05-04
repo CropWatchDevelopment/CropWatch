@@ -19,7 +19,7 @@
 	<div class="flex flex-col gap-2">
 		<div class="flex flex-row gap-1 justify-between">
 			<div>
-				<label for="action_recipient" class="text-white">IF </label>
+				<label for="action_recipient" class="text-surface-100">IF </label>
 				<SelectField
 					classes={{ root: 'w-full' }}
 					placeholder="Sensor Data To Watch"
@@ -32,7 +32,7 @@
 			</div>
 
 			<div>
-				<label for="action_recipient" class="text-white">IS </label>
+				<label for="action_recipient" class="text-surface-100">IS </label>
 				<SelectField
 					class="w-20"
 					label="Operator"
@@ -49,12 +49,12 @@
 			</div>
 
 			<div>
-				<label for="action_recipient" class="text-white">Value: </label>
+				<label for="action_recipient" class="text-surface-100">Value: </label>
 				<TextField type="decimal" label="Trigger Value" bind:value={root.trigger_value} />
 			</div>
 		</div>
 		<div>
-			<label for="action_recipient" class="text-white"
+			<label for="action_recipient" class="text-surface-100"
 				>And Reset when {root.subject} Return to:
 			</label>
 			<TextField type="decimal" label="Reset Rule Value" bind:value={root.reset_value} />

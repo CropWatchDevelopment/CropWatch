@@ -9,11 +9,16 @@
 	import RulesImage from '$lib/images/UI/cw_rules.svg';
 	import RulesDeviceImage from '$lib/images/UI/cw_rule.svg';
 	import { _ } from 'svelte-i18n';
-	import { Button, Card, Header, Menu, MenuItem, Toggle } from 'svelte-ux';
-	import { mdiDotsHorizontal, mdiPencil, mdiPlusCircle, mdiTrashCan } from '@mdi/js';
+	import { Button, Card, Dialog, Header, Menu, MenuItem, Toggle } from 'svelte-ux';
+	import {
+		mdiChartBar,
+		mdiDotsHorizontal,
+		mdiGraph,
+		mdiPencil,
+		mdiPlusCircle,
+		mdiTrashCan
+	} from '@mdi/js';
 	import { goto } from '$app/navigation';
-
-	export let data;
 
 	let rules: Promise<Tables<'cw_rules'>[]> = browser
 		? fetch(`/api/v1/devices/${$page.params.dev_eui}/rules`, { method: 'GET' }).then((r) =>
@@ -52,6 +57,8 @@
 
 	let selectedRule: Tables<'cw_rules'> | undefined = undefined;
 	let openDialog: boolean = false;
+	let deleteConfirmOpen: boolean = false;
+	let selectedRuleId: number = -1;
 </script>
 
 <div class="flex flex-row bg-emerald-300 p-4 text-center justify-center">
@@ -64,15 +71,14 @@
 </div>
 
 <div class="m-6">
-	<div class="flex flex-row">
+	<div class="flex flex-row text-surface-100 text-2xl items-center">
 		<img src={activeImage} alt="device" class="w-14 h-14 mr-4" />
-		<h1 class="text-surface-100 text-3xl align-middle">
-			{#await device}
-				<p>Loading Device Name...</p>
-			{:then dev}
-				{dev.name}
-			{/await}
-		</h1>
+
+		{#await device}
+			Loading Device Name...
+		{:then dev}
+			{dev.name}
+		{/await}
 	</div>
 
 	<h1 class="text-surface-100 text-xl mt-4">{$_('rules.description')}</h1>
@@ -84,14 +90,14 @@
 			class="flex-row-reverse"
 			color="success"
 		>
-			<span class="text-white">{$_('rules.new_rule')}</span>
+			<span class="text-surface-100">{$_('rules.new_rule')}</span>
 		</Button>
 	</div>
 
 	{#await rules}
 		<p>Loading Rules...</p>
 	{:then allRules}
-		{#if allRules && allRules.length === 0}<p class="my-4 text-white">
+		{#if allRules && allRules.length === 0}<p class="my-4 text-surface-100">
 				{$_('rules.no_rules_created')}
 			</p>{/if}
 		<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
@@ -118,15 +124,24 @@
 												openDialog = true;
 											}}>Edit</MenuItem
 										>
-										<MenuItem icon={mdiTrashCan} on:click={() => deleteRule(rule.id)}
-											>Delete</MenuItem
+
+										<MenuItem icon={mdiChartBar} disabled>Rule Statistics (Future)</MenuItem>
+										
+										<MenuItem
+											icon={mdiTrashCan}
+											color="danger"
+											on:click={() => {
+												deleteConfirmOpen = true;
+												selectedRuleId = rule.id;
+											}}>Delete</MenuItem
 										>
+
 									</Menu>
 								</Button>
 							</Toggle>
 						</div>
 					</Header>
-					<p class="text-white mt-3 ml-1">{rule.name}</p>
+					<p class="text-surface-100 mt-3 ml-1">{rule.name}</p>
 				</Card>
 			{/each}
 		</div>
@@ -146,3 +161,26 @@
 		}}>Close</button
 	>
 </dialog>
+
+<Dialog
+	open={deleteConfirmOpen}
+	on:close={() => {
+		deleteConfirmOpen = false;
+		selectedRuleId = -1;
+	}}
+>
+	<div slot="title">Are you sure?</div>
+	<div class="px-6 py-3">This will permanently delete the item and can not be undone.</div>
+	<div slot="actions">
+		<Button
+			on:click={() => {
+				deleteRule(selectedRuleId);
+			}}
+			variant="fill"
+			color="danger"
+		>
+			Yes, delete item
+		</Button>
+		<Button>Cancel</Button>
+	</div>
+</Dialog>

@@ -15,7 +15,7 @@
 <div class="my-4 mx-2 flex justify-between">
 	<Back />
 
-    <span class="text-sm inline-block align-middle text-center text-white">
+    <span class="text-sm inline-block align-middle text-center text-surface-100">
         <!-- <img src={activeImage} alt="device" class="w-14 h-14 mr-4" /> -->
             sensor name
     </span>
