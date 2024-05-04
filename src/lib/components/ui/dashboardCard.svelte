@@ -2,6 +2,8 @@
 	import { getWeatherImage } from '$lib/utilities/weatherCodeToImage';
 	import activeImage from '$lib/images/UI/cw_active.png';
 	import inactiveImage from '$lib/images/UI/cw_inactive_circle.png';
+	import thermometerImage from '$lib/images/UI/cw_thermometer.png';
+	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
 	import { Card, Collapse, ProgressCircle } from 'svelte-ux';
 	import { get, writable } from 'svelte/store';
@@ -66,11 +68,11 @@
 		<div class="flex">
 			<p class="basis-1/3"></p>
 			<div class="basis-1/3 text-xs flex">
-				<img src="/icons/UI/cw_thermometer.png" alt="" class="w-4" />
+				<img src={thermometerImage} alt="" class="w-4" />
 				<p>Primary Data</p>
 			</div>
 			<div class="basis-1/3 text-xs flex">
-				<img src="/icons/UI/cw_moisture.png" alt="" class="w-4" />
+				<img src={moistureImage} alt="" class="w-4" />
 				<p>Secondary Data</p>
 			</div>
 		</div>
@@ -139,6 +141,6 @@
 
 <style>
 	.text-shadow {
-		text-shadow: 0px 1px 5px gray;
+		text-shadow: black 5px 5px 3px;
 	}
 </style>

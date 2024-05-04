@@ -10,24 +10,23 @@
 	import RulesDeviceImage from '$lib/images/UI/cw_rule.svg';
 	import { _ } from 'svelte-i18n';
 	import { Button, Card, Dialog, Header, Menu, MenuItem, Toggle } from 'svelte-ux';
-	import {
-		mdiChartBar,
-		mdiDotsHorizontal,
-		mdiGraph,
-		mdiPencil,
-		mdiPlusCircle,
-		mdiTrashCan
-	} from '@mdi/js';
+	import { mdiChartBar, mdiDotsHorizontal, mdiPencil, mdiPlusCircle, mdiTrashCan } from '@mdi/js';
 	import { goto } from '$app/navigation';
 
 	let rules: Promise<Tables<'cw_rules'>[]> = browser
-		? fetch(`/api/v1/devices/${$page.params.dev_eui}/rules`, { method: 'GET' }).then((r) =>
-				r.json()
-			)
+		? fetch(`/api/v1/devices/${$page.params.dev_eui}/rules`, { method: 'GET' }).then((r) => {
+				const result = r.json();
+				return result;
+			})
 		: Promise.resolve([]);
+
 	let device: Promise<any> = browser
-		? fetch(`/api/v1/devices/${$page.params.dev_eui}/type`, { method: 'GET' }).then((r) => r.json())
+		? fetch(`/api/v1/devices/${$page.params.dev_eui}/type`, { method: 'GET' }).then((r) => {
+				const result = r.json();
+				return result;
+			})
 		: Promise.resolve([]);
+
 	const deleteRule = (id: number) => {
 		fetch(`/api/v1/devices/${$page.params.dev_eui}/rules?rule-id=${id}`, {
 			method: 'DELETE'
@@ -126,7 +125,7 @@
 										>
 
 										<MenuItem icon={mdiChartBar} disabled>Rule Statistics (Future)</MenuItem>
-										
+
 										<MenuItem
 											icon={mdiTrashCan}
 											color="danger"
@@ -135,7 +134,6 @@
 												selectedRuleId = rule.id;
 											}}>Delete</MenuItem
 										>
-
 									</Menu>
 								</Button>
 							</Toggle>

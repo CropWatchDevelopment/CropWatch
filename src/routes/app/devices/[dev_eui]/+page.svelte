@@ -20,9 +20,3 @@
 </svelte:head>
 
 <h1>Devices</h1>
-
-<ul>
-	{#each $deviceStore as device}
-		<li>{JSON.stringify(device, null, 2)}</li>
-	{/each}
-</ul>

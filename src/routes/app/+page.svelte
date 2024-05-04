@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
-	import { Card, Collapse } from 'svelte-ux';
+	import bellImage from '$lib/images/UI/cw-bell.svg';
+	import filterImage from '$lib/images/UI/cw_filter_button.svg';
 	export let data;
 	const { locations } = data;
 	import { onMount } from 'svelte';
@@ -22,7 +23,7 @@
 		<!-- BELL -->
 		<div class="py-1 my-5">
 			<div class="flex justify-end w-full h-7">
-				<img src="/icons/UI/cw-bell.png" alt="" />
+				<img src={bellImage} alt="" />
 			</div>
 		</div>
 
@@ -34,7 +35,7 @@
 			<!-- Filter -->
 			<div class="flex align-baseline justify-center items-center">
 				<div class="w-4">
-					<img src="/icons/UI/cw_filter_button.png" alt="" />
+					<img src={filterImage} alt="" />
 				</div>
 				<p class="text-surface-100 px-1">Filter</p>
 			</div>
