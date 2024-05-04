@@ -92,20 +92,20 @@
 </script>
 
 <form
-	method={isNew ? 'PUT' : 'POST'}
+	method={isNew ? 'POST' : 'POST'}
 	action="/api/v1/devices/{$page.params.dev_eui}/rules"
 	on:submit|preventDefault={handleSubmit}
 	use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 		return async ({ result, update }) => {
 			if (result.status && result.status < 400) {
 				update();
+				goto('/rules');
 				toast.push('Rule Created Successfully!', {
 					theme: {
 						'--toastBackground': 'success',
 						'--toastColor': 'black'
 					}
 				});
-				goto('/rules'); // redirect to '/app'
 			} else {
 				toast.push(form?.message ?? 'Error Creating Rule, Contact Support', {
 					theme: {

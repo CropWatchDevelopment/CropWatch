@@ -10,15 +10,18 @@
 	import RulesDeviceImage from '$lib/images/UI/cw_rule.svg';
 	import { _ } from 'svelte-i18n';
 	import { Button, Card, Header, Menu, MenuItem, Toggle } from 'svelte-ux';
-	import { mdiDotsHorizontal, mdiDotsVertical, mdiPencil, mdiPlusCircle, mdiTrashCan } from '@mdi/js';
+	import { mdiDotsHorizontal, mdiPencil, mdiPlusCircle, mdiTrashCan } from '@mdi/js';
 	import { goto } from '$app/navigation';
 
 	export let data;
 
-	const rules: Promise<Tables<'cw_rules'>[]> = browser
+	let rules: Promise<Tables<'cw_rules'>[]> = browser
 		? fetch(`/api/v1/devices/${$page.params.dev_eui}/rules`, { method: 'GET' }).then((r) =>
 				r.json()
 			)
+		: Promise.resolve([]);
+	let device: Promise<any> = browser
+		? fetch(`/api/v1/devices/${$page.params.dev_eui}/type`, { method: 'GET' }).then((r) => r.json())
 		: Promise.resolve([]);
 	const deleteRule = (id: number) => {
 		fetch(`/api/v1/devices/${$page.params.dev_eui}/rules?rule-id=${id}`, {
@@ -31,6 +34,11 @@
 						'--toastColor': 'black'
 					}
 				});
+				rules = browser
+					? fetch(`/api/v1/devices/${$page.params.dev_eui}/rules`, { method: 'GET' }).then((r) =>
+							r.json()
+						)
+					: Promise.resolve([]);
 			} else {
 				toast.push(`Failed to delete Rule`, {
 					theme: {
@@ -58,9 +66,16 @@
 <div class="m-6">
 	<div class="flex flex-row">
 		<img src={activeImage} alt="device" class="w-14 h-14 mr-4" />
+		<h1 class="text-surface-100 text-3xl align-middle">
+			{#await device}
+				<p>Loading Device Name...</p>
+			{:then dev}
+				{dev.name}
+			{/await}
+		</h1>
 	</div>
 
-	<h1 class="text-surface-100 text-3xl mt-4">{$_('rules.description')}</h1>
+	<h1 class="text-surface-100 text-xl mt-4">{$_('rules.description')}</h1>
 
 	<div class="w-full flex flex-row justify-end mt-5">
 		<Button
@@ -76,8 +91,10 @@
 	{#await rules}
 		<p>Loading Rules...</p>
 	{:then allRules}
-		<p class="my-4 text-white">{$_('rules.no_rules_created')}</p>
-		<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
+		{#if allRules && allRules.length === 0}<p class="my-4 text-white">
+				{$_('rules.no_rules_created')}
+			</p>{/if}
+		<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
 			{#each allRules as rule}
 				<Card class="bg-gradient-to-r from-cyan-600 to-sky-300 p-3 rounded-lg">
 					<Header>
@@ -86,7 +103,13 @@
 						</div>
 						<div slot="actions">
 							<Toggle let:on={open} let:toggle>
-								<Button on:click={toggle} icon={mdiDotsHorizontal} variant="outline" rounded="full" size="sm">
+								<Button
+									on:click={toggle}
+									icon={mdiDotsHorizontal}
+									variant="outline"
+									rounded="full"
+									size="sm"
+								>
 									<Menu {open} on:close={toggle}>
 										<MenuItem
 											icon={mdiPencil}
@@ -95,7 +118,9 @@
 												openDialog = true;
 											}}>Edit</MenuItem
 										>
-										<MenuItem icon={mdiTrashCan} on:click={() => deleteRule(rule.id)}>Delete</MenuItem>
+										<MenuItem icon={mdiTrashCan} on:click={() => deleteRule(rule.id)}
+											>Delete</MenuItem
+										>
 									</Menu>
 								</Button>
 							</Toggle>
