@@ -80,33 +80,20 @@
 	</nav>
 </div>
 <div class="app background-gradient">
-	<!-- <h1>{$_('header.home')}</h1>
-	<span id="auth_header">
-		{#if !data.session}
-			<a href="/auth/login">login</a> / <a href="/auth/register">signup</a> /
-		{:else}
-			<a href="/">Home</a> /
-			<a href="/auth/user-profile">User profile</a> /
-			<a href="/app/devices">devices</a>
-			<form action="/auth/logout?/logout" method="POST" use:enhance={submitLogout}>
-				<button type="submit">Logout</button>
-			</form>
-		{/if}
-	</span> -->
 	{#if $navigating || $isLoading}
-			<div class="flex items-center justify-center h-full">
-				<ProgressCircle />
-				{#if $isLoading}
-					&nbsp; {$_('app.loading_translations_message')}
-				{:else}
-					&nbsp; {$_('app.loading_message')}
-				{/if}
-			</div>
-		{:else}
-			<main>
-				<slot />
-			</main>
-		{/if}
+		<div class="my-auto mx-auto flex flex-col justify-center align-middle items-center text-surface-100">
+			<ProgressCircle />
+			{#if $isLoading}
+				&nbsp; {$_('app.loading_translations_message')}
+			{:else}
+				&nbsp; {$_('app.loading_message')}
+			{/if}
+		</div>
+	{:else}
+		<main>
+			<slot />
+		</main>
+	{/if}
 </div>
 
 <style>
