@@ -56,12 +56,12 @@
 			<p class="text-slate-500">Last Seen: <Duration start={lastSeen} totalUnits={1} /> ago</p>
 		</div>
 	</div>
-	<DarkCard title={'Temperature'} value={temperature} optimalValue={-20} unit={'ºC'}>
+	<DarkCard title={'Temperature'} value={temperature} optimalValue={20} unit={'ºC'}>
 		<div class="chart" use:Highcharts={tempConfig} />
 		{data.length}
 	</DarkCard>
 
-	<DarkCard title={'Moisture'} value={moisture} optimalValue={-20} unit={'%'}>
+	<DarkCard title={'Moisture'} value={moisture} optimalValue={40} unit={'%'}>
 		<div class="chart" use:Highcharts={moistureConfig} />
 	</DarkCard>
 

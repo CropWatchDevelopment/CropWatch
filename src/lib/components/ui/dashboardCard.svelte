@@ -130,7 +130,7 @@
 									</div>
 								{/each}
 								<Button
-									on:click={() => goto(`devices/${device.data.dev_eui}/data`)}
+									on:click={() => goto(`app/devices/${device.data.dev_eui}/data`)}
 									variant="fill-light"
 									color="primary"
 									class="w-full"
