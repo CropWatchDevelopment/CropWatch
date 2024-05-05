@@ -19,6 +19,7 @@
 </svelte:head>
 
 <section>
+	<div class="px-4">
 	<!-- JSON -->
 		<!-- BELL -->
 		<div class="py-1 my-5">
@@ -34,7 +35,7 @@
 
 			<!-- Filter -->
 			<div class="flex align-baseline justify-center items-center">
-				<div class="w-4">
+				<div class="w-3">
 					<img src={filterImage} alt="" />
 				</div>
 				<p class="text-surface-100 px-1">Filter</p>
@@ -44,4 +45,5 @@
 		{#each locations as location}
 			<DashboardCard data={location} />
 		{/each}
+	</div>
 </section>
