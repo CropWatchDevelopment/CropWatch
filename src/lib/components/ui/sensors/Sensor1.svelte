@@ -1,17 +1,12 @@
 <script lang="ts">
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
-	import { mdiCog, mdiLock, mdiHistory } from '@mdi/js';
 	import Highcharts from '$lib/actions/highcharts.action';
 	import TempHumidityCard from '../TempHumidityCard.svelte';
 	import DarkCard from './../DarkCard.svelte';
-	import Back from '../Back.svelte';
-	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
 	import ActiveImage from '$lib/images/UI/cw-10.svg';
-	import RulesImage from '$lib/images/UI/cw_rules.svg';
 	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
-	import { Button, Duration } from 'svelte-ux';
-	import { goto } from '$app/navigation';
-	import CwDate from '$lib/components/ui/Date.svelte';
+	import { Duration } from 'svelte-ux';
+	import SensorFooterControls from '../SensorFooterControls.svelte';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -54,11 +49,6 @@
 	]);
 </script>
 
-<div class="mt-4 mx-2 flex justify-between">
-	<Back />
-	<NotificationsBell />
-</div>
-
 <div class="m-4">
 	<div class="flex flex-row">
 		<img
@@ -82,14 +72,5 @@
 	</DarkCard>
 	<DarkCard title={'VPD'} value={vpd} optimalValue={null} unit={'kPa'} />
 
-	<div class="flex flex-col w-full my-8 gap-4">
-		<Button classes={{ root: 'w-full' }} size="lg" icon={mdiHistory} variant="fill">History</Button>
-		<Button classes={{ root: 'w-full' }} size="lg" icon={mdiCog} variant="fill">Settings</Button>
-		<Button classes={{ root: 'w-full' }} on:click={() => goto('/rules')} size="lg" variant="fill">
-			<img src={RulesImage} alt="Rules" class="w-6 h-6 mr-2" />
-			Rules and Custom Alerts
-		</Button>
-		<Button classes={{ root: 'w-full' }} size="lg" icon={mdiLock} variant="fill">Permissions</Button
-		>
-	</div>
+	<SensorFooterControls />
 </div>

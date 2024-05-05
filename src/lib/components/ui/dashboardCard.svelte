@@ -1,7 +1,12 @@
 <script lang="ts">
+	import { getWeatherImage } from '$lib/utilities/weatherCodeToImage';
+	import activeImage from '$lib/images/UI/cw_active.png';
+	import inactiveImage from '$lib/images/UI/cw_inactive_circle.png';
+	import thermometerImage from '$lib/images/UI/cw_thermometer.png';
+	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
-	import { Card, Collapse, ProgressCircle, stringify } from 'svelte-ux';
-	import { writable } from 'svelte/store';
+	import { Card, Collapse, ProgressCircle } from 'svelte-ux';
+	import { get, writable } from 'svelte/store';
 
 	export let data;
 	const locationId = data.location_id;
@@ -10,6 +15,7 @@
 	const rainfall: number = data.weatherJSON.rainfall ?? 0;
 	const humidity: number = data.weatherJSON.humidity ?? 0;
 	const windSpeed: number = data.weatherJSON.windSpeed ?? 0;
+	const weatherCode: number = data.weatherJSON.weatherCode ?? 0;
 	let loading = true;
 	const devices = writable([]);
 
@@ -32,15 +38,11 @@
 	});
 </script>
 
+<!-- https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs -->
 <div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
-	<div class="w-full h-20 relative rounded-2xl">
-		<a href="/app/locations/{locationId}">
-			<img
-				src="https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs"
-				alt=""
-				class="object-cover w-full h-full absolute top-0 rounded-2xl"
-			/>
-		</a>
+	<a href="/app/locations/{locationId}" class="">
+	<div class="w-full h-20 relative rounded-2xl bg-sky-800 bg-blend-overlay bg-no-repeat bg-cover bg-bottom bg-[url('https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs')]">
+			
 		<div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
 		<div class="absolute top-4 text-[0.65em] text-surface-100 drop-shadow-md right-3 space-y-1">
 			<p>Rainfall: {rainfall}%</p>
@@ -48,21 +50,29 @@
 			<p>Windspeed: {windSpeed} km/h</p>
 		</div>
 		<div class="absolute left-3 top-5">
-			<p class="text-surface-100 text-3xl text-shadow">
-				{temperature}<span class="text-xl text-gray-100">ºC</span>
+			<p class="flex text-surface-100 text-3xl text-shadow">
+				{temperature}<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
+				{#await getWeatherImage(weatherCode, true)}
+				<ProgressCircle />
+				{:then image}
+				<img src={image} alt="weather code icon" class="ml-2 w-12" />
+				{:catch error}
+				<p>{error}</p>
+				{/await}
 			</p>
 		</div>
 	</div>
+</a>
 	<div class="pl-2 pt-2">
 		<h2 class="text-xl my-3">{locationName ?? '--'}</h2>
 		<div class="flex">
 			<p class="basis-1/3"></p>
 			<div class="basis-1/3 text-xs flex">
-				<img src="/icons/UI/cw_thermometer.png" alt="" class="w-4" />
+				<img src={thermometerImage} alt="" class="w-4" />
 				<p>Primary Data</p>
 			</div>
 			<div class="basis-1/3 text-xs flex">
-				<img src="/icons/UI/cw_moisture.png" alt="" class="w-4" />
+				<img src={moistureImage} alt="" class="w-4" />
 				<p>Secondary Data</p>
 			</div>
 		</div>
@@ -80,10 +90,11 @@
 							<div class="flex text-center">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
+										
 										<img
 											src={device.isPastDue
-												? '/icons/UI/cw_inactive_circle.png'
-												: '/icons/UI/cw_active.png'}
+												? inactiveImage
+												: activeImage}
 											alt=""
 										/>
 									</div>
@@ -130,6 +141,6 @@
 
 <style>
 	.text-shadow {
-		text-shadow: 0px 1px 5px gray;
+		text-shadow: black 5px 5px 3px;
 	}
 </style>

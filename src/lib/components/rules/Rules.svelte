@@ -5,8 +5,11 @@
 	import type { Tables } from '../../../database.types';
 	import SubRule from './SubRule.svelte';
 	import { applyAction, deserialize, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { toast } from '@zerodevx/svelte-toast';
+	import { SelectField, TextField, Button } from 'svelte-ux';
+	import { mdiPlus } from '@mdi/js';
+	import { _ } from 'svelte-i18n';
 
 	export let existingRule: Tables<'cw_rules'> | undefined = undefined;
 	export let dialogOpen: boolean;
@@ -23,7 +26,7 @@
 	};
 
 	const dataItem: Promise<any[]> = browser
-		? fetch(`/api/v1/devices/${$page.params.dev_eui}/data?page=1&count=1`, { method: 'GET' }).then(
+		? fetch(`/api/v1/devices/${$page.params.dev_eui}/data?page=0&count=1`, { method: 'GET' }).then(
 				(response) => response.json()
 			)
 		: Promise.resolve([]);
@@ -41,7 +44,6 @@
 		});
 
 		const promises = ruleGroup.cw_rule_criteria.map(async (criteria) => {
-			debugger;
 			criteria.ruleGroupId = ruleGroup.groupId;
 			const criteriaData = JSON.stringify(criteria);
 			return fetch(`/api/v1/devices/${$page.params.dev_eui}/rules/criteria/${criteria.id || -1}`, {
@@ -89,51 +91,91 @@
 	}
 </script>
 
-<h1>Edit Rule</h1>
-
 <form
-	method={isNew ? 'PUT' : 'POST'}
+	method={isNew ? 'POST' : 'POST'}
 	action="/api/v1/devices/{$page.params.dev_eui}/rules"
 	on:submit|preventDefault={handleSubmit}
+	use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+		return async ({ result, update }) => {
+			if (result.status && result.status < 400) {
+				update();
+				goto('/rules');
+				toast.push('Rule Created Successfully!', {
+					theme: {
+						'--toastBackground': 'success',
+						'--toastColor': 'black'
+					}
+				});
+			} else {
+				toast.push(form?.message ?? 'Error Creating Rule, Contact Support', {
+					theme: {
+						'--toastBackground': 'red',
+						'--toastColor': 'black'
+					}
+				});
+			}
+		};
+	}}
 >
 	<input type="hidden" id="ruleGroupId" name="ruleGroupId" bind:value={ruleGroup.groupId} />
 	<input type="hidden" id="dev_eui" name="dev_eui" bind:value={$page.params.dev_eui} />
-	<div>
-		<label for="name">Name</label>
-		<input type="text" id="name" name="name" required bind:value={ruleGroup.ruleName} />
-		<label for="type">Notification Type</label>
-		<select name="babylon_notifier_type" bind:value={ruleGroup.babylon_notifier_type}>
-			<option value={1}>Email</option>
-			<option value={2}>SMS</option>
-		</select>
+	<div class="mx-4 flex flex-col gap-4">
+		<div>
+			<label for="name" class="text-surface-100">Rule Name:</label>
+			<TextField label="Name" id="name" name="name" required bind:value={ruleGroup.ruleName} />
+		</div>
 
-		<label for="action_recipient">Recipient</label>
-		<input
-			type="text"
-			id="action_recipient"
-			name="action_recipient"
-			required
-			bind:value={ruleGroup.action_recipient}
-		/>
+		<div>
+			<label for="type" class="text-surface-100">Notification Type:</label>
+			<SelectField
+				bind:value={ruleGroup.babylon_notifier_type}
+				name="babylon_notifier_type"
+				id="babylon_notifier_type_control"
+				options={[
+					{ value: 1, label: '1' },
+					{ value: 2, label: '2' }
+				]}
+			/>
+		</div>
+
+		<div>
+			<label for="action_recipient" class="text-surface-100">Recipient(s):</label>
+			<TextField
+				label="Name"
+				id="action_recipient"
+				name="action_recipient"
+				required
+				bind:value={ruleGroup.action_recipient}
+			/>
+		</div>
 	</div>
-	<div>
+	<div class="m-4">
+		<p class="text-surface-100">{$_('rules.rule_criteria')}:</p>
 		{#await dataItem}
 			loading data items
 		{:then dataItem}
-			{#each ruleGroup.cw_rule_criteria as singleRule, i}
-				<SubRule bind:root={singleRule} dataItem={dataItem[0]}>
-					<button on:click={() => onDelete(i)} color="danger">Delete</button>
-				</SubRule>
-			{/each}
+			{#if ruleGroup.cw_rule_criteria.length == 0}
+				<p class="text-surface-100 text-center">{$_('rules.no_rule_criteria')}</p>
+			{:else}
+				{#each ruleGroup.cw_rule_criteria as singleRule, i}
+					<SubRule bind:root={singleRule} dataItem={dataItem}>
+						<!-- <button on:click={() => onDelete(i)} color="danger">Delete</button> -->
+					</SubRule>
+				{/each}
+			{/if}
 		{/await}
 	</div>
-	<button type="submit">{isNew ? 'Create' : 'Update'}</button>
+	<div class="flex flex-row my-4">
+		<Button on:click={() => onAdd()} icon={mdiPlus} variant="outline" color="success"
+			>Add condition</Button
+		>
+	</div>
+
+	<Button
+		type="submit"
+		disabled={!ruleGroup.cw_rule_criteria || ruleGroup.cw_rule_criteria.length == 0}
+		variant="fill"
+		color="primary"
+		class="w-full">{isNew ? 'Create' : 'Update'}</Button
+	>
 </form>
-
-<div class="flex flex-row">
-	<button on:click={() => onAdd()} color="success">Add additional condition</button>
-</div>
-
-<pre>
-	{JSON.stringify(ruleGroup, null, 2)}
-</pre>

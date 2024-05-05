@@ -128,8 +128,8 @@ devDependencies:
     specifier: ^4.0.0
     version: 4.0.0(svelte@4.2.14)
   svelte-ux:
-    specifier: ^0.60.2
-    version: 0.60.6(postcss-load-config@5.0.3)(postcss@8.4.38)(svelte@4.2.14)
+    specifier: ^0.62.11
+    version: 0.62.11(postcss-load-config@5.0.3)(postcss@8.4.38)(svelte@4.2.14)
   sveltekit-i18n:
     specifier: ^2.4.2
     version: 2.4.2(svelte@4.2.14)
@@ -2962,7 +2962,7 @@ packages:
       posthog-js: 1.130.0
       shapefile: 0.6.6
       svelte: 4.2.14
-      svelte-ux: 0.60.6(postcss-load-config@5.0.3)(postcss@8.4.38)(svelte@4.2.14)
+      svelte-ux: 0.62.11(postcss-load-config@5.0.3)(postcss@8.4.38)(svelte@4.2.14)
       topojson-client: 3.1.0
     transitivePeerDependencies:
       - '@babel/core'
@@ -4170,8 +4170,8 @@ packages:
       typescript: 5.4.5
     dev: true
 
-  /svelte-ux@0.60.6(postcss-load-config@5.0.3)(postcss@8.4.38)(svelte@4.2.14):
-    resolution: {integrity: sha512-lkfGW1rGtXqHnHBDxBlHGOgLnKr5INzPCbdc6N4TDS5ZvAz8AAuvbUvDd+kPjwuCyuCNXapXLePiHgGPf2kk4A==}
+  /svelte-ux@0.62.11(postcss-load-config@5.0.3)(postcss@8.4.38)(svelte@4.2.14):
+    resolution: {integrity: sha512-jzQ0jC1bQstoWKyc8SEHJsfJNrlXUyubqbHVandvNNN7tQXpyfoUCRcn++OMq7QSkXHhQWSchhtLDfklD0jDCw==}
     peerDependencies:
       svelte: ^3.56.0 || ^4.0.0
     dependencies:

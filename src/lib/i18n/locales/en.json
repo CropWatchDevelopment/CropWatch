@@ -141,11 +141,23 @@
     "Email": "Email address",
     "Password": "Password",
     "email": "email",
-    "enter_password": "Enter Password",
+    "enter_password": "Password",
     "forgot_password": "Forgot Password?",
     "login": "Login",
     "dont_have_an_account": "Don't have an acount?",
     "register_now": "Register Now",
-    "remember_me": "Remember Me"
+    "remember_me": "Remember Me",
+    "ConfirmPassword": "Confirm Password",
+    "password": "Password",
+    "already_have_an_account": "Already have an account?",
+    "return_to_login": "Return to",
+    "register_title": "Register for a new CropWatch Account"
+  },
+  "rules": {
+    "description": "Create a new rule, or edit existing rules below",
+    "new_rule": "New Rule",
+    "no_rules_created": "You have not created any rules for this sensor yet.",
+    "rule_criteria": "Rule Criteria",
+    "no_rule_criteria": "No Rule Criteria yet..."
   }
 }

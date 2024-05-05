@@ -19,8 +19,6 @@ export async function load({ fetch, locals: { supabase, safeGetSession } }) {
 
     return {
         locations: locations,
-        // weatherJSON: await getWeatherAPIData(),
-        // sensor: await supabase.from('cw_ss_tmepnpk').select('*').eq('dev_eui', params.sensor_eui).order('created_at', { ascending: false }).limit(100),
     };
 }
 
@@ -35,7 +33,7 @@ async function updateLocations(locations, supabase, user_id) {
 async function getWeatherAPIData(lat: number, lng: number) {
     try {
         const weatherRequest = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
         );
         const weatherJSON = await weatherRequest.json();
         const result = convertApiResponseToResultIncludingLux(weatherJSON);
@@ -86,7 +84,8 @@ function convertApiResponseToResultIncludingLux(apiResponse) {
         pressure: apiResponse.current.surface_pressure || 0,
         windSpeed: apiResponse.current.wind_speed_10m || 0,
         windDirection: apiResponse.current.wind_direction_10m ? degreesToDirection(apiResponse.current.wind_direction_10m) : 'N/A',
-        rainfall: apiResponse.current.rain || 0
+        rainfall: apiResponse.current.rain || 0,
+        weatherCode: apiResponse.current.weather_code || 0,
     };
 
     return result;

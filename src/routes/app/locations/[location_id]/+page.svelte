@@ -6,10 +6,9 @@
 	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
 	import { ProgressCircle } from 'svelte-ux';
 	import type { Tables } from '../../../../database.types';
-	import Maps from '$lib/components/maps/openlayers/Map.svelte';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
-	import Map from '$lib/components/maps/openlayers/Map.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
+	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -22,45 +21,63 @@
 				r.json()
 			)
 		: Promise.resolve([]);
+
+	//Dummy Data
+	const sensors = [
+		{ id: 1, name: 'name', temperature: 21.1, moisture: 26.4, ph: 6.2, ec: 389, status:"active"},
+		{ id: 2, name: 'name', temperature: 21.1, moisture: 26.4, ph: 6.2, ec: 389, status:"inactive"}
+	];
 </script>
 
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative h-screen px-4">
 	<Date />
 	<div class="mt-8 flex justify-between">
-		<Back />
+		<Back previousPage={'/app'} />
 		<NotificationsBell />
 	</div>
+	<!-- Display each sensor brief at current location -->
+	<div class="my-6">
+		<p class="text-xl text-surface-100">Devices</p>
+		{#each sensors as sensor}
+			<LocationSensorCard {sensor}/>
+		{/each}
+	</div>
+
 	{#await location}
 		<ProgressCircle />
 	{:then loc}
-		<div class="flex justify-between mb-6">
-			<h2 class="font-light text-2xl text-surface-100">{loc.cw_locations.name}</h2>
-		</div>
+		{#if loc}
+			<div class="flex justify-between mb-6">
+				<h2 class="font-light text-2xl text-surface-100">{loc?.cw_locations?.name}</h2>
+			</div>
 
-		{#await locationDevices}
-			<ProgressCircle />
-		{:then devices}
-			<!-- <pre>{JSON.stringify(devices, null, 2)}</pre> -->
-			{#each devices as device}
-				<a href={`/app/devices/${device.dev_eui}/data`} class="text-surface-100">CLICK TO GOTO {device.cw_devices.name}</a>
-			{/each}
-		{/await}
-
-		<Leaflet
-			view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
-			zoom={19}
-			disableZoom={true}
-			width={100}
-			height={400}
-		>
-			<!-- TODO: Load devices on map... -->
-			{#await locationDevices then devices}
+			{#await locationDevices}
+				<ProgressCircle />
+			{:then devices}
+				<!-- <pre>{JSON.stringify(devices, null, 2)}</pre> -->
 				{#each devices as device}
-					<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
-						<div class="bg-red-500 w-10 h-10 rounded-full">ICON HERE!</div>
-					</Marker>
+					<a href={`/app/devices/${device.dev_eui}/data`} class="text-surface-100"
+						>CLICK TO GOTO {device.cw_devices.name}</a
+					>
 				{/each}
 			{/await}
-		</Leaflet>
+
+			<Leaflet
+				view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
+				zoom={19}
+				disableZoom={true}
+				width={100}
+				height={400}
+			>
+				<!-- TODO: Load devices on map... -->
+				{#await locationDevices then devices}
+					{#each devices as device}
+						<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
+							<div class="bg-red-500 w-10 h-10 rounded-full">ICON HERE!</div>
+						</Marker>
+					{/each}
+				{/await}
+			</Leaflet>
+		{/if}
 	{/await}
 </div>
