@@ -16,12 +16,11 @@
 		}
 	}
 </script>
-
 <div class="bg-[#34393f] bg-opacity-50 rounded-xl py-5 px-6 text-surface-100 my-3">
 	{#if title}
 		<div class="flex justify-between items-center">
 			<p class="text-lg">{title}</p>
-			{#if value && unit}<p class="text-3xl">{value}<span class="text-2xl">{unit}</span></p>{/if}
+			{#if value != null && unit != null}<p class="text-3xl">{value}<span class="text-2xl">{unit}</span></p>{/if}
 		</div>
 	{/if}
 	{#if optimalValue}

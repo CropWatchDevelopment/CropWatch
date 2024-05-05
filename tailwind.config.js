@@ -4,7 +4,8 @@ const svelteUx = require('svelte-ux/plugins/tailwind.cjs');
 module.exports = {
   content: [
     './src/**/*.{html,svelte}', 
-    './node_modules/svelte-ux/**/*.{svelte,js}'
+    './node_modules/svelte-ux/**/*.{svelte,js}',
+    './node_modules/layerchart/**/*.{svelte,js}'
   ],
 
   // See customization docs: https://svelte-ux.techniq.dev/customization

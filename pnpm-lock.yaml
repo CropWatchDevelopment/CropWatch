@@ -72,6 +72,9 @@ importers:
       autoprefixer:
         specifier: ^10.4.14
         version: 10.4.19(postcss@8.4.38)
+      d3-array:
+        specifier: ^3.2.4
+        version: 3.2.4
       d3-scale:
         specifier: ^4.0.2
         version: 4.0.2
@@ -94,7 +97,7 @@ importers:
         specifier: ^11.3.0
         version: 11.4.1
       layerchart:
-        specifier: ^0.31.1
+        specifier: ^0.31.2
         version: 0.31.2(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))
       leaflet:
         specifier: ^1.9.4
@@ -130,8 +133,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(svelte@4.2.14)
       svelte-ux:
-        specifier: ^0.62.11
-        version: 0.62.11(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14)
+        specifier: ^0.60.2
+        version: 0.60.6(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14)
       sveltekit-i18n:
         specifier: ^2.4.2
         version: 2.4.2(svelte@4.2.14)
@@ -5067,37 +5070,7 @@ snapshots:
       postcss: 8.4.38
       postcss-load-config: 5.0.3(jiti@1.21.0)(postcss@8.4.38)
       typescript: 5.4.5
-
-  svelte-ux@0.60.6(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14):
-    dependencies:
-      '@floating-ui/dom': 1.6.4
-      '@fortawesome/fontawesome-common-types': 6.5.2
-      '@mdi/js': 7.4.47
-      clsx: 2.1.1
-      culori: 4.0.1
-      d3-array: 3.2.4
-      d3-scale: 4.0.2
-      date-fns: 3.6.0
-      immer: 10.1.1
-      lodash-es: 4.17.21
-      prism-svelte: 0.5.0
-      prism-themes: 1.9.0
-      prismjs: 1.29.0
-      sveld: 0.19.2(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)
-      svelte: 4.2.14
-      tailwind-merge: 2.3.0
-      zod: 3.23.4
-    transitivePeerDependencies:
-      - '@babel/core'
-      - coffeescript
-      - less
-      - postcss
-      - postcss-load-config
-      - pug
-      - sass
-      - stylus
-      - sugarss
-
+      
   svelte-ux@0.62.11(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14):
     dependencies:
       '@floating-ui/dom': 1.6.4
