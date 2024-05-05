@@ -4,10 +4,11 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import Date from '$lib/components/ui/Date.svelte';
 	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
-	import { ProgressCircle } from 'svelte-ux';
+	import { Button, ProgressCircle } from 'svelte-ux';
 	import type { Tables } from '../../../../database.types';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
+	import { goto } from '$app/navigation';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -23,7 +24,6 @@
 </script>
 
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative h-screen px-4">
-	<Date />
 	<div class="mt-8 flex justify-between">
 		<Back previousPage={'/app'} />
 		<NotificationsBell />
@@ -39,12 +39,13 @@
 			{#await locationDevices}
 				<ProgressCircle />
 			{:then devices}
-				<!-- <pre>{JSON.stringify(devices, null, 2)}</pre> -->
-				{#each devices as device}
-					<a href={`/app/devices/${device.dev_eui}/data`} class="text-surface-100"
-						>CLICK TO GOTO {device.cw_devices.name}</a
-					>
-				{/each}
+				<div class="flex flex-col gap-2 mb-2">
+					{#each devices as device}
+						<Button variant="fill" on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							>{device.cw_devices.name}</Button
+						>
+					{/each}
+				</div>
 			{/await}
 
 			<Leaflet

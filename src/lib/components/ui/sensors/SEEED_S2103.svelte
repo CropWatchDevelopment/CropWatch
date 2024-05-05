@@ -19,7 +19,7 @@
 	let co2_level = data.at(0).co2_level;
 
 	let lastSeen = data.at(0).created_at;
-	let isActiveRecently = moment().diff(moment(lastSeen), 'minutes') < 31;
+	let isActiveRecently = moment().diff(moment(lastSeen), 'minutes') < 61;
 	let curve = curveLinearClosed;
 
 	$: tempMoistConfig = HighChartsTimeSeriesChart(
