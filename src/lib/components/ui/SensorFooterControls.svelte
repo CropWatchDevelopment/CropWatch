@@ -6,8 +6,8 @@
 
 </script>
 <div class="flex flex-col w-full my-8 gap-4">
-	<Button classes={{ root: 'w-full' }} size="lg" icon={mdiHistory} variant="fill">History</Button>
-	<Button classes={{ root: 'w-full' }} size="lg" icon={mdiCog} variant="fill">Settings</Button>
+	<Button classes={{ root: 'w-full' }} size="lg" icon={mdiHistory} variant="fill" on:click={() => goto('history')}>History</Button>
+	<Button classes={{ root: 'w-full' }} size="lg" icon={mdiCog} variant="fill" on:click={() => goto('settings')}>Settings</Button>
 	<Button classes={{ root: 'w-full' }} on:click={() => goto('rules')} size="lg" variant="fill">
 		<img src={RulesImage} alt="Rules" class="w-6 h-6 mr-2" />
 		Rules and Custom Alerts

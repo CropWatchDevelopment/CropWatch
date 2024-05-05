@@ -48,18 +48,20 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                     color: 'red'
                 }
             },
-            plotLines: [{
-                value: 0, // This is the specific point on the y-axis
-                color: 'lightred',
-                width: 2,
-                label: {
-                    text: 'ALERT RULE 1 (Temperature > 0°C)',
-                    style: {
-                        fontWeight: 'bold', // Makes the label text bold
-                        color: 'lightred',
-                    },
-                }
-            }],
+            plotLines: [
+                // {
+                //     value: -13, // This is the specific point on the y-axis
+                //     color: 'red',
+                //     width: 2,
+                //     label: {
+                //         text: 'ALERT RULE 1 (Temperature > 0°C)',
+                //         style: {
+                //             fontWeight: 'bold', // Makes the label text bold
+                //             color: 'red',
+                //         },
+                //     }
+                // }
+            ],
         }, { // Secondary yAxis
             title: {
                 text: 'Humidity',

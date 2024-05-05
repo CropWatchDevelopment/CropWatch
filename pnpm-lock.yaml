@@ -2480,6 +2480,11 @@ packages:
     peerDependencies:
       svelte: ^3.56.0 || ^4.0.0
 
+  svelte-ux@0.62.11:
+    resolution: {integrity: sha512-jzQ0jC1bQstoWKyc8SEHJsfJNrlXUyubqbHVandvNNN7tQXpyfoUCRcn++OMq7QSkXHhQWSchhtLDfklD0jDCw==}
+    peerDependencies:
+      svelte: ^3.56.0 || ^4.0.0
+
   svelte@4.2.14:
     resolution: {integrity: sha512-ry3+YlWqZpHxLy45MW4MZIxNdvB+Wl7p2nnstWKbOAewaJyNJuOtivSbRChcfIej6wFBjWqyKmf/NgK1uW2JAA==}
     engines: {node: '>=16'}
@@ -5065,8 +5070,8 @@ snapshots:
       postcss: 8.4.38
       postcss-load-config: 5.0.3(jiti@1.21.0)(postcss@8.4.38)
       typescript: 5.4.5
-
-  svelte-ux@0.60.6(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14):
+      
+  svelte-ux@0.62.11(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14):
     dependencies:
       '@floating-ui/dom': 1.6.4
       '@fortawesome/fontawesome-common-types': 6.5.2
