@@ -122,6 +122,7 @@
 								<h3 class="text-lg basis-1/3 font-medium mb-2">Details</h3>
 							</div>
 							{#if device.data}
+							{JSON.stringify(device.data)}
 								{#each Object.keys(device.data) as dataPointKey}
 									<div class="px-3 pb-3 flex text-left">
 										<p class="basis-1/2 text-sm">{dataPointKey}</p>

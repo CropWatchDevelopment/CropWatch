@@ -2,14 +2,13 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
-	import Date from '$lib/components/ui/Date.svelte';
 	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
-	import { Button, ProgressCircle } from 'svelte-ux';
+	import { Button, Icon, ProgressCircle } from 'svelte-ux';
 	import type { Tables } from '../../../../database.types';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
 	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
-	import { goto } from '$app/navigation';
+	import { mdiMoleculeCo2 } from '@mdi/js';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -23,11 +22,9 @@
 			)
 		: Promise.resolve([]);
 
-	//Dummy Data
-	const sensors = [
-		{ id: 1, name: 'name', temperature: 21.1, moisture: 26.4, ph: 6.2, ec: 389, status:"active"},
-		{ id: 2, name: 'name', temperature: 21.1, moisture: 26.4, ph: 6.2, ec: 389, status:"inactive"}
-	];
+	const getDeviceType = (dev_eui: string) => {
+		return fetch(`/api/v1/devices/${dev_eui}/type`, { method: 'GET' }).then((r) => r.json());
+	};
 </script>
 
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative h-screen px-4">
@@ -38,9 +35,6 @@
 	<!-- Display each sensor brief at current location -->
 	<div class="my-6">
 		<p class="text-xl text-surface-100">Devices</p>
-		{#each sensors as sensor}
-			<LocationSensorCard {sensor}/>
-		{/each}
 	</div>
 
 	{#await location}
@@ -54,27 +48,40 @@
 			{#await locationDevices}
 				<ProgressCircle />
 			{:then devices}
-				<div class="flex flex-col gap-2 mb-2">
-					{#each devices as device}
-						<Button variant="fill" on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
-							>{device.cw_devices.name}</Button
-						>
+				<!-- <div class="flex flex-col gap-2 mb-2">
+					{#each devices as sensor}
+						<LocationSensorCard {sensor} />
 					{/each}
-				</div>
+				</div> -->
 			{/await}
 
 			<Leaflet
 				view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
-				zoom={19}
+				zoom={20}
 				disableZoom={true}
 				width={100}
-				height={400}
+				height={500}
 			>
 				<!-- TODO: Load devices on map... -->
 				{#await locationDevices then devices}
 					{#each devices as device}
 						<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
-							<div class="bg-red-500 w-10 h-10 rounded-full">ICON HERE!</div>
+							<a
+								class="bg-black p-2 w-10 text-2xl rounded-full z-20 hover:text-4xl hover:z-30"
+								href={`/app/devices/${device.dev_eui}/data`}
+							>
+								{#await getDeviceType(device.dev_eui)}
+									<ProgressCircle />
+								{:then deviceType}
+									{#if deviceType.cw_device_type.data_table === 'cw_air_thvd'}
+										🌡️
+									{:else if deviceType.cw_device_type.data_table === 'cw_ss_tme' || deviceType.cw_device_type.data_table === 'cw_ss_tmepnpk'}
+										🌱
+									{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks'}
+										<Icon data={mdiMoleculeCo2} />
+									{/if}
+								{/await}
+							</a>
 						</Marker>
 					{/each}
 				{/await}
