@@ -60,39 +60,9 @@
 
 	<DarkCard title={'CO2'} value={co2_level} optimalValue={null} unit={'PPM'}>
 		<div class="chart" use:Highcharts={co2Config} />
-		<!-- <div class="h-[120px] p-4 border rounded">
-			<Chart>
-				<Svg>
-					<Group center>
-						<Group y={16}>
-							<LinearGradient class="from-secondary to-primary" let:url>
-								<Arc
-									value={co2_level}
-									range={[-120, 120]}
-									outerRadius={60}
-									innerRadius={50}
-									cornerRadius={5}
-									spring
-									let:value
-									fill={url}
-									track={{ class: 'fill-none stroke-surface-content/10' }}
-								>
-									<Text
-										value={Math.round(value) + '%'}
-										textAnchor="middle"
-										verticalAnchor="middle"
-										class="text-3xl tabular-nums"
-									/>
-								</Arc>
-							</LinearGradient>
-						</Group>
-					</Group>
-				</Svg>
-			</Chart>
-		</div> -->
 	</DarkCard>
 
-	<DarkCard title={'Temperature/Humidity'} value={null} optimalValue={20} unit={'%'}>
+	<DarkCard title={'Temperature/Humidity'} value={null} optimalValue={null} unit={'%'}>
 		<div class="chart" use:Highcharts={tempMoistConfig} />
 	</DarkCard>
 

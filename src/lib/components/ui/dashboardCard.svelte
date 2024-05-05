@@ -10,6 +10,7 @@
 	import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
 	import { mdiEye } from '@mdi/js';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 	const locationId = data.location_id;
@@ -24,6 +25,14 @@
 
 	const loadDeviceDataFor = async (device) => {
 		return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`)
+			.then((res) => res.json())
+			.then((data) => {
+				return data;
+			});
+	};
+
+	const latestDeviceData = async (device) => {
+		return await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`)
 			.then((res) => res.json())
 			.then((data) => {
 				return data;
@@ -100,14 +109,14 @@
 									</div>
 									<p>{device.cw_devices.name}</p>
 								</div>
-								<p class="basis-1/3">
+								<p class="basis-1/3 justify-center m-auto">
 									{#if device.data && device.data.primaryData && device.data.primary_data_notation}
 										{device.data[device.data.primaryData]}{device.data.primary_data_notation}
 									{:else}
 										N/A
 									{/if}
 								</p>
-								<p class="basis-1/3">
+								<p class="basis-1/3 justify-center m-auto">
 									{#if device.data && device.data.secondaryData && device.data.secondary_data_notation}
 										{device.data[device.data.secondaryData]}{device.data.secondary_data_notation}
 									{:else}
@@ -122,13 +131,18 @@
 								<h3 class="text-lg basis-1/3 font-medium mb-2">Details</h3>
 							</div>
 							{#if device.data}
-							{JSON.stringify(device.data)}
-								{#each Object.keys(device.data) as dataPointKey}
-									<div class="px-3 pb-3 flex text-left">
-										<p class="basis-1/2 text-sm">{dataPointKey}</p>
-										<p class="basis-1/2 text-sm">{device.data[dataPointKey]}</p>
-									</div>
-								{/each}
+								{#await latestDeviceData(device)}
+								<div class="w-full h-full flex flex-row justify-center my-1">
+									<ProgressCircle /> {$_('app.loading')}
+								</div>
+								{:then data}
+									{#each Object.keys(data) as dataPointKey}
+										<div class="px-3 pb-3 flex border-b">
+											<p class="basis-1/2 text-sm">{dataPointKey.replace(/_/g, ' ')}</p>
+											<p class="basis-1/2 text-sm">{data[dataPointKey]}</p>
+										</div>
+									{/each}
+								{/await}
 								<Button
 									on:click={() => goto(`app/devices/${device.data.dev_eui}/data`)}
 									variant="fill-light"

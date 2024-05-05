@@ -35,7 +35,7 @@
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
 			}
 		],
-		'Temperature'
+		''
 	);
 
 	$: dewPointConfig = HighChartsTimeSeriesChart([
@@ -63,7 +63,7 @@
 	</div>
 	<TempHumidityCard {temperature} {humidity} />
 	<DarkCard title={'Temperature'} value={temperature} optimalValue={-20} unit={'ºC'} />
-	<DarkCard title={'Humidity'} value={humidity} optimalValue={0} unit={'ºC'} />
+	<DarkCard title={'Humidity'} value={humidity} optimalValue={0} unit={'%'} />
 	<DarkCard title={'Temperature/Humidity History'}>
 		<div class="chart" use:Highcharts={config} />
 	</DarkCard>

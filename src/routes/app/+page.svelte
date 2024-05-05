@@ -4,13 +4,6 @@
 	import filterImage from '$lib/images/UI/cw_filter_button.svg';
 	export let data;
 	const { locations } = data;
-	import { onMount } from 'svelte';
-
-	onMount(async () => {
-		// const response = await fetch('/api/v1/dashboard');
-		// const data = await response.json();
-		// console.log('loaded data', data);
-	});
 </script>
 
 <svelte:head>
