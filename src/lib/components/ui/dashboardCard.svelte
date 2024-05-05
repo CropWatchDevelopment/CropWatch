@@ -5,8 +5,11 @@
 	import thermometerImage from '$lib/images/UI/cw_thermometer.png';
 	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
-	import { Card, Collapse, ProgressCircle } from 'svelte-ux';
+	import { Button, Card, Collapse, ProgressCircle } from 'svelte-ux';
 	import { get, writable } from 'svelte/store';
+	import { isDayTime } from '$lib/utilities/isDayTime';
+	import { goto } from '$app/navigation';
+	import { mdiEye } from '@mdi/js';
 
 	export let data;
 	const locationId = data.location_id;
@@ -41,28 +44,31 @@
 <!-- https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs -->
 <div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 	<a href="/app/locations/{locationId}" class="">
-	<div class="w-full h-20 relative rounded-2xl bg-sky-800 bg-blend-overlay bg-no-repeat bg-cover bg-bottom bg-[url('https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs')]">
-			
-		<div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
-		<div class="absolute top-4 text-[0.65em] text-surface-100 drop-shadow-md right-3 space-y-1">
-			<p>Rainfall: {rainfall}%</p>
-			<p>Humidity: {humidity}%</p>
-			<p>Windspeed: {windSpeed} km/h</p>
+		<div
+			class="w-full h-20 relative rounded-2xl bg-sky-800 bg-blend-overlay bg-no-repeat bg-cover bg-bottom bg-[url('https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs')]"
+		>
+			<div
+				class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"
+			></div>
+			<div class="absolute top-4 text-[0.65em] text-surface-100 drop-shadow-md right-3 space-y-1">
+				<p>Rainfall: {rainfall}%</p>
+				<p>Humidity: {humidity}%</p>
+				<p>Windspeed: {windSpeed} km/h</p>
+			</div>
+			<div class="absolute left-3 top-5">
+				<p class="flex text-surface-100 text-3xl text-shadow">
+					{temperature}<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
+					{#await getWeatherImage(weatherCode, isDayTime())}
+						<ProgressCircle />
+					{:then image}
+						<img src={image} alt="weather code icon" class="ml-2 w-12" />
+					{:catch error}
+						<p>{error}</p>
+					{/await}
+				</p>
+			</div>
 		</div>
-		<div class="absolute left-3 top-5">
-			<p class="flex text-surface-100 text-3xl text-shadow">
-				{temperature}<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
-				{#await getWeatherImage(weatherCode, true)}
-				<ProgressCircle />
-				{:then image}
-				<img src={image} alt="weather code icon" class="ml-2 w-12" />
-				{:catch error}
-				<p>{error}</p>
-				{/await}
-			</p>
-		</div>
-	</div>
-</a>
+	</a>
 	<div class="pl-2 pt-2">
 		<h2 class="text-xl my-3">{locationName ?? '--'}</h2>
 		<div class="flex">
@@ -90,13 +96,7 @@
 							<div class="flex text-center">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
-										
-										<img
-											src={device.isPastDue
-												? inactiveImage
-												: activeImage}
-											alt=""
-										/>
+										<img src={device.isPastDue ? inactiveImage : activeImage} alt="" />
 									</div>
 									<p>{device.cw_devices.name}</p>
 								</div>
@@ -128,6 +128,13 @@
 										<p class="basis-1/2 text-sm">{device.data[dataPointKey]}</p>
 									</div>
 								{/each}
+								<Button
+									on:click={() => goto(`devices/${device.data.dev_eui}/data`)}
+									variant="fill-light"
+									color="primary"
+									class="w-full"
+									icon={mdiEye}>View</Button
+								>
 							{:else}
 								<ProgressCircle />
 							{/if}
