@@ -2475,11 +2475,6 @@ packages:
       typescript:
         optional: true
 
-  svelte-ux@0.60.6:
-    resolution: {integrity: sha512-lkfGW1rGtXqHnHBDxBlHGOgLnKr5INzPCbdc6N4TDS5ZvAz8AAuvbUvDd+kPjwuCyuCNXapXLePiHgGPf2kk4A==}
-    peerDependencies:
-      svelte: ^3.56.0 || ^4.0.0
-
   svelte-ux@0.62.11:
     resolution: {integrity: sha512-jzQ0jC1bQstoWKyc8SEHJsfJNrlXUyubqbHVandvNNN7tQXpyfoUCRcn++OMq7QSkXHhQWSchhtLDfklD0jDCw==}
     peerDependencies:
@@ -4380,7 +4375,7 @@ snapshots:
       posthog-js: 1.130.0
       shapefile: 0.6.6
       svelte: 4.2.14
-      svelte-ux: 0.60.6(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14)
+      svelte-ux: 0.62.11(postcss-load-config@5.0.3(jiti@1.21.0)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.14)
       topojson-client: 3.1.0
     transitivePeerDependencies:
       - '@babel/core'

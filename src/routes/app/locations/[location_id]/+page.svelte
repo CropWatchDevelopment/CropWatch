@@ -8,6 +8,7 @@
 	import type { Tables } from '../../../../database.types';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
+	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 	import { goto } from '$app/navigation';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
@@ -21,6 +22,12 @@
 				r.json()
 			)
 		: Promise.resolve([]);
+
+	//Dummy Data
+	const sensors = [
+		{ id: 1, name: 'name', temperature: 21.1, moisture: 26.4, ph: 6.2, ec: 389, status:"active"},
+		{ id: 2, name: 'name', temperature: 21.1, moisture: 26.4, ph: 6.2, ec: 389, status:"inactive"}
+	];
 </script>
 
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative h-screen px-4">
@@ -28,6 +35,14 @@
 		<Back previousPage={'/app'} />
 		<NotificationsBell />
 	</div>
+	<!-- Display each sensor brief at current location -->
+	<div class="my-6">
+		<p class="text-xl text-surface-100">Devices</p>
+		{#each sensors as sensor}
+			<LocationSensorCard {sensor}/>
+		{/each}
+	</div>
+
 	{#await location}
 		<ProgressCircle />
 	{:then loc}
