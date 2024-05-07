@@ -1,205 +1,92 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-
+	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
-	import {
-		mdiCalendar,
-		mdiChevronLeft,
-		mdiDevices,
-		mdiDotsVertical,
-		mdiEye,
-		mdiMagnifyScan,
-		mdiMapMarker,
-		mdiPlus,
-		mdiThermometer,
-		mdiWater,
-		mdiWeatherSunny
-	} from '@mdi/js';
-	import {
-		Avatar,
-		Button,
-		Card,
-		Header,
-		Icon,
-		Menu,
-		MenuItem,
-		MultiSelect,
-		ProgressCircle,
-		Toggle
-	} from 'svelte-ux';
-	import Leaflet from '$lib/components/leaflet/Leaflet.svelte';
-	import L from 'leaflet';
-	import './cloud.css';
-	import WeatherChart from '$lib/components/charts/highcharts/weatherChart/WeatherChart.svelte';
-	import Marker from '$lib/components/leaflet/Marker.svelte';
-	import WeatherWidget from '$lib/components/weatherWidget/WeatherWidget.svelte';
-	import Calendar from '@event-calendar/core';
-	import TimeGrid from '@event-calendar/day-grid';
-	import StatsQuickView from '$lib/components/StatsQuickViewModal/StatsQuickView.svelte';
-	import DeviceSelect from '$lib/components/DeviceSelect/DeviceSelect.svelte';
-	import TempMarker from '$lib/components/leaflet/TempMarker.svelte';
-	import backgroundImg from '$lib/images/breadcrumb-bg.jpg';
-	import moment from 'moment';
+	import Back from '$lib/components/ui/Back.svelte';
+	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
+	import { Button, Icon, ProgressCircle } from 'svelte-ux';
+	import type { Tables } from '../../../../database.types';
+	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
+	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
+	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 	import { _ } from 'svelte-i18n';
+	import { mdiMoleculeCo2 } from '@mdi/js';
 
-	export let data;
-	let view: L.LatLngExpression | undefined = [32.14088948246444, 131.3853159103882];
-	let zoom: number | undefined = 19;
-	let mapWidth: number = 150;
-	let mapHeight: number = 100;
-	let mapPopupOpen: boolean = false;
+	const location: Promise<Tables<'cw_locations'>> = browser
+		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
+				r.json()
+			)
+		: Promise.resolve([]);
 
-	let plugins = [TimeGrid];
-	let options = {
-		view: 'dayGridMonth',
-		date: new Date(),
-		events: [
-			{"id":"event-0","title":"🌤️ 7°C, Rain: 0mm","editable":false,"allDay":true,"backgroundColor":"#a90f0f","start":"2024-03-01T00:00:00.000Z","end":"2024-03-01T00:00:00.000Z"}
-		],
-		locale: 'ja-jp'
+	const locationDevices: Promise<Tables<'cw_devices'>[]> = browser
+		? fetch(`/api/v1/locations/${$page.params.location_id}/devices`, { method: 'GET' }).then((r) =>
+				r.json()
+			)
+		: Promise.resolve([]);
+
+	const getDeviceType = (dev_eui: string) => {
+		return fetch(`/api/v1/devices/${dev_eui}/type`, { method: 'GET' }).then((r) => r.json());
 	};
-
-	let displayCalendar = false;
-
-	fetch(
-		`https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.41&start_date=${moment().startOf('month').format('YYYY-MM-DD')}&end_date=${moment().endOf('day').format('YYYY-MM-DD')}&daily=weather_code,temperature_2m_mean,rain_sum`
-	).then(async (r) => {
-		const apiResponse = await r.json();
-
-		for (let index = 0; index < apiResponse.daily.time.length; index++) {
-			const date = apiResponse.daily.time[index];
-			const tempEvent = {
-				id: `event-${index}`,
-				title: `🌡️ Temp ${apiResponse.daily.temperature_2m_mean[index]}°C`, // Replace the emoji based on weather_code or your preferences
-				editable: false,
-				allDay: true,
-				backgroundColor: '#a90f0f',
-				start: new Date(date),
-				end: new Date(date)
-			};
-			const rainEvent = {
-				id: `event-${index}`,
-				title: `🌧️ Rain: ${apiResponse.daily.rain_sum[index]}mm`, // Replace the emoji based on weather_code or your preferences
-				editable: false,
-				allDay: true,
-				backgroundColor: 'blue',
-				start: new Date(date),
-				end: new Date(date)
-			};
-			options.events.push(tempEvent);
-			options.events.push(rainEvent);
-			options = options;
-		}
-		options = options;
-		displayCalendar = true;
-	});
-
-	$: console.log(data);
-	view = [data.location.latitude, data.location.longitude];
 </script>
 
-<h1
-	class="mb-2 flex items-center text-2xl font-bold border-b w-full text-white relative"
-	style="background-image:url({backgroundImg}); width:100%; height: 100px;"
->
-	<Button
-		variant="outline"
-		icon={mdiChevronLeft}
-		size="lg"
-		on:click={() => goto(`/app/locations`)}
-	/>
-	{#await data.location}
-		<ProgressCircle />
-	{:then location}
-		<p class="my-auto ml-2">{location.name}</p>
-	{/await}
-</h1>
-
-<div class="my-4">
-	{#if data.weatherJSON}
-		<WeatherWidget environmentalData={data.weatherJSON} />
-	{/if}
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-12 grid-flow-row gap-4">
-	<Card class="col-span-12 lg:col-span-8">
-		<Header slot="header" class="gap-0">
-			<div slot="title" class="text-nowrap text-xl font-medium">{$_('location.map_card_title')}</div>
-			<div slot="avatar">
-				<Avatar class="bg-accent-500 text-white font-bold mr-4">
-					<Icon data={mdiMapMarker} />
-				</Avatar>
-			</div>
-		</Header>
-
-		<div slot="contents">
-			<div class="w-full min-h-96" bind:offsetHeight={mapHeight} bind:offsetWidth={mapWidth}>
-				{#await data.streamed.sensors}
-					<ProgressCircle />
-				{:then sensors}
-					<!-- <pre>{JSON.stringify(sensors, null, 2)}</pre> -->
-					{#if sensors}
-						<Leaflet
-							{view}
-							{zoom}
-							disableZoom={true}
-							width={mapWidth}
-							height={mapHeight}
-							heatMapLatLngs={sensors
-								?.filter((i) => i.cw_devices.type === 3 || i.cw_devices.type === 4)
-								.map((s) => {
-									if (s.cw_devices.cw_ss_tmepnpk.length > 0)
-										return [
-											s.cw_devices.lat,
-											s.cw_devices.long,
-											(s.cw_devices.cw_ss_tmepnpk[0].soil_temperatureC/zoom)
-										];
-								})}
-						>
-							{#each sensors as sensor}
-								{#if sensor && sensor.cw_devices && sensor.cw_devices.lat && sensor.cw_devices.long}
-									<Marker
-										latLng={[sensor.cw_devices.lat, sensor.cw_devices.long]}
-										width={40}
-										height={40}
-									>
-										<StatsQuickView sensor={sensor.cw_devices} />
-									</Marker>
-								{/if}
-							{/each}
-						</Leaflet>
-					{/if}
-				{/await}
-			</div>
-		</div>
-	</Card>
-	{#await data.streamed.sensors}
-		<ProgressCircle />
-	{:then sensors}
-		<DeviceSelect {sensors} />
-	{/await}
-</div>
-
-<Card id="list" class="grid-flow-row col-span-2 justify-start my-2" title="Location List">
-	<Header title="{$_('Calendar.Log')}" slot="header" class="gap-0">
-		<div slot="avatar">
-			<Avatar class="bg-accent-500 text-white font-bold mr-4">
-				<Icon data={mdiCalendar} />
-			</Avatar>
-		</div>
-		<div slot="actions">
-			<Toggle let:on={open} let:toggle>
-				<Button icon={mdiDotsVertical} on:click={toggle}>
-					<Menu {open} on:close={toggle}>
-						<MenuItem icon={mdiPlus}>Add Event</MenuItem>
-					</Menu>
-				</Button>
-			</Toggle>
-		</div>
-	</Header>
-	<div slot="contents">
-		{#if displayCalendar}
-		<Calendar {plugins} {options} />
-		{/if}
+<div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative h-screen px-4">
+	<div class="mt-8 flex justify-between">
+		<Back previousPage={'/app'} />
+		<NotificationsBell />
 	</div>
-</Card>
+	<!-- Display each sensor brief at current location -->
+	<div class="my-6">
+		<p class="text-xl text-surface-100">{$_('app.devices')}</p>
+	</div>
+
+	{#await location}
+		<ProgressCircle />
+	{:then loc}
+		{#if loc}
+			<div class="flex justify-between mb-6">
+				<h2 class="font-light text-2xl text-surface-100">{loc?.cw_locations?.name}</h2>
+			</div>
+
+			{#await locationDevices}
+				<ProgressCircle />
+			{:then devices}
+				<!-- <div class="flex flex-col gap-2 mb-2">
+					{#each devices as sensor}
+						<LocationSensorCard {sensor} />
+					{/each}
+				</div> -->
+			{/await}
+
+			<Leaflet
+				view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
+				zoom={20}
+				disableZoom={true}
+				width={100}
+				height={500}
+			>
+				<!-- TODO: Load devices on map... -->
+				{#await locationDevices then devices}
+					{#each devices as device}
+						<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
+							<a
+								class="bg-black p-2 w-10 text-2xl rounded-full z-20 hover:text-4xl hover:z-30"
+								href={`/app/devices/${device.dev_eui}/data`}
+							>
+								{#await getDeviceType(device.dev_eui)}
+									<ProgressCircle />
+								{:then deviceType}
+									{#if deviceType.cw_device_type.data_table === 'cw_air_thvd'}
+										🌡️
+									{:else if deviceType.cw_device_type.data_table === 'cw_ss_tme' || deviceType.cw_device_type.data_table === 'cw_ss_tmepnpk'}
+										🌱
+									{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks'}
+										<Icon data={mdiMoleculeCo2} />
+									{/if}
+								{/await}
+							</a>
+						</Marker>
+					{/each}
+				{/await}
+			</Leaflet>
+		{/if}
+	{/await}
+</div>

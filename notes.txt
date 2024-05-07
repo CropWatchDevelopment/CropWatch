@@ -1,0 +1,17 @@
+Both light and dark themes are currently the same.
+        // ,
+    // "dark": {
+    //   "color-scheme": "dark",
+    //   "primary": "#055817",
+    //   "secondary": "#0DBF34",
+    //   "accent": "#8EF4FF",
+    //   "neutral": "#FFFEF4",
+    //   "info": "#7a95ff",
+    //   "success": "#62ef98",
+    //   "warning": "#f9ffa3",
+    //   "danger": "#ff8f8f",
+    //   "surface-100": "#242327",
+    //   "surface-200": "#191e24",
+    //   "surface-300": "#15191e"
+    // }
+This used to be the dark theme

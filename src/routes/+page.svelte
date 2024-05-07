@@ -1,30 +1,11 @@
 <script>
-	import { AppBar, Button } from 'svelte-ux';
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
+	import tractor from '$lib/images/UI/tractor.svg';
+
+	if(browser) goto('/auth/login');
 </script>
 
-<main class="p-2 grid place-items-center content-center">
-	<h1 class="text-2xl font-semibold mb-2">Welcome to ✨Svelte UX✨</h1>
-	<div>
-		<Button
-			href="https://svelte-ux.techniq.dev"
-			target="_blank"
-			variant="fill-light"
-			color="primary"
-		>
-			Documentation
-		</Button>
-		<Button
-			href="https://svelte-ux.techniq.dev/customization"
-			target="_blank"
-			variant="fill-light"
-			color="primary"
-		>
-			Customization
-		</Button>
-
-			<div class="grid gap-2">
-			  <AppBar title="Example" class="[--bg-primary:theme(colors.primary)] text-primary-content" />
-			  <AppBar title="Example" class="bg-primary [--text-color:theme(colors.warning)]" />
-			</div>
-	</div>
-</main>
+<div class="flex flex-col w-screen h-screen text-center justify-center">
+		<img src={tractor} alt="loading..." class="w-14 mx-auto" /> loading...
+</div>

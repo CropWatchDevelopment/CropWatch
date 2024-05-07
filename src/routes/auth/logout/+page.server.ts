@@ -1,10 +1,15 @@
+// src/routes/logout/+page.server.js
 import { redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
 
-export const actions: Actions = {
-	async default({ locals: { supabase } }) {
-		console.log("CALLING SERVBER LOGOUT!!!")
-		await supabase.auth.signOut();
-		throw redirect(303, '/');
-	}
-};
+export const actions = {
+    logout: async ({ locals }) => {
+        await locals.supabase.auth.signOut()
+        redirect(303, '/');
+    }
+}
+
+// we only use this endpoint for the api
+// and don't need to see the page
+export async function load() {
+    redirect(303, '/');
+}

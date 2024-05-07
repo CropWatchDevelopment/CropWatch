@@ -1,0 +1,31 @@
+{
+    "light": {
+      "color-scheme": "light",
+      "primary": "#055817",
+      "secondary": "#0DBF34",
+      "accent": "#8EF4FF",
+      "neutral": "#242327",
+      "info": "#7a95ff",
+      "success": "#62ef98",
+      "warning": "#f9ffa3",
+      "danger": "#ff8f8f",
+      "surface-100": "#FFFEF4",
+      "surface-200": "#F2F2F2",
+      "surface-300": "#E5E6E6"
+    },
+    "dark": {
+      "color-scheme": "light",
+      "primary": "#055817",
+      "secondary": "#0DBF34",
+      "accent": "#8EF4FF",
+      "neutral": "#242327",
+      "info": "#7a95ff",
+      "success": "#62ef98",
+      "warning": "#f9ffa3",
+      "danger": "#ff8f8f",
+      "surface-100": "#FFFEF4",
+      "surface-200": "#F2F2F2",
+      "surface-300": "#E5E6E6"
+    }
+
+  }
