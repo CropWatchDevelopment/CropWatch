@@ -204,5 +204,6 @@
   "ago": "前",
   "optimal": "最適",
   "difference": "差",
-  "temp_humidity": "温度/湿度"
+  "temp_humidity": "温度/湿度",
+  "filter": "フィルター"
 }

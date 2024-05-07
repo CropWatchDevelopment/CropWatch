@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { mdiEye } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
+	import moment from 'moment';
 
 	export let data;
 	const locationId = data.location_id;
@@ -105,7 +106,7 @@
 							<div class="flex text-center">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
-										<img src={device.isPastDue ? inactiveImage : activeImage} alt="" />
+										<img src={moment().diff(moment(device.data.created_at), 'minutes') > 120 ? inactiveImage : activeImage} alt="" />
 									</div>
 									<p>{device.cw_devices.name}</p>
 								</div>

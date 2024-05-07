@@ -2,6 +2,7 @@
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 	import bellImage from '$lib/images/UI/cw-bell.svg';
 	import filterImage from '$lib/images/UI/cw_filter_button.svg';
+	import { _ } from 'svelte-i18n';
 	export let data;
 	const { locations } = data;
 </script>
@@ -24,14 +25,14 @@
 		<!-- TITLE and Filter -->
 		<div class="flex justify-between mb-6">
 			<!-- TITLE -->
-			<h2 class=" font-light text-2xl text-surface-100">Dashboard</h2>
+			<h2 class=" font-light text-2xl text-surface-100">{$_('dashboardCard.dashboard')}</h2>
 
 			<!-- Filter -->
 			<div class="flex align-baseline justify-center items-center">
 				<div class="w-3">
 					<img src={filterImage} alt="" />
 				</div>
-				<p class="text-surface-100 px-1">Filter</p>
+			<p class="text-surface-100 px-1">{$_('filter')}</p>
 			</div>
 		</div>
 		<!-- CARDS -->

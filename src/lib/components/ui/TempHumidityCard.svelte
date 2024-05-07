@@ -7,8 +7,8 @@
 
     function computeColor(temp) {
         // Temperature range from -40 to +150
-        const minTemp = -40;
-        const maxTemp = 85;
+        const minTemp = -20;
+        const maxTemp = 40;
         
         // Normalize temperature to a 0-1 scale
         const normalized = (temp - minTemp) / (maxTemp - minTemp);
@@ -31,7 +31,7 @@
         <div class="h-56 w-56 rounded-full bg-[#343f34] bg-opacity-80 flex justify-center items-center">
             <div class="text-center space-y-4">
                 <p class="text-5xl text-center">{temperature}<span class="text-4xl text-[#A3A3A3]">ºC</span></p>
-                <p class="text-xl text-center">{humidity}<span class="text-xl text-[#A3A3A3]">RHS%</span></p>
+                <p class="text-xl text-center">{humidity}<span class="text-xl text-[#A3A3A3]">RH%</span></p>
             </div>
         </div>
 		</div>
