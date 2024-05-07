@@ -62,7 +62,7 @@
 
 <div class="flex flex-row bg-emerald-300 p-4 text-center justify-center">
 	<img src={RulesImage} alt="rules icon" class="w-12" />
-	<p class="text-surface-100 text-3xl ml-2">Rules and custom alerts</p>
+	<p class="text-surface-100 text-3xl ml-2">{$_('rules.title')}</p>
 </div>
 
 <div class="mt-4 mx-2 flex justify-between">
@@ -94,7 +94,7 @@
 	</div>
 
 	{#await rules}
-		<p>Loading Rules...</p>
+		<p>{$_('rules.loadingRules')}</p>
 	{:then allRules}
 		{#if allRules && allRules.length === 0}<p class="my-4 text-surface-100">
 				{$_('rules.no_rules_created')}

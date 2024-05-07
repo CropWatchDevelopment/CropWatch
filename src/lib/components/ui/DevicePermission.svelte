@@ -4,6 +4,7 @@
 	import { mdiAccount, mdiPlus, mdiTrashCan } from '@mdi/js';
 	import { toast } from '@zerodevx/svelte-toast';
 	import { Button, ListItem, SelectField, TextField } from 'svelte-ux';
+	import { _ } from 'svelte-i18n';
 
 	export let devEui;
 	export let permissions;
@@ -71,29 +72,29 @@
 	>
 		<input type="hidden" name="dev_eui" value={devEui} />
 		<div>
-			<label for="email" class="text-surface-100">Email:</label>
-			<TextField name="email" label="User E-Mail" />
+			<label for="email" class="text-surface-100">{$_('permissions.email')}:</label>
+			<TextField name="email" label={$_('permissions.user_email')} />
 		</div>
 		<div>
-			<label for="role" class="text-surface-100">Role: {permission_level}</label>
+			<label for="role" class="text-surface-100">{$_('permissions.role')}:</label>
 			<input type="hidden" name="permission_level" value={permission_level} />
 			<SelectField
-				label="Role"
+				label={$_('permissions.role')}
 				id="permission_level"
 				bind:value={permission_level}
 				options={[
-					{ value: '1', label: 'Admin (view, Edit, Update, Delete)' },
-					{ value: '2', label: 'User (view data, Download Data' },
-					{ value: '3', label: 'Viewer (view data only)' }
+					{ value: '1', label: $_('permissions.admin') },
+					{ value: '2', label: $_('permissions.user') },
+					{ value: '3', label: $_('permissions.viewer') }
 				]}
 			/>
 		</div>
 		<Button variant="fill" type="submit" icon={mdiPlus} color="primary" class="mt-2 w-full"
-			>Add Permission</Button
+			>{$_('permissions.add_permission')}</Button
 		>
 	</form>
 
-	<p class="text-surface-100 mt-5 mb-2">The following logins have access to this device:</p>
+	<p class="text-surface-100 mt-5 mb-2">{$_('permissions.following_have_access')}:</p>
 	<ul>
 		{#each permissions as permission}
 			<ListItem

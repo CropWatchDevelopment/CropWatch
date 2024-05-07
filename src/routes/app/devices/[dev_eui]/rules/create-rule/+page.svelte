@@ -3,13 +3,14 @@
 	import RulesImage from '$lib/images/UI/cw_rules.svg';
     import activeImage from '$lib/images/UI/cw-10.svg';
 	import Rules from '$lib/components/rules/Rules.svelte';
+    import { _ } from 'svelte-i18n';
 
     export let data;
 </script>
 
 <div class="flex flex-row bg-emerald-300 p-4 text-center justify-center">
 	<img src={RulesImage} alt="rules icon" class="w-12" />
-	<p class="text-surface-100 text-3xl ml-2">Rules and custom alerts</p>
+	<p class="text-surface-100 text-3xl ml-2">{$_('rules.title')}</p>
 </div>
 
 <div class="my-4 mx-2 flex justify-between">
