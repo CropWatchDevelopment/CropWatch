@@ -121,27 +121,51 @@
 	<input type="hidden" id="dev_eui" name="dev_eui" bind:value={$page.params.dev_eui} />
 	<div class="mx-4 flex flex-col gap-4">
 		<div>
-			<label for="name" class="text-surface-100">Rule Name:</label>
-			<TextField label="Name" id="name" name="name" required bind:value={ruleGroup.ruleName} />
+			<label for="name" class="text-surface-100">{$_('rules.rule_name')}:</label>
+			<TextField label={$_('rules.ruleName')} id="name" name="name" required bind:value={ruleGroup.ruleName} />
+		</div>
+
+		<div class="m-4">
+			<p class="text-surface-100">{$_('rules.rule_criteria')}:</p>
+			{#await dataItem}
+				loading data items
+			{:then dataItem}
+				{#if ruleGroup.cw_rule_criteria.length == 0}
+					<p class="text-surface-100 text-center">{$_('rules.no_rule_criteria')}</p>
+				{:else}
+					{#each ruleGroup.cw_rule_criteria as singleRule, i}
+						<SubRule bind:root={singleRule} dataItem={dataItem}>
+							<!-- <button on:click={() => onDelete(i)} color="danger">Delete</button> -->
+						</SubRule>
+						AND
+					{/each}
+				{/if}
+			{/await}
+
+			<div class="flex flex-row mt-4">
+				<Button on:click={() => onAdd()} icon={mdiPlus} variant="outline" color="success"
+					>{$_('rules.add_condition_button')}</Button
+				>
+			</div>
 		</div>
 
 		<div>
-			<label for="type" class="text-surface-100">Notification Type:</label>
+			<label for="type" class="text-surface-100">{$_('rules.notification_type')}:</label>
 			<SelectField
 				bind:value={ruleGroup.babylon_notifier_type}
 				name="babylon_notifier_type"
 				id="babylon_notifier_type_control"
 				options={[
-					{ value: 1, label: '1' },
-					{ value: 2, label: '2' }
+					{ value: 1, label: $_('rules.notification_email') },
+					{ value: 2, label: 'SMS' }
 				]}
 			/>
 		</div>
 
-		<div>
-			<label for="action_recipient" class="text-surface-100">Recipient(s):</label>
+		<div class="mb-4">
+			<label for="action_recipient" class="text-surface-100">{$_('rules.recipients')}:</label>
 			<TextField
-				label="Name"
+				label={$_('rules.emails')}
 				id="action_recipient"
 				name="action_recipient"
 				required
@@ -149,33 +173,12 @@
 			/>
 		</div>
 	</div>
-	<div class="m-4">
-		<p class="text-surface-100">{$_('rules.rule_criteria')}:</p>
-		{#await dataItem}
-			loading data items
-		{:then dataItem}
-			{#if ruleGroup.cw_rule_criteria.length == 0}
-				<p class="text-surface-100 text-center">{$_('rules.no_rule_criteria')}</p>
-			{:else}
-				{#each ruleGroup.cw_rule_criteria as singleRule, i}
-					<SubRule bind:root={singleRule} dataItem={dataItem}>
-						<!-- <button on:click={() => onDelete(i)} color="danger">Delete</button> -->
-					</SubRule>
-				{/each}
-			{/if}
-		{/await}
-	</div>
-	<div class="flex flex-row my-4">
-		<Button on:click={() => onAdd()} icon={mdiPlus} variant="outline" color="success"
-			>Add condition</Button
-		>
-	</div>
 
 	<Button
 		type="submit"
 		disabled={!ruleGroup.cw_rule_criteria || ruleGroup.cw_rule_criteria.length == 0}
 		variant="fill"
 		color="primary"
-		class="w-full">{isNew ? 'Create' : 'Update'}</Button
+		class="w-full">{isNew ? $_('rules.create') : 'Update'}</Button
 	>
 </form>

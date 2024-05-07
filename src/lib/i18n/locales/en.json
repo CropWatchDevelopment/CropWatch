@@ -159,7 +159,27 @@
     "new_rule": "New Rule",
     "no_rules_created": "You have not created any rules for this sensor yet.",
     "rule_criteria": "Rule Criteria",
-    "no_rule_criteria": "No Rule Criteria yet..."
+    "no_rule_criteria": "No Rule Criteria yet...",
+    "title": "Rules and custom alerts",
+    "loadingRules": "Loading Rules",
+    "rule_name": "Rule Name",
+    "notification_email": "E-Mail",
+    "notification_type": "Notification Type",
+    "recipients": "Recipient(s)",
+    "emails": "E-Mail Address(s)",
+    "ruleName": "name",
+    "and_reset_when": "And Re-Activate rule when",
+    "returns_to": "returns to",
+    "trigger_value": "Trigger Value",
+    "data": "Data",
+    "reset_rule_value": "Reset Value",
+    "operator": "Operator",
+    "if": "IF",
+    "is": "IS",
+    "select_data": "Sensor Data to Watch",
+    "thresholdValue": "Value",
+    "add_condition_button": "Add Condition",
+    "create": "Create"
   },
   "dashboardCard": {
     "Rainfall": "Rainfall",
@@ -167,6 +187,19 @@
     "Windspeed": "Windspeed",
     "PrimaryData": "Primary Data",
     "secondaryData": "Secondary Data",
-    "Details": "Details"
+    "Details": "Details",
+    "primaryData": "Primary Data",
+    "dashboard": "Dashboard"
+  },
+  "permissions": {
+    "permissions": "Device Permissions",
+    "email": "E-Mail",
+    "user_email": "User E-Mail",
+    "following_have_access": "The following users have access to this device",
+    "role": "Select a Role",
+    "admin": "Admin (View, Edit, Update, Delete)",
+    "user": "User (View Data, Download Data)",
+    "viewer": "Viewer (Read Data Only)",
+    "add_permission": "Add Permission"
   }
 }

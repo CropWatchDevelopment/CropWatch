@@ -170,16 +170,35 @@
     "permissions": "権限"
   },
   "rules": {
+    "title": "ルール設定",
     "description": "新規ルールの作成または既存ルールの編集は以下から。",
     "no_rules_created": "このセンサーのルールはまだ作成されていません。",
     "new_rule": "ルールの追加",
     "edit_rule": "編集",
     "delete_rule": "削除",
-    "rule_statistics": "統計"
+    "rule_statistics": "統計",
+    "loadingRules": "ルールを読み込んでいます...",
+    "rule_name": "ルール名",
+    "notification_email": "Eメール",
+    "notification_type": "通知タイプ",
+    "recipients": "受信者",
+    "emails": "Eメール",
+    "rule_criteria": "ルール条件",
+    "ruleName": "名称",
+    "no_rule_criteria": "ルール条件がありません",
+    "and_reset_when": "そして、",
+    "returns_to": "が戻ったらルールを再び有効にする  (リセット数値の設定なしではルールは一度しか適用されません。)",
+    "trigger_value": "閾値",
+    "data": "データ",
+    "reset_rule_value": "ルール値のリセット",
+    "operator": "演算子",
+    "if": "もし",
+    "is": "が",
+    "select_data": "監視するセンサーデータ",
+    "thresholdValue": "値",
+    "add_condition_button": "条件の追加",
+    "create": "作成"
   },
-
-
-
   "temperature": "温度",
   "humidity": "湿度",
   "soil_moisture": "土壌水分量",
@@ -200,10 +219,21 @@
   "soil_PH": "土壌pH",
   "soil_pH": "土壌pH",
   "time": "時間",
-  "lastSeen": "最後に閲覧",
+  "lastSeen": "最終接続",
   "ago": "前",
   "optimal": "最適",
   "difference": "差",
   "temp_humidity": "温度/湿度",
-  "filter": "フィルター"
+  "filter": "フィルター",
+  "permissions": {
+    "permissions": "デバイス権限",
+    "email": "Eメール",
+    "user_email": "Eメール",
+    "role": "役割を選択する",
+    "admin": "管理者（閲覧、編集、更新、削除）",
+    "user": "ユーザー（データ閲覧、データダウンロード）",
+    "viewer": "閲覧者(データ閲覧のみ)",
+    "add_permission": "アクセス許可",
+    "following_have_access": "次のユーザーはこのデバイスにアクセスできます。"
+  }
 }

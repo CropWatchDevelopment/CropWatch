@@ -4,6 +4,7 @@
 	import { uuidv4 } from '$lib/utilities/uuidv4';
 	import { SelectField, TextField } from 'svelte-ux';
 	import type { Tables } from '../../../database.types';
+	import { _ } from 'svelte-i18n';
 
 	// export const latestData;
 	export let root: Tables<'cw_rule_criteria'>;
@@ -19,23 +20,23 @@
 	<div class="flex flex-col gap-2">
 		<div class="flex flex-row gap-1 justify-between">
 			<div>
-				<label for="action_recipient" class="text-surface-100">IF </label>
+				<label for="action_recipient" class="text-surface-100">{$_('rules.if')} </label>
 				<SelectField
 					classes={{ root: 'w-full' }}
-					placeholder="Sensor Data To Watch"
-					label="Data"
+					placeholder={$_('rules.select_data')}
+					label={$_('rules.data')}
 					bind:value={root.subject}
 					options={Object.keys(dataItem ?? {}).map((key) => {
-						return { label: key, value: key };
+						return { label: $_(key), value: key };
 					})}
 				/>
 			</div>
 
 			<div>
-				<label for="action_recipient" class="text-surface-100">IS </label>
+				<label for="action_recipient" class="text-surface-100">{$_('rules.is')}</label>
 				<SelectField
 					class="w-20"
-					label="Operator"
+					label={$_('rules.operator')}
 					bind:value={root.operator}
 					options={[
 						{ value: '=', label: '=' },
@@ -49,15 +50,15 @@
 			</div>
 
 			<div>
-				<label for="action_recipient" class="text-surface-100">Value: </label>
-				<TextField type="decimal" label="Trigger Value" bind:value={root.trigger_value} />
+			<label for="action_recipient" class="text-surface-100">{$_('rules.thresholdValue')}: </label>
+				<TextField type="decimal" label={$_('rules.trigger_value')} bind:value={root.trigger_value} />
 			</div>
 		</div>
 		<div>
 			<label for="action_recipient" class="text-surface-100"
-				>And Reset when {root.subject} Return to:
+				>{$_('rules.and_reset_when')} {$_(root.subject)} {$_('rules.returns_to')}:
 			</label>
-			<TextField type="decimal" label="Reset Rule Value" bind:value={root.reset_value} />
+			<TextField type="decimal" label={$_('rules.reset_rule_value')} bind:value={root.reset_value} />
 		</div>
 	</div>
 </div>

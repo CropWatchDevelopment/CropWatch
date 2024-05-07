@@ -5,11 +5,11 @@
 	import thermometerImage from '$lib/images/UI/cw_thermometer.png';
 	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
-	import { Button, Card, Collapse, ProgressCircle } from 'svelte-ux';
+	import { Button, Card, Collapse, Icon, ProgressCircle } from 'svelte-ux';
 	import { get, writable } from 'svelte/store';
 	import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
-	import { mdiEye } from '@mdi/js';
+	import { mdiArrowRight, mdiArrowRightCircle, mdiEye, mdiLink } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
 
@@ -80,7 +80,11 @@
 		</div>
 	</a>
 	<div class="pl-2 pt-2">
-		<h2 class="text-xl my-3">{locationName ?? '--'}</h2>
+		<h2 class="text-xl my-3 flex flex-row">
+			{locationName ?? '--'}
+			<span class="flex flex-grow" />
+			<Button variant="outline" color="primary" icon={mdiArrowRight} on:click={() => goto(`app/locations/${locationId}`)} />
+		</h2>
 		<div class="flex">
 			<p class="basis-1/3"></p>
 			<div class="basis-1/3 text-xs flex flex-row justify-center">
@@ -134,7 +138,7 @@
 							{#if device.data}
 								{#await latestDeviceData(device)}
 								<div class="w-full h-full flex flex-row justify-center my-1">
-									<ProgressCircle /> {$_('app.loading')}
+									<ProgressCircle /> {$_('app.loading_message')}
 								</div>
 								{:then data}
 									{#each Object.keys(data) as dataPointKey}
