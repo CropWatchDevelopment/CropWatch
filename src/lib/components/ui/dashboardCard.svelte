@@ -60,9 +60,9 @@
 				class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"
 			></div>
 			<div class="absolute top-4 text-[0.65em] text-surface-100 drop-shadow-md right-3 space-y-1">
-				<p>Rainfall: {rainfall}%</p>
-				<p>Humidity: {humidity}%</p>
-				<p>Windspeed: {windSpeed} km/h</p>
+				<p>{$_('dashboardCard.rainfall')}: {rainfall}%</p>
+				<p>{$_('dashboardCard.humidity')}: {humidity}%</p>
+				<p>{$_('dashboardCard.windspeed')}: {windSpeed} km/h</p>
 			</div>
 			<div class="absolute left-3 top-5">
 				<p class="flex text-surface-100 text-3xl text-shadow">
@@ -82,13 +82,13 @@
 		<h2 class="text-xl my-3">{locationName ?? '--'}</h2>
 		<div class="flex">
 			<p class="basis-1/3"></p>
-			<div class="basis-1/3 text-xs flex">
+			<div class="basis-1/3 text-xs flex flex-row justify-center">
 				<img src={thermometerImage} alt="" class="w-4" />
-				<p>Primary Data</p>
+				<p>{$_('dashboardCard.primaryData')}</p>
 			</div>
-			<div class="basis-1/3 text-xs flex">
+			<div class="basis-1/3 text-xs flex flex-row justify-center">
 				<img src={moistureImage} alt="" class="w-4" />
-				<p>Secondary Data</p>
+				<p>{$_('dashboardCard.secondaryData')}</p>
 			</div>
 		</div>
 		<div class="flex flex-col text-sm">
@@ -128,7 +128,7 @@
 						<!-- Inside -->
 						<div class="pl-4">
 							<div class="flex px-3 mt-3">
-								<h3 class="text-lg basis-1/3 font-medium mb-2">Details</h3>
+								<h3 class="text-lg basis-1/3 font-medium mb-2">{$_('dashboardCard.details')}</h3>
 							</div>
 							{#if device.data}
 								{#await latestDeviceData(device)}
@@ -138,7 +138,7 @@
 								{:then data}
 									{#each Object.keys(data) as dataPointKey}
 										<div class="px-3 pb-3 flex border-b">
-											<p class="basis-1/2 text-sm">{dataPointKey.replace(/_/g, ' ')}</p>
+											<p class="basis-1/2 text-sm">{$_(dataPointKey)}</p>
 											<p class="basis-1/2 text-sm">{data[dataPointKey]}</p>
 										</div>
 									{/each}
@@ -148,7 +148,7 @@
 									variant="fill-light"
 									color="primary"
 									class="w-full"
-									icon={mdiEye}>View</Button
+									icon={mdiEye}>{$_('dashboardCard.view')}</Button
 								>
 							{:else}
 								<ProgressCircle />

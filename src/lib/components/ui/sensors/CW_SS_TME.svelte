@@ -7,6 +7,7 @@
 	import moment from 'moment';
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
 	import Highcharts from '$lib/actions/highcharts.action';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -22,12 +23,12 @@
 			{
 				type: 'line',
 				yAxis: 0,
-				name: 'Temperature',
+				name: $_('temperature'),
 				color: 'red',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.soil_temperatureC])
 			}
 		],
-		'Soil Temperature'
+		$_('soil_temperature')
 	);
 
 	$: moistureConfig = HighChartsTimeSeriesChart(
@@ -35,12 +36,12 @@
 			{
 				type: 'line',
 				yAxis: 0,
-				name: 'Moisture',
+				name: $_('soil_moisture'),
 				color: 'blue',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.soil_moisture])
 			}
 		],
-		'Soil Moisture'
+		$_('soil_moisture')
 	);
 </script>
 
@@ -53,19 +54,19 @@
 		/>
 		<div class="flex flex-col">
 			<p class="text-surface-100 text-4xl">{sensorName}</p>
-			<p class="text-slate-500">Last Seen: <Duration start={lastSeen} totalUnits={1} /> ago</p>
+			<p class="text-slate-500">{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} /> {$_('ago')}</p>
 		</div>
 	</div>
-	<DarkCard title={'Temperature'} value={temperature} optimalValue={20} unit={'ºC'}>
+	<DarkCard title={$_('soil_temperature')} value={temperature} optimalValue={20} unit={'ºC'}>
 		<div class="chart" use:Highcharts={tempConfig} />
 		{data.length}
 	</DarkCard>
 
-	<DarkCard title={'Moisture'} value={moisture} optimalValue={40} unit={'%'}>
+	<DarkCard title={$_('soil_moisture')} value={moisture} optimalValue={40} unit={'%'}>
 		<div class="chart" use:Highcharts={moistureConfig} />
 	</DarkCard>
 
-	<DarkCard title={'EC'} value={soil_ec} unit={'dS/m'} optimalValue={1}></DarkCard>
+	<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'dS/m'} optimalValue={1}></DarkCard>
 
 	<SensorFooterControls />
 </div>

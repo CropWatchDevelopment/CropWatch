@@ -8,6 +8,7 @@
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
 	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
+	import { _ } from 'svelte-i18n';
 	import { mdiMoleculeCo2 } from '@mdi/js';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
@@ -34,7 +35,7 @@
 	</div>
 	<!-- Display each sensor brief at current location -->
 	<div class="my-6">
-		<p class="text-xl text-surface-100">Devices</p>
+		<p class="text-xl text-surface-100">{$_('app.devices')}</p>
 	</div>
 
 	{#await location}

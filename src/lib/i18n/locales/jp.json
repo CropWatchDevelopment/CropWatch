@@ -57,8 +57,10 @@
     "title": "全ての設置場所"
   },
   "app": {
-    "loading_message": "Loading Content...",
-    "loading_translations_message": "Loading Translations"
+    "loading_message": "読み込み中...",
+    "loading_translations_message": "翻訳を読み込んでいます...",
+    "back": "戻る",
+    "devices": "デバイス"
   },
   "location": {
     "map_card_title": "エリアマップ"
@@ -144,5 +146,63 @@
     "dont_have_an_account": "アカウントがありませんか？",
     "register_now": "新規登録",
     "remember_me": "パスワードを保持する"
-  }
+  },
+  "dashboardCard": {
+    "dashboard": "ダッシュボード",
+    "details": "詳細",
+    "view": "詳細を見る",
+    "rainfall": "雨量",
+    "windspeed": "風速",
+    "wind_speed": "風速",
+    "wind_direction": "風向",
+    "pressure": "気圧",
+    "lux": "照度",
+    "uv": "紫外線",
+    "temperature": "温度",
+    "humidity": "湿度",
+    "primaryData": "主要データ",
+    "secondaryData": "補助データ"
+  },
+  "sensorFooterControls": {
+    "history": "履歴",
+    "settings": "設定",
+    "rules": "ルール",
+    "permissions": "権限"
+  },
+  "rules": {
+    "description": "新規ルールの作成または既存ルールの編集は以下から。",
+    "no_rules_created": "このセンサーのルールはまだ作成されていません。",
+    "new_rule": "ルールの追加",
+    "edit_rule": "編集",
+    "delete_rule": "削除",
+    "rule_statistics": "統計"
+  },
+
+
+
+  "temperature": "温度",
+  "humidity": "湿度",
+  "soil_moisture": "土壌水分量",
+  "soil_temperature": "土壌温度",
+  "soil_temperatureC": "土壌温度",
+  "temperatureC": "温度",
+  "air_temperature": "温度",
+  "air_humidity": "相対湿度",
+  "co2_level": "CO²",
+  "soil_EC": "土壌EC",
+  "vpd": "飽差",
+  "dew_point": "露点",
+  "dewPointC": "露点",
+  "dew_pointC": "露点",
+  "soil_N": "土壌窒素",
+  "soil_P": "リン酸",
+  "soil_K": "カリウム",
+  "soil_PH": "土壌pH",
+  "soil_pH": "土壌pH",
+  "time": "時間",
+  "lastSeen": "最後に閲覧",
+  "ago": "前",
+  "optimal": "最適",
+  "difference": "差",
+  "temp_humidity": "温度/湿度"
 }

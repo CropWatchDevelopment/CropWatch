@@ -8,10 +8,9 @@
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
 	import Highcharts from '$lib/actions/highcharts.action';
 	import { scaleBand, scaleUtc } from 'd3-scale';
-	import { flatGroup } from 'd3-array';
-	import { curveLinearClosed, curveCatmullRomClosed, curveCatmullRom } from 'd3-shape';
-	import { Field, PeriodType, ToggleGroup, ToggleOption, cls } from 'svelte-ux';
+	import { curveLinearClosed } from 'd3-shape';
     import { Chart, Svg, Group, Axis, Spline, Points } from 'layerchart';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -38,7 +37,7 @@
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.soil_temperatureC])
 			}
 		],
-		'Soil Temperature'
+		$_('soil_temperature')
 	);
 
 	$: moistureConfig = HighChartsTimeSeriesChart(
@@ -46,12 +45,12 @@
 			{
 				type: 'line',
 				yAxis: 0,
-				name: 'Moisture',
+				name: $_('soil_moisture'),
 				color: 'blue',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.soil_moisture])
 			}
 		],
-		'Soil Moisture'
+		$_('soil_moisture')
 	);
 </script>
 
@@ -64,21 +63,21 @@
 		/>
 		<div class="flex flex-col">
 			<p class="text-surface-100 text-4xl">{sensorName}</p>
-			<p class="text-slate-500">Last Seen: <Duration start={lastSeen} totalUnits={1} /> ago</p>
+			<p class="text-slate-500">{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} /> {$_('ago')}</p>
 		</div>
 	</div>
-	<DarkCard title={'Temperature'} value={temperature} optimalValue={-20} unit={'ºC'}>
+	<DarkCard title={$_('soil_temperature')} value={temperature} optimalValue={-20} unit={'ºC'}>
 		<div class="chart" use:Highcharts={tempConfig} />
 		{data.length}
 	</DarkCard>
 
-	<DarkCard title={'Moisture'} value={moisture} optimalValue={20} unit={'%'}>
+	<DarkCard title={$_('soil_moisture')} value={moisture} optimalValue={20} unit={'%'}>
 		<div class="chart" use:Highcharts={moistureConfig} />
 	</DarkCard>
 
-	<DarkCard title={'EC'} value={soil_ec} unit={'µS/m'} optimalValue={1}></DarkCard>
+	<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'µS/m'} optimalValue={1}></DarkCard>
 
-	<DarkCard title={'NPK'}>
+	<DarkCard title={`${$_('soil_N')} / ${$_('soil_P')} / ${$_('soil_K')}`}>
 		<div class="h-[300px] p-4 border rounded">
 			<Chart
 				data={npk_array}
