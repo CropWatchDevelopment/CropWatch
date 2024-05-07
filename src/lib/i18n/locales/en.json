@@ -160,5 +160,13 @@
     "no_rules_created": "You have not created any rules for this sensor yet.",
     "rule_criteria": "Rule Criteria",
     "no_rule_criteria": "No Rule Criteria yet..."
+  },
+  "dashboardCard": {
+    "Rainfall": "Rainfall",
+    "Humidity": "Humidity",
+    "Windspeed": "Windspeed",
+    "PrimaryData": "Primary Data",
+    "secondaryData": "Secondary Data",
+    "Details": "Details"
   }
 }

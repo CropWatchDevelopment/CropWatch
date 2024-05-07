@@ -7,6 +7,7 @@
 	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
 	import { Duration } from 'svelte-ux';
 	import SensorFooterControls from '../SensorFooterControls.svelte';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -23,14 +24,14 @@
 			{
 				type: 'line',
 				yAxis: 0,
-				name: 'Temperature',
+				name: $_('temperatureC'),
 				color: 'red',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
 			},
 			{
 				type: 'line',
 				yAxis: 1,
-				name: 'Humidity',
+				name: $_('humidity'),
 				color: 'blue',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
 			}
@@ -42,7 +43,7 @@
 		{
 			type: 'line',
 			yAxis: 0,
-			name: 'Dew Point',
+			name: $_('dewPointC'),
 			color: 'red',
 			data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
 		}
@@ -58,19 +59,19 @@
 		/>
 		<div class="flex flex-col">
 			<p class="text-surface-100 text-4xl">{sensorName}</p>
-			<p class="text-slate-500">Last Seen: <Duration start={lastSeen} totalUnits={1} /> ago</p>
+			<p class="text-slate-500">{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} /> {$_('ago')}</p>
 		</div>
 	</div>
 	<TempHumidityCard {temperature} {humidity} />
-	<DarkCard title={'Temperature'} value={temperature} optimalValue={-20} unit={'ºC'} />
-	<DarkCard title={'Humidity'} value={humidity} optimalValue={0} unit={'%'} />
-	<DarkCard title={'Temperature/Humidity History'}>
+	<DarkCard title={$_('temperature')} value={temperature} optimalValue={-20} unit={'ºC'} />
+	<DarkCard title={$_('humidity')} value={humidity} optimalValue={0} unit={'%'} />
+	<DarkCard title={$_('temp_humidity')}>
 		<div class="chart" use:Highcharts={config} />
 	</DarkCard>
-	<DarkCard title={'Dew Point'} value={dewPoint} optimalValue={null} unit={'ºC'}>
+	<DarkCard title={$_('dewPointC')} value={dewPoint} optimalValue={null} unit={'ºC'}>
 		<div class="chart" use:Highcharts={dewPointConfig} />
 	</DarkCard>
-	<DarkCard title={'VPD'} value={vpd} optimalValue={null} unit={'kPa'} />
+	<DarkCard title={$_('vpd')} value={vpd} optimalValue={null} unit={'kPa'} />
 
 	<SensorFooterControls />
 </div>

@@ -121,10 +121,12 @@
 											on:click={() => {
 												selectedRule = rule;
 												openDialog = true;
-											}}>Edit</MenuItem
+											}}>{$_('rules.edit_rule')}</MenuItem
 										>
 
-										<MenuItem icon={mdiChartBar} disabled>Rule Statistics (Future)</MenuItem>
+										<MenuItem icon={mdiChartBar} disabled>
+											{$_('rules.rule_statistics')} (Future)
+										</MenuItem>
 
 										<MenuItem
 											icon={mdiTrashCan}
@@ -132,7 +134,7 @@
 											on:click={() => {
 												deleteConfirmOpen = true;
 												selectedRuleId = rule.id;
-											}}>Delete</MenuItem
+											}}>{$_('rules.delete_rule')}</MenuItem
 										>
 									</Menu>
 								</Button>
