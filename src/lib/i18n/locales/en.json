@@ -152,7 +152,8 @@
     "password": "Password",
     "already_have_an_account": "Already have an account?",
     "return_to_login": "Return to",
-    "register_title": "Register for a new CropWatch Account"
+    "register_title": "Register for a new CropWatch Account",
+    "signup": "Sign up"
   },
   "rules": {
     "description": "Create a new rule, or edit existing rules below",
@@ -189,7 +190,12 @@
     "secondaryData": "Secondary Data",
     "Details": "Details",
     "primaryData": "Primary Data",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "details": "Detail",
+    "view": "View Device Detail",
+    "rainfall": "Rainfall",
+    "humidity": "Humidity",
+    "windspeed": "Wind Speed"
   },
   "permissions": {
     "permissions": "Device Permissions",

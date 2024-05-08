@@ -74,7 +74,7 @@
 						color: 'lightblue'
 					}
 				},
-				opposite: false
+				opposite: true
 			}
 		],
 		''

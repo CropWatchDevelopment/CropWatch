@@ -145,7 +145,11 @@
     "login": "ログイン",
     "dont_have_an_account": "アカウントがありませんか？",
     "register_now": "新規登録",
-    "remember_me": "パスワードを保持する"
+    "remember_me": "パスワードを保持する",
+    "register_title": "アカウントを作成する",
+    "ConfirmPassword": "パスワードの確認",
+    "already_have_an_account": "アカウントをお持ちですか？",
+    "signup": "サインアップ"
   },
   "dashboardCard": {
     "dashboard": "ダッシュボード",

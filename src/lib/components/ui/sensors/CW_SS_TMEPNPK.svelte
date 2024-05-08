@@ -67,7 +67,7 @@
 				type: 'line',
 				yAxis: 0,
 				name: $_('soil_moisture'),
-				color: 'blue',
+				color: 'lightblue',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.soil_moisture])
 			}
 		],
@@ -86,7 +86,7 @@
 						color: 'lightblue'
 					}
 				},
-				opposite: false
+				opposite: true
 			}
 		],
 		$_('')
@@ -116,7 +116,7 @@
 		<div class="chart" use:Highcharts={moistureConfig} />
 	</DarkCard>
 
-	<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'µS/m'} optimalValue={1}></DarkCard>
+	<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'µS/m'} optimalValue={null}></DarkCard>
 
 	<DarkCard title={$_('soil_PH')} value={soil_ph} unit={''} optimalValue={null}></DarkCard>
 

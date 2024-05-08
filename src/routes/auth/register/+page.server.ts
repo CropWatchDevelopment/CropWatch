@@ -34,9 +34,9 @@ export const actions = {
 }
 
 export async function load({locals: { safeGetSession }}) {
-    const session = await safeGetSession();
-    // if the user is already logged in return him to the home page
-    if (session) {
-        redirect(303, '/');
-    }
+    // const session = await safeGetSession();
+    // // if the user is already logged in return him to the home page
+    // if (session) {
+    //     redirect(303, '/');
+    // }
   }
