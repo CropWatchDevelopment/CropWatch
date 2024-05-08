@@ -32,8 +32,42 @@
 				type: 'line',
 				yAxis: 1,
 				name: $_('humidity'),
-				color: 'blue',
+				color: 'lightblue',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
+			}
+		],
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('temperature'),
+					style: {
+						color: 'red'
+					}
+				},
+				labels: {
+					format: '{value} °C',
+					style: {
+						color: 'red'
+					}
+				},
+				opposite: false
+			},
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('humidity'),
+					style: {
+						color: 'lightblue'
+					}
+				},
+				labels: {
+					format: '{value} %',
+					style: {
+						color: 'lightblue'
+					}
+				},
+				opposite: true
 			}
 		],
 		''
@@ -46,8 +80,27 @@
 			name: $_('dewPointC'),
 			color: 'red',
 			data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
-		}
-	]);
+		}],
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('dewPointC'),
+					style: {
+						color: 'red'
+					}
+				},
+				labels: {
+					format: '{value} °C',
+					style: {
+						color: 'red'
+					}
+				},
+				opposite: false
+			}
+		],
+		''
+	);
 </script>
 
 <div class="m-4">

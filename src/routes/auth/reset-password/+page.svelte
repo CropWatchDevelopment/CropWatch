@@ -20,7 +20,7 @@
 						{$_('login.title')}
 					</h2>
 				</div>
-				<h2>Where should we send you a link for password reset?</h2>
+				<h2>{$_('auth.were_to_send_email')}</h2>
 				<form
 					action="?/reset_password"
 					method="POST"
@@ -31,7 +31,7 @@
 							if (result.status && result.status < 400) {
 								update();
 								isLoading = false;
-								toast.push('Recovery Email Sent, Please check your messages.', {
+								toast.push($_('auth.please_check_email'), {
 									theme: {
 										'--toastBackground': 'green',
 										'--toastColor': 'white'
@@ -39,7 +39,7 @@
 								});
 								goto('login'); // redirect to '/app'
 							} else {
-								toast.push(form?.message ?? 'Error sending Message', {
+								toast.push(form?.message ?? $_('auth.error_sending_email'), {
 									theme: {
 										'--toastBackground': 'red',
 										'--toastColor': 'white'
@@ -71,15 +71,15 @@
 						variant="fill-outline"
 						color="primary"
 						loading={isLoading}
-						classes={{ root: 'w-full' }}>Send Recovery Email</Button
+						classes={{ root: 'w-full' }}>{$_('auth.send_recovery_email')}</Button
 					>
 				</form>
 				{#if form?.invalid}<mark>{form?.message}!</mark>{/if}
 				<div>
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
-							<p>{$_('login.return_to_login')}</p>
-							<a class="blue-100" href="register"
+							<p>{$_('auth.return_to_login')}</p>
+							<a class="blue-100" href="/auth/login"
 								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.login')}</u></a
 							>
 						</div>

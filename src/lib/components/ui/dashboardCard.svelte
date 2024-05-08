@@ -87,12 +87,12 @@
 		</h2>
 		<div class="flex">
 			<p class="basis-1/3"></p>
-			<div class="basis-1/3 text-xs flex flex-row justify-center">
+			<div class="basis-1/3 text-xs flex flex-row justify-center  text-slate-800">
 				<img src={thermometerImage} alt="" class="w-4" />
 				<p>{$_('dashboardCard.primaryData')}</p>
 			</div>
 			<div class="basis-1/3 text-xs flex flex-row justify-center">
-				<img src={moistureImage} alt="" class="w-4" />
+				<img src={moistureImage} alt="" class="w-4  text-slate-800" />
 				<p>{$_('dashboardCard.secondaryData')}</p>
 			</div>
 		</div>
@@ -107,7 +107,7 @@
 					<Collapse>
 						<!-- Outside -->
 						<div slot="trigger" class="flex-1 px-3 py-2">
-							<div class="flex text-center">
+							<div class="flex text-center text-base">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
 										<img src={moment().diff(moment(device.data.created_at), 'minutes') > 120 ? inactiveImage : activeImage} alt="" />
@@ -143,8 +143,8 @@
 								{:then data}
 									{#each Object.keys(data) as dataPointKey}
 										<div class="px-3 pb-3 flex border-b">
-											<p class="basis-1/2 text-sm">{$_(dataPointKey)}</p>
-											<p class="basis-1/2 text-sm">{data[dataPointKey]}</p>
+											<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
+											<p class="basis-1/2 text-base">{data[dataPointKey]}</p>
 										</div>
 									{/each}
 								{/await}
