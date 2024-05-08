@@ -201,5 +201,11 @@
     "user": "User (View Data, Download Data)",
     "viewer": "Viewer (Read Data Only)",
     "add_permission": "Add Permission"
+  },
+  "sensorFooterControls": {
+    "rules": "Rules and Rule Settings",
+    "permissions": "Permissions",
+    "settings": "Settings",
+    "history": "History"
   }
 }
