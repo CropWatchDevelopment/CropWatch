@@ -11,6 +11,7 @@
 
 	export let data;
 	export let sensorName = 'NS';
+	export let permissions = 0;
 
 	const temperature = data.at(0).temperatureC;
 	const humidity = data.at(0).humidity;
@@ -73,5 +74,5 @@
 	</DarkCard>
 	<DarkCard title={$_('vpd')} value={vpd} optimalValue={null} unit={'kPa'} />
 
-	<SensorFooterControls />
+	<SensorFooterControls {permissions} />
 </div>

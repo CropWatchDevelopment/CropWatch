@@ -13,6 +13,7 @@
 
 	export let data;
 	export let sensorName = 'NS';
+	export let permissions = 0;
 
 	let temperature = data.at(0).temperature;
 	let humidity = data.at(0).humidity;
