@@ -9,13 +9,14 @@
 	import { get, writable } from 'svelte/store';
 	import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
-	import { mdiArrowRight, mdiArrowRightCircle, mdiEye, mdiLink } from '@mdi/js';
+	import { mdiArrowRight, mdiArrowRightCircle, mdiEye, mdiLink, mdiPencil } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
+	import EditLocationNameDialog from './EditLocationNameDialog.svelte';
 
 	export let data;
 	const locationId = data.location_id;
-	const locationName: string = data.cw_locations.name ?? '--';
+	let locationName: string = data.cw_locations.name ?? '--';
 	const temperature: number = data.weatherJSON.temperature ?? 0;
 	const rainfall: number = data.weatherJSON.rainfall ?? 0;
 	const humidity: number = data.weatherJSON.humidity ?? 0;
@@ -80,8 +81,8 @@
 		</div>
 	</a>
 	<div class="pl-2 pt-2">
-		<h2 class="text-xl my-3 flex flex-row">
-			{locationName ?? '--'}
+		<h2 class="text-xl my-3 flex flex-row items-center">
+			{locationName ?? '--'} <EditLocationNameDialog {locationId} bind:currentLocationName={locationName} />
 			<span class="flex flex-grow" />
 			<Button variant="outline" color="primary" icon={mdiArrowRight} on:click={() => goto(`app/locations/${locationId}`)} />
 		</h2>
