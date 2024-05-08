@@ -226,5 +226,12 @@
     "were_to_send_email": "Where should we send you a link for password reset?",
     "please_check_email": "Recovery Email Sent, Please check your messages.",
     "error_sending_email": "There was an error sending the email, contact support."
-  }
+  },
+  "save": "Save",
+  "rename_dialog": {
+    "to_what": "to what?",
+    "rename": "Rename",
+    "new_name": "New Name"
+  },
+  "close": "Close"
 }

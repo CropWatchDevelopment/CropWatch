@@ -248,5 +248,12 @@
     "were_to_send_email": "リカバリーメールを送信するEメールアドレスを入力してください。",
     "please_check_email": "Eメールを確認してください",
     "error_sending_email": "Eメールの送信中にエラーが発生しました。"
-  }
+  },
+  "save": "保存",
+  "rename_dialog": {
+    "to_what": "を変更する",
+    "rename": " ",
+    "new_name": "新しい名前"
+  },
+  "close": "閉じる"
 }
