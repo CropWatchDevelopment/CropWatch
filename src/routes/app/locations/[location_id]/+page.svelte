@@ -10,6 +10,7 @@
 	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 	import { _ } from 'svelte-i18n';
 	import { mdiMoleculeCo2 } from '@mdi/js';
+	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -55,13 +56,15 @@
 					{/each}
 				</div> -->
 			{/await}
+			<DarkCard2>
 
+			
 			<Leaflet
 				view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
-				zoom={20}
+				zoom={19}
 				disableZoom={true}
 				width={100}
-				height={500}
+				height={270}
 			>
 				<!-- TODO: Load devices on map... -->
 				{#await locationDevices then devices}
@@ -87,6 +90,13 @@
 					{/each}
 				{/await}
 			</Leaflet>
+		</DarkCard2>	
 		{/if}
 	{/await}
+	<div>
+		<h2 class="text-xl text-surface-100">Location Data</h2>
+		<div class="flex flex-wrap">
+			
+		</div>
+	</div>
 </div>
