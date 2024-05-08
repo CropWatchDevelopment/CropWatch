@@ -201,5 +201,24 @@
     "user": "User (View Data, Download Data)",
     "viewer": "Viewer (Read Data Only)",
     "add_permission": "Add Permission"
+  },
+  "temperature": "Temperature",
+  "humidity": "Humidity",
+  "ago": "ago",
+  "soil_PH": "PH",
+  "soil_moisture": "Soil Moisture",
+  "soil_temperature": "Soil Temperature",
+  "soil_EC": "Soil EC",
+  "lastSeen": "Last seen",
+  "temperatureC": "Temperature",
+  "dewPointC": "Dew Point",
+  "auth": {
+    "back_to_login": "Go Back to Login Page",
+    "check_email": "Check your email to confirm.",
+    "send_recovery_email": "Send Recovery Email",
+    "return_to_login": "Return to",
+    "were_to_send_email": "Where should we send you a link for password reset?",
+    "please_check_email": "Recovery Email Sent, Please check your messages.",
+    "error_sending_email": "There was an error sending the email, contact support."
   }
 }

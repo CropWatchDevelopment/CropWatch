@@ -28,6 +28,24 @@
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.soil_temperatureC])
 			}
 		],
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('temperature'),
+					style: {
+						color: 'red'
+					}
+				},
+				labels: {
+					format: '{value} °C',
+					style: {
+						color: 'red'
+					}
+				},
+				opposite: false
+			},
+		],
 		$_('soil_temperature')
 	);
 
@@ -37,11 +55,29 @@
 				type: 'line',
 				yAxis: 0,
 				name: $_('soil_moisture'),
-				color: 'blue',
+				color: 'lightblue',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.soil_moisture])
 			}
 		],
-		$_('soil_moisture')
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('humidity'),
+					style: {
+						color: 'lightblue'
+					}
+				},
+				labels: {
+					format: '{value} %',
+					style: {
+						color: 'lightblue'
+					}
+				},
+				opposite: false
+			}
+		],
+		''
 	);
 </script>
 

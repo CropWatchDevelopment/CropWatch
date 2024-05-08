@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import Highcharts from 'highcharts';
 import moment from 'moment';
 
-export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
+export const HighChartsTimeSeriesChart = (data: any[], yAxis: any[], name: string = '') => {
     return {
         chart: {
             zoomType: 'x',
@@ -35,48 +35,7 @@ export const HighChartsTimeSeriesChart = (data: any[], name: string = '') => {
                 },
             }
         },
-        yAxis: [{ // Primary yAxis
-            labels: {
-                format: '{value}°C',
-                style: {
-                    color: 'red'
-                }
-            },
-            title: {
-                text: '',
-                style: {
-                    color: 'red'
-                }
-            },
-            plotLines: [
-                // {
-                //     value: -13, // This is the specific point on the y-axis
-                //     color: 'red',
-                //     width: 2,
-                //     label: {
-                //         text: 'ALERT RULE 1 (Temperature > 0°C)',
-                //         style: {
-                //             fontWeight: 'bold', // Makes the label text bold
-                //             color: 'red',
-                //         },
-                //     }
-                // }
-            ],
-        }, { // Secondary yAxis
-            title: {
-                text: 'Humidity',
-                style: {
-                    color: 'lightblue'
-                }
-            },
-            labels: {
-                format: '{value} %',
-                style: {
-                    color: 'lightblue'
-                }
-            },
-            opposite: true
-        }],
+        yAxis: yAxis,
         legend: {
             enabled: false
         },

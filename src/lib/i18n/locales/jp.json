@@ -235,5 +235,14 @@
     "viewer": "閲覧者(データ閲覧のみ)",
     "add_permission": "アクセス許可",
     "following_have_access": "次のユーザーはこのデバイスにアクセスできます。"
+  },
+  "auth": {
+    "back_to_login": "ログイン画面に戻る",
+    "check_email": "Eメールを確認してください",
+    "send_recovery_email": "リカバリーメールを送信",
+    "return_to_login": "ログイン画面に戻る",
+    "were_to_send_email": "リカバリーメールを送信するEメールアドレスを入力してください。",
+    "please_check_email": "Eメールを確認してください",
+    "error_sending_email": "Eメールの送信中にエラーが発生しました。"
   }
 }
