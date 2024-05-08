@@ -80,7 +80,7 @@
 						disabled={password != confirmPassword}
 						variant="fill-outline"
 						color="primary"
-						classes={{ root: 'w-full' }}>Sign up</Button
+						classes={{ root: 'w-full' }}>{$_('login.signup')}</Button
 					>
 				</form>
 				{#if form?.invalid}<mark>{form?.message}!</mark>{/if}

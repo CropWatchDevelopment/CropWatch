@@ -8,7 +8,7 @@
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
 	import Highcharts from '$lib/actions/highcharts.action';
 	import { curveLinearClosed } from 'd3-shape';
-	import { Chart, Svg, Group, LinearGradient, Arc, Text } from 'layerchart';
+	import { _ } from 'svelte-i18n';
 	import { HighChartsGuageChart } from '$lib/charts/highcharts/guage';
 
 	export let data;
@@ -28,22 +28,56 @@
 			{
 				type: 'line',
 				yAxis: 0,
-				name: 'Temperature',
+				name: $_('temperature'),
 				color: 'red',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperature])
 			},
 			{
 				type: 'line',
-				yAxis: 0,
-				name: 'Moisture',
-				color: 'blue',
+				yAxis: 1,
+				name: $_('humidity'),
+				color: 'lightblue',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
 			}
 		],
-		'Soil Temperature'
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('temperature'),
+					style: {
+						color: 'red'
+					}
+				},
+				labels: {
+					format: '{value} °C',
+					style: {
+						color: 'red'
+					}
+				},
+				opposite: false
+			},
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('humidity'),
+					style: {
+						color: 'lightblue'
+					}
+				},
+				labels: {
+					format: '{value} %',
+					style: {
+						color: 'lightblue'
+					}
+				},
+				opposite: true
+			}
+		],
+		''
 	);
 
-	$: co2Config = HighChartsGuageChart(co2_level, 'CO2 Level');
+	$: co2Config = HighChartsGuageChart(co2_level, 'CO² Level');
 </script>
 
 <div class="m-4">
@@ -55,20 +89,21 @@
 		/>
 		<div class="flex flex-col">
 			<p class="text-surface-100 text-4xl">{sensorName}</p>
-			<p class="text-slate-500">Last Seen: <Duration start={lastSeen} totalUnits={1} /> ago</p>
+			<p class="text-slate-500">{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} /> {$_('ago')}</p>
 		</div>
 	</div>
 
-	<DarkCard title={'CO2'} value={co2_level} optimalValue={null} unit={'PPM'}>
+	<DarkCard title={'CO²'} value={co2_level} optimalValue={null} unit={'PPM'}>
 		<div class="chart" use:Highcharts={co2Config} />
 	</DarkCard>
-
-	<DarkCard title={'Temperature/Humidity'} value={null} optimalValue={null} unit={'%'}>
+	
+	<DarkCard title={$_('temperature')} value={temperature} optimalValue={null} unit={'ºC'} />
+	<DarkCard title={$_('humidity')} value={humidity} optimalValue={null} unit={'%'} />
+	
+	<DarkCard title={`${$_('temperature')}/${$_('humidity')}`} value={null} optimalValue={null} unit={'%'}>
 		<div class="chart" use:Highcharts={tempMoistConfig} />
 	</DarkCard>
 
-	<DarkCard title={'Temperature'} value={temperature} optimalValue={null} unit={'ºC'} />
-	<DarkCard title={'Humidity'} value={humidity} optimalValue={null} unit={'%'} />
 
 	<SensorFooterControls />
 </div>

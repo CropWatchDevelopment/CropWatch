@@ -142,7 +142,7 @@
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
 							<p>{$_('login.dont_have_an_account')}</p>
-							<a class="blue-100" href="register"
+							<a class="blue-100" href="/auth/register"
 								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.register_now')}</u
 								></a
 							>
