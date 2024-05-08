@@ -233,5 +233,11 @@
     "rename": "Rename",
     "new_name": "New Name"
   },
-  "close": "Close"
+  "close": "Close",
+  "sensorFooterControls": {
+    "rules": "Rules and Rule Settings",
+    "permissions": "Permissions",
+    "settings": "Settings",
+    "history": "History"
+  }
 }

@@ -11,8 +11,12 @@ export async function load({ params, fetch, locals: { supabase, safeGetSession }
     const sensorTypeRequest = await fetch(`/api/v1/devices/${params.dev_eui}/type`);
     const sensorType = await sensorTypeRequest.json();
 
+    const permissionsRequest = await fetch(`/api/v1/devices/${params.dev_eui}/permissions/name`);
+    const permissions = await permissionsRequest.json();
+
     return {
         data: sensorData,
         sensorType: sensorType,
+        permissions: permissions,
     };
 }

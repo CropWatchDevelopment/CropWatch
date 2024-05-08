@@ -7,18 +7,19 @@
 
 	export let sensorType = 'NS';
 	export let sensorName = 'NS';
+	export let permissions = 0;
 	export let data;
 </script>
 
 <div class="relative">
 	{#if sensorType == 'cw_air_thvd'}
-		<Sensor1 {data} {sensorName} />
+		<Sensor1 {data} {sensorName} {permissions} />
 	{:else if sensorType == 'cw_ss_tme'}
-		<CW_SS_TME {data} {sensorName} />
+		<CW_SS_TME {data} {sensorName} {permissions} />
 	{:else if sensorType == 'cw_ss_tmepnpk'}
-		<CW_SS_TMENPK {data} {sensorName} />
+		<CW_SS_TMENPK {data} {sensorName} {permissions} />
 	{:else if sensorType == 'seeed_co2_lorawan_uplinks'}
-		<SeeedS2103 {data} {sensorName} />
+		<SeeedS2103 {data} {sensorName} {permissions} />
 	{:else}
 		<Back />
 		<p>No sensor was specified</p>
