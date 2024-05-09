@@ -8,11 +8,13 @@
 	import { Duration } from 'svelte-ux';
 	import SensorFooterControls from '../SensorFooterControls.svelte';
 	import { _ } from 'svelte-i18n';
+	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 
 	export let data;
 	export let sensorName = 'NS';
 	export let permissions = 0;
 
+	let dev_eui = data.at(0).dev_eui;
 	const temperature = data.at(0).temperatureC;
 	const humidity = data.at(0).humidity;
 	const dewPoint = data.at(0).dewPointC;
@@ -112,7 +114,10 @@
 			class="w-14 h-14 mr-4"
 		/>
 		<div class="flex flex-col">
-			<p class="text-surface-100 text-4xl">{sensorName}</p>
+			<div class="flex flex-row text-neutral-content">
+				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
+				<EditSensorNameDialog {dev_eui} bind:currentSensorName={sensorName} />
+			</div>
 			<p class="text-slate-500">{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} /> {$_('ago')}</p>
 		</div>
 	</div>
