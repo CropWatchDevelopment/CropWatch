@@ -5,11 +5,13 @@
 	import thermometerImage from '$lib/images/UI/cw_thermometer.png';
 	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
-	import { Button, Card, Collapse, ProgressCircle } from 'svelte-ux';
+	import { Button, Card, Collapse, Icon, ProgressCircle } from 'svelte-ux';
 	import { get, writable } from 'svelte/store';
 	import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
-	import { mdiEye } from '@mdi/js';
+	import { mdiArrowRight, mdiArrowRightCircle, mdiEye, mdiLink } from '@mdi/js';
+	import { _ } from 'svelte-i18n';
+	import moment from 'moment';
 
 	export let data;
 	const locationId = data.location_id;
@@ -24,6 +26,14 @@
 
 	const loadDeviceDataFor = async (device) => {
 		return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`)
+			.then((res) => res.json())
+			.then((data) => {
+				return data;
+			});
+	};
+
+	const latestDeviceData = async (device) => {
+		return await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`)
 			.then((res) => res.json())
 			.then((data) => {
 				return data;
@@ -51,9 +61,9 @@
 				class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"
 			></div>
 			<div class="absolute top-4 text-[0.65em] text-surface-100 drop-shadow-md right-3 space-y-1">
-				<p>Rainfall: {rainfall}%</p>
-				<p>Humidity: {humidity}%</p>
-				<p>Windspeed: {windSpeed} km/h</p>
+				<p>{$_('dashboardCard.rainfall')}: {rainfall}%</p>
+				<p>{$_('dashboardCard.humidity')}: {humidity}%</p>
+				<p>{$_('dashboardCard.windspeed')}: {windSpeed} km/h</p>
 			</div>
 			<div class="absolute left-3 top-5">
 				<p class="flex text-surface-100 text-3xl text-shadow">
@@ -70,16 +80,20 @@
 		</div>
 	</a>
 	<div class="pl-2 pt-2">
-		<h2 class="text-xl my-3">{locationName ?? '--'}</h2>
+		<h2 class="text-xl my-3 flex flex-row">
+			{locationName ?? '--'}
+			<span class="flex flex-grow" />
+			<Button variant="outline" color="primary" icon={mdiArrowRight} on:click={() => goto(`app/locations/${locationId}`)} />
+		</h2>
 		<div class="flex">
 			<p class="basis-1/3"></p>
-			<div class="basis-1/3 text-xs flex">
+			<div class="basis-1/3 text-xs flex flex-row justify-center">
 				<img src={thermometerImage} alt="" class="w-4" />
-				<p>Primary Data</p>
+				<p>{$_('dashboardCard.primaryData')}</p>
 			</div>
-			<div class="basis-1/3 text-xs flex">
+			<div class="basis-1/3 text-xs flex flex-row justify-center">
 				<img src={moistureImage} alt="" class="w-4" />
-				<p>Secondary Data</p>
+				<p>{$_('dashboardCard.secondaryData')}</p>
 			</div>
 		</div>
 		<div class="flex flex-col text-sm">
@@ -96,18 +110,18 @@
 							<div class="flex text-center">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
-										<img src={device.isPastDue ? inactiveImage : activeImage} alt="" />
+										<img src={moment().diff(moment(device.data.created_at), 'minutes') > 120 ? inactiveImage : activeImage} alt="" />
 									</div>
 									<p>{device.cw_devices.name}</p>
 								</div>
-								<p class="basis-1/3">
+								<p class="basis-1/3 justify-center m-auto">
 									{#if device.data && device.data.primaryData && device.data.primary_data_notation}
 										{device.data[device.data.primaryData]}{device.data.primary_data_notation}
 									{:else}
 										N/A
 									{/if}
 								</p>
-								<p class="basis-1/3">
+								<p class="basis-1/3 justify-center m-auto">
 									{#if device.data && device.data.secondaryData && device.data.secondary_data_notation}
 										{device.data[device.data.secondaryData]}{device.data.secondary_data_notation}
 									{:else}
@@ -119,21 +133,27 @@
 						<!-- Inside -->
 						<div class="pl-4">
 							<div class="flex px-3 mt-3">
-								<h3 class="text-lg basis-1/3 font-medium mb-2">Details</h3>
+								<h3 class="text-lg basis-1/3 font-medium mb-2">{$_('dashboardCard.details')}</h3>
 							</div>
 							{#if device.data}
-								{#each Object.keys(device.data) as dataPointKey}
-									<div class="px-3 pb-3 flex text-left">
-										<p class="basis-1/2 text-sm">{dataPointKey}</p>
-										<p class="basis-1/2 text-sm">{device.data[dataPointKey]}</p>
-									</div>
-								{/each}
+								{#await latestDeviceData(device)}
+								<div class="w-full h-full flex flex-row justify-center my-1">
+									<ProgressCircle /> {$_('app.loading_message')}
+								</div>
+								{:then data}
+									{#each Object.keys(data) as dataPointKey}
+										<div class="px-3 pb-3 flex border-b">
+											<p class="basis-1/2 text-sm">{$_(dataPointKey)}</p>
+											<p class="basis-1/2 text-sm">{data[dataPointKey]}</p>
+										</div>
+									{/each}
+								{/await}
 								<Button
-									on:click={() => goto(`devices/${device.data.dev_eui}/data`)}
+									on:click={() => goto(`app/devices/${device.data.dev_eui}/data`)}
 									variant="fill-light"
 									color="primary"
 									class="w-full"
-									icon={mdiEye}>View</Button
+									icon={mdiEye}>{$_('dashboardCard.view')}</Button
 								>
 							{:else}
 								<ProgressCircle />

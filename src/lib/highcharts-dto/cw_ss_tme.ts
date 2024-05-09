@@ -20,4 +20,5 @@ export class CWSS_TMEHighcharts implements IHighchartsData {
         };
         return result;
     }
+
 }

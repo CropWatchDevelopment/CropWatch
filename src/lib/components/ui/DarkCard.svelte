@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	export let title;
 	export let value;
 	export let optimalValue;
@@ -26,11 +27,11 @@
 	{#if optimalValue}
 		<div class="mt-4 text-[#C3C3C3] space-y-1 text-left">
 			<div class="flex justify-between">
-				<p class="text-sm">Optimal</p>
+				<p class="text-sm">{$_('optimal')}</p>
 				<p class="text-sm">{optimalValue}<span class="text-xs">{unit}</span></p>
 			</div>
 			<div class="flex justify-between">
-				<p class="text-sm">Difference</p>
+				<p class="text-sm">{$_('difference')}</p>
 				<p
 					class="text-sm {checkValue(differenceValue) == 'greater'
 						? 'greater'

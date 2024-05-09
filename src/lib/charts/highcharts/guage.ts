@@ -1,10 +1,8 @@
 import { browser } from '$app/environment';
 import Highcharts from 'highcharts';
-import moment from 'moment';
 
 export const HighChartsGuageChart = (data: any[], name: string = '', notation: string = '') => {
     return {
-
         chart: {
             type: 'gauge',
             plotBackgroundColor: null,

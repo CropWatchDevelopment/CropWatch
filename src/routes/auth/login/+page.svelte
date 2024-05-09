@@ -102,9 +102,9 @@
 						</div>
 					</div>
 
-					<div class="grid grid-flow-col grid-cols-2 my-2">
-						<div>
-							<Switch
+					<!-- <div class="grid grid-flow-col grid-cols-2 my-2"> -->
+					<div class="flex flex-row w-full mb-2">
+						<Switch
 							name="rememberMe"
 							id="remember"
 							bind:checked={rememberMe}
@@ -112,18 +112,20 @@
 								switch: 'bg-white border-gray-400 data-[checked=true]:bg-blue-600',
 								toggle: 'data-[checked=false]:bg-blue-600 data-[checked=true]:bg-white'
 							}}
-								on:change={(e) => {
-									localStorage.setItem('rememberMe', e.detail);
-								}}
-							/>
-							<span class="text-sm font-medium text-gray-900"
-								>{$_('login.remember_me')}</span>
-						</div>
-						<div class="text-right">
-							<a href="reset-password" class="text-sm font-medium text-gray-900"
-								><Icon data={mdiLockQuestion} /> {$_('login.forgot_password')}</a>
-						</div>
+							on:change={(e) => {
+								localStorage.setItem('rememberMe', e.detail);
+							}}
+						/>
+
+						<span class="text-sm font-medium text-gray-900">{$_('login.remember_me')}</span>
+						<span class="flex-1" />
+						<!-- <div class="text-right"> -->
+						<a href="reset-password" class="text-xs font-medium text-gray-900"
+							><Icon data={mdiLockQuestion} /> {$_('login.forgot_password')}</a
+						>
+						<!-- </div> -->
 					</div>
+					<!-- </div> -->
 
 					<Button
 						disabled={loggingIn}
@@ -133,7 +135,6 @@
 						class="flex w-full mb-2 justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 						>{$_('login.login')}</Button
 					>
-
 				</form>
 				{#if form?.invalid}<mark>{form?.message}!</mark>{/if}
 

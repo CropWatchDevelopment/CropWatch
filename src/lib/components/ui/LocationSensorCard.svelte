@@ -3,6 +3,10 @@
 	import Active from '$lib/images/UI/cw_active.svg';
 	import Inactive from '$lib/images/UI/cw_inactive_circle.svg';
 	import SensorArrow from '$lib/images/UI/cw_get into arrow.svg';
+	import { CW_AIR_THVD_DATA } from '$lib/sensor-dto/convert_cw_air_thvd';
+
+	let data = CW_AIR_THVD_DATA(sensor.cw_devices);
+	debugger;
 </script>
 
 <div class="flex bg-[#34393f] bg-opacity-50 rounded-xl text-surface-100 my-3 justify-between">
