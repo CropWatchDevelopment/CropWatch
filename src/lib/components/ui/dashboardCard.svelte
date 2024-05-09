@@ -13,6 +13,7 @@
 	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
 	import EditLocationNameDialog from './EditLocationNameDialog.svelte';
+	import { nameToNotation } from '$lib/utilities/nameToNotation';
 
 	export let data;
 	const locationId = data.location_id;
@@ -145,7 +146,7 @@
 									{#each Object.keys(data) as dataPointKey}
 										<div class="px-3 pb-3 flex border-b">
 											<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
-											<p class="basis-1/2 text-base">{data[dataPointKey]}</p>
+											<p class="basis-1/2 text-base flex flex-row">{data[dataPointKey]} <span class="text-sm text-slate-500 flex-grow">{nameToNotation(dataPointKey)}</span></p>
 										</div>
 									{/each}
 								{/await}
