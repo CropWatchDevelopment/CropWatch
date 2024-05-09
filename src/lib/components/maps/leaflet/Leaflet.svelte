@@ -57,7 +57,7 @@
 	}
 </script>
 
-<div class="relative" style={`width: ${width}%; height: ${height}px;`} bind:this={mapElement}>
+<div class="relative rounded-xl" style={`width: ${width}%; height: ${height}px;`} bind:this={mapElement}>
 	{#if map}
 		<slot />
 	{/if}

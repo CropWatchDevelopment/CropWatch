@@ -7,9 +7,10 @@
 	import type { Tables } from '../../../../database.types';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
-	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 	import { _ } from 'svelte-i18n';
 	import { mdiMoleculeCo2 } from '@mdi/js';
+	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
+	import SquareCard from '$lib/components/ui/SquareCard.svelte';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -26,9 +27,13 @@
 	const getDeviceType = (dev_eui: string) => {
 		return fetch(`/api/v1/devices/${dev_eui}/type`, { method: 'GET' }).then((r) => r.json());
 	};
+
+	const getDeviceData = (dev_eui: string) => {
+		return fetch(`/api/v1/devices/${dev_eui}/data/latest`, { method: 'GET' }).then((r) => r.json());
+	};
 </script>
 
-<div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative h-screen px-4">
+<div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative px-4 pb-12">
 	<div class="mt-8 flex justify-between">
 		<Back previousPage={'/app'} />
 		<NotificationsBell />
@@ -55,38 +60,70 @@
 					{/each}
 				</div> -->
 			{/await}
-
-			<Leaflet
-				view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
-				zoom={20}
-				disableZoom={true}
-				width={100}
-				height={500}
-			>
-				<!-- TODO: Load devices on map... -->
-				{#await locationDevices then devices}
-					{#each devices as device}
-						<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
-							<a
-								class="bg-black p-2 w-10 text-2xl rounded-full z-20 hover:text-4xl hover:z-30"
-								href={`/app/devices/${device.dev_eui}/data`}
+			<DarkCard2>
+				<Leaflet
+					view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
+					zoom={19}
+					disableZoom={true}
+					width={100}
+					height={270}
+				>
+					<!-- TODO: Load devices on map... -->
+					{#await locationDevices then devices}
+						{#each devices as device}
+							<Marker
+								latLng={[device.cw_devices.lat, device.cw_devices.long]}
+								width={50}
+								height={50}
 							>
-								{#await getDeviceType(device.dev_eui)}
-									<ProgressCircle />
-								{:then deviceType}
-									{#if deviceType.cw_device_type.data_table === 'cw_air_thvd'}
-										🌡️
-									{:else if deviceType.cw_device_type.data_table === 'cw_ss_tme' || deviceType.cw_device_type.data_table === 'cw_ss_tmepnpk'}
-										🌱
-									{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks'}
-										<Icon data={mdiMoleculeCo2} />
-									{/if}
-								{/await}
-							</a>
-						</Marker>
-					{/each}
-				{/await}
-			</Leaflet>
+								<a
+									class="bg-black p-2 w-10 text-2xl rounded-full z-20 hover:text-4xl hover:z-30"
+									href={`/app/devices/${device.dev_eui}/data`}
+								>
+									{#await getDeviceType(device.dev_eui)}
+										<ProgressCircle />
+									{:then deviceType}
+										{#if deviceType.cw_device_type.data_table === 'cw_air_thvd'}
+											🌡️
+										{:else if deviceType.cw_device_type.data_table === 'cw_ss_tme' || deviceType.cw_device_type.data_table === 'cw_ss_tmepnpk'}
+											🌱
+										{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks'}
+											<Icon data={mdiMoleculeCo2} />
+										{/if}
+									{/await}
+								</a>
+							</Marker>
+						{/each}
+					{/await}
+				</Leaflet>
+			</DarkCard2>
 		{/if}
 	{/await}
+	<div>
+		<h2 class="text-xl text-surface-100">Location Data:</h2>
+		<div class="flex flex-wrap justify-center">
+			{#await locationDevices then devices}
+				{#each devices as device}
+					{#await getDeviceData(device.dev_eui)}
+						<ProgressCircle />
+					{:then dev_data}
+						<div class="flex flex-col text-center text-neutral-content text-xl">
+							<h2>{device.cw_devices.name}</h2>
+							<div class="flex flex-row flex-wrap">
+								{#each Object.keys(dev_data) as d}
+									<SquareCard
+										title={$_(d)}
+										titleColor={'#4FDE6F'}
+										value={dev_data[d]}
+										unit={'ºC'}
+										message={'Status coming soon'}
+									/>
+								{/each}
+							</div>
+						</div>
+					{/await}
+				{/each}
+			{/await}
+		</div>
+	</div>
 </div>
