@@ -11,11 +11,13 @@
 	import { curveLinearClosed } from 'd3-shape';
 	import { Chart, Svg, Group, Axis, Spline, Points } from 'layerchart';
 	import { _ } from 'svelte-i18n';
-
+	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
+	
 	export let data;
 	export let sensorName = 'NS';
 	export let permissions = 0;
 
+	let dev_eui = data.at(0).dev_eui;
 	let temperature = data.at(0).soil_temperatureC;
 	let moisture = data.at(0).soil_moisture;
 	let soil_ec = data.at(0).soil_EC;
@@ -102,7 +104,10 @@
 			class="w-14 h-14 mr-4"
 		/>
 		<div class="flex flex-col">
-			<p class="text-surface-100 text-4xl">{sensorName}</p>
+			<div class="flex flex-row text-neutral-content">
+				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
+				<EditSensorNameDialog {dev_eui} bind:currentSensorName={sensorName} />
+			</div>
 			<p class="text-slate-500">
 				{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} />
 				{$_('ago')}
