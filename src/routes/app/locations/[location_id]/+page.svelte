@@ -109,7 +109,7 @@
 					{:then dev_data}
 						<div class="flex flex-col text-center text-neutral-content text-xl">
 							<h2>{device.cw_devices.name}</h2>
-							<div class="flex flex-row flex-wrap">
+							<div class="flex flex-row flex-wrap justify-center">
 								{#each Object.keys(dev_data) as d}
 									<SquareCard
 										title={$_(d)}
