@@ -73,7 +73,7 @@
 							</p>
 						</div>
 						<div class="text-lg mt-24">
-							<form action="" method="post">
+							<form action="/auth/logout?/logout" method="post">
 								<button type="submit">Sign Out</button>
 							</form>
 						</div>
