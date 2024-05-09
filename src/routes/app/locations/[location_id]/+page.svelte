@@ -11,6 +11,8 @@
 	import { mdiMoleculeCo2 } from '@mdi/js';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import SquareCard from '$lib/components/ui/SquareCard.svelte';
+	import { json } from '@sveltejs/kit';
+	import { nameToNotation } from '$lib/utilities/nameToNotation';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -107,15 +109,15 @@
 					{#await getDeviceData(device.dev_eui)}
 						<ProgressCircle />
 					{:then dev_data}
-						<div class="flex flex-col text-center text-neutral-content text-xl">
-							<h2>{device.cw_devices.name}</h2>
-							<div class="flex flex-row flex-wrap">
-								{#each Object.keys(dev_data) as d}
+					<div class="flex flex-col text-center text-neutral-content text-xl">
+						<h2>{device.cw_devices.name}</h2>
+						<div class="flex flex-row flex-wrap justify-center">
+							{#each Object.keys(dev_data) as d}
 									<SquareCard
 										title={$_(d)}
 										titleColor={'#4FDE6F'}
 										value={dev_data[d]}
-										unit={'ºC'}
+										unit={nameToNotation(d)}
 										message={'Status coming soon'}
 									/>
 								{/each}

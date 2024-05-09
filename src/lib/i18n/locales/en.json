@@ -59,7 +59,8 @@
   "app": {
     "loading_message": "Loading Content...",
     "loading_translations_message": "Loading Translations...",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "devices": "Devices"
   },
   "location": {
     "map_card_title": "Overview Map"
