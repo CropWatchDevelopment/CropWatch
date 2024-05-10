@@ -104,7 +104,6 @@
 	</div>
 	<DarkCard title={$_('soil_temperature')} value={temperature} optimalValue={20} unit={'ºC'}>
 		<div class="chart" use:Highcharts={tempConfig} />
-		{data.length}
 	</DarkCard>
 
 	<DarkCard title={$_('soil_moisture')} value={moisture} optimalValue={40} unit={'%'}>
