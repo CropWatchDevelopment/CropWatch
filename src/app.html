@@ -17,6 +17,15 @@
 
 		gtag('config', 'G-1C791PBK6E');
 	</script>
+	<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+	<script>
+	  window.OneSignalDeferred = window.OneSignalDeferred || [];
+	  OneSignalDeferred.push(function(OneSignal) {
+		OneSignal.init({
+		  appId: "ec27de06-fdef-4538-bbd0-22c1ede56150",
+		});
+	  });
+	</script>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="google" content="notranslate">
 	%sveltekit.head%
