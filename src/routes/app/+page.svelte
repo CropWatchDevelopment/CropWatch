@@ -1,5 +1,6 @@
 <script lang="ts">
-	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
+	import AddLocation from '$lib/components/ui/AddLocation.svelte';
+import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 	import bellImage from '$lib/images/UI/cw-bell.svg';
 	import filterImage from '$lib/images/UI/cw_filter_button.svg';
 	import { mdiViewDashboard } from '@mdi/js';
@@ -31,14 +32,15 @@
 				<Icon data={mdiViewDashboard} class="w-6 h-6" />
 				{$_('dashboardCard.dashboard')}
 			</h2>
-
+			
 			<!-- Filter -->
-			<!-- <div class="flex align-baseline justify-center items-center">
-				<div class="w-3">
+			<div class="flex align-baseline justify-center items-center text-white">
+				<AddLocation />
+				<!-- <div class="w-3">
 					<img src={filterImage} alt="" />
 				</div>
-				<p class="text-surface-100 px-1">{$_('filter')}</p>
-			</div> -->
+				<p class="text-surface-100 px-1">{$_('filter')}</p> -->
+			</div>
 		</div>
 		<!-- CARDS -->
 		{#each locations as location}
