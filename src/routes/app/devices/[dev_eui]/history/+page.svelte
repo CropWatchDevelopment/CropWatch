@@ -19,7 +19,7 @@
 		to: today,
 		periodType: PeriodType.Day
 	};
-
+    let isLoading: boolean = false;
 	let chartKey = 0;
 
 	let options = Object.keys(data.sensorData).map((key) => {
@@ -106,6 +106,7 @@
 	};
 
 	const downloadCSV = (sensorName) => {
+        isLoading = true;
 		const date = new Date();
 		const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
 		const fileName = `${sensorName}-${formattedDate}.csv`;
@@ -129,8 +130,12 @@
 				document.body.appendChild(a);
 				a.click();
 				window.URL.revokeObjectURL(url);
+                isLoading = false;
 			})
-			.catch((error) => console.error('Error downloading the file:', error));
+			.catch((error) => {
+                console.error('Error downloading the file:', error);
+                isLoading = false;
+            });
 	};
 </script>
 
@@ -180,6 +185,8 @@
 			on:click={() => downloadCSV('sensor')}
 			size="lg"
 			class="w-full"
+            loading={isLoading}
+            disabled={isLoading}
 			rounded>{$_('history.download_selected')}</Button
 		>
 	</div>
