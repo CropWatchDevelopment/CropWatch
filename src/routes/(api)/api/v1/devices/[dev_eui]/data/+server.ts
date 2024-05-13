@@ -14,6 +14,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
   const from = query.get('from');
   const to = query.get('to');
   const dataPoints = query.get('data-points');
+  const noLimit = query.get('no-limit' || 0);
   const csv = query.get('csv');
 
   if (!dev_eui) {
@@ -31,14 +32,16 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     .eq('dev_eui', dev_eui)
     .order('created_at', { ascending: false })
 
-    if (from) {
-      baseQuery = baseQuery.gte('created_at', moment(from).toISOString());
-    }
-    if (to) {
-      baseQuery = baseQuery.lte('created_at', moment(to).toISOString());
-    }
+  if (from) {
+    baseQuery = baseQuery.gte('created_at', moment(from).utc().toISOString());
+  }
+  if (to) {
+    baseQuery = baseQuery.lte('created_at', moment(to).utc().toISOString());
+  }
 
+  if (!noLimit) {
     baseQuery.range(startingPage, startingPage + itemsPerPage - 1);
+  }
 
   // Conditionally apply `.single()` if itemsPerPage is 1
   let finalQuery = itemsPerPage === 1 ? baseQuery.single() : baseQuery;

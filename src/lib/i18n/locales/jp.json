@@ -255,5 +255,12 @@
     "rename": " ",
     "new_name": "新しい名前"
   },
-  "close": "閉じる"
+  "close": "閉じる",
+  "history": {
+    "title": "履歴",
+    "data_preview": "データプレビュー",
+    "no_data": "データがありません",
+    "download_selected": "選択したデータをダウンロード",
+    "search_text": "Filter Data Points"
+  }
 }
