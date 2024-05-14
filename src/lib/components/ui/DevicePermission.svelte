@@ -42,7 +42,6 @@
 			return async ({ result, update }) => {
 				if (result) {
 					update();
-					debugger;
 					if(permissions) {
 						permissions.push(result);
 						permissions = permissions;
@@ -55,7 +54,6 @@
 						}
 					});
 				} else {
-					debugger;
 					toast.push(
 						result.statusText ??
 							'Failed to add User Permission, does the user exist and have a setup account?',

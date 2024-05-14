@@ -7,6 +7,13 @@ module.exports = {
     './node_modules/svelte-ux/**/*.{svelte,js}',
     './node_modules/layerchart/**/*.{svelte,js}'
   ],
+  themes: {
+    extend: {
+      backgroundImage: {
+        clouds: "url('https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs')"
+      }
+    },
+  },
 
   // See customization docs: https://svelte-ux.techniq.dev/customization
   ux: {

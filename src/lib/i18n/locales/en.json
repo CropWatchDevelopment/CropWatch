@@ -196,7 +196,8 @@
     "view": "View Device Detail",
     "rainfall": "Rainfall",
     "humidity": "Humidity",
-    "windspeed": "Wind Speed"
+    "windspeed": "Wind Speed",
+    "noDevices": "This location has no devices yet..."
   },
   "permissions": {
     "permissions": "Device Permissions",
@@ -213,6 +214,7 @@
   "humidity": "Humidity",
   "ago": "ago",
   "soil_PH": "PH",
+  "vpd": "VPD",
   "soil_moisture": "Soil Moisture",
   "soil_temperature": "Soil Temperature",
   "soil_EC": "Soil EC",
@@ -240,5 +242,8 @@
     "permissions": "Permissions",
     "settings": "Settings",
     "history": "History"
+  },
+  "addlocation": {
+    "title": "Create a new Location"
   }
 }

@@ -165,7 +165,8 @@
     "temperature": "温度",
     "humidity": "湿度",
     "primaryData": "主要データ",
-    "secondaryData": "補助データ"
+    "secondaryData": "補助データ",
+    "noDevices": "デバイスがありません"
   },
   "sensorFooterControls": {
     "history": "履歴",
@@ -255,5 +256,8 @@
     "rename": " ",
     "new_name": "新しい名前"
   },
-  "close": "閉じる"
+  "close": "閉じる",
+  "addlocation": {
+    "title": "設置場所の追加"
+  }
 }
