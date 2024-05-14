@@ -3,7 +3,7 @@
 	import L from 'leaflet';
 	import 'leaflet/dist/leaflet.css';
 	// import '$lib/vendor/leaflet-heat';
-	import { onDestroy, onMount, setContext } from 'svelte';
+	import { onDestroy, onMount, setContext, createEventDispatcher } from 'svelte';
 
 	export let bounds: L.LatLngBoundsExpression | undefined = undefined;
 	export let view: L.LatLngExpression | undefined = undefined;
@@ -15,6 +15,7 @@
 
 	let map: L.Map | undefined;
 	let mapElement: HTMLDivElement;
+	const dispatch = createEventDispatcher();
 
 	onMount(async () => {
 		map = L.map(mapElement);
@@ -37,6 +38,11 @@
 			map.keyboard.disable();
 			if (map.tap) map.tap.disable();
 		}
+
+		map.on('click', function (e: L.LeafletMouseEvent) {
+			const { lat, lng } = e.latlng;
+			dispatch('mapclick', { latitude: lat, longitude: lng });
+		});
 	});
 
 	onDestroy(() => {
@@ -57,7 +63,11 @@
 	}
 </script>
 
-<div class="relative rounded-xl" style={`width: ${width}%; height: ${height}px;`} bind:this={mapElement}>
+<div
+	class="relative rounded-xl"
+	style={`width: ${width}%; height: ${height}px;`}
+	bind:this={mapElement}
+>
 	{#if map}
 		<slot />
 	{/if}

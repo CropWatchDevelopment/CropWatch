@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { mdiClose, mdiFloppy, mdiPencil, mdiPlusCircle } from '@mdi/js';
+	import { mdiClose, mdiFloppy, mdiMapMarker, mdiPencil, mdiPlusCircle } from '@mdi/js';
 	import { toast } from '@zerodevx/svelte-toast';
-	import { Button, Dialog, TextField } from 'svelte-ux';
+	import { Button, Dialog, Icon, TextField } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
+	import { browser } from '$app/environment';
+	import Leaflet from '../maps/leaflet/Leaflet.svelte';
+	import Marker from '../maps/leaflet/Marker.svelte';
 
 	let open = false;
 	let latitude: number = 0;
@@ -50,6 +53,24 @@
 	const closing = () => {
 		open = false;
 	};
+
+	const getLocation = async () => {
+		if (browser && navigator.geolocation) {
+			return await navigator.geolocation.getCurrentPosition(
+				async (pos) => {
+					latitude = pos.coords.latitude;
+					longitude = pos.coords.longitude;
+					return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+				},
+				(error) => {
+					console.error(error);
+					return { latitude: 0, longitude: 0 };
+				}
+			);
+		}
+		return { latitude: 0, longitude: 0 };
+	};
+	getLocation();
 </script>
 
 <Button on:click={() => (open = true)} icon={mdiPlusCircle} size="sm" />
@@ -62,6 +83,24 @@
 		<TextField name="latitude" label="Location Latitude" type="decimal" bind:value={latitude} />
 
 		<TextField name="longigude" label="Location Latitude" type="decimal" bind:value={longitude} />
+
+		<Leaflet
+			view={[latitude, longitude]}
+			zoom={19}
+			disableZoom={true}
+			width={100}
+			height={270}
+			on:mapclick={(e) => {
+				latitude = e.detail.latitude;
+				longitude = e.detail.longitude;
+			}}
+		>
+			{#key latitude + longitude}
+				<Marker latLng={[latitude, longitude]} width={50} height={50}
+					><Icon data={mdiMapMarker} class="text-red-600 w-full h-full" /></Marker
+				>
+			{/key}
+		</Leaflet>
 	</div>
 	<div class="flex flex-row mt-1 p-2">
 		<Button variant="fill" icon={mdiClose} on:click={() => (open = false)} color="danger"
