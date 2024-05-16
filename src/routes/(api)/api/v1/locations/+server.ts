@@ -57,6 +57,7 @@ export const POST: RequestHandler = async ({ url, request, locals: { supabase, s
       name,
       latitude,
       longitude,
+      owner_id: session.user.id,
     }])
     .select();
 
@@ -79,14 +80,29 @@ export const POST: RequestHandler = async ({ url, request, locals: { supabase, s
       location_id: data[0].location_id,
       is_active: true
     }]);
-  return new Response(
-    JSON.stringify(data) ||
-    JSON.stringify(permsError),
-    {
-      status: permsError ? 500 : 200,
-      statusText: permsError ? 'Internal Server Error' : 'OK',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+
+    if (error) {
+      return new Response(
+        JSON.stringify(error),
+        {
+          status: 500,
+          statusText: 'Internal Server Error',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+    }
+
+    return redirect(303, `/api/v1/locations/${data[0].location_id}`);
+
+  // return new Response(
+  //   JSON.stringify(data) ||
+  //   JSON.stringify(permsError),
+  //   {
+  //     status: permsError ? 500 : 200,
+  //     statusText: permsError ? 'Internal Server Error' : 'OK',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     }
+  //   });
 }

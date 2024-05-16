@@ -59,7 +59,6 @@
 	});
 </script>
 
-<!-- https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs -->
 <div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 	<a href="/app/locations/{locationId}" class="">
 		<div
