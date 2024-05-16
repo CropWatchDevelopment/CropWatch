@@ -10,8 +10,8 @@
         }
     }
 </script>
-<div>
-    <div class="{batteryIndicator(battery)} w-24 h-24"></div>
+<div class="w-24 h-24">
+    <div class="{batteryIndicator(battery)} w-24 h-[{battery}%]"></div>
 </div>
 <style>
     .full{
