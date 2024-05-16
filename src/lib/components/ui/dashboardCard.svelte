@@ -84,7 +84,7 @@
 		<h2 class="text-xl my-3 flex flex-row">
 			<div>
 				{locationName ?? '--'}
-				<Battery battery={20}/>
+				<Battery battery={100}/>
 			</div>
 			<span class="flex flex-grow" />
 			<Button variant="outline" color="primary" icon={mdiArrowRight} on:click={() => goto(`app/locations/${locationId}`)} />
