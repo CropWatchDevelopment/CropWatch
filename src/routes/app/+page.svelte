@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Battery from '$lib/components/ui/Battery.svelte';
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 	import bellImage from '$lib/images/UI/cw-bell.svg';
 	import filterImage from '$lib/images/UI/cw_filter_button.svg';
