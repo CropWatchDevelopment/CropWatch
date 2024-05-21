@@ -6,6 +6,7 @@
 	import { ProgressCircle, Drawer, Button } from 'svelte-ux';
 	import { navigating } from '$app/stores';
 	import Close from '$lib/images/UI/cw_Close Button.svg';
+	import { dev } from '$app/environment';
 
 	export let data;
 	$: ({ session, supabase } = data);
@@ -115,6 +116,11 @@
 		</div>
 	</nav>
 </div>
+{#if dev}
+<div class="w-full h-fit bg-orange-300 text-center">
+	🔨 DEVELOP ENVIRONMENT
+</div>
+{/if}
 <div class="app background-gradient">
 	{#if $navigating || $isLoading}
 		<div

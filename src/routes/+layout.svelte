@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { SvelteToast } from '@zerodevx/svelte-toast';
 	import '../app.css';
-	import { dev } from '$app/environment';
 
 	import { settings } from 'svelte-ux';
 
@@ -27,9 +26,4 @@
 </script>
 
 <SvelteToast />
-{#if dev}
-<div class="w-full h-fit bg-orange-300 text-center">
-	🔨 DEVELOP ENVIRONMENT
-</div>
-{/if}
 <slot />

@@ -32,20 +32,19 @@
 				.then((res) => res.json())
 				.then((data) => {
 					return data;
-				}).catch((err) => {
-					return [];
 				})
+				.catch((err) => {
+					return [];
+				});
 		}
 	};
 
 	const latestDeviceData = async (device) => {
-		if (!device.data || !device.dev_eui) {
-			return await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`)
-				.then((res) => res.json())
-				.then((data) => {
-					return data;
-				});
-		}
+		return await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`)
+			.then((res) => res.json())
+			.then((data) => {
+				return data;
+			});
 	};
 
 	onMount(async () => {
@@ -162,12 +161,12 @@
 										<ProgressCircle />
 										{$_('app.loading_message')}
 									</div>
-								{:then data}
-									{#each Object.keys(data) as dataPointKey}
+								{:then latestData}
+									{#each Object.keys(latestData) as dataPointKey}
 										<div class="px-3 pb-3 flex border-b">
 											<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
 											<p class="basis-1/2 text-base flex flex-row">
-												{data[dataPointKey]}
+												{latestData[dataPointKey]}
 												<span class="text-sm text-slate-500 flex-grow"
 													>{nameToNotation(dataPointKey)}</span
 												>
