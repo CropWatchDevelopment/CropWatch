@@ -44,7 +44,7 @@
 		<div class="flex justify-between px-4 items-center">
 			<!-- HOME/LOGO BUTTON -->
 			<div class="w-32">
-				<a href="/">
+				<a href="/app">
 					<img src={cw_LogoImage} alt="" />
 				</a>
 			</div>
