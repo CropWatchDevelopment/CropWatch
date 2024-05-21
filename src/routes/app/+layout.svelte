@@ -66,10 +66,10 @@
 
 						<div class="text-lg mt-12 space-y-2">
 							<p>
-								<a href="">Locations</a>
+								<a href="/app">Locations</a>
 							</p>
 							<p>
-								<a href="">Sensors</a>
+								<a href="/app/devices">Devices</a>
 							</p>
 						</div>
 						<div class="text-lg mt-24">
