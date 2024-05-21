@@ -250,5 +250,12 @@
   },
   "addlocation": {
     "title": "Create a new Location"
+  },
+  "history": {
+    "title": "History and Downloads",
+    "data_preview": "Data Preview",
+    "no_data": "No data to display",
+    "download_selected": "Download Selected Range",
+    "search_text": "Filter Data Points"
   }
 }

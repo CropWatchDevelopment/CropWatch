@@ -264,5 +264,12 @@
   "close": "閉じる",
   "addlocation": {
     "title": "設置場所の追加"
+  },
+  "history": {
+    "title": "履歴",
+    "data_preview": "データプレビュー",
+    "no_data": "データがありません",
+    "download_selected": "選択したデータをダウンロード",
+    "search_text": "Filter Data Points"
   }
 }
