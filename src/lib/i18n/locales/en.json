@@ -60,7 +60,12 @@
     "loading_message": "Loading Content...",
     "loading_translations_message": "Loading Translations...",
     "loading": "Loading...",
-    "devices": "Devices"
+    "devices": "Devices",
+    "location": {
+      "settings": {
+        "permissions": "Location Permission Settings"
+      }
+    }
   },
   "location": {
     "map_card_title": "Overview Map"
@@ -196,7 +201,8 @@
     "view": "View Device Detail",
     "rainfall": "Rainfall",
     "humidity": "Humidity",
-    "windspeed": "Wind Speed"
+    "windspeed": "Wind Speed",
+    "noDevices": "This location has no devices yet..."
   },
   "permissions": {
     "permissions": "Device Permissions",
@@ -213,6 +219,7 @@
   "humidity": "Humidity",
   "ago": "ago",
   "soil_PH": "PH",
+  "vpd": "VPD",
   "soil_moisture": "Soil Moisture",
   "soil_temperature": "Soil Temperature",
   "soil_EC": "Soil EC",
@@ -240,6 +247,9 @@
     "permissions": "Permissions",
     "settings": "Settings",
     "history": "History"
+  },
+  "addlocation": {
+    "title": "Create a new Location"
   },
   "history": {
     "title": "History and Downloads",

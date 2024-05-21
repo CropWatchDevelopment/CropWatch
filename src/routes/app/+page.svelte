@@ -1,10 +1,12 @@
 <script lang="ts">
-	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
+	import { goto } from '$app/navigation';
+	import AddLocation from '$lib/components/ui/AddLocation.svelte';
+import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 	import bellImage from '$lib/images/UI/cw-bell.svg';
 	import filterImage from '$lib/images/UI/cw_filter_button.svg';
-	import { mdiViewDashboard } from '@mdi/js';
+	import { mdiPlusCircle, mdiViewDashboard } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
-	import { Icon } from 'svelte-ux';
+	import { Button, Icon } from 'svelte-ux';
 	export let data;
 	const { locations } = data;
 </script>
@@ -31,14 +33,15 @@
 				<Icon data={mdiViewDashboard} class="w-6 h-6" />
 				{$_('dashboardCard.dashboard')}
 			</h2>
-
+			
 			<!-- Filter -->
-			<!-- <div class="flex align-baseline justify-center items-center">
-				<div class="w-3">
+			<div class="flex align-baseline justify-center items-center text-white">
+				<Button on:click={() => goto('/app/locations/add')} icon={mdiPlusCircle} size="sm" />
+				<!-- <div class="w-3">
 					<img src={filterImage} alt="" />
 				</div>
-				<p class="text-surface-100 px-1">{$_('filter')}</p>
-			</div> -->
+				<p class="text-surface-100 px-1">{$_('filter')}</p> -->
+			</div>
 		</div>
 		<!-- CARDS -->
 		{#each locations as location}

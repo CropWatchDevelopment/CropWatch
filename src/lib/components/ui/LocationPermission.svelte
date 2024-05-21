@@ -6,16 +6,16 @@
 	import { Button, ListItem, SelectField, TextField } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 
-	export let devEui;
-	export let permissions;
+	export let location_id: number;
+	export let locationPermissions;
 	let permission_level: number = 3;
 
 	const deletePermission = (id: number) => {
-		fetch(`/api/v1/devices/${devEui}/permissions?id=${id}`, {
+		fetch(`/api/v1/locations/${location_id}/permissions?id=${id}`, {
 			method: 'DELETE'
 		}).then((response) => {
 			if (response.status < 400) {
-				permissions = permissions.filter((permission) => permission.id !== id);
+				locationPermissions = locationPermissions.filter((permission) => permission.id !== id);
 				toast.push('User Permission Deleted Successfully!', {
 					theme: {
 						'--toastBackground': 'green',
@@ -36,15 +36,15 @@
 
 <div class="flex flex-col m-4 gap-2">
 	<form
-		action="/api/v1/devices/{devEui}/permissions"
+		action="/api/v1/locations/{location_id}/permissions"
 		method="POST"
 		use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 			return async ({ result, update }) => {
 				if (result) {
 					update();
-					if(permissions) {
-						permissions.push(result);
-						permissions = permissions;
+					if(locationPermissions) {
+						locationPermissions.push(result);
+						locationPermissions = locationPermissions;
 					}
 					//reload page
 					toast.push('User Permission Added Successfully!', {
@@ -68,7 +68,7 @@
 			};
 		}}
 	>
-		<input type="hidden" name="dev_eui" value={devEui} />
+		<input type="hidden" name="location_id" value={location_id} />
 		<div>
 			<label for="email" class="text-surface-100">{$_('permissions.email')}:</label>
 			<TextField name="email" label={$_('permissions.user_email')} />
@@ -94,7 +94,7 @@
 
 	<p class="text-surface-100 mt-5 mb-2">{$_('permissions.following_have_access')}:</p>
 	<ul>
-		{#each permissions as permission}
+		{#each locationPermissions as permission}
 			<ListItem
 				title={permission.profiles.email}
 				subheading={PermissionNumberToName(permission.permission_level)}

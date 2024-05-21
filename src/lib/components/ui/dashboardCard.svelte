@@ -6,10 +6,10 @@
 	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
 	import { Button, Card, Collapse, Icon, ProgressCircle } from 'svelte-ux';
-	import { get, writable } from 'svelte/store';
+	import { writable } from 'svelte/store';
 	import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
-	import { mdiArrowRight, mdiArrowRightCircle, mdiEye, mdiLink, mdiPencil } from '@mdi/js';
+	import { mdiArrowRight, mdiEye } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
 	import EditLocationNameDialog from './EditLocationNameDialog.svelte';
@@ -18,28 +18,34 @@
 	export let data;
 	const locationId = data.location_id;
 	let locationName: string = data.cw_locations.name ?? '--';
-	const temperature: number = data.weatherJSON.temperature ?? 0;
-	const rainfall: number = data.weatherJSON.rainfall ?? 0;
-	const humidity: number = data.weatherJSON.humidity ?? 0;
-	const windSpeed: number = data.weatherJSON.windSpeed ?? 0;
-	const weatherCode: number = data.weatherJSON.weatherCode ?? 0;
+	const temperature: number = data.weatherJSON?.temperature ?? 0;
+	const rainfall: number = data.weatherJSON?.rainfall ?? 0;
+	const humidity: number = data.weatherJSON?.humidity ?? 0;
+	const windSpeed: number = data.weatherJSON?.windSpeed ?? 0;
+	const weatherCode: number = data.weatherJSON?.weatherCode ?? 0;
 	let loading = true;
 	const devices = writable([]);
 
 	const loadDeviceDataFor = async (device) => {
-		return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`)
-			.then((res) => res.json())
-			.then((data) => {
-				return data;
-			});
+		if (device) {
+			return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`)
+				.then((res) => res.json())
+				.then((data) => {
+					return data;
+				}).catch((err) => {
+					return [];
+				})
+		}
 	};
 
 	const latestDeviceData = async (device) => {
-		return await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`)
-			.then((res) => res.json())
-			.then((data) => {
-				return data;
-			});
+		if (!device.data || !device.dev_eui) {
+			return await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`)
+				.then((res) => res.json())
+				.then((data) => {
+					return data;
+				});
+		}
 	};
 
 	onMount(async () => {
@@ -53,11 +59,10 @@
 	});
 </script>
 
-<!-- https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs -->
 <div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 	<a href="/app/locations/{locationId}" class="">
 		<div
-			class="w-full h-20 relative rounded-2xl bg-sky-800 bg-blend-overlay bg-no-repeat bg-cover bg-bottom bg-[url('https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs')]"
+			class="w-full h-20 relative rounded-2xl bg-sky-800 bg-blend-overlay bg-no-repeat bg-cover bg-bottom bg-clouds]"
 		>
 			<div
 				class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"
@@ -83,24 +88,33 @@
 	</a>
 	<div class="pl-2 pt-2">
 		<h2 class="text-xl my-3 flex flex-row items-center">
-			{locationName ?? '--'} <EditLocationNameDialog {locationId} bind:currentLocationName={locationName} />
+			{locationName ?? '--'}
+			<EditLocationNameDialog {locationId} bind:currentLocationName={locationName} />
 			<span class="flex flex-grow" />
-			<Button variant="outline" color="primary" icon={mdiArrowRight} on:click={() => goto(`app/locations/${locationId}`)} />
+			<Button
+				variant="outline"
+				color="primary"
+				icon={mdiArrowRight}
+				on:click={() => goto(`app/locations/${locationId}`)}
+			/>
 		</h2>
 		<div class="flex">
 			<p class="basis-1/3"></p>
-			<div class="basis-1/3 text-xs flex flex-row justify-center  text-slate-800">
+			<div class="basis-1/3 text-xs flex flex-row justify-center text-slate-800">
 				<img src={thermometerImage} alt="" class="w-4" />
 				<p>{$_('dashboardCard.primaryData')}</p>
 			</div>
 			<div class="basis-1/3 text-xs flex flex-row justify-center">
-				<img src={moistureImage} alt="" class="w-4  text-slate-800" />
+				<img src={moistureImage} alt="" class="w-4 text-slate-800" />
 				<p>{$_('dashboardCard.secondaryData')}</p>
 			</div>
 		</div>
 		<div class="flex flex-col text-sm">
 			{#if $devices.length === 0 && loading}
 				<ProgressCircle class="flex self-center" />
+			{/if}
+			{#if $devices.length === 0 && !loading}
+				<p class="text-center my-5">{$_('dashboardCard.noDevices')}</p>
 			{/if}
 			{#each $devices as device}
 				<Card
@@ -112,7 +126,12 @@
 							<div class="flex text-center text-base">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
-										<img src={moment().diff(moment(device.data.created_at), 'minutes') > 120 ? inactiveImage : activeImage} alt="" />
+										<img
+											src={moment().diff(moment(device.data.created_at), 'minutes') > 120
+												? inactiveImage
+												: activeImage}
+											alt=""
+										/>
 									</div>
 									<p>{device.cw_devices.name}</p>
 								</div>
@@ -139,14 +158,20 @@
 							</div>
 							{#if device.data}
 								{#await latestDeviceData(device)}
-								<div class="w-full h-full flex flex-row justify-center my-1">
-									<ProgressCircle /> {$_('app.loading_message')}
-								</div>
+									<div class="w-full h-full flex flex-row justify-center my-1">
+										<ProgressCircle />
+										{$_('app.loading_message')}
+									</div>
 								{:then data}
 									{#each Object.keys(data) as dataPointKey}
 										<div class="px-3 pb-3 flex border-b">
 											<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
-											<p class="basis-1/2 text-base flex flex-row">{data[dataPointKey]} <span class="text-sm text-slate-500 flex-grow">{nameToNotation(dataPointKey)}</span></p>
+											<p class="basis-1/2 text-base flex flex-row">
+												{data[dataPointKey]}
+												<span class="text-sm text-slate-500 flex-grow"
+													>{nameToNotation(dataPointKey)}</span
+												>
+											</p>
 										</div>
 									{/each}
 								{/await}

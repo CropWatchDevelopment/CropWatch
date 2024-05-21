@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
 	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
-	import { Button, Icon, ProgressCircle } from 'svelte-ux';
+	import { Icon, ProgressCircle } from 'svelte-ux';
 	import type { Tables } from '../../../../database.types';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
@@ -11,8 +11,8 @@
 	import { mdiMoleculeCo2 } from '@mdi/js';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import SquareCard from '$lib/components/ui/SquareCard.svelte';
-	import { json } from '@sveltejs/kit';
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
+	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -52,7 +52,6 @@
 			<div class="flex justify-between mb-6">
 				<h2 class="font-light text-2xl text-surface-100">{loc?.cw_locations?.name}</h2>
 			</div>
-
 			{#await locationDevices}
 				<ProgressCircle />
 			{:then devices}
@@ -64,7 +63,7 @@
 			{/await}
 			<DarkCard2>
 				<Leaflet
-					view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
+					view={[loc.cw_locations?.latitude ?? 0, loc.cw_locations?.longitude ?? 0]}
 					zoom={19}
 					disableZoom={true}
 					width={100}
@@ -109,10 +108,10 @@
 					{#await getDeviceData(device.dev_eui)}
 						<ProgressCircle />
 					{:then dev_data}
-					<div class="flex flex-col text-center text-neutral-content text-xl">
-						<h2>{device.cw_devices.name}</h2>
-						<div class="flex flex-row flex-wrap justify-center">
-							{#each Object.keys(dev_data) as d}
+						<div class="flex flex-col text-center text-neutral-content text-xl">
+							<h2>{device.cw_devices.name}</h2>
+							<div class="flex flex-row flex-wrap justify-center">
+								{#each Object.keys(dev_data) as d}
 									<SquareCard
 										title={$_(d)}
 										titleColor={'#4FDE6F'}
@@ -129,3 +128,5 @@
 		</div>
 	</div>
 </div>
+
+<LocationFooterControls />

@@ -6,7 +6,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
         throw redirect(303, '/auth/unauthorized');
     }
 
-    const locationId = +(params.id ?? 0);
+    const locationId = +(params.location_id ?? 0);
     if (locationId === 0) {
         return new Response(
             JSON.stringify({ error: 'location_id is required' }),
@@ -95,3 +95,51 @@ export const PUT: RequestHandler = async ({ params, request, locals: { supabase,
             }
         });
 }
+
+
+export const DELETE: RequestHandler = async ({ request, locals: { supabase, safeGetSession } }) => {
+    const { session } = await safeGetSession();
+    if (!session) {
+        throw redirect(303, '/auth/unauthorized');
+    }
+
+    const body = new URLSearchParams(await request.json());
+    const locationId = body.get('location_id');
+
+    //Check to see if user CAN delete location
+    const { data, error } = await supabase
+        .from('cw_location_owners')
+        .select('*, cw_locations(*)')
+        .eq('location_id', locationId)
+        .eq('user_id', session.user.id)
+        .limit(1)
+        .single();
+
+    if (error || !data) {
+        return new Response(
+            JSON.stringify({ error: 'You do not have permission to delete this location' }),
+            {
+                status: 403,
+            });
+    }
+
+    //Delete location
+    const { data: deletedData, error: deleteError } = await supabase
+        .from('cw_locations')
+        .delete()
+        .eq('location_id', locationId)
+        .eq('owner_id', session.user.id)
+        .select();
+
+    const result = deletedData ? deletedData[0] : null;
+
+    return new Response(
+        JSON.stringify(result),
+        {
+            statusText: result ? 'OK' : deleteError,
+            status: result ? 200 : 404,
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+};

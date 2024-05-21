@@ -128,7 +128,7 @@
 			{/if}
 		</div>
 	{:else}
-		<main>
+		<main class="sm:max-w-5xl md:max-w-full">
 			<slot />
 		</main>
 	{/if}
@@ -152,7 +152,6 @@
 		flex-direction: column;
 		padding: 0rem;
 		width: 100%;
-		max-width: 64rem;
 		margin: 0 auto;
 		box-sizing: border-box;
 	}
