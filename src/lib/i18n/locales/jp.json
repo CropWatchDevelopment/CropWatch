@@ -60,7 +60,12 @@
     "loading_message": "読み込み中...",
     "loading_translations_message": "翻訳を読み込んでいます...",
     "back": "戻る",
-    "devices": "デバイス"
+    "devices": "デバイス",
+    "location": {
+      "settings": {
+        "permissions": "権限"
+      }
+    }
   },
   "location": {
     "map_card_title": "エリアマップ"

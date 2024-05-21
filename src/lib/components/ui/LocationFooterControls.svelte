@@ -9,7 +9,7 @@
 </script>
 
 <div class="flex flex-col w-full my-8 gap-4">
-	{#if permissions <= 2}
+	<!-- {#if permissions <= 2}
 	<Button
 		classes={{ root: 'w-full' }}
 		size="lg"
@@ -17,7 +17,7 @@
 		variant="fill"
 		on:click={() => goto('history')}>{$_('sensorFooterControls.history')}</Button
 	>
-	{/if}
+	{/if} -->
 	{#if permissions <= 1}
 		<Button
 			classes={{ root: 'w-full' }}
@@ -31,7 +31,7 @@
 			size="lg"
 			icon={mdiLock}
 			variant="fill"
-			on:click={() => goto('permissions')}>{$_('sensorFooterControls.permissions')}</Button
+			on:click={() => goto(`${$page.params.location_id}/settings/permissions`)}>{$_('sensorFooterControls.permissions')}</Button
 		>
 	{/if}
 </div>

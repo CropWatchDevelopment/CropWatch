@@ -6,7 +6,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
         throw redirect(303, '/auth/unauthorized');
     }
 
-    const locationId = +(params.id ?? 0);
+    const locationId = +(params.location_id ?? 0);
     if (locationId === 0) {
         return new Response(
             JSON.stringify({ error: 'location_id is required' }),

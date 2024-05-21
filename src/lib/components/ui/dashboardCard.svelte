@@ -18,11 +18,11 @@
 	export let data;
 	const locationId = data.location_id;
 	let locationName: string = data.cw_locations.name ?? '--';
-	const temperature: number = data.weatherJSON.temperature ?? 0;
-	const rainfall: number = data.weatherJSON.rainfall ?? 0;
-	const humidity: number = data.weatherJSON.humidity ?? 0;
-	const windSpeed: number = data.weatherJSON.windSpeed ?? 0;
-	const weatherCode: number = data.weatherJSON.weatherCode ?? 0;
+	const temperature: number = data.weatherJSON?.temperature ?? 0;
+	const rainfall: number = data.weatherJSON?.rainfall ?? 0;
+	const humidity: number = data.weatherJSON?.humidity ?? 0;
+	const windSpeed: number = data.weatherJSON?.windSpeed ?? 0;
+	const weatherCode: number = data.weatherJSON?.weatherCode ?? 0;
 	let loading = true;
 	const devices = writable([]);
 

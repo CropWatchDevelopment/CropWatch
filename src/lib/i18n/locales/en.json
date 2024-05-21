@@ -60,7 +60,12 @@
     "loading_message": "Loading Content...",
     "loading_translations_message": "Loading Translations...",
     "loading": "Loading...",
-    "devices": "Devices"
+    "devices": "Devices",
+    "location": {
+      "settings": {
+        "permissions": "Location Permission Settings"
+      }
+    }
   },
   "location": {
     "map_card_title": "Overview Map"

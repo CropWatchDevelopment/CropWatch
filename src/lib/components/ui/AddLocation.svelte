@@ -30,7 +30,6 @@
 		})
 			.then((res) => {
 				if (res.ok) {
-					debugger;
 					toast.push(`Location name updated successfully`, {
 						theme: {
 							'--toastBackground': 'green',
@@ -46,6 +45,11 @@
 					});
 				}
 				return res.json();
+			})
+			.then((data) => {
+				debugger;
+				console.log(data);
+				goto(`/app/locations/${data.location_id}`);
 			})
 			.catch((err) => {
 				console.error(err);

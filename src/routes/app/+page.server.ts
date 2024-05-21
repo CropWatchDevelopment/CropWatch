@@ -24,24 +24,32 @@ export async function load({ fetch, locals: { supabase, safeGetSession } }) {
 
 async function updateLocations(locations, supabase, user_id) {
     for (var location of locations) {
-        const weatherJSON = await getWeatherAPIData(location.lat, location.lng);
+        const weatherJSON = await getWeatherAPIData(location.cw_locations.latitude, location.cw_locations.longitude);
         location.weatherJSON = weatherJSON
     }
     return locations
 }
 
-async function getWeatherAPIData(lat: number, lng: number) {
+async function getWeatherAPIData(lat, lng) {
     try {
         const weatherRequest = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat ?? 0}&longitude=${lng ?? 0}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
         );
+        
+        if (!weatherRequest.ok) {
+            console.error(`Weather API request failed with status: ${weatherRequest.status}`);
+            return null;
+        }
+
         const weatherJSON = await weatherRequest.json();
         const result = convertApiResponseToResultIncludingLux(weatherJSON);
         return result;
     } catch (error) {
-
+        console.error('Error fetching weather data:', error);
+        return null;
     }
 }
+
 
 
 function convertApiResponseToResultIncludingLux(apiResponse) {
