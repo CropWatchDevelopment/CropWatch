@@ -3,10 +3,10 @@
 	import { onMount } from 'svelte';
 	import { _, isLoading } from 'svelte-i18n';
 	import cw_LogoImage from '$lib/images/UI/cw_Logo.png';
+	import LightBell from '$lib/images/UI/cw_Bell icon light.svg';
 	import { ProgressCircle, Drawer, Button } from 'svelte-ux';
 	import { navigating } from '$app/stores';
 	import Close from '$lib/images/UI/cw_Close Button.svg';
-
 	export let data;
 	$: ({ session, supabase } = data);
 
@@ -48,12 +48,24 @@
 					<img src={cw_LogoImage} alt="" />
 				</a>
 			</div>
-			<div class="flex">
-				
+			<div class="flex items-center">
+				<!-- MENU LINKS -->
 				<div class="space-x-6 hidden md:flex lg:space-x-16">
 					<a href="/app" class="hover:text-secondary transition duration-150">Locations</a>
 					<a href="/app/devices" class="hover:text-secondary transition duration-150">Devices</a>
 				</div>
+				<!-- NOTIFICATION BELL -->
+				<div class="mr-6 md:mr-0 md:ml-20 w-8 " >
+					<p>
+						<a href="/app/notifications" class="relative">
+							<img src="{LightBell}" alt="notifications bell" class=" mix-blend-soft-light">
+							
+							<!-- NEW NOTIFICATION INDICATOR -->
+							<div class="bg-teal-200 w-2 h-2 rounded-full absolute top-0 right-0 animate-pulse"></div>
+						</a>
+					</p>
+				</div>
+				
 
 				<!-- HAMBURGER ICON -->
 				<div class="block md:hidden">
