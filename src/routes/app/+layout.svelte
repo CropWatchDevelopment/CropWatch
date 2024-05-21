@@ -41,77 +41,86 @@
 
 <div class="bg-primary text-surface-300 py-2 static">
 	<nav>
-		<div class="flex justify-between px-4 items-center">
+		<div class="flex justify-between px-4 md:px-12 md:py-4 items-center">
 			<!-- HOME/LOGO BUTTON -->
 			<div class="w-32">
 				<a href="/app">
 					<img src={cw_LogoImage} alt="" />
 				</a>
 			</div>
-
-			<!-- HAMBURGER ICON -->
-			<Drawer
-				bind:open={rightOpen}
-				placement="right"
-				class="w-[300px] bg-[#212E23] text-surface-100"
-			>
-				<div class="pt-12 px-4">
-					<div class="w-full text-right">
-						<Button on:click={() => (rightOpen = false)} class="w-16"
-							><img src={Close} alt="menu hamburger" /></Button
-						>
-					</div>
-					<div class="pl-2">
-					<h1 class="text-2xl font-medium">Menu</h1>
-
-						<div class="text-lg mt-12 space-y-2">
-							<p>
-								<a href="/app">Locations</a>
-							</p>
-							<p>
-								<a href="/app/devices">Devices</a>
-							</p>
-						</div>
-						<div class="text-lg mt-24">
-							<form action="" method="post">
-								<button type="submit">Sign Out</button>
-							</form>
-						</div>
-					</div>
+			<div class="flex">
+				
+				<div class="space-x-6 hidden md:flex lg:space-x-16">
+					<a href="/app" class="hover:text-secondary transition duration-150">Locations</a>
+					<a href="/app/devices" class="hover:text-secondary transition duration-150">Devices</a>
 				</div>
-				<div slot="actions">
-					<Button on:click={() => (rightOpen = false)}>Close</Button>
-				</div>
-			</Drawer>
-			<Button on:click={() => (rightOpen = true)} class="p-0"
-				><div class="w-14">
-					<svg
-						id="Layer_1"
-						data-name="Layer 1"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 300 300"
-						><defs
-							><style>
-								.cls-1 {
-									fill: #0dbf34;
-								}
-							</style></defs
-						><title>cw</title><rect
-							class="cls-1"
-							x="27.92"
-							y="66.2"
-							width="244.15"
-							height="35.66"
-						/><rect class="cls-1" x="27.96" y="132.19" width="244.15" height="35.66" /><rect
-							class="cls-1"
-							x="27.96"
-							y="198.18"
-							width="244.15"
-							height="35.66"
-						/></svg
+
+				<!-- HAMBURGER ICON -->
+				<div class="block md:hidden">
+					<Drawer
+						bind:open={rightOpen}
+						placement="right"
+						class="w-[300px] bg-[#212E23] text-surface-100 "
 					>
-				</div></Button
-			>
+						<div class="pt-12 px-4">
+							<div class="w-full text-right">
+								<Button on:click={() => (rightOpen = false)} class="w-16"
+									><img src={Close} alt="menu hamburger" /></Button
+								>
+							</div>
+							<div class="pl-2">
+								<h1 class="text-2xl font-medium">Menu</h1>
+
+								<div class="text-lg mt-12 space-y-2">
+									<p>
+										<a href="/app">Locations</a>
+									</p>
+									<p>
+										<a href="/app/devices">Devices</a>
+									</p>
+								</div>
+								<div class="text-lg mt-24">
+									<form action="" method="post">
+										<button type="submit">Sign Out</button>
+									</form>
+								</div>
+							</div>
+						</div>
+						<div slot="actions">
+							<Button on:click={() => (rightOpen = false)}>Close</Button>
+						</div>
+					</Drawer>
+					<Button on:click={() => (rightOpen = true)} class="p-0"
+						><div class="w-14">
+							<svg
+								id="Layer_1"
+								data-name="Layer 1"
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 300 300"
+								><defs
+									><style>
+										.cls-1 {
+											fill: #0dbf34;
+										}
+									</style></defs
+								><title>cw</title><rect
+									class="cls-1"
+									x="27.92"
+									y="66.2"
+									width="244.15"
+									height="35.66"
+								/><rect class="cls-1" x="27.96" y="132.19" width="244.15" height="35.66" /><rect
+									class="cls-1"
+									x="27.96"
+									y="198.18"
+									width="244.15"
+									height="35.66"
+								/></svg
+							>
+						</div></Button
+					>
+				</div>
+			</div>
 		</div>
 	</nav>
 </div>
