@@ -25,11 +25,6 @@
 				subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 			}).addTo(map);
 
-			// //Heatmap layer
-			// if (heatMapLatLngs instanceof Array) {
-			// 	L.heatLayer(heatMapLatLngs, { radius: 30 }).addTo(map);
-			// }
-
 			if (disableZoom) {
 				map.dragging.disable();
 				map.touchZoom.disable();

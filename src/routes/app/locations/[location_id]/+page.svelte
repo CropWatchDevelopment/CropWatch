@@ -3,16 +3,17 @@
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
 	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
-	import { Icon, ProgressCircle } from 'svelte-ux';
+	import { Button, Icon, ProgressCircle } from 'svelte-ux';
 	import type { Tables } from '../../../../database.types';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
 	import { _ } from 'svelte-i18n';
-	import { mdiMoleculeCo2 } from '@mdi/js';
+	import { mdiMoleculeCo2, mdiPlusCircle } from '@mdi/js';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import SquareCard from '$lib/components/ui/SquareCard.svelte';
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
 	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
+	import { goto } from '$app/navigation';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -38,19 +39,17 @@
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative px-4 pb-12">
 	<div class="mt-8 flex justify-between">
 		<Back previousPage={'/app'} />
-		<NotificationsBell />
-	</div>
-	<!-- Display each sensor brief at current location -->
-	<div class="my-6">
-		<p class="text-xl text-surface-100">{$_('app.devices')}</p>
 	</div>
 
 	{#await location}
 		<ProgressCircle />
 	{:then loc}
 		{#if loc}
-			<div class="flex justify-between mb-6">
-				<h2 class="font-light text-2xl text-surface-100">{loc?.cw_locations?.name}</h2>
+			<div class="flex justify-between my-5">
+				<h2 class="font-light text-2xl text-surface-100">
+					Add New Device
+				</h2>
+				<Button on:click={() => goto(`/app/locations/${$page.params.location_id}/devices/add`)} icon={mdiPlusCircle} size="sm" />
 			</div>
 			{#await locationDevices}
 				<ProgressCircle />

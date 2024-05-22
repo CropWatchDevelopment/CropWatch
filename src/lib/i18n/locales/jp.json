@@ -64,6 +64,21 @@
     "location": {
       "settings": {
         "permissions": "権限"
+      },
+      "title": "設置場所",
+      "add": {
+        "title": "設置場所の追加"
+      }
+    },
+    "device": {
+      "add": {
+        "name": "aaa",
+        "namePlaceholder": "bbb",
+        "deviceEUI": "ccc",
+        "upload_interval": "ddd",
+        "submit": "eee",
+        "macAddress": "XX:XX:XX:XX:XX:XX:XX:XX",
+        "deviceType": "fff"
       }
     }
   },
