@@ -138,12 +138,14 @@
 				name="name"
 				label={$_('app.device.add.name')}
 				placeholder={$_('app.device.add.namePlaceholder')}
+				required
 			/>
 			<TextField
 				placeholder={$_('app.device.add.macAddress')}
 				name="dev_eui"
 				label={$_('app.device.add.deviceEUI')}
 				bind:value={dev_eui}
+				required
 			/>
 			{#await deviceTypes}
 				<ProgressCircle />
@@ -151,16 +153,18 @@
 				<SelectField
 					classes={{ root: 'z-10' }}
 					bind:value={dev_type}
+					name="type"
 					options={types.data.map((m) => {
 						return { label: m.name, value: m.id };
 					})}
 					on:change={(e) => console.log('on:change', e.detail)}
 					label={$_('app.device.add.deviceType')}
+					required
 				/>
 			{/await}
 			<div class="grid grid-cols-2 grid-col gap-5">
-				<TextField label="Latitude" placeholder={'131.000'} name="lat" bind:value={latitude} />
-				<TextField label="Longitude" placeholder={'32.000'} name="long" bind:value={longitude} />
+				<TextField label="Latitude" placeholder={'131.000'} name="lat" bind:value={latitude} required />
+				<TextField label="Longitude" placeholder={'32.000'} name="long" bind:value={longitude} required />
 			</div>
 			<NumberStepper
 				class="w-full"
@@ -168,8 +172,9 @@
 				bind:value={upload_interval}
 				label={$_('app.device.add.upload_interval')}
 				min={-1}
+				required
 			/>
-			<DateField label="Installed At" icon={mdiCalendarStart} bind:value={currentDate} />
+			<DateField name="installed_at" label="Installed At" icon={mdiCalendarStart} bind:value={currentDate} required />
 		</div>
 		<Button type="submit" class="w-full" variant="fill" color="success" icon={mdiFloppy}>
 			{$_('app.device.add.submit')}
