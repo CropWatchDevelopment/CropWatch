@@ -115,6 +115,7 @@ async function getDeviceDataTable(dev_eui, session, supabase) {
         } else {
             console.error('Error fetching weather data:', error);
         }
+        console.error('Error fetching device data table:', error);
         return null;
     }
 }
