@@ -150,7 +150,6 @@
 
 <dialog open={openDialog}>
 	{#if selectedRule}
-		{JSON.stringify(selectedRule)}
 		<Rules existingRule={selectedRule} bind:dialogOpen={openDialog} />
 	{/if}
 	<button

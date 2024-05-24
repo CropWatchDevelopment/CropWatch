@@ -11,7 +11,7 @@ export async function load({ fetch, locals: { supabase, safeGetSession } }) {
     // const locationsRequest = await fetch(`/api/v1/dashboard`);
     const locationsRequest = await fetch(`/api/v1/locations`);
     const locationsData = await locationsRequest.json();
-    const locations = await updateLocations(locationsData, supabase, user_id);
+    const locations = await updateLocations(locationsData);
 
     for (var location of locations) {
         location.weatherJSON = await getWeatherAPIData(location.cw_locations.latitude, location.cw_locations.longitude);
@@ -22,7 +22,7 @@ export async function load({ fetch, locals: { supabase, safeGetSession } }) {
     };
 }
 
-async function updateLocations(locations, supabase, user_id) {
+async function updateLocations(locations) {
     for (var location of locations) {
         const weatherJSON = await getWeatherAPIData(location.cw_locations.latitude, location.cw_locations.longitude);
         location.weatherJSON = weatherJSON
