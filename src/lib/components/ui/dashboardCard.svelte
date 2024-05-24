@@ -28,33 +28,47 @@
 
 	const loadDeviceDataFor = async (device) => {
 		if (device) {
-			return await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`)
-				.then((res) => res.json())
-				.then((data) => {
-					return data;
-				})
-				.catch((err) => {
-					return [];
-				});
+			try {
+				const res = await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`);
+				let data = null;
+				try {
+					data = await res.json();
+				} catch (error) {
+					console.log('No data for device:', device.dev_eui, error);
+				}
+				return data;
+			} catch (err) {
+				console.error('Error loading device data:', err);
+				return [];
+			}
 		}
 	};
 
 	const latestDeviceData = async (device) => {
-		return await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`)
-			.then((res) => res.json())
-			.then((data) => {
-				return data;
-			});
+		try {
+			const res = await fetch(`/api/v1/devices/${device.dev_eui}/data/latest`);
+			const data = await res.json();
+			return data;
+		} catch (err) {
+			console.error('Error loading latest device data:', err);
+			return {};
+		}
 	};
 
 	onMount(async () => {
-		const response = await fetch(`/api/v1/locations/${locationId}/devices`);
-		const devicesFromApi = await response.json();
-		for (let device of devicesFromApi) {
-			device.data = await loadDeviceDataFor(device);
+		try {
+			const response = await fetch(`/api/v1/locations/${locationId}/devices`);
+			const devicesFromApi = await response.json();
+			for (let device of devicesFromApi) {
+				device.data = await loadDeviceDataFor(device);
+			}
+			devices.set(devicesFromApi);
+		} catch (err) {
+			console.error('Error loading devices:', err);
+			devices.set([]);
+		} finally {
+			loading = false;
 		}
-		devices.set(devicesFromApi);
-		loading = false;
 	});
 </script>
 
@@ -79,7 +93,7 @@
 					{:then image}
 						<img src={image} alt="weather code icon" class="ml-2 w-12" />
 					{:catch error}
-						<p>{error}</p>
+						<p>{error.message}</p>
 					{/await}
 				</p>
 			</div>
@@ -119,21 +133,27 @@
 				<Card
 					class="divide-y bg-[#F7FAFF] border-[#FBFBFB] border-[0.1em] rounded-md elevation-none my-2"
 				>
+				{#if device.data}
 					<Collapse>
 						<!-- Outside -->
 						<div slot="trigger" class="flex-1 px-3 py-2">
 							<div class="flex text-center text-base">
 								<div class="basis-1/3 flex items-center space-x-2">
 									<div class="w-2">
-										<img
-											src={moment().diff(moment(device.data.created_at), 'minutes') > 120
-												? inactiveImage
-												: activeImage}
-											alt=""
-										/>
+										{#if device.data}
+											<img
+												src={moment().diff(moment(device.data.created_at), 'minutes') > 120
+													? inactiveImage
+													: activeImage}
+												alt=""
+											/>
+										{:else}
+											<img src={inactiveImage} alt="" />
+										{/if}
 									</div>
 									<p>{device.cw_devices.name}</p>
 								</div>
+								{#if device.data}
 								<p class="basis-1/3 justify-center m-auto">
 									{#if device.data && device.data.primaryData && device.data.primary_data_notation}
 										{device.data[device.data.primaryData]}{device.data.primary_data_notation}
@@ -148,6 +168,10 @@
 										N/A
 									{/if}
 								</p>
+								{:else}
+									<p class="basis-1/3 justify-center m-auto">(no Data Yet...)</p>
+									<p class="basis-1/3 justify-center m-auto"></p>
+								{/if}
 							</div>
 						</div>
 						<!-- Inside -->
@@ -173,6 +197,8 @@
 											</p>
 										</div>
 									{/each}
+								{:catch error}
+									<p class="text-center my-5">{error.message}</p>
 								{/await}
 								<Button
 									on:click={() => goto(`app/devices/${device.data.dev_eui}/data`)}
@@ -186,6 +212,9 @@
 							{/if}
 						</div>
 					</Collapse>
+					{:else}
+						<p class="text-center my-5">{$_('dashboardCard.noData')}</p>
+					{/if}
 				</Card>
 			{/each}
 		</div>

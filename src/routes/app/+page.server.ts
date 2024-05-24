@@ -13,7 +13,7 @@ export async function load({ fetch, locals: { supabase, safeGetSession } }) {
     const locationsData = await locationsRequest.json();
     const locations = await updateLocations(locationsData, supabase, user_id);
 
-    for(var location of locations){
+    for (var location of locations) {
         location.weatherJSON = await getWeatherAPIData(location.cw_locations.latitude, location.cw_locations.longitude);
     }
 
@@ -30,26 +30,32 @@ async function updateLocations(locations, supabase, user_id) {
     return locations
 }
 
-async function getWeatherAPIData(lat, lng) {
+async function getWeatherAPIData(lat: number, lng: number) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+
     try {
         const weatherRequest = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat ?? 0}&longitude=${lng ?? 0}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
-        );
-        
-        if (!weatherRequest.ok) {
-            console.error(`Weather API request failed with status: ${weatherRequest.status}`);
-            return null;
-        }
-
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
+            { signal: controller.signal });
         const weatherJSON = await weatherRequest.json();
         const result = convertApiResponseToResultIncludingLux(weatherJSON);
         return result;
     } catch (error) {
         console.error('Error fetching weather data:', error);
-        return null;
+        return {
+            temperature: 0,
+            humidity: 0,
+            lux: 0,
+            uv: 0,
+            pressure: 0,
+            windSpeed: 0,
+            windDirection: 'N/A',
+            rainfall: 0,
+            weatherCode: 0,
+        };
     }
 }
-
 
 
 function convertApiResponseToResultIncludingLux(apiResponse) {

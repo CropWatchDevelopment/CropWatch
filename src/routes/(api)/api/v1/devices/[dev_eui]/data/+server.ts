@@ -44,7 +44,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
   }
 
   // Conditionally apply `.single()` if itemsPerPage is 1
-  let finalQuery = itemsPerPage === 1 ? baseQuery.single() : baseQuery;
+  let finalQuery = itemsPerPage === 1 ? baseQuery.maybeSingle() : baseQuery;
 
   finalQuery = csv ? finalQuery.csv() : finalQuery;
 

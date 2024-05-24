@@ -217,7 +217,8 @@
     "rainfall": "Rainfall",
     "humidity": "Humidity",
     "windspeed": "Wind Speed",
-    "noDevices": "This location has no devices yet..."
+    "noDevices": "This location has no devices yet...",
+    "noData": "No Data recieved yet..."
   },
   "permissions": {
     "permissions": "Device Permissions",

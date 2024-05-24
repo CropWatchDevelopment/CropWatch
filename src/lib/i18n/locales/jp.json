@@ -72,13 +72,13 @@
     },
     "device": {
       "add": {
-        "name": "aaa",
-        "namePlaceholder": "bbb",
-        "deviceEUI": "ccc",
-        "upload_interval": "ddd",
-        "submit": "eee",
+        "name": "デバイスの追加",
+        "namePlaceholder": "デバイス名",
+        "deviceEUI": "デバイスEUI",
+        "upload_interval": "アップロード間隔",
+        "submit": "追加",
         "macAddress": "XX:XX:XX:XX:XX:XX:XX:XX",
-        "deviceType": "fff"
+        "deviceType": "デバイスタイプ"
       }
     }
   },
@@ -186,7 +186,8 @@
     "humidity": "湿度",
     "primaryData": "主要データ",
     "secondaryData": "補助データ",
-    "noDevices": "デバイスがありません"
+    "noDevices": "デバイスがありません",
+    "noData": "データがありません"
   },
   "sensorFooterControls": {
     "history": "履歴",
