@@ -64,6 +64,21 @@
     "location": {
       "settings": {
         "permissions": "Location Permission Settings"
+      },
+      "title": "Location",
+      "add": {
+        "title": "Add New Device"
+      }
+    },
+    "device": {
+      "add": {
+        "name": "Add a device name",
+        "namePlaceholder": "Left side outdoor device",
+        "deviceEUI": "Device EUI/Serial Number",
+        "upload_interval": "Expect Updates every X minutes (-1 means unknown)",
+        "submit": "Add device",
+        "macAddress": "XX:XX:XX:XX:XX:XX:XX:XX",
+        "deviceType": "Device Type"
       }
     }
   },
@@ -202,7 +217,8 @@
     "rainfall": "Rainfall",
     "humidity": "Humidity",
     "windspeed": "Wind Speed",
-    "noDevices": "This location has no devices yet..."
+    "noDevices": "This location has no devices yet...",
+    "noData": "No Data recieved yet..."
   },
   "permissions": {
     "permissions": "Device Permissions",

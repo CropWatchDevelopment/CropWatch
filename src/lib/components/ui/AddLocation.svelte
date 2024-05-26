@@ -47,7 +47,6 @@
 				return res.json();
 			})
 			.then((data) => {
-				debugger;
 				console.log(data);
 				goto(`/app/locations/${data.location_id}`);
 			})

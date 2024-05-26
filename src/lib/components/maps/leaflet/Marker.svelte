@@ -21,9 +21,6 @@
 
 	onMount(async () => {
 		if (browser) {
-			console.log(
-				'initializing leaflet-------------------------------------------------------------------------------'
-			);
 			L = await import('leaflet');
 			if (map) {
 				let icon = L.divIcon({

@@ -54,10 +54,6 @@ const handleSB: Handle = async ({ event, resolve }) => {
       return { session: null, user: null }
     }
 
-    // if(session) {
-    //   delete session.user // Here!
-    // }
-
     return { session, user }
   }
 
