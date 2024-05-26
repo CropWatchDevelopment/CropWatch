@@ -117,10 +117,10 @@
 							}}
 						/>
 
-						<span class="text-sm font-medium text-gray-900">{$_('login.remember_me')}</span>
+						<span class="text-sm font-medium text-gray-900 ml-1">{$_('login.remember_me')}</span>
 						<span class="flex-1" />
 						<!-- <div class="text-right"> -->
-						<a href="reset-password" class="text-xs font-medium text-gray-900"
+						<a href="reset-password" class="text-xs font-medium text-gray-900 align-middle hover:text-indigo-500"
 							><Icon data={mdiLockQuestion} /> {$_('login.forgot_password')}</a
 						>
 						<!-- </div> -->

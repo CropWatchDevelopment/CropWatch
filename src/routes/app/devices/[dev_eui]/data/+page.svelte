@@ -3,7 +3,6 @@
 	import SensorPicker from '$lib/components/ui/SensorPicker.svelte';
 	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
 	export let data;
-	debugger;
 	const sensorType = data.sensorType.cw_device_type.data_table;
 	const sensorName = data.sensorType.name;
 	const permissions = data.permissions.permission_level;

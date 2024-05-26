@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
   }
 
   const query = new URLSearchParams(url.search);
-  const locationId = +(params.id ?? 0);
+  const locationId = +(params.location_id ?? 0);
   const startingPage = query.get('pageNumber') || 0;
   const itemsPerPage = query.get('itemsPerPage') || 10;
 

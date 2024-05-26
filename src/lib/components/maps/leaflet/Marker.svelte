@@ -1,16 +1,16 @@
 <script lang="ts">
-	import L from 'leaflet';
+	import { browser } from '$app/environment';
 	import 'leaflet/dist/leaflet.css';
 	import { getContext, onDestroy, onMount, setContext } from 'svelte';
 
 	export let width: number;
 	export let height: number;
 	export let latLng: L.LatLngExpression;
-	// export let popupOpen: boolean = false;
+
+	let L = undefined;
 
 	let marker: L.Marker | undefined;
 	let markerElement: HTMLDivElement;
-
 
 	const { getMap }: { getMap: () => L.Map | undefined } = getContext('map');
 	const map = getMap();
@@ -19,14 +19,17 @@
 		getLayer: () => marker
 	});
 
-	onMount(() => {
-		if (map) {
-			let icon = L.divIcon({
-				html: markerElement,
-				className: 'map-marker',
-				iconSize: L.point(width, height)
-			});
-			marker = L.marker(latLng, { icon }).addTo(map);
+	onMount(async () => {
+		if (browser) {
+			L = await import('leaflet');
+			if (map) {
+				let icon = L.divIcon({
+					html: markerElement,
+					className: 'map-marker',
+					iconSize: L.point(width, height)
+				});
+				marker = L.marker(latLng, { icon }).addTo(map);
+			}
 		}
 	});
 

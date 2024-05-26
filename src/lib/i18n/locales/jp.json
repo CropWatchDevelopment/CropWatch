@@ -60,7 +60,27 @@
     "loading_message": "読み込み中...",
     "loading_translations_message": "翻訳を読み込んでいます...",
     "back": "戻る",
-    "devices": "デバイス"
+    "devices": "デバイス",
+    "location": {
+      "settings": {
+        "permissions": "権限"
+      },
+      "title": "設置場所",
+      "add": {
+        "title": "設置場所の追加"
+      }
+    },
+    "device": {
+      "add": {
+        "name": "デバイスの追加",
+        "namePlaceholder": "デバイス名",
+        "deviceEUI": "デバイスEUI",
+        "upload_interval": "アップロード間隔",
+        "submit": "追加",
+        "macAddress": "XX:XX:XX:XX:XX:XX:XX:XX",
+        "deviceType": "デバイスタイプ"
+      }
+    }
   },
   "location": {
     "map_card_title": "エリアマップ"
@@ -165,7 +185,9 @@
     "temperature": "温度",
     "humidity": "湿度",
     "primaryData": "主要データ",
-    "secondaryData": "補助データ"
+    "secondaryData": "補助データ",
+    "noDevices": "デバイスがありません",
+    "noData": "データがありません"
   },
   "sensorFooterControls": {
     "history": "履歴",
@@ -256,6 +278,9 @@
     "new_name": "新しい名前"
   },
   "close": "閉じる",
+  "addlocation": {
+    "title": "設置場所の追加"
+  },
   "history": {
     "title": "履歴",
     "data_preview": "データプレビュー",

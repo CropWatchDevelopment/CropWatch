@@ -8,11 +8,12 @@
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
 	import { _ } from 'svelte-i18n';
-	import { mdiMoleculeCo2 } from '@mdi/js';
+	import { mdiMoleculeCo2, mdiPlusCircle } from '@mdi/js';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import SquareCard from '$lib/components/ui/SquareCard.svelte';
-	import { json } from '@sveltejs/kit';
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
+	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
+	import { goto } from '$app/navigation';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -38,21 +39,18 @@
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative px-4 pb-12">
 	<div class="mt-8 flex justify-between">
 		<Back previousPage={'/app'} />
-		<NotificationsBell />
-	</div>
-	<!-- Display each sensor brief at current location -->
-	<div class="my-6">
-		<p class="text-xl text-surface-100">{$_('app.devices')}</p>
 	</div>
 
 	{#await location}
 		<ProgressCircle />
 	{:then loc}
 		{#if loc}
-			<div class="flex justify-between mb-6">
-				<h2 class="font-light text-2xl text-surface-100">{loc?.cw_locations?.name}</h2>
+			<div class="flex justify-between my-5">
+				<h2 class="font-light text-2xl text-surface-100">
+					Add New Device
+				</h2>
+				<Button on:click={() => goto(`/app/locations/${$page.params.location_id}/devices/add`)} icon={mdiPlusCircle} size="sm" />
 			</div>
-
 			{#await locationDevices}
 				<ProgressCircle />
 			{:then devices}
@@ -64,7 +62,7 @@
 			{/await}
 			<DarkCard2>
 				<Leaflet
-					view={[loc.cw_locations.latitude, loc.cw_locations.longitude]}
+					view={[loc.cw_locations?.latitude ?? 0, loc.cw_locations?.longitude ?? 0]}
 					zoom={19}
 					disableZoom={true}
 					width={100}
@@ -109,10 +107,11 @@
 					{#await getDeviceData(device.dev_eui)}
 						<ProgressCircle />
 					{:then dev_data}
-					<div class="flex flex-col text-center text-neutral-content text-xl">
-						<h2>{device.cw_devices.name}</h2>
-						<div class="flex flex-row flex-wrap justify-center">
-							{#each Object.keys(dev_data) as d}
+						<div class="flex flex-col text-center text-neutral-content text-xl">
+							<h2>{device.cw_devices.name}</h2>
+							{#if dev_data}
+							<div class="flex flex-row flex-wrap justify-center">
+								{#each Object.keys(dev_data) as d}
 									<SquareCard
 										title={$_(d)}
 										titleColor={'#4FDE6F'}
@@ -122,6 +121,9 @@
 									/>
 								{/each}
 							</div>
+							{:else}
+								<p>No data available...</p>
+							{/if}
 						</div>
 					{/await}
 				{/each}
@@ -129,3 +131,5 @@
 		</div>
 	</div>
 </div>
+
+<LocationFooterControls />
