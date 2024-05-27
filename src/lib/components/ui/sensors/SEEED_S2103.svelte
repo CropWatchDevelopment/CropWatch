@@ -323,19 +323,94 @@
 	</DarkCard2>
 	<DarkCard title={$_('temp_humidity')}>
 		<div class="chart" use:Highcharts={config} />
+		<DarkCard
+			title="Max Temperature:"
+			value={Math.max(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
+			unit="ºC"
+		/>
+		<DarkCard
+			title="Average Temperature:"
+			value={(data.reduce((total, next) => total + next.temperatureC, 0) / data.length).toFixed(
+				2
+			)}
+			unit="ºC"
+		/>
+		<DarkCard
+			title="Min Temperature:"
+			value={Math.min(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
+			unit="ºC"
+		/>
 	</DarkCard>
 	<DarkCard title="{$_('rainfall')} mm/h" value={null} optimalValue={null} unit={null}>
 		<div class="chart" use:Highcharts={rainBarChartConfig} />
-		<h2 class="text-lg">Total: {data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)} mm</h2>
+		<h2 class="text-lg">
+			Total: {data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)} mm
+		</h2>
+		<DarkCard
+			title="Total Rainfall:"
+			value={data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)}
+			unit=" mm/day"
+		/>
+		<DarkCard
+			title="Max Rainfall:"
+			value={Math.max(...data.map((periodData) => periodData.rainfall)).toFixed(2)}
+			unit=" mm/h"
+		/>
+		<DarkCard
+			title="Average Rainfall:"
+			value={(data.reduce((total, next) => total + next.rainfall, 0) / data.length).toFixed(2)}
+			unit=" mm/h"
+		/>
 	</DarkCard>
 	<DarkCard title="LUX / UV" value={null} optimalValue={null} unit={'ºC'}>
 		<div class="chart" use:Highcharts={luxUvChartConfig} />
+		<DarkCard
+			title="Max LUX/UV:"
+			value="{Math.max(...data.map((periodData) => periodData.lux * 3.6)).toFixed(2)} / {Math.max(
+				...data.map((periodData) => periodData.uv * 3.6)
+			).toFixed(2)}"
+			unit=" "
+		/>
+		<DarkCard
+			title="Average LUX/UV:"
+			value="{(data.reduce((total, next) => total + next.lux, 0) / data.length).toFixed(2)} / {(
+				data.reduce((total, next) => total + next.uv, 0) / data.length
+			).toFixed(2)}"
+			unit=" "
+		/>
 	</DarkCard>
 	<DarkCard title="Barometric Pressure" value={null} optimalValue={null} unit={'ºC'}>
 		<div class="chart" use:Highcharts={pressureChartConfig} />
+		<DarkCard
+			title="Max Pressure:"
+			value={Math.max(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
+			unit="kPh"
+		/>
+		<DarkCard
+			title="Average Pressure:"
+			value={(data.reduce((total, next) => total + next.pressure / 100, 0) / data.length).toFixed(
+				2
+			)}
+			unit="kPh"
+		/>
+		<DarkCard
+			title="Min Pressure:"
+			value={Math.min(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
+			unit="kPh"
+		/>
 	</DarkCard>
 	<DarkCard title="Wind Speed" value={null} optimalValue={null} unit={'ºC'}>
 		<div class="chart" use:Highcharts={windSpeedChartConfig} />
+		<DarkCard
+			title="Max Wind Speed:"
+			value={Math.max(...data.map((periodData) => periodData.wind_speed * 3.6)).toFixed(2)}
+			unit="km/h"
+		/>
+		<DarkCard
+			title="Average Wind Speed:"
+			value={(data.reduce((total, next) => total + next.wind_speed, 0) / data.length).toFixed(2)}
+			unit="km/h"
+		/>
 	</DarkCard>
 
 	<SensorFooterControls {permissions} />
