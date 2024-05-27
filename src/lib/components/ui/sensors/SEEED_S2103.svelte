@@ -12,6 +12,9 @@
 	import TestCompas from '../TestCompas.svelte';
 	import DarkCard2 from '../DarkCard2.svelte';
 	import { degreesToDirection } from '$lib/stores/weatherStore';
+	import UvIndex from '../UVIndex.svelte';
+	import LuxGuage from '../LuxGuage.svelte';
+	import RainPerHourGuage from '../RainPerHourGuage.svelte';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -27,6 +30,11 @@
     let arrowRotation = data.at(0).wind_direction; // Update this value dynamically if needed
     let windDirection = degreesToDirection(arrowRotation); // Update this value dynamically if needed
 
+	let luxValue = data.at(0).lux;
+
+	let rainValue = 10// data.at(0).rainfall;
+	debugger;
+	let pressureValue = data.at(0).pressure || 0;
 
 	$: config = HighChartsTimeSeriesChart(
 		[
@@ -131,8 +139,17 @@
 	<DarkCard2>
 		<TestCompas {temperature} {windDirection} {arrowRotation} {humidity} />
 	</DarkCard2>
-	<DarkCard title={$_('temperature')} value={temperature} optimalValue={-20} unit={'ºC'} />
-	<DarkCard title={$_('humidity')} value={humidity} optimalValue={0} unit={'%'} />
+	<DarkCard2>
+		<div class="grid grid-flow-col grid-cols-2 gap-5">
+			<UvIndex />
+			<LuxGuage {luxValue}/>
+		</div>
+	</DarkCard2>
+	<DarkCard2>
+		<div class="flex flex-row w-full justify-center">
+			<RainPerHourGuage {rainValue} {pressureValue} />
+		</div>
+	</DarkCard2>
 	<DarkCard title={$_('temp_humidity')}>
 		<div class="chart" use:Highcharts={config} />
 	</DarkCard>
