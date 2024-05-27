@@ -102,3 +102,7 @@ async function getDeviceDataTable(dev_eui: string, session: any, supabase: any) 
       });
   }
 }
+
+const getNextFrame = (frame_id: number) => {
+
+};

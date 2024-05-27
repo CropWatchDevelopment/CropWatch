@@ -32,7 +32,6 @@ async function updateLocations(locations) {
 
 async function getWeatherAPIData(lat: number, lng: number) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
 
     try {
         const weatherRequest = await fetch(
