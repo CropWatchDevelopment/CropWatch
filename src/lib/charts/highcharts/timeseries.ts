@@ -13,8 +13,6 @@ export const HighChartsTimeSeriesChart = (data: any[], yAxis: any[], name: strin
             align: 'left'
         },
         subtitle: {
-            // text: browser && document.ontouchstart === undefined ?
-            //     'Click and drag in the plot area to zoom in' : 'Pinch the chart to zoom in',
             align: 'left'
         },
         xAxis: {
@@ -45,7 +43,7 @@ export const HighChartsTimeSeriesChart = (data: any[], yAxis: any[], name: strin
             formatter: function (): any {
                 var s = '<b>Time: ' + moment(this.x).format('hh:mm a').toString() + '</b><br/>';
                 this.points.forEach(point => {
-                    s += point.series.name + ': ' + point.y;
+                    s += point.series.name + ': ' + point.y.toLocaleString();
                     if (point.series.yAxis.opposite) {
                         s += ' %'; // Assuming humidity values are formatted as percentages
                     } else {
@@ -57,6 +55,10 @@ export const HighChartsTimeSeriesChart = (data: any[], yAxis: any[], name: strin
             }
         },
         plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0
+            },
             area: {
                 fillColor: {
                     linearGradient: {

@@ -64,6 +64,7 @@
 		"@supabase/ssr": "^0.3.0",
 		"@supabase/supabase-js": "^2.39.6",
 		"@sveltejs/adapter-vercel": "^5.3.0",
+		"d3": "^7.9.0",
 		"dotenv": "16.4.2",
 		"gridjs": "^6.2.0",
 		"gridjs-svelte": "^2.1.1",
