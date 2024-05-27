@@ -307,20 +307,20 @@
 			{/if}
 		</div>
 	</DarkCard2>
-	<DarkCard2>
+	<DarkCard title="Wind Speed/Direction">
 		<TestCompas {temperature} {windSpeed} {windDirection} {arrowRotation} {humidity} />
-	</DarkCard2>
-	<DarkCard2>
+	</DarkCard>
+	<DarkCard title="UV/LUX">
 		<div class="grid grid-flow-col grid-cols-2 gap-5 lg:items-center">
 			<UvIndex {uvIndex} uvLevel={uvIndexText} />
 			<LuxGuage {luxValue} />
 		</div>
-	</DarkCard2>
-	<DarkCard2>
+	</DarkCard>
+	<DarkCard title="Rainfall/Pressure">
 		<div class="flex flex-row w-full justify-center">
 			<RainPerHourGuage {rainValue} {pressureValue} />
 		</div>
-	</DarkCard2>
+	</DarkCard>
 	<DarkCard title={$_('temp_humidity')}>
 		<div class="chart" use:Highcharts={config} />
 		<DarkCard
@@ -341,16 +341,8 @@
 			unit="ºC"
 		/>
 	</DarkCard>
-	<DarkCard title="{$_('rainfall')} mm/h" value={null} optimalValue={null} unit={null}>
+	<DarkCard title="{$_('rainfall')} mm/h" value={data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)} optimalValue={null} unit={'mm/day'}>
 		<div class="chart" use:Highcharts={rainBarChartConfig} />
-		<h2 class="text-lg">
-			Total: {data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)} mm
-		</h2>
-		<DarkCard
-			title="Total Rainfall:"
-			value={data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)}
-			unit=" mm/day"
-		/>
 		<DarkCard
 			title="Max Rainfall:"
 			value={Math.max(...data.map((periodData) => periodData.rainfall)).toFixed(2)}
