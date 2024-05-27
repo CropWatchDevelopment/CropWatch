@@ -5,20 +5,27 @@
 	import DarkCard from './../DarkCard.svelte';
 	import ActiveImage from '$lib/images/UI/cw-10.svg';
 	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
-	import { Duration } from 'svelte-ux';
+	import { Duration, ProgressCircle } from 'svelte-ux';
 	import SensorFooterControls from '../SensorFooterControls.svelte';
 	import { _ } from 'svelte-i18n';
 	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 	import TestCompas from '../TestCompas.svelte';
 	import DarkCard2 from '../DarkCard2.svelte';
-	import { UVI_to_text, degreesToDirection, fetchWeatherData, weatherData } from '$lib/stores/weatherStore';
+	import {
+		UVI_to_text,
+		degreesToDirection,
+		fetchWeatherData,
+		weatherData
+	} from '$lib/stores/weatherStore';
 	import UvIndex from '../UVIndex.svelte';
 	import LuxGuage from '../LuxGuage.svelte';
 	import RainPerHourGuage from '../RainPerHourGuage.svelte';
-	import { get } from 'svelte/store';
+	import { get, writable } from 'svelte/store';
 	import { page } from '$app/stores';
 	//
 	import nightCloudy from '$lib/images/weather/night/c02n.png';
+	import { getWeatherImage } from '$lib/utilities/weatherCodeToImage';
+	import { isDayTime } from '$lib/utilities/isDayTime';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -34,6 +41,7 @@
 
 	let temperature = data.at(0).temperatureC;
 	let arrowRotation = data.at(0).wind_direction; // Update this value dynamically if needed
+	let windSpeed = data.at(0).wind_speed;
 	let windDirection = degreesToDirection(arrowRotation); // Update this value dynamically if needed
 
 	let luxValue = data.at(0).lux;
@@ -42,8 +50,18 @@
 
 	let rainValue = 10; // data.at(0).rainfall;
 	let pressureValue = data.at(0).pressure || 0;
+	let locationWeatherData = writable(null);
 
-	// let cloudy = fetchWeatherData(data.cw_locations.latitude, data.cw_locations.longitude);
+	fetch(`/api/v1/devices/${dev_eui}`)
+		.then((res) => res.json())
+		.then(async (res) => {
+			if (res.length > 0) {
+				let lat = res[0].cw_devices.cw_device_locations.cw_locations.latitude;
+				let lon = res[0].cw_devices.cw_device_locations.cw_locations.longitude;
+				const weather = await fetchWeatherData(lat, lon);
+				locationWeatherData.set(weather);
+			}
+		});
 
 	$: config = HighChartsTimeSeriesChart(
 		[
@@ -164,6 +182,40 @@
 		''
 	);
 
+	$: windSpeedChartConfig = HighChartsTimeSeriesChart(
+		[
+			{
+				type: 'line',
+				yAxis: 0,
+				name: '',
+				color: '#2cafff',
+				data: data.map((d: any) => [
+					new Date(d.created_at).valueOf(),
+					+(d.wind_speed * 3.6).toFixed(2)
+				])
+			}
+		],
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: '',
+					style: {
+						color: 'silver'
+					}
+				},
+				labels: {
+					format: '{value}',
+					style: {
+						color: 'silver'
+					}
+				},
+				opposite: false
+			}
+		],
+		''
+	);
+
 	$: luxUvChartConfig = HighChartsTimeSeriesChart(
 		[
 			{
@@ -242,10 +294,21 @@
 		<div class="flex flex-row items-center justify-center">
 			Current Weather
 			<span class="flex-auto" />
+			{#if $locationWeatherData}
+				{#await getWeatherImage($locationWeatherData.weatherCode, isDayTime())}
+					<ProgressCircle />
+				{:then image}
+					<img src={image} alt="weather code icon" class="ml-2 w-12" />
+				{:catch error}
+					<p>{error.message}</p>
+				{/await}
+			{:else}
+				<ProgressCircle />
+			{/if}
 		</div>
 	</DarkCard2>
 	<DarkCard2>
-		<TestCompas {temperature} {windDirection} {arrowRotation} {humidity} />
+		<TestCompas {temperature} {windSpeed} {windDirection} {arrowRotation} {humidity} />
 	</DarkCard2>
 	<DarkCard2>
 		<div class="grid grid-flow-col grid-cols-2 gap-5 lg:items-center">
@@ -263,13 +326,16 @@
 	</DarkCard>
 	<DarkCard title="{$_('rainfall')} mm/h" value={null} optimalValue={null} unit={null}>
 		<div class="chart" use:Highcharts={rainBarChartConfig} />
-		<h2 class="text-lg">Total: {data.reduce((sum, item) => sum + item.rainfall, 0)}</h2>
+		<h2 class="text-lg">Total: {data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)} mm</h2>
 	</DarkCard>
 	<DarkCard title="LUX / UV" value={null} optimalValue={null} unit={'ºC'}>
 		<div class="chart" use:Highcharts={luxUvChartConfig} />
 	</DarkCard>
 	<DarkCard title="Barometric Pressure" value={null} optimalValue={null} unit={'ºC'}>
 		<div class="chart" use:Highcharts={pressureChartConfig} />
+	</DarkCard>
+	<DarkCard title="Wind Speed" value={null} optimalValue={null} unit={'ºC'}>
+		<div class="chart" use:Highcharts={windSpeedChartConfig} />
 	</DarkCard>
 
 	<SensorFooterControls {permissions} />
