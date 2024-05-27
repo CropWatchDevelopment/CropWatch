@@ -1,38 +1,41 @@
 <script lang="ts">
-	import { Duration } from 'svelte-ux';
-	import DarkCard from '$lib/components/ui/DarkCard.svelte';
-	import SensorFooterControls from '../SensorFooterControls.svelte';
-	import ActiveImage from '$lib/images/UI/cw-10.svg';
-	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
-	import moment from 'moment';
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
 	import Highcharts from '$lib/actions/highcharts.action';
-	import { curveLinearClosed } from 'd3-shape';
+	import TempHumidityCard from '../TempHumidityCard.svelte';
+	import DarkCard from './../DarkCard.svelte';
+	import ActiveImage from '$lib/images/UI/cw-10.svg';
+	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
+	import { Duration } from 'svelte-ux';
+	import SensorFooterControls from '../SensorFooterControls.svelte';
 	import { _ } from 'svelte-i18n';
-	import { HighChartsGuageChart } from '$lib/charts/highcharts/guage';
 	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
+	import TestCompas from '../TestCompas.svelte';
+	import DarkCard2 from '../DarkCard2.svelte';
+	import { degreesToDirection } from '$lib/stores/weatherStore';
 
 	export let data;
 	export let sensorName = 'NS';
 	export let permissions = 0;
 
 	let dev_eui = data.at(0).dev_eui;
-	let temperature = data.at(0).temperature;
-	let humidity = data.at(0).humidity;
-	let co2_level = data.at(0).co2_level;
+	const humidity = data.at(0).humidity;
+	const dewPoint = data.at(0).dewPointC;
+	const lastSeen: Date = data.at(0).created_at;
+	const isActiveRecently = true;
 
-	let lastSeen = data.at(0).created_at;
-	let isActiveRecently = moment().diff(moment(lastSeen), 'minutes') < 61;
-	let curve = curveLinearClosed;
+	let temperature = data.at(0).temperatureC;
+    let arrowRotation = data.at(0).wind_direction; // Update this value dynamically if needed
+    let windDirection = degreesToDirection(arrowRotation); // Update this value dynamically if needed
 
-	$: tempMoistConfig = HighChartsTimeSeriesChart(
+
+	$: config = HighChartsTimeSeriesChart(
 		[
 			{
 				type: 'line',
 				yAxis: 0,
-				name: $_('temperature'),
+				name: $_('temperatureC'),
 				color: 'red',
-				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperature])
+				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
 			},
 			{
 				type: 'line',
@@ -79,7 +82,34 @@
 		''
 	);
 
-	$: co2Config = HighChartsGuageChart(co2_level, 'CO² Level');
+	$: dewPointConfig = HighChartsTimeSeriesChart([
+		{
+			type: 'line',
+			yAxis: 0,
+			name: $_('dewPointC'),
+			color: 'red',
+			data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
+		}],
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: $_('dewPointC'),
+					style: {
+						color: 'red'
+					}
+				},
+				labels: {
+					format: '{value} °C',
+					style: {
+						color: 'red'
+					}
+				},
+				opposite: false
+			}
+		],
+		''
+	);
 </script>
 
 <div class="m-4">
@@ -97,18 +127,18 @@
 			<p class="text-slate-500">{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} /> {$_('ago')}</p>
 		</div>
 	</div>
-
-	<DarkCard title={'CO²'} value={co2_level} optimalValue={null} unit={'PPM'}>
-		<div class="chart" use:Highcharts={co2Config} />
+	<!-- <TempHumidityCard {temperature} {humidity} /> -->
+	<DarkCard2>
+		<TestCompas {temperature} {windDirection} {arrowRotation} {humidity} />
+	</DarkCard2>
+	<DarkCard title={$_('temperature')} value={temperature} optimalValue={-20} unit={'ºC'} />
+	<DarkCard title={$_('humidity')} value={humidity} optimalValue={0} unit={'%'} />
+	<DarkCard title={$_('temp_humidity')}>
+		<div class="chart" use:Highcharts={config} />
 	</DarkCard>
-	
-	<DarkCard title={$_('temperature')} value={temperature} optimalValue={null} unit={'ºC'} />
-	<DarkCard title={$_('humidity')} value={humidity} optimalValue={null} unit={'%'} />
-	
-	<DarkCard title={`${$_('temperature')}/${$_('humidity')}`} value={null} optimalValue={null} unit={'%'}>
-		<div class="chart" use:Highcharts={tempMoistConfig} />
+	<DarkCard title={$_('dewPointC')} value={dewPoint} optimalValue={null} unit={'ºC'}>
+		<div class="chart" use:Highcharts={dewPointConfig} />
 	</DarkCard>
 
-
-	<SensorFooterControls />
+	<SensorFooterControls {permissions} />
 </div>
