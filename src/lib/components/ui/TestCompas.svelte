@@ -2,14 +2,14 @@
     import { onMount, afterUpdate } from 'svelte';
     import * as d3 from 'd3';
 
-    export let temperature;
-    export let humidity;
+    export let temperature: number;
+    export let humidity: number;
     export let windDirection = 'N';
     export let windSpeed = 0;
     export let arrowRotation = 0;
 
-    let svgContainer;
-    let arrow;
+    let svgContainer: SVGSVGElement;
+    let arrow: SVGSVGElement;
 
     onMount(() => {
         drawGauge();
@@ -77,7 +77,7 @@
                 .attr('y', y)
                 .attr('text-anchor', 'middle')
                 .attr('dominant-baseline', 'middle')
-                .attr('font-size', '14px')
+                .attr('font-size', '16px')
                 .attr('font-weight', 'bold')
                 .attr('fill', i % 2 === 0 ? '#555' : '#999')  // Darker for cardinal directions
                 .text(dir);
@@ -132,9 +132,9 @@
 
         // Draw the wind speed text
         svg.append('text')
-            .attr('y', -5)
+            .attr('y', 8)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '20px')
+            .attr('font-size', '30px')
             .attr('font-weight', 'bold')
             .text(`${(windSpeed * 3.6).toFixed(2)} km/h`);
 
@@ -142,16 +142,16 @@
         svg.append('text')
             .attr('y', -35)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '16px')
+            .attr('font-size', '25px')
             .attr('font-weight', 'bold')
             .html(`<tspan fill="green">${windDirection}</tspan>`);
             // .text(windDirection);
 
         // Draw the temperature and humidity text
         svg.append('text')
-            .attr('y', 25)
+            .attr('y', 50)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '17px')
+            .attr('font-size', '20px')
             .attr('font-weight', 'bold')
             .html(`<tspan fill="coral">${temperature}°C</tspan> / <tspan fill="teal">${humidity}% RH</tspan>`);
 

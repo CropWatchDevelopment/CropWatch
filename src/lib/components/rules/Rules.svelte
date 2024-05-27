@@ -125,7 +125,7 @@
 			<TextField label={$_('rules.ruleName')} id="name" name="name" required bind:value={ruleGroup.ruleName} />
 		</div>
 
-		<div class="m-4">
+		<div class="m-2">
 			<p class="text-surface-100">{$_('rules.rule_criteria')}:</p>
 			{#await dataItem}
 				loading data items
