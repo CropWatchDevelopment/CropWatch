@@ -21,8 +21,8 @@
     });
 
     function drawGauge() {
-        const width = 200;
-        const height = 200;
+        const width = 300;
+        const height = 300;
         const radius = width / 2;
         const tickLength = 15;  // 50% longer tick marks
         const smallTickLength = 7.5;  // 50% longer small tick marks
