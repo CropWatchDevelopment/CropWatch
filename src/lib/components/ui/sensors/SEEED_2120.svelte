@@ -13,6 +13,7 @@
 	let dev_eui = data.at(0).dev_eui;
 	let lastSeen = data.at(0).created_at;
 	let isActiveRecently = moment().diff(moment(lastSeen), 'minutes') < 31;
+
 </script>
 
 <div class="m-4">

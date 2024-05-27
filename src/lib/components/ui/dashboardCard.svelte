@@ -39,7 +39,8 @@
 			// Fetch weather data
 			const weather = await fetchWeatherData(
 				data.cw_locations.latitude,
-				data.cw_locations.longitude
+				data.cw_locations.longitude,
+				locationId
 			);
 			locationWeatherData.set(weather);
 		} catch (err) {

@@ -6,9 +6,9 @@ const CACHE_KEY_PREFIX = 'weatherDataCache_';
 const CACHE_EXPIRY_KEY_PREFIX = 'weatherDataCacheExpiry_';
 const CACHE_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 
-function getCachedWeatherData(lat: number, lng: number) {
-    const cacheKey = `${CACHE_KEY_PREFIX}${lat}_${lng}`;
-    const cacheExpiryKey = `${CACHE_EXPIRY_KEY_PREFIX}${lat}_${lng}`;
+function getCachedWeatherData(identifier: string) {
+    const cacheKey = `${CACHE_KEY_PREFIX}${identifier}`;
+    const cacheExpiryKey = `${CACHE_EXPIRY_KEY_PREFIX}${identifier}`;
 
     const cache = localStorage.getItem(cacheKey);
     const cacheExpiry = localStorage.getItem(cacheExpiryKey);
@@ -19,18 +19,19 @@ function getCachedWeatherData(lat: number, lng: number) {
     return null;
 }
 
-function setCachedWeatherData(lat: number, lng: number, data: any) {
-    const cacheKey = `${CACHE_KEY_PREFIX}${lat}_${lng}`;
-    const cacheExpiryKey = `${CACHE_EXPIRY_KEY_PREFIX}${lat}_${lng}`;
+function setCachedWeatherData(identifier: string, data: any) {
+    const cacheKey = `${CACHE_KEY_PREFIX}${identifier}`;
+    const cacheExpiryKey = `${CACHE_EXPIRY_KEY_PREFIX}${identifier}`;
 
     localStorage.setItem(cacheKey, JSON.stringify(data));
     localStorage.setItem(cacheExpiryKey, (Date.now() + CACHE_DURATION).toString());
 }
 
-export async function fetchWeatherData(lat: number, lng: number) {
-    const cachedData = getCachedWeatherData(lat, lng);
+export async function fetchWeatherData(lat: number, lng: number, location_id: string = null) {
+    const identifier = location_id ? location_id : `${lat}_${lng}`;
+    const cachedData = getCachedWeatherData(identifier);
     if (cachedData) {
-        weatherData.update(currentData => ({ ...currentData, [`${lat}_${lng}`]: cachedData }));
+        weatherData.update(currentData => ({ ...currentData, [identifier]: cachedData }));
         return cachedData;
     }
 
@@ -44,8 +45,8 @@ export async function fetchWeatherData(lat: number, lng: number) {
         );
         const weatherJSON = await weatherRequest.json();
         const result = convertApiResponseToResultIncludingLux(weatherJSON);
-        setCachedWeatherData(lat, lng, result);
-        weatherData.update(currentData => ({ ...currentData, [`${lat}_${lng}`]: result }));
+        setCachedWeatherData(identifier, result);
+        weatherData.update(currentData => ({ ...currentData, [identifier]: result }));
         return result;
     } catch (error) {
         console.error('Error fetching weather data:', error);
@@ -60,8 +61,10 @@ export async function fetchWeatherData(lat: number, lng: number) {
             rainfall: 0,
             weatherCode: 0,
         };
-        weatherData.update(currentData => ({ ...currentData, [`${lat}_${lng}`]: defaultData }));
+        weatherData.update(currentData => ({ ...currentData, [identifier]: defaultData }));
         return defaultData;
+    } finally {
+        clearTimeout(timeoutId);
     }
 }
 
@@ -87,8 +90,22 @@ export const degreesToDirection = (deg: number) => {
     }
 };
 
-function convertApiResponseToResultIncludingLux(apiResponse) {
+export function UVI_to_text(uvIndex: number) {
+    if (uvIndex < 3) {
+        return 'Low';
+    }
+    if (uvIndex < 6) {
+        return 'Moderate';
+    }
+    if (uvIndex < 8) {
+        return 'High';
+    }
+    if (uvIndex < 11) {
+        return 'Very high';
+    }
+}
 
+function convertApiResponseToResultIncludingLux(apiResponse: any) {
     const cloudCoverToLux = (cloudCover: number) => {
         return Math.max(0, 100000 - (cloudCover * 1000));
     };

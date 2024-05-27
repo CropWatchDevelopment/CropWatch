@@ -132,26 +132,27 @@
 
         // Draw the wind speed text
         svg.append('text')
-            .attr('y', -10)
+            .attr('y', -5)
             .attr('text-anchor', 'middle')
             .attr('font-size', '24px')
             .attr('font-weight', 'bold')
-            .text(`${windSpeed} m/s`);
+            .text(`${windSpeed * 3.6} km/h`);
 
         // Draw the wind direction text
         svg.append('text')
-            .attr('y', -30)
+            .attr('y', -35)
             .attr('text-anchor', 'middle')
             .attr('font-size', '16px')
             .attr('font-weight', 'bold')
-            .text(windDirection);
+            .html(`<tspan fill="green">${windDirection}</tspan>`);
+            // .text(windDirection);
 
         // Draw the temperature and humidity text
         svg.append('text')
-            .attr('y', 15)
+            .attr('y', 25)
             .attr('text-anchor', 'middle')
-            .attr('font-size', '16px')
-            .attr('font-weight', 'normal')
+            .attr('font-size', '17px')
+            .attr('font-weight', 'bold')
             .html(`<tspan fill="coral">${temperature}°C</tspan> / <tspan fill="teal">${humidity}% RH</tspan>`);
 
         // Draw the arrowhead

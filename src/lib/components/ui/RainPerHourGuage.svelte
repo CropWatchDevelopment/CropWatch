@@ -84,12 +84,12 @@
             .attr('dy', '.35em')
             .attr('font-size', '16px')
             .attr('fill', 'black')
-            .text(`${pressureValue.toLocaleString()} hPa`);
+            .text(`${(+(pressureValue/100).toLocaleString()).toFixed(2)} hPa`);
 
         // Draw raindrops if rainValue > 0
         if (rainValue > 0) {
-            for (let i = 0; i < 10; i++) {
-                const x = width / 2 - cloudWidth / 3 + Math.random() * (cloudWidth * 2 / 3);
+            for (let i = 0; i < 5; i++) {
+                const x = width / 2 - (cloudWidth-10) / 3 + Math.random() * (cloudWidth * 2 / 3);
                 if (x < width / 2 - bucketWidth / 2 || x > width / 2 + bucketWidth / 2) continue;
                 const y = cloudHeight + cloudHeight / 2;  // Start raindrops from the bottom of the cloud
                 const raindrop = createRaindrop(x, y);

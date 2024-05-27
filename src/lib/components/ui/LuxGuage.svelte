@@ -162,4 +162,4 @@
 	}
 </script>
 
-<svg bind:this={svgContainer}></svg>
+<svg bind:this={svgContainer} class="mx-auto"></svg>
