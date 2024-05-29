@@ -12,6 +12,7 @@
 	import { mdiArrowRight, mdiArrowRightCircle, mdiEye, mdiLink } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
+	import Battery from './Battery.svelte';
 
 	export let data;
 	const locationId = data.location_id;
@@ -81,7 +82,10 @@
 	</a>
 	<div class="pl-2 pt-2">
 		<h2 class="text-xl my-3 flex flex-row">
-			{locationName ?? '--'}
+			<div>
+				{locationName ?? '--'}
+				<Battery battery={100}/>
+			</div>
 			<span class="flex flex-grow" />
 			<Button variant="outline" color="primary" icon={mdiArrowRight} on:click={() => goto(`app/locations/${locationId}`)} />
 		</h2>
