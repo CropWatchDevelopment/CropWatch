@@ -1,7 +1,6 @@
 <script lang="ts">
 	// your script goes here
 
-	import DarkCard2 from './DarkCard2.svelte';
 	let inputDegrees = 0;
 
 	function toRadians(degree) {
@@ -10,7 +9,7 @@
 
 	let degrees = inputDegrees - 90;
 	let diameter = 15;
-	let radius = 15 / 2 + 0.8;
+	let radius = diameter / 2 + 0.8;
 	let x = radius * Math.cos(toRadians(degrees));
 	let y = radius * Math.sin(toRadians(degrees));
 
@@ -42,9 +41,10 @@
 >
 	<div class="main" style="width: {diameter}rem; height: {diameter}rem">
 		<div id="direction" style="transform: translateX({x}rem) translateY({y}rem);">
+		<!-- <div id="direction"> -->
 			<div>
 				<div class="arrow" style="transform: rotate({inputDegrees}deg)">
-					<p class="letter">{letter(inputDegrees)}</p>
+					<p class="letter">{letter(inputDegrees)}</p> 
 				</div>
 			</div>
 		</div>
@@ -64,10 +64,11 @@
 		margin: 5rem 0rem;
 	}
 	#direction {
-		/* width: fit-content; */
-		/* height: fit-content; */
-		/* background-color: red; */
+		width: 5rem;
+		height: 2.5rem;
+		background-color: transparent;
 		/* position: absolute; */
+		position: relative;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -79,7 +80,7 @@
 		border-right: 2.5rem solid transparent;
 		border-bottom: 2.5rem solid red;
 		position: absolute;
-		top: 10%;
+		top: 0%;
 		left: 0%;
 		display: flex;
 		justify-content: center;
