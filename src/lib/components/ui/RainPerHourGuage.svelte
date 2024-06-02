@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import * as d3 from 'd3';
 
-    export let rainValue = 20;  // Rain in mm per hour
+    export let rainValue = 0;  // Rain in mm per hour
     export let pressureValue = 0; // Pressure value in hPa
 
     let svgContainer;

@@ -48,7 +48,7 @@
 	let uvIndex = data.at(0).uv;
 	let uvIndexText = UVI_to_text(uvIndex);
 
-	let rainValue = 10; // data.at(0).rainfall;
+	let rainValue = data.at(0).rainfall;
 	let pressureValue = data.at(0).pressure || 0;
 	let locationWeatherData = writable(null);
 
