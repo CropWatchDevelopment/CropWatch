@@ -90,7 +90,7 @@
 											🌱
 										{:else if deviceType.cw_device_type.data_table === 'seeed_sensecap_s2120'}
 											<Icon data={mdiWindsock} />
-										{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks'}
+										{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks' || deviceType.cw_device_type.data_table === 'cw_co2_uplinks'}
 											<Icon data={mdiMoleculeCo2} />
 										{/if}
 									{/await}
