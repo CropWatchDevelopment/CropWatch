@@ -2,13 +2,12 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
-	import NotificationsBell from '$lib/components/ui/NotificationsBell.svelte';
 	import { Button, Icon, ProgressCircle } from 'svelte-ux';
 	import type { Tables } from '../../../../database.types';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
 	import { _ } from 'svelte-i18n';
-	import { mdiMoleculeCo2, mdiPlusCircle } from '@mdi/js';
+	import { mdiMoleculeCo2, mdiPlusCircle, mdiWindsock } from '@mdi/js';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import SquareCard from '$lib/components/ui/SquareCard.svelte';
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
@@ -46,10 +45,12 @@
 	{:then loc}
 		{#if loc}
 			<div class="flex justify-between my-5">
-				<h2 class="font-light text-2xl text-surface-100">
-					Add New Device
-				</h2>
-				<Button on:click={() => goto(`/app/locations/${$page.params.location_id}/devices/add`)} icon={mdiPlusCircle} size="sm" />
+				<h2 class="font-light text-2xl text-surface-100">Add New Device</h2>
+				<Button
+					on:click={() => goto(`/app/locations/${$page.params.location_id}/devices/add`)}
+					icon={mdiPlusCircle}
+					size="sm"
+				/>
 			</div>
 			{#await locationDevices}
 				<ProgressCircle />
@@ -87,7 +88,9 @@
 											🌡️
 										{:else if deviceType.cw_device_type.data_table === 'cw_ss_tme' || deviceType.cw_device_type.data_table === 'cw_ss_tmepnpk'}
 											🌱
-										{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks'}
+										{:else if deviceType.cw_device_type.data_table === 'seeed_sensecap_s2120'}
+											<Icon data={mdiWindsock} />
+										{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks' || deviceType.cw_device_type.data_table === 'cw_co2_uplinks'}
 											<Icon data={mdiMoleculeCo2} />
 										{/if}
 									{/await}
@@ -110,17 +113,17 @@
 						<div class="flex flex-col text-center text-neutral-content text-xl">
 							<h2>{device.cw_devices.name}</h2>
 							{#if dev_data}
-							<div class="flex flex-row flex-wrap justify-center">
-								{#each Object.keys(dev_data) as d}
-									<SquareCard
-										title={$_(d)}
-										titleColor={'#4FDE6F'}
-										value={dev_data[d]}
-										unit={nameToNotation(d)}
-										message={'Status coming soon'}
-									/>
-								{/each}
-							</div>
+								<div class="flex flex-row flex-wrap justify-center">
+									{#each Object.keys(dev_data) as d}
+										<SquareCard
+											title={$_(d)}
+											titleColor={'#4FDE6F'}
+											value={dev_data[d]}
+											unit={nameToNotation(d)}
+											message={'Status coming soon'}
+										/>
+									{/each}
+								</div>
 							{:else}
 								<p>No data available...</p>
 							{/if}

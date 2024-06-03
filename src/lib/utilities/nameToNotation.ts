@@ -24,6 +24,18 @@ export const nameToNotation = (name: string) => {
             return 'ppm';
         case 'vpd':
             return 'hPk';
+        case 'rainfall':
+            return 'mm/hr';
+        case 'pressure':
+            return 'hPa';
+        case 'wind_speed':
+            return 'm/s';
+        case 'lux':
+            return 'lux';
+        case 'uv':
+            return 'UVI';
+        case 'wind_direction':
+            return '°';
         default:
             return '';
     }

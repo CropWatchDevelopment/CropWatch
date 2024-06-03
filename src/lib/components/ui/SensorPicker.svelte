@@ -4,6 +4,7 @@
 	import CW_SS_TME from './sensors/CW_SS_TME.svelte';
 	import CW_SS_TMENPK from './sensors/CW_SS_TMEPNPK.svelte';
 	import SeeedS2103 from './sensors/SEEED_S2103.svelte';
+	import Seeed_2120 from './sensors/SEEED_2120.svelte';
 
 	export let sensorType = 'NS';
 	export let sensorName = 'NS';
@@ -18,8 +19,10 @@
 		<CW_SS_TME {data} {sensorName} {permissions} />
 	{:else if sensorType == 'cw_ss_tmepnpk'}
 		<CW_SS_TMENPK {data} {sensorName} {permissions} />
-	{:else if sensorType == 'seeed_co2_lorawan_uplinks'}
+	{:else if sensorType == 'seeed_co2_lorawan_uplinks' || sensorType == 'cw_co2_uplinks'}
 		<SeeedS2103 {data} {sensorName} {permissions} />
+	{:else if sensorType == 'seeed_sensecap_s2120'}
+		<Seeed_2120 {data} {sensorName} {permissions} />
 	{:else}
 		<Back />
 		<p>No sensor was specified</p>
