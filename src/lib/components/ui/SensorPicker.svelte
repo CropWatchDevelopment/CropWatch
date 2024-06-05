@@ -5,6 +5,7 @@
 	import CW_SS_TMENPK from './sensors/CW_SS_TMEPNPK.svelte';
 	import SeeedS2103 from './sensors/SEEED_S2103.svelte';
 	import Seeed_2120 from './sensors/SEEED_2120.svelte';
+	import SeeedT1000 from './sensors/SEEED_T1000.svelte';
 
 	export let sensorType = 'NS';
 	export let sensorName = 'NS';
@@ -23,8 +24,10 @@
 		<SeeedS2103 {data} {sensorName} {permissions} />
 	{:else if sensorType == 'seeed_sensecap_s2120'}
 		<Seeed_2120 {data} {sensorName} {permissions} />
+	{:else if sensorType == 'seeed_t1000'}
+		<SeeedT1000 {data} {sensorName} {permissions} />
 	{:else}
 		<Back />
-		<p>No sensor was specified</p>
+		<p>No sensor for type `{sensorType}` was specified</p>
 	{/if}
 </div>

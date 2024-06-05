@@ -54,6 +54,7 @@
 	const loadDeviceDataFor = async (device) => {
 		if (device) {
 			try {
+				debugger;
 				const res = await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`);
 				try {
 					return await res.json();
@@ -198,6 +199,7 @@
 											</p>
 										</div>
 									{/each}
+									{JSON.stringify(device.data.dev_eui)}
 									<Button
 										on:click={() => goto(`app/devices/${device.data.dev_eui}/data`)}
 										variant="fill-light"

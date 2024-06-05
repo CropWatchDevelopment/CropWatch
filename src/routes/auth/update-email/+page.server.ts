@@ -25,11 +25,3 @@ export const actions = {
         redirect(303, "/check_email");
     },
 }
-
-export async function load({locals: { safeGetSession } }) {
-    const session = await safeGetSession();
-    // if the user is not logged in redirect back to the home page
-    if (!session) {
-        redirect(303, '/');
-    }
-  }
