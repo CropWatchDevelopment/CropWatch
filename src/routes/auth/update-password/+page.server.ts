@@ -22,13 +22,6 @@ export const actions = {
             });
         }
 
-        redirect(303, "/auth/user-profile");
+        return { success: !err}
     },
 }
-
-export async function load({locals: { safeGetSession } }) {
-    const session = await safeGetSession();
-    if (!session) {
-        redirect(303, '/');
-    }
-  }
