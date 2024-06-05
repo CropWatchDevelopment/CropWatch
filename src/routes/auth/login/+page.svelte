@@ -56,6 +56,7 @@
 								});
 								goto('/app'); // redirect to '/app'
 							} else {
+								loggingIn = false;
 								toast.push(form?.message ?? 'Login Error', {
 									theme: {
 										'--toastBackground': 'red',
