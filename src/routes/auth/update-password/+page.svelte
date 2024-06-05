@@ -1,4 +1,3 @@
-// src/routes/update_password/+page.svelte
 <script lang="ts">
     import { enhance } from '$app/forms';
 	import { Button, TextField } from 'svelte-ux';
@@ -21,10 +20,10 @@
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
 					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-						{$_('login.register_title')}
+						{$_('login.update_title')}
 					</h2>
 				</div>
-				<form action="?/update-password" method="POST" use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+				<form method="POST" use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 					// `formElement` is this `<form>` element
 					// `formData` is its `FormData` object that's about to be submitted
 					// `action` is the URL to which the form is posted
