@@ -9,7 +9,7 @@ export const actions = {
 
         const { data, error: err } = await locals.supabase.auth.resetPasswordForEmail(
             email, 
-            {redirectTo: '/update-password'}
+            {redirectTo: 'https://app.cropwatch.io/auth/update-password'}
         )
 
         if (err) {
@@ -26,11 +26,3 @@ export const actions = {
         redirect(303, "/auth/check-email");
     },
 }
-
-export async function load({locals: { safeGetSession } }) {
-    const session = await safeGetSession();
-    // if the user is already logged in return him to the home page
-    if (session) {
-        redirect(303, '/');
-    }
-  }

@@ -2,10 +2,10 @@
 	import { _ } from 'svelte-i18n';
 	export let title;
 	export let value;
-	export let optimalValue;
+	export let optimalValue: number | string | null = null;
 	export let unit;
 
-	const differenceValue = (value - optimalValue).toFixed(2);
+	const differenceValue = (value - +(optimalValue ?? 0)).toFixed(2);
 
 	function checkValue(value: number) {
 		if (value > 0) {
