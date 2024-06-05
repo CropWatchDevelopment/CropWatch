@@ -36,7 +36,7 @@
 						// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
 						debugger;
 						isLoading = false;
-						if (result.success) {
+						if (result.data.success) {
 							toast.push('Password updated successfully', {
 								theme: {
 									'--toastBackground': 'green',

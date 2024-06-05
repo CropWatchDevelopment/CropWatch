@@ -46,7 +46,7 @@
 						}
 
 						return async ({ result, update }) => {
-							if (result.data && result.data.success) {
+							if (result.status && result.status < 400) {
 								update();
 								toast.push('Login successful!', {
 									theme: {
