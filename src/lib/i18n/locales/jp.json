@@ -170,7 +170,8 @@
     "ConfirmPassword": "パスワードの確認",
     "already_have_an_account": "アカウントをお持ちですか？",
     "signup": "サインアップ",
-    "update_password": "aaa"
+    "update_password": "aaa",
+    "update_title": "aaa"
   },
   "dashboardCard": {
     "dashboard": "ダッシュボード",
