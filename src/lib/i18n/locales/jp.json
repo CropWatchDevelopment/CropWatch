@@ -169,7 +169,8 @@
     "register_title": "アカウントを作成する",
     "ConfirmPassword": "パスワードの確認",
     "already_have_an_account": "アカウントをお持ちですか？",
-    "signup": "サインアップ"
+    "signup": "サインアップ",
+    "update_password": "aaa"
   },
   "dashboardCard": {
     "dashboard": "ダッシュボード",

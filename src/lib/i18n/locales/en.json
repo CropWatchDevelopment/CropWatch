@@ -174,7 +174,8 @@
     "already_have_an_account": "Already have an account?",
     "return_to_login": "Return to",
     "register_title": "Register for a new CropWatch Account",
-    "signup": "Sign up"
+    "signup": "Sign up",
+    "update_password": "Update Password"
   },
   "rules": {
     "description": "Create a new rule, or edit existing rules below",
