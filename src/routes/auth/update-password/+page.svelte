@@ -67,7 +67,7 @@
 						</div>
 
 
-						<div class="mt-2">
+						<div class="mt-2 mb-3">
 							<TextField
 								id="password-confirm"
 								label={$_('login.ConfirmPassword')}
