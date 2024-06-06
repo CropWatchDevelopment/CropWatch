@@ -11,6 +11,7 @@
 	let open = false;
 
 	const handleSubmit = () => {
+		debugger;
 		fetch(`/api/v1/locations/${locationId}`, {
 			method: 'PUT',
 			headers: {
