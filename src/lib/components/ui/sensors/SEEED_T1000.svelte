@@ -15,7 +15,7 @@
 	export let permissions = 0;
 	data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-	let dev_eui = data.at(0).dev_eui;
+	const dev_eui = data.at(0).dev_eui;
 	const temperature = data.at(0).temperatureC;
 	let lastSeen = data.at(0).created_at;
 	let latitude = data.at(0).latitude;
@@ -60,10 +60,11 @@
 
 	<p class="text-white text-4xl">{moment.utc(lastDatapointAsOf).format('YYYY-MM-DD HH:MM:ss')}</p>
 
-	<DarkCard title="Temperature" value={dataRange.at(value).temperatureC} unit="°C" />
+	<DarkCard title="Temperature" value={temperature} unit="°C" />
 	<DarkCard title="Battery Level" value={dataRange.at(value).battery_level} unit="%" />
 	<RangeField bind:value max={data.length - 1} min={0} />
-	<Leaflet bounds={[[latitude, longitude]]} height={innerHeight / 1.5} zoom={15} {disableZoom}>
+
+	<Leaflet bounds={[dataRange.map(points => [points.latitude, points.longitude])]} height={innerHeight / 1.5} zoom={15} {disableZoom}>
 		<Marker latLng={[latitude, longitude]} width={32} height={32}>
 			<Icon data={mdiMapMarker} size={52} class="text-red-600" />
 		</Marker>
@@ -84,6 +85,8 @@
 			</Marker>
 		{/each}
 	</Leaflet>
+
+
 </div>
 
 <div>

@@ -7,12 +7,13 @@
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
 	import { _ } from 'svelte-i18n';
-	import { mdiMoleculeCo2, mdiPlusCircle, mdiWindsock } from '@mdi/js';
+	import { mdiAccount, mdiAccountCircle, mdiMoleculeCo2, mdiPlusCircle, mdiWindsock } from '@mdi/js';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import SquareCard from '$lib/components/ui/SquareCard.svelte';
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
 	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
 	import { goto } from '$app/navigation';
+	import DarkCard from '$lib/components/ui/DarkCard.svelte';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -31,6 +32,10 @@
 	};
 
 	const getDeviceData = (dev_eui: string) => {
+		return fetch(`/api/v1/devices/${dev_eui}/data/latest`, { method: 'GET' }).then((r) => r.json());
+	};
+
+	const getDeviceOwnerName = (dev_eui: string) => {
 		return fetch(`/api/v1/devices/${dev_eui}/data/latest`, { method: 'GET' }).then((r) => r.json());
 	};
 </script>
@@ -60,14 +65,16 @@
 						<LocationSensorCard {sensor} />
 					{/each}
 				</div> -->
-			{/await}
+				<pre>{JSON.stringify(devices, null, 2)}</pre>
+			
 			<DarkCard2>
 				<Leaflet
 					view={[loc.cw_locations?.latitude ?? 0, loc.cw_locations?.longitude ?? 0]}
+					bounds={[devices.map((d) => [d.cw_devices.lat, d.cw_devices.long])]}
 					zoom={19}
 					disableZoom={true}
 					width={100}
-					height={270}
+					height={400}
 				>
 					<!-- TODO: Load devices on map... -->
 					{#await locationDevices then devices}
@@ -90,6 +97,11 @@
 											🌱
 										{:else if deviceType.cw_device_type.data_table === 'seeed_sensecap_s2120'}
 											<Icon data={mdiWindsock} />
+										{:else if deviceType.cw_device_type.data_table === 'seeed_t1000'}
+											<div class="flex bg-slate-500 pr-2 border-4 border-fuchsia-700">
+												<Icon data={mdiAccountCircle} class="self-center text-black" />
+												<p class="bg-slate-100 p-2">{device.cw_devices.name}</p>
+											</div>
 										{:else if deviceType.cw_device_type.data_table === 'seeed_co2_lorawan_uplinks' || deviceType.cw_device_type.data_table === 'cw_co2_uplinks'}
 											<Icon data={mdiMoleculeCo2} />
 										{/if}
@@ -100,6 +112,7 @@
 					{/await}
 				</Leaflet>
 			</DarkCard2>
+			{/await}
 		{/if}
 	{/await}
 	<div>
@@ -134,5 +147,6 @@
 		</div>
 	</div>
 </div>
+
 
 <LocationFooterControls />
