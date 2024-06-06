@@ -30,11 +30,9 @@
 					// calling `cancel()` will prevent the submission
 					// `submitter` is the `HTMLElement` that caused the form to be submitted
 					isLoading=true;
-					debugger;
 					return async ({ result, update }) => {
 						// `result` is an `ActionResult` object
 						// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
-						debugger;
 						isLoading = false;
 						if (result.data.success) {
 							toast.push('Password updated successfully', {

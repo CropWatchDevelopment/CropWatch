@@ -4,7 +4,6 @@ import { fail, redirect } from "@sveltejs/kit"
 
 export const actions = {
     default: async ({ request, locals }) => {
-        debugger;
         const formData = await request.formData()
         const password = formData.get('new_password')
 

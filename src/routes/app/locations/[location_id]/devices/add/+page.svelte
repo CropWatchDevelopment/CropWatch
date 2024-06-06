@@ -56,7 +56,6 @@
 			qrScanner = new QrScanner(videoElem, (result) => {
 				console.log('decoded qr code:', result);
 				try {
-					debugger;
 					const data = JSON.parse(result);
 					stopScanner();
 					toast.push(`Scan Success`, {

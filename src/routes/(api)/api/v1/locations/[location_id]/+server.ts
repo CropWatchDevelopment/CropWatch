@@ -50,7 +50,7 @@ export const PUT: RequestHandler = async ({ params, request, locals: { supabase,
             });
     }
 
-    const locationId = +(params.id ?? 0);
+    const locationId = +(params.location_id ?? 0);
     if (locationId === 0) {
         return new Response(
             JSON.stringify({ error: 'location_id is required' }),

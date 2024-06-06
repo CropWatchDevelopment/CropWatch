@@ -54,7 +54,6 @@
 	const loadDeviceDataFor = async (device) => {
 		if (device) {
 			try {
-				debugger;
 				const res = await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`);
 				try {
 					return await res.json();
