@@ -14,6 +14,7 @@
 	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
 	import { goto } from '$app/navigation';
 	import DarkCard from '$lib/components/ui/DarkCard.svelte';
+	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -60,13 +61,6 @@
 			{#await locationDevices}
 				<ProgressCircle />
 			{:then devices}
-				<!-- <div class="flex flex-col gap-2 mb-2">
-					{#each devices as sensor}
-						<LocationSensorCard {sensor} />
-					{/each}
-				</div> -->
-				<pre>{JSON.stringify(devices, null, 2)}</pre>
-			
 			<DarkCard2>
 				<Leaflet
 					view={[loc.cw_locations?.latitude ?? 0, loc.cw_locations?.longitude ?? 0]}
@@ -112,10 +106,24 @@
 					{/await}
 				</Leaflet>
 			</DarkCard2>
+
+			<div class="grid grid-flow-col grid-cols-1">
+				<div class="flex flex-col gap-2 mb-2">
+					{#each devices as sensor}
+						{#await getDeviceType(sensor.dev_eui)}
+							<ProgressCircle />
+						{:then deviceType}
+						<LocationSensorCard {sensor} {deviceType}>
+						</LocationSensorCard>
+
+						{/await}
+					{/each}
+				</div>
+			</div>
 			{/await}
 		{/if}
 	{/await}
-	<div>
+	<!-- <div>
 		<h2 class="text-xl text-surface-100">Location Data:</h2>
 		<div class="flex flex-wrap justify-center">
 			{#await locationDevices then devices}
@@ -145,7 +153,7 @@
 				{/each}
 			{/await}
 		</div>
-	</div>
+	</div> -->
 </div>
 
 
