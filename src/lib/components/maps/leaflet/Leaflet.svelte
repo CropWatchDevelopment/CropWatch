@@ -25,15 +25,7 @@
 				subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 			}).addTo(map);
 
-			if (disableZoom) {
-				map.dragging.disable();
-				map.touchZoom.disable();
-				map.doubleClickZoom.disable();
-				map.scrollWheelZoom.disable();
-				map.boxZoom.disable();
-				map.keyboard.disable();
-				if (map.tap) map.tap.disable();
-			}
+			updateZoomPanAbility();
 
 			map.on('click', function (e: L.LeafletMouseEvent) {
 				const { lat, lng } = e.latlng;
@@ -50,6 +42,32 @@
 	setContext('map', {
 		getMap: () => map
 	});
+
+	function updateZoomPanAbility() {
+		if (map) {
+			if (disableZoom) {
+				map.dragging.disable();
+				map.touchZoom.disable();
+				map.doubleClickZoom.disable();
+				map.scrollWheelZoom.disable();
+				map.boxZoom.disable();
+				map.keyboard.disable();
+				if (map.tap) map.tap.disable();
+			} else {
+				map.dragging.enable();
+				map.touchZoom.enable();
+				map.doubleClickZoom.enable();
+				map.scrollWheelZoom.enable();
+				map.boxZoom.enable();
+				map.keyboard.enable();
+				if (map.tap) map.tap.enable();
+			}
+		}
+	}
+
+	$: if (disableZoom !== undefined) {
+		updateZoomPanAbility();
+	}
 
 	$: if (map) {
 		if (bounds) {

@@ -4,7 +4,7 @@
 	import { _ } from 'svelte-i18n';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
-	import { mdiMapMarker } from '@mdi/js';
+	import { mdiArrowRight, mdiEye, mdiMapMarker } from '@mdi/js';
 	import Line from '$lib/components/maps/leaflet/Line.svelte';
 	import moment from 'moment';
 	import DarkCard2 from '../DarkCard2.svelte';
@@ -35,17 +35,18 @@
 		openDialog = true;
 		selectedPoint = point;
 	}
+
+	function getAddress(latitude, longitude) {
+		return fetch('/api/v1/geocoding?lat=' + latitude + '&long=' + longitude)
+			.then((response) => response.json())
+			.then((data) => data.display_name);
+	}
 </script>
 
 <svelte:window bind:innerWidth bind:innerHeight />
 
 <div class="m-4">
 	<div class="flex flex-row">
-		<!-- <img
-			src={isActiveRecently ? ActiveImage : inActiveImage}
-			alt={isActiveRecently ? 'Active Image' : 'in-active Image'}
-			class="w-14 h-14 mr-4"
-		/> -->
 		<div class="flex flex-col justify-center">
 			<div class="flex flex-row text-neutral-content">
 				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
@@ -62,9 +63,22 @@
 
 	<DarkCard title="Temperature" value={temperature} unit="°C" />
 	<DarkCard title="Battery Level" value={dataRange.at(value).battery_level} unit="%" />
-	<RangeField bind:value max={data.length - 1} min={0} />
+	<div class="flex flex-row gap-1 w-full mb-4">
+		<RangeField bind:value max={data.length - 1} min={0} class="w-full" />
+		<Button
+			size="sm"
+			on:click={() => {
+				disableZoom = !disableZoom;
+			}}>{disableZoom ? 'Enable Pan/Zoom' : 'Disable Pan/Zoom'}</Button
+		>
+	</div>
 
-	<Leaflet bounds={[dataRange.map(points => [points.latitude, points.longitude])]} height={innerHeight / 1.5} zoom={15} {disableZoom}>
+	<Leaflet
+		bounds={[dataRange.map((points) => [points.latitude, points.longitude])]}
+		height={innerHeight / 1.5}
+		zoom={15}
+		{disableZoom}
+	>
 		<Marker latLng={[latitude, longitude]} width={32} height={32}>
 			<Icon data={mdiMapMarker} size={52} class="text-red-600" />
 		</Marker>
@@ -85,14 +99,10 @@
 			</Marker>
 		{/each}
 	</Leaflet>
-
-
 </div>
 
 <div>
-	<Button variant="fill" color="primary" class="m-4 w-full">
-		Send BEEP Alert
-	</Button>
+	<Button variant="fill" color="primary" class="m-4 w-full">Send BEEP Alert</Button>
 </div>
 
 <Dialog
@@ -103,7 +113,7 @@
 		selectedPoint = null;
 	}}
 >
-	<div slot="title">
+	<div slot="title" class="py-4">
 		Status at: {moment.utc(selectedPoint.created_at).format('YYYY-MM-DD HH:MM A')}
 	</div>
 	{#if selectedPoint}
@@ -185,6 +195,20 @@
 						NO SOS!
 					{/if}
 				</p>
+				<div class="grid grid-flow-col grid-cols-12 bg-slate-500 my-3">
+				<p class="col-span-11 p-2">
+					{#await getAddress(selectedPoint.latitude, selectedPoint.longitude)}
+						<p>Loading...</p>
+					{:then address}
+						<p class="flex flex-wrap text-center text-slate-100 text-3xl">{address}</p>
+					{:catch error}
+						<p class="text-center text-slate-500 text-3xl">Error: {error.message}</p>
+					{/await}
+				</p>
+				<div class="flex h-full">
+					<Button icon={mdiArrowRight} variant="fill" />
+				</div>
+			</div>
 			</div>
 			<DarkCard title="Temperature" value={selectedPoint.temperatureC} unit="°C" />
 			<DarkCard title="Battery Level" value={selectedPoint.battery_level} unit="%" />
@@ -194,6 +218,7 @@
 		<Button variant="fill" color="primary">Close</Button>
 	</div>
 </Dialog>
+
 
 <style>
 	.circle {
