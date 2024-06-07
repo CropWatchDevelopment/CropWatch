@@ -6,6 +6,8 @@
 	import SEEED_T1000_IMG from '$lib/images/devices/seeed-t1000.png';
 	import SEEED_S2120_IMG from '$lib/images/devices/seeed_sensecap_s2120.png';
 	import { page } from '$app/stores';
+	import { nameToNotation } from '$lib/utilities/nameToNotation';
+	import { _ } from 'svelte-i18n';
 
 	export let sensor;
 	export let deviceType;
@@ -47,8 +49,8 @@
 				<div class="grid grid-cols-2 gap-1 text-sm text-left mt-2">
 					{#each Object.keys(dataPoint) as value}
 						{#if value != 'created_at' && value != 'dev_eui' && value != 'id' && value != 'latitude' && value != 'longitude' && value != 'temperature'}
-							<p>{value}</p>
-							<p class="ml-6">{dataPoint[value]}</p>
+							<p>{ $_(value)}</p>
+							<p class="ml-6">{dataPoint[value]}{nameToNotation(value)}</p>
 						{/if}
 					{/each}
 				</div>

@@ -244,6 +244,8 @@
   "lastSeen": "Last seen",
   "temperatureC": "Temperature",
   "dewPointC": "Dew Point",
+  "battery": "Battery",
+  "battery_level": "Battery Level",
   "auth": {
     "back_to_login": "Go Back to Login Page",
     "check_email": "Check your email to confirm.",

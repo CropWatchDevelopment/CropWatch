@@ -36,9 +36,6 @@
 		return fetch(`/api/v1/devices/${dev_eui}/data/latest`, { method: 'GET' }).then((r) => r.json());
 	};
 
-	const getDeviceOwnerName = (dev_eui: string) => {
-		return fetch(`/api/v1/devices/${dev_eui}/data/latest`, { method: 'GET' }).then((r) => r.json());
-	};
 </script>
 
 <div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative px-4 pb-12">
@@ -113,9 +110,7 @@
 						{#await getDeviceType(sensor.dev_eui)}
 							<ProgressCircle />
 						{:then deviceType}
-						<LocationSensorCard {sensor} {deviceType}>
-						</LocationSensorCard>
-
+						<LocationSensorCard {sensor} {deviceType} />
 						{/await}
 					{/each}
 				</div>
