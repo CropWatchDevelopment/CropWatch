@@ -254,6 +254,8 @@
   "difference": "差",
   "temp_humidity": "温度/湿度",
   "filter": "フィルター",
+  "battery": "バッテリー",
+  "battery_level": "バッテリー",
   "permissions": {
     "permissions": "デバイス権限",
     "email": "Eメール",
