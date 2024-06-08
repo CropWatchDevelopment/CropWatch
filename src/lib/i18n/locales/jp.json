@@ -292,5 +292,6 @@
     "no_data": "データがありません",
     "download_selected": "選択したデータをダウンロード",
     "search_text": "検索"
-  }
+  },
+  "no_data_available": "データがありません"
 }

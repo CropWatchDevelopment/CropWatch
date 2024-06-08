@@ -280,5 +280,6 @@
     "download_selected": "Download Selected Range",
     "search_text": "Filter Data Points"
   },
-  "rainfall": "Rainfall"
+  "rainfall": "Rainfall",
+  "no_data_available": "No Data Available"
 }
