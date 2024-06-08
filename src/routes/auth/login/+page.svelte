@@ -7,6 +7,7 @@
 	import { mdiAccountPlus, mdiLockQuestion, mdiKeyArrowRight } from '@mdi/js';
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { onMount } from 'svelte';
+	import UtilButton from '$lib/components/ui/UtilButton.svelte';
 	export let form;
 
 	let loggingIn: boolean = false;
