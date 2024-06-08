@@ -8,6 +8,8 @@
 	import moment from 'moment';
 	import DarkCard from '../DarkCard.svelte';
 	import { subDays } from 'date-fns';
+	import ResponsiveTable from '../ResponsiveTable.svelte';
+	import { SEEED_T1000 } from '$lib/sensor-dto/convert_seeed_t1000';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -103,8 +105,10 @@
 			size="sm"
 			on:click={() => {
 				disableZoom = !disableZoom;
-			}}>{disableZoom ? 'Enable Pan/Zoom' : 'Disable Pan/Zoom'}</Button
+			}}
 		>
+			{disableZoom ? 'Enable Pan/Zoom' : 'Disable Pan/Zoom'}
+		</Button>
 	</div>
 
 	<Leaflet height={innerHeight / 1.5} zoom={15} {disableZoom} {bounds}>
@@ -112,7 +116,7 @@
 			<Marker latLng={[movementPoint.latitude, movementPoint.longitude]} width={16} height={16}>
 				<Icon
 					data={mdiMapMarker}
-					size={52}
+					size={40}
 					class={movementPoint.sos > 0 ? 'text-red-600' : 'text-green-500'}
 				/>
 			</Marker>
@@ -120,69 +124,16 @@
 	</Leaflet>
 </div>
 
-<div class="text-lg font-medium">
-	{#await filteredData}
-		<p>Loading...</p>
-	{:then data}
-		{#if data.length > 0}
-			<table class="min-w-full divide-y divide-gray-200">
-				<thead class="bg-gray-50">
-					<tr>
-						<th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Timestamp
-						</th>
-						<th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Status
-						</th>
-						<th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Temperature
-						</th>
-						<th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Coordinates
-						</th>
-						<th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Elapsed Time
-						</th>
-						<!-- <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Actions
-						</th> -->
-					</tr>
-				</thead>
-				<tbody class="bg-white divide-y divide-gray-200">
-					{#each data as movementPoint, index}
-						<tr class="hover:bg-amber-200">
-							<td class="px-6 py-4 whitespace-nowrap text-center">
-								{moment.utc(movementPoint.created_at).format('YYYY-MM-DD HH:MM:ss')}
-							</td>
-							<td class="px-6 py-4 whitespace-nowrap text-center">
-								{movementPoint.sos && movementPoint.sos > 0 ? 'ALERT' : 'OK'}
-							</td>
-							<td class="px-6 py-4 whitespace-nowrap text-center">
-								{movementPoint.temperatureC.toFixed(2)}°C
-							</td>
-							<td class="px-6 py-4 whitespace-nowrap text-center">
-								{movementPoint.latitude}, {movementPoint.longitude}
-							</td>
-							<td class="px-6 py-4 whitespace-nowrap text-center">
-								<Duration start={movementPoint.created_at} totalUnits={2} minUnits={DurationUnits.Second} /> ago
-							</td>
-							<!-- <td class="px-6 py-4 whitespace-nowrap text-center">
-								<Button size="sm" variant="fill" color="primary">
-									<Icon data={mdiEye} size={24} />
-								</Button>
-							</td> -->
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		{:else}
-			<p>No data available</p>
-		{/if}
-	{:catch error}
-		<p>{error.message}</p>
-	{/await}
+<div class="overflow-x-auto">
+	<ResponsiveTable
+		data={data.map((d) => {
+			let resp = SEEED_T1000(d);
+			if (resp) resp.created_at = moment.utc(d.created_at).format('YYYY-MM-DD HH:MM:ss');
+			return resp;
+		})}
+	/>
 </div>
 
-<div>
+<div class="overflow-x-auto">
 	<Button variant="fill" color="primary" class="m-4 w-full">Send BEEP Alert</Button>
 </div>
