@@ -23,6 +23,9 @@ importers:
       dotenv:
         specifier: 16.4.2
         version: 16.4.2
+      flatpickr:
+        specifier: ^4.6.13
+        version: 4.6.13
       gridjs:
         specifier: ^6.2.0
         version: 6.2.0
@@ -38,6 +41,9 @@ importers:
       qr-scanner:
         specifier: ^1.4.2
         version: 1.4.2
+      svelte-flatpickr:
+        specifier: ^3.3.4
+        version: 3.3.4(svelte@4.2.14)
     devDependencies:
       '@event-calendar/core':
         specifier: ^2.6.1
@@ -1578,6 +1584,9 @@ packages:
     resolution: {integrity: sha512-CYcENa+FtcUKLmhhqyctpclsq7QF38pKjZHsGNiSQF5r4FtoKDWabFDl3hzaEQMvT1LHEysw5twgLvpYYb4vbw==}
     engines: {node: ^10.12.0 || >=12.0.0}
 
+  flatpickr@4.6.13:
+    resolution: {integrity: sha512-97PMG/aywoYpB4IvbvUJi0RQi8vearvU0oov1WW3k0WZPBMrTQVqekSX5CjSG/M4Q3i6A/0FKXC7RyAoAUUSPw==}
+
   flatted@3.3.1:
     resolution: {integrity: sha512-X8cqMLLie7KsNUDSdzeN8FYK9rEt4Dt67OsG/DNGnYTSDBG4uFAJFBnUeiV+zCVAvwFy56IjM9sH51jVaEhNxw==}
 
@@ -2501,6 +2510,11 @@ packages:
     peerDependenciesMeta:
       svelte:
         optional: true
+
+  svelte-flatpickr@3.3.4:
+    resolution: {integrity: sha512-i+QqJRs8zPRKsxv8r2GIk1fsb8cI3ozn3/aHXtViAoNKLy0j4PV7OSWavgEZC1wlAa34qi2hMkUh+vg6qt2DRA==}
+    peerDependencies:
+      svelte: '>= 3.31.0 < 5.0'
 
   svelte-grid@5.1.2:
     resolution: {integrity: sha512-Suwgb+L3LALhTyA7z4vn87UOJ+xBY6EeKa6MdWqDv/lZOtQgIZ21ry/I6txIn9IC0p8of4AiOXupkSMcZ+DEug==}
@@ -4287,6 +4301,8 @@ snapshots:
       keyv: 4.5.4
       rimraf: 3.0.2
 
+  flatpickr@4.6.13: {}
+
   flatted@3.3.1: {}
 
   foreground-child@3.1.1:
@@ -5215,6 +5231,11 @@ snapshots:
       postcss: 8.4.38
       postcss-scss: 4.0.9(postcss@8.4.38)
     optionalDependencies:
+      svelte: 4.2.14
+
+  svelte-flatpickr@3.3.4(svelte@4.2.14):
+    dependencies:
+      flatpickr: 4.6.13
       svelte: 4.2.14
 
   svelte-grid@5.1.2: {}

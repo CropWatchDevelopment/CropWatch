@@ -2,6 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-.Popover {
+.Popover, .Dialog {
     z-index: 10000;
 }
