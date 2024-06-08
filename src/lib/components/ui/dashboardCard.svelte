@@ -76,7 +76,7 @@
 			<div
 				class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"
 			></div>
-			<div class="absolute top-4 text-[0.65em] text-surface-100 drop-shadow-md right-3 space-y-1">
+			<div class="absolute top-4 text-xs text-surface-100 drop-shadow-md right-3 space-y-1">
 				{#if $locationWeatherData}
 					<p>{$_('dashboardCard.rainfall')}: {$locationWeatherData.rainfall}%</p>
 					<p>{$_('dashboardCard.humidity')}: {$locationWeatherData.humidity}%</p>
@@ -187,18 +187,26 @@
 									<h3 class="text-lg basis-1/3 font-medium mb-2">{$_('dashboardCard.details')}</h3>
 								</div>
 								{#if device.data}
-									{#each Object.keys(convertObject(device.data)) as dataPointKey}
-										<div class="px-3 pb-3 flex border-b">
-											<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
-											<p class="basis-1/2 text-base flex flex-row">
-												{device.data[dataPointKey]}
-												<span class="text-sm text-slate-500 flex-grow"
-													>{nameToNotation(dataPointKey)}</span
-												>
-											</p>
+									{#each Object.keys(convertObject(device.data)) as dataPointKey, index}
+										<div class="py-1">
+											<div class="px-3 flex">
+												<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
+												<p class="basis-1/2 text-base flex flex-row">
+													{device.data[dataPointKey]}
+													<span class="text-sm text-slate-500 flex-grow"
+														>{nameToNotation(dataPointKey)}</span
+													>
+												</p>
+											</div>
+											{#if Object.keys(convertObject(device.data)).length-1 !== index}
+												<div class="px-3 pt-2 border-b border-[#7d7d81]"></div>
+											{:else}
+												<div class="px-3 pt-3"></div>
+											{/if}
+											<!-- <div class="px-3 pt-2 border-b border-[#7d7d81]"></div> -->
 										</div>
 									{/each}
-									{JSON.stringify(device.data.dev_eui)}
+
 									<Button
 										on:click={() => goto(`app/devices/${device.data.dev_eui}/data`)}
 										variant="fill-light"
