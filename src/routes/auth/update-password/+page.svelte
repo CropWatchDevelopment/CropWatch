@@ -10,8 +10,20 @@
     let password: string = '';
     let confirmPassword: string = '';
 	let isLoading: boolean = false;
-</script>
+    let submissionResult = null;
 
+    // Reactive statement to track form data
+    let formData = {};
+    $: formData = {
+        password,
+        confirmPassword
+    };
+
+    // Utility function to display JSON data prettily
+    function displayJSON(data) {
+        return JSON.stringify(data, null, 2);
+    }
+</script>
 
 <div id="login-background">
 	<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -24,16 +36,9 @@
 					</h2>
 				</div>
 				<form method="POST" use:enhance={({ formElement, formData, action, cancel, submitter }) => {
-					// `formElement` is this `<form>` element
-					// `formData` is its `FormData` object that's about to be submitted
-					// `action` is the URL to which the form is posted
-					// calling `cancel()` will prevent the submission
-					// `submitter` is the `HTMLElement` that caused the form to be submitted
-					isLoading=true;
+					isLoading = true;
 					return async ({ result, update }) => {
-						// `result` is an `ActionResult` object
-						// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
-						console.log(result);
+						submissionResult = result;
 						isLoading = false;
 						if (result.data.success) {
 							toast.push('Password updated successfully', {
@@ -47,53 +52,71 @@
 								theme: {
 									'--toastBackground': 'red',
 								}
-							})
+							});
 						}
 					};
 				}}>
 
-						<div class="mt-2">
-							<TextField
-								id="password"
-								label={$_('login.password')}
-								placeholder="****************"
-								name="new_password"
-								type="password"
-                                bind:value={password}
-								autocomplete="new-password"
-								required
-							/>
-						</div>
+					<div class="mt-2">
+						<TextField
+							id="password"
+							label={$_('login.password')}
+							placeholder="****************"
+							name="new_password"
+							type="password"
+							bind:value={password}
+							autocomplete="new-password"
+							required
+						/>
+					</div>
 
-
-						<div class="mt-2 mb-3">
-							<TextField
-								id="password-confirm"
-								label={$_('login.ConfirmPassword')}
-								placeholder="****************"
-								type="password"
-                                bind:value={confirmPassword}
-								autocomplete="current-password"
-								required
-							/>
-						</div>
+					<div class="mt-2 mb-3">
+						<TextField
+							id="password-confirm"
+							label={$_('login.ConfirmPassword')}
+							placeholder="****************"
+							type="password"
+							bind:value={confirmPassword}
+							autocomplete="current-password"
+							required
+						/>
+					</div>
 
 					<Button
 						type="submit"
-						disabled={password != confirmPassword}
+						disabled={password !== confirmPassword}
 						variant="fill-outline"
 						color="primary"
-						classes={{ root: 'w-full' }}>{$_('login.update_password')}</Button
-					>
+						classes={{ root: 'w-full' }}>
+						{$_('login.update_password')}
+					</Button>
 				</form>
-				{#if form?.invalid}<mark>{form?.message}!</mark>{/if}
+
+				<!-- Display the JSON stringified form data -->
+				<div class="mt-4">
+					<h3 class="text-lg font-medium leading-6 text-gray-900">Form Data</h3>
+					<pre class="bg-gray-100 p-4 rounded">{displayJSON(formData)}</pre>
+				</div>
+
+				<!-- Display the form submission result -->
+				{#if submissionResult}
+					<div class="mt-4">
+						<h3 class="text-lg font-medium leading-6 text-gray-900">Submission Result</h3>
+						<pre class="bg-gray-100 p-4 rounded">{displayJSON(submissionResult)}</pre>
+					</div>
+				{/if}
+
+				{#if form?.invalid}
+					<mark>{form?.message}!</mark>
+				{/if}
+
 				<div>
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
 							<p>{$_('login.already_have_an_account')}</p>
-							<a class="blue-100" href="login"
-								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.login')}</u></a
-							>
+							<a class="blue-100" href="login">
+								&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.login')}</u>
+							</a>
 						</div>
 					</div>
 				</div>
