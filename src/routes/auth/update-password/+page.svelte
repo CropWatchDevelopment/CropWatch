@@ -33,6 +33,7 @@
 					return async ({ result, update }) => {
 						// `result` is an `ActionResult` object
 						// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
+						console.log(result);
 						isLoading = false;
 						if (result.data.success) {
 							toast.push('Password updated successfully', {

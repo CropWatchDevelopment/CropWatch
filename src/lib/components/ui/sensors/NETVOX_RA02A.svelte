@@ -23,8 +23,10 @@
 			{ event: 'INSERT', schema: 'public', table: 'netvox_ra02a' },
 			(payload) => {
 				console.log('Change received!', payload);
-				data.push(payload.new);
-                status = data.at(-1).fireAlarm;
+                if (payload.eventType === 'INSERT') {
+                    data.push(payload.new);
+                    status = data.at(-1).fireAlarm;
+                }
 			}
 		)
 		.subscribe();
