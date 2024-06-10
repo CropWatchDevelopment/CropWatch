@@ -12,16 +12,17 @@ export const actions = {
         })
 
         if (err) {
+            console.log(err);
             if (err instanceof AuthApiError && err.status >= 400 && err.status < 500) {
                 return fail(400, {
                     error: "invalidCredentials", invalid: true, message: err.message
                 });
             }
             return fail(500, {
-                error: "Server error. Please try again later.",
+                error: JSON.stringify(err),
             });
         }
 
-        return { success: !err}
+        return { success: !err }
     },
 }
