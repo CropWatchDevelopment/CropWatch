@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { mdiClose, mdiFloppy, mdiPencil } from '@mdi/js';
 	import { toast } from '@zerodevx/svelte-toast';
 	import { Button, Dialog, TextField } from 'svelte-ux';
@@ -58,7 +57,7 @@
 	};
 </script>
 
-<Button on:click={() => (open = true)} icon={mdiPencil} size="sm" />
+<Button on:click={() => (open = true)} icon={mdiPencil} size="sm" class="ml-2" />
 
 <form action={`/api/v1/locations/${locationId}`} method="PUT">
 	<Dialog bind:open on:close={() => closing()}>

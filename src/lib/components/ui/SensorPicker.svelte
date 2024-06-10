@@ -6,6 +6,7 @@
 	import SeeedS2103 from './sensors/SEEED_S2103.svelte';
 	import Seeed_2120 from './sensors/SEEED_2120.svelte';
 	import SeeedT1000 from './sensors/SEEED_T1000.svelte';
+	import NetvoxRa02A from './sensors/NETVOX_RA02A.svelte';
 
 	export let sensorType = 'NS';
 	export let sensorName = 'NS';
@@ -26,6 +27,8 @@
 		<Seeed_2120 {data} {sensorName} {permissions} />
 	{:else if sensorType == 'seeed_t1000'}
 		<SeeedT1000 {data} {sensorName} {permissions} />
+	{:else if sensorType == 'netvox_ra02a'}
+		<NetvoxRa02A {data} {sensorName} {permissions} />
 	{:else}
 		<Back />
 		<p>No sensor for type `{sensorType}` was specified</p>

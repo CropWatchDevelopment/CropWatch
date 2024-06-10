@@ -244,6 +244,10 @@
   "lastSeen": "Last seen",
   "temperatureC": "Temperature",
   "dewPointC": "Dew Point",
+  "battery": "Battery",
+  "battery_level": "Battery Level",
+  "wind_speed": "Wind Speed",
+  "wind_direction": "Wind Direction",
   "auth": {
     "back_to_login": "Go Back to Login Page",
     "check_email": "Check your email to confirm.",
@@ -276,5 +280,6 @@
     "download_selected": "Download Selected Range",
     "search_text": "Filter Data Points"
   },
-  "rainfall": "Rainfall"
+  "rainfall": "Rainfall",
+  "no_data_available": "No Data Available"
 }
