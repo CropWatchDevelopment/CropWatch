@@ -150,7 +150,7 @@
 
 <div class="m-6">
 	<div>
-		<DateRangeField bind:value stepper rounded center />
+		<DateRangeField bind:value label="" stepper rounded center />
 	</div>
 
 	<div class="grid lg:grid-flow-col grid-flow-rowgrid-cols-1 md:grid-cols-2 my-4 gap-2 text-white">
