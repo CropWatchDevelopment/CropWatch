@@ -3,11 +3,14 @@
 	import { Button, TextField } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
-	export let form;
+	import { mdiClock, mdiLoading } from '@mdi/js';
+	import { toast } from '@zerodevx/svelte-toast';
+	import { goto } from '$app/navigation';
 
 	let email: string = '';
 	let password: string = '';
 	let confirmPassword: string = '';
+	let loading: boolean = false;
 </script>
 
 <div id="login-background">
@@ -20,14 +23,46 @@
 						{$_('login.register_title')}
 					</h2>
 				</div>
-				<form action="?/register" method="POST" use:enhance>
+				<form
+					action="?/register"
+					method="POST"
+					use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+						// `formElement` is this `<form>` element
+						// `formData` is its `FormData` object that's about to be submitted
+						// `action` is the URL to which the form is posted
+						// calling `cancel()` will prevent the submission
+						// `submitter` is the `HTMLElement` that caused the form to be submitted
+						loading = true;
+						return async ({ result, update }) => {
+							loading = false;
+							// `result` is an `ActionResult` object
+							// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
+							if (result.data.success) {
+								// do something with the result
+								toast.push('Account Created, Please Check your Email to Confirm and Login.', {
+									theme: {
+										'--toastBackground': 'green'
+									}
+								});
+								goto('check-email');
+							} else {
+								// do something with the error
+								toast.push('Account creation failed, try again or contact support.', {
+									theme: {
+										'--toastBackground': 'red'
+									}
+								});
+							}
+						};
+					}}
+				>
 					<div class="mb-3">
 						<label for="email" class="block text-sm font-medium leading-6 text-gray-900"
 							>{$_('login.Email')}</label
 						>
 						<div class="mt-2">
 							<TextField
-								label={$_('login.email')}
+								label=""
 								id="email"
 								placeholder="my@address.com"
 								name="email"
@@ -47,7 +82,7 @@
 						<div class="mt-2">
 							<TextField
 								id="password"
-								label={$_('login.password')}
+								label=""
 								placeholder="****************"
 								name="password"
 								type="password"
@@ -65,7 +100,7 @@
 						<div class="mt-2">
 							<TextField
 								id="password-confirm"
-								label={$_('login.ConfirmPassword')}
+								label=""
 								placeholder="****************"
 								type="password"
 								bind:value={confirmPassword}
@@ -77,13 +112,13 @@
 
 					<Button
 						type="submit"
-						disabled={password != confirmPassword}
+						disabled={password != confirmPassword || loading || password.length < 3}
 						variant="fill-outline"
 						color="primary"
+						icon={loading ? mdiClock : ''}
 						classes={{ root: 'w-full' }}>{$_('login.signup')}</Button
 					>
 				</form>
-				{#if form?.invalid}<mark>{form?.message}!</mark>{/if}
 				<div>
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
