@@ -5,7 +5,7 @@ export const GET = async (event) => {
 		url,
 		locals: { supabase }
 	} = event;
-	const code = url.searchParams.get('code') as string;
+	const code = url.searchParams.get('access_token') as string;
 	const next = url.searchParams.get('next') ?? '/';
   console.log('code: ', code);
 
@@ -19,5 +19,5 @@ export const GET = async (event) => {
   }
 
   // return the user to an error page with instructions
-  throw redirect(303, '/auth-code-error');
+  throw redirect(303, '/auth/auth-code-error');
 };
