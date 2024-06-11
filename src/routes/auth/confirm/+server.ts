@@ -10,14 +10,17 @@ export const GET = async (event) => {
     const type = url.searchParams.get('type');
     const next = url.searchParams.get('next') ?? '/';
 
+    console.log('token_hash: ', token_hash);
+
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
     console.error('Google Auth Error!: ', error);
+    console.log('Google Auth Error!: ', error);
     if (!error) {
       redirect(303, `/app`);
     }
   }
   
   // return the user to an error page with some instructions
-  redirect(303, 'auth/auth-code-error');
+  redirect(303, 'auth/confirm/auth-code-error');
 };
