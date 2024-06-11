@@ -5,11 +5,7 @@
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { mdiArrowLeft } from '@mdi/js';
 	import { goto } from '$app/navigation';
-	export let form;
 
-	let email: string = '';
-	let password: string = '';
-	let confirmPassword: string = '';
 </script>
 
 <div id="login-background">
