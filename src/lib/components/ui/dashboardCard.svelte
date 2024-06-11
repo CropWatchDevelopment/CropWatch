@@ -5,7 +5,7 @@
 	import thermometerImage from '$lib/images/UI/cw_thermometer.png';
 	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
-	import { Button, Card, Collapse, Icon, ProgressCircle } from 'svelte-ux';
+	import { Button, Card, Collapse, DurationUnits, Duration, ProgressCircle } from 'svelte-ux';
 	import { writable, get } from 'svelte/store';
 	import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
@@ -16,6 +16,7 @@
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
 	import { fetchWeatherData, weatherData } from '$lib/stores/weatherStore';
 	import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
+	import Date from './Date.svelte';
 
 	export let data;
 	const locationId = data.location_id;
@@ -192,16 +193,20 @@
 											<div class="px-3 flex">
 												<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
 												<p class="basis-1/2 text-base flex flex-row">
+													{#if dataPointKey === 'created_at'}
+													<Duration start={device.data[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />
+													{:else}
 													{device.data[dataPointKey]}
 													<span class="text-sm text-slate-500 flex-grow"
 														>{nameToNotation(dataPointKey)}</span
 													>
+													{/if}
 												</p>
 											</div>
-											{#if Object.keys(convertObject(device.data)).length-1 !== index}
+											{#if Object.keys(convertObject(device.data)).length - 1 !== index}
 												<div class="px-3 pt-2 border-b border-[#7d7d81]"></div>
 											{:else}
-												<div class="px-3 pt-3"></div>
+												<div class="px-3 pt-2"></div>
 											{/if}
 											<!-- <div class="px-3 pt-2 border-b border-[#7d7d81]"></div> -->
 										</div>
