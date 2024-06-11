@@ -29,6 +29,7 @@ export const actions = {
                     error: "User already exists", email: email, invalid: true, message: "User already exists"
                 })
             }
-            redirect(303, "check-email");
+            // redirect(303, "check-email");
+            return { success: true }
     }
 }
