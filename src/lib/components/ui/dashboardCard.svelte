@@ -201,7 +201,7 @@
 											{#if Object.keys(convertObject(device.data)).length-1 !== index}
 												<div class="px-3 pt-2 border-b border-[#7d7d81]"></div>
 											{:else}
-												<div class="px-3 pt-3"></div>
+												<div class="px-3 pt-2"></div>
 											{/if}
 											<!-- <div class="px-3 pt-2 border-b border-[#7d7d81]"></div> -->
 										</div>

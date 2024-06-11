@@ -4,9 +4,10 @@
 	import { toast } from '@zerodevx/svelte-toast';
 	import { _ } from 'svelte-i18n';
 	import { TextField, Button, Switch, Icon } from 'svelte-ux';
-	import { mdiAccountPlus, mdiLockQuestion, mdiKeyArrowRight } from '@mdi/js';
+	import { mdiAccountPlus, mdiLockQuestion, mdiKeyArrowRight, mdiGoogle } from '@mdi/js';
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { onMount } from 'svelte';
+	import { supabase } from '$lib/supabaseClient';
 	export let form;
 
 	let loggingIn: boolean = false;
@@ -36,6 +37,7 @@
 					</h2>
 				</div>
 				<form
+					class="border-b-2 border-gray-300 mt-6 pb-1"
 					action="?/login"
 					method="POST"
 					use:enhance={({ formElement, formData, action, cancel, submitter }) => {
@@ -73,7 +75,7 @@
 						>
 						<div class="mt-2">
 							<TextField
-								label={$_('login.email')}
+								label=""
 								id="email"
 								name="email"
 								type="email"
@@ -92,7 +94,7 @@
 						<div class="mt-2">
 							<TextField
 								id="password"
-								label={$_('login.enter_password')}
+								label=""
 								placeholder="****************"
 								name="password"
 								type="password"
@@ -121,7 +123,9 @@
 						<span class="text-sm font-medium text-gray-900 ml-1">{$_('login.remember_me')}</span>
 						<span class="flex-1" />
 						<!-- <div class="text-right"> -->
-						<a href="reset-password" class="text-xs font-medium text-gray-900 align-middle hover:text-indigo-500"
+						<a
+							href="reset-password"
+							class="text-xs font-medium text-gray-900 align-middle hover:text-indigo-500"
 							><Icon data={mdiLockQuestion} /> {$_('login.forgot_password')}</a
 						>
 						<!-- </div> -->
@@ -137,17 +141,33 @@
 						>{$_('login.login')}</Button
 					>
 				</form>
-				{#if form?.invalid}<mark>{form?.message}!</mark>{/if}
 
-				<div>
-					<div class="relative mt-6 flex flex-row">
-						<div class="mx-auto flex flex-row">
-							<p>{$_('login.dont_have_an_account')}</p>
-							<a class="blue-100" href="/auth/register"
-								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.register_now')}</u
-								></a
-							>
-						</div>
+				<div class="mt-2">
+					<Button
+						disabled={loggingIn}
+						loading={loggingIn}
+						icon={mdiGoogle}
+						type="button"
+						on:click={() => {
+							supabase.auth.signInWithOAuth({
+								provider: 'google',
+								options: {
+									redirectTo: 'https://app.cropwatch.io/auth/callback'
+								}
+							});
+						}}
+						class="flex w-full mb-2 justify-center rounded-md bg-red-500 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+						>Google {$_('login.login')}</Button
+					>
+				</div>
+
+				<div class="relative mt-6 flex flex-row">
+					<div class="mx-auto flex flex-row">
+						<p>{$_('login.dont_have_an_account')}</p>
+						<a class="blue-100" href="/auth/register"
+							>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.register_now')}</u
+							></a
+						>
 					</div>
 				</div>
 			</div>

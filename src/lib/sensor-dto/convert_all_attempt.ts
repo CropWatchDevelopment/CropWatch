@@ -10,7 +10,7 @@ export function convertObject(input: InputObject): OutputObject {
     const keysToKeep = [
       'temperature', 'temperatureC', 'humidity', 'dewPointC', 'vpd', 'rainfall', 'pressure',
       'wind_speed', 'wind_direction', 'lux', 'uv', 'co2_level', 'soil_N', 'soil_P',
-      'soil_K', 'soil_PH', 'soil_EC', 'soil_moisture', 'soil_temperatureC'
+      'soil_K', 'soil_PH', 'soil_EC', 'soil_moisture', 'soil_temperatureC', 'created_at'
     ];
   
     const output: OutputObject = {};
