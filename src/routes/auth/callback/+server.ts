@@ -10,7 +10,7 @@ export const GET = async (event) => {
   console.log('code: ', code);
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.
     console.log('Google Auth Error!: ', error);
     console.error('Google Auth Error!: ', error);
     if (!error) {
