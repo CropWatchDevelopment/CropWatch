@@ -12,11 +12,12 @@ export const GET = async (event) => {
 
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
+    console.error('Google Auth Error!: ', error);
     if (!error) {
       redirect(303, `/app`);
     }
   }
-
+  
   // return the user to an error page with some instructions
-  redirect(303, 'auth-code-error');
+  redirect(303, 'auth/auth-code-error');
 };
