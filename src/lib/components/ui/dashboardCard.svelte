@@ -197,7 +197,7 @@
 													<Duration start={device.data[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />
 													{:else}
 													{device.data[dataPointKey]}
-													<span class="text-sm text-slate-500 flex-grow"
+													<span class="text-sm text-slate-800 flex-grow"
 														>{nameToNotation(dataPointKey)}</span
 													>
 													{/if}
@@ -208,7 +208,6 @@
 											{:else}
 												<div class="px-3 pt-2"></div>
 											{/if}
-											<!-- <div class="px-3 pt-2 border-b border-[#7d7d81]"></div> -->
 										</div>
 									{/each}
 

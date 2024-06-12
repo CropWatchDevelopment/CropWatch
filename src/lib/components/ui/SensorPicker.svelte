@@ -7,14 +7,19 @@
 	import Seeed_2120 from './sensors/SEEED_2120.svelte';
 	import SeeedT1000 from './sensors/SEEED_T1000.svelte';
 	import NetvoxRa02A from './sensors/NETVOX_RA02A.svelte';
+	import SensorHeader from './sensors/SensorHeader.svelte';
 
 	export let sensorType = 'NS';
 	export let sensorName = 'NS';
 	export let permissions = 0;
 	export let data;
+
+	const dev_eui = data.at(0).dev_eui;
+	const lastSeen = data.at(0).created_at;
 </script>
 
-<div class="relative">
+<div class="relative m-1">
+	<SensorHeader {sensorName} {dev_eui} {lastSeen} />
 	{#if sensorType == 'cw_air_thvd'}
 		<Sensor1 {data} {sensorName} {permissions} />
 	{:else if sensorType == 'cw_ss_tme'}

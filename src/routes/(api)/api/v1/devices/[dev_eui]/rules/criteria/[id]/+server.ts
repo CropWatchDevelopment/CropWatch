@@ -1,7 +1,7 @@
 import { redirect, type RequestHandler } from "@sveltejs/kit";
 
-export const POST: RequestHandler = async ({ url, params, request, locals: { supabase, safeGetSession } }) => {
-    const { session } = await safeGetSession();
+export const POST: RequestHandler = async ({ url, params, request, locals: { supabase, getSession } }) => {
+    const session = await getSession();
     if (!session) {
         throw redirect(303, '/auth/unauthorized');
     }
@@ -20,8 +20,8 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
         });
 }
 
-export const PUT: RequestHandler = async ({ request, locals: { supabase, safeGetSession } }) => {
-    const session = await safeGetSession();
+export const PUT: RequestHandler = async ({ request, locals: { supabase, getSession } }) => {
+    const session = await getSession();
     if (!session) {
         throw redirect(303, '/auth/unauthorized');
     }

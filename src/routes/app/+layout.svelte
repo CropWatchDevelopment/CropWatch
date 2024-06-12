@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate, goto } from '$app/navigation';
+	import { invalidate, goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { _, isLoading } from 'svelte-i18n';
 	import cw_LogoImage from '$lib/images/UI/cw_Logo.png';
@@ -9,34 +9,26 @@
 	import { dev } from '$app/environment';
 
 	export let data;
-	$: ({ session, supabase } = data);
+	$: ({ supabase } = data);
 
-	onMount(() => {
-		const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
-			if (!newSession) {
-				/**
-				 * Queue this as a task so the navigation won't prevent the
-				 * triggering function from completing
-				 */
-				setTimeout(() => {
-					goto('/auth/login', { invalidateAll: true });
-				});
-			}
-			if (newSession?.expires_at !== session?.expires_at) {
-				invalidate('supabase:auth');
-			}
+	onMount(async() => {
+		const {
+			data: { subscription }
+		} = supabase.auth.onAuthStateChange((event, _session) => {
+			// If you want to fain grain which routes should rerun their load function
+			// when onAuthStateChange changges
+			// use invalidate('supabase:auth')
+			// which is linked to +layout.js depends('supabase:auth').
+			// This should mainly concern all routes
+			//that should be accesible only for logged in user.
+			// Otherwise use invalidateAll()
+			// which will rerun every load function of you app.
+			invalidate('supabase:auth');
+			invalidateAll();
 		});
-
-		return () => data.subscription.unsubscribe();
+		return () => subscription.unsubscribe();
 	});
 
-	const submitLogout = async (): Promise<void> => {
-		const { error } = await data.supabase.auth.signOut();
-		if (error) {
-			console.log(error);
-		}
-		await goto('/');
-	};
 	let rightOpen = false;
 </script>
 
@@ -63,7 +55,7 @@
 						>
 					</div>
 					<div class="pl-2">
-					<h1 class="text-2xl font-medium">Menu</h1>
+						<h1 class="text-2xl font-medium">Menu</h1>
 
 						<div class="text-lg mt-12 space-y-2">
 							<p>
@@ -117,9 +109,7 @@
 	</nav>
 </div>
 {#if dev}
-<div class="w-full h-fit bg-orange-300 text-center">
-	🔨 DEVELOP ENVIRONMENT
-</div>
+	<div class="w-full h-fit bg-orange-300 text-center">🔨 DEVELOP ENVIRONMENT</div>
 {/if}
 <div class="app background-gradient">
 	{#if $navigating || $isLoading}
