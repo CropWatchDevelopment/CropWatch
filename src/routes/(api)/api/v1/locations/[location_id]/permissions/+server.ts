@@ -35,7 +35,6 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
         throw redirect(303, '/auth/unauthorized');
     }
     const formData = await request.formData();
-    console.log([...formData]);
 
     const { data: userProfile, error: userProfileError } = await supabase
         .from('profiles')

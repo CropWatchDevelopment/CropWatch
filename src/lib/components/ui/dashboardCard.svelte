@@ -14,9 +14,8 @@
 	import moment from 'moment';
 	import EditLocationNameDialog from './EditLocationNameDialog.svelte';
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
-	import { fetchWeatherData, weatherData } from '$lib/stores/weatherStore';
+	import { fetchWeatherData } from '$lib/stores/weatherStore';
 	import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
-	import Date from './Date.svelte';
 
 	export let data;
 	const locationId = data.location_id;
@@ -59,7 +58,7 @@
 				try {
 					return await res.json();
 				} catch (error) {
-					console.log('No data for device:', device.dev_eui, error);
+					console.error('No data for device:', device.dev_eui, error);
 				}
 			} catch (err) {
 				console.error('Error loading device data:', err);
@@ -69,45 +68,41 @@
 	};
 </script>
 
-<div class="bg-white p-3 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
-	<a href="/app/locations/{locationId}" class="">
-		<div
-			class="w-full h-20 relative rounded-2xl bg-sky-800 bg-blend-overlay bg-no-repeat bg-cover bg-bottom bg-clouds]"
-		>
-			<div
-				class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"
-			></div>
-			<div class="absolute top-4 text-xs text-surface-100 drop-shadow-md right-3 space-y-1">
-				{#if $locationWeatherData}
-					<p>{$_('dashboardCard.rainfall')}: {$locationWeatherData.rainfall}%</p>
-					<p>{$_('dashboardCard.humidity')}: {$locationWeatherData.humidity}%</p>
-					<p>{$_('dashboardCard.windspeed')}: {$locationWeatherData.windSpeed} km/h</p>
-				{:else}
-					<p>{$_('dashboardCard.rainfall')}: --%</p>
-					<p>{$_('dashboardCard.humidity')}: --%</p>
-					<p>{$_('dashboardCard.windspeed')}: -- km/h</p>
-				{/if}
-			</div>
-			<div class="absolute left-3 top-5">
-				<p class="flex text-surface-100 text-3xl text-shadow">
-					{#if $locationWeatherData}
-						{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md"
-							>ºC</span
-						>
-						{#await getWeatherImage($locationWeatherData.weatherCode, isDayTime())}
-							<ProgressCircle />
-						{:then image}
-							<img src={image} alt="weather code icon" class="ml-2 w-12" />
-						{:catch error}
-							<p>{error.message}</p>
-						{/await}
-					{:else}
-						--<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
-					{/if}
-				</p>
-			</div>
+<div class="bg-white p-0.5 mb-4 rounded-2xl border-[#D2D2D2] border-[0.1em]">
+	<div
+		class="w-full h-20 relative rounded-2xl bg-blend-overlay bg-no-repeat bg-cover bg-bottom custom-bg"
+	>
+		<div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
+		<div class="absolute top-4 text-xs text-surface-100 drop-shadow-md right-3 space-y-1">
+			{#if $locationWeatherData}
+				<p>{$_('dashboardCard.rainfall')}: {$locationWeatherData.rainfall}%</p>
+				<p>{$_('dashboardCard.humidity')}: {$locationWeatherData.humidity}%</p>
+				<p>{$_('dashboardCard.windspeed')}: {$locationWeatherData.windSpeed} km/h</p>
+			{:else}
+				<p>{$_('dashboardCard.rainfall')}: --%</p>
+				<p>{$_('dashboardCard.humidity')}: --%</p>
+				<p>{$_('dashboardCard.windspeed')}: -- km/h</p>
+			{/if}
 		</div>
-	</a>
+		<div class="absolute left-3 top-5">
+			<p class="flex text-surface-100 text-3xl text-shadow">
+				{#if $locationWeatherData}
+					{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md"
+						>ºC</span
+					>
+					{#await getWeatherImage($locationWeatherData.weatherCode, isDayTime())}
+						<ProgressCircle />
+					{:then image}
+						<img src={image} alt="weather code icon" class="ml-2 w-12" />
+					{:catch error}
+						<p>{error.message}</p>
+					{/await}
+				{:else}
+					--<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
+				{/if}
+			</p>
+		</div>
+	</div>
 	<div class="pl-2 pt-2">
 		<h2 class="text-xl my-3 flex flex-row items-center">
 			{locationName ?? '--'}
@@ -194,12 +189,16 @@
 												<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
 												<p class="basis-1/2 text-base flex flex-row">
 													{#if dataPointKey === 'created_at'}
-													<Duration start={device.data[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />
+														<Duration
+															start={device.data[dataPointKey]}
+															totalUnits={2}
+															minUnits={DurationUnits.Second}
+														/>
 													{:else}
-													{device.data[dataPointKey]}
-													<span class="text-sm text-slate-800 flex-grow"
-														>{nameToNotation(dataPointKey)}</span
-													>
+														{device.data[dataPointKey]}
+														<span class="text-sm text-slate-800 flex-grow"
+															>{nameToNotation(dataPointKey)}</span
+														>
 													{/if}
 												</p>
 											</div>
@@ -235,5 +234,11 @@
 <style>
 	.text-shadow {
 		text-shadow: black 5px 5px 3px;
+	}
+	.custom-bg {
+		background-image: url($lib/images/weather/sunny_clouds.png);
+	}
+	.custom-bg::after {
+		backdrop-filter: blur(90px);
 	}
 </style>

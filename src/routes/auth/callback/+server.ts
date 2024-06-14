@@ -1,23 +1,34 @@
-import { redirect } from '@sveltejs/kit';
+// import { redirect } from '@sveltejs/kit';
 
-export const GET = async (event) => {
-	const {
-		url,
-		locals: { supabase }
-	} = event;
-	const code = url.searchParams.get('access_token') as string;
-	const next = url.searchParams.get('next') ?? '/';
-  console.log('code: ', code);
+// export const GET = async (event) => {
+// 	const {
+// 		url,
+// 		locals: { supabase }
+// 	} = event;
+// 	const code = url.searchParams.get('code') as string;
+
+//   if (code) {
+//     console.log('code', code);
+//     const { error } = await supabase.auth.exchangeCodeForSession(code);
+//     console.error('error', error);
+//     if (!error) {
+//       throw redirect(303, `/app`);
+//     }
+//   }
+
+//   // return the user to an error page with instructions
+//   throw redirect(303, '/auth/auth-code-error');
+// };
+
+// src/routes/auth/callback/+server.ts
+import { redirect, type RequestHandler } from '@sveltejs/kit'
+
+export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
+  const code = url.searchParams.get('code')
 
   if (code) {
-    const { error } = await supabase.auth.
-    console.log('Google Auth Error!: ', error);
-    console.error('Google Auth Error!: ', error);
-    if (!error) {
-      throw redirect(303, `/${next.slice(1)}`);
-    }
+    await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // return the user to an error page with instructions
-  throw redirect(303, '/auth/auth-code-error');
-};
+  redirect(303, '/app')
+}

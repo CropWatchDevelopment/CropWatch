@@ -38,6 +38,11 @@ export async function fetchWeatherData(lat: number, lng: number, location_id: st
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
 
+    if (!lat || !lng) {
+        console.error('Invalid lat/lng:', lat, lng);
+        return null;
+    }
+    
     try {
         const weatherRequest = await fetch(
             `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
@@ -45,8 +50,10 @@ export async function fetchWeatherData(lat: number, lng: number, location_id: st
         );
         const weatherJSON = await weatherRequest.json();
         const result = convertApiResponseToResultIncludingLux(weatherJSON);
-        setCachedWeatherData(identifier, result);
-        weatherData.update(currentData => ({ ...currentData, [identifier]: result }));
+        if (result) {
+            setCachedWeatherData(identifier, result);
+            weatherData.update(currentData => ({ ...currentData, [identifier]: result }));
+        }
         return result;
     } catch (error) {
         console.error('Error fetching weather data:', error);
@@ -110,17 +117,19 @@ function convertApiResponseToResultIncludingLux(apiResponse: any) {
         return Math.max(0, 100000 - (cloudCover * 1000));
     };
 
-    const result = {
-        temperature: apiResponse.current.temperature_2m || 0,
-        humidity: apiResponse.current.relative_humidity_2m || 0,
-        lux: apiResponse.current.cloud_cover !== undefined ? cloudCoverToLux(apiResponse.current.cloud_cover) : 0,
-        uv: 0,
-        pressure: apiResponse.current.surface_pressure || 0,
-        windSpeed: apiResponse.current.wind_speed_10m || 0,
-        windDirection: apiResponse.current.wind_direction_10m ? degreesToDirection(apiResponse.current.wind_direction_10m) : 'N/A',
-        rainfall: apiResponse.current.rain || 0,
-        weatherCode: apiResponse.current.weather_code || 0,
-    };
-
-    return result;
+    if (!apiResponse.error) {
+        const result = {
+            temperature: apiResponse.current.temperature_2m || 0,
+            humidity: apiResponse.current.relative_humidity_2m || 0,
+            lux: apiResponse.current.cloud_cover !== undefined ? cloudCoverToLux(apiResponse.current.cloud_cover) : 0,
+            uv: 0,
+            pressure: apiResponse.current.surface_pressure || 0,
+            windSpeed: apiResponse.current.wind_speed_10m || 0,
+            windDirection: apiResponse.current.wind_direction_10m ? degreesToDirection(apiResponse.current.wind_direction_10m) : 'N/A',
+            rainfall: apiResponse.current.rain || 0,
+            weatherCode: apiResponse.current.weather_code || 0,
+        };
+        return result;
+    }
+    return null;
 }

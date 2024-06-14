@@ -43,7 +43,6 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
   const formObject = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
   formObject['profile_id'] = session.user.id;
 
-  console.log(formObject)
   const { data, error } = await supabase
     .from('cw_rules')
     .insert(formObject)
@@ -64,7 +63,6 @@ export const PUT: RequestHandler = async ({ url, params, request, locals: { supa
   const formData = await request.formData();
   const formObject = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
 
-  console.log(formObject)
   const { data, error } = await supabase
     .from('cw_rules')
     .update(formObject)

@@ -7,7 +7,6 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
     }
     const formObject = await request.json();  // Expect JSON
 
-    console.log(formObject)
     const { data, error } = await supabase
         .from('cw_rule_criteria')
         .insert(formObject)

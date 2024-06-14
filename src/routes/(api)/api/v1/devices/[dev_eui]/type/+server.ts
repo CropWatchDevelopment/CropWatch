@@ -23,7 +23,6 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
     .limit(1)
     .single();
     const { data, error } = await baseQuery;
-    console.log(data, error)
 
   if (error) {
     return new Response(

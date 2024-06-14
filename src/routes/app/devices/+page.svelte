@@ -6,11 +6,10 @@
 		fetch(`/api/v1/devices`)
 			.then((res) => res.json())
 			.then((data) => {
-				console.log(data);
 				deviceStore.add(data);
 			})
 			.catch((err) => {
-				console.log(err);
+				console.error(err);
 			});
 </script>
 

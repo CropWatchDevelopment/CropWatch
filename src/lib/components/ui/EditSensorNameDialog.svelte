@@ -40,7 +40,6 @@
 				return res.json();
 			})
 			.then((data) => {
-				console.log(data);
 				currentSensorName = data.name;
 				open = false;
 			})
