@@ -29,14 +29,12 @@
 			const response = await fetch(`/api/v1/locations/${locationId}/devices`);
 			const devicesFromApi = await response.json();
 
-			// Fetch device data in parallel
 			const deviceDataPromises = devicesFromApi.map((device) => loadDeviceDataFor(device));
 			const deviceDataArray = await Promise.all(deviceDataPromises);
 			devicesFromApi.forEach((device, index) => (device.data = deviceDataArray[index]));
 
 			devices.set(devicesFromApi);
 
-			// Fetch weather data
 			const weather = await fetchWeatherData(
 				data.cw_locations.latitude,
 				data.cw_locations.longitude,
@@ -236,9 +234,20 @@
 		text-shadow: black 5px 5px 3px;
 	}
 	.custom-bg {
-		background-image: url($lib/images/weather/sunny_clouds.png);
+		position: relative;
+		overflow: hidden;
+		background-color: lightgray; /* Temporary background color to ensure the div is visible */
 	}
-	.custom-bg::after {
-		backdrop-filter: blur(90px);
+	.custom-bg::before {
+		content: ' '; /* Ensure the pseudo-element is generated */
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-image: url($lib/images/weather/sunny_clouds.png);
+		background-size: cover;
+		background-position: center;
+		filter: blur(1px) grayscale(20%);
 	}
 </style>
