@@ -7,14 +7,39 @@
 	import { mdiAccountPlus, mdiLockQuestion, mdiKeyArrowRight, mdiGoogle } from '@mdi/js';
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { onMount } from 'svelte';
-	import { supabase } from '$lib/supabaseClient';
-	export let form;
+	import { browser } from '$app/environment';
+	
+	export let data
+	export let form
+
+	let { supabase } = data;
+	$: ({ supabase } = data);
 
 	let loggingIn: boolean = false;
 	let rememberMe: boolean = false;
 
 	let email: string = '';
 	let password: string = '';
+
+	let redirectURL: string = browser ? `${window.location.origin}/auth/callback` : '';
+
+	const oAuthLogin = async () => {
+		const { data: response, error } = await data.supabase.auth.signInWithOAuth({
+			provider: 'google',
+			options: {
+				redirectTo: `http://localhost:5173/auth/callback`
+			}
+		});
+		if (error) {
+			console.error('Error logging in with Google:', error.message);
+			toast.push('Error logging in with Google', {
+				theme: {
+					'--toastBackground': 'red',
+					'--toastColor': 'black'
+				}
+			});
+		}
+	};
 
 	onMount(() => {
 		const hasRememberMe = localStorage.getItem('rememberMe');
@@ -148,11 +173,7 @@
 						loading={loggingIn}
 						icon={mdiGoogle}
 						type="button"
-						on:click={() => {
-							supabase.auth.signInWithOAuth({
-								provider: 'google'
-							});
-						}}
+						on:click={async () => oAuthLogin({ provider: 'google' })}
 						class="flex w-full mb-2 justify-center rounded-md bg-red-500 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 						>Google {$_('login.login')}</Button
 					>

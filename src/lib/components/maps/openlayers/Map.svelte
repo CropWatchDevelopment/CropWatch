@@ -13,7 +13,6 @@
     export let lat: number = 0;
     export let lng: number = 0;
     const coords = fromLonLat([lng, lat]);
-    console.log('coords', coords);
 
     // Exports
     let mapId = uuidv4();

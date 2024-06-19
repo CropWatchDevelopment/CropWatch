@@ -40,7 +40,6 @@
 				return res.json();
 			})
 			.then((data) => {
-				console.log(data);
 				currentLocationName = data.name;
 				open = false;
 			})

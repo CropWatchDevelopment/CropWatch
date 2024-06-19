@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import AddLocation from '$lib/components/ui/AddLocation.svelte';
-import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
-	import bellImage from '$lib/images/UI/cw-bell.svg';
-	import filterImage from '$lib/images/UI/cw_filter_button.svg';
+	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 	import { mdiPlusCircle, mdiViewDashboard } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import { Button, Icon } from 'svelte-ux';
@@ -33,7 +30,7 @@ import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 				<Icon data={mdiViewDashboard} class="w-6 h-6" />
 				{$_('dashboardCard.dashboard')}
 			</h2>
-			
+
 			<!-- Filter -->
 			<div class="flex align-baseline justify-center items-center text-white">
 				<Button on:click={() => goto('/app/locations/add')} icon={mdiPlusCircle} size="sm" />
@@ -44,8 +41,10 @@ import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 			</div>
 		</div>
 		<!-- CARDS -->
-		{#each locations as location}
-			<DashboardCard data={location} />
-		{/each}
+		<div class="grid grid-flow-row grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+			{#each locations as location}
+				<DashboardCard data={location} />
+			{/each}
+		</div>
 	</div>
 </section>
