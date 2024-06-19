@@ -94,4 +94,3 @@
 
 <DarkCard title={$_('soil_EC')} value={soil_ec} unit={'dS/m'} optimalValue={1}></DarkCard>
 
-<SensorFooterControls />

@@ -8,6 +8,7 @@
 	import SeeedT1000 from './sensors/SEEED_T1000.svelte';
 	import NetvoxRa02A from './sensors/NETVOX_RA02A.svelte';
 	import SensorHeader from './sensors/SensorHeader.svelte';
+	import SensorFooterControls from './SensorFooterControls.svelte';
 
 	export let sensorType = 'NS';
 	export let sensorName = 'NS';
@@ -38,4 +39,5 @@
 		<Back />
 		<p>No sensor for type `{sensorType}` was specified</p>
 	{/if}
+	<SensorFooterControls {permissions} />
 </div>

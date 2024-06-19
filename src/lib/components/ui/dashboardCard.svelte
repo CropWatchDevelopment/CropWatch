@@ -12,7 +12,6 @@
 	import { mdiArrowRight, mdiEye } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
-	import EditLocationNameDialog from './EditLocationNameDialog.svelte';
 	import { nameToNotation } from '$lib/utilities/nameToNotation';
 	import { fetchWeatherData } from '$lib/stores/weatherStore';
 	import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
@@ -104,7 +103,6 @@
 	<div class="pl-2 pt-2">
 		<h2 class="text-xl my-3 flex flex-row items-center">
 			{locationName ?? '--'}
-			<EditLocationNameDialog {locationId} bind:currentLocationName={locationName} />
 			<span class="flex flex-grow" />
 			<Button
 				variant="outline"

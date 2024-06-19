@@ -4,9 +4,10 @@
 	import { toast } from '@zerodevx/svelte-toast';
 	import { Button, Dialog, TextField } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
+	import { page } from '$app/stores';
 	
 	export let currentSensorName: string = '';
-	export let dev_eui: string = -1;
+	export let dev_eui: string = $page.params.dev_eui ?? 'NS';
 	let currentSensorNameStatic = currentSensorName;
 	let open = false;
 

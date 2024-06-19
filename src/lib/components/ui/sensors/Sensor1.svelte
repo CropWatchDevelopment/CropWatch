@@ -3,13 +3,10 @@
 	import Highcharts from '$lib/actions/highcharts.action';
 	import TempHumidityCard from '../TempHumidityCard.svelte';
 	import DarkCard from './../DarkCard.svelte';
-	import { DateRangeField, Duration, PeriodType } from 'svelte-ux';
+	import { DateRangeField, PeriodType } from 'svelte-ux';
 	import SensorFooterControls from '../SensorFooterControls.svelte';
 	import { _ } from 'svelte-i18n';
-	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 	import { subDays } from 'date-fns';
-	import Back from '../Back.svelte';
-	import { supabase } from '$lib/supabaseClient';
 
 	export let data;
 	export let sensorName = 'NS';
@@ -157,6 +154,4 @@
 	{/key}
 
 	<DarkCard title={$_('vpd')} value={vpd} optimalValue={null} unit={'kPa'} />
-
-	<SensorFooterControls {permissions} />
 
