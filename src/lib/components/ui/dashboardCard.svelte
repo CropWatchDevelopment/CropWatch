@@ -106,26 +106,37 @@
 			{/if}
 			{#each $devices as device}
 				<Card
-					class="divide-y bg-[#F7FAFF] border-[#FBFBFB] border-[0.1em] rounded-md elevation-none my-2"
+					class="divide-y bg-[#F7FAFF] border-[#FBFBFB] border-[0.1em] rounded-md elevation-none my-2 drop-shadow-md"
 				>
 					<Collapse>
 						<!-- Outside -->
 						<div slot="trigger" class="flex-1 px-3 py-2">
-							<div class="flex text-center">
-								<div class="basis-1/3 flex items-center space-x-2">
-									<div class="w-2">
-										<img src={moment().diff(moment(device.data.created_at), 'minutes') > 120 ? inactiveImage : activeImage} alt="" />
-									</div>
-									<p>{device.cw_devices.name}</p>
+							<div class="basis-1/3 flex items-center space-x-2">
+								<div class="w-2">
+									<img src={moment().diff(moment(device.data.created_at), 'minutes') > 120 ? inactiveImage : activeImage} alt="" />
 								</div>
-								<p class="basis-1/3 justify-center m-auto">
+								<p>{device.cw_devices.name}</p>
+							</div>
+							<!-- Instant Values -->
+							<div class="flex text-center mt-4">
+								<!-- First Value -->
+								<p class="basis-1/3 justify-center m-auto text-xs">
 									{#if device.data && device.data.primaryData && device.data.primary_data_notation}
 										{device.data[device.data.primaryData]}{device.data.primary_data_notation}
 									{:else}
 										N/A
 									{/if}
 								</p>
-								<p class="basis-1/3 justify-center m-auto">
+								<!-- Second Value -->
+								<p class="basis-1/3 justify-center m-auto text-xs">
+									{#if device.data && device.data.primaryData && device.data.primary_data_notation}
+										{device.data[device.data.primaryData]}{device.data.primary_data_notation}
+									{:else}
+										N/A
+									{/if}
+								</p>
+								<!-- Third Value -->
+								<p class="basis-1/3 justify-center m-auto text-xs">
 									{#if device.data && device.data.secondaryData && device.data.secondary_data_notation}
 										{device.data[device.data.secondaryData]}{device.data.secondary_data_notation}
 									{:else}
@@ -135,7 +146,7 @@
 							</div>
 						</div>
 						<!-- Inside -->
-						<div class="pl-4">
+						<div class="p-2">
 							<div class="flex px-3 mt-3">
 								<h3 class="text-lg basis-1/3 font-medium mb-2">{$_('dashboardCard.details')}</h3>
 							</div>
