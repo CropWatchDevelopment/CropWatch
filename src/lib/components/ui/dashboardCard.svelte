@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { getWeatherImage } from '$lib/utilities/weatherCodeToImage';
-	import activeImage from '$lib/images/UI/cw_active.png';
-	import inactiveImage from '$lib/images/UI/cw_inactive_circle.png';
-	import thermometerImage from '$lib/images/UI/cw_thermometer.png';
-	import moistureImage from '$lib/images/UI/cw_moisture.png';
 	import { onMount } from 'svelte';
-	import { Button, Card, Collapse, DurationUnits, Duration, ProgressCircle } from 'svelte-ux';
+	import { Button, Collapse, DurationUnits, Duration, ProgressCircle } from 'svelte-ux';
 	import { writable, get } from 'svelte/store';
 	import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
@@ -16,12 +12,12 @@
 	import { fetchWeatherData } from '$lib/stores/weatherStore';
 	import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
 	import { nameToEmoji } from '$lib/utilities/nameToEmoji';
+	import type { PageData } from '../../../routes/$types';
 
-	export let data;
+	export let data: PageData;
 	const locationId = data.location_id;
 	let locationName: string = data.cw_locations.name ?? '--';
 	let loading = true;
-	// let expanded: boolean = false;
 	const devices = writable([]);
 	let locationWeatherData = writable(null);
 
@@ -48,6 +44,7 @@
 		} finally {
 			loading = false;
 		}
+
 	});
 
 	const loadDeviceDataFor = async (device) => {

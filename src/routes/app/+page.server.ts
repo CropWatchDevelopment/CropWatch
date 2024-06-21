@@ -18,27 +18,3 @@ export async function load({ fetch, locals: { getSession } }) {
         locations: [],
     };
 }
-
-
-// /*
-// RLS:
-
-// CREATE POLICY user_owns_location
-// ON public.cw_locations
-// FOR SELECT
-// USING (
-//     EXISTS (
-//         SELECT 1
-//         FROM public.cw_location_owners
-//         WHERE
-//             public.cw_location_owners.location_id = public.cw_locations.location_id
-//             AND public.cw_location_owners.user_id = auth.uid() -- Replace `current_user_id()` with your method of obtaining the current user's ID, often `auth.uid()`
-//             AND public.cw_location_owners.is_active = true
-//     )
-// );
-
-
-
-
-
-// */

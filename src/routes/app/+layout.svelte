@@ -62,23 +62,18 @@
 		</Drawer>
 	</div>
 </AppBar>
-<main class="flex flex-col background-gradient min-h-screen">
+<main class="flex flex-col min-h-screen">
 	{#if $navigating || $isLoading}
-		<ProgressCircle />
-		{#if $isLoading}
-			&nbsp; {$_('app.loading_translations_message')}
-		{:else}
-			&nbsp; {$_('app.loading_message')}
-		{/if}
+		<div class="my-auto mx-auto font-white">
+			<ProgressCircle class="my-auto mx-auto" />
+			{#if $isLoading}
+				&nbsp; {$_('app.loading_translations_message')}
+			{:else}
+				&nbsp; {$_('app.loading_message')}
+			{/if}
+		</div>
 	{:else}
 		<slot />
 	{/if}
 	<span class="flex-grow" />
 </main>
-
-<style>
-	.background-gradient {
-		background: rgb(19, 32, 23);
-		background: linear-gradient(180deg, rgb(61 93 99) 0%, rgb(138 140 126) 100%);
-	}
-</style>

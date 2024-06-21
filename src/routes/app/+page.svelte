@@ -4,8 +4,10 @@
 	import { mdiPlusCircle, mdiViewDashboard } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import { Button, Icon } from 'svelte-ux';
+
 	export let data;
 	const { locations } = data;
+
 </script>
 
 <svelte:head>
