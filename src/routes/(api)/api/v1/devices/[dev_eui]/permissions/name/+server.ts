@@ -1,8 +1,8 @@
 import { PermissionNameToNumber } from "$lib/utilities/permissionNumberToName";
 import { redirect, type RequestHandler } from "@sveltejs/kit";
 
-export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
-    const { session } = await safeGetSession();
+export const GET: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
+    const session = await getSession();
     if (!session) {
         throw redirect(303, '/auth/unauthorized');
     }

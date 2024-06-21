@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { Button, DateRangeField, Duration, DurationUnits, Icon, PeriodType } from 'svelte-ux';
-	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
+	import { Button, DateRangeField, Icon, PeriodType } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
-	import { mdiArrowRight, mdiEye, mdiMapMarker } from '@mdi/js';
+	import { mdiMapMarker } from '@mdi/js';
 	import moment from 'moment';
 	import DarkCard from '../DarkCard.svelte';
 	import { subDays } from 'date-fns';
@@ -69,19 +68,7 @@
 
 <svelte:window bind:innerWidth bind:innerHeight />
 
-<div class="m-4">
-	<div class="flex flex-row">
-		<div class="flex flex-col justify-center">
-			<div class="flex flex-row text-neutral-content">
-				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
-				<EditSensorNameDialog {dev_eui} bind:currentSensorName={sensorName} />
-			</div>
-			<p class="text-slate-500">
-				{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} />
-				{$_('ago')}
-			</p>
-		</div>
-	</div>
+
 
 	<p class="text-white text-4xl">
 		Latest: {moment.utc(data[data.length - 1].created_at).format('YYYY-MM-DD HH:MM:ss')}
@@ -122,7 +109,7 @@
 			</Marker>
 		{/each}
 	</Leaflet>
-</div>
+
 
 <div class="overflow-x-auto">
 	<ResponsiveTable
@@ -134,6 +121,3 @@
 	/>
 </div>
 
-<div class="overflow-x-auto">
-	<Button variant="fill" color="primary" class="m-4 w-full">Send BEEP Alert</Button>
-</div>

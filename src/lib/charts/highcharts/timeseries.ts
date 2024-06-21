@@ -19,14 +19,14 @@ export const HighChartsTimeSeriesChart = (data: any[], yAxis: any[], name: strin
             type: 'datetime',
             title: {
                 enabled: true,
-                text: 'Month/Day',
+                text: '',
                 style: {
                     color: 'white',
                 },
             },
             labels: {
                 formatter: function (): any {
-                    return moment(this.value).format('MMM-DD').toString();
+                    return moment(this.value).format('MMM-DD HH:MM').toString();
                 },
                 style: {
                     color: 'white',

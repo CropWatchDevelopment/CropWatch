@@ -74,7 +74,6 @@
 				type="button"
 				disabled={value != $page.params.location_id}
 				on:click={() => {
-					console.log('Deleting item...');
 					deleteLocation($page.params.location_id);
 				}}
 				variant="fill"

@@ -1,32 +1,51 @@
 <script lang="ts">
 	import { _ } from 'svelte-i18n';
+	import { Button, Paginate, Pagination, paginationStore } from 'svelte-ux';
+	import DarkCard from './DarkCard.svelte';
+	import DarkCard2 from './DarkCard2.svelte';
 	export let data: any[] = [];
 	export let title: string = '';
+
+	const pagination = paginationStore();
+	pagination.setTotal(data.length);
+	pagination.setPerPage(10);
 </script>
 
-{#if data.length > 0}
-	<table>
-		<caption>{title}</caption>
-		<thead>
-			<tr>
-				{#each Object.keys(data[0]) as key}
-					<th scope="col">{key}</th>
-				{/each}
-			</tr>
-		</thead>
-		<tbody>
-			{#each data as row}
+<DarkCard2>
+	{#if data.length > 0}
+		<table class="mb-2 text-black">
+			<caption>{title}</caption>
+			<thead>
 				<tr>
-					{#each Object.values(row) as value, index}
-						<td data-label={Object.keys(row)[index]}>{value}</td>
+					{#each Object.keys(data[0]) as key}
+						<th scope="col">{key}</th>
 					{/each}
 				</tr>
-			{/each}
-		</tbody>
-	</table>
-{:else}
-	<p>{$_('no_data_available')}</p>
-{/if}
+			</thead>
+			<tbody>
+				{#each data.slice($pagination.from, $pagination.to) as row}
+					<tr>
+						{#each Object.values(row) as value, index}
+							<td data-label={Object.keys(row)[index]}>{value}</td>
+						{/each}
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+
+		<Pagination
+			{pagination}
+			show={['actions', 'perPage', 'pagination', 'prevPage', 'nextPage']}
+			classes={{ perPage: 'flex-1 text-right', pagination: 'px-8' }}
+		>
+			<div slot="actions">
+				<Button variant="fill" color="primary">Click me</Button>
+			</div>
+		</Pagination>
+	{:else}
+		<p>{$_('no_data_available')}</p>
+	{/if}
+</DarkCard2>
 
 <style>
 	table {

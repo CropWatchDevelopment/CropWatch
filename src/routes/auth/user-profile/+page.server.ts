@@ -1,8 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit'
 import type { Actions, PageServerLoad } from './$types'
 
-export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
-  const { session } = await safeGetSession()
+export const load: PageServerLoad = async ({ locals: { supabase, getSession } }) => {
+  const session = await getSession()
 
   if (!session) {
     throw redirect(303, '/')
@@ -18,14 +18,14 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 }
 
 export const actions: Actions = {
-  update: async ({ request, locals: { supabase, safeGetSession } }) => {
+  update: async ({ request, locals: { supabase, getSession } }) => {
     const formData = await request.formData()
     const fullName = formData.get('fullName') as string
     const username = formData.get('username') as string
     const website = formData.get('website') as string
     const avatarUrl = formData.get('avatarUrl') as string
 
-    const { session } = await safeGetSession()
+    const session = await getSession()
 
     const { error } = await supabase.from('profiles').upsert({
       id: session?.user.id,
@@ -52,8 +52,8 @@ export const actions: Actions = {
       avatarUrl,
     }
   },
-  signout: async ({ locals: { supabase, safeGetSession } }) => {
-    const { session } = await safeGetSession()
+  signout: async ({ locals: { supabase, getSession } }) => {
+    const session = await getSession()
     if (session) {
       await supabase.auth.signOut()
       throw redirect(303, '/')

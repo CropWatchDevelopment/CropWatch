@@ -38,7 +38,10 @@ export const nameToNotation = (name: string) => {
             return '°';
         case 'battery_level':
         case 'battery':
+        case 'Battery':
             return '%';
+        case 'sos':
+            return 'SOS';
         default:
             return '';
     }
