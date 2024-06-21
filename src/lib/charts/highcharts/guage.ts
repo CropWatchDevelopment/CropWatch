@@ -14,7 +14,7 @@ export const HighChartsGuageChart = (data: any[], name: string = '', notation: s
         },
 
         title: {
-            text: 'Speedometer'
+            text: ''
         },
 
         pane: {
@@ -75,7 +75,7 @@ export const HighChartsGuageChart = (data: any[], name: string = '', notation: s
                     Highcharts.defaultOptions.title &&
                     Highcharts.defaultOptions.title.style &&
                     Highcharts.defaultOptions.title.style.color
-                ) || '#333333' : '#333333',
+                ) || 'white' : 'white',
                 style: {
                     fontSize: '16px'
                 }

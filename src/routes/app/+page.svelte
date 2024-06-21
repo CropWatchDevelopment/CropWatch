@@ -15,18 +15,10 @@
 
 <section>
 	<div class="px-4">
-		<!-- JSON -->
-		<!-- BELL -->
-		<div class="py-1 my-5">
-			<!-- <div class="flex justify-end w-full h-7">
-				<img src={bellImage} alt="" />
-			</div> -->
-		</div>
-
 		<!-- TITLE and Filter -->
-		<div class="flex justify-between mb-6">
+		<div class="flex justify-between my-3">
 			<!-- TITLE -->
-			<h2 class=" font-light text-2xl text-surface-100">
+			<h2 class="font-light text-2xl text-surface-100">
 				<Icon data={mdiViewDashboard} class="w-6 h-6" />
 				{$_('dashboardCard.dashboard')}
 			</h2>
@@ -41,7 +33,7 @@
 			</div>
 		</div>
 		<!-- CARDS -->
-		<div class="grid grid-flow-row grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+		<div class="grid grid-flow-row grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mb-3">
 			{#each locations as location}
 				<DashboardCard data={location} />
 			{/each}

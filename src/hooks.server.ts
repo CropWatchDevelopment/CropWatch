@@ -34,6 +34,10 @@ const handleSB: Handle = async ({ event, resolve }) => {
 
   event.locals.getSession = async () => {
     const {
+      data: { user },
+      error,
+    } = await event.locals.supabase.auth.getUser();
+    const {
       data: { session },
     } = await event.locals.supabase.auth.getSession();
 
@@ -41,10 +45,6 @@ const handleSB: Handle = async ({ event, resolve }) => {
       return { user: null };
     }
 
-    const {
-      data: { user },
-      error,
-    } = await event.locals.supabase.auth.getUser();
 
     if (error) {
       // JWT validation has failed

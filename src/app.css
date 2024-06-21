@@ -5,3 +5,9 @@
 .Popover, .Dialog {
     z-index: 10000;
 }
+
+body, html {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
