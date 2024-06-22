@@ -23,7 +23,6 @@
 	let locationWeatherData = writable(null);
 	devices = deviceStore.getDevicesByLocation(locationId);
 
-
 	onMount(async () => {
 		try {
 			const weather = await fetchWeatherData(
@@ -38,7 +37,6 @@
 			loading = false;
 		}
 	});
-
 </script>
 
 <!-- <pre>{JSON.stringify(devices, null, 2)}</pre> -->
@@ -100,8 +98,8 @@
 				<Collapse classes={{ root: 'shadow-md pr-2 bg-white' }}>
 					<div
 						slot="trigger"
-						class="flex-1 border-l-8 {device.data &&
-						moment().diff(moment(device.data.created_at), 'minutes') > 120
+						class="flex-1 border-l-8 {device &&
+						moment().diff(moment(device.created_at), 'minutes') > 120
 							? 'border-l-red-500'
 							: 'border-l-green-500'}"
 					>
@@ -150,7 +148,10 @@
 						{#each Object.keys(convertObject(device)) as dataPointKey, index}
 							<div class="py-1">
 								<div class="px-3 flex">
-									<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
+									<p class="basis-1/2 text-base">
+										{nameToEmoji(dataPointKey)}
+										{$_(dataPointKey)}
+									</p>
 									<p class="basis-1/2 text-base flex flex-row">
 										{#if dataPointKey === 'created_at'}
 											<Duration
