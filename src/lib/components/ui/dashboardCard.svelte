@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getWeatherImage } from '$lib/utilities/weatherCodeToImage';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { Button, Collapse, DurationUnits, Duration, ProgressCircle } from 'svelte-ux';
 	import { writable, get } from 'svelte/store';
 	import { isDayTime } from '$lib/utilities/isDayTime';
@@ -13,25 +13,19 @@
 	import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
 	import { nameToEmoji } from '$lib/utilities/nameToEmoji';
 	import type { PageData } from '../../../routes/$types';
+	import { deviceStore } from '$lib/stores/device.store';
 
 	export let data: PageData;
 	const locationId = data.location_id;
 	let locationName: string = data.cw_locations.name ?? '--';
 	let loading = true;
-	const devices = writable([]);
+	let devices = [];
 	let locationWeatherData = writable(null);
+	devices = deviceStore.getDevicesByLocation(locationId);
+
 
 	onMount(async () => {
 		try {
-			const response = await fetch(`/api/v1/locations/${locationId}/devices`);
-			const devicesFromApi = await response.json();
-
-			const deviceDataPromises = devicesFromApi.map((device) => loadDeviceDataFor(device));
-			const deviceDataArray = await Promise.all(deviceDataPromises);
-			devicesFromApi.forEach((device, index) => (device.data = deviceDataArray[index]));
-
-			devices.set(devicesFromApi);
-
 			const weather = await fetchWeatherData(
 				data.cw_locations.latitude,
 				data.cw_locations.longitude,
@@ -40,30 +34,14 @@
 			locationWeatherData.set(weather);
 		} catch (err) {
 			console.error('Error loading devices:', err);
-			devices.set([]);
 		} finally {
 			loading = false;
 		}
-
 	});
 
-	const loadDeviceDataFor = async (device) => {
-		if (device) {
-			try {
-				const res = await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`);
-				try {
-					return await res.json();
-				} catch (error) {
-					console.error('No data for device:', device.dev_eui, error);
-				}
-			} catch (err) {
-				console.error('Error loading device data:', err);
-			}
-		}
-		return null;
-	};
 </script>
 
+<!-- <pre>{JSON.stringify(devices, null, 2)}</pre> -->
 <div class="bg-[#E2E2E2] p-0.5 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 	<div
 		class="w-full h-20 relative rounded-2xl bg-blend-overlay bg-no-repeat bg-cover bg-bottom custom-bg"
@@ -111,14 +89,14 @@
 		/>
 	</h2>
 	<div class="flex flex-col text-sm gap-1 pb-4 px-1">
-		{#if $devices.length === 0 && loading}
+		{#if devices.length === 0 && loading}
 			<ProgressCircle class="flex self-center" />
 		{/if}
-		{#if $devices.length === 0 && !loading}
+		{#if devices.length === 0 && !loading}
 			<p class="text-center my-5">{$_('dashboardCard.noDevices')}</p>
 		{/if}
-		{#each $devices as device}
-			{#if device.data}
+		{#each devices as device}
+			{#if device}
 				<Collapse classes={{ root: 'shadow-md pr-2 bg-white' }}>
 					<div
 						slot="trigger"
@@ -130,30 +108,29 @@
 						<div class="my-1 mr-2 border-r-2">
 							<div class="flex flex-col text-center text-base">
 								<div class="flex flex-row justify-left">
-									<b class="text-sm ml-4 text-slate-800">{device.cw_devices.name}</b>
+									<b class="text-sm ml-4 text-slate-800">{device.name}</b>
 								</div>
 								<div class="flex flex-row justify-center">
-									{#if device.data}
+									{#if device}
 										<p class="justify-center m-auto">
-											{#if device.data && device.data.primaryData && device.data.primary_data_notation}
+											{#if device && device.primaryData && device.primary_data_notation}
 												<span>
-													{nameToEmoji(device.data.primaryData)}
-													{device.data[device.data.primaryData]}
+													{nameToEmoji(device.primaryData)}
+													{device[device.primaryData]}
 												</span>
-
 												<small class="text-slate-800"
-													><sup>{device.data.primary_data_notation}</sup></small
+													><sup>{device.primary_data_notation}</sup></small
 												>
 											{:else}
 												N/A
 											{/if}
 										</p>
 										<p class="justify-center m-auto">
-											{#if device.data && device.data.secondaryData && device.data.secondary_data_notation}
-												{nameToEmoji(device.data.secondaryData)}
-												{device.data[device.data.secondaryData]}
+											{#if device && device.secondaryData && device.secondary_data_notation}
+												{nameToEmoji(device.secondaryData)}
+												{device[device.secondaryData]}
 												<small class="text-slate-800"
-													><sup>{device.data.secondary_data_notation}</sup></small
+													><sup>{device.secondary_data_notation}</sup></small
 												>
 											{:else}
 												N/A
@@ -170,44 +147,39 @@
 						<div class="flex px-3 mt-3">
 							<h3 class="text-lg basis-1/3 font-medium mb-2">{$_('dashboardCard.details')}</h3>
 						</div>
-						{#if device.data}
-							{#each Object.keys(convertObject(device.data)) as dataPointKey, index}
-								<div class="py-1">
-									<div class="px-3 flex">
-										<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
-										<p class="basis-1/2 text-base flex flex-row">
-											{#if dataPointKey === 'created_at'}
-												<Duration
-													start={device.data[dataPointKey]}
-													totalUnits={2}
-													minUnits={DurationUnits.Second}
-												/>
-											{:else}
-												{device.data[dataPointKey]}
-												<small class="text-slate-800"
-													><sup>{nameToNotation(dataPointKey)}</sup></small
-												>
-											{/if}
-										</p>
-									</div>
-									{#if Object.keys(convertObject(device.data)).length - 1 !== index}
-										<div class="px-3 pt-2 border-b border-[#7d7d81]"></div>
-									{:else}
-										<div class="px-3 pt-2"></div>
-									{/if}
+						{#each Object.keys(convertObject(device)) as dataPointKey, index}
+							<div class="py-1">
+								<div class="px-3 flex">
+									<p class="basis-1/2 text-base">{$_(dataPointKey)}</p>
+									<p class="basis-1/2 text-base flex flex-row">
+										{#if dataPointKey === 'created_at'}
+											<Duration
+												start={device[dataPointKey]}
+												totalUnits={2}
+												minUnits={DurationUnits.Second}
+											/>
+										{:else}
+											{device[dataPointKey]}
+											<small class="text-slate-800"><sup>{nameToNotation(dataPointKey)}</sup></small
+											>
+										{/if}
+									</p>
 								</div>
-							{/each}
+								{#if Object.keys(convertObject(device)).length - 1 !== index}
+									<div class="px-3 pt-2 border-b border-[#7d7d81]"></div>
+								{:else}
+									<div class="px-3 pt-2"></div>
+								{/if}
+							</div>
+						{/each}
 
-							<Button
-								on:click={() => goto(`app/devices/${device.data.dev_eui}/data`)}
-								variant="fill-light"
-								color="primary"
-								class="w-full mb-1"
-								icon={mdiEye}>{$_('dashboardCard.view')}</Button
-							>
-						{:else}
-							<ProgressCircle />
-						{/if}
+						<Button
+							on:click={() => goto(`app/devices/${device.dev_eui}/data`)}
+							variant="fill-light"
+							color="primary"
+							class="w-full mb-1"
+							icon={mdiEye}>{$_('dashboardCard.view')}</Button
+						>
 					</div>
 				</Collapse>
 			{:else}
