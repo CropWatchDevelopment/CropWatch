@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { writable, type Writable } from 'svelte/store';
+import { writable, type Writable, get } from 'svelte/store';
 
 // Define Device interface
 interface Device {
@@ -11,7 +11,8 @@ interface Device {
 
 // Load initial data from local storage
 const loadFromLocalStorage = () => {
-  const storedData = browser ?? localStorage.getItem('deviceStore');
+  if (!browser) return [];
+  const storedData = localStorage.getItem('deviceStore');
   return storedData ? JSON.parse(storedData) : [];
 };
 
@@ -20,7 +21,9 @@ function createDeviceStore() {
   const { subscribe, set, update }: Writable<Device[]> = writable(loadFromLocalStorage());
 
   const saveToLocalStorage = (items: Device[]) => {
-    localStorage.setItem('deviceStore', JSON.stringify(items));
+    if (browser) {
+      localStorage.setItem('deviceStore', JSON.stringify(items));
+    }
   };
 
   return {
@@ -29,6 +32,8 @@ function createDeviceStore() {
       update(items => {
         const index = items.findIndex(item => item.dev_eui === obj.dev_eui);
         if (index === -1) {
+          // Ensure data array is initialized
+          if (!obj.data) obj.data = [];
           const newItems = [...items, obj];
           saveToLocalStorage(newItems);
           return newItems;
@@ -46,6 +51,10 @@ function createDeviceStore() {
           console.error('Item with dev_eui', dev_eui, 'does not exist.');
           return items;
         } else {
+          // Initialize data array if it does not exist
+          if (!items[index].data) {
+            items[index].data = [];
+          }
           items[index].data.push(newData); // Push new data onto the array
           const newItems = [...items];
           saveToLocalStorage(newItems);
@@ -63,36 +72,20 @@ function createDeviceStore() {
     },
 
     search: (dev_eui: string) => {
-      let found: Device | null = null;
-      update(items => {
-        found = items.find(item => item.dev_eui === dev_eui) || null;
-        return items;
-      });
-      return found;
+      const items = get(deviceStore);
+      return items.find(item => item.dev_eui === dev_eui) || null;
     },
 
     getLatestData: (dev_eui: string) => {
-      let latestData: any = null;
-      update(items => {
-        const device = items.find(item => item.dev_eui === dev_eui);
-        if (device && device.data.length > 0) {
-          latestData = device.data[device.data.length - 1]; // Get the latest data item
-        }
-        return items;
-      });
-      return latestData;
+      const items = get(deviceStore);
+      const device = items.find(item => item.dev_eui === dev_eui);
+      return device && device.data.length > 0 ? device.data[device.data.length - 1] : null;
     },
 
     getDevicesByLocation: (location_id: number) => {
-      let devices: Device[] = [];
-      update(items => {
-        if (!items.length) return [];
-        devices = items.filter(item => item.location_id === location_id);
-        return items;
-      });
-      return devices;
-    },
-    
+      const items = get(deviceStore);
+      return items.filter(item => item.location_id === location_id);
+    }
   };
 }
 

@@ -19,9 +19,8 @@
 	const locationId = data.location_id;
 	let locationName: string = data.cw_locations.name ?? '--';
 	let loading = true;
-	let devices = [];
+	let devices = deviceStore.getDevicesByLocation(locationId);
 	let locationWeatherData = writable(null);
-	devices = deviceStore.getDevicesByLocation(locationId);
 
 	onMount(async () => {
 		try {
@@ -39,7 +38,6 @@
 	});
 </script>
 
-<!-- <pre>{JSON.stringify(devices, null, 2)}</pre> -->
 <div class="bg-[#E2E2E2] p-0.5 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 	<div
 		class="w-full h-20 relative rounded-2xl bg-blend-overlay bg-no-repeat bg-cover bg-bottom custom-bg"
@@ -147,12 +145,15 @@
 						</div>
 						{#each Object.keys(convertObject(device)) as dataPointKey, index}
 							<div class="py-1">
-								<div class="px-3 flex">
-									<p class="basis-1/2 text-base">
+								<div class="flex">
+									<p class="text-base">
 										{nameToEmoji(dataPointKey)}
+									</p>
+									<p class="text-right">
 										{$_(dataPointKey)}
 									</p>
-									<p class="basis-1/2 text-base flex flex-row">
+									<span class="flex-grow" />
+									<p class="text-base flex flex-row align-bottom">
 										{#if dataPointKey === 'created_at'}
 											<Duration
 												start={device[dataPointKey]}

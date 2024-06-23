@@ -1,13 +1,63 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
+	import { deviceStore } from '$lib/stores/device.store.js';
 	import { mdiPlusCircle, mdiViewDashboard } from '@mdi/js';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
+	import { onMount } from 'svelte';
 	import { _ } from 'svelte-i18n';
 	import { Button, Icon } from 'svelte-ux';
 
 	export let data;
 	const { locations } = data;
+	const channels: RealtimeChannel[] = [];
 
+	const loadDeviceDataFor = async (device) => {
+		if (device) {
+			try {
+				const res = await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`);
+				try {
+					return await res.json();
+				} catch (error) {
+					console.error('No data for device:', device.dev_eui, error);
+				}
+			} catch (err) {
+				console.error('Error loading device data:', err);
+			}
+		}
+		return null;
+	};
+
+	onMount(async () => {
+		console.log('APP LOADED');
+		for (let location of data.locations) {
+			const response = await fetch(`/api/v1/locations/${location.location_id}/devices`);
+			const devicesFromApi = await response.json();
+			devicesFromApi.forEach(async (device) => {
+				const device_to_add = await loadDeviceDataFor(device);
+				device_to_add.location_id = location.location_id;
+				device_to_add.name = device.cw_devices.name;
+				deviceStore.add(device_to_add);
+				if (
+					channels.find((channel) => channel.topic === `realtime:${device_to_add.data_table}`) ===
+					undefined
+				) {
+					const channel = data.supabase
+						.channel(device_to_add.data_table)
+						.on(
+							'postgres_changes',
+							{ event: 'INSERT', schema: 'public', table: device_to_add.data_table },
+							(payload) => {
+								console.log('Change received!', payload);
+								deviceStore.updateDevice(device_to_add.dev_eui, payload.new);
+							}
+						)
+						.subscribe();
+					channels.push(channel);
+				}
+			});
+		}
+	});
 </script>
 
 <svelte:head>
@@ -35,7 +85,9 @@
 			</div>
 		</div>
 		<!-- CARDS -->
-		<div class="grid grid-flow-row grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mb-3">
+		<div
+			class="grid grid-flow-row grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mb-3"
+		>
 			{#each locations as location}
 				<DashboardCard data={location} />
 			{/each}

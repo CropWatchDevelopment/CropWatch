@@ -44,6 +44,9 @@ importers:
       svelte-flatpickr:
         specifier: ^3.3.4
         version: 3.3.4(svelte@4.2.18)
+      svelte-grid-extended:
+        specifier: ^1.2.1
+        version: 1.2.1(svelte@4.2.18)
     devDependencies:
       '@event-calendar/core':
         specifier: ^2.7.2
@@ -2513,6 +2516,11 @@ packages:
     resolution: {integrity: sha512-i+QqJRs8zPRKsxv8r2GIk1fsb8cI3ozn3/aHXtViAoNKLy0j4PV7OSWavgEZC1wlAa34qi2hMkUh+vg6qt2DRA==}
     peerDependencies:
       svelte: '>= 3.31.0 < 5.0'
+
+  svelte-grid-extended@1.2.1:
+    resolution: {integrity: sha512-ASEN5L6cHQMsyBkBsG//nR1vrRNJxlzqg0QhmbNLh9r4jp9tMNGg2v2UQ6Bh4jp9IbqIgpX4jRD/Ds/wFzyULg==}
+    peerDependencies:
+      svelte: ^4.0.0
 
   svelte-grid@5.1.2:
     resolution: {integrity: sha512-Suwgb+L3LALhTyA7z4vn87UOJ+xBY6EeKa6MdWqDv/lZOtQgIZ21ry/I6txIn9IC0p8of4AiOXupkSMcZ+DEug==}
@@ -5223,6 +5231,10 @@ snapshots:
   svelte-flatpickr@3.3.4(svelte@4.2.18):
     dependencies:
       flatpickr: 4.6.13
+      svelte: 4.2.18
+
+  svelte-grid-extended@1.2.1(svelte@4.2.18):
+    dependencies:
       svelte: 4.2.18
 
   svelte-grid@5.1.2: {}

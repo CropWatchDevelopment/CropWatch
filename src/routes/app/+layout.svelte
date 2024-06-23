@@ -6,58 +6,12 @@
 	import { ProgressCircle, Drawer, Button, Icon, AppBar, AppLayout } from 'svelte-ux';
 	import { navigating } from '$app/stores';
 	import Close from '$lib/images/UI/cw_Close Button.svg';
-	import { dev } from '$app/environment';
 	import { mdiBell, mdiMenu } from '@mdi/js';
-	import { deviceStore } from '$lib/stores/device.store.js';
-	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	export let data;
 	$: ({ supabase } = data);
-	const channels: RealtimeChannel[] = [];
 
-	const loadDeviceDataFor = async (device) => {
-		if (device) {
-			try {
-				const res = await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`);
-				try {
-					return await res.json();
-				} catch (error) {
-					console.error('No data for device:', device.dev_eui, error);
-				}
-			} catch (err) {
-				console.error('Error loading device data:', err);
-			}
-		}
-		return null;
-	};
-
-	onMount(async () => {
-		for (let location of data.locations) {
-			const response = await fetch(`/api/v1/locations/${location.location_id}/devices`);
-			const devicesFromApi = await response.json();
-			devicesFromApi.forEach(async (device) => {
-				const device_to_add = await loadDeviceDataFor(device);
-				device_to_add.location_id = location.location_id;
-				device_to_add.name = device.cw_devices.name;
-				// device_to_add.name = device.cw_devices.name;
-				deviceStore.add(device_to_add);
-				if (channels.find((channel) => channel.topic === `realtime:${device_to_add.data_table}`) === undefined) {
-					const channel = data.supabase
-						.channel(device_to_add.data_table)
-						.on(
-							'postgres_changes',
-							{ event: 'INSERT', schema: 'public', table: device_to_add.data_table },
-							(payload) => {
-								console.log('Change received!', payload);
-								deviceStore.updateDevice(device_to_add.dev_eui, payload.new);
-							}
-						)
-						.subscribe();
-					channels.push(channel);
-				}
-			});
-		}
-
+	onMount(() => {
 		const {
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((_session) => {

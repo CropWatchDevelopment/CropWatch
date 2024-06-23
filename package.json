@@ -72,6 +72,7 @@
 		"jsqr": "^1.4.0",
 		"moment": "^2.30.1",
 		"qr-scanner": "^1.4.2",
-		"svelte-flatpickr": "^3.3.4"
+		"svelte-flatpickr": "^3.3.4",
+		"svelte-grid-extended": "^1.2.1"
 	}
 }
