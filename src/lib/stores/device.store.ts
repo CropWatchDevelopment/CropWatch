@@ -5,6 +5,7 @@ import { writable, type Writable, get } from 'svelte/store';
 interface Device {
   dev_eui: string;
   name: string;
+  location_id: number; // Ensure location_id is included
   data: any[]; // Array to store multiple data items
   [key: string]: any; // Additional properties can be dynamically added
 }
@@ -37,14 +38,11 @@ function createDeviceStore() {
           const newItems = [...items, obj];
           saveToLocalStorage(newItems);
           return newItems;
-        } else {
-          console.error('Item with dev_eui', obj.dev_eui, 'already exists.');
-          return items;
         }
       });
     },
 
-    updateDevice: (dev_eui: string, newData: any) => {
+    updateDevice: (dev_eui: string, newData: any, location_id: number) => {
       update(items => {
         const index = items.findIndex(item => item.dev_eui === dev_eui);
         if (index === -1) {
@@ -55,10 +53,10 @@ function createDeviceStore() {
           if (!items[index].data) {
             items[index].data = [];
           }
+          newData['location_id'] = location_id; // Ensure location_id is included
           items[index].data.push(newData); // Push new data onto the array
-          const newItems = [...items];
-          saveToLocalStorage(newItems);
-          return newItems;
+          items[index] = { ...items[index], data: [...items[index].data] }; // Ensure reactivity and correct location
+          return items;
         }
       });
     },
