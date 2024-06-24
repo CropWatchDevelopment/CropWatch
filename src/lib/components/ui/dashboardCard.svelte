@@ -183,6 +183,6 @@
 
 <style>
 	.text-shadow {
-		text-shadow: black 5px 5px 3px;
+		text-shadow: black 2px 2px 5px;
 	}
 </style>
