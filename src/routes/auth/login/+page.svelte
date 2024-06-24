@@ -7,7 +7,16 @@
 	import { mdiAccountPlus, mdiLockQuestion, mdiKeyArrowRight } from '@mdi/js';
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { onMount } from 'svelte';
+	import UtilButton from '$lib/components/ui/UtilButton.svelte';
 	export let form;
+	
+	// Should be moved to location page
+	import History from '$lib/images/UI/history.svg'
+	import Permissions from '$lib/images/UI/permissions.svg'
+	import Rules from '$lib/images/UI/rules.svg'
+	import Settings from '$lib/images/UI/settings.svg'
+	
+
 
 	let loggingIn: boolean = false;
 	let rememberMe: boolean = false;
@@ -152,6 +161,13 @@
 			</div>
 		</div>
 	</div>
+</div>
+<!-- DELETE AFTER IMPLEMENTING -->
+<div>
+	<UtilButton title="History" img={History} href="/"/>
+	<UtilButton title="Rules and Custom Alerts" img={Rules} href="/"/>
+	<UtilButton title="Settings" img={Settings} href="/"/>
+	<UtilButton title="Permissions" img={Permissions} href="/"/>
 </div>
 
 <style>

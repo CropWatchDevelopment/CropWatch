@@ -30,7 +30,7 @@
 	};
 </script>
 
-<div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative  px-4 pb-12">
+<div class="bg-gradient-to-b from-[#4091F1] to-[#70d4f2] relative  px-4 pb-12">
 	<div class="mt-8 flex justify-between">
 		<Back previousPage={'/app'} />
 		<NotificationsBell />

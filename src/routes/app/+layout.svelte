@@ -39,7 +39,7 @@
 	let rightOpen = false;
 </script>
 
-<div class="bg-primary text-surface-300 py-2 static">
+<div class="bg-[#298A3F] text-surface-300 py-2 static">
 	<nav>
 		<div class="flex justify-between px-4 md:px-12 md:py-4 items-center">
 			<!-- HOME/LOGO BUTTON -->
@@ -136,7 +136,7 @@
 		</div>
 	</nav>
 </div>
-<div class="app background-gradient">
+<div class="app bg-[#4091F1]">
 	{#if $navigating || $isLoading}
 		<div
 			class="my-auto mx-auto flex flex-col justify-center align-middle items-center text-surface-100"
