@@ -11,8 +11,6 @@
 	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
 
 	let dev_eui = data.at(0).dev_eui;
 	let temperature = data.at(0).soil_temperatureC;

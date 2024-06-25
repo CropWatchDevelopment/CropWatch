@@ -4,13 +4,10 @@
 	import TempHumidityCard from '../TempHumidityCard.svelte';
 	import DarkCard from './../DarkCard.svelte';
 	import { DateRangeField, PeriodType } from 'svelte-ux';
-	import SensorFooterControls from '../SensorFooterControls.svelte';
 	import { _ } from 'svelte-i18n';
 	import { subDays } from 'date-fns';
 
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
 
 	let dev_eui = data.at(0).dev_eui;
 	const temperature = data.at(0).temperatureC;

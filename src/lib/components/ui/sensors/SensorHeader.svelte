@@ -2,14 +2,12 @@
 	import { Duration } from 'svelte-ux';
 
 	import Back from '../Back.svelte';
-	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 	import { _ } from 'svelte-i18n';
 
 	import ActiveImage from '$lib/images/UI/cw-10.svg';
 	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
 
 	export let sensorName: string = 'NS';
-	export let dev_eui: string = 'NS';
 	export let lastSeen: Date = new Date();
 	export let isActiveRecently: boolean = true;
 </script>

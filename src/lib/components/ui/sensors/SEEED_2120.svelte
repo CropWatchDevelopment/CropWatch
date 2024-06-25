@@ -20,10 +20,6 @@
 	import { isDayTime } from '$lib/utilities/isDayTime';
 
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
-	export let latitude;
-	export let longitude;
 
 	let dev_eui = data.at(0).dev_eui;
 	const humidity = data.at(0).humidity;

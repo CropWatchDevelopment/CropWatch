@@ -7,7 +7,6 @@
 
 	export let data;
 	export let sensorName = 'NS';
-	export let permissions = 0;
 	let dev_eui = data.at(0).dev_eui;
 	const lastSeen: Date = data.at(0).created_at;
 	$: status = data.at(-1).fireAlarm;

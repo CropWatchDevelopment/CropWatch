@@ -124,10 +124,4 @@
 			border-bottom: 0;
 		}
 	}
-
-	/* general styling */
-	body {
-		font-family: 'Open Sans', sans-serif;
-		line-height: 1.25;
-	}
 </style>
