@@ -11,8 +11,6 @@
 	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
 
 	let dev_eui = data.at(0).dev_eui;
 	let temperature = data.at(0).soil_temperatureC;
@@ -35,7 +33,7 @@
 			{
 				// Secondary yAxis
 				title: {
-					text: $_('temperature'),
+					text: '',
 					style: {
 						color: 'red'
 					}
@@ -66,7 +64,7 @@
 			{
 				// Secondary yAxis
 				title: {
-					text: $_('humidity'),
+					text: '',
 					style: {
 						color: 'lightblue'
 					}
@@ -84,33 +82,13 @@
 	);
 </script>
 
-<div class="m-4">
-	<div class="flex flex-row">
-		<img
-			src={isActiveRecently ? ActiveImage : inActiveImage}
-			alt={isActiveRecently ? 'Active Image' : 'in-active Image'}
-			class="w-14 h-14 mr-4"
-		/>
-		<div class="flex flex-col justify-center">
-			<div class="flex flex-row text-neutral-content">
-				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
-				<EditSensorNameDialog {dev_eui} bind:currentSensorName={sensorName} />
-			</div>
-			<p class="text-slate-500">
-				{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} />
-				{$_('ago')}
-			</p>
-		</div>
-	</div>
-	<DarkCard title={$_('soil_temperature')} value={temperature} optimalValue={20} unit={'ºC'}>
-		<div class="chart" use:Highcharts={tempConfig} />
-	</DarkCard>
+<DarkCard title={$_('soil_temperature')} value={temperature} optimalValue={20} unit={'ºC'}>
+	<div class="chart" use:Highcharts={tempConfig} />
+</DarkCard>
 
-	<DarkCard title={$_('soil_moisture')} value={moisture} optimalValue={40} unit={'%'}>
-		<div class="chart" use:Highcharts={moistureConfig} />
-	</DarkCard>
+<DarkCard title={$_('soil_moisture')} value={moisture} optimalValue={40} unit={'%'}>
+	<div class="chart" use:Highcharts={moistureConfig} />
+</DarkCard>
 
-	<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'dS/m'} optimalValue={1}></DarkCard>
+<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'dS/m'} optimalValue={1}></DarkCard>
 
-	<SensorFooterControls />
-</div>

@@ -1,7 +1,7 @@
 import { redirect, type RequestHandler } from "@sveltejs/kit";
 
-export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
-  const { session } = await safeGetSession();
+export const GET: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
+  const session = await getSession();
   if (!session) {
     throw redirect(303, '/auth/unauthorized');
   }
@@ -23,7 +23,6 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     .limit(1)
     .single();
     const { data, error } = await baseQuery;
-    console.log(data, error)
 
   if (error) {
     return new Response(

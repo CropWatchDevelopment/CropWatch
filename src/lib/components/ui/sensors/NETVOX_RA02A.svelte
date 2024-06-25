@@ -4,11 +4,9 @@
 	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 	import ActiveImage from '$lib/images/UI/cw-10.svg';
 	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
-	import { supabase } from '$lib/supabaseClient';
 
 	export let data;
 	export let sensorName = 'NS';
-	export let permissions = 0;
 	let dev_eui = data.at(0).dev_eui;
 	const lastSeen: Date = data.at(0).created_at;
 	$: status = data.at(-1).fireAlarm;
@@ -16,7 +14,7 @@
 
 	// ALERM! 010A011C0100012C000000
 
-	const channels = supabase
+	const channels = data.supabase
 		.channel('custom-insert-channel')
 		.on(
 			'postgres_changes',

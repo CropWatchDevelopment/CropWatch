@@ -1,7 +1,7 @@
 import { redirect, type RequestHandler } from "@sveltejs/kit";
 
-export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSession } }) => {
-  const { session } = await safeGetSession();
+export const GET: RequestHandler = async ({ url, locals: { supabase, getSession } }) => {
+  const session = await getSession();
   if (!session) {
     throw redirect(303, '/auth/unauthorized');
   }
@@ -17,8 +17,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
     .range(+startingPage, +itemsPerPage)
     ;
   return new Response(
-    JSON.stringify(data) ||
-    error,
+    JSON.stringify(data || error),
     {
       status: 200,
       statusText: 'OK',
@@ -28,8 +27,8 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
     });
 }
 
-export const POST: RequestHandler = async ({ url, request, locals: { supabase, safeGetSession } }) => {
-  const { session } = await safeGetSession();
+export const POST: RequestHandler = async ({ url, request, locals: { supabase, getSession } }) => {
+  const session = await getSession();
   if (!session) {
     throw redirect(303, '/auth/unauthorized');
   }
@@ -94,15 +93,4 @@ export const POST: RequestHandler = async ({ url, request, locals: { supabase, s
     }
 
     return redirect(303, `/api/v1/locations/${data[0].location_id}`);
-
-  // return new Response(
-  //   JSON.stringify(data) ||
-  //   JSON.stringify(permsError),
-  //   {
-  //     status: permsError ? 500 : 200,
-  //     statusText: permsError ? 'Internal Server Error' : 'OK',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     }
-  //   });
 }

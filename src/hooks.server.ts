@@ -32,30 +32,27 @@ const handleSB: Handle = async ({ event, resolve }) => {
     },
   })
 
-  /**
-     * Unlike `supabase.auth.getSession`, which is unsafe on the server because it
-     * doesn't validate the JWT, this function validates the JWT by first calling
-     * `getUser` and aborts early if the JWT signature is invalid.
-     */
-  event.locals.safeGetSession = async () => {
-    const {
-      data: { session },
-    } = await event.locals.supabase.auth.getSession()
-    if (!session) {
-      return { session: null, user: null }
-    }
-
+  event.locals.getSession = async () => {
     const {
       data: { user },
       error,
-    } = await event.locals.supabase.auth.getUser()
-    if (error) {
-      // JWT validation has failed
-      return { session: null, user: null }
+    } = await event.locals.supabase.auth.getUser();
+    const {
+      data: { session },
+    } = await event.locals.supabase.auth.getSession();
+
+    if (!session) {
+      return { user: null };
     }
 
-    return { session, user }
-  }
+
+    if (error) {
+      // JWT validation has failed
+      return { user: null };
+    }
+
+    return { user };
+  };
 
   return resolve(event, {
     filterSerializedResponseHeaders(name) {

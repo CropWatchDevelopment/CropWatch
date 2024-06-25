@@ -236,6 +236,13 @@
   "temperatureC": "温度",
   "air_temperature": "温度",
   "air_humidity": "相対湿度",
+  "rainfall": "雨量",
+  "pressure": "気圧",
+  "wind_speed": "風速",
+  "wind_direction": "風向",
+  "lux": "照度",
+  "uv": "紫外線",
+  "created_at": "最終接続",
   "co2_level": "CO²",
   "soil_EC": "土壌EC",
   "vpd": "飽差",
@@ -293,5 +300,44 @@
     "download_selected": "選択したデータをダウンロード",
     "search_text": "検索"
   },
-  "no_data_available": "データがありません"
+  "no_data_available": "データがありません",
+  "weatherStation": {
+    "Current_Weather": "現在の天気",
+    "windspeedDirection": "風速/風向",
+    "uvLux": "紫外線/照度",
+    "rainfallPressure": "雨量/気圧",
+    "maxTemperature": "最高温度",
+    "minimumTemperature": "最低温度",
+    "averageTemperature": "平均温度",
+    "maxRainfall": "最大雨量",
+    "averageRainfall": "平均雨量",
+    "maxUvLux": "最大紫外線/照度",
+    "averageUvLux": "平均紫外線/照度",
+    "barometricPressure": "気圧",
+    "maxPressure": "最大気圧",
+    "averagePressure": "平均気圧",
+    "minimumPressure": "最低気圧",
+    "windSpeed": "風速",
+    "averageWindSpeed": "平均風速",
+    "maxWindSpeed": "最大風速"
+  },
+  "compassGuage": {
+    "N": "北",
+    "NE": "北東",
+    "E": "東",
+    "SE": "南東",
+    "S": "南",
+    "SW": "南西",
+    "W": "西",
+    "NW": "北西"
+  },
+  "uvGuage": {
+    "Low": "低",
+    "Moderate": "中",
+    "High": "高",
+    "uvIndex": "紫外線指数"
+  },
+  "luxGuage": {
+    "title": "照度"
+  }
 }

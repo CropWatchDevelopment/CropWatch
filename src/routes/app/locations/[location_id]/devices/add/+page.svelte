@@ -17,7 +17,6 @@
 	import { browser } from '$app/environment';
 	import type { Tables } from '../../../../../../database.types';
 	import { mdiCalendarStart, mdiFloppy, mdiMapMarker, mdiQrcode } from '@mdi/js';
-	import { supabase } from '$lib/supabaseClient';
 	import { onDestroy, onMount } from 'svelte';
 	import QrScanner from 'qr-scanner';
 	import { toast } from '@zerodevx/svelte-toast';
@@ -54,7 +53,6 @@
 			stopScanner();
 		} else {
 			qrScanner = new QrScanner(videoElem, (result) => {
-				console.log('decoded qr code:', result);
 				try {
 					const data = JSON.parse(result);
 					stopScanner();

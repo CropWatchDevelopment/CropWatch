@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
+	import { _ } from 'svelte-i18n';
 
 	export let luxValue = 0; // Example Lux value
 
@@ -93,7 +94,7 @@
 				.attr('dy', '-1.0em')
 				.attr('font-size', '16px')
 				.attr('fill', 'black')
-				.text('LUX');
+				.text($_(`luxGuage.title`));
 
 			// Lux value number
 			svg
@@ -133,7 +134,7 @@
 				.attr('dy', '-2em')
 				.attr('font-size', '16px')
 				.attr('fill', 'white')
-				.text('LUX');
+				.text($_(`luxGuage.title`));
 
 			// Lux value number
 			svg

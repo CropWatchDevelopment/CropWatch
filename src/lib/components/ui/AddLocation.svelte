@@ -47,7 +47,6 @@
 				return res.json();
 			})
 			.then((data) => {
-				console.log(data);
 				goto(`/app/locations/${data.location_id}`);
 			})
 			.catch((err) => {

@@ -12,10 +12,8 @@
 	import { Chart, Svg, Group, Axis, Spline, Points } from 'layerchart';
 	import { _ } from 'svelte-i18n';
 	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
-	
+
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
 
 	let dev_eui = data.at(0).dev_eui;
 	let temperature = data.at(0).soil_temperatureC;
@@ -96,76 +94,54 @@
 	);
 </script>
 
-<div class="m-4">
-	<div class="flex flex-row">
-		<img
-			src={isActiveRecently ? ActiveImage : inActiveImage}
-			alt={isActiveRecently ? 'Active Image' : 'in-active Image'}
-			class="w-14 h-14 mr-4"
-		/>
-		<div class="flex flex-col">
-			<div class="flex flex-row text-neutral-content">
-				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
-				<EditSensorNameDialog {dev_eui} bind:currentSensorName={sensorName} />
-			</div>
-			<p class="text-slate-500">
-				{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} />
-				{$_('ago')}
-			</p>
-		</div>
-	</div>
-	<DarkCard title={$_('soil_temperature')} value={temperature} optimalValue={-20} unit={'ºC'}>
-		<div class="chart" use:Highcharts={tempConfig} />
-	</DarkCard>
+<DarkCard title={$_('soil_temperature')} value={temperature} optimalValue={-20} unit={'ºC'}>
+	<div class="chart" use:Highcharts={tempConfig} />
+</DarkCard>
 
-	<DarkCard title={$_('soil_moisture')} value={moisture} optimalValue={20} unit={'%'}>
-		<div class="chart" use:Highcharts={moistureConfig} />
-	</DarkCard>
+<DarkCard title={$_('soil_moisture')} value={moisture} optimalValue={20} unit={'%'}>
+	<div class="chart" use:Highcharts={moistureConfig} />
+</DarkCard>
 
-	<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'µS/m'} optimalValue={null}></DarkCard>
+<DarkCard title={$_('soil_EC')} value={soil_ec} unit={'µS/m'} optimalValue={null}></DarkCard>
 
-	<DarkCard title={$_('soil_PH')} value={soil_ph} unit={''} optimalValue={null}></DarkCard>
+<DarkCard title={$_('soil_PH')} value={soil_ph} unit={''} optimalValue={null}></DarkCard>
 
-	<DarkCard title={`${$_('soil_N')} / ${$_('soil_P')} / ${$_('soil_K')}`}>
-		<!-- <div class="flex flex-row w-full justify-between flex-wrap mt-3">
+<DarkCard title={`${$_('soil_N')} / ${$_('soil_P')} / ${$_('soil_K')}`}>
+	<!-- <div class="flex flex-row w-full justify-between flex-wrap mt-3">
 			<p class="text-surface-100 text-xl">{$_('soil_N')}: {N}</p>
 			<p class="text-surface-100 text-xl">{$_('soil_P')}: {P}</p>
 			<p class="text-surface-100 text-xl">{$_('soil_K')}: {K}</p>
 		</div> -->
-		<div class="flex flex-col justify-between">
-				<DarkCard title={$_('soil_N')} value={N} unit={'µS/m'} optimalValue={null}></DarkCard>
-				<DarkCard title={$_('soil_P')} value={P} unit={'µS/m'} optimalValue={null}></DarkCard>
-				<DarkCard title={$_('soil_K')} value={K} unit={'µS/m'} optimalValue={null}></DarkCard>
-
-		</div>
-		<div class="h-[300px] p-4 border rounded">
-			<Chart
-				data={npk_array}
-				x="name"
-				xScale={scaleBand()}
-				xDomain={npk_array.map((d) => d.name)}
-				xRange={[0, 2 * Math.PI]}
-				y="value"
-				yRange={({ height }) => [0, height / 2]}
-				yPadding={[0, 10]}
-				padding={{ top: 32, bottom: 8 }}
-			>
-				<Svg>
-					<Group center>
-						<Axis
-							placement="radius"
-							grid={{ class: 'stroke-surface-content/20 fill-surface-200/50' }}
-							ticks={[0, 5, 10]}
-							format={(d) => ''}
-						/>
-						<Axis placement="angle" grid={{ class: 'stroke-surface-content/20' }} />
-						<Spline radial {curve} class="stroke-primary fill-primary/20" />
-						<Points radial class="fill-primary stroke-surface-200" />
-					</Group>
-				</Svg>
-			</Chart>
-		</div>
-	</DarkCard>
-
-	<SensorFooterControls />
-</div>
+	<div class="flex flex-col justify-between">
+		<DarkCard title={$_('soil_N')} value={N} unit={'µS/m'} optimalValue={null}></DarkCard>
+		<DarkCard title={$_('soil_P')} value={P} unit={'µS/m'} optimalValue={null}></DarkCard>
+		<DarkCard title={$_('soil_K')} value={K} unit={'µS/m'} optimalValue={null}></DarkCard>
+	</div>
+	<div class="h-[300px] p-4 border rounded">
+		<Chart
+			data={npk_array}
+			x="name"
+			xScale={scaleBand()}
+			xDomain={npk_array.map((d) => d.name)}
+			xRange={[0, 2 * Math.PI]}
+			y="value"
+			yRange={({ height }) => [0, height / 2]}
+			yPadding={[0, 10]}
+			padding={{ top: 32, bottom: 8 }}
+		>
+			<Svg>
+				<Group center>
+					<Axis
+						placement="radius"
+						grid={{ class: 'stroke-surface-content/20 fill-surface-200/50' }}
+						ticks={[0, 5, 10]}
+						format={(d) => ''}
+					/>
+					<Axis placement="angle" grid={{ class: 'stroke-surface-content/20' }} />
+					<Spline radial {curve} class="stroke-primary fill-primary/20" />
+					<Points radial class="fill-primary stroke-surface-200" />
+				</Group>
+			</Svg>
+		</Chart>
+	</div>
+</DarkCard>

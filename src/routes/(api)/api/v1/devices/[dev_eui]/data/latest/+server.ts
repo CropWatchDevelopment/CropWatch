@@ -1,9 +1,9 @@
 import { SensorDtoSelector } from "$lib/sensor-dto/sensorDtoSelector";
 import { redirect, type RequestHandler } from "@sveltejs/kit";
 
-export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
+export const GET: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
     try {
-        const { session } = await safeGetSession();
+        const session = await getSession();
         if (!session) {
             throw redirect(303, '/auth/unauthorized');
         }

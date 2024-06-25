@@ -3,92 +3,109 @@
 	import Highcharts from '$lib/actions/highcharts.action';
 	import TempHumidityCard from '../TempHumidityCard.svelte';
 	import DarkCard from './../DarkCard.svelte';
-	import ActiveImage from '$lib/images/UI/cw-10.svg';
-	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
-	import { Duration } from 'svelte-ux';
-	import SensorFooterControls from '../SensorFooterControls.svelte';
+	import { DateRangeField, PeriodType } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
-	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
+	import { subDays } from 'date-fns';
 
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
 
 	let dev_eui = data.at(0).dev_eui;
 	const temperature = data.at(0).temperatureC;
 	const humidity = data.at(0).humidity;
-	const dewPoint = data.at(0).dewPointC;
 	const vpd = data.at(0).vpd;
 	const lastSeen: Date = data.at(0).created_at;
-	const isActiveRecently = true;
 
-	$: config = HighChartsTimeSeriesChart(
+	let today = new Date();
+	let value = {
+		from: subDays(today, 3),
+		to: today,
+		periodType: PeriodType.Day
+	};
+
+	let config = null;
+
+	const filterDataByDate = (e) => {
+		config = null;
+		value = e.detail;
+		fetch(
+			`/api/v1/devices/${dev_eui}/data?from=${value.from.toISOString()}&to=${value.to.toISOString()}`
+		)
+			.then((res) => res.json())
+			.then((data) => {
+				data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+				data = data;
+				config = HighChartsTimeSeriesChart(
+					[
+						{
+							type: 'line',
+							yAxis: 0,
+							name: $_('temperatureC'),
+							color: 'red',
+							data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
+						},
+						{
+							type: 'line',
+							yAxis: 1,
+							name: $_('humidity'),
+							color: 'lightblue',
+							data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
+						}
+					],
+					[
+						{
+							// Secondary yAxis
+							title: {
+								text: '',
+								style: {
+									color: 'red'
+								}
+							},
+							labels: {
+								format: '{value} °C',
+								style: {
+									color: 'red'
+								}
+							},
+							opposite: false
+						},
+						{
+							// Secondary yAxis
+							title: {
+								text: '',
+								style: {
+									color: 'lightblue'
+								}
+							},
+							labels: {
+								format: '{value} %',
+								style: {
+									color: 'lightblue'
+								}
+							},
+							opposite: true
+						}
+					],
+					`${$_('temperatureC')}/${$_('humidity')}`
+				);
+			});
+	};
+
+
+	$: dewPointConfig = HighChartsTimeSeriesChart(
 		[
 			{
 				type: 'line',
 				yAxis: 0,
-				name: $_('temperatureC'),
+				name: $_('dewPointC'),
 				color: 'red',
-				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
-			},
-			{
-				type: 'line',
-				yAxis: 1,
-				name: $_('humidity'),
-				color: 'lightblue',
-				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
+				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
 			}
 		],
 		[
 			{
 				// Secondary yAxis
 				title: {
-					text: $_('temperature'),
-					style: {
-						color: 'red'
-					}
-				},
-				labels: {
-					format: '{value} °C',
-					style: {
-						color: 'red'
-					}
-				},
-				opposite: false
-			},
-			{
-				// Secondary yAxis
-				title: {
-					text: $_('humidity'),
-					style: {
-						color: 'lightblue'
-					}
-				},
-				labels: {
-					format: '{value} %',
-					style: {
-						color: 'lightblue'
-					}
-				},
-				opposite: true
-			}
-		],
-		''
-	);
-
-	$: dewPointConfig = HighChartsTimeSeriesChart([
-		{
-			type: 'line',
-			yAxis: 0,
-			name: $_('dewPointC'),
-			color: 'red',
-			data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
-		}],
-		[
-			{
-				// Secondary yAxis
-				title: {
-					text: $_('dewPointC'),
+					text: '',
 					style: {
 						color: 'red'
 					}
@@ -106,31 +123,32 @@
 	);
 </script>
 
-<div class="m-4">
-	<div class="flex flex-row">
-		<img
-			src={isActiveRecently ? ActiveImage : inActiveImage}
-			alt={isActiveRecently ? 'Active Image' : 'in-active Image'}
-			class="w-14 h-14 mr-4"
-		/>
-		<div class="flex flex-col">
-			<div class="flex flex-row text-neutral-content">
-				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
-				<EditSensorNameDialog {dev_eui} bind:currentSensorName={sensorName} />
-			</div>
-			<p class="text-slate-500">{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} /> {$_('ago')}</p>
-		</div>
-	</div>
+
+
 	<TempHumidityCard {temperature} {humidity} />
-	<DarkCard title={$_('temperature')} value={temperature} optimalValue={-20} unit={'ºC'} />
-	<DarkCard title={$_('humidity')} value={humidity} optimalValue={0} unit={'%'} />
-	<DarkCard title={$_('temp_humidity')}>
-		<div class="chart" use:Highcharts={config} />
-	</DarkCard>
-	<DarkCard title={$_('dewPointC')} value={dewPoint} optimalValue={null} unit={'ºC'}>
-		<div class="chart" use:Highcharts={dewPointConfig} />
-	</DarkCard>
+
+	<DateRangeField
+		periodTypes={[]}
+		label=""
+		maxDate={new Date()}
+		on:change={(e) => filterDataByDate(e)}
+		bind:value
+		size="lg"
+		stepper
+		rounded
+		center
+		class="w-full"
+	/>
+
+	<h1 class="text-white my-5">{$_('temperatureC')}/{$_('humidity')}</h1>
+
+	{#key data}
+	{#if config}
+	<div class="chart" use:Highcharts={config} />
+	<h1 class="text-white my-3">{$_('dewPointC')}</h1>
+	<div class="chart" use:Highcharts={dewPointConfig} />
+		{/if}
+	{/key}
+
 	<DarkCard title={$_('vpd')} value={vpd} optimalValue={null} unit={'kPa'} />
 
-	<SensorFooterControls {permissions} />
-</div>

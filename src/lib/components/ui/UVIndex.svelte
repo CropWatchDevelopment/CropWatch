@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import * as d3 from 'd3';
+    import { _ } from 'svelte-i18n';
 
     export let uvIndex = 4.0;  // Example UV index value
     export let uvLevel = "Moderate";  // Example UV level
@@ -28,7 +29,7 @@
             .attr('dy', '-1.5em')
             .attr('font-size', '16px')
             .attr('fill', 'white')
-            .text('UV INDEX');
+            .text($_(`uvGuage.uvIndex`));
 
         // UV index number
         svg.append('text')
@@ -41,10 +42,10 @@
         // UV level label
         svg.append('text')
             .attr('text-anchor', 'middle')
-            .attr('dy', '2em')
+            .attr('dy', '2.5em')
             .attr('font-size', '16px')
             .attr('fill', '#f4d03f')
-            .text(uvLevel);
+            .text($_(`uvGuage.${uvLevel}`));
 
         // Gradient scale
         const scaleHeight = 80;  // Shorter scale
