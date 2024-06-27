@@ -339,5 +339,10 @@
   },
   "luxGuage": {
     "title": "照度"
+  },
+  "gateways": {
+    "title": "Gateways",
+    "offline": "Gateway Offline",
+    "online": "Gateway Offline"
   }
 }
