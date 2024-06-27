@@ -1,5 +1,7 @@
 <h1 align="center">CropWatch Web UI</h1>
 <p align="center"><i>Our PWA Web Application for viewing and controlling your farm from anywhere and everwhere.</i></p>
+[![CodeQL](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
+[![CodeQL](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=develop)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
 <div align="center">
 
 </div>

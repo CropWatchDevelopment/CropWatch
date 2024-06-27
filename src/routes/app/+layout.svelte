@@ -50,6 +50,9 @@
 						<p>
 							<a href="/app">All Locations</a>
 						</p>
+						<p>
+							<a href="/app/gateways">Gateway Status</a>
+						</p>
 					</div>
 					<div class="text-lg mt-24">
 						<form action="/auth/logout?/logout" method="post">

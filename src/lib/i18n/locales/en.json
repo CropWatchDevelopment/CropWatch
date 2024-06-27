@@ -323,5 +323,10 @@
   },
   "luxGuage": {
     "title": "LUX"
+  },
+  "gateways": {
+    "title": "Gateways",
+    "online": "Gateway Online",
+    "offline": "Gateway Offline"
   }
 }
