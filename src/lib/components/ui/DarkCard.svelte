@@ -5,7 +5,7 @@
 	export let optimalValue: number | string | null = null;
 	export let unit: string | null = null;
 
-	const differenceValue = value ? (+value - +(optimalValue ?? 0)).toFixed(2) : null;
+	// const differenceValue = value ? (+value - +(optimalValue ?? 0)).toFixed(2) : null;
 
 	function checkValue(value: number) {
 		if (value > 0) {

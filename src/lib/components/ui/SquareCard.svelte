@@ -1,6 +1,5 @@
 <script lang="ts">
     export let title;
-    export let titleColor;
     export let value;
     export let unit;
     export let message;
