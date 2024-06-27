@@ -179,7 +179,7 @@
 				color: '#2cafff',
 				data: data.map((d: any) => [
 					new Date(d.created_at).valueOf(),
-					+(d.wind_speed * 3.6).toFixed(2)
+					+(d.wind_speed).toFixed(2)
 				])
 			}
 		],
@@ -365,12 +365,12 @@
 	<div class="chart" use:Highcharts={windSpeedChartConfig} />
 	<DarkCard
 		title="{$_('weatherStation.maxWindSpeed')}"
-		value={Math.max(...data.map((periodData) => periodData.wind_speed * 3.6)).toFixed(2)}
-		unit="km/h"
+		value={Math.max(...data.map((periodData) => periodData.wind_speed)).toFixed(2)}
+		unit="m/s"
 	/>
 	<DarkCard
 		title="{$_('weatherStation.averageWindSpeed')}"
 		value={(data.reduce((total, next) => total + next.wind_speed, 0) / data.length).toFixed(2)}
-		unit="km/h"
+		unit="m/s"
 	/>
 </DarkCard>
