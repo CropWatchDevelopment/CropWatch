@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
+	import DeleteSensorDialog from '$lib/components/ui/DeleteSensorDialog.svelte';
 	import EditSensorNameDialog from '$lib/components/ui/EditSensorNameDialog.svelte';
 	import historyImage from '$lib/images/UI/cw_settings.svg';
 
@@ -30,4 +31,5 @@
 		{JSON.stringify(data)}
 	{/await}
 	<EditSensorNameDialog bind:currentSensorName={sensorName} />
+	<DeleteSensorDialog bind:dev_eui={$page.params.dev_eui} />
 </div>

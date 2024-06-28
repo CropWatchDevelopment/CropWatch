@@ -39,6 +39,8 @@ function createDeviceStore() {
           saveToLocalStorage(newItems);
           return newItems;
         }
+        // If the device already exists, return the current state without changes
+        return items;
       });
     },
 
@@ -56,6 +58,7 @@ function createDeviceStore() {
           newData['location_id'] = location_id; // Ensure location_id is included
           items[index].data.push(newData); // Push new data onto the array
           items[index] = { ...items[index], data: [...items[index].data] }; // Ensure reactivity and correct location
+          saveToLocalStorage(items); // Save the updated items to localStorage
           return items;
         }
       });
