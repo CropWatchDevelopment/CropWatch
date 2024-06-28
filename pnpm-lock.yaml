@@ -151,8 +151,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(svelte@4.2.18)
       svelte-ux:
-        specifier: ^0.62.12
-        version: 0.62.12(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
+        specifier: ^0.71.0
+        version: 0.71.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
       sveltekit-i18n:
         specifier: ^2.4.2
         version: 2.4.2(svelte@4.2.18)
@@ -2493,8 +2493,8 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  sveld@0.19.2:
-    resolution: {integrity: sha512-690sbiEq2cyH6HINJw0f+m9s2wGFX3G8D/EHWnpShAfqTfzWoDUrrqPmul+RyzVJQ5tH5zfbJ98C+4OtR3DUAQ==}
+  sveld@0.20.0:
+    resolution: {integrity: sha512-PQRs0evdOjsFzjHuPu8B/flqbJX2osN2D0++6nl77jhwriQazaEF0pkQAMwPRaSn/kMivvUdWkkPKi1NmHLosg==}
     hasBin: true
 
   svelte-check@3.8.0:
@@ -2575,10 +2575,10 @@ packages:
       typescript:
         optional: true
 
-  svelte-ux@0.62.12:
-    resolution: {integrity: sha512-lkcEEulsqjtJS2a9Vs8aPMqA/vBfSgjnEnkCYl2glbJTjfcfc9pnj6VkrOYvlUHntJF5m6MMKqQTMwe9P7w7kA==}
+  svelte-ux@0.71.0:
+    resolution: {integrity: sha512-Geo4r/BWRZh//gHjGtsk3j/B2Wj8M1jVo/dNpcFcgNQ9lrBJ1RHFCsc23MCE+4zfeNl6MYPVetUREShGiq+cCw==}
     peerDependencies:
-      svelte: ^3.56.0 || ^4.0.0
+      svelte: ^3.56.0 || ^4.0.0 || ^5.0.0-next.120
 
   svelte@4.2.18:
     resolution: {integrity: sha512-d0FdzYIiAePqRJEb90WlJDkjUEx42xhivxN8muUBmfZnP+tzUgz12DJ2hRJi8sIHCME7jeK1PTMgKPSfTd8JrA==}
@@ -4569,7 +4569,7 @@ snapshots:
       posthog-js: 1.139.0
       shapefile: 0.6.6
       svelte: 4.2.18
-      svelte-ux: 0.62.12(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
+      svelte-ux: 0.71.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
       topojson-client: 3.1.0
     transitivePeerDependencies:
       - '@babel/core'
@@ -5173,7 +5173,7 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  sveld@0.19.2(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38):
+  sveld@0.20.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38):
     dependencies:
       '@rollup/plugin-node-resolve': 13.3.0(rollup@2.79.1)
       acorn: 8.11.3
@@ -5267,7 +5267,7 @@ snapshots:
       postcss-load-config: 5.1.0(jiti@1.21.6)(postcss@8.4.38)
       typescript: 5.4.5
 
-  svelte-ux@0.62.12(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18):
+  svelte-ux@0.71.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18):
     dependencies:
       '@floating-ui/dom': 1.6.5
       '@fortawesome/fontawesome-common-types': 6.5.2
@@ -5282,7 +5282,7 @@ snapshots:
       prism-svelte: 0.5.0
       prism-themes: 1.9.0
       prismjs: 1.29.0
-      sveld: 0.19.2(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)
+      sveld: 0.20.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)
       svelte: 4.2.18
       tailwind-merge: 2.3.0
       zod: 3.23.8

@@ -2,9 +2,8 @@
 	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
 	import Highcharts from '$lib/actions/highcharts.action';
 	import DarkCard from './../DarkCard.svelte';
-	import { Duration, ProgressCircle } from 'svelte-ux';
+	import { ProgressCircle } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
-	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
 	import TestCompas from '../TestCompas.svelte';
 	import DarkCard2 from '../DarkCard2.svelte';
 	import {
@@ -16,17 +15,11 @@
 	import UvIndex from '../UVIndex.svelte';
 	import LuxGuage from '../LuxGuage.svelte';
 	import RainPerHourGuage from '../RainPerHourGuage.svelte';
-	import { get, writable } from 'svelte/store';
-	//
-	import nightCloudy from '$lib/images/weather/night/c02n.png';
+	import { writable } from 'svelte/store';
 	import { getWeatherImage } from '$lib/utilities/weatherCodeToImage';
 	import { isDayTime } from '$lib/utilities/isDayTime';
 
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
-	export let latitude;
-	export let longitude;
 
 	let dev_eui = data.at(0).dev_eui;
 	const humidity = data.at(0).humidity;
@@ -186,7 +179,7 @@
 				color: '#2cafff',
 				data: data.map((d: any) => [
 					new Date(d.created_at).valueOf(),
-					+(d.wind_speed * 3.6).toFixed(2)
+					+(d.wind_speed).toFixed(2)
 				])
 			}
 		],
@@ -268,7 +261,7 @@
 
 <DarkCard2>
 	<div class="flex flex-row items-center justify-center">
-		Current Weather
+		{$_('weatherStation.Current_Weather')}
 		<span class="flex-auto" />
 		{#if $locationWeatherData}
 			{#await getWeatherImage($locationWeatherData.weatherCode, isDayTime())}
@@ -283,16 +276,16 @@
 		{/if}
 	</div>
 </DarkCard2>
-<DarkCard title="Wind Speed/Direction">
+<DarkCard title="{$_('weatherStation.windspeedDirection')}">
 	<TestCompas {temperature} {windSpeed} {windDirection} {arrowRotation} {humidity} />
 </DarkCard>
-<DarkCard title="UV/LUX">
+<DarkCard title="{$_('weatherStation.uvLux')}">
 	<div class="grid grid-flow-col grid-cols-2 gap-5 lg:items-center">
 		<UvIndex {uvIndex} uvLevel={uvIndexText} />
 		<LuxGuage {luxValue} />
 	</div>
 </DarkCard>
-<DarkCard title="Rainfall/Pressure">
+<DarkCard title="{$_('weatherStation.rainfallPressure')}">
 	<div class="flex flex-row w-full justify-center">
 		<RainPerHourGuage {rainValue} {pressureValue} />
 	</div>
@@ -300,17 +293,17 @@
 <DarkCard title={$_('temp_humidity')}>
 	<div class="chart" use:Highcharts={config} />
 	<DarkCard
-		title="Max Temperature:"
+		title="{$_('weatherStation.maxTemperature')}"
 		value={Math.max(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
 		unit="ºC"
 	/>
 	<DarkCard
-		title="Average Temperature:"
+		title="{$_('weatherStation.averageTemperature')}"
 		value={(data.reduce((total, next) => total + next.temperatureC, 0) / data.length).toFixed(2)}
 		unit="ºC"
 	/>
 	<DarkCard
-		title="Min Temperature:"
+		title="{$_('weatherStation.minimumTemperature')}"
 		value={Math.min(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
 		unit="ºC"
 	/>
@@ -323,61 +316,61 @@
 >
 	<div class="chart" use:Highcharts={rainBarChartConfig} />
 	<DarkCard
-		title="Max Rainfall:"
+		title="{$_('weatherStation.maxRainfall')}"
 		value={Math.max(...data.map((periodData) => periodData.rainfall)).toFixed(2)}
 		unit=" mm/h"
 	/>
 	<DarkCard
-		title="Average Rainfall:"
+		title="{$_('weatherStation.averageRainfall')}"
 		value={(data.reduce((total, next) => total + next.rainfall, 0) / data.length).toFixed(2)}
 		unit=" mm/h"
 	/>
 </DarkCard>
-<DarkCard title="LUX / UV" value={null} optimalValue={null} unit={'ºC'}>
+<DarkCard title="{$_('weatherStation.uvLux')}" value={null} optimalValue={null} unit={'ºC'}>
 	<div class="chart" use:Highcharts={luxUvChartConfig} />
 	<DarkCard
-		title="Max LUX/UV:"
+		title="{$_('weatherStation.maxUvLux')}"
 		value="{Math.max(...data.map((periodData) => periodData.lux * 3.6)).toFixed(2)} / {Math.max(
 			...data.map((periodData) => periodData.uv * 3.6)
 		).toFixed(2)}"
 		unit=" "
 	/>
 	<DarkCard
-		title="Average LUX/UV:"
+		title="{$_('weatherStation.averageUvLux')}"
 		value="{(data.reduce((total, next) => total + next.lux, 0) / data.length).toFixed(2)} / {(
 			data.reduce((total, next) => total + next.uv, 0) / data.length
 		).toFixed(2)}"
 		unit=" "
 	/>
 </DarkCard>
-<DarkCard title="Barometric Pressure" value={null} optimalValue={null} unit={'ºC'}>
+<DarkCard title="{$_('weatherStation.barometricPressure')}" value={null} optimalValue={null} unit={'ºC'}>
 	<div class="chart" use:Highcharts={pressureChartConfig} />
 	<DarkCard
-		title="Max Pressure:"
+		title="{$_('weatherStation.maxPressure')}"
 		value={Math.max(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
 		unit="kPh"
 	/>
 	<DarkCard
-		title="Average Pressure:"
+		title="{$_('weatherStation.averagePressure')}"
 		value={(data.reduce((total, next) => total + next.pressure / 100, 0) / data.length).toFixed(2)}
 		unit="kPh"
 	/>
 	<DarkCard
-		title="Min Pressure:"
+		title="{$_('weatherStation.minimumPressure')}"
 		value={Math.min(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
 		unit="kPh"
 	/>
 </DarkCard>
-<DarkCard title="Wind Speed" value={null} optimalValue={null} unit={'ºC'}>
+<DarkCard title="{$_('weatherStation.windSpeed')}" value={null} optimalValue={null} unit={'ºC'}>
 	<div class="chart" use:Highcharts={windSpeedChartConfig} />
 	<DarkCard
-		title="Max Wind Speed:"
-		value={Math.max(...data.map((periodData) => periodData.wind_speed * 3.6)).toFixed(2)}
-		unit="km/h"
+		title="{$_('weatherStation.maxWindSpeed')}"
+		value={Math.max(...data.map((periodData) => periodData.wind_speed)).toFixed(2)}
+		unit="m/s"
 	/>
 	<DarkCard
-		title="Average Wind Speed:"
+		title="{$_('weatherStation.averageWindSpeed')}"
 		value={(data.reduce((total, next) => total + next.wind_speed, 0) / data.length).toFixed(2)}
-		unit="km/h"
+		unit="m/s"
 	/>
 </DarkCard>

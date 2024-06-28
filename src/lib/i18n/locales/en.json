@@ -284,5 +284,49 @@
     "search_text": "Filter Data Points"
   },
   "rainfall": "Rainfall",
-  "no_data_available": "No Data Available"
+  "no_data_available": "No Data Available",
+  "weatherStation": {
+    "Current_Weather": "Current Weather",
+    "windspeedDirection": "Wind Speed/Direction",
+    "uvLux": "UV/LUX",
+    "rainfallPressure": "Rainfall/Pressure",
+    "maxTemperature": "Max Temperature",
+    "averageTemperature": "Average Temperature",
+    "minimumTemperature": "Minimum Temperature",
+    "maxRainfall": "Max Rainfall",
+    "averageRainfall": "Average Rainfall",
+    "maxUvLux": "Max UV/LUX:",
+    "averageUvLux": "Average UV/LUX:",
+    "barometricPressure": "Barometric Pressure",
+    "maxPressure": "Maximum Pressure",
+    "averagePressure": "Average Pressure",
+    "minimumPressure": "Minimum Pressure",
+    "windSpeed": "Wind Speed:",
+    "maxWindSpeed": "Max Wind Speed:",
+    "averageWindSpeed": "Average Wind Speed:"
+  },
+  "compassGuage": {
+    "N": "N",
+    "S": "S",
+    "E": "E",
+    "W": "W",
+    "NE": "NE",
+    "NW": "NW",
+    "SE": "SE",
+    "SW": "SW"
+  },
+  "uvGuage": {
+    "uvIndex": "UV Index",
+    "Low": "Low",
+    "Moderate": "Moderate",
+    "High": "High"
+  },
+  "luxGuage": {
+    "title": "LUX"
+  },
+  "gateways": {
+    "title": "Gateways",
+    "online": "Gateway Online",
+    "offline": "Gateway Offline"
+  }
 }

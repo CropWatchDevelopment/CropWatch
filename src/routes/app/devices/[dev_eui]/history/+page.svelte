@@ -11,7 +11,6 @@
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 
 	export let data;
-	export let sensorName = 'NS';
 
 	let today = new Date();
 	let value = {

@@ -11,6 +11,7 @@
 	import { mdiPlus } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 
+	export let form;
 	export let existingRule: Tables<'cw_rules'> | undefined = undefined;
 	export let dialogOpen: boolean;
 	const isNew: boolean = existingRule ? false : true;

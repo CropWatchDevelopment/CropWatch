@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, afterUpdate } from 'svelte';
     import * as d3 from 'd3';
+    import { _ } from 'svelte-i18n';
 
     export let temperature: number;
     export let humidity: number;
@@ -80,7 +81,7 @@
                 .attr('font-size', '16px')
                 .attr('font-weight', 'bold')
                 .attr('fill', i % 2 === 0 ? '#555' : '#999')  // Darker for cardinal directions
-                .text(dir);
+                .text($_(`compassGuage.${dir}`));
 
             const tickX1 = radius * Math.sin((angle * Math.PI) / 180);
             const tickY1 = -radius * Math.cos((angle * Math.PI) / 180);
@@ -136,7 +137,7 @@
             .attr('text-anchor', 'middle')
             .attr('font-size', '26px')
             .attr('font-weight', 'bold')
-            .text(`🍃${(windSpeed * 3.6).toFixed(2)} km/h`);
+            .text(`${(windSpeed).toFixed(2)} m/s`);
 
         // Draw the wind direction text
         svg.append('text')
@@ -144,7 +145,7 @@
             .attr('text-anchor', 'middle')
             .attr('font-size', '26px')
             .attr('font-weight', 'bold')
-            .html(`<tspan fill="green">🧭${windDirection}</tspan>`);
+            .html(`<tspan fill="green">${$_(`compassGuage.${windDirection}`)}</tspan>`);
             // .text(windDirection);
 
         // Draw the temperature and humidity text
@@ -153,7 +154,7 @@
             .attr('text-anchor', 'middle')
             .attr('font-size', '20px')
             .attr('font-weight', 'bold')
-            .html(`<tspan fill="coral">🌡️${temperature}°C</tspan> <tspan fill="teal">💨${humidity}% RH</tspan>`);
+            .html(`<tspan fill="coral">${temperature}°C</tspan> / <tspan fill="teal">${humidity}% RH</tspan>`);
 
         // Draw the arrowhead
         const arrowLength = radius * 0.9;

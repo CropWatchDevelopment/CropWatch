@@ -26,7 +26,9 @@
 
 <AppBar title="CropWatch" class="bg-primary text-primary-content p-4 h-16">
 	<svelte:fragment slot="menuIcon" let:toggleMenu let:isMenuOpen>
-		<img src={cw_LogoImage} alt="CropWatch Logo" width="40px" />
+		<a href="/app">
+			<img src={cw_LogoImage} alt="CropWatch Logo" width="40px" />
+		</a>
 	</svelte:fragment>
 
 	<div slot="actions">
@@ -46,6 +48,9 @@
 					<div class="text-lg mt-12 space-y-2">
 						<p>
 							<a href="/app">All Locations</a>
+						</p>
+						<p>
+							<a href="/app/gateways">Gateway Status</a>
 						</p>
 					</div>
 					<div class="text-lg mt-24">

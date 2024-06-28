@@ -11,8 +11,6 @@
 	import { SEEED_T1000 } from '$lib/sensor-dto/convert_seeed_t1000';
 
 	export let data;
-	export let sensorName = 'NS';
-	export let permissions = 0;
 	data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
 	const dev_eui = data.at(-1).dev_eui;
