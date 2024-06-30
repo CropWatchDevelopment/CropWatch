@@ -3,23 +3,23 @@
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
 	import { deviceStore } from '$lib/stores/device.store.js';
 	import { mdiPlusCircle, mdiViewDashboard } from '@mdi/js';
-	import type { RealtimeChannel } from '@supabase/supabase-js';
 	import { onMount } from 'svelte';
 	import { _ } from 'svelte-i18n';
 	import { Button, Icon } from 'svelte-ux';
 
 	export let data;
 	const { locations } = data;
-	const channels: RealtimeChannel[] = [];
+	const subscribedTables = new Set();
+	const allDevices = [];
 
-	const loadDeviceDataFor = async (device) => {
-		if (device) {
+	const loadDeviceDataFor = async (dev_eui: string) => {
+		if (dev_eui) {
 			try {
-				const res = await fetch(`/api/v1/devices/${device.dev_eui}/data?page=0&count=1`);
+				const res = await fetch(`/api/v1/devices/${dev_eui}/data?page=0&count=1`);
 				try {
 					return await res.json();
 				} catch (error) {
-					console.error('No data for device:', device.dev_eui, error);
+					console.error('No data for device:', dev_eui, error);
 				}
 			} catch (err) {
 				console.error('Error loading device data:', err);
@@ -29,40 +29,39 @@
 	};
 
 	onMount(async () => {
-		for (let location of data.locations) {
+		for (let location of locations) {
 			const response = await fetch(`/api/v1/locations/${location.location_id}/devices`);
 			const devicesFromApi = await response.json();
-			devicesFromApi.forEach(async (device) => {
-				const device_to_add = await loadDeviceDataFor(device);
+			for (const device of devicesFromApi) {
+				const device_to_add = await loadDeviceDataFor(device.dev_eui);
 				if (device_to_add) {
-					device_to_add.location_id = location.location_id;
-					device_to_add.name = device.cw_devices.name;
-					deviceStore.add(device_to_add);
-					if (
-						device_to_add.data_table !== null &&
-						device_to_add.data_table !== undefined &&
-						channels.find((channel) => channel.topic === `realtime:${device_to_add.data_table}`) ===
-							undefined
-					) {
+					if (device_to_add.data_table && !subscribedTables.has(device_to_add.data_table)) {
+						allDevices.push(device_to_add);
 						const channel = data.supabase
 							.channel(`realtime:${device_to_add.data_table}`)
 							.on(
 								'postgres_changes',
-								{ event: 'INSERT', schema: 'public', table: 'cw_air_thvd' },
+								{ event: '*', schema: 'public', table: device_to_add.data_table },
 								(payload) => {
 									console.log('Change received!', payload);
-									deviceStore.updateDevice(
-										device_to_add.dev_eui,
-										payload.new,
-										device_to_add.location_id
-									);
+									const dev_type = allDevices.find((d) => d.dev_eui == payload.new.dev_eui);
+									if (dev_type) {
+										payload.new.name = dev_type.name;
+										payload.new.primaryData = dev_type.primaryData;
+										payload.new.secondaryData = dev_type.secondaryData;
+										payload.new.primary_data_notation = dev_type.primary_data_notation;
+										payload.new.secondary_data_notation = dev_type.secondary_data_notation;
+										payload.new.data_table = dev_type.data_table;
+									}
+									deviceStore.updateDevice(payload.new);
 								}
 							)
 							.subscribe();
-						channels.push(channel);
+						subscribedTables.add(device_to_add.data_table);
+						console.log('Subscribed to channel:', device_to_add.data_table, channel);
 					}
 				}
-			});
+			}
 		}
 	});
 </script>

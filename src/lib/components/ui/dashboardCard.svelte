@@ -12,18 +12,31 @@
 	import { fetchWeatherData } from '$lib/stores/weatherStore';
 	import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
 	import { nameToEmoji } from '$lib/utilities/nameToEmoji';
-	import type { PageData } from '../../../routes/$types';
 	import { deviceStore } from '$lib/stores/device.store';
   
-	export let data: PageData;
+	export let data;
 	const locationId = data.location_id;
 	let locationName: string = data.cw_locations.name ?? '--';
 	let loading = true;
 	let locationWeatherData = writable(null);
   
-	// Reactive statement to filter devices by location
 	let devices = [];
-	$: devices = $deviceStore.filter(device => device.location_id === locationId);
+	let deviceData = {};
+  
+	// Subscribe to deviceStore to get the latest devices
+	const unsubscribeDeviceStore = deviceStore.subscribe(value => {
+	  devices = value;
+	});
+  
+	// Subscribe to deviceDataStore to get the latest data
+	const unsubscribeDeviceDataStore = deviceStore.subscribe(value => {
+	  deviceData = value;
+	});
+  
+	// Reactive statement to filter devices by location using dev_eui
+	$: filteredDevices = devices.filter(device => 
+	  data.cw_locations.cw_device_locations.some(locationDevice => locationDevice.dev_eui === device.dev_eui)
+	);
   
 	onMount(async () => {
 	  try {
@@ -34,17 +47,22 @@
 		);
 		locationWeatherData.set(weather);
 	  } catch (err) {
-		console.error('Error loading devices:', err);
+		console.error('Error loading weather data:', err);
 	  } finally {
 		loading = false;
 	  }
+  
+	  return () => {
+		unsubscribeDeviceStore();
+		unsubscribeDeviceDataStore();
+	  };
 	});
   </script>
   
+  <pre>{JSON.stringify(filteredDevices, null, 2)}</pre>
+  
   <div class="bg-[#E2E2E2] p-0.5 rounded-2xl border-[#D2D2D2] border-[0.1em]">
-	<div
-	  class="w-full h-20 relative rounded-2xl bg-blend-overlay bg-no-repeat bg-cover bg-bottom custom-bg"
-	>
+	<div class="w-full h-20 relative rounded-2xl bg-blend-overlay bg-no-repeat bg-cover bg-bottom custom-bg">
 	  <div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
 	  <div class="absolute top-4 text-xs text-surface-100 drop-shadow-md right-3 space-y-1">
 		{#if $locationWeatherData}
@@ -60,9 +78,7 @@
 	  <div class="absolute left-3 top-5">
 		<p class="flex text-surface-100 text-3xl text-shadow">
 		  {#if $locationWeatherData}
-			{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md"
-			  >ºC</span
-			>
+			{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
 			{#await getWeatherImage($locationWeatherData.weatherCode, isDayTime())}
 			  <ProgressCircle />
 			{:then image}
@@ -88,21 +104,18 @@
 	  />
 	</h2>
 	<div class="flex flex-col text-sm gap-1 pb-4 px-1">
-	  {#if devices.length === 0 && loading}
+	  {#if filteredDevices.length === 0 && loading}
 		<ProgressCircle class="flex self-center" />
 	  {/if}
-	  {#if devices.length === 0 && !loading}
+	  {#if filteredDevices.length === 0 && !loading}
 		<p class="text-center my-5">{$_('dashboardCard.noDevices')}</p>
 	  {/if}
-	  {#each devices as device}
+	  {#each filteredDevices as device}
 		{#if device}
 		  <Collapse classes={{ root: 'shadow-md pr-2 bg-white' }}>
 			<div
 			  slot="trigger"
-			  class="flex-1 border-l-8 {device &&
-			  moment().diff(moment(device.created_at), 'minutes') > 120
-				? 'border-l-red-500'
-				: 'border-l-green-500'}"
+			  class="flex-1 border-l-8 {device && moment().diff(moment(device.created_at), 'minutes') > 120 ? 'border-l-red-500' : 'border-l-green-500'}"
 			>
 			  <div class="my-1 mr-2 border-r-2">
 				<div class="flex flex-col text-center text-base">
@@ -113,24 +126,16 @@
 					{#if device}
 					  <p class="justify-center m-auto">
 						{#if device && device.primaryData && device.primary_data_notation}
-						  <span>
-							{nameToEmoji(device.primaryData)}
-							{device[device.primaryData]}
-						  </span>
-						  <small class="text-slate-800"
-							><sup>{device.primary_data_notation}</sup></small
-						  >
+						  <span>{nameToEmoji(device.primaryData)}{device[device.primaryData]}</span>
+						  <small class="text-slate-800"><sup>{device.primary_data_notation}</sup></small>
 						{:else}
 						  N/A
 						{/if}
 					  </p>
 					  <p class="justify-center m-auto">
 						{#if device && device.secondaryData && device.secondary_data_notation}
-						  {nameToEmoji(device.secondaryData)}
-						  {device[device.secondaryData]}
-						  <small class="text-slate-800"
-							><sup>{device.secondary_data_notation}</sup></small
-						  >
+						  {nameToEmoji(device.secondaryData)}{device[device.secondaryData]}
+						  <small class="text-slate-800"><sup>{device.secondary_data_notation}</sup></small>
 						{:else}
 						  N/A
 						{/if}
@@ -149,24 +154,15 @@
 			  {#each Object.keys(convertObject(device)) as dataPointKey, index}
 				<div class="py-1">
 				  <div class="flex">
-					<p class="text-base">
-					  {nameToEmoji(dataPointKey)}
-					</p>
-					<p class="text-right">
-					  {$_(dataPointKey)}
-					</p>
+					<p class="text-base">{nameToEmoji(dataPointKey)}</p>
+					<p class="text-right">{$_(dataPointKey)}</p>
 					<span class="flex-grow" />
 					<p class="text-base flex flex-row align-bottom">
 					  {#if dataPointKey === 'created_at'}
-						<Duration
-						  start={device[dataPointKey]}
-						  totalUnits={2}
-						  minUnits={DurationUnits.Second}
-						/>
+						<Duration start={device[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />
 					  {:else}
 						{device[dataPointKey]}
-						<small class="text-slate-800"><sup>{nameToNotation(dataPointKey)}</sup></small
-						>
+						<small class="text-slate-800"><sup>{nameToNotation(dataPointKey)}</sup></small>
 					  {/if}
 					</p>
 				  </div>
@@ -192,29 +188,27 @@
 		{/if}
 	  {/each}
 	</div>
-	<pre>{JSON.stringify(devices, null, 1)}</pre>
   </div>
-  
-  <style>
+
+<style>
 	.text-shadow {
-	  text-shadow: black 5px 5px 3px;
+		text-shadow: black 5px 5px 3px;
 	}
 	.custom-bg {
-	  position: relative;
-	  overflow: hidden;
-	  background-color: lightgray; /* Temporary background color to ensure the div is visible */
+		position: relative;
+		overflow: hidden;
+		background-color: lightgray; /* Temporary background color to ensure the div is visible */
 	}
 	.custom-bg::before {
-	  content: ' '; /* Ensure the pseudo-element is generated */
-	  position: absolute;
-	  top: 0;
-	  left: 0;
-	  width: 100%;
-	  height: 100%;
-	  background-image: url($lib/images/weather/sunny_clouds.png);
-	  background-size: cover;
-	  background-position: center;
-	  filter: blur(1px) grayscale(20%);
+		content: ' '; /* Ensure the pseudo-element is generated */
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-image: url($lib/images/weather/sunny_clouds.png);
+		background-size: cover;
+		background-position: center;
+		filter: blur(1px) grayscale(20%);
 	}
-  </style>
-  
+</style>

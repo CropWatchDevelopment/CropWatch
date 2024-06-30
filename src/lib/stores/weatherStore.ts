@@ -39,7 +39,7 @@ export async function fetchWeatherData(lat: number, lng: number, location_id: st
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
 
     if (!lat || !lng) {
-        console.error('Invalid lat/lng:', lat, lng);
+        // console.error('Invalid lat/lng:', lat, lng);
         return null;
     }
     

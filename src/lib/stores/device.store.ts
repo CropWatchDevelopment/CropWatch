@@ -27,40 +27,31 @@ function createDeviceStore() {
     }
   };
 
+  const limitItems = (items: Device[]) => {
+    if (items.length > 30) {
+      items.splice(0, items.length - 30);
+    }
+    return items;
+  };
+
   return {
     subscribe,
     add: (obj: Device) => {
-      update(items => {
-        const index = items.findIndex(item => item.dev_eui === obj.dev_eui);
-        if (index === -1) {
-          // Ensure data array is initialized
-          if (!obj.data) obj.data = [];
-          const newItems = [...items, obj];
-          saveToLocalStorage(newItems);
-          return newItems;
-        }
-        // If the device already exists, return the current state without changes
-        return items;
-      });
+
     },
 
-    updateDevice: (dev_eui: string, newData: any, location_id: number) => {
-      update(items => {
-        const index = items.findIndex(item => item.dev_eui === dev_eui);
+    updateDevice: (newData: any) => {
+      update(item => {
+        debugger;
+        const index = item.findIndex(i => i.dev_eui === newData.dev_eui);
         if (index === -1) {
-          console.error('Item with dev_eui', dev_eui, 'does not exist.');
-          return items;
-        } else {
-          // Initialize data array if it does not exist
-          if (!items[index].data) {
-            items[index].data = [];
-          }
-          newData['location_id'] = location_id; // Ensure location_id is included
-          items[index].data.push(newData); // Push new data onto the array
-          items[index] = { ...items[index], data: [...items[index].data] }; // Ensure reactivity and correct location
-          saveToLocalStorage(items); // Save the updated items to localStorage
-          return items;
+          item.push(newData);
+          return item;
         }
+        const existingDevice = item[index];
+        if (!existingDevice) item = {...newData };
+        item[index] = newData;
+        return item;
       });
     },
 

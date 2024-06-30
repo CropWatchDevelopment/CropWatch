@@ -1,45 +1,28 @@
-import { writable, type Writable } from "svelte/store";
+// src/lib/stores/device.store.js
+import { writable } from 'svelte/store';
 
-interface DeviceData {
-  dev_eui: string;
-  name: string;
-  [key: string]: any; // Additional properties can be dynamically added
-  data: {
-    [key: string]: any;
-  }
-}
-
-function createDeviceDataStore() {
-  const { subscribe, set, update }: Writable<DeviceData[]> = writable([]);
+const createDeviceStore = () => {
+  const { subscribe, set, update } = writable([]);
 
   return {
     subscribe,
-
-    add: (obj: DeviceData) => {
-      update(items => {
-        const index = items.findIndex(item => item.dev_eui === obj.dev_eui);
-        if (index === -1) {
-          return [...items, obj];
-        } else {
-          console.error("Item with dev_eui", obj.dev_eui, "already exists.");
-          return items;
-        }
-      });
-    },
-
-    delete: (dev_eui: string) => {
-      update(items => items.filter(item => item.dev_eui !== dev_eui));
-    },
-
-    search: (dev_eui: string) => {
-      let found: DeviceData | null = null;
-      update(items => {
-        found = items.find(item => item.dev_eui === dev_eui) || null;
-        return items;
-      });
-      return found;
-    }
+    setDevices: (devices) => set(devices),
+    add: (device) => update(devices => {
+      const existingDeviceIndex = devices.findIndex(d => d.dev_eui === device.dev_eui);
+      if (existingDeviceIndex === -1) {
+        return [...devices, device];
+      }
+      return devices;
+    }),
+    updateDevice: (updatedDevice) => update(devices => {
+      const index = devices.findIndex(d => d.dev_eui === updatedDevice.dev_eui);
+      if (index !== -1) {
+        devices[index] = updatedDevice;
+      }
+      return devices;
+    }),
+    remove: (deviceId) => update(devices => devices.filter(device => device.dev_eui !== deviceId))
   };
-}
+};
 
-export const deviceDataStore = createDeviceDataStore();
+export const deviceStore = createDeviceStore();

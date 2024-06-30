@@ -54,7 +54,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        status: 500,
+        status: 404,
         headers: {
           'Content-Type': csv ? 'application/csv' : 'application/json',
         }

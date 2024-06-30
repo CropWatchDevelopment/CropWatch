@@ -8,18 +8,18 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, getSession 
 
   const query = new URLSearchParams(url.search);
   const startingPage = query.get('pageNumber') || 0;
-  const itemsPerPage = query.get('itemsPerPage') || 10;
+  const itemsPerPage = query.get('itemsPerPage') || 50;
 
   const { data, error } = await supabase
     .from('cw_location_owners')
-    .select('*, cw_locations(*)')
+    .select('*, cw_locations(*,cw_device_locations(dev_eui))')
     .eq('user_id', session.user.id)
     .range(+startingPage, +itemsPerPage)
     ;
   return new Response(
     JSON.stringify(data || error),
     {
-      status: 200,
+      status: data ? 200 : 500,
       statusText: 'OK',
       headers: {
         'Content-Type': 'application/json',
@@ -71,26 +71,6 @@ export const POST: RequestHandler = async ({ url, request, locals: { supabase, g
         }
       });
   }
-
-  const { data: permsData, error: permsError } = await supabase
-    .from('cw_location_owners')
-    .insert([{
-      user_id: session.user.id,
-      location_id: data[0].location_id,
-      is_active: true
-    }]);
-
-    if (error) {
-      return new Response(
-        JSON.stringify(error),
-        {
-          status: 500,
-          statusText: 'Internal Server Error',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-    }
 
     return redirect(303, `/api/v1/locations/${data[0].location_id}`);
 }
