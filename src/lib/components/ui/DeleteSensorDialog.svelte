@@ -25,7 +25,7 @@
 </script>
 
 <Toggle let:on={open} let:toggle let:toggleOff>
-	<Button icon={mdiTrashCan} on:click={toggle} color="danger">Delete Sensor</Button>
+	<Button icon={mdiTrashCan} on:click={toggle} color="danger" class="w-full">Delete Sensor</Button>
 	<Dialog {open} on:close={toggleOff}>
 		<div slot="title">Are you sure?</div>
 		<div class="px-6 py-3">This will permanently delete the item and can not be undone.</div>

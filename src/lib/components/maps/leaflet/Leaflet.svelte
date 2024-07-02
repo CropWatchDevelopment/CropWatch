@@ -70,7 +70,7 @@
 	}
 
 	$: if (map) {
-		if (bounds && bounds.length > 0) {
+		if (bounds && bounds.length > 0 && bounds[0].length > 1) {
 			map.fitBounds(bounds);
 		} else if (view && zoom) {
 			if (view[0] && view[1]) map.setView(view, zoom);

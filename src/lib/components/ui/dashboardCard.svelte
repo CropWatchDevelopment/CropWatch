@@ -186,7 +186,6 @@
 		  <p class="text-center my-5">{$_('dashboardCard.noData')}</p>
 		{/if}
 	  {/each}
-	  <!-- <pre>{JSON.stringify(filteredDevices, null, 2)}</pre> -->
 	</div>
   </div>
 

@@ -69,7 +69,7 @@
 				error
 			/>
 		</div>
-		<div slot="actions" class="flex flex-row justify-between">
+		<div slot="actions" class="flex flex-row justify-between gap-2">
 			<Button
 				type="button"
 				disabled={value != $page.params.location_id}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
-	import { addOrUpdateDevice, getDeviceByDevEui, devices } from '$lib/stores/device.store.js';
+	import { addOrUpdateDevice, devices } from '$lib/stores/device.store.js';
 	import { deviceDataStore } from '$lib/stores/deviceData.store.js';
 	import { mdiPlusCircle, mdiViewDashboard } from '@mdi/js';
 	import { onMount } from 'svelte';
@@ -85,8 +85,8 @@
 			</h2>
 
 			<!-- Filter -->
-			<div class="flex align-baseline justify-center items-center text-white">
-				<Button on:click={() => goto('/app/locations/add')} icon={mdiPlusCircle} size="sm" />
+			<div class="flex align-baseline justify-center items-center">
+				<Button on:click={() => goto('/app/locations/add')} variant="text" class="text-white" icon={mdiPlusCircle} size="sm" />
 			</div>
 		</div>
 		<!-- CARDS -->
@@ -99,18 +99,3 @@
 		</div>
 	</div>
 </section>
-
-<div>
-    <h1>Devices</h1>
-    <ul>
-        {#each $devices as device}
-            <li>{device.dev_eui} - {device.cw_devices.name}</li>
-        {/each}
-    </ul>
-    <h2>All Devices</h2>
-    <ul>
-        {#each allDevices as device}
-            <li>{device.dev_eui} - {device.cw_devices.name}</li>
-        {/each}
-    </ul>
-</div>
