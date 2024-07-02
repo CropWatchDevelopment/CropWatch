@@ -37,6 +37,7 @@
 				addOrUpdateDevice(device);
 				const device_to_add = await loadDeviceDataFor(device.dev_eui);
 				if (device_to_add) {
+					deviceDataStore.updateDevice(device_to_add);
 					if (device_to_add.data_table && !subscribedTables.has(device_to_add.data_table)) {
 						allDevices.push(device_to_add);
 						const channel = data.supabase

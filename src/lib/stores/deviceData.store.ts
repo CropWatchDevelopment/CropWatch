@@ -42,7 +42,6 @@ function createDeviceDataStore() {
 
     updateDevice: (newData: any) => {
       update(item => {
-        debugger;
         const index = item.findIndex(i => i.dev_eui === newData.dev_eui);
         if (index === -1) {
           item.push(newData);

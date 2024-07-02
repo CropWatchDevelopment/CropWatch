@@ -119,7 +119,7 @@
 			  <div class="my-1 mr-2 border-r-2">
 				<div class="flex flex-col text-center text-base">
 				  <div class="flex flex-row justify-left">
-					<b class="text-sm ml-4 text-slate-800">{getDeviceByDevEui(device.dev_eui).cw_devices.name}</b>
+					<b class="text-sm ml-4 text-slate-800">{getDeviceByDevEui(device.dev_eui)?.cw_devices?.name ?? 'un-named'}</b>
 				  </div>
 				  <div class="flex flex-row justify-center">
 					{#if device}
