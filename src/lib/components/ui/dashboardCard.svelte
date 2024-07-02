@@ -12,7 +12,8 @@
 	import { fetchWeatherData } from '$lib/stores/weatherStore';
 	import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
 	import { nameToEmoji } from '$lib/utilities/nameToEmoji';
-	import { deviceStore } from '$lib/stores/device.store';
+	import { deviceDataStore } from '$lib/stores/deviceData.store';
+	import { getDeviceByDevEui } from '$lib/stores/device.store';
   
 	export let data;
 	const locationId = data.location_id;
@@ -24,12 +25,12 @@
 	let deviceData = {};
   
 	// Subscribe to deviceStore to get the latest devices
-	const unsubscribeDeviceStore = deviceStore.subscribe(value => {
+	const unsubscribeDeviceStore = deviceDataStore.subscribe(value => {
 	  devices = value;
 	});
   
 	// Subscribe to deviceDataStore to get the latest data
-	const unsubscribeDeviceDataStore = deviceStore.subscribe(value => {
+	const unsubscribeDeviceDataStore = deviceDataStore.subscribe(value => {
 	  deviceData = value;
 	});
   
@@ -58,8 +59,6 @@
 	  };
 	});
   </script>
-  
-  <pre>{JSON.stringify(filteredDevices, null, 2)}</pre>
   
   <div class="bg-[#E2E2E2] p-0.5 rounded-2xl border-[#D2D2D2] border-[0.1em]">
 	<div class="w-full h-20 relative rounded-2xl bg-blend-overlay bg-no-repeat bg-cover bg-bottom custom-bg">
@@ -120,7 +119,7 @@
 			  <div class="my-1 mr-2 border-r-2">
 				<div class="flex flex-col text-center text-base">
 				  <div class="flex flex-row justify-left">
-					<b class="text-sm ml-4 text-slate-800">{device.name}</b>
+					<b class="text-sm ml-4 text-slate-800">{getDeviceByDevEui(device.dev_eui).cw_devices.name}</b>
 				  </div>
 				  <div class="flex flex-row justify-center">
 					{#if device}
@@ -187,6 +186,7 @@
 		  <p class="text-center my-5">{$_('dashboardCard.noData')}</p>
 		{/if}
 	  {/each}
+	  <!-- <pre>{JSON.stringify(filteredDevices, null, 2)}</pre> -->
 	</div>
   </div>
 

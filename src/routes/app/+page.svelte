@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import DashboardCard from '$lib/components/ui/dashboardCard.svelte';
-	import { deviceStore } from '$lib/stores/device.store.js';
+	import { addOrUpdateDevice, getDeviceByDevEui, devices } from '$lib/stores/device.store.js';
+	import { deviceDataStore } from '$lib/stores/deviceData.store.js';
 	import { mdiPlusCircle, mdiViewDashboard } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { _ } from 'svelte-i18n';
@@ -33,6 +34,7 @@
 			const response = await fetch(`/api/v1/locations/${location.location_id}/devices`);
 			const devicesFromApi = await response.json();
 			for (const device of devicesFromApi) {
+				addOrUpdateDevice(device);
 				const device_to_add = await loadDeviceDataFor(device.dev_eui);
 				if (device_to_add) {
 					if (device_to_add.data_table && !subscribedTables.has(device_to_add.data_table)) {
@@ -43,7 +45,7 @@
 								'postgres_changes',
 								{ event: '*', schema: 'public', table: device_to_add.data_table },
 								(payload) => {
-									console.log('Change received!', payload);
+									console.log('➡️ Change received!', payload);
 									const dev_type = allDevices.find((d) => d.dev_eui == payload.new.dev_eui);
 									if (dev_type) {
 										payload.new.name = dev_type.name;
@@ -53,12 +55,12 @@
 										payload.new.secondary_data_notation = dev_type.secondary_data_notation;
 										payload.new.data_table = dev_type.data_table;
 									}
-									deviceStore.updateDevice(payload.new);
+									deviceDataStore.updateDevice(payload.new);
 								}
 							)
 							.subscribe();
 						subscribedTables.add(device_to_add.data_table);
-						console.log('Subscribed to channel:', device_to_add.data_table, channel);
+						console.log('🔌 Subscribed to channel:', device_to_add.data_table, channel);
 					}
 				}
 			}
@@ -67,7 +69,7 @@
 </script>
 
 <svelte:head>
-	<title>Home</title>
+	<title>CropWatch UI</title>
 	<meta name="description" content="CropWatch" />
 </svelte:head>
 
@@ -96,3 +98,18 @@
 		</div>
 	</div>
 </section>
+
+<div>
+    <h1>Devices</h1>
+    <ul>
+        {#each $devices as device}
+            <li>{device.dev_eui} - {device.cw_devices.name}</li>
+        {/each}
+    </ul>
+    <h2>All Devices</h2>
+    <ul>
+        {#each allDevices as device}
+            <li>{device.dev_eui} - {device.cw_devices.name}</li>
+        {/each}
+    </ul>
+</div>

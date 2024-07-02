@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { deviceStore } from '$lib/stores/device.store';
+	import { deviceDataStore } from '$lib/stores/deviceDataData.store';
 
 	if (browser)
 		fetch(`/api/v1/devices`)
 			.then((res) => res.json())
 			.then((data) => {
-				deviceStore.add(data);
+				deviceDataStore.add(data);
 			})
 			.catch((err) => {
 				console.error(err);
@@ -20,7 +20,7 @@
 
 <h1>Devices</h1>
 
-{#await $deviceStore}
+{#await $deviceDataStore}
 	<p>loading...</p>
 {:then devices}
 	<ul>

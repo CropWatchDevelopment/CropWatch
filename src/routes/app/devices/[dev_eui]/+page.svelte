@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { deviceStore } from '$lib/stores/device.store';
+	import { deviceDataStore } from '$lib/stores/deviceData.store';
 
 	if (browser)
 		fetch(`/api/v1/devices`)
 			.then((res) => res.json())
-			.then((data) => deviceStore.add(data))
+			.then((data) => deviceDataStore.add(data))
 			.catch((err) => {
 				console.error(err);
 			});
