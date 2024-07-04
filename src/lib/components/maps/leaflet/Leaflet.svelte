@@ -69,8 +69,16 @@
 		updateZoomPanAbility();
 	}
 
+	const filterNullPoints = (data) => {
+		if (!data) return;
+		return data.map((innerArray) =>
+			innerArray.filter((point) => !(point[0] === null && point[1] === null))
+		);
+	};
+
 	$: if (map) {
-		if (bounds && bounds.length > 0 && bounds[0].length > 1) {
+		const filteredData = filterNullPoints(bounds);
+		if (filteredData) {
 			map.fitBounds(bounds);
 		} else if (view && zoom) {
 			if (view[0] && view[1]) map.setView(view, zoom);
