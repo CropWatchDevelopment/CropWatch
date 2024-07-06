@@ -19,6 +19,7 @@
 </div>
 
 <div class="flex flex-col m-6 h-full">
+
 	<h1 class="mb-4 text-4xl">{latestSensorData.cw_devices.name}:</h1>
 	<EditSensorNameDialog bind:currentSensorName={latestSensorData.cw_devices.name} />
 

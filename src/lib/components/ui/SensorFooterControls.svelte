@@ -24,7 +24,7 @@
 			size="lg"
 			icon={mdiCog}
 			variant="fill"
-			on:click={() => goto('settings')}>{$_('sensorFooterControls.settings')}</Button
+			href="settings">{$_('sensorFooterControls.settings')}</Button
 		>
 		<Button classes={{ root: 'w-full' }} on:click={() => goto('rules')} size="lg" variant="fill">
 			<img src={RulesImage} alt="Rules" class="w-6 h-6 mr-2" />
@@ -35,7 +35,7 @@
 			size="lg"
 			icon={mdiLock}
 			variant="fill"
-			on:click={() => goto('permissions')}>{$_('sensorFooterControls.permissions')}</Button
+			href="permissions">{$_('sensorFooterControls.permissions')}</Button
 		>
 	{/if}
 </div>

@@ -1,54 +1,46 @@
 <script lang="ts">
 	import { _ } from 'svelte-i18n';
-	import { Duration } from 'svelte-ux';
-	import EditSensorNameDialog from '../EditSensorNameDialog.svelte';
-	import ActiveImage from '$lib/images/UI/cw-10.svg';
-	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
+	import { HighChartsTimeSeriesChart } from '$lib/charts/highcharts/timeseries';
+	import DarkCard from '../DarkCard.svelte';
+	import Highcharts from '$lib/actions/highcharts.action';
 
 	export let data;
-	export let sensorName = 'NS';
-	let dev_eui = data.at(0).dev_eui;
-	const lastSeen: Date = data.at(0).created_at;
-	$: status = data.at(-1).fireAlarm;
-	const isActiveRecently = true;
-
 	// ALERM! 010A011C0100012C000000
-
-	const channels = data.supabase
-		.channel('custom-insert-channel')
-		.on(
-			'postgres_changes',
-			{ event: 'INSERT', schema: 'public', table: 'netvox_ra02a' },
-			(payload) => {
-				console.log('Change received!', payload);
-                if (payload.eventType === 'INSERT') {
-                    data.push(payload.new);
-                    status = data.at(-1).fireAlarm;
-                }
+	$: status = data.at(-1).fireAlarm;
+	$: temperature = data.at(-1).temperatureC;
+	$: tempConfig = HighChartsTimeSeriesChart(
+		[
+			{
+				type: 'line',
+				yAxis: 0,
+				name: '',
+				color: 'red',
+				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
 			}
-		)
-		.subscribe();
+		],
+		[
+			{
+				// Secondary yAxis
+				title: {
+					text: '',
+					style: {
+						color: 'red'
+					}
+				},
+				labels: {
+					format: '{value} °C',
+					style: {
+						color: 'red'
+					}
+				},
+				opposite: false
+			}
+		],
+		''
+	);
 </script>
 
 <div class="m-4">
-	<div class="flex flex-row">
-		<img
-			src={isActiveRecently ? ActiveImage : inActiveImage}
-			alt={isActiveRecently ? 'Active Image' : 'in-active Image'}
-			class="w-14 h-14 mr-4"
-		/>
-		<div class="flex flex-col">
-			<div class="flex flex-row text-neutral-content">
-				<p class="text-surface-100 text-4xl mr-2">{sensorName}</p>
-				<EditSensorNameDialog {dev_eui} bind:currentSensorName={sensorName} />
-			</div>
-			<p class="text-slate-500">
-				{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} />
-				{$_('ago')}
-			</p>
-		</div>
-	</div>
-
 	<div class="w-full">
 		{#if status > 0}
 			<svg
@@ -119,7 +111,9 @@
 			>
 			<p class="w-full text-4xl text-white text-center">Normal</p>
 		{/if}
-
-		<!-- <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122.88 73.17"><defs><style>.cls-1{fill:#131313;}.cls-2{fill:#f44336;fill-rule:evenodd;}</style></defs><title>battery-low</title><path class="cls-1" d="M109.58,62.92V52.81h10.08a3.23,3.23,0,0,0,3.22-3.22v-26a3.24,3.24,0,0,0-3.22-3.22H109.58V10.25a10.21,10.21,0,0,0-3-7.24l-.2-.18a10.19,10.19,0,0,0-7-2.83H10.25A10.28,10.28,0,0,0,0,10.25V62.92a10.19,10.19,0,0,0,3,7.23H3a10.21,10.21,0,0,0,7.24,3H99.33a10.28,10.28,0,0,0,10.25-10.25Zm-6-52.67V62.92a4.23,4.23,0,0,1-4.21,4.21H10.25a4.19,4.19,0,0,1-3-1.24h0a4.21,4.21,0,0,1-1.23-3V10.25A4.23,4.23,0,0,1,10.25,6H99.33a4.2,4.2,0,0,1,2.86,1.12l.11.12a4.21,4.21,0,0,1,1.24,3Z"/><path class="cls-2" d="M36.05,60.56V12.39H15.23A2.64,2.64,0,0,0,12.62,15V58a2.61,2.61,0,0,0,2.61,2.6Z"/></svg> -->
 	</div>
+	<DarkCard title={$_('air_temperature')} value={temperature} unit={'ºC'}>
+		<div class="chart" use:Highcharts={tempConfig} />
+	</DarkCard>
+	
 </div>
