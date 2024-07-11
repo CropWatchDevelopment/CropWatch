@@ -1,13 +1,15 @@
 // src/stores/devices.js
+import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 
 // Initialize the store with data from localStorage if available
-const initialDevices = JSON.parse(localStorage.getItem('devices')) || [];
+const initialDeviceData = browser ? localStorage.getItem('devices') : '[]';
+const initialDevices = JSON.parse(initialDeviceData ?? '[]');
 export const devices = writable(initialDevices);
 
 // Subscribe to changes in the store and update localStorage
 devices.subscribe(currentDevices => {
-    localStorage.setItem('devices', JSON.stringify(currentDevices));
+    browser ? localStorage.setItem('devices', JSON.stringify(currentDevices)) : null;
 });
 
 export function addOrUpdateDevice(device) {
