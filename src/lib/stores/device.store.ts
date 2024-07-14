@@ -26,7 +26,7 @@ export function addOrUpdateDevice(device) {
     });
 }
 
-export function getDeviceByDevEui(dev_eui) {
+export function getDeviceByDevEui(dev_eui: string) {
     let device;
     devices.subscribe(currentDevices => {
         device = currentDevices.find(d => d.dev_eui === dev_eui);

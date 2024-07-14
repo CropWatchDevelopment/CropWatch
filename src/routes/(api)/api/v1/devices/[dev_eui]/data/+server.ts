@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
   const from = query.get('from');
   const to = query.get('to');
   const dataPoints = query.get('data-points');
-  const noLimit = query.get('no-limit' || 0);
+  const noLimit = query.get('noLimit') === '1';  // Ensure noLimit is parsed correctly
   const csv = query.get('csv');
 
   if (!dev_eui) {
@@ -48,7 +48,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
 
   finalQuery = csv ? finalQuery.csv() : finalQuery;
 
-  const { data, error } = await finalQuery
+  const { data, error } = await finalQuery;
 
   if (error) {
     return new Response(
@@ -77,7 +77,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
         'Content-Type': 'application/json',
       }
     });
-}
+};
 
 async function getDeviceDataTable(dev_eui: string, session: any, supabase: any) {
   try {
@@ -103,7 +103,3 @@ async function getDeviceDataTable(dev_eui: string, session: any, supabase: any) 
       });
   }
 }
-
-const getNextFrame = (frame_id: number) => {
-
-};

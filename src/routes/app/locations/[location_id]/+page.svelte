@@ -11,8 +11,8 @@
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
 	import { goto } from '$app/navigation';
-	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 	import { devices } from '$lib/stores/device.store.ts';
+	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
 
 	const location: Promise<Tables<'cw_locations'>> = browser
 		? fetch(`/api/v1/locations/${$page.params.location_id}`, { method: 'GET' }).then((r) =>
@@ -33,9 +33,6 @@
 			allDevices.push(d);
 		}
 	});
-	
-	debugger;
-	console.log('device: ', devices);
 </script>
 
 <svelte:window bind:innerWidth bind:innerHeight />
@@ -57,7 +54,7 @@
 					size="sm"
 				/>
 			</div>
-			{#await $devices.map((d) => d.location_id == loc.location_id)}
+			{#await allDevices.map((d) => d.location_id == loc.location_id)}
 				<ProgressCircle />
 			{:then devices}
 				<DarkCard2>
@@ -68,7 +65,7 @@
 						width={100}
 						height={innerHeight}
 					>
-						{#await locationDevices then devices}
+						<!-- {#await locationDevices then devices}
 							{#each devices as device}
 								<Marker
 									latLng={[device.cw_devices.lat, device.cw_devices.long]}
@@ -97,21 +94,22 @@
 									</a>
 								</Marker>
 							{/each}
-						{/await}
+						{/await} -->
 					</Leaflet>
 				</DarkCard2>
 
-				<!-- <div class="grid grid-flow-col grid-cols-1">
+				<div class="grid grid-flow-col grid-cols-1">
 					<div class="flex flex-col gap-2 mb-2">
 						{#each allDevices as sensor}
 							{#await getDeviceType(sensor.cw_devices.dev_eui)}
 								<ProgressCircle />
 							{:then deviceType}
 								<LocationSensorCard {sensor} {deviceType} />
+								{JSON.stringify(sensor, null, 2)}
 							{/await}
 						{/each}
 					</div>
-				</div> -->
+				</div>
 			{/await}
 		{/if}
 	{/await}
