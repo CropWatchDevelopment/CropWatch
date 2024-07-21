@@ -13,11 +13,10 @@
 	export let data;
 	data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-	const dev_eui = data.at(-1).dev_eui;
 	let temperature = data.at(-1).temperatureC;
 	let lastSeen = data.at(-1).created_at;
-	let latitude = data.at(-1).latitude;
-	let longitude = data.at(-1).longitude;
+	let lat = data.at(-1).lat;
+	let long = data.at(-1).long;
 
 	let innerWidth = 0;
 	let innerHeight = 0;
@@ -40,13 +39,13 @@
 		if (filteredData.length > 0) {
 			lastSeen = filteredData.at(-1).created_at;
 			temperature = filteredData.at(-1).temperatureC;
-			latitude = filteredData.at(-1).latitude;
-			longitude = filteredData.at(-1).longitude;
+			lat = filteredData.at(-1).lat;
+			long = filteredData.at(-1).long;
 		}
 	}
 
 	// Calculate bounds for Leaflet map
-	$: bounds = filteredData.map((d) => [d.latitude, d.longitude]);
+	$: bounds = filteredData.map((d) => [d.lat, d.long]);
 
 	const filterDataByDate = (e) => {
 		value = e.detail;
@@ -57,8 +56,8 @@
 		filteredData.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 	};
 
-	function getAddress(latitude, longitude) {
-		return fetch('/api/v1/geocoding?lat=' + latitude + '&long=' + longitude)
+	function getAddress(lat, long) {
+		return fetch('/api/v1/geocoding?lat=' + lat + '&long=' + long)
 			.then((response) => response.json())
 			.then((data) => data.display_name);
 	}
@@ -98,7 +97,7 @@
 
 	<Leaflet height={innerHeight / 1.5} zoom={15} {disableZoom} {bounds}>
 		{#each filteredData as movementPoint, index}
-			<Marker latLng={[movementPoint.latitude, movementPoint.longitude]} width={16} height={16}>
+			<Marker latLng={[movementPoint.lat, movementPoint.long]} width={16} height={16}>
 				<Icon
 					data={mdiMapMarker}
 					size={40}

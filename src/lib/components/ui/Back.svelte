@@ -16,6 +16,5 @@
 	aria-controls="back button"
 	icon={mdiArrowLeftCircle}
 >
-	<!-- <img src={cw_LogoImage} alt="" class="w-12 bg-surface-100 rounded-full p-2" /> -->
-</Button>
 <slot />
+</Button>

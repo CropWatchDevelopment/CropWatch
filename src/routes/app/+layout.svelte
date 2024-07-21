@@ -6,16 +6,15 @@
 	import { ProgressCircle, Drawer, Button, Icon, AppBar, AppLayout } from 'svelte-ux';
 	import { navigating } from '$app/stores';
 	import Close from '$lib/images/UI/cw_Close Button.svg';
-	import { dev } from '$app/environment';
 	import { mdiBell, mdiMenu } from '@mdi/js';
 
 	export let data;
 	$: ({ supabase } = data);
 
-	onMount(async () => {
+	onMount(() => {
 		const {
 			data: { subscription }
-		} = supabase.auth.onAuthStateChange((event, _session) => {
+		} = supabase.auth.onAuthStateChange((_session) => {
 			invalidate('supabase:auth');
 			invalidateAll();
 		});
