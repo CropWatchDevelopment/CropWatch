@@ -137,7 +137,7 @@
             .attr('text-anchor', 'middle')
             .attr('font-size', '26px')
             .attr('font-weight', 'bold')
-            .text(`${(windSpeed * 3.6).toFixed(2)} km/h`);
+            .text(`${(windSpeed).toFixed(2)} m/s`);
 
         // Draw the wind direction text
         svg.append('text')

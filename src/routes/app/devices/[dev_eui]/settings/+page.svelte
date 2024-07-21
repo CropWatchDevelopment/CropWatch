@@ -1,17 +1,12 @@
 <script>
-	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
+	import DeleteSensorDialog from '$lib/components/ui/DeleteSensorDialog.svelte';
 	import EditSensorNameDialog from '$lib/components/ui/EditSensorNameDialog.svelte';
 	import historyImage from '$lib/images/UI/cw_settings.svg';
+	import { getDeviceByDevEui } from '$lib/stores/device.store';
 
-	export let sensorName = 'Loading...';
-
-	const latest =
-		browser &&
-		fetch(`/api/v1/devices/${$page.params.dev_eui}/data?count=1&order=desc`)
-			.then((res) => res.json())
-			.catch((err) => console.error(err));
+	let latestSensorData = getDeviceByDevEui($page.params.dev_eui);
 </script>
 
 <div class="flex flex-row bg-emerald-300 p-4 text-center justify-center">
@@ -19,15 +14,18 @@
 	<p class="text-surface-100 text-3xl ml-2">Settings</p>
 </div>
 
-<div class="mt-4 mx-2 flex justify-between">
-	<Back />
+<div class="flex flex-row">
+	<Back>Back</Back>
 </div>
 
-<div class="m-6">
-	{#await latest}
-		mdiLoading...
-	{:then data}
-		{JSON.stringify(data)}
-	{/await}
-	<EditSensorNameDialog bind:currentSensorName={sensorName} />
+<div class="flex flex-col m-6 h-full">
+
+	<h1 class="mb-4 text-4xl">{latestSensorData.cw_devices.name}:</h1>
+	<EditSensorNameDialog bind:currentSensorName={latestSensorData.cw_devices.name} />
+
+	<span class="flex flex-1" />
+	<fieldset class="border border-red-600 p-4">
+		<legend>Danger Zone</legend>
+		<DeleteSensorDialog bind:dev_eui={$page.params.dev_eui} />
+	</fieldset>
 </div>

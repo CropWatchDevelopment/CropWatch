@@ -10,12 +10,11 @@
 <Button
 	variant="default"
 	size="lg"
-	class="flex flex-row align-middle text-center cursor-pointer"
+	class="flex flex-row align-middle text-center cursor-pointer text-slate-200"
 	on:click={() => (previousPage ? goto(previousPage) : history.go(-1))}
 	aria-roledescription="back button"
 	aria-controls="back button"
 	icon={mdiArrowLeftCircle}
 >
-	<!-- <img src={cw_LogoImage} alt="" class="w-12 bg-surface-100 rounded-full p-2" /> -->
-</Button>
 <slot />
+</Button>

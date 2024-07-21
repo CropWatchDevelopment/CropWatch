@@ -90,3 +90,22 @@ export const PUT: RequestHandler = async ({ params, request, locals: { supabase,
       }
     });
 }
+
+
+export const DELETE: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
+  const session = await getSession();
+  if (!session) {
+    throw redirect(303, '/auth/unauthorized');
+  }
+  const dev_eui = params.dev_eui;
+  const { data, error } = await supabase
+    .from('cw_devices')
+    .delete()
+    .eq('dev_eui', dev_eui);
+
+  return new Response(
+    error === null ? JSON.stringify(true) : JSON.stringify(false),
+    {
+      status: error ? 500 : 200,
+    });
+}

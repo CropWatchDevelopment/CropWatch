@@ -16,7 +16,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
     }
     const { data, error } = await supabase
         .from('cw_location_owners')
-        .select('*, cw_locations(*)')
+        .select('*, cw_locations(*, cw_device_locations(*, cw_devices(*)))')
         .eq('location_id', locationId)
         .eq('user_id', session.user.id)
         .limit(1)

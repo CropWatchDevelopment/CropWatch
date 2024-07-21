@@ -6,16 +6,15 @@
 	import { ProgressCircle, Drawer, Button, Icon, AppBar, AppLayout } from 'svelte-ux';
 	import { navigating } from '$app/stores';
 	import Close from '$lib/images/UI/cw_Close Button.svg';
-	import { dev } from '$app/environment';
 	import { mdiBell, mdiMenu } from '@mdi/js';
 
 	export let data;
 	$: ({ supabase } = data);
 
-	onMount(async () => {
+	onMount(() => {
 		const {
 			data: { subscription }
-		} = supabase.auth.onAuthStateChange((event, _session) => {
+		} = supabase.auth.onAuthStateChange((_session) => {
 			invalidate('supabase:auth');
 			invalidateAll();
 		});
@@ -27,7 +26,9 @@
 
 <AppBar title="CropWatch" class="bg-primary text-primary-content p-4 h-16">
 	<svelte:fragment slot="menuIcon" let:toggleMenu let:isMenuOpen>
-		<img src={cw_LogoImage} alt="CropWatch Logo" width="40px" />
+		<a href="/app">
+			<img src={cw_LogoImage} alt="CropWatch Logo" width="40px" />
+		</a>
 	</svelte:fragment>
 
 	<div slot="actions">
@@ -47,6 +48,9 @@
 					<div class="text-lg mt-12 space-y-2">
 						<p>
 							<a href="/app">All Locations</a>
+						</p>
+						<p>
+							<a href="/app/gateways">Gateway Status</a>
 						</p>
 					</div>
 					<div class="text-lg mt-24">

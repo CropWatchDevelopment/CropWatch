@@ -1,42 +1,43 @@
-import { writable, type Writable } from "svelte/store";
+// src/stores/devices.js
+import { browser } from '$app/environment';
+import { writable } from 'svelte/store';
 
-interface Device {
-  dev_eui: string;
-  name: string;
-  [key: string]: any; // Additional properties can be dynamically added
-}
+// Initialize the store with data from localStorage if available
+const initialDeviceData = browser ? localStorage.getItem('devices') : '[]';
+const initialDevices = JSON.parse(initialDeviceData ?? '[]');
+export const devices = writable(initialDevices);
 
-function createDeviceStore() {
-  const { subscribe, set, update }: Writable<Device[]> = writable([]);
+// Subscribe to changes in the store and update localStorage
+devices.subscribe(currentDevices => {
+    browser ? localStorage.setItem('devices', JSON.stringify(currentDevices)) : null;
+});
 
-  return {
-    subscribe,
-
-    add: (obj: Device) => {
-      update(items => {
-        const index = items.findIndex(item => item.dev_eui === obj.dev_eui);
-        if (index === -1) {
-          return [...items, obj];
+export function addOrUpdateDevice(device) {
+    devices.update(currentDevices => {
+        const index = currentDevices.findIndex(d => d.dev_eui === device.dev_eui);
+        if (index !== -1) {
+            // Update existing device
+            currentDevices[index] = device;
         } else {
-          console.error("Item with dev_eui", obj.dev_eui, "already exists.");
-          return items;
+            // Add new device
+            currentDevices.push(device);
         }
-      });
-    },
-
-    delete: (dev_eui: string) => {
-      update(items => items.filter(item => item.dev_eui !== dev_eui));
-    },
-
-    search: (dev_eui: string) => {
-      let found: Device | null = null;
-      update(items => {
-        found = items.find(item => item.dev_eui === dev_eui) || null;
-        return items;
-      });
-      return found;
-    }
-  };
+        return currentDevices;
+    });
 }
 
-export const deviceStore = createDeviceStore();
+export function getDeviceByDevEui(dev_eui: string) {
+    let device;
+    devices.subscribe(currentDevices => {
+        device = currentDevices.find(d => d.dev_eui === dev_eui);
+    })();
+    return device;
+}
+
+export function getAllDevices() {
+    let allDevices;
+    devices.subscribe(currentDevices => {
+        allDevices = currentDevices;
+    })();
+    return allDevices;
+}

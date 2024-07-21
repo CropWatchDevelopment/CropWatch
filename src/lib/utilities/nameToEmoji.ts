@@ -30,6 +30,8 @@ export const nameToEmoji = (name: string) => {
             return '🌧️';
         case 'pressure':
             return '🕕';
+        case 'created_at':
+            return '⌛';
         case 'wind_speed':
             return '🍃';
         case 'lux':

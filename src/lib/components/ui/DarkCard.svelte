@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { _ } from 'svelte-i18n';
-	export let title;
-	export let value;
+	export let title: string | null = null;
+	export let value: number | string | null = null;
 	export let optimalValue: number | string | null = null;
-	export let unit;
+	export let unit: string | null = null;
 
-	const differenceValue = (value - +(optimalValue ?? 0)).toFixed(2);
+	// const differenceValue = value ? (+value - +(optimalValue ?? 0)).toFixed(2) : null;
 
 	function checkValue(value: number) {
 		if (value > 0) {
@@ -32,6 +32,7 @@
 			</div>
 			<div class="flex justify-between">
 				<p class="text-sm">{$_('difference')}</p>
+				<!-- {#if differenceValue !== null}
 				<p
 					class="text-sm {checkValue(differenceValue) == 'greater'
 						? 'greater'
@@ -41,6 +42,7 @@
 				>
 					{differenceValue > 0 ? '+' : ''}{differenceValue}<span class="text-xs">{unit}</span>
 				</p>
+				{/if} -->
 			</div>
 		</div>
 	{/if}

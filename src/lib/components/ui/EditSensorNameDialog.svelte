@@ -57,7 +57,7 @@
 	};
 </script>
 
-<Button on:click={() => (open = true)} icon={mdiPencil} size="sm" />
+<Button icon={mdiPencil} on:click={() => (open = true)} class="w-full" variant="fill">Edit Sensor Name</Button>
 
 <form action={`/api/v1/sensors/${dev_eui}`} method="PUT">
 	<Dialog bind:open on:close={() => closing()}>
