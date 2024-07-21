@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { deviceDataStore } from '$lib/stores/deviceDataData.store';
 
 	if (browser)
 		fetch(`/api/v1/devices`)
