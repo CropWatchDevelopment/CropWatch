@@ -42,10 +42,11 @@
 	onMount(async () => {
 	  try {
 		const weather = await fetchWeatherData(
-		  data.cw_locations.latitude,
-		  data.cw_locations.longitude,
+		  data.cw_locations.lat,
+		  data.cw_locations.long,
 		  locationId
 		);
+		debugger;
 		locationWeatherData.set(weather);
 	  } catch (err) {
 		console.error('Error loading weather data:', err);

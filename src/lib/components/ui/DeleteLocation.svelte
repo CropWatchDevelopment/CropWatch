@@ -45,9 +45,7 @@
 		icon={mdiTrashCan}
 		{open}
 		on:click={toggle}
-		color="danger"
-		variant="fill-outline"
-		class="w-full">Delete Location</Button
+		class="rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-400">Delete Location</Button
 	>
 	<Dialog {open} on:close={toggle}>
 		<div slot="title">Are you sure?</div>
