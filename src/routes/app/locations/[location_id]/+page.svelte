@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { devices } from '$lib/stores/device.store';
 	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
+	import { _ } from 'svelte-i18n';
 
 	let location;
 	let allDevices = [];
@@ -52,9 +53,11 @@
 
 <svelte:window bind:innerWidth bind:innerHeight />
 
-<div class="bg-gradient-to-b from-[#132017] to-[#7F8D7F] relative px-4 pb-12">
+<div class="">
 	<div class="mt-8 flex justify-between">
-		<Back previousPage={'/app'} />
+		<Back previousPage={'/app'}>
+			{$_('back')}
+		</Back>
 	</div>
 
 	{#if !location}

@@ -177,10 +177,7 @@
 				yAxis: 0,
 				name: '',
 				color: '#2cafff',
-				data: data.map((d: any) => [
-					new Date(d.created_at).valueOf(),
-					+(d.wind_speed).toFixed(2)
-				])
+				data: data.map((d: any) => [new Date(d.created_at).valueOf(), +d.wind_speed.toFixed(2)])
 			}
 		],
 		[
@@ -259,7 +256,7 @@
 	);
 </script>
 
-<DarkCard2>
+<!-- <DarkCard2>
 	<div class="flex flex-row items-center justify-center">
 		{$_('weatherStation.Current_Weather')}
 		<span class="flex-auto" />
@@ -275,8 +272,8 @@
 			<ProgressCircle />
 		{/if}
 	</div>
-</DarkCard2>
-<DarkCard title="{$_('weatherStation.windspeedDirection')}">
+</DarkCard2> -->
+<!-- <DarkCard title="{$_('weatherStation.windspeedDirection')}">
 	<TestCompas {temperature} {windSpeed} {windDirection} {arrowRotation} {humidity} />
 </DarkCard>
 <DarkCard title="{$_('weatherStation.uvLux')}">
@@ -289,88 +286,97 @@
 	<div class="flex flex-row w-full justify-center">
 		<RainPerHourGuage {rainValue} {pressureValue} />
 	</div>
-</DarkCard>
-<DarkCard title={$_('temp_humidity')}>
-	<div class="chart" use:Highcharts={config} />
+</DarkCard> -->
+<div class="grid grid-flow-row gap-5">
+	<DarkCard title={$_('temp_humidity')}>
+		<DarkCard
+			title={$_('weatherStation.maxTemperature')}
+			value={Math.max(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
+			unit="ºC"
+		/>
+		<DarkCard
+			title={$_('weatherStation.averageTemperature')}
+			value={(data.reduce((total, next) => total + next.temperatureC, 0) / data.length).toFixed(2)}
+			unit="ºC"
+		/>
+		<DarkCard
+			title={$_('weatherStation.minimumTemperature')}
+			value={Math.min(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
+			unit="ºC"
+		/>
+		<div class="chart" use:Highcharts={config} />
+	</DarkCard>
 	<DarkCard
-		title="{$_('weatherStation.maxTemperature')}"
-		value={Math.max(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
-		unit="ºC"
-	/>
+		title="{$_('rainfall')} mm/h"
+		value={data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)}
+		optimalValue={null}
+		unit={'mm/day'}
+	>
+		<DarkCard
+			title={$_('weatherStation.maxRainfall')}
+			value={Math.max(...data.map((periodData) => periodData.rainfall)).toFixed(2)}
+			unit=" mm/h"
+		/>
+		<DarkCard
+			title={$_('weatherStation.averageRainfall')}
+			value={(data.reduce((total, next) => total + next.rainfall, 0) / data.length).toFixed(2)}
+			unit=" mm/h"
+		/>
+		<div class="chart" use:Highcharts={rainBarChartConfig} />
+	</DarkCard>
+	<DarkCard title={$_('weatherStation.uvLux')} value={null} optimalValue={null} unit={'ºC'}>
+		<DarkCard
+			title={$_('weatherStation.maxUvLux')}
+			value="{Math.max(...data.map((periodData) => periodData.lux * 3.6)).toFixed(2)} / {Math.max(
+				...data.map((periodData) => periodData.uv * 3.6)
+			).toFixed(2)}"
+			unit=" "
+		/>
+		<DarkCard
+			title={$_('weatherStation.averageUvLux')}
+			value="{(data.reduce((total, next) => total + next.lux, 0) / data.length).toFixed(2)} / {(
+				data.reduce((total, next) => total + next.uv, 0) / data.length
+			).toFixed(2)}"
+			unit=" "
+		/>
+		<div class="chart" use:Highcharts={luxUvChartConfig} />
+	</DarkCard>
 	<DarkCard
-		title="{$_('weatherStation.averageTemperature')}"
-		value={(data.reduce((total, next) => total + next.temperatureC, 0) / data.length).toFixed(2)}
-		unit="ºC"
-	/>
-	<DarkCard
-		title="{$_('weatherStation.minimumTemperature')}"
-		value={Math.min(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
-		unit="ºC"
-	/>
-</DarkCard>
-<DarkCard
-	title="{$_('rainfall')} mm/h"
-	value={data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)}
-	optimalValue={null}
-	unit={'mm/day'}
->
-	<div class="chart" use:Highcharts={rainBarChartConfig} />
-	<DarkCard
-		title="{$_('weatherStation.maxRainfall')}"
-		value={Math.max(...data.map((periodData) => periodData.rainfall)).toFixed(2)}
-		unit=" mm/h"
-	/>
-	<DarkCard
-		title="{$_('weatherStation.averageRainfall')}"
-		value={(data.reduce((total, next) => total + next.rainfall, 0) / data.length).toFixed(2)}
-		unit=" mm/h"
-	/>
-</DarkCard>
-<DarkCard title="{$_('weatherStation.uvLux')}" value={null} optimalValue={null} unit={'ºC'}>
-	<div class="chart" use:Highcharts={luxUvChartConfig} />
-	<DarkCard
-		title="{$_('weatherStation.maxUvLux')}"
-		value="{Math.max(...data.map((periodData) => periodData.lux * 3.6)).toFixed(2)} / {Math.max(
-			...data.map((periodData) => periodData.uv * 3.6)
-		).toFixed(2)}"
-		unit=" "
-	/>
-	<DarkCard
-		title="{$_('weatherStation.averageUvLux')}"
-		value="{(data.reduce((total, next) => total + next.lux, 0) / data.length).toFixed(2)} / {(
-			data.reduce((total, next) => total + next.uv, 0) / data.length
-		).toFixed(2)}"
-		unit=" "
-	/>
-</DarkCard>
-<DarkCard title="{$_('weatherStation.barometricPressure')}" value={null} optimalValue={null} unit={'ºC'}>
-	<div class="chart" use:Highcharts={pressureChartConfig} />
-	<DarkCard
-		title="{$_('weatherStation.maxPressure')}"
-		value={Math.max(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
-		unit="kPh"
-	/>
-	<DarkCard
-		title="{$_('weatherStation.averagePressure')}"
-		value={(data.reduce((total, next) => total + next.pressure / 100, 0) / data.length).toFixed(2)}
-		unit="kPh"
-	/>
-	<DarkCard
-		title="{$_('weatherStation.minimumPressure')}"
-		value={Math.min(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
-		unit="kPh"
-	/>
-</DarkCard>
-<DarkCard title="{$_('weatherStation.windSpeed')}" value={null} optimalValue={null} unit={'ºC'}>
-	<div class="chart" use:Highcharts={windSpeedChartConfig} />
-	<DarkCard
-		title="{$_('weatherStation.maxWindSpeed')}"
-		value={Math.max(...data.map((periodData) => periodData.wind_speed)).toFixed(2)}
-		unit="m/s"
-	/>
-	<DarkCard
-		title="{$_('weatherStation.averageWindSpeed')}"
-		value={(data.reduce((total, next) => total + next.wind_speed, 0) / data.length).toFixed(2)}
-		unit="m/s"
-	/>
-</DarkCard>
+		title={$_('weatherStation.barometricPressure')}
+		value={null}
+		optimalValue={null}
+		unit={'ºC'}
+	>
+		<DarkCard
+			title={$_('weatherStation.maxPressure')}
+			value={Math.max(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
+			unit="kPh"
+		/>
+		<DarkCard
+			title={$_('weatherStation.averagePressure')}
+			value={(data.reduce((total, next) => total + next.pressure / 100, 0) / data.length).toFixed(
+				2
+			)}
+			unit="kPh"
+		/>
+		<DarkCard
+			title={$_('weatherStation.minimumPressure')}
+			value={Math.min(...data.map((periodData) => periodData.pressure / 100)).toFixed(2)}
+			unit="kPh"
+		/>
+		<div class="chart" use:Highcharts={pressureChartConfig} />
+	</DarkCard>
+	<DarkCard title={$_('weatherStation.windSpeed')} value={null} optimalValue={null} unit={'ºC'}>
+		<DarkCard
+			title={$_('weatherStation.maxWindSpeed')}
+			value={Math.max(...data.map((periodData) => periodData.wind_speed)).toFixed(2)}
+			unit="m/s"
+		/>
+		<DarkCard
+			title={$_('weatherStation.averageWindSpeed')}
+			value={(data.reduce((total, next) => total + next.wind_speed, 0) / data.length).toFixed(2)}
+			unit="m/s"
+		/>
+		<div class="chart" use:Highcharts={windSpeedChartConfig} />
+	</DarkCard>
+</div>

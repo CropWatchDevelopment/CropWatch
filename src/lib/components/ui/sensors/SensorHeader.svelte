@@ -23,7 +23,7 @@
 				/>
 				<span class="w-full inline-block flex-nowrap text-xl">
 					{sensorName}
-					<p class="text-slate-500">
+					<p class="text-slate-300">
 						{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} />
 						{$_('ago')}
 					</p>

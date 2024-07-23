@@ -7,6 +7,7 @@
 	import { _ } from 'svelte-i18n';
 	import { subDays } from 'date-fns';
 	import { onMount } from 'svelte';
+	import DarkCard2 from '../DarkCard2.svelte';
 
 	export let data;
 
@@ -45,14 +46,14 @@
 					type: 'line',
 					yAxis: 0,
 					name: $_('temperatureC'),
-					color: 'red',
+					color: '#ffdd00',
 					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
 				},
 				{
 					type: 'line',
 					yAxis: 1,
 					name: $_('humidity'),
-					color: 'lightblue',
+					color: '#91fbfc',
 					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
 				}
 			],
@@ -62,13 +63,15 @@
 					title: {
 						text: '',
 						style: {
-							color: 'red'
+							color: '#ffdd00'
 						}
 					},
 					labels: {
 						format: '{value} °C',
 						style: {
-							color: 'red'
+							color: '#ffdd00',
+							'font-size': '17px',
+							'font-weight': 'bold'
 						}
 					},
 					opposite: false
@@ -78,13 +81,15 @@
 					title: {
 						text: '',
 						style: {
-							color: 'lightblue'
+							color: '#91fbfc'
 						}
 					},
 					labels: {
 						format: '{value} %',
 						style: {
-							color: 'lightblue'
+							color: '#91fbfc',
+							'font-size': '17px',
+							'font-weight': 'bold'
 						}
 					},
 					opposite: true
@@ -154,13 +159,16 @@
 	class="w-full"
 />
 
-<h1 class="text-white my-5">{$_('temperatureC')}/{$_('humidity')}</h1>
 
 {#key data}
 	{#if config}
-		<div class="chart" use:Highcharts={config} />
+		<DarkCard title={$_('temperatureC')}/{$_('humidity')}>
+			<div class="chart mt-2" use:Highcharts={config} />
+		</DarkCard>
 		<h1 class="text-white my-3">{$_('dewPointC')}</h1>
-		<div class="chart" use:Highcharts={dewPointConfig} />
+		<DarkCard>
+			<div class="chart" use:Highcharts={dewPointConfig} />
+		</DarkCard>
 	{/if}
 {/key}
 
