@@ -46,7 +46,6 @@
 		  data.cw_locations.long,
 		  locationId
 		);
-		debugger;
 		locationWeatherData.set(weather);
 	  } catch (err) {
 		console.error('Error loading weather data:', err);

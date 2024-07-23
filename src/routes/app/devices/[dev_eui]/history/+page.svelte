@@ -24,7 +24,7 @@
 	let options = Object.keys(data.sensorData).map((key) => {
 		return {
 			value: key,
-			name: $_(key)
+			label: $_(key)
 		};
 	});
 	let selectedDataPoints: string[] = [];
@@ -152,7 +152,7 @@
 		<DateRangeField bind:value label="" stepper rounded center />
 	</div>
 
-	<div class="grid lg:grid-flow-col grid-flow-rowgrid-cols-1 md:grid-cols-2 my-4 gap-2 text-white">
+	<div class="grid lg:grid-flow-col grid-flow-rowgrid-cols-1 grid-cols-1 md:grid-cols-1 my-4 gap-2 text-white">
 		<DarkCard2>
 			<MultiSelect
 				{options}
