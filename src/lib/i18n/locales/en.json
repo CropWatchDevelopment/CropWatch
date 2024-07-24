@@ -328,5 +328,6 @@
     "title": "Gateways",
     "online": "Gateway Online",
     "offline": "Gateway Offline"
-  }
+  },
+  "back": "Back"
 }

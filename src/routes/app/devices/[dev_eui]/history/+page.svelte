@@ -24,7 +24,7 @@
 	let options = Object.keys(data.sensorData).map((key) => {
 		return {
 			value: key,
-			name: $_(key)
+			label: $_(key)
 		};
 	});
 	let selectedDataPoints: string[] = [];
@@ -91,7 +91,7 @@
 
 	const loadSelectedDataRange = async () => {
 		const response = await fetch(
-			`/api/v1/devices/${$page.params.dev_eui}/data?from=${value.from}&to=${value.to}&data-points=${selectedDataPoints}&page=0&count=10000`,
+			`/api/v1/devices/${$page.params.dev_eui}/data?from=${value.from}&to=${value.to}&data-points=${selectedDataPoints}&page=0&count=1000`,
 			{
 				method: 'GET',
 				headers: {
@@ -105,13 +105,14 @@
 	};
 
 	const downloadCSV = (sensorName) => {
+		debugger;
         isLoading = true;
 		const date = new Date();
 		const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
 		const fileName = `${sensorName}-${formattedDate}.csv`;
 
 		fetch(
-			`/api/v1/devices/${$page.params.dev_eui}/data?from=${value.from}&to=${value.to}&data-points=${selectedDataPoints}&no-limit=1&csv=1`,
+			`/api/v1/devices/${$page.params.dev_eui}/data?from=${value.from}&to=${value.to}&data-points=${selectedDataPoints}&noLimit=1&csv=1`,
 			{
 				method: 'GET',
 				headers: {
@@ -144,7 +145,9 @@
 </div>
 
 <div class="mt-4 mx-2 flex justify-between">
-	<Back />
+	<Back>
+		{$_('back')}
+	</Back>
 </div>
 
 <div class="m-6">
@@ -152,9 +155,12 @@
 		<DateRangeField bind:value label="" stepper rounded center />
 	</div>
 
-	<div class="grid lg:grid-flow-col grid-flow-rowgrid-cols-1 md:grid-cols-2 my-4 gap-2 text-white">
+	{JSON.stringify(data, null, 2)}
+
+	<div class="grid grid-flow-row lg:grid-flow-col gap-2">
 		<DarkCard2>
 			<MultiSelect
+				class="text-neutral-content"
 				{options}
 				value={selectedDataPoints}
 				on:change={(e) => {

@@ -20,18 +20,11 @@
 	{/if} -->
 	{#if permissions <= 1}
 		<Button
-			classes={{ root: 'w-full' }}
+			classes={{ root: 'w-full mb-4' }}
 			size="lg"
 			icon={mdiCog}
 			variant="fill"
 			on:click={() => goto(`${$page.params.location_id}/settings`)}>{$_('sensorFooterControls.settings')}</Button
-		>
-		<Button
-			classes={{ root: 'w-full' }}
-			size="lg"
-			icon={mdiLock}
-			variant="fill"
-			on:click={() => goto(`${$page.params.location_id}/settings/permissions`)}>{$_('sensorFooterControls.permissions')}</Button
 		>
 	{/if}
 </div>

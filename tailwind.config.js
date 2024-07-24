@@ -11,7 +11,7 @@ module.exports = {
     extend: {
       backgroundImage: {
         clouds: "url('https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L2ZsMzYyNjkxODE2NDItcHVibGljLWltYWdlLWtvbnFxczZlLmpwZw.jpgs')"
-      }
+      },
     },
   },
 

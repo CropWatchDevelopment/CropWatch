@@ -344,5 +344,6 @@
     "title": "Gateways",
     "offline": "Gateway Offline",
     "online": "Gateway Offline"
-  }
+  },
+  "back": "戻る"
 }

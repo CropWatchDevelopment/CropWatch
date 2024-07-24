@@ -11,7 +11,8 @@
       "danger": "#ff8f8f",
       "surface-100": "#FFFEF4",
       "surface-200": "#F2F2F2",
-      "surface-300": "#E5E6E6"
+      "surface-300": "#E5E6E6",
+      "text-surface-content": "red"
     },
     "dark": {
       "color-scheme": "light",
@@ -26,6 +27,8 @@
       "surface-100": "#FFFEF4",
       "surface-200": "#F2F2F2",
       "surface-300": "#E5E6E6",
-      "surface-content": "#A6ADBB"
+      "surface-content": "#A6ADBB",
+
+      "text-surface-content": "red"
     }
   }

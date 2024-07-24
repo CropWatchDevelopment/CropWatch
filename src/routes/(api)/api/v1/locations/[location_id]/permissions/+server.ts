@@ -70,6 +70,7 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
         user_id: userProfile.id,
         location_id: formData.get('location_id'),
         permission_level: formData.get('permission_level'),
+        is_active: true,
     }
 
     const { data, error } = await supabase

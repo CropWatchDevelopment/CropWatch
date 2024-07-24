@@ -7,11 +7,12 @@
 	import { _ } from 'svelte-i18n';
 	import { subDays } from 'date-fns';
 	import { onMount } from 'svelte';
-	import DarkCard2 from '../DarkCard2.svelte';
 
 	export let data;
+    // Upload payload: 3110010000001A80000000
+    // On Port 3
 
-	let dev_eui = data.at(0).dev_eui;
+	let dev_eui = $page.params.dev_eui;
 	const temperature = data.at(0).temperatureC;
 	const humidity = data.at(0).humidity;
 	const vpd = data.at(0).vpd;
@@ -98,36 +99,6 @@
 			``
 		);
 
-		dewPointConfig = HighChartsTimeSeriesChart(
-			[
-				{
-					type: 'line',
-					yAxis: 0,
-					name: $_('dewPointC'),
-					color: 'red',
-					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
-				}
-			],
-			[
-				{
-					// Secondary yAxis
-					title: {
-						text: '',
-						style: {
-							color: 'red'
-						}
-					},
-					labels: {
-						format: '{value} °C',
-						style: {
-							color: 'red'
-						}
-					},
-					opposite: false
-				}
-			],
-			''
-		);
 	};
 
 	const filterDataByDate = (e) => {
@@ -144,7 +115,6 @@
 	});
 </script>
 
-<TempHumidityCard {temperature} {humidity} />
 
 <DateRangeField
 	periodTypes={[]}
@@ -165,11 +135,5 @@
 		<DarkCard title={$_('temperatureC')}/{$_('humidity')}>
 			<div class="chart mt-2" use:Highcharts={config} />
 		</DarkCard>
-		<h1 class="text-white my-3">{$_('dewPointC')}</h1>
-		<DarkCard>
-			<div class="chart" use:Highcharts={dewPointConfig} />
-		</DarkCard>
 	{/if}
 {/key}
-
-<DarkCard title={$_('vpd')} value={vpd} optimalValue={null} unit={'kPa'} />

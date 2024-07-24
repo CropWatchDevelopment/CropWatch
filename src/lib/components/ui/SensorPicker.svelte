@@ -9,14 +9,16 @@
 	import NetvoxRa02A from './sensors/NETVOX_RA02A.svelte';
 	import SensorHeader from './sensors/SensorHeader.svelte';
 	import SensorFooterControls from './SensorFooterControls.svelte';
+	import SeeedS2103WaterLevel from './sensors/SEEED_S2103_WaterLevel.svelte';
+	import { page } from '$app/stores';
 
 	export let sensorType = 'NS';
 	export let sensorName = 'NS';
 	export let permissions = 0;
 	export let data;
 
-	const dev_eui = data.at(0).dev_eui;
-	const lastSeen = data.at(0).created_at;
+	const dev_eui = $page.params.dev_eui; //data.at(0).dev_eui;
+	const lastSeen = (data && data.length > 0) ? data.at(-1).created_at : new Date();
 </script>
 
 <div class="relative m-1">
@@ -35,6 +37,8 @@
 		<SeeedT1000 {data} {sensorName} {permissions} />
 	{:else if sensorType == 'netvox_ra02a'}
 		<NetvoxRa02A {data} {sensorName} {permissions} />
+	{:else if sensorType == 'seeed_sensecap_s2103_WaterLevel'}
+		<SeeedS2103WaterLevel {data} {sensorName} {permissions} />
 	{:else}
 		<Back />
 		<p>No sensor for type `{sensorType}` was specified</p>

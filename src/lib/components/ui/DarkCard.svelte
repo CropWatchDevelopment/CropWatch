@@ -20,7 +20,7 @@
 <div class="bg-[#34393f] bg-opacity-50 rounded-xl py-5 px-2 text-surface-100 my-3">
 	{#if title}
 		<div class="flex justify-between items-center">
-			<p class="text-lg">{title}</p>
+			<p class="text-2xl">{title}</p>
 			{#if value != null && unit != null}<p class="text-3xl">{value}<span class="text-2xl">{unit}</span></p>{/if}
 		</div>
 	{/if}
@@ -32,17 +32,6 @@
 			</div>
 			<div class="flex justify-between">
 				<p class="text-sm">{$_('difference')}</p>
-				<!-- {#if differenceValue !== null}
-				<p
-					class="text-sm {checkValue(differenceValue) == 'greater'
-						? 'greater'
-						: checkValue(differenceValue) == 'equal'
-							? ''
-							: 'less'}"
-				>
-					{differenceValue > 0 ? '+' : ''}{differenceValue}<span class="text-xs">{unit}</span>
-				</p>
-				{/if} -->
 			</div>
 		</div>
 	{/if}
