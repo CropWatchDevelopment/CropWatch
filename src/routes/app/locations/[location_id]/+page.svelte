@@ -5,7 +5,14 @@
 	import { Button, Icon, ProgressCircle } from 'svelte-ux';
 	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
-	import { mdiAccountCircle, mdiMoleculeCo2, mdiPlusCircle, mdiSmokeDetectorAlert, mdiThermometer, mdiWindsock } from '@mdi/js';
+	import {
+		mdiAccountCircle,
+		mdiMoleculeCo2,
+		mdiPlusCircle,
+		mdiSmokeDetectorAlert,
+		mdiThermometer,
+		mdiWindsock
+	} from '@mdi/js';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
 	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
 	import { goto } from '$app/navigation';
@@ -47,7 +54,7 @@
 		seeed_t1000: '📍',
 		seeed_co2_lorawan_uplinks: mdiMoleculeCo2,
 		cw_co2_uplinks: mdiMoleculeCo2,
-		netvox_ra02a: mdiSmokeDetectorAlert,
+		netvox_ra02a: mdiSmokeDetectorAlert
 	};
 </script>
 
@@ -80,16 +87,18 @@
 				height={innerHeight}
 			>
 				{#each allDevices as device}
-					<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
-						<a
-							class="bg-black p-2 w-10 text-2xl rounded-full z-20 hover:text-4xl hover:z-30"
-							href={`/app/devices/${device.dev_eui}/data`}
-						>
-							{#if typeof icons[device.type.cw_device_type.data_table] === 'string'}
-								<Icon data={icons[device.type.cw_device_type.data_table]} />
-							{/if}
-						</a>
-					</Marker>
+					{#if device.cw_devices.lat && device.cw_devices.long}
+						<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
+							<a
+								class="bg-black p-2 w-10 text-2xl rounded-full z-20 hover:text-4xl hover:z-30"
+								href={`/app/devices/${device.dev_eui}/data`}
+							>
+								{#if typeof icons[device.type.cw_device_type.data_table] === 'string'}
+									<Icon data={icons[device.type.cw_device_type.data_table]} />
+								{/if}
+							</a>
+						</Marker>
+					{/if}
 				{/each}
 			</Leaflet>
 		</DarkCard2>
