@@ -158,7 +158,7 @@
 					<span class="flex-grow" />
 					<p class="text-base flex flex-row align-bottom">
 					  {#if dataPointKey === 'created_at'}
-						<Duration start={device[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />
+						<Duration start={device[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />&nbsp ago
 					  {:else}
 						{device[dataPointKey]}
 						<small class="text-slate-800"><sup>{nameToNotation(dataPointKey)}</sup></small>

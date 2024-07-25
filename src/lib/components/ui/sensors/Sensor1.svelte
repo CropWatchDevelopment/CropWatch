@@ -46,7 +46,7 @@
 					type: 'line',
 					yAxis: 0,
 					name: $_('temperatureC'),
-					color: '#ffdd00',
+					color: 'red',
 					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
 				},
 				{
@@ -69,9 +69,7 @@
 					labels: {
 						format: '{value} °C',
 						style: {
-							color: '#ffdd00',
-							'font-size': '17px',
-							'font-weight': 'bold'
+							color: 'red',
 						}
 					},
 					opposite: false
@@ -81,15 +79,13 @@
 					title: {
 						text: '',
 						style: {
-							color: '#91fbfc'
+							color: 'red'
 						}
 					},
 					labels: {
 						format: '{value} %',
 						style: {
 							color: '#91fbfc',
-							'font-size': '17px',
-							'font-weight': 'bold'
 						}
 					},
 					opposite: true
@@ -172,4 +168,3 @@
 	{/if}
 {/key}
 
-<DarkCard title={$_('vpd')} value={vpd} optimalValue={null} unit={'kPa'} />
