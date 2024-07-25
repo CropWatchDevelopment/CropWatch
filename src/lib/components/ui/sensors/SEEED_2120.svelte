@@ -36,6 +36,9 @@
 	let uvIndex = data.at(0).uv;
 	let uvIndexText = UVI_to_text(uvIndex);
 
+	//find and remove pressure where it is 0 from data
+	data = data.filter((d) => d.pressure !== 0 && d.pressure != null);
+
 	let rainValue = data.at(0).rainfall;
 	let pressureValue = data.at(0).pressure || 0;
 	let locationWeatherData = writable(null);

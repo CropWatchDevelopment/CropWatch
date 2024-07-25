@@ -21,8 +21,9 @@ export const HighChartsGuageChart = (data: any[], name: string = '', notation: s
             startAngle: -90,
             endAngle: 90, // Changed from 89.9 to 90 for symmetry
             background: null,
-            center: ['50%', '70%'], // Moved the gauge upwards
-            size: '100%' // Adjusted size for better fitting
+            center: ['50%', '50%'], // Moved the gauge upwards
+            size: '75%', // Adjusted size for better fitting
+            height: '100%',
         },
 
         // the value axis

@@ -18,7 +18,7 @@
 	export let data;
 
 	const dev_eui = $page.params.dev_eui; //data.at(0).dev_eui;
-	const lastSeen = (data && data.length > 0) ? data.at(-1).created_at : new Date();
+	const lastSeen = (data && data.length > 0) ? data.at(0).created_at : new Date();
 </script>
 
 <div class="relative m-1">

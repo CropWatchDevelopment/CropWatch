@@ -100,7 +100,7 @@
 					type: 'line',
 					yAxis: 0,
 					name: $_('dewPointC'),
-					color: 'red',
+					color: 'blue',
 					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
 				}
 			],
@@ -110,13 +110,13 @@
 					title: {
 						text: '',
 						style: {
-							color: 'red'
+							color: 'white'
 						}
 					},
 					labels: {
 						format: '{value} °C',
 						style: {
-							color: 'red'
+							color: 'white'
 						}
 					},
 					opposite: false
@@ -142,7 +142,7 @@
 
 <TempHumidityCard {temperature} {humidity} />
 
-<DateRangeField
+<!-- <DateRangeField
 	periodTypes={[]}
 	label=""
 	maxDate={Date}
@@ -153,16 +153,16 @@
 	rounded
 	center
 	class="w-full"
-/>
+/> -->
 
 
 {#key data}
 	{#if config}
-		<DarkCard title={$_('temperatureC')}/{$_('humidity')}>
-			<div class="chart mt-2" use:Highcharts={config} />
+		<DarkCard title="24h {$_('temperatureC')}/{$_('humidity')}">
+			<div class="chart" use:Highcharts={config} />
 		</DarkCard>
-		<h1 class="text-white my-3">{$_('dewPointC')}</h1>
-		<DarkCard>
+		
+		<DarkCard title="24h {$_('dewPointC')}">
 			<div class="chart" use:Highcharts={dewPointConfig} />
 		</DarkCard>
 	{/if}
