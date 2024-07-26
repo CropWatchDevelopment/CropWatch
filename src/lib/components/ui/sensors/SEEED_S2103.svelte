@@ -78,7 +78,7 @@
 				type: 'line',
 				yAxis: 0,
 				name: 'CO2',
-				color: 'red',
+				color: 'lightgreen',
 				data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.co2_level])
 			}
 		],
@@ -88,13 +88,13 @@
 				title: {
 					text: '',
 					style: {
-						color: 'red'
+						color: 'lightgreen',
 					}
 				},
 				labels: {
 					format: '{value} PPM',
 					style: {
-						color: 'red'
+						color: 'lightgreen',
 					}
 				},
 				opposite: false

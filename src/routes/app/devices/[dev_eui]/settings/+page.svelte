@@ -2,11 +2,13 @@
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
 	import DeleteSensorDialog from '$lib/components/ui/DeleteSensorDialog.svelte';
+	import DevicePermission from '$lib/components/ui/DevicePermission.svelte';
 	import EditSensorNameDialog from '$lib/components/ui/EditSensorNameDialog.svelte';
 	import historyImage from '$lib/images/UI/cw_settings.svg';
 	import { getDeviceByDevEui } from '$lib/stores/device.store';
 
 	let latestSensorData = getDeviceByDevEui($page.params.dev_eui);
+	let devEui = $page.params.dev_eui;
 </script>
 
 <div class="flex flex-row bg-emerald-300 p-4 text-center justify-center">
@@ -22,10 +24,11 @@
 
 	<h1 class="mb-4 text-4xl">{latestSensorData.cw_devices.name}:</h1>
 	<EditSensorNameDialog bind:currentSensorName={latestSensorData.cw_devices.name} />
+	<DevicePermission {devEui} />
 
 	<span class="flex flex-1" />
-	<fieldset class="border border-red-600 p-4">
+	<!-- <fieldset class="border border-red-600 p-4">
 		<legend>Danger Zone</legend>
 		<DeleteSensorDialog bind:dev_eui={$page.params.dev_eui} />
-	</fieldset>
+	</fieldset> -->
 </div>

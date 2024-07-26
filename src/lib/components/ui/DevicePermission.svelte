@@ -7,7 +7,8 @@
 	import { _ } from 'svelte-i18n';
 
 	export let devEui;
-	export let permissions;
+	// export let permissions;
+	let permissions = [];
 	let permission_level: number = 3;
 
 	const deletePermission = (id: number) => {
