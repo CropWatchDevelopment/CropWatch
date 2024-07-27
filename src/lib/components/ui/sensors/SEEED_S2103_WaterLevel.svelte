@@ -7,15 +7,15 @@
 	import { _ } from 'svelte-i18n';
 	import { subDays } from 'date-fns';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
+	import CircleNumber from '../CircleNumber.svelte';
 
 	export let data;
     // Upload payload: 3110010000001A80000000
     // On Port 3
 
 	let dev_eui = $page.params.dev_eui;
-	const temperature = data.at(0).temperatureC;
-	const humidity = data.at(0).humidity;
-	const vpd = data.at(0).vpd;
+	const water_level = data.at(0).water_level;
 
 	let today = new Date();
 	let value = {
@@ -48,15 +48,8 @@
 					yAxis: 0,
 					name: $_('temperatureC'),
 					color: '#ffdd00',
-					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
+					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.water_level/1000])
 				},
-				{
-					type: 'line',
-					yAxis: 1,
-					name: $_('humidity'),
-					color: '#91fbfc',
-					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.humidity])
-				}
 			],
 			[
 				{
@@ -68,7 +61,7 @@
 						}
 					},
 					labels: {
-						format: '{value} °C',
+						format: '{value}m',
 						style: {
 							color: '#ffdd00',
 							'font-size': '17px',
@@ -115,24 +108,10 @@
 	});
 </script>
 
-
-<DateRangeField
-	periodTypes={[]}
-	label=""
-	maxDate={Date}
-	on:change={(e) => filterDataByDate(e)}
-	bind:value
-	size="lg"
-	stepper
-	rounded
-	center
-	class="w-full"
-/>
-
-
 {#key data}
 	{#if config}
-		<DarkCard title={$_('temperatureC')}/{$_('humidity')}>
+		<CircleNumber value={(water_level/1000).toFixed(2)} notation={'m'} />
+		<DarkCard title={$_('water_level')}>
 			<div class="chart mt-2" use:Highcharts={config} />
 		</DarkCard>
 	{/if}
