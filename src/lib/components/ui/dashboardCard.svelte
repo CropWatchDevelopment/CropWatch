@@ -127,8 +127,6 @@
 						{#if device && device.primaryData && device.primary_data_notation}
 						  <span>{nameToEmoji(device.primaryData)}{device[device.primaryData].toLocaleString()}</span>
 						  <small class="text-slate-800"><sup>{device.primary_data_notation}</sup></small>
-						{:else}
-						  N/A
 						{/if}
 					  </p>
 					  <p class="justify-center m-auto">

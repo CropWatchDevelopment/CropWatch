@@ -7,14 +7,12 @@
 	import { _ } from 'svelte-i18n';
 	import { subDays } from 'date-fns';
 	import { onMount } from 'svelte';
-	import DarkCard2 from '../DarkCard2.svelte';
 
 	export let data;
 
 	let dev_eui = data.at(0).dev_eui;
 	const temperature = data.at(0).temperatureC;
 	const humidity = data.at(0).humidity;
-	const vpd = data.at(0).vpd;
 
 	let today = new Date();
 	let value = {
@@ -28,7 +26,7 @@
 
 	const fetchData = (from, to) => {
 		return fetch(
-			`/api/v1/devices/${dev_eui}/data?from=${from.toISOString()}&to=${to.toISOString()}&noLimit=1`
+			`/api/v1/devices/${dev_eui}/data?from=${from.toISOString()}&to=${to.toISOString()}`
 		)
 			.then((res) => res.json())
 			.then((data) => {
@@ -141,20 +139,6 @@
 </script>
 
 <TempHumidityCard {temperature} {humidity} />
-
-<!-- <DateRangeField
-	periodTypes={[]}
-	label=""
-	maxDate={Date}
-	on:change={(e) => filterDataByDate(e)}
-	bind:value
-	size="lg"
-	stepper
-	rounded
-	center
-	class="w-full"
-/> -->
-
 
 {#key data}
 	{#if config}
