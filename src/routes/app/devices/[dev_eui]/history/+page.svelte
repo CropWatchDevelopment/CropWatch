@@ -155,8 +155,6 @@
 		<DateRangeField bind:value label="" stepper rounded center />
 	</div>
 
-	{JSON.stringify(data, null, 2)}
-
 	<div class="grid grid-flow-row lg:grid-flow-col gap-2">
 		<DarkCard2>
 			<MultiSelect

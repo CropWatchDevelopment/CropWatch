@@ -18,9 +18,20 @@
 			},
 			MultiSelect: {
 				classes: {
-					root: 'text-white'
+					root: 'text-black'
 				} 
-			}
+			},
+
+			TextField: {
+				classes: {
+					root: 'text-black'
+				}
+			},
+			Input: {
+				classes: {
+					root: 'text-black'
+				}
+			},
 		}
 	});
 </script>
