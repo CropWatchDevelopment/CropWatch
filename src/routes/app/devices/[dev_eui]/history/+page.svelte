@@ -9,8 +9,22 @@
 	import Highcharts from '$lib/actions/highcharts.action';
 	import { page } from '$app/stores';
 	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
+	import { deviceDataStore } from '$lib/stores/deviceData.store';
+	import { onMount } from 'svelte';
 
 	export let data;
+	let dev_eui = $page.params.dev_eui;
+
+	onMount(async () => {
+		await fetch(`/api/v1/devices/${dev_eui}/data/latest`)
+			.then((response) => response.json())
+			.then((res) => {
+				data = res;
+			})
+			.catch((error) => {
+				console.error('Error fetching data:', error);
+			});
+	});
 
 	let today = new Date();
 	let value = {
@@ -21,6 +35,7 @@
     let isLoading: boolean = false;
 	let chartKey = 0;
 
+	
 	let options = Object.keys(data.sensorData).map((key) => {
 		return {
 			value: key,
@@ -105,7 +120,6 @@
 	};
 
 	const downloadCSV = (sensorName) => {
-		debugger;
         isLoading = true;
 		const date = new Date();
 		const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;

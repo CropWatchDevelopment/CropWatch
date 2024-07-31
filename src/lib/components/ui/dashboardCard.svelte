@@ -125,13 +125,13 @@
 					{#if device}
 					  <p class="justify-center m-auto">
 						{#if device && device.primaryData && device.primary_data_notation}
-						  <span>{nameToEmoji(device.primaryData)}{device[device.primaryData].toLocaleString()}</span>
+						  <span>{nameToEmoji(device.primaryData)}{(device[device.primaryData] * device.primary_multiplier).toLocaleString()}</span>
 						  <small class="text-slate-800"><sup>{device.primary_data_notation}</sup></small>
 						{/if}
 					  </p>
 					  <p class="justify-center m-auto">
 						{#if device && device.secondaryData && device.secondary_data_notation}
-						  {nameToEmoji(device.secondaryData)}{device[device.secondaryData].toLocaleString()}
+						  {nameToEmoji(device.secondaryData)}{(device[device.secondaryData]).toLocaleString()}
 						  <small class="text-slate-800"><sup>{device.secondary_data_notation}</sup></small>
 						{/if}
 					  </p>

@@ -37,20 +37,24 @@ function createDeviceDataStore() {
   return {
     subscribe,
     add: (obj: Device) => {
-
+      update(items => {
+        items.push(obj);
+        saveToLocalStorage(limitItems(items));
+        return items;
+      });
     },
 
     updateDevice: (newData: any) => {
-      update(item => {
-        const index = item.findIndex(i => i.dev_eui === newData.dev_eui);
+      update(items => {
+        const index = items.findIndex(i => i.dev_eui === newData.dev_eui);
         if (index === -1) {
-          item.push(newData);
-          return item;
+          items.push(newData);
+          saveToLocalStorage(limitItems(items));
+          return items;
         }
-        const existingDevice = item[index];
-        if (!existingDevice) item = {...newData };
-        item[index] = newData;
-        return item;
+        items[index] = newData;
+        saveToLocalStorage(limitItems(items));
+        return items;
       });
     },
 
@@ -63,18 +67,21 @@ function createDeviceDataStore() {
     },
 
     search: (dev_eui: string) => {
-      const items = get(deviceStore);
+      const items = get(deviceDataStore);
       return items.find(item => item.dev_eui === dev_eui) || null;
     },
 
     getLatestData: (dev_eui: string) => {
-      const items = get(deviceStore);
+      const items = get(deviceDataStore);
       const device = items.find(item => item.dev_eui === dev_eui);
-      return device && device.data.length > 0 ? device.data[device.data.length - 1] : null;
+      return device && Array.isArray(device.data) && device.data.length > 0 
+        ? device.data[device.data.length - 1] 
+        : null;
     },
+    
 
     getDevicesByLocation: (location_id: number) => {
-      const items = get(deviceStore);
+      const items = get(deviceDataStore);
       return items.filter(item => item.location_id === location_id);
     }
   };
