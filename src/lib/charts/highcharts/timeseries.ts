@@ -26,7 +26,7 @@ export const HighChartsTimeSeriesChart = (data: any[], yAxis: any[], name: strin
             },
             labels: {
                 formatter: function (): any {
-                    return moment(this.value).format('MMM-DD HH:MM').toString();
+                    return moment(this.value).format('MM/DD<br>HH:MM').toString();
                 },
                 style: {
                     color: 'white',
@@ -41,13 +41,13 @@ export const HighChartsTimeSeriesChart = (data: any[], yAxis: any[], name: strin
             borderColor: '#2c3e50',
             shared: true,
             formatter: function (): any {
-                var s = '<b>Time: ' + moment(this.x).format('hh:mm a').toString() + '</b><br/>';
+                var s = '<b>Date: ' + moment(this.x).format('MM/DD/YY hh:mm a').toString() + '</b><br/>';
                 this.points.forEach(point => {
                     s += point.series.name + ': ' + point.y.toLocaleString();
                     if (point.series.yAxis.opposite) {
                         s += ' %'; // Assuming humidity values are formatted as percentages
                     } else {
-                        s += '°C'; // Assuming temperature values are formatted in Celsius
+                        s += ''; // Assuming temperature values are formatted in Celsius
                     }
                     s += '<br/>';
                 });

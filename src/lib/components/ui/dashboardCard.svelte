@@ -65,7 +65,7 @@
 	  <div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
 	  <div class="absolute top-4 text-xs text-surface-100 drop-shadow-md right-3 space-y-1">
 		{#if $locationWeatherData}
-		  <p>{$_('dashboardCard.rainfall')}: {$locationWeatherData.rainfall}%</p>
+		  <p>{$_('dashboardCard.rainfall')}: {$locationWeatherData.rainfall}mm/h</p>
 		  <p>{$_('dashboardCard.humidity')}: {$locationWeatherData.humidity}%</p>
 		  <p>{$_('dashboardCard.windspeed')}: {$locationWeatherData.windSpeed} km/h</p>
 		{:else}
@@ -125,18 +125,14 @@
 					{#if device}
 					  <p class="justify-center m-auto">
 						{#if device && device.primaryData && device.primary_data_notation}
-						  <span>{nameToEmoji(device.primaryData)}{device[device.primaryData]}</span>
+						  <span>{nameToEmoji(device.primaryData)}{(device[device.primaryData] * device.primary_multiplier).toLocaleString()}</span>
 						  <small class="text-slate-800"><sup>{device.primary_data_notation}</sup></small>
-						{:else}
-						  N/A
 						{/if}
 					  </p>
 					  <p class="justify-center m-auto">
 						{#if device && device.secondaryData && device.secondary_data_notation}
-						  {nameToEmoji(device.secondaryData)}{device[device.secondaryData]}
+						  {nameToEmoji(device.secondaryData)}{(device[device.secondaryData]).toLocaleString()}
 						  <small class="text-slate-800"><sup>{device.secondary_data_notation}</sup></small>
-						{:else}
-						  N/A
 						{/if}
 					  </p>
 					{:else}
@@ -158,9 +154,9 @@
 					<span class="flex-grow" />
 					<p class="text-base flex flex-row align-bottom">
 					  {#if dataPointKey === 'created_at'}
-						<Duration start={device[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />
+						<Duration start={device[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />&nbsp {$_('ago')}
 					  {:else}
-						{device[dataPointKey]}
+						{device[dataPointKey] ? device[dataPointKey].toLocaleString() : 'N/A'}
 						<small class="text-slate-800"><sup>{nameToNotation(dataPointKey)}</sup></small>
 					  {/if}
 					</p>

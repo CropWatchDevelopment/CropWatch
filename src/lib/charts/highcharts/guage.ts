@@ -9,8 +9,8 @@ export const HighChartsGuageChart = (data: any[], name: string = '', notation: s
             plotBackgroundImage: null,
             plotBorderWidth: 0,
             plotShadow: false,
-            height: '80%',
             backgroundColor: 'transparent',
+            spacing: [0, 0, 0, 0] // Adjusted spacing to minimize top space
         },
 
         title: {
@@ -19,10 +19,11 @@ export const HighChartsGuageChart = (data: any[], name: string = '', notation: s
 
         pane: {
             startAngle: -90,
-            endAngle: 89.9,
+            endAngle: 90, // Changed from 89.9 to 90 for symmetry
             background: null,
-            center: ['50%', '75%'],
-            size: '110%'
+            center: ['50%', '50%'], // Moved the gauge upwards
+            size: '75%', // Adjusted size for better fitting
+            height: '100%',
         },
 
         // the value axis
@@ -31,53 +32,55 @@ export const HighChartsGuageChart = (data: any[], name: string = '', notation: s
             max: 1500,
             tickPixelInterval: 72,
             tickPosition: 'inside',
-            tickColor: browser ? (Highcharts?.defaultOptions?.chart.backgroundColor || '#FFFFFF') : '#FFFFFF',
+            tickColor: browser ? (Highcharts?.defaultOptions?.chart.backgroundColor || 'red') : 'red',
             tickLength: 20,
             tickWidth: 2,
             minorTickInterval: null,
             labels: {
                 distance: 20,
                 style: {
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    color: 'white'
                 }
             },
             lineWidth: 0,
             plotBands: [{
                 from: 0,
-                to: 1500,
-                color: '#55BF3B', // green
+                to: 400,
+                color: '#DDDF0D', // green
                 thickness: 20
             },
-            // {
-            //     from: 120,
-            //     to: 160,
-            //     color: '#DDDF0D', // yellow
-            //     thickness: 20
-            // }, {
-            //     from: 160,
-            //     to: 10000,
-            //     color: '#DF5353', // red
-            //     thickness: 20
-            // }
-        ]
+            {
+                from: 400,
+                to: 1000,
+                color: '#55BF3B', // yellow
+                thickness: 20
+            }, {
+                from: 1000,
+                to: 1400,
+                color: 'orange', // orange
+                thickness: 20
+            },
+            {
+                from: 1400,
+                to: 1500,
+                color: '#DF5353', // red
+                thickness: 20
+            }]
         },
 
         series: [{
-            name: 'Speed',
+            name: 'CO2 PPM',
             data: [data],
             tooltip: {
                 valueSuffix: ` ${notation}`
             },
             dataLabels: {
-                format: `{y} ${notation}`,
+                format: `{y} ${notation} PPM`,
                 borderWidth: 0,
-                color: browser ? (
-                    Highcharts.defaultOptions.title &&
-                    Highcharts.defaultOptions.title.style &&
-                    Highcharts.defaultOptions.title.style.color
-                ) || 'white' : 'white',
                 style: {
-                    fontSize: '16px'
+                    fontSize: '40px',
+                    color: 'white'
                 }
             },
             dial: {
@@ -88,7 +91,7 @@ export const HighChartsGuageChart = (data: any[], name: string = '', notation: s
                 rearLength: '0%'
             },
             pivot: {
-                backgroundColor: 'gray',
+                backgroundColor: 'black',
                 radius: 6
             }
 

@@ -345,5 +345,6 @@
     "offline": "Gateway Offline",
     "online": "Gateway Offline"
   },
-  "back": "戻る"
+  "back": "戻る",
+  "water_level": "水位"
 }

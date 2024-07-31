@@ -5,9 +5,12 @@
 	import { toast } from '@zerodevx/svelte-toast';
 	import { Button, ListItem, SelectField, TextField } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
+	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 
-	export let devEui;
-	export let permissions;
+	let devEui = $page.params.dev_eui;
+	// export let permissions;
+	let permissions = [];
 	let permission_level: number = 3;
 
 	const deletePermission = (id: number) => {
@@ -32,6 +35,14 @@
 			}
 		});
 	};
+
+	onMount(() => {
+		fetch(`/api/v1/devices/${devEui}/permissions`)
+			.then((response) => response.json())
+			.then((data) => {
+				permissions = data;
+			});
+	});
 </script>
 
 <div class="flex flex-col m-4 gap-2">

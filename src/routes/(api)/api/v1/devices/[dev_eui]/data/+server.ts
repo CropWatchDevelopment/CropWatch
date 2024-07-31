@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
   const dev_eui = params.dev_eui;
   const query = new URLSearchParams(url.search);
   const startingPage = parseInt(query.get('page') || '0');
-  const itemsPerPage = parseInt(query.get('count') || '10');
+  const itemsPerPage = parseInt(query.get('count') || '144');
   const from = query.get('from');
   const to = query.get('to');
   const dataPoints = query.get('data-points');
@@ -67,6 +67,10 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
     data.primary_data_notation = deviceType.primary_data_notation;
     data.secondary_data_notation = deviceType.secondary_data_notation;
     data.data_table = deviceType.data_table;
+    data.primary_multiplier = +deviceType.primary_multiplier;
+    data.secondary_multiplier = +deviceType.secondary_multiplier;
+    data.primary_divider = +deviceType.primary_divider;
+    data.secondary_divider = +deviceType.secondary_divider;
   }
 
   return new Response(

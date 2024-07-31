@@ -36,6 +36,10 @@
 	let uvIndex = data.at(0).uv;
 	let uvIndexText = UVI_to_text(uvIndex);
 
+	//find and remove pressure where it is 0 from data
+	data = data.filter((d) => d.pressure !== 0 && d.pressure != null);
+
+
 	let rainValue = data.at(0).rainfall;
 	let pressureValue = data.at(0).pressure || 0;
 	let locationWeatherData = writable(null);
@@ -288,7 +292,7 @@
 	</div>
 </DarkCard> -->
 <div class="grid grid-flow-row gap-5">
-	<DarkCard title={$_('temp_humidity')}>
+	<DarkCard title="24h {$_('temp_humidity')}">
 		<DarkCard
 			title={$_('weatherStation.maxTemperature')}
 			value={Math.max(...data.map((periodData) => periodData.temperatureC)).toFixed(2)}
@@ -307,7 +311,7 @@
 		<div class="chart" use:Highcharts={config} />
 	</DarkCard>
 	<DarkCard
-		title="{$_('rainfall')} mm/h"
+		title="24h {$_('rainfall')} mm/h"
 		value={data.reduce((sum, item) => sum + item.rainfall, 0).toFixed(2)}
 		optimalValue={null}
 		unit={'mm/day'}
@@ -324,7 +328,7 @@
 		/>
 		<div class="chart" use:Highcharts={rainBarChartConfig} />
 	</DarkCard>
-	<DarkCard title={$_('weatherStation.uvLux')} value={null} optimalValue={null} unit={'ºC'}>
+	<DarkCard title="24h {$_('weatherStation.uvLux')}" value={null} optimalValue={null} unit={'ºC'}>
 		<DarkCard
 			title={$_('weatherStation.maxUvLux')}
 			value="{Math.max(...data.map((periodData) => periodData.lux * 3.6)).toFixed(2)} / {Math.max(
@@ -342,7 +346,7 @@
 		<div class="chart" use:Highcharts={luxUvChartConfig} />
 	</DarkCard>
 	<DarkCard
-		title={$_('weatherStation.barometricPressure')}
+		title="24h {$_('weatherStation.barometricPressure')}"
 		value={null}
 		optimalValue={null}
 		unit={'ºC'}
@@ -366,7 +370,7 @@
 		/>
 		<div class="chart" use:Highcharts={pressureChartConfig} />
 	</DarkCard>
-	<DarkCard title={$_('weatherStation.windSpeed')} value={null} optimalValue={null} unit={'ºC'}>
+	<DarkCard title="24h {$_('weatherStation.windSpeed')}" value={null} optimalValue={null} unit={'ºC'}>
 		<DarkCard
 			title={$_('weatherStation.maxWindSpeed')}
 			value={Math.max(...data.map((periodData) => periodData.wind_speed)).toFixed(2)}

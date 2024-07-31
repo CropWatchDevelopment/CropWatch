@@ -40,6 +40,8 @@ export const nameToEmoji = (name: string) => {
             return '☢️';
         case 'wind_direction':
             return '🧭';
+        case 'water_level':
+            return '📏';
         case 'battery_level':
         case 'battery':
         case 'Battery':

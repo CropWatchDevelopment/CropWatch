@@ -5,7 +5,7 @@ import SolidGauge from 'highcharts/modules/solid-gauge';
 HighchartsMore(Highcharts);
 SolidGauge(Highcharts);
 
-export default async (node: HTMLElement, config: Highcharts.Options) => {
+export default (node: HTMLElement, config: Highcharts.Options) => {
     // Now, since the modules are already initialized, you can directly create the chart.
     const chart = Highcharts.chart(node, config);
 

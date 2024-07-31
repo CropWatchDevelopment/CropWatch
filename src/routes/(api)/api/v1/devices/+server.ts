@@ -24,7 +24,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, getSession 
     });
 }
 
-export const POST: RequestHandler = async ({ url, request, locals: { supabase, getSession } }) => {
+export const POST: RequestHandler = async ({ url, fetch, request, locals: { supabase, getSession } }) => {
   const session = await getSession();
   if (!session) {
     throw redirect(303, '/auth/unauthorized');
@@ -32,21 +32,20 @@ export const POST: RequestHandler = async ({ url, request, locals: { supabase, g
 
   const formData = await request.formData();
   const data = Object.fromEntries(formData);
+  const dev_eui = data.dev_eui.toString().split(':').join('');
 
   const { data: deviceData, error: deviceError } = await supabase
     .from('cw_devices')
     .insert({
-      dev_eui: data.dev_eui,
-      name: data.name,
-      type: data.type,
-      upload_interval: data.upload_interval,
-      lat: data.lat,
-      long: data.long,
-      installed_at: new Date()
-    })
-    .select()
-    .single()
-    ;
+      dev_eui: dev_eui,
+      name: data.name.toString(),
+      type: +data.type.toString(),
+      upload_interval: +data.upload_interval.toString(),
+      lat: +data.lat.toString(),
+      long: +data.long.toString(),
+      installed_at: new Date(),
+      user_id: session.user.id,
+    });
 
     if (deviceError) {
       return new Response(
@@ -60,7 +59,7 @@ export const POST: RequestHandler = async ({ url, request, locals: { supabase, g
     .from('cw_device_owners')
     .insert({
       user_id: session.user.id,
-      dev_eui: deviceData.dev_eui,
+      dev_eui: dev_eui,
     })
     .select()
     .single()
@@ -77,7 +76,7 @@ export const POST: RequestHandler = async ({ url, request, locals: { supabase, g
   const { data: locationData, error: locationError } = await supabase
     .from('cw_device_locations')
     .insert({
-      dev_eui: deviceData.dev_eui,
+      dev_eui: dev_eui,
       location_id: data.location_id,
     })
     .select()

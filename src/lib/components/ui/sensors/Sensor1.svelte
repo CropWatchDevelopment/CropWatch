@@ -7,14 +7,12 @@
 	import { _ } from 'svelte-i18n';
 	import { subDays } from 'date-fns';
 	import { onMount } from 'svelte';
-	import DarkCard2 from '../DarkCard2.svelte';
 
 	export let data;
 
 	let dev_eui = data.at(0).dev_eui;
 	const temperature = data.at(0).temperatureC;
 	const humidity = data.at(0).humidity;
-	const vpd = data.at(0).vpd;
 
 	let today = new Date();
 	let value = {
@@ -28,7 +26,7 @@
 
 	const fetchData = (from, to) => {
 		return fetch(
-			`/api/v1/devices/${dev_eui}/data?from=${from.toISOString()}&to=${to.toISOString()}&noLimit=1`
+			`/api/v1/devices/${dev_eui}/data?from=${from.toISOString()}&to=${to.toISOString()}`
 		)
 			.then((res) => res.json())
 			.then((data) => {
@@ -46,7 +44,7 @@
 					type: 'line',
 					yAxis: 0,
 					name: $_('temperatureC'),
-					color: '#ffdd00',
+					color: 'red',
 					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.temperatureC])
 				},
 				{
@@ -69,9 +67,7 @@
 					labels: {
 						format: '{value} °C',
 						style: {
-							color: '#ffdd00',
-							'font-size': '17px',
-							'font-weight': 'bold'
+							color: 'red',
 						}
 					},
 					opposite: false
@@ -81,15 +77,13 @@
 					title: {
 						text: '',
 						style: {
-							color: '#91fbfc'
+							color: 'red'
 						}
 					},
 					labels: {
 						format: '{value} %',
 						style: {
 							color: '#91fbfc',
-							'font-size': '17px',
-							'font-weight': 'bold'
 						}
 					},
 					opposite: true
@@ -104,7 +98,7 @@
 					type: 'line',
 					yAxis: 0,
 					name: $_('dewPointC'),
-					color: 'red',
+					color: 'blue',
 					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.dewPointC])
 				}
 			],
@@ -114,13 +108,13 @@
 					title: {
 						text: '',
 						style: {
-							color: 'red'
+							color: 'white'
 						}
 					},
 					labels: {
 						format: '{value} °C',
 						style: {
-							color: 'red'
+							color: 'white'
 						}
 					},
 					opposite: false
@@ -146,30 +140,15 @@
 
 <TempHumidityCard {temperature} {humidity} />
 
-<DateRangeField
-	periodTypes={[]}
-	label=""
-	maxDate={Date}
-	on:change={(e) => filterDataByDate(e)}
-	bind:value
-	size="lg"
-	stepper
-	rounded
-	center
-	class="w-full"
-/>
-
-
 {#key data}
 	{#if config}
-		<DarkCard title={$_('temperatureC')}/{$_('humidity')}>
-			<div class="chart mt-2" use:Highcharts={config} />
+		<DarkCard title="24h {$_('temperatureC')}/{$_('humidity')}">
+			<div class="chart" use:Highcharts={config} />
 		</DarkCard>
-		<h1 class="text-white my-3">{$_('dewPointC')}</h1>
-		<DarkCard>
+		
+		<DarkCard title="24h {$_('dewPointC')}">
 			<div class="chart" use:Highcharts={dewPointConfig} />
 		</DarkCard>
 	{/if}
 {/key}
 
-<DarkCard title={$_('vpd')} value={vpd} optimalValue={null} unit={'kPa'} />

@@ -329,5 +329,6 @@
     "online": "Gateway Online",
     "offline": "Gateway Offline"
   },
-  "back": "Back"
+  "back": "Back",
+  "water_level": "Water Level"
 }
