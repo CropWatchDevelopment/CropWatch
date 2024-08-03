@@ -3,6 +3,7 @@ export const nameToNotation = (name: string) => {
         case 'humidity':
         case 'soil_moisture':
             return '%';
+        case 'Temperature':
         case 'temperature':
         case 'temperatureC':
         case 'dew_point':

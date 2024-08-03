@@ -71,7 +71,7 @@
 		<ProgressCircle />
 	{:else}
 		<div class="flex justify-between my-5">
-			<h2 class="font-light text-2xl text-surface-100">Location Devices</h2>
+			<h2 class="ml-5 text-3xl text-surface-100">{location.cw_locations.name}</h2>
 			<Button
 				on:click={() => goto(`/app/locations/${$page.params.location_id}/devices/add`)}
 				icon={mdiPlusCircle}

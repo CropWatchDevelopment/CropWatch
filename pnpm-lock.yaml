@@ -154,8 +154,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(svelte@4.2.18)
       svelte-ux:
-        specifier: ^0.73.0
-        version: 0.73.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
+        specifier: ^0.74.0
+        version: 0.74.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
       sveltekit-i18n:
         specifier: ^2.4.2
         version: 2.4.2(svelte@4.2.18)
@@ -2642,8 +2642,8 @@ packages:
       typescript:
         optional: true
 
-  svelte-ux@0.73.0:
-    resolution: {integrity: sha512-gIrCR8Z9CfAhDPY2Kkp3udTM5xAHJwvhnlehMEycaWIH030KaZZOccYcQWJr0MC2H8H3PH8tZ+AI9wqkoQcn1Q==}
+  svelte-ux@0.74.0:
+    resolution: {integrity: sha512-VvdkyELwRM7ZHv1ELFK6ynR6KlAKUBB3cQ8PJzMYTiaYRd5qgJOVqVwboYg+UUqRjqmrji0UeevNJj/X4wDnlA==}
     peerDependencies:
       svelte: ^3.56.0 || ^4.0.0 || ^5.0.0-next.120
 
@@ -4687,7 +4687,7 @@ snapshots:
       posthog-js: 1.139.0
       shapefile: 0.6.6
       svelte: 4.2.18
-      svelte-ux: 0.73.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
+      svelte-ux: 0.74.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18)
       topojson-client: 3.1.0
     transitivePeerDependencies:
       - '@babel/core'
@@ -5415,7 +5415,7 @@ snapshots:
       postcss-load-config: 5.1.0(jiti@1.21.6)(postcss@8.4.38)
       typescript: 5.4.5
 
-  svelte-ux@0.73.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18):
+  svelte-ux@0.74.0(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.38))(postcss@8.4.38)(svelte@4.2.18):
     dependencies:
       '@floating-ui/dom': 1.6.7
       '@fortawesome/fontawesome-common-types': 6.5.2

@@ -3,7 +3,6 @@ export const CW_AIR_THVD_DATA = (data: any) => {
         return {
             temperatureC: data.temperatureC,
             humidity: data.humidity,
-            vpd: data.vpd,
             dewPointC: data.dewPointC,
         };
     } else {
@@ -11,7 +10,6 @@ export const CW_AIR_THVD_DATA = (data: any) => {
         return {
             temperatureC: data[0].temperatureC,
             humidity: data[0].humidity,
-            vpd: data[0].vpd,
             dewPointC: data[0].dewPointC,
         };
     }

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Back from '$lib/components/ui/Back.svelte';
 	import historyImage from '$lib/images/UI/cw_history.svg';
-	import { Button, DateRangeField, MultiSelect, PeriodType } from 'svelte-ux';
+	import { Button, DateRangeField, MultiSelect, MultiSelectOption, PeriodType } from 'svelte-ux';
 	import { subDays, subWeeks } from 'date-fns';
 	import { mdiDownload } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
@@ -36,10 +36,11 @@
 	let chartKey = 0;
 
 	
-	let options = Object.keys(data.sensorData).map((key) => {
+	let options: MultiSelectOption[] = Object.keys(data.sensorData).map((key) => {
 		return {
 			value: key,
-			label: $_(key)
+			label: $_(key),
+			variant: 'primary'
 		};
 	});
 	let selectedDataPoints: string[] = [];
