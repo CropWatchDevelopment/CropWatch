@@ -11,11 +11,11 @@
 	import CircleNumber from '../CircleNumber.svelte';
 
 	export let data;
-    // Upload payload: 3110010000001A80000000
-    // On Port 3
+	// Upload payload: 3110010000001A80000000
+	// On Port 3
 
 	let dev_eui = $page.params.dev_eui;
-	const water_level = data.at(0).water_level;
+	const water_level = data.at(0).water_level > 0 ? data.at(0).water_level : 0;
 
 	let today = new Date();
 	let value = {
@@ -48,8 +48,8 @@
 					yAxis: 0,
 					name: $_('temperatureC'),
 					color: '#ffdd00',
-					data: data.map((d: any) => [new Date(d.created_at).valueOf(), d.water_level/1000])
-				},
+					data: data.map((d: any) => [new Date(d.created_at).valueOf(), getWaterLevel(d.water_level / 1000)])
+				}
 			],
 			[
 				{
@@ -91,7 +91,6 @@
 			],
 			``
 		);
-
 	};
 
 	const filterDataByDate = (e) => {
@@ -103,6 +102,25 @@
 		});
 	};
 
+	function getWaterLevel(voltage: number) {
+		if (voltage < 0.5) return 0;
+		if (voltage > 4.5) return 5;
+
+		if (voltage >= 0.5 && voltage < 1.3) {
+			return ((voltage - 0.5) / (1.3 - 0.5)) * (1 - 0) + 0;
+		} else if (voltage >= 1.3 && voltage < 2.1) {
+			return ((voltage - 1.3) / (2.1 - 1.3)) * (2 - 1) + 1;
+		} else if (voltage >= 2.1 && voltage < 2.9) {
+			return ((voltage - 2.1) / (2.9 - 2.1)) * (3 - 2) + 2;
+		} else if (voltage >= 2.9 && voltage < 3.7) {
+			return ((voltage - 2.9) / (3.7 - 2.9)) * (4 - 3) + 3;
+		} else if (voltage >= 3.7 && voltage < 4.5) {
+			return ((voltage - 3.7) / (4.5 - 3.7)) * (5 - 4) + 4;
+		} else {
+			return 5; // In case the voltage is exactly 4.5V
+		}
+	}
+
 	onMount(() => {
 		filterDataByDate({ detail: value });
 	});
@@ -110,7 +128,7 @@
 
 {#key data}
 	{#if config}
-		<CircleNumber value={(water_level/1000).toFixed(2)} notation={'m'} />
+		<CircleNumber value={getWaterLevel(water_level).toFixed(2)} notation={'m'} />
 		<DarkCard title={$_('water_level')}>
 			<div class="chart mt-2" use:Highcharts={config} />
 		</DarkCard>

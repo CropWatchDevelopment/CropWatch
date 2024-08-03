@@ -17,7 +17,6 @@
 	let temperature = data.at(0).temperature;
 	let humidity = data.at(0).humidity;
 	let co2_level = data.at(0).co2_level;
-	debugger;
 
 	$: tempMoistConfig = HighChartsTimeSeriesChart(
 		[

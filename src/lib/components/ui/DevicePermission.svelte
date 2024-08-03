@@ -9,7 +9,6 @@
 	import { page } from '$app/stores';
 
 	let devEui = $page.params.dev_eui;
-	// export let permissions;
 	let permissions = [];
 	let permission_level: number = 3;
 
@@ -19,6 +18,7 @@
 		}).then((response) => {
 			if (response.status < 400) {
 				permissions = permissions.filter((permission) => permission.id !== id);
+				sortPermissions();
 				toast.push('User Permission Deleted Successfully!', {
 					theme: {
 						'--toastBackground': 'green',
@@ -36,11 +36,21 @@
 		});
 	};
 
+	const sortPermissions = () => {
+		permissions.sort((a, b) => {
+			if (a.permission_level !== b.permission_level) {
+				return a.permission_level - b.permission_level;
+			}
+			return a.profiles.email.localeCompare(b.profiles.email);
+		});
+	};
+
 	onMount(() => {
 		fetch(`/api/v1/devices/${devEui}/permissions`)
 			.then((response) => response.json())
 			.then((data) => {
-				permissions = data;
+				permissions = data.filter((permission) => !permission.profiles.email.includes('cropwatch.io'));
+				sortPermissions();
 			});
 	});
 </script>
@@ -53,11 +63,10 @@
 			return async ({ result, update }) => {
 				if (result) {
 					update();
-					if(permissions) {
+					if (permissions) {
 						permissions.push(result);
-						permissions = permissions;
+						sortPermissions();
 					}
-					//reload page
 					toast.push('User Permission Added Successfully!', {
 						theme: {
 							'--toastBackground': 'green',
@@ -98,9 +107,9 @@
 				]}
 			/>
 		</div>
-		<Button variant="fill" type="submit" icon={mdiPlus} color="primary" class="mt-2 w-full"
-			>{$_('permissions.add_permission')}</Button
-		>
+		<Button variant="fill" type="submit" icon={mdiPlus} color="primary" class="mt-2 w-full">
+			{$_('permissions.add_permission')}
+		</Button>
 	</form>
 
 	<p class="text-surface-100 mt-5 mb-2">{$_('permissions.following_have_access')}:</p>
@@ -108,10 +117,18 @@
 		{#each permissions as permission}
 			<ListItem
 				title={permission.profiles.email}
-				subheading={PermissionNumberToName(permission.permission_level)}
 				icon={mdiAccount}
 				avatar={{ class: 'bg-surface-content/50 text-surface-100/90' }}
 			>
+				<div slot="subheading">
+					{#if permission.permission_level === 1}
+						<span class="text-red-500 font-bold">{PermissionNumberToName(permission.permission_level)}</span>
+					{:else if permission.permission_level === 2}
+						<span class="text-blue-500 font-bold">{PermissionNumberToName(permission.permission_level)}</span>
+					{:else}
+						<span class="text-green-500 font-bold">{PermissionNumberToName(permission.permission_level)}</span>
+					{/if}
+				</div>
 				<div slot="actions">
 					<Button
 						variant="outline"

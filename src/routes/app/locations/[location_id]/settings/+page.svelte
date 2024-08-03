@@ -10,7 +10,7 @@
 
 <div class="mt-8 flex justify-between">
 	<Back>
-		<p class="text-white">Settings</p>
+		<p class="text-white">"My Location Name" Location Settings</p>
 	</Back>
 </div>
 

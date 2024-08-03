@@ -15,37 +15,35 @@
 		fetch(`/api/v1/devices/${dev_eui}`, {
 			method: 'PUT',
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({ name: currentSensorName })
 		})
 			.then((res) => {
 				if (res.ok) {
-					toast.push(`Sensor name updated successfully`, {
-						theme: {
-							'--toastBackground': 'green',
-							'--toastColor': 'black'
-						}
-					});
-					currentSensorNameStatic = currentSensorName;
+					return res.json();
 				} else {
-					toast.push(`Sensor name updated FAILED`, {
-						theme: {
-							'--toastBackground': 'red',
-							'--toastColor': 'black'
-						}
-					});
-					currentSensorName = currentSensorNameStatic;
-					open = false;
+					throw new Error('Failed to update sensor name');
 				}
-				return res.json();
 			})
 			.then((data) => {
-				currentSensorName = data.name;
+				toast.push(`Sensor name updated successfully`, {
+					theme: {
+						'--toastBackground': 'green',
+						'--toastColor': 'black'
+					}
+				});
+				currentSensorNameStatic = currentSensorName;
 				open = false;
 			})
 			.catch((err) => {
 				console.error(err);
+				toast.push(`Sensor name update FAILED`, {
+					theme: {
+						'--toastBackground': 'red',
+						'--toastColor': 'black'
+					}
+				});
 				currentSensorName = currentSensorNameStatic;
 				open = false;
 			});
@@ -59,22 +57,19 @@
 
 <Button icon={mdiPencil} on:click={() => (open = true)} class="w-full" variant="fill">Edit Sensor Name</Button>
 
-<form action={`/api/v1/sensors/${dev_eui}`} method="PUT">
-	<Dialog bind:open on:close={() => closing()}>
-		<div slot="title">{$_('rename_dialog.rename')} {currentSensorNameStatic} {$_('rename_dialog.to_what')}</div>
-		<div class="m-4">
-			<TextField name="newName" label={$_('rename_dialog.new_name')} bind:value={currentSensorName} />
-		</div>
-		<div class="flex flex-row mt-1 p-2">
-			<Button variant="fill" icon={mdiClose} on:click={() => (open = false)} color="danger">{$_('close')}</Button>
-			<span class="flex-grow" />
-			<Button
-				variant="fill"
-				type="button"
-				icon={mdiFloppy}
-				on:click={() => handleSubmit()}
-				color="success">{$_('save')}</Button
-			>
-		</div>
-	</Dialog>
-</form>
+<Dialog bind:open on:close={() => closing()}>
+	<div slot="title">{$_('rename_dialog.rename')} {currentSensorNameStatic} {$_('rename_dialog.to_what')}</div>
+	<div class="m-4">
+		<TextField name="newName" label={$_('rename_dialog.new_name')} bind:value={currentSensorName} />
+	</div>
+	<div class="flex flex-row mt-1 p-2">
+		<Button variant="fill" icon={mdiClose} on:click={() => (open = false)} color="danger">{$_('close')}</Button>
+		<span class="flex-grow" />
+		<Button
+			variant="fill"
+			type="button"
+			icon={mdiFloppy}
+			on:click={() => handleSubmit()}
+			color="success">{$_('save')}</Button>
+	</div>
+</Dialog>

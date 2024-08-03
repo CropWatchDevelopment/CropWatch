@@ -16,8 +16,8 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
     .select('*, cw_devices(*, cw_device_type(*), cw_device_locations(*, cw_locations(*)))')
     .eq('user_id', session.user.id)
     .eq('dev_eui', dev_eui)
-    .range(+startingPage, +itemsPerPage)
-    ;
+    .range(+startingPage, +itemsPerPage);
+
   return new Response(
     JSON.stringify(data) ||
     error,
@@ -26,16 +26,14 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, get
     });
 }
 
-
 export const PUT: RequestHandler = async ({ params, request, locals: { supabase, getSession } }) => {
   const session = await getSession();
   if (!session) {
     throw redirect(303, '/auth/unauthorized');
   }
 
-  const body = new URLSearchParams(await request.json());
-  const name = body.get('name');
-
+  const body = await request.json();
+  const name = body.name;
 
   if (!name) {
     return new Response(
@@ -48,11 +46,12 @@ export const PUT: RequestHandler = async ({ params, request, locals: { supabase,
   const dev_eui = params.dev_eui;
   if (!dev_eui) {
     return new Response(
-      JSON.stringify({ error: 'location_id is required' }),
+      JSON.stringify({ error: 'dev_eui is required' }),
       {
         status: 400,
       });
   }
+
   const { data, error } = await supabase
     .from('cw_device_owners')
     .select('*, cw_devices(*)')
@@ -76,27 +75,26 @@ export const PUT: RequestHandler = async ({ params, request, locals: { supabase,
     .from('cw_devices')
     .update({ 'name': name })
     .eq('dev_eui', data.cw_devices.dev_eui)
-    .select()
-    .single();
+    .select();
 
   return new Response(
     JSON.stringify(updatedData) ||
     JSON.stringify(updateError),
     {
       status: updatedData ? 200 : 500,
-      statusText: updatedData ? 'OK' : updateError,
+      statusText: updatedData ?? updateError,
       headers: {
         'Content-Type': 'application/json',
       }
     });
 }
 
-
 export const DELETE: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
   const session = await getSession();
   if (!session) {
     throw redirect(303, '/auth/unauthorized');
   }
+
   const dev_eui = params.dev_eui;
   const { data, error } = await supabase
     .from('cw_devices')

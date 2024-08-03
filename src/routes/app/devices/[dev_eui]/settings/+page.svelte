@@ -1,6 +1,7 @@
 <script>
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
+	import DeleteSensorDialog from '$lib/components/ui/DeleteSensorDialog.svelte';
 	import DevicePermission from '$lib/components/ui/DevicePermission.svelte';
 	import EditSensorNameDialog from '$lib/components/ui/EditSensorNameDialog.svelte';
 	import historyImage from '$lib/images/UI/cw_settings.svg';
@@ -25,9 +26,9 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Location Information</h2>
+			<h2 class="text-base font-semibold leading-7 text-white">Sensor Name Settings</h2>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
-				General Location Information
+				Update the sensor name that will display on your dashboard.
 			</p>
 		</div>
 
@@ -55,7 +56,20 @@
 		</form>
 	</div>
 
-	
+	<div
+		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
+	>
+		<div>
+			<h2 class="text-base font-semibold leading-7 text-white">Move Sensor</h2>
+			<p class="mt-1 text-sm leading-6 text-gray-400">
+				Update the sensor's Placement
+			</p>
+		</div>
+
+		<form class="md:col-span-2">
+			
+		</form>
+	</div>
 
 	<span class="flex flex-1" />
 	<!-- <fieldset class="border border-red-600 p-4">
