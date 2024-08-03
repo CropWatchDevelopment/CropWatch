@@ -17,6 +17,7 @@
 	let temperature = data.at(0).temperature;
 	let humidity = data.at(0).humidity;
 	let co2_level = data.at(0).co2_level;
+	debugger;
 
 	$: tempMoistConfig = HighChartsTimeSeriesChart(
 		[
@@ -106,16 +107,21 @@
 	$: co2Config = HighChartsGuageChart(co2_level, 'CO² Level');
 </script>
 
+{#if co2_level != null}
 <DarkCard title={''} value={null} optimalValue={null} unit={null}>
 	<div class="m-5">
 		<div class="chart" use:Highcharts={co2Config} />
 	</div>
 </DarkCard>
+{/if}
+
 <TempHumidityCard {temperature} {humidity} />
 
+{#if co2_level != null}
 <DarkCard title={`24h CO2`} value={null} optimalValue={null} unit={'%'}>
 	<div class="chart" use:Highcharts={co2GraphConfig} />
 </DarkCard>
+{/if}
 
 <DarkCard
 	title={`24h ${$_('temperature')}/${$_('humidity')}`}
