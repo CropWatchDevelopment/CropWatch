@@ -14,7 +14,6 @@
 	import { nameToEmoji } from '$lib/utilities/nameToEmoji';
 	import { deviceDataStore } from '$lib/stores/deviceData.store';
 	import { getDeviceByDevEui } from '$lib/stores/device.store';
-	import { json } from '@sveltejs/kit';
 
 	export let data;
 	const locationId = data.location_id;
@@ -135,17 +134,19 @@
 								</div>
 								<div class="flex flex-row justify-center mt-1">
 									{#each Object.keys(convertObject(device)) as dataPointKey, index}
-									{#if index < 5 && dataPointKey != 'created_at'}
-											<p class="justify-center m-auto">
-												{#if device && device[dataPointKey]}
+										{#if index < 5 && dataPointKey != 'created_at'}
+											{#if device && device[dataPointKey]}
+												<p class="justify-center m-auto">
 													<span
 														>{nameToEmoji(dataPointKey)}{device[
 															dataPointKey
 														].toLocaleString()}</span
 													>
-													<small class="text-slate-800"><sup>{nameToNotation(dataPointKey)}</sup></small>
-												{/if}
-											</p>
+													<small class="text-slate-800"
+														><sup>{nameToNotation(dataPointKey)}</sup></small
+													>
+												</p>
+											{/if}
 										{/if}
 									{/each}
 								</div>

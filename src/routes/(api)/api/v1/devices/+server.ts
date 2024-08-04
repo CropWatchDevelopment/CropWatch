@@ -17,10 +17,9 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, getSession 
     .range(+startingPage, +itemsPerPage)
     ;
   return new Response(
-    JSON.stringify(data) ||
-    error,
+    JSON.stringify(data) || JSON.stringify(error),
     {
-      status: 200,
+      status: data ? 200 : 500,
     });
 }
 

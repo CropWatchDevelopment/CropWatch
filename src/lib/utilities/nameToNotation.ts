@@ -37,6 +37,8 @@ export const nameToNotation = (name: string) => {
             return 'UVI';
         case 'wind_direction':
             return '°';
+        case 'water_level':
+            return 'm';
         case 'battery_level':
         case 'battery':
         case 'Battery':

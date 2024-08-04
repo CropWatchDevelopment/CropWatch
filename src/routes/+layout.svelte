@@ -21,7 +21,11 @@
 					root: 'text-black'
 				} 
 			},
-
+			ListItem: {
+				classes: {
+					root: 'text-black'
+				}
+			},
 			TextField: {
 				classes: {
 					root: 'text-black'
