@@ -1,53 +1,26 @@
 <script>
-	import Header from './Header.svelte';
 	import '../app.css';
+	import { AppBar, AppLayout, Button, ThemeSwitch } from 'svelte-ux';
+	import CROPWATCH_LOGO from '$lib/images/UI/logo.svg';
 </script>
 
-<div class="app">
-	<Header></Header>
+<AppLayout areas="'header header' 'aside main'">
+	<svelte:fragment slot="nav">
+		<!-- Nav menu -->
+	</svelte:fragment>
+
+	<AppBar title="CropWatch" class="bg-primary text-primary-content">
+		<svelte:fragment slot="menuIcon" let:toggleMenu let:isMenuOpen>
+			<Button on:click={toggleMenu} variant="none">
+				<img src={CROPWATCH_LOGO} alt="CropWatch" class="h-8" />
+			</Button>
+		</svelte:fragment>
+		<div slot="actions">
+			<ThemeSwitch />
+		</div>
+	</AppBar>
 
 	<main>
-		<slot></slot>
+		<slot />
 	</main>
-
-	<footer>
-		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
-	</footer>
-</div>
-
-<style>
-	.app {
-		display: flex;
-		flex-direction: column;
-		min-height: 100vh;
-	}
-
-	main {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		padding: 1rem;
-		width: 100%;
-		max-width: 64rem;
-		margin: 0 auto;
-		box-sizing: border-box;
-	}
-
-	footer {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		padding: 12px;
-	}
-
-	footer a {
-		font-weight: bold;
-	}
-
-	@media (min-width: 480px) {
-		footer {
-			padding: 12px 0;
-		}
-	}
-</style>
+</AppLayout>
