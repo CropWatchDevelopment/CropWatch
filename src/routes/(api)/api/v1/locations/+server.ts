@@ -1,76 +1,46 @@
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+import CwLocationsService from '$lib/services/CwLocationsService';
+import CwDevicesService from '$lib/services/CwDevicesService';
+import type { Tables } from '$lib/types/supabaseSchema';
+
+type CwLocations = Tables<'cw_locations'>;
+type CwDevices = Tables<'cw_devices'>;
 
 export const GET: RequestHandler = async ({ url, locals: { supabase, getSession } }) => {
   const session = await getSession();
-  if (!session) {
+  if (!session.user) {
     throw redirect(303, '/auth/unauthorized');
   }
 
-  const query = new URLSearchParams(url.search);
-  const startingPage = query.get('pageNumber') || 0;
-  const itemsPerPage = query.get('itemsPerPage') || 50;
+  const includeDevices = url.searchParams.get('includeDevices') === 'true';
+  const includeDevicesData = url.searchParams.get('includeDevicesData') === 'true';
 
-  const { data, error } = await supabase
-    .from('cw_location_owners')
-    .select('*, cw_locations(*,cw_device_locations(dev_eui))')
-    .eq('user_id', session.user.id)
-    .range(+startingPage, +itemsPerPage)
-    ;
-  return new Response(
-    JSON.stringify(data || error),
-    {
-      status: data ? 200 : 500,
-      statusText: 'OK',
-      headers: {
-        'Content-Type': 'application/json',
-      }
+  const cwLocationsService = new CwLocationsService(supabase);
+  const cwDevicesService = new CwDevicesService(supabase);
+
+  // Fetch main data
+  const locations: CwLocations[] = await cwLocationsService.getAllLocations();
+
+  if (!locations) {
+    throw error(500, 'Error fetching locations');
+  }
+
+  // Conditionally fetch related data
+  if (includeDevices) {
+    const devicesPromises = locations.map(location =>
+      cwDevicesService.getDevicesByLocationId(location.location_id)
+    );
+    const devices = await Promise.all(devicesPromises);
+
+    locations.forEach((location, index) => {
+      (location as any).devices = devices[index];
     });
-}
-
-export const POST: RequestHandler = async ({ url, request, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  if (!session) {
-    throw redirect(303, '/auth/unauthorized');
   }
 
-  const query = await request.json();
-  const latitude = query.latitude || -1;
-  const longitude = query.longitude || -1;
-  const name = query.name;
-
-  if (!name || (latitude === -1 && longitude === -1)) {
-    return new Response(
-      JSON.stringify({ error: 'Name is required' }),
-      {
-        status: 400,
-        statusText: 'Bad Request',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-  }
-
-  const { data, error } = await supabase
-    .from('cw_locations')
-    .insert([{
-      name,
-      latitude,
-      longitude,
-      owner_id: session.user.id,
-    }])
-    .select();
-
-  if (error) {
-    return new Response(
-      JSON.stringify(error),
-      {
-        status: 500,
-        statusText: 'Internal Server Error',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-  }
-
-    return redirect(303, `/api/v1/locations/${data[0].location_id}`);
-}
+  return new Response(JSON.stringify(locations), {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+};

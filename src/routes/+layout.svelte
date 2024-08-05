@@ -1,40 +1,53 @@
-<script lang="ts">
-	import { SvelteToast } from '@zerodevx/svelte-toast';
+<script>
+	import Header from './Header.svelte';
 	import '../app.css';
-
-	import { settings } from 'svelte-ux';
-
-	settings({
-		components: {
-			Button: {
-				// same as <Button class="flex-2">
-				classes: 'flex-2',
-				// All component that wrap Button will also use this variant by default,
-				variant: 'outline'
-			},
-			Field: {
-				// All components based on Field will use this as well.
-				labelPlacement: 'top'
-			},
-			MultiSelect: {
-				classes: {
-					root: 'text-black'
-				} 
-			},
-
-			TextField: {
-				classes: {
-					root: 'text-black'
-				}
-			},
-			Input: {
-				classes: {
-					root: 'text-black'
-				}
-			},
-		}
-	});
 </script>
 
-<SvelteToast />
-<slot />
+<div class="app">
+	<Header></Header>
+
+	<main>
+		<slot></slot>
+	</main>
+
+	<footer>
+		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
+	</footer>
+</div>
+
+<style>
+	.app {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+	}
+
+	main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		padding: 1rem;
+		width: 100%;
+		max-width: 64rem;
+		margin: 0 auto;
+		box-sizing: border-box;
+	}
+
+	footer {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		padding: 12px;
+	}
+
+	footer a {
+		font-weight: bold;
+	}
+
+	@media (min-width: 480px) {
+		footer {
+			padding: 12px 0;
+		}
+	}
+</style>

@@ -2,9 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { Button, TextField } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
-	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
+	// import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { mdiClock, mdiLoading } from '@mdi/js';
-	import { toast } from '@zerodevx/svelte-toast';
 	import { goto } from '$app/navigation';
 
 	let email: string = '';
@@ -18,7 +17,7 @@
 		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
 			<div class="bg-white px-6 py-12 shadow rounded-lg sm:px-12 mx-2 md:mx-0">
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
+					<!-- <img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" /> -->
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
 						{$_('login.register_title')}
 					</h2>
@@ -39,19 +38,10 @@
 							// `update` is a function which triggers the default logic that would be triggered if this callback wasn't set
 							if (result.data.success) {
 								// do something with the result
-								toast.push('Account Created, Please Check your Email to Confirm and Login.', {
-									theme: {
-										'--toastBackground': 'green'
-									}
-								});
 								goto('check-email');
 							} else {
 								// do something with the error
-								toast.push('Account creation failed, try again or contact support.', {
-									theme: {
-										'--toastBackground': 'red'
-									}
-								});
+								console.error(result.data.error);
 							}
 						};
 					}}

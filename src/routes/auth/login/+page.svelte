@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { toast } from '@zerodevx/svelte-toast';
 	import { _ } from 'svelte-i18n';
 	import { TextField, Button, Switch, Icon } from 'svelte-ux';
 	import { mdiAccountPlus, mdiLockQuestion, mdiKeyArrowRight, mdiGoogle } from '@mdi/js';
-	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
+	// import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	
@@ -32,12 +31,6 @@
 		});
 		if (error) {
 			console.error('Error logging in with Google:', error.message);
-			toast.push('Error logging in with Google', {
-				theme: {
-					'--toastBackground': 'red',
-					'--toastColor': 'black'
-				}
-			});
 		}
 	};
 
@@ -56,7 +49,7 @@
 		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
 			<div class="bg-white px-6 py-12 shadow rounded-lg sm:px-12 mx-2 md:mx-0">
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
+					<!-- <img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" /> -->
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
 						{$_('login.title')}
 					</h2>
@@ -75,21 +68,9 @@
 						return async ({ result, update }) => {
 							if (result.status && result.status < 400) {
 								update();
-								toast.push('Login successful!', {
-									theme: {
-										'--toastBackground': 'cyan',
-										'--toastColor': 'black'
-									}
-								});
 								goto('/app'); // redirect to '/app'
 							} else {
 								loggingIn = false;
-								toast.push(form?.message ?? 'Login Error', {
-									theme: {
-										'--toastBackground': 'red',
-										'--toastColor': 'black'
-									}
-								});
 							}
 						};
 					}}
