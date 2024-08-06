@@ -4,13 +4,14 @@
 	import { convertObject } from "./utilities/ConvertSensorDataObject";
 	import { nameToNotation } from "./utilities/NameToNotation";
 	import { nameToEmoji } from "./utilities/NameToEmoji";
+    import { _ } from 'svelte-i18n';
 
     export let data: Tables<'cw_devices'>;
 </script>
 
 <div class="mt-3 flex px-3">
     <h3 class="mb-2 basis-1/3 text-lg font-medium">
-        <!-- {$_('dashboardCard.details')} -->
+        {$_('dashboardCard.details')}
     </h3>
 </div>
     {#each Object.keys(convertObject(data)) as dataPointKey, index}

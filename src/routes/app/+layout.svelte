@@ -1,20 +1,31 @@
 <script>
 	import '../../app.css';
-	import { AppBar, AppLayout, Button, ThemeSwitch } from 'svelte-ux';
+	import { AppBar, AppLayout, Button, NavItem, ThemeSwitch } from 'svelte-ux';
 	import CROPWATCH_LOGO from '$lib/images/UI/logo.svg';
 	import UserHeaderWidget from '$lib/components/ui/Header/UserHeaderWidget.svelte';
+	import { page } from '$app/stores';
 </script>
 
 <AppLayout areas="'header header' 'aside main'" class="h-full">
 	<svelte:fragment slot="nav">
 		<!-- Nav menu -->
-		<nav class="nav bg-secondary">
+		<nav class="nav mr-1 h-full bg-secondary">
 			<ul>
 				<li>
-					<a href="/">Home</a>
+					<NavItem
+						text="Dashboard"
+						currentUrl={$page.url}
+						path="/app/dashboard"
+						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					/>
 				</li>
 				<li>
-					<a href="/about">About</a>
+					<NavItem
+						text="App Settings"
+						currentUrl={$page.url}
+						path="/app/settings"
+						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					/>
 				</li>
 			</ul>
 		</nav>
@@ -31,7 +42,7 @@
 		</div>
 	</AppBar>
 
-	<main class="h-full w-full">
+	<main class="h-full">
 		<slot />
 	</main>
 </AppLayout>

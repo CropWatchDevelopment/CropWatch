@@ -42,7 +42,7 @@
 		class="custom-bg relative h-20 w-full rounded-2xl bg-cover bg-bottom bg-no-repeat bg-blend-overlay"
 	>
 		<div class="absolute right-0 top-0 h-full w-1/2 rounded-2xl bg-gradient-to-l from-black"></div>
-		<div class="absolute right-3 top-4 space-y-1 text-xs drop-shadow-md text-white">
+		<div class="absolute right-3 top-4 space-y-1 text-xs text-white drop-shadow-md">
 			{#if $locationWeatherData}
 				<p>Rainfall: {$locationWeatherData.rainfall}mm/h</p>
 				<p>Humidity: {$locationWeatherData.humidity}%</p>
@@ -66,7 +66,7 @@
 		</div>
 	</div>
 
-	<h2 class="my-3 flex flex-row items-center text-xl primary-text">
+	<h2 class="primary-text my-3 flex flex-row items-center text-xl">
 		{location.name}
 		<span class="flex flex-grow" />
 		<Button
@@ -79,8 +79,15 @@
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">
 		{#each location.devices as device}
 			<Collapse classes={{ root: 'shadow-md pr-2 bg-primary' }}>
-				{JSON.stringify(devicesLatestData[device.dev_eui].isDataOld, null,  2)}
-				<div slot="trigger" class="flex-1 border-l-8 {(devicesLatestData[device.dev_eui] ? devicesLatestData[device.dev_eui].isDataOld : true) ? 'border-l-red-500' : 'border-l-green-500'}">
+				{JSON.stringify(devicesLatestData[device.dev_eui].isDataOld, null, 2)}
+				<div
+					slot="trigger"
+					class="flex-1 border-l-8 {(
+						devicesLatestData[device.dev_eui] ? devicesLatestData[device.dev_eui].isDataOld : true
+					)
+						? 'border-l-red-500'
+						: 'border-l-green-500'}"
+				>
 					<div class="my-1 mr-2 border-r-2">
 						<div class="flex flex-col text-center text-base">
 							<div class="justify-left flex flex-row">
@@ -130,7 +137,6 @@
 		{/each}
 	</div>
 </div>
-
 <style>
 	.text-shadow {
 		text-shadow: black 5px 5px 3px;
