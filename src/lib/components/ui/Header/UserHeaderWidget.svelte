@@ -1,16 +1,13 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import {
-		mdiAccount,
 		mdiAccountCircle,
 		mdiCog,
 		mdiExitRun,
 		mdiHelpCircle,
 		mdiMagnify,
-		mdiMoonFirstQuarter,
 		mdiReload,
 		mdiThemeLightDark,
-		mdiWeatherNight
 	} from '@mdi/js';
 	import { Avatar, Button, Icon, Menu, MenuItem, TextField, ThemeSwitch, Toggle } from 'svelte-ux';
 
@@ -29,10 +26,10 @@
 					{/if}
 				</Avatar>
 			</div>
-			<div class="flex flex-col gap-1 text-left">
+			<div class="flex flex-col gap-1 text-center">
 				<p>Kevin Cantrell</p>
 				<hr class="h-px w-full bg-gray-200" />
-				<p class="text-left text-xs text-secondary-100">System Admin</p>
+				<p class="text-xs text-secondary-100">System Administrator</p>
 			</div>
 		</div>
 
