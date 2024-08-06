@@ -2,11 +2,12 @@
 	import { goto } from '$app/navigation';
 	import DashboardCard from '$lib/components/ui/DashboardCard.svelte';
 	import { onMount } from 'svelte';
-	import { mdiViewDashboard } from '@mdi/js';
+	import { mdiFilter, mdiViewDashboard } from '@mdi/js';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { Icon, ProgressCircle } from 'svelte-ux';
+	import { Button, Icon, ProgressCircle } from 'svelte-ux';
 	import type { PageData } from './$types';
 	import moment from 'moment';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	export let data;
 	let { supabase, session } = data;
@@ -14,7 +15,7 @@
 
 	let locations: Tables<'cw_locations'>[] = [];
 	let loading: boolean = true;
-	const subscribedTables = new Set();
+	const subscribedTables = new Set<string>();
 
 	onMount(() => {
 		fetchInitialData();
@@ -44,20 +45,24 @@
 	}
 
 	function setupSubscriptions(locations) {
-		const dataTables = new Set();
-		locations.forEach((location) => {
+		const dataTables = new Set<string>();
+		locations.forEach((location: Tables<'cw_locations'>) => {
 			location.devices.forEach((device) => {
 				dataTables.add(device.deviceType.data_table);
 			});
 		});
 
-		dataTables.forEach((dataTable) => {
+		dataTables.forEach((dataTable: string) => {
 			const channel = supabase
 				.channel(`realtime:${dataTable}`)
-				.on('postgres_changes', { event: '*', schema: 'public', table: dataTable }, (payload) => {
-					console.log('➡️ Change received!', payload);
-					updateDeviceData(payload.new);
-				})
+				.on(
+					'postgres_changes',
+					{ event: '*', schema: 'public', table: dataTable },
+					(payload: any) => {
+						console.log('📩 Change received!', payload);
+						updateDeviceData(payload.new);
+					}
+				)
 				.subscribe();
 			subscribedTables.add(dataTable);
 			console.log('🔌 Subscribed to:', dataTable);
@@ -85,18 +90,18 @@
 </script>
 
 <svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
+	<title>CropWatch - Dashboard</title>
 </svelte:head>
 
 <!-- TITLE and Filter -->
-<div class="my-3 flex justify-between">
+<div class="my-3 grid grid-row grid-cols-2 justify-between">
 	<!-- TITLE -->
 	<h2 class="text-surface mt-3 text-2xl font-light">
 		<Icon data={mdiViewDashboard} class="h-6 w-6" />
 		Dashboard
 	</h2>
 	<!-- Filter -->
+	 <Button icon={mdiFilter} variant="outline" color="primary" class="mt-3 mr-1 justify-self-end max-w-10" />
 </div>
 <!-- CARDS -->
 {#if loading}
@@ -117,3 +122,4 @@
 		{/each}
 	</div>
 {/if}
+<p>&nbsp;</p>

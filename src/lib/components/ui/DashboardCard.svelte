@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Collapse } from 'svelte-ux';
+	import { Button, Collapse, ProgressCircle } from 'svelte-ux';
 	import { writable } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import { mdiArrowRight } from '@mdi/js';
@@ -114,7 +114,10 @@
 									{/if}
 								</div>
 							{:else}
+							<div class="flex flex-row">
+								<ProgressCircle />
 								<p>Loading data...</p>
+							</div>
 							{/if}
 						</div>
 					</div>

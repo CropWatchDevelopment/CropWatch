@@ -11,7 +11,7 @@ type CwDevices = Tables<'cw_devices'>;
 export const GET: RequestHandler = async ({ url, locals: { supabase, getSession } }) => {
   const session = await getSession();
   if (!session.user) {
-    throw redirect(303, '/auth/unauthorized');
+    return redirect(301, '/auth/unauthorized');
   }
 
   const includeDevicesTypes = url.searchParams.get('includeDevicesTypes') === 'true';
