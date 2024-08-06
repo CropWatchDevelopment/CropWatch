@@ -33,10 +33,10 @@
                     {/if}
                 </p>
             </div>
-            <!-- {#if Object.keys(convertObject(device)).length - 1 !== index}
+            {#if Object.keys(convertObject(device)).length - 1 !== index}
                 <div class="border-b border-[#7d7d81] px-3 pt-2"></div>
             {:else}
                 <div class="px-3 pt-2"></div>
-            {/if} -->
+            {/if}
         </div>
     {/each}

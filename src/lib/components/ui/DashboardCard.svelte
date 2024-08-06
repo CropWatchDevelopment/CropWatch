@@ -5,6 +5,8 @@
 	import { mdiArrowRight } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { nameToEmoji } from './utilities/NameToEmoji';
+	import moment from 'moment';
+	import { json } from '@sveltejs/kit';
 
 	export let location;
 
@@ -17,6 +19,7 @@
 		for (let device of location.devices) {
 			const latestData = await getDeviceLatestData(device.dev_eui);
 			devicesLatestData[device.dev_eui] = latestData;
+			devicesLatestData[device.dev_eui].isDataOld = isDeviceDataOld(device.dev_eui);
 		}
 	});
 
@@ -24,6 +27,13 @@
 		const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
 		const data = await res.json();
 		return data;
+	}
+
+	function isDeviceDataOld(deviceEui) {
+		if (!devicesLatestData[deviceEui] || !devicesLatestData[deviceEui].created_at) {
+			return true; // Consider it old if data is not available
+		}
+		return moment().diff(moment(devicesLatestData[deviceEui].created_at), 'minutes') > 120;
 	}
 </script>
 
@@ -56,7 +66,7 @@
 		</div>
 	</div>
 
-	<h2 class="my-3 flex flex-row items-center text-xl">
+	<h2 class="my-3 flex flex-row items-center text-xl primary-text">
 		{location.name}
 		<span class="flex flex-grow" />
 		<Button
@@ -69,7 +79,8 @@
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">
 		{#each location.devices as device}
 			<Collapse classes={{ root: 'shadow-md pr-2 bg-primary' }}>
-				<div slot="trigger" class="flex-1 border-l-8">
+				{JSON.stringify(devicesLatestData[device.dev_eui].isDataOld, null,  2)}
+				<div slot="trigger" class="flex-1 border-l-8 {(devicesLatestData[device.dev_eui] ? devicesLatestData[device.dev_eui].isDataOld : true) ? 'border-l-red-500' : 'border-l-green-500'}">
 					<div class="my-1 mr-2 border-r-2">
 						<div class="flex flex-col text-center text-base">
 							<div class="justify-left flex flex-row">
