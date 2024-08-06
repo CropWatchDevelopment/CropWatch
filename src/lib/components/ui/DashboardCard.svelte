@@ -1,195 +1,131 @@
 <script lang="ts">
-	// import { getWeatherImage } from '$lib/utilities/weatherCodeToImage';
-	import { onMount } from 'svelte';
-	import { Button, Collapse, DurationUnits, Duration, ProgressCircle } from 'svelte-ux';
+	import { Button, Collapse } from 'svelte-ux';
 	import { writable } from 'svelte/store';
-	// import { isDayTime } from '$lib/utilities/isDayTime';
 	import { goto } from '$app/navigation';
-	import { mdiArrowRight, mdiEye } from '@mdi/js';
-	import { _ } from 'svelte-i18n';
-	// import moment from 'moment';
-	// import { nameToNotation } from '$lib/utilities/nameToNotation';
-	// import { fetchWeatherData } from '$lib/stores/weatherStore';
-	// import { convertObject } from '$lib/sensor-dto/convert_all_attempt';
-	// import { nameToEmoji } from '$lib/utilities/nameToEmoji';
-	// import { deviceDataStore } from '$lib/stores/deviceData.store';
-	// import { getDeviceByDevEui } from '$lib/stores/device.store';
-  
-	export let data;
-    console.log(data.devices);
-    let devices = data.devices;
-	const locationId = data.location_id;
+	import { mdiArrowRight } from '@mdi/js';
+	import { onMount } from 'svelte';
+	import { nameToEmoji } from './utilities/NameToEmoji';
+
+	export let location;
+
+	const locationId = location.location_id;
 	let locationWeatherData = writable(null);
-  
-	// let devices = [];
-	// let deviceData = {};
-  
-	// // Subscribe to deviceStore to get the latest devices
-	// const unsubscribeDeviceStore = deviceDataStore.subscribe(value => {
-	//   devices = value;
-	// });
-  
-	// // Subscribe to deviceDataStore to get the latest data
-	// const unsubscribeDeviceDataStore = deviceDataStore.subscribe(value => {
-	//   deviceData = value;
-	// });
-  
-	// // Reactive statement to filter devices by location using dev_eui
-	// $: filteredDevices = devices.filter(device => 
-	//   data.cw_locations.cw_device_locations.some(locationDevice => locationDevice.dev_eui === device.dev_eui)
-	// );
-  
-	// onMount(async () => {
-	//   try {
-	// 	const weather = await fetchWeatherData(
-	// 	  data.cw_locations.lat,
-	// 	  data.cw_locations.long,
-	// 	  locationId
-	// 	);
-	// 	locationWeatherData.set(weather);
-	//   } catch (err) {
-	// 	console.error('Error loading weather data:', err);
-	//   } finally {
-	// 	loading = false;
-	//   }
-  
-	//   return () => {
-	// 	unsubscribeDeviceStore();
-	// 	unsubscribeDeviceDataStore();
-	//   };
-	// });
-  </script>
-  <div class="bg-[#E2E2E2] p-0.5 rounded-2xl border-[#D2D2D2] border-[0.1em]">
-	<div class="w-full h-20 relative rounded-2xl bg-blend-overlay bg-no-repeat bg-cover bg-bottom custom-bg">
-	  <div class="w-1/2 h-full bg-gradient-to-l from-black absolute top-0 rounded-2xl right-0"></div>
-	  <div class="absolute top-4 text-xs text-surface-100 drop-shadow-md right-3 space-y-1">
-		{#if $locationWeatherData}
-		  <!-- <p>{$_('dashboardCard.rainfall')}: {$locationWeatherData.rainfall}mm/h</p>
-		  <p>{$_('dashboardCard.humidity')}: {$locationWeatherData.humidity}%</p>
-		  <p>{$_('dashboardCard.windspeed')}: {$locationWeatherData.windSpeed} km/h</p> -->
-		{:else}
-		  <!-- <p>{$_('dashboardCard.rainfall')}: --%</p>
-		  <p>{$_('dashboardCard.humidity')}: --%</p>
-		  <p>{$_('dashboardCard.windspeed')}: -- km/h</p> -->
-		{/if}
-	  </div>
-	  <div class="absolute left-3 top-5">
-		<p class="flex text-surface-100 text-3xl text-shadow">
-		  <!-- {#if $locationWeatherData}
-			{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
-			{#await getWeatherImage($locationWeatherData.weatherCode, isDayTime())}
-			  <ProgressCircle />
-			{:then image}
-			  <img src={image} alt="weather code icon" class="ml-2 w-12" />
-			{:catch error}
-			  <p>{error.message}</p>
-			{/await}
-		  {:else}
-			--<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
-		  {/if} -->
-		</p>
-	  </div>
+
+	let devicesLatestData = {};
+
+	onMount(async () => {
+		for (let device of location.devices) {
+			const latestData = await getDeviceLatestData(device.dev_eui);
+			devicesLatestData[device.dev_eui] = latestData;
+		}
+	});
+
+	async function getDeviceLatestData(devEui: string) {
+		const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
+		const data = await res.json();
+		return data;
+	}
+</script>
+
+<div class="rounded-2xl border-[0.1em] border-[#D2D2D2] bg-secondary-50 p-0.5">
+	<div
+		class="custom-bg relative h-20 w-full rounded-2xl bg-cover bg-bottom bg-no-repeat bg-blend-overlay"
+	>
+		<div class="absolute right-0 top-0 h-full w-1/2 rounded-2xl bg-gradient-to-l from-black"></div>
+		<div class="absolute right-3 top-4 space-y-1 text-xs drop-shadow-md text-white">
+			{#if $locationWeatherData}
+				<p>Rainfall: {$locationWeatherData.rainfall}mm/h</p>
+				<p>Humidity: {$locationWeatherData.humidity}%</p>
+				<p>Wind Speed: {$locationWeatherData.windSpeed} km/h</p>
+			{:else}
+				<p>Rainfall: --%</p>
+				<p>Humidity: --%</p>
+				<p>Wind Speed: -- km/h</p>
+			{/if}
+		</div>
+		<div class="absolute left-3 top-5">
+			<p class="text-shadow flex text-3xl text-white">
+				{#if $locationWeatherData}
+					{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md"
+						>ºC</span
+					>
+				{:else}
+					--<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
+				{/if}
+			</p>
+		</div>
 	</div>
-  
-	<h2 class="text-xl my-3 flex flex-row items-center">
-	  {data.name}
-	  <span class="flex flex-grow" />
-	  <Button
-		variant="outline"
-		color="primary"
-		icon={mdiArrowRight}
-		on:click={() => goto(`app/locations/${locationId}`)}
-	  />
+
+	<h2 class="my-3 flex flex-row items-center text-xl">
+		{location.name}
+		<span class="flex flex-grow" />
+		<Button
+			variant="outline"
+			color="primary"
+			icon={mdiArrowRight}
+			on:click={() => goto(`app/locations/${locationId}`)}
+		/>
 	</h2>
-	<div class="flex flex-col text-sm gap-1 pb-4 px-1">
-        <slot name="data"/>
-	  {#each devices as device}
-		{#if device}
-		  <Collapse classes={{ root: 'shadow-md pr-2 bg-white' }}>
-			<div
-			  slot="trigger"
-			  class="flex-1 border-l-8 "
-			>
-			  <div class="my-1 mr-2 border-r-2">
-				<div class="flex flex-col text-center text-base">
-				  <div class="flex flex-row justify-left">
-					<b class="text-sm ml-4 text-slate-800">{device.name}</b>
-				  </div>
-				  <div class="flex flex-row justify-center">
-					<!-- {#if device}
-					  <p class="justify-center m-auto">
-						{#if device && device.primaryData && device.primary_data_notation}
-						  <span>{nameToEmoji(device.primaryData)}{(device[device.primaryData] * device.primary_multiplier).toLocaleString()}</span>
-						  <small class="text-slate-800"><sup>{device.primary_data_notation}</sup></small>
-						{/if}
-					  </p>
-					  <p class="justify-center m-auto">
-						{#if device && device.secondaryData && device.secondary_data_notation}
-						  {nameToEmoji(device.secondaryData)}{(device[device.secondaryData]).toLocaleString()}
-						  <small class="text-slate-800"><sup>{device.secondary_data_notation}</sup></small>
-						{/if}
-					  </p>
-					{:else}
-					  <p class="basis-1/3 justify-center m-auto">(no Data Yet...)</p>
-					{/if} -->
-				  </div>
+	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">
+		{#each location.devices as device}
+			<Collapse classes={{ root: 'shadow-md pr-2 bg-primary' }}>
+				<div slot="trigger" class="flex-1 border-l-8">
+					<div class="my-1 mr-2 border-r-2">
+						<div class="flex flex-col text-center text-base">
+							<div class="justify-left flex flex-row">
+								<b class="ml-4 text-sm">{device.name}</b>
+							</div>
+							{#if devicesLatestData[device.dev_eui]}
+								<div class="flex flex-row justify-center">
+									<p class="m-auto justify-center">
+										<span>
+											{nameToEmoji(device.deviceType.primary_data)}
+											{devicesLatestData[device.dev_eui][device.deviceType.primary_data]}
+										</span>
+										<small class="text-slate-800">
+											<sup>{device.deviceType.primary_data_notation}</sup>
+										</small>
+									</p>
+									{#if device.deviceType.secondary_data}
+										<p class="m-auto justify-center">
+											<span>
+												{nameToEmoji(device.deviceType.secondary_data)}
+												{devicesLatestData[device.dev_eui][device.deviceType.secondary_data]}
+											</span>
+											<small class="text-slate-800">
+												<sup>{device.deviceType.secondary_data_notation}</sup>
+											</small>
+										</p>
+									{/if}
+								</div>
+							{:else}
+								<p>Loading data...</p>
+							{/if}
+						</div>
+					</div>
 				</div>
-			  </div>
-			</div>
-			<div class="pl-4">
-			  <div class="flex px-3 mt-3">
-				<h3 class="text-lg basis-1/3 font-medium mb-2">{$_('dashboardCard.details')}</h3>
-			  </div>
-			  <!-- {#each Object.keys(convertObject(device)) as dataPointKey, index}
-				<div class="py-1">
-				  <div class="flex">
-					<p class="text-base">{nameToEmoji(dataPointKey)}</p>
-					<p class="text-right">{$_(dataPointKey)}</p>
-					<span class="flex-grow" />
-					<p class="text-base flex flex-row align-bottom">
-					  {#if dataPointKey === 'created_at'}
-						<Duration start={device[dataPointKey]} totalUnits={2} minUnits={DurationUnits.Second} />&nbsp {$_('ago')}
-					  {:else}
-						{device[dataPointKey] ? device[dataPointKey].toLocaleString() : 'N/A'}
-						<small class="text-slate-800"><sup>{nameToNotation(dataPointKey)}</sup></small>
-					  {/if}
-					</p>
-				  </div>
-				  {#if Object.keys(convertObject(device)).length - 1 !== index}
-					<div class="px-3 pt-2 border-b border-[#7d7d81]"></div>
-				  {:else}
-					<div class="px-3 pt-2"></div>
-				  {/if}
+				<div class="pl-4">
+					<Button
+						on:click={() => goto(`app/devices/${device.dev_eui}/data`)}
+						variant="fill"
+						color="info"
+						class="mb-1 w-full"
+						icon={mdiArrowRight}
+					>
+						View Data
+					</Button>
 				</div>
-			  {/each} -->
-  
-			  <Button
-				on:click={() => goto(`app/devices/123/data`)}
-				variant="fill-light"
-				color="primary"
-				class="w-full mb-1"
-				icon={mdiEye}>{$_('dashboardCard.view')}</Button
-			  >
-			</div>
-		  </Collapse>
-		{:else}
-		  <p class="text-center my-5">{$_('dashboardCard.noData')}</p>
-		{/if}
-	  {/each}
+			</Collapse>
+		{/each}
 	</div>
-  </div>
+</div>
 
 <style>
 	.text-shadow {
 		text-shadow: black 5px 5px 3px;
 	}
-	.custom-bg {
-		position: relative;
-		overflow: hidden;
-		background-color: lightgray; /* Temporary background color to ensure the div is visible */
-	}
 	.custom-bg::before {
-		content: ' '; /* Ensure the pseudo-element is generated */
+		content: ' ';
 		position: absolute;
 		top: 0;
 		left: 0;
