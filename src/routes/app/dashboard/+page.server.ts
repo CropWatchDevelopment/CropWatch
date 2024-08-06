@@ -6,5 +6,4 @@ export const load: PageLoad = async ({ params, locals: { supabase, getSession } 
     if (!userSession) {
         throw redirect(303, '/auth/unauthorized');
     }
-    
 };

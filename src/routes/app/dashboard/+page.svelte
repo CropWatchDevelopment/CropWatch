@@ -7,7 +7,10 @@
 	import { Icon, ProgressCircle } from 'svelte-ux';
 	import type { PageData } from './$types';
 
-	export let data: PageData;
+	export let data;
+	let { supabase, session } = data;
+	$: ({ supabase, session } = data);
+
 	let locations: Tables<'cw_locations'>[] = [];
 	let loading: boolean = true;
 
