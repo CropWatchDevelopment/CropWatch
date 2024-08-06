@@ -3,38 +3,34 @@
 	import { writable } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import { mdiArrowRight } from '@mdi/js';
-	import { onMount } from 'svelte';
 	import { nameToEmoji } from './utilities/NameToEmoji';
 	import moment from 'moment';
-	import { json } from '@sveltejs/kit';
 	import DeviceDataList from './DeviceDataList.svelte';
 
 	export let location;
 
 	const locationId = location.location_id;
 	let locationWeatherData = writable(null);
+	let devicesLatestData = writable({});
 
-	let devicesLatestData = {};
-
-	onMount(async () => {
-		for (let device of location.devices) {
-			const latestData = await getDeviceLatestData(device.dev_eui);
-			devicesLatestData[device.dev_eui] = latestData;
-			devicesLatestData[device.dev_eui].isDataOld = isDeviceDataOld(device.dev_eui);
-		}
-	});
-
-	async function getDeviceLatestData(devEui: string) {
-		const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
-		const data = await res.json();
-		return data;
+	$: if (location.devices) {
+		const updatedDevicesLatestData = {};
+		location.devices.forEach(device => {
+			if (device.latestData) {
+				updatedDevicesLatestData[device.dev_eui] = {
+					...device.latestData,
+					isDataOld: isDeviceDataOld(device.latestData.created_at)
+				};
+			}
+		});
+		devicesLatestData.set(updatedDevicesLatestData);
 	}
 
-	function isDeviceDataOld(deviceEui) {
-		if (!devicesLatestData[deviceEui] || !devicesLatestData[deviceEui].created_at) {
+	function isDeviceDataOld(createdAt) {
+		if (!createdAt) {
 			return true; // Consider it old if data is not available
 		}
-		return moment().diff(moment(devicesLatestData[deviceEui].created_at), 'minutes') > 120;
+		return moment().diff(moment(createdAt), 'minutes') > 120;
 	}
 </script>
 
@@ -80,11 +76,11 @@
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">
 		{#each location.devices as device}
 			<Collapse classes={{ root: 'shadow-md pr-2 bg-primary' }}>
-				<DeviceDataList data={devicesLatestData[device.dev_eui]} />
+				<DeviceDataList data={$devicesLatestData[device.dev_eui]} />
 				<div
 					slot="trigger"
 					class="flex-1 border-l-8 {(
-						devicesLatestData[device.dev_eui] ? devicesLatestData[device.dev_eui].isDataOld : true
+						$devicesLatestData[device.dev_eui] ? $devicesLatestData[device.dev_eui].isDataOld : true
 					)
 						? 'border-l-red-500'
 						: 'border-l-green-500'}"
@@ -94,12 +90,12 @@
 							<div class="justify-left flex flex-row">
 								<b class="ml-4 text-sm">{device.name}</b>
 							</div>
-							{#if devicesLatestData[device.dev_eui]}
+							{#if $devicesLatestData[device.dev_eui]}
 								<div class="flex flex-row justify-center">
 									<p class="m-auto justify-center">
 										<span>
 											{nameToEmoji(device.deviceType.primary_data)}
-											{devicesLatestData[device.dev_eui][device.deviceType.primary_data]}
+											{$devicesLatestData[device.dev_eui][device.deviceType.primary_data]}
 										</span>
 										<small class="text-slate-800">
 											<sup>{device.deviceType.primary_data_notation}</sup>
@@ -109,7 +105,7 @@
 										<p class="m-auto justify-center">
 											<span>
 												{nameToEmoji(device.deviceType.secondary_data)}
-												{devicesLatestData[device.dev_eui][device.deviceType.secondary_data]}
+												{$devicesLatestData[device.dev_eui][device.deviceType.secondary_data]}
 											</span>
 											<small class="text-slate-800">
 												<sup>{device.deviceType.secondary_data_notation}</sup>
