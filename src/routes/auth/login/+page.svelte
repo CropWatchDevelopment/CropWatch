@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { _ } from 'svelte-i18n';
 	import { TextField, Button, Switch, Icon } from 'svelte-ux';
-	import { mdiAccountPlus, mdiLockQuestion, mdiKeyArrowRight, mdiGoogle } from '@mdi/js';
-	// import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
+	import { mdiLockQuestion, mdiKeyArrowRight, mdiGoogle } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	
-	export let data
-	export let form
+
+	export let data;
+	export let form;
 
 	let { supabase } = data;
 	$: ({ supabase } = data);
@@ -20,8 +20,9 @@
 	let email: string = '';
 	let password: string = '';
 
-	let redirectURL: string = browser ? `${window.location.origin}/auth/callback` : '';
+	let avatarUrl: string | null = null;
 
+	let redirectURL: string = browser ? `${window.location.origin}/auth/callback` : '';
 	const oAuthLogin = async () => {
 		const { data: response, error } = await data.supabase.auth.signInWithOAuth({
 			provider: 'google',
@@ -47,15 +48,15 @@
 <div id="login-background">
 	<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
 		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-			<div class="bg-white px-6 py-12 shadow rounded-lg sm:px-12 mx-2 md:mx-0">
+			<div class="mx-2 rounded-lg bg-primary-50 px-6 py-12 shadow sm:px-12 md:mx-0">
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<!-- <img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" /> -->
-					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
+					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight">
 						{$_('login.title')}
 					</h2>
 				</div>
 				<form
-					class="border-b-2 border-gray-300 mt-6 pb-1"
+					class="mt-6 border-b-2 border-gray-300 pb-1"
 					action="?/login"
 					method="POST"
 					use:enhance={({ formElement, formData, action, cancel, submitter }) => {
@@ -68,7 +69,10 @@
 						return async ({ result, update }) => {
 							if (result.status && result.status < 400) {
 								update();
-								goto('/app'); // redirect to '/app'
+								if (result.data.avatarUrl) {
+									localStorage.setItem('avatarUrl', result.data.avatarUrl);
+								}
+								goto('/app/dashboard'); // redirect to '/app'
 							} else {
 								loggingIn = false;
 							}
@@ -112,7 +116,7 @@
 					</div>
 
 					<!-- <div class="grid grid-flow-col grid-cols-2 my-2"> -->
-					<div class="flex flex-row w-full mb-2">
+					<div class="mb-2 flex w-full flex-row">
 						<Switch
 							name="rememberMe"
 							id="remember"
@@ -126,12 +130,12 @@
 							}}
 						/>
 
-						<span class="text-sm font-medium text-gray-900 ml-1">{$_('login.remember_me')}</span>
+						<span class="ml-1 text-sm font-medium text-gray-900">{$_('login.remember_me')}</span>
 						<span class="flex-1" />
 						<!-- <div class="text-right"> -->
 						<a
 							href="reset-password"
-							class="text-xs font-medium text-gray-900 align-middle hover:text-indigo-500"
+							class="align-middle text-xs font-medium text-gray-900 hover:text-indigo-500"
 							><Icon data={mdiLockQuestion} /> {$_('login.forgot_password')}</a
 						>
 						<!-- </div> -->
@@ -143,7 +147,7 @@
 						loading={loggingIn}
 						icon={mdiKeyArrowRight}
 						type="submit"
-						class="flex w-full mb-2 justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+						class="mb-2 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 						>{$_('login.login')}</Button
 					>
 				</form>
@@ -155,7 +159,7 @@
 						icon={mdiGoogle}
 						type="button"
 						on:click={async () => oAuthLogin({ provider: 'google' })}
-						class="flex w-full mb-2 justify-center rounded-md bg-red-500 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+						class="mb-2 flex w-full justify-center rounded-md bg-red-500 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 						>Google {$_('login.login')}</Button
 					>
 				</div>

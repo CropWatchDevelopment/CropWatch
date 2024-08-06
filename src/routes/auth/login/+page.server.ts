@@ -27,13 +27,11 @@ export const actions = {
                 message: 'Server error. Try again later.'
             });
         }
-
-        redirect(307, '/');
+        return {
+            status: 201,
+            redirect: '/app/dashboard',
+            avatarUrl: data.user?.user_metadata?.avatar_url,
+        }
     },
 }
 
-export async function load({ locals: { getSession } }) {
-    let session = await getSession();
-    if (session?.user) throw redirect(304, '/app');
-    return { };
-}

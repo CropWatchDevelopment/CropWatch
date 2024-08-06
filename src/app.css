@@ -2,3 +2,9 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 @import '@fontsource/fira-mono';
+
+html, body {
+    display: flex;
+    flex-direction: column;
+    height:100%;
+}

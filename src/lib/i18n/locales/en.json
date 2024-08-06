@@ -1,0 +1,334 @@
+{
+    "header_title": "CropWatch Farming",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "my_locations": "My Locations",
+      "all_devices": "My Devices",
+      "settings": "Settings",
+      "sensor_rules": "Sensor Rules",
+      "permissions": "Permissions",
+      "change_log": "Change Log"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "notifications": "Notifications",
+      "devices": "Devices",
+      "gateways": "Gateways",
+      "low_battery": "Low Battery"
+    },
+    "header_no_alerts": "No New Alerts",
+    "header": {
+      "logout": "Logout",
+      "alerts": "Alerts",
+      "user_management": "User Management",
+      "settings": "Settings",
+      "admin": "Administrator",
+      "home": "Home"
+    },
+    "settings": {
+      "theme": "Dark / Light Theme",
+      "title": "User Interface Settings"
+    },
+    "all_rules": {
+      "title": "All Configured Rules",
+      "last_triggered": "Last Triggered",
+      "dialog": {
+        "areYouSure": "Are you sure?",
+        "ruleResetText": "Do you want to RESET this rule?",
+        "yes_reset_button": "Yes, Reset Rule",
+        "cancle": "Cancel"
+      },
+      "downloadIconTooltip": "Download Event History (coming soon!)",
+      "ViewDeviceIconTooltip": "Edit",
+      "deleteIconTooltip": "Delete",
+      "delete_dialog": {
+        "areYouSure": "Are you sure?",
+        "caption": "This will permanently delete the item and can not be undone.",
+        "yes_button_text": "Yes, Delete Rule",
+        "cancle": "Cancle"
+      },
+      "last_triggered_timeName": "Never",
+      "tooltip": {
+        "resetRule": "Reset"
+      }
+    },
+    "all_locations": {
+      "no_locations_message": "You have not setup any locations yet",
+      "title": "All Locations"
+    },
+    "app": {
+      "loading_message": "Loading Content...",
+      "loading_translations_message": "Loading Translations...",
+      "loading": "Loading...",
+      "devices": "Devices",
+      "location": {
+        "settings": {
+          "permissions": "Location Permission Settings"
+        },
+        "title": "Location",
+        "add": {
+          "title": "Add New Device"
+        }
+      },
+      "device": {
+        "add": {
+          "name": "Add a device name",
+          "namePlaceholder": "Left side outdoor device",
+          "deviceEUI": "Device EUI/Serial Number",
+          "upload_interval": "Expect Updates every X minutes (-1 means unknown)",
+          "submit": "Add device",
+          "macAddress": "XX:XX:XX:XX:XX:XX:XX:XX",
+          "deviceType": "Device Type"
+        }
+      }
+    },
+    "location": {
+      "map_card_title": "Overview Map"
+    },
+    "weather widget": {
+      "title": "Outdoor Weather",
+      "temp": "Temperature",
+      "Humidity": "Humidity",
+      "Rainfall": "Rainfall",
+      "Wind Speed": "Wind Speed",
+      "Direction": "Direction",
+      "Wind Direction": "Wind Direction",
+      "Pressure": "Pressure",
+      "Lux": "Lux",
+      "UV": "UV"
+    },
+    "DeviceSelect": {
+      "Device Quick View": "Device Quick View",
+      "Add Device": "Add Device"
+    },
+    "My Location": {
+      "Calendar": "Calendar Memo"
+    },
+    "Calendar": {
+      "Log": "Calendar Log"
+    },
+    "All Devices": {
+      "All Devices": "All Devices",
+      "All Devices in your account": "All Devices in your account"
+    },
+    "Device Quick View": {
+      "Add Device": "Add Device"
+    },
+    "icon sensor": {
+      "Air Temperature": "Air Temperature",
+      "Soil Moisture": "Soil Moisture",
+      "Soil Temperature": "Soil Temperature",
+      "Air Humidity": "Air Humidity",
+      "View Details": "View Details",
+      "Close": "Close"
+    },
+    "Detail": {
+      "Air Temperature": "Air Temperature",
+      "Relative Humidity": "Relative Humidity",
+      "VPD": "VPD",
+      "Dew Point": "Dew Point",
+      "Temperature History": "Air Temperature History",
+      "Air Temperature Over Time": "Air Temperature Over Time",
+      "Humidity Over Time": "Relative Humidity Over Time",
+      "Dew Point History": "Dew Point History",
+      "Dew Point Over Time": "Dew Point Over Time",
+      "Relative Humidity History": "Relative Humidity History",
+      "Soil Temperature": "Soil Temperature",
+      "Soil Moisture": "Soil Moisture",
+      "Soil Temperature History": "Soil Temperature History",
+      "Soil Moisture History": "Soil Moisture History",
+      "Soil pH": "Soil pH",
+      "Soil EC": "Soil EC",
+      "Soil N": "Soil N",
+      "Soil P": "Soil P",
+      "P": "P",
+      "N": "N",
+      "K": "K",
+      "NPK Map": "NPK Map"
+    },
+    "detail": {
+      "CO2": "CO²",
+      "Air Temperature": "Air Temperature",
+      "Relative Humidity": "Relative Humidity",
+      "CO2 History": "CO²  History",
+      "CO2 Over Time": "CO² Over Time",
+      "Temperature History": "Temperature History",
+      "Air Temperature History": "Air Temperature History",
+      "Air Temperature Over Time": "Air Temperature Over Time",
+      "Humidity History": "Relative Humidity History",
+      "Relative Humidity Over Time": "Relative Humidity Over Time"
+    },
+    "login": {
+      "title": "Log in to your account",
+      "Email": "Email address",
+      "Password": "Password",
+      "email": "email",
+      "enter_password": "Password",
+      "forgot_password": "Forgot Password?",
+      "login": "Login",
+      "dont_have_an_account": "Don't have an acount?",
+      "register_now": "Register Now",
+      "remember_me": "Remember Me",
+      "ConfirmPassword": "Confirm Password",
+      "password": "Password",
+      "already_have_an_account": "Already have an account?",
+      "return_to_login": "Return to",
+      "register_title": "Register for a new CropWatch Account",
+      "signup": "Sign up",
+      "update_password": "Update Password",
+      "update_title": "Update your password to a new one"
+    },
+    "rules": {
+      "description": "Create a new rule, or edit existing rules below",
+      "new_rule": "New Rule",
+      "no_rules_created": "You have not created any rules for this sensor yet.",
+      "rule_criteria": "Rule Criteria",
+      "no_rule_criteria": "No Rule Criteria yet...",
+      "title": "Rules and custom alerts",
+      "loadingRules": "Loading Rules",
+      "rule_name": "Rule Name",
+      "notification_email": "E-Mail",
+      "notification_type": "Notification Type",
+      "recipients": "Recipient(s)",
+      "emails": "E-Mail Address(s)",
+      "ruleName": "name",
+      "and_reset_when": "And Re-Activate rule when",
+      "returns_to": "returns to",
+      "trigger_value": "Trigger Value",
+      "data": "Data",
+      "reset_rule_value": "Reset Value",
+      "operator": "Operator",
+      "if": "IF",
+      "is": "IS",
+      "select_data": "Sensor Data to Watch",
+      "thresholdValue": "Value",
+      "add_condition_button": "Add Condition",
+      "create": "Create"
+    },
+    "dashboardCard": {
+      "Rainfall": "Rainfall",
+      "Humidity": "Humidity",
+      "Windspeed": "Windspeed",
+      "PrimaryData": "Primary Data",
+      "secondaryData": "Secondary Data",
+      "Details": "Details",
+      "primaryData": "Primary Data",
+      "dashboard": "Dashboard",
+      "details": "Detail",
+      "view": "View Device Detail",
+      "rainfall": "Rainfall",
+      "humidity": "Humidity",
+      "windspeed": "Wind Speed",
+      "noDevices": "This location has no devices yet...",
+      "noData": "No Data recieved yet..."
+    },
+    "permissions": {
+      "permissions": "Device Permissions",
+      "email": "E-Mail",
+      "user_email": "User E-Mail",
+      "following_have_access": "The following users have access to this device",
+      "role": "Select a Role",
+      "admin": "Admin (View, Edit, Update, Delete)",
+      "user": "User (View Data, Download Data)",
+      "viewer": "Viewer (Read Data Only)",
+      "add_permission": "Add Permission"
+    },
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "ago": "ago",
+    "soil_PH": "PH",
+    "vpd": "VPD",
+    "soil_moisture": "Soil Moisture",
+    "soil_temperature": "Soil Temperature",
+    "soil_EC": "Soil EC",
+    "lastSeen": "Last seen",
+    "temperatureC": "Temperature",
+    "created_at": "Last Updated",
+    "dewPointC": "Dew Point",
+    "lux": "Lux",
+    "uv": "UV",
+    "battery": "Battery",
+    "battery_level": "Battery Level",
+    "wind_speed": "Wind Speed",
+    "wind_direction": "Wind Direction",
+    "auth": {
+      "back_to_login": "Go Back to Login Page",
+      "check_email": "Check your email to confirm.",
+      "send_recovery_email": "Send Recovery Email",
+      "return_to_login": "Return to",
+      "were_to_send_email": "Where should we send you a link for password reset?",
+      "please_check_email": "Recovery Email Sent, Please check your messages.",
+      "error_sending_email": "There was an error sending the email, contact support."
+    },
+    "save": "Save",
+    "rename_dialog": {
+      "to_what": "to what?",
+      "rename": "Rename",
+      "new_name": "New Name"
+    },
+    "close": "Close",
+    "sensorFooterControls": {
+      "rules": "Rules and Rule Settings",
+      "permissions": "Permissions",
+      "settings": "Settings",
+      "history": "History"
+    },
+    "addlocation": {
+      "title": "Create a new Location"
+    },
+    "history": {
+      "title": "History and Downloads",
+      "data_preview": "Data Preview",
+      "no_data": "No data to display",
+      "download_selected": "Download Selected Range",
+      "search_text": "Filter Data Points"
+    },
+    "rainfall": "Rainfall",
+    "no_data_available": "No Data Available",
+    "weatherStation": {
+      "Current_Weather": "Current Weather",
+      "windspeedDirection": "Wind Speed/Direction",
+      "uvLux": "UV/LUX",
+      "rainfallPressure": "Rainfall/Pressure",
+      "maxTemperature": "Max Temperature",
+      "averageTemperature": "Average Temperature",
+      "minimumTemperature": "Minimum Temperature",
+      "maxRainfall": "Max Rainfall",
+      "averageRainfall": "Average Rainfall",
+      "maxUvLux": "Max UV/LUX:",
+      "averageUvLux": "Average UV/LUX:",
+      "barometricPressure": "Barometric Pressure",
+      "maxPressure": "Maximum Pressure",
+      "averagePressure": "Average Pressure",
+      "minimumPressure": "Minimum Pressure",
+      "windSpeed": "Wind Speed:",
+      "maxWindSpeed": "Max Wind Speed:",
+      "averageWindSpeed": "Average Wind Speed:"
+    },
+    "compassGuage": {
+      "N": "N",
+      "S": "S",
+      "E": "E",
+      "W": "W",
+      "NE": "NE",
+      "NW": "NW",
+      "SE": "SE",
+      "SW": "SW"
+    },
+    "uvGuage": {
+      "uvIndex": "UV Index",
+      "Low": "Low",
+      "Moderate": "Moderate",
+      "High": "High"
+    },
+    "luxGuage": {
+      "title": "LUX"
+    },
+    "gateways": {
+      "title": "Gateways",
+      "online": "Gateway Online",
+      "offline": "Gateway Offline"
+    },
+    "back": "Back",
+    "water_level": "Water Level"
+  }

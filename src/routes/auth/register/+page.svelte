@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button, TextField } from 'svelte-ux';
+	import { Button, Checkbox, TextField } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
-	// import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
+	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { mdiClock, mdiLoading } from '@mdi/js';
 	import { goto } from '$app/navigation';
 
@@ -15,10 +15,10 @@
 <div id="login-background">
 	<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
 		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-			<div class="bg-white px-6 py-12 shadow rounded-lg sm:px-12 mx-2 md:mx-0">
+			<div class="bg-primary-100 px-6 py-12 shadow rounded-lg sm:px-12 mx-2 md:mx-0">
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<!-- <img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" /> -->
-					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
+					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight">
 						{$_('login.register_title')}
 					</h2>
 				</div>
@@ -47,7 +47,7 @@
 					}}
 				>
 					<div class="mb-3">
-						<label for="email" class="block text-sm font-medium leading-6 text-gray-900"
+						<label for="email" class="block text-sm font-medium leading-6"
 							>{$_('login.Email')}</label
 						>
 						<div class="mt-2">
@@ -66,7 +66,7 @@
 					</div>
 
 					<div class="mb-2">
-						<label for="password" class="block text-sm font-medium leading-6 text-gray-900"
+						<label for="password" class="block text-sm font-medium leading-6"
 							>{$_('login.Password')}</label
 						>
 						<div class="mt-2">
@@ -84,7 +84,7 @@
 					</div>
 
 					<div class="mb-2">
-						<label for="password-confirm" class="block text-sm font-medium leading-6 text-gray-900"
+						<label for="password-confirm" class="block text-sm font-medium leading-6"
 							>{$_('login.ConfirmPassword')}</label
 						>
 						<div class="mt-2">
@@ -98,6 +98,12 @@
 								required
 							/>
 						</div>
+					</div>
+
+					<div class="mt-2">
+						<Checkbox>I have read, and agree to the Privacy Policy</Checkbox>
+						<Checkbox>I have read, and agree to the Terms of Use</Checkbox>
+						<Checkbox>I have read, and agree to the Cookie Policy</Checkbox>
 					</div>
 
 					<Button
