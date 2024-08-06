@@ -7,6 +7,7 @@
 	import { nameToEmoji } from './utilities/NameToEmoji';
 	import moment from 'moment';
 	import { json } from '@sveltejs/kit';
+	import DeviceDataList from './DeviceDataList.svelte';
 
 	export let location;
 
@@ -79,7 +80,7 @@
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">
 		{#each location.devices as device}
 			<Collapse classes={{ root: 'shadow-md pr-2 bg-primary' }}>
-				{JSON.stringify(devicesLatestData[device.dev_eui].isDataOld, null, 2)}
+				<DeviceDataList data={devicesLatestData[device.dev_eui]} />
 				<div
 					slot="trigger"
 					class="flex-1 border-l-8 {(
