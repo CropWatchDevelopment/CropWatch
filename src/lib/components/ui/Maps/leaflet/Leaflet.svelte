@@ -87,7 +87,7 @@
 </script>
 
 <div
-	class="relative rounded-xl"
+	class="relative rounded-xl z-40"
 	style={`width: ${width}%; height: ${height}px;`}
 	bind:this={mapElement}
 >

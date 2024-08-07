@@ -4,6 +4,7 @@
 	import CROPWATCH_LOGO from '$lib/images/UI/logo.svg';
 	import UserHeaderWidget from '$lib/components/ui/Header/UserHeaderWidget.svelte';
 	import { page } from '$app/stores';
+	import Back from '$lib/components/ui/Back.svelte';
 </script>
 
 <AppLayout areas="'header header' 'aside main'" class="h-full">
@@ -43,6 +44,7 @@
 	</AppBar>
 
 	<main class="h-full">
+		<Back>Back</Back>
 		<slot />
 	</main>
 </AppLayout>

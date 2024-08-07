@@ -1,13 +1,10 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import DashboardCard from '$lib/components/ui/Cards/Dashboard/DashboardCard.svelte';
 	import { onMount } from 'svelte';
 	import { mdiFilter, mdiViewDashboard } from '@mdi/js';
 	import type { Tables } from '$lib/types/supabaseSchema';
 	import { Button, Icon, ProgressCircle } from 'svelte-ux';
-	import type { PageData } from './$types';
 	import moment from 'moment';
-	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	export let data;
 	let { supabase, session } = data;
@@ -17,6 +14,23 @@
 	let loading: boolean = true;
 	const subscribedTables = new Set<string>();
 
+	// async function fetchHlocData() {
+	// 	const { data, error } = await supabase.rpc('get_hloc_data', {
+	// 		start_time: '2024-07-01 00:00:00',
+	// 		end_time: '2024-08-07 00:00:00',
+	// 		time_interval: 'day',
+	// 		table_name: 'seeed_co2_lorawan_uplinks',
+	// 		device_eui: '2CF7F1C061700099'
+	// 	});
+
+	// 	if (error) {
+	// 		console.error('Error:', error);
+	// 	} else {
+	// 		console.log('HLOC Data:', data);
+	// 	}
+	// }
+
+	
 	onMount(() => {
 		fetchInitialData();
 	});

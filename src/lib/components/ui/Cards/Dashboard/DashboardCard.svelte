@@ -5,7 +5,7 @@
 	import { mdiArrowRight } from '@mdi/js';
 	import { nameToEmoji } from '../../utilities/NameToEmoji';
 	import moment from 'moment';
-	import DeviceDataList from '../../DeviceDataList.svelte';
+	import DeviceDataList from './DeviceDataList.svelte';
 
 	export let location;
 

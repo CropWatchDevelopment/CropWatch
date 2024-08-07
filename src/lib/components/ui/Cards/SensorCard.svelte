@@ -16,7 +16,7 @@
     export let latestData: any;
 </script>
 
-<div class="flex bg-[#34393f] bg-opacity-50 rounded-xl my-3 justify-between">
+<div class="flex bg-[#34393f] bg-opacity-50 rounded-xl justify-between">
 	<!-- Content -->
     <div class="py-4 pl-6 flex items-center space-x-3 w-full">
 		<!-- image -->
@@ -33,27 +33,12 @@
 		<div class="w-full">
 			<!-- Title and status -->
 			<div class="flex space-x-1 items-center w-full">
-				<div class="w-2">
-					<!-- {#if sensor.status == 'active'}
-						<img src={Active} alt="active" />
-					{:else}
-						<img src={Inactive} alt="inactive" />
-					{/if} -->
-				</div>
 				<div>
 					<p class="text-lg">{name}</p>
 				</div>
 			</div>
 
 			{#if latestData}
-				<!-- <div class="grid grid-cols-2 gap-1 text-sm text-left mt-2">
-					{#each Object.keys(latestData) as value}
-						{#if value != 'created_at' && value != 'dev_eui' && value != 'id' && value != 'latitude' && value != 'longitude' && value != 'temperature'}
-							<p>{ $_(value)}</p>
-							<p class="ml-6">{latestData[value]}{nameToNotation(value)}</p>
-						{/if}
-					{/each}
-				</div> -->
                 <DeviceDataList data={latestData} />
 			{/if}
 		</div>

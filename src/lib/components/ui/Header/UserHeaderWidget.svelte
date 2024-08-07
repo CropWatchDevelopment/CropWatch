@@ -35,7 +35,7 @@
 			</div>
 		</div>
 
-		<Menu {open} on:close={toggleOff} explicitClose let:close>
+		<Menu {open} on:close={toggleOff} explicitClose let:close class="z-50">
 			<div class="flex flex-col md:hidden gap-1 text-center">
 				<p>Kevin Cantrell</p>
 				<hr class="h-px w-1/2 mx-auto bg-gray-200" />
