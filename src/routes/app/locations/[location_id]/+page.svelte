@@ -3,26 +3,27 @@
 	import SensorCard from '$lib/components/ui/Cards/SensorCard.svelte';
 	import Leaflet from '$lib/components/ui/Maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/ui/Maps/leaflet/Marker.svelte';
-	// import SensorCard from '$lib/components/ui/Cards/SensorCard.svelte';
-	// import locationsStore from '$lib/stores/locationsStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
 	import { mdiMapMarker } from '@mdi/js';
-	import moment from 'moment';
 	import { onMount } from 'svelte';
 	import { Icon } from 'svelte-ux';
+	import devicesStore from '$lib/stores/devicesStore';
 
 	let location_id = $page.params.location_id;
 	let loading: boolean = true;
 	let location: Tables<'cw_locations'>;
-	let innerWidth = 0
-    let innerHeight = 200
+	let innerWidth = 0;
+	let innerHeight = 200;
+
+	onMount(() => {
+		fetchInitialData();
+	});
 
 	async function fetchInitialData() {
 		try {
 			const res = await fetch(`/api/v1/locations/${location_id}?includeDevicesTypes=true`);
 			const data = await res.json();
 			location = data;
-			await fetchInitialDeviceData();
 			loading = false;
 		} catch (e) {
 			loading = false;
@@ -30,35 +31,14 @@
 		}
 	}
 
-	async function fetchInitialDeviceData() {
-		for (let device of location.devices) {
-			const latestData = await getDeviceLatestData(device.dev_eui);
-			updateDeviceData(latestData);
+	// Subscribe to devicesStore and update the location.devices when data changes
+	devicesStore.subscribe((devicesData) => {
+		if (location && location.devices) {
+			location.devices = location.devices.map((device) => ({
+				...device,
+				latestData: devicesData[device.dev_eui],
+			}));
 		}
-	}
-
-	async function getDeviceLatestData(devEui: string) {
-		const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
-		const data = await res.json();
-		return data;
-	}
-
-	function updateDeviceData(newData) {
-		location.devices = location.devices.map((device) => {
-			if (device.dev_eui === newData.dev_eui) {
-				const isDataOld = moment().diff(moment(newData.created_at), 'minutes') > 120;
-				return { ...device, latestData: newData, isDataOld };
-			}
-			return device;
-		});
-		location = location;
-		return location;
-	}
-
-	
-
-	onMount(() => {
-		fetchInitialData();
 	});
 </script>
 
@@ -79,7 +59,7 @@
 <!-- DEVICE MAP -->
 <div class="mx-4 mb-4">
 	{#if !loading}
-		<Leaflet view={[location.lat, location.long]} zoom={19} height={innerHeight/3}>
+		<Leaflet view={[location.lat, location.long]} zoom={19} height={innerHeight / 3}>
 			{#each location.devices as device}
 				<Marker latLng={[device.lat, device.long]}>
 					<Icon data={mdiMapMarker} class="h-6 w-6 hover:h-8 hover:w-8 hover:-translate-x-1 hover:-translate-y-1 text-primary border-red-500 border-4 rounded-full" />
