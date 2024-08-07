@@ -67,8 +67,8 @@
                     class="flex-1 border-l-8 {(
                         $devicesLatestData[device.dev_eui] ? $devicesLatestData[device.dev_eui].isDataOld : true
                     )
-                        ? 'border-l-red-500'
-                        : 'border-l-green-500'}"
+                        ? '!border-l-red-500'
+                        : '!border-l-green-500'}"
                 >
                     <div class="my-1 mr-2 border-r-2">
                         <div class="flex flex-col text-center text-base">

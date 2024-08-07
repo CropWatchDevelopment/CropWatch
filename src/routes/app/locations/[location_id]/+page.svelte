@@ -7,7 +7,7 @@
 	import { mdiMapMarker } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { Icon } from 'svelte-ux';
-	import devicesStore from '$lib/stores/devicesStore';
+	import devicesStore, { updateDeviceData } from '$lib/stores/devicesStore';
 
 	let location_id = $page.params.location_id;
 	let loading: boolean = true;
@@ -24,12 +24,27 @@
 			const res = await fetch(`/api/v1/locations/${location_id}?includeDevicesTypes=true`);
 			const data = await res.json();
 			location = data;
+			await fetchInitialDeviceData();
 			loading = false;
 		} catch (e) {
 			loading = false;
 			console.error('Failed to fetch locations', e);
 		}
 	}
+
+	async function getDeviceLatestData(devEui: string) {
+        const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
+        const data = await res.json();
+        return data;
+    }
+
+    async function fetchInitialDeviceData() {
+
+            for (let device of location.devices) {
+                const latestData = await getDeviceLatestData(device.dev_eui);
+                updateDeviceData(latestData);
+            }
+    }
 
 	// Subscribe to devicesStore and update the location.devices when data changes
 	devicesStore.subscribe((devicesData) => {
