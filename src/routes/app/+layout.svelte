@@ -22,6 +22,14 @@
 				</li>
 				<li>
 					<NavItem
+						text="All Locations"
+						currentUrl={$page.url}
+						path="/app/locations"
+						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					/>
+				</li>
+				<li>
+					<NavItem
 						text="App Settings"
 						currentUrl={$page.url}
 						path="/app/settings"
