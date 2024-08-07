@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { _ } from 'svelte-i18n';
 	import { TextField, Button, Switch, Icon } from 'svelte-ux';
-	import { mdiLockQuestion, mdiKeyArrowRight, mdiGoogle } from '@mdi/js';
+	import { mdiLockQuestion, mdiKeyArrowRight, mdiGoogle, mdiCheckCircle, mdiCloseCircle } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { notificationStore } from '$lib/stores/notificationStore.js';
+
 
 	export let data;
 	export let form;
@@ -23,11 +25,12 @@
 	let avatarUrl: string | null = null;
 
 	let redirectURL: string = browser ? `${window.location.origin}/auth/callback` : '';
+
 	const oAuthLogin = async () => {
 		const { data: response, error } = await data.supabase.auth.signInWithOAuth({
 			provider: 'google',
 			options: {
-				redirectTo: `http://localhost:5173/auth/callback`
+				redirectTo: redirectURL
 			}
 		});
 		if (error) {
@@ -59,7 +62,7 @@
 					class="mt-6 border-b-2 border-gray-300 pb-1"
 					action="?/login"
 					method="POST"
-					use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+					use:enhance={({ formElement, formData, action, cancel, submitter}) => {
 						loggingIn = true;
 						if (rememberMe) {
 							localStorage.setItem('email', email);
@@ -68,12 +71,26 @@
 
 						return async ({ result, update }) => {
 							if (result.status && result.status < 400) {
-								update();
+								await update({ reset: false });
 								if (result.data.avatarUrl) {
 									localStorage.setItem('avatarUrl', result.data.avatarUrl);
 								}
-								goto('/app/dashboard'); // redirect to '/app'
+								notificationStore.NotificationTimedOpen({
+									title: 'Login Successful',
+									description: 'You have successfully logged in',
+									icon: mdiCheckCircle,
+									timeout: 3000,
+									buttonText: 'Close'
+								});
+								await goto(result.data.redirect);
 							} else {
+								notificationStore.NotificationTimedOpen({
+									title: 'Login Failed',
+									description: 'Please check your email and password and try again',
+									icon: mdiCloseCircle,
+									timeout: 3000,
+									buttonText: 'Close'
+								});
 								loggingIn = false;
 							}
 						};
@@ -92,7 +109,6 @@
 								bind:value={email}
 								autocomplete="email"
 								required
-								on:change={(e) => console.log(e.detail)}
 							/>
 						</div>
 					</div>
@@ -115,7 +131,6 @@
 						</div>
 					</div>
 
-					<!-- <div class="grid grid-flow-col grid-cols-2 my-2"> -->
 					<div class="mb-2 flex w-full flex-row">
 						<Switch
 							name="rememberMe"
@@ -132,15 +147,12 @@
 
 						<span class="ml-1 text-sm font-medium text-gray-900">{$_('login.remember_me')}</span>
 						<span class="flex-1" />
-						<!-- <div class="text-right"> -->
 						<a
 							href="reset-password"
 							class="align-middle text-xs font-medium text-gray-900 hover:text-indigo-500"
 							><Icon data={mdiLockQuestion} /> {$_('login.forgot_password')}</a
 						>
-						<!-- </div> -->
 					</div>
-					<!-- </div> -->
 
 					<Button
 						disabled={loggingIn}

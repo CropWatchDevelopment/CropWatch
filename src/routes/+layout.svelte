@@ -3,12 +3,19 @@
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { Button, Icon, Notification } from 'svelte-ux';
-	import { mdiInbox } from '@mdi/js';
-
+	import { mdiInbox, mdiInformation } from '@mdi/js';
+	import { notificationStore } from '$lib/stores/notificationStore';
+	import type { UINotification } from '$lib/stores/notificationStore';
 	export let data;
 
 	let { supabase, session } = data;
 	$: ({ supabase, session } = data);
+
+	let notification: UINotification;
+
+	$: notificationStore.subscribe((value) => {
+		notification = value;
+	});
 
 	onMount(() => {
 		const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
@@ -23,18 +30,21 @@
 
 <slot />
 
-<div class="absolute mt-5 z-50 w-[400px]">
-	<Notification actions="below" closeIcon>
+<div class="absolute z-50 mt-5 w-[400px]">
+	<Notification actions="below" closeIcon open={notification.open}>
 		<div slot="icon" class="self-start">
-			<Icon data={mdiInbox} />
+			{#if notification.icon}
+				<Icon data={notification.icon} />
+			{:else}
+				<Icon data={mdiInformation} />
+			{/if}
 		</div>
-		<div slot="title">Discussion moved</div>
+		<div slot="title">{notification.title}</div>
 		<div slot="description">
-			Lorem ipsum dolor sit amet consectetur adipisicing elit oluptatum tenetur.
+			{notification.description}
 		</div>
 		<div slot="actions">
-			<Button color="primary">Undo</Button>
-			<Button>Dismiss</Button>
+			<Button color="primary">{notification.buttonText}</Button>
 		</div>
 	</Notification>
 </div>

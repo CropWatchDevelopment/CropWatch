@@ -3,9 +3,9 @@
 	import { writable } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import { mdiArrowRight } from '@mdi/js';
-	import { nameToEmoji } from './utilities/NameToEmoji';
+	import { nameToEmoji } from '../../utilities/NameToEmoji';
 	import moment from 'moment';
-	import DeviceDataList from './DeviceDataList.svelte';
+	import DeviceDataList from '../../DeviceDataList.svelte';
 
 	export let location;
 
@@ -70,7 +70,7 @@
 			variant="outline"
 			color="primary"
 			icon={mdiArrowRight}
-			on:click={() => goto(`app/locations/${locationId}`)}
+			on:click={() => goto(`/app/locations/${locationId}`)}
 		/>
 	</h2>
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">

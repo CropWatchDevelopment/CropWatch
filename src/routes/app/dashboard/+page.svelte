@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import DashboardCard from '$lib/components/ui/DashboardCard.svelte';
+	import DashboardCard from '$lib/components/ui/Cards/Dashboard/DashboardCard.svelte';
 	import { onMount } from 'svelte';
 	import { mdiFilter, mdiViewDashboard } from '@mdi/js';
 	import type { Tables } from '$lib/types/supabaseSchema';
@@ -94,14 +94,19 @@
 </svelte:head>
 
 <!-- TITLE and Filter -->
-<div class="my-3 grid grid-row grid-cols-2 justify-between">
+<div class="grid-row my-3 grid grid-cols-2 justify-between">
 	<!-- TITLE -->
-	<h2 class="text-surface mt-3 text-2xl font-light">
+	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
 		<Icon data={mdiViewDashboard} class="h-6 w-6" />
 		Dashboard
 	</h2>
 	<!-- Filter -->
-	 <Button icon={mdiFilter} variant="outline" color="primary" class="mt-3 mr-1 justify-self-end max-w-10" />
+	<Button
+		icon={mdiFilter}
+		variant="outline"
+		color="primary"
+		class="mr-1 mt-3 max-w-10 justify-self-end"
+	/>
 </div>
 <!-- CARDS -->
 {#if loading}

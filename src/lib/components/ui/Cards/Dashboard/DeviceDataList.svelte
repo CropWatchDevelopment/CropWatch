@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { Tables } from '$lib/types/supabaseSchema';
 	import { Duration, DurationUnits } from 'svelte-ux';
-	import { convertObject } from './utilities/ConvertSensorDataObject';
-	import { nameToNotation } from './utilities/NameToNotation';
-	import { nameToEmoji } from './utilities/NameToEmoji';
+	// import { convertObject } from './utilities/ConvertSensorDataObject';
+	// import { nameToNotation } from './utilities/NameToNotation';
+	// import { nameToEmoji } from './utilities/NameToEmoji';
 	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
+	import { convertObject } from '../../utilities/ConvertSensorDataObject';
+	import { nameToEmoji } from '../../utilities/NameToEmoji';
+	import { nameToNotation } from '../../utilities/NameToNotation';
 
 	export let data: any;
     let isOld = moment(data.created_at).diff(moment(), 'minutes') > 120;

@@ -32,6 +32,7 @@ export const actions = {
             redirect: '/app/dashboard',
             avatarUrl: data.user?.user_metadata?.avatar_url,
         }
+        throw redirect(301, '/app/dashboard');
     },
 }
 
