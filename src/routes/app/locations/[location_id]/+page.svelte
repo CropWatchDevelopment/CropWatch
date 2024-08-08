@@ -6,8 +6,9 @@
 	import type { Tables } from '$lib/types/supabaseSchema';
 	import { mdiMapMarker } from '@mdi/js';
 	import { onMount } from 'svelte';
-	import { Icon } from 'svelte-ux';
+	import { Button, Icon } from 'svelte-ux';
 	import devicesStore, { updateDeviceData } from '$lib/stores/devicesStore';
+	import { goto } from '$app/navigation';
 
 	let location_id = $page.params.location_id;
 	let loading: boolean = true;
@@ -77,7 +78,7 @@
 		<Leaflet view={[location.lat, location.long]} zoom={19} height={innerHeight / 3}>
 			{#each location.devices as device}
 				<Marker latLng={[device.lat, device.long]}>
-					<Icon data={mdiMapMarker} class="h-6 w-6 hover:h-8 hover:w-8 hover:-translate-x-1 hover:-translate-y-1 text-primary border-red-500 border-4 rounded-full" />
+					<Button icon={mdiMapMarker} variant="none" on:click={() => (goto(`/app/devices/${device.dev_eui}/data`))} class="h-6 w-6 text-primary border-red-600 hover:border-red-500 border-4 rounded-full" />
 				</Marker>
 			{/each}
 		</Leaflet>

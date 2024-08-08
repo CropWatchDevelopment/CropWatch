@@ -18,7 +18,7 @@
 	}
 </script>
 
-<div class="bg-[#34393f] bg-opacity-50 rounded-xl py-5 px-2 text-surface-100 my-3">
+<div class="bg-primary bg-opacity-50 rounded-xl py-5 px-2 text-surface my-3">
 	{#if title}
 		<div class="flex justify-between items-center">
 			<p class="text-2xl">{title}</p>

@@ -53,6 +53,24 @@ class CwDevicesService {
     return data;
   }
 
+  async getDataRangeByDeviceEui(dev_eui: string, data_table: string, firstDataDate: Date, lastDataDate: Date): Promise<any | null> {
+    if (!dev_eui) {
+      console.error('Error fetching latest data: dev_eui is required');
+      return null;
+    }
+    if (!data_table) {
+      console.error('Error fetching latest data: data_table is required');
+      return null;
+    }
+    const data = await this.repository.findDataRangeByDevice(dev_eui, data_table, firstDataDate, lastDataDate);
+    if (data === null) {
+      console.error('Error fetching latest data');
+      return null;
+    }
+
+    return data;
+  }
+
   async getDevicesByLocationId(location_id: number): Promise<CwDevices[]> {
     return await this.repository.findByLocationId(location_id);
   }

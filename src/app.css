@@ -2,9 +2,18 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 @import '@fontsource/fira-mono';
+@import 'highcharts/css/highcharts.css';
 
 html, body {
     display: flex;
     flex-direction: column;
     height:100%;
+}
+
+.highcharts-tooltip {
+    pointer-events: none;
+    z-index: 9999;
+}
+.highcharts-background {
+    fill: transparent !important;
 }

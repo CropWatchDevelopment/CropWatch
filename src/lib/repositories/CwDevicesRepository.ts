@@ -49,7 +49,7 @@ class CwDevicesRepository {
 
     return data;
   }
-  
+
   async findByDeviceEui(dev_eui: string): Promise<CwDevices | null> {
     const { data, error } = await this.client
       .from('cw_devices')
@@ -73,6 +73,23 @@ class CwDevicesRepository {
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
+
+    if (error) {
+      console.error(`Error fetching latest data from ${dataTable}:`, error.message);
+      return null;
+    }
+
+    return data;
+  }
+
+  async findDataRangeByDevice(dev_eui: string, dataTable: string, firstDataDate: Date, lastDataDate: Date): Promise<CwDevices[] | null> {
+    const { data, error } = await this.client
+      .from(dataTable)
+      .select('*')
+      .eq('dev_eui', dev_eui)
+      .gte('created_at', firstDataDate.toISOString())
+      .lte('created_at', lastDataDate.toISOString())
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error(`Error fetching latest data from ${dataTable}:`, error.message);
