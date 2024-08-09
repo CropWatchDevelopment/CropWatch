@@ -40,6 +40,20 @@ class CwRulesRepository {
     return data;
   }
 
+  async findAllBySubscription(email: string): Promise<CwRules[]> {
+    const { data, error } = await this.client
+      .from('cw_rules')
+      .select('*')
+      .contains('action_recipient', email);
+
+    if (error) {
+      console.error('Error fetching all cw_rules:', error.message);
+      return [];
+    }
+
+    return data;
+  }
+
   async insert(rule: CwRulesInsert): Promise<CwRules | null> {
     const { data, error } = await this.client
       .from('cw_rules')

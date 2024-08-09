@@ -21,6 +21,10 @@ class CwRulesService {
     return await this.repository.findAll();
   }
 
+  async getAllBySubscription(email: string): Promise<CwRules[]> {
+    return await this.repository.findAllBySubscription(email);
+  }
+
   async add(data: CwRulesInsert): Promise<CwRules | null> {
     return await this.repository.insert(data);
   }

@@ -5,6 +5,7 @@ export interface UINotification {
   description: string;
   buttonText: string;
   icon?: string | null;
+  iconColor?: string | null;
   open: boolean;
   timed: boolean;
   timeout: number;
@@ -15,6 +16,7 @@ const defaultNotification: UINotification = {
   description: '',
   buttonText: '',
   icon: null,
+  iconColor: null,
   open: false,
   timed: false,
   timeout: 10000 // default 10 seconds
@@ -30,7 +32,8 @@ function createNotificationStore() {
     description,
     buttonText,
     timeout = 10000,
-    icon = null
+    icon = null,
+    iconColor = null,
   }: {
     title: string;
     description: string;
@@ -44,6 +47,7 @@ function createNotificationStore() {
       description,
       buttonText,
       icon,
+      iconColor,
       open: true,
       timed: true,
       timeout
@@ -57,12 +61,14 @@ function createNotificationStore() {
     title,
     description,
     buttonText,
-    icon = null
+    icon = null,
+    iconColor = null,
   }: {
     title: string;
     description: string;
     buttonText: string;
     icon?: string | null;
+    iconColor?: string | null;
   }) {
     clearTimeout(timer);
     set({
@@ -70,6 +76,7 @@ function createNotificationStore() {
       description,
       buttonText,
       icon,
+      iconColor,
       open: true,
       timed: false,
       timeout: 0

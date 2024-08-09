@@ -3,7 +3,7 @@
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { Button, Icon, Notification } from 'svelte-ux';
-	import { mdiInbox, mdiInformation } from '@mdi/js';
+	import { mdiAlertCircle, mdiInbox, mdiInformation } from '@mdi/js';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { UINotification } from '$lib/stores/notificationStore';
 	export let data;
@@ -26,6 +26,19 @@
 
 		return () => data.subscription.unsubscribe();
 	});
+
+	supabase
+		.channel('cw_rules')
+		.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'todos' }, (payload) => {
+			notificationStore.NotificationTimedOpen({
+				title: 'New Alert',
+				description: `${payload.new.name} has been triggered`,
+				icon: mdiAlertCircle,
+				iconColor: 'text-error',
+				duration: 5000
+			});
+		})
+		.subscribe();
 </script>
 
 <slot />
@@ -34,7 +47,7 @@
 	<Notification actions="below" closeIcon open={notification.open}>
 		<div slot="icon" class="self-start">
 			{#if notification.icon}
-				<Icon data={notification.icon} />
+				<Icon data={notification.icon} class={notification.iconColor} />
 			{:else}
 				<Icon data={mdiInformation} />
 			{/if}

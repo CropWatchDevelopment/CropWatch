@@ -5,6 +5,7 @@
 	import UserHeaderWidget from '$lib/components/ui/Header/UserHeaderWidget.svelte';
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
+	import AlertMenu from '$lib/components/ui/Header/AlertMenu.svelte';
 </script>
 
 <AppLayout areas="'header header' 'aside main'" class="h-full">
@@ -40,13 +41,14 @@
 		</nav>
 	</svelte:fragment>
 
-	<AppBar title="CropWatch" class="bg-primary text-primary-content" head={true}>
+	<AppBar title="CropWatch" class="bg-primary text-primary-content flex" head={true}>
 		<svelte:fragment slot="menuIcon" let:toggleMenu let:isMenuOpen>
 			<Button on:click={toggleMenu} variant="none">
 				<img src={CROPWATCH_LOGO} alt="CropWatch" class="h-8" />
 			</Button>
 		</svelte:fragment>
-		<div slot="actions">
+		<div slot="actions" class="flex">
+			<AlertMenu />
 			<UserHeaderWidget />
 		</div>
 	</AppBar>

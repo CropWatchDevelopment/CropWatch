@@ -8,17 +8,8 @@
 
 	export let data;
 
-	let dev_eui = data.at(0).dev_eui;
 	const temperature = data.at(0).temperatureC;
 	const humidity = data.at(0).humidity;
-
-	let today = new Date();
-	let value = {
-		from: subDays(today, 1),
-		to: today,
-		periodType: PeriodType.Day
-	};
-
 	let config: any | null = null;
 	let dewPointConfig: any | null = null;
 
