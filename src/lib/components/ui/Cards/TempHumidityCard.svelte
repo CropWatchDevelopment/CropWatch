@@ -22,16 +22,16 @@
     }
 </script>
 
-<div class="bg-[#34393f] bg-opacity-50 rounded-xl py-5 flex justify-center text-surface-100 my-3">
+<div class="bg-secondary bg-opacity-50 rounded-xl py-5 flex justify-center my-3">
     <div
         class="h-60 w-60 rounded-full bg-gradient-to-r from-[#375270] to-[#2108b4] flex justify-center items-center my-auto"
         style="background: linear-gradient(to right, {bgColor} 0%, {bgColor} 100%);"
     >
-	<div class="h-56 w-56 rounded-full bg-[#343f34] bg-opacity-80 flex justify-center items-center">
-        <div class="h-56 w-56 rounded-full bg-[#343f34] bg-opacity-80 flex justify-center items-center">
+	<div class="h-56 w-56 rounded-full bg-secondary bg-opacity-80 flex justify-center items-center">
+        <div class="h-56 w-56 rounded-full bg-secondary bg-opacity-80 flex justify-center items-center">
             <div class="text-center space-y-4">
-                <p class="text-5xl text-center">{temperature}<span class="text-4xl text-[#A3A3A3]">ºC</span></p>
-                <p class="text-xl text-center">{humidity}<span class="text-xl text-[#A3A3A3]">RH%</span></p>
+                <p class="text-5xl text-center text-surface-50">{temperature}<sup class="text-3xl text-surface-100">ºC</sup></p>
+                <p class="text-xl text-center">{humidity}<span class="text-xl text-[#A3A3A3]">%</span></p>
             </div>
         </div>
 		</div>
