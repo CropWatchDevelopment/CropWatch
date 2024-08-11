@@ -8,8 +8,8 @@ import type { Tables } from '$lib/types/supabaseSchema';
 type CwLocations = Tables<'cw_locations'>;
 type CwDevices = Tables<'cw_devices'>;
 
-export const GET: RequestHandler = async ({ url, locals: { supabase, getSession } }) => {
-  const session = await getSession();
+export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSession } }) => {
+  const session = await safeGetSession();
   if (!session.user) {
     return redirect(301, '/auth/unauthorized');
   }

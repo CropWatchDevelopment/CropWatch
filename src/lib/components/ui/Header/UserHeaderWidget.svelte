@@ -11,6 +11,7 @@
 		mdiThemeLightDark,
 	} from '@mdi/js';
 	import { Avatar, Button, Icon, Menu, MenuItem, TextField, ThemeSwitch, Toggle } from 'svelte-ux';
+	import LanguageSelect from './LanguageSelect.svelte';
 
 	let avatarUrl = browser ? (localStorage.getItem('avatarUrl') || null) : null;
 	let searchText: string = '';

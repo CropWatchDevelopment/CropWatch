@@ -54,7 +54,7 @@
 						</ListItem>
 					{/each}
 				{:else}
-					<ListItem title="No alerts" icon={mdiCheckCircle} />
+					<ListItem title="No alerts" icon={mdiCheckCircle} class="text-center" classes={{icon: 'text-green-400'}} />
 				{/if}
 			{:else}
 				<MenuItem>
@@ -62,7 +62,7 @@
 				</MenuItem>
 			{/if}
 			<MenuItem>
-				<Button href="/app/alerts" class="flex w-full text-center text-info">
+				<Button href="/app/notifications" class="flex w-full text-center text-info">
 					<Icon data={mdiHistory} />
 					View alert history
 				</Button>

@@ -1,44 +1,28 @@
 <script>
 	import '../../app.css';
-	import { AppBar, AppLayout, Button, NavItem, ThemeSwitch } from 'svelte-ux';
+	import { AppBar, AppLayout, Button, NavItem, Settings, ThemeInit, ThemeSwitch } from 'svelte-ux';
 	import CROPWATCH_LOGO from '$lib/images/UI/logo.svg';
 	import UserHeaderWidget from '$lib/components/ui/Header/UserHeaderWidget.svelte';
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
 	import AlertMenu from '$lib/components/ui/Header/AlertMenu.svelte';
+	import NavMenu from '$lib/components/ui/SideNav/NavMenu.svelte';
+
 </script>
 
-<AppLayout areas="'header header' 'aside main'" class="h-full">
+<ThemeInit />
+<Settings
+  components={{
+    Button: { classes: "border-2 font-bold" },
+    Menu: { classes: "shadow-xl border-gray-500" },
+    MenuItem: { classes: "font-bold" },
+  }}
+/>
+
+<AppLayout areas="'header header' 'aside main'" class="h-full [&>header]:fixed [&>header]:top-0 [&>header]:h-[var(--headerHeight)] [&>header]:transition-all [&>header]:w-full [&>main]:md:ml-[var(--drawerWidth)] [&>main]:mt-[var(--headerHeight)] [&>main]:transition-[margin] [&>main]:duration-500 [:where(&_[id])]:scroll-m-[var(--headerHeight)]">
 	<svelte:fragment slot="nav">
 		<!-- Nav menu -->
-		<nav class="nav mr-1 h-full bg-secondary">
-			<ul>
-				<li>
-					<NavItem
-						text="Dashboard"
-						currentUrl={$page.url}
-						path="/app/dashboard"
-						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
-					/>
-				</li>
-				<li>
-					<NavItem
-						text="All Locations"
-						currentUrl={$page.url}
-						path="/app/locations"
-						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
-					/>
-				</li>
-				<li>
-					<NavItem
-						text="App Settings"
-						currentUrl={$page.url}
-						path="/app/settings"
-						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
-					/>
-				</li>
-			</ul>
-		</nav>
+		<NavMenu />
 	</svelte:fragment>
 
 	<AppBar title="CropWatch" class="bg-primary text-primary-content flex" head={true}>
@@ -53,7 +37,7 @@
 		</div>
 	</AppBar>
 
-	<main class="h-full">
+	<main class="h-full bg-">
 		<Back>Back</Back>
 		<slot />
 	</main>

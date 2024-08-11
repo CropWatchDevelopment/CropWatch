@@ -29,27 +29,51 @@ const handleSB: Handle = async ({ event, resolve }) => {
         },
     })
 
-    event.locals.getSession = async () => {
-        const {
-            data: { user },
-            error,
-        } = await event.locals.supabase.auth.getUser();
-        const {
-            data: { session },
-        } = await event.locals.supabase.auth.getSession();
+    // event.locals.getSession = async () => {
+    //     const {
+    //         data: { user },
+    //         error,
+    //     } = await event.locals.supabase.auth.getUser();
+    //     const {
+    //         data: { session },
+    //     } = await event.locals.supabase.auth.getSession();
 
-        if (!session) {
-            return { user: null };
-        }
+    //     if (!session) {
+    //         return { user: null };
+    //     }
 
 
-        if (error) {
-            // JWT validation has failed
-            return { user: null };
-        }
+    //     if (error) {
+    //         // JWT validation has failed
+    //         return { user: null };
+    //     }
 
-        return { user };
-    };
+    //     return { user };
+    // };
+    /**
+   * Unlike `supabase.auth.getSession()`, which returns the session _without_
+   * validating the JWT, this function also calls `getUser()` to validate the
+   * JWT before returning the session.
+   */
+  event.locals.safeGetSession = async () => {
+    const {
+      data: { session },
+    } = await event.locals.supabase.auth.getSession()
+    if (!session) {
+      return { session: null, user: null }
+    }
+
+    const {
+      data: { user },
+      error,
+    } = await event.locals.supabase.auth.getUser()
+    if (error) {
+      // JWT validation has failed
+      return { session: null, user: null }
+    }
+
+    return { session, user }
+  }
 
     return resolve(event, {
         filterSerializedResponseHeaders(name) {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { Settings, ThemeInit } from 'svelte-ux';
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { Button, Icon, Notification } from 'svelte-ux';

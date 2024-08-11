@@ -19,7 +19,7 @@
     }
 </script>
 
-<div class="rounded-2xl border-[0.1em] border-[#D2D2D2] bg-secondary-50 p-0.5">
+<div class="rounded-2xl border-[0.1em] border-[#D2D2D2] bg-surface-content/30 p-0.5">
     <div
         class="custom-bg relative h-20 w-full rounded-2xl bg-cover bg-bottom bg-no-repeat bg-blend-overlay"
     >

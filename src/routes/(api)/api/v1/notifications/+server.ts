@@ -2,8 +2,8 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 import CwRulesService from '$lib/services/CwRulesService';
 
-export const GET: RequestHandler = async ({ url, locals: { supabase, getSession } }) => {
-  const session = await getSession();
+export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSession } }) => {
+  const session = await safeGetSession();
   if (!session.user) {
     throw redirect(303, '/auth/unauthorized');
   }
