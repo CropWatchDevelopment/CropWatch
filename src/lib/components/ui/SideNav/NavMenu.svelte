@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { NavItem } from 'svelte-ux';
+	import { Icon, NavItem } from 'svelte-ux';
 
 	import { page } from '$app/stores';
 	import {
@@ -26,6 +26,7 @@
 					icon={mdiViewDashboard}
 					currentUrl={$page.url}
 					path="/app/dashboard"
+					classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
 				/>
 			</li>
 			<li>
@@ -34,6 +35,7 @@
 					icon={mdiCog}
 					currentUrl={$page.url}
 					path="/app/general-settings"
+					classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
 				/>
 			</li>
 
@@ -91,3 +93,12 @@
 		</ul>
 	</ul>
 </nav>
+
+<style>
+	h1 {
+		margin-bottom: 12px;
+	}
+	li {
+		margin-bottom: 5px;
+	}
+</style>

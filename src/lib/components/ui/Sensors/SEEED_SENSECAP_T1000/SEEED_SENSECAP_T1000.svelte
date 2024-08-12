@@ -23,7 +23,7 @@
 	const tempHumidChartConfig = getChartConfig(temperatureData);
 </script>
 
-<div class="grid grid-flow-row grid-cols-1 gap-2">
+<div class="my-4">
 	<Leaflet view={[lat, long]} zoom={19} height={innerHeight / 3}>
 		<Marker latLng={[lat, long]}>
 			<Button
@@ -43,7 +43,7 @@
 
 <DarkCard title="Location History">
 	<ul>
-		{#each sensor.data as item}
+		{#each sensor.data as item, index}
 			<ListItem title="Normal Checkin">
 				<div slot="avatar">
 					{#if item.sos > 0}
@@ -58,6 +58,7 @@
 						{item.lat},{item.long}
 						<CopyButton value={`${item.lat}, ${item.long}`} />
 					</p>
+					<p>Battery Level: {item.battery_level}%</p>
 				</div>
 				<div slot="actions">
 					<Button variant="fill" icon={mdiMapSearch} on:click={() => {
