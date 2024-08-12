@@ -4,6 +4,7 @@
 	import TempHumidityCard from '../../Cards/TempHumidityCard.svelte';
 	import DarkCard from '../../Cards/DarkCard.svelte';
 	import { getChartConfig } from './chart_tempConfig';
+	import Back from '../../Back.svelte';
 
 	export let sensor = null;
 
