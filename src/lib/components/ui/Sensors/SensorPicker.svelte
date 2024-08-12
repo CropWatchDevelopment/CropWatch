@@ -7,6 +7,7 @@
 	import SEEED_SENSECAP_S2103 from './SEEED_SENSECAP_S2103/SEEED_SENSECAP_S2103.svelte'; // CO2 Sensor
 	import SEEED_SENSECAP_S2120 from './SEEED_SENSECAP_S2120/SEEED_SENSECAP_S2120.svelte'; // Weather Station
 	import SEEED_SENSECAP_T1000 from './SEEED_SENSECAP_T1000/SEEED_SENSECAP_T1000.svelte'; // Tracking Badge
+	import SEEED_SENSECAP_S2103_WATER_LEVEL from './SEEED_SENSECAP_S2103_WATER_LEVEL/SEEED_SENSECAP_S2103_WATER_LEVEL.svelte'; // Tracking Badge
 	// import CW_SS_TME from './sensors/CW_SS_TME.svelte';
 	// import CW_SS_TMENPK from './sensors/CW_SS_TMEPNPK.svelte';
 	// import SeeedS2103 from './sensors/SEEED_S2103.svelte';
@@ -67,6 +68,8 @@
 				<NetvoxRa02A {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_t1000'}
 				<SEEED_SENSECAP_T1000 {sensor} />
+			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2103_WaterLevel'}
+				<SEEED_SENSECAP_S2103_WATER_LEVEL {sensor} />
 				<!-- {:else if sensorType == 'cw_ss_tme'}
 		<CW_SS_TME {data} {sensorName} {permissions} />
 	{:else if sensorType == 'cw_ss_tmepnpk'}

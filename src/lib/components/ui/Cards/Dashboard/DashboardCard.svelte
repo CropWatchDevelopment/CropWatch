@@ -80,9 +80,9 @@
                                     <p class="m-auto justify-center">
                                         <span>
                                             {nameToEmoji(device.deviceType.primary_data)}
-                                            {$devicesLatestData[device.dev_eui][device.deviceType.primary_data]}
+                                            {($devicesLatestData[device.dev_eui][device.deviceType.primary_data]).toFixed(2)}
                                         </span>
-                                        <small class="text-slate-800">
+                                        <small class="">
                                             <sup>{device.deviceType.primary_data_notation}</sup>
                                         </small>
                                     </p>
@@ -90,9 +90,9 @@
                                         <p class="m-auto justify-center">
                                             <span>
                                                 {nameToEmoji(device.deviceType.secondary_data)}
-                                                {$devicesLatestData[device.dev_eui][device.deviceType.secondary_data]}
+                                                {($devicesLatestData[device.dev_eui][device.deviceType.secondary_data]).toFixed(2)}
                                             </span>
-                                            <small class="text-slate-800">
+                                            <small class="">
                                                 <sup>{device.deviceType.secondary_data_notation}</sup>
                                             </small>
                                         </p>

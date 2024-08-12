@@ -1,5 +1,6 @@
 <script lang="ts">
 	export let temperature: number;
+	export let temperatureNotation: number = 'ºC';
 	export let humidity: number | null;
 
 	// Reactive statement to compute background color based on temperature
@@ -33,7 +34,7 @@
 			>
 				<div class="space-y-4 text-center">
 					<p class="text-surface-50 text-center text-5xl">
-						{temperature}<sup class="text-3xl text-surface-100">ºC</sup>
+						{temperature}<sup class="text-3xl text-surface-100">{temperatureNotation}</sup>
 					</p>
 					{#if humidity !== null}
 						<p class="text-center text-xl">

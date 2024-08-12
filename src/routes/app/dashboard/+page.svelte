@@ -115,6 +115,7 @@
 	<div id="filter panel">
 		<DarkCard2>
 			<h2 class="text-surface">Filters:</h2>
+			<!--PUT FILTERS INPUT BOX HERE-->
 		</DarkCard2>
 	</div>
 {/if}
