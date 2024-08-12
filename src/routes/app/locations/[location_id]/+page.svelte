@@ -15,6 +15,7 @@
 	let location: Tables<'cw_locations'>;
 	let innerWidth = 0;
 	let innerHeight = 200;
+	// let bounds = [];
 
 	onMount(() => {
 		fetchInitialData();
@@ -26,6 +27,7 @@
 			const data = await res.json();
 			location = data;
 			await fetchInitialDeviceData();
+			// bounds = location.devices.map(d => [d.latestData.lat, d.latestData.long]);
 			loading = false;
 		} catch (e) {
 			loading = false;
@@ -34,25 +36,24 @@
 	}
 
 	async function getDeviceLatestData(devEui: string) {
-        const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
-        const data = await res.json();
-        return data;
-    }
+		const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
+		const data = await res.json();
+		return data;
+	}
 
-    async function fetchInitialDeviceData() {
-
-            for (let device of location.devices) {
-                const latestData = await getDeviceLatestData(device.dev_eui);
-                updateDeviceData(latestData);
-            }
-    }
+	async function fetchInitialDeviceData() {
+		for (let device of location.devices) {
+			const latestData = await getDeviceLatestData(device.dev_eui);
+			updateDeviceData(latestData);
+		}
+	}
 
 	// Subscribe to devicesStore and update the location.devices when data changes
 	devicesStore.subscribe((devicesData) => {
 		if (location && location.devices) {
 			location.devices = location.devices.map((device) => ({
 				...device,
-				latestData: devicesData[device.dev_eui],
+				latestData: devicesData[device.dev_eui]
 			}));
 		}
 	});
@@ -77,16 +78,32 @@
 	{#if !loading}
 		<Leaflet view={[location.lat, location.long]} zoom={19} height={innerHeight / 3}>
 			{#each location.devices as device}
-				<Marker latLng={[device.lat, device.long]}>
-					<Button icon={mdiMapMarker} variant="none" on:click={() => (goto(`/app/devices/${device.dev_eui}/data`))} class="h-6 w-6 text-primary border-red-600 hover:border-red-500 border-4 rounded-full" />
-				</Marker>
+				{#if device.latestData.lat && device.latestData.long}
+					<Marker latLng={[device.latestData.lat, device.latestData.long]}>
+						<Button
+							icon={mdiMapMarker}
+							variant="none"
+							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+						/>
+					</Marker>
+				{:else}
+					<Marker latLng={[device.lat, device.long]}>
+						<Button
+							icon={mdiMapMarker}
+							variant="none"
+							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+						/>
+					</Marker>
+				{/if}
 			{/each}
 		</Leaflet>
 	{/if}
 </div>
 
 <!-- LOCATION DEVICES -->
-<div class="mx-4 grid grid-flow-row grid-cols-1 md:grid-cols-2 gap-2">
+<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2">
 	{#if loading}
 		<div class="flex items-center justify-center">
 			<div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
@@ -106,3 +123,7 @@
 		{/each}
 	{/if}
 </div>
+
+<pre>
+	<!-- {JSON.stringify(location.devices, null, 2)} -->
+</pre>

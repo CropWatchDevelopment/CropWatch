@@ -21,7 +21,7 @@
 
 <div class="rounded-2xl border-[0.1em] border-[#D2D2D2] bg-surface-content/30 p-0.5">
     <div
-        class="custom-bg relative h-20 w-full rounded-2xl bg-cover bg-bottom bg-no-repeat bg-blend-overlay"
+        class="custom-bg relative h-20 w-full rounded-4xl bg-cover bg-bottom bg-no-repeat bg-blend-overlay"
     >
         <div class="absolute right-0 top-0 h-full w-1/2 rounded-2xl bg-gradient-to-l from-black"></div>
         <div class="absolute right-3 top-4 space-y-1 text-xs text-white drop-shadow-md">

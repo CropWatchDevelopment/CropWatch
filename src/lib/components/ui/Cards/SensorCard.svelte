@@ -23,23 +23,23 @@
 	});
 </script>
 
-<div class="flex bg-[#34393f] bg-opacity-50 rounded-xl justify-between">
+<div class="flex justify-between rounded-xl bg-[#34393f] bg-opacity-50">
 	<!-- Content -->
-	<div class="py-4 pl-6 flex items-center space-x-3 w-full">
+	<div class="flex w-full items-center space-x-3 py-4 pl-6">
 		<!-- image -->
 		<div class="h-full rounded-md">
-			{#if deviceType == 'seeed_t1000'}
-				<img src={SEEED_T1000_IMG} alt="device" class="object-cover w-20 h-full rounded-xl" />
+			{#if deviceType == 'T1000'}
+				<img src={SEEED_T1000_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
 			{:else if deviceType == 'seeed_sensecap_s2120'}
-				<img src={SEEED_S2120_IMG} alt="device" class="object-cover w-20 h-full rounded-xl" />
+				<img src={SEEED_S2120_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
 			{:else if deviceType == 'SenseCAP S2103'}
-				<img src={SEEED_S2103_IMG} alt="device" class="object-cover w-20 h-full rounded-xl" />
+				<img src={SEEED_S2103_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
 			{/if}
 		</div>
 		<!-- data -->
 		<div class="w-full">
 			<!-- Title and status -->
-			<div class="flex space-x-1 items-center w-full">
+			<div class="flex w-full items-center space-x-1">
 				<div>
 					<p class="text-lg">{name}</p>
 				</div>
@@ -54,7 +54,10 @@
 		</div>
 	</div>
 	<!-- href arrow -->
-	<a href={`/app/devices/${devEui}/data`} class="bg-[#3A393F] mix-blend-soft-light px-3 rounded-xl flex items-center">
+	<a
+		href={`/app/devices/${devEui}/data`}
+		class="flex items-center rounded-xl bg-[#3A393F] px-3 mix-blend-soft-light"
+	>
 		<div class="w-5">
 			<img src={SensorArrow} alt="" />
 		</div>
