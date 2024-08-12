@@ -4,7 +4,7 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import moment from 'moment';
 	import CW_AIR_THVD from './CW_AIR_THVD/CW_AIR_THVD.svelte';
-    import SEEED_SENSECAP_S2103 from './SEEED_SENSECAP_S2103/SEEED_SENSECAP_S2103.svelte';
+	import SEEED_SENSECAP_S2103 from './SEEED_SENSECAP_S2103/SEEED_SENSECAP_S2103.svelte';
 	// import CW_SS_TME from './sensors/CW_SS_TME.svelte';
 	// import CW_SS_TMENPK from './sensors/CW_SS_TMEPNPK.svelte';
 	// import SeeedS2103 from './sensors/SEEED_S2103.svelte';
@@ -18,23 +18,26 @@
 	import { mdiCog } from '@mdi/js';
 	import { Button, Icon } from 'svelte-ux';
 	import { goto } from '$app/navigation';
+	import NetvoxRa02A from './NETVOX_RA02A/NETVOX_RA02A.svelte';
 
-	export let sensorType = 'NS';
+	export let sensorType;
 	let sensorName = 'NS';
 	let devEui = $page.params.dev_eui;
 	let lastSeen = new Date();
 	let upload_interval = 0;
+	let data_table: string;
 
 	const sensorPromise = browser
-		? fetch(`/api/v1/devices/${devEui}?firstDataDate=2024-08-07&lastDataDate=2024-08-09`).then(
-				(res) => res.json()
-			).then((sensor) => {
-                let newestData = sensor.data.at(0);
-                lastSeen = new Date(newestData.created_at);
-                sensorName = sensor.device.name;
-				upload_interval = sensor.deviceType.upload_interval;
-                return sensor;
-            })
+		? fetch(`/api/v1/devices/${devEui}?firstDataDate=2024-08-07&lastDataDate=2024-08-09`)
+				.then((res) => res.json())
+				.then((sensor) => {
+					let newestData = sensor.data.at(0);
+					lastSeen = new Date(newestData.created_at);
+					sensorName = sensor.device.name;
+					data_table = sensor.deviceType.data_table;
+					upload_interval = sensor.deviceType.upload_interval;
+					return sensor;
+				})
 		: null;
 </script>
 
@@ -43,15 +46,17 @@
 		loading
 	{:then sensor}
 		<div class="relative m-1">
-			<div class="flex flex-row mx-2">
+			<div class="mx-2 flex flex-row">
 				<SensorHeader {sensorName} {lastSeen} {upload_interval} />
 				<span class="flex-grow" />
-				<Button icon={mdiCog} size="lg" on:click={() => (goto(`settings`))} />
+				<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
 			</div>
 			{#if sensor.deviceType.data_table == 'cw_air_thvd'}
 				<CW_AIR_THVD data />
 			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensorType == 'cw_co2_uplinks'}
-				<SEEED_SENSECAP_S2103 {sensor}/>
+				<SEEED_SENSECAP_S2103 {sensor} />
+			{:else if sensor.deviceType.data_table == 'netvox_ra02a'}
+				<NetvoxRa02A {sensor} />
 				<!-- {:else if sensorType == 'cw_ss_tme'}
 		<CW_SS_TME {data} {sensorName} {permissions} />
 	{:else if sensorType == 'cw_ss_tmepnpk'}
@@ -60,8 +65,6 @@
 		<Seeed_2120 {data} {sensorName} {permissions} />
 	{:else if sensorType == 'seeed_t1000'}
 		<SeeedT1000 {data} {sensorName} {permissions} />
-	{:else if sensorType == 'netvox_ra02a'}
-		<NetvoxRa02A {data} {sensorName} {permissions} />
 	{:else if sensorType == 'seeed_sensecap_s2103_WaterLevel'}
 		<SeeedS2103WaterLevel {data} {sensorName} {permissions} /> -->
 			{:else}

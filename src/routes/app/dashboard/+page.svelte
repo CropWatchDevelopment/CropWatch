@@ -105,7 +105,7 @@
 	<!-- Filter -->
 	<Button
 		icon={mdiFilter}
-		variant="outline"
+		variant="fill"
 		color="primary"
 		class="mr-1 mt-3 max-w-10 justify-self-end"
 		on:click={() => (showFilters = !showFilters)}

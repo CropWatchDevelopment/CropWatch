@@ -33,7 +33,7 @@
 					text="General Settings"
 					icon={mdiCog}
 					currentUrl={$page.url}
-					path="/app/settings"
+					path="/app/general-settings"
 				/>
 			</li>
 

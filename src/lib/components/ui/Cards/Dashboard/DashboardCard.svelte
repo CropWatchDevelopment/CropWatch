@@ -52,7 +52,7 @@
         {location.name}
         <span class="flex flex-grow" />
         <Button
-            variant="outline"
+            variant="fill"
             color="primary"
             icon={mdiArrowRight}
             on:click={() => goto(`/app/locations/${locationId}`)}
@@ -109,7 +109,7 @@
                 </div>
                 <div class="pl-4">
                     <Button
-                        on:click={() => goto(`app/devices/${device.dev_eui}/data`)}
+                        on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
                         variant="fill"
                         color="info"
                         class="mb-1 w-full"

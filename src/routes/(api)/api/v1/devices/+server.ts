@@ -4,8 +4,8 @@ import CwDevicesService from '$lib/services/CwDevicesService';
 import CwDeviceOwnersService from '$lib/services/CwDeviceOwnersService';
 import type { Tables } from '$lib/types/supabaseSchema';
 
-export const GET: RequestHandler = async ({ url, locals: { supabase, getSession } }) => {
-  const session = await getSession();
+export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSession } }) => {
+  const session = await safeGetSession();
   if (!session.user) {
     throw redirect(303, '/auth/unauthorized');
   }

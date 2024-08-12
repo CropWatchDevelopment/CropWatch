@@ -57,7 +57,7 @@
 					</div>
 					<Button
 						type="submit"
-						variant="fill-outline"
+						variant="fill"
 						color="primary"
 						loading={isLoading}
 						classes={{ root: 'w-full' }}>{$_('auth.send_recovery_email')}</Button

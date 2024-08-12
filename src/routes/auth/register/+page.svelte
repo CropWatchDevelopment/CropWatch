@@ -109,7 +109,7 @@
 					<Button
 						type="submit"
 						disabled={password != confirmPassword || loading || password.length < 3}
-						variant="fill-outline"
+						variant="fill"
 						color="primary"
 						icon={loading ? mdiClock : ''}
 						classes={{ root: 'w-full' }}>{$_('login.signup')}</Button

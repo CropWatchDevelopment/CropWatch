@@ -12,6 +12,7 @@
 	} from '@mdi/js';
 	import { Avatar, Button, Icon, Menu, MenuItem, TextField, ThemeSwitch, Toggle } from 'svelte-ux';
 	import LanguageSelect from './LanguageSelect.svelte';
+	import { goto } from '$app/navigation';
 
 	let avatarUrl = browser ? (localStorage.getItem('avatarUrl') || null) : null;
 	let searchText: string = '';
@@ -49,7 +50,7 @@
 					</div>
 				</TextField>
 				<MenuItem on:click={() => location.reload()} icon={mdiReload}>Refresh</MenuItem>
-				<MenuItem on:click={close} icon={mdiCog}>Settings</MenuItem>
+				<MenuItem on:click={() => {close; goto(`/app/general-settings`)}} icon={mdiCog}>General Settings</MenuItem>
 				<MenuItem icon={mdiThemeLightDark}>Dark Mode: <ThemeSwitch /></MenuItem>
 				<MenuItem on:click={close} icon={mdiHelpCircle}>Help</MenuItem>
 				<MenuItem icon={mdiExitRun}>

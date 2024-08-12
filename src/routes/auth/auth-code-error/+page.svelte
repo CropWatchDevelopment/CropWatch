@@ -21,7 +21,7 @@
 
 					<Button
 						type="button"
-						variant="fill-outline"
+						variant="fill"
 						color="primary"
                         icon={mdiArrowLeft}
                         on:click={() => goto('/auth/login') }

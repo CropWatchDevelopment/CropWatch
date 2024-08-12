@@ -74,7 +74,7 @@
 					<Button
 						type="submit"
 						disabled={password !== confirmPassword}
-						variant="fill-outline"
+						variant="fill"
 						color="primary"
 						classes={{ root: 'w-full' }}>
 						{$_('login.update_password')}

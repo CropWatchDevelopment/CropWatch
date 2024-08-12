@@ -2,14 +2,20 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
-	import { mdiArrowRight, mdiFilter, mdiMapMarker } from '@mdi/js';
-	import { Button, ListItem } from 'svelte-ux';
+	import {
+		mdiEye,
+		mdiFilter,
+		mdiMapMarker,
+		mdiRouterWireless,
+		mdiRouterWirelessOff
+	} from '@mdi/js';
+	import { Button, Duration, DurationUnits, Icon, ListItem } from 'svelte-ux';
 
-	let locationsPromise;
+	let gatewaysPromise;
 	let showFilters: boolean = false;
 
 	if (browser) {
-		locationsPromise = fetch('/api/v1/locations')
+		gatewaysPromise = fetch('/api/v1/gateways')
 			.then((response) => {
 				if (!response.ok) {
 					throw new Error('Network response was not ok');
@@ -21,16 +27,21 @@
 				return [];
 			});
 	} else {
-		locationsPromise = Promise.resolve([]);
+		gatewaysPromise = Promise.resolve([]);
 	}
 </script>
 
 <svelte:head>
-	<title>CropWatch - Locations</title>
+	<title>CropWatch - Gateways</title>
 </svelte:head>
 
+<!-- TITLE and Filter -->
 <div class="grid-row my-3 grid grid-cols-2 justify-between">
-	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">All Locations:</h2>
+	<!-- TITLE -->
+	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
+		<Icon data={mdiRouterWireless} class="h-6 w-6" />
+		Gateways
+	</h2>
 	<!-- Filter -->
 	<Button
 		icon={mdiFilter}
@@ -41,7 +52,7 @@
 	/>
 </div>
 
-{#if locationsPromise}
+{#if gatewaysPromise}
 	{#if showFilters}
 		<div id="filter panel">
 			<DarkCard2>
@@ -49,19 +60,33 @@
 			</DarkCard2>
 		</div>
 	{/if}
-	{#await locationsPromise}
+	{#await gatewaysPromise}
 		<div class="grid-row my-3 grid grid-cols-2 justify-between">
 			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">Loading locations...</h2>
 		</div>
-	{:then locations}
+	{:then gateways}
 		<div>
-			{#each locations as location}
-				<ListItem title={location.name} subheading="Subheading" icon={mdiMapMarker}>
+			{#each gateways as gateway}
+				<ListItem
+					title={gateway.gateway_name}
+					icon={gateway.isOnline ? mdiRouterWireless : mdiRouterWirelessOff}
+					classes={{ icon: gateway.isOnline ? 'text-green-500' : 'text-red-500' }}
+				>
+					<div slot="subheading">
+						<p>{`${gateway.isOnline ? '✅ Gateway is UP' : '❌ Gateway is offline'}`}</p>
+						<p>
+							Last Seen: <Duration
+								start={gateway.updated_at}
+								totalUnits={2}
+								minUnits={DurationUnits.Second}
+							/>
+						</p>
+					</div>
 					<div slot="actions">
 						<Button
 							variant="fill"
-							icon={mdiArrowRight}
-							on:click={() => goto(`/app/locations/${location.location_id}`)}
+							icon={mdiEye}
+							on:click={() => goto(`/app/locations/${gateway.gateway_id}`)}
 						/>
 					</div>
 				</ListItem>

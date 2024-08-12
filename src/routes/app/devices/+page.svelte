@@ -2,14 +2,20 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
-	import { mdiArrowRight, mdiFilter, mdiMapMarker } from '@mdi/js';
-	import { Button, ListItem } from 'svelte-ux';
+	import {
+		mdiArrowRight,
+		mdiFilter,
+		mdiMapMarker,
+		mdiMapMarkerRadius,
+		mdiMapMarkerRight
+	} from '@mdi/js';
+	import { Button, ListItem, Tooltip } from 'svelte-ux';
 
-	let locationsPromise;
+	let devicesPromise;
 	let showFilters: boolean = false;
 
 	if (browser) {
-		locationsPromise = fetch('/api/v1/locations')
+		devicesPromise = fetch('/api/v1/devices')
 			.then((response) => {
 				if (!response.ok) {
 					throw new Error('Network response was not ok');
@@ -21,16 +27,16 @@
 				return [];
 			});
 	} else {
-		locationsPromise = Promise.resolve([]);
+		devicesPromise = Promise.resolve([]);
 	}
 </script>
 
 <svelte:head>
-	<title>CropWatch - Locations</title>
+	<title>CropWatch - All Devices</title>
 </svelte:head>
 
 <div class="grid-row my-3 grid grid-cols-2 justify-between">
-	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">All Locations:</h2>
+	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">All Devices:</h2>
 	<!-- Filter -->
 	<Button
 		icon={mdiFilter}
@@ -41,7 +47,7 @@
 	/>
 </div>
 
-{#if locationsPromise}
+{#if devicesPromise}
 	{#if showFilters}
 		<div id="filter panel">
 			<DarkCard2>
@@ -49,20 +55,29 @@
 			</DarkCard2>
 		</div>
 	{/if}
-	{#await locationsPromise}
+	{#await devicesPromise}
 		<div class="grid-row my-3 grid grid-cols-2 justify-between">
-			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">Loading locations...</h2>
+			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">Loading devices...</h2>
 		</div>
-	{:then locations}
+	{:then devices}
 		<div>
-			{#each locations as location}
-				<ListItem title={location.name} subheading="Subheading" icon={mdiMapMarker}>
-					<div slot="actions">
-						<Button
-							variant="fill"
-							icon={mdiArrowRight}
-							on:click={() => goto(`/app/locations/${location.location_id}`)}
-						/>
+			{#each devices as device}
+				<ListItem title={device.name} subheading={''} icon={mdiMapMarker}>
+					<div slot="actions" class="flex gap-2">
+						<Tooltip title="View Device Details">
+							<Button
+								variant="fill"
+								icon={mdiArrowRight}
+								on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							/>
+						</Tooltip>
+						<Tooltip title="View Device's Location">
+							<Button
+								variant="fill"
+								icon={mdiMapMarkerRight}
+								on:click={() => goto(`/app/locations/${device.location_id}`)}
+							/>
+						</Tooltip>
 					</div>
 				</ListItem>
 			{/each}
