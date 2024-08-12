@@ -8,15 +8,6 @@
 	import SEEED_SENSECAP_S2120 from './SEEED_SENSECAP_S2120/SEEED_SENSECAP_S2120.svelte'; // Weather Station
 	import SEEED_SENSECAP_T1000 from './SEEED_SENSECAP_T1000/SEEED_SENSECAP_T1000.svelte'; // Tracking Badge
 	import SEEED_SENSECAP_S2103_WATER_LEVEL from './SEEED_SENSECAP_S2103_WATER_LEVEL/SEEED_SENSECAP_S2103_WATER_LEVEL.svelte'; // Tracking Badge
-	// import CW_SS_TME from './sensors/CW_SS_TME.svelte';
-	// import CW_SS_TMENPK from './sensors/CW_SS_TMEPNPK.svelte';
-	// import SeeedS2103 from './sensors/SEEED_S2103.svelte';
-	// import Seeed_2120 from './sensors/SEEED_2120.svelte';
-	// import SeeedT1000 from './sensors/SEEED_T1000.svelte';
-	// import NetvoxRa02A from './sensors/NETVOX_RA02A.svelte';
-	// import SensorHeader from './sensors/SensorHeader.svelte';
-	// import SensorFooterControls from './SensorFooterControls.svelte';
-	// import SeeedS2103WaterLevel from './sensors/SEEED_S2103_WaterLevel.svelte';
 	import SensorHeader from './SensorHeader.svelte';
 	import { mdiCog } from '@mdi/js';
 	import { Button, Icon, Tooltip } from 'svelte-ux';

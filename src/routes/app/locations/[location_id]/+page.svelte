@@ -4,9 +4,9 @@
 	import Leaflet from '$lib/components/ui/Maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/ui/Maps/leaflet/Marker.svelte';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiMapMarker } from '@mdi/js';
+	import { mdiCog, mdiMapMarker } from '@mdi/js';
 	import { onMount } from 'svelte';
-	import { Button, Icon } from 'svelte-ux';
+	import { Button, Icon, Tooltip } from 'svelte-ux';
 	import devicesStore, { updateDeviceData } from '$lib/stores/devicesStore';
 	import { goto } from '$app/navigation';
 
@@ -65,12 +65,16 @@
 <svelte:window bind:innerWidth bind:innerHeight />
 
 <!-- TITLE and Filter -->
-<div class="grid-row my-3 grid grid-cols-2 justify-between">
+<div class="flex flex-row my-3">
 	<!-- TITLE -->
 	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
 		<Icon data={mdiMapMarker} class="h-6 w-6" />
 		Location: {location?.name}
 	</h2>
+	<span class="flex-grow" />
+	<Tooltip title={`${location?.name}'s Location Settings`}>
+		<Button icon={mdiCog} size="lg" on:click={() => goto(`/app/locations/${location_id}/settings`)} />
+	</Tooltip>
 </div>
 
 <!-- DEVICE MAP -->
