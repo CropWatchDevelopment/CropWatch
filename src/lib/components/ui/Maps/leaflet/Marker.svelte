@@ -8,7 +8,6 @@
 	export let latLng: L.LatLngExpression;
 
 	let L = undefined;
-
 	let marker: L.Marker | undefined;
 	let markerElement: HTMLDivElement;
 
@@ -37,6 +36,11 @@
 		marker?.remove();
 		marker = undefined;
 	});
+
+	// Reactive statement to update marker's position when latLng changes
+	$: if (marker && latLng) {
+		marker.setLatLng(latLng);
+	}
 
 	setContext('layer', {
 		getLayer: () => marker

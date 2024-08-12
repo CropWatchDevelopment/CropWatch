@@ -6,8 +6,7 @@
 	import DarkCard from '../../Cards/DarkCard.svelte';
 	import WindCompas from '../../WindCompas.svelte';
 	import { degreesToDirection } from '../../utilities/degreeseToDirection';
-	import { onMount } from 'svelte';
-	import { createMeteogramChart } from './chart_meteogramConfig';
+	import { getWindChartConfig } from './chart_windSpeed';
 
 	export let sensor = null;
 
@@ -32,6 +31,17 @@
 		new Date(d.created_at).getTime(),
 		d.pressure
 	]);
+	const lux = sensor.data.map((d) => [
+		new Date(d.created_at).getTime(),
+		d.lux
+	]);
+
+	const windData = sensor.data.map((d) => [
+		new Date(d.created_at).getTime(),
+		d.wind_speed,
+		d.wind_direction,
+	]);
+	console.log(windData);
 
 
 	const humidityData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.humidity]);
@@ -43,23 +53,8 @@
 
 	// Get Highcharts configuration
 	const tempHumidChartConfig = getChartConfig(temperatureData, humidityData);
-	
-	let container: HTMLElement;
+	const windChartConfig = getWindChartConfig(windData);
 
-  onMount(() => {
-    const data = {
-      temperatures: sensor.data.map((d) => ({ x: new Date(d.created_at).getTime(), y: d.temperatureC })),
-      precipitations: sensor.data.map((d) => ({ x: new Date(d.created_at).getTime(), y: d.humidity })),
-      winds: sensor.data.map((d) => ({
-        x: new Date(d.created_at).getTime(),
-        value: d.wind_speed,
-        direction: d.wind_direction
-      })),
-      pressures: sensor.data.map((d) => ({ x: new Date(d.created_at).getTime(), y: d.pressure }))
-    };
-
-    createMeteogramChart(data, container);
-  });
 </script>
 
 <div class="grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2">
@@ -72,11 +67,13 @@
 		humidity={sensor.data.at(-1).humidity}
 	/>
 </div>
-<DarkCard title="">
-	<div bind:this={container}></div>
-</DarkCard>
+
 <DarkCard title="Temperature & Humidity">
 	<div class="chart-container" use:highcharts={tempHumidChartConfig}></div>
+</DarkCard>
+
+<DarkCard title="24h Wind Speed">
+	<div class="chart-container" use:highcharts={windChartConfig}></div>
 </DarkCard>
 
 <style>
