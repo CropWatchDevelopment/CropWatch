@@ -127,7 +127,3 @@
 		{/each}
 	{/if}
 </div>
-
-<pre>
-	<!-- {JSON.stringify(location.devices, null, 2)} -->
-</pre>

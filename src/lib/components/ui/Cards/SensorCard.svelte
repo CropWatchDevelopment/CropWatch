@@ -32,7 +32,7 @@
 				<img src={SEEED_T1000_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
 			{:else if deviceType == 'seeed_sensecap_s2120'}
 				<img src={SEEED_S2120_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
-			{:else if deviceType == 'SenseCAP S2103'}
+			{:else if deviceType == 'SenseCAP S2103' || deviceType == 'S2101'}
 				<img src={SEEED_S2103_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
 			{/if}
 		</div>
