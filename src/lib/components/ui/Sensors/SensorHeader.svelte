@@ -5,7 +5,6 @@
 	import ActiveImage from '$lib/images/UI/cw-10.svg';
 	import inActiveImage from '$lib/images/UI/cw_sensor_status_inactive.svg';
 	import moment from 'moment';
-	import { page } from '$app/stores';
 
 	export let sensorName: string = 'NS';
 	export let lastSeen: Date;

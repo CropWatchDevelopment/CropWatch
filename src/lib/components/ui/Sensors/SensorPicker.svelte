@@ -14,7 +14,6 @@
 	import { goto } from '$app/navigation';
 	import NetvoxRa02A from './NETVOX_RA02A/NETVOX_RA02A.svelte';
 
-	export let sensorType;
 	let sensorName = 'NS';
 	let devEui = $page.params.dev_eui;
 	let lastSeen = new Date();
@@ -51,7 +50,7 @@
 			</div>
 			{#if sensor.deviceType.data_table == 'cw_air_thvd'}
 				<CW_AIR_THVD data />
-			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensorType == 'cw_co2_uplinks'}
+			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensor.deviceType.data_table == 'cw_co2_uplinks'}
 				<SEEED_SENSECAP_S2103 {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2120'}
 				<SEEED_SENSECAP_S2120 {sensor} />
@@ -61,18 +60,9 @@
 				<SEEED_SENSECAP_T1000 {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2103_WaterLevel'}
 				<SEEED_SENSECAP_S2103_WATER_LEVEL {sensor} />
-				<!-- {:else if sensorType == 'cw_ss_tme'}
-		<CW_SS_TME {data} {sensorName} {permissions} />
-	{:else if sensorType == 'cw_ss_tmepnpk'}
-		<CW_SS_TMENPK {data} {sensorName} {permissions} />
-	
-	{:else if sensorType == 'seeed_t1000'}
-		<SeeedT1000 {data} {sensorName} {permissions} />
-	{:else if sensorType == 'seeed_sensecap_s2103_WaterLevel'}
-		<SeeedS2103WaterLevel {data} {sensorName} {permissions} /> -->
 			{:else}
 				<Back />
-				<p>No sensor for type `{sensorType}` was specified</p>
+				<p>No sensor for type `{sensor.deviceType.data_table}` was specified</p>
 			{/if}
 		</div>
 	{:catch error}
