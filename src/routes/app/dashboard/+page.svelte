@@ -131,7 +131,7 @@
 	<p>No locations found</p>
 {:else}
 	<div
-		class="mb-3 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+		class="mb-3 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
 	>
 		{#each locations as location}
 			<DashboardCard {location} />
