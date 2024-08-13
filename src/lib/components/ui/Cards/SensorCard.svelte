@@ -2,7 +2,7 @@
 	import Active from '$lib/images/UI/cw_active.svg';
 	import Inactive from '$lib/images/UI/cw_inactive_circle.svg';
 	import SensorArrow from '$lib/images/UI/cw_get_into_arrow.svg';
-	import { ProgressCircle } from 'svelte-ux';
+	import { ProgressCircle, Tooltip } from 'svelte-ux';
 	import SEEED_T1000_IMG from '$lib/images/devices/seeed-t1000.png';
 	import SEEED_S2120_IMG from '$lib/images/devices/seeed_sensecap_s2120.png';
 	import SEEED_S2103_IMG from '$lib/images/devices/seeed_sensecap_s210x.png';
@@ -29,11 +29,17 @@
 		<!-- image -->
 		<div class="h-full rounded-md">
 			{#if deviceType == 'T1000'}
-				<img src={SEEED_T1000_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				<Tooltip title="Card Tracker">
+					<img src={SEEED_T1000_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				</Tooltip>
 			{:else if deviceType == 'seeed_sensecap_s2120'}
-				<img src={SEEED_S2120_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				<Tooltip title="Weather Station">
+					<img src={SEEED_S2120_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				</Tooltip>
 			{:else if deviceType == 'SenseCAP S2103' || deviceType == 'S2101'}
-				<img src={SEEED_S2103_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				<Tooltip title={`${deviceType == 'SenseCAP S2103' ? 'CO²' : ''}/Temperature/Humidity Sensor`}>
+					<img src={SEEED_S2103_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				</Tooltip>
 			{/if}
 		</div>
 		<!-- data -->
