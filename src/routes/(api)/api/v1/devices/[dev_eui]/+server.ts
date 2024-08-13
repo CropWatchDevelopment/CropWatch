@@ -1,8 +1,9 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 import CwDevicesService from '$lib/services/CwDevicesService';
+import moment from 'moment';
 
-export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
+export const GET: RequestHandler = async ({ params, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
     if (!session.user) {
         throw redirect(303, '/auth/unauthorized');
@@ -12,21 +13,6 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     if (!devEui) {
         throw error(400, 'dev_eui is required');
     }
-    const firstDataDate = new Date(url.searchParams.get('firstDataDate') ?? '');
-    const lastDataDate = new Date(url.searchParams.get('lastDataDate') ?? '');
-    // Check dates are provided
-    if (!firstDataDate || !lastDataDate) {
-        throw error(400, 'firstDataDate and lastDataDate are required');
-    }
-    // Check dates are valid
-    if (isNaN(firstDataDate.getTime()) || isNaN(lastDataDate.getTime())) {
-        throw error(400, 'firstDataDate and lastDataDate must be valid dates');
-    }
-    // Check last date is AFTER first date
-    if (firstDataDate > lastDataDate) {
-        throw error(400, 'firstDataDate must be less than lastDataDate');
-    }
-
 
     const cwDevicesService = new CwDevicesService(supabase);
 
@@ -35,24 +21,67 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     if (!device) {
         throw error(500, 'Error fetching device');
     }
-    const deviceType = await cwDevicesService.getDeviceTypeById(device.type);
-    if (!deviceType) {
-        throw error(500, 'Error fetching device type');
-    }
-    // const data = await cwDevicesService.getLatestDataByDeviceEui(device.dev_eui, deviceType.data_table ?? '');
-    const data = await cwDevicesService.getDataRangeByDeviceEui(device.dev_eui, deviceType.data_table ?? '', firstDataDate, lastDataDate);
-    if (!data) {
-        throw error(500, 'Error fetching latest data');
-    }
 
-    const result = {
-        data,
-        device,
-        deviceType,
-    }
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify(device), {
         headers: {
             'Content-Type': 'application/json'
         }
     });
+};
+
+export const PUT: RequestHandler = async ({ params, request, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        throw redirect(303, '/auth/unauthorized');
+    }
+
+    const devEui = params.dev_eui;
+    if (!devEui) {
+        throw error(400, 'dev_eui is required');
+    }
+
+    const cwDevicesService = new CwDevicesService(supabase);
+
+    try {
+        const data = await request.json();
+        
+        // Perform validation on the incoming data
+        // if (!data.name || !data.lat || !data.long || !data.upload_interval || !data.battery_changed_at) {
+        //     throw error(400, 'All fields are required.');
+        // }
+        let existing_device = await cwDevicesService.getDeviceByEui(devEui);
+        if (existing_device === null) throw error(500, 'Failed to find device to update');
+        existing_device.name = data.name ?? existing_device.name;
+        existing_device.battery_changed_at = data.battery_changed_at ?? existing_device.battery_changed_at;
+        existing_device.lat = data.lat ?? existing_device.lat;
+        existing_device.long = data.long ?? existing_device.long;
+        existing_device.location_id = data.location_id ?? existing_device.location_id;
+
+        // Format and validate the data
+        const updatedDeviceData = {
+            name: data.name,
+            lat: parseFloat(data.lat),
+            long: parseFloat(data.long),
+            upload_interval: parseInt(data.upload_interval, 10),
+            battery_changed_at: moment(data.battery_changed_at).toISOString(),
+            location_id: existing_device.location_id,
+        };
+
+        // Update the device in the database
+        const updatedDevice = await cwDevicesService.updateDevice(devEui, updatedDeviceData);
+
+        if (!updatedDevice) {
+            throw error(500, 'Error updating device');
+        }
+
+        return new Response(JSON.stringify(updatedDevice), {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+    } catch (err) {
+        console.error('Error updating device:', err);
+        throw error(500, 'Internal Server Error');
+    }
 };

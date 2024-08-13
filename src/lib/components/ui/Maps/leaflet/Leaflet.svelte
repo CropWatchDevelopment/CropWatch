@@ -21,7 +21,7 @@
 			L = await import('leaflet');
 			map = L.map(mapElement);
 			L.tileLayer('http://{s}.google.com/vt?lyrs=s,h&x={x}&y={y}&z={z}', {
-				maxZoom: 20,
+				maxZoom: 18,
 				subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 			}).addTo(map);
 
@@ -71,6 +71,7 @@
 
 	const filterNullPoints = (data) => {
 		if (!data) return;
+		if (!data.includes(undefined) || data.includes(null)) return;
 		return data.map((innerArray) =>
 			innerArray.filter((point) => !(point[0] === null && point[1] === null))
 		);
@@ -78,9 +79,9 @@
 
 	$: if (map) {
 		const filteredData = filterNullPoints(bounds);
-		if (filteredData) {
+		if (filteredData && filteredData != undefined) {
 			map.fitBounds(bounds);
-		} else if (view && zoom) {
+		} else if (view && !view.includes(null) && zoom) {
 			if (view[0] && view[1]) map.setView(view, zoom);
 		}
 	}

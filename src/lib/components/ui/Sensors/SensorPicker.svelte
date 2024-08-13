@@ -9,7 +9,7 @@
 	import SEEED_SENSECAP_T1000 from './SEEED_SENSECAP_T1000/SEEED_SENSECAP_T1000.svelte'; // Tracking Badge
 	import SEEED_SENSECAP_S2103_WATER_LEVEL from './SEEED_SENSECAP_S2103_WATER_LEVEL/SEEED_SENSECAP_S2103_WATER_LEVEL.svelte'; // Tracking Badge
 	import SensorHeader from './SensorHeader.svelte';
-	import { mdiCog } from '@mdi/js';
+	import { mdiCog, mdiDownload } from '@mdi/js';
 	import { Button, Icon, Tooltip } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import NetvoxRa02A from './NETVOX_RA02A/NETVOX_RA02A.svelte';
@@ -23,7 +23,7 @@
 	let yesterday: Date = moment(today).subtract(1, 'day').toDate();
 
 	const sensorPromise = browser
-		? fetch(`/api/v1/devices/${devEui}?firstDataDate=${yesterday}&lastDataDate=${today}`)
+		? fetch(`/api/v1/devices/${devEui}/data?firstDataDate=${yesterday}&lastDataDate=${today}`)
 				.then((res) => res.json())
 				.then((sensor) => {
 					let newestData = sensor.data.at(0);
@@ -41,13 +41,16 @@
 		loading
 	{:then sensor}
 		<div class="relative m-1">
-			<div class="mx-2 flex flex-row">
+			<!-- <div class="mx-2 flex flex-row">
 				<SensorHeader {sensorName} {lastSeen} {upload_interval} />
 				<span class="flex-grow" />
+				<Tooltip title={`${sensorName} History Download`}>
+					<Button icon={mdiDownload} size="lg" on:click={() => goto(`history`)} />
+				</Tooltip>
 				<Tooltip title={`${sensorName}'s Settings`}>
 					<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
 				</Tooltip>
-			</div>
+			</div> -->
 			{#if sensor.deviceType.data_table == 'cw_air_thvd'}
 				<CW_AIR_THVD data />
 			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensor.deviceType.data_table == 'cw_co2_uplinks'}

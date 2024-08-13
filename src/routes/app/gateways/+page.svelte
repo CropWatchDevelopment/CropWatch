@@ -36,21 +36,18 @@
 </svelte:head>
 
 <!-- TITLE and Filter -->
-<div class="grid-row my-3 grid grid-cols-2 justify-between">
-	<!-- TITLE -->
-	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
+<h1 class="text-surface flex flex-row">
+	<span>
 		<Icon data={mdiRouterWireless} class="h-6 w-6" />
-		Gateways
-	</h2>
-	<!-- Filter -->
+		All Gateways:</span>
+	<span class="flex-1" />
 	<Button
 		icon={mdiFilter}
 		variant="fill"
 		color="primary"
-		class="mr-1 mt-3 max-w-10 justify-self-end"
 		on:click={() => (showFilters = !showFilters)}
 	/>
-</div>
+</h1>
 
 {#if gatewaysPromise}
 	{#if showFilters}

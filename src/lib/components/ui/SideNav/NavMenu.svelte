@@ -7,6 +7,7 @@
 		mdiCog,
 		mdiDevices,
 		mdiFormatListBulleted,
+		mdiFunction,
 		mdiHome,
 		mdiMapMarkerDistance,
 		mdiMapMarkerMultiple,
@@ -60,6 +61,19 @@
 						currentUrl={$page.url}
 						path="/app/devices"
 						icon={mdiDevices}
+						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					/>
+				</li>
+			</ul>
+
+			<h1>Rules</h1>
+			<ul>
+				<li>
+					<NavItem
+						text="All Rules"
+						currentUrl={$page.url}
+						path="/app/rules"
+						icon={mdiFunction}
 						classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
 					/>
 				</li>

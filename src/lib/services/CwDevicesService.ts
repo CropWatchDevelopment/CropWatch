@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import CwDevicesRepository from '$lib/repositories/CwDevicesRepository';
 import type { Tables } from '$lib/types/supabaseSchema';
 import CwDeviceTypeRepository from '$lib/repositories/CwDeviceTypeRepository';
+import { error } from '@sveltejs/kit';
 
 type CwDevices = Tables<'cw_devices'>;
 type CwDevicesInsert = Tables<'cw_devices'>;
@@ -84,7 +85,8 @@ class CwDevicesService {
   }
 
   async updateDevice(dev_eui: string, device: CwDevicesUpdate): Promise<CwDevices | null> {
-    return await this.repository.update(dev_eui, device);
+    const result = await this.repository.update(dev_eui, device);
+    return result;
   }
 
   async removeDevice(dev_eui: string): Promise<boolean> {

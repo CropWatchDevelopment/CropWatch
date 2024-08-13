@@ -54,6 +54,9 @@ importers:
       '@types/eslint':
         specifier: ^9.6.0
         version: 9.6.0
+      '@types/leaflet':
+        specifier: ^1.9.12
+        version: 1.9.12
       autoprefixer:
         specifier: ^10.4.19
         version: 10.4.20(postcss@8.4.40)
@@ -792,6 +795,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/leaflet@1.9.12':
+    resolution: {integrity: sha512-BK7XS+NyRI291HIo0HCfE18Lp8oA30H1gpi1tf0mF3TgiCEzanQjOqNZ4x126SXzzi2oNSZhZ5axJp1k0iM6jg==}
 
   '@types/node@22.1.0':
     resolution: {integrity: sha512-AOmuRF0R2/5j1knA3c6G3HOk523Ga+l+ZXltX8SF1+5oqcXijjfTd8fY3XRZqSihEu9XhtQnKYLmkFaoxgsJHw==}
@@ -3120,6 +3126,10 @@ snapshots:
   '@types/geojson@7946.0.14': {}
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/leaflet@1.9.12':
+    dependencies:
+      '@types/geojson': 7946.0.14
 
   '@types/node@22.1.0':
     dependencies:

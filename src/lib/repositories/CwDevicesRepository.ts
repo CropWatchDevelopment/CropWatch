@@ -118,6 +118,7 @@ class CwDevicesRepository {
       .from('cw_devices')
       .update(device)
       .eq('dev_eui', dev_eui)
+      .select()
       .single();
 
     if (error) {

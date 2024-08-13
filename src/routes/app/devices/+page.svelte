@@ -6,7 +6,6 @@
 		mdiArrowRight,
 		mdiFilter,
 		mdiMapMarker,
-		mdiMapMarkerRadius,
 		mdiMapMarkerRight
 	} from '@mdi/js';
 	import { Button, ListItem, Tooltip } from 'svelte-ux';
@@ -35,17 +34,16 @@
 	<title>CropWatch - All Devices</title>
 </svelte:head>
 
-<div class="grid-row my-3 grid grid-cols-2 justify-between">
-	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">All Devices:</h2>
-	<!-- Filter -->
+<h1 class="text-surface flex flex-row">
+	<span>All Devices:</span>
+	<span class="flex-1" />
 	<Button
 		icon={mdiFilter}
 		variant="fill"
 		color="primary"
-		class="mr-1 mt-3 max-w-10 justify-self-end"
 		on:click={() => (showFilters = !showFilters)}
 	/>
-</div>
+</h1>
 
 {#if devicesPromise}
 	{#if showFilters}

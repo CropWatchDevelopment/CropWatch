@@ -15,7 +15,7 @@
 	let location: Tables<'cw_locations'>;
 	let innerWidth = 0;
 	let innerHeight = 200;
-	// let bounds = [];
+	let bounds: [number, number] | [] = [];
 
 	onMount(() => {
 		fetchInitialData();
@@ -27,7 +27,7 @@
 			const data = await res.json();
 			location = data;
 			await fetchInitialDeviceData();
-			// bounds = location.devices.map(d => [d.latestData.lat, d.latestData.long]);
+			bounds = location.devices.map(d => [d.latestData.lat, d.latestData.long]);
 			loading = false;
 		} catch (e) {
 			loading = false;
@@ -79,31 +79,31 @@
 
 <!-- DEVICE MAP -->
 <div class="mx-4 mb-4">
-	{#if !loading}
-		<Leaflet view={[location.lat, location.long]} zoom={19} height={innerHeight / 3}>
-			{#each location.devices as device}
-				{#if device.latestData.lat && device.latestData.long}
-					<Marker latLng={[device.latestData.lat, device.latestData.long]}>
-						<Button
-							icon={mdiMapMarker}
-							variant="none"
-							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
-							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
-						/>
-					</Marker>
-				{:else}
-					<Marker latLng={[device.lat, device.long]}>
-						<Button
-							icon={mdiMapMarker}
-							variant="none"
-							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
-							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
-						/>
-					</Marker>
-				{/if}
-			{/each}
-		</Leaflet>
-	{/if}
+    {#if !loading && location.lat && location.long}
+        <Leaflet view={[location.lat, location.long]} {bounds} zoom={20} height={innerHeight / 3}>
+            {#each location.devices as device}
+                {#if device.latestData.lat && device.latestData.long}
+                    <Marker latLng={[device.latestData.lat, device.latestData.long]}>
+                        <Button
+                            icon={mdiMapMarker}
+                            variant="none"
+                            on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+                            class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+                        />
+                    </Marker>
+                {:else}
+                    <Marker latLng={[device.lat, device.long]}>
+                        <Button
+                            icon={mdiMapMarker}
+                            variant="none"
+                            on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+                            class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+                        />
+                    </Marker>
+                {/if}
+            {/each}
+        </Leaflet>
+    {/if}
 </div>
 
 <!-- LOCATION DEVICES -->
