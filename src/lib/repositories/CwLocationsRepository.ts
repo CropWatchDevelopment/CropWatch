@@ -55,6 +55,7 @@ class CwLocationsRepository {
       .from('cw_locations')
       .update(location)
       .eq('location_id', location_id)
+      .select()
       .single();
 
     if (error) {

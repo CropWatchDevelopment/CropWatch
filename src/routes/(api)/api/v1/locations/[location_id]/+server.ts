@@ -53,3 +53,37 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
         }
     });
 };
+
+
+export const PUT: RequestHandler = async ({ request, params, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        return redirect(301, '/auth/unauthorized');
+    }
+
+
+    const data = await request.json();
+
+    const location_id: number = +(params.location_id ?? -1);
+    if (location_id === -1) {
+        throw error(400, 'Location ID is not supported');
+    }
+
+    const cwLocationsService = new CwLocationsService(supabase);
+
+    let updateResult = await cwLocationsService.updateLocation(location_id, {
+        name: data.name,
+        lat: data.lat,
+        long: data.long,
+    });
+
+    if (!updateResult) {
+        throw error(500, 'Location Update failed');
+    }
+
+    return new Response(JSON.stringify(updateResult), {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+}

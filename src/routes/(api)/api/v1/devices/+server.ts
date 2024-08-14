@@ -13,6 +13,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
   const includeLocations = url.searchParams.get('includeLocations') === 'true';
   const includeOwners = url.searchParams.get('includeOwners') === 'true';
   const includeLatestData = url.searchParams.get('includeLatestData') === 'true';
+  const includeDeviceType = url.searchParams.get('includeDeviceType') === 'true';
 
   const cwDevicesService = new CwDevicesService(supabase);
   const cwDeviceOwnersService = new CwDeviceOwnersService(supabase);
@@ -48,6 +49,13 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
     devices.forEach((device, index) => {
       (device as any).latestData = latestData[index];
     });
+  }
+
+  if (includeDeviceType) {
+    for (let device of devices) {
+      const deviceType = await cwDevicesService.getDeviceTypeById(device.type);
+      device['deviceType'] = deviceType;
+    }
   }
 
   return new Response(JSON.stringify(devices), {
