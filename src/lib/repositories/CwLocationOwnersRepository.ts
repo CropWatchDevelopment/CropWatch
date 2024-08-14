@@ -45,6 +45,7 @@ class CwLocationOwnersRepository {
     const { data, error } = await this.client
       .from('cw_location_owners')
       .insert(owner)
+      .select()
       .single();
 
     if (error) {

@@ -56,18 +56,20 @@
 		}
 	}
 
-    let deletePermission = async (id: number) => {
-        debugger;
-		const deletePermissionRequest = await fetch(`/api/v1/locations/${$page.params.location_id}/permissions?id=${id}`, {
-			method: 'DELETE',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ id }) // Pass the id in the body
-		});
+	let deletePermission = async (id: number) => {
+		const deletePermissionRequest = await fetch(
+			`/api/v1/locations/${$page.params.location_id}/permissions?id=${id}`,
+			{
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ id }) // Pass the id in the body
+			}
+		);
 
 		const deletePermissionResult = await deletePermissionRequest.json();
-        debugger;
+
 		if (deletePermissionResult) {
 			// Remove the deleted permission from the list
 			locationPermissions = locationPermissions.filter((permission) => permission.id !== id);
@@ -186,12 +188,16 @@
 		</div>
 
 		<form
-			action="?/updateLocationInfo"
+			action="?/addLocationPermissions"
 			method="POST"
 			class="md:col-span-2"
 			use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 				return async ({ result, update }) => {
 					if (result.type === 'success') {
+						debugger;
+						result.data;
+						locationPermissions.push(result.data);
+						locationPermissions = locationPermissions;
 						notificationStore.NotificationTimedOpen({
 							title: 'Location Updated',
 							description: 'Location Updated Successfully.',
@@ -248,8 +254,8 @@
 										<div slot="title">Are you sure?</div>
 										<div class="px-6 py-3">
 											<p>
-												You are about to delete '{permission.profile.email}' This user will no longer
-												be
+												You are about to delete '{permission.profile.email}' This user will no
+												longer be
 											</p>
 											<p>able to view this device.</p>
 										</div>

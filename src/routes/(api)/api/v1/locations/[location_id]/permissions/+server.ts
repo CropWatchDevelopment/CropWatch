@@ -39,6 +39,56 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
 
 }
 
+export const POST: RequestHandler = async ({ request, params, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        return redirect(301, '/auth/unauthorized');
+    }
+
+    const location_id: number = +(params.location_id ?? -1);
+    if (location_id === -1) {
+        throw error(400, 'Location ID is not supported');
+    }
+
+    const data = await request.json();
+
+    const email = data.email;
+    if (!email) {
+        throw error(400, 'Email in request not found');
+    }
+
+    const permission_level = data.permissionLevel;
+    if (!permission_level) {
+        throw error(400, 'Permission Level in request not found');
+    }
+
+    const cwProfileService = new CwProfileService(supabase);
+    const profile = await cwProfileService.getByEmail(email.toLowerCase())
+    if (!profile) {
+        throw error(404, 'Profile not found');
+    }
+
+    const cwLocationOwnersService = new CwLocationOwnersService(supabase);
+    const result = await cwLocationOwnersService.add({
+        permission_level: +permission_level,
+        is_active: true,
+        user_id: profile?.id,
+        location_id: location_id,
+    });
+
+    if (!result) {
+        throw error(500, 'Failed to create Permission');
+    }
+
+    result['profile'] = profile;
+
+    return new Response(JSON.stringify(result), {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+}
+
 export const DELETE: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
     if (!session.user) {

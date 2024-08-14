@@ -9,7 +9,7 @@ export const actions: Actions = {
         const name = formData.get('name') as string;
         const lat = formData.get('lat') as string;
         const long = formData.get('long') as string;
-        
+
         // Optional: Perform any additional server-side validation
         if (!name || !lat || !long) {
             return fail(400, { error: 'All fields are required.' });
@@ -43,5 +43,30 @@ export const actions: Actions = {
             console.error('Error submitting form:', error);
             return fail(500, { error: 'Failed to update the device.' });
         }
+    },
+
+
+    addLocationPermissions: async ({ request, params, fetch }) => {
+        const locationId = params.location_id; // Assuming device EUI is part of the route parameters
+        if (!locationId) {
+            return fail(400, { error: 'Location ID is required.' });
+        }
+
+        // Get the form data
+        const formData = await request.formData();
+        const email = formData.get('email') as string;
+        const permissionLevel = formData.get('permissionLevel') as string;
+
+        if (!email || !permissionLevel) {
+            return fail(400, { error: 'Email or Permission level not supplied.' });
+        }
+
+        const resultJson = await fetch(`/api/v1/locations/${locationId}/permissions`, {
+            method: 'POST',
+            body: JSON.stringify({email, permissionLevel}),
+        });
+
+        const result = await resultJson.json();
+        return result;
     },
 };
