@@ -43,7 +43,7 @@ export const actions: Actions = {
             }
 
             // Redirect or return success
-            return JSON.stringify({success: true})
+            return JSON.stringify({ success: true })
         } catch (error) {
             console.error('Error submitting form:', error);
             return fail(500, { error: 'Failed to update the device.' });
@@ -83,10 +83,52 @@ export const actions: Actions = {
             }
 
             // Redirect or return success
-            return JSON.stringify({success: true})
+            return JSON.stringify({ success: true })
         } catch (error) {
             console.error('Error submitting form:', error);
             return fail(500, { error: 'Failed to update the device location.' });
         }
-    }
+    },
+
+    addDevicePermission: async ({ request, fetch, params, locals }) => {
+        const devEui = params.dev_eui; // Assuming device EUI is part of the route parameters
+
+        // Get the form data
+        const formData = await request.formData();
+        const email = formData.get('email') as string;
+        const permissionLevel = formData.get('permissionLevel') as string;
+
+        // Optional: Perform any additional server-side validation
+        if (!email || !permissionLevel) {
+            return fail(400, { error: 'Email and permission level are required.' });
+        }
+
+        // Construct the payload to send in the POST request
+        const payload = {
+            email,
+            permission_level: permissionLevel
+        };
+
+        try {
+            // Make the POST request to add the device permission
+            const response = await fetch(`/api/v1/permissions/${devEui}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                return fail(500, { error: errorData.message });
+            }
+
+            // Return success or redirect
+            return JSON.stringify({ success: true });
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            return fail(500, { error: 'Failed to add device permission.' });
+        }
+    },
 };

@@ -25,6 +25,22 @@ class CwProfileRepository {
     return data;
   }
 
+  async findByEmail(email: string): Promise<CwProfile | null> {
+    const { data, error } = await this.client
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error fetching Profile by Email:', error.message);
+      return null;
+    }
+
+    return data;
+  }
+
   async findAll(): Promise<CwProfile[]> {
     const { data, error } = await this.client
       .from('profiles')

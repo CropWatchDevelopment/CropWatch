@@ -16,6 +16,10 @@ class CwPermissionLevelTypesService {
     return await this.repository.findById(uuid);
   }
 
+  async getByEmail(email: string): Promise<CwProfile | null> {
+    return await this.repository.findByEmail(email);
+  }
+
   async getAll(): Promise<CwProfile[]> {
     return await this.repository.findAll();
   }

@@ -10,15 +10,23 @@
 		SelectField,
 		ListItem,
 		Icon,
-		ProgressCircle
+		ProgressCircle,
+
+		Toggle,
+
+		Dialog
+
+
 	} from 'svelte-ux';
 	import { mdiAccount, mdiCalendar, mdiPlus, mdiTrashCan } from '@mdi/js';
 	import type { Tables } from '$lib/types/supabaseSchema';
 	import { permissionNumberToRole } from '$lib/components/ui/utilities/permissionNumberToRole';
 	import DarkCard from '$lib/components/ui/Cards/DarkCard.svelte';
+	import { notificationStore } from '$lib/stores/notificationStore';
 
 	let loading: boolean = true;
 	let permissionsRequest: Tables<'cw_device_owners'>[] = [];
+    let permissionLevel: string = '';
 	const permissionLevelOptions = [
 		{ label: 'Administrator', value: '1' },
 		{ label: 'User', value: '2' },
@@ -30,6 +38,39 @@
 		permissionsRequest = await (await fetch(`/api/v1/permissions/${$page.params.dev_eui}`)).json();
 		loading = false;
 	});
+
+    let deletePermission = async (id: number) => {
+    const deletePermissionRequest = await fetch(`/api/v1/permissions/${$page.params.dev_eui}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }) // Pass the id in the body
+    });
+
+    const deletePermissionResult = await deletePermissionRequest.json();
+
+    if (deletePermissionResult.success) {
+        // Remove the deleted permission from the list
+        permissionsRequest = permissionsRequest.filter(permission => permission.id !== id);
+
+        notificationStore.NotificationTimedOpen({
+            title: 'Permission Deleted',
+            description: 'Permission Successfully deleted.',
+            timeout: 2000,
+            icon: '✅',
+            buttonText: 'OK'
+        });
+    } else {
+        notificationStore.NotificationTimedOpen({
+            title: 'Failed to Delete Permission',
+            description: deletePermissionResult.error || 'An error occurred.',
+            timeout: 2000,
+            icon: '❌',
+            buttonText: 'OK'
+        });
+    }
+}
 </script>
 
 <div class="divide-y divide-white/5">
@@ -42,17 +83,22 @@
 			<p class="mt-1 text-sm leading-6 text-gray-400">Setup What users can/Cannot see or do</p>
 		</div>
 
-		<form action="?/updateDevicePermission" method="POST" class="md:col-span-2">
+		<form action="?/addDevicePermission" method="POST" class="md:col-span-2">
 			<DarkCard title="Add New User Permission:">
 				<div class="flex flex-row gap-2">
 					<TextField
 						label="User Email to grant permission"
 						operators={permissionLevelOptions}
-						id="permission"
-						name="permission"
+                        on:change={(e) => {
+                            console.log(e);
+                            permissionLevel = e.detail.operator ?? '-1';
+                        }}
+						id="email"
+						name="email"
 						class="w-full"
 					/>
-					<Button icon={mdiPlus} variant="fill" color="success" />
+                    <input type="hidden" bind:value={permissionLevel} name="permissionLevel" id="permissionLevel" />
+					<Button icon={mdiPlus} type="submit" variant="fill" color="success" />
 				</div>
 			</DarkCard>
 
@@ -74,7 +120,28 @@
 								<!-- {/if} -->
 							</div>
 							<div slot="actions">
-								<Button icon={mdiTrashCan} variant="fill" color="danger" />
+                                <Toggle let:on={open} let:toggle let:toggleOff>
+                                    <Button icon={mdiTrashCan} on:click={toggle} variant="fill" color="danger" />
+                                    <Dialog {open} on:close={toggleOff}>
+                                      <div slot="title">Are you sure?</div>
+                                      <div class="px-6 py-3">
+                                        <p>You are about to delete '{permission.owner.email}' This user will no longer be</p>
+                                        <p>able to view this device.</p>
+                                      </div>
+                                      <div slot="actions">
+                                        <Button
+                                          on:click={() => {
+                                            deletePermission(permission.id)
+                                          }}
+                                          variant="fill"
+                                          color="danger"
+                                        >
+                                          Yes, delete item {permission.id}
+                                        </Button>
+                                        <Button>Cancel</Button>
+                                      </div>
+                                    </Dialog>
+                                  </Toggle>
 							</div>
 						</ListItem>
 					{/each}
