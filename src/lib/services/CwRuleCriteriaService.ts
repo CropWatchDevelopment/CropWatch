@@ -17,8 +17,8 @@ class CwRuleCriteriaService {
     return await this.repository.findById(id);
   }
 
-  async getAll(): Promise<CwRuleCriteria[]> {
-    return await this.repository.findAll();
+  async getAll(groupId: string): Promise<CwRuleCriteria[]> {
+    return await this.repository.findAll(groupId);
   }
 
   async add(data: CwRuleCriteriaInsert): Promise<CwRuleCriteria | null> {

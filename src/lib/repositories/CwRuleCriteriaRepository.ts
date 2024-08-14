@@ -27,10 +27,11 @@ class CwRuleCriteriaRepository {
     return data;
   }
 
-  async findAll(): Promise<CwRuleCriteria[]> {
+  async findAll(groupId: string): Promise<CwRuleCriteria[]> {
     const { data, error } = await this.client
       .from('cw_rule_criteria')
-      .select('*');
+      .select('*')
+      .eq('ruleGroupId', groupId);
 
     if (error) {
       console.error('Error fetching all cw_rule_criteria:', error.message);

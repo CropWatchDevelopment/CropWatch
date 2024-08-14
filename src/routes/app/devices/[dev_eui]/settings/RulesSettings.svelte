@@ -37,5 +37,5 @@
 {#if state === 'list'}
 	<RuleList {rules} />
 {:else if state === 'add'}
-	<RuleAdd />
+	<RuleAdd bind:state />
 {/if}

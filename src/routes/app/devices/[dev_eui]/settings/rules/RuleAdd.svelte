@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import DarkCard from '$lib/components/ui/Cards/DarkCard.svelte';
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
@@ -9,6 +10,8 @@
 	import { mdiAccountPlus, mdiCloseCircle, mdiEmail, mdiFloppy, mdiMinusCircle, mdiPlusCircle } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { Button, TextField, SelectField, Checkbox, ListItem, NumberStepper } from 'svelte-ux';
+
+    export let state: string;
 
 	type rule = Tables<'cw_rules'>;
 	type ruleCriteria = Tables<'cw_rule_criteria'>[];
@@ -87,6 +90,8 @@
 				icon: '✅',
 				buttonText: 'OK'
 			});
+            state = 'list';
+            goto(`/app/devices/${$page.params.dev_eui}/settings?page=rules`);
 		} else {
 			notificationStore.NotificationTimedOpen({
 				title: 'Failed to Create Rule.',
