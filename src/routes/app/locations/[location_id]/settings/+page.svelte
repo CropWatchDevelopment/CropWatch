@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
+	import DarkCard from '$lib/components/ui/Cards/DarkCard.svelte';
+	import { permissionNumberToRole } from '$lib/components/ui/utilities/permissionNumberToRole';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiAccount, mdiFloppy, mdiMapMarker, mdiTrashCan } from '@mdi/js';
+	import { mdiAccount, mdiFloppy, mdiMapMarker, mdiPlus, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
-	import { Button, Icon, ListItem, TextField } from 'svelte-ux';
+	import { Button, Dialog, Icon, ListItem, TextField, Toggle } from 'svelte-ux';
 	type locationType = Tables<'cw_locations'>;
 
 	let location: locationType = {
@@ -18,6 +20,12 @@
 		owner_id: ''
 	};
 	let locationPermissions = [];
+	let permissionLevel: string = '';
+	const permissionLevelOptions = [
+		{ label: 'Administrator', value: '1' },
+		{ label: 'User', value: '2' },
+		{ label: 'Viewer', value: '3' }
+	];
 
 	onMount(async () => {
 		const locationPromise = await fetch(`/api/v1/locations/${$page.params.location_id}`);
@@ -47,6 +55,40 @@
 			alert('Geolocation is not supported by this browser.');
 		}
 	}
+
+    let deletePermission = async (id: number) => {
+        debugger;
+		const deletePermissionRequest = await fetch(`/api/v1/locations/${$page.params.location_id}/permissions?id=${id}`, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ id }) // Pass the id in the body
+		});
+
+		const deletePermissionResult = await deletePermissionRequest.json();
+        debugger;
+		if (deletePermissionResult) {
+			// Remove the deleted permission from the list
+			locationPermissions = locationPermissions.filter((permission) => permission.id !== id);
+
+			notificationStore.NotificationTimedOpen({
+				title: 'Permission Deleted',
+				description: 'Permission Successfully deleted.',
+				timeout: 2000,
+				icon: '✅',
+				buttonText: 'OK'
+			});
+		} else {
+			notificationStore.NotificationTimedOpen({
+				title: 'Failed to Delete Permission',
+				description: deletePermissionResult.error || 'An error occurred.',
+				timeout: 2000,
+				icon: '❌',
+				buttonText: 'OK'
+			});
+		}
+	};
 </script>
 
 <div class="my-3 flex flex-row">
@@ -169,16 +211,67 @@
 				};
 			}}
 		>
-
+			<DarkCard title="Add New Location Permission:">
+				<div class="flex flex-row gap-2">
+					<TextField
+						label="User Email to grant permission"
+						operators={permissionLevelOptions}
+						on:change={(e) => {
+							console.log(e);
+							permissionLevel = e.detail.operator ?? '-1';
+						}}
+						id="email"
+						name="email"
+						class="w-full"
+					/>
+					<input
+						type="hidden"
+						bind:value={permissionLevel}
+						name="permissionLevel"
+						id="permissionLevel"
+					/>
+					<Button icon={mdiPlus} type="submit" variant="fill" color="success" />
+				</div>
+			</DarkCard>
+			<DarkCard title="Current Users:">
 				<ul>
 					{#each locationPermissions as permission}
-						<ListItem title={permission.profile.email} subheading="Subheading" icon={mdiAccount}>
-                            <div slot="actions">
-                                <Button icon={mdiTrashCan} variant="fill" color="danger"/>
-                            </div>
-                        </ListItem>
+						<ListItem
+							title={permission.profile.email}
+							subheading={permissionNumberToRole(permission.permission_level)}
+							icon={mdiAccount}
+						>
+							<div slot="actions">
+								<Toggle let:on={open} let:toggle let:toggleOff>
+									<Button icon={mdiTrashCan} on:click={toggle} variant="fill" color="danger" />
+									<Dialog {open} on:close={toggleOff}>
+										<div slot="title">Are you sure?</div>
+										<div class="px-6 py-3">
+											<p>
+												You are about to delete '{permission.profile.email}' This user will no longer
+												be
+											</p>
+											<p>able to view this device.</p>
+										</div>
+										<div slot="actions">
+											<Button
+												on:click={() => {
+													deletePermission(permission.id);
+												}}
+												variant="fill"
+												color="danger"
+											>
+												Yes, delete item
+											</Button>
+											<Button>Cancel</Button>
+										</div>
+									</Dialog>
+								</Toggle>
+							</div>
+						</ListItem>
 					{/each}
 				</ul>
+			</DarkCard>
 		</form>
 	</div>
 </div>

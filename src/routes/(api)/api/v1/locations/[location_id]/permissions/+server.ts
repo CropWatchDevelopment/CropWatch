@@ -38,3 +38,33 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     });
 
 }
+
+export const DELETE: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        return redirect(301, '/auth/unauthorized');
+    }
+
+    const location_id: number = +(params.location_id ?? -1);
+    if (location_id === -1) {
+        throw error(400, 'Location ID is not supported');
+    }
+    const permission_id = url.searchParams.get('id');
+    if (!permission_id) {
+        throw error(400, 'Location ID is not supported');
+    }
+
+    const cwLocationOwnersService = new CwLocationOwnersService(supabase);
+
+    const result = await cwLocationOwnersService.remove(+permission_id);
+
+    if (!result) {
+        throw error(500, 'Permission Delete Failed');
+    }
+
+    return new Response(JSON.stringify(result), {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+}

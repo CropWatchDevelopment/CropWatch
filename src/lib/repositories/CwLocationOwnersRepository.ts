@@ -71,10 +71,11 @@ class CwLocationOwnersRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const { error } = await this.client
+    const { error, data } = await this.client
       .from('cw_location_owners')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select()
 
     if (error) {
       console.error('Error deleting cw_location_owners:', error.message);

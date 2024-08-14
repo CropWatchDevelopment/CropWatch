@@ -31,12 +31,12 @@
 
 	// Fetch device data when component is mounted
 	onMount(async () => {
-		permissionsRequest = await (await fetch(`/api/v1/permissions/${$page.params.dev_eui}`)).json();
+		permissionsRequest = await (await fetch(`/api/v1/devices/${$page.params.dev_eui}/permissions`)).json();
 		loading = false;
 	});
 
 	let deletePermission = async (id: number) => {
-		const deletePermissionRequest = await fetch(`/api/v1/permissions/${$page.params.dev_eui}`, {
+		const deletePermissionRequest = await fetch(`/api/v1/devices/${$page.params.dev_eui}/permissions`, {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json'
