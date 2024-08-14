@@ -125,7 +125,8 @@ export const actions: Actions = {
             }
 
             // Return success or redirect
-            return JSON.stringify({ success: true });
+            const responseData = await response.json();
+            return JSON.stringify({ responseData});
         } catch (error) {
             console.error('Error submitting form:', error);
             return fail(500, { error: 'Failed to add device permission.' });

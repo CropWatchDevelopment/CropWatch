@@ -67,7 +67,7 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
     owner_id: 0, // Placeholder value
     user_id: user.id,
     permission_level: permissionLevel,
-});
+  });
 
   return new Response(JSON.stringify(result), {
     headers: {
@@ -88,7 +88,7 @@ export const DELETE: RequestHandler = async ({ params, request, locals: { supaba
 
   // Extract the id from the request body
   const { id } = await request.json();
-  
+
   if (id === null || id === undefined || id === -1) {
     throw error(400, 'No ID Supplied');
   }

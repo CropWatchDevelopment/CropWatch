@@ -58,6 +58,7 @@ class CwDeviceOwnersRepository {
     const { data, error } = await this.client
       .from('cw_device_owners')
       .insert(owner)
+      .select()
       .single();
 
     if (error) {
