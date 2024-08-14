@@ -3,9 +3,9 @@
 	import { page } from '$app/stores';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiFloppy, mdiMapMarker } from '@mdi/js';
+	import { mdiAccount, mdiFloppy, mdiMapMarker, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
-	import { Button, Icon, TextField } from 'svelte-ux';
+	import { Button, Icon, ListItem, TextField } from 'svelte-ux';
 	type locationType = Tables<'cw_locations'>;
 
 	let location: locationType = {
@@ -17,11 +17,17 @@
 		name: '',
 		owner_id: ''
 	};
+	let locationPermissions = [];
 
 	onMount(async () => {
 		const locationPromise = await fetch(`/api/v1/locations/${$page.params.location_id}`);
 		const locationData = await locationPromise.json();
 		location = locationData;
+
+		const locationPermissionPromise = await fetch(
+			`/api/v1/locations/${$page.params.location_id}/permissions`
+		);
+		locationPermissions = await locationPermissionPromise.json();
 	});
 
 	// Get current location using Geolocation API
@@ -124,19 +130,17 @@
 		</form>
 	</div>
 
-
-
-    <div
+	<div
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
 			<h2 class="text-base font-semibold leading-7 text-white">Location Permissions</h2>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
-                Control what users have view access to this location,
-            </p>
-            <p class="mt-1 text-sm leading-6 text-gray-400">
-                Granting users access to this location does not grant them access to devices by default.
-            </p>
+				Control what users have view access to this location,
+			</p>
+			<p class="mt-1 text-sm leading-6 text-gray-400">
+				Granting users access to this location does not grant them access to devices by default.
+			</p>
 		</div>
 
 		<form
@@ -165,9 +169,16 @@
 				};
 			}}
 		>
-			<div class="mb-2 grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
-				
-			</div>
+
+				<ul>
+					{#each locationPermissions as permission}
+						<ListItem title={permission.profile.email} subheading="Subheading" icon={mdiAccount}>
+                            <div slot="actions">
+                                <Button icon={mdiTrashCan} variant="fill" color="danger"/>
+                            </div>
+                        </ListItem>
+					{/each}
+				</ul>
 		</form>
 	</div>
 </div>

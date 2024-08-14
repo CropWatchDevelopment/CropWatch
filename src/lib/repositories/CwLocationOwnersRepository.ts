@@ -27,10 +27,11 @@ class CwLocationOwnersRepository {
     return data;
   }
 
-  async findAll(): Promise<CwLocationOwners[]> {
+  async findAll(id: number): Promise<CwLocationOwners[]> {
     const { data, error } = await this.client
       .from('cw_location_owners')
-      .select('*');
+      .select('*')
+      .eq('location_id', id);
 
     if (error) {
       console.error('Error fetching all cw_location_owners:', error.message);

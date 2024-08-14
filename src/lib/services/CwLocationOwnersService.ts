@@ -17,8 +17,8 @@ class CwLocationOwnersService {
     return await this.repository.findById(id);
   }
 
-  async getAll(): Promise<CwLocationOwners[]> {
-    return await this.repository.findAll();
+  async getAll(id: number): Promise<CwLocationOwners[]> {
+    return await this.repository.findAll(id);
   }
 
   async add(data: CwLocationOwnersInsert): Promise<CwLocationOwners | null> {
