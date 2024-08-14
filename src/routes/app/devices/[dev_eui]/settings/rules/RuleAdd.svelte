@@ -19,14 +19,14 @@
 	let actionRecipient = '';
 	let isTriggered = false;
 	let ruleGroupId = '';
-	let devEui = '';
+	const devEui: string = $page.params.dev_eui;
 	let profileId = '';
 	let emailArray: string[] = [];
 	let emailToAdd = '';
 	let operators = [
-		{ label: '=', value: '=' },
-		{ label: '>', value: '>' },
-		{ label: '<', value: '<' }
+        { label: '>', value: '>' },
+		{ label: '<', value: '<' },
+		{ label: '=', value: '= (not recommended)' },
 	];
 	let subjects: [{ label: string; value: string }] | [] = [];
 	let latestData;
@@ -37,7 +37,7 @@
 		{ label: 'Webhook', value: '3' }
 	];
 
-	const addSubCriterion = () => {
+	const addSubCriterion = () => {mdiCloseCircle
 		const newCriterion: ruleCriteria = {
 			subject: '',
 			operator: '',
@@ -61,7 +61,7 @@
 		const ruleData = {
 			name: ruleName,
 			babylon_notifier_type: babylonNotifierType,
-			action_recipient: actionRecipient,
+			action_recipient: emailArray.join(','),
 			is_triggered: isTriggered,
 			ruleGroupId: ruleGroupId,
 			dev_eui: devEui,
@@ -69,7 +69,9 @@
 			sub_criteria: subCriteria
 		};
 
-		const response = await fetch('/api/rules', {
+        console.log('submitted rule', ruleData);
+
+		const response = await fetch(`/api/v1/rules/${devEui}`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -78,9 +80,21 @@
 		});
 
 		if (response.ok) {
-			alert('Rule added successfully!');
+			notificationStore.NotificationTimedOpen({
+				title: 'Rule Created!',
+				description: 'Rule Successfully Created.',
+				timeout: 2000,
+				icon: '✅',
+				buttonText: 'OK'
+			});
 		} else {
-			alert('Failed to add rule.');
+			notificationStore.NotificationTimedOpen({
+				title: 'Failed to Create Rule.',
+				description: 'An error occurred.',
+				timeout: 2000,
+				icon: '❌',
+				buttonText: 'OK'
+			});
 		}
 	};
 
@@ -174,8 +188,6 @@
 				</div>
 			</DarkCard2>
 
-			<input type="hidden" bind:value={devEui} required />
-
 			<div class="px-10">
 				<hr />
 			</div>
@@ -189,6 +201,7 @@
 								label="Sensor Value"
 								bind:value={subCriterion.subject}
 								options={subjects}
+                                clearable={false}
 								required
 							/>
 							<SelectField

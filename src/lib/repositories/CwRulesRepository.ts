@@ -73,6 +73,7 @@ class CwRulesRepository {
     const { data, error } = await this.client
       .from('cw_rules')
       .insert(rule)
+      .select()
       .single();
 
     if (error) {

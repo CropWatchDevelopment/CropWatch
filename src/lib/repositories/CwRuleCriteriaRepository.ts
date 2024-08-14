@@ -44,6 +44,7 @@ class CwRuleCriteriaRepository {
     const { data, error } = await this.client
       .from('cw_rule_criteria')
       .insert(ruleCriteria)
+      .select()
       .single();
 
     if (error) {
