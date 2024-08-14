@@ -17,6 +17,10 @@ class CwRulesService {
     return await this.repository.findById(id);
   }
 
+  async getByDevEui(devEui: string): Promise<CwRules[] | null> {
+    return await this.repository.findByDevEui(devEui);
+  }
+
   async getAll(): Promise<CwRules[]> {
     return await this.repository.findAll();
   }

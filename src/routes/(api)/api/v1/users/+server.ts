@@ -1,8 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
-import CwLocationsService from '$lib/services/CwLocationsService';
-import CwDevicesService from '$lib/services/CwDevicesService';
-import CwDeviceTypeService from '$lib/services/CwDeviceTypeService';
 import type { Tables } from '$lib/types/supabaseSchema';
 import CwGatewaysService from '$lib/services/CwGatewaysService';
 

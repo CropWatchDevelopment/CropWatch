@@ -42,9 +42,7 @@
 		.subscribe();
 </script>
 
-<slot />
-
-<div class="absolute z-50 mt-5 w-[400px]">
+<div class="absolute z-50 mt-5">
 	<Notification actions="below" closeIcon open={notification.open}>
 		<div slot="icon" class="self-start">
 			{#if notification.icon}
@@ -62,3 +60,5 @@
 		</div>
 	</Notification>
 </div>
+<slot />
+

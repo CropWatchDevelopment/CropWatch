@@ -2,8 +2,8 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { Button, DatePickerField, NumberStepper, TextField, SelectField } from 'svelte-ux';
-	import { mdiCalendar } from '@mdi/js';
+	import { Button, DatePickerField, NumberStepper, TextField, SelectField, Icon } from 'svelte-ux';
+	import { mdiCalendar, mdiLock } from '@mdi/js';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
 
@@ -225,5 +225,20 @@
 				>
 			</div>
 		</form>
+	</div>
+
+	<!-- Device Danger Zone Section -->
+	<div
+		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
+	>
+		<div>
+			<h2 class="text-base font-semibold leading-7 text-white">Device Configuration</h2>
+			<p class="mt-1 text-sm leading-6 text-gray-400">Update Device Configuration OTA</p>
+		</div>
+
+		<p class="w-full text-center">
+			<Icon data={mdiLock} />
+			Section Coming in the future
+		</p>
 	</div>
 </div>
