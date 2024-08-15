@@ -172,7 +172,9 @@
     "signup": "サインアップ",
     "update_password": "パスワードの更新",
     "update_title": "パスワードの更新",
-    "password": "パスワード"
+    "password": "パスワード",
+    "full_name": "full name",
+    "full_name_placeholder": "山田太郎"
   },
   "dashboardCard": {
     "dashboard": "ダッシュボード",

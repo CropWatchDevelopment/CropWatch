@@ -11,10 +11,10 @@
 		mdiThemeLightDark,
 	} from '@mdi/js';
 	import { Avatar, Button, Icon, Menu, MenuItem, TextField, ThemeSwitch, Toggle } from 'svelte-ux';
-	import LanguageSelect from './LanguageSelect.svelte';
 	import { goto } from '$app/navigation';
 
 	let avatarUrl = browser ? (localStorage.getItem('avatarUrl') || null) : null;
+	let name = browser ? (localStorage.getItem('name') || null) : '';
 	let searchText: string = '';
 </script>
 
@@ -31,7 +31,7 @@
 				</Avatar>
 			</div>
 			<div class="hidden md:flex md:flex-col gap-1 text-center">
-				<p>Kevin Cantrell</p>
+				<p>{name}</p>
 				<hr class="h-px w-full bg-gray-200" />
 				<p class="text-xs text-secondary-100">System Administrator</p>
 			</div>
@@ -39,7 +39,7 @@
 
 		<Menu {open} on:close={toggleOff} explicitClose let:close class="z-50">
 			<div class="flex flex-col md:hidden gap-1 text-center">
-				<p>Kevin Cantrell</p>
+				<p>{name}</p>
 				<hr class="h-px w-1/2 mx-auto bg-gray-200" />
 				<p class="text-xs text-secondary-100">System Administrator</p>
 			</div>
@@ -55,7 +55,7 @@
 				<MenuItem on:click={close} icon={mdiHelpCircle}>Help</MenuItem>
 				<MenuItem icon={mdiExitRun}>
 					<form action="/auth/logout?/logout" method="post">
-						<Button type="submit" variant="none">Sign Out</Button>
+						<Button type="submit" on:click={() => { localStorage.clear() }} variant="none">Sign Out</Button>
 					</form>
 				</MenuItem>
 			</div>

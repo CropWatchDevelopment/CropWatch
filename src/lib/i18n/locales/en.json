@@ -176,7 +176,9 @@
     "register_title": "Register for a new CropWatch Account",
     "signup": "Sign up",
     "update_password": "Update Password",
-    "update_title": "Update your password to a new one"
+    "update_title": "Update your password to a new one",
+    "full_name": "Full Name",
+    "full_name_placeholder": "John Smith"
   },
   "rules": {
     "description": "Create a new rule, or edit existing rules below",

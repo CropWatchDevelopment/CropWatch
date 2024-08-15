@@ -22,15 +22,46 @@ module.exports = {
         "warning": "#EE8133",
         "danger": "#E93F33"
       },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       "dark": {
         "color-scheme": "dark",
         "primary": "#1C4E80",
         "secondary": "#7C909A",
         "accent": "#EA6947",
         "neutral": "#23282E",
-        "surface-100": "hsl(0 0% 21.1765%)",
-        "surface-200": "hsl(0 0% 12.9412%)",
-        "surface-300": "hsl(0 6.6667% 5.8824%)",
+        "surface-100": "hsl(0 0% 21.1765%)", // Background
+        "surface-200": "hsl(0 0% 12.9412%)", // Card Background
+        "surface-300": "hsl(0 6.6667% 5.8824%)", // Sidenav Background
         "info": "#0091D5",
         "success": "#6BB187",
         "warning": "#DBAE59",

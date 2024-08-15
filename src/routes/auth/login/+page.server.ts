@@ -27,9 +27,11 @@ export const actions = {
                 message: 'Server error. Try again later.'
             });
         }
+        const { data: user, error: user_err } = await locals.supabase.from('profiles').select().eq('id', data.user.id).single();
         return {
             status: 201,
             redirect: '/app/dashboard',
+            profile: user || null,
             avatarUrl: data.user?.user_metadata?.avatar_url,
         }
         throw redirect(301, '/app/dashboard');

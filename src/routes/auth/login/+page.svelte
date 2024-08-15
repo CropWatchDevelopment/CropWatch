@@ -75,6 +75,10 @@
 								if (result.data.avatarUrl) {
 									localStorage.setItem('avatarUrl', result.data.avatarUrl);
 								}
+								debugger;
+								if (result.data.profile != null) {
+									localStorage.setItem('name', result.data.profile.full_name);
+								}
 								notificationStore.NotificationTimedOpen({
 									title: 'Login Successful',
 									description: 'You have successfully logged in',
