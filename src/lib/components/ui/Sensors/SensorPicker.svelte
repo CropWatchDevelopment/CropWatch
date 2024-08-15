@@ -4,6 +4,7 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import moment from 'moment';
 	import CW_AIR_THVD from './CW_AIR_THVD/CW_AIR_THVD.svelte';
+	import CW_TRAFFIC from './CW_TRAFFIC/CW_TRAFFIC.svelte';
 	import SEEED_SENSECAP_S2103 from './SEEED_SENSECAP_S2103/SEEED_SENSECAP_S2103.svelte'; // CO2 Sensor
 	import SEEED_SENSECAP_S2120 from './SEEED_SENSECAP_S2120/SEEED_SENSECAP_S2120.svelte'; // Weather Station
 	import SEEED_SENSECAP_T1000 from './SEEED_SENSECAP_T1000/SEEED_SENSECAP_T1000.svelte'; // Tracking Badge
@@ -41,16 +42,6 @@
 		loading
 	{:then sensor}
 		<div class="relative m-1">
-			<!-- <div class="mx-2 flex flex-row">
-				<SensorHeader {sensorName} {lastSeen} {upload_interval} />
-				<span class="flex-grow" />
-				<Tooltip title={`${sensorName} History Download`}>
-					<Button icon={mdiDownload} size="lg" on:click={() => goto(`history`)} />
-				</Tooltip>
-				<Tooltip title={`${sensorName}'s Settings`}>
-					<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
-				</Tooltip>
-			</div> -->
 			{#if sensor.deviceType.data_table == 'cw_air_thvd'}
 				<CW_AIR_THVD data />
 			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensor.deviceType.data_table == 'cw_co2_uplinks'}
@@ -63,6 +54,8 @@
 				<SEEED_SENSECAP_T1000 {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2103_WaterLevel'}
 				<SEEED_SENSECAP_S2103_WATER_LEVEL {sensor} />
+			{:else if sensor.deviceType.data_table == 'cw_traffic2'}
+				<CW_TRAFFIC {sensor} />
 			{:else}
 				<Back />
 				<p>No sensor for type `{sensor.deviceType.data_table}` was specified</p>

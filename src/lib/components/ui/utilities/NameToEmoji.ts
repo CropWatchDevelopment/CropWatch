@@ -50,6 +50,12 @@ export const nameToEmoji = (name: string) => {
             return '🆘';
         case 'fire':
             return '🔥';
+        case 'people_count':
+            return '🧍';
+        case 'car_count':
+            return '🚗';
+        case 'bicycle_count':
+            return '🚲';
         default:
             return '';
     }

@@ -4,6 +4,7 @@ import CwLocationsService from '$lib/services/CwLocationsService';
 import CwDevicesService from '$lib/services/CwDevicesService';
 import CwDeviceTypeService from '$lib/services/CwDeviceTypeService';
 import type { Tables } from '$lib/types/supabaseSchema';
+import CwLocationOwnersService from '$lib/services/CwLocationOwnersService';
 
 type CwLocations = Tables<'cw_locations'>;
 type CwDevices = Tables<'cw_devices'>;
@@ -22,7 +23,7 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
   const cwDeviceTypeService = new CwDeviceTypeService(supabase);
 
   // Fetch main data
-  const locations: CwLocations[] = await cwLocationsService.getAllLocations();
+  const locations: CwLocations[] = await cwLocationsService.getAllLocations(session.user.id);
 
   if (!locations) {
     throw error(500, 'Error fetching locations');

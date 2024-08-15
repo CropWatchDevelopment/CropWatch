@@ -17,8 +17,8 @@ class CwLocationsService {
     return await this.repository.findById(location_id);
   }
 
-  async getAllLocations(): Promise<CwLocations[]> {
-    return await this.repository.findAll();
+  async getAllLocations(user_id: string): Promise<CwLocations[]> {
+    return await this.repository.findAll(user_id);
   }
 
   async addLocation(location: CwLocationsInsert): Promise<CwLocations | null> {

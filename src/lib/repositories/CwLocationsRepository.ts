@@ -25,15 +25,22 @@ class CwLocationsRepository {
     return data;
   }
 
-  async findAll(): Promise<CwLocations[]> {
-    const { data, error } = await this.client.from('cw_locations').select('*');
+  async findAll(user_id: string): Promise<CwLocations[]> {
+    const { data, error } = await this.client
+      .from('cw_location_owners')
+      .select('cw_locations(*)')
+      .eq('user_id', user_id)
+      .select('cw_locations(*)');
+    // const { data, error } = await this.client.from('cw_locations').select('*');
+    //pull cw_locaction out from each item in the array
+    const locations = data.map((item) => item.cw_locations);
 
     if (error) {
       console.error('Error fetching all locations:', error.message);
       return [];
     }
 
-    return data;
+    return locations;
   }
 
   async insert(location: CwLocations): Promise<CwLocations | null> {

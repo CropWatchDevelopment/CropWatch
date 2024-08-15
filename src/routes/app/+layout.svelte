@@ -5,18 +5,15 @@
 		AppLayout,
 		Button,
 		createLocaleSettings,
-		NavItem,
 		settings,
 		Settings,
 		ThemeInit,
-		ThemeSwitch,
 	} from 'svelte-ux';
 	import CROPWATCH_LOGO from '$lib/images/UI/logo.svg';
 	import UserHeaderWidget from '$lib/components/ui/Header/UserHeaderWidget.svelte';
 	import Back from '$lib/components/ui/Back.svelte';
 	import AlertMenu from '$lib/components/ui/Header/AlertMenu.svelte';
 	import NavMenu from '$lib/components/ui/SideNav/NavMenu.svelte';
-	import { localeStore } from 'svelte-ux/utils/locale';
 
 	const s = settings({
 		localeFormats: {

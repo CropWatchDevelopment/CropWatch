@@ -60,7 +60,7 @@
 	</h2>
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">
 		{#each location.devices as device}
-			<Collapse classes={{ root: 'shadow-md pr-2 bg-primary' }}>
+			<Collapse classes={{ root: 'shadow-md pr-2 bg-surface-200/50' }}>
 				<DeviceDataList data={$devicesLatestData[device.dev_eui]} />
 				<div
 					slot="trigger"

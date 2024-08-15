@@ -265,6 +265,9 @@
   "filter": "フィルター",
   "battery": "バッテリー",
   "battery_level": "バッテリー",
+  "car_count": "車",
+  "people_count": "人",
+  "bicycle_count": "自転車",
   "permissions": {
     "permissions": "デバイス権限",
     "email": "Eメール",

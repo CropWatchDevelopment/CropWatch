@@ -11,7 +11,8 @@ export function convertObject(input: InputObject): OutputObject {
       'temperature', 'temperatureC', 'humidity', 'dewPointC', 'vpd', 'rainfall', 'pressure',
       'wind_speed', 'wind_direction', 'lux', 'uv', 'co2_level', 'soil_N', 'soil_P',
       'soil_K', 'soil_PH', 'soil_EC', 'soil_moisture', 'soil_temperatureC', 'created_at',
-      'battery_level'
+      'battery_level', 'people_count', 'car_count', 'bicycle_count', 'motorcycle_count',
+
     ];
   
     const output: OutputObject = {};

@@ -42,6 +42,12 @@ export const nameToNotation = (name: string) => {
             return '%';
         case 'sos':
             return 'SOS';
+        case 'people_count':
+            return 'People';
+        case 'car_count':
+            return 'Cars';
+        case 'bicycle_count':
+            return 'Bicycles';
         default:
             return '';
     }

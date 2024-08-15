@@ -4,6 +4,7 @@ import CwLocationsService from '$lib/services/CwLocationsService';
 import CwDevicesService from '$lib/services/CwDevicesService';
 import CwDeviceTypeService from '$lib/services/CwDeviceTypeService';
 import type { Tables } from '$lib/types/supabaseSchema';
+import CwLocationOwnersService from '$lib/services/CwLocationOwnersService';
 
 type CwLocations = Tables<'cw_locations'>;
 type CwDevices = Tables<'cw_devices'>;
@@ -22,11 +23,18 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     const includeDevices = url.searchParams.get('includeDevices') === 'true' || includeDevicesTypes;
 
     const cwLocationsService = new CwLocationsService(supabase);
+    const cwLocationOwnersService = new CwLocationOwnersService(supabase);
     const cwDevicesService = new CwDevicesService(supabase);
     const cwDeviceTypeService = new CwDeviceTypeService(supabase);
 
     // Fetch main data
     const location: CwLocations = await cwLocationsService.getLocationById(location_id);
+
+    const locationOwner = await cwLocationOwnersService.getById(location.location_id);
+
+    if (locationOwner?.user_id !== session.user.id) {
+        throw error(403, 'Unauthorized');
+    }
 
     if (!location) {
         throw error(500, 'Error fetching locations');

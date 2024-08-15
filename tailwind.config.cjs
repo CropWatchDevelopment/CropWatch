@@ -12,41 +12,18 @@ module.exports = {
     themes: {
       "light": {
         "color-scheme": "light",
-        "primary": "#45AEEE",
-        "secondary": "#E8488A",
-        "accent": "#FFF232",
-        "neutral": "#1a1a1a",
-        "surface-100": "oklch(100% 0 0)",
-        "info": "#4AA8C0",
-        "success": "#823290",
-        "warning": "#EE8133",
-        "danger": "#E93F33"
+        "primary": "hsl(215.4061 100% 50%)",
+        "secondary": "hsl(246.9231 47.2727% 43.1373%)",
+        "accent": "hsl(310.4132 49.3878% 51.9608%)",
+        "neutral": "hsl(217.0213 92.1569% 10%)",
+        "info": "hsl(191.5385 92.8571% 78.0392%)",
+        "success": "hsl(181.5 46.5116% 66.2745%)",
+        "warning": "hsl(32.3077 61.9048% 83.5294%)",
+        "danger": "hsl(0 63.3803% 72.1569%)",
+        "surface-100": "hsl(0 0% 100%)",
+        "surface-200": "hsl(216.6667 100% 92.9412%)",
+        "surface-300": "hsl(218.8235 43.5897% 92.3529%)"
       },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -253,6 +253,9 @@
   "battery_level": "Battery Level",
   "wind_speed": "Wind Speed",
   "wind_direction": "Wind Direction",
+  "car_count": "Car Count",
+  "people_count": "People Count",
+  "bicycle_count": "Bicycle Count",
   "auth": {
     "back_to_login": "Go Back to Login Page",
     "check_email": "Check your email to confirm.",
