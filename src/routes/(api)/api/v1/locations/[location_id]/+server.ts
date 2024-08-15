@@ -30,12 +30,6 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     // Fetch main data
     const location: CwLocations = await cwLocationsService.getLocationById(location_id);
 
-    const locationOwner = await cwLocationOwnersService.getById(location.location_id);
-
-    if (locationOwner?.user_id !== session.user.id) {
-        throw error(403, 'Unauthorized');
-    }
-
     if (!location) {
         throw error(500, 'Error fetching locations');
     }
