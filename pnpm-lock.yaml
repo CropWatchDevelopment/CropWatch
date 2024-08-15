@@ -24,6 +24,12 @@ importers:
         specifier: ^0.74.0
         version: 0.74.0(postcss-load-config@4.0.2(postcss@8.4.40))(postcss@8.4.40)(svelte@4.2.18)
     devDependencies:
+      '@event-calendar/core':
+        specifier: ^3.4.0
+        version: 3.4.0
+      '@event-calendar/day-grid':
+        specifier: ^3.4.0
+        version: 3.4.0
       '@fontsource/fira-mono':
         specifier: ^5.0.0
         version: 5.0.13
@@ -432,6 +438,12 @@ packages:
   '@eslint/object-schema@2.1.4':
     resolution: {integrity: sha512-BsWiH1yFGjXXS2yvrf5LyuoSIIbPrGUWob917o+BTKuZ7qJdxX8aJLRxs1fS9n6r7vESrq1OUqb68dANcFXuQQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@event-calendar/core@3.4.0':
+    resolution: {integrity: sha512-b7Kx214hRs6MNfRbnN/L29kgWsBI+Zv2KrU0Gp0H/alqN9yJR+6YNaqcaAo3NV4DiCo+9moBOlZ4KbbpZhnulQ==}
+
+  '@event-calendar/day-grid@3.4.0':
+    resolution: {integrity: sha512-BlZLM4fiqb4kPtis4tX5jg8XcbhmIOesgc8qhUjooEmWcPc8GZvW4Ob0UYt0Js/HjX+u4IvNdVUsNDzJe8o2Dw==}
 
   '@floating-ui/core@1.6.5':
     resolution: {integrity: sha512-8GrTWmoFhm5BsMZOTHeGD2/0FLKLQQHvO/ZmQga4tKempYRLz8aqJGqXVuQgisnMObq2YZ2SgkwctN1LOOxcqA==}
@@ -2723,6 +2735,15 @@ snapshots:
   '@eslint/js@9.8.0': {}
 
   '@eslint/object-schema@2.1.4': {}
+
+  '@event-calendar/core@3.4.0':
+    dependencies:
+      svelte: 4.2.18
+
+  '@event-calendar/day-grid@3.4.0':
+    dependencies:
+      '@event-calendar/core': 3.4.0
+      svelte: 4.2.18
 
   '@floating-ui/core@1.6.5':
     dependencies:

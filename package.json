@@ -16,6 +16,8 @@
 		"test:unit": "vitest"
 	},
 	"devDependencies": {
+		"@event-calendar/core": "^3.4.0",
+		"@event-calendar/day-grid": "^3.4.0",
 		"@fontsource/fira-mono": "^5.0.0",
 		"@neoconfetti/svelte": "^2.0.0",
 		"@playwright/test": "^1.28.1",
