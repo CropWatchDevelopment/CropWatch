@@ -5,6 +5,11 @@ import 'highcharts/css/highcharts.css';
 
 HighchartsMore(Highcharts);
 SolidGauge(Highcharts);
+Highcharts.setOptions({
+    time: {
+      timezone: 'Asia/Tokyo' // Set your desired timezone
+    }
+  });
 
 export default (node: HTMLElement, config: Highcharts.Options) => {
     // Now, since the modules are already initialized, you can directly create the chart.

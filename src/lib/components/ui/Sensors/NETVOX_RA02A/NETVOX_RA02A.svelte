@@ -4,12 +4,15 @@
 	import TempHumidityCard from '../../Cards/TempHumidityCard.svelte';
 	import DarkCard from '../../Cards/DarkCard.svelte';
 	import { getChartConfig } from './chart_tempConfig';
+	import moment from 'moment';
 
 	export let sensor = null;
 
 	// Prepare data for the chart
 	const temperatureData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.temperatureC]);
-    const temp = sensor.data.at(-1).temperatureC;
+    const temp = sensor.data.at(0).temperatureC;
+	const time = new Date(sensor.data.at(0).created_at)
+	debugger;
 
 	// Get Highcharts configuration
 	const tempChartConfig = getChartConfig(temperatureData);
