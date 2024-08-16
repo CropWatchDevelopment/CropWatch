@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Tables } from '$lib/types/supabaseSchema';
 
+type Profile = Tables<'profiles'>;
 type CwDeviceOwners = Tables<'cw_device_owners'>;
 type CwDeviceOwnersInsert = Tables<'cw_device_owners'>;
 type CwDeviceOwnersUpdate = Tables<'cw_device_owners'>;
@@ -39,6 +40,19 @@ class CwDeviceOwnersRepository {
     }
 
     return data;
+  }
+  
+  async findDeviceOwnerByDevEui(): Promise<Profile[]> {
+    const { data, error } = await this.client
+      .from('profiles')
+      .select('*, cw_device_owners(dev_eui, user_id, cw_devices(dev_eui, name))')
+
+    if (error) {
+      console.error('Error fetching owners by device ID:', error.message);
+      return [];
+    }
+
+     return data;
   }
 
   async findAll(): Promise<CwDeviceOwners[]> {
