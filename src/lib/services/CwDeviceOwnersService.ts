@@ -18,7 +18,7 @@ class CwDeviceOwnersService {
         return await this.repository.findById(id);
     }
 
-    async getByDeviceByDevEui(dev_eui: string): Promise<CwDeviceOwners[]> {
+    async getDeviceByDevEui(dev_eui: string): Promise<CwDeviceOwners[]> {
         return await this.repository.findByDeviceEui(dev_eui);
     }
 

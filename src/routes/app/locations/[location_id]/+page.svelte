@@ -16,6 +16,13 @@
 	let innerWidth = 0;
 	let innerHeight = 200;
 	let bounds: [number, number] | [] = [];
+	let heatLatLngData = [
+		// [31.699393, 131.124394, 0.8], // [lat, lng, intensity]
+		// [31.699393, 131.124394, 0.5],
+		// [31.699393, 131.124394, 1.0],
+		// [31.699393, 131.124394, 0.7],
+		// [31.699185, 131.124394, 0.6]
+	];
 
 	onMount(() => {
 		fetchInitialData();
@@ -27,7 +34,7 @@
 			const data = await res.json();
 			location = data;
 			await fetchInitialDeviceData();
-			bounds = location.devices.map(d => [d.latestData.lat, d.latestData.long]);
+			bounds = location.devices.map((d) => [d.latestData.lat, d.latestData.long]);
 			loading = false;
 		} catch (e) {
 			loading = false;
@@ -55,8 +62,38 @@
 				...device,
 				latestData: devicesData[device.dev_eui]
 			}));
+			debugger;
+			heatLatLngData = location.devices.map((device) => {
+				debugger;
+				return [
+					device.lat,
+					device.long,
+					//(device.latestData?.temperature - -40) / 80 - -40 || 0
+					// normalizeTemperature(device.latestData?.temperature)
+					normalizeCO2(device.latestData?.co2_level)
+				];
+			});
 		}
 	});
+
+	function normalizeTemperature(temp) {
+		// Normalize temperature with a range of -40 to 80
+		const minTemp = -40;
+		const maxTemp = 40;
+
+		if (temp === undefined || temp === null) return 0; // Handle missing temperature
+
+		return (temp - minTemp) / (maxTemp - minTemp);
+	}
+	function normalizeCO2(co2) {
+		// Normalize CO2 with a range of 400 to 10,000 ppm
+		const minCO2 = 400;
+		const maxCO2 = 900;
+
+		if (co2 === undefined || co2 === null) return 0; // Handle missing CO2
+
+		return (co2 - minCO2) / (maxCO2 - minCO2);
+	}
 </script>
 
 <svelte:head>
@@ -65,7 +102,7 @@
 <svelte:window bind:innerWidth bind:innerHeight />
 
 <!-- TITLE and Filter -->
-<div class="flex flex-row my-3">
+<div class="my-3 flex flex-row">
 	<!-- TITLE -->
 	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
 		<Icon data={mdiMapMarker} class="h-6 w-6" />
@@ -73,41 +110,51 @@
 	</h2>
 	<span class="flex-grow" />
 	<Tooltip title={`${location?.name}'s Location Settings`}>
-		<Button icon={mdiCog} size="lg" on:click={() => goto(`/app/locations/${location_id}/settings`)} />
+		<Button
+			icon={mdiCog}
+			size="lg"
+			on:click={() => goto(`/app/locations/${location_id}/settings`)}
+		/>
 	</Tooltip>
 </div>
 
 <!-- DEVICE MAP -->
 <div class="mx-4 mb-4">
-    {#if !loading && location.lat && location.long}
-        <Leaflet view={[location.lat, location.long]} {bounds} zoom={20} height={innerHeight / 3}>
-            {#each location.devices as device}
-                {#if device.latestData.lat && device.latestData.long}
-                    <Marker latLng={[device.latestData.lat, device.latestData.long]}>
-                        <Button
-                            icon={mdiMapMarker}
-                            variant="none"
-                            on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
-                            class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
-                        />
-                    </Marker>
-                {:else}
-                    <Marker latLng={[device.lat, device.long]}>
-                        <Button
-                            icon={mdiMapMarker}
-                            variant="none"
-                            on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
-                            class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
-                        />
-                    </Marker>
-                {/if}
-            {/each}
-        </Leaflet>
-    {/if}
+	{#if !loading && location.lat && location.long}
+		<Leaflet
+			view={[location.lat, location.long]}
+			{bounds}
+			{heatLatLngData}
+			zoom={20}
+			height={innerHeight / 2.5}
+		>
+			{#each location.devices as device}
+				{#if device.latestData.lat && device.latestData.long}
+					<Marker latLng={[device.latestData.lat, device.latestData.long]}>
+						<Button
+							icon={mdiMapMarker}
+							variant="none"
+							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+						/>
+					</Marker>
+				{:else}
+					<Marker latLng={[device.lat, device.long]}>
+						<Button
+							icon={mdiMapMarker}
+							variant="none"
+							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+						/>
+					</Marker>
+				{/if}
+			{/each}
+		</Leaflet>
+	{/if}
 </div>
 
 <!-- LOCATION DEVICES -->
-<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2">
+<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-4">
 	{#if loading}
 		<div class="flex items-center justify-center">
 			<div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>

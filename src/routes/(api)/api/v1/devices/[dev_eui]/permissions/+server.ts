@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
   const cwDeviceOwnersService = new CwDeviceOwnersService(supabase);
   const cwProfileService = new CwProfileService(supabase);
 
-  const devicePermissions = await cwDeviceOwnersService.getByDeviceId(params.dev_eui);
+  const devicePermissions = await cwDeviceOwnersService.getDeviceByDevEui(params.dev_eui);
   if (!devicePermissions) {
     throw error(500, 'No device found with that dev_eui');
   }

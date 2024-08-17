@@ -2,6 +2,7 @@
 	import { browser } from '$app/environment';
 	import 'leaflet/dist/leaflet.css';
 	import { onDestroy, onMount, setContext, createEventDispatcher } from 'svelte';
+	import type { HeatLayer } from './leafletHeatLayer';
 
 	let L = undefined;
 
@@ -11,22 +12,39 @@
 	export let disableZoom: boolean = false;
 	export let width: number = 100;
 	export let height: number = 100;
+	export let heatLatLngData: [number, number, number][] = [];
 
 	let map: L.Map | undefined;
+	let heatLayer: any | undefined;
 	let mapElement: HTMLDivElement;
 	const dispatch = createEventDispatcher();
 
 	onMount(async () => {
 		if (browser) {
+			// Dynamically import Leaflet
 			L = await import('leaflet');
+			// await import('leaflet/dist/leaflet.css');
+			// Now that Leaflet (L) is defined, import other dependencies
+			heatLayer = (await import('./leafletHeatLayer.js')).heatLayer;
+			await import('./simpleheat');
+
+			// Initialize the map
 			map = L.map(mapElement);
+
+			// Add tile layer
 			L.tileLayer('http://{s}.google.com/vt?lyrs=s,h&x={x}&y={y}&z={z}', {
 				maxZoom: 18,
 				subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 			}).addTo(map);
 
+			// Update zoom and pan ability
 			updateZoomPanAbility();
 
+			// Create and add heat layer
+			const heatmap = heatLayer(heatLatLngData, { radius: 25 });
+			heatmap.addTo(map);
+
+			// Handle map click events
 			map.on('click', function (e: L.LeafletMouseEvent) {
 				const { lat, lng } = e.latlng;
 				dispatch('mapclick', { latitude: lat, longitude: lng });
@@ -88,7 +106,7 @@
 </script>
 
 <div
-	class="relative rounded-xl z-40"
+	class="relative z-40 rounded-xl"
 	style={`width: ${width}%; height: ${height}px;`}
 	bind:this={mapElement}
 >

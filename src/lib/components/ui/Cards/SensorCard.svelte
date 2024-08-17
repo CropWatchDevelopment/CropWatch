@@ -47,7 +47,7 @@
 			<!-- Title and status -->
 			<div class="flex w-full items-center space-x-1">
 				<div>
-					<p class="text-lg">{name}</p>
+					<p class="text-md">{name}</p>
 				</div>
 			</div>
 
