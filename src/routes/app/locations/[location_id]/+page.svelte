@@ -6,23 +6,21 @@
 	import type { Tables } from '$lib/types/supabaseSchema';
 	import { mdiCog, mdiMapMarker } from '@mdi/js';
 	import { onMount } from 'svelte';
-	import { Button, Icon, Tooltip } from 'svelte-ux';
+	import { Button, Icon, Radio, Tooltip } from 'svelte-ux';
 	import devicesStore, { updateDeviceData } from '$lib/stores/devicesStore';
 	import { goto } from '$app/navigation';
+	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
+	import { convertObject } from '$lib/components/ui/utilities/ConvertSensorDataObject';
 
 	let location_id = $page.params.location_id;
 	let loading: boolean = true;
 	let location: Tables<'cw_locations'>;
 	let innerWidth = 0;
 	let innerHeight = 200;
-	let bounds: [number, number] | [] = [];
-	let heatLatLngData = [
-		// [31.699393, 131.124394, 0.8], // [lat, lng, intensity]
-		// [31.699393, 131.124394, 0.5],
-		// [31.699393, 131.124394, 1.0],
-		// [31.699393, 131.124394, 0.7],
-		// [31.699185, 131.124394, 0.6]
-	];
+	let bounds: [number, number][] = [];
+	let heatLatLngData: [number, number, number][] = [];
+	let heatMapSubjectKey: string | null = null;
+	let latestDataInterestingObjects: string[] = [];
 
 	onMount(() => {
 		fetchInitialData();
@@ -36,6 +34,7 @@
 			await fetchInitialDeviceData();
 			bounds = location.devices.map((d) => [d.latestData.lat, d.latestData.long]);
 			loading = false;
+			updateHeatLatLngData(); // Initial update of heat map data
 		} catch (e) {
 			loading = false;
 			console.error('Failed to fetch locations', e);
@@ -52,6 +51,13 @@
 		for (let device of location.devices) {
 			const latestData = await getDeviceLatestData(device.dev_eui);
 			updateDeviceData(latestData);
+			const obj = convertObject(latestData);
+			Object.keys(obj).forEach((key) => {
+				if (!latestDataInterestingObjects.includes(key)) {
+					latestDataInterestingObjects.push(key);
+				}
+			});
+			latestDataInterestingObjects = [...latestDataInterestingObjects.filter((key) => key !== 'created_at')];
 		}
 	}
 
@@ -62,37 +68,50 @@
 				...device,
 				latestData: devicesData[device.dev_eui]
 			}));
-			debugger;
-			heatLatLngData = location.devices.map((device) => {
-				debugger;
-				return [
-					device.lat,
-					device.long,
-					//(device.latestData?.temperature - -40) / 80 - -40 || 0
-					// normalizeTemperature(device.latestData?.temperature)
-					normalizeCO2(device.latestData?.co2_level)
-				];
-			});
+			updateHeatLatLngData(); // Recalculate heatLatLngData whenever device data changes
 		}
 	});
 
-	function normalizeTemperature(temp) {
-		// Normalize temperature with a range of -40 to 80
-		const minTemp = -40;
-		const maxTemp = 40;
+	// Update heatLatLngData based on selected heatMapSubjectKey
+	function updateHeatLatLngData() {
+		if (!heatMapSubjectKey || !location || !location.devices) return;
 
-		if (temp === undefined || temp === null) return 0; // Handle missing temperature
+		heatLatLngData = location.devices.map((device) => {
+			const value = device.latestData[heatMapSubjectKey];
+			let normalizedValue = 0;
 
-		return (temp - minTemp) / (maxTemp - minTemp);
+			// Apply normalization based on the selected key
+			if (heatMapSubjectKey === 'temperature') {
+				normalizedValue = normalizeTemperature(value);
+			} else if (heatMapSubjectKey === 'co2_level') {
+				normalizedValue = normalizeCO2(value);
+			} else if (heatMapSubjectKey === 'humidity') {
+				normalizedValue = normalizeHumidity(value);
+			} else if (value !== undefined && value !== null) {
+				normalizedValue = Number(value); // Default behavior for other fields
+			}
+			return [device.lat, device.long, normalizedValue];
+		});
+
+		console.log(heatLatLngData);
+		return heatLatLngData;
 	}
-	function normalizeCO2(co2) {
-		// Normalize CO2 with a range of 400 to 10,000 ppm
+
+	function normalizeTemperature(temp: number) {
+		const minTemp = 0;
+		const maxTemp = 50;
+		return temp !== undefined && temp !== null ? (temp - minTemp) / (maxTemp - minTemp) : 0;
+	}
+
+	function normalizeCO2(co2: number) {
 		const minCO2 = 400;
-		const maxCO2 = 900;
-
-		if (co2 === undefined || co2 === null) return 0; // Handle missing CO2
-
-		return (co2 - minCO2) / (maxCO2 - minCO2);
+		const maxCO2 = 700;
+		return co2 !== undefined && co2 !== null ? (co2 - minCO2) / (maxCO2 - minCO2) : 0;
+	}
+	function normalizeHumidity(humidity: number) {
+		const minHumidity = 0;
+		const maxHumidity = 100;
+		return humidity !== undefined && humidity !== null ? (humidity - minHumidity) / (maxHumidity - minHumidity) : 0;
 	}
 </script>
 
@@ -118,6 +137,25 @@
 	</Tooltip>
 </div>
 
+<!-- Render the radio buttons -->
+<DarkCard2>
+	{#if latestDataInterestingObjects.length > 0}
+		<div class="flex flex-row flex-wrap justify-between">
+			{#each latestDataInterestingObjects as key}
+				<Radio
+					name={key}
+					bind:group={heatMapSubjectKey}
+					value={key}
+					fullWidth
+					on:change={updateHeatLatLngData}
+				>{key}</Radio>
+			{/each}
+		</div>
+	{:else}
+		<p>No data available for selection</p>
+	{/if}
+</DarkCard2>
+
 <!-- DEVICE MAP -->
 <div class="mx-4 mb-4">
 	{#if !loading && location.lat && location.long}
@@ -125,7 +163,7 @@
 			view={[location.lat, location.long]}
 			{bounds}
 			{heatLatLngData}
-			zoom={20}
+			zoom={18}
 			height={innerHeight / 2.5}
 		>
 			{#each location.devices as device}
@@ -154,7 +192,7 @@
 </div>
 
 <!-- LOCATION DEVICES -->
-<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-3 lg:grid-cols-4">
+<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
 	{#if loading}
 		<div class="flex items-center justify-center">
 			<div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>

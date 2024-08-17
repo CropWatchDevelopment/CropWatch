@@ -26,7 +26,7 @@
 				icon={mdiViewDashboard}
 				currentUrl={$page.url}
 				path="/app/dashboard"
-				classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+				classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 			/>
 		</li>
 		<li>
@@ -35,7 +35,7 @@
 				icon={mdiCog}
 				currentUrl={$page.url}
 				path="/app/general-settings"
-				classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+				classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/0 text-accent' }}
 			/>
 		</li>
 
@@ -47,7 +47,7 @@
 					currentUrl={$page.url}
 					path="/app/locations"
 					icon={mdiMapMarkerMultiple}
-					classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 				/>
 			</li>
 		</ul>
@@ -60,7 +60,7 @@
 					currentUrl={$page.url}
 					path="/app/devices"
 					icon={mdiDevices}
-					classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 				/>
 			</li>
 		</ul>
@@ -73,7 +73,7 @@
 					currentUrl={$page.url}
 					path="/app/rules"
 					icon={mdiFunction}
-					classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 				/>
 			</li>
 		</ul>
@@ -86,7 +86,7 @@
 					currentUrl={$page.url}
 					path="/app/gateways"
 					icon={mdiRouterWireless}
-					classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 				/>
 			</li>
 		</ul>
@@ -99,7 +99,7 @@
 					currentUrl={$page.url}
 					path="/app/users"
 					icon={mdiAccountGroup}
-					classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
+					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 				/>
 			</li>
 		</ul>

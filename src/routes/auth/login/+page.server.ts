@@ -28,6 +28,7 @@ export const actions = {
             });
         }
         const { data: user, error: user_err } = await locals.supabase.from('profiles').select().eq('id', data.user.id).single();
+        await locals.supabase.from('profiles').update({ last_login: new Date() }).eq('id', data.user.id);
         return {
             status: 201,
             redirect: '/app/dashboard',

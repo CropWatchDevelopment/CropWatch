@@ -7,7 +7,6 @@
 	import SEEED_S2120_IMG from '$lib/images/devices/seeed_sensecap_s2120.png';
 	import SEEED_S2103_IMG from '$lib/images/devices/seeed_sensecap_s210x.png';
 	import { _ } from 'svelte-i18n';
-	import { nameToNotation } from '../utilities/NameToNotation';
 	import DeviceDataList from './Dashboard/DeviceDataList.svelte';
 	import devicesStore from '$lib/stores/devicesStore';
 

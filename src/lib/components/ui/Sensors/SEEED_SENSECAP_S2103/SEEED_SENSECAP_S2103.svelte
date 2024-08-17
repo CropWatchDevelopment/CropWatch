@@ -25,8 +25,8 @@
 		</DarkCard>
 	{/if}
 	<TempHumidityCard
-		temperature={sensor.data.at(-1).temperature}
-		humidity={sensor.data.at(-1).humidity}
+		temperature={sensor.data.at(0).temperature}
+		humidity={sensor.data.at(0).humidity}
 	/>
 </div>
 <DarkCard title="Temperature & Humidity">
