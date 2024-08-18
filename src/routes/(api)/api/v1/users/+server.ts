@@ -52,7 +52,8 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
           ...acc[user.email].devices,
           ...sharedDevices.map(deviceOwner => ({
             dev_eui: deviceOwner.dev_eui,
-            name: deviceOwner.cw_devices ? deviceOwner.cw_devices.name : null
+            name: deviceOwner.cw_devices ? deviceOwner.cw_devices.name : null,
+            last_login: deviceOwner.cw_devices ? deviceOwner.cw_devices.last_login : null,
           }))
         ];
       } else {
@@ -61,7 +62,8 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
           email: user.email,
           devices: sharedDevices.map(deviceOwner => ({
             dev_eui: deviceOwner.dev_eui,
-            name: deviceOwner.cw_devices ? deviceOwner.cw_devices.name : null
+            name: deviceOwner.cw_devices ? deviceOwner.cw_devices.name : null,
+            last_login: deviceOwner.cw_devices ? deviceOwner.cw_devices.last_login : null,
           }))
         };
       }
