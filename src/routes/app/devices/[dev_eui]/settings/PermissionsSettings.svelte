@@ -75,8 +75,8 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Device Permissions</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">Setup What users can/Cannot see or do</p>
+			<h2 class="text-base font-semibold leading-7 text-surface-900">Device Permissions</h2>
+			<p class="mt-1 text-sm leading-6 text-surface-600">Setup What users can/Cannot see or do</p>
 		</div>
 
 		<form

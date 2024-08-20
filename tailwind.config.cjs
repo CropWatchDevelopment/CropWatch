@@ -13,16 +13,17 @@ module.exports = {
       "light": {
         "color-scheme": "light",
         "primary": "hsl(215.4061 100% 50%)",
-        "secondary": "hsl(246.9231 47.2727% 43.1373%)",
+        "secondary": "hsl(0 0% 0%)",
         "accent": "hsl(310.4132 49.3878% 51.9608%)",
         "neutral": "hsl(217.0213 92.1569% 10%)",
         "info": "hsl(191.5385 92.8571% 78.0392%)",
         "success": "hsl(181.5 46.5116% 66.2745%)",
         "warning": "hsl(32.3077 61.9048% 83.5294%)",
         "danger": "hsl(0 63.3803% 72.1569%)",
-        "surface-100": "hsl(0 0% 100%)",
-        "surface-200": "hsl(216.6667 100% 92.9412%)",
-        "surface-300": "hsl(218.8235 43.5897% 92.3529%)"
+        "surface-100": "hsl(217.5 26.6667% 94.1176%)",
+        "surface-200": "hsl(218.5714 42.4242% 87.0588%)",
+        "surface-300": "hsl(218.7342 67.5214% 77.0588%)",
+        "surface": "hsl(0 0% 0%)"
       },
 
 
@@ -45,7 +46,8 @@ module.exports = {
         "danger": "#AC3E31",
         "--rounded-box": "0.25rem",
         "--rounded-btn": ".125rem",
-        "--rounded-badge": ".125rem"
+        "--rounded-badge": ".125rem",
+        "surface": "hsl(0 0% 100%)"
       }
     },
   },

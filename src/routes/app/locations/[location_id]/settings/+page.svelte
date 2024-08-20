@@ -194,7 +194,6 @@
 			use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 				return async ({ result, update }) => {
 					if (result.type === 'success') {
-						debugger;
 						result.data;
 						locationPermissions.push(result.data);
 						locationPermissions = locationPermissions;

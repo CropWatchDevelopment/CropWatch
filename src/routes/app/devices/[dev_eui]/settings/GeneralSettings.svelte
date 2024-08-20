@@ -100,8 +100,8 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Device Basic Info</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">Setup basic device data</p>
+			<h2 class="text-base font-semibold leading-7 text-surface-900">Device Basic Info</h2>
+			<p class="mt-1 text-sm leading-6 text-surface-600">Setup basic device data</p>
 		</div>
 
 		<form action="?/updateDeviceInfo" method="POST" class="md:col-span-2">
@@ -177,7 +177,7 @@
 					<Button
 						type="button"
 						on:click={getCurrentLocation}
-						class="rounded bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-400"
+						class="rounded bg-blue-500 px-4 py-2 font-semibold text-surface-900 hover:bg-blue-400"
 					>
 						Use Current Location
 					</Button>
@@ -189,7 +189,7 @@
 					type="submit"
 					name="action"
 					value="updateDeviceInfo"
-					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-surface-900 shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
 					>Save</Button
 				>
 			</div>
@@ -201,8 +201,8 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Device Location</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">Select the location of the device</p>
+			<h2 class="text-base font-semibold leading-7 text-surface-900">Device Location</h2>
+			<p class="mt-1 text-sm leading-6 text-surface-600">Select the location of the device</p>
 		</div>
 
 		<form action="?/updateLocation" method="POST" class="md:col-span-2">
@@ -220,7 +220,7 @@
 					type="submit"
 					name="action"
 					value="updateLocation"
-					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-surface-900 shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
 					disabled={errors.location_id !== ''}>Save Location</Button
 				>
 			</div>
@@ -232,8 +232,8 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Device Configuration</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">Update Device Configuration OTA</p>
+			<h2 class="text-base font-semibold leading-7 text-surface-900">Device Configuration</h2>
+			<p class="mt-1 text-sm leading-6 text-surface-600">Update Device Configuration OTA</p>
 		</div>
 
 		<p class="w-full text-center">

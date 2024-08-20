@@ -81,7 +81,7 @@
 	<!-- Centering the button and text inside the container -->
 	<div class="flex flex-col justify-center items-center" style="width: {size}em;">
 		<label
-			class="align-center rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20"
+			class="align-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20"
 			for="single"
 		>
 			{uploading ? 'Uploading ...' : 'Change avatar'}

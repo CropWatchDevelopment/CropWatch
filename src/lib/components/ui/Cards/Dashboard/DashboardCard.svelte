@@ -84,7 +84,7 @@
 												2
 											)}
 										</span>
-										<small class="">
+										<small class="text-secondary-700">
 											<sup>{device.deviceType.primary_data_notation}</sup>
 										</small>
 									</p>
@@ -96,7 +96,7 @@
 													device.deviceType.secondary_data
 												].toFixed(2)}
 											</span>
-											<small class="">
+											<small class="text-secondary-700">
 												<sup>{device.deviceType.secondary_data_notation}</sup>
 											</small>
 										</p>

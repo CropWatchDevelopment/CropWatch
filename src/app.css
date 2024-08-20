@@ -2,7 +2,7 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 @import '@fontsource/fira-mono';
-@import 'highcharts/css/highcharts.css';
+/* @import 'highcharts/css/highcharts.css'; */
 
 html {
     @apply bg-surface-200 accent-primary scroll-smooth;
@@ -59,6 +59,10 @@ html {
     pointer-events: none;
     z-index: 9999;
 }
-.highcharts-background {
+/* .highcharts-background {
     fill: transparent !important;
+} */
+
+.highcharts-plot-band, .highcharts-pane {
+  fill-opacity: 0.9 !important;
 }

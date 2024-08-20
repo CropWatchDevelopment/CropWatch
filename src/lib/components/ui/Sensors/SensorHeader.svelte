@@ -15,7 +15,7 @@
 
 <div class="flex flex-row">
 	<div class="flex w-full flex-col">
-		<div class="flex flex-row items-center text-neutral-content">
+		<div class="flex flex-row items-center text-surface-900">
 			<Tooltip title={isActiveRecently ? 'Active' : 'Inactive'}>
 				<img
 					src={isActiveRecently ? ActiveImage : inActiveImage}
@@ -25,7 +25,7 @@
 			</Tooltip>
 			<span class="inline-block w-full flex-nowrap text-xl">
                     {sensorName}<CopyButton value={sensorName} />
-				<p class="text-slate-300">
+				<p class="text-surface-900">
 					{$_('lastSeen')}: <Duration start={lastSeen} totalUnits={1} />
 					{$_('ago')}
 				</p>

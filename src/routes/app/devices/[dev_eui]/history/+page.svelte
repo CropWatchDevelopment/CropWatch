@@ -18,7 +18,6 @@
 				throw new Error('Failed to fetch data');
 			}
 			const blob = await response.blob();
-			debugger;
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;

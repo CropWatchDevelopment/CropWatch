@@ -5,14 +5,14 @@ import HighchartsExporting from 'highcharts/modules/exporting';
 // Initialize the module
 HighchartsExporting(Highcharts);
 
-export const getChartConfig = (temperatureData: [number, number][], humidityData: [number, number][]): Highcharts.Options => {
+export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Options => {
     return {
         chart: {
             type: 'spline',
+            backgroundColor: 'transparent',
             zooming: {
                 type: 'x'
             },
-            backgroundColor: 'transparent',
         },
         title: {
             text: '',
@@ -31,24 +31,10 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
         },
         yAxis: [{
             title: {
-                text: '',
-            },
-            // min: -40,
-            // max: 85,
-            labels: {
-                format: '{value}°C',
-                style: {
-                    color: 'red'
-                }
-            }
-        }, {
-            title: {
                 text: ''
             },
-            // max: 100,
-            // min: 0,
             labels: {
-                format: '{value}%',
+                format: '{value} PPM',
                 style: {
                     color: 'blue'
                 }
@@ -68,23 +54,13 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
         },
         series: [{
             type: 'spline',  // Add this line
-            name: 'Temperature',
-            data: temperatureData,
+            name: 'CO2 PPM',
+            data: co2Data,
             tooltip: {
                 valueSuffix: ' °C'
             },
             lineWidth: 1,
             color: 'red',
-        }, {
-            type: 'spline',  // Add this line
-            name: 'Humidity',
-            data: humidityData,
-            color: 'blue',
-            yAxis: 1,
-            tooltip: {
-                valueSuffix: ' %'
-            },
-            lineWidth: 1,
         }]
     };
 };

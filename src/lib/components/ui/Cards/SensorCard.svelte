@@ -22,7 +22,7 @@
 	});
 </script>
 
-<div class="flex justify-between rounded-xl bg-[#34393f] bg-opacity-50">
+<div class="flex justify-between rounded-xl bg-secondary/20 bg-opacity-50">
 	<!-- Content -->
 	<div class="flex w-full items-center space-x-3 py-4 pl-6">
 		<!-- image -->

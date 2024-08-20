@@ -12,7 +12,6 @@
 	const temperatureData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.temperatureC]);
     const temp = sensor.data.at(0).temperatureC;
 	const time = new Date(sensor.data.at(0).created_at)
-	debugger;
 
 	// Get Highcharts configuration
 	const tempChartConfig = getChartConfig(temperatureData);

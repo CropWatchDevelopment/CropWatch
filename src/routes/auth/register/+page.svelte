@@ -46,7 +46,6 @@
 						throw new Error('Network response was not ok.');
 					})
 					.then((data) => {
-						debugger;
 						console.log(data);
 						if (data.type == 'success') {
 							notificationStore.NotificationTimedOpen({

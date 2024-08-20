@@ -1,7 +1,6 @@
 <script>
 	import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
-    debugger;
 
     fetch('/auth/logout?/logout', {
         method: 'POST',

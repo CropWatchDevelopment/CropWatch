@@ -7,7 +7,7 @@
 		createLocaleSettings,
 		settings,
 		Settings,
-		ThemeInit,
+		ThemeInit
 	} from 'svelte-ux';
 	import CROPWATCH_LOGO from '$lib/images/UI/logo.svg';
 	import UserHeaderWidget from '$lib/components/ui/Header/UserHeaderWidget.svelte';
@@ -16,6 +16,13 @@
 	import NavMenu from '$lib/components/ui/SideNav/NavMenu.svelte';
 
 	const s = settings({
+		components: {
+			Radio: {
+				classes: {
+					label: 'text-secondary-900',
+				}
+			}
+		},
 		localeFormats: {
 			ja: createLocaleSettings({
 				locale: 'ja',
@@ -62,11 +69,10 @@
 						//...
 					}
 				}
-			}),
+			})
 		}
 	});
 	s.forceLocale = 'ja';
-	
 </script>
 
 <ThemeInit />

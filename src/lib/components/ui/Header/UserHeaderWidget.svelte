@@ -44,7 +44,7 @@
 				<p class="text-xs text-secondary-100">System Administrator</p>
 			</div>
 			<div class="p-2">
-				<TextField icon={mdiMagnify} bind:value={searchText} placeholder="Search" class="mb-2" autofocus={{ delay: 50 }}>
+				<TextField icon={mdiMagnify} disabled bind:value={searchText} placeholder="Search" class="mb-2" autofocus={{ delay: 50 }}>
 					<div slot="append">
 						<Button variant="none" icon={mdiCloseCircle} on:click={() => (searchText = '')} />
 					</div>

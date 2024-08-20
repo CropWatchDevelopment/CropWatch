@@ -1,10 +1,8 @@
 import Highcharts from 'highcharts';
 import HighchartsMore from 'highcharts/highcharts-more';
-import SolidGauge from 'highcharts/modules/solid-gauge';
-import 'highcharts/css/highcharts.css';
+
 
 HighchartsMore(Highcharts);
-SolidGauge(Highcharts);
 Highcharts.setOptions({
     time: {
       timezone: 'Asia/Tokyo' // Set your desired timezone

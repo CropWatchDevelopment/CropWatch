@@ -2,12 +2,11 @@
 	import { _ } from 'svelte-i18n';
 	import highcharts from '$lib/actions/highcharts.action';
 	import { getChartConfig } from './chart_tempHumidityConfig';
-	import TempHumidityCard from '../../Cards/TempHumidityCard.svelte';
 	import DarkCard from '../../Cards/DarkCard.svelte';
 	import Leaflet from '../../Maps/leaflet/Leaflet.svelte';
 	import Marker from '../../Maps/leaflet/Marker.svelte';
 	import { Button, CopyButton, Icon, ListItem } from 'svelte-ux';
-	import { mdiAlertCircle, mdiCheckCircle, mdiEye, mdiMapMarker, mdiMapSearch } from '@mdi/js';
+	import { mdiAlertCircle, mdiCheckCircle, mdiMapMarker, mdiMapSearch } from '@mdi/js';
 	import moment from 'moment';
 
 	export let sensor = null;
@@ -24,7 +23,7 @@
 </script>
 
 <div class="my-4">
-	<Leaflet view={[lat, long]} zoom={19} height={innerHeight / 3}>
+	<Leaflet view={[lat, long]} zoom={19} height={innerHeight / 2.5}>
 		<Marker latLng={[lat, long]}>
 			<Button
 				icon={mdiMapMarker}

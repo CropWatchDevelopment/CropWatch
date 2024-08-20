@@ -75,9 +75,11 @@
 								if (result.data.avatarUrl) {
 									localStorage.setItem('avatarUrl', result.data.avatarUrl);
 								}
-								debugger;
 								if (result.data.profile != null) {
 									localStorage.setItem('name', result.data.profile.full_name);
+								}
+								if (!result.data.profile.accepted_agreements) {
+									document.location.href = '/auth/accept-agreements';
 								}
 								notificationStore.NotificationTimedOpen({
 									title: 'Login Successful',

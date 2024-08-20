@@ -140,7 +140,7 @@
 <!-- Render the radio buttons -->
 <DarkCard2>
 	{#if latestDataInterestingObjects.length > 0}
-		<div class="flex flex-row flex-wrap justify-between">
+		<div class="flex flex-row flex-wrap justify-between text-surface-500">
 			{#each latestDataInterestingObjects as key}
 				<Radio
 					name={key}
@@ -150,6 +150,13 @@
 					on:change={updateHeatLatLngData}
 				>{key}</Radio>
 			{/each}
+			<Radio
+					name='none'
+					bind:group={heatMapSubjectKey}
+					value={null}
+					fullWidth
+					on:change={updateHeatLatLngData}
+				>No Filter</Radio>
 		</div>
 	{:else}
 		<p>No data available for selection</p>

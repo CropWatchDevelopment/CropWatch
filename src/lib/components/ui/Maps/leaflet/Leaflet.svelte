@@ -35,6 +35,7 @@
 				minZoom: 10,
 				subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 			}).addTo(map);
+			map.setView(view, zoom);
 
 			// Update zoom and pan ability
 			updateZoomPanAbility();
