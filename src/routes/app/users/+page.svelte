@@ -3,6 +3,7 @@
     import { mdiAccount, mdiDevices, mdiEye } from '@mdi/js';
     import { onMount } from 'svelte';
     import { Button, ExpansionPanel, ListItem } from 'svelte-ux';
+    import { _ } from 'svelte-i18n';
     
     let users: any[] = [];
     let searchTerm = ''; // Two-way binding for search input
@@ -51,25 +52,25 @@
     $: searchTerm, updateUsers();
   </script>
   
-  <h1>All Users ({filteredAndSortedUsers.length}):</h1>
+  <h1>{$_('users.allUsers')} ({filteredAndSortedUsers.length}):</h1>
   
   <div class="controls">
     <!-- Search Bar -->
     <input
       type="text"
       bind:value={searchTerm}
-      placeholder="Search by email"
+      placeholder={$_('users.searchByEmail')}
       class="search-input"
     />
   
     <!-- Sort by Number of Devices Button -->
     <Button on:click={toggleDeviceSortDirection} class="sort-button">
-      Sort by number of devices ({sortDirection})
+      {$_('users.sort')}({sortDirection})
     </Button>
   
     <!-- Sort by Email Button -->
     <Button on:click={toggleEmailSortDirection} class="sort-button">
-      Sort by email ({emailSortDirection})
+      {$_('users.sortEmail')} ({emailSortDirection})
     </Button>
   </div>
   
@@ -80,7 +81,7 @@
           <ListItem
             slot="trigger"
             title="{user.email}"
-            subheading={user.devices.length + ' devices'}
+            subheading={user.devices.length + $_('app.devices')}
             icon={mdiAccount}
             avatar={{ class: 'bg-surface-content/50 text-surface-100/90' }}
             class="flex-1"

@@ -67,7 +67,10 @@
     "loading": "Loading...",
     "ago": "ago",
     "pageNotFound": "Page Not Found",
-    "areYouSure": "Are you sure?"
+    "areYouSure": "Are you sure?",
+    "back": "Back",
+    "cancle": "Cancle",
+    "devices": "Devices"
   },
   "header": {
     "widget": {
@@ -84,7 +87,34 @@
   },
   "location": {
     "name": "Location",
-    "noFilters": "No Filter"
+    "noFilters": "No Filter",
+    "settings": {
+      "basicInfo": "Device Basic Info",
+      "basicInfoSubtitle": "Setup basic device data",
+      "updated": "Location Updated!",
+      "locationUpdatedSuccessfully": "Location Updated Successfully",
+      "locationUpdatedFailed": "Location Update Failed",
+      "ContactSupport": "Contact Support",
+      "deviceName": "Device Name",
+      "locationLatitude": "Location Latitude",
+      "locationLongitude": "Location Longitude",
+      "useCurrentLocation": "Use Current Location",
+      "save": "Save",
+      "locationPermissionTitle": "Location Permissions",
+      "locationPermissionSubtitle": "Control what users have access to this location.",
+      "locationPermissionSubtitle2": "Granting users access to this location does not grant them access to devices by default.",
+      "locationUpdated": "Location Updated",
+      "locationUpdateFailed": "Location Update Failed",
+      "contactSupport": "Contact Support",
+      "addNewLocationPermission": "Add New Location Permission",
+      "userEmailToGrantAccess": "User Email to grant permission",
+      "currentUsers": "Current Users",
+      "confirmDelete": "Yes, Delete User"
+    },
+    "all": {
+      "name": "All Locations",
+      "errorLoading": "Error Loading Locations"
+    }
   },
   "devices": {
     "history": {
@@ -138,6 +168,18 @@
       "success": "Permission added successfully",
       "failedToAdd": "Failed to add permission",
       "userEmailToGrantAccess": "User Email to grant permission"
+    },
+    "all": {
+      "title": "All Devices",
+      "errorLoadingLocations": "Error Loading Locations",
+      "viewDeviceLocaction": "View Device Location",
+      "viewDeviceDetails": "View Device Details"
     }
+  },
+  "users": {
+    "searchByEmail": "Search By Email",
+    "sort": "Sort by number of devices",
+    "sortEmail": "Sort By Email",
+    "allUsers": "All Users"
   }
 }

@@ -5,9 +5,11 @@
 	import { permissionNumberToRole } from '$lib/components/ui/utilities/permissionNumberToRole';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiAccount, mdiFloppy, mdiMapMarker, mdiPlus, mdiTrashCan } from '@mdi/js';
+	import { mdiAccount, mdiCheckCircle, mdiCloseBox, mdiFloppy, mdiMapMarker, mdiPlus, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { Button, Dialog, Icon, ListItem, TextField, Toggle } from 'svelte-ux';
+	import { _ } from 'svelte-i18n';
+
 	type locationType = Tables<'cw_locations'>;
 
 	let location: locationType = {
@@ -107,8 +109,8 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Device Basic Info</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">Setup basic device data</p>
+			<h2 class="text-base font-semibold leading-7 text-white">{$_('location.settings.basicInfo')}</h2>
+			<p class="mt-1 text-sm leading-6 text-gray-400">{$_('location.settings.basicInfoSubtitle')}</p>
 		</div>
 
 		<form
@@ -119,18 +121,18 @@
 				return async ({ result, update }) => {
 					if (result.type === 'success') {
 						notificationStore.NotificationTimedOpen({
-							title: 'Location Updated',
-							description: 'Location Updated Successfully.',
+							title: $_('location.settings.updated'),
+							description: $_('location.settings.locationUpdatedSuccessfully'),
 							timeout: 2000,
-							icon: '✅',
+							icon: mdiCheckCircle,
 							buttonText: 'OK'
 						});
 					} else {
 						notificationStore.NotificationTimedOpen({
-							title: 'Location Update Failed',
-							description: 'Contact Support',
+							title: $_('location.settings.locationUpdatedFailed'),
+							description: $_('location.settings.ContactSupport'),
 							timeout: 2000,
-							icon: '❌',
+							icon: mdiCloseBox,
 							buttonText: 'OK'
 						});
 					}
@@ -143,7 +145,7 @@
 					<TextField
 						id="device-name"
 						name="name"
-						label="Device Name"
+						label={$_('location.settings.deviceName')}
 						labelPlacement="top"
 						bind:value={location.name}
 					/>
@@ -151,13 +153,13 @@
 						<TextField
 							id="device-name"
 							name="lat"
-							label="Location Latitude"
+							label={$_('location.settings.locationLatitude')}
 							bind:value={location.lat}
 						/>
 						<TextField
 							id="device-name"
 							name="long"
-							label="Location Longitude"
+							label={$_('location.settings.locationLongitude')}
 							bind:value={location.long}
 						/>
 						<Button
@@ -165,12 +167,12 @@
 							on:click={getCurrentLocation}
 							class="rounded bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-400"
 						>
-							Use Current Location
+						{$_('location.settings.useCurrentLocation')}
 						</Button>
 					</div>
 				</div>
 			</div>
-			<Button type="submit" icon={mdiFloppy} variant="fill" color="success">Save</Button>
+			<Button type="submit" icon={mdiFloppy} variant="fill" color="success">{$_('location.settings.save')}</Button>
 		</form>
 	</div>
 
@@ -178,12 +180,12 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Location Permissions</h2>
+			<h2 class="text-base font-semibold leading-7 text-white">{$_('location.settings.locationPermissionTitle')}:</h2>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
-				Control what users have view access to this location,
+				{$_('location.settings.locationPermissionSubtitle')}
 			</p>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
-				Granting users access to this location does not grant them access to devices by default.
+				{$_('location.settings.locationPermissionSubtitle2')}
 			</p>
 		</div>
 
@@ -198,28 +200,28 @@
 						locationPermissions.push(result.data);
 						locationPermissions = locationPermissions;
 						notificationStore.NotificationTimedOpen({
-							title: 'Location Updated',
-							description: 'Location Updated Successfully.',
+							title: $_('location.settings.locationUpdated'),
+							description: $_('location.settings.locationUpdatedSuccessfully'),
 							timeout: 2000,
-							icon: '✅',
+							icon: mdiCheckCircle,
 							buttonText: 'OK'
 						});
 					} else {
 						notificationStore.NotificationTimedOpen({
-							title: 'Location Update Failed',
-							description: 'Contact Support',
+							title: $_('location.settings.locationUpdateFailed'),
+							description: $_('location.settings.contactSupport'),
 							timeout: 2000,
-							icon: '❌',
+							icon: mdiCloseBox,
 							buttonText: 'OK'
 						});
 					}
 				};
 			}}
 		>
-			<DarkCard title="Add New Location Permission:">
+			<DarkCard title={$_('location.settings.addNewLocationPermission')}>
 				<div class="flex flex-row gap-2">
 					<TextField
-						label="User Email to grant permission"
+						label={$_('location.settings.userEmailToGrantAccess')}
 						operators={permissionLevelOptions}
 						on:change={(e) => {
 							console.log(e);
@@ -238,7 +240,7 @@
 					<Button icon={mdiPlus} type="submit" variant="fill" color="success" />
 				</div>
 			</DarkCard>
-			<DarkCard title="Current Users:">
+			<DarkCard title="{$_('location.settings.currentUsers')}:">
 				<ul>
 					{#each locationPermissions as permission}
 						<ListItem
@@ -266,9 +268,9 @@
 												variant="fill"
 												color="danger"
 											>
-												Yes, delete item
+											{$_('location.settings.confirmDelete')}
 											</Button>
-											<Button>Cancel</Button>
+											<Button>{$_('app.cancle')}</Button>
 										</div>
 									</Dialog>
 								</Toggle>

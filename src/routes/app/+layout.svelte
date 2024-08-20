@@ -14,6 +14,7 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import AlertMenu from '$lib/components/ui/Header/AlertMenu.svelte';
 	import NavMenu from '$lib/components/ui/SideNav/NavMenu.svelte';
+	import { _ } from 'svelte-i18n';
 
 	const s = settings({
 		components: {
@@ -106,7 +107,7 @@
 	</AppBar>
 
 	<main class="bg- h-full">
-		<Back>Back</Back>
+		<Back>{$_('app.back')}</Back>
 		<slot />
 	</main>
 </AppLayout>

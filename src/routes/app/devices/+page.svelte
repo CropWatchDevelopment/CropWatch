@@ -9,6 +9,7 @@
 		mdiMapMarkerRight
 	} from '@mdi/js';
 	import { Button, ListItem, Tooltip } from 'svelte-ux';
+	import { _ } from 'svelte-i18n';
 
 	let devicesPromise;
 	let showFilters: boolean = false;
@@ -35,7 +36,7 @@
 </svelte:head>
 
 <h1 class="text-surface flex flex-row">
-	<span>All Devices:</span>
+	<span>{$_('devices.all.title')}:</span>
 	<span class="flex-1" />
 	<Button
 		icon={mdiFilter}
@@ -55,21 +56,21 @@
 	{/if}
 	{#await devicesPromise}
 		<div class="grid-row my-3 grid grid-cols-2 justify-between">
-			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">Loading devices...</h2>
+			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">{$_('app.loading')}</h2>
 		</div>
 	{:then devices}
 		<div>
 			{#each devices as device}
 				<ListItem title={device.name} subheading={''} icon={mdiMapMarker}>
 					<div slot="actions" class="flex gap-2">
-						<Tooltip title="View Device Details">
+						<Tooltip title={$_('devices.all.viewDeviceDetails')}>
 							<Button
 								variant="fill"
 								icon={mdiArrowRight}
 								on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
 							/>
 						</Tooltip>
-						<Tooltip title="View Device's Location">
+						<Tooltip title={$_('devices.all.viewDeviceLocaction')}>
 							<Button
 								variant="fill"
 								icon={mdiMapMarkerRight}
@@ -82,7 +83,7 @@
 		</div>
 	{:catch error}
 		<div class="grid-row my-3 grid grid-cols-2 justify-between">
-			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">Error loading locations</h2>
+			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">{$_('devices.all.errorLoadingLocations')}</h2>
 		</div>
 	{/await}
 {/if}
