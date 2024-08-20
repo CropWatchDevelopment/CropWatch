@@ -11,7 +11,6 @@
 
 
 	export let data;
-	export let form;
 
 	let { supabase } = data;
 	$: ({ supabase } = data);
@@ -21,8 +20,6 @@
 
 	let email: string = '';
 	let password: string = '';
-
-	let avatarUrl: string | null = null;
 
 	let redirectURL: string = browser ? `${window.location.origin}/auth/callback` : '';
 
@@ -55,7 +52,7 @@
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
 					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight">
-						{$_('login.title')}
+						{$_('auth.login.title')}
 					</h2>
 				</div>
 				<form
@@ -82,8 +79,8 @@
 									document.location.href = '/auth/accept-agreements';
 								}
 								notificationStore.NotificationTimedOpen({
-									title: 'Login Successful',
-									description: 'You have successfully logged in',
+									title: $_('auth.login.Success'),
+									description: $_('auth.login.youHaveLoggedin'),
 									icon: mdiCheckCircle,
 									timeout: 3000,
 									buttonText: 'Close'
@@ -91,8 +88,8 @@
 								await goto(result.data.redirect);
 							} else {
 								notificationStore.NotificationTimedOpen({
-									title: 'Login Failed',
-									description: 'Please check your email and password and try again',
+									title: $_('auth.login.Failed'),
+									description: $_('auth.login.FailedToLogin'),
 									icon: mdiCloseCircle,
 									timeout: 3000,
 									buttonText: 'Close'
@@ -104,7 +101,7 @@
 				>
 					<div class="mb-3">
 						<label for="email" class="block text-sm font-medium leading-6 text-gray-900"
-							>{$_('login.Email')}</label
+							>{$_('auth.login.Email')}</label
 						>
 						<div class="mt-2">
 							<TextField
@@ -121,7 +118,7 @@
 
 					<div class="mb-2">
 						<label for="password" class="block text-sm font-medium leading-6 text-gray-900"
-							>{$_('login.Password')}</label
+							>{$_('auth.login.Password')}</label
 						>
 						<div class="mt-2">
 							<TextField
@@ -151,12 +148,12 @@
 							}}
 						/>
 
-						<span class="ml-1 text-sm font-medium text-gray-900">{$_('login.remember_me')}</span>
+						<span class="ml-1 text-sm font-medium text-gray-900">{$_('auth.login.remember_me')}</span>
 						<span class="flex-1" />
 						<a
 							href="reset-password"
 							class="align-middle text-xs font-medium text-gray-900 hover:text-indigo-500"
-							><Icon data={mdiLockQuestion} /> {$_('login.forgot_password')}</a
+							><Icon data={mdiLockQuestion} /> {$_('auth.login.forgot_password')}</a
 						>
 					</div>
 
@@ -166,7 +163,7 @@
 						icon={mdiKeyArrowRight}
 						type="submit"
 						class="mb-2 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-						>{$_('login.login')}</Button
+						>{$_('auth.login.login')}</Button
 					>
 				</form>
 
@@ -178,15 +175,15 @@
 						type="button"
 						on:click={async () => oAuthLogin({ provider: 'google' })}
 						class="mb-2 flex w-full justify-center rounded-md bg-red-500 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-						>Google {$_('login.login')}</Button
+						>Google {$_('auth.login.login')}</Button
 					>
 				</div>
 
 				<div class="relative mt-6 flex flex-row">
 					<div class="mx-auto flex flex-row">
-						<p>{$_('login.dont_have_an_account')}</p>
+						<p>{$_('auth.login.dont_have_an_account')}</p>
 						<a class="blue-100" href="/auth/register"
-							>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.register_now')}</u
+							>&nbsp; <u class="text-blue-700 hover:text-indigo-900">{$_('auth.login.register_now')}</u
 							></a
 						>
 					</div>

@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import { Button, DatePickerField, NumberStepper, TextField, SelectField, Icon } from 'svelte-ux';
 	import { mdiCalendar, mdiLock } from '@mdi/js';
-	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
+	import { _ } from 'svelte-i18n';
 
 	let initialDeviceData: Tables<'cw_devices'>;
 	let deviceData = {
@@ -100,8 +99,8 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface-900">Device Basic Info</h2>
-			<p class="mt-1 text-sm leading-6 text-surface-600">Setup basic device data</p>
+			<h2 class="text-base font-semibold leading-7 text-surface-900">{$_('devices.settings.deviceBasicInfo')}</h2>
+			<p class="mt-1 text-sm leading-6 text-surface-600">{$_('devices.settings.setupBasicDeviceSettings')}</p>
 		</div>
 
 		<form action="?/updateDeviceInfo" method="POST" class="md:col-span-2">
@@ -111,7 +110,7 @@
 					<TextField
 						id="device-name"
 						name="name"
-						label="Device Name"
+						label={$_('devices.settings.deviceName')}
 						labelPlacement="top"
 						bind:value={deviceData.name}
 						error={errors.name}
@@ -124,7 +123,7 @@
 					<TextField
 						id="lat"
 						name="lat"
-						label="Latitude"
+						label={$_('devices.settings.latitude')}
 						type="text"
 						labelPlacement="top"
 						bind:value={deviceData.lat}
@@ -138,7 +137,7 @@
 					<TextField
 						id="long"
 						name="long"
-						label="Longitude"
+						label={$_('devices.settings.longitude')}
 						type="text"
 						labelPlacement="top"
 						bind:value={deviceData.long}
@@ -152,7 +151,7 @@
 					<NumberStepper
 						id="upload_interval"
 						name="upload_interval"
-						label="Uplink Interval (minutes)"
+						label="{$_('devices.settings.uplinkInterval')}"
 						bind:value={deviceData.upload_interval}
 						error={errors.upload_interval}
 						on:input={validate}
@@ -164,7 +163,7 @@
 					<DatePickerField
 						id="battery"
 						name="battery"
-						label="Date of Battery Change"
+						label="{$_('devices.settings.batteryChangedAt')}"
 						icon={mdiCalendar}
 						bind:value={deviceData.battery_changed_at}
 						error={errors.battery_changed_at}
@@ -179,7 +178,7 @@
 						on:click={getCurrentLocation}
 						class="rounded bg-blue-500 px-4 py-2 font-semibold text-surface-900 hover:bg-blue-400"
 					>
-						Use Current Location
+					{$_('devices.settings.useCurrentLocation')}
 					</Button>
 				</div>
 			</div>
@@ -190,7 +189,7 @@
 					name="action"
 					value="updateDeviceInfo"
 					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-surface-900 shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-					>Save</Button
+					>{$_('devices.settings.save')}</Button
 				>
 			</div>
 		</form>
@@ -201,8 +200,8 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface-900">Device Location</h2>
-			<p class="mt-1 text-sm leading-6 text-surface-600">Select the location of the device</p>
+			<h2 class="text-base font-semibold leading-7 text-surface-900">{$_('devices.settings.deviceLocationTitle')}</h2>
+			<p class="mt-1 text-sm leading-6 text-surface-600">{$_('devices.settings.deviceLocationSubtitle')}</p>
 		</div>
 
 		<form action="?/updateLocation" method="POST" class="md:col-span-2">
@@ -221,7 +220,7 @@
 					name="action"
 					value="updateLocation"
 					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-surface-900 shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-					disabled={errors.location_id !== ''}>Save Location</Button
+					disabled={errors.location_id !== ''}>{$_('devices.settings.save')}</Button
 				>
 			</div>
 		</form>
@@ -232,13 +231,13 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface-900">Device Configuration</h2>
-			<p class="mt-1 text-sm leading-6 text-surface-600">Update Device Configuration OTA</p>
+			<h2 class="text-base font-semibold leading-7 text-surface-900">{$_('devices.settings.deviceConfigurationTitle')}</h2>
+			<p class="mt-1 text-sm leading-6 text-surface-600">{$_('devices.settings.deviceConfigurationSubtitle')}</p>
 		</div>
 
 		<p class="w-full text-center">
 			<Icon data={mdiLock} />
-			Section Coming in the future
+			{$_('devices.settings.comingSoon')}
 		</p>
 	</div>
 </div>

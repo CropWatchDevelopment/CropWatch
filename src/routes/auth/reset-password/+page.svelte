@@ -16,10 +16,10 @@
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
 					<!-- <img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" /> -->
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-						{$_('login.title')}
+						{$_('auth.forgot_password.title')}
 					</h2>
 				</div>
-				<h2>{$_('auth.were_to_send_email')}</h2>
+				<h2>{$_('auth.forgot_password.were_to_send_email')}</h2>
 				<form
 					action="?/reset_password"
 					method="POST"
@@ -40,11 +40,11 @@
 				>
 					<div class="mb-3">
 						<label for="email" class="block text-sm font-medium leading-6 text-gray-900"
-							>{$_('login.Email')}</label
+							>{$_('auth.login.Email')}</label
 						>
 						<div class="mt-2">
 							<TextField
-								label={$_('login.email')}
+								label={$_('auth.login.Email')}
 								id="email"
 								placeholder="my@address.com"
 								name="email"
@@ -60,16 +60,16 @@
 						variant="fill"
 						color="primary"
 						loading={isLoading}
-						classes={{ root: 'w-full' }}>{$_('auth.send_recovery_email')}</Button
+						classes={{ root: 'w-full' }}>{$_('auth.forgot_password.send_recovery_email')}</Button
 					>
 				</form>
 				{#if form?.invalid}<mark>{form?.message}!</mark>{/if}
 				<div>
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
-							<p>{$_('auth.return_to_login')}</p>
+							<p>{$_('auth.forgot_password.return_to_login')}</p>
 							<a class="blue-100" href="/auth/login"
-								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.login')}</u></a
+								>&nbsp; <u class="text-blue-700 hover:text-indigo-900">{$_('auth.login.login')}</u></a
 							>
 						</div>
 					</div>

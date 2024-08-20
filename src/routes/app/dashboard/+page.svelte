@@ -3,9 +3,10 @@
 	import { onMount } from 'svelte';
 	import { mdiFilter, mdiViewDashboard } from '@mdi/js';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { Button, Collapse, Icon, ProgressCircle } from 'svelte-ux';
-	import devicesStore, { updateDeviceData } from '$lib/stores/devicesStore';
+	import { Button, Icon, ProgressCircle } from 'svelte-ux';
+	import { updateDeviceData } from '$lib/stores/devicesStore';
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 	let { supabase, session } = data;
@@ -100,7 +101,7 @@
 	<!-- TITLE -->
 	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
 		<Icon data={mdiViewDashboard} class="h-6 w-6" />
-		Dashboard
+		{$_('dashboard.dashboard.title')}
 	</h2>
 	<!-- Filter -->
 	<Button
@@ -114,7 +115,9 @@
 {#if showFilters}
 	<div id="filter panel">
 		<DarkCard2>
-			<h2 class="text-surface">Filters:</h2>
+			<h2 class="text-surface">
+				{$_('dashboard.dashboard.filters')}
+			</h2>
 			<!--PUT FILTERS INPUT BOX HERE-->
 		</DarkCard2>
 	</div>
@@ -124,11 +127,11 @@
 	<div class="flex h-full items-center justify-center">
 		<div class="flex h-32 w-32 flex-col items-center justify-center">
 			<ProgressCircle class="justify-center" />
-			<p class="mt-2 text-left text-sm">⌛ Loading...</p>
+			<p class="mt-2 text-left text-sm">⌛ {$_('app.loading')}</p>
 		</div>
 	</div>
 {:else if locations.length === 0}
-	<p>No locations found</p>
+	<p>{$_('dashboard.dashboard.noLocationsFound')}</p>
 {:else}
 	<div
 		class="mb-3 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"

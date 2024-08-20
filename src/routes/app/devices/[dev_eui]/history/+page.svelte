@@ -2,7 +2,9 @@
 	import { page } from '$app/stores';
 	import { mdiCalendarRange, mdiFileExcel, mdiFilePdfBox } from '@mdi/js';
 	import { subDays } from 'date-fns';
-	import { Button, Card, DateRangeField, Icon, PeriodType, Tooltip } from 'svelte-ux';
+	import { Button, Card, DateRangeField, PeriodType } from 'svelte-ux';
+	import { _ } from 'svelte-i18n';
+
 	let today = new Date();
 	let value = {
 		from: subDays(today, 7),
@@ -50,7 +52,9 @@
 		}}
 		icon={mdiFileExcel}
 		variant="fill"
-		classes={{ icon: 'text-[#177841]' }}>Download Excel</Button
+		classes={{ icon: 'text-[#177841]' }}>
+		{$_('devices.history.downloadExcel')}
+		</Button
 	>
 		<Button
 			on:click={() => {
@@ -59,11 +63,11 @@
 			icon={mdiFilePdfBox}
 			variant="fill"
 			disabled
-			classes={{ icon: 'text-[#ed1c24]' }}>Download PDF (Future Feature)</Button
+			classes={{ icon: 'text-[#ed1c24]' }}>{$_('devices.history.downloadPDF')}</Button
 		>
 </div>
 
 <Card>
-	<h2>Custom Reports:</h2>
-	<p class="text-center">You have no custom reports. (Coming Soon)</p>
+	<h2>{$_('devices.history.customReports')}:</h2>
+	<p class="text-center">{$_('devices.history.noCustomReports')}</p>
 </Card>

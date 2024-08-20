@@ -12,6 +12,7 @@
 	} from '@mdi/js';
 	import { Avatar, Button, Icon, Menu, MenuItem, TextField, ThemeSwitch, Toggle } from 'svelte-ux';
 	import { goto } from '$app/navigation';
+	import { _ } from 'svelte-i18n';
 
 	let avatarUrl = browser ? (localStorage.getItem('avatarUrl') || null) : null;
 	let name = browser ? (localStorage.getItem('name') || null) : '';
@@ -33,7 +34,7 @@
 			<div class="hidden md:flex md:flex-col gap-1 text-center">
 				<p>{name}</p>
 				<hr class="h-px w-full bg-gray-200" />
-				<p class="text-xs text-secondary-100">System Administrator</p>
+				<p class="text-xs text-secondary-100">System User</p>
 			</div>
 		</div>
 
@@ -41,21 +42,21 @@
 			<div class="flex flex-col md:hidden gap-1 text-center">
 				<p>{name}</p>
 				<hr class="h-px w-1/2 mx-auto bg-gray-200" />
-				<p class="text-xs text-secondary-100">System Administrator</p>
+				<p class="text-xs text-secondary-100">System User</p>
 			</div>
 			<div class="p-2">
-				<TextField icon={mdiMagnify} disabled bind:value={searchText} placeholder="Search" class="mb-2" autofocus={{ delay: 50 }}>
+				<TextField icon={mdiMagnify} disabled bind:value={searchText} placeholder={$_('header.widget.search')} class="mb-2" autofocus={{ delay: 50 }}>
 					<div slot="append">
 						<Button variant="none" icon={mdiCloseCircle} on:click={() => (searchText = '')} />
 					</div>
 				</TextField>
-				<MenuItem on:click={() => location.reload()} icon={mdiReload}>Refresh</MenuItem>
-				<MenuItem on:click={() => {close; goto(`/app/general-settings`)}} icon={mdiCog}>General Settings</MenuItem>
-				<MenuItem icon={mdiThemeLightDark}>Dark Mode: <ThemeSwitch /></MenuItem>
-				<MenuItem on:click={close} icon={mdiHelpCircle}>Help</MenuItem>
+				<MenuItem on:click={() => location.reload()} icon={mdiReload}>{$_('header.widget.reload')}</MenuItem>
+				<MenuItem on:click={() => {close; goto(`/app/general-settings`)}} icon={mdiCog}>{$_('nav.GeneralSettings')}</MenuItem>
+				<MenuItem icon={mdiThemeLightDark}>{$_('header.widget.darkmode')}: <ThemeSwitch /></MenuItem>
+				<MenuItem on:click={close} icon={mdiHelpCircle}>{$_('header.widget.help')}</MenuItem>
 				<MenuItem icon={mdiExitRun}>
 					<form action="/auth/logout?/logout" method="post">
-						<Button type="submit" on:click={() => { localStorage.clear() }} variant="none">Sign Out</Button>
+						<Button type="submit" on:click={() => { localStorage.clear() }} variant="none">{$_('header.widget.signout')}</Button>
 					</form>
 				</MenuItem>
 			</div>

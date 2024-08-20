@@ -3,6 +3,7 @@
 	import type { Tables } from '$lib/types/supabaseSchema';
 	import { mdiEye, mdiPencil, mdiTrashCan } from '@mdi/js';
 	import { Button, Dialog, ListItem, Toggle, Tooltip } from 'svelte-ux';
+	import { _ } from 'svelte-i18n';
 
 	export let rules: Tables<'cw_rules'>[] = [];
 
@@ -26,20 +27,20 @@
 				</ul>
 			</div>
 			<div slot="actions" class="flex flex-row gap-4">
-				<Tooltip title="View rule">
+				<Tooltip title="{$_('devices.rules.viewRule')}">
 					<Button icon={mdiEye} variant="fill" color="info" /></Tooltip
 				>
-				<Tooltip title="Edit rule">
+				<Tooltip title="{$_('devices.rules.EditRule')}">
 					<Button icon={mdiPencil} variant="fill" color="warning" /></Tooltip
 				>
-				<Tooltip title="Delete rule">
+				<Tooltip title="{$_('devices.rules.deleteRule')}">
 					<Toggle let:on={open} let:toggle let:toggleOff>
 						<Button icon={mdiTrashCan} on:click={toggle} variant="fill" color="danger" />
 						<Dialog {open} on:close={toggleOff}>
-							<div slot="title">Are you sure?</div>
+							<div slot="title">{$_('app.areYouSure')}</div>
 							<div class="px-6 py-3">
-								<p>This will permanently delete the item and can not be undone.</p>
-								<p>You will no longer recieve alerts for this rule.</p>
+								<p>{$_('devices.rules.deleteRuleMessage')}</p>
+								<p>{$_('devices.rules.deleteRuleMessage2')}</p>
 							</div>
 							<div slot="actions">
 								<Button
@@ -49,9 +50,9 @@
 									variant="fill"
 									color="danger"
 								>
-									Yes, delete item
+								{$_('devices.rules.deleteConfirm')}
 								</Button>
-								<Button>Cancel</Button>
+								<Button>{$_('devices.rules.cancle')}</Button>
 							</div>
 						</Dialog>
 					</Toggle>
@@ -60,6 +61,6 @@
 		</ListItem>
 	{/each}
 	{#if rules.length === 0}
-		<ListItem title="There are no rules configured yet..." />
+		<ListItem title="{$_('devices.rules.emptyRules')}" />
 	{/if}
 </ul>

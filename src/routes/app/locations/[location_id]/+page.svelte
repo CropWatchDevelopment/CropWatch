@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
 	import { convertObject } from '$lib/components/ui/utilities/ConvertSensorDataObject';
+	import { _ } from 'svelte-i18n';
 
 	let location_id = $page.params.location_id;
 	let loading: boolean = true;
@@ -125,7 +126,7 @@
 	<!-- TITLE -->
 	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
 		<Icon data={mdiMapMarker} class="h-6 w-6" />
-		Location: {location?.name}
+		{$_('location.name')}: {location?.name}
 	</h2>
 	<span class="flex-grow" />
 	<Tooltip title={`${location?.name}'s Location Settings`}>
@@ -156,10 +157,10 @@
 					value={null}
 					fullWidth
 					on:change={updateHeatLatLngData}
-				>No Filter</Radio>
+				>{$_('location.noFilters')}</Radio>
 		</div>
 	{:else}
-		<p>No data available for selection</p>
+		<p>{$_('location.noFilters')}</p>
 	{/if}
 </DarkCard2>
 

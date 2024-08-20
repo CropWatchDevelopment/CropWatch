@@ -1,17 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { notificationStore } from '$lib/stores/notificationStore';
 	import {
-		mdiAlertCircle,
 		mdiArrowRight,
 		mdiBell,
 		mdiBellAlert,
 		mdiCheckCircle,
-		mdiExclamation,
-
 		mdiHistory
-
 	} from '@mdi/js';
+	import { _ } from 'svelte-i18n';
 	import moment from 'moment';
 	import { onMount } from 'svelte';
 	import { Button, Duration, Icon, ListItem, Menu, MenuItem, ProgressCircle, Toggle } from 'svelte-ux';
@@ -43,7 +39,7 @@
 						>
 							<div slot="subheading">
 								@{moment(alert.last_triggered).format('YYYY/MM/DD HH:mm')}
-								<Duration start={alert.last_triggered} totalUnits={1} /> ago
+								<Duration start={alert.last_triggered} totalUnits={1} /> {$_('app.ago')}
 							</div>
 							<div slot="actions">
 								<Button
@@ -54,30 +50,19 @@
 						</ListItem>
 					{/each}
 				{:else}
-					<ListItem title="No alerts" icon={mdiCheckCircle} class="text-center" classes={{icon: 'text-green-400'}} />
+					<ListItem title={$_('header.alertMenu.noAlerts')} icon={mdiCheckCircle} class="text-center" classes={{icon: 'text-green-400'}} />
 				{/if}
 			{:else}
 				<MenuItem>
-					<ProgressCircle size={12} /> Loading...
+					<ProgressCircle size={12} /> {$_('app.loading')}
 				</MenuItem>
 			{/if}
 			<MenuItem>
-				<Button href="/app/notifications" class="flex w-full text-center text-info">
+				<Button href="/app/notifications" class="flex w-full text-center text-surface-300">
 					<Icon data={mdiHistory} />
-					View alert history
+					{$_('header.alertMenu.viewHistory')}
 				</Button>
 			</MenuItem>
-			<!-- <ListItem
-				title="View alert history"
-				avatar={{ class: 'bg-surface-content/50 text-surface-100/90' }}>
-				<div slot="actions">
-					<Button
-						color="primary"
-						icon={mdiArrowRight}
-						on:click={() => goto(`/app/alerts`)}>View</Button
-					>
-				</div>
-			</ListItem> -->
 		</Menu>
 	</Button>
 </Toggle>

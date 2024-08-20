@@ -23,8 +23,7 @@
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
 					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight">
-						Before Continuing, please read, and accept the following agreements in order to use this
-						application.
+						{$_('agreement.auth.title')}
 					</h2>
 				</div>
 				<form
@@ -53,7 +52,7 @@
 					<div class="mb-4 flex justify-center">
 						<div class="flex w-full max-w-xs flex-col justify-start space-y-2">
 							<div class="flex flex-row">
-								<Checkbox size="lg" bind:checked={privacy}>Privacy Policy</Checkbox>
+								<Checkbox size="lg" bind:checked={privacy}>{$_('agreement.auth.title')}</Checkbox>
 								<input type="hidden" name="privacy_accept" value={privacy} />
 								<span class="flex flex-1" />
 								<Button

@@ -120,9 +120,5 @@
       border-radius: 4px;
       border: 1px solid #ccc;
     }
-  
-    .sort-button {
-      white-space: nowrap;
-    }
   </style>
   

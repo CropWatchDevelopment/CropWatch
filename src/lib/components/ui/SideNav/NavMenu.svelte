@@ -1,28 +1,24 @@
 <script lang="ts">
-	import { Icon, NavItem } from 'svelte-ux';
-
+	import { NavItem } from 'svelte-ux';
 	import { page } from '$app/stores';
 	import {
 		mdiAccountGroup,
 		mdiCog,
 		mdiDevices,
-		mdiFormatListBulleted,
 		mdiFunction,
-		mdiHome,
-		mdiMapMarkerDistance,
 		mdiMapMarkerMultiple,
-		mdiPalette,
 		mdiRouterWireless,
 		mdiViewDashboard
 	} from '@mdi/js';
+	import { _ } from 'svelte-i18n';
 </script>
 
 <ul class="nav h-full bg-surface-300">
-	<h1>General</h1>
+	<h1>{$_('nav.general')}</h1>
 	<ul>
 		<li>
 			<NavItem
-				text="Dashboard"
+				text={$_('nav.dashboard')}
 				icon={mdiViewDashboard}
 				currentUrl={$page.url}
 				path="/app/dashboard"
@@ -31,7 +27,7 @@
 		</li>
 		<li>
 			<NavItem
-				text="General Settings"
+				text={$_('nav.GeneralSettings')}
 				icon={mdiCog}
 				currentUrl={$page.url}
 				path="/app/general-settings"
@@ -43,7 +39,7 @@
 		<ul>
 			<li>
 				<NavItem
-					text="All Locations"
+					text={$_('nav.AllLocations')}
 					currentUrl={$page.url}
 					path="/app/locations"
 					icon={mdiMapMarkerMultiple}
@@ -52,11 +48,11 @@
 			</li>
 		</ul>
 
-		<h1>Devices</h1>
+		<h1>{$_('nav.Devices')}</h1>
 		<ul>
 			<li>
 				<NavItem
-					text="All Devices"
+					text={$_('nav.AllDevices')}
 					currentUrl={$page.url}
 					path="/app/devices"
 					icon={mdiDevices}
@@ -65,11 +61,11 @@
 			</li>
 		</ul>
 
-		<h1>Rules</h1>
+		<h1>{$_('nav.Rules')}</h1>
 		<ul>
 			<li>
 				<NavItem
-					text="All Rules"
+					text={$_('nav.AllRules')}
 					currentUrl={$page.url}
 					path="/app/rules"
 					icon={mdiFunction}
@@ -78,11 +74,11 @@
 			</li>
 		</ul>
 
-		<h1>Gateways</h1>
+		<h1>{$_('nav.Gateways')}</h1>
 		<ul>
 			<li>
 				<NavItem
-					text="Gateway Status"
+					text={$_('nav.Gateways')}
 					currentUrl={$page.url}
 					path="/app/gateways"
 					icon={mdiRouterWireless}
@@ -91,11 +87,11 @@
 			</li>
 		</ul>
 
-		<h1>Users</h1>
+		<h1>{$_('nav.Users')}</h1>
 		<ul>
 			<li>
 				<NavItem
-					text="All Users"
+					text={$_('nav.AllUsers')}
 					currentUrl={$page.url}
 					path="/app/users"
 					icon={mdiAccountGroup}

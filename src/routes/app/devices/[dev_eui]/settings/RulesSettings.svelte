@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiEye, mdiPencil, mdiPlus, mdiTrashCan } from '@mdi/js';
+	import { mdiPlus } from '@mdi/js';
 	import { onMount } from 'svelte';
-	import { Button, ListItem, Tooltip } from 'svelte-ux';
+	import { Button, Tooltip } from 'svelte-ux';
 	import RuleList from './rules/RuleList.svelte';
 	import RuleAdd from './rules/RuleAdd.svelte';
+	import { _ } from 'svelte-i18n';
 
 	let rules: Tables<'cw_rules'>[] = [];
 	let devEui = $page.params.dev_eui;
@@ -20,9 +21,9 @@
 </script>
 
 <h1 class="flex flex-row justify-center px-4 text-center">
-	Configured Rules
+	{$_('devices.rules.title')}
 	<span class="flex-1" />
-	<Tooltip title="Add a new rule">
+	<Tooltip title="{$_('devices.rules.addRule')}">
 		<Button
 			icon={mdiPlus}
 			variant="fill"

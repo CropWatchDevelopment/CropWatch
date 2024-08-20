@@ -85,30 +85,12 @@
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
 					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight">
-						{$_('login.register_title')}
+						{$_('auth.register.title')}
 					</h2>
 				</div>
-				<!-- <div class="mb-3">
-					<label for="email" class="block text-sm font-medium leading-6"
-						>{$_('login.full_name')}</label
-					>
-					<div class="mt-2">
-						<TextField
-							label=""
-							id="full_name"
-							placeholder={$_('login.full_name_placeholder')}
-							name="full_name"
-							type="text"
-							bind:value={full_name}
-							autocomplete="name"
-							required
-							on:change={(e) => console.log(e.detail)}
-						/>
-					</div>
-				</div> -->
 
 				<div class="mb-3">
-					<label for="email" class="block text-sm font-medium leading-6">{$_('login.Email')}</label>
+					<label for="email" class="block text-sm font-medium leading-6">{$_('auth.login.Email')}</label>
 					<div class="mt-2">
 						<TextField
 							label=""
@@ -126,7 +108,7 @@
 
 				<div class="mb-2">
 					<label for="password" class="block text-sm font-medium leading-6"
-						>{$_('login.Password')}</label
+						>{$_('auth.login.Password')}</label
 					>
 					<div class="mt-2">
 						<TextField
@@ -144,7 +126,7 @@
 
 				<div class="mb-2">
 					<label for="password-confirm" class="block text-sm font-medium leading-6"
-						>{$_('login.ConfirmPassword')}</label
+						>{$_('auth.register.ConfirmPassword')}</label
 					>
 					<div class="mt-2">
 						<TextField
@@ -161,18 +143,18 @@
 
 				<div class="mt-2">
 					<Checkbox bind:checked={privacyChecked}
-						>I have read, and agree to the <a href="/legal/privacy-policy" class="text-blue-800"
-							>Privacy Policy</a
+						>{$_('auth.register.ReadPrivacyPolicy')} <a href="/legal/privacy-policy" target="_blank" class="text-blue-800"
+							>{$_('auth.register.PrivacyPolicy')}</a
 						></Checkbox
 					>
 					<Checkbox bind:checked={termsChecked}
-						>I have read, and agree to the <a href="/legal/terms-of-use" class="text-blue-800"
-							>Terms of Use</a
+						>{$_('auth.register.ReadTermsOfUse')} <a href="/legal/eula" target="_blank" class="text-blue-800"
+							>{$_('auth.register.TermsOfUse')}</a
 						></Checkbox
 					>
 					<Checkbox bind:checked={cookieChecked}
-						>I have read, and agree to the <a href="/legal/cookie-policy" class="text-blue-800"
-							>Cookie Policy</a
+						>{$_('auth.register.ReadCookiePolicy')} <a href="/legal/cookie-policy" target="_blank" class="text-blue-800"
+							>{$_('auth.register.CookiePolicy')}</a
 						></Checkbox
 					>
 				</div>
@@ -189,14 +171,14 @@
 					color="primary"
 					icon={loading ? mdiClock : ''}
 					on:click={onClick}
-					classes={{ root: 'w-full' }}>{$_('login.signup')}</Button
+					classes={{ root: 'w-full' }}>{$_('auth.register.signup')}</Button
 				>
 				<div>
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
-							<p>{$_('login.already_have_an_account')}</p>
+							<p>{$_('auth.register.already_have_an_account')}</p>
 							<a class="blue-100" href="login"
-								>&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.login')}</u></a
+								>&nbsp; <u class="text-blue-700 hover:text-indigo-900">{$_('auth.register.login')}</u></a
 							>
 						</div>
 					</div>

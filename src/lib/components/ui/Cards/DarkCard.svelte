@@ -42,12 +42,3 @@
 		<slot />
 	</div>
 </div>
-
-<style>
-	.greater {
-		color: #5bf7ac;
-	}
-	.less {
-		color: #fe5e5e;
-	}
-</style>

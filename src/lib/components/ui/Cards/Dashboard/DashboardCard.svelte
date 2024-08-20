@@ -6,6 +6,7 @@
 	import DeviceDataList from './DeviceDataList.svelte';
 	import devicesStore from '$lib/stores/devicesStore';
 	import { get, writable } from 'svelte/store';
+	import { _ } from 'svelte-i18n';
 
 	export let location;
 
@@ -26,9 +27,9 @@
 		<div class="absolute right-0 top-0 h-full w-1/2 rounded-2xl bg-gradient-to-l from-black"></div>
 		<div class="absolute right-3 top-4 space-y-1 text-xs text-white drop-shadow-md">
 			{#if $locationWeatherData}
-				<p>Rainfall: {$locationWeatherData.rainfall}mm/h</p>
-				<p>Humidity: {$locationWeatherData.humidity}%</p>
-				<p>Wind Speed: {$locationWeatherData.windSpeed} km/h</p>
+				<p>{$_('dashboard.dashboardCard.Rainfall')}: {$locationWeatherData.rainfall}mm/h</p>
+				<p>{$_('dashboard.dashboardCard.Humidity')}: {$locationWeatherData.humidity}%</p>
+				<p>{$_('dashboard.dashboardCard.WindSpeed')}: {$locationWeatherData.windSpeed} km/h</p>
 			{:else}
 				<p>Rainfall: --%</p>
 				<p>Humidity: --%</p>
@@ -105,7 +106,7 @@
 							{:else}
 								<div class="flex flex-row">
 									<ProgressCircle />
-									<p>Loading data...</p>
+									<p>{$_('app.loading')}</p>
 								</div>
 							{/if}
 						</div>
@@ -119,7 +120,7 @@
 						class="mb-1 w-full"
 						icon={mdiArrowRight}
 					>
-						View Data
+						{$_('dashboard.dashboardCard.ViewData')}
 					</Button>
 				</div>
 			</Collapse>
