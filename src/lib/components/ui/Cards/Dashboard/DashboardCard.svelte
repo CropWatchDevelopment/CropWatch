@@ -48,7 +48,7 @@
 		</div>
 	</div>
 
-	<h2 class="primary-text my-3 flex flex-row items-center text-xl">
+	<h2 class="primary-text my-3 flex flex-row items-center text-xl text-ellipsis overflow-hidden">
 		{location.name}
 		<span class="flex flex-grow" />
 		<Button

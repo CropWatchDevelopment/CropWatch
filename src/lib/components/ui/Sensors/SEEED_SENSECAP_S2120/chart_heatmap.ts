@@ -13,7 +13,8 @@ export const getChartConfig = (temperatureData: [number, number][]): Highcharts.
             type: 'heatmap',
             marginTop: 40,
             marginBottom: 80,
-            plotBorderWidth: 1
+            plotBorderWidth: 1,
+            backgroundColor: 'transparent',
         },
 
 

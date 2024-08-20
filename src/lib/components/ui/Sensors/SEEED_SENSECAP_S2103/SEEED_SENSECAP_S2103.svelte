@@ -4,8 +4,8 @@
 	import { getChartConfig } from './chart_tempHumidityConfig';
 	import TempHumidityCard from '../../Cards/TempHumidityCard.svelte';
 	import { getGaugeChartConfig } from './chart_co2Config';
-	import DarkCard from '../../Cards/DarkCard.svelte';
 	import { getCo2ChartConfig } from './chart_co2LineConfig';
+	import DarkCard from '../../Cards/DarkCard.svelte';
 
 	export let sensor = null;
 

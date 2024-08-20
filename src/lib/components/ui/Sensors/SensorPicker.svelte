@@ -9,10 +9,6 @@
 	import SEEED_SENSECAP_S2120 from './SEEED_SENSECAP_S2120/SEEED_SENSECAP_S2120.svelte'; // Weather Station
 	import SEEED_SENSECAP_T1000 from './SEEED_SENSECAP_T1000/SEEED_SENSECAP_T1000.svelte'; // Tracking Badge
 	import SEEED_SENSECAP_S2103_WATER_LEVEL from './SEEED_SENSECAP_S2103_WATER_LEVEL/SEEED_SENSECAP_S2103_WATER_LEVEL.svelte'; // Tracking Badge
-	import SensorHeader from './SensorHeader.svelte';
-	import { mdiCog, mdiDownload } from '@mdi/js';
-	import { Button, Icon, Tooltip } from 'svelte-ux';
-	import { goto } from '$app/navigation';
 	import NetvoxRa02A from './NETVOX_RA02A/NETVOX_RA02A.svelte';
 
 	let sensorName = 'NS';

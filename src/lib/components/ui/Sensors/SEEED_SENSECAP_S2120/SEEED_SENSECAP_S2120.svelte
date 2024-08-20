@@ -6,7 +6,9 @@
 	import DarkCard from '../../Cards/DarkCard.svelte';
 	import WindCompas from '../../WindCompas.svelte';
 	import { degreesToDirection } from '../../utilities/degreeseToDirection';
+	import { getRainfallChartConfig } from './chart_rainfall';
 	import { getWindChartConfig } from './chart_windSpeed';
+
 
 	export let sensor = null;
 
@@ -41,7 +43,6 @@
 		d.wind_speed,
 		d.wind_direction,
 	]);
-	console.log(windData);
 
 
 	const humidityData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.humidity]);
@@ -53,7 +54,9 @@
 
 	// Get Highcharts configuration
 	const tempHumidChartConfig = getChartConfig(temperatureData, humidityData);
-	const windChartConfig = getWindChartConfig(windData);
+	const windChartConfig = getWindChartConfig(wind_speed);
+	const rainfallChartConfig = getRainfallChartConfig(precipitations);
+
 
 </script>
 
@@ -63,8 +66,8 @@
 	</DarkCard>
 
 	<TempHumidityCard
-		temperature={sensor.data.at(-1).temperatureC}
-		humidity={sensor.data.at(-1).humidity}
+		temperature={sensor.data.at(0).temperatureC}
+		humidity={sensor.data.at(0).humidity}
 	/>
 </div>
 
@@ -74,6 +77,10 @@
 
 <DarkCard title="24h Wind Speed">
 	<div class="chart-container" use:highcharts={windChartConfig}></div>
+</DarkCard>
+
+<DarkCard title="Rainfall 24h">
+	<div class="chart-container" use:highcharts={rainfallChartConfig}></div>
 </DarkCard>
 
 <style>

@@ -50,21 +50,43 @@
 						};
 					}}
 				>
-					<div class="flex justify-center mb-4">
-						<div class="flex flex-col justify-start space-y-2 w-full max-w-xs">
-							<div>
+					<div class="mb-4 flex justify-center">
+						<div class="flex w-full max-w-xs flex-col justify-start space-y-2">
+							<div class="flex flex-row">
 								<Checkbox size="lg" bind:checked={privacy}>Privacy Policy</Checkbox>
 								<input type="hidden" name="privacy_accept" value={privacy} />
+								<span class="flex flex-1" />
+								<Button
+									href="/legal/privacy-policy"
+									target="_blank"
+									variant="fill"
+									icon={mdiKeyArrowRight}
+								>
+									Read
+								</Button>
 							</div>
 
-							<div>
+							<div class="flex flex-row">
 								<Checkbox size="lg" bind:checked={eula}>EULA</Checkbox>
 								<input type="hidden" name="eula_accept" value={eula} />
+								<span class="flex flex-1" />
+								<Button href="/legal/eula" target="_blank" variant="fill" icon={mdiKeyArrowRight}>
+									Read
+								</Button>
 							</div>
 
-							<div>
+							<div class="flex flex-row">
 								<Checkbox size="lg" bind:checked={cookie}>Cookie Policy</Checkbox>
 								<input type="hidden" name="cookie_accept" value={cookie} />
+								<span class="flex flex-1" />
+								<Button
+									href="/legal/cookie-policy"
+									target="_blank"
+									variant="fill"
+									icon={mdiKeyArrowRight}
+								>
+									Read
+								</Button>
 							</div>
 						</div>
 					</div>
@@ -76,11 +98,11 @@
 						type="submit"
 						class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 					>
-					{#if !allAccepted}
-						Please accept all agreements to continue
-					{:else}
-						Accept and Continue
-					{/if}
+						{#if !allAccepted}
+							Please accept all agreements to continue
+						{:else}
+							Accept and Continue
+						{/if}
 					</Button>
 				</form>
 			</div>

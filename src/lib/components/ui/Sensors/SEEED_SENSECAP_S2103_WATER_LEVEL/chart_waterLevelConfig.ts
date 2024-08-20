@@ -12,6 +12,7 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
             zooming: {
                 type: 'x'
             },
+            backgroundColor: 'transparent',
         },
         title: {
             text: '',

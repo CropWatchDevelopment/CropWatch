@@ -15,8 +15,11 @@
                 height: '80%',
                 backgroundColor: 'transparent',
             },
+            exporting: {
+                enabled: false
+            },
             title: {
-                text: name,
+                text: '',
                 style: {
                     color: 'orange' // Dynamic text color
                 }

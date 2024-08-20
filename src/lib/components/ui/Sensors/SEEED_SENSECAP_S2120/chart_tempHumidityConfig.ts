@@ -12,6 +12,7 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
             zooming: {
                 type: 'x'
             },
+            backgroundColor: 'transparent',
         },
         title: {
             text: '',
@@ -45,7 +46,7 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
             labels: {
                 format: '{value}%',
                 style: {
-                    color: 'lightblue'
+                    color: 'blue'
                 }
             },
             opposite: true
@@ -74,6 +75,7 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
             type: 'spline',  // Add this line
             name: 'Humidity',
             data: humidityData,
+            color: 'blue',
             yAxis: 1,
             tooltip: {
                 valueSuffix: ' %'

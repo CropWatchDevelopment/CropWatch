@@ -4,7 +4,7 @@ import HighchartsExporting from 'highcharts/modules/exporting';
 // Initialize the module
 HighchartsExporting(Highcharts);
 
-export const getWindChartConfig = (
+export const getRainfallChartConfig = (
     windData: [number, number, number][]
 ): Highcharts.Options => {
     return {
@@ -16,31 +16,31 @@ export const getWindChartConfig = (
             backgroundColor: 'transparent',
         },
         title: {
-            text: 'Wind Speed and Direction',
+            text: 'Rainfall',
             align: 'left',
         },
         xAxis: {
             type: 'datetime',
-            lineColor: 'darkgray',
-            tickColor: 'darkgray',
+            lineColor: 'gray',
+            tickColor: 'gray',
             labels: {
                 style: {
                     color: 'white',
                 },
             },
-            gridLineColor: 'darkgray',
+            gridLineColor: 'gray',
         },
         yAxis: [{
             title: {
-                text: 'Wind Speed (km/h)',
+                text: 'Rainfall (mm/h)',
                 style: {
-                    color: 'darkgray',
+                    color: 'black',
                 },
             },
             labels: {
                 format: '{value} km/h',
                 style: {
-                    color: 'darkgray',
+                    color: 'black',
                 },
             },
             opposite: false,
@@ -52,21 +52,20 @@ export const getWindChartConfig = (
             formatter: function (this: Highcharts.TooltipFormatterContextObject) {
                 let tooltip = `<b>${Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x as number)}</b>`;
                 this.points?.forEach((point) => {
-                    tooltip += `<br/><span style="color:${point.color}">\u25B2</span> ${point.series.name}: <b>${point.y} km/h</b><br/>Direction: <b>${point.direction}°</b>`;
+                    tooltip += `<br/><span style="color:${point.color}">\u25B2</span> ${point.series.name}: <b>${point.y} mm/h</b>`;
                 });
                 return tooltip;
             },
         },
         series: [{
-            type: 'spline',
-            name: 'Wind Speed',
+            type: 'column',
+            name: 'Rainfall',
             data: windData.map((d) => ({
                 x: d[0],
                 y: d[1],
-                direction: d[2],
             })),
             lineWidth: 1,
-            color: 'black',
+            color: 'gray',
             marker: {
                 enabled: true,
                 symbol: 'circle', // Use circle as a placeholder symbol
