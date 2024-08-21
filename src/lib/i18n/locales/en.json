@@ -115,7 +115,8 @@
       "confirmDelete": "Yes, Delete User",
       "deleteMsg1": "You are about to delete",
       "deleteMsg2": "This user will no longer be able to view this device.",
-      "deleteTitle": "Are you sure?"
+      "deleteTitle": "Are you sure?",
+      "userAlreadyExists": "Email already Exists"
     },
     "all": {
       "name": "All Locations",

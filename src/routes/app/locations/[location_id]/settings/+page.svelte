@@ -5,7 +5,16 @@
 	import { permissionNumberToRole } from '$lib/components/ui/utilities/permissionNumberToRole';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiAccount, mdiCheckCircle, mdiCloseBox, mdiFloppy, mdiMapMarker, mdiPlus, mdiTrashCan } from '@mdi/js';
+	import {
+		mdiAccount,
+		mdiCheckCircle,
+		mdiCloseBox,
+		mdiCloseCircle,
+		mdiFloppy,
+		mdiMapMarker,
+		mdiPlus,
+		mdiTrashCan
+	} from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { Button, Dialog, Icon, ListItem, TextField, Toggle } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
@@ -23,6 +32,9 @@
 	};
 	let locationPermissions = [];
 	let permissionLevel: string = '';
+	let email: string = '';
+	let disableUserAdd: boolean = false;
+
 	const permissionLevelOptions = [
 		{ label: $_('Administrator'), value: '1' },
 		{ label: $_('User'), value: '2' },
@@ -109,8 +121,12 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">{$_('location.settings.basicInfo')}</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">{$_('location.settings.basicInfoSubtitle')}</p>
+			<h2 class="text-base font-semibold leading-7 text-white">
+				{$_('location.settings.basicInfo')}
+			</h2>
+			<p class="mt-1 text-sm leading-6 text-gray-400">
+				{$_('location.settings.basicInfoSubtitle')}
+			</p>
 		</div>
 
 		<form
@@ -167,12 +183,14 @@
 							on:click={getCurrentLocation}
 							class="rounded bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-400"
 						>
-						{$_('location.settings.useCurrentLocation')}
+							{$_('location.settings.useCurrentLocation')}
 						</Button>
 					</div>
 				</div>
 			</div>
-			<Button type="submit" icon={mdiFloppy} variant="fill" color="success">{$_('location.settings.save')}</Button>
+			<Button type="submit" icon={mdiFloppy} variant="fill" color="success"
+				>{$_('location.settings.save')}</Button
+			>
 		</form>
 	</div>
 
@@ -180,7 +198,9 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">{$_('location.settings.locationPermissionTitle')}:</h2>
+			<h2 class="text-base font-semibold leading-7 text-white">
+				{$_('location.settings.locationPermissionTitle')}:
+			</h2>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
 				{$_('location.settings.locationPermissionSubtitle')}
 			</p>
@@ -225,10 +245,15 @@
 						operators={permissionLevelOptions}
 						on:change={(e) => {
 							console.log(e);
+							const dups = locationPermissions.find((m) => m.profile.email == e.detail.inputValue);
+							if (dups) {
+								disableUserAdd = true;
+							}
 							permissionLevel = e.detail.operator ?? '-1';
 						}}
 						id="email"
 						name="email"
+						bind:value={email}
 						class="w-full"
 					/>
 					<input
@@ -237,8 +262,20 @@
 						name="permissionLevel"
 						id="permissionLevel"
 					/>
-					<Button icon={mdiPlus} type="submit" variant="fill" color="success" />
+					<Button
+						icon={mdiPlus}
+						type="submit"
+						variant="fill"
+						color={disableUserAdd ? 'warning' : 'success'}
+						disabled={disableUserAdd}
+					/>
 				</div>
+				{#if disableUserAdd}
+					<p class="text-red-500">
+						{$_('location.settings.userAlreadyExists')}
+						<Button on:click={() => {email = ''; disableUserAdd = false;}} icon={mdiCloseCircle} />
+					</p>
+				{/if}
 			</DarkCard>
 			<DarkCard title="{$_('location.settings.currentUsers')}:">
 				<ul>
@@ -255,7 +292,9 @@
 										<div slot="title">{$_('location.settings.deleteTitle')}</div>
 										<div class="px-6 py-3">
 											<p>
-												{$_('location.settings.deleteMsg1')} "{permission.profile.email}" {$_('location.settings.deleteMsg2')}
+												{$_('location.settings.deleteMsg1')} "{permission.profile.email}" {$_(
+													'location.settings.deleteMsg2'
+												)}
 											</p>
 										</div>
 										<div slot="actions">
@@ -266,7 +305,7 @@
 												variant="fill"
 												color="danger"
 											>
-											{$_('location.settings.confirmDelete')}
+												{$_('location.settings.confirmDelete')}
 											</Button>
 											<Button>{$_('app.cancle')}</Button>
 										</div>

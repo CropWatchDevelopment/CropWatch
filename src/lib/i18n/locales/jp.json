@@ -115,7 +115,8 @@
       "confirmDelete": "はい、ユーザーを削除",
       "deleteMsg1": "以下のユーザーを削除しようとしています。",
       "deleteMsg2": "このユーザーは削除後、デバイスにアクセスできなくなります。",
-      "deleteTitle": "本当によろしいですか？"
+      "deleteTitle": "本当によろしいですか？",
+      "userAlreadyExists": "メールアドレスは既に存在します"
     },
     "all": {
       "name": "全ての場所",
