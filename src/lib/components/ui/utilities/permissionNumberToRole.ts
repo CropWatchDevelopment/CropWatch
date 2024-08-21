@@ -10,3 +10,19 @@ export const permissionNumberToRole = (permissionNumber: number) => {
             return 'Unknown';
     }
 }
+
+export const PermissionNumberToName = (permissionNumber: number) => {
+    switch (permissionNumber) {
+        case 0:
+            return 'No Permission';
+        case 1:
+            return 'Admin';
+        case 2:
+            return 'User';
+        case 3:
+            return 'View Only';
+        default:
+            return 'Unknown';
+    }
+}
+

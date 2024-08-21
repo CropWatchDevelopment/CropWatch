@@ -12,6 +12,7 @@ export const getChartConfig = (peopleData: [number, number][], bicycleData: [num
             zooming: {
                 type: 'x'
             },
+            backgroundColor: 'transparent',
         },
         title: {
             text: '',

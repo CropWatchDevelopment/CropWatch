@@ -237,5 +237,8 @@
   "temperature": "温度",
   "humidity": "湿度",
   "co2_level": "CO²",
-  "created_at": "Last Updated"
+  "created_at": "Last Updated",
+  "Administrator": "Administrator",
+  "User": "User",
+  "Viewer": "Viewer"
 }

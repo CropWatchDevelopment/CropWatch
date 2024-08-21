@@ -36,8 +36,10 @@
 	let options = {
 		view: 'dayGridMonth',
 		date: value.from,
-		events: [],
-		locale: 'ja-jp'
+		events: [
+
+		],
+		locale: 'ja-jp',
 	};
 
 	onMount(() => {

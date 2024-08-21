@@ -24,9 +24,9 @@
 	let locationPermissions = [];
 	let permissionLevel: string = '';
 	const permissionLevelOptions = [
-		{ label: 'Administrator', value: '1' },
-		{ label: 'User', value: '2' },
-		{ label: 'Viewer', value: '3' }
+		{ label: $_('Administrator'), value: '1' },
+		{ label: $_('User'), value: '2' },
+		{ label: $_('Viewer'), value: '3' }
 	];
 
 	onMount(async () => {
@@ -245,7 +245,7 @@
 					{#each locationPermissions as permission}
 						<ListItem
 							title={permission.profile.email}
-							subheading={permissionNumberToRole(permission.permission_level)}
+							subheading={$_(permissionNumberToRole(permission.permission_level))}
 							icon={mdiAccount}
 						>
 							<div slot="actions">

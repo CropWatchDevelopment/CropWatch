@@ -235,7 +235,16 @@
   "lux": "照度",
   "uv": "紫外線",
   "temperature": "温度",
+  "temperatureC": "温度",
+  "battery_level": "バッテリー",
+  "battery": "バッテリー",
   "humidity": "湿度",
   "co2_level": "CO²",
-  "created_at": "最終更新"
+  "created_at": "最終更新",
+  "car_count": "車両数",
+  "people_count": "人数",
+  "bicycle_count": "自転車数",
+  "Administrator": "管理者 (更新/表示/ダウンロード)",
+  "User": "ユーザー (表示/ダウンロード)",
+  "Viewer": "ビューアー (表示)"
 }

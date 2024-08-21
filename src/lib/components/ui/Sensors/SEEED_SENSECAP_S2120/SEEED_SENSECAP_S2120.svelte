@@ -9,7 +9,6 @@
 	import { getRainfallChartConfig } from './chart_rainfall';
 	import { getWindChartConfig } from './chart_windSpeed';
 
-
 	export let sensor = null;
 
 	// Prepare data for the chart
@@ -25,10 +24,10 @@
 		new Date(d.created_at).getTime(),
 		d.wind_speed
 	]);
-	const wind_direction = sensor.data.map((d) => [
-		new Date(d.created_at).getTime(),
-		d.wind_direction
-	]);
+	// const wind_direction = sensor.data.map((d) => [
+	// 	new Date(d.created_at).getTime(),
+	// 	d.wind_direction
+	// ]);
 	const pressure = sensor.data.map((d) => [
 		new Date(d.created_at).getTime(),
 		d.pressure
