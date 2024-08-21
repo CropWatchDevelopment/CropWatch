@@ -45,7 +45,14 @@
 			// Fetch available locations
 			const locationsRes = await fetch('/api/v1/locations');
 			const locationJson = await locationsRes.json();
-			locationOptions = locationJson.map((l) => ({ label: l.name, value: l.location_id }));
+			debugger;
+			locationOptions = locationJson
+				.filter(
+					(obj1, i, arr) => arr.findIndex((obj2) => obj2.location_id === obj1.location_id) === i
+				)
+				.map((m) => {
+					return { label: m.name, value: m.location_id };
+				});
 
 			deviceData = { ...initialDeviceData };
 		} catch (error) {
@@ -99,8 +106,12 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface-900">{$_('devices.settings.deviceBasicInfo')}</h2>
-			<p class="mt-1 text-sm leading-6 text-surface-600">{$_('devices.settings.setupBasicDeviceSettings')}</p>
+			<h2 class="text-surface-900 text-base font-semibold leading-7">
+				{$_('devices.settings.deviceBasicInfo')}
+			</h2>
+			<p class="text-surface-600 mt-1 text-sm leading-6">
+				{$_('devices.settings.setupBasicDeviceSettings')}
+			</p>
 		</div>
 
 		<form action="?/updateDeviceInfo" method="POST" class="md:col-span-2">
@@ -151,10 +162,11 @@
 					<NumberStepper
 						id="upload_interval"
 						name="upload_interval"
-						label="{$_('devices.settings.uplinkInterval')}"
+						label={$_('devices.settings.uplinkInterval')}
 						bind:value={deviceData.upload_interval}
 						error={errors.upload_interval}
 						on:input={validate}
+						class="w-full"
 					/>
 				</div>
 
@@ -163,7 +175,7 @@
 					<DatePickerField
 						id="battery"
 						name="battery"
-						label="{$_('devices.settings.batteryChangedAt')}"
+						label={$_('devices.settings.batteryChangedAt')}
 						icon={mdiCalendar}
 						bind:value={deviceData.battery_changed_at}
 						error={errors.battery_changed_at}
@@ -176,9 +188,9 @@
 					<Button
 						type="button"
 						on:click={getCurrentLocation}
-						class="rounded bg-blue-500 px-4 py-2 font-semibold text-surface-900 hover:bg-blue-400"
+						class="text-surface-900 rounded bg-blue-500 px-4 py-2 font-semibold hover:bg-blue-400"
 					>
-					{$_('devices.settings.useCurrentLocation')}
+						{$_('devices.settings.useCurrentLocation')}
 					</Button>
 				</div>
 			</div>
@@ -188,7 +200,7 @@
 					type="submit"
 					name="action"
 					value="updateDeviceInfo"
-					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-surface-900 shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+					class="text-surface-900 rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
 					>{$_('devices.settings.save')}</Button
 				>
 			</div>
@@ -200,8 +212,12 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface-900">{$_('devices.settings.deviceLocationTitle')}</h2>
-			<p class="mt-1 text-sm leading-6 text-surface-600">{$_('devices.settings.deviceLocationSubtitle')}</p>
+			<h2 class="text-surface-900 text-base font-semibold leading-7">
+				{$_('devices.settings.deviceLocationTitle')}
+			</h2>
+			<p class="text-surface-600 mt-1 text-sm leading-6">
+				{$_('devices.settings.deviceLocationSubtitle')}
+			</p>
 		</div>
 
 		<form action="?/updateLocation" method="POST" class="md:col-span-2">
@@ -219,7 +235,7 @@
 					type="submit"
 					name="action"
 					value="updateLocation"
-					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-surface-900 shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+					class="text-surface-900 rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
 					disabled={errors.location_id !== ''}>{$_('devices.settings.save')}</Button
 				>
 			</div>
@@ -231,8 +247,12 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface-900">{$_('devices.settings.deviceConfigurationTitle')}</h2>
-			<p class="mt-1 text-sm leading-6 text-surface-600">{$_('devices.settings.deviceConfigurationSubtitle')}</p>
+			<h2 class="text-surface-900 text-base font-semibold leading-7">
+				{$_('devices.settings.deviceConfigurationTitle')}
+			</h2>
+			<p class="text-surface-600 mt-1 text-sm leading-6">
+				{$_('devices.settings.deviceConfigurationSubtitle')}
+			</p>
 		</div>
 
 		<p class="w-full text-center">

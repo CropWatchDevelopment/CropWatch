@@ -35,7 +35,7 @@
 			/>
 		</li>
 
-		<h1>Locations</h1>
+		<h1>{$_('nav.locations')}</h1>
 		<ul>
 			<li>
 				<NavItem

@@ -41,7 +41,7 @@
 	};
 </script>
 
-<h1>Downloads:</h1>
+<h1>{$_('devices.history.title')}:</h1>
 
 <DateRangeField bind:value icon={mdiCalendarRange} />
 

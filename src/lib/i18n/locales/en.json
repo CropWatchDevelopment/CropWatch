@@ -48,7 +48,8 @@
     "AllRules": "All Rules",
     "Users": "Users",
     "Gateways": "Gateways",
-    "AllUsers": "All Users"
+    "AllUsers": "All Users",
+    "locations": "Locations"
   },
   "dashboard": {
     "dashboard": {
@@ -109,7 +110,10 @@
       "addNewLocationPermission": "Add New Location Permission",
       "userEmailToGrantAccess": "User Email to grant permission",
       "currentUsers": "Current Users",
-      "confirmDelete": "Yes, Delete User"
+      "confirmDelete": "Yes, Delete User",
+      "deleteMsg1": "You are about to delete",
+      "deleteMsg2": "This user will no longer be able to view this device.",
+      "deleteTitle": "Are you sure?"
     },
     "all": {
       "name": "All Locations",
@@ -121,7 +125,8 @@
       "downloadExcel": "Download Excel",
       "downloadPDF": "Download PDF (Future Feature)",
       "customReports": "Custom Reports",
-      "noCustomReports": "You have no custom reports. (Coming Soon)"
+      "noCustomReports": "You have no custom reports. (Coming Soon)",
+      "title": "Downloads"
     },
     "settings": {
       "general": "General",
@@ -135,7 +140,7 @@
       "deviceName": "Device Name",
       "latitude": "Latitude",
       "longitude": "Longitude",
-      "uplinkInterval": "Uplink Interval (minutes)",
+      "uplinkInterval": "Expected Uplink Interval (minutes)",
       "batteryChangedAt": "Date of Battery Change",
       "useCurrentLocation": "Use Current Location",
       "save": "Save",
@@ -143,7 +148,8 @@
       "deviceLocationSubtitle": "Select the location for this device",
       "deviceConfigurationTitle": "Device Configuration",
       "deviceConfigurationSubtitle": "Update Device Configuration OTA",
-      "comingSoon": "Section Coming in the future"
+      "comingSoon": "Section Coming in the future",
+      "settings": "settings"
     },
     "rules": {
       "title": "Configured Rules",
@@ -167,7 +173,8 @@
       "deleteConfirmMessage": "Are you sure?",
       "success": "Permission added successfully",
       "failedToAdd": "Failed to add permission",
-      "userEmailToGrantAccess": "User Email to grant permission"
+      "userEmailToGrantAccess": "User Email to grant permission",
+      "currentUsers": "Current Users"
     },
     "all": {
       "title": "All Devices",
@@ -181,5 +188,7 @@
     "sort": "Sort by number of devices",
     "sortEmail": "Sort By Email",
     "allUsers": "All Users"
-  }
+  },
+  "lastSeen": "Last Seen",
+  "ago": "ago"
 }

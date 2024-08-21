@@ -14,13 +14,13 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import AlertMenu from '$lib/components/ui/Header/AlertMenu.svelte';
 	import NavMenu from '$lib/components/ui/SideNav/NavMenu.svelte';
-	import { _ } from 'svelte-i18n';
+	import { _, isLoading } from 'svelte-i18n';
 
 	const s = settings({
 		components: {
 			Radio: {
 				classes: {
-					label: 'text-secondary-900',
+					label: 'text-secondary-900'
 				}
 			}
 		},
@@ -32,10 +32,11 @@
 					dates: {
 						baseParsing: 'yyyy/mm/dd',
 						ordinalSuffixes: {
-							one: 'ー'
-						}
+							one: 'ー',
+							two: '二',
+						},
+						
 					},
-
 					numbers: {
 						defaults: {
 							currency: 'JPY'
@@ -44,27 +45,27 @@
 				},
 
 				dictionary: {
-					Ok: 'Valider',
-					Cancel: 'Annuler',
+					Ok: 'OK',
+					Cancel: 'キャンセル',
 
 					Date: {
-						Start: 'Début',
-						End: 'Fin',
+						Start: '開始',
+						End: '終了',
 
 						Day: '日',
-						DayTime: 'Jour & Heure',
+						DayTime: '日時',
 						Time: '時間',
 						Week: '週',
-						Month: 'Mois',
-						Quarter: 'Trimestre',
-						CalendarYear: 'Année',
-						FiscalYearOct: 'Année fiscale (octobre)',
-						BiWeek: 'Bi-hebdomadaire',
+						Month: '月',
+						Quarter: '四半期',
+						CalendarYear: 'カレンダー年',
+						FiscalYearOct: '会計年度',
+						BiWeek: '2週間',
 
 						PeriodDay: {
-							Current: "Aujourd'hui",
-							Last: 'Hier',
-							LastX: 'Les {0} derniers jours'
+							Current: "今日",
+							Last: '昨日',
+							LastX: '{0}日前',
 						}
 
 						//...
@@ -73,7 +74,7 @@
 			})
 		}
 	});
-	s.forceLocale = 'ja';
+	s.locale.set('ja');
 </script>
 
 <ThemeInit />

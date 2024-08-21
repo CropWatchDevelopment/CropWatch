@@ -99,7 +99,7 @@
 	<!-- TITLE -->
 	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
 		<Icon data={mdiMapMarker} class="h-6 w-6" />
-		Location: {location?.name}
+		{$_('location.name')}: {location?.name}
 	</h2>
 </div>
 
@@ -252,13 +252,11 @@
 								<Toggle let:on={open} let:toggle let:toggleOff>
 									<Button icon={mdiTrashCan} on:click={toggle} variant="fill" color="danger" />
 									<Dialog {open} on:close={toggleOff}>
-										<div slot="title">Are you sure?</div>
+										<div slot="title">{$_('location.settings.deleteTitle')}</div>
 										<div class="px-6 py-3">
 											<p>
-												You are about to delete '{permission.profile.email}' This user will no
-												longer be
+												{$_('location.settings.deleteMsg1')} "{permission.profile.email}" {$_('location.settings.deleteMsg2')}
 											</p>
-											<p>able to view this device.</p>
 										</div>
 										<div slot="actions">
 											<Button

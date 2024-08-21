@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { mdiCog } from '@mdi/js';
 	import { Button, Icon, SelectField, TextField } from 'svelte-ux';
-	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import SupabaseAvatar from '$lib/components/ui/SupabaseAvatar.svelte';
+	import { locale, locales } from 'svelte-i18n';
 
 	export let data;
 	export let form;
@@ -34,15 +34,14 @@
 		};
 	};
 
-
 	const CLIENT_ID = 'OgvNbMAZkaUJfsdUtSaFlz';
 	const REDIRECT_URI = encodeURIComponent('http://localhost:5173/app/line/notifications-callback');
 	const STATE = 'aabbcc'; // Generate this dynamically in a real app
-  
+
 	const lineAuthorizeUrl = `https://notify-bot.line.me/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=notify&state=${STATE}`;
-  
+
 	function register() {
-	  window.location.href = lineAuthorizeUrl;
+		window.location.href = lineAuthorizeUrl;
 	}
 </script>
 
@@ -296,7 +295,24 @@
 		</div>
 
 		<Button on:click={register} variant="fill" color="success">Register with LINE</Button>
-
 	</div>
 
+	<div
+		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
+	>
+		<div>
+			<h2 class="text-base font-semibold leading-7 text-white">Language</h2>
+			<p class="mt-1 text-sm leading-6 text-gray-400">
+				Select Your prefered Language (defaults to your browser's language)
+			</p>
+		</div>
+
+		<div class="flex w-full flex-row justify-center align-middle">
+			<select bind:value={$locale} class="h-10 border">
+				{#each $locales as locale}
+					<option value={locale}>{locale}</option>
+				{/each}
+			</select>
+		</div>
+	</div>
 </div>

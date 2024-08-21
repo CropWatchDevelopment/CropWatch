@@ -8,6 +8,7 @@
 	import { Button, Icon, Tooltip } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import SensorHeader from '$lib/components/ui/Sensors/SensorHeader.svelte';
+	import { _ } from 'svelte-i18n';
 
 	let sensorName = 'NS';
 	let devEui = $page.params.dev_eui;
@@ -39,10 +40,10 @@
 			<div class="mx-2 flex flex-row">
 				<SensorHeader {sensorName} {lastSeen} {upload_interval} />
 				<span class="flex-grow" />
-                <Tooltip title={`${sensorName} History Download`}>
+                <Tooltip title={`${sensorName} ${$_('devices.history.title')}`}>
 					<Button icon={mdiDownload} size="lg" on:click={() => goto(`history`)} />
 				</Tooltip>
-				<Tooltip title={`${sensorName}'s Settings`}>
+				<Tooltip title={`${sensorName}'s ${$_('devices.settings.settings')}`}>
 					<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
 				</Tooltip>
 			</div>

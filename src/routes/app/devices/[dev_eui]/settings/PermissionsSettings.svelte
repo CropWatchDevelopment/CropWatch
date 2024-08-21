@@ -136,7 +136,7 @@
 				</div>
 			</DarkCard>
 
-			<DarkCard title="Current Users:">
+			<DarkCard title="{$_('devices.permissions.currentUsers')}:">
 				<ul>
 					{#if loading}
 						<ProgressCircle />

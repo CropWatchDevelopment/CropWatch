@@ -8,7 +8,6 @@ import type { LayoutLoad } from './$types'
 
 export const load: LayoutLoad = async ({ fetch, data, depends }) => {
     depends('supabase:auth')
-
     if (browser) {
         locale.set(window.navigator.language)
     }
