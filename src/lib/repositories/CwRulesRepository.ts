@@ -89,6 +89,7 @@ class CwRulesRepository {
       .from('cw_rules')
       .update(rule)
       .eq('id', id)
+      .select()
       .single();
 
     if (error) {

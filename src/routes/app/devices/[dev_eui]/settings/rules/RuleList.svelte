@@ -4,8 +4,11 @@
 	import { mdiEye, mdiPencil, mdiTrashCan } from '@mdi/js';
 	import { Button, Dialog, ListItem, Toggle, Tooltip } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
+	import ViewRule from './ViewRule.svelte';
 
 	export let rules: Tables<'cw_rules'>[] = [];
+	export let editing: Tables<'cw_rules'>;
+	export let state: string;
 
 	const deleteRule = async (id: number) => {
 		const deleteResult = await fetch(`/api/v1/rules/${$page.params.dev_eui}?id=${id}`, {
@@ -27,13 +30,19 @@
 				</ul>
 			</div>
 			<div slot="actions" class="flex flex-row gap-4">
-				<Tooltip title="{$_('devices.rules.viewRule')}">
-					<Button icon={mdiEye} variant="fill" color="info" /></Tooltip
+				<ViewRule {rule} />
+				<Tooltip title={$_('devices.rules.EditRule')}>
+					<Button
+						icon={mdiPencil}
+						variant="fill"
+						color="warning"
+						on:click={() => {
+							editing = rule;
+							state = 'edit';
+						}}
+					/></Tooltip
 				>
-				<Tooltip title="{$_('devices.rules.EditRule')}">
-					<Button icon={mdiPencil} variant="fill" color="warning" /></Tooltip
-				>
-				<Tooltip title="{$_('devices.rules.deleteRule')}">
+				<Tooltip title={$_('devices.rules.deleteRule')}>
 					<Toggle let:on={open} let:toggle let:toggleOff>
 						<Button icon={mdiTrashCan} on:click={toggle} variant="fill" color="danger" />
 						<Dialog {open} on:close={toggleOff}>
@@ -50,7 +59,7 @@
 									variant="fill"
 									color="danger"
 								>
-								{$_('devices.rules.deleteConfirm')}
+									{$_('devices.rules.deleteConfirm')}
 								</Button>
 								<Button>{$_('devices.rules.cancle')}</Button>
 							</div>
@@ -61,6 +70,6 @@
 		</ListItem>
 	{/each}
 	{#if rules.length === 0}
-		<ListItem title="{$_('devices.rules.emptyRules')}" />
+		<ListItem title={$_('devices.rules.emptyRules')} />
 	{/if}
 </ul>

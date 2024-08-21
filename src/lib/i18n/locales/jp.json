@@ -73,7 +73,8 @@
     "back": "戻る",
     "cancle": "キャンセル",
     "devices": "デバイス",
-    "save": "保存"
+    "save": "保存",
+    "update": "Update"
   },
   "header": {
     "widget": {
@@ -181,7 +182,8 @@
       "resetValue": "リセット値",
       "addAtLeastOneCriterion": "少なくとも1つの基準を追加してください",
       "removeCriterion": "基準を削除",
-      "addSubCriterion": "サブ基準を追加"
+      "addSubCriterion": "サブ基準を追加",
+      "editRule": "Editing Rule"
     },
     "permissions": {
       "title": "デバイスの許可",

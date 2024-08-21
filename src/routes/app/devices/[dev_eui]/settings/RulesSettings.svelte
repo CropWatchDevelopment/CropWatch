@@ -7,10 +7,12 @@
 	import RuleList from './rules/RuleList.svelte';
 	import RuleAdd from './rules/RuleAdd.svelte';
 	import { _ } from 'svelte-i18n';
+	import RuleEdit from './rules/RuleEdit.svelte';
 
 	let rules: Tables<'cw_rules'>[] = [];
 	let devEui = $page.params.dev_eui;
 	let state: 'list' | 'add' | 'edit' = 'list';
+	let editing: Tables<'cw_rules'>;
 
 	onMount(async () => {
 		console.log(devEui);
@@ -23,7 +25,7 @@
 <h1 class="flex flex-row justify-center px-4 text-center">
 	{$_('devices.rules.title')}
 	<span class="flex-1" />
-	<Tooltip title="{$_('devices.rules.addRule')}">
+	<Tooltip title={$_('devices.rules.addRule')}>
 		<Button
 			icon={mdiPlus}
 			variant="fill"
@@ -36,7 +38,9 @@
 </h1>
 
 {#if state === 'list'}
-	<RuleList {rules} />
+	<RuleList {rules} bind:editing={editing} bind:state={state} />
 {:else if state === 'add'}
 	<RuleAdd bind:state />
+{:else if state === 'edit'}
+	<RuleEdit {editing} criteria={editing.criteria} bind:state={state} />
 {/if}

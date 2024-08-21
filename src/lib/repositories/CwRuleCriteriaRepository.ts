@@ -61,6 +61,7 @@ class CwRuleCriteriaRepository {
       .from('cw_rule_criteria')
       .update(ruleCriteria)
       .eq('id', id)
+      .select()
       .single();
 
     if (error) {

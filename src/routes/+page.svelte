@@ -5,7 +5,6 @@
 
     onMount(() => {
         if (browser) {
-            debugger;
             goto('/app/dashboard');
         }
     })

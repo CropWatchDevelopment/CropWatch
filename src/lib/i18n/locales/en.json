@@ -73,7 +73,8 @@
     "back": "Back",
     "cancle": "Cancle",
     "devices": "Devices",
-    "save": "Save"
+    "save": "Save",
+    "update": "Update"
   },
   "header": {
     "widget": {
@@ -181,7 +182,8 @@
       "resetValue": "Reset Value",
       "addAtLeastOneCriterion": "Please add at least 1 criteria",
       "removeCriterion": "Remove criterion",
-      "addSubCriterion": "Add sub criterion"
+      "addSubCriterion": "Add sub criterion",
+      "editRule": "Editing Rule"
     },
     "permissions": {
       "title": "Device Permissions",

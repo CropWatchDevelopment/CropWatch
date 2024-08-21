@@ -8,7 +8,6 @@
 	import DarkCard from '../../Cards/DarkCard.svelte';
 
 	export let sensor = null;
-	debugger;
 
 	// Prepare data for the chart
 	const temperatureData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.temperature]);

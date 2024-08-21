@@ -45,7 +45,7 @@
 			// Fetch available locations
 			const locationsRes = await fetch('/api/v1/locations');
 			const locationJson = await locationsRes.json();
-			debugger;
+
 			locationOptions = locationJson
 				.filter(
 					(obj1, i, arr) => arr.findIndex((obj2) => obj2.location_id === obj1.location_id) === i

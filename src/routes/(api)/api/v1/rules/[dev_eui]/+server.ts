@@ -65,6 +65,7 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
     name: newRule.name,
     trigger_count: 0,
     ruleGroupId,
+    id: editing.id,
     profile_id: session.user.id,
   });
 
@@ -90,6 +91,72 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
     }
   });
 }
+
+
+
+
+export const PUT: RequestHandler = async ({ url, params, request, locals: { supabase, safeGetSession } }) => {
+  const session = await safeGetSession();
+  if (!session.user) {
+    return redirect(301, '/auth/unauthorized');
+  }
+  const ruleToEdit = await request.json();
+
+  const devEui = params.dev_eui;
+  if (!devEui) {
+    throw error(400, 'No Dev_Eui provided');
+  }
+
+  const cwRulesService = new CwRulesService(supabase);
+  const cwRuleCriteriaService = new CwRuleCriteriaService(supabase);
+
+  const updateObject: Tables<'cw_rules'> = {
+    action_recipient: ruleToEdit.action_recipient,
+    babylon_notifier_type: ruleToEdit.babylon_notifier_type,
+    dev_eui: devEui,
+    is_triggered: ruleToEdit.is_triggered,
+    name: ruleToEdit.name,
+    trigger_count: ruleToEdit.trigger_count,
+    ruleGroupId: ruleToEdit.ruleGroupId,
+    id: ruleToEdit.id,
+    profile_id: session.user.id,
+  };
+
+  const topLevelRuleResult = await cwRulesService.update(+ruleToEdit.id, updateObject);
+  console.log(topLevelRuleResult);
+
+  if (!topLevelRuleResult) {
+    throw error(500, JSON.stringify(topLevelRuleResult));
+  }
+
+  //Update Rule Criteria associated with this rule
+  const criteriaUpdateResults = [];
+  for (let criteria of ruleToEdit.sub_criteria) {
+    const updateCriteriaObject: Tables<'cw_rule_criteria'> = {
+      ruleGroupId: ruleToEdit.ruleGroupId,
+      subject: criteria.subject,
+      trigger_value: criteria.trigger_value,
+      reset_value: criteria.reset_value,
+      operator: criteria.operator,
+    };
+    const updatedCriteria = await cwRuleCriteriaService.update(+criteria.id, updateCriteriaObject);
+    criteriaUpdateResults.push(updatedCriteria);
+  }
+  if (criteriaUpdateResults.length !== ruleToEdit.sub_criteria.length) {
+    throw error(500, JSON.stringify(criteriaUpdateResults));
+  }
+ 
+
+  return new Response(JSON.stringify({message: "Rule Updated Successfully!"}), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+}
+
+
+
 
 export const DELETE: RequestHandler = async ({ url, params, request, locals: { supabase, safeGetSession } }) => {
   const session = await safeGetSession();
