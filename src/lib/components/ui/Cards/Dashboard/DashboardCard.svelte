@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Button, Collapse, ProgressCircle } from 'svelte-ux';
+	import { Button, Collapse, Icon, ProgressCircle } from 'svelte-ux';
 	import { goto } from '$app/navigation';
-	import { mdiArrowRight } from '@mdi/js';
+	import { mdiArrowDown, mdiArrowRight, mdiTimerSand } from '@mdi/js';
 	import { nameToEmoji } from '../../utilities/NameToEmoji';
 	import DeviceDataList from './DeviceDataList.svelte';
 	import devicesStore from '$lib/stores/devicesStore';
@@ -13,6 +13,7 @@
 	const locationId = location.location_id;
 	let locationWeatherData = writable(null);
 	let devicesLatestData = devicesStore;
+	let open: boolean = false;
 
 	$: if (location.devices) {
 		const updatedDevicesLatestData = get(devicesStore);
@@ -20,7 +21,7 @@
 	}
 </script>
 
-<div class="rounded-2xl border-[0.1em] border-[rgb(121 121 121)] bg-surface-content/30 p-0.5">
+<div class="border-[rgb(121 121 121)] rounded-2xl border-[0.1em] bg-surface-content/30 p-0.5">
 	<div
 		class="custom-bg rounded-4xl relative h-20 w-full bg-cover bg-bottom bg-no-repeat bg-blend-overlay"
 	>
@@ -31,9 +32,9 @@
 				<p>{$_('dashboard.dashboardCard.Humidity')}: {$locationWeatherData.humidity}%</p>
 				<p>{$_('dashboard.dashboardCard.WindSpeed')}: {$locationWeatherData.windSpeed} km/h</p>
 			{:else}
-				<p>Rainfall: --%</p>
-				<p>Humidity: --%</p>
-				<p>Wind Speed: -- km/h</p>
+				<p>{$_('dashboard.dashboardCard.Rainfall')}: --%</p>
+				<p>{$_('dashboard.dashboardCard.Humidity')}: --%</p>
+				<p>{$_('dashboard.dashboardCard.WindSpeed')}: -- km/h</p>
 			{/if}
 		</div>
 		<div class="absolute left-3 top-5">
@@ -49,7 +50,7 @@
 		</div>
 	</div>
 
-	<h2 class="primary-text my-3 flex flex-row items-center text-xl text-ellipsis overflow-hidden">
+	<h2 class="primary-text my-3 flex flex-row items-center overflow-hidden text-ellipsis text-xl">
 		{location.name}
 		<span class="flex flex-grow" />
 		<Button
@@ -61,7 +62,12 @@
 	</h2>
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm">
 		{#each location.devices as device}
-			<Collapse classes={{ root: 'shadow-md pr-2 bg-surface-200/50' }}>
+			<Collapse
+				{open}
+				icon={!$devicesLatestData[device.dev_eui] ? mdiTimerSand : mdiArrowRight}
+				classes={{ root: 'shadow-md pr-2 bg-surface-200/50', icon: 'data-[open=true]:rotate-90' }}
+				disabled={!$devicesLatestData[device.dev_eui]}
+			>
 				<DeviceDataList data={$devicesLatestData[device.dev_eui]} />
 				<div
 					slot="trigger"
@@ -105,7 +111,6 @@
 								</div>
 							{:else}
 								<div class="flex flex-row">
-									<ProgressCircle />
 									<p>{$_('app.loading')}</p>
 								</div>
 							{/if}

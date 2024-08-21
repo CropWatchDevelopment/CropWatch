@@ -61,7 +61,8 @@
       "Rainfall": "Rainfall",
       "Humidity": "Humidity",
       "WindSpeed": "Wind Speed",
-      "ViewData": "View Data"
+      "ViewData": "View Data",
+      "details": "Details"
     }
   },
   "app": {
@@ -71,7 +72,8 @@
     "areYouSure": "Are you sure?",
     "back": "Back",
     "cancle": "Cancle",
-    "devices": "Devices"
+    "devices": "Devices",
+    "save": "Save"
   },
   "header": {
     "widget": {
@@ -161,7 +163,24 @@
       "deleteRuleMessage2": "You will no longer recieve alerts for this rule.",
       "deleteRule": "Delete Rule",
       "viewRule": "View Rule",
-      "EditRule": "Edit Rule"
+      "EditRule": "Edit Rule",
+      "ruleName": "Rule Name",
+      "notifierType": "Notifier Type",
+      "actionRecipient": "Action Recipient",
+      "emailAlreadyAdded": "Email Already Added!",
+      "emailAlreadyAddedDesc": "The Email list cannot contain duplicate Emails!",
+      "emailInvalid": "The E-Mail address you entered is not a valid E-Mail address",
+      "emailInvalidDesc": "You must enter a STANDARD valid E-Mail address",
+      "addedEmails": "Added Email List",
+      "pleaseAddAtLeastOneEmail": "Please add at least 1 E-Mail address to the recipients list.",
+      "criteria": "Rule Criteria",
+      "sensorValue": "Sensor Value",
+      "operator": "Operator",
+      "triggerValue": "Trigger Value",
+      "resetValue": "Reset Value",
+      "addAtLeastOneCriterion": "Please add at least 1 criteria",
+      "removeCriterion": "Remove criterion",
+      "addSubCriterion": "Add sub criterion"
     },
     "permissions": {
       "title": "Device Permissions",
@@ -190,5 +209,33 @@
     "allUsers": "All Users"
   },
   "lastSeen": "Last Seen",
-  "ago": "ago"
+  "ago": "ago",
+  "charts": {
+    "tempHumidity": "Temperature & Humidity",
+    "temperature": "Temperature",
+    "co2": "CO²",
+    "rh": "RH",
+    "compassGuage": {
+      "N": "N",
+      "NE": "NE",
+      "E": "E",
+      "SE": "SE",
+      "S": "S",
+      "SW": "SW",
+      "W": "W",
+      "NW": "NW"
+    },
+    "windSpeedDirTempHumid": "Temperature, Humidity, Wind Speed & Direction"
+  },
+  "rainfall": "雨量",
+  "windspeed": "風速",
+  "wind_speed": "風速",
+  "wind_direction": "風向",
+  "pressure": "気圧",
+  "lux": "照度",
+  "uv": "紫外線",
+  "temperature": "温度",
+  "humidity": "湿度",
+  "co2_level": "CO²",
+  "created_at": "Last Updated"
 }

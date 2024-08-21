@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { _ } from 'svelte-i18n';
 	export let temperature: number;
 	export let temperatureNotation: number = 'ºC';
 	export let humidity: number | null;
@@ -38,7 +39,7 @@
 					</p>
 					{#if humidity !== null}
 						<p class="text-center text-xl">
-							{humidity}<span class="text-xl text-surface-900">%</span>
+							{humidity}<span class="text-xl text-surface-900">% {$_(`charts.rh`)}</span>
 						</p>
 					{/if}
 				</div>

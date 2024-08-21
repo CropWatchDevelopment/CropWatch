@@ -7,11 +7,19 @@
 	import { isValidEmail } from '$lib/components/ui/utilities/isValidEmail';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiAccountPlus, mdiCloseCircle, mdiEmail, mdiFloppy, mdiMinusCircle, mdiPlusCircle } from '@mdi/js';
+	import {
+		mdiAccountPlus,
+		mdiCloseCircle,
+		mdiEmail,
+		mdiFloppy,
+		mdiMinusCircle,
+		mdiPlusCircle
+	} from '@mdi/js';
 	import { onMount } from 'svelte';
-	import { Button, TextField, SelectField, Checkbox, ListItem, NumberStepper } from 'svelte-ux';
+	import { Button, TextField, SelectField, ListItem, NumberStepper } from 'svelte-ux';
+	import { _ } from 'svelte-i18n';
 
-    export let state: string;
+	export let state: string;
 
 	type rule = Tables<'cw_rules'>;
 	type ruleCriteria = Tables<'cw_rule_criteria'>[];
@@ -19,7 +27,6 @@
 
 	let ruleName = '';
 	let babylonNotifierType = '';
-	let actionRecipient = '';
 	let isTriggered = false;
 	let ruleGroupId = '';
 	const devEui: string = $page.params.dev_eui;
@@ -27,12 +34,14 @@
 	let emailArray: string[] = [];
 	let emailToAdd = '';
 	let operators = [
-        { label: '>', value: '>' },
+		{ label: '>', value: '>' },
 		{ label: '<', value: '<' },
-		{ label: '=', value: '= (not recommended)' },
+		{ label: '=', value: '= (not recommended)' }
 	];
 	let subjects: [{ label: string; value: string }] | [] = [];
 	let latestData;
+
+	$: allValuesEntered = ruleName.length > 0 && (babylonNotifierType && babylonNotifierType.length > 0) && emailArray.length > 0 && subCriteria.length > 0;
 
 	const babylonNotifierOptions = [
 		{ label: 'Email', value: '1' },
@@ -40,7 +49,8 @@
 		{ label: 'Webhook', value: '3' }
 	];
 
-	const addSubCriterion = () => {mdiCloseCircle
+	const addSubCriterion = () => {
+		mdiCloseCircle;
 		const newCriterion: ruleCriteria = {
 			subject: '',
 			operator: '',
@@ -57,7 +67,7 @@
 
 	const removeSubCriterion = (index: number) => {
 		subCriteria.splice(index, 1);
-        subCriteria = subCriteria;
+		subCriteria = subCriteria;
 	};
 
 	const submitRule = async () => {
@@ -72,7 +82,7 @@
 			sub_criteria: subCriteria
 		};
 
-        console.log('submitted rule', ruleData);
+		console.log('submitted rule', ruleData);
 
 		const response = await fetch(`/api/v1/rules/${devEui}`, {
 			method: 'POST',
@@ -90,8 +100,8 @@
 				icon: '✅',
 				buttonText: 'OK'
 			});
-            state = 'list';
-            goto(`/app/devices/${$page.params.dev_eui}/settings?page=rules`);
+			state = 'list';
+			goto(`/app/devices/${$page.params.dev_eui}/settings?page=rules`);
 		} else {
 			notificationStore.NotificationTimedOpen({
 				title: 'Failed to Create Rule.',
@@ -116,12 +126,12 @@
 </script>
 
 <div class="px-4">
-	<DarkCard title="Add New Rule">
+	<DarkCard title={$_('devices.rules.addRule')}>
 		<div class="flex flex-col gap-2">
 			<div class="flex flex-row justify-between gap-2">
-				<TextField label="Rule Name" bind:value={ruleName} required />
+				<TextField label={$_('devices.rules.ruleName')} bind:value={ruleName} required />
 				<SelectField
-					label="Notifier Type"
+					label={$_('devices.rules.notifierType')}
 					bind:value={babylonNotifierType}
 					options={babylonNotifierOptions}
 					required
@@ -130,7 +140,7 @@
 
 			<div class="flex flex-row gap-2">
 				<TextField
-					label="Action Recipient"
+					label={$_('devices.rules.actionRecipient')}
 					type="email"
 					bind:value={emailToAdd}
 					class="w-full"
@@ -143,8 +153,8 @@
 					on:click={() => {
 						if (emailArray.includes(emailToAdd)) {
 							notificationStore.NotificationTimedOpen({
-								title: 'Email Already Added!',
-								description: 'List cannot contain duplicates',
+								title: $_('devices.rules.emailAlreadyAdded'),
+								description: $_('devices.rules.emailAlreadyAddedDesc'),
 								timeout: 2000,
 								icon: '❌',
 								buttonText: 'OK'
@@ -153,8 +163,8 @@
 						}
 						if (!isValidEmail(emailToAdd)) {
 							notificationStore.NotificationTimedOpen({
-								title: 'Email Address NOT valid!',
-								description: 'Please enter a valid email address',
+								title: $_('devices.rules.emailInvalid'),
+								description: $_('devices.rules.emailInvalidDesc'),
 								timeout: 2000,
 								icon: '❌',
 								buttonText: 'OK'
@@ -169,7 +179,7 @@
 			</div>
 			<DarkCard2>
 				<div class="text-surface">
-					<p>Added Email List:</p>
+					<p class="text-surface-content">{$_('devices.rules.addedEmails')}:</p>
 					<ul class="text-secondary">
 						{#each emailArray as email}
 							<ListItem title={email} icon={mdiEmail}>
@@ -187,7 +197,7 @@
 							</ListItem>
 						{/each}
 						{#if emailArray.length === 0}
-							<p>Please add at least 1 email address</p>
+							<p class="text-surface-content">{$_('devices.rules.pleaseAddAtLeastOneEmail')}</p>
 						{/if}
 					</ul>
 				</div>
@@ -197,45 +207,64 @@
 				<hr />
 			</div>
 
-			<h2>Criteria</h2>
+			<h2>{$_('devices.rules.criteria')}</h2>
 			{#each subCriteria as subCriterion, index}
 				<DarkCard2>
 					<div class="my-2 flex flex-col gap-2 text-white">
 						<div class="flex flex-row gap-4">
 							<SelectField
-								label="Sensor Value"
+								label={$_('devices.rules.sensorValue')}
 								bind:value={subCriterion.subject}
 								options={subjects}
-                                clearable={false}
+								clearable={false}
 								required
 							/>
 							<SelectField
-								label="Operator"
+								label={$_('devices.rules.operator')}
 								bind:value={subCriterion.operator}
 								options={operators}
 								classes={{ field: { input: 'text-center' } }}
 							/>
 							<NumberStepper
-								label="Trigger Value"
+								label={$_('devices.rules.triggerValue')}
 								bind:value={subCriterion.trigger_value}
 								class="w-full"
 							/>
 						</div>
 						<NumberStepper
-							label="Reset Value"
+							label={$_('devices.rules.resetValue')}
 							bind:value={subCriterion.reset_value}
 							class="w-full"
 						/>
 
-						<Button icon={mdiMinusCircle} on:click={() => removeSubCriterion(index)} variant="fill" color="danger">
-							Remove Criterion
+						<Button
+							icon={mdiMinusCircle}
+							on:click={() => removeSubCriterion(index)}
+							variant="fill"
+							color="danger"
+						>
+						{$_('devices.rules.removeCriterion')}
 						</Button>
 					</div>
 				</DarkCard2>
 			{/each}
-			<Button on:click={addSubCriterion} icon={mdiPlusCircle} variant="fill" color="primary">Add Sub Criterion</Button>
-
-			<Button on:click={submitRule} icon={mdiFloppy} variant="fill" color="success">Submit Rule</Button>
+			<Button on:click={addSubCriterion} icon={mdiPlusCircle} variant="fill" color="primary"
+				>{$_('devices.rules.addSubCriterion')}</Button
+			>
+{allValuesEntered}
+{(subCriteria.length > 1)}
+			<Button
+				on:click={submitRule}
+				disabled={(subCriteria.length > 1) || !allValuesEntered}
+				icon={mdiFloppy}
+				variant="fill"
+				color={subCriteria.length < 1 ? "warning" : "success"}>
+				{#if subCriteria.length < 1}
+				{$_('devices.rules.addAtLeastOneCriterion')}
+				{:else}
+				{$_('app.save')}
+				{/if}
+				</Button>
 		</div>
 	</DarkCard>
 </div>

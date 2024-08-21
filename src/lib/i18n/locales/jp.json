@@ -61,7 +61,8 @@
       "Rainfall": "降水量",
       "Humidity": "湿度",
       "WindSpeed": "風速",
-      "ViewData": "データを表示"
+      "ViewData": "データを表示",
+      "details": "詳細"
     }
   },
   "app": {
@@ -71,7 +72,8 @@
     "areYouSure": "本当によろしいですか？",
     "back": "戻る",
     "cancle": "キャンセル",
-    "devices": "デバイス"
+    "devices": "デバイス",
+    "save": "保存"
   },
   "header": {
     "widget": {
@@ -161,7 +163,24 @@
       "deleteRuleMessage2": "このルールに対するアラートは今後受信されません。",
       "deleteRule": "ルールを削除",
       "viewRule": "ルールを表示",
-      "EditRule": "ルールを編集"
+      "EditRule": "ルールを編集",
+      "ruleName": "ルール名",
+      "notifierType": "通知タイプ",
+      "actionRecipient": "アクション受信者",
+      "emailAlreadyAdded": "メールアドレスが既に追加されています！",
+      "emailAlreadyAddedDesc": "このメールアドレスは既に受信者リストに追加されています",
+      "emailInvalid": "入力したEメールアドレスは有効なEメールアドレスではありません",
+      "emailInvalidDesc": "有効なEメールアドレスを入力する必要があります",
+      "addedEmails": "追加されたEメールリスト",
+      "pleaseAddAtLeastOneEmail": "少なくとも1つのEメールアドレスを追加してください",
+      "criteria": "ルールの基準",
+      "sensorValue": "センサー値",
+      "operator": "オペレーター",
+      "triggerValue": "トリガー値",
+      "resetValue": "リセット値",
+      "addAtLeastOneCriterion": "少なくとも1つの基準を追加してください",
+      "removeCriterion": "基準を削除",
+      "addSubCriterion": "サブ基準を追加"
     },
     "permissions": {
       "title": "デバイスの許可",
@@ -190,5 +209,33 @@
     "allUsers": "全てのユーザー"
   },
   "lastSeen": "最後に閲覧",
-  "ago": "前"
+  "ago": "前",
+  "charts": {
+    "tempHumidity": "温度/湿度",
+    "temperature": "温度",
+    "co2": "CO²",
+    "rh": " ",
+    "compassGuage": {
+      "N": "北",
+      "NE": "北東",
+      "E": "東",
+      "SE": "南東",
+      "S": "南",
+      "SW": "南西",
+      "W": "西",
+      "NW": "北西"
+    },
+    "windSpeedDirTempHumid": "Temperature, Humidity, Wind Speed & Direction"
+  },
+  "rainfall": "雨量",
+  "windspeed": "風速",
+  "wind_speed": "風速",
+  "wind_direction": "風向",
+  "pressure": "気圧",
+  "lux": "照度",
+  "uv": "紫外線",
+  "temperature": "温度",
+  "humidity": "湿度",
+  "co2_level": "CO²",
+  "created_at": "最終更新"
 }

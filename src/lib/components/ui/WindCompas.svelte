@@ -88,7 +88,7 @@
 				.attr('font-size', '16px')
 				.attr('font-weight', 'bold')
 				.attr('fill', i % 2 === 0 ? '#555' : '#999') // Darker for cardinal directions
-				.text($_(`compassGuage.${dir}`));
+				.text($_(`charts.compassGuage.${dir}`));
 
 			const tickX1 = radius * Math.sin((angle * Math.PI) / 180);
 			const tickY1 = -radius * Math.cos((angle * Math.PI) / 180);
@@ -157,7 +157,7 @@
 			.attr('text-anchor', 'middle')
 			.attr('font-size', '26px')
 			.attr('font-weight', 'bold')
-			.html(`<tspan fill="green">${$_(`compassGuage.${windDirection}`)}</tspan>`);
+			.html(`<tspan fill="green">${$_(`charts.compassGuage.${windDirection}`)}</tspan>`);
 		// .text(windDirection);
 
 		// Draw the temperature and humidity text
@@ -168,7 +168,7 @@
 			.attr('font-size', '20px')
 			.attr('font-weight', 'bold')
 			.html(
-				`<tspan fill="coral">${temperature}°C</tspan> / <tspan fill="teal">${humidity}% RH</tspan>`
+				`<tspan fill="coral">${temperature}°C</tspan> / <tspan fill="teal">${humidity}% ${$_(`charts.rh`)}</tspan>`
 			);
 
 		// Draw the arrowhead

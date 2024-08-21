@@ -4,7 +4,6 @@
 	import TempHumidityCard from '../../Cards/TempHumidityCard.svelte';
 	import DarkCard from '../../Cards/DarkCard.svelte';
 	import { getChartConfig } from './chart_tempConfig';
-	import moment from 'moment';
 
 	export let sensor = null;
 
@@ -23,7 +22,7 @@
 		humidity={null}
 	/>
 </div>
-<DarkCard title="Temperature & Humidity">
+<DarkCard title="{$_('charts.temperature')}/24h">
 	<div class="chart-container" use:highcharts={tempChartConfig}></div>
 </DarkCard>
 

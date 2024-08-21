@@ -36,7 +36,7 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
             labels: {
                 format: '{value} PPM',
                 style: {
-                    color: 'blue'
+                    color: 'red'
                 }
             },
             opposite: true
@@ -47,14 +47,14 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
             formatter: function (this: Highcharts.TooltipFormatterContextObject) {
                 let tooltip = `<b>${Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x as number)}</b>`;
                 this.points?.forEach(point => {
-                    tooltip += `<br/><span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}${point.series.name === 'Temperature' ? '°C' : '%'}</b>`;
+                    tooltip += `<br/><span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b>`;
                 });
                 return tooltip;
             }
         },
         series: [{
             type: 'spline',  // Add this line
-            name: 'CO2 PPM',
+            name: 'CO² PPM',
             data: co2Data,
             tooltip: {
                 valueSuffix: ' °C'

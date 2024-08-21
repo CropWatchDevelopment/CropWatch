@@ -61,7 +61,7 @@
 </script>
 
 <div class="grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2">
-	<DarkCard title="CO2 Level">
+	<DarkCard title={$_('charts.windSpeedDirTempHumid')}>
 		<WindCompas {temperature} {humidity} {windSpeed} {windDirection} {arrowRotation} />
 	</DarkCard>
 

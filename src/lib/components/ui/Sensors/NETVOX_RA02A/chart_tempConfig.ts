@@ -12,6 +12,7 @@ export const getChartConfig = (temperatureData: [number, number][]): Highcharts.
             zooming: {
                 type: 'x'
             },
+            backgroundColor: 'transparent',
         },
         title: {
             text: '',
@@ -31,6 +32,9 @@ export const getChartConfig = (temperatureData: [number, number][]): Highcharts.
         yAxis: [{
             title: {
                 text: '',
+                style: {
+                    color: 'red'
+                }
             },
             labels: {
                 format: '{value}°C',

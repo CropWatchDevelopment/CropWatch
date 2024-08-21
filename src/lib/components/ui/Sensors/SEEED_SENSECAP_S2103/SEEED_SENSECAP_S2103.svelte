@@ -8,6 +8,7 @@
 	import DarkCard from '../../Cards/DarkCard.svelte';
 
 	export let sensor = null;
+	debugger;
 
 	// Prepare data for the chart
 	const temperatureData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.temperature]);
@@ -33,11 +34,11 @@
 	/>
 </div>
 {#if Current_co2_level}
-<DarkCard title="CO2">
+<DarkCard title="{$_('charts.co2')}/24h">
 	<div class="chart-container my-auto" use:highcharts={getCo2lineConfig} />
 </DarkCard>
 {/if}
-<DarkCard title="Temperature & Humidity">
+<DarkCard title="{$_('charts.tempHumidity')}/24h">
 	<div class="chart-container" use:highcharts={tempHumidChartConfig} />
 </DarkCard>
 

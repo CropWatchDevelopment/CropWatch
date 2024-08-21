@@ -13,7 +13,7 @@
 <div class="mr-2 border-l-8 {isOld ? 'border-l-red-500' : 'border-l-green-500'}">
 	<div class="flex px-3">
 		<h3 class="mb-2 basis-1/3 text-lg font-medium">
-			{$_('dashboardCard.details')}
+			{$_('dashboard.dashboardCard.details')}
 		</h3>
 	</div>
 	{#each Object.keys(convertObject(data)) as dataPointKey, index}
