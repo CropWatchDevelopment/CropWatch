@@ -35,6 +35,10 @@
     },
     "agreement": {
       "title": "Before Continuing, please read, and accept the following agreements in order to use this \t\t\t\t\t\tapplication."
+    },
+    "unauthorized": {
+      "title": "Unauthorized",
+      "description": "Your session may have ended, or you do not have access to this resource, please use the back button in your browser or return to the login using the button below."
     }
   },
   "nav": {
