@@ -35,7 +35,7 @@
 	};
 
 	const CLIENT_ID = 'OgvNbMAZkaUJfsdUtSaFlz';
-	const REDIRECT_URI = encodeURIComponent('http://localhost:5173/app/line/notifications-callback');
+	const REDIRECT_URI = encodeURIComponent('https://app.cropwatch.io/app/lineChat/notifications-callback');
 	const STATE = 'aabbcc'; // Generate this dynamically in a real app
 
 	const lineAuthorizeUrl = `https://notify-bot.line.me/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=notify&state=${STATE}`;
