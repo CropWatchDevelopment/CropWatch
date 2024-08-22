@@ -1,5 +1,6 @@
 // src/routes/api/v1/line/+server.ts
 import { json, redirect } from '@sveltejs/kit';
+import { PRIVATE_LINE_CHAT_KEY } from "$env/static/private"
 
 export async function POST({ request, url, locals: { supabase, safeGetSession } }) {
     const session = await safeGetSession();
@@ -31,7 +32,7 @@ export async function POST({ request, url, locals: { supabase, safeGetSession } 
             code,
             redirect_uri: 'https://app.cropwatch.io/app/lineChat/notifications-callback', // Ensure this matches exactly
             client_id: 'OgvNbMAZkaUJfsdUtSaFlz',
-            client_secret: 'CtDeSMEqhzc06YPlA4qCDhuQWz05JIk6kDYDYutyJRY',
+            client_secret: PRIVATE_LINE_CHAT_KEY,
         }),
     });
 
