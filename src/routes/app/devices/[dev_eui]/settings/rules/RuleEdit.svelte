@@ -22,7 +22,7 @@
 	export let state: string;
 	export let editing: Tables<'cw_rules'>; // Pass in the entire rule when editing
 	export let criteria: Tables<'cw_rule_criteria'>[]; // Pass in the criteria when editing
-	debugger;
+
 	const allCriteria = criteria;
 	let emailArray: string[] = editing.action_recipient.split(',');
 
@@ -63,16 +63,17 @@
 	// };
 
 	const submitRule = async () => {
+		debugger;
 		const ruleData = {
 			name: editing?.name,
-			babylon_notifier_type: editing.babylonNotifierType,
+			babylon_notifier_type: bbb,
 			action_recipient: emailArray.join(','),
 			is_triggered: editing.isTriggered,
 			ruleGroupId: editing.ruleGroupId,
 			dev_eui: editing.devEui,
 			profile_id: editing.profileId,
 			id: editing?.id,
-			sub_criteria: editing?.criteria
+			sub_criteria: allCriteria
 		};
 
 		console.log('submitted rule', ruleData);
@@ -104,7 +105,7 @@
 			});
 		}
 	};
-	let bbb = babylonNotifierOptions.find((o) => o.value == editing.babylon_notifier_type)?.label;
+	$: bbb = '';
 
 	onMount(async () => {
 		const latestDataPromise = await fetch(`/api/v1/devices/${$page.params.dev_eui}/latest-data`);
@@ -115,10 +116,11 @@
 			subjects.push({ label: key, value: key });
 		}
 		subjects = subjects;
+		bbb = babylonNotifierOptions.find((o) => o.value == editing.babylon_notifier_type)?.value;
+		console.log(bbb);
 	});
 </script>
 
-{bbb}
 <div class="px-4">
 	<DarkCard title={`${$_('devices.rules.editRule')}: ${editing.name}`}>
 		<div class="flex flex-col gap-2">
@@ -127,8 +129,7 @@
 				{#if bbb}
 					<SelectField
 						label={$_('devices.rules.notifierType')}
-						value={babylonNotifierOptions.find((o) => o.value == editing.babylon_notifier_type)
-							?.value}
+						value={bbb}
 						options={babylonNotifierOptions}
 						required
 					/>
