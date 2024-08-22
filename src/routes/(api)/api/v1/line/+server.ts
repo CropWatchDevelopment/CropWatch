@@ -29,7 +29,7 @@ export async function POST({ request, url, locals: { supabase, safeGetSession } 
         body: new URLSearchParams({
             grant_type: 'authorization_code',
             code,
-            redirect_uri: 'http://localhost:5173/app/lineChat/notifications-callback', // Ensure this matches exactly
+            redirect_uri: 'http://app.cropwatch.io/app/lineChat/notifications-callback', // Ensure this matches exactly
             client_id: 'OgvNbMAZkaUJfsdUtSaFlz',
             client_secret: 'CtDeSMEqhzc06YPlA4qCDhuQWz05JIk6kDYDYutyJRY',
         }),
