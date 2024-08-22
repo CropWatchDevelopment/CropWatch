@@ -33,12 +33,15 @@ function createNotificationStore() {
     buttonText,
     timeout = 10000,
     icon = null,
+    duration = 2000,
     iconColor = null,
   }: {
     title: string;
     description: string;
     buttonText: string;
     timeout?: number;
+    duration?: number;
+    iconColor?: string | null;
     icon?: string | null;
   }) {
     clearTimeout(timer);

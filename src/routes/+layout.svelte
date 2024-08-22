@@ -35,8 +35,8 @@
 				title: 'New Alert',
 				description: `${payload.new.name} has been triggered`,
 				icon: mdiAlertCircle,
-				iconColor: 'text-error',
-				duration: 5000
+				duration: 5000,
+				buttonText: 'View'
 			});
 		})
 		.subscribe();
