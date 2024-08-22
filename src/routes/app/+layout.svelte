@@ -95,7 +95,8 @@
 		<NavMenu />
 	</svelte:fragment>
 
-	<AppBar title="CropWatch" class="flex bg-primary text-primary-content" head={true}>
+	<AppBar class="flex bg-primary text-primary-content" head={true}>
+		<a href="/app/dashboard" slot="title" class="ml-2">CropWatch</a>
 		<svelte:fragment slot="menuIcon" let:toggleMenu let:isMenuOpen>
 			<Button on:click={toggleMenu} variant="none">
 				<img src={CROPWATCH_LOGO} alt="CropWatch" class="h-8" />
