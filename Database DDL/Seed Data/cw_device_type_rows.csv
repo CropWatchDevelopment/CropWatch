@@ -1,7 +1,0 @@
-id,created_at,name,model,decoder,manufacturer,data_table,device_app,primary_data,primary_data_notation
-4,2024-02-11 10:30:19.050431+00,CropWatch V2 Modbus Board,CW-SS-TMEPNPK,1,CropWatch,cw_ss_tmepnpk,app.cropwatch.io,soil_temperatureC,°c
-3,2024-01-28 07:34:02.848896+00,CropWatch Legacy Box,CW-L1,1.0,CropWatch,cw_ss_tmepnpk,,soil_temperatureC,°c
-6,2024-03-03 16:12:58.85661+00,SEEED CO2 Sensor,SenseCAP S2103,1,SEEED Studio,seeed_co2_lorawan_uplinks,,co2_level,ppm
-1,2023-11-11 14:17:46.661349+00,Milesight Co2 Sensor,EM500-co2,,Milesight,cw_co2_uplinks,,co2_level,ppm
-5,2024-03-02 08:48:29.641934+00,CropWatch Pulse Watch,CW-Pulse,1,CropWatch,cw_pulse,,total_pulses,L
-2,2023-12-31 13:16:05.592979+00,"CropWatch Air Temperature, Humidity Sensor",CW-air-thvd,1.0,CropWatch,cw_air_thvd,,temperatureC,°c

@@ -1,109 +1,97 @@
-import { redirect, type RequestHandler } from "@sveltejs/kit";
-import moment from "moment";
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+import CwDevicesService from '$lib/services/CwDevicesService';
+import moment from 'moment';
 
-export const GET: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  if (!session) {
-    throw redirect(303, '/auth/unauthorized');
-  }
-
-  const dev_eui = params.dev_eui;
-  const query = new URLSearchParams(url.search);
-  const startingPage = parseInt(query.get('page') || '0');
-  const itemsPerPage = parseInt(query.get('count') || '144');
-  const from = query.get('from');
-  const to = query.get('to');
-  const dataPoints = query.get('data-points');
-  const noLimit = query.get('noLimit') === '1';  // Ensure noLimit is parsed correctly
-  const csv = query.get('csv');
-
-  if (!dev_eui) {
-    return new Response(
-      JSON.stringify({ error: 'dev_eui is required' }),
-      {
-        status: 400,
-      });
-  }
-
-  let deviceType = await getDeviceDataTable(dev_eui, session, supabase);
-  let baseQuery = supabase
-    .from(deviceType.data_table)
-    .select(dataPoints ?? '*')
-    .eq('dev_eui', dev_eui)
-    .order('created_at', { ascending: false })
-
-  if (from) {
-    baseQuery = baseQuery.gte('created_at', moment(from).utc().toISOString());
-  }
-  if (to) {
-    baseQuery = baseQuery.lte('created_at', moment(to).utc().toISOString());
-  }
-
-  if (!noLimit) {
-    baseQuery.range(startingPage, startingPage + itemsPerPage - 1);
-  }
-
-  // Conditionally apply `.single()` if itemsPerPage is 1
-  let finalQuery = itemsPerPage === 1 ? baseQuery.maybeSingle() : baseQuery;
-
-  finalQuery = csv ? finalQuery.csv() : finalQuery;
-
-  const { data, error } = await finalQuery;
-
-  if (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 404,
-        headers: {
-          'Content-Type': csv ? 'application/csv' : 'application/json',
-        }
-      });
-  }
-
-  if (data && !csv) {
-    data.primaryData = deviceType.primary_data;
-    data.secondaryData = deviceType.secondary_data;
-    data.primary_data_notation = deviceType.primary_data_notation;
-    data.secondary_data_notation = deviceType.secondary_data_notation;
-    data.data_table = deviceType.data_table;
-    data.primary_multiplier = +deviceType.primary_multiplier;
-    data.secondary_multiplier = +deviceType.secondary_multiplier;
-    data.primary_divider = +deviceType.primary_divider;
-    data.secondary_divider = +deviceType.secondary_divider;
-  }
-
-  return new Response(
-    data ? (csv ? data : JSON.stringify(data)) : error,
-    {
-      status: data ? 200 : 404,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-};
-
-async function getDeviceDataTable(dev_eui: string, session: any, supabase: any) {
-  try {
-    const { data, error } = await supabase
-      .from('cw_device_owners')
-      .select('*, cw_devices(*, cw_device_type(*))')
-      .eq('user_id', session.user.id)
-      .eq('dev_eui', dev_eui)
-      .limit(1)
-      .single();
-    if (error) {
-      throw new Error(error.message);
+export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        throw redirect(303, '/auth/unauthorized');
     }
-    return data.cw_devices.cw_device_type;
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-  }
-}
+
+    const devEui = params.dev_eui;
+    if (!devEui) {
+        throw error(400, 'dev_eui is required');
+    }
+    const firstDataDate = new Date(url.searchParams.get('firstDataDate') ?? '');
+    const lastDataDate = new Date(url.searchParams.get('lastDataDate') ?? '');
+    const csv = url.searchParams.get('csv') ? true : false;
+
+    // Check dates are provided
+    if (!firstDataDate || !lastDataDate) {
+        throw error(400, 'firstDataDate and lastDataDate are required');
+    }
+    // Check dates are valid
+    if (isNaN(firstDataDate.getTime()) || isNaN(lastDataDate.getTime())) {
+        throw error(400, 'firstDataDate and lastDataDate must be valid dates');
+    }
+    // Check last date is AFTER first date
+    if (firstDataDate > lastDataDate) {
+        throw error(400, 'firstDataDate must be less than lastDataDate');
+    }
+
+    const cwDevicesService = new CwDevicesService(supabase);
+
+    // Fetch main data
+    const device = await cwDevicesService.getDeviceByEui(devEui);
+    if (!device) {
+        throw error(500, 'Error fetching device');
+    }
+    const deviceType = await cwDevicesService.getDeviceTypeById(device.type);
+    if (!deviceType) {
+        throw error(500, 'Error fetching device type');
+    }
+    const data = await cwDevicesService.getDataRangeByDeviceEui(device.dev_eui, deviceType.data_table ?? '', firstDataDate, lastDataDate);
+    if (!data) {
+        throw error(500, 'Error fetching latest data');
+    }
+
+    if (csv) {
+        // Format the data
+        const formattedData = data.map(row => {
+            const formattedRow: Record<string, any> = {};
+            for (const key in row) {
+                if (Object.hasOwn(row, key)) {
+                    let value = row[key];
+                    if (key === 'created_at') {
+                        value = moment(value).format('YYYY-MM-DD HH:mm:ss'); // Format date for Excel
+                    } else if (typeof value === 'number') {
+                        value = value.toFixed(2); // Format numbers to 2 decimal places
+                    } else if (value === null) {
+                        value = ''; // Replace null with an empty string
+                    }
+                    formattedRow[key] = value;
+                }
+            }
+            return formattedRow;
+        });
+
+        // Generate CSV headers dynamically from the keys of the first formatted row
+        const csvHeaders = Object.keys(formattedData[0]).join(',');
+
+        // Convert data rows to CSV format
+        const csvRows = formattedData.map(row => {
+            return Object.values(row).map(value => `"${value}"`).join(',');
+        }).join('\n');
+
+        // Return CSV directly without converting it to JSON
+        return new Response(`${csvHeaders}\n${csvRows}`, {
+            headers: {
+                'Content-Type': 'text/csv',
+                'Content-Disposition': `attachment; filename="${devEui}_data.csv"`
+            }
+        });
+    } else {
+        const result = {
+            data,
+            device,
+            deviceType,
+        };
+
+        return new Response(JSON.stringify(result), {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+    }
+};

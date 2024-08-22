@@ -1,11 +1,13 @@
-<script>
+<script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-	import tractor from '$lib/images/UI/tractor.svg';
+	import { onMount } from 'svelte';
 
-	if(browser) goto('/auth/login');
+    onMount(() => {
+        if (browser) {
+            goto('/app/dashboard');
+        }
+    })
 </script>
 
-<div class="flex flex-col w-screen h-screen text-center justify-center">
-		<img src={tractor} alt="loading..." class="w-14 mx-auto" /> loading...
-</div>
+<slot />

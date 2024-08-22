@@ -1,116 +1,114 @@
-<script lang="ts">
-	import { invalidate, goto, invalidateAll } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { _, isLoading } from 'svelte-i18n';
-	import cw_LogoImage from '$lib/images/UI/logo_192.png';
-	import { ProgressCircle, Drawer, Button, Icon, AppBar, AppLayout } from 'svelte-ux';
-	import { navigating } from '$app/stores';
-	import Close from '$lib/images/UI/cw_Close Button.svg';
+<script>
+	import '../../app.css';
 	import {
-		mdiAccount,
-		mdiBell,
-		mdiCog,
-		mdiDevices,
-		mdiLock,
-		mdiMenu,
-		mdiRouter,
-		mdiRouterNetwork,
-		mdiRouterWireless,
-		mdiViewDashboard
-	} from '@mdi/js';
+		AppBar,
+		AppLayout,
+		Button,
+		createLocaleSettings,
+		settings,
+		Settings,
+		ThemeInit
+	} from 'svelte-ux';
+	import CROPWATCH_LOGO from '$lib/images/UI/logo.svg';
+	import UserHeaderWidget from '$lib/components/ui/Header/UserHeaderWidget.svelte';
+	import Back from '$lib/components/ui/Back.svelte';
+	import AlertMenu from '$lib/components/ui/Header/AlertMenu.svelte';
+	import NavMenu from '$lib/components/ui/SideNav/NavMenu.svelte';
+	import { _, isLoading } from 'svelte-i18n';
 
-	export let data;
-	$: ({ supabase } = data);
+	const s = settings({
+		components: {
+			Radio: {
+				classes: {
+					label: 'text-secondary-900'
+				}
+			}
+		},
+		localeFormats: {
+			ja: createLocaleSettings({
+				locale: 'ja',
 
-	onMount(() => {
-		const {
-			data: { subscription }
-		} = supabase.auth.onAuthStateChange((_session) => {
-			invalidate('supabase:auth');
-			invalidateAll();
-		});
-		return () => subscription.unsubscribe();
+				formats: {
+					dates: {
+						baseParsing: 'yyyy/mm/dd',
+						ordinalSuffixes: {
+							one: 'ー',
+							two: '二',
+						},
+						
+					},
+					numbers: {
+						defaults: {
+							currency: 'JPY'
+						}
+					}
+				},
+
+				dictionary: {
+					Ok: 'OK',
+					Cancel: 'キャンセル',
+
+					Date: {
+						Start: '開始',
+						End: '終了',
+
+						Day: '日',
+						DayTime: '日時',
+						Time: '時間',
+						Week: '週',
+						Month: '月',
+						Quarter: '四半期',
+						CalendarYear: 'カレンダー年',
+						FiscalYearOct: '会計年度',
+						BiWeek: '2週間',
+
+						PeriodDay: {
+							Current: "今日",
+							Last: '昨日',
+							LastX: '{0}日前',
+						}
+
+						//...
+					}
+				}
+			})
+		}
 	});
-
-	let rightOpen = false;
+	s.locale.set('ja');
 </script>
 
-<AppBar title="CropWatch" class="bg-primary text-primary-content p-4 h-16">
-	<svelte:fragment slot="menuIcon" let:toggleMenu let:isMenuOpen>
-		<a href="/app">
-			<img src={cw_LogoImage} alt="CropWatch Logo" width="40px" />
-		</a>
+<ThemeInit />
+<Settings
+	components={{
+		Button: { classes: 'border-2 font-bold' },
+		Menu: { classes: 'shadow-xl border-gray-500' },
+		MenuItem: { classes: 'font-bold' }
+	}}
+/>
+
+<AppLayout
+	areas="'header header' 'aside main'"
+	class="h-full [&>header]:fixed [&>header]:top-0 [&>header]:h-[var(--headerHeight)] [&>header]:w-full [&>header]:transition-all [&>main]:mt-[var(--headerHeight)] [&>main]:transition-[margin] [&>main]:duration-500 [&>main]:md:ml-[var(--drawerWidth)] [:where(&_[id])]:scroll-m-[var(--headerHeight)]"
+>
+	<svelte:fragment slot="nav">
+		<!-- Nav menu -->
+		<NavMenu />
 	</svelte:fragment>
 
-	<div slot="actions">
-		<!-- App actions -->
-		<Icon data={mdiBell} class="mr-4" />
-		<Icon data={mdiMenu} on:click={() => (rightOpen = true)} />
-		<Drawer bind:open={rightOpen} placement="right" class="w-[300px] bg-[#212E23] text-surface-100">
-			<div class="pt-12 px-4">
-				<div class="w-full text-right">
-					<Button on:click={() => (rightOpen = false)} class="w-16"
-						><img src={Close} alt="menu hamburger" /></Button
-					>
-				</div>
-				<div class="pl-2">
-					<h1 class="text-2xl font-medium">Menu</h1>
-
-					<div class="text-lg mt-12 space-y-2">
-						<p>
-							<a href="/app" on:click={() => (rightOpen = false)}>
-								<Icon data={mdiViewDashboard} class="w-6 h-6" />
-								Dashboard
-							</a>
-						</p>
-						<p>
-							<a href="/app/devices" on:click={() => (rightOpen = false)}>
-								<Icon data={mdiDevices} class="w-6 h-6" />
-								All Devices
-							</a>
-						</p>
-						<p>
-							<a href="/app/gateways" disabled on:click={() => (rightOpen = false)}>
-								<Icon data={mdiAccount} class="w-6 h-6" />
-								All Users
-							</a>
-						</p>
-						<p>
-							<a href="/app/gateways" on:click={() => (rightOpen = false)}>
-								<Icon data={mdiRouterWireless} class="w-6 h-6" />
-								Gateway Status
-							</a>
-						</p>
-					</div>
-				</div>
-			</div>
-			<div slot="actions" class="grid gap-2">
-				<button type="submit" on:click={() => (rightOpen = false)}>
-					<Icon data={mdiCog} class="w-6 h-6" />
-					Application Settings
-				</button>
-				<form action="/auth/logout?/logout" method="post">
-					<button type="submit" on:click={() => (rightOpen = false)}>
-						<Icon data={mdiLock} class="w-6 h-6" />
-						Sign Out
-					</button>
-				</form>
-			</div>
-		</Drawer>
-	</div>
-</AppBar>
-<main class="flex flex-col min-h-screen">
-	{#if $navigating || $isLoading}
-		<div class="my-auto mx-auto font-white">
-			<ProgressCircle class="my-auto mx-auto" />
-			{#if $isLoading}
-				&nbsp; {$_('app.loading_translations_message')}
-			{:else}
-				&nbsp; {$_('app.loading_message')}
-			{/if}
+	<AppBar title="CropWatch" class="flex bg-primary text-primary-content" head={true}>
+		<svelte:fragment slot="menuIcon" let:toggleMenu let:isMenuOpen>
+			<Button on:click={toggleMenu} variant="none">
+				<img src={CROPWATCH_LOGO} alt="CropWatch" class="h-8" />
+			</Button>
+		</svelte:fragment>
+		<div slot="actions" class="flex">
+			<AlertMenu />
+			<UserHeaderWidget />
 		</div>
-	{:else}
+	</AppBar>
+
+	<main class="bg- h-full">
+		<Back>{$_('app.back')}</Back>
 		<slot />
-	{/if}
-	<span class="flex-grow" />
-</main>
+	</main>
+</AppLayout>

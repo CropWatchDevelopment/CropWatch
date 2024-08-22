@@ -2,8 +2,7 @@
     import { enhance } from '$app/forms';
 	import { Button, TextField } from 'svelte-ux';
     import { _ } from 'svelte-i18n';
-    import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
-	import { toast } from '@zerodevx/svelte-toast';
+    // import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { goto } from '$app/navigation';
     export let form;
 
@@ -30,7 +29,7 @@
 		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
 			<div class="bg-white px-6 py-12 shadow rounded-lg sm:px-12 mx-2 md:mx-0">
 				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
+					<!-- <img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" /> -->
 					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
 						{$_('login.update_title')}
 					</h2>
@@ -41,18 +40,8 @@
 						submissionResult = result;
 						isLoading = false;
 						if (result.data.success) {
-							toast.push('Password updated successfully', {
-								theme: {
-									'--toastBackground': 'green',
-								}
-							});
 							goto('/auth/login');
 						} else {
-							toast.push('Password update failed', {
-								theme: {
-									'--toastBackground': 'red',
-								}
-							});
 						}
 					};
 				}}>
@@ -85,7 +74,7 @@
 					<Button
 						type="submit"
 						disabled={password !== confirmPassword}
-						variant="fill-outline"
+						variant="fill"
 						color="primary"
 						classes={{ root: 'w-full' }}>
 						{$_('login.update_password')}

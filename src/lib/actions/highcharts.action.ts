@@ -1,9 +1,13 @@
 import Highcharts from 'highcharts';
 import HighchartsMore from 'highcharts/highcharts-more';
-import SolidGauge from 'highcharts/modules/solid-gauge';
+
 
 HighchartsMore(Highcharts);
-SolidGauge(Highcharts);
+Highcharts.setOptions({
+    time: {
+      timezone: 'Asia/Tokyo' // Set your desired timezone
+    }
+  });
 
 export default (node: HTMLElement, config: Highcharts.Options) => {
     // Now, since the modules are already initialized, you can directly create the chart.

@@ -1,109 +1,87 @@
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+import CwDevicesService from '$lib/services/CwDevicesService';
+import moment from 'moment';
 
-export const GET: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  if (!session) {
-    throw redirect(303, '/auth/unauthorized');
-  }
+export const GET: RequestHandler = async ({ params, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        throw redirect(303, '/auth/unauthorized');
+    }
 
-  const dev_eui = params.dev_eui;
-  const query = new URLSearchParams(url.search);
-  const startingPage = query.get('pageNumber') || 0;
-  const itemsPerPage = query.get('itemsPerPage') || 10;
+    const devEui = params.dev_eui;
+    if (!devEui) {
+        throw error(400, 'dev_eui is required');
+    }
 
-  const { data, error } = await supabase
-    .from('cw_device_owners')
-    .select('*, cw_devices(*, cw_device_type(*), cw_device_locations(*, cw_locations(*)))')
-    .eq('user_id', session.user.id)
-    .eq('dev_eui', dev_eui)
-    .range(+startingPage, +itemsPerPage);
+    const cwDevicesService = new CwDevicesService(supabase);
 
-  return new Response(
-    JSON.stringify(data) ||
-    error,
-    {
-      status: error ? 500 : 200,
-    });
-}
+    // Fetch main data
+    const device = await cwDevicesService.getDeviceByEui(devEui);
+    if (!device) {
+        throw error(500, 'Error fetching device');
+    }
 
-export const PUT: RequestHandler = async ({ params, request, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  if (!session) {
-    throw redirect(303, '/auth/unauthorized');
-  }
-
-  const body = await request.json();
-  const name = body.name;
-
-  if (!name) {
-    return new Response(
-      JSON.stringify({ error: 'name is required' }),
-      {
-        status: 400,
-      });
-  }
-
-  const dev_eui = params.dev_eui;
-  if (!dev_eui) {
-    return new Response(
-      JSON.stringify({ error: 'dev_eui is required' }),
-      {
-        status: 400,
-      });
-  }
-
-  const { data, error } = await supabase
-    .from('cw_device_owners')
-    .select('*, cw_devices(*)')
-    .eq('dev_eui', dev_eui)
-    .eq('user_id', session.user.id)
-    .limit(1)
-    .single();
-
-  if (error) {
-    return new Response(
-      JSON.stringify(error),
-      {
-        status: 500,
+    return new Response(JSON.stringify(device), {
         headers: {
-          'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         }
-      });
-  }
-
-  const { data: updatedData, error: updateError } = await supabase
-    .from('cw_devices')
-    .update({ 'name': name })
-    .eq('dev_eui', data.cw_devices.dev_eui)
-    .select();
-
-  return new Response(
-    JSON.stringify(updatedData) ||
-    JSON.stringify(updateError),
-    {
-      status: updatedData ? 200 : 500,
-      statusText: updatedData ?? updateError,
-      headers: {
-        'Content-Type': 'application/json',
-      }
     });
-}
+};
 
-export const DELETE: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  if (!session) {
-    throw redirect(303, '/auth/unauthorized');
-  }
+export const PUT: RequestHandler = async ({ params, request, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        throw redirect(303, '/auth/unauthorized');
+    }
 
-  const dev_eui = params.dev_eui;
-  const { data, error } = await supabase
-    .from('cw_devices')
-    .delete()
-    .eq('dev_eui', dev_eui);
+    const devEui = params.dev_eui;
+    if (!devEui) {
+        throw error(400, 'dev_eui is required');
+    }
 
-  return new Response(
-    error === null ? JSON.stringify(true) : JSON.stringify(false),
-    {
-      status: error ? 500 : 200,
-    });
-}
+    const cwDevicesService = new CwDevicesService(supabase);
+
+    try {
+        const data = await request.json();
+        
+        // Perform validation on the incoming data
+        // if (!data.name || !data.lat || !data.long || !data.upload_interval || !data.battery_changed_at) {
+        //     throw error(400, 'All fields are required.');
+        // }
+        let existing_device = await cwDevicesService.getDeviceByEui(devEui);
+        if (existing_device === null) throw error(500, 'Failed to find device to update');
+        existing_device.name = data.name ?? existing_device.name;
+        existing_device.battery_changed_at = data.battery_changed_at ?? existing_device.battery_changed_at;
+        existing_device.lat = data.lat ?? existing_device.lat;
+        existing_device.long = data.long ?? existing_device.long;
+        existing_device.location_id = data.location_id ?? existing_device.location_id;
+
+        // Format and validate the data
+        const updatedDeviceData = {
+            name: data.name,
+            lat: parseFloat(data.lat),
+            long: parseFloat(data.long),
+            upload_interval: parseInt(data.upload_interval, 10),
+            battery_changed_at: moment(data.battery_changed_at).toISOString(),
+            location_id: existing_device.location_id,
+        };
+
+        // Update the device in the database
+        const updatedDevice = await cwDevicesService.updateDevice(devEui, updatedDeviceData);
+
+        if (!updatedDevice) {
+            throw error(500, 'Error updating device');
+        }
+
+        return new Response(JSON.stringify(updatedDevice), {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+    } catch (err) {
+        console.error('Error updating device:', err);
+        throw error(500, 'Internal Server Error');
+    }
+};

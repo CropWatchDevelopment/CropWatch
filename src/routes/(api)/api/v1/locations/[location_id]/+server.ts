@@ -1,145 +1,91 @@
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+import CwLocationsService from '$lib/services/CwLocationsService';
+import CwDevicesService from '$lib/services/CwDevicesService';
+import CwDeviceTypeService from '$lib/services/CwDeviceTypeService';
+import type { Tables } from '$lib/types/supabaseSchema';
+import CwLocationOwnersService from '$lib/services/CwLocationOwnersService';
 
-export const GET: RequestHandler = async ({ url, params, locals: { supabase, getSession } }) => {
-    const session = await getSession();
-    if (!session) {
-        throw redirect(303, '/auth/unauthorized');
+type CwLocations = Tables<'cw_locations'>;
+type CwDevices = Tables<'cw_devices'>;
+
+export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        return redirect(301, '/auth/unauthorized');
     }
 
-    const locationId = +(params.location_id ?? 0);
-    if (locationId === 0) {
-        return new Response(
-            JSON.stringify({ error: 'location_id is required' }),
-            {
-                status: 400,
-            });
+    const location_id: number = +(params.location_id ?? -1);
+    if (location_id === -1) {
+        throw error(400, 'Location ID is not supported');
     }
-    const { data, error } = await supabase
-        .from('cw_location_owners')
-        .select('*, cw_locations(*, cw_device_locations(*, cw_devices(*)))')
-        .eq('location_id', locationId)
-        .eq('user_id', session.user.id)
-        .limit(1)
-        .single();
-    return new Response(
-        JSON.stringify(data) ||
-        JSON.stringify(error),
-        {
-            status: data ? 200 : 404,
-            headers: {
-                'Content-Type': 'application/json',
+    const includeDevicesTypes = url.searchParams.get('includeDevicesTypes') === 'true';
+    const includeDevices = url.searchParams.get('includeDevices') === 'true' || includeDevicesTypes;
+
+    const cwLocationsService = new CwLocationsService(supabase);
+    const cwLocationOwnersService = new CwLocationOwnersService(supabase);
+    const cwDevicesService = new CwDevicesService(supabase);
+    const cwDeviceTypeService = new CwDeviceTypeService(supabase);
+
+    // Fetch main data
+    const location: CwLocations = await cwLocationsService.getLocationById(location_id);
+
+    if (!location) {
+        throw error(500, 'Error fetching locations');
+    }
+
+    // Conditionally fetch related data
+    if (includeDevices) {
+
+        const devices: CwDevices[] = await cwDevicesService.getDevicesByLocationId(location.location_id);
+
+        (location as any).devices = devices;
+
+        if (includeDevicesTypes) {
+            for (const device of (location as any).devices) {
+                const deviceType = await cwDeviceTypeService.getById(device.type as number);
+                device.deviceType = deviceType;
             }
-        });
-}
-
-export const PUT: RequestHandler = async ({ params, request, locals: { supabase, getSession } }) => {
-    const session = await getSession();
-    if (!session) {
-        throw redirect(303, '/auth/unauthorized');
+        }
     }
 
-    const body = new URLSearchParams(await request.json());
-    const name = body.get('name');
-
-
-    if (!name) {
-        return new Response(
-            JSON.stringify({ error: 'name is required' }),
-            {
-                status: 400,
-            });
-    }
-
-    const locationId = +(params.location_id ?? 0);
-    if (locationId === 0) {
-        return new Response(
-            JSON.stringify({ error: 'location_id is required' }),
-            {
-                status: 400,
-            });
-    }
-    const { data, error } = await supabase
-        .from('cw_location_owners')
-        .select('*, cw_locations(*)')
-        .eq('location_id', locationId)
-        .eq('user_id', session.user.id)
-        .limit(1)
-        .single();
-
-    if (error) {
-        return new Response(
-            JSON.stringify(error),
-            {
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-    }
-
-    const { data: updatedData, error: updateError } = await supabase
-    .from('cw_locations')
-    .update({'name': name})
-    .eq('location_id', data.cw_locations.location_id)
-    .select()
-    .single();
-
-    return new Response(
-        JSON.stringify(updatedData) ||
-        JSON.stringify(updateError),
-        {
-            status: updatedData ? 200 : 500,
-            statusText: updatedData ? 'OK' : updateError,
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-}
-
-
-export const DELETE: RequestHandler = async ({ request, locals: { supabase, getSession } }) => {
-    const session = await getSession();
-    if (!session) {
-        throw redirect(303, '/auth/unauthorized');
-    }
-
-    const body = new URLSearchParams(await request.json());
-    const locationId = body.get('location_id');
-
-    //Check to see if user CAN delete location
-    const { data, error } = await supabase
-        .from('cw_location_owners')
-        .select('*, cw_locations(*)')
-        .eq('location_id', locationId)
-        .eq('user_id', session.user.id)
-        .limit(1)
-        .single();
-
-    if (error || !data) {
-        return new Response(
-            JSON.stringify({ error: 'You do not have permission to delete this location' }),
-            {
-                status: 403,
-            });
-    }
-
-    //Delete location
-    const { data: deletedData, error: deleteError } = await supabase
-        .from('cw_locations')
-        .delete()
-        .eq('location_id', locationId)
-        .eq('owner_id', session.user.id)
-        .select();
-
-    const result = deletedData ? deletedData[0] : null;
-
-    return new Response(
-        JSON.stringify(result),
-        {
-            statusText: result ? 'OK' : deleteError,
-            status: result ? 200 : 404,
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
+    return new Response(JSON.stringify(location), {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
 };
+
+
+export const PUT: RequestHandler = async ({ request, params, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        return redirect(301, '/auth/unauthorized');
+    }
+
+
+    const data = await request.json();
+
+    const location_id: number = +(params.location_id ?? -1);
+    if (location_id === -1) {
+        throw error(400, 'Location ID is not supported');
+    }
+
+    const cwLocationsService = new CwLocationsService(supabase);
+
+    let updateResult = await cwLocationsService.updateLocation(location_id, {
+        name: data.name,
+        lat: data.lat,
+        long: data.long,
+    });
+
+    if (!updateResult) {
+        throw error(500, 'Location Update failed');
+    }
+
+    return new Response(JSON.stringify(updateResult), {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+}
