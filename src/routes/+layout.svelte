@@ -7,10 +7,12 @@
 	import { mdiAlertCircle, mdiInbox, mdiInformation } from '@mdi/js';
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import type { UINotification } from '$lib/stores/notificationStore';
+	import { pwaInfo } from 'virtual:pwa-info';
 	export let data;
 
 	let { supabase, session } = data;
 	$: ({ supabase, session } = data);
+	$: webManifestLink = pwaInfo ? pwaInfo.webManifest.linkTag : '' 
 
 	let notification: UINotification;
 
@@ -41,6 +43,10 @@
 		})
 		.subscribe();
 </script>
+
+<svelte:head> 
+ 	{@html webManifestLink} 
+</svelte:head>
 
 <div class="absolute z-50 mt-5">
 	<Notification actions="below" closeIcon open={notification.open}>
