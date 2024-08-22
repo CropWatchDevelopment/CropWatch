@@ -5,10 +5,13 @@ declare global {
   namespace App {
     interface Locals {
       supabase: SupabaseClient<Database>
-      getSession(): Promise<{ user: User | null }>
+      // getSession(): Promise<{ user: User | null }>
+      safeGetSession(): Promise<{ session: Session | null; user: User | null }>
     }
     interface PageData {
-      supabase: SupabaseClient,
+      // supabase: SupabaseClient,
+      // user: User | null
+      session: Session | null
       user: User | null
     }
     // interface Error {}

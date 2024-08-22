@@ -27,13 +27,15 @@ export const actions = {
                 message: 'Server error. Try again later.'
             });
         }
-
-        redirect(307, '/');
+        const { data: user, error: user_err } = await locals.supabase.from('profiles').select().eq('id', data.user.id).single();
+        await locals.supabase.from('profiles').update({ last_login: new Date() }).eq('id', data.user.id);
+        return {
+            status: 201,
+            redirect: '/app/dashboard',
+            profile: user || null,
+            avatarUrl: data.user?.user_metadata?.avatar_url,
+        }
+        throw redirect(301, '/app/dashboard');
     },
 }
 
-export async function load({ locals: { getSession } }) {
-    let session = await getSession();
-    if (session?.user) throw redirect(304, '/app');
-    return { };
-}

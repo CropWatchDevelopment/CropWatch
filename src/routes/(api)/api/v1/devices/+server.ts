@@ -1,100 +1,66 @@
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+import CwDevicesService from '$lib/services/CwDevicesService';
+import CwDeviceOwnersService from '$lib/services/CwDeviceOwnersService';
+import type { Tables } from '$lib/types/supabaseSchema';
 
-export const GET: RequestHandler = async ({ url, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  if (!session) {
+export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSession } }) => {
+  const session = await safeGetSession();
+  if (!session.user) {
     throw redirect(303, '/auth/unauthorized');
   }
 
-  const query = new URLSearchParams(url.search);
-  const startingPage = query.get('pageNumber') || 0;
-  const itemsPerPage = query.get('itemsPerPage') || 50;
+  const includeLocations = url.searchParams.get('includeLocations') === 'true';
+  const includeOwners = url.searchParams.get('includeOwners') === 'true';
+  const includeLatestData = url.searchParams.get('includeLatestData') === 'true';
+  const includeDeviceType = url.searchParams.get('includeDeviceType') === 'true';
 
-  const { data, error } = await supabase
-    .from('cw_device_owners')
-    .select('*, cw_devices(*, cw_device_type(*), cw_device_locations(*, cw_locations(*)))')
-    .eq('user_id', session.user.id)
-    .range(+startingPage, +itemsPerPage)
-    ;
-  return new Response(
-    JSON.stringify(data) ||
-    error,
-    {
-      status: 200,
-    });
-}
+  const cwDevicesService = new CwDevicesService(supabase);
+  const cwDeviceOwnersService = new CwDeviceOwnersService(supabase);
 
-export const POST: RequestHandler = async ({ url, fetch, request, locals: { supabase, getSession } }) => {
-  const session = await getSession();
-  if (!session) {
-    throw redirect(303, '/auth/unauthorized');
+  // Fetch main data
+  const devices: Tables<'cw_devices'>[] = await cwDevicesService.getAllDevices();
+
+  if (!devices) {
+    throw error(500, 'Error fetching devices');
   }
 
-  const formData = await request.formData();
-  const data = Object.fromEntries(formData);
-  const dev_eui = data.dev_eui.toString().split(':').join('');
+  if (includeOwners) {
+    const ownersPromises = devices.map(device =>
+      cwDeviceOwnersService.getByDeviceId(device.dev_eui)
+    );
+    const owners = await Promise.all(ownersPromises);
 
-  const { data: deviceData, error: deviceError } = await supabase
-    .from('cw_devices')
-    .insert({
-      dev_eui: dev_eui,
-      name: data.name.toString(),
-      type: +data.type.toString(),
-      upload_interval: +data.upload_interval.toString(),
-      lat: +data.lat.toString(),
-      long: +data.long.toString(),
-      installed_at: new Date(),
-      user_id: session.user.id,
+    devices.forEach((device, index) => {
+      (device as any).owners = owners[index];
     });
-
-    if (deviceError) {
-      return new Response(
-        JSON.stringify(deviceError),
-        {
-          status: 400,
-        });
-    }
-
-  const { data: ownerData, error: ownerError } = await supabase
-    .from('cw_device_owners')
-    .insert({
-      user_id: session.user.id,
-      dev_eui: dev_eui,
-    })
-    .select()
-    .single()
-    ;
-  
-  if (ownerError) {
-    return new Response(
-      JSON.stringify(ownerError),
-      {
-        status: 400,
-      });
   }
 
-  const { data: locationData, error: locationError } = await supabase
-    .from('cw_device_locations')
-    .insert({
-      dev_eui: dev_eui,
-      location_id: data.location_id,
-    })
-    .select()
-    .single()
-    ;
-
-    if (locationError) {
-      return new Response(
-        JSON.stringify(locationError),
-        {
-          status: 400,
-        });
-    }
-
-
-  return new Response(
-    JSON.stringify(deviceData),
-    {
-      status: 200,
+  if (includeLatestData) {
+    const latestDataPromises = devices.map(async device => {
+      const deviceType = await cwDevicesService.getDeviceTypeById(device.type);
+      if (deviceType && deviceType.data_table) {
+        return cwDevicesService.getLatestDataByDeviceEui(device.dev_eui, deviceType.data_table);
+      }
+      return null;
     });
-}
+    const latestData = await Promise.all(latestDataPromises);
+
+    devices.forEach((device, index) => {
+      (device as any).latestData = latestData[index];
+    });
+  }
+
+  if (includeDeviceType) {
+    for (let device of devices) {
+      const deviceType = await cwDevicesService.getDeviceTypeById(device.type);
+      device['deviceType'] = deviceType;
+    }
+  }
+
+  return new Response(JSON.stringify(devices), {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+};

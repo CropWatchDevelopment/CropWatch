@@ -1,116 +1,222 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
-	import Back from '$lib/components/ui/Back.svelte';
-	import { Button, Icon, ProgressCircle } from 'svelte-ux';
-	import Leaflet from '$lib/components/maps/leaflet/Leaflet.svelte';
-	import Marker from '$lib/components/maps/leaflet/Marker.svelte';
-	import {
-		mdiAccountCircle,
-		mdiMoleculeCo2,
-		mdiPlusCircle,
-		mdiSmokeDetectorAlert,
-		mdiThermometer,
-		mdiWindsock
-	} from '@mdi/js';
-	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
-	import LocationFooterControls from '$lib/components/ui/LocationFooterControls.svelte';
+	import SensorCard from '$lib/components/ui/Cards/SensorCard.svelte';
+	import Leaflet from '$lib/components/ui/Maps/leaflet/Leaflet.svelte';
+	import Marker from '$lib/components/ui/Maps/leaflet/Marker.svelte';
+	import type { Tables } from '$lib/types/supabaseSchema';
+	import { mdiCog, mdiMapMarker } from '@mdi/js';
+	import { onMount } from 'svelte';
+	import { Button, Icon, Radio, Tooltip } from 'svelte-ux';
+	import devicesStore, { updateDeviceData } from '$lib/stores/devicesStore';
 	import { goto } from '$app/navigation';
-	import { devices } from '$lib/stores/device.store';
-	import LocationSensorCard from '$lib/components/ui/LocationSensorCard.svelte';
+	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
+	import { convertObject } from '$lib/components/ui/utilities/ConvertSensorDataObject';
 	import { _ } from 'svelte-i18n';
 
-	let location;
-	let allDevices = [];
+	let location_id = $page.params.location_id;
+	let loading: boolean = true;
+	let location: Tables<'cw_locations'>;
 	let innerWidth = 0;
-	let innerHeight = 0;
+	let innerHeight = 200;
+	let bounds: [number, number][] = [];
+	let heatLatLngData: [number, number, number][] = [];
+	let heatMapSubjectKey: string | null = null;
+	let latestDataInterestingObjects: string[] = [];
 
-	if (browser) {
-		const fetchLocation = async () => {
-			const res = await fetch(`/api/v1/locations/${$page.params.location_id}`);
-			location = await res.json();
-		};
+	onMount(() => {
+		fetchInitialData();
+	});
 
-		const fetchDevices = async () => {
-			const devs = [];
-			for (const d of $devices) {
-				if (d.location_id == +$page.params.location_id) {
-					const deviceType = await fetch(`/api/v1/devices/${d.dev_eui}/type`).then((r) => r.json());
-					devs.push({ ...d, type: deviceType });
-				}
-			}
-			allDevices = devs;
-		};
-
-		fetchLocation();
-		fetchDevices();
+	async function fetchInitialData() {
+		try {
+			const res = await fetch(`/api/v1/locations/${location_id}?includeDevicesTypes=true`);
+			const data = await res.json();
+			location = data;
+			await fetchInitialDeviceData();
+			bounds = location.devices.map((d) => [d.latestData.lat, d.latestData.long]);
+			loading = false;
+			updateHeatLatLngData(); // Initial update of heat map data
+		} catch (e) {
+			loading = false;
+			console.error('Failed to fetch locations', e);
+		}
 	}
 
-	const icons = {
-		cw_air_thvd: mdiThermometer,
-		cw_ss_tme: '🌱',
-		cw_ss_tmepnpk: '🌱',
-		seeed_sensecap_s2120: mdiWindsock,
-		seeed_t1000: '📍',
-		seeed_co2_lorawan_uplinks: mdiMoleculeCo2,
-		cw_co2_uplinks: mdiMoleculeCo2,
-		netvox_ra02a: mdiSmokeDetectorAlert
-	};
+	async function getDeviceLatestData(devEui: string) {
+		const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
+		const data = await res.json();
+		return data;
+	}
+
+	async function fetchInitialDeviceData() {
+		for (let device of location.devices) {
+			const latestData = await getDeviceLatestData(device.dev_eui);
+			updateDeviceData(latestData);
+			const obj = convertObject(latestData);
+			Object.keys(obj).forEach((key) => {
+				if (!latestDataInterestingObjects.includes(key)) {
+					latestDataInterestingObjects.push(key);
+				}
+			});
+			latestDataInterestingObjects = [...latestDataInterestingObjects.filter((key) => key !== 'created_at')];
+		}
+	}
+
+	// Subscribe to devicesStore and update the location.devices when data changes
+	devicesStore.subscribe((devicesData) => {
+		if (location && location.devices) {
+			location.devices = location.devices.map((device) => ({
+				...device,
+				latestData: devicesData[device.dev_eui]
+			}));
+			updateHeatLatLngData(); // Recalculate heatLatLngData whenever device data changes
+		}
+	});
+
+	// Update heatLatLngData based on selected heatMapSubjectKey
+	function updateHeatLatLngData() {
+		if (!heatMapSubjectKey || !location || !location.devices) return;
+
+		heatLatLngData = location.devices.map((device) => {
+			const value = device.latestData[heatMapSubjectKey];
+			let normalizedValue = 0;
+
+			// Apply normalization based on the selected key
+			if (heatMapSubjectKey === 'temperature') {
+				normalizedValue = normalizeTemperature(value);
+			} else if (heatMapSubjectKey === 'co2_level') {
+				normalizedValue = normalizeCO2(value);
+			} else if (heatMapSubjectKey === 'humidity') {
+				normalizedValue = normalizeHumidity(value);
+			} else if (value !== undefined && value !== null) {
+				normalizedValue = Number(value); // Default behavior for other fields
+			}
+			return [device.lat, device.long, normalizedValue];
+		});
+
+		console.log(heatLatLngData);
+		return heatLatLngData;
+	}
+
+	function normalizeTemperature(temp: number) {
+		const minTemp = 0;
+		const maxTemp = 50;
+		return temp !== undefined && temp !== null ? (temp - minTemp) / (maxTemp - minTemp) : 0;
+	}
+
+	function normalizeCO2(co2: number) {
+		const minCO2 = 400;
+		const maxCO2 = 700;
+		return co2 !== undefined && co2 !== null ? (co2 - minCO2) / (maxCO2 - minCO2) : 0;
+	}
+	function normalizeHumidity(humidity: number) {
+		const minHumidity = 0;
+		const maxHumidity = 100;
+		return humidity !== undefined && humidity !== null ? (humidity - minHumidity) / (maxHumidity - minHumidity) : 0;
+	}
 </script>
 
+<svelte:head>
+	<title>CropWatch - Location</title>
+</svelte:head>
 <svelte:window bind:innerWidth bind:innerHeight />
 
-<div class="">
-	<div class="mt-8 flex justify-between">
-		<Back previousPage={'/app'}>
-			{$_('back')}
-		</Back>
-	</div>
+<!-- TITLE and Filter -->
+<div class="my-3 flex flex-row">
+	<!-- TITLE -->
+	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
+		<Icon data={mdiMapMarker} class="h-6 w-6" />
+		{$_('location.name')}: {location?.name}
+	</h2>
+	<span class="flex-grow" />
+	<Tooltip title={`${location?.name}'s Location Settings`}>
+		<Button
+			icon={mdiCog}
+			size="lg"
+			on:click={() => goto(`/app/locations/${location_id}/settings`)}
+		/>
+	</Tooltip>
+</div>
 
-	{#if !location}
-		<ProgressCircle />
+<!-- Render the radio buttons -->
+<DarkCard2>
+	{#if latestDataInterestingObjects.length > 0}
+		<div class="flex flex-row flex-wrap justify-between text-surface-500">
+			{#each latestDataInterestingObjects as key}
+				<Radio
+					name={key}
+					bind:group={heatMapSubjectKey}
+					value={key}
+					fullWidth
+					on:change={updateHeatLatLngData}
+				>{key}</Radio>
+			{/each}
+			<Radio
+					name='none'
+					bind:group={heatMapSubjectKey}
+					value={null}
+					fullWidth
+					on:change={updateHeatLatLngData}
+				>{$_('location.noFilters')}</Radio>
+		</div>
 	{:else}
-		<div class="flex justify-between my-5">
-			<h2 class="font-light text-2xl text-surface-100">Location Devices</h2>
-			<Button
-				on:click={() => goto(`/app/locations/${$page.params.location_id}/devices/add`)}
-				icon={mdiPlusCircle}
-				size="sm"
-			/>
-		</div>
-		<DarkCard2>
-			<Leaflet
-				view={[location.cw_locations?.lat ?? 0, location.cw_locations?.long ?? 0]}
-				zoom={19}
-				disableZoom={true}
-				width={100}
-				height={innerHeight}
-			>
-				{#each allDevices as device}
-					{#if device.cw_devices.lat && device.cw_devices.long}
-						<Marker latLng={[device.cw_devices.lat, device.cw_devices.long]} width={50} height={50}>
-							<a
-								class="bg-black p-2 w-10 text-2xl rounded-full z-20 hover:text-4xl hover:z-30"
-								href={`/app/devices/${device.dev_eui}/data`}
-							>
-								{#if typeof icons[device.type.cw_device_type.data_table] === 'string'}
-									<Icon data={icons[device.type.cw_device_type.data_table]} />
-								{/if}
-							</a>
-						</Marker>
-					{/if}
-				{/each}
-			</Leaflet>
-		</DarkCard2>
+		<p>{$_('location.noFilters')}</p>
+	{/if}
+</DarkCard2>
 
-		<div class="grid grid-flow-col grid-cols-1">
-			<div class="flex flex-col gap-2 mb-2">
-				{#each allDevices as sensor}
-					<LocationSensorCard {sensor} deviceType={sensor.type} />
-				{/each}
-			</div>
-		</div>
+<!-- DEVICE MAP -->
+<div class="mx-4 mb-4">
+	{#if !loading && location.lat && location.long}
+		<Leaflet
+			view={[location.lat, location.long]}
+			{bounds}
+			{heatLatLngData}
+			zoom={18}
+			height={innerHeight / 2.5}
+		>
+			{#each location.devices as device}
+				{#if device.latestData.lat && device.latestData.long}
+					<Marker latLng={[device.latestData.lat, device.latestData.long]}>
+						<Button
+							icon={mdiMapMarker}
+							variant="none"
+							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+						/>
+					</Marker>
+				{:else}
+					<Marker latLng={[device.lat, device.long]}>
+						<Button
+							icon={mdiMapMarker}
+							variant="none"
+							on:click={() => goto(`/app/devices/${device.dev_eui}/data`)}
+							class="h-6 w-6 rounded-full border-4 border-red-600 text-primary hover:border-red-500"
+						/>
+					</Marker>
+				{/if}
+			{/each}
+		</Leaflet>
 	{/if}
 </div>
 
-<LocationFooterControls />
+<!-- LOCATION DEVICES -->
+<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+	{#if loading}
+		<div class="flex items-center justify-center">
+			<div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+		</div>
+	{:else if location.devices.length === 0}
+		<div class="flex items-center justify-center">
+			<p class="text-surface">No devices found</p>
+		</div>
+	{:else}
+		{#each location.devices as device}
+			<SensorCard
+				devEui={device.dev_eui}
+				name={device.name}
+				deviceType={device.deviceType.model}
+				latestData={device.latestData}
+			/>
+		{/each}
+	{/if}
+</div>

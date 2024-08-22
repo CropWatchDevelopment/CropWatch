@@ -1,4 +1,3 @@
-// src/lib/i18n/index.ts
 import { browser } from '$app/environment'
 import { init, register } from 'svelte-i18n'
 
@@ -15,6 +14,8 @@ const getLastSavedLocale = () => {
 
 register('en', () => import('./locales/en.json'));
 register('en-US', () => import('./locales/en.json'));
+register('es', () => import('./locales/es.json'));
+register('fr', () => import('./locales/fr.json'));
 register('jp', () => import('./locales/jp.json'));
 
 init({

@@ -1,41 +1,97 @@
 <script lang="ts">
-	import { _ } from 'svelte-i18n';
-	import Back from '$lib/components/ui/Back.svelte';
-	import { mdiEye, mdiRouterWireless, mdiRouterWirelessOff } from '@mdi/js';
-	import { Button, Icon } from 'svelte-ux';
-	import DarkCard2 from '$lib/components/ui/DarkCard2.svelte';
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
+	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
+	import {
+		mdiEye,
+		mdiFilter,
+		mdiMapMarker,
+		mdiRouterWireless,
+		mdiRouterWirelessOff
+	} from '@mdi/js';
+	import { Button, Duration, DurationUnits, Icon, ListItem } from 'svelte-ux';
 
-	export let data;
+	let gatewaysPromise;
+	let showFilters: boolean = false;
+
+	if (browser) {
+		gatewaysPromise = fetch('/api/v1/gateways')
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response.json();
+			})
+			.catch((error) => {
+				console.error('Fetch error:', error);
+				return [];
+			});
+	} else {
+		gatewaysPromise = Promise.resolve([]);
+	}
 </script>
 
-<Back>
-	<span class="w-full inline-block flex-nowrap text-xl">
-		<h1 class="text-slate-200">{$_('gateways.title')}</h1>
-	</span>
-</Back>
+<svelte:head>
+	<title>CropWatch - Gateways</title>
+</svelte:head>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-	{#if data.gateways.length > 0}
-		{#each data.gateways as gateway}
+<!-- TITLE and Filter -->
+<h1 class="text-surface flex flex-row">
+	<span>
+		<Icon data={mdiRouterWireless} class="h-6 w-6" />
+		All Gateways:</span>
+	<span class="flex-1" />
+	<Button
+		icon={mdiFilter}
+		variant="fill"
+		color="primary"
+		on:click={() => (showFilters = !showFilters)}
+	/>
+</h1>
+
+{#if gatewaysPromise}
+	{#if showFilters}
+		<div id="filter panel">
 			<DarkCard2>
-				{#if gateway.isOnline}
-					<Icon data={mdiRouterWireless} class="w-full h-12 text-green-600" />
-					<p class="text-green-400 text-center">{$_('gateways.online')}</p>
-				{:else}
-					<Icon data={mdiRouterWirelessOff} class="w-full h-12 text-red-600" />
-					<p class="text-red-400 text-center">{$_('gateways.offline')}</p>
-				{/if}
-				<h2>{gateway.gateway_id}</h2>
-				<Button
-                    icon={mdiEye}
-					class="text-blue-300 hover:underline w-full"
-					href="https://ttnmapper.org/gateways/?gateway={gateway.gateway_id}&startdate=&enddate=&gateways=on&lines=off&points=off"
-				>
-					View On Map
-				</Button>
+				<h2 class="text-surface">Filters:</h2>
 			</DarkCard2>
-		{/each}
-	{:else}
-		<p>{$_('gateways.no_gateways')}</p>
+		</div>
 	{/if}
-</div>
+	{#await gatewaysPromise}
+		<div class="grid-row my-3 grid grid-cols-2 justify-between">
+			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">Loading locations...</h2>
+		</div>
+	{:then gateways}
+		<div>
+			{#each gateways as gateway}
+				<ListItem
+					title={gateway.gateway_name}
+					icon={gateway.isOnline ? mdiRouterWireless : mdiRouterWirelessOff}
+					classes={{ icon: gateway.isOnline ? 'text-green-500' : 'text-red-500' }}
+				>
+					<div slot="subheading">
+						<p>{`${gateway.isOnline ? '✅ Gateway is UP' : '❌ Gateway is offline'}`}</p>
+						<p>
+							Last Seen: <Duration
+								start={gateway.updated_at}
+								totalUnits={2}
+								minUnits={DurationUnits.Second}
+							/>
+						</p>
+					</div>
+					<div slot="actions">
+						<Button
+							variant="fill"
+							icon={mdiEye}
+							on:click={() => goto(`/app/locations/${gateway.gateway_id}`)}
+						/>
+					</div>
+				</ListItem>
+			{/each}
+		</div>
+	{:catch error}
+		<div class="grid-row my-3 grid grid-cols-2 justify-between">
+			<h2 class="text-surface ml-1 mt-4 text-2xl font-light">Error loading locations</h2>
+		</div>
+	{/await}
+{/if}

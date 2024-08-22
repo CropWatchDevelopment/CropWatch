@@ -1,65 +1,59 @@
 <script>
 	import { page } from '$app/stores';
-	import Back from '$lib/components/ui/Back.svelte';
-	import DevicePermission from '$lib/components/ui/DevicePermission.svelte';
-	import EditSensorNameDialog from '$lib/components/ui/EditSensorNameDialog.svelte';
-	import historyImage from '$lib/images/UI/cw_settings.svg';
-	import { getDeviceByDevEui } from '$lib/stores/device.store';
+	import { mdiDevices, mdiFunction, mdiInformation, mdiLock } from '@mdi/js';
+	import { Icon } from 'svelte-ux';
+	import GeneralSettings from './GeneralSettings.svelte';
+	import RulesSettings from './RulesSettings.svelte';
+	import PermissionsSettings from './PermissionsSettings.svelte';
+	import InformationSettings from './InformationSettings.svelte';
+	import { _ } from 'svelte-i18n';
 
-	let latestSensorData = getDeviceByDevEui($page.params.dev_eui);
-	let devEui = $page.params.dev_eui;
+	$: currentQuery = $page.url.searchParams.get('page') || 'general'; // Default to "general" if no query is set
 </script>
 
-<div class="flex flex-row bg-emerald-300 p-4 text-center justify-center">
-	<img src={historyImage} alt="History" class="w-10 h-10" />
-	<p class="text-surface-100 text-3xl ml-2">Settings</p>
-</div>
-
-<div class="flex flex-row">
-	<Back>Back</Back>
-</div>
-
-<!-- Settings forms -->
-<div class="divide-y divide-white/5">
-	<div
-		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
-	>
-		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Location Information</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">
-				General Location Information
-			</p>
+<div>
+	<div class="hidden sm:block">
+		<div class="border-b border-gray-200">
+			<nav class="-mb-px flex space-x-8" aria-label="Tabs">
+				<a href="?page=general"
+					class="group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium 
+					{currentQuery === 'general' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}">
+					<Icon data={mdiDevices} class="h-5 w-5 {currentQuery === 'general' ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'}" />
+					<span>{$_('devices.settings.general')}</span>
+				</a>
+				<a href="?page=rules"
+					class="group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium 
+					{currentQuery === 'rules' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}">
+					<Icon data={mdiFunction} class="h-5 w-5 {currentQuery === 'rules' ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'}" />
+					<span>{$_('devices.settings.rules')}</span>
+				</a>
+				<a href="?page=permissions"
+					class="group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium 
+					{currentQuery === 'permissions' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}">
+					<Icon data={mdiLock} class="h-5 w-5 {currentQuery === 'permissions' ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'}" />
+					<span>{$_('devices.settings.permissions')}</span>
+				</a>
+				<a href="?page=information"
+					class="group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium 
+					{currentQuery === 'information' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}">
+					<Icon data={mdiInformation} class="h-5 w-5 {currentQuery === 'information' ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-500'}" />
+					<span>{$_('devices.settings.Information')}</span>
+				</a>
+			</nav>
 		</div>
-
-		<form class="md:col-span-2">
-			<div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
-				<div class="col-span-full flex items-center gap-x-8">
-					<EditSensorNameDialog bind:currentSensorName={latestSensorData.cw_devices.name} />
-				</div>
-			</div>
-		</form>
 	</div>
-
-	<div
-		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
-	>
-		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Change Permissions</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">
-				Add/Remove users with permission to this Device
-			</p>
-		</div>
-
-		<form class="md:col-span-2">
-			<DevicePermission />
-		</form>
-	</div>
-
-	
-
-	<span class="flex flex-1" />
-	<!-- <fieldset class="border border-red-600 p-4">
-		<legend>Danger Zone</legend>
-		<DeleteSensorDialog bind:dev_eui={$page.params.dev_eui} />
-	</fieldset> -->
 </div>
+
+<!-- Conditionally render content in the slot based on currentQuery -->
+{#if currentQuery === 'general'}
+	<GeneralSettings />
+{:else if currentQuery === 'rules'}
+	<RulesSettings />
+{:else if currentQuery === 'permissions'}
+	<PermissionsSettings />
+{:else if currentQuery === 'information'}
+	<InformationSettings />
+{:else}
+	<!-- Optionally handle an unknown query by showing a default component or a 404 message -->
+	<p>{$_('app.pageNotFound')}</p>
+{/if}

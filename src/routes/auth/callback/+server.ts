@@ -27,8 +27,8 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
   const code = url.searchParams.get('code')
 
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code)
+    const result = await supabase.auth.exchangeCodeForSession(code);
+    redirect(303, '/app/dashboard')
   }
-
-  redirect(303, '/app')
+  redirect(303, '/auth/auth-code-error')
 }
