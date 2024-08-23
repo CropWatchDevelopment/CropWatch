@@ -234,18 +234,48 @@
     },
     "windSpeedDirTempHumid": "Temperature, Humidity, Wind Speed & Direction"
   },
-  "rainfall": "雨量",
-  "windspeed": "風速",
-  "wind_speed": "風速",
-  "wind_direction": "風向",
-  "pressure": "気圧",
-  "lux": "照度",
-  "uv": "紫外線",
-  "temperature": "温度",
-  "humidity": "湿度",
+  "rainfall": "Rainfall",
+  "windspeed": "windspeed",
+  "wind_speed": "Wind Speed",
+  "wind_direction": "Wind Direction",
+  "pressure": "Pressure",
+  "lux": "Lux",
+  "uv": "UV",
+  "temperature": "Temperature",
+  "humidity": "Humidity",
   "co2_level": "CO²",
+  "dewPointC": "Dew Point",
   "created_at": "Last Updated",
   "Administrator": "Administrator",
   "User": "User",
-  "Viewer": "Viewer"
+  "Viewer": "Viewer",
+  "generalsettings": {
+    "title": "General Settings",
+    "personalinfo": {
+      "title": "Personal Information",
+      "description": "Use a permanent address where you can receive mail.",
+      "fullname": "Full Name",
+      "email": "Email",
+      "username": "username"
+    },
+    "notifications": {
+      "title": "Line Chat",
+      "connectLine": "Use the link to the right to register to recieve notifications through line chart app.",
+      "register": "Register with",
+      "description": "Select Your prefered Language (defaults to your browser's language)"
+    },
+    "language": {
+      "title": "Language"
+    }
+  },
+  "agreement": {
+    "auth": {
+      "title": "Before continuing, please carefully read the following required legal documents.",
+      "accept": "Please accept all agreements to continue",
+      "acceptDone": "Accept and Continue",
+      "privacy_policy": "Privacy Policy",
+      "read": "Read",
+      "cookiePolicy": "Cookie Policy"
+    }
+  }
 }

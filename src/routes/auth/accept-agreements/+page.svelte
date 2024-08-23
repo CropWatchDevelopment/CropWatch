@@ -52,7 +52,9 @@
 					<div class="mb-4 flex justify-center">
 						<div class="flex w-full max-w-xs flex-col justify-start space-y-2">
 							<div class="flex flex-row">
-								<Checkbox size="lg" bind:checked={privacy}>{$_('agreement.auth.title')}</Checkbox>
+								<Checkbox size="lg" bind:checked={privacy}
+									>{$_('agreement.auth.privacy_policy')}</Checkbox
+								>
 								<input type="hidden" name="privacy_accept" value={privacy} />
 								<span class="flex flex-1" />
 								<Button
@@ -61,7 +63,7 @@
 									variant="fill"
 									icon={mdiKeyArrowRight}
 								>
-									Read
+								{$_('agreement.auth.read')}
 								</Button>
 							</div>
 
@@ -70,12 +72,12 @@
 								<input type="hidden" name="eula_accept" value={eula} />
 								<span class="flex flex-1" />
 								<Button href="/legal/eula" target="_blank" variant="fill" icon={mdiKeyArrowRight}>
-									Read
+									{$_('agreement.auth.read')}
 								</Button>
 							</div>
 
 							<div class="flex flex-row">
-								<Checkbox size="lg" bind:checked={cookie}>Cookie Policy</Checkbox>
+								<Checkbox size="lg" bind:checked={cookie}>{$_('agreement.auth.cookiePolicy')}</Checkbox>
 								<input type="hidden" name="cookie_accept" value={cookie} />
 								<span class="flex flex-1" />
 								<Button
@@ -84,7 +86,7 @@
 									variant="fill"
 									icon={mdiKeyArrowRight}
 								>
-									Read
+								{$_('agreement.auth.read')}
 								</Button>
 							</div>
 						</div>
@@ -98,9 +100,9 @@
 						class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 					>
 						{#if !allAccepted}
-							Please accept all agreements to continue
+							{$_('agreement.auth.accept')}
 						{:else}
-							Accept and Continue
+							{$_('agreement.auth.acceptDone')}
 						{/if}
 					</Button>
 				</form>

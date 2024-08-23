@@ -8,6 +8,7 @@
 	import SEEED_SENSECAP_S2103 from './SEEED_SENSECAP_S2103/SEEED_SENSECAP_S2103.svelte'; // CO2 Sensor
 	import SEEED_SENSECAP_S2120 from './SEEED_SENSECAP_S2120/SEEED_SENSECAP_S2120.svelte'; // Weather Station
 	import SEEED_SENSECAP_T1000 from './SEEED_SENSECAP_T1000/SEEED_SENSECAP_T1000.svelte'; // Tracking Badge
+	import SEEED_SENSECAP_S2100_NIMBOL from './SEEED_SENSECAP_S2100_NIMBOL/SEEED_SENSECAP_S2100_NIMBOL.svelte'; // 7-in-1 Soil Sensor
 	import SEEED_SENSECAP_S2103_WATER_LEVEL from './SEEED_SENSECAP_S2103_WATER_LEVEL/SEEED_SENSECAP_S2103_WATER_LEVEL.svelte'; // Tracking Badge
 	import NetvoxRa02A from './NETVOX_RA02A/NETVOX_RA02A.svelte';
 
@@ -39,8 +40,8 @@
 	{:then sensor}
 		<div class="relative m-1">
 			{#if sensor.deviceType.data_table == 'cw_air_thvd'}
-				<CW_AIR_THVD data />
-			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensor.deviceType.data_table == 'cw_co2_uplinks'}
+				<CW_AIR_THVD {sensor} />
+			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensor.deviceType.data_table == 'cw_co2_uplinks' || sensor.deviceType.data_table == 'cw_air_thvd'}
 				<SEEED_SENSECAP_S2103 {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2120'}
 				<SEEED_SENSECAP_S2120 {sensor} />
@@ -50,6 +51,8 @@
 				<SEEED_SENSECAP_T1000 {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2103_WaterLevel'}
 				<SEEED_SENSECAP_S2103_WATER_LEVEL {sensor} />
+			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2100_nimbol'}
+				<SEEED_SENSECAP_S2100_NIMBOL {sensor} />
 			{:else if sensor.deviceType.data_table == 'cw_traffic2'}
 				<CW_TRAFFIC {sensor} />
 			{:else}

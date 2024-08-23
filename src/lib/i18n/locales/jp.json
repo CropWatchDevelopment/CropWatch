@@ -241,6 +241,8 @@
   "pressure": "気圧",
   "lux": "照度",
   "uv": "紫外線",
+  "dewPointC": "露点",
+  "Last Updated": "最終更新",
   "temperature": "温度",
   "temperatureC": "温度",
   "battery_level": "バッテリー",
@@ -251,7 +253,37 @@
   "car_count": "車両数",
   "people_count": "人数",
   "bicycle_count": "自転車数",
-  "Administrator": "管理者 (更新/表示/ダウンロード)",
-  "User": "ユーザー (表示/ダウンロード)",
-  "Viewer": "ビューアー (表示)"
+  "Administrator": "管理者",
+  "User": "ユーザー",
+  "Viewer": "ビューアー",
+
+  "generalsettings": {
+    "title": "一般設定",
+    "personalinfo": {
+      "title": "個人情報",
+      "description": "メールを受け取れる永続的な住所を使用してください。",
+      "fullname": "フルネーム",
+      "email": "Eメール",
+      "username": "ユーザー名"
+    },
+    "notifications": {
+      "title": "Lineチャット",
+      "connectLine": "通知を受け取るためにLineチャットアプリに登録するためのリンクを使用してください。",
+      "register": "登録",
+      "description": "お好みの言語を選択してください（デフォルトはブラウザの言語に設定されます）"
+    },
+    "language": {
+      "title": "言語"
+    }
+  },
+  "agreement": {
+    "auth": {
+      "title": "契約",
+      "accept": "同意する",
+      "acceptDone": "契約に同意しました",
+      "privacy_policy": "プライバシーポリシー",
+      "read": "読む",
+      "cookiePolicy": "クッキーポリシー"
+    }
+  }
 }
