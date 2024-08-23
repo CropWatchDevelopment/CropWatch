@@ -35,6 +35,7 @@
 			</div>
 			<div class="flex justify-between">
 				<p class="text-sm">{$_('difference')}</p>
+				<p class="text-sm">{( value - optimalValue ).toFixed(2)}<span class="text-xs">{unit}</span></p>
 			</div>
 		</div>
 	{/if}

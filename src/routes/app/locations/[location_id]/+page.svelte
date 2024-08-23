@@ -32,6 +32,7 @@
 			const res = await fetch(`/api/v1/locations/${location_id}?includeDevicesTypes=true`);
 			const data = await res.json();
 			location = data;
+			debugger;
 			await fetchInitialDeviceData();
 			bounds = location.devices.map((d) => [d.latestData.lat, d.latestData.long]);
 			loading = false;

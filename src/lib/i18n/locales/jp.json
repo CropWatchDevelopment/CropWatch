@@ -222,6 +222,7 @@
     "temperature": "温度",
     "co2": "CO²",
     "rh": " ",
+    "npk": "NPK",
     "compassGuage": {
       "N": "北",
       "NE": "北東",
@@ -248,6 +249,15 @@
   "battery_level": "バッテリー",
   "battery": "バッテリー",
   "humidity": "湿度",
+  "moisture": "湿度",
+  "soil_temperature": "Soil Temperature",
+  "soil_humidity": "Soil Humidity",
+  "soil_moisture": "Soil Moisture",
+  "soil_ec": "Soil EC",
+  "soil_ph": "Soil PH",
+  "soil_n": "Soil Nitrogen",
+  "soil_p": "Soil Phosphorus",
+  "soil_k": "Soil Potassium",
   "co2_level": "CO²",
   "created_at": "最終更新",
   "car_count": "車両数",
@@ -256,6 +266,7 @@
   "Administrator": "管理者",
   "User": "ユーザー",
   "Viewer": "ビューアー",
+  "tempMoisture": "温度/湿度",
 
   "generalsettings": {
     "title": "一般設定",

@@ -35,6 +35,24 @@ export const nameToNotation = (name: string) => {
             return 'lux';
         case 'uv':
             return 'UVI';
+        case 'soil_temperature':
+        case 'soil_temperatureC':
+            return '°C';
+        case 'soil_humidity':
+            return '%';
+        case 'soil_ec':
+            return 'µS/cm';
+        case 'soil_ph':
+            return 'pH';
+        case 'soil_nitrogen':
+        case 'soil_n':
+            return 'mg/kg';
+        case 'soil_phosphorus':
+        case 'soil_p':
+            return 'mg/kg';
+        case 'soil_potassium':
+        case 'soil_k':
+            return 'mg/kg';
         case 'wind_direction':
             return '°';
         case 'water_level':

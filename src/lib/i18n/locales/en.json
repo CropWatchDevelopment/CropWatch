@@ -222,6 +222,7 @@
     "temperature": "Temperature",
     "co2": "CO²",
     "rh": "RH",
+    "npk": "NPK",
     "compassGuage": {
       "N": "N",
       "NE": "NE",
@@ -232,7 +233,8 @@
       "W": "W",
       "NW": "NW"
     },
-    "windSpeedDirTempHumid": "Temperature, Humidity, Wind Speed & Direction"
+    "windSpeedDirTempHumid": "Temperature, Humidity, Wind Speed & Direction",
+    "tempMoisture": "Temperature/Moisture"
   },
   "rainfall": "Rainfall",
   "windspeed": "windspeed",
@@ -243,6 +245,15 @@
   "uv": "UV",
   "temperature": "Temperature",
   "humidity": "Humidity",
+  "moisture": "Moisture",
+  "soil_temperature": "Soil Temperature",
+  "soil_humidity": "Soil Humidity",
+  "soil_moisture": "Soil Moisture",
+  "soil_ec": "Soil EC",
+  "soil_ph": "Soil PH",
+  "soil_n": "Soil Nitrogen",
+  "soil_p": "Soil Phosphorus",
+  "soil_k": "Soil Potassium",
   "co2_level": "CO²",
   "dewPointC": "Dew Point",
   "created_at": "Last Updated",
