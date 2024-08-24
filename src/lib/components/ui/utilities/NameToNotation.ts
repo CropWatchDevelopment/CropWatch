@@ -9,7 +9,6 @@ export const nameToNotation = (name: string) => {
         case 'dew_point':
         case 'dew_pointC':
         case 'dewPointC':
-        case 'soil_temperatureC':
             return '°C';
         case 'soil_EC':
             return 'dS/m';
