@@ -6,6 +6,7 @@ export function getSupabaseClient(locals: any) {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      storage: localStorage,
     }
   });
 }

@@ -1,23 +1,28 @@
 <script lang="ts">
-	import { Button, Collapse, Icon, ProgressCircle } from 'svelte-ux';
+	import { Button, Collapse, Icon } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import { mdiArrowDown, mdiArrowRight, mdiTimerSand } from '@mdi/js';
 	import { nameToEmoji } from '../../utilities/NameToEmoji';
 	import DeviceDataList from './DeviceDataList.svelte';
 	import devicesStore from '$lib/stores/devicesStore';
-	import { get, writable } from 'svelte/store';
+	import { get } from 'svelte/store';
 	import { _ } from 'svelte-i18n';
+	import { locationWeatherDataStore } from '$lib/stores/locationWeatherDataStore';
 
 	export let location;
 
 	const locationId = location.location_id;
-	let locationWeatherData = writable(null);
 	let devicesLatestData = devicesStore;
 	let open: boolean = false;
 
 	$: if (location.devices) {
 		const updatedDevicesLatestData = get(devicesStore);
 		devicesLatestData.set(updatedDevicesLatestData);
+	}
+
+	$: {
+		// Fetch weather data for this specific location
+		locationWeatherDataStore.fetchWeatherData(location.lat, location.long, locationId);
 	}
 </script>
 
@@ -27,10 +32,10 @@
 	>
 		<div class="absolute right-0 top-0 h-full w-1/2 rounded-2xl bg-gradient-to-l from-black"></div>
 		<div class="absolute right-3 top-4 space-y-1 text-xs text-white drop-shadow-md">
-			{#if $locationWeatherData}
-				<p>{$_('dashboard.dashboardCard.Rainfall')}: {$locationWeatherData.rainfall}mm/h</p>
-				<p>{$_('dashboard.dashboardCard.Humidity')}: {$locationWeatherData.humidity}%</p>
-				<p>{$_('dashboard.dashboardCard.WindSpeed')}: {$locationWeatherData.windSpeed} km/h</p>
+			{#if $locationWeatherDataStore[location.location_id]}
+				<p>{$_('dashboard.dashboardCard.Rainfall')}: {$locationWeatherDataStore[location.location_id].current?.rain}mm/h</p>
+				<p>{$_('dashboard.dashboardCard.Humidity')}: {$locationWeatherDataStore[location.location_id].current?.relative_humidity_2m}%</p>
+				<p>{$_('dashboard.dashboardCard.WindSpeed')}: {$locationWeatherDataStore[location.location_id].current?.wind_speed_10m} km/h</p>
 			{:else}
 				<p>{$_('dashboard.dashboardCard.Rainfall')}: --%</p>
 				<p>{$_('dashboard.dashboardCard.Humidity')}: --%</p>
@@ -39,8 +44,8 @@
 		</div>
 		<div class="absolute left-3 top-5">
 			<p class="text-shadow flex text-3xl text-white">
-				{#if $locationWeatherData}
-					{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md"
+				{#if $locationWeatherDataStore[location.location_id]}
+					{$locationWeatherDataStore[location.location_id].current?.temperature_2m}<span class="text-xl text-neutral-content drop-shadow-md"
 						>ºC</span
 					>
 				{:else}
@@ -132,6 +137,7 @@
 		{/each}
 	</div>
 </div>
+
 
 <style>
 	.text-shadow {

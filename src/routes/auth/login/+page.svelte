@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
 	import { _ } from 'svelte-i18n';
 	import { TextField, Button, Switch, Icon } from 'svelte-ux';

@@ -34,7 +34,7 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
                 text: '',
             },
             labels: {
-                format: '{value}°C',
+                format: '{value} M',
                 style: {
                     color: 'red'
                 }
@@ -46,7 +46,7 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
             formatter: function (this: Highcharts.TooltipFormatterContextObject) {
                 let tooltip = `<b>${Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x as number)}</b>`;
                 this.points?.forEach(point => {
-                    tooltip += `<br/><span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}/m}</b>`;
+                    tooltip += `<br/><span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y?.toFixed(2)}/m}</b>`;
                 });
                 return tooltip;
             }
