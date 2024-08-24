@@ -7,6 +7,7 @@
     "display": "standalone",
     "description": "CropWatch is a web application that helps you monitor all of your sensors in one place.",
     "display_override": ["window-controls-overlay"],
+    "orientation": "portrait-primary",
     "icons": [
         {
             "src": "/favicon.svg",
