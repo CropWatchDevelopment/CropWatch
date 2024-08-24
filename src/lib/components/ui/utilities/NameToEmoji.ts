@@ -1,6 +1,7 @@
 export const nameToEmoji = (name: string) => {
     switch (name) {
         case 'soil_moisture':
+        case 'soil_humidity':
             return '💧';
         case 'humidity':
             return '💨';
@@ -11,16 +12,20 @@ export const nameToEmoji = (name: string) => {
         case 'temperature':
         case 'temperatureC':
         case 'soil_temperatureC':
+        case 'soil_temperature':
             return '🌡️';
         case 'soil_EC':
+        case 'soil_ec':
             return '🧂';
         case 'soil_N':
-            return '🧪';
         case 'soil_P':
-            return '🧪';
         case 'soil_K':
+        case 'soil_n':
+        case 'soil_p':
+        case 'soil_k':
             return '🧪';
         case 'soil_PH':
+        case 'soil_ph':
             return '⚗️';
         case 'co2_level':
             return '⌬';

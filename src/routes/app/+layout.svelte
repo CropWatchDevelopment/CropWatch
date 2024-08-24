@@ -88,8 +88,7 @@
 
 <AppLayout
 	areas="'header header' 'aside main'"
-	class="h-full [&>header]:fixed [&>header]:top-0 [&>header]:h-[var(--headerHeight)] [&>header]:w-full [&>header]:transition-all [&>main]:mt-[var(--headerHeight)] [&>main]:transition-[margin] [&>main]:duration-500 [&>main]:md:ml-[var(--drawerWidth)] [:where(&_[id])]:scroll-m-[var(--headerHeight)]"
->
+	>
 	<svelte:fragment slot="nav">
 		<!-- Nav menu -->
 		<NavMenu />

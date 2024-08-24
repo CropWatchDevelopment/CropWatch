@@ -11,7 +11,6 @@
 
 	let { supabase, session } = data;
 	$: ({ supabase, session } = data);
-
 	let notification: UINotification;
 
 	$: notificationStore.subscribe((value) => {
@@ -42,23 +41,20 @@
 		.subscribe();
 </script>
 
-<div class="absolute z-50 mt-5">
-	<Notification actions="below" closeIcon open={notification.open}>
-		<div slot="icon" class="self-start">
-			{#if notification.icon}
-				<Icon data={notification.icon} class={notification.iconColor} />
-			{:else}
-				<Icon data={mdiInformation} />
-			{/if}
-		</div>
-		<div slot="title">{notification.title}</div>
-		<div slot="description">
-			{notification.description}
-		</div>
-		<div slot="actions">
-			<Button color="primary">{notification.buttonText}</Button>
-		</div>
-	</Notification>
-</div>
+<Notification actions="below" closeIcon open={notification.open}>
+	<div slot="icon" class="self-start">
+		{#if notification.icon}
+			<Icon data={notification.icon} class={notification.iconColor} />
+		{:else}
+			<Icon data={mdiInformation} />
+		{/if}
+	</div>
+	<div slot="title">{notification.title}</div>
+	<div slot="description">
+		{notification.description}
+	</div>
+	<div slot="actions">
+		<Button color="primary">{notification.buttonText}</Button>
+	</div>
+</Notification>
 <slot />
-

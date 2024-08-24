@@ -32,6 +32,7 @@
 			const res = await fetch(`/api/v1/locations/${location_id}?includeDevicesTypes=true`);
 			const data = await res.json();
 			location = data;
+			debugger;
 			await fetchInitialDeviceData();
 			bounds = location.devices.map((d) => [d.latestData.lat, d.latestData.long]);
 			loading = false;
@@ -170,8 +171,10 @@
 		<Leaflet
 			view={[location.lat, location.long]}
 			{bounds}
+			disableZoom={true}
 			{heatLatLngData}
 			zoom={18}
+			
 			height={innerHeight / 2.5}
 		>
 			{#each location.devices as device}

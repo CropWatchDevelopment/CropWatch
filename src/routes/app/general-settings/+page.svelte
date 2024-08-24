@@ -4,6 +4,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import SupabaseAvatar from '$lib/components/ui/SupabaseAvatar.svelte';
 	import { locale, locales } from 'svelte-i18n';
+	import { _ } from 'svelte-i18n';
 
 	export let data;
 	export let form;
@@ -35,7 +36,9 @@
 	};
 
 	const CLIENT_ID = 'OgvNbMAZkaUJfsdUtSaFlz';
-	const REDIRECT_URI = encodeURIComponent('https://app.cropwatch.io/app/lineChat/notifications-callback');
+	const REDIRECT_URI = encodeURIComponent(
+		'https://app.cropwatch.io/app/lineChat/notifications-callback'
+	);
 	const STATE = 'aabbcc'; // Generate this dynamically in a real app
 
 	const lineAuthorizeUrl = `https://notify-bot.line.me/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=notify&state=${STATE}`;
@@ -54,7 +57,7 @@
 	<!-- TITLE -->
 	<h2 class="text-surface ml-1 mt-4 text-2xl font-light">
 		<Icon data={mdiCog} class="h-6 w-6" />
-		General Settings
+		{$_('generalsettings.title')}
 	</h2>
 </div>
 
@@ -63,9 +66,11 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Personal Information</h2>
+			<h2 class="text-base font-semibold leading-7 text-white">
+				{$_('generalsettings.personalinfo.title')}
+			</h2>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
-				Use a permanent address where you can receive mail.
+				{$_('generalsettings.personalinfo.description')}
 			</p>
 		</div>
 
@@ -84,7 +89,7 @@
 
 				<div class="sm:col-span-3">
 					<TextField
-						label="Full Name"
+						label={$_('generalsettings.personalinfo.fullname')}
 						name="fullName"
 						id="fullName"
 						value={form?.fullName ?? fullName}
@@ -95,7 +100,7 @@
 
 				<div class="col-span-full">
 					<TextField
-						label="email"
+						label={$_('generalsettings.personalinfo.email')}
 						id="email"
 						name="email"
 						type="email"
@@ -107,7 +112,7 @@
 
 				<div class="col-span-full">
 					<TextField
-						label="Username"
+						label={$_('generalsettings.personalinfo.username')}
 						name="username"
 						id="username"
 						value={form?.username ?? username}
@@ -137,13 +142,13 @@
 				<button
 					type="submit"
 					class="rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-					>Save</button
+					>{$_('app.save')}</button
 				>
 			</div>
 		</form>
 	</div>
 
-	<div
+	<!-- <div
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
@@ -213,9 +218,9 @@
 				>
 			</div>
 		</form>
-	</div>
+	</div> -->
 
-	<div
+	<!-- <div
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
@@ -281,29 +286,34 @@
 				>
 			</div>
 		</form>
-	</div>
+	</div> -->
 
 	<div
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Notifications</h2>
+			<h2 class="text-base font-semibold leading-7 text-white">
+				{$_('generalsettings.notifications.title')}
+			</h2>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
-				Please enter your password to confirm you would like to log out of your other sessions
-				across all of your devices.
+				{$_('generalsettings.notifications.connectLine')}
 			</p>
 		</div>
 
-		<Button on:click={register} variant="fill" color="success">Register with LINE</Button>
+		<Button on:click={register} variant="fill" color="success"
+			>{$_('generalsettings.notifications.register')} LINE</Button
+		>
 	</div>
 
 	<div
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">Language</h2>
+			<h2 class="text-base font-semibold leading-7 text-white">
+				{$_('generalsettings.language.title')}
+			</h2>
 			<p class="mt-1 text-sm leading-6 text-gray-400">
-				Select Your prefered Language (defaults to your browser's language)
+				{$_('generalsettings.notifications.description')}
 			</p>
 		</div>
 

@@ -5,29 +5,30 @@
 	import { subDays } from 'date-fns';
 	import DarkCard from '../../Cards/DarkCard.svelte';
 	import TempHumidityCard from '../../Cards/TempHumidityCard.svelte';
+	import { getChartConfig } from './chart_tempHumidityConfig';
 
-	export let data;
+	export let sensor;
 
-	const temperature = data.at(0).temperatureC;
-	const humidity = data.at(0).humidity;
-	let config: any | null = null;
-	let dewPointConfig: any | null = null;
+	const temperature = sensor.data.at(0).temperatureC;
+	const humidity = sensor.data.at(0).humidity;
+	const temperatureData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.temperatureC]);
+	const humidityData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.humidity]);
 
-	
+	const chartConfig = getChartConfig(temperatureData,humidityData);
 
 	
 </script>
 
 <TempHumidityCard {temperature} {humidity} />
 
-{#key data}
-	{#if config}
+{#key sensor}
+	{#if chartConfig}
 		<DarkCard title="24h {$_('temperatureC')}/{$_('humidity')}">
-			<div class="chart" use:Highcharts={config} />
+			<div class="chart" use:Highcharts={chartConfig} />
 		</DarkCard>
 		
-		<DarkCard title="24h {$_('dewPointC')}">
+		<!-- <DarkCard title="24h {$_('dewPointC')}">
 			<div class="chart" use:Highcharts={dewPointConfig} />
-		</DarkCard>
+		</DarkCard> -->
 	{/if}
 {/key}

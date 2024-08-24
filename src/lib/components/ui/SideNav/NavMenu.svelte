@@ -74,7 +74,7 @@
 			</li>
 		</ul>
 
-		<h1>{$_('nav.Gateways')}</h1>
+		<!-- <h1>{$_('nav.Gateways')}</h1>
 		<ul>
 			<li>
 				<NavItem
@@ -85,7 +85,7 @@
 					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 				/>
 			</li>
-		</ul>
+		</ul> -->
 
 		<h1>{$_('nav.Users')}</h1>
 		<ul>

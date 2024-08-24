@@ -65,16 +65,16 @@
 				)
 				.subscribe((status, err) => {
 					if (err) {
-						console.error('❌ Error subscribing to:', dataTable, err);
+						// console.error('❌ Error subscribing to:', dataTable, err);
 					}
 					switch (status) {
                         case 'SUBSCRIBED':
                             console.log('🔌 Subscribed to:', dataTable);
                         case 'CHANNEL_ERROR':
-                            console.error('❌ Error on channel:', dataTable);
+                            // console.error('❌ Error on channel:', dataTable);
                             break;
                         case 'TIMED_OUT':
-                            console.error('❌ Timeout on channel:', dataTable);
+                            // console.error('❌ Timeout on channel:', dataTable);
                             break;
                         case 'CLOSED':
                         default:
@@ -142,3 +142,4 @@
 	</div>
 {/if}
 <p>&nbsp;</p>
+
