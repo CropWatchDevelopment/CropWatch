@@ -161,7 +161,7 @@
 					<TextField
 						id="device-name"
 						name="name"
-						label={$_('location.settings.deviceName')}
+						label={$_('location.settings.locationName')}
 						labelPlacement="top"
 						bind:value={location.name}
 					/>

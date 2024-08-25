@@ -14,7 +14,8 @@ class CwDevicesRepository {
     const { data, error } = await this.client
       .from('cw_devices')
       .select('*')
-      .eq('location_id', location_id);
+      .eq('location_id', location_id)
+      .select('*');
 
     if (error) {
       console.error('Error fetching devices by location ID:', error.message);

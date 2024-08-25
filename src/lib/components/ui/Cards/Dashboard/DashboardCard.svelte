@@ -1,23 +1,33 @@
 <script lang="ts">
-	import { Button, Collapse, Icon, ProgressCircle } from 'svelte-ux';
+	import { Button, Collapse, Icon } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import { mdiArrowDown, mdiArrowRight, mdiTimerSand } from '@mdi/js';
 	import { nameToEmoji } from '../../utilities/NameToEmoji';
 	import DeviceDataList from './DeviceDataList.svelte';
-	import devicesStore from '$lib/stores/devicesStore';
-	import { get, writable } from 'svelte/store';
 	import { _ } from 'svelte-i18n';
+	import { locationWeatherDataStore } from '$lib/stores/locationWeatherDataStore';
+	import { deviceStore } from '$lib/stores/deviceStore';
+	import type { Tables } from '$lib/types/supabaseSchema';
+	import moment from 'moment';
+
+	type deviceType = Tables<'cw_devices'>;
 
 	export let location;
 
 	const locationId = location.location_id;
-	let locationWeatherData = writable(null);
-	let devicesLatestData = devicesStore;
+	let devicesLatestData = deviceStore;
 	let open: boolean = false;
+	// Initialize devices as an empty array if undefined
+	let devices = location.devices || [];
 
-	$: if (location.devices) {
-		const updatedDevicesLatestData = get(devicesStore);
-		devicesLatestData.set(updatedDevicesLatestData);
+	// Fetch device data for all devices in the location
+	devices.forEach((device: deviceType) => {
+		deviceStore.fetchDeviceData(device.dev_eui);
+	});
+
+	$: {
+		// Fetch weather data for this specific location
+		locationWeatherDataStore.fetchWeatherData(location.lat, location.long, locationId);
 	}
 </script>
 
@@ -27,10 +37,20 @@
 	>
 		<div class="absolute right-0 top-0 h-full w-1/2 rounded-2xl bg-gradient-to-l from-black"></div>
 		<div class="absolute right-3 top-4 space-y-1 text-xs text-white drop-shadow-md">
-			{#if $locationWeatherData}
-				<p>{$_('dashboard.dashboardCard.Rainfall')}: {$locationWeatherData.rainfall}mm/h</p>
-				<p>{$_('dashboard.dashboardCard.Humidity')}: {$locationWeatherData.humidity}%</p>
-				<p>{$_('dashboard.dashboardCard.WindSpeed')}: {$locationWeatherData.windSpeed} km/h</p>
+			{#if $locationWeatherDataStore[location.location_id]}
+				<p>
+					{$_('dashboard.dashboardCard.Rainfall')}: {$locationWeatherDataStore[location.location_id]
+						.current?.rain}mm/h
+				</p>
+				<p>
+					{$_('dashboard.dashboardCard.Humidity')}: {$locationWeatherDataStore[location.location_id]
+						.current?.relative_humidity_2m}%
+				</p>
+				<p>
+					{$_('dashboard.dashboardCard.WindSpeed')}: {$locationWeatherDataStore[
+						location.location_id
+					].current?.wind_speed_10m} km/h
+				</p>
 			{:else}
 				<p>{$_('dashboard.dashboardCard.Rainfall')}: --%</p>
 				<p>{$_('dashboard.dashboardCard.Humidity')}: --%</p>
@@ -39,9 +59,9 @@
 		</div>
 		<div class="absolute left-3 top-5">
 			<p class="text-shadow flex text-3xl text-white">
-				{#if $locationWeatherData}
-					{$locationWeatherData.temperature}<span class="text-xl text-gray-100 drop-shadow-md"
-						>ºC</span
+				{#if $locationWeatherDataStore[location.location_id]}
+					{$locationWeatherDataStore[location.location_id].current?.temperature_2m}<span
+						class="text-xl text-neutral-content drop-shadow-md">ºC</span
 					>
 				{:else}
 					--<span class="text-xl text-gray-100 drop-shadow-md">ºC</span>
@@ -68,11 +88,13 @@
 				classes={{ root: 'shadow-md pr-2 bg-surface-200/50', icon: 'data-[open=true]:rotate-90' }}
 				disabled={!$devicesLatestData[device.dev_eui]}
 			>
-				<DeviceDataList data={$devicesLatestData[device.dev_eui]} />
+				<DeviceDataList data={$devicesLatestData[device.dev_eui].latest} />
+
 				<div
 					slot="trigger"
-					class="flex-1 border-l-8 {(
-						$devicesLatestData[device.dev_eui] ? $devicesLatestData[device.dev_eui].isDataOld : true
+					class="flex-1 border-l-8
+				 {moment($devicesLatestData[device.dev_eui]?.latest.created_at).isBefore(
+						moment().subtract(device.upload_interval, 'minutes')
 					)
 						? '!border-l-red-500'
 						: '!border-l-green-500'}"
@@ -87,9 +109,9 @@
 									<p class="m-auto justify-center">
 										<span>
 											{nameToEmoji(device.deviceType.primary_data)}
-											{$devicesLatestData[device.dev_eui][device.deviceType.primary_data].toFixed(
-												2
-											)}
+											{$devicesLatestData[device.dev_eui].latest[
+												device.deviceType.primary_data
+											]?.toFixed(2)}
 										</span>
 										<small class="text-secondary-700">
 											<sup>{device.deviceType.primary_data_notation}</sup>
@@ -99,9 +121,9 @@
 										<p class="m-auto justify-center">
 											<span>
 												{nameToEmoji(device.deviceType.secondary_data)}
-												{$devicesLatestData[device.dev_eui][
+												{$devicesLatestData[device.dev_eui].latest[
 													device.deviceType.secondary_data
-												].toFixed(2)}
+												]?.toFixed(2)}
 											</span>
 											<small class="text-secondary-700">
 												<sup>{device.deviceType.secondary_data_notation}</sup>

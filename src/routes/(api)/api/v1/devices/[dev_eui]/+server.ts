@@ -45,10 +45,6 @@ export const PUT: RequestHandler = async ({ params, request, locals: { supabase,
     try {
         const data = await request.json();
         
-        // Perform validation on the incoming data
-        // if (!data.name || !data.lat || !data.long || !data.upload_interval || !data.battery_changed_at) {
-        //     throw error(400, 'All fields are required.');
-        // }
         let existing_device = await cwDevicesService.getDeviceByEui(devEui);
         if (existing_device === null) throw error(500, 'Failed to find device to update');
         existing_device.name = data.name ?? existing_device.name;

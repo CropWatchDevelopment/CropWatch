@@ -34,6 +34,8 @@
 						ordinalSuffixes: {
 							one: 'ー',
 							two: '二',
+							few: '三',
+							other: 'ー'
 						},
 						
 					},
@@ -47,11 +49,9 @@
 				dictionary: {
 					Ok: 'OK',
 					Cancel: 'キャンセル',
-
 					Date: {
 						Start: '開始',
 						End: '終了',
-
 						Day: '日',
 						DayTime: '日時',
 						Time: '時間',
@@ -61,14 +61,11 @@
 						CalendarYear: 'カレンダー年',
 						FiscalYearOct: '会計年度',
 						BiWeek: '2週間',
-
 						PeriodDay: {
 							Current: "今日",
 							Last: '昨日',
 							LastX: '{0}日前',
 						}
-
-						//...
 					}
 				}
 			})
@@ -90,7 +87,6 @@
 	areas="'header header' 'aside main'"
 	>
 	<svelte:fragment slot="nav">
-		<!-- Nav menu -->
 		<NavMenu />
 	</svelte:fragment>
 
@@ -112,3 +108,4 @@
 		<slot />
 	</main>
 </AppLayout>
+
