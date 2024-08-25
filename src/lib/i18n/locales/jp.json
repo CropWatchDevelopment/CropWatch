@@ -201,7 +201,9 @@
       "success": "許可が正常に追加されました",
       "failedToAdd": "許可の追加に失敗しました",
       "userEmailToGrantAccess": "アクセス許可を与えるユーザーのメールアドレス",
-      "currentUsers": "現在のユーザー"
+      "currentUsers": "現在のユーザー",
+      "deleteMessage1": "以下のアドレスを削除しようとしています。",
+      "deleteMessage2": "このユーザーはこのデバイスを見ることが出来なくなります。"
     },
     "all": {
       "title": "全てのデバイス",
@@ -255,11 +257,12 @@
   "moisture": "水分量",
   "soil_temperature": "土壌温度",
   "soil_moisture": "土壌水分量",
-  "soil_ec": "Soil EC",
-  "soil_ph": "Soil PH",
-  "soil_n": "Soil Nitrogen",
-  "soil_p": "Soil Phosphorus",
-  "soil_k": "Soil Potassium",
+  "soil_humidity": "土壌水分量",
+  "soil_n": "窒素",
+  "soil_p": "リン酸",
+  "soil_k": "カリウム",
+  "soil_ec": "EC",
+  "soil_ph": "PH",
   "co2_level": "CO²",
   "created_at": "最終更新",
   "car_count": "車両数",

@@ -201,7 +201,9 @@
       "success": "Permission added successfully",
       "failedToAdd": "Failed to add permission",
       "userEmailToGrantAccess": "User Email to grant permission",
-      "currentUsers": "Current Users"
+      "currentUsers": "Current Users",
+      "deleteMessage1": "You are about the delete the user:",
+      "deleteMessage2": "This user will no longer be  able to view this device."
     },
     "all": {
       "title": "All Devices",
@@ -249,7 +251,7 @@
   "humidity": "Humidity",
   "moisture": "Moisture",
   "soil_temperature": "Soil Temperature",
-  "soil_humidity": "Soil Humidity",
+  "soil_humidity": "Soil Moisture",
   "soil_moisture": "Soil Moisture",
   "soil_ec": "Soil EC",
   "soil_ph": "Soil PH",
@@ -293,5 +295,6 @@
   },
   "avatar": {
     "changeAvatar": "Change Avatar"
-  }
+  },
+  "temperatureC": "Temperature"
 }

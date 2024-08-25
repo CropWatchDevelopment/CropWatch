@@ -47,7 +47,7 @@ export const getNPKChartConfig = (soil_n: number, soil_p: number, soil_k: number
         },
 
         exporting: {
-            enabled: false
+            enabled: true
         },
 
         yAxis: {
