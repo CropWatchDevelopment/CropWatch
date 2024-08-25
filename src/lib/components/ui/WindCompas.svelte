@@ -161,15 +161,15 @@
 		// .text(windDirection);
 
 		// Draw the temperature and humidity text
-		svg
-			.append('text')
-			.attr('y', 50)
-			.attr('text-anchor', 'middle')
-			.attr('font-size', '20px')
-			.attr('font-weight', 'bold')
-			.html(
-				`<tspan fill="coral">${temperature}°C</tspan> / <tspan fill="teal">${humidity}% ${$_(`charts.rh`)}</tspan>`
-			);
+		// svg
+		// 	.append('text')
+		// 	.attr('y', 50)
+		// 	.attr('text-anchor', 'middle')
+		// 	.attr('font-size', '20px')
+		// 	.attr('font-weight', 'bold')
+		// 	.html(
+		// 		`<tspan fill="coral">${temperature}°C</tspan> / <tspan fill="teal">${humidity}% ${$_(`charts.rh`)}</tspan>`
+		// 	);
 
 		// Draw the arrowhead
 		const arrowLength = radius * 0.9;

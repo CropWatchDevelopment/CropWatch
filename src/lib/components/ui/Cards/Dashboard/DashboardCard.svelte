@@ -49,7 +49,7 @@
 				<p>
 					{$_('dashboard.dashboardCard.WindSpeed')}: {$locationWeatherDataStore[
 						location.location_id
-					].current?.wind_speed_10m} km/h
+					].current?.wind_speed_10m} m/s
 				</p>
 			{:else}
 				<p>{$_('dashboard.dashboardCard.Rainfall')}: --%</p>
@@ -113,7 +113,7 @@
 												device.deviceType.primary_data
 											]?.toFixed(2)}
 										</span>
-										<small class="text-secondary-700">
+										<small class="text-secondary-200">
 											<sup>{device.deviceType.primary_data_notation}</sup>
 										</small>
 									</p>
@@ -125,7 +125,7 @@
 													device.deviceType.secondary_data
 												]?.toFixed(2)}
 											</span>
-											<small class="text-secondary-700">
+											<small class="text-secondary-200">
 												<sup>{device.deviceType.secondary_data_notation}</sup>
 											</small>
 										</p>

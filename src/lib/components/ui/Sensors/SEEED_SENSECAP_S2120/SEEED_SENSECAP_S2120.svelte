@@ -60,7 +60,7 @@
 </script>
 
 <div class="grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2">
-	<DarkCard title={$_('charts.windSpeedDirTempHumid')}>
+	<DarkCard>
 		<WindCompas {temperature} {humidity} {windSpeed} {windDirection} {arrowRotation} />
 	</DarkCard>
 
@@ -70,15 +70,15 @@
 	/>
 </div>
 
-<DarkCard title="Temperature & Humidity">
+<DarkCard title="24h {$_('charts.tempHumidity')}">
 	<div class="chart-container" use:highcharts={tempHumidChartConfig}></div>
 </DarkCard>
 
-<DarkCard title="24h Wind Speed">
+<DarkCard title="24h {$_('windspeed')}">
 	<div class="chart-container" use:highcharts={windChartConfig}></div>
 </DarkCard>
 
-<DarkCard title="Rainfall 24h">
+<DarkCard title="24h {$_('rainfall')}">
 	<div class="chart-container" use:highcharts={rainfallChartConfig}></div>
 </DarkCard>
 

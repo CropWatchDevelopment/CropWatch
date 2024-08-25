@@ -19,7 +19,7 @@
 	<TempHumidityCard temperature={curentWaterLevel} temperatureNotation='m' humidity={null}
 	/>
 </div>
-<DarkCard title="24h History">
+<DarkCard title="24h {$_('devices.waterLevel')}">
 	<div class="chart-container" use:highcharts={tempHumidChartConfig}></div>
 </DarkCard>
 

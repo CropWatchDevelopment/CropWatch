@@ -21,7 +21,7 @@ function createWeatherDataStore() {
 			const controller = new AbortController();
 			if (lat != null && lng != null) {
 				const weatherRequest = await fetch(
-					`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
+					`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&wind_speed_unit=ms&current=temperature_2m,relative_humidity_2m,is_day,rain,cloud_cover,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m&daily=uv_index_max`,
 					{ signal: controller.signal }
 				);
 

@@ -65,7 +65,6 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
     name: newRule.name,
     trigger_count: 0,
     ruleGroupId,
-    id: editing.id,
     profile_id: session.user.id,
   });
 

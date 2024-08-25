@@ -69,6 +69,8 @@ class CwDeviceOwnersRepository {
   }
 
   async insert(owner: CwDeviceOwnersInsert): Promise<CwDeviceOwners | null> {
+    delete owner.id;
+    delete owner.owner_id;
     const { data, error } = await this.client
       .from('cw_device_owners')
       .insert(owner)

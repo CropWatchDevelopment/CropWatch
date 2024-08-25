@@ -38,7 +38,7 @@ export const getWindChartConfig = (
                 },
             },
             labels: {
-                format: '{value} km/h',
+                format: '{value} m/s',
                 style: {
                     color: 'darkgray',
                 },

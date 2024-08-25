@@ -116,7 +116,7 @@
 	onMount(async () => {
 		const latestDataPromise = await fetch(`/api/v1/devices/${$page.params.dev_eui}/latest-data`);
 		const allData = await latestDataPromise.json();
-		latestData = convertObject(allData);
+		latestData = convertObject(allData, true);
 		delete latestData.created_at;
 		for (let key of Object.keys(latestData)) {
 			subjects.push({ label: key, value: key });
@@ -251,8 +251,7 @@
 			<Button on:click={addSubCriterion} icon={mdiPlusCircle} variant="fill" color="primary"
 				>{$_('devices.rules.addSubCriterion')}</Button
 			>
-{allValuesEntered}
-{(subCriteria.length > 1)}
+
 			<Button
 				on:click={submitRule}
 				disabled={(subCriteria.length > 1) || !allValuesEntered}

@@ -208,7 +208,8 @@
       "errorLoadingLocations": "Error Loading Locations",
       "viewDeviceLocaction": "View Device Location",
       "viewDeviceDetails": "View Device Details"
-    }
+    },
+    "waterLevel": "Water Level"
   },
   "users": {
     "searchByEmail": "Search By Email",
@@ -273,7 +274,7 @@
     "notifications": {
       "title": "Line Chat",
       "connectLine": "Use the link to the right to register to recieve notifications through line chart app.",
-      "register": "Register with",
+      "register": "Register with Line",
       "description": "Select Your prefered Language (defaults to your browser's language)"
     },
     "language": {
@@ -289,5 +290,8 @@
       "read": "Read",
       "cookiePolicy": "Cookie Policy"
     }
+  },
+  "avatar": {
+    "changeAvatar": "Change Avatar"
   }
 }
