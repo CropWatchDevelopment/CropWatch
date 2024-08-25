@@ -293,9 +293,9 @@
   },
   "agreement": {
     "auth": {
-      "title": "契約",
+      "title": "続行する前に、次の必要な法的文書をよくお読みください。",
       "accept": "同意する",
-      "acceptDone": "契約に同意しました",
+      "acceptDone": "同意して続行する",
       "privacy_policy": "プライバシーポリシー",
       "read": "読む",
       "cookiePolicy": "クッキーポリシー"
