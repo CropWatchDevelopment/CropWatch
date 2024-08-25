@@ -49,15 +49,15 @@
 
 <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
 	<DarkCard
-		title="{nameToEmoji('temperature')}{$_('temperature')}"
+		title="{nameToEmoji('temperature')}{$_('soil_temperature')}"
 		value={current_temp}
 		unit="°C"
 		optimalValue={25}
 	/>
-	<DarkCard title="💧{$_('moisture')}" value={current_humidity} unit="%" optimalValue={40} />
+	<DarkCard title="💧{$_('soil_moisture')}" value={current_humidity} unit="%" optimalValue={40} />
 </div>
 
-<DarkCard title="{$_('charts.tempMoisture')}/24h">
+<DarkCard title="24h {$_('charts.tempMoisture')}">
 	<div class="chart-container" use:highcharts={tempHumidChartConfig} />
 </DarkCard>
 
@@ -86,7 +86,7 @@
 	</DarkCard>
 
 	<DarkCard>
-		<h1 class="text-center">EC</h1>
+		<h1>EC</h1>
 		<!-- Apply flexbox directly here to center the content -->
 		<div class="flex flex-1 flex-col justify-center items-center" style="min-height: 150px;">
 			<p id="EC" class="text-5xl">

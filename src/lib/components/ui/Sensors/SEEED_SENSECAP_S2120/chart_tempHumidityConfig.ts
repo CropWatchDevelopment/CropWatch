@@ -14,6 +14,9 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
             },
             backgroundColor: 'transparent',
         },
+        exporting: {
+            enabled: false
+        },
         title: {
             text: '',
             align: 'left',

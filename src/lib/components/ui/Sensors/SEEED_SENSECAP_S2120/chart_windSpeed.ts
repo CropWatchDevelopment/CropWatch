@@ -15,32 +15,35 @@ export const getWindChartConfig = (
             },
             backgroundColor: 'transparent',
         },
+        exporting: {
+            enabled: false,
+        },
         title: {
-            text: 'Wind Speed and Direction',
+            text: ' ',
             align: 'left',
         },
         xAxis: {
             type: 'datetime',
-            lineColor: 'darkgray',
-            tickColor: 'darkgray',
+            lineColor: 'orange',
+            tickColor: 'orange',
             labels: {
                 style: {
                     color: 'white',
                 },
             },
-            gridLineColor: 'darkgray',
+            gridLineColor: 'orange',
         },
         yAxis: [{
             title: {
-                text: 'Wind Speed (km/h)',
+                text: ' ',
                 style: {
-                    color: 'darkgray',
+                    color: 'orange',
                 },
             },
             labels: {
                 format: '{value} m/s',
                 style: {
-                    color: 'darkgray',
+                    color: 'orange',
                 },
             },
             opposite: false,
@@ -66,7 +69,7 @@ export const getWindChartConfig = (
                 direction: d[2],
             })),
             lineWidth: 1,
-            color: 'black',
+            color: 'orange',
             marker: {
                 enabled: true,
                 symbol: 'circle', // Use circle as a placeholder symbol

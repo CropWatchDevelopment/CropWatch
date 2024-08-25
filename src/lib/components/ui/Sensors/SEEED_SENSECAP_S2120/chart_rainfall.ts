@@ -15,32 +15,35 @@ export const getRainfallChartConfig = (
             },
             backgroundColor: 'transparent',
         },
+        exporting: {
+            enabled: false,
+        },
         title: {
-            text: 'Rainfall',
+            text: ' ',
             align: 'left',
         },
         xAxis: {
             type: 'datetime',
-            lineColor: 'gray',
-            tickColor: 'gray',
+            lineColor: 'blue',
+            tickColor: 'blue',
             labels: {
                 style: {
                     color: 'white',
                 },
             },
-            gridLineColor: 'gray',
+            gridLineColor: 'blue',
         },
         yAxis: [{
             title: {
                 text: 'Rainfall (mm/h)',
                 style: {
-                    color: 'black',
+                    color: 'blue',
                 },
             },
             labels: {
                 format: '{value} km/h',
                 style: {
-                    color: 'black',
+                    color: 'blue',
                 },
             },
             opposite: false,

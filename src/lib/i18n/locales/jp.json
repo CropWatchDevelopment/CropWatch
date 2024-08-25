@@ -235,7 +235,8 @@
       "W": "西",
       "NW": "北西"
     },
-    "windSpeedDirTempHumid": "風速·風向"
+    "windSpeedDirTempHumid": "風速·風向",
+    "tempMoisture": "土壌温度/水分量"
   },
   "rainfall": "雨量",
   "windspeed": "風速",
@@ -251,10 +252,9 @@
   "battery_level": "バッテリー",
   "battery": "バッテリー",
   "humidity": "湿度",
-  "moisture": "湿度",
-  "soil_temperature": "Soil Temperature",
-  "soil_humidity": "Soil Humidity",
-  "soil_moisture": "Soil Moisture",
+  "moisture": "水分量",
+  "soil_temperature": "土壌温度",
+  "soil_moisture": "土壌水分量",
   "soil_ec": "Soil EC",
   "soil_ph": "Soil PH",
   "soil_n": "Soil Nitrogen",

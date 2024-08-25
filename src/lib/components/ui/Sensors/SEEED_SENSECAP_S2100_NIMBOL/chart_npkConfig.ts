@@ -40,7 +40,8 @@ export const getNPKChartConfig = (soil_n: number, soil_p: number, soil_k: number
             lineWidth: 0,
             labels: {
                 style: {
-                    color: 'white'
+                    color: 'white',
+                    fontSize: '1.2em'
                 }
             }
         },
@@ -66,14 +67,14 @@ export const getNPKChartConfig = (soil_n: number, soil_p: number, soil_k: number
                 '{point.y:,.0f}</b>'
         },
 
-        legend: {
-            align: 'right',
-            verticalAlign: 'middle',
-            layout: 'vertical',
-            itemStyle: {
-                color: 'white'
-            }
-        },
+        // legend: {
+        //     align: 'right',
+        //     verticalAlign: 'middle',
+        //     layout: 'vertical',
+        //     itemStyle: {
+        //         color: 'white'
+        //     }
+        // },
 
         series: [{
             name: '',
