@@ -7,7 +7,7 @@
 	export let previousPage: string | null = null;
 </script>
 
-{#if !$page.url.pathname == '/app/dashboard'}
+{#if $page.url.pathname !== '/app/dashboard'}
 	<Button
 		variant="default"
 		size="lg"

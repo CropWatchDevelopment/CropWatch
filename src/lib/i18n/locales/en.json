@@ -97,8 +97,8 @@
     "name": "Location",
     "noFilters": "No Filter",
     "settings": {
-      "basicInfo": "Device Basic Info",
-      "basicInfoSubtitle": "Setup basic device data",
+      "basicInfo": "Location Basic Info",
+      "basicInfoSubtitle": "Setup basic Location data",
       "updated": "Location Updated!",
       "locationUpdatedSuccessfully": "Location Updated Successfully",
       "locationUpdatedFailed": "Location Update Failed",
@@ -121,7 +121,8 @@
       "deleteMsg1": "You are about to delete",
       "deleteMsg2": "This user will no longer be able to view this device.",
       "deleteTitle": "Are you sure?",
-      "userAlreadyExists": "Email already Exists"
+      "userAlreadyExists": "Email already Exists",
+      "locationName": "Location Name"
     },
     "all": {
       "name": "All Locations",

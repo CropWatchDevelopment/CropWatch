@@ -97,8 +97,8 @@
     "name": "場所",
     "noFilters": "フィルターなし",
     "settings": {
-      "basicInfo": "デバイスの基本情報",
-      "basicInfoSubtitle": "基本的なデバイスデータを設定",
+      "basicInfo": "場所の基本情報",
+      "basicInfoSubtitle": "基本的な場所データを設定",
       "updated": "場所が更新されました！",
       "locationUpdatedSuccessfully": "場所が正常に更新されました",
       "locationUpdatedFailed": "場所の更新に失敗しました",
@@ -121,7 +121,8 @@
       "deleteMsg1": "以下のユーザーを削除しようとしています。",
       "deleteMsg2": "このユーザーは削除後、デバイスにアクセスできなくなります。",
       "deleteTitle": "本当によろしいですか？",
-      "userAlreadyExists": "メールアドレスは既に存在します"
+      "userAlreadyExists": "メールアドレスは既に存在します",
+      "locationName": "場所名"
     },
     "all": {
       "name": "全ての場所",
@@ -267,12 +268,11 @@
   "User": "ユーザー",
   "Viewer": "ビューアー",
   "tempMoisture": "温度/湿度",
-
   "generalsettings": {
     "title": "一般設定",
     "personalinfo": {
       "title": "個人情報",
-      "description": "メールを受け取れる永続的な住所を使用してください。",
+      "description": "メールを受け取れる永続的なアドレスを使用してください。",
       "fullname": "フルネーム",
       "email": "Eメール",
       "username": "ユーザー名"
