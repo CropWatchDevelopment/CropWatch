@@ -15,7 +15,7 @@ export const getPHChartConfig = (ph: number): Highcharts.Options => {
             backgroundColor: 'transparent',
         },
         exporting: {
-            enabled: false
+            enabled: true
         },
         title: {
             text: '&nbsp;',

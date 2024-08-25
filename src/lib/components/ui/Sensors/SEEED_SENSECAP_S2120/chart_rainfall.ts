@@ -16,7 +16,7 @@ export const getRainfallChartConfig = (
             backgroundColor: 'transparent',
         },
         exporting: {
-            enabled: false,
+            enabled: true,
         },
         title: {
             text: ' ',
@@ -35,15 +35,15 @@ export const getRainfallChartConfig = (
         },
         yAxis: [{
             title: {
-                text: 'Rainfall (mm/h)',
+                text: ' ',
                 style: {
-                    color: 'blue',
+                    color: 'white',
                 },
             },
             labels: {
-                format: '{value} km/h',
+                format: '{value} mm/h',
                 style: {
-                    color: 'blue',
+                    color: 'white',
                 },
             },
             opposite: false,

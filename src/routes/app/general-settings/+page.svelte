@@ -66,10 +66,10 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">
+			<h2 class="text-base font-semibold leading-7 text-surface">
 				{$_('generalsettings.personalinfo.title')}
 			</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">
+			<p class="mt-1 text-sm leading-6 text-surface">
 				{$_('generalsettings.personalinfo.description')}
 			</p>
 		</div>
@@ -257,7 +257,7 @@
 							name="new_password"
 							type="password"
 							autocomplete="new-password"
-							class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
+							class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inclass="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-2"set ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
 						/>
 					</div>
 				</div>
@@ -292,10 +292,10 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">
+			<h2 class="text-base font-semibold leading-7 text-surface">
 				{$_('generalsettings.notifications.title')}
 			</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">
+			<p class="mt-1 text-sm leading-6 text-surface">
 				{$_('generalsettings.notifications.connectLine')}
 			</p>
 		</div>
@@ -309,10 +309,10 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">
+			<h2 class="text-base font-semibold leading-7 text-surface">
 				{$_('generalsettings.language.title')}
 			</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">
+			<p class="mt-1 text-sm leading-6 text-surface">
 				{$_('generalsettings.notifications.description')}
 			</p>
 		</div>

@@ -156,10 +156,9 @@
 										<div slot="title">{$_('devices.permissions.deleteConfirmMessage')}</div>
 										<div class="px-6 py-3">
 											<p>
-												You are about to delete '{permission.owner.email}' This user will no longer
-												be
+												{$_('devices.permissions.deleteMessage1')} '{permission.owner.email}'
 											</p>
-											<p>able to view this device.</p>
+											<p>{$_('devices.permissions.deleteMessage2')}</p>
 										</div>
 										<div slot="actions">
 											<Button

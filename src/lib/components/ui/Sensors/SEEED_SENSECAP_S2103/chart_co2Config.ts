@@ -16,7 +16,7 @@
                 backgroundColor: 'transparent',
             },
             exporting: {
-                enabled: false
+                enabled: true
             },
             title: {
                 text: '',

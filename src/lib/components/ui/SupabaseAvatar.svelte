@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SupabaseClient } from '@supabase/supabase-js';
 	import { createEventDispatcher } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	export let size = 10;
 	export let url: string;
@@ -84,7 +85,7 @@
 			class="align-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20"
 			for="single"
 		>
-			{uploading ? 'Uploading ...' : 'Change avatar'}
+			{uploading ? 'Uploading ...' : $_('avatar.changeAvatar')}
 		</label>
         <p class="mt-2 text-xs leading-5 text-gray-400">JPG, GIF or PNG. 1MB max.</p>
 		<input

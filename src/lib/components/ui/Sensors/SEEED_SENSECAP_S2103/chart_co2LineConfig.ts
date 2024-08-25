@@ -15,7 +15,7 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
             },
         },
         exporting: {
-            enabled: false
+            enabled: true
         },
         title: {
             text: '',

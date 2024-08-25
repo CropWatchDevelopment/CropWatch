@@ -16,7 +16,7 @@ export const getWindChartConfig = (
             backgroundColor: 'transparent',
         },
         exporting: {
-            enabled: false,
+            enabled: true,
         },
         title: {
             text: ' ',
@@ -55,7 +55,7 @@ export const getWindChartConfig = (
             formatter: function (this: Highcharts.TooltipFormatterContextObject) {
                 let tooltip = `<b>${Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x as number)}</b>`;
                 this.points?.forEach((point) => {
-                    tooltip += `<br/><span style="color:${point.color}">\u25B2</span> ${point.series.name}: <b>${point.y} km/h</b><br/>Direction: <b>${point.direction}°</b>`;
+                    tooltip += `<br/><span style="color:${point.color}">\u25B2</span> ${point.series.name}: <b>${point.y} m/s</b><br/>`;
                 });
                 return tooltip;
             },

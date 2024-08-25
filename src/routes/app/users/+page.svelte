@@ -54,7 +54,7 @@
   
   <h1>{$_('users.allUsers')} ({filteredAndSortedUsers.length}):</h1>
   
-  <div class="controls">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-2">
     <!-- Search Bar -->
     <input
       type="text"
@@ -64,12 +64,12 @@
     />
   
     <!-- Sort by Number of Devices Button -->
-    <Button on:click={toggleDeviceSortDirection} class="sort-button">
+    <Button variant="outline" on:click={toggleDeviceSortDirection} class="sort-button">
       {$_('users.sort')}({sortDirection})
     </Button>
   
     <!-- Sort by Email Button -->
-    <Button on:click={toggleEmailSortDirection} class="sort-button">
+    <Button variant="outline" on:click={toggleEmailSortDirection} class="sort-button">
       {$_('users.sortEmail')} ({emailSortDirection})
     </Button>
   </div>
