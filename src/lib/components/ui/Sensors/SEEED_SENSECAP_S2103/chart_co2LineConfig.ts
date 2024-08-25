@@ -14,20 +14,23 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
                 type: 'x'
             },
         },
+        exporting: {
+            enabled: false
+        },
         title: {
             text: '',
             align: 'left',
         },
         xAxis: {
             type: 'datetime',
-            lineColor: 'red',
-            tickColor: 'red',
+            lineColor: 'green',
+            tickColor: 'green',
             labels: {
                 style: {
                     color: 'white',
                 },
             },
-            gridLineColor: 'red',
+            gridLineColor: 'green',
         },
         yAxis: [{
             title: {
@@ -36,7 +39,7 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
             labels: {
                 format: '{value} PPM',
                 style: {
-                    color: 'red'
+                    color: 'green'
                 }
             },
             opposite: true
@@ -60,7 +63,7 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
                 valueSuffix: ' °C'
             },
             lineWidth: 1,
-            color: 'red',
+            color: 'green',
         }]
     };
 };

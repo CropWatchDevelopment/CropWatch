@@ -33,17 +33,16 @@
 	/>
 </div>
 {#if Current_co2_level}
-<DarkCard title="{$_('charts.co2')}/24h">
+<DarkCard title="24h {$_('charts.co2')}">
 	<div class="chart-container my-auto" use:highcharts={getCo2lineConfig} />
 </DarkCard>
 {/if}
-<DarkCard title="{$_('charts.tempHumidity')}/24h">
+<DarkCard title="24h {$_('charts.tempHumidity')}">
 	<div class="chart-container" use:highcharts={tempHumidChartConfig} />
 </DarkCard>
 
 <style>
 	.chart-container {
 		width: 100%;
-		height: 400px;
 	}
 </style>

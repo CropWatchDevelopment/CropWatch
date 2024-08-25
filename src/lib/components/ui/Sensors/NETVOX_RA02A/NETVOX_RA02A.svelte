@@ -22,7 +22,7 @@
 		humidity={null}
 	/>
 </div>
-<DarkCard title="{$_('charts.temperature')}/24h">
+<DarkCard title="24h {$_('charts.temperature')}">
 	<div class="chart-container" use:highcharts={tempChartConfig}></div>
 </DarkCard>
 

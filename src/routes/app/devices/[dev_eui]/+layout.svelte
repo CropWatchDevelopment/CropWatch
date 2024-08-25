@@ -40,7 +40,7 @@
 			<div class="mx-2 flex flex-row">
 				<SensorHeader {sensorName} {lastSeen} {upload_interval} />
 				<span class="flex-grow" />
-                <Tooltip title={`${sensorName} ${$_('devices.history.title')}`}>
+                <Tooltip class="hidden md:flex" title={`${sensorName} ${$_('devices.history.title')}`}>
 					<Button icon={mdiDownload} size="lg" on:click={() => goto(`history`)} />
 				</Tooltip>
 				<Tooltip title={`${sensorName}'s ${$_('devices.settings.settings')}`}>

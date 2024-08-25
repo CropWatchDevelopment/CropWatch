@@ -111,7 +111,7 @@ export const actions: Actions = {
 
         try {
             // Make the POST request to add the device permission
-            const response = await fetch(`/api/v1/permissions/${devEui}`, {
+            const response = await fetch(`/api/v1/devices/${devEui}/permissions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

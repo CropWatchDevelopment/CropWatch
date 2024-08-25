@@ -12,7 +12,7 @@
                 type: 'gauge',
                 plotBorderWidth: 0,
                 plotShadow: false,
-                height: '80%',
+                // height: '100%',
                 backgroundColor: 'transparent',
             },
             exporting: {
@@ -28,8 +28,8 @@
                 startAngle: -90,
                 endAngle: 90,
                 background: [],
-                center: ['50%', '50%'],
-                size: '90%',
+                // center: ['50%', '40%'],
+                // size: '70%',
             },
             yAxis: {
                 min: 400,

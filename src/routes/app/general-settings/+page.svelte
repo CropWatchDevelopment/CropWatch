@@ -301,7 +301,7 @@
 		</div>
 
 		<Button on:click={register} variant="fill" color="success"
-			>{$_('generalsettings.notifications.register')} LINE</Button
+			>{$_('generalsettings.notifications.register')}</Button
 		>
 	</div>
 

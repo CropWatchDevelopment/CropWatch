@@ -6,7 +6,7 @@ interface OutputObject {
     [key: string]: string | number | null;
 }
 
-export function convertObject(input: InputObject): OutputObject {
+export function convertObject(input: InputObject, keepHidden: boolean = false): OutputObject {
     const keysToKeep = [
       'temperature', 'temperatureC', 'humidity', 'dewPointC', 'rainfall', 'pressure',
       'wind_speed', 'wind_direction', 'lux', 'uv', 'co2_level', 'soil_N', 'soil_P',
@@ -16,6 +16,10 @@ export function convertObject(input: InputObject): OutputObject {
       'soil_ph', 'soil_nitrogen', 'soil_phosphorus', 'soil_potassium', 'soil_salinity',
       'soil_n', 'soil_p', 'soil_k'
     ];
+
+    if (keepHidden) {
+      keysToKeep.push('fireAlarm');
+    }
   
     const output: OutputObject = {};
   

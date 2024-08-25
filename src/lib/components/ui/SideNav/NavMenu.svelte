@@ -25,6 +25,7 @@
 				classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
 			/>
 		</li>
+		<h1>{$_('nav.general')}</h1>
 		<li>
 			<NavItem
 				text={$_('nav.GeneralSettings')}
@@ -107,6 +108,6 @@
 		margin-bottom: 12px;
 	}
 	li {
-		margin-bottom: 5px;
+		margin-bottom: 10px;
 	}
 </style>
