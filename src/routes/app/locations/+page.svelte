@@ -2,8 +2,8 @@
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
-	import { mdiArrowRight, mdiFilter, mdiMapMarker } from '@mdi/js';
-	import { Button, ListItem } from 'svelte-ux';
+	import { mdiArrowRight, mdiFilter, mdiMapMarker, mdiPlus } from '@mdi/js';
+	import { Button, ListItem, Tooltip } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 
 	let locationsPromise;
@@ -30,15 +30,26 @@
 	<title>CropWatch - Locations</title>
 </svelte:head>
 
-<h1 class="text-surface flex flex-row">
+<h1 class="text-surface flex flex-row gap-2">
 	<span>{$_('location.all.name')}:</span>
 	<span class="flex-1" />
-	<Button
-		icon={mdiFilter}
-		variant="fill"
-		color="primary"
-		on:click={() => (showFilters = !showFilters)}
-	/>
+	<Tooltip title="Add Location" placement="left">
+		<Button
+			icon={mdiPlus}
+			variant="fill"
+			color="primary"
+			on:click={() => goto('/app/locations/create')}
+		/>
+	</Tooltip>
+
+	<Tooltip title="Show/Hide Filters" placement="left">
+		<Button
+			icon={mdiFilter}
+			variant="fill"
+			color="primary"
+			on:click={() => (showFilters = !showFilters)}
+		/>
+	</Tooltip>
 </h1>
 
 {#if locationsPromise}

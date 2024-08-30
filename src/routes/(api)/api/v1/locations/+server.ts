@@ -7,7 +7,6 @@ import type { Tables } from '$lib/types/supabaseSchema';
 import CwLocationOwnersService from '$lib/services/CwLocationOwnersService';
 
 type CwLocations = Tables<'cw_locations'>;
-type CwDevices = Tables<'cw_devices'>;
 
 export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSession } }) => {
   const session = await safeGetSession();
@@ -51,6 +50,50 @@ export const GET: RequestHandler = async ({ url, locals: { supabase, safeGetSess
   }
 
   return new Response(JSON.stringify(locations), {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+};
+
+
+export const POST: RequestHandler = async ({ request, locals: { supabase, safeGetSession } }) => {
+  const session = await safeGetSession();
+  if (!session.user) {
+    return redirect(301, '/auth/unauthorized');
+  }
+
+  const cwLocationsService = new CwLocationsService(supabase);
+  const cwLocationOwnersService = new CwLocationOwnersService(supabase);
+
+  const data = await request.json();
+  type CwLocationsInsertType = Tables<'cw_locations'>;
+  type CwLocationOwnersInsertType = Tables<'cw_location_owners'>;
+
+  const newLocation: CwLocationsInsertType = {
+    description: data.description,
+    lat: data.lat,
+    long: data.long,
+    name: data.name,
+    owner_id: session.user.id,
+  }
+  const location = await cwLocationsService.addLocation(newLocation);
+  if (!location) {
+    throw error(500, 'Error creating location');
+  }
+
+  const newLocationOwner: CwLocationOwnersInsertType = {
+    location_id: location.location_id,
+    user_id: session.user.id,
+    permission_level: 1,
+    is_active: true,
+    description: null,
+  }
+  const locationOwner = await cwLocationOwnersService.add(newLocationOwner);
+  if (!locationOwner) {
+    throw error(500, 'Error creating location owner');
+  }
+  return new Response(JSON.stringify(location), {
     headers: {
       'Content-Type': 'application/json'
     }

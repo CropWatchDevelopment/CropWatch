@@ -22,8 +22,11 @@
 		? fetch(`/api/v1/devices/${devEui}/data?firstDataDate=${yesterday}&lastDataDate=${today}`)
 				.then((res) => res.json())
 				.then((sensor) => {
-					let newestData = sensor.data.at(0);
-					lastSeen = new Date(newestData.created_at);
+					if (sensor.data.length === 0) {
+						throw new Error('No (recent) data found for this device');
+					}
+					let newestData = sensor.data?.at(0);
+					lastSeen = new Date(newestData.created_at || Date());
 					sensorName = sensor.device.name;
 					data_table = sensor.deviceType.data_table;
 					upload_interval = sensor.deviceType.upload_interval;
