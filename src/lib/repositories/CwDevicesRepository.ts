@@ -73,7 +73,7 @@ class CwDevicesRepository {
       .eq('dev_eui', dev_eui)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error(`Error fetching latest data from ${dataTable}:`, error.message);
@@ -104,6 +104,7 @@ class CwDevicesRepository {
     const { data, error } = await this.client
       .from('cw_devices')
       .insert(device)
+      .select()
       .single();
 
     if (error) {

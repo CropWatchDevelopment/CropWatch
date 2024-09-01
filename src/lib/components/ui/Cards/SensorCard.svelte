@@ -54,14 +54,14 @@
 				<DeviceDataList data={latestData} />
 			{:else}
 				<ProgressCircle />
-				<p>Loading data...</p>
+				<p>Waiting For Data...</p>
 			{/if}
 		</div>
 	</div>
 	<!-- href arrow -->
 	<a
 		href={`/app/devices/${devEui}/data`}
-		class="flex items-center rounded-xl bg-[#3A393F] px-3 mix-blend-soft-light"
+		class="flex items-center rounded-xl bg-primary px-3"
 	>
 		<div class="w-5">
 			<img src={SensorArrow} alt="" />
