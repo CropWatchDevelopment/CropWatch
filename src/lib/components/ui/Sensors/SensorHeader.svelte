@@ -9,8 +9,9 @@
 	export let sensorName: string = 'NS';
 	export let lastSeen: Date;
 	export let upload_interval: number = 0;
+	debugger;
 	export let isActiveRecently: boolean =
-		moment().diff(moment(lastSeen).add(upload_interval, 'minutes'), 'minutes') > upload_interval;
+		moment().diff(moment(lastSeen).add(upload_interval, 'minutes'), 'minutes') < upload_interval;
 </script>
 
 <div class="flex flex-row">

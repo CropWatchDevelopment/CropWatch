@@ -76,19 +76,19 @@
 					<TextField
 						label="Join EUI/App Key *"
 						placeholder="xyz"
-						name="name"
+						name="joinEui"
 						bind:value={$form.joinEui}
 						aria-invalid={$errors.name ? 'true' : undefined}
-						error={$errors.name}
+						error={$errors.joinEui}
 						required
 					/>
 					<TextField
 						label="Secret Key *"
 						placeholder="xyz"
-						name="name"
+						name="secretKey"
 						bind:value={$form.secretKey}
-						aria-invalid={$errors.name ? 'true' : undefined}
-						error={$errors.name}
+						aria-invalid={$errors.secretKey ? 'true' : undefined}
+						error={$errors.secretKey}
 						required
 					/>
 				{/if}
@@ -101,8 +101,8 @@
 			name="serialNumber"
 			class="w-full"
 			bind:value={$form.serialNumber}
-			aria-invalid={$errors.name ? 'true' : undefined}
-			error={$errors.name}
+			aria-invalid={$errors.serialNumber ? 'true' : undefined}
+			error={$errors.serialNumber}
 			required
 		/>
 
@@ -122,9 +122,13 @@
 						}
 					}
 				}}
+				aria-invalid={$errors.type ? 'true' : undefined}
+				error={$errors.type}
 				required
 			/>
+
 			<NumberStepper name="uploadInterval" bind:value={$form.uploadInterval} />
+
 			<hidden name="uploadInterval" value={$form.uploadInterval} />
 		</div>
 
@@ -138,6 +142,7 @@
 				error={$errors.lat}
 				required
 			/>
+
 			<TextField
 				label="Longitude *"
 				placeholder="131.12345"

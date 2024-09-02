@@ -13,7 +13,7 @@ const schema = z.object({
     deveui: z.string(),
     joinEui: z.string().default('').optional(),
     secretKey: z.string().optional(),
-    type: z.number().default(0),
+    type: z.number().min(1, 'Device type must be selected').default(0),
     lat: z.number().min(-90, 'Latitude must be at least -90').max(90, 'Latitude must be at most 90'),
     long: z.number().min(-180, 'Longitude must be at least -180').max(180, 'Longitude must be at most 180'),
     serialNumber: z.string().min(3, 'Serial number must be at least 3 characters long').default('').optional(),

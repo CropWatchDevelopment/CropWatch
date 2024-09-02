@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import Back from '$lib/components/ui/Back.svelte';
 	import moment from 'moment';
-	
+
 	import { mdiCog, mdiDownload } from '@mdi/js';
 	import { Button, Icon, Tooltip } from 'svelte-ux';
 	import { goto } from '$app/navigation';
@@ -22,37 +22,39 @@
 		? fetch(`/api/v1/devices/${devEui}/data?firstDataDate=${yesterday}&lastDataDate=${today}`)
 				.then((res) => res.json())
 				.then((sensor) => {
+					if (sensor && sensor.device && sensor.device.name) {
+						sensorName = sensor.device.name;
+					}
 					if (sensor.data.length === 0) {
 						throw new Error('No (recent) data found for this device');
 					}
 					let newestData = sensor.data?.at(0);
 					lastSeen = new Date(newestData.created_at || Date());
-					sensorName = sensor.device.name;
 					data_table = sensor.deviceType.data_table;
-					upload_interval = sensor.deviceType.upload_interval;
+					upload_interval = sensor.deviceType.default_upload_interval;
 					return sensor;
 				})
 		: null;
 </script>
 
-{#if sensorPromise !== null}
-	{#await sensorPromise}
-		loading
-	{:then sensor}
-		<div class="relative m-1">
-			<div class="mx-2 flex flex-row">
-				<SensorHeader {sensorName} {lastSeen} {upload_interval} />
-				<span class="flex-grow" />
-                <Tooltip class="hidden md:flex" title={`${sensorName} ${$_('devices.history.title')}`}>
-					<Button icon={mdiDownload} size="lg" on:click={() => goto(`history`)} />
-				</Tooltip>
-				<Tooltip title={`${sensorName}'s ${$_('devices.settings.settings')}`}>
-					<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
-				</Tooltip>
-			</div>
+<div class="relative m-1">
+	<div class="mx-2 flex flex-row">
+		<SensorHeader {sensorName} {lastSeen} {upload_interval} />
+		<span class="flex-grow" />
+		<Tooltip class="hidden md:flex" title={`${sensorName} ${$_('devices.history.title')}`}>
+			<Button icon={mdiDownload} size="lg" on:click={() => goto(`history`)} />
+		</Tooltip>
+		<Tooltip title={`${sensorName}'s ${$_('devices.settings.settings')}`}>
+			<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
+		</Tooltip>
+	</div>
+	{#if sensorPromise !== null}
+		{#await sensorPromise}
+			loading
+		{:then sensor}
 			<slot />
-		</div>
-	{:catch error}
-		<p>{error.message}</p>
-	{/await}
-{/if}
+		{:catch error}
+			<p>{error.message}</p>
+		{/await}
+	{/if}
+</div>

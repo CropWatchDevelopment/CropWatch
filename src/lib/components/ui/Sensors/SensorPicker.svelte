@@ -12,7 +12,6 @@
 	import SEEED_SENSECAP_S2103_WATER_LEVEL from './SEEED_SENSECAP_S2103_WATER_LEVEL/SEEED_SENSECAP_S2103_WATER_LEVEL.svelte'; // Tracking Badge
 	import NetvoxRa02A from './NETVOX_RA02A/NETVOX_RA02A.svelte';
 
-	debugger;
 	let sensorName = 'NS';
 	let devEui = $page.params.dev_eui;
 	let lastSeen = new Date();
@@ -25,12 +24,11 @@
 		? fetch(`/api/v1/devices/${devEui}/data?firstDataDate=${yesterday}&lastDataDate=${today}`)
 				.then((res) => res.json())
 				.then((sensor) => {
-					debugger;
 					let newestData = sensor.data.at(0);
 					lastSeen = new Date(newestData.created_at);
 					sensorName = sensor.device.name;
 					data_table = sensor.deviceType.data_table;
-					upload_interval = sensor.deviceType.upload_interval;
+					upload_interval = sensor.deviceType.default_upload_interval;
 					return sensor;
 				})
 		: null;
@@ -41,7 +39,6 @@
 		loading
 	{:then sensor}
 		<div class="relative m-1">
-			{sensor.deviceType.data_table}
 			{#if sensor.deviceType.data_table == 'cw_air_thvd'}
 				<CW_AIR_THVD {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensor.deviceType.data_table == 'cw_co2_uplinks' || sensor.deviceType.data_table == 'cw_air_thvd'}
