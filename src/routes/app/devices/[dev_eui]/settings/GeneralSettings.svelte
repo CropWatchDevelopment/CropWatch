@@ -1,64 +1,29 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import { Button, DatePickerField, NumberStepper, TextField, SelectField, Icon } from 'svelte-ux';
-	import { mdiCalendar, mdiLock } from '@mdi/js';
-	import type { Tables } from '$lib/types/supabaseSchema';
+	import { mdiCalendar, mdiFloppy, mdiLock, mdiMapMarker } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
+	import { appStore } from '$lib/stores/app.store';
+	import SuperDebug from 'sveltekit-superforms';
 
-	let initialDeviceData: Tables<'cw_devices'>;
-	let deviceData = {
-		name: '',
-		lat: '',
-		long: '',
-		upload_interval: 65,
-		battery_changed_at: new Date(),
-		location_id: -1 // New field for location ID
-	};
-	let errors = {
-		name: '',
-		lat: '',
-		long: '',
-		upload_interval: '',
-		battery_changed_at: '',
-		location_id: '' // New field for location ID
-	};
-	let isDirty = false;
-	let locations: Tables<'cw_locations'>[] = []; // Array to store fetched locations
+	export let superform;
+
+	let { form, errors, enhance, delayed } = superform;
+
 	let locationOptions: { label: string; value: number }[];
 
 	// Fetch device data when component is mounted
 	onMount(async () => {
-		const devEui = $page.params.dev_eui; // Assuming device EUI is in the route parameters
-		try {
-			const res = await fetch(`/api/v1/devices/${devEui}`);
-			const data = await res.json();
-			initialDeviceData = {
-				name: data.name || '',
-				lat: data.lat || '',
-				location_id: data.location_id,
-				long: data.long || '',
-				upload_interval: data.upload_interval || 65,
-				battery_changed_at: data.battery_changed_at ? new Date(data.battery_changed_at) : new Date()
-			};
+		const locationsRes = await fetch('/api/v1/locations');
+		const locationJson = await locationsRes.json();
 
-			// Fetch available locations
-			const locationsRes = await fetch('/api/v1/locations');
-			const locationJson = await locationsRes.json();
-
-			locationOptions = locationJson
-				.filter(
-					(obj1, i, arr) => arr.findIndex((obj2) => obj2.location_id === obj1.location_id) === i
-				)
-				.map((m) => {
-					return { label: m.name, value: m.location_id };
-				});
-
-			deviceData = { ...initialDeviceData };
-		} catch (error) {
-			console.error('Error loading device data:', error);
-		}
-		validate(); // Run validation after loading data
+		locationOptions = locationJson
+			.filter(
+				(obj1, i, arr) => arr.findIndex((obj2) => obj2.location_id === obj1.location_id) === i
+			)
+			.map((m) => {
+				return { label: m.name, value: m.location_id };
+			});
 	});
 
 	// Get current location using Geolocation API
@@ -66,9 +31,8 @@
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
-					deviceData.lat = position.coords.latitude.toString();
-					deviceData.long = position.coords.longitude.toString();
-					validate(); // Re-validate after setting new values
+					$form.lat = position.coords.latitude;
+					$form.long = position.coords.longitude;
 				},
 				(error) => {
 					console.error('Error getting location:', error);
@@ -78,25 +42,6 @@
 		} else {
 			alert('Geolocation is not supported by this browser.');
 		}
-	}
-
-	function validate() {
-		errors.name = deviceData.name ? '' : 'This is a required field';
-		errors.lat =
-			!isNaN(deviceData.lat) && deviceData.lat >= -90 && deviceData.lat <= 90
-				? ''
-				: 'Latitude must be a valid number between -90 and 90';
-		errors.long =
-			!isNaN(deviceData.long) && deviceData.long >= -180 && deviceData.long <= 180
-				? ''
-				: 'Longitude must be a valid number between -180 and 180';
-		errors.upload_interval =
-			deviceData.upload_interval > 0 ? '' : 'Interval must be greater than 0';
-		errors.battery_changed_at = deviceData.battery_changed_at
-			? ''
-			: 'Battery changed date is required';
-		errors.location_id = deviceData.location_id !== -1 ? '' : 'You must select a location';
-		isDirty = JSON.stringify(initialDeviceData) !== JSON.stringify(deviceData);
 	}
 </script>
 
@@ -114,7 +59,7 @@
 			</p>
 		</div>
 
-		<form action="?/updateDeviceInfo" method="POST" class="md:col-span-2">
+		<form action="?/updateDeviceInfo" method="POST" class="md:col-span-2" use:enhance>
 			<div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
 				<!-- Device Name -->
 				<div class="col-span-full">
@@ -123,9 +68,9 @@
 						name="name"
 						label={$_('devices.settings.deviceName')}
 						labelPlacement="top"
-						bind:value={deviceData.name}
-						error={errors.name}
-						on:input={validate}
+						bind:value={$form.name}
+						error={$errors.name}
+						aria-invalid={$errors.name ? 'true' : undefined}
 					/>
 				</div>
 
@@ -137,9 +82,9 @@
 						label={$_('devices.settings.latitude')}
 						type="text"
 						labelPlacement="top"
-						bind:value={deviceData.lat}
-						error={errors.lat}
-						on:input={validate}
+						bind:value={$form.lat}
+						error={$errors.lat}
+						aria-invalid={$errors.lat ? 'true' : undefined}
 					/>
 				</div>
 
@@ -151,9 +96,9 @@
 						label={$_('devices.settings.longitude')}
 						type="text"
 						labelPlacement="top"
-						bind:value={deviceData.long}
-						error={errors.long}
-						on:input={validate}
+						bind:value={$form.long}
+						error={$errors.long}
+						aria-invalid={$errors.long ? 'true' : undefined}
 					/>
 				</div>
 
@@ -163,9 +108,9 @@
 						id="upload_interval"
 						name="upload_interval"
 						label={$_('devices.settings.uplinkInterval')}
-						bind:value={deviceData.upload_interval}
-						error={errors.upload_interval}
-						on:input={validate}
+						bind:value={$form.upload_interval}
+						error={$errors.upload_interval}
+						aria-invalid={$errors.upload_interval ? 'true' : undefined}
 						class="w-full"
 					/>
 				</div>
@@ -177,9 +122,9 @@
 						name="battery"
 						label={$_('devices.settings.batteryChangedAt')}
 						icon={mdiCalendar}
-						bind:value={deviceData.battery_changed_at}
-						error={errors.battery_changed_at}
-						on:input={validate}
+						bind:value={$form.battery_changed_at}
+						error={$errors.battery_changed_at}
+						aria-invalid={$errors.battery_changed_at ? 'true' : undefined}
 					/>
 				</div>
 
@@ -187,6 +132,7 @@
 				<div class="col-span-full">
 					<Button
 						type="button"
+						icon={mdiMapMarker}
 						on:click={getCurrentLocation}
 						class="text-surface-900 rounded bg-blue-500 px-4 py-2 font-semibold hover:bg-blue-400"
 					>
@@ -199,6 +145,8 @@
 				<Button
 					type="submit"
 					name="action"
+					icon={mdiFloppy}
+					loading={$delayed}
 					value="updateDeviceInfo"
 					class="text-surface-900 rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
 					>{$_('devices.settings.save')}</Button
@@ -226,9 +174,9 @@
 				name="location_id"
 				label="Select Location"
 				options={locationOptions}
-				bind:value={deviceData.location_id}
-				error={errors.location_id}
-				on:change={validate}
+				bind:value={$form.location_id}
+				error={$errors.location_id}
+				aria-invalid={$errors.location_id ? 'true' : undefined}
 			/>
 			<div class="mt-8 flex">
 				<Button
@@ -236,7 +184,7 @@
 					name="action"
 					value="updateLocation"
 					class="text-surface-900 rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-					disabled={errors.location_id !== ''}>{$_('devices.settings.save')}</Button
+					disable={$errors}>{$_('devices.settings.save')}</Button
 				>
 			</div>
 		</form>
@@ -261,3 +209,7 @@
 		</p>
 	</div>
 </div>
+
+{#if $appStore.debugMode}
+	<SuperDebug data={$form} />
+{/if}

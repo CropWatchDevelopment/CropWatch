@@ -11,10 +11,13 @@
 		to: today,
 		periodType: PeriodType.Day
 	};
+	let isLoading: boolean = false;
+
 	const download = async (type: string) => {
+		isLoading = true;
 		try {
 			const response = await fetch(
-				`/api/v1/devices/${$page.params.dev_eui}/data?firstDataDate=${value.from.toISOString()}&lastDataDate=${value.to.toISOString()}&${type}`
+				`/api/v1/devices/${$page.params.dev_eui}/data?firstDataDate=${value.from.toISOString()}&lastDataDate=${value.to.toISOString()}&${type}&timezone=asia/tokyo`
 			);
 			if (!response.ok) {
 				throw new Error('Failed to fetch data');
@@ -26,7 +29,7 @@
 
 			// Set the file name based on the type
 			if ((type = 'csv')) {
-				link.download = 'report.xlsx';
+				link.download = `report-${$page.params.dev_eui}-${new Date().getTime()}.csv`;
 			} else {
 				link.download = 'report.pdf';
 			}
@@ -35,8 +38,10 @@
 			link.click();
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
+			isLoading = false;
 		} catch (error) {
 			console.error('Download failed', error);
+			isLoading = false;
 		}
 	};
 </script>
@@ -52,6 +57,7 @@
 		}}
 		icon={mdiFileExcel}
 		variant="fill"
+		loading={isLoading}
 		classes={{ icon: 'text-[#177841]' }}>
 		{$_('devices.history.downloadExcel')}
 		</Button

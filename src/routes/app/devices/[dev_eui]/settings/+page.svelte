@@ -1,14 +1,35 @@
 <script>
 	import { page } from '$app/stores';
-	import { mdiDevices, mdiFunction, mdiInformation, mdiLock } from '@mdi/js';
+	import { mdiCheckCircle, mdiCloseCircle, mdiDevices, mdiFunction, mdiInformation, mdiLock } from '@mdi/js';
 	import { Icon } from 'svelte-ux';
 	import GeneralSettings from './GeneralSettings.svelte';
 	import RulesSettings from './RulesSettings.svelte';
 	import PermissionsSettings from './PermissionsSettings.svelte';
 	import InformationSettings from './InformationSettings.svelte';
 	import { _ } from 'svelte-i18n';
+	import { superForm } from 'sveltekit-superforms';
+	import { notificationStore } from '$lib/stores/notificationStore';
 
+	export let data;
+	const superform = superForm(data.form, {
+		delayMs: 500,
+		timeoutMs: 5000,
+		onUpdate({ form }) {
+			if (form.message) {
+				localStorage.clear();
+				notificationStore.NotificationTimedOpen({
+					title: 'Success!',
+					description: form.message.text,
+					buttonText: 'Close',
+					timeout: 5000,
+					icon: mdiCheckCircle
+				});
+			}
+		}
+	});
+	
 	$: currentQuery = $page.url.searchParams.get('page') || 'general'; // Default to "general" if no query is set
+	
 </script>
 
 <div>
@@ -46,7 +67,7 @@
 
 <!-- Conditionally render content in the slot based on currentQuery -->
 {#if currentQuery === 'general'}
-	<GeneralSettings />
+	<GeneralSettings {superform} />
 {:else if currentQuery === 'rules'}
 	<RulesSettings />
 {:else if currentQuery === 'permissions'}

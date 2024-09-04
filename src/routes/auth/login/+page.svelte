@@ -8,6 +8,8 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { notificationStore } from '$lib/stores/notificationStore.js';
+	import { appStore } from '$lib/stores/app.store.js';
+	import { set } from 'date-fns';
 
 
 	export let data;
@@ -69,9 +71,6 @@
 						return async ({ result, update }) => {
 							if (result.status && result.status < 400) {
 								await update({ reset: false });
-								if (result.data.avatarUrl) {
-									localStorage.setItem('avatarUrl', result.data.avatarUrl);
-								}
 								if (result.data.profile != null) {
 									localStorage.setItem('name', result.data.profile.full_name);
 								}
@@ -85,6 +84,8 @@
 									timeout: 3000,
 									buttonText: 'Close'
 								});
+								appStore.set({ user: result.data.profile, avatarUrl: result.data.avatarUrl, debugMode: false });
+								localStorage.setItem('appStore', JSON.stringify($appStore));
 								await goto(result.data.redirect);
 							} else {
 								notificationStore.NotificationTimedOpen({

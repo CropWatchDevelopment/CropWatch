@@ -26,7 +26,7 @@
 	let loading = true;
 
 	// Get Highcharts configuration
-	const tempChartConfig = getChartConfig(people_count, car_count, bicycle_count);
+	const tempChartConfig = getChartConfig(people_count, bicycle_count, car_count);
 
 	let value = {
 		from: moment.utc().utcOffset('+0900').toDate(),
@@ -111,7 +111,7 @@
 	<DarkCard title={$_('traffic.bicycle_count')} value={current_bicycle_count} unit="/hr" />
 </div>
 
-<DarkCard title="24h">
+<DarkCard title="24h {$_('traffic.count')}">
 	<div class="chart-container" use:highcharts={tempChartConfig}></div>
 </DarkCard>
 

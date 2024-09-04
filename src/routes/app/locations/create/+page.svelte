@@ -9,6 +9,7 @@
 	import Marker from '$lib/components/ui/Maps/leaflet/Marker.svelte';
 	import { mdiCheckCircle, mdiExclamation, mdiMapMarker } from '@mdi/js';
 	import { notificationStore } from '$lib/stores/notificationStore';
+	import { appStore } from '$lib/stores/app.store';
 
 	export let data: PageData;
 
@@ -20,6 +21,7 @@
 			timeoutMs: 5000,
 			onUpdate({ form }) {
 				if (form.message) {
+					localStorage.clear();
 					notificationStore.NotificationTimedOpen({
 						title: form.message.status == 'success' ? 'Success' : 'Error',
 						description: form.message,
@@ -131,6 +133,8 @@
 			<Button type="submit" variant="fill" color="primary" loading={$delayed}>Submit</Button>
 		</div>
 
-		<SuperDebug data={$form} />
+		{#if $appStore.debugMode}
+			<SuperDebug data={$form} />
+		{/if}
 	</section>
 </form>

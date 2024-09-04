@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import Avatar from './Avatar.svelte';
+	import { Button } from 'svelte-ux';
 
 	export let data;
 	export let form;
@@ -81,7 +82,7 @@
 
 	<form method="post" action="?/signout" use:enhance={handleSignOut}>
 		<div>
-			<button class="button block" disabled={loading}>Sign Out</button>
+			<Button class="button block" on:click={() => {loading = true}} loading={loading} disabled={loading}>Sign Out</Button>
 		</div>
 	</form>
 </div>

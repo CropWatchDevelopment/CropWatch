@@ -131,7 +131,7 @@
   },
   "devices": {
     "history": {
-      "downloadExcel": "Excelをダウンロード",
+      "downloadExcel": "CSVをダウンロード",
       "downloadPDF": "PDFをダウンロード（将来の機能）",
       "customReports": "カスタムレポート",
       "noCustomReports": "カスタムレポートがありません。（近日公開）",
@@ -265,9 +265,9 @@
   "soil_ph": "PH",
   "co2_level": "CO²",
   "created_at": "最終更新",
-  "car_count": "車両数",
-  "people_count": "人数",
-  "bicycle_count": "自転車数",
+  "car_count": "車両",
+  "people_count": "人",
+  "bicycle_count": "自転車",
   "Administrator": "管理者",
   "User": "ユーザー",
   "Viewer": "ビューアー",
@@ -285,10 +285,15 @@
       "title": "Lineチャット",
       "connectLine": "通知を受け取るためにLineチャットアプリに登録するためのリンクを使用してください。",
       "register": "LINE登録",
-      "description": "お好みの言語を選択してください（デフォルトはブラウザの言語に設定されます）"
+      "description": "アカウントに関する問題がある場合は、以下のボタンを使用してサポートに連絡してください。"
     },
     "language": {
       "title": "言語"
+    },
+    "troubleshooting": {
+      "title": "トラブルシューティング",
+      "description": "アカウントに関する問題がある場合は、以下のボタンを使用してサポートに連絡してください。",
+      "debugMode": "デバッグモード"
     }
   },
   "agreement": {
@@ -308,6 +313,7 @@
     "people_count": "人数",
     "car_count": "車両数",
     "bicycle_count": "自転車数",
-    "calendar": "カレンダー"
+    "calendar": "カレンダー",
+    "count": "カウント"
   }
 }
