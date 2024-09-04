@@ -12,9 +12,14 @@ declare global {
       // supabase: SupabaseClient,
       // user: User | null
       session: Session | null
-      user: User | null
+      user: User | null,
     }
     // interface Error {}
     // interface Platform {}
+  }
+  namespace Superforms {
+    type Message = {
+      type: 'error' | 'success', text: string
+    }
   }
 }

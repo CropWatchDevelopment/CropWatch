@@ -53,7 +53,11 @@
     "Users": "Users",
     "Gateways": "Gateways",
     "AllUsers": "All Users",
-    "locations": "Locations"
+    "locations": "Locations",
+    "Reports": "Reports",
+    "AllReports": "All Reports",
+    "weeklyReports": "Weekly Reports",
+    "monthlyReports": "Monthly Reports"
   },
   "dashboard": {
     "dashboard": {
@@ -131,7 +135,7 @@
   },
   "devices": {
     "history": {
-      "downloadExcel": "Download Excel",
+      "downloadExcel": "Download CSV",
       "downloadPDF": "Download PDF (Future Feature)",
       "customReports": "Custom Reports",
       "noCustomReports": "You have no custom reports. (Coming Soon)",
@@ -277,10 +281,15 @@
       "title": "Line Chat",
       "connectLine": "Use the link to the right to register to recieve notifications through line chart app.",
       "register": "Register with Line",
-      "description": "Select Your prefered Language (defaults to your browser's language)"
+      "description": "Notifications are more ways to get alerts and messages from this app."
     },
     "language": {
       "title": "Language"
+    },
+    "troubleshooting": {
+      "title": "Troubleshooting",
+      "description": "Useful for determining problems, You may be asked to turn this on when contacting support for help.",
+      "debugMode": "Debug Mode"
     }
   },
   "agreement": {
@@ -296,5 +305,12 @@
   "avatar": {
     "changeAvatar": "Change Avatar"
   },
-  "temperatureC": "Temperature"
+  "temperatureC": "Temperature",
+  "traffic": {
+    "people_count": "People Count",
+    "car_count": "Car Count",
+    "bicycle_count": "Bicycle Count",
+    "calendar": "Calendar",
+    "count": "Count"
+  }
 }

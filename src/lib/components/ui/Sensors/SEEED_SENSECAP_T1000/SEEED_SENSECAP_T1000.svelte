@@ -10,6 +10,7 @@
 	import moment from 'moment';
 
 	export let sensor = null;
+	debugger;
 	let lat = sensor.data.at(0).lat;
 	let long = sensor.data.at(0).long;
 

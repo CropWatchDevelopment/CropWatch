@@ -39,17 +39,6 @@ export const getChartConfig = (peopleData: [number, number][], bicycleData: [num
                     color: 'red'
                 }
             }
-        }, {
-            title: {
-                text: ''
-            },
-            labels: {
-                format: '{value}%',
-                style: {
-                    color: 'lightblue'
-                }
-            },
-            opposite: true
         }],
         tooltip: {
             shared: true,
@@ -57,7 +46,7 @@ export const getChartConfig = (peopleData: [number, number][], bicycleData: [num
             formatter: function (this: Highcharts.TooltipFormatterContextObject) {
                 let tooltip = `<b>${Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x as number)}</b>`;
                 this.points?.forEach(point => {
-                    tooltip += `<br/><span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}/hr}</b>`;
+                    tooltip += `<br/><span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}/hr</b>`;
                 });
                 return tooltip;
             }
@@ -75,7 +64,6 @@ export const getChartConfig = (peopleData: [number, number][], bicycleData: [num
             type: 'spline',  // Add this line
             name: 'Bicycles',
             data: bicycleData,
-            yAxis: 1,
             tooltip: {
                 valueSuffix: ''
             },
@@ -85,7 +73,6 @@ export const getChartConfig = (peopleData: [number, number][], bicycleData: [num
             type: 'spline',  // Add this line
             name: 'Cars',
             data: carData,
-            yAxis: 1,
             tooltip: {
                 valueSuffix: ''
             },

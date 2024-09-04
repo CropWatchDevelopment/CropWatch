@@ -10,7 +10,6 @@
 		mdiCheckCircle,
 		mdiCloseBox,
 		mdiCloseCircle,
-		mdiFloppy,
 		mdiMapMarker,
 		mdiPlus,
 		mdiTrashCan
@@ -18,8 +17,29 @@
 	import { onMount } from 'svelte';
 	import { Button, Dialog, Icon, ListItem, TextField, Toggle } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
+	import BasicInfo from './BasicInfo.svelte';
+	import SuperDebug, { superForm } from 'sveltekit-superforms';
+	import { appStore } from '$lib/stores/app.store';
 
 	type locationType = Tables<'cw_locations'>;
+
+	export let data;
+	const superform = superForm(data.form, {
+		delayMs: 500,
+		timeoutMs: 5000,
+		onUpdate({ form }) {
+			if (form.message) {
+				localStorage.clear();
+				notificationStore.NotificationTimedOpen({
+					title: 'success',
+					description: form.message.text,
+					buttonText: 'Close',
+					timeout: 5000,
+					icon: mdiCheckCircle
+				});
+			}
+		}
+	});
 
 	let location: locationType = {
 		created_at: new Date().toDateString(),
@@ -42,33 +62,11 @@
 	];
 
 	onMount(async () => {
-		const locationPromise = await fetch(`/api/v1/locations/${$page.params.location_id}`);
-		const locationData = await locationPromise.json();
-		location = locationData;
-
 		const locationPermissionPromise = await fetch(
 			`/api/v1/locations/${$page.params.location_id}/permissions`
 		);
 		locationPermissions = await locationPermissionPromise.json();
 	});
-
-	// Get current location using Geolocation API
-	function getCurrentLocation() {
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(
-				(position) => {
-					location.lat = position.coords.latitude.toString();
-					location.long = position.coords.longitude.toString();
-				},
-				(error) => {
-					console.error('Error getting location:', error);
-					alert('Failed to get current location.');
-				}
-			);
-		} else {
-			alert('Geolocation is not supported by this browser.');
-		}
-	}
 
 	let deletePermission = async (id: number) => {
 		const deletePermissionRequest = await fetch(
@@ -116,83 +114,12 @@
 </div>
 
 <div class="divide-y divide-white/5">
-	<!-- Device Basic Info -->
-	<div
-		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
-	>
-		<div>
-			<h2 class="text-base font-semibold leading-7 text-white">
-				{$_('location.settings.basicInfo')}
-			</h2>
-			<p class="mt-1 text-sm leading-6 text-gray-400">
-				{$_('location.settings.basicInfoSubtitle')}
-			</p>
-		</div>
-
-		<form
-			action="?/updateLocationInfo"
-			method="POST"
-			class="md:col-span-2"
-			use:enhance={({ formElement, formData, action, cancel, submitter }) => {
-				return async ({ result, update }) => {
-					if (result.type === 'success') {
-						notificationStore.NotificationTimedOpen({
-							title: $_('location.settings.updated'),
-							description: $_('location.settings.locationUpdatedSuccessfully'),
-							timeout: 2000,
-							icon: mdiCheckCircle,
-							buttonText: 'OK'
-						});
-					} else {
-						notificationStore.NotificationTimedOpen({
-							title: $_('location.settings.locationUpdatedFailed'),
-							description: $_('location.settings.ContactSupport'),
-							timeout: 2000,
-							icon: mdiCloseBox,
-							buttonText: 'OK'
-						});
-					}
-				};
-			}}
-		>
-			<div class="mb-2 grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
-				<!-- Device Name -->
-				<div class="col-span-full flex flex-col gap-2">
-					<TextField
-						id="device-name"
-						name="name"
-						label={$_('location.settings.locationName')}
-						labelPlacement="top"
-						bind:value={location.name}
-					/>
-					<div class="flex flex-row gap-2">
-						<TextField
-							id="device-name"
-							name="lat"
-							label={$_('location.settings.locationLatitude')}
-							bind:value={location.lat}
-						/>
-						<TextField
-							id="device-name"
-							name="long"
-							label={$_('location.settings.locationLongitude')}
-							bind:value={location.long}
-						/>
-						<Button
-							type="button"
-							on:click={getCurrentLocation}
-							class="rounded bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-400"
-						>
-							{$_('location.settings.useCurrentLocation')}
-						</Button>
-					</div>
-				</div>
-			</div>
-			<Button type="submit" icon={mdiFloppy} variant="fill" color="success"
-				>{$_('location.settings.save')}</Button
-			>
-		</form>
-	</div>
+	{#if location}
+		<BasicInfo {superform} />
+		{#if $appStore.debugMode}
+			<SuperDebug data={superform.form} />
+		{/if}
+	{/if}
 
 	<div
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
@@ -273,7 +200,13 @@
 				{#if disableUserAdd}
 					<p class="text-red-500">
 						{$_('location.settings.userAlreadyExists')}
-						<Button on:click={() => {email = ''; disableUserAdd = false;}} icon={mdiCloseCircle} />
+						<Button
+							on:click={() => {
+								email = '';
+								disableUserAdd = false;
+							}}
+							icon={mdiCloseCircle}
+						/>
 					</p>
 				{/if}
 			</DarkCard>

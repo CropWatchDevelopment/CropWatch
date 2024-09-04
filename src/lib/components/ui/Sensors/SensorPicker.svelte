@@ -28,7 +28,7 @@
 					lastSeen = new Date(newestData.created_at);
 					sensorName = sensor.device.name;
 					data_table = sensor.deviceType.data_table;
-					upload_interval = sensor.deviceType.upload_interval;
+					upload_interval = sensor.deviceType.default_upload_interval;
 					return sensor;
 				})
 		: null;

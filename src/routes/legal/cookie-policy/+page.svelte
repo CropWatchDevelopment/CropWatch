@@ -60,7 +60,6 @@
 <style>
 	h1,
 	h2 {
-		color: #2c3e50;
 		font-weight: bold;
 	}
 
@@ -68,23 +67,18 @@
 		width: 100%;
 		border-collapse: collapse;
 		margin: 20px 0;
-		background-color: #fff;
 	}
 
 	table,
 	th,
 	td {
-		border: 1px solid #ddd;
+		border: 1px solid #7a7c00;
 	}
 
 	th,
 	td {
 		padding: 12px;
 		text-align: left;
-	}
-
-	th {
-		background-color: #f2f2f2;
 	}
 
 	ul {
