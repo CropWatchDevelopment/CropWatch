@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { mdiCog } from '@mdi/js';
-	import { Button, Icon, SelectField, TextField } from 'svelte-ux';
+	import { Button, Icon, SelectField, Switch, TextField } from 'svelte-ux';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import SupabaseAvatar from '$lib/components/ui/SupabaseAvatar.svelte';
 	import { locale, locales } from 'svelte-i18n';
 	import { _ } from 'svelte-i18n';
+	import { appStore } from '$lib/stores/app.store.js';
 
 	export let data;
 	export let form;
@@ -66,10 +67,10 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface">
+			<h2 class="text-surface text-base font-semibold leading-7">
 				{$_('generalsettings.personalinfo.title')}
 			</h2>
-			<p class="mt-1 text-sm leading-6 text-surface">
+			<p class="text-surface mt-1 text-sm leading-6">
 				{$_('generalsettings.personalinfo.description')}
 			</p>
 		</div>
@@ -292,10 +293,10 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface">
+			<h2 class="text-surface text-base font-semibold leading-7">
 				{$_('generalsettings.notifications.title')}
 			</h2>
-			<p class="mt-1 text-sm leading-6 text-surface">
+			<p class="text-surface mt-1 text-sm leading-6">
 				{$_('generalsettings.notifications.connectLine')}
 			</p>
 		</div>
@@ -309,10 +310,10 @@
 		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
 	>
 		<div>
-			<h2 class="text-base font-semibold leading-7 text-surface">
+			<h2 class="text-surface text-base font-semibold leading-7">
 				{$_('generalsettings.language.title')}
 			</h2>
-			<p class="mt-1 text-sm leading-6 text-surface">
+			<p class="text-surface mt-1 text-sm leading-6">
 				{$_('generalsettings.notifications.description')}
 			</p>
 		</div>
@@ -323,6 +324,26 @@
 					<option value={locale}>{locale}</option>
 				{/each}
 			</select>
+		</div>
+	</div>
+
+	<div
+		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8"
+	>
+		<div>
+			<h2 class="text-surface text-base font-semibold leading-7">
+				{$_('generalsettings.troubleshooting.title')}
+			</h2>
+			<p class="text-surface mt-1 text-sm leading-6">
+				{$_('generalsettings.troubleshooting.description')}
+			</p>
+		</div>
+
+		<div class="flex w-full flex-row justify-center align-middle">
+			<label for="debugToggle" class="flex items-center gap-2 text-sm">
+				{$_('generalsettings.troubleshooting.debugMode')}:
+				<Switch id="debugToggle" bind:checked={$appStore.debugMode} />
+			</label>
 		</div>
 	</div>
 </div>

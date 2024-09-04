@@ -1,7 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
 import CwDevicesService from '$lib/services/CwDevicesService';
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
@@ -15,6 +15,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     }
     const firstDataDate = new Date(url.searchParams.get('firstDataDate') ?? '');
     const lastDataDate = new Date(url.searchParams.get('lastDataDate') ?? '');
+    const timezone = url.searchParams.get('timezone');
     const csv = url.searchParams.get('csv') ? true : false;
 
     // Check dates are provided
@@ -47,14 +48,18 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     }
 
     if (csv) {
-        // Format the data
+        // Format the data for CSV
         const formattedData = data.map(row => {
             const formattedRow: Record<string, any> = {};
             for (const key in row) {
                 if (Object.hasOwn(row, key)) {
                     let value = row[key];
                     if (key === 'created_at') {
-                        value = moment(value).format('YYYY-MM-DD HH:mm:ss'); // Format date for Excel
+                        if (timezone) {
+                            value = moment(value).tz(timezone).format('YYYY-MM-DD HH:mm:ss'); // Format date for Excel
+                        } else {
+                            value = moment(value).format('YYYY-MM-DD HH:mm:ss'); // Format date for Excel
+                        }
                     } else if (typeof value === 'number') {
                         value = value.toFixed(2); // Format numbers to 2 decimal places
                     } else if (value === null) {

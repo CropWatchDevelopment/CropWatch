@@ -1,30 +1,26 @@
 // src/lib/stores.js
+import { browser } from '$app/environment';
+import type { Session } from '@supabase/supabase-js';
 import { writable } from 'svelte/store';
 
-// Define stores
-export const locationsStore = writable([]);
-export const devicesStore = writable({});
-export const deviceDataStore = writable({});
+interface AppStore {
+  user: {
+    email: string;
+    username: string | null;
 
-// Function to update local storage
-const updateLocalStorage = (key, value) => {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
+  } | null;
+  avatarUrl: string | null;
+  debugMode: boolean;
 };
 
-// Subscribe to stores to update local storage
-locationsStore.subscribe(value => updateLocalStorage('locations', value));
-devicesStore.subscribe(value => updateLocalStorage('devices', value));
-deviceDataStore.subscribe(value => updateLocalStorage('deviceData', value));
-
-// Load from local storage if available
-if (typeof localStorage !== 'undefined') {
-  const storedLocations = JSON.parse(localStorage.getItem('locations'));
-  const storedDevices = JSON.parse(localStorage.getItem('devices'));
-  const storedDeviceData = JSON.parse(localStorage.getItem('deviceData'));
-
-  if (storedLocations) locationsStore.set(storedLocations);
-  if (storedDevices) devicesStore.set(storedDevices);
-  if (storedDeviceData) deviceDataStore.set(storedDeviceData);
-}
+const localStorageString = browser ? localStorage.getItem('appStore'): '{}';
+const localStorageData = localStorageString ? JSON.parse(localStorageString) : {};
+// Define stores
+export const appStore = writable<AppStore>({
+  user: {
+    email: localStorageData?.user?.email || '',
+    username: localStorageData?.user?.username || null,
+  },
+  avatarUrl: localStorageData?.avatarUrl || null,
+  debugMode: localStorageData?.debugMode || false
+});

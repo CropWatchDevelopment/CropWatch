@@ -10,6 +10,7 @@
 	import { notificationStore } from '$lib/stores/notificationStore';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { appStore } from '$lib/stores/app.store';
 
 	export let data: PageData;
 
@@ -174,6 +175,8 @@
 			<Button type="submit" variant="fill" color="primary" loading={$delayed}>Submit</Button>
 		</div>
 
+		{#if $appStore.debugMode}
 		<SuperDebug data={$form} />
+		{/if}
 	</section>
 </form>

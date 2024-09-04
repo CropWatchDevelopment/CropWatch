@@ -63,11 +63,11 @@ export const nameToNotation = (name: string) => {
         case 'sos':
             return 'SOS';
         case 'people_count':
-            return 'People';
+            return '';
         case 'car_count':
-            return 'Cars';
+            return '';
         case 'bicycle_count':
-            return 'Bicycles';
+            return '';
         default:
             return '';
     }
