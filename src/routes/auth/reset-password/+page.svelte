@@ -67,7 +67,7 @@
 				<div>
 					<div class="relative mt-6 flex flex-row">
 						<div class="mx-auto flex flex-row">
-							<p>{$_('auth.forgot_password.return_to_login')}</p>
+							<p class="text-primary">{$_('auth.forgot_password.return_to_login')}</p>
 							<a class="blue-100" href="/auth/login"
 								>&nbsp; <u class="text-blue-700 hover:text-indigo-900">{$_('auth.login.login')}</u></a
 							>

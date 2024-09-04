@@ -63,8 +63,8 @@
 </script>
 
 
-<div class="w-full h-full flex justify-center items-center">
-    <img src={TRACTOR} alt="logo" class="w-1/2" />
+<div class="w-1/2 h-1/2 flex justify-center items-center">
+    <img src={TRACTOR} alt="logo" class="margin-auto" />
 </div>
 <p class="text-center w-full text-black">Loading...</p>
 

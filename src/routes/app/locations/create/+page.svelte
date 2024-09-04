@@ -13,22 +13,24 @@
 	export let data: PageData;
 
 	// Client API:
-	const { form, errors, submitting, delayed, timeout, constraints, message, enhance } = superForm(data.form, {
-		delayMs: 500,
-		timeoutMs: 5000,
-		onUpdate({ form }) {
-
-			if (form.message) {
-				notificationStore.NotificationTimedOpen({
-					title: form.message.status == 'success' ? 'Success' : 'Error',
-					description: form.message,
-					buttonText: 'Close',
-					timeout: 5000,
-					icon: form.message.status == 'success' ? mdiCheckCircle : mdiExclamation,
-				});
-			}	
+	const { form, errors, submitting, delayed, timeout, constraints, message, enhance } = superForm(
+		data.form,
+		{
+			delayMs: 500,
+			timeoutMs: 5000,
+			onUpdate({ form }) {
+				if (form.message) {
+					notificationStore.NotificationTimedOpen({
+						title: form.message.status == 'success' ? 'Success' : 'Error',
+						description: form.message,
+						buttonText: 'Close',
+						timeout: 5000,
+						icon: form.message.status == 'success' ? mdiCheckCircle : mdiExclamation
+					});
+				}
+			}
 		}
-	});
+	);
 
 	function getLocation(): void {
 		if (browser && navigator.geolocation) {
@@ -44,7 +46,6 @@
 		console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
 		$form.lat = latitude;
 		$form.long = longitude;
-		// You can use the latitude and longitude here, e.g., pass them to another function
 	}
 
 	function showError(error: GeolocationPositionError): void {
@@ -68,7 +69,7 @@
 	getLocation();
 </script>
 
-<h1>Create a new Location</h1>
+<h1><Icon mdi={mdiMapMarker} /> Create a new Location</h1>
 <form method="POST" use:enhance>
 	<section class="flex flex-col gap-2">
 		<TextField
@@ -109,19 +110,21 @@
 		/>
 
 		{#if $form.lat && $form.long}
-			<Leaflet
-				view={[$form.lat, $form.long]}
-				zoom={17}
-				height={300}
-				on:mapclick={(coords) => {
-					$form.lat = coords.detail.lat;
-					$form.long = coords.detail.long;
-				}}
-			>
-				<Marker latLng={[$form.lat, $form.long]} width={100} height={100}>
-					<Icon data={mdiMapMarker} size={1} color="danger" />
-				</Marker>
-			</Leaflet>
+			{#if parseFloat($form.lat) && parseFloat($form.long)}
+				<Leaflet
+					view={[+$form.lat, +$form.long]}
+					zoom={17}
+					height={500}
+					on:mapclick={(coords) => {
+						$form.lat = +coords.detail.lat;
+						$form.long = +coords.detail.long;
+					}}
+				>
+					<Marker latLng={[$form.lat, $form.long]} width={100} height={100}>
+						<Icon data={mdiMapMarker} size={1} color="danger" />
+					</Marker>
+				</Leaflet>
+			{/if}
 		{/if}
 
 		<div>

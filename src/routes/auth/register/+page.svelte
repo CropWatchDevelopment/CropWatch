@@ -18,6 +18,7 @@
 	let loading: boolean = false;
 
 	function onClick(e) {
+		loading = true;
 		e.preventDefault();
 		grecaptcha.ready(function () {
 			grecaptcha.execute(PUBLIC_RECAPTCHA_KEY, { action: 'submit' }).then(function (token) {
@@ -46,7 +47,7 @@
 						throw new Error('Network response was not ok.');
 					})
 					.then((data) => {
-						console.log(data);
+						loading = false;
 						if (data.type == 'success') {
 							notificationStore.NotificationTimedOpen({
 								title: 'Account Created!',

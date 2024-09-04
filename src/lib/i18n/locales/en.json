@@ -296,5 +296,11 @@
   "avatar": {
     "changeAvatar": "Change Avatar"
   },
-  "temperatureC": "Temperature"
+  "temperatureC": "Temperature",
+  "traffic": {
+    "people_count": "People Count",
+    "car_count": "Car Count",
+    "bicycle_count": "Bicycle Count",
+    "calendar": "Calendar"
+  }
 }
