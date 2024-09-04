@@ -32,7 +32,7 @@
 			// Add tile layer
 			L.tileLayer('http://{s}.google.com/vt?lyrs=s,h&x={x}&y={y}&z={z}', {
 				maxZoom: 20,
-				minZoom: 10,
+				minZoom: 5,
 				subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 			}).addTo(map);
 			map.setView(view, zoom);
@@ -61,7 +61,7 @@
 			// Handle map click events
 			map.on('click', function (e: L.LeafletMouseEvent) {
 				const { lat, lng } = e.latlng;
-				dispatch('mapclick', { latitude: lat, longitude: lng });
+				dispatch('mapclick', { lat: lat, long: lng });
 			});
 		}
 	});

@@ -59,6 +59,7 @@ class CwDeviceLocationsRepository {
     const { data, error } = await this.client
       .from('cw_device_locations')
       .insert(location)
+      .select()
       .single();
 
     if (error) {

@@ -303,5 +303,11 @@
   },
   "avatar": {
     "changeAvatar": "アバターを変更"
+  },
+  "traffic": {
+    "people_count": "人数",
+    "car_count": "車両数",
+    "bicycle_count": "自転車数",
+    "calendar": "カレンダー"
   }
 }

@@ -6,6 +6,7 @@
 	import SEEED_T1000_IMG from '$lib/images/devices/seeed-t1000.png';
 	import SEEED_S2120_IMG from '$lib/images/devices/seeed_sensecap_s2120.png';
 	import SEEED_S2103_IMG from '$lib/images/devices/seeed_sensecap_s210x.png';
+	import SEEED_S2103_NimBol_IMAGE from '$lib/images/devices/seeed_sensecap_s2100_nimbol.png';
 	import { _ } from 'svelte-i18n';
 	import DeviceDataList from './Dashboard/DeviceDataList.svelte';
 	import devicesStore from '$lib/stores/devicesStore';
@@ -36,8 +37,18 @@
 					<img src={SEEED_S2120_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
 				</Tooltip>
 			{:else if deviceType == 'SenseCAP S2103' || deviceType == 'S2101'}
-				<Tooltip title={`${deviceType == 'SenseCAP S2103' ? 'CO²' : ''}/Temperature/Humidity Sensor`}>
+				<Tooltip
+					title={`${deviceType == 'SenseCAP S2103' ? 'CO²' : ''}/Temperature/Humidity Sensor`}
+				>
 					<img src={SEEED_S2103_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				</Tooltip>
+			{:else if deviceType == 'SenseCAP S2100' || deviceType == 'S2100'}
+				<Tooltip title={`Soil Moisture/Temperature Sensor`}>
+					<img
+						src={SEEED_S2103_NimBol_IMAGE}
+						alt="device"
+						class="h-full w-20 rounded-xl object-cover"
+					/>
 				</Tooltip>
 			{/if}
 		</div>
@@ -54,15 +65,12 @@
 				<DeviceDataList data={latestData} />
 			{:else}
 				<ProgressCircle />
-				<p>Loading data...</p>
+				<p>Waiting For Data...</p>
 			{/if}
 		</div>
 	</div>
 	<!-- href arrow -->
-	<a
-		href={`/app/devices/${devEui}/data`}
-		class="flex items-center rounded-xl bg-[#3A393F] px-3 mix-blend-soft-light"
-	>
+	<a href={`/app/devices/${devEui}/data`} class="flex items-center rounded-xl bg-primary px-3">
 		<div class="w-5">
 			<img src={SensorArrow} alt="" />
 		</div>

@@ -4,7 +4,7 @@
 	import Leaflet from '$lib/components/ui/Maps/leaflet/Leaflet.svelte';
 	import Marker from '$lib/components/ui/Maps/leaflet/Marker.svelte';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiCog, mdiMapMarker } from '@mdi/js';
+	import { mdiCog, mdiMapMarker, mdiPlus } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { Button, Icon, Radio, Tooltip } from 'svelte-ux';
 	import devicesStore, { updateDeviceData } from '$lib/stores/devicesStore';
@@ -32,11 +32,20 @@
 			const res = await fetch(`/api/v1/locations/${location_id}?includeDevicesTypes=true`);
 			const data = await res.json();
 			location = data;
-			debugger;
 			await fetchInitialDeviceData();
-			bounds = location.devices.map((d) => [d.latestData.lat, d.latestData.long]);
-			loading = false;
-			updateHeatLatLngData(); // Initial update of heat map data
+			if (location.devices) {
+				bounds = location.devices.map((d) => {
+					if (d.latestData) {
+						return [d.latestData.lat, d.latestData.long];
+					} else {
+						return [d.lat, d.long];
+					}
+				});
+				loading = false;
+				updateHeatLatLngData(); // Initial update of heat map data
+			} else {
+				loading = false;
+			}
 		} catch (e) {
 			loading = false;
 			console.error('Failed to fetch locations', e);
@@ -45,8 +54,26 @@
 
 	async function getDeviceLatestData(devEui: string) {
 		const res = await fetch(`/api/v1/devices/${devEui}/latest-data`);
-		const data = await res.json();
-		return data;
+		if (!res.ok) {
+			if (res.status === 404) {
+				return [];
+			}
+			if (res.status === 401) {
+				// Unauthorized
+				console.error('Unauthorized');
+			}
+			if (res.status === 403) {
+				// Forbidden
+				console.error('Forbidden');
+			}
+			if (res.status === 500) {
+				// Internal Server Error
+				console.error('Internal Server Error');
+			}
+		} else {
+			const data = await res.json();
+			return data;
+		}
 	}
 
 	async function fetchInitialDeviceData() {
@@ -59,7 +86,9 @@
 					latestDataInterestingObjects.push(key);
 				}
 			});
-			latestDataInterestingObjects = [...latestDataInterestingObjects.filter((key) => key !== 'created_at')];
+			latestDataInterestingObjects = [
+				...latestDataInterestingObjects.filter((key) => key !== 'created_at')
+			];
 		}
 	}
 
@@ -113,7 +142,9 @@
 	function normalizeHumidity(humidity: number) {
 		const minHumidity = 0;
 		const maxHumidity = 100;
-		return humidity !== undefined && humidity !== null ? (humidity - minHumidity) / (maxHumidity - minHumidity) : 0;
+		return humidity !== undefined && humidity !== null
+			? (humidity - minHumidity) / (maxHumidity - minHumidity)
+			: 0;
 	}
 </script>
 
@@ -130,7 +161,14 @@
 		{$_('location.name')}: {location?.name}
 	</h2>
 	<span class="flex-grow" />
-	<Tooltip title={`${location?.name}'s Location Settings`}>
+	<Tooltip title={`Add Device`} placement="left">
+		<Button
+			icon={mdiPlus}
+			size="lg"
+			on:click={() => goto(`/app/locations/${location_id}/devices/add`)}
+		/>
+	</Tooltip>
+	<Tooltip title={`${location?.name}'s Location Settings`} placement="left">
 		<Button
 			icon={mdiCog}
 			size="lg"
@@ -142,23 +180,23 @@
 <!-- Render the radio buttons -->
 <DarkCard2>
 	{#if latestDataInterestingObjects.length > 0}
-		<div class="flex flex-row flex-wrap justify-between text-surface-500">
+		<div class="text-surface-500 flex flex-row flex-wrap justify-between">
 			{#each latestDataInterestingObjects as key}
 				<Radio
 					name={key}
 					bind:group={heatMapSubjectKey}
 					value={key}
 					fullWidth
-					on:change={updateHeatLatLngData}
-				>{key}</Radio>
+					on:change={updateHeatLatLngData}>{key}</Radio
+				>
 			{/each}
 			<Radio
-					name='none'
-					bind:group={heatMapSubjectKey}
-					value={null}
-					fullWidth
-					on:change={updateHeatLatLngData}
-				>{$_('location.noFilters')}</Radio>
+				name="none"
+				bind:group={heatMapSubjectKey}
+				value={null}
+				fullWidth
+				on:change={updateHeatLatLngData}>{$_('location.noFilters')}</Radio
+			>
 		</div>
 	{:else}
 		<p>{$_('location.noFilters')}</p>
@@ -174,11 +212,10 @@
 			disableZoom={true}
 			{heatLatLngData}
 			zoom={18}
-			
 			height={innerHeight / 2.5}
 		>
 			{#each location.devices as device}
-				{#if device.latestData.lat && device.latestData.long}
+				{#if device.latestData && device.latestData.lat && device.latestData.long}
 					<Marker latLng={[device.latestData.lat, device.latestData.long]}>
 						<Button
 							icon={mdiMapMarker}
@@ -201,18 +238,18 @@
 		</Leaflet>
 	{/if}
 </div>
-
+<h1>Location's devices</h1>
 <!-- LOCATION DEVICES -->
-<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-	{#if loading}
-		<div class="flex items-center justify-center">
-			<div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
-		</div>
-	{:else if location.devices.length === 0}
-		<div class="flex items-center justify-center">
-			<p class="text-surface">No devices found</p>
-		</div>
-	{:else}
+{#if loading}
+	<div class="flex items-center justify-center">
+		<div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
+	</div>
+{:else if location.devices && location.devices.length === 0}
+	<div class="flex items-center justify-center">
+		<p class="text-surface w-full text-center">No devices found</p>
+	</div>
+{:else}
+	<div class="mx-4 grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
 		{#each location.devices as device}
 			<SensorCard
 				devEui={device.dev_eui}
@@ -221,5 +258,5 @@
 				latestData={device.latestData}
 			/>
 		{/each}
-	{/if}
-</div>
+	</div>
+{/if}

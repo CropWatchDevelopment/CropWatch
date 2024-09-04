@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     }
     const data = await cwDevicesService.getLatestDataByDeviceEui(device.dev_eui, deviceType.data_table ?? '');
     if (!data) {
-        throw error(500, 'Error fetching latest data');
+        throw error(404, 'Latest Data Not Found For Device');
     }
     return new Response(JSON.stringify(data), {
         headers: {

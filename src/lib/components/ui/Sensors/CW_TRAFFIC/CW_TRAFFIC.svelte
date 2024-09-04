@@ -9,6 +9,7 @@
 	import { PeriodType } from 'svelte-ux';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { _ } from 'svelte-i18n';
 
 	export let sensor = null;
 
@@ -105,16 +106,16 @@
 </script>
 
 <div class="grid grid-flow-row grid-cols-1 gap-2 md:grid-cols-3">
-	<DarkCard title="People Count" value={current_people_count} unit="/hr" />
-	<DarkCard title="Car Count" value={current_car_count} unit="/hr" />
-	<DarkCard title="Bicycle Count" value={current_bicycle_count} unit="/hr" />
+	<DarkCard title={$_('traffic.people_count')} value={current_people_count} unit="/hr" />
+	<DarkCard title={$_('traffic.car_count')} value={current_car_count} unit="/hr" />
+	<DarkCard title={$_('traffic.bicycle_count')} value={current_bicycle_count} unit="/hr" />
 </div>
 
-<DarkCard title="24h Counts">
+<DarkCard title="24h">
 	<div class="chart-container" use:highcharts={tempChartConfig}></div>
 </DarkCard>
 
-<DarkCard title="Month View">
+<DarkCard title={$_('traffic.calendar')}>
 	{#if loading}
 		<p>Loading...</p>
 	{:else}
