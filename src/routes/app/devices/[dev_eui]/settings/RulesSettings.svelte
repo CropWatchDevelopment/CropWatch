@@ -5,9 +5,9 @@
 	import { onMount } from 'svelte';
 	import { Button, Tooltip } from 'svelte-ux';
 	import RuleList from './rules/RuleList.svelte';
-	import RuleAdd from './rules/RuleAdd.svelte';
+	import RuleAdd from './rules/add/+page.svelte';
 	import { _ } from 'svelte-i18n';
-	import RuleEdit from './rules/RuleEdit.svelte';
+	import RuleEdit from './rules/edit/+page.svelte';
 
 	let rules: Tables<'cw_rules'>[] = [];
 	let devEui = $page.params.dev_eui;
@@ -30,17 +30,9 @@
 			icon={mdiPlus}
 			variant="fill"
 			color="success"
-			on:click={() => {
-				state = 'add';
-			}}
+			href={`/app/devices/${devEui}/settings/rules/add`}
 		/>
 	</Tooltip>
 </h1>
 
-{#if state === 'list'}
-	<RuleList {rules} bind:editing={editing} bind:state={state} />
-{:else if state === 'add'}
-	<RuleAdd bind:state />
-{:else if state === 'edit'}
-	<RuleEdit {editing} criteria={editing.criteria} bind:state={state} />
-{/if}
+<RuleList {rules} bind:editing bind:state />

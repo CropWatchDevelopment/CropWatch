@@ -14,17 +14,18 @@
 		mdiPlus,
 		mdiTrashCan
 	} from '@mdi/js';
-	import { onMount } from 'svelte';
-	import { Button, Dialog, Icon, ListItem, TextField, Toggle } from 'svelte-ux';
+	import { Button, Dialog, Icon, ListItem, SelectField, TextField, Toggle } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import BasicInfo from './BasicInfo.svelte';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
 	import { appStore } from '$lib/stores/app.store';
+	import AlertMenu from '$lib/components/ui/Header/AlertMenu.svelte';
 
 	type locationType = Tables<'cw_locations'>;
 
 	export let data;
-	const superform = superForm(data.form, {
+	let locationPermissions = data.locationPermissions;
+	const superform = superForm(data.locationEditForm, {
 		delayMs: 500,
 		timeoutMs: 5000,
 		onUpdate({ form }) {
@@ -41,6 +42,33 @@
 		}
 	});
 
+	const { form: permissionForm, delayed: permissionsDelayed, enhance: permissionsEnhance } = superForm(data.permissionForm, {
+		delayMs: 500,
+		timeoutMs: 5000,
+		onUpdate({ form }) {
+			if (form.message) {
+				locationPermissions.push(form.message.user);
+				locationPermissions = locationPermissions;
+				notificationStore.NotificationTimedOpen({
+					title: $_('location.settings.locationUpdated'),
+					description: $_('location.settings.locationUpdatedSuccessfully'),
+					timeout: 2000,
+					icon: mdiCheckCircle,
+					buttonText: 'OK'
+				});
+			} else {
+				notificationStore.NotificationTimedOpen({
+					title: $_('location.settings.locationUpdateFailed'),
+					description: $_('location.settings.contactSupport'),
+					timeout: 2000,
+					icon: mdiCloseBox,
+					buttonText: 'OK'
+				});
+			}
+		}
+	});
+	let disableUserAdd: boolean = false;
+
 	let location: locationType = {
 		created_at: new Date().toDateString(),
 		description: '',
@@ -50,23 +78,12 @@
 		name: '',
 		owner_id: ''
 	};
-	let locationPermissions = [];
-	let permissionLevel: string = '';
-	let email: string = '';
-	let disableUserAdd: boolean = false;
 
 	const permissionLevelOptions = [
-		{ label: $_('Administrator'), value: '1' },
-		{ label: $_('User'), value: '2' },
-		{ label: $_('Viewer'), value: '3' }
+		{ label: $_('Administrator'), value: 1 },
+		{ label: $_('User'), value: 2 },
+		{ label: $_('Viewer'), value: 3 }
 	];
-
-	onMount(async () => {
-		const locationPermissionPromise = await fetch(
-			`/api/v1/locations/${$page.params.location_id}/permissions`
-		);
-		locationPermissions = await locationPermissionPromise.json();
-	});
 
 	let deletePermission = async (id: number) => {
 		const deletePermissionRequest = await fetch(
@@ -83,9 +100,7 @@
 		const deletePermissionResult = await deletePermissionRequest.json();
 
 		if (deletePermissionResult) {
-			// Remove the deleted permission from the list
-			locationPermissions = locationPermissions.filter((permission) => permission.id !== id);
-
+			locationPermissions = locationPermissions.filter((m) => m.id !== id);
 			notificationStore.NotificationTimedOpen({
 				title: 'Permission Deleted',
 				description: 'Permission Successfully deleted.',
@@ -136,59 +151,35 @@
 			</p>
 		</div>
 
-		<form
-			action="?/addLocationPermissions"
-			method="POST"
-			class="md:col-span-2"
-			use:enhance={({ formElement, formData, action, cancel, submitter }) => {
-				return async ({ result, update }) => {
-					if (result.type === 'success') {
-						result.data;
-						locationPermissions.push(result.data);
-						locationPermissions = locationPermissions;
-						notificationStore.NotificationTimedOpen({
-							title: $_('location.settings.locationUpdated'),
-							description: $_('location.settings.locationUpdatedSuccessfully'),
-							timeout: 2000,
-							icon: mdiCheckCircle,
-							buttonText: 'OK'
-						});
-					} else {
-						notificationStore.NotificationTimedOpen({
-							title: $_('location.settings.locationUpdateFailed'),
-							description: $_('location.settings.contactSupport'),
-							timeout: 2000,
-							icon: mdiCloseBox,
-							buttonText: 'OK'
-						});
-					}
-				};
-			}}
-		>
+		<form action="?/addLocationPermissions" method="POST" class="md:col-span-2" use:permissionsEnhance>
 			<DarkCard title={$_('location.settings.addNewLocationPermission')}>
 				<div class="flex flex-row gap-2">
 					<TextField
 						label={$_('location.settings.userEmailToGrantAccess')}
-						operators={permissionLevelOptions}
 						on:change={(e) => {
-							console.log(e);
-							const dups = locationPermissions.find((m) => m.profile.email == e.detail.inputValue);
+							const dups = locationPermissions.find(
+								(m) => m.profile.email == e.detail.value
+							);
 							if (dups) {
 								disableUserAdd = true;
+							} else {
+								disableUserAdd = false;
 							}
-							permissionLevel = e.detail.operator ?? '-1';
+							if (e.detail.operator) $permissionForm.permission_level = +e.detail.operator;
 						}}
 						id="email"
 						name="email"
-						bind:value={email}
+						bind:value={$permissionForm.email}
 						class="w-full"
 					/>
-					<input
-						type="hidden"
-						bind:value={permissionLevel}
-						name="permissionLevel"
-						id="permissionLevel"
+					<SelectField
+						options={permissionLevelOptions}
+						bind:value={$permissionForm.permission_level}
+						label={$_('location.settings.permissionLevel')}
+						name="permission_level"
+						id="permission_level"
 					/>
+
 					<Button
 						icon={mdiPlus}
 						type="submit"
@@ -202,9 +193,10 @@
 						{$_('location.settings.userAlreadyExists')}
 						<Button
 							on:click={() => {
-								email = '';
+								$permissionForm.email = '';
 								disableUserAdd = false;
 							}}
+							loading={$permissionsDelayed}
 							icon={mdiCloseCircle}
 						/>
 					</p>
@@ -248,6 +240,9 @@
 						</ListItem>
 					{/each}
 				</ul>
+				{#if $appStore.debugMode}
+					<SuperDebug data={$permissionForm} />
+				{/if}
 			</DarkCard>
 		</form>
 	</div>

@@ -122,7 +122,8 @@
       "deleteMsg2": "このユーザーは削除後、デバイスにアクセスできなくなります。",
       "deleteTitle": "本当によろしいですか？",
       "userAlreadyExists": "メールアドレスは既に存在します",
-      "locationName": "場所名"
+      "locationName": "場所名",
+      "permissionLevel": "aaa"
     },
     "all": {
       "name": "全ての場所",

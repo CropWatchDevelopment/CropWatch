@@ -126,7 +126,8 @@
       "deleteMsg2": "This user will no longer be able to view this device.",
       "deleteTitle": "Are you sure?",
       "userAlreadyExists": "Email already Exists",
-      "locationName": "Location Name"
+      "locationName": "Location Name",
+      "permissionLevel": "Permission Level"
     },
     "all": {
       "name": "All Locations",
