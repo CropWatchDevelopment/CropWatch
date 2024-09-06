@@ -4,8 +4,8 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import moment from 'moment';
 
-	import { mdiCog, mdiDownload } from '@mdi/js';
-	import { Button, Icon, Tooltip } from 'svelte-ux';
+	import { mdiCog, mdiDownload, mdiRoad, mdiRobot } from '@mdi/js';
+	import { Button, Dialog, Icon, Toggle, Tooltip } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import SensorHeader from '$lib/components/ui/Sensors/SensorHeader.svelte';
 	import { _ } from 'svelte-i18n';
@@ -17,6 +17,14 @@
 	let data_table: string;
 	let today: Date = new Date();
 	let yesterday: Date = moment(today).subtract(1, 'day').toDate();
+	let openAi = false;
+	let AIResult;
+
+	const runAI = async () => {
+		openAi = true;
+		let result = await fetch('/api/v1/ai/chatgpt');
+		AIResult = await result.json();
+	};
 
 	const sensorPromise = browser
 		? fetch(`/api/v1/devices/${devEui}/data?firstDataDate=${yesterday}&lastDataDate=${today}`)
@@ -46,6 +54,14 @@
 		</Tooltip>
 		<Tooltip title={`${sensorName}'s ${$_('devices.settings.settings')}`}>
 			<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
+		</Tooltip>
+		<Tooltip title="AI">
+				<Button icon={mdiRobot} on:click={() => runAI()} />
+				<Dialog open={openAi} on:close={() => openAI = false}>
+				  <div class="px-6 py-3">
+					<pre>{JSON.stringify(AIResult ?? {}, null, 2)}</pre>
+				  </div>
+				</Dialog>
 		</Tooltip>
 	</div>
 	{#if sensorPromise !== null}
