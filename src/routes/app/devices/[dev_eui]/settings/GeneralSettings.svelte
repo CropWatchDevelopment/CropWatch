@@ -142,6 +142,8 @@
 			</div>
 
 			<div class="mt-8 flex">
+				<input type="hidden" name="dev_eui" value={$form.dev_eui} />
+				<input type="hidden" name="location_id" value={$form.location_id} />
 				<Button
 					type="submit"
 					name="action"
@@ -168,7 +170,7 @@
 			</p>
 		</div>
 
-		<form action="?/updateLocation" method="POST" class="md:col-span-2">
+		<!-- <form action="?/updateLocation" method="POST" class="md:col-span-2">
 			<SelectField
 				id="location-select"
 				name="location_id"
@@ -187,7 +189,7 @@
 					disable={$errors}>{$_('devices.settings.save')}</Button
 				>
 			</div>
-		</form>
+		</form> -->
 	</div>
 
 	<!-- Device Danger Zone Section -->
