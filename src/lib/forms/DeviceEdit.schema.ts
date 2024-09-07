@@ -6,5 +6,5 @@ export const deviceEditSchema = z.object({
     long: z.number().min(-180).max(180).default(0),
     upload_interval: z.number().default(65),
     battery_changed_at: z.date().default(new Date()),
-    location_id: z.number().default(-1),
+    location_id: z.number(),
 });

@@ -70,7 +70,7 @@ export const POST: RequestHandler = async ({ url, params, request, locals: { sup
 
   //Add Rule Criteria associated with this rule
   const cwRuleCriteriaService = new CwRuleCriteriaService(supabase);
-  for (let criteria of newRule.sub_criteria) {
+  for (let criteria of newRule.cw_rule_criteria) {
     const insertedCriterial = await cwRuleCriteriaService.add({
       ruleGroupId,
       subject: criteria.subject,

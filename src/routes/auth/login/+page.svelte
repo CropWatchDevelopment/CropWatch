@@ -25,6 +25,8 @@
 
 	let redirectURL: string = browser ? `${window.location.origin}/auth/callback` : '';
 
+	let loginMethod: 'email' | 'social' = 'email';
+
 	const oAuthLogin = async () => {
 		const { data: response, error } = await data.supabase.auth.signInWithOAuth({
 			provider: 'google',
@@ -160,8 +162,9 @@
 
 					<Button
 						disabled={loggingIn}
-						loading={loggingIn}
+						loading={loggingIn && loginMethod === 'email'}
 						icon={mdiKeyArrowRight}
+						on:click={() => (loginMethod = 'email')}
 						type="submit"
 						class="mb-2 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 						>{$_('auth.login.login')}</Button
@@ -171,8 +174,9 @@
 				<div class="mt-2">
 					<Button
 						disabled={loggingIn}
-						loading={loggingIn}
+						loading={loggingIn && loginMethod === 'social'}
 						icon={mdiGoogle}
+						on:click={() => (loginMethod = 'social')}
 						type="button"
 						on:click={async () => oAuthLogin({ provider: 'google' })}
 						class="mb-2 flex w-full justify-center rounded-md bg-red-500 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"

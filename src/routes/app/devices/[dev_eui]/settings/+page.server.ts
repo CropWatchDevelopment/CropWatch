@@ -6,11 +6,16 @@ import { deviceEditSchema } from '$lib/forms/DeviceEdit.schema';
 
 export const load = async ({ params, fetch }) => {
     const devEui = params.dev_eui;
+
+    if (!devEui) {
+        return fail(400, { error: 'Device EUI is required.' });
+    }
     try {
         const res = await fetch(`/api/v1/devices/${devEui}`);
         const device = await res.json();
         if (!device) error(404, 'Not found');
         const form = await superValidate(device, zod(deviceEditSchema));
+        form.data.location_id = device.location_id;
 
         // Always return { form } in load functions
         return { form };
@@ -27,7 +32,7 @@ export const actions: Actions = {
         if (!form.valid) {
             // Again, return { form } and things will just work.
             return fail(400, { form });
-          }
+        }
 
         try {
             // Make the PUT request to update the device
