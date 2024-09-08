@@ -127,7 +127,11 @@
       "deleteTitle": "Are you sure?",
       "userAlreadyExists": "Email already Exists",
       "locationName": "Location Name",
-      "permissionLevel": "Permission Level"
+      "permissionLevel": "Permission Level",
+      "dangerZone": {
+        "title": "DANGER ZONE",
+        "description": "Deleting this location will also delete all devices within, and all device data associated with that device. DO NOT DO THIS IF YOU ARE NOT SURE WHAT YOU ARE DOING!!!!"
+      }
     },
     "all": {
       "name": "All Locations",

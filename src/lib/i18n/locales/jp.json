@@ -123,7 +123,10 @@
       "deleteTitle": "本当によろしいですか？",
       "userAlreadyExists": "メールアドレスは既に存在します",
       "locationName": "場所名",
-      "permissionLevel": "aaa"
+      "permissionLevel": "aaa",
+      "dangerZone": {
+        "title": "aaa"
+      }
     },
     "all": {
       "name": "全ての場所",
