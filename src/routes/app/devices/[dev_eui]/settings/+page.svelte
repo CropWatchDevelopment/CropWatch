@@ -64,7 +64,6 @@
 			}
 		}
 	});
-	debugger;
 
 	$: currentQuery = $page.url.searchParams.get('page') || 'general'; // Default to "general" if no query is set
 </script>
