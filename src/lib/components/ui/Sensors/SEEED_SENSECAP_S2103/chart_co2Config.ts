@@ -33,7 +33,7 @@
             },
             yAxis: {
                 min: 400,
-                max: 2000,
+                max: (data < 2000) ? 2000 : 10000,
                 tickPixelInterval: 72,
                 tickPosition: 'inside',
                 tickLength: 20,
@@ -63,14 +63,14 @@
                 },
                 {
                     from: 1101,
-                    to: 1500,
+                    to: 2000,
                     color: 'orange',
                     thickness: 20,
                     zIndex: 1000,
                 },
                 {
-                    from: 1501,
-                    to: 2000,
+                    from: 2001,
+                    to: 10000,
                     color: 'red',
                     thickness: 20,
                     zIndex: 1000,

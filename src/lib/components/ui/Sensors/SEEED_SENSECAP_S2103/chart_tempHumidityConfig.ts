@@ -48,8 +48,8 @@ export const getChartConfig = (temperatureData: [number, number][], humidityData
             title: {
                 text: ''
             },
-            // max: 100,
-            // min: 0,
+            max: 100,
+            min: 0,
             labels: {
                 format: '{value}%',
                 style: {
