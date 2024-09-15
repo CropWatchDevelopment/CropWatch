@@ -42,7 +42,11 @@
 		}
 	});
 
-	const { form: permissionForm, delayed: permissionsDelayed, enhance: permissionsEnhance } = superForm(data.permissionForm, {
+	const {
+		form: permissionForm,
+		delayed: permissionsDelayed,
+		enhance: permissionsEnhance
+	} = superForm(data.permissionForm, {
 		delayMs: 500,
 		timeoutMs: 5000,
 		onUpdate({ form }) {
@@ -151,15 +155,18 @@
 			</p>
 		</div>
 
-		<form action="?/addLocationPermissions" method="POST" class="md:col-span-2" use:permissionsEnhance>
+		<form
+			action="?/addLocationPermissions"
+			method="POST"
+			class="md:col-span-2"
+			use:permissionsEnhance
+		>
 			<DarkCard title={$_('location.settings.addNewLocationPermission')}>
 				<div class="flex flex-row gap-2">
 					<TextField
 						label={$_('location.settings.userEmailToGrantAccess')}
 						on:change={(e) => {
-							const dups = locationPermissions.find(
-								(m) => m.profile.email == e.detail.value
-							);
+							const dups = locationPermissions.find((m) => m.profile.email == e.detail.value);
 							if (dups) {
 								disableUserAdd = true;
 							} else {
@@ -245,5 +252,19 @@
 				{/if}
 			</DarkCard>
 		</form>
+	</div>
+
+	<div
+		class="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-8 bg-danger/50 text-danger-content"
+	>
+		<div>
+			<h2 class="text-base font-semibold leading-7 text-danger-content">
+				{$_('location.settings.dangerZone.title')}:
+			</h2>
+			<p class="mt-1 text-sm leading-6 text-danger-content/50">
+				{$_('location.settings.dangerZone.description')}:
+			</p>
+		</div>
+			asb
 	</div>
 </div>

@@ -3,10 +3,19 @@
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
 	import { isValidEmail } from '$lib/components/ui/utilities/isValidEmail';
 	import { notificationStore } from '$lib/stores/notificationStore';
-	import { mdiAccountPlus, mdiCheckCircle, mdiCloseCircle, mdiEmail, mdiFloppy, mdiPlusCircle } from '@mdi/js';
+	import {
+		mdiAccountPlus,
+		mdiCheckCircle,
+		mdiCloseCircle,
+		mdiEmail,
+		mdiFloppy,
+		mdiPlusCircle
+	} from '@mdi/js';
 	import { Button, TextField, SelectField, ListItem, NumberStepper } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
+	import { appStore } from '$lib/stores/app.store.js';
+	import { onMount } from 'svelte';
 
 	export let data;
 	const { form, errors, delayed, enhance } = superForm(data.form, {
@@ -40,7 +49,7 @@
 
 	const babylonNotifierOptions = [
 		{ label: 'Email', value: 1 },
-		{ label: 'SMS', value: 2 }
+		{ label: 'LINE', value: 2 }
 	];
 
 	const addNewCriterion = () => {
@@ -49,10 +58,14 @@
 			operator: '>',
 			trigger_value: 0,
 			reset_value: -10,
-			ruleGroupId: $form.ruleGroupId,
+			ruleGroupId: $form.ruleGroupId
 		});
 		$form.cw_rule_criteria = $form.cw_rule_criteria;
 	};
+
+	onMount(() => {
+		addNewCriterion();
+	})
 </script>
 
 <form method="post" use:enhance>
@@ -192,29 +205,27 @@
 						/>
 					</div>
 				{/each}
-				<Button
-					on:click={() => addNewCriterion()}
-					icon={mdiPlusCircle}
-					variant="fill"
-					color="primary">{$_('devices.rules.addSubCriterion')}</Button
-				>
 
-				<input type="hidden" name="action_recipient" value={$form.action_recipient} />
-				<input type="hidden" name="ruleGroupId" value={$form.ruleGroupId} />
-				<input type="hidden" name="dev_eui" value={$form.dev_eui} />
-				<input type="hidden" name="cw_rule_criteria" value={$form.cw_rule_criteria} />
-				<Button
-					type="submit"
-					icon={mdiFloppy}
-					variant="fill"
-					loading={$delayed}
-				>
-					{$_('app.save')}
-				</Button>
+				<div>
+					<!-- <Button
+						on:click={() => addNewCriterion()}
+						icon={mdiPlusCircle}
+						variant="fill"
+						color="primary">{$_('devices.rules.addSubCriterion')}</Button
+					> -->
+
+					<input type="hidden" name="action_recipient" value={$form.action_recipient} />
+					<input type="hidden" name="ruleGroupId" value={$form.ruleGroupId} />
+					<input type="hidden" name="dev_eui" value={$form.dev_eui} />
+					<input type="hidden" name="cw_rule_criteria" value={$form.cw_rule_criteria} />
+					<Button type="submit" icon={mdiFloppy} variant="fill" loading={$delayed} color="primary">
+						{$_('app.save')}
+					</Button>
+				</div>
 			</div>
 		</DarkCard>
 	</div>
 </form>
 <!-- {#if $appStore.debugMode} -->
-<SuperDebug data={$form} />
+	<SuperDebug data={$form} />
 <!-- {/if} -->

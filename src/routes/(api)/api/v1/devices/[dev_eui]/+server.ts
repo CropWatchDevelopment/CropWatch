@@ -3,11 +3,13 @@ import { error, redirect } from '@sveltejs/kit';
 import CwDevicesService from '$lib/services/CwDevicesService';
 import moment from 'moment';
 
-export const GET: RequestHandler = async ({ params, locals: { supabase, safeGetSession } }) => {
+export const GET: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
     if (!session.user) {
         throw redirect(303, '/auth/unauthorized');
     }
+
+    const includeDeviceType = url.searchParams.get('includeDeviceType') === 'true';
 
     const devEui = params.dev_eui;
     if (!devEui) {
@@ -20,6 +22,11 @@ export const GET: RequestHandler = async ({ params, locals: { supabase, safeGetS
     const device = await cwDevicesService.getDeviceByEui(devEui);
     if (!device) {
         throw error(500, 'Error fetching device');
+    }
+
+    if (includeDeviceType) {
+        const deviceType = await cwDevicesService.getDeviceTypeById(device.type);
+        device['deviceType'] = deviceType;
     }
 
     return new Response(JSON.stringify(device), {
@@ -44,7 +51,7 @@ export const PUT: RequestHandler = async ({ params, request, locals: { supabase,
 
     try {
         const data = await request.json();
-        
+
         let existing_device = await cwDevicesService.getDeviceByEui(devEui);
         if (existing_device === null) throw error(500, 'Failed to find device to update');
         existing_device.name = data.name ?? existing_device.name;

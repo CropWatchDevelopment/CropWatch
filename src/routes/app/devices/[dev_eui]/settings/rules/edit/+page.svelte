@@ -63,7 +63,6 @@
 	// };
 
 	const submitRule = async () => {
-		debugger;
 		const ruleData = {
 			name: editing?.name,
 			babylon_notifier_type: bbb,

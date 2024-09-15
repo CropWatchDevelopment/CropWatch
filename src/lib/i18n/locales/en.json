@@ -82,7 +82,10 @@
     "cancle": "Cancle",
     "devices": "Devices",
     "save": "Save",
-    "update": "Update"
+    "update": "Update",
+    "success": "Success",
+    "close": "close",
+    "error": "Error"
   },
   "header": {
     "widget": {
@@ -127,7 +130,11 @@
       "deleteTitle": "Are you sure?",
       "userAlreadyExists": "Email already Exists",
       "locationName": "Location Name",
-      "permissionLevel": "Permission Level"
+      "permissionLevel": "Permission Level",
+      "dangerZone": {
+        "title": "DANGER ZONE",
+        "description": "Deleting this location will also delete all devices within, and all device data associated with that device. DO NOT DO THIS IF YOU ARE NOT SURE WHAT YOU ARE DOING!!!!"
+      }
     },
     "all": {
       "name": "All Locations",
@@ -193,7 +200,10 @@
       "addAtLeastOneCriterion": "Please add at least 1 criteria",
       "removeCriterion": "Remove criterion",
       "addSubCriterion": "Add sub criterion",
-      "editRule": "Editing Rule"
+      "editRule": "Editing Rule",
+      "subject": "Subject",
+      "deleteRuleSuccess": "Rule was deleted successfully",
+      "deleteRuleError": "There was a problem deleting this rule, Please contact support."
     },
     "permissions": {
       "title": "Device Permissions",

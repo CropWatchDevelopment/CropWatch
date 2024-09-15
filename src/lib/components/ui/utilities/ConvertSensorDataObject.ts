@@ -14,7 +14,7 @@ export function convertObject(input: InputObject, keepHidden: boolean = false): 
       'battery_level', 'people_count', 'car_count', 'bicycle_count', 'motorcycle_count',
       'soil_temperature', 'soil_moisture', 'soil_temperatureC', 'soil_humidity', 'soil_ec',
       'soil_ph', 'soil_nitrogen', 'soil_phosphorus', 'soil_potassium', 'soil_salinity',
-      'soil_n', 'soil_p', 'soil_k'
+      'soil_n', 'soil_p', 'soil_k', 'water_level', 'water_temperature', 'water_ph',
     ];
 
     if (keepHidden) {

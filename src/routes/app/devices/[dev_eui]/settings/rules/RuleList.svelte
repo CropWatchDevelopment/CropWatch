@@ -1,10 +1,18 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import type { Tables } from '$lib/types/supabaseSchema';
-	import { mdiEye, mdiPencil, mdiTrashCan } from '@mdi/js';
+	import {
+		mdiCheckCircle,
+		mdiClose,
+		mdiCloseCircle,
+		mdiEye,
+		mdiPencil,
+		mdiTrashCan
+	} from '@mdi/js';
 	import { Button, Dialog, ListItem, Toggle, Tooltip } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import ViewRule from './ViewRule.svelte';
+	import { notificationStore } from '$lib/stores/notificationStore';
 
 	export let rules: Tables<'cw_rules'>[] = [];
 	export let editing: Tables<'cw_rules'>;
@@ -14,6 +22,26 @@
 		const deleteResult = await fetch(`/api/v1/rules/${$page.params.dev_eui}?id=${id}`, {
 			method: 'DELETE'
 		});
+		if (deleteResult.ok) {
+			notificationStore.NotificationTimedOpen({
+				title: $_('app.success'),
+				description: $_('devices.rules.deleteRuleSuccess'),
+				buttonText: $_('app.close'),
+				timeout: 5000,
+				icon: mdiCheckCircle
+			});
+			const deletedIndex = rules.findIndex((rule) => rule.id == id);
+			rules.splice(deletedIndex, 1);
+			rules = rules;
+		} else {
+			notificationStore.NotificationTimedOpen({
+				title: $_('app.error'),
+				description: $_('devices.rules.deleteRuleError'),
+				buttonText: $_('app.close'),
+				timeout: 5000,
+				icon: mdiCloseCircle
+			});
+		}
 	};
 </script>
 

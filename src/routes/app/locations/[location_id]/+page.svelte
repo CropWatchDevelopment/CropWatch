@@ -31,7 +31,6 @@
 		try {
 			const res = await fetch(`/api/v1/locations/${location_id}?includeDevicesTypes=true`);
 			const data = await res.json();
-			debugger;
 			location = data;
 			await fetchInitialDeviceData();
 			if (location.devices) {
