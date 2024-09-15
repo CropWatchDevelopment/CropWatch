@@ -36,6 +36,8 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
             title: {
                 text: ''
             },
+            max: 10000,
+            min: 400,
             labels: {
                 format: '{value} PPM',
                 style: {
