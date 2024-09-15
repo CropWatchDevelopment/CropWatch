@@ -82,7 +82,10 @@
     "cancle": "Cancle",
     "devices": "Devices",
     "save": "Save",
-    "update": "Update"
+    "update": "Update",
+    "success": "Success",
+    "close": "close",
+    "error": "Error"
   },
   "header": {
     "widget": {
@@ -193,7 +196,10 @@
       "addAtLeastOneCriterion": "Please add at least 1 criteria",
       "removeCriterion": "Remove criterion",
       "addSubCriterion": "Add sub criterion",
-      "editRule": "Editing Rule"
+      "editRule": "Editing Rule",
+      "subject": "Subject",
+      "deleteRuleSuccess": "Rule was deleted successfully",
+      "deleteRuleError": "There was a problem deleting this rule, Please contact support."
     },
     "permissions": {
       "title": "Device Permissions",

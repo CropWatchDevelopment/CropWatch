@@ -78,7 +78,10 @@
     "cancle": "キャンセル",
     "devices": "デバイス",
     "save": "保存",
-    "update": "Update"
+    "update": "Update",
+    "success": "aaa",
+    "close": "aaa",
+    "error": "aaa"
   },
   "header": {
     "widget": {
@@ -189,7 +192,9 @@
       "addAtLeastOneCriterion": "少なくとも1つの基準を追加してください",
       "removeCriterion": "基準を削除",
       "addSubCriterion": "サブ基準を追加",
-      "editRule": "Editing Rule"
+      "editRule": "ルールを編集",
+      "subject": "件名",
+      "deleteRuleError": "aaa"
     },
     "permissions": {
       "title": "デバイスの許可",

@@ -5,7 +5,7 @@ export const RuleAddSchema = z.object({
     dev_eui: z.string().min(16).max(16),
     action_recipient: z.string().min(3).max(255),
     is_triggered: z.boolean().default(false),
-    profile_id: z.number().default(-1),
+    profile_id: z.string(),
     ruleGroupId: z.string(),
     babylon_notifier_type: z.number().default(1),
     cw_rule_criteria: z.object({

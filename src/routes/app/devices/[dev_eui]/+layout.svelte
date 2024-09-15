@@ -55,14 +55,14 @@
 		<Tooltip title={`${sensorName}'s ${$_('devices.settings.settings')}`}>
 			<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
 		</Tooltip>
-		<Tooltip title="AI">
+		<!-- <Tooltip title="AI">
 				<Button icon={mdiRobot} on:click={() => runAI()} />
 				<Dialog open={openAi} on:close={() => openAI = false}>
 				  <div class="px-6 py-3">
 					<pre>{JSON.stringify(AIResult ?? {}, null, 2)}</pre>
 				  </div>
 				</Dialog>
-		</Tooltip>
+		</Tooltip> -->
 	</div>
 	{#if sensorPromise !== null}
 		{#await sensorPromise}

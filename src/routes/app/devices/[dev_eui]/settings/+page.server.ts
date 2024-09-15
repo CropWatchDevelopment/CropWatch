@@ -3,17 +3,39 @@ import type { Actions } from './$types';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 import { deviceEditSchema } from '$lib/forms/DeviceEdit.schema';
+import { deviceLocationEditSchema } from '$lib/forms/DeviceLocationEditSchema';
 
-export const load = async ({ params, fetch }) => {
+export const load = async ({ params, fetch, locals: { supabase, safeGetSession } }) => {
+    const session = await safeGetSession();
+    if (!session.user) {
+        return redirect(301, '/auth/unauthorized');
+    }
     const devEui = params.dev_eui;
+    if (!devEui) error(404, 'Not found');
+
+    const role = await supabase.from('cw_device_owners').select('permission_level').eq('dev_eui', devEui).eq('user_id', session.user.id).maybeSingle();
+    if (!role) error(403, 'Forbidden');
+
     try {
         const res = await fetch(`/api/v1/devices/${devEui}`);
         const device = await res.json();
         if (!device) error(404, 'Not found');
-        const form = await superValidate(device, zod(deviceEditSchema));
+        const deviceEdit = await superValidate(device, zod(deviceEditSchema));
+        const deviceLocationEditForm = await superValidate(device, zod(deviceLocationEditSchema));
 
-        // Always return { form } in load functions
-        return { form };
+        const locationsRes = await fetch('/api/v1/locations');
+        const locationJson = await locationsRes.json();
+        deviceLocationEditForm.data.dev_eui = devEui;
+
+        const locationOptions = locationJson
+            .filter(
+                (obj1, i, arr) => arr.findIndex((obj2) => obj2.location_id === obj1.location_id) === i
+            )
+            .map((m) => {
+                return { label: m.name, value: m.location_id };
+            });
+
+        return { deviceEdit, deviceLocationEditForm, locationOptions, userRole: role.data?.permission_level };
     } catch (error) {
         console.error('Error loading device data:', error);
         return fail(500, { error: 'Failed to load device data.' });
@@ -27,7 +49,7 @@ export const actions: Actions = {
         if (!form.valid) {
             // Again, return { form } and things will just work.
             return fail(400, { form });
-          }
+        }
 
         try {
             // Make the PUT request to update the device
@@ -56,18 +78,11 @@ export const actions: Actions = {
         const devEui = params.dev_eui; // Assuming device EUI is part of the route parameters
 
         // Get the form data
-        const formData = await request.formData();
-        const location_id = formData.get('location_id') as string;
-
-        // Optional: Perform any additional server-side validation
-        if (!location_id) {
-            return fail(400, { error: 'Location is required.' });
+        const form = await superValidate(request, zod(deviceLocationEditSchema));
+        if (!form.valid) {
+            // Again, return { form } and things will just work.
+            return fail(400, { form });
         }
-
-        // Construct the payload to send in the PUT request
-        const payload = {
-            location_id: parseInt(location_id),
-        };
 
         try {
             // Make the PUT request to update the device location
@@ -76,7 +91,7 @@ export const actions: Actions = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(form.data)
             });
 
             if (!response.ok) {
@@ -85,7 +100,7 @@ export const actions: Actions = {
             }
 
             // Redirect or return success
-            return JSON.stringify({ success: true })
+            return message(form, { text: 'Device Info Update Success' })
         } catch (error) {
             console.error('Error submitting form:', error);
             return fail(500, { error: 'Failed to update the device location.' });
