@@ -121,6 +121,8 @@
 			</div>
 
 			<div class="mt-8 flex">
+				<input type="hidden" name="dev_eui" value={$locationForm.dev_eui} />
+				<input type="hidden" name="location_id" value={$locationForm.location_id} />
 				<Button
 					type="submit"
 					name="action"
@@ -187,7 +189,7 @@
 	</div>
 </div>
 
-<!-- {#if $appStore.debugMode} -->
+{#if $appStore.debugMode}
 <SuperDebug data={$deviceForm} />
 <SuperDebug data={$locationForm} />
-<!-- {/if} -->
+{/if}

@@ -7,7 +7,6 @@
 	import RuleList from './rules/RuleList.svelte';
 	import RuleAdd from './rules/add/+page.svelte';
 	import { _ } from 'svelte-i18n';
-	import RuleEdit from './rules/edit/+page.svelte';
 
 	let rules: Tables<'cw_rules'>[] = [];
 	let devEui = $page.params.dev_eui;
