@@ -5,6 +5,7 @@
 	import moment from 'moment';
 	import CW_AIR_THVD from './CW_AIR_THVD/CW_AIR_THVD.svelte';
 	import CW_TRAFFIC from './CW_TRAFFIC/CW_TRAFFIC.svelte';
+	import CW_SS_TMEPNPK from './CW_SS_TMEPNPK/CW_SS_TMEPNPK.svelte';
 	import SEEED_SENSECAP_S2103 from './SEEED_SENSECAP_S2103/SEEED_SENSECAP_S2103.svelte'; // CO2 Sensor
 	import SEEED_SENSECAP_S2120 from './SEEED_SENSECAP_S2120/SEEED_SENSECAP_S2120.svelte'; // Weather Station
 	import SEEED_SENSECAP_T1000 from './SEEED_SENSECAP_T1000/SEEED_SENSECAP_T1000.svelte'; // Tracking Badge
@@ -41,6 +42,8 @@
 		<div class="relative m-1">
 			{#if sensor.deviceType.data_table == 'cw_air_thvd'}
 				<CW_AIR_THVD {sensor} />
+			{:else if sensor.deviceType.data_table == 'cw_ss_tmepnpk'}
+				<CW_SS_TMEPNPK {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_co2_lorawan_uplinks' || sensor.deviceType.data_table == 'cw_co2_uplinks' || sensor.deviceType.data_table == 'cw_air_thvd'}
 				<SEEED_SENSECAP_S2103 {sensor} />
 			{:else if sensor.deviceType.data_table == 'seeed_sensecap_s2120'}
