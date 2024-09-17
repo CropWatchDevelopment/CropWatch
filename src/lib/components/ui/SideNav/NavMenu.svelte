@@ -16,7 +16,7 @@
 	import { _ } from 'svelte-i18n';
 </script>
 
-<ul class="nav h-full bg-surface-300">
+<ul class="h-full bg-surface-300">
 	<h1>{$_('nav.general')}</h1>
 	<ul>
 		<li>
@@ -141,8 +141,5 @@
 	}
 	ul {
 		list-style-type: none;
-	}
-	ul ul {
-		margin-left: 10px;
 	}
 </style>
