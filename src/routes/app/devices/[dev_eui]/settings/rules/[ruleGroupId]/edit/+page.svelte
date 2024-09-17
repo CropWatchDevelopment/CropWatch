@@ -14,9 +14,9 @@
 	import { _ } from 'svelte-i18n';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { appStore } from '$lib/stores/app.store.js';
+	import { mdiArrowLeft } from '@mdi/js';
 
 	export let data;
 
@@ -217,6 +217,7 @@
 							label={$_('devices.rules.resetValue')}
 							name="cw_rule_criteria"
 							type="decimal"
+							class="mt-2"
 							bind:value={$form.cw_rule_criteria[i].reset_value}
 							aria-invalid={$errors.cw_rule_criteria?.[i]?.reset_value ? 'true' : undefined}
 							errors={$errors.cw_rule_criteria?.[i]?.reset_value}
@@ -225,14 +226,17 @@
 					</div>
 				{/each}
 
-				<div>
+				<div class="space-y-0 w-full">
 					<!-- Include hidden fields -->
 					<input type="hidden" name="action_recipient" value={$form.action_recipient} />
 					<input type="hidden" name="ruleGroupId" value={$form.ruleGroupId} />
 					<input type="hidden" name="dev_eui" value={$form.dev_eui} />
 					<input type="hidden" name="cw_rule_criteria" value={$form.cw_rule_criteria} />
-					<Button type="submit" icon={mdiFloppy} variant="fill" loading={$delayed} color="primary">
+					<Button type="submit" icon={mdiFloppy} variant="fill" loading={$delayed} disabled={$delayed} color="primary">
 						{$_('app.save')}
+					</Button>
+					<Button type="button" icon={mdiArrowLeft} variant="fill" href={`/app/devices/${$page.params.dev_eui}/settings?page=rules`} color="secondary">
+						{$_('app.back')}
 					</Button>
 				</div>
 			</div>
