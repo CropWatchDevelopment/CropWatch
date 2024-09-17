@@ -20,17 +20,16 @@
 			{#each rule.criteria as criteria, i}
 				<div>
 					<p>
-						When the incoming {$_(criteria.subject)} from the device is {criteria.operator}
-						{criteria.trigger_value}{nameToNotation(criteria.subject)},
+						When the incoming <b>{$_(criteria.subject)}</b> from the device is <b>{criteria.operator} {criteria.trigger_value}{nameToNotation(criteria.subject)}</b>
 					</p>
 					{#if i < rule.criteria.length - 1}
 						<p>OR</p>
 					{/if}
 				</div>
-			{/each}
+			
 
-			<div class="bg-surface-200">
-				<p>an Alert will be sent to the following Recipients</p>
+			<div>
+				<p>an Alert will be sent to the following Recipients:</p>
 				<ol>
 					{#each recipients as recipient}
 						<ListItem
@@ -40,7 +39,9 @@
 						/>
 					{/each}
 				</ol>
+				<p>and the rule will be reset when <b>{criteria.reset_value}{nameToNotation(criteria.subject)}</b></p>
 			</div>
+			{/each}
 		</div>
 	</DarkCard>
     <div slot="actions">
