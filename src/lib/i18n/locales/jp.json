@@ -81,9 +81,9 @@
     "devices": "デバイス",
     "save": "保存",
     "update": "Update",
-    "success": "aaa",
-    "close": "aaa",
-    "error": "aaa"
+    "success": "成功",
+    "close": "閉じる",
+    "error": "エラー"
   },
   "header": {
     "widget": {
@@ -128,9 +128,9 @@
       "deleteTitle": "本当によろしいですか？",
       "userAlreadyExists": "メールアドレスは既に存在します",
       "locationName": "場所名",
-      "permissionLevel": "aaa",
+      "permissionLevel": "許可レベル",
       "dangerZone": {
-        "title": "aaa"
+        "title": "危険ゾーン"
       }
     },
     "all": {
@@ -199,7 +199,7 @@
       "addSubCriterion": "サブ基準を追加",
       "editRule": "ルールを編集",
       "subject": "件名",
-      "deleteRuleError": "aaa"
+      "deleteRuleError": "ルールの削除に失敗しました"
     },
     "permissions": {
       "title": "デバイスの許可",
@@ -334,5 +334,12 @@
     "bicycle_count": "自転車数",
     "calendar": "カレンダー",
     "count": "カウント"
+  },
+  "login": {
+    "password": "パスワード",
+    "ConfirmPassword": "パスワードを確認",
+    "update_password": "パスワードを更新",
+    "already_have_an_account": "すでにアカウントをお持ちですか？",
+    "login": "ログイン"
   }
 }

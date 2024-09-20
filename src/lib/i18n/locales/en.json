@@ -330,5 +330,12 @@
     "bicycle_count": "Bicycle Count",
     "calendar": "Calendar",
     "count": "Count"
+  },
+  "login": {
+    "password": "Password",
+    "ConfirmPassword": "Confirm Password",
+    "update_password": "Update Password",
+    "already_have_an_account": "Already have an account?",
+    "login": "Login"
   }
 }
