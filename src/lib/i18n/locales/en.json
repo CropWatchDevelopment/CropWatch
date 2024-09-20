@@ -336,6 +336,7 @@
     "ConfirmPassword": "Confirm Password",
     "update_password": "Update Password",
     "already_have_an_account": "Already have an account?",
-    "login": "Login"
+    "login": "Login",
+    "update_title": "Update your current password"
   }
 }
