@@ -340,6 +340,7 @@
     "ConfirmPassword": "パスワードを確認",
     "update_password": "パスワードを更新",
     "already_have_an_account": "すでにアカウントをお持ちですか？",
-    "login": "ログイン"
+    "login": "ログイン",
+    "update_title": "パスワードを更新"
   }
 }
