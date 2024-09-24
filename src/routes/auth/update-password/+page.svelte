@@ -82,10 +82,10 @@
 				</form>
 
 				<!-- Display the JSON stringified form data -->
-				<div class="mt-4">
+				<!-- <div class="mt-4">
 					<h3 class="text-lg font-medium leading-6 text-gray-900">Form Data</h3>
 					<pre class="bg-gray-100 p-4 rounded">{displayJSON(formData)}</pre>
-				</div>
+				</div> -->
 
 				<!-- Display the form submission result -->
 				{#if submissionResult}

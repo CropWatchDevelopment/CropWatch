@@ -30,7 +30,7 @@
 							if (result.status && result.status < 400) {
 								update();
 								isLoading = false;
-								goto('login'); // redirect to '/app'
+								goto('/auth/check-email'); // redirect to '/app'
 							} else {
 								isLoading = false;
 								console.log(result);

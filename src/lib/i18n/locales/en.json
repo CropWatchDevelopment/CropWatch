@@ -39,7 +39,9 @@
     "unauthorized": {
       "title": "Unauthorized",
       "description": "Your session may have ended, or you do not have access to this resource, please use the back button in your browser or return to the login using the button below."
-    }
+    },
+    "check_email": "An message with the password recovery link has been sent to your E-Mail address. Please check your E-Mail and follow the instructions there to complete your password reset.",
+    "back_to_login": "Return to Login"
   },
   "nav": {
     "general": "General",
@@ -328,5 +330,13 @@
     "bicycle_count": "Bicycle Count",
     "calendar": "Calendar",
     "count": "Count"
+  },
+  "login": {
+    "password": "Password",
+    "ConfirmPassword": "Confirm Password",
+    "update_password": "Update Password",
+    "already_have_an_account": "Already have an account?",
+    "login": "Login",
+    "update_title": "Update your current password"
   }
 }
