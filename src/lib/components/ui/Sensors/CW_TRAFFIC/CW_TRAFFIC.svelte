@@ -48,10 +48,8 @@
 	});
 
 	const loadCountsForCalendar = async () => {
-		const daysThisMonth = moment().daysInMonth() - moment().date() + 1;
-
 		fetch(
-			`/api/v1/devices/${$page.params.dev_eui}/data?firstDataDate=${moment.utc().utcOffset('+0000').subtract(daysThisMonth, 'days').toDate()}&lastDataDate=${moment.utc().utcOffset('+0000').toDate()}`
+			`/api/v1/devices/${$page.params.dev_eui}/data?firstDataDate=${moment.utc().utcOffset('+0000').startOf('month').toDate()}&lastDataDate=${moment.utc().utcOffset('+0000').toDate()}`
 		)
 			.then((res) => res.json())
 			.then((data) => {
