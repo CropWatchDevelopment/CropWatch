@@ -84,7 +84,13 @@ export const GET: RequestHandler = async ({ params, locals: { supabase, safeGetS
             bold: Buffer.from(pdfFonts.pdfMake.vfs['Roboto-Medium.ttf'], 'base64'),
             italics: Buffer.from(pdfFonts.pdfMake.vfs['Roboto-Italic.ttf'], 'base64'),
             bolditalics: Buffer.from(pdfFonts.pdfMake.vfs['Roboto-MediumItalic.ttf'], 'base64'),
-        }
+        },
+        NotoSansJP: {
+            normal: ['http://localhost:5173/fonts/NotoSansJP-Regular.ttf', 'NotoSansJP-Regular'],
+            bold: ['http://localhost:5173/fonts/NotoSansJP-Regular.ttf', 'NotoSansJP-Regular'],
+            italics: ['http://localhost:5173/fonts/NotoSansJP-Regular.ttf', 'NotoSansJP-Regular'],
+            bolditalics: ['http://localhost:5173/fonts/NotoSansJP-Regular.ttf', 'NotoSansJP-Regular'],
+          }
     };
 
     // Create a new PdfPrinter instance
@@ -259,7 +265,7 @@ export const GET: RequestHandler = async ({ params, locals: { supabase, safeGetS
                 color: 'black'
             }
         },
-        defaultStyle: { font: 'Roboto' }
+        defaultStyle: { font: 'NotoSansJP' }
     };
 
     // Generate the PDF document
