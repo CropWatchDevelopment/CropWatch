@@ -39,7 +39,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
     const array = data.data.map(d => {
         return [
             moment(d.created_at).format('YYYY-MM-DD HH:mm'), // Format date as desired
-            `${d.temperatureC.toFixed(2)}℃`, // Format temperature
+            d.temperatureC, // Format temperature
             '' // Placeholder for comment
         ];
     });
@@ -132,14 +132,21 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 const row = [];
                 for (let colIndex = 0; colIndex < numColumns; colIndex++) {
                     const dataItem = columnsData[colIndex][rowIndex];
+                    let color = 'white';
                     if (dataItem) {
-                        row.push({ text: dataItem[0], alignment: 'center' }); // 測定日時
-                        row.push({ text: dataItem[1], alignment: 'center' }); // 温度
-                        row.push({ text: dataItem[2], alignment: 'center' }); // コメント
+                        if (dataItem[1] && dataItem[1] <= -18) color = 'white';
+                        if (dataItem[1] && dataItem[1] >= -18.1) color = 'yellow';
+                        if (dataItem[1] && dataItem[1] >= -15.1) color = 'orange';
+                        if (dataItem[1] && dataItem[1] >= -0) color = 'red';
+            
+                        // Add vertical borders to each cell
+                        row.push({ text: dataItem[0], alignment: 'center', border: [true, false, true, false] }); // 測定日時
+                        row.push({ text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }); // 温度
+                        row.push({ text: dataItem[2], alignment: 'center', border: [true, false, true, false] }); // コメント
                     } else {
-                        row.push('');
-                        row.push('');
-                        row.push('');
+                        row.push({ text: '', border: [true, false, true, false] });
+                        row.push({ text: '', border: [true, false, true, false] });
+                        row.push({ text: '', border: [true, false, true, false] });
                     }
                 }
                 tableBody.push(row);
@@ -325,6 +332,17 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
             },
             dataTable: {
                 fontSize: 7,
+                table: {
+                    border: '1px solid #dddddd',
+                    body: [
+                        [
+                            {
+                                border: [false, true, false, false],
+                                fillColor: '#eeeeee',
+                                text: 'border:\n[false, true, false, false]'
+                            },
+                        ]],
+                }
             },
             tableHeader: {
                 bold: true,
@@ -346,7 +364,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
     // Add the data tables to your docDefinition content
     tableBodies.forEach((tableBody, index) => {
         const dataTable = {
-            layout: 'lightHorizontalLines',
+            layout: 'horizontalLines',
             style: 'dataTable',
             table: {
                 headerRows: 2, // We have two header rows now
