@@ -4,7 +4,7 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import moment from 'moment';
 
-	import { mdiCog, mdiDownload, mdiRoad, mdiRobot } from '@mdi/js';
+	import { mdiCog, mdiDownload, mdiFileChart, mdiRobot } from '@mdi/js';
 	import { Button, Dialog, Icon, Toggle, Tooltip } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import SensorHeader from '$lib/components/ui/Sensors/SensorHeader.svelte';
@@ -63,6 +63,9 @@
 				  </div>
 				</Dialog>
 		</Tooltip> -->
+		<Tooltip title="Reports">
+				<Button icon={mdiFileChart} href="reports" />
+		</Tooltip>
 	</div>
 	{#if sensorPromise !== null}
 		{#await sensorPromise}
