@@ -1,12 +1,14 @@
 import { error, redirect, type RequestHandler } from "@sveltejs/kit";
 import PdfPrinter from 'pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
-import QuickChart from 'quickchart-js';
 import fs from 'fs';
 import path from 'path';
 import moment from "moment";
+import D3Node from 'd3-node';
+import * as d3 from 'd3';
+import sharp from 'sharp';
 
-export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, safeGetSession } }) => {
+export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
 
     if (!session?.user) {
@@ -19,6 +21,7 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
         throw error(400, 'dev_eui is required');
     }
 
+    // Fetch the data for the device
     const response = await fetch(
         `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${moment().startOf('month').toISOString()}&lastDataDate=${moment().endOf('month').toISOString()}&timezone=asia/tokyo`
     );
@@ -28,52 +31,31 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
     }
 
     const data = await response.json();
+
+    // Prepare data for the chart and table
+    const chartDataValues = data.data.map(d => d.temperatureC);
+    const chartLabels = data.data.map(d => moment(d.created_at).toISOString());
+
     const array = data.data.map(d => {
-        return [new Date(d.created_at).toISOString(), d.temperatureC.toString(), '']
-    })
-
-    // Define your chart data
-    const labels = ['January', 'February', 'March', 'April', 'May', 'June'];
-    const dataValues = [3, 2, 1, 5, 6, 4];
-
-    // Create a new QuickChart instance
-    const qc = new QuickChart();
-    qc.setConfig({
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Temperature',
-                data: dataValues,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+        return [
+            moment(d.created_at).format('YYYY-MM-DD HH:mm'), // Format date as desired
+            `${d.temperatureC.toFixed(2)}℃`, // Format temperature
+            '' // Placeholder for comment
+        ];
     });
-    qc.setWidth(800);
-    qc.setHeight(600);
-    qc.setBackgroundColor('white');
 
-    // Get the chart image URL
-    const chartUrl = qc.getUrl();
+    // Prepare data for D3 chart
+    const chartData = data.data.map(d => ({
+        date: moment(d.created_at).toDate(),
+        value: d.temperatureC
+    }));
 
-    // Fetch the image and convert it to base64
-    const imageResponse = await fetch(chartUrl);
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const imageBase64 = Buffer.from(imageBuffer).toString('base64');
-    const chartDataUrl = `data:image/png;base64,${imageBase64}`;
+    // Generate chart image
+    const chartImageBuffer = await generateChartImage(chartData);
 
+    // Read the font file
     const fontPath = path.join(process.cwd(), './', 'fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
     const NotoSansJPRegularFont = fs.readFileSync(fontPath);
-
 
     // Prepare data for the report
     const reportDetails = [
@@ -81,23 +63,16 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
         ['部署：', 'ペットフード事業部'],
         ['使用場所：', 'xyz'],
         ['センサー名：', 'ABC'],
-        ['測定期間', '24/09/01 9:30am - 20/09/30 9:00pm'],
+        ['測定期間', `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment().endOf('month').format('YYYY/MM/DD')}`],
         ['DevEUI', devEui]
     ];
 
     const sensorDetails = [
-        ['サンプリング数', '334'],
-        ['Normal: <= -18', '35/334 (0.10%)'],
-        ['Notice: >= -18.1', '35/334 (0.10%)'],
-        ['Warning: >= -15.1', '35/334 (0.10%)'],
-        ['Alert: >= 0', '35/334 (0.10%)'],
-        ['最大値', '10℃'],
-        ['最小値', '-24℃'],
-        ['平均値', '-18℃'],
-        ['標準偏差', '15.13℃']
+        ['サンプリング数', data.data.length.toString()],
+        // Add other sensor details as needed
     ];
 
-    // Define fonts using the embedded fonts from pdfMake
+    // Define fonts
     const fonts = {
         Roboto: {
             normal: Buffer.from(pdfFonts.pdfMake.vfs['Roboto-Regular.ttf'], 'base64'),
@@ -116,24 +91,84 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
     // Create a new PdfPrinter instance
     const printer = new PdfPrinter(fonts);
 
+    // Function to generate the data table columns
+    function prepareTableBodiesForPages(dataArray: any[], numColumns: number, maxRowsPerPage: number): any[] {
+        const totalRows = Math.ceil(dataArray.length / numColumns);
+        const pages = [];
+        for (let startRow = 0; startRow < totalRows; startRow += maxRowsPerPage) {
+            const endRow = Math.min(startRow + maxRowsPerPage, totalRows);
+            const columnsData = [];
+            for (let i = 0; i < numColumns; i++) {
+                const columnData = dataArray.slice(
+                    i * totalRows + startRow,
+                    i * totalRows + endRow
+                );
+                columnsData.push(columnData);
+            }
+
+            const tableBody = [];
+
+            // Create header row
+            const headerRow = [];
+            for (let i = 0; i < numColumns; i++) {
+                headerRow.push({ text: '測定日時', style: 'tableHeader', colSpan: 3, alignment: 'center' });
+                headerRow.push({});
+                headerRow.push({});
+            }
+            tableBody.push(headerRow);
+
+            // Create sub-header row
+            const subHeaderRow = [];
+            for (let i = 0; i < numColumns; i++) {
+                subHeaderRow.push({ text: '日時', style: 'tableSubHeader', alignment: 'center' });
+                subHeaderRow.push({ text: '温度', style: 'tableSubHeader', alignment: 'center' });
+                subHeaderRow.push({ text: 'コメント', style: 'tableSubHeader', alignment: 'center' });
+            }
+            tableBody.push(subHeaderRow);
+
+            // Create data rows
+            const rowsOnPage = endRow - startRow;
+            for (let rowIndex = 0; rowIndex < rowsOnPage; rowIndex++) {
+                const row = [];
+                for (let colIndex = 0; colIndex < numColumns; colIndex++) {
+                    const dataItem = columnsData[colIndex][rowIndex];
+                    if (dataItem) {
+                        row.push({ text: dataItem[0], alignment: 'center' }); // 測定日時
+                        row.push({ text: dataItem[1], alignment: 'center' }); // 温度
+                        row.push({ text: dataItem[2], alignment: 'center' }); // コメント
+                    } else {
+                        row.push('');
+                        row.push('');
+                        row.push('');
+                    }
+                }
+                tableBody.push(row);
+            }
+
+            pages.push(tableBody);
+        }
+        return pages;
+    }
+
+    // Prepare table bodies for pages
+    const numColumns = 4;
+    const maxRowsPerPage = 20; // Adjust as needed based on page size
+    const tableBodies = prepareTableBodiesForPages(array, numColumns, maxRowsPerPage);
+
     // Define the PDF document
-    // Page Margins: [left, top, right, bottom]
     const docDefinition = {
         language: 'ja-jp',
         compress: true,
         pageSize: 'A4',
-        pageOrientation: 'portrate',
-        pageMargins: [40, 0, 0, 0],
+        pageOrientation: 'portrait',
+        pageMargins: [40, 40, 40, 40],
         info: {
-            title: 'Refridgerator Report',
+            title: 'Refrigerator Report',
             author: 'CropWatch Backend Server',
             subject: 'Cold-Storage',
             keywords: 'Refer Cold Storage',
             creationDate: new Date(),
         },
-        // userPassword: '123',
-        // ownerPassword: '123456',
-        // watermark: { text: `Generated by CropWatch ${new Date()}`, opacity: 0.1, angle: 70 },
         content: [
             {
                 text: '週次 温度データレポート',
@@ -156,8 +191,6 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
                                 },
                                 layout: 'noBorders',
                             },
-                            // Horizontal line
-                            // { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 275, y2: 0, lineWidth: 1 }], margin: [0, 10, 0, 10] },
                             // Sensor Details Table
                             {
                                 style: 'sensorTable',
@@ -257,60 +290,22 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
             },
             // Chart image
             {
-                id: 'chart',
-                image: chartDataUrl,
-                width: 595, // Dynamically adjust width or set to 100%
-                fit: [595, 400], // Allow the image to scale within these dimensions
-                margin: [0, 0, 0, 0],
+                image: chartImageBuffer,
+                width: 500, // Adjust as needed
+                margin: [0, 0, 0, 20],
             },
-            // Legend
-            // {
-            //     id: 'dataPointsLegend',
-            //     columns: [
-            //         { text: 'Normal: <= -18', fillColor: 'white', border: [true, true, true, true], margin: [0, 0, 0, 0], alignment: 'left' },
-            //         { text: 'Notice: >= -18.1 黄色', fillColor: 'yellow', border: [true, true, true, true], alignment: 'center' },
-            //         { text: 'Warning: >= -15.1 オレンジ', fillColor: 'orange', border: [true, true, true, true], alignment: 'center' },
-            //         { text: 'Alert: >= 0 赤', fillColor: 'red', border: [true, true, true, true], alignment: 'right' }
-            //     ],
-            //     columnGap: 5,
-            //     margin: [0, 10, 0, 0]
-            // },
+            // Data table legend
             {
-                layout: 'lightHorizontalLines', // optional
-                style: 'dataTableLegend',
-                table: {
-                    // headers are automatically repeated if the table spans over multiple pages
-                    // you can declare how many rows should be treated as headers
-                    headerRows: 1,
-                    widths: ['*', 'auto', 'auto', '*'],
-
-                    body: [
-                        ['', '', '', ''],
-                        [
-                            [{ text: 'Normal: <= -18' }],
-                            [{ text: 'Notice: >= -18.1 黄色', fillColor: 'yellow' }],
-                            [{ text: 'Warning: >= -15.1 オレンジ', fillColor: 'orange' }],
-                            [{ text: 'Alert: >= 0 赤', fillColor: 'red' }],
-                        ],
-                    ]
-                }
+                columns: [
+                    { text: 'Normal: <= -18', border: [true, true, true, true], alignment: 'center' },
+                    { text: 'Notice: >= -18.1 黄色', fillColor: 'yellow', border: [true, true, true, true], alignment: 'center' },
+                    { text: 'Warning: >= -15.1 オレンジ', fillColor: 'orange', border: [true, true, true, true], alignment: 'center' },
+                    { text: 'Alert: >= 0 赤', fillColor: 'red', border: [true, true, true, true], alignment: 'center' }
+                ],
+                columnGap: 5,
+                margin: [0, 10, 0, 20]
             },
-            {
-                layout: 'lightHorizontalLines', // optional
-                style: 'dataTable',
-                table: {
-                    // headers are automatically repeated if the table spans over multiple pages
-                    // you can declare how many rows should be treated as headers
-                    headerRows: 1,
-                    widths: ['*', 'auto', 'auto', '*'],
-                    margin: [40, 0, 0, 0],
-
-                    body: [
-                        ['測定日時', '温度', 'コメント'],
-                        ...array
-                    ]
-                }
-            }
+            // The data tables will be added here
         ],
         styles: {
             title: {
@@ -329,26 +324,40 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
                 fontSize: 10,
             },
             dataTable: {
-                fontSize: 6,
-            },
-            dataPointsLegend: {
-                fontSize: 10,
+                fontSize: 7,
             },
             tableHeader: {
                 bold: true,
-                fontSize: 13,
+                fontSize: 8,
                 color: 'black',
-            }
+                alignment: 'center'
+            },
+            tableSubHeader: {
+                bold: true,
+                fontSize: 7,
+                color: 'black',
+                alignment: 'center'
+            },
+            // Other styles as needed
         },
         defaultStyle: { font: 'NotoSansJP' },
-        pageBreakBefore: function (currentNode, followingNodesOnPage, nodesOnNextPage, previousNodesOnPage) {
-            //check if signature part is completely on the last page, add pagebreak if not
-            if (currentNode.id === 'dataTableLegend') {
-                return true;
-            }
-            return false;
-        },
     };
+
+    // Add the data tables to your docDefinition content
+    tableBodies.forEach((tableBody, index) => {
+        const dataTable = {
+            layout: 'lightHorizontalLines',
+            style: 'dataTable',
+            table: {
+                headerRows: 2, // We have two header rows now
+                widths: Array(numColumns * 3).fill('auto'),
+                body: tableBody
+            },
+            margin: [20, 0, 0, 0],
+            pageBreak: index < tableBodies.length - 1 ? 'after' : undefined
+        };
+        docDefinition.content.push(dataTable);
+    });
 
     // Generate the PDF document
     const pdfDoc = printer.createPdfKitDocument(docDefinition);
@@ -377,3 +386,81 @@ export const GET: RequestHandler = async ({ params, fetch,  locals: { supabase, 
         pdfDoc.end();
     });
 };
+
+// Function to generate the chart image using D3.js and sharp
+async function generateChartImage(data) {
+    const d3n = new D3Node();
+
+    const width = 800;
+    const height = 600;
+
+    const svg = d3n.createSVG(width, height);
+
+    const margin = { top: 40, right: 20, bottom: 50, left: 60 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const x = d3.scaleTime()
+        .range([0, innerWidth])
+        .domain(d3.extent(data, d => d.date));
+
+    const y = d3.scaleLinear()
+        .range([innerHeight, 0])
+        .domain([d3.min(data, d => d.value) - 5, d3.max(data, d => d.value) + 5]);
+
+    const line = d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d.value));
+
+    const g = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // X Axis
+    g.append('g')
+        .attr('transform', `translate(0,${innerHeight})`)
+        .call(d3.axisBottom(x).ticks(d3.timeWeek.every(1)).tickFormat(d3.timeFormat('%b %d')))
+        .selectAll('text')
+        .attr('transform', 'rotate(45)')
+        .style('text-anchor', 'start');
+
+    // Y Axis
+    g.append('g')
+        .call(d3.axisLeft(y));
+
+    // Line path
+    g.append('path')
+        .datum(data)
+        .attr('fill', 'none')
+        .attr('stroke', 'steelblue')
+        .attr('stroke-width', 2)
+        .attr('d', line);
+
+    // Labels
+    // X Axis Label
+    svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', height - 10)
+        .attr('text-anchor', 'middle')
+        .text('Week');
+
+    // Y Axis Label
+    svg.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2)
+        .attr('y', 15)
+        .attr('text-anchor', 'middle')
+        .text('Temperature (℃)');
+
+    // Title
+    svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', 25)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '16px')
+        .text('Temperature Over Time');
+
+    // Convert SVG to PNG buffer using sharp
+    const svgString = d3n.svgString();
+    const pngBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
+    return pngBuffer;
+}

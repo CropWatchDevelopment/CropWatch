@@ -62,14 +62,16 @@
 		"@supabase/ssr": "^0.4.0",
 		"@supabase/supabase-js": "^2.45.0",
 		"bufferutil": "^4.0.8",
-		"chart.js": "^4.4.4",
-		"chartjs-node-canvas": "^4.1.6",
+		"chart.js": "4",
+		"chartjs-node-canvas": "4",
+		"d3-node": "^3.0.0",
 		"highcharts-export-server": "^4.0.2",
 		"leaflet": "^1.9.4",
 		"moment-timezone": "^0.5.45",
 		"openai": "^4.58.0",
 		"pdfmake": "^0.2.13",
 		"quickchart-js": "^3.1.3",
+		"sharp": "^0.33.5",
 		"svelte-ux": "^0.74.0",
 		"utf-8-validate": "^6.0.4"
 	}
