@@ -38,7 +38,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
 
     const array = data.data.map(d => {
         return [
-            moment(d.created_at).format('YYYY-MM-DD HH:mm'), // Format date as desired
+            moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
             d.temperatureC, // Format temperature
             '' // Placeholder for comment
         ];
@@ -67,9 +67,38 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         ['DevEUI', devEui]
     ];
 
+    const normal = data.data.filter(item => item.temperatureC <= -18).length;
+    const notice = data.data.filter(item => (item.temperatureC >= -18.1 && item.temperatureC < 15.1)).length;
+    const warning = data.data.filter(item => (item.temperatureC >= -15.1 && item.temperatureC < 0)).length;
+    const alert = data.data.filter(item => item.temperatureC >= 0).length;
+    const maxTemperature = data.data.reduce((max, item) => 
+        item.temperatureC > max ? item.temperatureC : max, -Infinity);
+    const minTemperature = data.data.reduce((min, item) => 
+        item.temperatureC < min ? item.temperatureC : min, Infinity);
+    const totalTemperature = data.data.reduce((sum, item) => sum + item.temperatureC, 0);
+    const averageTemperature = totalTemperature / data.data.length;
+// Step 1: Calculate the mean (average) temperatureC
+const meanTemperature = totalTemperature / data.data.length;
+
+// Step 2: Calculate the variance
+const variance = data.data.reduce((sum, item) => {
+  const diff = item.temperatureC - meanTemperature;
+  return sum + diff * diff;
+}, 0) / data.data.length;
+
+// Step 3: Calculate the standard deviation
+const standardDeviation = Math.sqrt(variance);
+
     const sensorDetails = [
-        ['サンプリング数', data.data.length.toString()],
-        // Add other sensor details as needed
+        ['サンプリング数', array.length.toString()],
+        ['Normal: <= -18', `${normal}/${array.length.toString()} (${(normal / array.length).toFixed(2)} %)`],
+        ['Notice: >= -18.1', `${notice}/${array.length.toString()} (${(notice / array.length).toFixed(2)} %)`],
+        ['Warning: >= -15.1', `${warning}/${array.length.toString()} (${(warning / array.length).toFixed(2)} %)`],
+        ['Alert: >= 0', `${alert}/${array.length.toString()} (${(alert / array.length).toFixed(2)} %)`],
+        ['最大値', `${maxTemperature}℃`],
+        ['最小値', `${minTemperature}℃`],
+        ['平均値', `${averageTemperature.toFixed(2)}℃`],
+        ['標準偏差', `${standardDeviation.toFixed(2)}℃`]
     ];
 
     // Define fonts
@@ -138,7 +167,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                         if (dataItem[1] && dataItem[1] >= -18.1) color = 'yellow';
                         if (dataItem[1] && dataItem[1] >= -15.1) color = 'orange';
                         if (dataItem[1] && dataItem[1] >= -0) color = 'red';
-            
+
                         // Add vertical borders to each cell
                         row.push({ text: dataItem[0], alignment: 'center', border: [true, false, true, false] }); // 測定日時
                         row.push({ text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }); // 温度
@@ -159,7 +188,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
 
     // Prepare table bodies for pages
     const numColumns = 4;
-    const maxRowsPerPage = 20; // Adjust as needed based on page size
+    const maxRowsPerPage = 45; // Adjust as needed based on page size
     const tableBodies = prepareTableBodiesForPages(array, numColumns, maxRowsPerPage);
 
     // Define the PDF document
@@ -168,7 +197,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         compress: true,
         pageSize: 'A4',
         pageOrientation: 'portrait',
-        pageMargins: [40, 40, 40, 40],
+        pageMargins: [40, 40, 0, 0],
         info: {
             title: 'Refrigerator Report',
             author: 'CropWatch Backend Server',
@@ -181,7 +210,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 text: '週次 温度データレポート',
                 style: 'title',
                 alignment: 'center',
-                margin: [0, 0, 0, 20]
+                margin: [0, 0, 0, 0]
             },
             {
                 columns: [
@@ -297,20 +326,22 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
             },
             // Chart image
             {
+                id: 'chart',
                 image: chartImageBuffer,
                 width: 500, // Adjust as needed
-                margin: [0, 0, 0, 20],
+                margin: [0, 0, 0, 40],
             },
             // Data table legend
             {
+                style: 'tableLegend',
                 columns: [
                     { text: 'Normal: <= -18', border: [true, true, true, true], alignment: 'center' },
                     { text: 'Notice: >= -18.1 黄色', fillColor: 'yellow', border: [true, true, true, true], alignment: 'center' },
                     { text: 'Warning: >= -15.1 オレンジ', fillColor: 'orange', border: [true, true, true, true], alignment: 'center' },
                     { text: 'Alert: >= 0 赤', fillColor: 'red', border: [true, true, true, true], alignment: 'center' }
                 ],
-                columnGap: 5,
-                margin: [0, 10, 0, 20]
+                // columnGap: 5,
+                margin: [0, 35, 0, 5]
             },
             // The data tables will be added here
         ],
@@ -330,8 +361,13 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 margin: [0, 0, 0, 0],
                 fontSize: 10,
             },
+            tableLegend: {
+                fontSize: 10,
+            },
             dataTable: {
                 fontSize: 7,
+                paddingRight: '5px',
+                marginRight: '5px',
                 table: {
                     border: '1px solid #dddddd',
                     body: [
@@ -339,7 +375,9 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                             {
                                 border: [false, true, false, false],
                                 fillColor: '#eeeeee',
-                                text: 'border:\n[false, true, false, false]'
+                                text: 'border:\n[false, true, false, false]',
+                                paddingRight: '5px',
+                                marginRight: '5px',
                             },
                         ]],
                 }
@@ -359,6 +397,9 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
             // Other styles as needed
         },
         defaultStyle: { font: 'NotoSansJP' },
+        pageBreakBefore: function(currentNode, followingNodesOnPage, nodesOnNextPage, previousNodesOnPage) {
+            return currentNode.id == 'tableLegend';
+         }
     };
 
     // Add the data tables to your docDefinition content
@@ -371,7 +412,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 widths: Array(numColumns * 3).fill('auto'),
                 body: tableBody
             },
-            margin: [20, 0, 0, 0],
+            margin: [0, 0, 0, 0],
             pageBreak: index < tableBodies.length - 1 ? 'after' : undefined
         };
         docDefinition.content.push(dataTable);

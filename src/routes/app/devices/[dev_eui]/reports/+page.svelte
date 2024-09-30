@@ -41,4 +41,4 @@
 <h1>Reports</h1>
 
 
-<Button on:click={() => makePdf()}>aaa</Button>
+<Button variant="outline" on:click={() => makePdf()}>Download This Month's Report</Button>
