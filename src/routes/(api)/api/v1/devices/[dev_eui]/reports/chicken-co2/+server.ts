@@ -52,7 +52,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
     const chartImageBuffer = await generateChartImage(chartData);
 
     // Read the font file
-    const fontPath = path.join(process.cwd(), './', 'fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
+    const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
     const NotoSansJPRegularFont = fs.readFileSync(fontPath);
 
     // Prepare data for the report

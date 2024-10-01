@@ -30,7 +30,7 @@
 	const makePdf = async () => {
 		try {
 			pdfLoading = true;
-			const response = await fetch(`/api/v1/devices/${$page.params.dev_eui}/reports`);
+			const response = await fetch(`/api/v1/devices/${$page.params.dev_eui}/reports/cold-storage-01`);
 
 			if (!response.ok) {
 				throw new Error('Failed to fetch the PDF');
