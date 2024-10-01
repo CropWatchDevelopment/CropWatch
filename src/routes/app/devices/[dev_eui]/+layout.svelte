@@ -17,6 +17,7 @@
 	let data_table: string;
 	let today: Date = new Date();
 	let yesterday: Date = moment(today).subtract(1, 'day').toDate();
+	let report_endpoint: string | null = null;
 	let openAi = false;
 	let AIResult;
 	let pdfLoading = false;
@@ -30,7 +31,9 @@
 	const makePdf = async () => {
 		try {
 			pdfLoading = true;
-			const response = await fetch(`/api/v1/devices/${$page.params.dev_eui}/reports/cold-storage-01`);
+			const response = await fetch(
+				`/api/v1/devices/${$page.params.dev_eui}/reports/${report_endpoint}`
+			);
 
 			if (!response.ok) {
 				throw new Error('Failed to fetch the PDF');
@@ -75,6 +78,7 @@
 					lastSeen = new Date(newestData.created_at || Date());
 					data_table = sensor.deviceType.data_table;
 					upload_interval = sensor.deviceType.default_upload_interval;
+					report_endpoint = sensor?.device?.report_endpoint;
 					return sensor;
 				})
 		: null;
@@ -98,9 +102,11 @@
 				  </div>
 				</Dialog>
 		</Tooltip> -->
-		<Tooltip title="Reports">
-			<Button icon={mdiFileChart} loading={pdfLoading} on:click={() => makePdf()} />
-		</Tooltip>
+		{#if report_endpoint}
+			<Tooltip title="Reports">
+				<Button icon={mdiFileChart} loading={pdfLoading} on:click={() => makePdf()} />
+			</Tooltip>
+		{/if}
 	</div>
 	{#if sensorPromise !== null}
 		{#await sensorPromise}
