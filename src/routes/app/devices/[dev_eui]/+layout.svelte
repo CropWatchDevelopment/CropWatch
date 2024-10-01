@@ -19,11 +19,46 @@
 	let yesterday: Date = moment(today).subtract(1, 'day').toDate();
 	let openAi = false;
 	let AIResult;
+	let pdfLoading = false;
 
 	const runAI = async () => {
 		openAi = true;
 		let result = await fetch('/api/v1/ai/chatgpt');
 		AIResult = await result.json();
+	};
+
+	const makePdf = async () => {
+		try {
+			pdfLoading = true;
+			const response = await fetch(`/api/v1/devices/${$page.params.dev_eui}/reports`);
+
+			if (!response.ok) {
+				throw new Error('Failed to fetch the PDF');
+			}
+
+			// Convert response stream into a Blob
+			const blob = await response.blob();
+
+			// Create a URL for the Blob object
+			const url = window.URL.createObjectURL(blob);
+
+			// Create a link element
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = 'report.pdf'; // Set the name for the downloaded file
+
+			// Append link to the body, click it to trigger download, and remove it afterward
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+			// Optionally, revoke the URL after the download
+			window.URL.revokeObjectURL(url);
+			pdfLoading = false;
+		} catch (error) {
+			console.error('Error downloading the PDF:', error);
+			pdfLoading = false;
+		}
 	};
 
 	const sensorPromise = browser
@@ -64,7 +99,7 @@
 				</Dialog>
 		</Tooltip> -->
 		<Tooltip title="Reports">
-				<Button icon={mdiFileChart} href="reports" />
+			<Button icon={mdiFileChart} loading={pdfLoading} on:click={() => makePdf()} />
 		</Tooltip>
 	</div>
 	{#if sensorPromise !== null}

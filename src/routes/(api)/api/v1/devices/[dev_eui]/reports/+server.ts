@@ -30,11 +30,9 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         throw error(500, 'Unable to get data');
     }
 
-    const data = await response.json();
+    let data = await response.json();
 
-    // Prepare data for the chart and table
-    const chartDataValues = data.data.map(d => d.temperatureC);
-    const chartLabels = data.data.map(d => moment(d.created_at).toISOString());
+    //data.data = data.data.filter(f => f.temperatureC > -18.2);
 
     const array = data.data.map(d => {
         return [
@@ -71,30 +69,30 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
     const notice = data.data.filter(item => (item.temperatureC >= -18.1 && item.temperatureC < 15.1)).length;
     const warning = data.data.filter(item => (item.temperatureC >= -15.1 && item.temperatureC < 0)).length;
     const alert = data.data.filter(item => item.temperatureC >= 0).length;
-    const maxTemperature = data.data.reduce((max, item) => 
+    const maxTemperature = data.data.reduce((max, item) =>
         item.temperatureC > max ? item.temperatureC : max, -Infinity);
-    const minTemperature = data.data.reduce((min, item) => 
+    const minTemperature = data.data.reduce((min, item) =>
         item.temperatureC < min ? item.temperatureC : min, Infinity);
     const totalTemperature = data.data.reduce((sum, item) => sum + item.temperatureC, 0);
     const averageTemperature = totalTemperature / data.data.length;
-// Step 1: Calculate the mean (average) temperatureC
-const meanTemperature = totalTemperature / data.data.length;
+    // Step 1: Calculate the mean (average) temperatureC
+    const meanTemperature = totalTemperature / data.data.length;
 
-// Step 2: Calculate the variance
-const variance = data.data.reduce((sum, item) => {
-  const diff = item.temperatureC - meanTemperature;
-  return sum + diff * diff;
-}, 0) / data.data.length;
+    // Step 2: Calculate the variance
+    const variance = data.data.reduce((sum, item) => {
+        const diff = item.temperatureC - meanTemperature;
+        return sum + diff * diff;
+    }, 0) / data.data.length;
 
-// Step 3: Calculate the standard deviation
-const standardDeviation = Math.sqrt(variance);
+    // Step 3: Calculate the standard deviation
+    const standardDeviation = Math.sqrt(variance);
 
     const sensorDetails = [
         ['サンプリング数', array.length.toString()],
-        ['Normal: <= -18', `${normal}/${array.length.toString()} (${(normal / array.length).toFixed(2)} %)`],
-        ['Notice: >= -18.1', `${notice}/${array.length.toString()} (${(notice / array.length).toFixed(2)} %)`],
-        ['Warning: >= -15.1', `${warning}/${array.length.toString()} (${(warning / array.length).toFixed(2)} %)`],
-        ['Alert: >= 0', `${alert}/${array.length.toString()} (${(alert / array.length).toFixed(2)} %)`],
+        ['Normal: <= -18', `${normal}/${array.length.toString()} (${((normal / array.length)*100).toFixed(2)} %)`],
+        ['Notice: >= -18.1', `${notice}/${array.length.toString()} (${((notice / array.length)*100).toFixed(2)} %)`],
+        ['Warning: >= -15.1', `${warning}/${array.length.toString()} (${((warning / array.length)*100).toFixed(2)} %)`],
+        ['Alert: >= 0', `${alert}/${array.length.toString()} (${((alert / array.length)*100).toFixed(2)} %)`],
         ['最大値', `${maxTemperature}℃`],
         ['最小値', `${minTemperature}℃`],
         ['平均値', `${averageTemperature.toFixed(2)}℃`],
@@ -397,9 +395,9 @@ const standardDeviation = Math.sqrt(variance);
             // Other styles as needed
         },
         defaultStyle: { font: 'NotoSansJP' },
-        pageBreakBefore: function(currentNode, followingNodesOnPage, nodesOnNextPage, previousNodesOnPage) {
+        pageBreakBefore: function (currentNode, followingNodesOnPage, nodesOnNextPage, previousNodesOnPage) {
             return currentNode.id == 'tableLegend';
-         }
+        }
     };
 
     // Add the data tables to your docDefinition content
