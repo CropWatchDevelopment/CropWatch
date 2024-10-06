@@ -17,6 +17,10 @@ class CwRuleCriteriaService {
     return await this.repository.findById(id);
   }
 
+  async getByRuleGroupId(id: string): Promise<CwRuleCriteria[] | null> {
+    return await this.repository.findByRuleGroupId(id);
+  }
+
   async getAll(groupId: string): Promise<CwRuleCriteria[]> {
     return await this.repository.findAll(groupId);
   }

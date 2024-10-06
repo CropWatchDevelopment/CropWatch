@@ -29,17 +29,18 @@
 	const tempChartConfig = getChartConfig(people_count, bicycle_count, car_count);
 
 	let value = {
-		from: moment.utc().utcOffset('+0900').toDate(),
-		to: moment.utc().utcOffset('+0900').toDate(),
+		from: moment.utc().utcOffset('+0900').startOf('month').toDate(),
+		to: moment.utc().utcOffset('+0900').endOf('month').toDate(),
 		periodType: PeriodType.Day
 	};
 	let plugins = [TimeGrid];
 	let options = {
 		view: 'dayGridMonth',
 		date: value.from,
-		events: [
-
-		],
+		events: [],
+		prev: () => {
+			debugger;
+		},
 		locale: 'ja-jp',
 	};
 
@@ -48,10 +49,8 @@
 	});
 
 	const loadCountsForCalendar = async () => {
-		const daysThisMonth = moment().daysInMonth() - moment().date() + 1;
-
 		fetch(
-			`/api/v1/devices/${$page.params.dev_eui}/data?firstDataDate=${moment.utc().utcOffset('+0000').subtract(daysThisMonth, 'days').toDate()}&lastDataDate=${moment.utc().utcOffset('+0000').toDate()}`
+			`/api/v1/devices/${$page.params.dev_eui}/data?firstDataDate=${moment.utc(value.from).utcOffset('+0000').startOf('month').toDate()}&lastDataDate=${moment.utc(value.to).utcOffset('+0000').toDate()}`
 		)
 			.then((res) => res.json())
 			.then((data) => {

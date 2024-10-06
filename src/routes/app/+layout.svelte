@@ -63,7 +63,7 @@
 							one: 'ー',
 							two: '二',
 							few: '三',
-							other: 'ー'
+							other: ''
 						}
 					},
 					numbers: {

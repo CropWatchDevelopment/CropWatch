@@ -17,7 +17,22 @@ class CwRuleCriteriaRepository {
       .from('cw_rule_criteria')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching cw_rule_criteria by id:', error.message);
+      return null;
+    }
+
+    return data;
+  }
+
+  async findByRuleGroupId(ruleGroupId: string): Promise<CwRuleCriteria[] | null> {
+    const { data, error } = await this.client
+      .from('cw_rule_criteria')
+      .select('*')
+      .eq('ruleGroupId', ruleGroupId)
+      .select()
 
     if (error) {
       console.error('Error fetching cw_rule_criteria by id:', error.message);

@@ -64,10 +64,7 @@
 						icon={mdiPencil}
 						variant="fill"
 						color="warning"
-						on:click={() => {
-							editing = rule;
-							state = 'edit';
-						}}
+						href={`/app/devices/${$page.params.dev_eui}/settings/rules/${rule.ruleGroupId}/edit`}
 					/></Tooltip
 				>
 				<Tooltip title={$_('devices.rules.deleteRule')}>

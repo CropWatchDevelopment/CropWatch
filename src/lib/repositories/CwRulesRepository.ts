@@ -27,6 +27,21 @@ class CwRulesRepository {
     return data;
   }
 
+  async findByRuleGroupId(ruleGroupId: string): Promise<CwRules | null> {
+    const { data, error } = await this.client
+      .from('cw_rules')
+      .select('*')
+      .eq('ruleGroupId', ruleGroupId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching cw_rules by ruleGroupId:', error.message);
+      return null;
+    }
+
+    return data;
+  }
+
   async findByDevEui(devEui: string): Promise<CwRules[] | null> {
     const { data, error } = await this.client
       .from('cw_rules')
