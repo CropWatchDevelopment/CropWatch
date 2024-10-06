@@ -12,7 +12,6 @@
 		mdiCloseCircle,
 		mdiEmail,
 		mdiFloppy,
-		mdiMinusCircle,
 		mdiPlusCircle
 	} from '@mdi/js';
 	import { onMount } from 'svelte';
