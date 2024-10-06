@@ -52,9 +52,9 @@ Link : https://app.CropWatch.io
 - [Supabase](https://github.com/supabase/supabase)
 
 # Chat, collaberate, and learn at our `community pages` Here:
-<a href="https://kb.CropWatch.io">CropWatch WIKI</a>
-<a href="https://forum.CropWatch.io">CropWatch Forum</a>
-<a href="https://discord.gg/fXHUpx6G">Join our Discord Server</a>
+- <a href="https://kb.CropWatch.io">CropWatch WIKI</a>
+- <a href="https://forum.CropWatch.io">CropWatch Forum</a>
+- <a href="https://discord.gg/fXHUpx6G">Join our Discord Server</a>
 
 # Contribute
 
