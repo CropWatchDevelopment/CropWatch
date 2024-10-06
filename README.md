@@ -25,6 +25,9 @@ List of `CropWatch UI` categories mentioned below
 Link : https://app.CropWatch.io
 
 <a href="https://app.CropWatch.io"><img src="https://github.com/CropWatchDevelopment/CropWatch/blob/master/github/.xdp-DashboardImg.png" alt="CropWatch UI Repo" /></a>
+<a href="https://forum.CropWatch.io">CropWatch Forum</a>
+<a href="https://kb.CropWatch.io">CropWatch WIKI</a>
+
 
 # Environments
 - [UAT](https://crop-watch-i2xiyd6mo-crop-watch-team.vercel.app/)
