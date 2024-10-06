@@ -35,6 +35,9 @@
 			case 2:
 				// dS/m (1 dS/m = 1000 µS/cm)
 				return ecValue / 1000;
+			case 3:
+				// mg/100g (custom conversion example)
+				return ecValue / 10; // Adjust this factor as needed for actual conversion
 			default:
 				return ecValue;
 		}
@@ -90,16 +93,15 @@
 		<div class="flex flex-1 flex-col justify-center items-center" style="min-height: 150px;">
 			<p id="EC" class="text-5xl">
 				{convertEC(current_ec, ecNotationType)}
-				{ecNotationType == 1 ? 'µS/cm' : 'dS/m'}
+				{ecNotationType == 1 ? 'µS/cm' : ecNotationType == 2 ? 'dS/m' : 'mg/100g'}
 			</p>
 			<div class="mt-4 flex flex-row gap-4">
 				<Radio name="label" bind:group={ecNotationType} value={1}>µS/cm</Radio>
 				<Radio name="label" bind:group={ecNotationType} value={2}>dS/m</Radio>
+				<Radio name="label" bind:group={ecNotationType} value={3}>mg/100g</Radio>
 			</div>
 		</div>
 	</DarkCard>
-	
-	
 </div>
 
 <style>
