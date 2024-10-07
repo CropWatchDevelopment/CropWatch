@@ -1,3 +1,4 @@
+// Import necessary modules
 import { error, redirect, type RequestHandler } from "@sveltejs/kit";
 import PdfPrinter from 'pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
@@ -8,6 +9,7 @@ import D3Node from 'd3-node';
 import * as d3 from 'd3';
 import sharp from 'sharp';
 
+// Define the GET handler
 export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
 
@@ -32,72 +34,45 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
 
     let data = await response.json();
 
-    //data.data = data.data.filter(f => f.temperatureC > -18.2);
+    let locationResponse = await fetch(
+        `/api/v1/locations/${data.device.location_id}`
+    );
 
-    const array = data.data.map(d => {
+    if (!locationResponse.ok) {
+        throw error(500, 'Unable to get device location');
+    }
+
+    let location = await locationResponse.json();
+    if (!location) {
+        throw error(500, 'Unable to get device location');
+    }
+
+    data.data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+    // Create a combined data array
+    const combinedArray = data.data.map(d => {
         return [
-            moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
-            d.temperatureC, // Format temperature
-            '' // Placeholder for comment
+            moment(d.created_at).format('YY/MM/DD HH:mm'), // Date
+            d.temperature, // Temperature
+            d.humidity,    // Humidity
+            d.co2_level,         // CO2
+            ''             // Placeholder for comment
         ];
     });
 
-    // Prepare data for D3 chart
-    const chartData = data.data.map(d => ({
-        date: moment(d.created_at).toDate(),
-        value: d.temperatureC
-    }));
-
-    // Generate chart image
-    const chartImageBuffer = await generateChartImage(chartData);
-
-    // Read the font file
-    const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
-    const NotoSansJPRegularFont = fs.readFileSync(fontPath);
-
-    // Prepare data for the report
+    // Prepare data for report
     const reportDetails = [
         ['会社：', '株式会社TKエビス'],
         ['部署：', 'ペットフード事業部'],
-        ['使用場所：', 'xyz'],
-        ['センサー名：', 'ABC'],
+        ['使用場所：', location.name],
+        ['センサー名：', data.device.name],
         ['測定期間', `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment().endOf('month').format('YYYY/MM/DD')}`],
         ['DevEUI', devEui]
     ];
 
-    const normal = data.data.filter(item => item.temperatureC <= -18).length;
-    const notice = data.data.filter(item => (item.temperatureC >= -18.1 && item.temperatureC < 15.1)).length;
-    const warning = data.data.filter(item => (item.temperatureC >= -15.1 && item.temperatureC < 0)).length;
-    const alert = data.data.filter(item => item.temperatureC >= 0).length;
-    const maxTemperature = data.data.reduce((max, item) =>
-        item.temperatureC > max ? item.temperatureC : max, -Infinity);
-    const minTemperature = data.data.reduce((min, item) =>
-        item.temperatureC < min ? item.temperatureC : min, Infinity);
-    const totalTemperature = data.data.reduce((sum, item) => sum + item.temperatureC, 0);
-    const averageTemperature = totalTemperature / data.data.length;
-    // Step 1: Calculate the mean (average) temperatureC
-    const meanTemperature = totalTemperature / data.data.length;
-
-    // Step 2: Calculate the variance
-    const variance = data.data.reduce((sum, item) => {
-        const diff = item.temperatureC - meanTemperature;
-        return sum + diff * diff;
-    }, 0) / data.data.length;
-
-    // Step 3: Calculate the standard deviation
-    const standardDeviation = Math.sqrt(variance);
-
-    const sensorDetails = [
-        ['サンプリング数', array.length.toString()],
-        ['Normal: <= -18', `${normal}/${array.length.toString()} (${((normal / array.length)*100).toFixed(2)} %)`],
-        ['Notice: >= -18.1', `${notice}/${array.length.toString()} (${((notice / array.length)*100).toFixed(2)} %)`],
-        ['Warning: >= -15.1', `${warning}/${array.length.toString()} (${((warning / array.length)*100).toFixed(2)} %)`],
-        ['Alert: >= 0', `${alert}/${array.length.toString()} (${((alert / array.length)*100).toFixed(2)} %)`],
-        ['最大値', `${maxTemperature}℃`],
-        ['最小値', `${minTemperature}℃`],
-        ['平均値', `${averageTemperature.toFixed(2)}℃`],
-        ['標準偏差', `${standardDeviation.toFixed(2)}℃`]
-    ];
+    // Load the font
+    const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
+    const NotoSansJPRegularFont = fs.readFileSync(fontPath);
 
     // Define fonts
     const fonts = {
@@ -115,311 +90,279 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         },
     };
 
-    // Create a new PdfPrinter instance
     const printer = new PdfPrinter(fonts);
 
-    // Function to generate the data table columns
-    function prepareTableBodiesForPages(dataArray: any[], numColumns: number, maxRowsPerPage: number): any[] {
-        const totalRows = Math.ceil(dataArray.length / numColumns);
-        const pages = [];
-        for (let startRow = 0; startRow < totalRows; startRow += maxRowsPerPage) {
-            const endRow = Math.min(startRow + maxRowsPerPage, totalRows);
-            const columnsData = [];
-            for (let i = 0; i < numColumns; i++) {
-                const columnData = dataArray.slice(
-                    i * totalRows + startRow,
-                    i * totalRows + endRow
-                );
-                columnsData.push(columnData);
-            }
+    // Function to generate the first chart (Temperature and Humidity)
+    async function generateTempHumidityChart(data) {
+        const d3n = new D3Node();
+        const svg = d3n.createSVG(800, 400);
 
-            const tableBody = [];
+        const margin = { top: 20, right: 60, bottom: 30, left: 50 };
+        const width = 800 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
 
-            // Create header row
-            const headerRow = [];
-            for (let i = 0; i < numColumns; i++) {
-                headerRow.push({ text: '測定日時', style: 'tableHeader', colSpan: 3, alignment: 'center' });
-                headerRow.push({});
-                headerRow.push({});
-            }
-            tableBody.push(headerRow);
+        // Parse dates and ensure data types
+        data.forEach(d => {
+            d.date = new Date(d.created_at);
+            d.temperature = Number(d.temperature);
+            d.humidity = Number(d.humidity);
+            d.co2_level = Number(d.co2_level);
+        });
 
-            // Create sub-header row
-            const subHeaderRow = [];
-            for (let i = 0; i < numColumns; i++) {
-                subHeaderRow.push({ text: '日時', style: 'tableSubHeader', alignment: 'center' });
-                subHeaderRow.push({ text: '温度', style: 'tableSubHeader', alignment: 'center' });
-                subHeaderRow.push({ text: 'コメント', style: 'tableSubHeader', alignment: 'center' });
-            }
-            tableBody.push(subHeaderRow);
+        // Filter out invalid data
+        data = data.filter(d => !isNaN(d.date.getTime()) && !isNaN(d.temperature) && !isNaN(d.humidity));
 
-            // Create data rows
-            const rowsOnPage = endRow - startRow;
-            for (let rowIndex = 0; rowIndex < rowsOnPage; rowIndex++) {
-                const row = [];
-                for (let colIndex = 0; colIndex < numColumns; colIndex++) {
-                    const dataItem = columnsData[colIndex][rowIndex];
-                    let color = 'white';
-                    if (dataItem) {
-                        if (dataItem[1] && dataItem[1] <= -18) color = 'white';
-                        if (dataItem[1] && dataItem[1] >= -18.1) color = 'yellow';
-                        if (dataItem[1] && dataItem[1] >= -15.1) color = 'orange';
-                        if (dataItem[1] && dataItem[1] >= -0) color = 'red';
+        // Sort data
+        data.sort((a, b) => a.date - b.date);
 
-                        // Add vertical borders to each cell
-                        row.push({ text: dataItem[0], alignment: 'center', border: [true, false, true, false] }); // 測定日時
-                        row.push({ text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }); // 温度
-                        row.push({ text: dataItem[2], alignment: 'center', border: [true, false, true, false] }); // コメント
-                    } else {
-                        row.push({ text: '', border: [true, false, true, false] });
-                        row.push({ text: '', border: [true, false, true, false] });
-                        row.push({ text: '', border: [true, false, true, false] });
-                    }
-                }
-                tableBody.push(row);
-            }
+        const x = d3.scaleTime().range([0, width]);
+        const yTemp = d3.scaleLinear().range([height, 0]);
+        const yHumidity = d3.scaleLinear().range([height, 0]);
 
-            pages.push(tableBody);
-        }
-        return pages;
+        x.domain(d3.extent(data, d => d.date));
+        yTemp.domain([
+            d3.min(data, d => d.temperature) - 5,
+            d3.max(data, d => d.temperature) + 5
+        ]);
+        yHumidity.domain([0, 100]); // Assuming humidity is in percentage
+
+        const lineTemp = d3.line()
+            .x(d => x(d.date))
+            .y(d => yTemp(d.temperature));
+
+        const lineHumidity = d3.line()
+            .x(d => x(d.date))
+            .y(d => yHumidity(d.humidity));
+
+        const g = svg.append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Add the temperature line
+        g.append('path')
+            .datum(data)
+            .attr('d', lineTemp)
+            .style('stroke', 'red')
+            .style('stroke-width', 1.5)
+            .style('fill', 'none');
+
+        // Add the humidity line
+        g.append('path')
+            .datum(data)
+            .attr('d', lineHumidity)
+            .style('stroke', 'blue')
+            .style('stroke-width', 1.5)
+            .style('fill', 'none');
+
+        // Add the X Axis
+        g.append('g')
+            .attr('transform', `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+
+        // Add the Y Axis for Temperature
+        g.append('g')
+            .style('stroke', 'red')
+            .call(d3.axisLeft(yTemp));
+
+        // Add the Y Axis for Humidity
+        g.append('g')
+            .attr('transform', `translate(${width},0)`)
+            .style('stroke', 'blue')
+            .call(d3.axisRight(yHumidity));
+
+        // Add labels
+        svg.append('text')
+            .attr('x', width / 2 + margin.left)
+            .attr('y', margin.top)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '6pt')
+            .text('Temperature and Humidity Over Time');
+
+        // Convert SVG to PNG buffer
+        return sharp(Buffer.from(d3n.svgString()))
+            .png()
+            .toBuffer();
     }
 
-    // Prepare table bodies for pages
-    const numColumns = 4;
-    const maxRowsPerPage = 45; // Adjust as needed based on page size
-    const tableBodies = prepareTableBodiesForPages(array, numColumns, maxRowsPerPage);
+    // Function to generate the second chart (Humidity)
+    async function generateHumidityChart(data) {
+        const d3n = new D3Node();
+        const svg = d3n.createSVG(800, 400);
 
-    // Define the PDF document
+        const margin = { top: 20, right: 60, bottom: 30, left: 50 };
+        const width = 800 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+
+        // Parse dates and ensure data types
+        data.forEach(d => {
+            d.date = new Date(d.created_at);
+            d.humidity = Number(d.humidity);
+        });
+
+        // Filter out invalid data
+        data = data.filter(d => !isNaN(d.date.getTime()) && !isNaN(d.humidity));
+
+        // Sort data
+        data.sort((a, b) => a.date - b.date);
+
+        const x = d3.scaleTime().range([0, width]);
+        const yHumidity = d3.scaleLinear().range([height, 0]);
+
+        x.domain(d3.extent(data, d => d.date));
+        yHumidity.domain([0, 100]);
+
+        const lineHumidity = d3.line()
+            .x(d => x(d.date))
+            .y(d => yHumidity(d.humidity));
+
+        const g = svg.append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        // Add the humidity line
+        g.append('path')
+            .datum(data)
+            .attr('d', lineHumidity)
+            .style('stroke', 'blue')
+            .style('stroke-width', 1.5)
+            .style('fill', 'none');
+
+        // Add the X Axis
+        g.append('g')
+            .attr('transform', `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+
+        // Add the Y Axis for Humidity
+        g.append('g')
+            .call(d3.axisLeft(yHumidity));
+
+        // Add labels
+        svg.append('text')
+            .attr('x', width / 2 + margin.left)
+            .attr('y', margin.top)
+            .attr('text-anchor', 'middle')
+            .style('font-size', '6pt')
+            .text('Humidity Over Time');
+
+        // Convert SVG to PNG buffer
+        return sharp(Buffer.from(d3n.svgString()))
+            .png()
+            .toBuffer();
+    }
+
+    // Generate the charts
+    const tempHumidityChartBuffer = await generateTempHumidityChart(data.data);
+    const humidityChartBuffer = await generateHumidityChart(data.data);
+
+    // Convert chart buffers to base64 strings
+    const tempHumidityChartBase64 = tempHumidityChartBuffer.toString('base64');
+    const humidityChartBase64 = humidityChartBuffer.toString('base64');
+
+    // Generate table bodies for the combined data
+    const numColumnsPerRow = 2; // Number of data entries per row
+    const maxRowsPerPage = 20; // Number of rows per page
+
+    const combinedTables = prepareTableBodiesForPages(combinedArray, numColumnsPerRow, maxRowsPerPage);
+
+    // Build table contents for docDefinition
+    const combinedTableContent = [];
+
+    for (let i = 0; i < combinedTables.length; i++) {
+        const tableBody = combinedTables[i];
+        combinedTableContent.push({
+            table: {
+                headerRows: 1,
+                widths: Array(numColumnsPerRow * 5).fill('*'), // Adjust widths as needed
+                body: tableBody
+            },
+            layout: 'lightHorizontalLines',
+            style: 'dataTable',
+            // Add pageBreak: 'after' unless it's the last table
+            pageBreak: i < combinedTables.length - 1 ? 'after' : undefined
+        });
+    }
+
+    // Define the PDF document and add the sections
+    const pageWidth = 595.28; // A4 width in points
+    const pageMargins = 40; // Default margins in pdfMake
+    const contentWidth = pageWidth - pageMargins * 2;
+
     const docDefinition = {
-        language: 'ja-jp',
-        compress: true,
-        pageSize: 'A4',
-        pageOrientation: 'portrait',
-        pageMargins: [40, 40, 0, 0],
-        info: {
-            title: 'Refrigerator Report',
-            author: 'CropWatch Backend Server',
-            subject: 'Cold-Storage',
-            keywords: 'Refer Cold Storage',
-            creationDate: new Date(),
-        },
         content: [
             {
-                text: '週次 温度データレポート',
-                style: 'title',
+                text: '週次 (or 月次) 温度データレポート',
+                style: 'header',
                 alignment: 'center',
-                margin: [0, 0, 0, 0]
+                margin: [0, 0, 0, 10],
             },
             {
                 columns: [
-                    // Left column (report-details)
                     {
-                        width: '50%',
+                        width: '25%',
                         stack: [
-                            // Report Details Table
+                            {
+                                text: 'Report Details',
+                                style: 'subheader',
+                                margin: [0, 0, 0, 3],
+                            },
                             {
                                 style: 'table',
                                 table: {
-                                    widths: ['auto', '*'],
-                                    body: reportDetails
-                                },
-                                layout: 'noBorders',
-                            },
-                            // Sensor Details Table
-                            {
-                                style: 'sensorTable',
-                                table: {
-                                    widths: ['*', '*'],
-                                    body: sensorDetails
+                                    body: reportDetails,
                                 },
                                 layout: 'lightHorizontalLines',
-                            }
-                        ]
-                    },
-                    // Right column (name-section)
-                    {
-                        width: '35%',
-                        stack: [
-                            // Date box
-                            {
-                                table: {
-                                    widths: ['*'],
-                                    body: [
-                                        [{ text: '日付:', alignment: 'left', margin: [5, 5, 5, 5] }]
-                                    ]
-                                },
-                                layout: {
-                                    defaultBorder: true,
-                                    hLineWidth: () => 1,
-                                    vLineWidth: () => 1,
-                                },
-                                margin: [0, 0, 0, 10]
                             },
-                            // Name boxes
-                            {
-                                columns: [
-                                    {
-                                        width: '33%',
-                                        table: {
-                                            widths: ['*'],
-                                            body: [
-                                                [{ text: '承認', alignment: 'center', border: [true, true, true, false], margin: [0, 5, 0, 5] }],
-                                                [{ text: '', border: [true, false, true, true], margin: [0, 20, 0, 20] }]
-                                            ]
-                                        },
-                                        layout: {
-                                            defaultBorder: false,
-                                            hLineWidth: () => 1,
-                                            vLineWidth: () => 1,
-                                            hLineColor: () => '#000',
-                                            vLineColor: () => '#000',
-                                        }
-                                    },
-                                    {
-                                        width: '33%',
-                                        table: {
-                                            widths: ['*'],
-                                            body: [
-                                                [{ text: '確認', alignment: 'center', border: [true, true, true, false], margin: [0, 5, 0, 5] }],
-                                                [{ text: '', border: [true, false, true, true], margin: [0, 20, 0, 20] }]
-                                            ]
-                                        },
-                                        layout: {
-                                            defaultBorder: false,
-                                            hLineWidth: () => 1,
-                                            vLineWidth: () => 1,
-                                            hLineColor: () => '#000',
-                                            vLineColor: () => '#000',
-                                        }
-                                    },
-                                    {
-                                        width: '34%',
-                                        table: {
-                                            widths: ['*'],
-                                            body: [
-                                                [{ text: '作成', alignment: 'center', border: [true, true, true, false], margin: [0, 5, 0, 5] }],
-                                                [{ text: '', border: [true, false, true, true], margin: [0, 20, 0, 20] }]
-                                            ]
-                                        },
-                                        layout: {
-                                            defaultBorder: false,
-                                            hLineWidth: () => 1,
-                                            vLineWidth: () => 1,
-                                            hLineColor: () => '#000',
-                                            vLineColor: () => '#000',
-                                        }
-                                    }
-                                ],
-                                columnGap: 2,
-                                margin: [0, 0, 0, 10]
-                            },
-                            // Comment line
-                            { text: 'コメント:', margin: [0, 15, 0, 0] }
                         ],
-                        margin: [20, 0, 0, 0]
-                    }
+                    },
+                    // ... [Include other columns if needed]
                 ],
-                columnGap: 20,
-                margin: [0, 0, 0, 20]
             },
-            // Chart image
             {
-                id: 'chart',
-                image: chartImageBuffer,
-                width: 500, // Adjust as needed
-                margin: [0, 0, 0, 40],
+                image: `data:image/png;base64,${tempHumidityChartBase64}`,
+                width: contentWidth,
+                margin: [0, 10, 0, 10],
             },
-            // Data table legend
             {
-                style: 'tableLegend',
-                columns: [
-                    { text: 'Normal: <= -18', border: [true, true, true, true], alignment: 'center' },
-                    { text: 'Notice: >= -18.1 黄色', fillColor: 'yellow', border: [true, true, true, true], alignment: 'center' },
-                    { text: 'Warning: >= -15.1 オレンジ', fillColor: 'orange', border: [true, true, true, true], alignment: 'center' },
-                    { text: 'Alert: >= 0 赤', fillColor: 'red', border: [true, true, true, true], alignment: 'center' }
-                ],
-                // columnGap: 5,
-                margin: [0, 35, 0, 5]
+                image: `data:image/png;base64,${humidityChartBase64}`,
+                width: contentWidth,
+                margin: [0, 10, 0, 10],
+                pageBreak: 'after', // Insert a page break after the second chart
             },
-            // The data tables will be added here
+            // Insert combined data table pages
+            ...combinedTableContent
         ],
         styles: {
-            title: {
-                fontSize: 18,
-                bold: true
+            header: {
+                fontSize: 6,
+                bold: true,
             },
-            text: {
-                fontSize: 10,
-            },
-            table: {
-                margin: [0, 0, 0, 10],
-                fontSize: 10,
-            },
-            sensorTable: {
-                margin: [0, 0, 0, 0],
-                fontSize: 10,
-            },
-            tableLegend: {
-                fontSize: 10,
-            },
-            dataTable: {
-                fontSize: 7,
-                paddingRight: '5px',
-                marginRight: '5px',
-                table: {
-                    border: '1px solid #dddddd',
-                    body: [
-                        [
-                            {
-                                border: [false, true, false, false],
-                                fillColor: '#eeeeee',
-                                text: 'border:\n[false, true, false, false]',
-                                paddingRight: '5px',
-                                marginRight: '5px',
-                            },
-                        ]],
-                }
+            subheader: {
+                fontSize: 4.5,
+                bold: true,
             },
             tableHeader: {
+                fontSize: 6,
                 bold: true,
-                fontSize: 8,
-                color: 'black',
-                alignment: 'center'
+                fillColor: '#eeeeee',
+                margin: [0, 2, 0, 2],
             },
-            tableSubHeader: {
-                bold: true,
-                fontSize: 7,
-                color: 'black',
-                alignment: 'center'
+            dataTable: {
+                fontSize: 4.5,
+                margin: [0, 5, 0, 15],
             },
-            // Other styles as needed
+            table: {
+                margin: [0, 5, 0, 15],
+                fontSize: 4.5,
+            },
         },
-        defaultStyle: { font: 'NotoSansJP' },
-        pageBreakBefore: function (currentNode, followingNodesOnPage, nodesOnNextPage, previousNodesOnPage) {
-            return currentNode.id == 'tableLegend';
-        }
+        defaultStyle: {
+            font: 'NotoSansJP',
+            fontSize: 4.5,
+        },
+        pageSize: 'A4',
+        pageMargins: [40, 60, 40, 60],
     };
 
-    // Add the data tables to your docDefinition content
-    tableBodies.forEach((tableBody, index) => {
-        const dataTable = {
-            layout: 'horizontalLines',
-            style: 'dataTable',
-            table: {
-                headerRows: 2, // We have two header rows now
-                widths: Array(numColumns * 3).fill('auto'),
-                body: tableBody
-            },
-            margin: [0, 0, 0, 0],
-            pageBreak: index < tableBodies.length - 1 ? 'after' : undefined
-        };
-        docDefinition.content.push(dataTable);
-    });
-
-    // Generate the PDF document
     const pdfDoc = printer.createPdfKitDocument(docDefinition);
 
-    // Collect the PDF data chunks
     const chunks: Uint8Array[] = [];
 
     return new Promise<Response>((resolve, reject) => {
@@ -442,82 +385,96 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
 
         pdfDoc.end();
     });
+
+    // Updated prepareTableBodiesForPages function
+    function prepareTableBodiesForPages(dataArray, numColumnsPerRow, maxRowsPerPage) {
+        const totalDataItems = dataArray.length;
+        const itemsPerPage = numColumnsPerRow * maxRowsPerPage;
+        const pages = [];
+        let currentIndex = 0;
+
+        while (currentIndex < totalDataItems) {
+            const tableBody = [];
+
+            // Create header row
+            const headerRow = [];
+            for (let i = 0; i < numColumnsPerRow; i++) {
+                headerRow.push(
+                    { text: '日時', style: 'tableHeader', alignment: 'center' },
+                    { text: '温度', style: 'tableHeader', alignment: 'center' },
+                    { text: '湿度', style: 'tableHeader', alignment: 'center' },
+                    { text: 'CO2', style: 'tableHeader', alignment: 'center' },
+                    { text: 'コメント', style: 'tableHeader', alignment: 'center' }
+                );
+            }
+            tableBody.push(headerRow);
+
+            // Extract data for the current page
+            const pageData = dataArray.slice(currentIndex, currentIndex + itemsPerPage);
+
+            // Split pageData into columns
+            const columnsData = [];
+            for (let i = 0; i < numColumnsPerRow; i++) {
+                const start = i * maxRowsPerPage;
+                const end = start + maxRowsPerPage;
+                columnsData.push(pageData.slice(start, end));
+            }
+
+            // Fill rows
+            for (let rowIndex = 0; rowIndex < maxRowsPerPage; rowIndex++) {
+                const row = [];
+
+                for (let colIndex = 0; colIndex < numColumnsPerRow; colIndex++) {
+                    const columnData = columnsData[colIndex];
+                    if (rowIndex < columnData.length) {
+                        const dataItem = columnData[rowIndex];
+                        const [date, temperature, humidity, co2, comment] = dataItem;
+
+                        // Determine fill colors based on thresholds
+                        let tempColor = 'white';
+                        if (temperature <= -18) tempColor = 'white';
+                        else if (temperature > -18 && temperature <= -15) tempColor = 'yellow';
+                        else if (temperature > -15 && temperature < 0) tempColor = 'orange';
+                        else if (temperature >= 0) tempColor = 'red';
+
+                        let humidityColor = 'white';
+                        if (humidity <= 40) humidityColor = 'white';
+                        else if (humidity > 40 && humidity <= 60) humidityColor = 'yellow';
+                        else if (humidity > 60 && humidity <= 80) humidityColor = 'orange';
+                        else if (humidity > 80) humidityColor = 'red';
+
+                        let co2Color = 'white';
+                        if (co2 <= 400) co2Color = 'white';
+                        else if (co2 > 400 && co2 <= 800) co2Color = 'yellow';
+                        else if (co2 > 800 && co2 <= 1000) co2Color = 'orange';
+                        else if (co2 > 1000) co2Color = 'red';
+
+                        row.push(
+                            { text: date, alignment: 'center', border: [true, false, true, false] },
+                            { text: temperature, alignment: 'center', fillColor: tempColor, border: [true, false, true, false] },
+                            { text: humidity, alignment: 'center', fillColor: humidityColor, border: [true, false, true, false] },
+                            { text: co2, alignment: 'center', fillColor: co2Color, border: [true, false, true, false] },
+                            { text: comment, alignment: 'center', border: [true, false, true, false] }
+                        );
+                    } else {
+                        // Fill empty cells if there's no more data in this column
+                        row.push(
+                            { text: '', border: [true, false, true, false] },
+                            { text: '', border: [true, false, true, false] },
+                            { text: '', border: [true, false, true, false] },
+                            { text: '', border: [true, false, true, false] },
+                            { text: '', border: [true, false, true, false] }
+                        );
+                    }
+                }
+
+                tableBody.push(row);
+            }
+
+            pages.push(tableBody);
+            currentIndex += itemsPerPage;
+        }
+
+        return pages;
+    }
 };
-
-// Function to generate the chart image using D3.js and sharp
-async function generateChartImage(data) {
-    const d3n = new D3Node();
-
-    const width = 800;
-    const height = 600;
-
-    const svg = d3n.createSVG(width, height);
-
-    const margin = { top: 40, right: 20, bottom: 50, left: 60 };
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const x = d3.scaleTime()
-        .range([0, innerWidth])
-        .domain(d3.extent(data, d => d.date));
-
-    const y = d3.scaleLinear()
-        .range([innerHeight, 0])
-        .domain([d3.min(data, d => d.value) - 5, d3.max(data, d => d.value) + 5]);
-
-    const line = d3.line()
-        .x(d => x(d.date))
-        .y(d => y(d.value));
-
-    const g = svg.append('g')
-        .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // X Axis
-    g.append('g')
-        .attr('transform', `translate(0,${innerHeight})`)
-        .call(d3.axisBottom(x).ticks(d3.timeWeek.every(1)).tickFormat(d3.timeFormat('%b %d')))
-        .selectAll('text')
-        .attr('transform', 'rotate(45)')
-        .style('text-anchor', 'start');
-
-    // Y Axis
-    g.append('g')
-        .call(d3.axisLeft(y));
-
-    // Line path
-    g.append('path')
-        .datum(data)
-        .attr('fill', 'none')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-width', 2)
-        .attr('d', line);
-
-    // Labels
-    // X Axis Label
-    svg.append('text')
-        .attr('x', width / 2)
-        .attr('y', height - 10)
-        .attr('text-anchor', 'middle')
-        .text('Week');
-
-    // Y Axis Label
-    svg.append('text')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -height / 2)
-        .attr('y', 15)
-        .attr('text-anchor', 'middle')
-        .text('Temperature (℃)');
-
-    // Title
-    svg.append('text')
-        .attr('x', width / 2)
-        .attr('y', 25)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '16px')
-        .text('Temperature Over Time');
-
-    // Convert SVG to PNG buffer using sharp
-    const svgString = d3n.svgString();
-    const pngBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
-    return pngBuffer;
-}

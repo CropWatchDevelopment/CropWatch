@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import moment from "moment";
 import D3Node from 'd3-node';
+import TextToSVG from 'text-to-svg';
 import * as d3 from 'd3';
 import sharp from 'sharp';
 
@@ -560,7 +561,16 @@ async function generateChartImage(data) {
 
     const svg = d3n.createSVG(width, height);
 
-    const margin = { top: 40, right: 20, bottom: 50, left: 60 };
+    // Add a <style> element to set the default font-family and font-size
+    svg.append('style').text(`
+        text {
+            font-family: sans-serif;
+            font-size: 10px;
+        }
+    `);
+
+    // Adjusted margins to accommodate rotated labels and legend
+    const margin = { top: 40, right: 80, bottom: 100, left: 60 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -570,7 +580,10 @@ async function generateChartImage(data) {
 
     const y = d3.scaleLinear()
         .range([innerHeight, 0])
-        .domain([d3.min(data, d => d.value) - 5, d3.max(data, d => d.value) + 5]);
+        .domain([
+            d3.min(data, d => d.value) - 5,
+            d3.max(data, d => d.value) + 5
+        ]);
 
     const line = d3.line()
         .x(d => x(d.date))
@@ -582,14 +595,25 @@ async function generateChartImage(data) {
     // X Axis
     g.append('g')
         .attr('transform', `translate(0,${innerHeight})`)
-        .call(d3.axisBottom(x).ticks(d3.timeWeek.every(1)).tickFormat(d3.timeFormat('%b %d')))
+        .call(
+            d3.axisBottom(x)
+                .ticks(d3.timeDay.every(2))
+                .tickFormat(d3.timeFormat('%Y-%m-%d'))
+        )
         .selectAll('text')
-        .attr('transform', 'rotate(45)')
-        .style('text-anchor', 'start');
+        .attr('transform', 'rotate(90)')
+        .attr('x', 10)
+        .attr('y', -5)
+        .style('text-anchor', 'start')
+        .style('font-family', 'sans-serif')
+        .style('font-size', '8px'); // Adjust font size as needed
 
     // Y Axis
     g.append('g')
-        .call(d3.axisLeft(y));
+        .call(d3.axisLeft(y))
+        .selectAll('text')
+        .style('font-family', 'sans-serif')
+        .style('font-size', '10px');
 
     // Line path
     g.append('path')
@@ -599,32 +623,67 @@ async function generateChartImage(data) {
         .attr('stroke-width', 2)
         .attr('d', line);
 
-    // Labels
     // X Axis Label
     svg.append('text')
-        .attr('x', width / 2)
-        .attr('y', height - 10)
+        .attr('x', margin.left + innerWidth / 2)
+        .attr('y', height - 20)
         .attr('text-anchor', 'middle')
-        .text('Week');
+        .text('Date')
+        .style('font-size', '12px')
+        .style('font-family', 'sans-serif');
 
     // Y Axis Label
     svg.append('text')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -height / 2)
-        .attr('y', 15)
+        .attr(
+            'transform',
+            `translate(${margin.left - 40}, ${
+                margin.top + innerHeight / 2
+            }) rotate(-90)`
+        )
         .attr('text-anchor', 'middle')
-        .text('Temperature (℃)');
+        .text('Temperature (℃)')
+        .style('font-size', '12px')
+        .style('font-family', 'sans-serif');
 
     // Title
     svg.append('text')
-        .attr('x', width / 2)
-        .attr('y', 25)
+        .attr('x', margin.left + innerWidth / 2)
+        .attr('y', margin.top - 20)
         .attr('text-anchor', 'middle')
         .style('font-size', '16px')
+        .style('font-family', 'sans-serif')
         .text('Temperature Over Time');
+
+    // Legend
+    const legend = svg
+        .append('g')
+        .attr('class', 'legend')
+        .attr(
+            'transform',
+            `translate(${width - margin.right + 10}, ${margin.top})`
+        );
+
+    legend
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', 20)
+        .attr('height', 10)
+        .style('fill', 'steelblue');
+
+    legend
+        .append('text')
+        .attr('x', 25)
+        .attr('y', 10)
+        .text('Temperature')
+        .style('font-size', '12px')
+        .style('font-family', 'sans-serif')
+        .attr('alignment-baseline', 'middle');
 
     // Convert SVG to PNG buffer using sharp
     const svgString = d3n.svgString();
-    const pngBuffer = await sharp(Buffer.from(svgString)).png().toBuffer();
+    const pngBuffer = await sharp(Buffer.from(svgString))
+        .png()
+        .toBuffer();
     return pngBuffer;
 }
