@@ -60,6 +60,23 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         ];
     });
 
+    const normal = data.data.filter(item => item.temperature <= -18).length;
+    const notice = data.data.filter(item => item.temperature > -18 && item.temperature <= -15).length;
+    const warning = data.data.filter(item => item.temperature > -15 && item.temperature < 0).length;
+    const alert = data.data.filter(item => item.temperature >= 0).length;
+    const maxTemperature = data.data.reduce((max, item) =>
+        item.temperature > max ? item.temperature : max, -Infinity);
+    const minTemperature = data.data.reduce((min, item) =>
+        item.temperature < min ? item.temperature : min, Infinity);
+    const totalTemperature = data.data.reduce((sum, item) => sum + item.temperature, 0);
+    const averageTemperature = totalTemperature / data.data.length;
+    const meanTemperature = totalTemperature / data.data.length;
+    const variance = data.data.reduce((sum, item) => {
+        const diff = item.temperature - meanTemperature;
+        return sum + diff * diff;
+    }, 0) / data.data.length;
+    const standardDeviation = Math.sqrt(variance);
+
     // Prepare data for report
     const reportDetails = [
         ['会社：', '株式会社TKエビス'],
@@ -68,6 +85,42 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         ['センサー名：', data.device.name],
         ['測定期間', `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment().endOf('month').format('YYYY/MM/DD')}`],
         ['DevEUI', devEui]
+    ];
+    const sensorDetails = [
+        ['Data Type', 'Temperature'],
+        ['サンプリング数', combinedArray.length.toString()],
+        ['Normal: <= -18', `${normal}/${combinedArray.length} (${((normal / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Notice: >= -18.1', `${notice}/${combinedArray.length} (${((notice / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Warning: >= -15.1', `${warning}/${combinedArray.length} (${((warning / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Alert: >= 0', `${alert}/${combinedArray.length} (${((alert / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['最大値', `${maxTemperature}℃`],
+        ['最小値', `${minTemperature}℃`],
+        ['平均値', `${averageTemperature.toFixed(2)}℃`]
+    ];
+
+    // Prepare sections for Humidity and CO2 as well
+    const humidityDetails = [
+        ['Data Type', 'Humidity'],
+        ['サンプリング数', combinedArray.length.toString()],
+        ['Normal: <= 40%', `${data.data.filter(item => (item.humidity || 0) <= 40).length}/${combinedArray.length} (${((data.data.filter(item => (item.humidity || 0) <= 40).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Notice: > 40% and <= 60%', `${data.data.filter(item => (item.humidity || 0) > 40 && (item.humidity || 0) <= 60).length}/${combinedArray.length} (${((data.data.filter(item => (item.humidity || 0) > 40 && (item.humidity || 0) <= 60).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Warning: > 60% and <= 80%', `${data.data.filter(item => (item.humidity || 0) > 60 && (item.humidity || 0) <= 80).length}/${combinedArray.length} (${((data.data.filter(item => (item.humidity || 0) > 60 && (item.humidity || 0) <= 80).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Alert: > 80%', `${data.data.filter(item => (item.humidity || 0) > 80).length}/${combinedArray.length} (${((data.data.filter(item => (item.humidity || 0) > 80).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['最大湿度', `${Math.max(...data.data.map(d => d.humidity || 0))}%`],
+        ['最小湿度', `${Math.min(...data.data.map(d => d.humidity || 0))}%`],
+        ['平均湿度', `${(data.data.reduce((sum, d) => sum + (d.humidity || 0), 0) / combinedArray.length).toFixed(2)}%`]
+    ];
+
+    const co2Details = [
+        ['Data Type', 'CO2'],
+        ['サンプリング数', combinedArray.length.toString()],
+        ['Normal: <= 400ppm', `${data.data.filter(item => (item.co2 || 0) <= 400).length}/${combinedArray.length} (${((data.data.filter(item => (item.co2 || 0) <= 400).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Notice: > 400ppm and <= 800ppm', `${data.data.filter(item => (item.co2 || 0) > 400 && (item.co2 || 0) <= 800).length}/${combinedArray.length} (${((data.data.filter(item => (item.co2 || 0) > 400 && (item.co2 || 0) <= 800).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Warning: > 800ppm and <= 1000ppm', `${data.data.filter(item => (item.co2 || 0) > 800 && (item.co2 || 0) <= 1000).length}/${combinedArray.length} (${((data.data.filter(item => (item.co2 || 0) > 800 && (item.co2 || 0) <= 1000).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['Alert: > 1000ppm', `${data.data.filter(item => (item.co2 || 0) > 1000).length}/${combinedArray.length} (${((data.data.filter(item => (item.co2 || 0) > 1000).length / combinedArray.length) * 100).toFixed(2)}%)`],
+        ['最大CO2濃度', `${Math.max(...data.data.map(d => d.co2 || 0))}ppm`],
+        ['最小CO2濃度', `${Math.min(...data.data.map(d => d.co2 || 0))}ppm`],
+        ['平均CO2濃度', `${(data.data.reduce((sum, d) => sum + (d.co2 || 0), 0) / combinedArray.length).toFixed(2)}ppm`]
     ];
 
     // Load the font
@@ -312,7 +365,57 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                             },
                         ],
                     },
-                    // ... [Include other columns if needed]
+                    {
+                        width: '25%',
+                        stack: [
+                            {
+                                text: 'Temperature Details',
+                                style: 'subheader',
+                                margin: [0, 0, 0, 3],
+                            },
+                            {
+                                style: 'table',
+                                table: {
+                                    body: sensorDetails,
+                                },
+                                layout: 'lightHorizontalLines',
+                            },
+                        ],
+                    },
+                    {
+                        width: '25%',
+                        stack: [
+                            {
+                                text: 'Humidity Details',
+                                style: 'subheader',
+                                margin: [0, 0, 0, 3],
+                            },
+                            {
+                                style: 'table',
+                                table: {
+                                    body: humidityDetails,
+                                },
+                                layout: 'lightHorizontalLines',
+                            },
+                        ],
+                    },
+                    {
+                        width: '25%',
+                        stack: [
+                            {
+                                text: 'CO2 Details',
+                                style: 'subheader',
+                                margin: [0, 0, 0, 3],
+                            },
+                            {
+                                style: 'table',
+                                table: {
+                                    body: co2Details,
+                                },
+                                layout: 'lightHorizontalLines',
+                            },
+                        ],
+                    },
                 ],
             },
             {
@@ -430,30 +533,11 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                         const dataItem = columnData[rowIndex];
                         const [date, temperature, humidity, co2, comment] = dataItem;
 
-                        // Determine fill colors based on thresholds
-                        let tempColor = 'white';
-                        if (temperature <= -18) tempColor = 'white';
-                        else if (temperature > -18 && temperature <= -15) tempColor = 'yellow';
-                        else if (temperature > -15 && temperature < 0) tempColor = 'orange';
-                        else if (temperature >= 0) tempColor = 'red';
-
-                        let humidityColor = 'white';
-                        if (humidity <= 40) humidityColor = 'white';
-                        else if (humidity > 40 && humidity <= 60) humidityColor = 'yellow';
-                        else if (humidity > 60 && humidity <= 80) humidityColor = 'orange';
-                        else if (humidity > 80) humidityColor = 'red';
-
-                        let co2Color = 'white';
-                        if (co2 <= 400) co2Color = 'white';
-                        else if (co2 > 400 && co2 <= 800) co2Color = 'yellow';
-                        else if (co2 > 800 && co2 <= 1000) co2Color = 'orange';
-                        else if (co2 > 1000) co2Color = 'red';
-
                         row.push(
                             { text: date, alignment: 'center', border: [true, false, true, false] },
-                            { text: temperature, alignment: 'center', fillColor: tempColor, border: [true, false, true, false] },
-                            { text: humidity, alignment: 'center', fillColor: humidityColor, border: [true, false, true, false] },
-                            { text: co2, alignment: 'center', fillColor: co2Color, border: [true, false, true, false] },
+                            { text: temperature, alignment: 'center', border: [true, false, true, false] },
+                            { text: humidity, alignment: 'center', border: [true, false, true, false] },
+                            { text: co2, alignment: 'center', border: [true, false, true, false] },
                             { text: comment, alignment: 'center', border: [true, false, true, false] }
                         );
                     } else {
