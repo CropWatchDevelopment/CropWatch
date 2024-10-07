@@ -338,6 +338,34 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
     const pageMargins = 40; // Default margins in pdfMake
     const contentWidth = pageWidth - pageMargins * 2;
 
+    function customTableLayout() {
+        return {
+            hLineWidth: function (i, node) {
+                return 0.5; // Draw horizontal lines between all rows
+            },
+            vLineWidth: function (i, node) {
+                // Draw vertical lines at the left edge, right edge, and right side of the comments column
+                if (i === 0 || i === node.table.widths.length) {
+                    return 0.5; // Left and right table borders
+                } else if (i % 5 === 0) {
+                    return 0.5; // Right edge of comments column
+                } else {
+                    return 0; // No vertical lines between other columns
+                }
+            },
+            hLineColor: function (i, node) {
+                return 'gray';
+            },
+            vLineColor: function (i, node) {
+                return 'gray';
+            },
+            paddingLeft: function (i, node) { return 2; },
+            paddingRight: function (i, node) { return 2; },
+            paddingTop: function (i, node) { return 1; },
+            paddingBottom: function (i, node) { return 1; },
+        };
+    }
+
     const docDefinition = {
         content: [
             {
@@ -495,10 +523,10 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         const itemsPerPage = numColumnsPerRow * maxRowsPerPage;
         const pages = [];
         let currentIndex = 0;
-
+    
         while (currentIndex < totalDataItems) {
             const tableBody = [];
-
+    
             // Create header row
             const headerRow = [];
             for (let i = 0; i < numColumnsPerRow; i++) {
@@ -511,10 +539,10 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 );
             }
             tableBody.push(headerRow);
-
+    
             // Extract data for the current page
             const pageData = dataArray.slice(currentIndex, currentIndex + itemsPerPage);
-
+    
             // Split pageData into columns
             const columnsData = [];
             for (let i = 0; i < numColumnsPerRow; i++) {
@@ -522,43 +550,43 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 const end = start + maxRowsPerPage;
                 columnsData.push(pageData.slice(start, end));
             }
-
+    
             // Fill rows
             for (let rowIndex = 0; rowIndex < maxRowsPerPage; rowIndex++) {
                 const row = [];
-
+    
                 for (let colIndex = 0; colIndex < numColumnsPerRow; colIndex++) {
                     const columnData = columnsData[colIndex];
                     if (rowIndex < columnData.length) {
                         const dataItem = columnData[rowIndex];
                         const [date, temperature, humidity, co2, comment] = dataItem;
-
+    
                         row.push(
-                            { text: date, alignment: 'center', border: [true, false, true, false] },
-                            { text: temperature, alignment: 'center', border: [true, false, true, false] },
-                            { text: humidity, alignment: 'center', border: [true, false, true, false] },
-                            { text: co2, alignment: 'center', border: [true, false, true, false] },
-                            { text: comment, alignment: 'center', border: [true, false, true, false] }
+                            { text: date, alignment: 'center' },
+                            { text: temperature, alignment: 'center' },
+                            { text: humidity, alignment: 'center' },
+                            { text: co2, alignment: 'center' },
+                            { text: comment, alignment: 'center' }
                         );
                     } else {
                         // Fill empty cells if there's no more data in this column
                         row.push(
-                            { text: '', border: [true, false, true, false] },
-                            { text: '', border: [true, false, true, false] },
-                            { text: '', border: [true, false, true, false] },
-                            { text: '', border: [true, false, true, false] },
-                            { text: '', border: [true, false, true, false] }
+                            { text: '', alignment: 'center' },
+                            { text: '', alignment: 'center' },
+                            { text: '', alignment: 'center' },
+                            { text: '', alignment: 'center' },
+                            { text: '', alignment: 'center' }
                         );
                     }
                 }
-
+    
                 tableBody.push(row);
             }
-
+    
             pages.push(tableBody);
             currentIndex += itemsPerPage;
         }
-
+    
         return pages;
     }
 };
