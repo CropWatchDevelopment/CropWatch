@@ -311,7 +311,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
 
     // Generate table bodies for the combined data
     const numColumnsPerRow = 2; // Number of data entries per row
-    const maxRowsPerPage = 20; // Number of rows per page
+    const maxRowsPerPage = 65; // Number of rows per page
 
     const combinedTables = prepareTableBodiesForPages(combinedArray, numColumnsPerRow, maxRowsPerPage);
 
@@ -434,7 +434,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         ],
         styles: {
             header: {
-                fontSize: 6,
+                fontSize: 12,
                 bold: true,
             },
             subheader: {
@@ -461,7 +461,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
             fontSize: 4.5,
         },
         pageSize: 'A4',
-        pageMargins: [40, 60, 40, 60],
+        pageMargins: [40, 5, 5, 5],
     };
 
     const pdfDoc = printer.createPdfKitDocument(docDefinition);
