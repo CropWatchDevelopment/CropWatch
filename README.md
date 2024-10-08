@@ -4,6 +4,7 @@
   
   [![CodeQL - Master](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
   [![CodeQL - Develop](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=develop)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
+  [![codecov](https://codecov.io/gh/CropWatchDevelopment/CropWatch/graph/badge.svg?token=H0LAIQ38KG)](https://codecov.io/gh/CropWatchDevelopment/CropWatch)
 
 </div>
 <br>
