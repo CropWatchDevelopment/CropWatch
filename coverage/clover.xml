@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1728379333782" clover="3.2.0">
-  <project timestamp="1728379333782" name="All files">
+<coverage generated="1728386085233" clover="3.2.0">
+  <project timestamp="1728386085233" name="All files">
     <metrics statements="11379" coveredstatements="4" conditionals="219" coveredconditionals="31" methods="219" coveredmethods="31" elements="11817" coveredelements="66" complexity="0" loc="11379" ncloc="11379" packages="91" files="219" classes="219"/>
     <package name="CropWatch">
       <metrics statements="96" coveredstatements="0" conditionals="4" coveredconditionals="1" methods="4" coveredmethods="1"/>
@@ -2382,11 +2382,20 @@
         <line num="65" count="0" type="stmt"/>
         <line num="66" count="0" type="stmt"/>
         <line num="68" count="0" type="stmt"/>
+        <line num="70" count="0" type="stmt"/>
+        <line num="71" count="0" type="stmt"/>
+        <line num="72" count="0" type="stmt"/>
+        <line num="73" count="0" type="stmt"/>
+        <line num="74" count="0" type="stmt"/>
+        <line num="76" count="0" type="stmt"/>
+        <line num="77" count="0" type="stmt"/>
+        <line num="78" count="0" type="stmt"/>
         <line num="79" count="0" type="stmt"/>
         <line num="80" count="0" type="stmt"/>
         <line num="81" count="0" type="stmt"/>
         <line num="82" count="0" type="stmt"/>
         <line num="83" count="0" type="stmt"/>
+        <line num="84" count="0" type="stmt"/>
         <line num="85" count="0" type="stmt"/>
         <line num="86" count="0" type="stmt"/>
         <line num="87" count="0" type="stmt"/>
@@ -2397,15 +2406,6 @@
         <line num="92" count="0" type="stmt"/>
         <line num="93" count="0" type="stmt"/>
         <line num="94" count="0" type="stmt"/>
-        <line num="95" count="0" type="stmt"/>
-        <line num="96" count="0" type="stmt"/>
-        <line num="97" count="0" type="stmt"/>
-        <line num="98" count="0" type="stmt"/>
-        <line num="99" count="0" type="stmt"/>
-        <line num="100" count="0" type="stmt"/>
-        <line num="101" count="0" type="stmt"/>
-        <line num="102" count="0" type="stmt"/>
-        <line num="103" count="0" type="stmt"/>
       </file>
       <file name="chart_phConfig.ts" path="/home/kevin/source/repos/cropwatch/CropWatch/src/lib/components/ui/Sensors/SEEED_SENSECAP_S2100_NIMBOL/chart_phConfig.ts">
         <metrics statements="119" coveredstatements="0" conditionals="1" coveredconditionals="0" methods="1" coveredmethods="0"/>
