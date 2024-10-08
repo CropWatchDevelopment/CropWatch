@@ -5,3 +5,4 @@ export function isValidEmail(email: string): boolean {
     // Test the input email against the pattern
     return emailPattern.test(email);
 }
+
