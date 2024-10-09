@@ -23,9 +23,6 @@ importers:
       chart.js:
         specifier: '4'
         version: 4.4.4
-      chartjs-node-canvas:
-        specifier: '4'
-        version: 4.1.6(chart.js@4.4.4)
       d3-node:
         specifier: ^3.0.0
         version: 3.0.0(bufferutil@4.0.8)(canvas@2.11.2)(utf-8-validate@6.0.4)
@@ -2213,11 +2210,6 @@ packages:
   chart.js@4.4.4:
     resolution: {integrity: sha512-emICKGBABnxhMjUjlYRR12PmOXhJ2eJjEHL2/dZlWjxRAZT1D8xplLFq5M0tMQK8ja+wBS/tuVEJB5C6r7VxJA==}
     engines: {pnpm: '>=8'}
-
-  chartjs-node-canvas@4.1.6:
-    resolution: {integrity: sha512-UQJbPWrvqB/FoLclGA9BaLQmZbzSYlujF4w8NZd6Xzb+sqgACBb2owDX6m7ifCXLjUW5Nz0Qx0qqrTtQkkSoYw==}
-    peerDependencies:
-      chart.js: ^3.5.1
 
   check-error@2.1.1:
     resolution: {integrity: sha512-OAlb+T7V4Op9OwdkjmguYRqncdlx5JiofwOAUkmTF+jNdHwzTaTs4sRAGpzLF3oOz5xAyDGrPgeIDFQmDOTiJw==}
@@ -7692,6 +7684,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+    optional: true
 
   chai@5.1.1:
     dependencies:
@@ -7715,15 +7708,6 @@ snapshots:
   chart.js@4.4.4:
     dependencies:
       '@kurkle/color': 0.3.2
-
-  chartjs-node-canvas@4.1.6(chart.js@4.4.4):
-    dependencies:
-      canvas: 2.11.2
-      chart.js: 4.4.4
-      tslib: 2.6.3
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
 
   check-error@2.1.1: {}
 
@@ -8281,6 +8265,7 @@ snapshots:
   decompress-response@4.2.1:
     dependencies:
       mimic-response: 2.1.0
+    optional: true
 
   deep-eql@5.0.2: {}
 
@@ -9548,7 +9533,8 @@ snapshots:
 
   mime@1.6.0: {}
 
-  mimic-response@2.1.0: {}
+  mimic-response@2.1.0:
+    optional: true
 
   min-indent@1.0.1: {}
 
@@ -9632,7 +9618,8 @@ snapshots:
       object-assign: 4.1.1
       thenify-all: 1.6.0
 
-  nan@2.20.0: {}
+  nan@2.20.0:
+    optional: true
 
   nanoid@3.3.7: {}
 
@@ -10315,13 +10302,15 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
-  simple-concat@1.0.1: {}
+  simple-concat@1.0.1:
+    optional: true
 
   simple-get@3.1.1:
     dependencies:
       decompress-response: 4.2.1
       once: 1.4.0
       simple-concat: 1.0.1
+    optional: true
 
   simple-swizzle@0.2.2:
     dependencies:
