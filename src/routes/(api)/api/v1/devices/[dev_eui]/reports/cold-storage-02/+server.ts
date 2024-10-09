@@ -537,8 +537,8 @@ async function generateChartImage(data) {
         .attr('y', -5)
         .style('text-anchor', 'start')
         .style('font-family', 'sans-serif')
-        .style('font-size', '8px'); // Adjust font size as needed
-        .style('color', 'red')
+        .style('font-size', '8px') // Adjust font size as needed
+        .style('color', 'red');
 
     // Y Axis
     g.append('g')
