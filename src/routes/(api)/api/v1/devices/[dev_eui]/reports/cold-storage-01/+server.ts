@@ -83,8 +83,8 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     const chartImageBuffer = await generateChartImage(chartData);
 
     // Read the font file
-    const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
-    const NotoSansJPRegularFont = fs.readFileSync(fontPath);
+    // const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
+    // const NotoSansJPRegularFont = fs.readFileSync(fontPath);
 
     // Prepare data for the report
     const reportDetails = [
@@ -177,6 +177,8 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     }
 
 
+    const fontUrl = new URL('./fonts/NotoSansJP/NotoSansJP-Regular.ttf', import.meta.url).pathname;
+    const NotoSansJPRegularFont = fs.readFileSync(fontUrl);
     // Define fonts
     const fonts = {
         Roboto: {
