@@ -5,10 +5,11 @@
 	import moment from 'moment';
 
 	import { mdiCog, mdiDownload, mdiFileChart, mdiRobot } from '@mdi/js';
-	import { Button, Dialog, Icon, Toggle, Tooltip } from 'svelte-ux';
+	import { Button, Dialog, Icon, MonthListByYear, Toggle, Tooltip } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import SensorHeader from '$lib/components/ui/Sensors/SensorHeader.svelte';
 	import { _ } from 'svelte-i18n';
+	import { startOfYear, subYears } from 'date-fns';
 
 	let sensorName = 'NS';
 	let devEui = $page.params.dev_eui;
@@ -21,6 +22,7 @@
 	let openAi = false;
 	let AIResult;
 	let pdfLoading = false;
+	let selectedMonth: Date = new Date();
 
 	const runAI = async () => {
 		openAi = true;
@@ -32,7 +34,7 @@
 		try {
 			pdfLoading = true;
 			const response = await fetch(
-				`/api/v1/devices/${$page.params.dev_eui}/reports/${report_endpoint}`
+				`/api/v1/devices/${$page.params.dev_eui}/reports/${report_endpoint}?month=${selectedMonth}`
 			);
 
 			if (!response.ok) {
@@ -103,9 +105,33 @@
 				</Dialog>
 		</Tooltip> -->
 		{#if report_endpoint}
-			<Tooltip title="Reports">
-				<Button icon={mdiFileChart} loading={pdfLoading} on:click={() => makePdf()} />
-			</Tooltip>
+			<Toggle let:on={open} let:toggle let:toggleOff>
+				<Tooltip title="Reports">
+					<Button icon={mdiFileChart} on:click={toggle} />
+				</Tooltip>
+				<Dialog {open} on:close={toggleOff} class="w-1/2">
+					<div slot="title">Select report Month</div>
+					<MonthListByYear
+						class="w-full"
+						selected={selectedMonth}
+						on:dateChange={(e) => {
+							selectedMonth = e.detail;
+						}}
+						minDate={startOfYear(subYears(new Date(), 3))}
+						maxDate={new Date()}
+					/>
+					<div slot="actions">
+						<Button
+							variant="fill"
+							icon={mdiDownload}
+							color="success"
+							loading={pdfLoading}
+							on:click={() => makePdf()}>Download</Button
+						>
+						<Button variant="fill" color="primary" on:click={toggle}>Close</Button>
+					</div>
+				</Dialog>
+			</Toggle>
 		{/if}
 	</div>
 	{#if sensorPromise !== null}

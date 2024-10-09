@@ -5,11 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import moment from "moment";
 import D3Node from 'd3-node';
-import TextToSVG from 'text-to-svg';
 import * as d3 from 'd3';
 import sharp from 'sharp';
 
-export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, safeGetSession } }) => {
+export const GET: RequestHandler = async ({ params, url, fetch, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
 
     if (!session?.user) {
@@ -22,9 +21,23 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         throw error(400, 'dev_eui is required');
     }
 
+    const { data: requesterData, error } = await supabase.from('profiles').select('id, employer').eq('id', session.user.id).single();
+
+    if (error) {
+        throw error(400, 'User has no employer');
+    }
+
+    const month = url.searchParams.get('month');
+    if (!month) {
+        throw error(400, 'You must include a month');
+    }
+    if (moment(month).isAfter(new Date())) {
+        throw error(400, 'month must be in the past');
+    }
+
     // Fetch the data for the device
     const response = await fetch(
-        `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${moment().startOf('month').toISOString()}&lastDataDate=${moment().endOf('month').toISOString()}&timezone=asia/tokyo`
+        `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${moment(month).startOf('month').toISOString()}&lastDataDate=${moment(month).endOf('month').toISOString()}&timezone=asia/tokyo`
     );
 
     if (!response.ok) {
@@ -46,12 +59,13 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         throw error(500, 'Unable to get device location');
     }
 
-    //data.data = data.data.filter(f => f.temperatureC > -18.2);
+    let filteringTimeQuery = url.searchParams.get('filteringTime');
+    let filteringTime: number = filteringTimeQuery ? +filteringTimeQuery : 30;
 
     // Sort data.data by created_at in ascending order
     data.data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-    const array = data.data.map(d => {
+    let array = data.data.map(d => {
         return [
             moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
             d.temperatureC, // Format temperature
@@ -60,7 +74,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
     });
 
     // Prepare data for D3 chart
-    const chartData = data.data.map(d => ({
+    let chartData = data.data.map(d => ({
         date: moment(d.created_at).toDate(),
         value: d.temperatureC
     }));
@@ -74,7 +88,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
 
     // Prepare data for the report
     const reportDetails = [
-        ['会社：', '株式会社TKエビス'],
+        ['会社：', requesterData.employer],
         ['部署：', 'ペットフード事業部'],
         ['使用場所：', location.name],
         ['センサー名：', data.device.name],
@@ -117,6 +131,51 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         ['標準偏差', `${standardDeviation.toFixed(2)}℃`]
     ];
 
+    // Use the filterData function to filter your data
+    const filteredData = filterData(data.data, filteringTime); // Default to 30 minutes
+
+    // Now, use the filteredData for your array and chartData
+    array = filteredData.map(d => {
+        return [
+            moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
+            d.temperatureC, // Format temperature
+            '' // Placeholder for comment
+        ];
+    });
+
+    chartData = filteredData.map(d => ({
+        date: moment(d.created_at).toDate(),
+        value: d.temperatureC
+    }));
+
+    function filterData(data, intervalMinutes = 30) {
+        const filteredData = [];
+        let lastAddedTime = null;
+
+        data.forEach((d) => {
+            const currentDate = moment(d.created_at);
+            const temperature = d.temperatureC;
+
+            const isNotice = temperature > -18 && temperature <= -15;
+            const isWarning = temperature > -15 && temperature < 0;
+            const isAlert = temperature >= 0;
+
+            // Always include if it's a notice, warning, or alert
+            if (isNotice || isWarning || isAlert) {
+                filteredData.push(d);
+                lastAddedTime = currentDate;
+            } else {
+                // Otherwise, include only if the time interval has passed
+                if (!lastAddedTime || currentDate.diff(lastAddedTime, 'minutes') >= intervalMinutes) {
+                    filteredData.push(d);
+                    lastAddedTime = currentDate;
+                }
+            }
+        });
+
+        return filteredData;
+    }
+
 
     // Define fonts
     const fonts = {
@@ -137,85 +196,16 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
     // Create a new PdfPrinter instance
     const printer = new PdfPrinter(fonts);
 
-    // Function to generate the data table columns
-    // function prepareTableBodiesForPages(dataArray: any[], numColumns: number, maxRowsPerPage: number): any[] {
-    //     const totalRows = Math.ceil(dataArray.length / numColumns);
-    //     const pages = [];
-    //     for (let startRow = 0; startRow < totalRows; startRow += maxRowsPerPage) {
-    //         const endRow = Math.min(startRow + maxRowsPerPage, totalRows);
-    //         const columnsData = [];
-    //         for (let i = 0; i < numColumns; i++) {
-    //             const columnData = dataArray.slice(
-    //                 i * totalRows + startRow,
-    //                 i * totalRows + endRow
-    //             );
-    //             columnsData.push(columnData);
-    //         }
-
-    //         const tableBody = [];
-
-    //         // Create header row
-    //         const headerRow = [];
-    //         for (let i = 0; i < numColumns; i++) {
-    //             headerRow.push({ text: '測定日時', style: 'tableHeader', colSpan: 3, alignment: 'center' });
-    //             headerRow.push({});
-    //             headerRow.push({});
-    //         }
-    //         tableBody.push(headerRow);
-
-    //         // Create sub-header row
-    //         const subHeaderRow = [];
-    //         for (let i = 0; i < numColumns; i++) {
-    //             subHeaderRow.push({ text: '日時', style: 'tableSubHeader', alignment: 'center' });
-    //             subHeaderRow.push({ text: '温度', style: 'tableSubHeader', alignment: 'center' });
-    //             subHeaderRow.push({ text: 'コメント', style: 'tableSubHeader', alignment: 'center' });
-    //         }
-    //         tableBody.push(subHeaderRow);
-
-    //         // Create data rows
-    //         const rowsOnPage = endRow - startRow;
-    //         for (let rowIndex = 0; rowIndex < rowsOnPage; rowIndex++) {
-    //             const row = [];
-    //             for (let colIndex = 0; colIndex < numColumns; colIndex++) {
-    //                 const dataItem = columnsData[colIndex][rowIndex];
-    //                 let color = 'white';
-    //                 if (dataItem) {
-    //                     if (dataItem[1] && dataItem[1] <= -18) color = 'white';
-    //                     else if (dataItem[1] && dataItem[1] >= -18.1 && dataItem[1] < 15.1) color = 'yellow';
-    //                     else if (dataItem[1] && dataItem[1] >= -15.1 && dataItem[1] <= 0.1) color = 'orange';
-    //                     else if (dataItem[1] && dataItem[1] >= 0) color = 'red';
-
-
-
-
-    //                     // Add vertical borders to each cell
-    //                     row.push({ text: dataItem[0], alignment: 'center', border: [true, false, true, false] }); // 測定日時
-    //                     row.push({ text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }); // 温度
-    //                     row.push({ text: dataItem[2], alignment: 'center', border: [true, false, true, false] }); // コメント
-    //                 } else {
-    //                     row.push({ text: '', border: [true, false, true, false] });
-    //                     row.push({ text: '', border: [true, false, true, false] });
-    //                     row.push({ text: '', border: [true, false, true, false] });
-    //                 }
-    //             }
-    //             tableBody.push(row);
-    //         }
-
-    //         pages.push(tableBody);
-    //     }
-    //     return pages;
-    // }
-
     function prepareTableBodiesForPages(dataArray, numColumns, maxRowsPerColumn) {
         const totalDataItems = dataArray.length;
         const itemsPerPage = numColumns * maxRowsPerColumn;
-    
+
         const pages = [];
         let currentIndex = 0;
-    
+
         while (currentIndex < totalDataItems) {
             const tableBody = [];
-    
+
             // Create header row
             const headerRow = [];
             for (let i = 0; i < numColumns; i++) {
@@ -226,7 +216,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 );
             }
             tableBody.push(headerRow);
-    
+
             // Create sub-header row
             const subHeaderRow = [];
             for (let i = 0; i < numColumns; i++) {
@@ -237,10 +227,10 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 );
             }
             tableBody.push(subHeaderRow);
-    
+
             // Extract data for the current page
             const pageData = dataArray.slice(currentIndex, currentIndex + itemsPerPage);
-    
+
             // Split pageData into columns
             const columnsData = [];
             for (let i = 0; i < numColumns; i++) {
@@ -248,24 +238,24 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                 const end = start + maxRowsPerColumn;
                 columnsData.push(pageData.slice(start, end));
             }
-    
+
             // Fill rows
             for (let rowIndex = 0; rowIndex < maxRowsPerColumn; rowIndex++) {
                 const row = [];
-    
+
                 for (let colIndex = 0; colIndex < numColumns; colIndex++) {
                     const columnData = columnsData[colIndex];
                     if (rowIndex < columnData.length) {
                         const dataItem = columnData[rowIndex];
                         let color = 'white';
                         const temperature = dataItem[1];
-    
+
                         // Determine the fill color based on temperature
                         if (temperature <= -18) color = 'white';
                         else if (temperature > -18 && temperature <= -15) color = 'yellow';
                         else if (temperature > -15 && temperature < 0) color = 'orange';
                         else if (temperature >= 0) color = 'red';
-    
+
                         row.push(
                             { text: dataItem[0], alignment: 'center', border: [true, false, true, false] }, // Date
                             { text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }, // Temperature
@@ -280,17 +270,17 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
                         );
                     }
                 }
-    
+
                 tableBody.push(row);
             }
-    
+
             pages.push(tableBody);
             currentIndex += itemsPerPage;
         }
-    
+
         return pages;
     }
-    
+
 
     // Prepare table bodies for pages
     const numColumns = 4;
@@ -636,8 +626,7 @@ async function generateChartImage(data) {
     svg.append('text')
         .attr(
             'transform',
-            `translate(${margin.left - 40}, ${
-                margin.top + innerHeight / 2
+            `translate(${margin.left - 40}, ${margin.top + innerHeight / 2
             }) rotate(-90)`
         )
         .attr('text-anchor', 'middle')
