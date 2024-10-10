@@ -26,6 +26,7 @@
 	let AIResult;
 	let pdfLoading = false;
 	let selectedMonth: Date = moment().startOf('month').subtract(1).toDate();
+    let reportDialog: boolean = false;
 
 	const runAI = async () => {
 		openAi = true;
@@ -96,6 +97,8 @@
 			}
 
 			if (!response.ok) {
+                reportDialog = false;
+                alert('error generating report - contact support');
 				throw new Error('Failed to fetch the PDF data');
 			}
 			const data = await response.json();
@@ -107,14 +110,17 @@
 			const docDefinition: pdfMake.TCreatedPdf = buildPdfDefinition(data, chartImageBase64);
 
 			// Generate the PDF and download it
-			pdfMake
+			await pdfMake
 				.createPdf(docDefinition)
 				.download(`${moment(selectedMonth).format('yyyy-MM')}-report.pdf`);
 
 			pdfLoading = false;
+            reportDialog = false;
 		} catch (error) {
 			console.error('Error generating the PDF:', error);
+            alert('error generating report - contact support');
 			pdfLoading = false;
+            reportDialog = false;
 		}
 	};
 
@@ -152,11 +158,11 @@
 			<Button icon={mdiCog} size="lg" on:click={() => goto(`settings`)} />
 		</Tooltip>
 		{#if report_endpoint}
-			<Toggle let:on={open} let:toggle let:toggleOff>
+			<Toggle let:on={reportDialog} let:toggle let:toggleOff>
 				<Tooltip title="Reports">
-					<Button icon={mdiFileChart} on:click={toggle} />
+					<Button icon={mdiFileChart} loading={pdfLoading} disabled={pdfLoading} on:click={toggle} />
 				</Tooltip>
-				<Dialog {open} on:close={toggleOff} class="w-1/2">
+				<Dialog open={reportDialog} on:close={toggleOff} class="w-1/2">
 					<div slot="title">{$_('devices.reports.DownloadTitle')}</div>
 					<MonthListByYear
 						class="w-full"
@@ -176,7 +182,6 @@
 							color="success"
 							loading={pdfLoading}
 							on:click={() => {
-								toggleOff();
 								makePdf();
 							}}>{$_('download')}</Button
 						>
