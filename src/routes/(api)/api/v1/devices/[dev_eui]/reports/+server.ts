@@ -29,7 +29,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     }
 
     // Get the variable key from query parameters, default to 'temperatureC'
-    const variableKey = url.searchParams.get('variable') || 'temperature';
+    const variableKey = url.searchParams.get('variable') || 'temperatureC';
 
     // Fetch the data for the device
     const response = await fetch(
@@ -102,18 +102,22 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
 
     // Prepare data for array and chartData
     let array = data.data.map(d => {
+        const variableValue = d[variableKey];
         return [
             moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
-            d[variableKey], // Dynamic variable value
+            variableValue !== undefined && variableValue !== null ? variableValue : 'N/A', // Dynamic variable value
             '' // Placeholder for comment
         ];
     });
 
     // Prepare data for D3 chart
-    let chartData = data.data.map(d => ({
-        date: moment(d.created_at).toDate(),
-        value: d[variableKey]
-    }));
+    let chartData = data.data.map(d => {
+        const variableValue = d[variableKey];
+        return {
+            date: moment(d.created_at).toDate(),
+            value: variableValue !== undefined && variableValue !== null ? variableValue : null
+        };
+    });
 
     // Initialize counts for each label
     const counts = {};
@@ -123,9 +127,15 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     let maxValue = -Infinity;
     let minValue = Infinity;
     let totalValue = 0;
+    let validDataPoints = 0;
 
-    data.data.forEach(item => {
+    data.data.forEach((item, index) => {
         const value = item[variableKey];
+        if (value === undefined || value === null) {
+            console.warn(`Data item at index ${index} has undefined ${variableKey}`);
+            return; // Skip this data point
+        }
+        validDataPoints++;
         const label = getLabel(value, thresholds, labels);
         counts[label]++;
         if (value > maxValue) maxValue = value;
@@ -133,14 +143,22 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         totalValue += value;
     });
 
-    const averageValue = totalValue / data.data.length;
+    if (validDataPoints === 0) {
+        throw error(400, `No valid data points found for variable ${variableKey}`);
+    }
+
+    const averageValue = totalValue / validDataPoints;
 
     // Calculate the standard deviation
-    const meanValue = totalValue / data.data.length;
+    const meanValue = totalValue / validDataPoints;
     const variance = data.data.reduce((sum, item) => {
-        const diff = item[variableKey] - meanValue;
+        const value = item[variableKey];
+        if (value === undefined || value === null) {
+            return sum; // Skip invalid data
+        }
+        const diff = value - meanValue;
         return sum + diff * diff;
-    }, 0) / data.data.length;
+    }, 0) / validDataPoints;
     const standardDeviation = Math.sqrt(variance);
 
     // Prepare sensor details
@@ -152,13 +170,13 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     const variableUnit = variableUnits[variableKey] || '';
 
     const sensorDetails = [
-        ['サンプリング数', data.data.length.toString()],
+        ['サンプリング数', validDataPoints.toString()],
     ];
 
     labels.forEach(label => {
         const count = counts[label];
-        const percentage = ((count / data.data.length) * 100).toFixed(2);
-        sensorDetails.push([`${label}`, `${count}/${data.data.length} (${percentage} %)`]);
+        const percentage = ((count / validDataPoints) * 100).toFixed(2);
+        sensorDetails.push([`${label}`, `${count}/${validDataPoints} (${percentage} %)`]);
     });
 
     sensorDetails.push(['最大値', `${maxValue}${variableUnit}`]);
@@ -171,17 +189,21 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
 
     // Now, use the filteredData for your array and chartData
     array = filteredData.map(d => {
+        const variableValue = d[variableKey];
         return [
             moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
-            d[variableKey], // Dynamic variable value
+            variableValue !== undefined && variableValue !== null ? variableValue : 'N/A', // Dynamic variable value
             '' // Placeholder for comment
         ];
     });
 
-    chartData = filteredData.map(d => ({
-        date: moment(d.created_at).toDate(),
-        value: d[variableKey]
-    }));
+    chartData = filteredData.map(d => {
+        const variableValue = d[variableKey];
+        return {
+            date: moment(d.created_at).toDate(),
+            value: variableValue !== undefined && variableValue !== null ? variableValue : null
+        };
+    });
 
     function filterData(data, intervalMinutes = 30, thresholds, labels) {
         const filteredData = [];
@@ -190,6 +212,10 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         data.forEach((d) => {
             const currentDate = moment(d.created_at);
             const value = d[variableKey];
+
+            if (value === undefined || value === null) {
+                return; // Skip invalid data
+            }
 
             const label = getLabel(value, thresholds, labels);
 
@@ -277,13 +303,14 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
                         const value = dataItem[1];
 
                         // Determine the fill color based on label
-                        const label = getLabel(value, thresholds, labels);
+                        const numericValue = parseFloat(value);
+                        const label = !isNaN(numericValue) ? getLabel(numericValue, thresholds, labels) : labels[0];
                         const color = labelColors[label] || 'white';
 
                         row.push(
-                            { text: dataItem[0], alignment: 'center', border: [true, false, true, false] }, // Date
-                            { text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }, // Value
-                            { text: dataItem[2], alignment: 'center', border: [true, false, true, false] } // Comment
+                            { text: dataItem[0] || '', alignment: 'center', border: [true, false, true, false] }, // Date
+                            { text: value !== undefined && value !== null ? value : 'N/A', alignment: 'center', fillColor: color, border: [true, false, true, false] }, // Value
+                            { text: dataItem[2] || '', alignment: 'center', border: [true, false, true, false] } // Comment
                         );
                     } else {
                         // Fill empty cells if there's no more data in this column
