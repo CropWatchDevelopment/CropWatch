@@ -1,12 +1,5 @@
 import { error, redirect, type RequestHandler } from "@sveltejs/kit";
-import PdfPrinter from 'pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
-import fs from 'fs';
-import path from 'path';
 import moment from "moment";
-import D3Node from 'd3-node';
-import * as d3 from 'd3';
-import sharp from 'sharp';
 
 export const GET: RequestHandler = async ({ params, url, fetch, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
@@ -21,9 +14,9 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         throw error(400, 'dev_eui is required');
     }
 
-    const { data: requesterData, error } = await supabase.from('profiles').select('id, employer').eq('id', session.user.id).single();
+    const { data: requesterData, error: profileError } = await supabase.from('profiles').select('id, employer').eq('id', session.user.id).single();
 
-    if (error) {
+    if (profileError) {
         throw error(400, 'User has no employer');
     }
 
@@ -79,13 +72,6 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         value: d.temperatureC
     }));
 
-    // Generate chart image
-    const chartImageBuffer = await generateChartImage(chartData);
-
-    // Read the font file
-    const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
-    const NotoSansJPRegularFont = fs.readFileSync(fontPath);
-
     // Prepare data for the report
     const reportDetails = [
         ['会社：', requesterData.employer],
@@ -107,16 +93,13 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         item.temperatureC < min ? item.temperatureC : min, Infinity);
     const totalTemperature = data.data.reduce((sum, item) => sum + item.temperatureC, 0);
     const averageTemperature = totalTemperature / data.data.length;
-    // Step 1: Calculate the mean (average) temperatureC
-    const meanTemperature = totalTemperature / data.data.length;
 
-    // Step 2: Calculate the variance
+    // Calculate the standard deviation
+    const meanTemperature = totalTemperature / data.data.length;
     const variance = data.data.reduce((sum, item) => {
         const diff = item.temperatureC - meanTemperature;
         return sum + diff * diff;
     }, 0) / data.data.length;
-
-    // Step 3: Calculate the standard deviation
     const standardDeviation = Math.sqrt(variance);
 
     const sensorDetails = [
@@ -176,19 +159,10 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         return filteredData;
     }
 
-
-    // Define fonts
-    const fonts = {
-        NotoSansJP: {
-            normal: NotoSansJPRegularFont,
-            bold: NotoSansJPRegularFont,
-            italics: NotoSansJPRegularFont,
-            bolditalics: NotoSansJPRegularFont,
-        },
-    };
-
-    // Create a new PdfPrinter instance
-    const printer = new PdfPrinter(fonts);
+    // Prepare table bodies for pages
+    const numColumns = 4;
+    const maxRowsPerPage = 45; // Adjust as needed based on page size
+    const tableBodies = prepareTableBodiesForPages(array, numColumns, maxRowsPerPage);
 
     function prepareTableBodiesForPages(dataArray, numColumns, maxRowsPerColumn) {
         const totalDataItems = dataArray.length;
@@ -275,398 +249,18 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         return pages;
     }
 
-
-    // Prepare table bodies for pages
-    const numColumns = 4;
-    const maxRowsPerPage = 45; // Adjust as needed based on page size
-    const tableBodies = prepareTableBodiesForPages(array, numColumns, maxRowsPerPage);
-
-    // Define the PDF document
-    const docDefinition = {
-        language: 'ja-jp',
-        compress: true,
-        pageSize: 'A4',
-        pageOrientation: 'portrait',
-        pageMargins: [40, 40, 0, 0],
-        info: {
-            title: 'Refrigerator Report',
-            author: 'CropWatch Backend Server',
-            subject: 'Cold-Storage',
-            keywords: 'Refer Cold Storage',
-            creationDate: new Date(),
-        },
-        content: [
-            {
-                text: '週次 温度データレポート',
-                style: 'title',
-                alignment: 'center',
-                margin: [0, 0, 0, 0]
-            },
-            {
-                columns: [
-                    // Left column (report-details)
-                    {
-                        width: '50%',
-                        stack: [
-                            // Report Details Table
-                            {
-                                style: 'table',
-                                table: {
-                                    widths: ['auto', '*'],
-                                    body: reportDetails
-                                },
-                                layout: 'noBorders',
-                            },
-                            // Sensor Details Table
-                            {
-                                style: 'sensorTable',
-                                table: {
-                                    widths: ['*', '*'],
-                                    body: sensorDetails
-                                },
-                                layout: 'lightHorizontalLines',
-                            }
-                        ]
-                    },
-                    // Right column (name-section)
-                    {
-                        width: '35%',
-                        stack: [
-                            // Date box
-                            {
-                                table: {
-                                    widths: ['*'],
-                                    body: [
-                                        [{ text: '日付:', alignment: 'left', margin: [5, 5, 5, 5] }]
-                                    ]
-                                },
-                                layout: {
-                                    defaultBorder: true,
-                                    hLineWidth: () => 1,
-                                    vLineWidth: () => 1,
-                                },
-                                margin: [0, 0, 0, 10]
-                            },
-                            // Name boxes
-                            {
-                                columns: [
-                                    {
-                                        width: '33%',
-                                        table: {
-                                            widths: ['*'],
-                                            body: [
-                                                [{ text: '承認', alignment: 'center', border: [true, true, true, false], margin: [0, 5, 0, 5] }],
-                                                [{ text: '', border: [true, false, true, true], margin: [0, 20, 0, 20] }]
-                                            ]
-                                        },
-                                        layout: {
-                                            defaultBorder: false,
-                                            hLineWidth: () => 1,
-                                            vLineWidth: () => 1,
-                                            hLineColor: () => '#000',
-                                            vLineColor: () => '#000',
-                                        }
-                                    },
-                                    {
-                                        width: '33%',
-                                        table: {
-                                            widths: ['*'],
-                                            body: [
-                                                [{ text: '確認', alignment: 'center', border: [true, true, true, false], margin: [0, 5, 0, 5] }],
-                                                [{ text: '', border: [true, false, true, true], margin: [0, 20, 0, 20] }]
-                                            ]
-                                        },
-                                        layout: {
-                                            defaultBorder: false,
-                                            hLineWidth: () => 1,
-                                            vLineWidth: () => 1,
-                                            hLineColor: () => '#000',
-                                            vLineColor: () => '#000',
-                                        }
-                                    },
-                                    {
-                                        width: '34%',
-                                        table: {
-                                            widths: ['*'],
-                                            body: [
-                                                [{ text: '作成', alignment: 'center', border: [true, true, true, false], margin: [0, 5, 0, 5] }],
-                                                [{ text: '', border: [true, false, true, true], margin: [0, 20, 0, 20] }]
-                                            ]
-                                        },
-                                        layout: {
-                                            defaultBorder: false,
-                                            hLineWidth: () => 1,
-                                            vLineWidth: () => 1,
-                                            hLineColor: () => '#000',
-                                            vLineColor: () => '#000',
-                                        }
-                                    }
-                                ],
-                                columnGap: 2,
-                                margin: [0, 0, 0, 10]
-                            },
-                            // Comment line
-                            { text: 'コメント:', margin: [0, 15, 0, 0] }
-                        ],
-                        margin: [20, 0, 0, 0]
-                    }
-                ],
-                columnGap: 20,
-                margin: [0, 0, 0, 20]
-            },
-            // Chart image
-            {
-                id: 'chart',
-                image: chartImageBuffer,
-                width: 500, // Adjust as needed
-                margin: [0, 0, 0, 40],
-            },
-            // Data table legend
-            {
-                style: 'tableLegend',
-                columns: [
-                    { text: 'Normal: <= -18', border: [true, true, true, true], alignment: 'center' },
-                    { text: 'Notice: >= -18.1 黄色', fillColor: 'yellow', border: [true, true, true, true], alignment: 'center' },
-                    { text: 'Warning: >= -15.1 オレンジ', fillColor: 'orange', border: [true, true, true, true], alignment: 'center' },
-                    { text: 'Alert: >= 0 赤', fillColor: 'red', border: [true, true, true, true], alignment: 'center' }
-                ],
-                // columnGap: 5,
-                margin: [0, 35, 0, 5]
-            },
-            // The data tables will be added here
-        ],
-        styles: {
-            title: {
-                fontSize: 18,
-                bold: true
-            },
-            text: {
-                fontSize: 10,
-            },
-            table: {
-                margin: [0, 0, 0, 10],
-                fontSize: 10,
-            },
-            sensorTable: {
-                margin: [0, 0, 0, 0],
-                fontSize: 10,
-            },
-            tableLegend: {
-                fontSize: 10,
-            },
-            dataTable: {
-                fontSize: 7,
-                paddingRight: '5px',
-                marginRight: '5px',
-                table: {
-                    border: '1px solid #dddddd',
-                    body: [
-                        [
-                            {
-                                border: [false, true, false, false],
-                                fillColor: '#eeeeee',
-                                text: 'border:\n[false, true, false, false]',
-                                paddingRight: '5px',
-                                marginRight: '5px',
-                            },
-                        ]],
-                }
-            },
-            tableHeader: {
-                bold: true,
-                fontSize: 8,
-                color: 'black',
-                alignment: 'center'
-            },
-            tableSubHeader: {
-                bold: true,
-                fontSize: 7,
-                color: 'black',
-                alignment: 'center'
-            },
-            // Other styles as needed
-        },
-        defaultStyle: { font: 'NotoSansJP' },
-        pageBreakBefore: function (currentNode, followingNodesOnPage, nodesOnNextPage, previousNodesOnPage) {
-            return currentNode.id == 'tableLegend';
-        }
+    // Return the data as JSON
+    const responseData = {
+        reportDetails,
+        sensorDetails,
+        chartData,
+        tableBodies,
+        // Include any other data needed to build the PDF
     };
 
-    // Add the data tables to your docDefinition content
-    tableBodies.forEach((tableBody, index) => {
-        const dataTable = {
-            layout: 'horizontalLines',
-            style: 'dataTable',
-            table: {
-                headerRows: 2, // We have two header rows now
-                widths: Array(numColumns * 3).fill('auto'),
-                body: tableBody
-            },
-            margin: [0, 0, 0, 0],
-            pageBreak: index < tableBodies.length - 1 ? 'after' : undefined
-        };
-        docDefinition.content.push(dataTable);
-    });
-
-    // Generate the PDF document
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
-
-    // Collect the PDF data chunks
-    const chunks: Uint8Array[] = [];
-
-    return new Promise<Response>((resolve, reject) => {
-        pdfDoc.on('data', (chunk) => chunks.push(chunk));
-
-        pdfDoc.on('end', () => {
-            const pdfBuffer = Buffer.concat(chunks);
-            resolve(new Response(pdfBuffer, {
-                headers: {
-                    'Content-Type': 'application/pdf',
-                    'Content-Disposition': `attachment; filename="report_${devEui}.pdf"`
-                }
-            }));
-        });
-
-        pdfDoc.on('error', (err) => {
-            console.error('PDF generation error:', err);
-            reject(error(500, 'Error generating PDF'));
-        });
-
-        pdfDoc.end();
+    return new Response(JSON.stringify(responseData), {
+        headers: {
+            'Content-Type': 'application/json',
+        },
     });
 };
-
-// Function to generate the chart image using D3.js and sharp
-async function generateChartImage(data) {
-    const d3n = new D3Node();
-
-    const width = 800;
-    const height = 600;
-
-    const svg = d3n.createSVG(width, height);
-
-    // Add a <style> element to set the default font-family and font-size
-    svg.append('style').text(`
-        text {
-            font-family: sans-serif;
-            font-size: 10px;
-        }
-    `);
-
-    // Adjusted margins to accommodate rotated labels and legend
-    const margin = { top: 40, right: 80, bottom: 100, left: 60 };
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const x = d3.scaleTime()
-        .range([0, innerWidth])
-        .domain(d3.extent(data, d => d.date));
-
-    const y = d3.scaleLinear()
-        .range([innerHeight, 0])
-        .domain([
-            d3.min(data, d => d.value) - 5,
-            d3.max(data, d => d.value) + 5
-        ]);
-
-    const line = d3.line()
-        .x(d => x(d.date))
-        .y(d => y(d.value));
-
-    const g = svg.append('g')
-        .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // X Axis
-    g.append('g')
-        .attr('transform', `translate(0,${innerHeight})`)
-        .call(
-            d3.axisBottom(x)
-                .ticks(d3.timeDay.every(2))
-                .tickFormat(d3.timeFormat('%Y-%m-%d'))
-        )
-        .selectAll('text')
-        .attr('transform', 'rotate(90)')
-        .attr('x', 10)
-        .attr('y', -5)
-        .style('text-anchor', 'start')
-        .style('font-family', 'sans-serif')
-        .style('font-size', '8px'); // Adjust font size as needed
-
-    // Y Axis
-    g.append('g')
-        .call(d3.axisLeft(y))
-        .selectAll('text')
-        .style('font-family', 'sans-serif')
-        .style('font-size', '10px');
-
-    // Line path
-    g.append('path')
-        .datum(data)
-        .attr('fill', 'none')
-        .attr('stroke', 'steelblue')
-        .attr('stroke-width', 2)
-        .attr('d', line);
-
-    // X Axis Label
-    svg.append('text')
-        .attr('x', margin.left + innerWidth / 2)
-        .attr('y', height - 20)
-        .attr('text-anchor', 'middle')
-        .text('Date')
-        .style('font-size', '12px')
-        .style('font-family', 'sans-serif');
-
-    // Y Axis Label
-    svg.append('text')
-        .attr(
-            'transform',
-            `translate(${margin.left - 40}, ${margin.top + innerHeight / 2
-            }) rotate(-90)`
-        )
-        .attr('text-anchor', 'middle')
-        .text('Temperature (℃)')
-        .style('font-size', '12px')
-        .style('font-family', 'sans-serif');
-
-    // Title
-    svg.append('text')
-        .attr('x', margin.left + innerWidth / 2)
-        .attr('y', margin.top - 20)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '16px')
-        .style('font-family', 'sans-serif')
-        .text('Temperature Over Time');
-
-    // Legend
-    const legend = svg
-        .append('g')
-        .attr('class', 'legend')
-        .attr(
-            'transform',
-            `translate(${width - margin.right + 10}, ${margin.top})`
-        );
-
-    legend
-        .append('rect')
-        .attr('x', 0)
-        .attr('y', 0)
-        .attr('width', 20)
-        .attr('height', 10)
-        .style('fill', 'steelblue');
-
-    legend
-        .append('text')
-        .attr('x', 25)
-        .attr('y', 10)
-        .text('Temperature')
-        .style('font-size', '12px')
-        .style('font-family', 'sans-serif')
-        .attr('alignment-baseline', 'middle');
-
-    // Convert SVG to PNG buffer using sharp
-    const svgString = d3n.svgString();
-    const pngBuffer = await sharp(Buffer.from(svgString))
-        .png()
-        .toBuffer();
-    return pngBuffer;
-}
