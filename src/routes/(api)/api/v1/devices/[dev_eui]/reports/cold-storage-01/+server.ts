@@ -1,8 +1,8 @@
-import { redirect, type RequestHandler } from "@sveltejs/kit";
+import { error, redirect, type RequestHandler } from "@sveltejs/kit";
 import PdfPrinter from 'pdfmake';
-// import pdfFonts from 'pdfmake/build/vfs_fonts';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 import fs from 'fs';
-// import path from 'path';
+import path from 'path';
 import moment from "moment";
 import D3Node from 'd3-node';
 import * as d3 from 'd3';
@@ -83,8 +83,8 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     const chartImageBuffer = await generateChartImage(chartData);
 
     // Read the font file
-    // const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
-    // const NotoSansJPRegularFont = fs.readFileSync(fontPath);
+    const fontPath = path.join(process.cwd(), './', './fonts/NotoSansJP/', 'NotoSansJP-Regular.ttf');
+    const NotoSansJPRegularFont = fs.readFileSync(fontPath);
 
     // Prepare data for the report
     const reportDetails = [
@@ -177,16 +177,16 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     }
 
 
-    // const fontUrl = new URL('/fonts/NotoSansJP/NotoSansJP-Regular.ttf', import.meta.url).pathname;
-    // const NotoSansJPRegularFont = fs.readFileSync(fontUrl);
-
     // Define fonts
     const fonts = {
         NotoSansJP: {
-            normal: 'https://crop-watch-git-reports-crop-watch-team.vercel.app/fonts/NotoSansJP/NotoSansJP-Regular.ttf',
-            bold: 'https://crop-watch-git-reports-crop-watch-team.vercel.app/fonts/NotoSansJP/NotoSansJP-Regular.ttf',
+            normal: NotoSansJPRegularFont,
+            bold: NotoSansJPRegularFont,
+            italics: NotoSansJPRegularFont,
+            bolditalics: NotoSansJPRegularFont,
         },
     };
+
     // Create a new PdfPrinter instance
     const printer = new PdfPrinter(fonts);
 

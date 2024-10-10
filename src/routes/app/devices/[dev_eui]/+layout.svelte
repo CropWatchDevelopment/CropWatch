@@ -4,7 +4,7 @@
 	import Back from '$lib/components/ui/Back.svelte';
 	import moment from 'moment';
 
-	import { mdiCog, mdiDownload, mdiFileChart, mdiRobot } from '@mdi/js';
+	import { mdiCog, mdiDownload, mdiFileChart } from '@mdi/js';
 	import { Button, Dialog, Icon, MonthListByYear, Toggle, Tooltip } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import SensorHeader from '$lib/components/ui/Sensors/SensorHeader.svelte';
