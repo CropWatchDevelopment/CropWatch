@@ -28,6 +28,9 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         throw error(400, 'month must be in the past');
     }
 
+    // Get the variable key from query parameters, default to 'temperatureC'
+    const variableKey = url.searchParams.get('variable') || 'temperature';
+
     // Fetch the data for the device
     const response = await fetch(
         `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${moment(month).startOf('month').toISOString()}&lastDataDate=${moment(month).endOf('month').toISOString()}&timezone=asia/tokyo`
@@ -56,12 +59,52 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     let filteringTime: number = filteringTimeQuery ? +filteringTimeQuery : 30;
 
     // Sort data.data by created_at in ascending order
-    data.data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    data.data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
+    // Get thresholds and labels from query parameters or set defaults
+    const thresholdValuesParam = url.searchParams.get('thresholdValues');
+    const thresholdLabelsParam = url.searchParams.get('thresholdLabels');
+    const thresholdColorsParam = url.searchParams.get('thresholdColors');
+
+    let thresholds: number[];
+    let labels: string[];
+    let colors: string[];
+
+    if (thresholdValuesParam && thresholdLabelsParam) {
+        thresholds = thresholdValuesParam.split(',').map(Number);
+        labels = thresholdLabelsParam.split(',');
+
+        if (labels.length !== thresholds.length + 1) {
+            throw error(400, 'Number of labels must be one more than number of thresholds');
+        }
+
+        if (thresholdColorsParam) {
+            colors = thresholdColorsParam.split(',');
+            if (colors.length !== labels.length) {
+                throw error(400, 'Number of colors must equal number of labels');
+            }
+        } else {
+            // Default colors
+            colors = ['white', 'yellow', 'orange', 'red'];
+        }
+    } else {
+        // Default thresholds and labels for temperatureC
+        thresholds = [-18, -15, 0];
+        labels = ['Normal', 'Notice', 'Warning', 'Alert'];
+        colors = ['white', 'yellow', 'orange', 'red'];
+    }
+
+    // Map labels to colors
+    const labelColors = {};
+    labels.forEach((label, index) => {
+        labelColors[label] = colors[index];
+    });
+
+    // Prepare data for array and chartData
     let array = data.data.map(d => {
         return [
             moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
-            d.temperatureC, // Format temperature
+            d[variableKey], // Dynamic variable value
             '' // Placeholder for comment
         ];
     });
@@ -69,82 +112,89 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     // Prepare data for D3 chart
     let chartData = data.data.map(d => ({
         date: moment(d.created_at).toDate(),
-        value: d.temperatureC
+        value: d[variableKey]
     }));
 
-    // Prepare data for the report
-    const reportDetails = [
-        ['会社：', requesterData.employer],
-        ['部署：', 'ペットフード事業部'],
-        ['使用場所：', location.name],
-        ['センサー名：', data.device.name],
-        ['測定期間', `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment().endOf('month').format('YYYY/MM/DD')}`],
-        ['DevEUI', devEui]
-    ];
+    // Initialize counts for each label
+    const counts = {};
+    labels.forEach(label => counts[label] = 0);
 
-    const normal = data.data.filter(item => item.temperatureC <= -18).length;
-    const notice = data.data.filter(item => item.temperatureC > -18 && item.temperatureC <= -15).length;
-    const warning = data.data.filter(item => item.temperatureC > -15 && item.temperatureC < 0).length;
-    const alert = data.data.filter(item => item.temperatureC >= 0).length;
+    // Calculate counts and statistics
+    let maxValue = -Infinity;
+    let minValue = Infinity;
+    let totalValue = 0;
 
-    const maxTemperature = data.data.reduce((max, item) =>
-        item.temperatureC > max ? item.temperatureC : max, -Infinity);
-    const minTemperature = data.data.reduce((min, item) =>
-        item.temperatureC < min ? item.temperatureC : min, Infinity);
-    const totalTemperature = data.data.reduce((sum, item) => sum + item.temperatureC, 0);
-    const averageTemperature = totalTemperature / data.data.length;
+    data.data.forEach(item => {
+        const value = item[variableKey];
+        const label = getLabel(value, thresholds, labels);
+        counts[label]++;
+        if (value > maxValue) maxValue = value;
+        if (value < minValue) minValue = value;
+        totalValue += value;
+    });
+
+    const averageValue = totalValue / data.data.length;
 
     // Calculate the standard deviation
-    const meanTemperature = totalTemperature / data.data.length;
+    const meanValue = totalValue / data.data.length;
     const variance = data.data.reduce((sum, item) => {
-        const diff = item.temperatureC - meanTemperature;
+        const diff = item[variableKey] - meanValue;
         return sum + diff * diff;
     }, 0) / data.data.length;
     const standardDeviation = Math.sqrt(variance);
 
+    // Prepare sensor details
+    const variableUnits = {
+        'temperatureC': '℃',
+        'humidity': '%',
+        // Add other variables and units as needed
+    };
+    const variableUnit = variableUnits[variableKey] || '';
+
     const sensorDetails = [
-        ['サンプリング数', array.length.toString()],
-        ['Normal: <= -18', `${normal}/${array.length} (${((normal / array.length) * 100).toFixed(2)} %)`],
-        ['Notice: > -18 and <= -15', `${notice}/${array.length} (${((notice / array.length) * 100).toFixed(2)} %)`],
-        ['Warning: > -15 and < 0', `${warning}/${array.length} (${((warning / array.length) * 100).toFixed(2)} %)`],
-        ['Alert: >= 0', `${alert}/${array.length} (${((alert / array.length) * 100).toFixed(2)} %)`],
-        ['最大値', `${maxTemperature}℃`],
-        ['最小値', `${minTemperature}℃`],
-        ['平均値', `${averageTemperature.toFixed(2)}℃`],
-        ['標準偏差', `${standardDeviation.toFixed(2)}℃`]
+        ['サンプリング数', data.data.length.toString()],
     ];
 
+    labels.forEach(label => {
+        const count = counts[label];
+        const percentage = ((count / data.data.length) * 100).toFixed(2);
+        sensorDetails.push([`${label}`, `${count}/${data.data.length} (${percentage} %)`]);
+    });
+
+    sensorDetails.push(['最大値', `${maxValue}${variableUnit}`]);
+    sensorDetails.push(['最小値', `${minValue}${variableUnit}`]);
+    sensorDetails.push(['平均値', `${averageValue.toFixed(2)}${variableUnit}`]);
+    sensorDetails.push(['標準偏差', `${standardDeviation.toFixed(2)}${variableUnit}`]);
+
     // Use the filterData function to filter your data
-    const filteredData = filterData(data.data, filteringTime); // Default to 30 minutes
+    const filteredData = filterData(data.data, filteringTime, thresholds, labels);
 
     // Now, use the filteredData for your array and chartData
     array = filteredData.map(d => {
         return [
             moment(d.created_at).format('YY/MM/DD HH:mm'), // Format date as desired
-            d.temperatureC, // Format temperature
+            d[variableKey], // Dynamic variable value
             '' // Placeholder for comment
         ];
     });
 
     chartData = filteredData.map(d => ({
         date: moment(d.created_at).toDate(),
-        value: d.temperatureC
+        value: d[variableKey]
     }));
 
-    function filterData(data, intervalMinutes = 30) {
+    function filterData(data, intervalMinutes = 30, thresholds, labels) {
         const filteredData = [];
         let lastAddedTime = null;
 
         data.forEach((d) => {
             const currentDate = moment(d.created_at);
-            const temperature = d.temperatureC;
+            const value = d[variableKey];
 
-            const isNotice = temperature > -18 && temperature <= -15;
-            const isWarning = temperature > -15 && temperature < 0;
-            const isAlert = temperature >= 0;
+            const label = getLabel(value, thresholds, labels);
 
-            // Always include if it's a notice, warning, or alert
-            if (isNotice || isWarning || isAlert) {
+            // Always include if it's not the first label (assumed to be 'Normal')
+            if (label !== labels[0]) {
                 filteredData.push(d);
                 lastAddedTime = currentDate;
             } else {
@@ -157,6 +207,15 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         });
 
         return filteredData;
+    }
+
+    function getLabel(value, thresholds, labels) {
+        for (let i = 0; i < thresholds.length; i++) {
+            if (value <= thresholds[i]) {
+                return labels[i];
+            }
+        }
+        return labels[labels.length - 1];
     }
 
     // Prepare table bodies for pages
@@ -190,7 +249,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
             for (let i = 0; i < numColumns; i++) {
                 subHeaderRow.push(
                     { text: '日時', style: 'tableSubHeader', alignment: 'center' },
-                    { text: '温度', style: 'tableSubHeader', alignment: 'center' },
+                    { text: '値', style: 'tableSubHeader', alignment: 'center' },
                     { text: 'コメント', style: 'tableSubHeader', alignment: 'center' }
                 );
             }
@@ -215,18 +274,15 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
                     const columnData = columnsData[colIndex];
                     if (rowIndex < columnData.length) {
                         const dataItem = columnData[rowIndex];
-                        let color = 'white';
-                        const temperature = dataItem[1];
+                        const value = dataItem[1];
 
-                        // Determine the fill color based on temperature
-                        if (temperature <= -18) color = 'white';
-                        else if (temperature > -18 && temperature <= -15) color = 'yellow';
-                        else if (temperature > -15 && temperature < 0) color = 'orange';
-                        else if (temperature >= 0) color = 'red';
+                        // Determine the fill color based on label
+                        const label = getLabel(value, thresholds, labels);
+                        const color = labelColors[label] || 'white';
 
                         row.push(
                             { text: dataItem[0], alignment: 'center', border: [true, false, true, false] }, // Date
-                            { text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }, // Temperature
+                            { text: dataItem[1], alignment: 'center', fillColor: color, border: [true, false, true, false] }, // Value
                             { text: dataItem[2], alignment: 'center', border: [true, false, true, false] } // Comment
                         );
                     } else {
@@ -248,6 +304,16 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
 
         return pages;
     }
+
+    // Prepare data for the report
+    const reportDetails = [
+        ['会社：', requesterData.employer],
+        ['部署：', 'ペットフード事業部'],
+        ['使用場所：', location.name],
+        ['センサー名：', data.device.name],
+        ['測定期間', `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment().endOf('month').format('YYYY/MM/DD')}`],
+        ['DevEUI', devEui]
+    ];
 
     // Return the data as JSON
     const responseData = {
