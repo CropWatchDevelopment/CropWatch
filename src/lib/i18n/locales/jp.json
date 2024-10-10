@@ -222,7 +222,10 @@
       "viewDeviceLocaction": "デバイスの場所を表示",
       "viewDeviceDetails": "デバイスの詳細を表示"
     },
-    "waterLevel": "水位"
+    "waterLevel": "水位",
+    "reports": {
+      "DownloadTitle": "レポートの日付を選択してください"
+    }
   },
   "users": {
     "searchByEmail": "メールで検索",
@@ -291,6 +294,7 @@
   "User": "ユーザー",
   "Viewer": "ビューアー",
   "tempMoisture": "温度/湿度",
+  "download": "ダウンロード",
   "generalsettings": {
     "title": "一般設定",
     "personalinfo": {
