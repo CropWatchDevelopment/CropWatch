@@ -78,7 +78,7 @@
 			let buildPdfDefinition, generateChartImage;
 			if (report_endpoint == 'cold-storage-01') {
                 debugger;
-				const imported = await import(`./reports/${report_endpoint}`);
+				const imported = await import(`./reports/cold-storage-01`);
 				buildPdfDefinition = imported.buildPdfDefinition;
 				generateChartImage = imported.generateChartImage;
 				response = await fetch(
