@@ -183,8 +183,8 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     // Define fonts
     const fonts = {
         NotoSansJP: {
-            normal: 'https://app.cropwatch.io/fonts/NotoSansJP/NotoSansJP-Regular.ttf',
-            bold: 'https://app.cropwatch.io/fonts/NotoSansJP/NotoSansJP-Regular.ttf',
+            normal: 'https://crop-watch-git-reports-crop-watch-team.vercel.app/fonts/NotoSansJP/NotoSansJP-Regular.ttf',
+            bold: 'https://crop-watch-git-reports-crop-watch-team.vercel.app/fonts/NotoSansJP/NotoSansJP-Regular.ttf',
         },
     };
     // Create a new PdfPrinter instance
