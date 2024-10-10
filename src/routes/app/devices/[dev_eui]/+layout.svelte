@@ -83,7 +83,12 @@
 
             const data = await response.json();
 
-			const { buildPdfDefinition, generateChartImage } = await import(`./reports/${report_endpoint}`);
+            let buildPdfDefinition, generateChartImage;
+            if (report_endpoint == 'cold-storage-01') {
+                const imported = await import(`./reports/${report_endpoint}`);
+                buildPdfDefinition = imported.buildPdfDefinition;
+                generateChartImage = imported.generateChartImage;
+            }
             // Generate the chart image
             const chartImageBase64 = await generateChartImage(data.chartData);
 
