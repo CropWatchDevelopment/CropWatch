@@ -4,7 +4,7 @@ export function buildPdfDefinition(data, chartImageBase64): pdfMake.TCreatedPdf 
     const docDefinition = {
         pageSize: 'A4',
         pageOrientation: 'portrait',
-        pageMargins: [40, 40, 0, 0],
+        pageMargins: [60, 20, 0, 0],
         content: [
             {
                 text: '月次 温度データレポート',
@@ -135,11 +135,11 @@ export function buildPdfDefinition(data, chartImageBase64): pdfMake.TCreatedPdf 
                 style: 'tableLegend',
                 columns: [
                     { text: 'Normal: <= -18', border: [true, true, true, true], alignment: 'center' },
-                    { text: 'Notice: >= -18.1 黄色', fillColor: 'yellow', border: [true, true, true, true], alignment: 'center' },
+                    { text: 'Notice: >= -17.99 黄色', fillColor: 'yellow', border: [true, true, true, true], alignment: 'center' },
                     { text: 'Warning: >= -15.1 オレンジ', fillColor: 'orange', border: [true, true, true, true], alignment: 'center' },
                     { text: 'Alert: >= 0 赤', fillColor: 'red', border: [true, true, true, true], alignment: 'center' }
                 ],
-                margin: [0, 35, 0, 5]
+                margin: [-35, 60, 0, 5]
             },
             // The data tables
             ...data.tableBodies.map((tableBody, index) => ({
