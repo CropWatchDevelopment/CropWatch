@@ -61,44 +61,13 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     // Sort data.data by created_at in ascending order
     data.data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    // Get thresholds and labels from query parameters or set defaults
-    const thresholdValuesParam = url.searchParams.get('thresholdValues');
-    const thresholdLabelsParam = url.searchParams.get('thresholdLabels');
-    const thresholdColorsParam = url.searchParams.get('thresholdColors');
-
-    let thresholds: number[];
-    let labels: string[];
-    let colors: string[];
-
-    if (thresholdValuesParam && thresholdLabelsParam) {
-        thresholds = thresholdValuesParam.split(',').map(Number);
-        labels = thresholdLabelsParam.split(',');
-
-        if (labels.length !== thresholds.length + 1) {
-            throw error(400, 'Number of labels must be one more than number of thresholds');
-        }
-
-        if (thresholdColorsParam) {
-            colors = thresholdColorsParam.split(',');
-            if (colors.length !== labels.length) {
-                throw error(400, 'Number of colors must equal number of labels');
-            }
-        } else {
-            // Default colors
-            colors = ['white', 'yellow', 'orange', 'red'];
-        }
-    } else {
-        // Default thresholds and labels for temperatureC
-        thresholds = [-18, -15, 0];
-        labels = ['Normal', 'Notice', 'Warning', 'Alert'];
-        colors = ['white', 'yellow', 'orange', 'red'];
-    }
-
-    // Map labels to colors
-    const labelColors = {};
-    labels.forEach((label, index) => {
-        labelColors[label] = colors[index];
-    });
+    // Define label colors mapping
+    const labelColors = {
+        'Normal': 'white',
+        'Notice': 'yellow',
+        'Warning': 'orange',
+        'Alert': 'red',
+    };
 
     // Prepare data for array and chartData
     let array = data.data.map(d => {
@@ -120,6 +89,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     });
 
     // Initialize counts for each label
+    const labels = ['Normal', 'Notice', 'Warning', 'Alert'];
     const counts = {};
     labels.forEach(label => counts[label] = 0);
 
@@ -136,7 +106,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
             return; // Skip this data point
         }
         validDataPoints++;
-        const label = getLabel(value, thresholds, labels);
+        const label = getLabel(value);
         counts[label]++;
         if (value > maxValue) maxValue = value;
         if (value < minValue) minValue = value;
@@ -185,7 +155,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
     sensorDetails.push(['標準偏差', `${standardDeviation.toFixed(2)}${variableUnit}`]);
 
     // Use the filterData function to filter your data
-    const filteredData = filterData(data.data, filteringTime, thresholds, labels);
+    const filteredData = filterData(data.data, filteringTime);
 
     // Now, use the filteredData for your array and chartData
     array = filteredData.map(d => {
@@ -205,7 +175,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         };
     });
 
-    function filterData(data, intervalMinutes = 30, thresholds, labels) {
+    function filterData(data, intervalMinutes = 30) {
         const filteredData = [];
         let lastAddedTime = null;
 
@@ -217,14 +187,14 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
                 return; // Skip invalid data
             }
 
-            const label = getLabel(value, thresholds, labels);
+            const label = getLabel(value);
 
-            // Always include if it's not the first label (assumed to be 'Normal')
-            if (label !== labels[0]) {
+            // Always include if it's not the 'Normal' label
+            if (label !== 'Normal') {
                 filteredData.push(d);
                 lastAddedTime = currentDate;
             } else {
-                // Otherwise, include only if the time interval has passed
+                // Include only if the time interval has passed
                 if (!lastAddedTime || currentDate.diff(lastAddedTime, 'minutes') >= intervalMinutes) {
                     filteredData.push(d);
                     lastAddedTime = currentDate;
@@ -235,13 +205,18 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         return filteredData;
     }
 
-    function getLabel(value, thresholds, labels) {
-        for (let i = 0; i < thresholds.length; i++) {
-            if (value <= thresholds[i]) {
-                return labels[i];
-            }
+    function getLabel(value) {
+        if (value <= -18) {
+            return 'Normal';
+        } else if (value >= -17.999 && value < -15.1) {
+            return 'Notice';
+        } else if (value >= -15.1 && value < 0) {
+            return 'Warning';
+        } else if (value >= 0) {
+            return 'Alert';
+        } else {
+            return 'Unknown';
         }
-        return labels[labels.length - 1];
     }
 
     // Prepare table bodies for pages
@@ -304,7 +279,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
 
                         // Determine the fill color based on label
                         const numericValue = parseFloat(value);
-                        const label = !isNaN(numericValue) ? getLabel(numericValue, thresholds, labels) : labels[0];
+                        const label = !isNaN(numericValue) ? getLabel(numericValue) : 'Normal';
                         const color = labelColors[label] || 'white';
 
                         row.push(
@@ -338,7 +313,7 @@ export const GET: RequestHandler = async ({ params, url, fetch, locals: { supaba
         ['部署：', 'ペットフード事業部'],
         ['使用場所：', location.name],
         ['センサー名：', data.device.name],
-        ['測定期間', `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment().endOf('month').format('YYYY/MM/DD')}`],
+        ['測定期間', `${moment(month).startOf('month').format('YYYY/MM/DD')} - ${moment(month).endOf('month').format('YYYY/MM/DD')}`],
         ['DevEUI', devEui]
     ];
 

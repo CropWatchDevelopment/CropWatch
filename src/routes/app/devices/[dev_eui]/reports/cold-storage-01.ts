@@ -7,7 +7,7 @@ export function buildPdfDefinition(data, chartImageBase64): pdfMake.TCreatedPdf 
         pageMargins: [40, 40, 0, 0],
         content: [
             {
-                text: '週次 温度データレポート',
+                text: '月次 温度データレポート',
                 style: 'title',
                 alignment: 'center',
                 margin: [0, 0, 0, 0]
@@ -273,7 +273,7 @@ export async function generateChartImage(chartData) {
         .attr('x', margin.left + innerWidth / 2)
         .attr('y', height - 20)
         .attr('text-anchor', 'middle')
-        .text('Date')
+        .text('日付')
         .style('font-size', '12px')
         .style('font-family', 'sans-serif');
 
@@ -285,7 +285,7 @@ export async function generateChartImage(chartData) {
             }) rotate(-90)`
         )
         .attr('text-anchor', 'middle')
-        .text('Temperature (℃)')
+        .text('温度 (℃)')
         .style('font-size', '12px')
         .style('font-family', 'sans-serif');
 
@@ -296,7 +296,7 @@ export async function generateChartImage(chartData) {
         .attr('text-anchor', 'middle')
         .style('font-size', '16px')
         .style('font-family', 'sans-serif')
-        .text('Temperature Over Time');
+        .text('温度');
 
     // Legend
     const legend = svg
@@ -307,22 +307,22 @@ export async function generateChartImage(chartData) {
             `translate(${width - margin.right + 10}, ${margin.top})`
         );
 
-    legend
-        .append('rect')
-        .attr('x', 0)
-        .attr('y', 0)
-        .attr('width', 20)
-        .attr('height', 10)
-        .style('fill', 'steelblue');
+    // legend
+    //     .append('rect')
+    //     .attr('x', 0)
+    //     .attr('y', 0)
+    //     .attr('width', 20)
+    //     .attr('height', 10)
+    //     .style('fill', 'steelblue');
 
-    legend
-        .append('text')
-        .attr('x', 25)
-        .attr('y', 10)
-        .text('Temperature')
-        .style('font-size', '12px')
-        .style('font-family', 'sans-serif')
-        .attr('alignment-baseline', 'middle');
+    // legend
+    //     .append('text')
+    //     .attr('x', 25)
+    //     .attr('y', 10)
+    //     .text('Temperature')
+    //     .style('font-size', '12px')
+    //     .style('font-family', 'sans-serif')
+    //     .attr('alignment-baseline', 'middle');
 
     // Serialize the SVG and convert it to base64
     const serializer = new XMLSerializer();
