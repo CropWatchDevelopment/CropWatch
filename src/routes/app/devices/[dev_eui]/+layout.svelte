@@ -96,16 +96,26 @@
 				);
 			}
 
+			if (report_endpoint == 'co2-report-01') {
+				const imported = await import(`./reports/co2-report-01`);
+				buildPdfDefinition = imported.buildPdfDefinition;
+				generateChartImage = imported.generateChartImage;
+                response = await fetch(
+					`/api/v1/devices/${$page.params.dev_eui}/reports/co2-report-01?month=${selectedMonth.toISOString()}&variable=temperature&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
+				);
+			}
+			
 			if (!response.ok) {
-                reportDialog = false;
+				reportDialog = false;
                 alert('error generating report - contact support');
 				throw new Error('Failed to fetch the PDF data');
 			}
 			const data = await response.json();
-
+			
 			// Generate the chart image
-			const chartImageBase64 = await generateChartImage(data.chartData);
-
+			const chartImageBase64 = await generateChartImage(data.data.data);
+			
+			debugger;
 			// Build the PDF definition using the data
 			const docDefinition: pdfMake.TCreatedPdf = buildPdfDefinition(data, chartImageBase64);
 
