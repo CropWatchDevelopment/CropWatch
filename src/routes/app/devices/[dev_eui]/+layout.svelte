@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
-	import Back from '$lib/components/ui/Back.svelte';
 	import moment from 'moment';
 
 	import { mdiCog, mdiDownload, mdiFileChart } from '@mdi/js';
