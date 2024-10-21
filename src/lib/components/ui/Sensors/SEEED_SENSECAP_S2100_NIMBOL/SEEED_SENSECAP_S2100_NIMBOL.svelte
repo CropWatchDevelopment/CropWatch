@@ -33,9 +33,9 @@
 		moisture: current_humidity,
 		ec: current_ec,
 		ph: current_ph,
-		actual_n: undefined,
-		actual_p: undefined,
-		actual_k: undefined,
+		actual_n: 7,
+		actual_p: 7,
+		actual_k: 18,
 		n_months_ago: 0,
 		soilType: 'Peaty',
 	});
