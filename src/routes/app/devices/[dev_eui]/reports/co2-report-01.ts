@@ -13,7 +13,23 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
 
-    const combinedArray = dataArray.map((d: any) => {
+    // Filter the dataArray to include data points every 30 minutes
+    const filteredDataArray = [];
+    let lastIncludedTime = null;
+
+    for (const dataPoint of dataArray) {
+        const currentTime = new Date(dataPoint.created_at);
+
+        if (
+            !lastIncludedTime ||
+            (currentTime.getTime() - lastIncludedTime.getTime()) >= 30 * 60 * 1000
+        ) {
+            filteredDataArray.push(dataPoint);
+            lastIncludedTime = currentTime;
+        }
+    }
+
+    const combinedArray = filteredDataArray.map((d: any) => {
         return [
             moment(d.created_at).format('YY/MM/DD HH:mm'),
             d.temperature,
@@ -23,19 +39,19 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
         ];
     });
 
-    const maxTemperature = dataArray.reduce(
+    const maxTemperature = filteredDataArray.reduce(
         (max: any, item: any) => (item.temperature > max ? item.temperature : max),
         -Infinity
     );
-    const minTemperature = dataArray.reduce(
+    const minTemperature = filteredDataArray.reduce(
         (min: any, item: any) => (item.temperature < min ? item.temperature : min),
         Infinity
     );
-    const totalTemperature = dataArray.reduce(
+    const totalTemperature = filteredDataArray.reduce(
         (sum: any, item: any) => sum + item.temperature,
         0
     );
-    const averageTemperature = totalTemperature / dataArray.length;
+    const averageTemperature = totalTemperature / filteredDataArray.length;
 
     const reportDetails = [
         ['会社：', '株式会社TKエビス'],
@@ -51,56 +67,44 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
         ['DevEUI', device.dev_eui],
     ];
 
+    const sampleCount = combinedArray.length;
+
     const sensorDetails = [
         ['Data Type', 'Temperature'],
-        ['サンプリング数', combinedArray.length.toString()],
+        ['サンプリング数', sampleCount.toString()],
         ['最大値', `${maxTemperature}℃`],
         ['最小値', `${minTemperature}℃`],
         ['平均値', `${averageTemperature.toFixed(2)}℃`],
     ];
 
+    const maxHumidity = Math.max(...filteredDataArray.map((d: any) => d.humidity || 0));
+    const minHumidity = Math.min(...filteredDataArray.map((d: any) => d.humidity || 0));
+    const averageHumidity = filteredDataArray.reduce(
+        (sum: any, d: any) => sum + (d.humidity || 0),
+        0
+    ) / sampleCount;
+
     const humidityDetails = [
         ['Data Type', 'Humidity'],
-        ['サンプリング数', combinedArray.length.toString()],
-        [
-            '最大湿度',
-            `${Math.max(...dataArray.map((d: any) => d.humidity || 0))}%`,
-        ],
-        [
-            '最小湿度',
-            `${Math.min(...dataArray.map((d: any) => d.humidity || 0))}%`,
-        ],
-        [
-            '平均湿度',
-            `${(
-                dataArray.reduce(
-                    (sum: any, d: any) => sum + (d.humidity || 0),
-                    0
-                ) / combinedArray.length
-            ).toFixed(2)}%`,
-        ],
+        ['サンプリング数', sampleCount.toString()],
+        ['最大湿度', `${maxHumidity}%`],
+        ['最小湿度', `${minHumidity}%`],
+        ['平均湿度', `${averageHumidity.toFixed(2)}%`],
     ];
+
+    const maxCO2 = Math.max(...filteredDataArray.map((d: any) => d.co2_level || 0));
+    const minCO2 = Math.min(...filteredDataArray.map((d: any) => d.co2_level || 0));
+    const averageCO2 = filteredDataArray.reduce(
+        (sum: any, d: any) => sum + (d.co2_level || 0),
+        0
+    ) / sampleCount;
 
     const co2Details = [
         ['Data Type', 'CO2'],
-        ['サンプリング数', combinedArray.length.toString()],
-        [
-            '最大CO2濃度',
-            `${Math.max(...dataArray.map((d: any) => d.co2_level || 0))}ppm`,
-        ],
-        [
-            '最小CO2濃度',
-            `${Math.min(...dataArray.map((d: any) => d.co2_level || 0))}ppm`,
-        ],
-        [
-            '平均CO2濃度',
-            `${(
-                dataArray.reduce(
-                    (sum: any, d: any) => sum + (d.co2_level || 0),
-                    0
-                ) / combinedArray.length
-            ).toFixed(2)}ppm`,
-        ],
+        ['サンプリング数', sampleCount.toString()],
+        ['最大CO2濃度', `${maxCO2}ppm`],
+        ['最小CO2濃度', `${minCO2}ppm`],
+        ['平均CO2濃度', `${averageCO2.toFixed(2)}ppm`],
     ];
 
     const numColumnsPerRow = 2;
@@ -155,7 +159,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                                 table: {
                                     body: reportDetails,
                                 },
-                                layout: 'outerBorder', // Added custom layout
+                                layout: 'outerBorder',
                             },
                         ],
                     },
@@ -172,7 +176,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                                 table: {
                                     body: sensorDetails,
                                 },
-                                layout: 'outerBorder', // Added custom layout
+                                layout: 'outerBorder',
                             },
                         ],
                     },
@@ -189,7 +193,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                                 table: {
                                     body: humidityDetails,
                                 },
-                                layout: 'outerBorder', // Added custom layout
+                                layout: 'outerBorder',
                             },
                         ],
                     },
@@ -206,7 +210,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                                 table: {
                                     body: co2Details,
                                 },
-                                layout: 'outerBorder', // Added custom layout
+                                layout: 'outerBorder',
                             },
                         ],
                     },
@@ -216,6 +220,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                 image: chartImageBase64,
                 width: 500,
                 margin: [0, 0, 0, 40],
+                pageBreak: 'after',
             },
             ...combinedTableContent,
         ],
