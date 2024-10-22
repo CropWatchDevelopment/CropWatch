@@ -6,6 +6,8 @@ import HighchartsExporting from 'highcharts/modules/exporting';
 HighchartsExporting(Highcharts);
 
 export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Options => {
+    // Fix highest co2 value in the co2Data array where [timestamp, co2Value]
+    const highestCo2Value = Math.max(...co2Data.map(data => data[1]));
     return {
         chart: {
             type: 'spline',
@@ -36,7 +38,7 @@ export const getCo2ChartConfig = (co2Data: [number, number][]): Highcharts.Optio
             title: {
                 text: ''
             },
-            max: 10000,
+            max: highestCo2Value,
             min: 400,
             labels: {
                 format: '{value} PPM',
