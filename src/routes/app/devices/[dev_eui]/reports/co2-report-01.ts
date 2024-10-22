@@ -55,7 +55,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
 debugger
     const reportDetails = [
         ['会社：', '株式会社TKエビス'],
-        ['部署：', 'ペットフード事業部'],
+        ['部署：', '種鶏事業部'],
         ['使用場所：', location.name],
         ['センサー名：', device.name],
         [
