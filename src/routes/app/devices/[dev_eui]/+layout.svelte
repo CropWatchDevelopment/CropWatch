@@ -82,7 +82,7 @@
 				buildPdfDefinition = imported.buildPdfDefinition;
 				generateChartImage = imported.generateChartImage;
 				response = await fetch(
-					`/api/v1/devices/${$page.params.dev_eui}/reports/?month=${selectedMonth.toISOString()}&variable=temperatureC&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
+					`/api/v1/devices/${$page.params.dev_eui}/reports/?month=${moment(selectedMonth).toDate()}&variable=temperatureC&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
 				);
 			}
 			if (report_endpoint == 'cold-storage-02') {
@@ -91,17 +91,17 @@
 				buildPdfDefinition = imported.buildPdfDefinition;
 				generateChartImage = imported.generateChartImage;
 				response = await fetch(
-					`/api/v1/devices/${$page.params.dev_eui}/reports/?month=${selectedMonth.toISOString()}&variable=temperature&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
+					`/api/v1/devices/${$page.params.dev_eui}/reports/?month=${moment(selectedMonth).toDate()}&variable=temperature&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
 				);
 			}
 
 			if (report_endpoint == 'co2-report-01') {
-				debugger;
 				const imported = await import(`./reports/co2-report-01`);
 				buildPdfDefinition = imported.buildPdfDefinition;
 				generateChartImage = imported.generateChartImage;
+				debugger;
 				response = await fetch(
-					`/api/v1/devices/${$page.params.dev_eui}/reports/co2-report-01?month=${selectedMonth.toISOString()}&variable=temperature&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
+					`/api/v1/devices/${$page.params.dev_eui}/reports/co2-report-01?month=${moment(selectedMonth).toDate()}&variable=temperature&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
 				);
 			}
 
