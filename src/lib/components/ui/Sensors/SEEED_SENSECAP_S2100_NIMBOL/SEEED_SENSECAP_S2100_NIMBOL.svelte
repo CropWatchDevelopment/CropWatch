@@ -8,6 +8,7 @@
 	import { getNPKChartConfig } from './chart_npkConfig';
 	import { getPHChartConfig } from './chart_phConfig';
 	import { Radio } from 'svelte-ux';
+	import { estimateNPK } from '../../utilities/SoilToNPK';
 
 	export let sensor = null;
 
@@ -26,6 +27,20 @@
 	let current_ec = sensor.data.at(0).soil_ec; // in µS/cm
 
 	let ecNotationType = 1;
+
+	const result = estimateNPK({
+		temperature: current_temp,
+		moisture: current_humidity,
+		ec: current_ec,
+		ph: current_ph,
+		actual_n: 7,
+		actual_p: 7,
+		actual_k: 18,
+		n_months_ago: 0,
+		soilType: 'Peaty',
+	});
+	console.log(result);
+	debugger;
 
 	// Function to convert EC based on selected notation type
 	const convertEC = (ecValue: number, notationType: number) => {
