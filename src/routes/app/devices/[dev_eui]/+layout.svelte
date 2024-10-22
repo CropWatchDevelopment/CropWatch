@@ -25,7 +25,7 @@
 	let AIResult;
 	let pdfLoading = false;
 	let selectedMonth: Date = moment().startOf('month').subtract(1).toDate();
-    let reportDialog: boolean = false;
+	let reportDialog: boolean = false;
 
 	const runAI = async () => {
 		openAi = true;
@@ -77,7 +77,7 @@
 
 			let buildPdfDefinition, generateChartImage;
 			if (report_endpoint == 'cold-storage-01') {
-                debugger;
+				debugger;
 				const imported = await import(`./reports/cold-storage-01`);
 				buildPdfDefinition = imported.buildPdfDefinition;
 				generateChartImage = imported.generateChartImage;
@@ -86,55 +86,70 @@
 				);
 			}
 			if (report_endpoint == 'cold-storage-02') {
-                debugger;
+				debugger;
 				const imported = await import(`./reports/cold-storage-01`);
 				buildPdfDefinition = imported.buildPdfDefinition;
 				generateChartImage = imported.generateChartImage;
-                response = await fetch(
+				response = await fetch(
 					`/api/v1/devices/${$page.params.dev_eui}/reports/?month=${selectedMonth.toISOString()}&variable=temperature&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
 				);
 			}
 
 			if (report_endpoint == 'co2-report-01') {
+				debugger;
 				const imported = await import(`./reports/co2-report-01`);
 				buildPdfDefinition = imported.buildPdfDefinition;
 				generateChartImage = imported.generateChartImage;
-                response = await fetch(
+				response = await fetch(
 					`/api/v1/devices/${$page.params.dev_eui}/reports/co2-report-01?month=${selectedMonth.toISOString()}&variable=temperature&thresholdValues=-18,-17.999,0&thresholdLabels=Normal,Notice,Warning,Alert&thresholdColors=white,yellow,orange,red`
 				);
 			}
-			
+
 			if (!response.ok) {
 				reportDialog = false;
-                alert('error generating report - contact support');
+				alert('error generating report - contact support');
 				throw new Error('Failed to fetch the PDF data');
 			}
 			const data = await response.json();
-			
-			// Generate the chart image
-			const chartImageBase64 = await generateChartImage(data.data.data);
-			
-			debugger;
-			// Build the PDF definition using the data
-			const docDefinition: pdfMake.TCreatedPdf = buildPdfDefinition(data, chartImageBase64);
 
-			// Generate the PDF and download it
-			await pdfMake
-				.createPdf(docDefinition)
-				.download(`${moment(selectedMonth).format('yyyy-MM')}-report.pdf`);
+			if (report_endpoint == 'co2-report-01') {
+				// Generate the chart image
+				const chartImageBase64 = await generateChartImage(data.data.data);
+				// Build the PDF definition using the data
+				const docDefinition: pdfMake.TCreatedPdf = buildPdfDefinition(data, chartImageBase64);
 
-			pdfLoading = false;
-            reportDialog = false;
+				// Generate the PDF and download it
+				await pdfMake
+					.createPdf(docDefinition)
+					.download(`${moment(selectedMonth).format('yyyy-MM')}-report.pdf`);
+
+				pdfLoading = false;
+				reportDialog = false;
+			} else {
+				// Generate the chart image
+				const chartImageBase64 = await generateChartImage(data.chartData);
+				const docDefinition: pdfMake.TCreatedPdf = buildPdfDefinition(data, chartImageBase64);
+
+				// Generate the PDF and download it
+				await pdfMake
+					.createPdf(docDefinition)
+					.download(`${moment(selectedMonth).format('yyyy-MM')}-report.pdf`);
+
+				pdfLoading = false;
+				reportDialog = false;
+			}
 		} catch (error) {
 			console.error('Error generating the PDF:', error);
-            alert('error generating report - contact support');
+			alert('error generating report - contact support');
 			pdfLoading = false;
-            reportDialog = false;
+			reportDialog = false;
 		}
 	};
 
 	const sensorPromise = browser
-		? fetch(`/api/v1/devices/${devEui}/data?firstDataDate=${yesterday.toISOString()}&lastDataDate=${today.toISOString()}`)
+		? fetch(
+				`/api/v1/devices/${devEui}/data?firstDataDate=${yesterday.toISOString()}&lastDataDate=${today.toISOString()}`
+			)
 				.then((res) => res.json())
 				.then((sensor) => {
 					if (sensor && sensor.device && sensor.device.name) {
@@ -166,7 +181,12 @@
 		{#if report_endpoint}
 			<Toggle let:on={reportDialog} let:toggle let:toggleOff>
 				<Tooltip title="Reports">
-					<Button icon={mdiFileChart} loading={pdfLoading} disabled={pdfLoading} on:click={toggle} />
+					<Button
+						icon={mdiFileChart}
+						loading={pdfLoading}
+						disabled={pdfLoading}
+						on:click={toggle}
+					/>
 				</Tooltip>
 				<Dialog open={reportDialog} on:close={toggleOff} class="w-1/2">
 					<div slot="title">{$_('devices.reports.DownloadTitle')}</div>

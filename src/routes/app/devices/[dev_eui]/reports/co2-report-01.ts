@@ -52,7 +52,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
         0
     );
     const averageTemperature = totalTemperature / filteredDataArray.length;
-
+debugger
     const reportDetails = [
         ['会社：', '株式会社TKエビス'],
         ['部署：', 'ペットフード事業部'],
@@ -60,7 +60,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
         ['センサー名：', device.name],
         [
             '測定期間',
-            `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment()
+            `${moment(filteredDataArray[0].created_at).startOf('month').format('YYYY/MM/DD')} - ${moment(filteredDataArray[0].created_at)
                 .endOf('month')
                 .format('YYYY/MM/DD')}`,
         ],

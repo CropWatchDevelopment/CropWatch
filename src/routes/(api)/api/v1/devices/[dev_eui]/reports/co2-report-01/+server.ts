@@ -24,9 +24,11 @@ export const GET: RequestHandler = async ({ params, fetch, url, locals: { supaba
         throw error(400, 'dev_eui is required');
     }
 
+    const start = moment(month).startOf('month').toISOString();
+    const end = moment(month).endOf('month').toISOString();
     // Fetch the data for the device
     const response = await fetch(
-        `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${moment(month).startOf('month').toISOString()}&lastDataDate=${moment(month).endOf('month').toISOString()}&timezone=asia/tokyo`
+        `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${start}&lastDataDate=${end}`
     );
 
     if (!response.ok) {
@@ -144,75 +146,75 @@ export const GET: RequestHandler = async ({ params, fetch, url, locals: { supaba
     });
 };
 
-// Updated prepareTableBodiesForPages function
-function prepareTableBodiesForPages(dataArray, numColumnsPerRow, maxRowsPerPage) {
-    const totalDataItems = dataArray.length;
-    const itemsPerPage = numColumnsPerRow * maxRowsPerPage;
-    const pages = [];
-    let currentIndex = 0;
+// // Updated prepareTableBodiesForPages function
+// function prepareTableBodiesForPages(dataArray, numColumnsPerRow, maxRowsPerPage) {
+//     const totalDataItems = dataArray.length;
+//     const itemsPerPage = numColumnsPerRow * maxRowsPerPage;
+//     const pages = [];
+//     let currentIndex = 0;
 
-    while (currentIndex < totalDataItems) {
-        const tableBody = [];
+//     while (currentIndex < totalDataItems) {
+//         const tableBody = [];
 
-        // Create header row
-        const headerRow = [];
-        for (let i = 0; i < numColumnsPerRow; i++) {
-            headerRow.push(
-                { text: '日時', style: 'tableHeader', alignment: 'center' },
-                { text: '温度', style: 'tableHeader', alignment: 'center' },
-                { text: '湿度', style: 'tableHeader', alignment: 'center' },
-                { text: 'CO2', style: 'tableHeader', alignment: 'center' },
-                { text: 'コメント', style: 'tableHeader', alignment: 'center' }
-            );
-        }
-        tableBody.push(headerRow);
+//         // Create header row
+//         const headerRow = [];
+//         for (let i = 0; i < numColumnsPerRow; i++) {
+//             headerRow.push(
+//                 { text: '日時', style: 'tableHeader', alignment: 'center' },
+//                 { text: '温度', style: 'tableHeader', alignment: 'center' },
+//                 { text: '湿度', style: 'tableHeader', alignment: 'center' },
+//                 { text: 'CO2', style: 'tableHeader', alignment: 'center' },
+//                 { text: 'コメント', style: 'tableHeader', alignment: 'center' }
+//             );
+//         }
+//         tableBody.push(headerRow);
 
-        // Extract data for the current page
-        const pageData = dataArray.slice(currentIndex, currentIndex + itemsPerPage);
+//         // Extract data for the current page
+//         const pageData = dataArray.slice(currentIndex, currentIndex + itemsPerPage);
 
-        // Split pageData into columns
-        const columnsData = [];
-        for (let i = 0; i < numColumnsPerRow; i++) {
-            const start = i * maxRowsPerPage;
-            const end = start + maxRowsPerPage;
-            columnsData.push(pageData.slice(start, end));
-        }
+//         // Split pageData into columns
+//         const columnsData = [];
+//         for (let i = 0; i < numColumnsPerRow; i++) {
+//             const start = i * maxRowsPerPage;
+//             const end = start + maxRowsPerPage;
+//             columnsData.push(pageData.slice(start, end));
+//         }
 
-        // Fill rows
-        for (let rowIndex = 0; rowIndex < maxRowsPerPage; rowIndex++) {
-            const row = [];
+//         // Fill rows
+//         for (let rowIndex = 0; rowIndex < maxRowsPerPage; rowIndex++) {
+//             const row = [];
 
-            for (let colIndex = 0; colIndex < numColumnsPerRow; colIndex++) {
-                const columnData = columnsData[colIndex];
-                if (rowIndex < columnData.length) {
-                    const dataItem = columnData[rowIndex];
-                    const [date, temperature, humidity, co2, comment] = dataItem;
+//             for (let colIndex = 0; colIndex < numColumnsPerRow; colIndex++) {
+//                 const columnData = columnsData[colIndex];
+//                 if (rowIndex < columnData.length) {
+//                     const dataItem = columnData[rowIndex];
+//                     const [date, temperature, humidity, co2, comment] = dataItem;
 
-                    row.push(
-                        { text: date, alignment: 'center' },
-                        { text: temperature, alignment: 'center' },
-                        { text: humidity, alignment: 'center' },
-                        { text: co2, alignment: 'center' },
-                        { text: comment, alignment: 'center' }
-                    );
-                } else {
-                    // Fill empty cells if there's no more data in this column
-                    row.push(
-                        { text: '', alignment: 'center' },
-                        { text: '', alignment: 'center' },
-                        { text: '', alignment: 'center' },
-                        { text: '', alignment: 'center' },
-                        { text: '', alignment: 'center' }
-                    );
-                }
-            }
+//                     row.push(
+//                         { text: date, alignment: 'center' },
+//                         { text: temperature, alignment: 'center' },
+//                         { text: humidity, alignment: 'center' },
+//                         { text: co2, alignment: 'center' },
+//                         { text: comment, alignment: 'center' }
+//                     );
+//                 } else {
+//                     // Fill empty cells if there's no more data in this column
+//                     row.push(
+//                         { text: '', alignment: 'center' },
+//                         { text: '', alignment: 'center' },
+//                         { text: '', alignment: 'center' },
+//                         { text: '', alignment: 'center' },
+//                         { text: '', alignment: 'center' }
+//                     );
+//                 }
+//             }
 
-            tableBody.push(row);
-        }
+//             tableBody.push(row);
+//         }
 
-        pages.push(tableBody);
-        currentIndex += itemsPerPage;
-    }
+//         pages.push(tableBody);
+//         currentIndex += itemsPerPage;
+//     }
 
-    return pages;
-}
+//     return pages;
+// }
