@@ -1,20 +1,21 @@
 // Import necessary modules
 import { error, redirect, type RequestHandler } from "@sveltejs/kit";
-import PdfPrinter from 'pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
-import fs from 'fs';
-import path from 'path';
 import moment from "moment";
-import D3Node from 'd3-node';
-import * as d3 from 'd3';
-import sharp from 'sharp';
 
 // Define the GET handler
-export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, safeGetSession } }) => {
+export const GET: RequestHandler = async ({ params, fetch, url, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
 
     if (!session?.user) {
         throw redirect(303, '/auth/unauthorized');
+    }
+
+    const month = url.searchParams.get('month');
+    if (!month) {
+        throw error(400, 'You must include a month');
+    }
+    if (moment(month).isAfter(new Date())) {
+        throw error(400, 'month must be in the past');
     }
 
     const devEui = params.dev_eui;
@@ -25,7 +26,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
 
     // Fetch the data for the device
     const response = await fetch(
-        `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${moment().startOf('month').toISOString()}&lastDataDate=${moment().endOf('month').toISOString()}&timezone=asia/tokyo`
+        `/api/v1/devices/${params.dev_eui}/data?firstDataDate=${moment(month).startOf('month').toISOString()}&lastDataDate=${moment(month).endOf('month').toISOString()}&timezone=asia/tokyo`
     );
 
     if (!response.ok) {
@@ -83,7 +84,7 @@ export const GET: RequestHandler = async ({ params, fetch, locals: { supabase, s
         ['部署：', 'ペットフード事業部'],
         ['使用場所：', location.name],
         ['センサー名：', data.device.name],
-        ['測定期間', `${moment().startOf('month').format('YYYY/MM/DD')} - ${moment().endOf('month').format('YYYY/MM/DD')}`],
+        ['測定期間', `${moment(month).startOf('month').format('YYYY/MM/DD')} - ${moment(month).endOf('month').format('YYYY/MM/DD')}`],
         ['DevEUI', devEui]
     ];
     const sensorDetails = [

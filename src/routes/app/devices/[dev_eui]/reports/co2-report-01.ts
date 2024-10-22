@@ -70,7 +70,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
     const sampleCount = combinedArray.length;
 
     const sensorDetails = [
-        ['Data Type', 'Temperature'],
+        ['データタイプ', '温度'],
         ['サンプリング数', sampleCount.toString()],
         ['最大値', `${maxTemperature}℃`],
         ['最小値', `${minTemperature}℃`],
@@ -85,7 +85,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
     ) / sampleCount;
 
     const humidityDetails = [
-        ['Data Type', 'Humidity'],
+        ['データタイプ', '湿度'],
         ['サンプリング数', sampleCount.toString()],
         ['最大湿度', `${maxHumidity}%`],
         ['最小湿度', `${minHumidity}%`],
@@ -100,7 +100,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
     ) / sampleCount;
 
     const co2Details = [
-        ['Data Type', 'CO2'],
+        ['データタイプ', 'CO2'],
         ['サンプリング数', sampleCount.toString()],
         ['最大CO2濃度', `${maxCO2}ppm`],
         ['最小CO2濃度', `${minCO2}ppm`],
@@ -139,7 +139,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
     const docDefinition = {
         content: [
             {
-                text: '週次 (or 月次) 温度データレポート',
+                text: '月次データレポート',
                 style: 'header',
                 alignment: 'center',
                 margin: [0, 0, 0, 10],
@@ -150,7 +150,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                         width: '25%',
                         stack: [
                             {
-                                text: 'Report Details',
+                                text: 'レポート詳細',
                                 style: 'subheader',
                                 margin: [0, 0, 0, 3],
                             },
@@ -167,7 +167,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                         width: '25%',
                         stack: [
                             {
-                                text: 'Temperature Details',
+                                text: '温度詳細',
                                 style: 'subheader',
                                 margin: [0, 0, 0, 3],
                             },
@@ -184,7 +184,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                         width: '25%',
                         stack: [
                             {
-                                text: 'Humidity Details',
+                                text: '湿度詳細',
                                 style: 'subheader',
                                 margin: [0, 0, 0, 3],
                             },
@@ -201,7 +201,7 @@ export function buildPdfDefinition(data: any, chartImageBase64: string) {
                         width: '25%',
                         stack: [
                             {
-                                text: 'CO2 Details',
+                                text: 'Co2 詳細',
                                 style: 'subheader',
                                 margin: [0, 0, 0, 3],
                             },
