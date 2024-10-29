@@ -5,6 +5,7 @@
 	import { ProgressCircle, Tooltip } from 'svelte-ux';
 	import SEEED_T1000_IMG from '$lib/images/devices/seeed-t1000.png';
 	import SEEED_S2120_IMG from '$lib/images/devices/seeed_sensecap_s2120.png';
+	import SEEED_S2104_IMG from '$lib/images/devices/seeed_sensecap_s2104.png';
 	import SEEED_S2103_IMG from '$lib/images/devices/seeed_sensecap_s210x.png';
 	import SEEED_S2103_NimBol_IMAGE from '$lib/images/devices/seeed_sensecap_s2100_nimbol.png';
 	import { _ } from 'svelte-i18n';
@@ -35,6 +36,10 @@
 			{:else if deviceType == 'seeed_sensecap_s2120'}
 				<Tooltip title="Weather Station">
 					<img src={SEEED_S2120_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
+				</Tooltip>
+			{:else if deviceType == 'S2104'}
+				<Tooltip title="Soil Temperature&Moisture">
+					<img src={SEEED_S2104_IMG} alt="device" class="h-full w-20 rounded-xl object-cover" />
 				</Tooltip>
 			{:else if deviceType == 'SenseCAP S2103' || deviceType == 'S2101'}
 				<Tooltip
