@@ -178,7 +178,7 @@
 </div>
 
 <!-- Render the radio buttons -->
-<DarkCard2>
+<!-- <DarkCard2>
 	{#if latestDataInterestingObjects.length > 0}
 		<div class="text-surface-500 flex flex-row flex-wrap justify-between">
 			{#each latestDataInterestingObjects as key}
@@ -201,7 +201,7 @@
 	{:else}
 		<p>{$_('location.noFilters')}</p>
 	{/if}
-</DarkCard2>
+</DarkCard2> -->
 
 <!-- DEVICE MAP -->
 <div class="mx-4 mb-4">
