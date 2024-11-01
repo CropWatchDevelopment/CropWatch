@@ -1,6 +1,7 @@
 export const nameToNotation = (name: string) => {
     switch (name) {
         case 'humidity':
+        case 'moisture':
         case 'soil_moisture':
             return '%';
         case 'Temperature':

@@ -12,7 +12,7 @@ export function convertObject(input: InputObject, keepHidden: boolean = false): 
       'wind_speed', 'wind_direction', 'lux', 'uv', 'co2_level', 'soil_N', 'soil_P',
       'soil_K', 'soil_PH', 'soil_EC', 'soil_moisture', 'soil_temperatureC', 'created_at',
       'battery_level', 'people_count', 'car_count', 'bicycle_count', 'motorcycle_count',
-      'soil_temperature', 'soil_moisture', 'soil_temperatureC', 'soil_humidity', 'soil_ec',
+      'soil_temperature', 'soil_moisture', 'moisture', 'soil_temperatureC', 'soil_humidity', 'soil_ec',
       'soil_ph', 'soil_nitrogen', 'soil_phosphorus', 'soil_potassium', 'soil_salinity',
       'soil_n', 'soil_p', 'soil_k', 'water_level', 'water_temperature', 'water_ph',
     ];

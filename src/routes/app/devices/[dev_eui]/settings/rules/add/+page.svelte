@@ -226,6 +226,6 @@
 		</DarkCard>
 	</div>
 </form>
-<!-- {#if $appStore.debugMode} -->
+{#if $appStore.debugMode}
 	<SuperDebug data={$form} />
-<!-- {/if} -->
+{/if}
