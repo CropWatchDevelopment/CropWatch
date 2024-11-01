@@ -5,15 +5,20 @@ import { error, redirect, type Actions } from "@sveltejs/kit";
 import { fail, message, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 
-export const load = async ({ params, fetch }) => {
+export const load = async ({ params, fetch, locals: { safeGetSession } }) => {
+    const session = await safeGetSession();
+        if (!session.user) {
+            throw redirect(303, '/auth/unauthorized');
+        }
     const devEui = params.dev_eui;
     const ruleId = params.rule_id;
+    let isNew = false;
 
     try {
         // Fetch subjects for form fields
         const latestDataPromise = await fetch(`/api/v1/devices/${devEui}/latest-data`);
         const allData = await latestDataPromise.json();
-        
+
         let subjects = [];
         let latestData = convertObject(allData, true);
         delete latestData.created_at;
@@ -26,7 +31,13 @@ export const load = async ({ params, fetch }) => {
             // Load existing rule data for editing
             const ruleDataPromise = await fetch(`/api/v1/rules/${devEui}/${ruleId}`);
             const ruleData = await ruleDataPromise.json();
-            form = await superValidate(ruleData,zod(RuleAddSchema));
+            if (ruleId === 'add') {
+                ruleData.ruleGroupId = generateCustomUUIDv4();
+                ruleData.dev_eui = devEui;
+                ruleData.profile_id = session.user.id;
+                isNew = true;
+            }
+            form = await superValidate(ruleData, zod(RuleAddSchema));
         } else {
             // Set up for new rule
             form = await superValidate(zod(RuleAddSchema));
@@ -34,7 +45,7 @@ export const load = async ({ params, fetch }) => {
             form.data.ruleGroupId = generateCustomUUIDv4();
         }
 
-        return { form, subjects };
+        return { isNew, form, subjects };
     } catch (err) {
         console.error('Error loading device data:', err);
         return fail(500, { error: 'Failed to load device data.' });
@@ -65,7 +76,7 @@ export const actions: Actions = {
         try {
             let ruleResult;
 
-            if (ruleId) {
+            if (ruleId !== 'add') {
                 // Update existing rule
                 ruleResult = await fetch(`/api/v1/rules/${devEui}/${ruleId}`, {
                     method: 'PUT',
@@ -93,7 +104,7 @@ export const actions: Actions = {
             console.error('Error saving rule:', error);
             return fail(500, { error: 'Failed to save rule.' });
         }
-        
+
         return message(form, { text: ruleId ? 'Rule updated' : 'Rule created' });
     }
 };

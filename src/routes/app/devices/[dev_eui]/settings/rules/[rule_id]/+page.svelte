@@ -7,9 +7,7 @@
 	import { Button, TextField, SelectField, ListItem } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
-	import { appStore } from '$lib/stores/app.store.js';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { generateCustomUUIDv4 } from '$lib/components/ui/utilities/generateCustomUUIDv4.js';
 
@@ -66,7 +64,8 @@
 
 	// Only add new criterion on mount if we are adding a new rule
 	onMount(() => {
-		if (!data.form.data.ruleGroupId) {
+		debugger;
+		if (data.isNew) {
 			addNewCriterion();
 		}
 	});
@@ -178,6 +177,7 @@
 												const item = emailArray.findIndex((e) => e == email);
 												emailArray.splice(item, 1);
 												emailArray = emailArray;
+												$form.action_recipient = emailArray.join(',');
 											}}
 											classes={{ icon: 'text-red-500' }}
 										/>
