@@ -73,15 +73,15 @@ export const PUT: RequestHandler = async ({ url, params, request, locals: { supa
   }
 
   submittedRule.cw_rule_criteria.forEach(async (criteria) => {
-    let currentCriteria = await cwRuleCriteriaService.getById(criteria.id);
+    let currentCriteria = await cwRuleCriteriaService.getByRuleGroupId(criteria.ruleGroupId);
     if (currentCriteria) {
-      currentCriteria.subject = criteria.subject;
-      currentCriteria.operator = criteria.operator;
-      currentCriteria.trigger_value = criteria.trigger_value;
-      currentCriteria.reset_value = criteria.reset_value;
-      const criteriaResult = await cwRuleCriteriaService.update(currentCriteria.id, currentCriteria);
+      currentCriteria[0].subject = criteria.subject;
+      currentCriteria[0].operator = criteria.operator;
+      currentCriteria[0].trigger_value = criteria.trigger_value;
+      currentCriteria[0].reset_value = criteria.reset_value;
+      const criteriaResult = await cwRuleCriteriaService.update(currentCriteria[0].id, currentCriteria);
       if (!criteriaResult) {
-        throw error(500, `Failed to update criteria of ID ${currentCriteria.id}`);
+        throw error(500, `Failed to update criteria of ID ${currentCriteria[0].id}`);
       }
     }
 

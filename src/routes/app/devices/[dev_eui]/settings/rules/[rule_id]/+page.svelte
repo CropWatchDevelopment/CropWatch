@@ -3,28 +3,24 @@
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
 	import { isValidEmail } from '$lib/components/ui/utilities/isValidEmail';
 	import { notificationStore } from '$lib/stores/notificationStore';
-	import {
-		mdiAccountPlus,
-		mdiCheckCircle,
-		mdiCloseCircle,
-		mdiEmail,
-		mdiFloppy,
-		mdiPlusCircle
-	} from '@mdi/js';
-	import { Button, TextField, SelectField, ListItem, NumberStepper } from 'svelte-ux';
+	import { mdiAccountPlus, mdiContentSaveEdit, mdiCheckCircle, mdiCloseCircle, mdiEmail, mdiFloppy } from '@mdi/js';
+	import { Button, TextField, SelectField, ListItem } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
 	import { appStore } from '$lib/stores/app.store.js';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { generateCustomUUIDv4 } from '$lib/components/ui/utilities/generateCustomUUIDv4.js';
 
 	export let data;
+
 	const { form, errors, delayed, enhance } = superForm(data.form, {
 		dataType: 'json',
 		delayMs: 500,
 		timeoutMs: 5000,
 		onUpdate({ form }) {
 			if (form.message) {
-				localStorage.clear();
 				notificationStore.NotificationTimedOpen({
 					title: 'Success!',
 					description: form.message.text,
@@ -32,11 +28,13 @@
 					timeout: 5000,
 					icon: mdiCheckCircle
 				});
+                document.location = (`/app/devices/${$page.params.dev_eui}/settings?page=rules`);
 			}
 		}
 	});
 
-	let emailArray: string[] = [];
+
+	let emailArray: string[] = data.form.data.action_recipient ? data.form.data.action_recipient.split(',') : [];
 	let emailToAdd = '';
 
 	let operators = [
@@ -49,28 +47,64 @@
 
 	const babylonNotifierOptions = [
 		{ label: 'Email', value: 1 },
-		{ label: 'LINE', value: 2 }
+		{ label: 'LINE', value: 2, disabled: true },
+		{ label: 'Webhook', value: 3 },
+		{ label: 'Relay', value: 4 }
 	];
 
 	const addNewCriterion = () => {
+        // data.form?.data?.ruleGroupId = $form.ruleGroupId;
 		$form.cw_rule_criteria.push({
 			subject: '',
 			operator: '>',
 			trigger_value: 0,
 			reset_value: -10,
-			ruleGroupId: $form.ruleGroupId
+			ruleGroupId: data.form.data.ruleGroupId ? $form.ruleGroupId : generateCustomUUIDv4(),
 		});
 		$form.cw_rule_criteria = $form.cw_rule_criteria;
 	};
 
+	// Only add new criterion on mount if we are adding a new rule
 	onMount(() => {
-		addNewCriterion();
-	})
+		if (!data.form.data.ruleGroupId) {
+			addNewCriterion();
+		}
+	});
+
+	// Function to validate reset value based on the selected operator
+	const validateResetValue = (criterion) => {
+		if (criterion.operator === '>' || criterion.operator === '>=') {
+			if (criterion.reset_value >= criterion.trigger_value) {
+				notificationStore.NotificationTimedOpen({
+					title: 'Invalid Reset Value',
+					description: 'Reset value must be less than the trigger value for the selected operator.',
+					timeout: 3000,
+					icon: '❌',
+					buttonText: 'OK'
+				});
+				criterion.reset_value = criterion.trigger_value - 1;
+			}
+		} else if (criterion.operator === '<' || criterion.operator === '<=') {
+			if (criterion.reset_value <= criterion.trigger_value) {
+				notificationStore.NotificationTimedOpen({
+					title: 'Invalid Reset Value',
+					description:
+						'Reset value must be greater than the trigger value for the selected operator.',
+					timeout: 3000,
+					icon: '❌',
+					buttonText: 'OK'
+				});
+				criterion.reset_value = criterion.trigger_value + 1;
+			}
+		}
+	};
 </script>
 
 <form method="post" use:enhance>
 	<div class="px-4">
-		<DarkCard title={$_('devices.rules.addRule')}>
+		<DarkCard
+			title={data.form.data.ruleGroupId ? $_('devices.rules.editRule') : $_('devices.rules.addRule')}
+		>
 			<div class="flex flex-col gap-2">
 				<div class="flex flex-row justify-between gap-2">
 					<TextField
@@ -164,13 +198,14 @@
 				<h2>{$_('devices.rules.criteria')}</h2>
 				{#each $form.cw_rule_criteria as criterion, i}
 					<div>
-						<h3>{$_('devices.rules.criteria')} {i + 1}</h3>
+						<h3>{$_('devices.rules.criteria')} {0 + 1}</h3>
 						<div class="grid grid-cols-3 gap-2">
+							<input type="hidden" name="id" value={criterion.ruleGroupId} />
 							<SelectField
 								label={$_('devices.rules.subject')}
 								name="cw_rule_criteria"
 								options={data.subjects}
-								bind:value={$form.cw_rule_criteria[i].subject}
+								bind:value={criterion.subject}
 								errors={$errors.cw_rule_criteria?.[i]?.subject}
 								aria-invalid={$errors.cw_rule_criteria?.[i]?.subject ? 'true' : undefined}
 								required
@@ -179,53 +214,51 @@
 								label={$_('devices.rules.operator')}
 								name="cw_rule_criteria"
 								options={operators}
-								bind:value={$form.cw_rule_criteria[i].operator}
+								bind:value={criterion.operator}
 								errors={$errors.cw_rule_criteria?.[i]?.operator}
 								aria-invalid={$errors.cw_rule_criteria?.[i]?.operator ? 'true' : undefined}
 								required
+								on:change={() => validateResetValue($form.cw_rule_criteria[i])}
 							/>
 							<TextField
 								label={$_('devices.rules.triggerValue')}
 								name="cw_rule_criteria"
 								type="decimal"
-								bind:value={$form.cw_rule_criteria[i].trigger_value}
+								bind:value={criterion.trigger_value}
 								aria-invalid={$errors.cw_rule_criteria?.[i]?.trigger_value ? 'true' : undefined}
 								errors={$errors.cw_rule_criteria?.[i]?.trigger_value}
 								required
+								on:change={() => validateResetValue(criterion)}
 							/>
 						</div>
-						<TextField
-							label={$_('devices.rules.resetValue')}
-							name="cw_rule_criteria"
-							type="decimal"
-							bind:value={$form.cw_rule_criteria[i].reset_value}
-							aria-invalid={$errors.cw_rule_criteria?.[i]?.reset_value ? 'true' : undefined}
-							errors={$errors.cw_rule_criteria?.[i]?.reset_value}
-							required
-						/>
+						<div class="mt-2">
+							<TextField
+								label={$_('devices.rules.resetValue')}
+								name="cw_rule_criteria"
+								type="decimal"
+								bind:value={criterion.reset_value}
+								aria-invalid={$errors.cw_rule_criteria?.[i]?.reset_value ? 'true' : undefined}
+								errors={$errors.cw_rule_criteria?.[i]?.reset_value}
+								required
+								on:change={() => validateResetValue($form.cw_rule_criteria[i])}
+							/>
+						</div>
 					</div>
 				{/each}
 
 				<div>
-					<!-- <Button
-						on:click={() => addNewCriterion()}
-						icon={mdiPlusCircle}
-						variant="fill"
-						color="primary">{$_('devices.rules.addSubCriterion')}</Button
-					> -->
-
 					<input type="hidden" name="action_recipient" value={$form.action_recipient} />
-					<input type="hidden" name="ruleGroupId" value={$form.ruleGroupId} />
-					<input type="hidden" name="dev_eui" value={$form.dev_eui} />
+					<input type="hidden" name="ruleGroupId" value={$form.ruleGroupId ? $form.ruleGroupId : generateCustomUUIDv4()} />
+					<input type="hidden" name="dev_eui" value={$page.params.dev_eui} />
 					<input type="hidden" name="cw_rule_criteria" value={$form.cw_rule_criteria} />
-					<Button type="submit" icon={mdiFloppy} variant="fill" loading={$delayed} color="primary">
-						{$_('app.save')}
+					<Button type="submit" icon={mdiContentSaveEdit} variant="fill" loading={$delayed} color="primary">
+						{$_(data.form.data.ruleGroupId ? 'app.update' : 'app.save')}
 					</Button>
 				</div>
 			</div>
 		</DarkCard>
 	</div>
 </form>
-{#if $appStore.debugMode}
+<!-- {#if $appStore.debugMode} -->
 	<SuperDebug data={$form} />
-{/if}
+<!-- {/if} -->
