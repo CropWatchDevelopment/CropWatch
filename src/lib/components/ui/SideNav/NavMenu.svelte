@@ -63,38 +63,6 @@
 			/>
 		</li>
 
-		<h1>{$_('nav.Reports')}</h1>
-
-		<li>
-			<NavItem
-				text={$_('nav.AllReports')}
-				currentUrl={$page.url}
-				path="/app/reports"
-				icon={mdiFileChart}
-				classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
-			/>
-		</li>
-		<ul>
-			<li>
-				<NavItem
-					text={$_('nav.weeklyReports')}
-					currentUrl={$page.url}
-					path="/app/reports"
-					icon={mdiViewWeek}
-					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
-				/>
-			</li>
-			<li>
-				<NavItem
-					text={$_('nav.monthlyReports')}
-					currentUrl={$page.url}
-					path="/app/reports"
-					icon={mdiCalendarMonth}
-					classes={{ root: 'pl-3 hover:bg-primary/30', active: 'bg-primary/30 text-accent' }}
-				/>
-			</li>
-		</ul>
-
 		<h1>{$_('nav.Rules')}</h1>
 
 		<li>

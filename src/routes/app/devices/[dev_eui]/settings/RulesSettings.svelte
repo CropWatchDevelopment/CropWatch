@@ -5,7 +5,7 @@
 	import { onMount } from 'svelte';
 	import { Button, Tooltip } from 'svelte-ux';
 	import RuleList from './rules/RuleList.svelte';
-	import RuleAdd from './rules/add/+page.svelte';
+	// import RuleAdd from './rules/add/+page.svelte';
 	import { _ } from 'svelte-i18n';
 
 	let rules: Tables<'cw_rules'>[] = [];

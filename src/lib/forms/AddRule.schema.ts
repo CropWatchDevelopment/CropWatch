@@ -10,6 +10,7 @@ export const RuleAddSchema = z.object({
     babylon_notifier_type: z.number().default(1),
     cw_rule_criteria: z.object({
         // id: z.number(),
+        ruleGroupId: z.string(),
         subject: z.string().default(''),
         operator: z.string().default(''),
         trigger_value: z.number(),

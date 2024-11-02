@@ -64,9 +64,9 @@
 						icon={mdiPencil}
 						variant="fill"
 						color="warning"
-						href={`/app/devices/${$page.params.dev_eui}/settings/rules/${rule.ruleGroupId}/edit`}
-					/></Tooltip
-				>
+						href={`/app/devices/${$page.params.dev_eui}/settings/rules/${rule.ruleGroupId}`}
+					/>
+				</Tooltip>
 				<Tooltip title={$_('devices.rules.deleteRule')}>
 					<Toggle let:on={open} let:toggle let:toggleOff>
 						<Button icon={mdiTrashCan} on:click={toggle} variant="fill" color="danger" />

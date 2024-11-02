@@ -1,6 +1,7 @@
 export const nameToEmoji = (name: string) => {
     switch (name) {
         case 'soil_moisture':
+        case 'moisture':
         case 'soil_humidity':
             return '💧';
         case 'humidity':
