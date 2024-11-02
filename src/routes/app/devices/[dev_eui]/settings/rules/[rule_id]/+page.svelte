@@ -3,20 +3,23 @@
 	import DarkCard2 from '$lib/components/ui/Cards/DarkCard2.svelte';
 	import { isValidEmail } from '$lib/components/ui/utilities/isValidEmail';
 	import { notificationStore } from '$lib/stores/notificationStore';
-	import { mdiAccountPlus, mdiContentSaveEdit, mdiCheckCircle, mdiCloseCircle, mdiEmail, mdiFloppy } from '@mdi/js';
+	import { mdiAccountPlus, mdiContentSaveEdit, mdiCheckCircle, mdiCloseCircle, mdiEmail } from '@mdi/js';
 	import { Button, TextField, SelectField, ListItem } from 'svelte-ux';
 	import { _ } from 'svelte-i18n';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { generateCustomUUIDv4 } from '$lib/components/ui/utilities/generateCustomUUIDv4.js';
+	import { zod } from 'sveltekit-superforms/adapters';
+	import { RuleAddSchema } from '$lib/forms/AddRule.schema.js';
 
 	export let data;
 
-	const { form, errors, delayed, enhance } = superForm(data.form, {
+	const { form, errors, delayed, enhance, validate } = superForm(data.form, {
 		dataType: 'json',
 		delayMs: 500,
 		timeoutMs: 5000,
+		validators: zod(RuleAddSchema),
 		onUpdate({ form }) {
 			if (form.message) {
 				notificationStore.NotificationTimedOpen({
@@ -34,6 +37,7 @@
 
 	let emailArray: string[] = data.form.data.action_recipient ? data.form.data.action_recipient.split(',') : [];
 	let emailToAdd = '';
+	let emailValidate: string[] = [];
 
 	let operators = [
 		{ label: '=', value: '=' },
@@ -63,12 +67,16 @@
 	};
 
 	// Only add new criterion on mount if we are adding a new rule
-	onMount(() => {
-		debugger;
+	onMount(async () => {
 		if (data.isNew) {
 			addNewCriterion();
 		}
+		
 	});
+
+	const validateForm = async () => {
+		emailValidate = await validate('action_recipient');
+	}
 
 	// Function to validate reset value based on the selected operator
 	const validateResetValue = (criterion) => {
@@ -184,8 +192,8 @@
 									</div>
 								</ListItem>
 							{/each}
-							{#if emailArray.length === 0}
-								<p class="text-surface-content">{$_('devices.rules.pleaseAddAtLeastOneEmail')}</p>
+							{#if emailValidate.length > 0}
+								<p class="text-red-400 font-extrabold">{$_('devices.rules.pleaseAddAtLeastOneEmail')}</p>
 							{/if}
 						</ul>
 					</div>
@@ -251,7 +259,7 @@
 					<input type="hidden" name="ruleGroupId" value={$form.ruleGroupId ? $form.ruleGroupId : generateCustomUUIDv4()} />
 					<input type="hidden" name="dev_eui" value={$page.params.dev_eui} />
 					<input type="hidden" name="cw_rule_criteria" value={$form.cw_rule_criteria} />
-					<Button type="submit" icon={mdiContentSaveEdit} variant="fill" loading={$delayed} color="primary">
+					<Button type="submit" on:click={() => validateForm()} icon={mdiContentSaveEdit} variant="fill" loading={$delayed} color="primary">
 						{$_(data.form.data.ruleGroupId ? 'app.update' : 'app.save')}
 					</Button>
 				</div>
