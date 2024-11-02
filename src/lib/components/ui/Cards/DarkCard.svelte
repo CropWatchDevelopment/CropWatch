@@ -23,7 +23,7 @@
 		<div class="flex justify-between items-center">
 			<p class="text-2xl">{title}</p>
 			{#if value != null && unit != null}<p class="text-3xl">
-					{value}<span class="text-2xl">{unit}</span>
+					{(typeof(value) == 'number' ? value.toFixed(2) : value)}<span class="text-2xl">{unit}</span>
 				</p>{/if}
 		</div>
 	{/if}
