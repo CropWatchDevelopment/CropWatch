@@ -12,6 +12,7 @@
 	import { generateCustomUUIDv4 } from '$lib/components/ui/utilities/generateCustomUUIDv4.js';
 	import { zod } from 'sveltekit-superforms/adapters';
 	import { RuleAddSchema } from '$lib/forms/AddRule.schema.js';
+	import { appStore } from '$lib/stores/app.store.js';
 
 	export let data;
 
