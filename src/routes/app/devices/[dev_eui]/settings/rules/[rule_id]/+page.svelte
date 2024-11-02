@@ -49,9 +49,9 @@
 
 	const babylonNotifierOptions = [
 		{ label: 'Email', value: 1 },
-		{ label: 'LINE', value: 2, disabled: true },
-		{ label: 'Webhook', value: 3 },
-		{ label: 'Relay', value: 4 }
+		// { label: 'LINE', value: 2, disabled: true },
+		// { label: 'Webhook', value: 3 },
+		// { label: 'Relay', value: 4 }
 	];
 
 	const addNewCriterion = () => {
@@ -89,7 +89,6 @@
 					icon: '❌',
 					buttonText: 'OK'
 				});
-				criterion.reset_value = criterion.trigger_value - 1;
 			}
 		} else if (criterion.operator === '<' || criterion.operator === '<=') {
 			if (criterion.reset_value <= criterion.trigger_value) {
@@ -101,7 +100,6 @@
 					icon: '❌',
 					buttonText: 'OK'
 				});
-				criterion.reset_value = criterion.trigger_value + 1;
 			}
 		}
 	};
@@ -267,6 +265,6 @@
 		</DarkCard>
 	</div>
 </form>
-<!-- {#if $appStore.debugMode} -->
+{#if $appStore.debugMode}
 	<SuperDebug data={$form} />
-<!-- {/if} -->
+{/if}
