@@ -36,6 +36,6 @@ export const actions = {
         }
 
         // Display a success status message
-        return message(form, { text: 'Location Created Successfully', id: 4 })
+        return message(form, { text: 'Location Created Successfully', id: newId });
     }
 };
