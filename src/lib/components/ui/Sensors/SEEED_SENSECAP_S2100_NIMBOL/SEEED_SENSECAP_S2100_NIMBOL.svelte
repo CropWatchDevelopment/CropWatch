@@ -20,15 +20,13 @@
 	const humidityData = sensor.data.map((d) => [new Date(d.created_at).getTime(), d.soil_humidity]);
 	const current_temp = sensor.data.at(0).soil_temperature;
 	const current_humidity = sensor.data.at(0).soil_humidity;
-	const soil_n = sensor.data.at(0).soil_n;
-	const soil_k = sensor.data.at(0).soil_k;
-	const soil_p = sensor.data.at(0).soil_p;
 	const current_ph = sensor.data.at(0).soil_ph;
 	let current_ec = sensor.data.at(0).soil_ec; // in µS/cm
 
 	let ecNotationType = 1;
+	let npkNotationType = 1;
 
-	const result = estimateNPK({
+	const npk = estimateNPK({
 		temperature: current_temp,
 		moisture: current_humidity,
 		ec: current_ec,
@@ -39,8 +37,10 @@
 		n_months_ago: 0,
 		soilType: 'Peaty',
 	});
-	console.log(result);
-	debugger;
+	const soil_n = npk.N;
+	const soil_p = npk.P;
+	const soil_k = npk.K;
+
 
 	// Function to convert EC based on selected notation type
 	const convertEC = (ecValue: number, notationType: number) => {
@@ -52,13 +52,23 @@
 				// dS/m (1 dS/m = 1000 µS/cm)
 				return ecValue / 1000;
 			case 3:
-				// mg/100g (custom conversion)
-				return ecValue / 10; // Adjust this factor based on actual conversion formula
-			case 4:
 				// mS/cm (1 mS/cm = 1000 µS/cm)
 				return ecValue / 1000;
 			default:
 				return ecValue;
+		}
+	};
+
+	const convertNPK = (npkValue: typeof npk, notationType: number) => {
+		switch (notationType) {
+			case 1:
+				// mg/100g (default)
+				return [npkValue.N, npkValue.P, npkValue.K];
+			case 2:
+				// mg/kg (1 mg/kg = 10 mg/100g)
+				return [ (npkValue['N'] * 10).toFixed(2), (npkValue['P'] * 10).toFixed(2), (npkValue['K'] * 10).toFixed(2) ];
+			default:
+				return npkValue;
 		}
 	};
 
@@ -89,14 +99,26 @@
 			<div class="chart-container" use:highcharts={npkChartConfig} />
 			<div class="flex w-full flex-row justify-center gap-5">
 				<p class="text-center">
-					<span class="text-green-500">N</span>: {soil_n}mg/kg
+					<span class="text-green-500">N</span>:
+					{convertNPK(npk, npkNotationType)[0]}
+					{npkNotationType == 1 ? 'mg/kg' : npkNotationType == 2 ? 'mg/100g' : 'not set'}
 				</p>
 				<p class="text-center">
-					<span class="text-red-500">P</span>: {soil_p}mg/kg
+					<span class="text-red-500">P</span>:
+					{convertNPK(npk, npkNotationType)[1]}
+					{npkNotationType == 1 ? 'mg/kg' : npkNotationType == 2 ? 'mg/100g' : 'not set'}
 				</p>
 				<p class="text-center">
-					<span class="text-yellow-500">K</span>: {soil_k}mg/kg
+					<span class="text-yellow-500">K</span>:
+					{convertNPK(npk, npkNotationType)[2]}
+					{npkNotationType == 1 ? 'mg/kg' : npkNotationType == 2 ? 'mg/100g' : 'not set'}
 				</p>
+			</div>
+			<div class="flex flex-1 flex-col justify-center items-center" style="min-height: 150px;">
+				<div class="mt-4 flex flex-row gap-4">
+					<Radio name="label" bind:group={npkNotationType} value={1}>mg/kg</Radio>
+					<Radio name="label" bind:group={npkNotationType} value={2}>mg/100g</Radio>
+				</div>
 			</div>
 		</DarkCard>
 	</div>
@@ -112,13 +134,12 @@
 		<div class="flex flex-1 flex-col justify-center items-center" style="min-height: 150px;">
 			<p id="EC" class="text-5xl">
 				{convertEC(current_ec, ecNotationType)}
-				{ecNotationType == 1 ? 'µS/cm' : ecNotationType == 2 ? 'dS/m' : ecNotationType == 3 ? 'mg/100g' : 'mS/cm'}
+				{ecNotationType == 1 ? 'µS/cm' : ecNotationType == 2 ? 'dS/m' : ecNotationType == 3 ? 'mS/cm' : 'not set'}
 			</p>
 			<div class="mt-4 flex flex-row gap-4">
 				<Radio name="label" bind:group={ecNotationType} value={1}>µS/cm</Radio>
 				<Radio name="label" bind:group={ecNotationType} value={2}>dS/m</Radio>
-				<Radio name="label" bind:group={ecNotationType} value={3}>mg/100g</Radio>
-				<Radio name="label" bind:group={ecNotationType} value={4}>mS/cm</Radio>
+				<Radio name="label" bind:group={ecNotationType} value={3}>mS/cm</Radio>
 			</div>
 		</div>
 	</DarkCard>
