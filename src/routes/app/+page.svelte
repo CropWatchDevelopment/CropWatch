@@ -41,6 +41,7 @@
 	$effect(() => {
 		if (browser) {
 			localStorage.setItem('dashboard_view_type', dashboardViewType);
+			userContext.fetchLocations();
 		}
 	});
 
