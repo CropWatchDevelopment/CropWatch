@@ -18,6 +18,7 @@ export const nameToEmoji = (name: string) => {
             return '🌡️';
         case 'soil_EC':
         case 'soil_ec':
+        case 'ec':
             return '🧂';
         case 'soil_N':
         case 'soil_P':
@@ -28,6 +29,7 @@ export const nameToEmoji = (name: string) => {
             return '🧪';
         case 'soil_PH':
         case 'soil_ph':
+        case 'ph':
             return '⚗️';
         case 'co2_level':
             return '⌬';

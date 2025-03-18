@@ -24,7 +24,6 @@
 	}
 </script>
 
-<!-- <pre>{JSON.stringify(device.latest_data, null, 2)}</pre> -->
 <div
 	class="mr-2 border-l-8 text-primary-content
 		{device && device.latest_data && device.latest_data.created_at

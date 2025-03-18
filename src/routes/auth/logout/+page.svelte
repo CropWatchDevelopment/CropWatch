@@ -4,7 +4,7 @@
 	import { Icon, ProgressCircle, Duration, TweenedValue } from 'svelte-ux';
 
 	export let data;
-	let countdown = 10;
+	let countdown = 3;
 
 	onMount(() => {
 		const interval = setInterval(() => {
@@ -13,7 +13,7 @@
 			} else {
 				clearInterval(interval);
 				data.supabase.auth.signOut();
-				window.location.href = 'auth/login'; // Redirect after logout
+				window.location.href = '/auth/login'; // Redirect after logout
 			}
 		}, 1000);
 	});

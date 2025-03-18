@@ -203,6 +203,9 @@ export const nameToJapaneseName = (name: string) => {
             return 'ルール';
         case 'Rule Name':
             return 'ルール名';
+        case 'CO²':
+        case 'co2':
+            return 'CO²';
         default:
             return '';
     }
