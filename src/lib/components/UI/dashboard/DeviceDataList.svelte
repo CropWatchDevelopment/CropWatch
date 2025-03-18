@@ -56,7 +56,7 @@
 						</p>
 					{:else if device.latest_data[dataPointKey] !== null}
 						<TweenedValue value={device.latest_data[dataPointKey]} format="decimal" />
-						<small class="text-secondary">
+						<small class="text-accent-content">
 							<sup>{nameToNotation(dataPointKey)}</sup>
 						</small>
 					{/if}

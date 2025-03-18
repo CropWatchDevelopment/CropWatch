@@ -17,6 +17,6 @@
   "auth_login_social_login_discord": "Discord",
   "auth_login_create_account": "アカウントを作成する",
   "app_dashboard_title": "ダッシュボード",
-  "component_device_data_list_details": "詳細",
-  "component_dataRowItem_detail_button": "詳細"
+  "component_device_data_list_details": "データを表示",
+  "component_dataRowItem_detail_button": "データを表示"
 }

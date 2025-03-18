@@ -47,7 +47,7 @@ export const nameToJapaneseName = (name: string) => {
         case 'pressure':
             return '気圧';
         case 'created_at':
-            return '作成日時';
+            return '最終更新';
         case 'wind_speed':
             return '風速';
         case 'lux':
