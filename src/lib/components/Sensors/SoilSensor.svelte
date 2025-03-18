@@ -32,20 +32,17 @@
 
 	$effect(() => {
 		if (device) {
-			const result = userContext.fetchLatestDeviceData(
+			userContext.fetchLatestDeviceData(
 				device,
 				moment().subtract(1, 'day').toDate(),
 				moment().toDate()
 			)?.all_data;
-			if (result) {
-				device.all_data = [...result];
-			}
 		}
 	});
 </script>
 
 <div class="flex flex-row gap-5">
-	<CWCard text={nameToJapaneseName('Temperature')} value={latestTemperature} notation="°C" />
+	<CWCard text={nameToJapaneseName('Soil Temperature')} value={latestTemperature} notation="°C" />
 	<CWCard text={nameToJapaneseName('Moisture')} value={latestMoisture} notation="%" />
 </div>
 
@@ -151,7 +148,7 @@
 						tooltip: {
 							valueSuffix: ' °C'
 						},
-						lineWidth: 5,
+						lineWidth: 2,
 						color: 'red'
 					},
 					{
@@ -169,7 +166,7 @@
 						tooltip: {
 							valueSuffix: ' %'
 						},
-						lineWidth: 5,
+						lineWidth: 2,
 						color: 'aqua'
 					}
 				]
@@ -205,7 +202,6 @@
 				</div>
 			</Header>
 			<div class="w-full text-center text-4xl">
-				{latestPH ?? 'N/A'}
 				<Chart
 					options={{
 						chart: {
@@ -340,7 +336,6 @@
 				</div>
 			</Header>
 			<div class="w-full text-center text-4xl">
-				{latestEC ?? 'N/A'} µS/cm
 				<Chart
 					options={{
 						chart: {
@@ -353,7 +348,7 @@
 							enabled: true
 						},
 						title: {
-							text: '&nbsp;',
+							text: '',
 							style: {
 								color: 'orange' // Dynamic text color
 							}
@@ -428,13 +423,13 @@
 						series: [
 							{
 								type: 'gauge',
-								name: 'pH',
+								name: '',
 								data: [latestEC],
 								tooltip: {
-									valueSuffix: ` EC`
+									valueSuffix: ` `
 								},
 								dataLabels: {
-									format: `{y} EC`,
+									format: `{y} µS/cm`,
 									borderWidth: 0,
 									style: {
 										fontSize: '32px',

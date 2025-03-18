@@ -4,7 +4,7 @@ export const nameToJapaneseName = (name: string) => {
         case 'moisture':
         case 'Moisture':
         case 'soil_humidity':
-            return '土壌水分';
+            return '体積含水率';
         case 'humidity':
         case 'Humidity':
             return '湿度';
@@ -18,9 +18,10 @@ export const nameToJapaneseName = (name: string) => {
         case 'soil_temperatureC':
         case 'temperature_c':
         case 'soil_temperature':
-            return '温度';
+        case 'Soil Temperature':
+            return '土壌温度';
         case 'Temperature and Moisture':
-            return '土壌温度/水分量';
+            return '土壌温度/体積含水率';
         case 'Temperature and Humidity':
         case 'temperature and humidity':
         case 'temperature_and_humidity':

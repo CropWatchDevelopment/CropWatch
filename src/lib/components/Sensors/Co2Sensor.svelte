@@ -123,7 +123,7 @@
 							tooltip: {
 								valueSuffix: ' °C'
 							},
-							lineWidth: 5,
+							lineWidth: 2,
 							color: 'lime'
 						}
 					]
@@ -144,7 +144,9 @@
 					height: 500
 				},
 				title: {
-					text:  device?.all_data?.some((data) => data.humidity > 0) ? nameToJapaneseName('Temperature & Humidity') : nameToJapaneseName('Temperature'),
+					text: device?.all_data?.some((data) => data.humidity > 0)
+						? nameToJapaneseName('Temperature & Humidity')
+						: nameToJapaneseName('Temperature'),
 					style: {
 						color: 'orange'
 					}
@@ -188,7 +190,6 @@
 						title: {
 							text: ''
 						},
-						tickAmount: 10,
 						labels: {
 							format: '{value}°C',
 							style: {
@@ -236,7 +237,7 @@
 						tooltip: {
 							valueSuffix: ' °C'
 						},
-						lineWidth: 5,
+						lineWidth: 2,
 						color: 'red'
 					},
 					{
@@ -254,7 +255,7 @@
 						tooltip: {
 							valueSuffix: ' %'
 						},
-						lineWidth: 5,
+						lineWidth: 2,
 						color: 'aqua'
 					}
 				]

@@ -157,7 +157,7 @@
 						tooltip: {
 							valueSuffix: ''
 						},
-						lineWidth: 5,
+						lineWidth: 2,
 						color: 'Yellow'
 					},
 					{
@@ -175,7 +175,7 @@
 						tooltip: {
 							valueSuffix: ''
 						},
-						lineWidth: 5,
+						lineWidth: 2,
 						color: 'Red'
 					},
 					{
@@ -193,7 +193,7 @@
 						tooltip: {
 							valueSuffix: ''
 						},
-						lineWidth: 5,
+						lineWidth: 2,
 						color: 'Blue'
 					}
 				]
