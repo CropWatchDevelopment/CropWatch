@@ -1,37 +1,25 @@
 <!doctype html>
-<html lang="en" translate="no" class="notranslate">
+<html lang="lang%">
 
 <head>
 	<meta charset="utf-8" />
-	<link rel="icon" href="%sveltekit.assets%/icons/favicon.png?id=v3" />
-	<link rel="icon" href="%sveltekit.assets%/icons/favicon.svg?id=v3">
-	<link rel="mask-icon" href="%sveltekit.assets%/icons/favicon.svg" color="#000000">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="theme-color" content="#3f51b5">
 
-	<meta charset="utf-8" />
-	<meta name="theme-color" content="#ffffff" />
-	<!-- Apple does not allow svg icons. -->
-	<!-- Use 196x196 png instead -->
-	<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
-	<link rel="apple-touch-icon-precomposed" href="%sveltekit.assets%/icons/apple-touch-icon-precomposed.png" />
+	<!-- apple stuff-->
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="CropWatch UI">
+	<link rel="apple-touch-icon" href="images/logo_192.png">
 
-	<link rel="icon" sizes="196x196" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
-	<link rel="manifest" href="%sveltekit.assets%/manifest.json" />
 
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<meta name="HandheldFriendly" content="true" />
-	<meta name="apple-mobile-web-app-capable" content="yes" />
-	<meta name="mobile-wep-app-capable" content="yes" />
-	<meta name="google" content="notranslate">
-
+	<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+	<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 	%sveltekit.head%
 </head>
 
-<!-- <body data-sveltekit-preload-data="hover"> -->
-
-<body>
-	<div style="display: contents">
-		%sveltekit.body%
-	</div>
+<body data-sveltekit-preload-data="hover" class="flex flex-col min-h-screen">
+	<div style="display: contents">%sveltekit.body%</div>
 </body>
 
 </html>

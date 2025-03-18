@@ -1,0 +1,73 @@
+{
+    "lang": "ja",
+    "short_name": "CropWatch",
+    "name": "CropWatch User Interface",
+    "icons": [
+        {
+            "src": "/images/cropwatch_static_512.svg",
+            "type": "image/svg+xml",
+            "sizes": "512x512"
+        },
+        {
+            "src": "/images/logo_192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "/images/logo_512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ],
+    "id": "/cropwatch-ui-app",
+    "start_url": "/",
+    "background_color": "#3367D6",
+    "display": "standalone",
+    "display_override": [
+        "fullscreen",
+        "minimal-ui"
+    ],
+    "scope": "/",
+    "theme_color": "#3367D6",
+    "shortcuts": [
+        {
+            "name": "CropWatch UI",
+            "short_name": "CropWatch",
+            "description": "CropWatch UI",
+            "url": "/",
+            "icons": [
+                {
+                    "src": "/images/logo_192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "CropWatch UI",
+            "short_name": "CropWatch",
+            "description": "CropWatch",
+            "url": "/",
+            "icons": [
+                {
+                    "src": "/images/logo_192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "description": "CropWatch UI",
+    "screenshots": [
+        {
+            "src": "/images/Dashboard-screenshot1.png",
+            "type": "image/png",
+            "sizes": "540x720",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "/images/login-screenshot1.png",
+            "type": "image/png",
+            "sizes": "720x540",
+            "form_factor": "wide"
+        }
+    ]
+}

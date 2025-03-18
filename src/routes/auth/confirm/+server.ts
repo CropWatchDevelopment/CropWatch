@@ -1,4 +1,4 @@
-// src/routes/auth/confirm/+server.js
+import { dev } from '$app/environment';
 import { redirect } from '@sveltejs/kit';
 
 export const GET = async (event) => {
@@ -8,7 +8,7 @@ export const GET = async (event) => {
     } = event;
     const token_hash = url.searchParams.get('token_hash');
     const type = url.searchParams.get('type');
-    const next = url.searchParams.get('next') ?? '/';
+    const next = url.searchParams.get('redirectUrl') ?? '/';
 
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });

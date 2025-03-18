@@ -1,43 +1,64 @@
-// src/routes/+layout.ts
-import { browser } from '$app/environment';
-import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
-import '$lib/i18n' // Import to initialize. Important :)
-import { locale, waitLocale } from 'svelte-i18n';
-import type { LayoutLoad } from './$types'
-
-export const load: LayoutLoad = async ({ fetch, data, depends }) => {
-    depends('supabase:auth')
-    if (browser) {
-        locale.set(window.navigator.language)
-    }
-    await waitLocale()
-
+import {
+    createBrowserClient,
+    createServerClient,
+    isBrowser,
+  } from "@supabase/ssr";
+  import {
+    PUBLIC_SUPABASE_ANON_KEY,
+    PUBLIC_SUPABASE_URL,
+  } from "$env/static/public";
+  import type { LayoutLoad } from "./$types";
+  import type { Database } from "$lib/types/database.types";
+  
+  export const load: LayoutLoad = async ({ data, depends, fetch }) => {
+    /**
+     * Declare a dependency so the layout can be invalidated, for example, on
+     * session refresh.
+     */
+    depends("supabase:auth");
+  
     const supabase = isBrowser()
-        ? createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+      ? createBrowserClient<Database>(
+          PUBLIC_SUPABASE_URL,
+          PUBLIC_SUPABASE_ANON_KEY,
+          {
             global: {
-                fetch,
+              fetch,
             },
-        })
-        : createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+            },
+          }
+        )
+      : createServerClient<Database>(
+          PUBLIC_SUPABASE_URL,
+          PUBLIC_SUPABASE_ANON_KEY,
+          {
             global: {
-                fetch,
+              fetch,
             },
             cookies: {
-                getAll() {
-                    return data.cookies
-                },
+              getAll() {
+                return data.cookies;
+              },
             },
-        })
-
+          }
+        );
+  
     /**
      * It's fine to use `getSession` here, because on the client, `getSession` is
      * safe, and on the server, it reads `session` from the `LayoutData`, which
      * safely checked the session using `safeGetSession`.
      */
     const {
-        data: { session },
-    } = await supabase.auth.getSession()
+      data: { session },
+    } = await supabase.auth.getSession();
+  
+    // const {
+    //   data: { user },
+    // } = await supabase.auth.getUser();
+    // return { session, supabase, user };
 
-    return { supabase, session }
-}
+    return { session, supabase };
+  };

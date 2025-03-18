@@ -1,0 +1,22 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "example_message": "こんにちは、{username}",
+  "test": "テスト",
+  "auth_login_title": "CropWatchアカウントにサインイン",
+  "auth_login_email": "メールアドレス",
+  "auth_login_email_label": "メールアドレス",
+  "auth_login_email_placeholder": "メールアドレスを入力してください",
+  "auth_login_password": "パスワード",
+  "auth_login_password_label": "パスワード",
+  "auth_login_password_placeholder": "パスワードを入力してください",
+  "auth_login_password_remember_me": "ログイン状態を保持する",
+  "auth_login_password_forgot": "パスワードをお忘れですか？",
+  "auth_login_submit": "サインイン",
+  "auth_login_social_login_title": "または次でサインイン",
+  "auth_login_social_login_google": "Google",
+  "auth_login_social_login_discord": "Discord",
+  "auth_login_create_account": "新しいCropWatchアカウントを作成",
+  "app_dashboard_title": "ダッシュボード",
+  "component_device_data_list_details": "詳細",
+  "component_dataRowItem_detail_button": "詳細"
+}

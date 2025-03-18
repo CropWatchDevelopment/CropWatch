@@ -1,71 +1,68 @@
-import { fail, redirect } from "@sveltejs/kit"
-import { AuthApiError } from '@supabase/supabase-js'
-import { PRIVATE_RECAPTCHA_KEY } from "$env/static/private"
+import { fail } from '@sveltejs/kit';
+import { message, superValidate } from 'sveltekit-superforms/server';
+import { registerSchema } from './form/register.schema';
+import { zod } from 'sveltekit-superforms/adapters';
+import { PRIVATE_GOOGLE_RECAPTCHA_SECRET_KEY } from '$env/static/private';
+
+export const load = async () => {
+    const form = await superValidate(zod(registerSchema));
+    return { form };
+};
 
 export const actions = {
-    default: async (event) => {
-        const { request, locals } = event
-        const formData = await request.formData()
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
+    default: async ({ request, locals: { supabase } }) => {
+        const form = await superValidate(request, zod(registerSchema));
 
-        const token = formData.get('token') as string;
-        const recaptchaUrl = 'https://www.google.com/recaptcha/api/siteverify';
+        if (!form.valid) {
+            return fail(400, { form });
+        }
+        if (!await reCatchaToken(form.data.reCatchaToken)) {
+            return fail(400, {
+                form: message(form, 'reCAPTCHA failed, please try again')
+            });
+        }
 
-        const captchaIsOK = await fetch(recaptchaUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `secret=${PRIVATE_RECAPTCHA_KEY}&response=${token}`,
-        }).then(async (response) => {
-            const data = await response.json();
-            if (!data.success) {
-                return false;
+        const { error } = await supabase.auth.signUp({
+            email: form.data.email,
+            password: form.data.password,
+            options: {
+                emailRedirectTo: 'https://cropwatch.io/legal/sign-forms',
+                data: {
+                    username: form.data.username,
+                    full_name: form.data.full_name,
+                    employer: form.data.employer,
+                    email: form.data.email
+                }
             }
-            return true;
         });
 
-        if (!captchaIsOK) {
+        if (error) {
             return fail(400, {
-                error: "invalidCredentials", email: email, invalid: true, message: "Captcha is invalid"
-            })
+                form: message(form, error.message)
+            });
         }
 
-        if (!email || !password) {
-            return fail(400, {
-                error: "invalidCredentials", email: email, invalid: true, message: "All fields are required"
-            })
-        }
-
-        const { data, error: err } = await locals.supabase.auth.signUp({
-            email: email,
-            password: password,
-        })
-
-        if (err) {
-            if (err instanceof AuthApiError && err.status >= 400 && err.status < 500) {
-                return fail(400, {
-                    error: "invalidCredentials", email: email, invalid: true, message: err.message
-                })
-            }
-            return fail(500, {
-                error: "Server error. Please try again later.",
-            })
-        }
-        if (!data.user) {
-            return fail(500, {
-                error: "Server error. Please try again later.",
-            })
-        }
-        // signup for existing user returns an obfuscated/fake user object without identities https://supabase.com/docs/reference/javascript/auth-signup
-        if (!err && !!data.user && !data.user.identities.length) {
-            return fail(409, {
-                error: "User already exists", email: email, invalid: true, message: "User already exists"
-            })
-        }
-
-        // redirect(303, "check-email");
-        return { success: true }
+        return { form };
     }
+};
+
+async function reCatchaToken(token: string): Promise<boolean> {
+    // Verify the reCAPTCHA token with Google
+    const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
+    const params = new URLSearchParams();
+    params.append('secret', PRIVATE_GOOGLE_RECAPTCHA_SECRET_KEY);
+    params.append('response', token);
+
+    const recaptchaResponse = await fetch(verificationUrl, {
+        method: 'POST',
+        body: params
+    });
+    const recaptchaResult = await recaptchaResponse.json();
+
+    if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+        console.error('reCAPTCHA failed:', recaptchaResult);
+        return false;
+    }
+
+    return true;
 }

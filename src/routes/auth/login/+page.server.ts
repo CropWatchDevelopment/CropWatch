@@ -1,41 +1,52 @@
-// src/routes/login/+page.server.js
-import { fail, redirect } from '@sveltejs/kit';
-import { AuthApiError } from '@supabase/supabase-js';
+import { fail, setError, superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
+import { loginFormSchema } from './forms/login.schema';
+import { redirect } from '@sveltejs/kit';
+import { PUBLIC_DOMAIN } from '$env/static/public';
 
-export const actions = {
-    login: async (event) => {
-        const { request, url, locals } = event;
-        const formData = await request.formData();
-        const email = formData.get('email');
-        const password = formData.get('password');
-
-        const { data, error: err } = await locals.supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (err) {
-            if (err instanceof AuthApiError && err.status === 400) {
-                return fail(400, {
-                    error: 'Invalid credentials',
-                    email: email,
-                    invalid: true,
-                    message: err.message
-                });
-            }
-            return fail(500, {
-                message: 'Server error. Try again later.'
-            });
-        }
-        const { data: user, error: user_err } = await locals.supabase.from('profiles').select().eq('id', data.user.id).single();
-        await locals.supabase.from('profiles').update({ last_login: new Date() }).eq('id', data.user.id);
-        return {
-            status: 201,
-            redirect: '/app/dashboard',
-            profile: user || null,
-            avatarUrl: data.user?.user_metadata?.avatar_url,
-        }
-        throw redirect(301, '/app/dashboard');
-    },
+export const load = async () => {
+    const form = await superValidate(zod(loginFormSchema));
+    return form
 }
 
+export const actions = {
+    passwordLogin: async ({ request, locals: { supabase } }) => {
+        const form = await superValidate(request, zod(loginFormSchema));
+        if (form.valid) {
+            const { email, password, rememberMe } = form.data;
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+            if (error) {
+                return setError(form, '', error.message);
+            }
+            return { status: 200, form };
+        }
+        return fail(400, { form });
+    },
+    googleLogin: async ({ request, locals: { supabase } }) => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${PUBLIC_DOMAIN}/auth/callback`,
+            },
+          })
+          
+          if (data.url) {
+            redirect(301, data.url)
+          }
+    },
+    discordLogin: async ({ request, locals: { supabase } }) => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'discord',
+            options: {
+              redirectTo: `${PUBLIC_DOMAIN}/auth/callback`,
+            },
+          })
+          
+          if (data.url) {
+            redirect(301, data.url)
+          }
+    }
+};
