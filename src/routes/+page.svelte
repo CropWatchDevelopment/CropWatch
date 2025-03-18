@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
 
 	// Import all messages at once
@@ -7,7 +8,10 @@
 
 	setLocale('ja', { reload: false });
 	console.log(getLocale());
-	goto('/app');
+	if (browser) {
+		console.log('Browser detected');
+		goto('/app');
+	}
 </script>
 
 <svelte:head>
