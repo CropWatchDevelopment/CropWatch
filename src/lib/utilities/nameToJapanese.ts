@@ -72,9 +72,6 @@ export const nameToJapaneseName = (name: string) => {
             return '車両数';
         case 'bicycle_count':
             return '自転車数';
-        case 'Details':
-        case 'details':
-            return '詳細';
         case 'Data Date Range':
         case 'data_date_range':
             return 'データ日付範囲';
@@ -206,6 +203,15 @@ export const nameToJapaneseName = (name: string) => {
         case 'CO²':
         case 'co2':
             return 'CO²';
+        case 'CO²':
+        case 'co2':
+            return 'CO²';
+        case 'EC':
+        case 'ec':
+            return 'EC';
+        case 'ph':
+        case 'PH':
+            return 'pH';
         default:
             return '';
     }

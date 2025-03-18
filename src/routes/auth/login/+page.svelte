@@ -91,7 +91,7 @@
 
 				<div class="flex items-center justify-between pb-2">
 					<div class="flex items-center">
-						<Checkbox id="remember-me" name="remember-me" size="sm">{m.auth_login_password_remember_me()}</Checkbox>
+						<!-- <Checkbox id="remember-me" name="remember-me" size="sm">{m.auth_login_password_remember_me()}</Checkbox> -->
 					</div>
 
 					<div class="text-sm/6">
@@ -123,7 +123,7 @@
 			<div class="flex w-full flex-col">
 				<div class="relative mt-4">
 					<div class="relative flex justify-center text-sm/6 font-medium">
-						<span class="bg-white px-6 text-gray-900">Or continue with</span>
+						<span class="bg-white px-6 text-gray-900"></span>
 					</div>
 				</div>
 

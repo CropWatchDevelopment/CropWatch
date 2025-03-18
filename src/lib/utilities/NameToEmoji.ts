@@ -32,6 +32,7 @@ export const nameToEmoji = (name: string) => {
         case 'ph':
             return '⚗️';
         case 'co2_level':
+        case 'co2':
             return '⌬';
         case 'vpd':
             return '💦';
