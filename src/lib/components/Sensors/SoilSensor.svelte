@@ -45,8 +45,8 @@
 </script>
 
 <div class="flex flex-row gap-5">
-	<CWCard text={nameToJapaneseName('Temperature')} value={latestTemperature} notation="C" />
-	<CWCard text={nameToJapaneseName('Moisture')} value={latestMoisture} notation="C" />
+	<CWCard text={nameToJapaneseName('Temperature')} value={latestTemperature} notation="°C" />
+	<CWCard text={nameToJapaneseName('Moisture')} value={latestMoisture} notation="%" />
 </div>
 
 <div class="my-4 flex w-full flex-row gap-5">
@@ -59,7 +59,7 @@
 					height: 500
 				},
 				title: {
-					text: nameToJapaneseName('Temperature'),
+					text: nameToJapaneseName('Temperature and Moisture'),
 					style: {
 						color: 'orange'
 					}

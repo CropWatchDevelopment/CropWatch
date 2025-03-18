@@ -24,6 +24,7 @@ export const nameToNotation = (name: string) => {
         case 'ph':
             return 'pH';
         case 'co2_level':
+        case 'co2':
             return 'ppm';
         case 'vpd':
             return 'hPk';

@@ -57,7 +57,7 @@
 									format="decimal"
 								/>
 							</span>
-							<small class="text-secondary-200">
+							<small class="text-secondary-900">
 								<sup>{device.cw_device_type.primary_data_notation}</sup>
 							</small>
 						</p>
@@ -71,7 +71,7 @@
 									/>
 								{/if}
 							</span>
-							<small class="text-secondary-200">
+							<small class="text-secondary-900">
 								<sup>{device.cw_device_type.secondary_data_notation}</sup>
 							</small>
 						</p>

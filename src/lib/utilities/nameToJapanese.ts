@@ -19,12 +19,14 @@ export const nameToJapaneseName = (name: string) => {
         case 'temperature_c':
         case 'soil_temperature':
             return '温度';
+        case 'Temperature and Moisture':
+            return '土壌温度/水分量';
         case 'Temperature and Humidity':
         case 'temperature and humidity':
         case 'temperature_and_humidity':
         case 'Temperature & Humidity':
         case 'temperature & humidity':
-            return '温度と湿度';
+            return '温度/湿度';
         case 'soil_EC':
         case 'soil_ec':
             return '土壌電気伝導率';

@@ -55,9 +55,9 @@
 						height: 500
 					},
 					title: {
-						text: '24 Hour CO²',
+						text: 'CO²',
 						style: {
-							color: 'white'
+							color: 'orange'
 						}
 					},
 					legend: {
