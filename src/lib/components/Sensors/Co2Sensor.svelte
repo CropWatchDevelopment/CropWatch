@@ -144,7 +144,7 @@
 					height: 500
 				},
 				title: {
-					text: nameToJapaneseName('Temperature & Humidity'),
+					text:  device?.all_data?.some((data) => data.humidity > 0) ? nameToJapaneseName('Temperature & Humidity') : nameToJapaneseName('Temperature'),
 					style: {
 						color: 'orange'
 					}

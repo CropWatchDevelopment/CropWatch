@@ -118,6 +118,9 @@ export const nameToJapaneseName = (name: string) => {
         case 'Last seen':
         case 'last seen':
             return '最終接続';
+        case 'Counts':
+        case 'counts':
+            return 'カウント';
         case 'ago':
             return '前';
         case 'Dashboard':

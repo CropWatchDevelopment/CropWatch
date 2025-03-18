@@ -431,10 +431,10 @@
 								name: 'pH',
 								data: [latestEC],
 								tooltip: {
-									valueSuffix: ` pH`
+									valueSuffix: ` EC`
 								},
 								dataLabels: {
-									format: `{y} pH`,
+									format: `{y} EC`,
 									borderWidth: 0,
 									style: {
 										fontSize: '32px',

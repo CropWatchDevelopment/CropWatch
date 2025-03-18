@@ -9,6 +9,7 @@
 	import accessibility from 'highcharts/modules/accessibility';
 	import { page } from '$app/stores';
 	import CwCalendar from '../UI/CWCalendar.svelte';
+	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 
 	// Initialize Highcharts modules
 	more(Highcharts);
@@ -67,7 +68,7 @@
 					height: 500
 				},
 				title: {
-					text: 'Counts',
+					text: nameToJapaneseName('Counts'),
 					style: {
 						color: 'orange'
 					}
