@@ -84,7 +84,7 @@
 						type: 'datetime', // Use datetime type for the x-axis
 						labels: {
 							style: {
-								color: 'white',
+								color: 'green',
 								fontSize: '20px'
 							},
 							format: `{value:%m/%d - %H:%M}`,
@@ -102,7 +102,7 @@
 							labels: {
 								format: '{value}ppm',
 								style: {
-									color: 'white',
+									color: 'green',
 									fontSize: '20px'
 								}
 							}
@@ -146,7 +146,7 @@
 				title: {
 					text: nameToJapaneseName('Temperature & Humidity'),
 					style: {
-						color: 'white'
+						color: 'orange'
 					}
 				},
 				legend: {
@@ -173,7 +173,7 @@
 					type: 'datetime', // Use datetime type for the x-axis
 					labels: {
 						style: {
-							color: 'white',
+							color: 'orange',
 							fontSize: '20px'
 						},
 						format: '{value:%m/%d - %H:%M}',

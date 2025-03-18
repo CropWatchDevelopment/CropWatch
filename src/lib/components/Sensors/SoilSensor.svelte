@@ -61,7 +61,7 @@
 				title: {
 					text: nameToJapaneseName('Temperature'),
 					style: {
-						color: 'white'
+						color: 'orange'
 					}
 				},
 				legend: {
@@ -88,7 +88,7 @@
 					type: 'datetime', // Use datetime type for the x-axis
 					labels: {
 						style: {
-							color: 'white',
+							color: 'orange',
 							fontSize: '20px'
 						},
 						format: '{value:%m/%d - %H:%M}',
