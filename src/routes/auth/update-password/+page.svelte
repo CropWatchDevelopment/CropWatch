@@ -1,129 +1,82 @@
 <script lang="ts">
-    import { enhance } from '$app/forms';
-	import { Button, TextField } from 'svelte-ux';
-    import { _ } from 'svelte-i18n';
-    // import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
-	import { goto } from '$app/navigation';
-    export let form;
+    import { superForm } from 'sveltekit-superforms';
+    import { Avatar, Button, Card, Header, TextField } from 'svelte-ux';
+    import { mdiLock } from '@mdi/js';
+    import LOGO_IMAGE from '$lib/images/CropWatchLogo.svg';
 
-    let password: string = '';
-    let confirmPassword: string = '';
-	let isLoading: boolean = false;
-    let submissionResult = null;
-
-    // Reactive statement to track form data
-    let formData = {};
-    $: formData = {
-        password,
-        confirmPassword
-    };
-
-    // Utility function to display JSON data prettily
-    function displayJSON(data) {
-        return JSON.stringify(data, null, 2);
-    }
+    let { data } = $props();
+    const { form, errors, enhance, message } = superForm(data.form, {
+        onResult: ({ result }) => {
+            // Handle successful password update
+            if (result.type === 'success') {
+                document.location.href = '/auth/password-update-success';
+            } else {
+                document.location.href = '/auth/password-update-failure';
+            }
+        },
+    });
 </script>
 
-<div id="login-background">
-	<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-			<div class="bg-white px-6 py-12 shadow rounded-lg sm:px-12 mx-2 md:mx-0">
-				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<!-- <img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" /> -->
-					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-						{$_('login.update_title')}
-					</h2>
-				</div>
-				<form method="POST" use:enhance={({ formElement, formData, action, cancel, submitter }) => {
-					isLoading = true;
-					return async ({ result, update }) => {
-						submissionResult = result;
-						isLoading = false;
-						if (result.data.success) {
-							goto('/auth/login');
-						} else {
-						}
-					};
-				}}>
+<div class="flex min-h-[calc(100vh-64px)] items-center justify-center">
+    <Card class="w-full max-w-[480px] px-3 shadow sm:rounded-lg sm:px-12">
+        <Header title="Set New Password" subheading="Please enter your new password" slot="header">
+            <div slot="avatar">
+                <Avatar class="font-bold text-primary-content">
+                    <img src={LOGO_IMAGE} alt="CropWatch LLC" />
+                </Avatar>
+            </div>
+        </Header>
 
-					<div class="mt-2">
-						<TextField
-							id="password"
-							label={$_('login.password')}
-							placeholder="****************"
-							name="new_password"
-							type="password"
-							bind:value={password}
-							autocomplete="new-password"
-							required
-						/>
-					</div>
+        <div class="flex w-full flex-col items-center justify-center">
+            <form method="POST" use:enhance class="w-full space-y-6">
+                {#if $message}
+                    <div class="rounded-md bg-primary/10 p-4">
+                        <p class="text-sm text-primary">{$message}</p>
+                    </div>
+                {/if}
 
-					<div class="mt-2 mb-3">
-						<TextField
-							id="password-confirm"
-							label={$_('login.ConfirmPassword')}
-							placeholder="****************"
-							type="password"
-							bind:value={confirmPassword}
-							autocomplete="current-password"
-							required
-						/>
-					</div>
+                <div>
+                    <label for="password" class="block text-sm/6 font-medium">New Password</label>
+                    <div class="mt-2">
+                        <TextField
+                            id="password"
+                            type="password"
+                            name="password"
+                            icon={mdiLock}
+                            autocomplete="new-password"
+                            bind:value={$form.password}
+                            error={$errors.password}
+                            placeholder="Enter your new password"
+                        />
+                    </div>
+                </div>
 
-					<Button
-						type="submit"
-						disabled={password !== confirmPassword}
-						variant="fill"
-						color="primary"
-						classes={{ root: 'w-full' }}>
-						{$_('login.update_password')}
-					</Button>
-				</form>
+                <div>
+                    <label for="confirmPassword" class="block text-sm/6 font-medium">Confirm Password</label>
+                    <div class="mt-2">
+                        <TextField
+                            id="confirmPassword"
+                            type="password"
+                            name="confirmPassword"
+                            icon={mdiLock}
+                            autocomplete="new-password"
+                            bind:value={$form.confirmPassword}
+                            error={$errors.confirmPassword}
+                            placeholder="Confirm your new password"
+                        />
+                    </div>
+                </div>
 
-				<!-- Display the JSON stringified form data -->
-				<!-- <div class="mt-4">
-					<h3 class="text-lg font-medium leading-6 text-gray-900">Form Data</h3>
-					<pre class="bg-gray-100 p-4 rounded">{displayJSON(formData)}</pre>
-				</div> -->
-
-				<!-- Display the form submission result -->
-				{#if submissionResult}
-					<div class="mt-4">
-						<h3 class="text-lg font-medium leading-6 text-gray-900">Submission Result</h3>
-						<pre class="bg-gray-100 p-4 rounded">{displayJSON(submissionResult)}</pre>
-					</div>
-				{/if}
-
-				{#if form?.invalid}
-					<mark>{form?.message}!</mark>
-				{/if}
-
-				<div>
-					<div class="relative mt-6 flex flex-row">
-						<div class="mx-auto flex flex-row">
-							<p>{$_('login.already_have_an_account')}</p>
-							<a class="blue-100" href="login">
-								&nbsp; <u class="text-blue-400 hover:text-indigo-500">{$_('login.login')}</u>
-							</a>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                <Button
+                    type="submit"
+                    variant="fill"
+                    color="primary"
+                    class="w-full"
+                    size="lg"
+                >
+                    Update Password
+                </Button>
+            </form>
+        </div>
+    </Card>
 </div>
-
-<style>
-	#login-background {
-		transition: opacity 0.3s;
-		opacity: 1;
-		min-height: 100vh;
-		margin: 0;
-		background-attachment: fixed;
-		background-image: url($lib/images/empty-greenhouse.jpg);
-		background-repeat: no-repeat;
-		background-size: cover;
-		background-position: center center;
-	}
-</style>

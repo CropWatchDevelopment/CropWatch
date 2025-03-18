@@ -1,19 +1,38 @@
 <script>
-	import { browser } from '$app/environment';
-    import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { mdiLogout } from '@mdi/js';
+	import { Icon, ProgressCircle, Duration, TweenedValue } from 'svelte-ux';
 
-    fetch('/auth/logout?/logout', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ logout: true })
-    }).then(() => {
-        browser ?? localStorage.clear();
-        goto('/auth/login');
-    });
+	export let data;
+	let countdown = 3;
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			if (countdown > 0) {
+				countdown--;
+			} else {
+				clearInterval(interval);
+				data.supabase.auth.signOut();
+				window.location.href = '/auth/login'; // Redirect after logout
+			}
+		}, 1000);
+	});
 </script>
 
+<div class="logout-container">
+	<Icon data={mdiLogout} class="logout-icon" />
+	<p>You are being logged out, Please wait while we direct you back to the login page.</p>
+	<ProgressCircle />
+	<TweenedValue value={countdown} format="integer" />
+</div>
 
-
-<h1>You have been Logged out, redirecting back to login page.</h1>
+<style>
+	.logout-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 100vh;
+		font-size: 1.5rem;
+	}
+</style>

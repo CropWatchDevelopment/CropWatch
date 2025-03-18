@@ -1,204 +1,235 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Button, Checkbox, TextField } from 'svelte-ux';
-	import { _ } from 'svelte-i18n';
-	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
-	import { mdiClock, mdiLoading } from '@mdi/js';
-	import { goto } from '$app/navigation';
-	import { PUBLIC_RECAPTCHA_KEY } from '$env/static/public';
-	import { notificationStore } from '$lib/stores/notificationStore';
+	import SuperDebug, { superForm } from 'sveltekit-superforms';
+	import {
+		Avatar,
+		Button,
+		Card,
+		Dialog,
+		Header,
+		Paginate,
+		Step,
+		Steps,
+		TextField
+	} from 'svelte-ux';
+	import LOGO_IMAGE from '$lib/images/CropWatchLogo.svg';
+	import FAILED_SVG from '$lib/images/fail.svg';
+	import {
+		mdiEmail,
+		mdiLock,
+		mdiAccountPlus,
+		mdiAccount,
+		mdiBriefcase,
+		mdiCardAccountDetails
+	} from '@mdi/js';
+	import { PUBLIC_RECAPTCHA_SITE_KEY } from '$env/static/public';
 
-	let full_name: string = '';
-	let email: string = '';
-	let password: string = '';
-	let confirmPassword: string = '';
-	let privacyChecked: boolean = false;
-	let termsChecked: boolean = false;
-	let cookieChecked: boolean = false;
-	let loading: boolean = false;
+	let { data } = $props();
+	let loading: boolean = $state(false);
+	let open: boolean = $state(false);
 
-	function onClick(e) {
-		loading = true;
-		e.preventDefault();
-		grecaptcha.ready(function () {
-			grecaptcha.execute(PUBLIC_RECAPTCHA_KEY, { action: 'submit' }).then(function (token) {
-				const formData = new URLSearchParams({
-					full_name: full_name,
-					email: email,
-					password: password,
-					confirmPassword: confirmPassword,
-					privacyChecked: privacyChecked.toString(),
-					termsChecked: termsChecked.toString(),
-					cookieChecked: cookieChecked.toString(),
-					token: token
-				});
-
-				fetch('?register', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded'
-					},
-					body: formData.toString()
-				})
-					.then((response) => {
-						if (response.ok) {
-							return response.json();
-						}
-						throw new Error('Network response was not ok.');
-					})
-					.then((data) => {
-						loading = false;
-						if (data.type == 'success') {
-							notificationStore.NotificationTimedOpen({
-								title: 'Account Created!',
-								description: '',
-								timeout: 2000,
-								icon: '❌',
-								buttonText: 'OK'
-							});
-							goto('/auth/check-email');
-						} else {
-							notificationStore.NotificationTimedOpen({
-								title: 'Failed to Register',
-								description: 'An error occurred.',
-								timeout: 2000,
-								icon: '❌',
-								buttonText: 'OK'
-							});
-						}
-					})
-					.catch((error) => {
-						console.error('There has been a problem with your fetch operation:', error);
+	$effect(() => {
+		if (window.grecaptcha) {
+			window.grecaptcha.ready(async () => {
+				window.grecaptcha
+					.execute(PUBLIC_RECAPTCHA_SITE_KEY, { action: 'submit' })
+					.then(async (token: string) => {
+						$form.reCatchaToken = token;
 					});
 			});
-		});
-	}
+		}
+	});
+
+	const { form, enhance, errors } = superForm(data.form, {
+		validationMethod: 'oninput',
+		dataType: 'json',
+		onSubmit: async () => {
+			loading = true;
+		},
+		onResult: async (event) => {
+			loading = false;
+			if (event.result.status === 200) {
+				document.location.href = '/auth/check-email';
+			} else {
+				open = true;
+			}
+		}
+	});
 </script>
 
 <svelte:head>
-	<script src="https://www.google.com/recaptcha/api.js?render={PUBLIC_RECAPTCHA_KEY}"></script>
+	<title>Register - CropWatch</title>
+	<script
+		src="https://www.google.com/recaptcha/api.js?render={PUBLIC_RECAPTCHA_SITE_KEY}"
+		nonce="%sveltekit.nonce%"
+	></script>
 </svelte:head>
 
-<div id="login-background">
-	<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-			<div class="mx-2 rounded-lg bg-primary-100 px-6 py-12 shadow sm:px-12 md:mx-0">
-				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
-					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight">
-						{$_('auth.register.title')}
-					</h2>
+<div class="flex min-h-[calc(100vh-64px)] items-center justify-center">
+	<Card class="flex h-full w-full max-w-[480px] flex-col shadow sm:rounded-lg">
+		<Header
+			title="Create a CropWatch Account"
+			subheading="Join CropWatch to start managing your farm data"
+			slot="header"
+		>
+			<div slot="avatar">
+				<Avatar class="font-bold text-primary-content">
+					<img src={LOGO_IMAGE} alt="CropWatch LLC" />
+				</Avatar>
+			</div>
+		</Header>
+
+		<div class="flex flex-1 flex-col p-4">
+			<form
+				method="POST"
+				use:enhance
+				class="w-full space-y-6"
+			>
+
+				<div>
+					<input type="hidden" name="reCatchaToken" bind:value={$form.reCatchaToken} />
+					<TextField
+						id="username"
+						label="Username*"
+						type="text"
+						name="username"
+						icon={mdiAccount}
+						autocomplete="username"
+						placeholder="Choose a username"
+						bind:value={$form.username}
+						error={$errors.username}
+						class="pb-2"
+					/>
 				</div>
 
-				<div class="mb-3">
-					<label for="email" class="block text-sm font-medium leading-6">{$_('auth.login.Email')}</label>
-					<div class="mt-2">
-						<TextField
-							label=""
-							id="email"
-							placeholder="my@address.com"
-							name="email"
-							type="email"
-							bind:value={email}
-							autocomplete="email"
-							required
-							on:change={(e) => console.log(e.detail)}
-						/>
-					</div>
+				<div>
+					<TextField
+						id="full_name"
+						label="Full Name*"
+						type="text"
+						name="full_name"
+						icon={mdiCardAccountDetails}
+						autocomplete="name"
+						placeholder="Enter your full name"
+						bind:value={$form.full_name}
+						error={$errors.full_name}
+						class="pb-2"
+					/>
 				</div>
 
-				<div class="mb-2">
-					<label for="password" class="block text-sm font-medium leading-6"
-						>{$_('auth.login.Password')}</label
-					>
-					<div class="mt-2">
-						<TextField
-							id="password"
-							label=""
-							placeholder="****************"
-							name="password"
-							type="password"
-							bind:value={password}
-							autocomplete="current-password"
-							required
-						/>
-					</div>
+				<div>
+					<TextField
+						id="employer"
+						label="Employer"
+						type="text"
+						name="employer"
+						icon={mdiBriefcase}
+						autocomplete="organization"
+						placeholder="Enter your employer's name (optional)"
+						bind:value={$form.employer}
+						error={$errors.employer}
+						class="pb-2"
+					/>
 				</div>
 
-				<div class="mb-2">
-					<label for="password-confirm" class="block text-sm font-medium leading-6"
-						>{$_('auth.register.ConfirmPassword')}</label
-					>
-					<div class="mt-2">
-						<TextField
-							id="password-confirm"
-							label=""
-							placeholder="****************"
-							type="password"
-							bind:value={confirmPassword}
-							autocomplete="current-password"
-							required
-						/>
-					</div>
+				<div>
+					<TextField
+						id="email"
+						label="Email address*"
+						type="email"
+						name="email"
+						icon={mdiEmail}
+						autocomplete="email"
+						placeholder="Enter your email address"
+						bind:value={$form.email}
+						error={$errors.email}
+						class="pb-2"
+					/>
 				</div>
 
-				<div class="mt-2">
-					<Checkbox bind:checked={privacyChecked}
-						>{$_('auth.register.ReadPrivacyPolicy')} <a href="/legal/privacy-policy" target="_blank" class="text-blue-800"
-							>{$_('auth.register.PrivacyPolicy')}</a
-						></Checkbox
-					>
-					<Checkbox bind:checked={termsChecked}
-						>{$_('auth.register.ReadTermsOfUse')} <a href="/legal/eula" target="_blank" class="text-blue-800"
-							>{$_('auth.register.TermsOfUse')}</a
-						></Checkbox
-					>
-					<Checkbox bind:checked={cookieChecked}
-						>{$_('auth.register.ReadCookiePolicy')} <a href="/legal/cookie-policy" target="_blank" class="text-blue-800"
-							>{$_('auth.register.CookiePolicy')}</a
-						></Checkbox
-					>
+				<div>
+					<TextField
+						id="password"
+						label="Password*"
+						type="password"
+						name="password"
+						icon={mdiLock}
+						autocomplete="new-password"
+						placeholder="Create a password"
+						bind:value={$form.password}
+						error={$errors.password}
+						class="pb-2"
+					/>
+				</div>
+
+				<div>
+					<!-- <div>
+						<Button on:click={() => steps} disabled={current.isFirst}>Previous</Button>
+						<Button
+							on:click={pagination.nextPage}
+							color="primary"
+							variant="fill"
+							disabled={current.isLast}>Next</Button
+						>
+					</div> -->
+					<TextField
+						id="passwordConfirm"
+						label="Confirm Password*"
+						type="password"
+						name="passwordConfirm"
+						icon={mdiLock}
+						autocomplete="new-password"
+						placeholder="Confirm your password"
+						bind:value={$form.passwordConfirm}
+						error={$errors.passwordConfirm}
+						class="pb-2"
+					/>
 				</div>
 
 				<Button
-					type="submit"
-					disabled={password != confirmPassword ||
-						loading ||
-						password.length < 3 ||
-						!privacyChecked ||
-						!termsChecked ||
-						!cookieChecked}
+					class="w-full"
+					{loading}
+					disabled={loading}
 					variant="fill"
 					color="primary"
-					icon={loading ? mdiClock : ''}
-					on:click={onClick}
-					classes={{ root: 'w-full' }}>{$_('auth.register.signup')}</Button
+					icon={mdiAccountPlus}
+					size="lg"
+					type="submit"
 				>
-				<div>
-					<div class="relative mt-6 flex flex-row">
-						<div class="mx-auto flex flex-row">
-							<p>{$_('auth.register.already_have_an_account')}</p>
-							<a class="blue-100" href="login"
-								>&nbsp; <u class="text-blue-700 hover:text-indigo-900">{$_('auth.register.login')}</u></a
-							>
-						</div>
+					Create Account
+				</Button>
+			</form>
+
+			<span class="flex-grow"></span>
+
+			<div class="flex w-full flex-col">
+				<div class="relative mt-4">
+					<div class="relative flex justify-center text-sm/6 font-medium">
+						<span class="bg-white px-6 text-gray-900">Or</span>
 					</div>
 				</div>
+
+				<a
+					href="/auth/login"
+					class="mt-3 flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
+				>
+					<span class="text-sm/6 font-semibold">Already have an account? Sign in</span>
+				</a>
 			</div>
 		</div>
-	</div>
-</div>
+	</Card>
 
-<style>
-	#login-background {
-		transition: opacity 0.3s;
-		opacity: 1;
-		min-height: 100vh;
-		margin: 0;
-		background-attachment: fixed;
-		background-image: url($lib/images/empty-greenhouse.jpg);
-		background-repeat: no-repeat;
-		background-size: cover;
-		background-position: center center;
-	}
-</style>
+	<Dialog {open} width="sm" on:close={() => (open = false)}>
+		<Header slot="header" class="mx-5">
+			<div slot="avatar">
+				<Avatar class="font-bold text-primary-content">
+					<img src={FAILED_SVG} alt="Registration failed" />
+				</Avatar>
+			</div>
+			<h2 slot="title">Registration Failed</h2>
+		</Header>
+		<p class="mx-2">Unable to create account. Please try again later.</p>
+		<div slot="actions">
+			<Button variant="fill" color="primary" on:click={() => (open = false)}>Close</Button>
+		</div>
+	</Dialog>
+</div>

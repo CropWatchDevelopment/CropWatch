@@ -1,211 +1,168 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
-	import cw_logo from '$lib/images/UI/cropwatch_logo_blue_text.png';
-	import { _ } from 'svelte-i18n';
-	import { TextField, Button, Switch, Icon } from 'svelte-ux';
-	import { mdiLockQuestion, mdiKeyArrowRight, mdiGoogle, mdiCheckCircle, mdiCloseCircle } from '@mdi/js';
-	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
-	import { notificationStore } from '$lib/stores/notificationStore.js';
-	import { appStore } from '$lib/stores/app.store.js';
-	import { set } from 'date-fns';
+	import { superForm } from 'sveltekit-superforms';
+	import { Avatar, Button, Card, Checkbox, Dialog, Header, TextField } from 'svelte-ux';
+	import LOGO_IMAGE from '$lib/images/CropWatchLogo.svg';
+	import FAILED_SVG from '$lib/images/fail.svg';
+	import { mdiEmail, mdiLock, mdiLogin } from '@mdi/js';
+	import DISCORD_LOGO from '$lib/images/discord-logo-blue.svg';
+	import GOOGLE_LOGO from '$lib/images/google-logo.svg';
 
+	import { m } from "$lib/paraglide/messages.js"; // Import translations
 
-	export let data;
+	let { data } = $props();
+	let loading: boolean = $state(false);
+	let open: boolean = $state(false);
 
-	let { supabase } = data;
-	$: ({ supabase } = data);
-
-	let loggingIn: boolean = false;
-	let rememberMe: boolean = false;
-
-	let email: string = '';
-	let password: string = '';
-
-	let redirectURL: string = browser ? `${window.location.origin}/auth/callback` : '';
-
-	let loginMethod: 'email' | 'social' = 'email';
-
-	const oAuthLogin = async () => {
-		const { data: response, error } = await data.supabase.auth.signInWithOAuth({
-			provider: 'google',
-			options: {
-				redirectTo: redirectURL
+	// Client API:
+	const { form, enhance, constraints, errors } = superForm(data, {
+		validationMethod: 'oninput',
+		// onChange: async (values) => {
+		// 	console.log(values);
+		// },
+		onSubmit: async (values) => {
+			loading = true;
+		},
+		onResult: async (event) => {
+			if (event.result.status === 200) {
+				document.location.href = '/app';
+			} else {
+				console.error('Login failed');
+				loading = false;
+				open = true;
 			}
-		});
-		if (error) {
-			console.error('Error logging in with Google:', error.message);
-		}
-	};
-
-	onMount(() => {
-		const hasRememberMe = localStorage.getItem('rememberMe');
-		if (hasRememberMe) {
-			rememberMe = true;
-			email = localStorage.getItem('email') || '';
-			password = localStorage.getItem('pw') || '';
 		}
 	});
 </script>
 
-<div id="login-background">
-	<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-		<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-			<div class="mx-2 rounded-lg bg-primary-50 px-6 py-12 shadow sm:px-12 md:mx-0">
-				<div class="sm:mx-auto sm:w-full sm:max-w-md">
-					<img class="mx-auto h-10 w-auto" src={cw_logo} alt="CropWatch" />
-					<h2 class="mt-4 text-center text-2xl font-bold leading-9 tracking-tight">
-						{$_('auth.login.title')}
-					</h2>
-				</div>
-				<form
-					class="mt-6 border-b-2 border-gray-300 pb-1"
-					action="?/login"
-					method="POST"
-					use:enhance={({ formElement, formData, action, cancel, submitter}) => {
-						loggingIn = true;
-						if (rememberMe) {
-							localStorage.setItem('email', email);
-							localStorage.setItem('pw', password);
-						}
+<svelte:head>
+	<title>{m.auth_login_title()}</title>
+</svelte:head>
 
-						return async ({ result, update }) => {
-							if (result.status && result.status < 400) {
-								await update({ reset: false });
-								if (result.data.profile != null) {
-									localStorage.setItem('name', result.data.profile.full_name);
-								}
-								if (!result.data.profile.accepted_agreements) {
-									document.location.href = '/auth/accept-agreements';
-								}
-								notificationStore.NotificationTimedOpen({
-									title: $_('auth.login.Success'),
-									description: $_('auth.login.youHaveLoggedin'),
-									icon: mdiCheckCircle,
-									timeout: 3000,
-									buttonText: 'Close'
-								});
-								appStore.set({ user: result.data.profile, avatarUrl: result.data.avatarUrl, debugMode: false });
-								localStorage.setItem('appStore', JSON.stringify($appStore));
-								await goto(result.data.redirect);
-							} else {
-								notificationStore.NotificationTimedOpen({
-									title: $_('auth.login.Failed'),
-									description: $_('auth.login.FailedToLogin'),
-									icon: mdiCloseCircle,
-									timeout: 3000,
-									buttonText: 'Close'
-								});
-								loggingIn = false;
-							}
-						};
-					}}
-				>
-					<div class="mb-3">
-						<label for="email" class="block text-sm font-medium leading-6 text-gray-900"
-							>{$_('auth.login.Email')}</label
-						>
-						<div class="mt-2">
-							<TextField
-								label=""
-								id="email"
-								name="email"
-								type="email"
-								bind:value={email}
-								autocomplete="email"
-								required
-							/>
-						</div>
-					</div>
+<div class="flex min-h-[calc(100vh-64px)] items-center justify-center">
+	<Card class="flex h-full w-full max-w-[480px] flex-col shadow sm:rounded-lg">
+		<Header title={m.auth_login_social_login_title()} slot="header">
+			<div slot="avatar">
+				<Avatar class="font-bold text-primary-content">
+					<img src={LOGO_IMAGE} alt="CropWatch LLC" />
+				</Avatar>
+			</div>
+		</Header>
 
-					<div class="mb-2">
-						<label for="password" class="block text-sm font-medium leading-6 text-gray-900"
-							>{$_('auth.login.Password')}</label
-						>
-						<div class="mt-2">
-							<TextField
-								id="password"
-								label=""
-								placeholder="****************"
-								name="password"
-								type="password"
-								bind:value={password}
-								autocomplete="current-password"
-								required
-							/>
-						</div>
-					</div>
-
-					<div class="mb-2 flex w-full flex-row">
-						<Switch
-							name="rememberMe"
-							id="remember"
-							bind:checked={rememberMe}
-							classes={{
-								switch: 'bg-white border-gray-400 data-[checked=true]:bg-blue-600',
-								toggle: 'data-[checked=false]:bg-blue-600 data-[checked=true]:bg-white'
-							}}
-							on:change={(e) => {
-								localStorage.setItem('rememberMe', e.detail);
-							}}
+		<!-- Container to fill remaining space and manage layout -->
+		<div class="flex flex-1 flex-col p-4">
+			<form method="POST" action="?/passwordLogin" use:enhance class="w-full">
+				<div>
+					<label for="email" class="block text-sm/6 font-medium">{m.auth_login_email_label()}</label>
+					<div class="mt-2">
+						<TextField
+							id="email"
+							label={m.auth_login_email_label()}
+							type="email"
+							name="email"
+							icon={mdiEmail}
+							autocomplete="email"
+							placeholder={m.auth_login_email_placeholder()}
+							bind:value={$form.email}
+							aria-invalid={$errors.email ? 'true' : undefined}
+							error={$errors.email}
+							class="pb-2"
 						/>
+					</div>
+				</div>
 
-						<span class="ml-1 text-sm font-medium text-gray-900">{$_('auth.login.remember_me')}</span>
-						<span class="flex-1" />
-						<a
-							href="reset-password"
-							class="align-middle text-xs font-medium text-gray-900 hover:text-indigo-500"
-							><Icon data={mdiLockQuestion} /> {$_('auth.login.forgot_password')}</a
-						>
+				<div>
+					<label for="password" class="block text-sm/6 font-medium">{m.auth_login_password_label()}</label>
+					<div class="mt-2">
+						<TextField
+							id="password"
+							label={m.auth_login_password_label()}
+							type="password"
+							name="password"
+							icon={mdiLock}
+							autocomplete="current-password"
+							bind:value={$form.password}
+							placeholder={m.auth_login_password_placeholder()}
+							aria-invalid={$errors.password ? 'true' : undefined}
+							error={$errors.password}
+							class="pb-2"
+						/>
+					</div>
+				</div>
+
+				<div class="flex items-center justify-between pb-2">
+					<div class="flex items-center">
+						<!-- <Checkbox id="remember-me" name="remember-me" size="sm">{m.auth_login_password_remember_me()}</Checkbox> -->
 					</div>
 
+					<div class="text-sm/6">
+						<a href="/auth/forgot-password" class="font-semibold hover:text-indigo-500">
+							{m.auth_login_password_forgot()}
+						</a>
+					</div>
+				</div>
+
+				<div>
 					<Button
-						disabled={loggingIn}
-						loading={loggingIn && loginMethod === 'email'}
-						icon={mdiKeyArrowRight}
-						on:click={() => (loginMethod = 'email')}
+						class="w-full"
+						{loading}
+						disabled={loading}
+						variant="fill"
+						color="primary"
+						icon={mdiLogin}
+						size="lg"
 						type="submit"
-						class="mb-2 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-						>{$_('auth.login.login')}</Button
 					>
-				</form>
-
-				<div class="mt-2">
-					<Button
-						disabled={loggingIn}
-						loading={loggingIn && loginMethod === 'social'}
-						icon={mdiGoogle}
-						on:click={() => (loginMethod = 'social')}
-						type="button"
-						on:click={async () => oAuthLogin({ provider: 'google' })}
-						class="mb-2 flex w-full justify-center rounded-md bg-red-500 px-3 py-3 text-sm font-semibold leading-6 text-surface-100 shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-						>Google {$_('auth.login.login')}</Button
-					>
+						{m.auth_login_submit()}
+					</Button>
 				</div>
+			</form>
 
-				<div class="relative mt-6 flex flex-row">
-					<div class="mx-auto flex flex-row">
-						<p>{$_('auth.login.dont_have_an_account')}</p>
-						<a class="blue-100" href="/auth/register"
-							>&nbsp; <u class="text-blue-700 hover:text-indigo-900">{$_('auth.login.register_now')}</u
-							></a
-						>
+			<!-- Flex grow to push the social login area to the bottom -->
+			<span class="flex-grow"></span>
+
+			<div class="flex w-full flex-col">
+				<div class="relative mt-4">
+					<div class="relative flex justify-center text-sm/6 font-medium">
+						<span class="bg-white px-6 text-gray-900"></span>
 					</div>
 				</div>
+
+				<div class="mt-6 grid grid-cols-2 gap-4">
+					<form method="POST" action="?/googleLogin">
+						<Button type="submit" variant="fill" class="w-full">
+							<img src={GOOGLE_LOGO} alt="Google" width="30px" />
+							<span class="text-sm/6 font-semibold">{m.auth_login_social_login_google()}</span>
+						</Button>
+					</form>
+					<form method="POST" action="?/discordLogin">
+						<Button type="submit" variant="fill" class="w-full">
+							<img src={DISCORD_LOGO} alt="Discord" width="39px" />
+							<span class="text-sm/6 font-semibold">{m.auth_login_social_login_discord()}</span>
+						</Button>
+					</form>
+				</div>
+				<a
+					href="/auth/register"
+					class="mt-3 flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
+				>
+					<img src={LOGO_IMAGE} alt="CropWatch LLC" width="25px" />
+					<span class="text-sm/6 font-semibold">{m.auth_login_create_account()}</span>
+				</a>
 			</div>
 		</div>
-	</div>
+	</Card>
+	<Dialog {open} width="sm" on:close={() => (open = false)}>
+		<Header slot="header" class="mx-5">
+			<div slot="avatar">
+				<Avatar class="font-bold text-primary-content">
+					<img src={FAILED_SVG} alt="incorrect email or password" />
+				</Avatar>
+			</div>
+			<h2 slot="title">Login Failed</h2>
+		</Header>
+		<p class="mx-2">E-Mail OR Password Incorrect</p>
+		<div slot="actions">
+			<Button variant="fill" color="primary" on:click={() => (open = false)}>Close</Button>
+		</div>
+	</Dialog>
 </div>
-
-<style>
-	#login-background {
-		min-height: 100vh;
-		margin: 0;
-		background-attachment: fixed;
-		background-image: url($lib/images/saito.jpg);
-		background-repeat: no-repeat;
-		background-size: cover;
-		background-position: center center;
-	}
-</style>

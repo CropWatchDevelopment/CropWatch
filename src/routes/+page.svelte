@@ -1,19 +1,25 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { goto } from '$app/navigation';
-	import TRACTOR from '$lib/images/UI/tractor.svg';
-	import { onMount } from 'svelte';
-	import { Overlay, ProgressCircle } from 'svelte-ux';
+	// Import all messages at once
+import { m } from "$lib/paraglide/messages.js";
+	import { getLocale, setLocale } from "$lib/paraglide/runtime";
 
-	onMount(() => {
-		if (browser) {
-			goto('/app/dashboard');
-		}
-	});
+	setLocale("ja", { reload: false });
+// Use a message
+console.log(m.example_message({ username: "kevin" }));
+console.log(getLocale());
 </script>
 
-<Overlay center class="bg-surface-content/10">
-	<ProgressCircle />
-</Overlay>
+<svelte:head>
+	<title>Home</title>
+	<meta name="description" content="Svelte demo app" />
+</svelte:head>
 
-<slot />
+<h1>Landing Page</h1>
+{m.example_message({ username: "kevin" })}
+<section>
+
+	<h2>
+		try editing <strong>src/routes/+page.svelte</strong>
+	</h2>
+
+</section>

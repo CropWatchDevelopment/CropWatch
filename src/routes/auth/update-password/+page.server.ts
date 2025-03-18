@@ -1,28 +1,38 @@
-// src/routes/update_password/+page.server.js
-import { AuthApiError } from "@supabase/supabase-js"
-import { fail, redirect } from "@sveltejs/kit"
+import { message } from 'sveltekit-superforms';
+import { fail, redirect } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
+import { UpdatePasswordFormSchema } from './forms/update-password.schema';
+
+export const load = async ({ url, locals: { supabase } }) => {
+    // Initialize the form
+    const form = await superValidate(zod(UpdatePasswordFormSchema));
+
+    return { form };
+};
 
 export const actions = {
-    default: async ({ request, locals }) => {
-        const formData = await request.formData()
-        const password = formData.get('new_password')
+    default: async ({ request, params, locals: { supabase } }) => {
+        const form = await superValidate(request, zod(UpdatePasswordFormSchema));
+        if (!form.valid) {
+            return fail(400, { form });
+        }
 
-        const { data, error: err } = await locals.supabase.auth.updateUser({
-            password
-        })
+        const { data, error: err } = await supabase.auth.updateUser({
+            password: form.data.password
+        });
 
-        if (err) {
-            console.log(err);
-            if (err instanceof AuthApiError && err.status >= 400 && err.status < 500) {
-                return fail(400, {
-                    error: "invalidCredentials", invalid: true, message: err.message
-                });
-            }
-            return fail(500, {
-                error: JSON.stringify(err),
+        console.log(data);
+
+        if (error) {
+            return fail(400, {
+                form: message(form, error.message)
             });
         }
 
-        return { success: !err }
-    },
-}
+        // Password updated successfully
+        return {
+            form: message(form, 'Password updated successfully! Redirecting to login...')
+        };
+    }
+};
