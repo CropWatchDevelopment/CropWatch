@@ -1,12 +1,11 @@
 <script lang="ts">
 	// Import all messages at once
-import { m } from "$lib/paraglide/messages.js";
-	import { getLocale, setLocale } from "$lib/paraglide/runtime";
+	import { m } from '$lib/paraglide/messages.js';
+	import { getLocale, setLocale } from '$lib/paraglide/runtime';
 
-	setLocale("ja", { reload: false });
-// Use a message
-console.log(m.example_message({ username: "kevin" }));
-console.log(getLocale());
+	setLocale('ja', { reload: false });
+	console.log(getLocale());
+	goto('/app');
 </script>
 
 <svelte:head>
@@ -14,12 +13,4 @@ console.log(getLocale());
 	<meta name="description" content="Svelte demo app" />
 </svelte:head>
 
-<h1>Landing Page</h1>
-{m.example_message({ username: "kevin" })}
-<section>
-
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
-
-</section>
+<p>Please wait...</p>
