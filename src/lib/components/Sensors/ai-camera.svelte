@@ -69,7 +69,7 @@
 				title: {
 					text: 'Counts',
 					style: {
-						color: 'white'
+						color: 'orange'
 					}
 				},
 				legend: {
@@ -96,7 +96,7 @@
 					type: 'datetime',
 					labels: {
 						style: {
-							color: 'white',
+							color: 'orange',
 							fontSize: '20px'
 						},
 						format: '{value:%m/%d - %H:%M}',
@@ -115,7 +115,7 @@
 						labels: {
 							format: '{value}',
 							style: {
-								color: 'white',
+								color: 'orange',
 								fontSize: '20px'
 							}
 						}
