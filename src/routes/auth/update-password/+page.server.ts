@@ -24,15 +24,16 @@ export const actions = {
 
         console.log(data);
 
-        if (error) {
+        if (err) {
             return fail(400, {
-                form: message(form, error.message)
+                form: message(form, err.message)
             });
         }
 
         // Password updated successfully
         return {
-            form: message(form, 'Password updated successfully! Redirecting to login...')
+            form: message(form, 'Password updated successfully! Redirecting to login...'),
+            status: 200,
         };
     }
 };
