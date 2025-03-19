@@ -15,7 +15,6 @@
 </script>
 
 {#if sensorType.data_table_v2 == 'cw_soil_data'}
-	<!-- <SoilSensor {device} {sensorType} /> -->
 	<SoilSensor />
 {:else if sensorType.data_table_v2 == 'cw_air_data'}
 	<Co2Sensor />
