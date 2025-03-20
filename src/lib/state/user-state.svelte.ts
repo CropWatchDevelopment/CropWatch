@@ -25,7 +25,7 @@ export class UserState {
     allLocations = $state<ILocation[]>([]);
     allDevices = $state<IDevice[]>([]);
     storage = useLocalStorage();
-    realtime: RealtimeChannel | undefined;
+    realtime: RealtimeChannel | undefined = $state<RealtimeChannel | undefined>();
 
     constructor(data: UserStateProps) {
         this.updateState(data);
@@ -35,15 +35,9 @@ export class UserState {
         this.session = data.session;
         this.supabase = data.supabase;
         this.user = data.user;
-        this.fetchLocations();
-        if (this.user) {
-            this.realtime = (browser && this.supabase && this.session?.user) ? this.supabase
-                .channel('realtime')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cw_air_data' }, (event) => this.handleDatabaseRealtimeEvent(event))
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cw_soil_data' }, (event) => this.handleDatabaseRealtimeEvent(event))
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cw_traffic2' }, (event) => this.handleDatabaseRealtimeEvent(event))
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cw_traffic2' }, (event) => this.handleDatabaseRealtimeEvent(event))
-                .subscribe() : undefined;
+        if (this.user && this.supabase) {
+            this.fetchLocations();
+            await this.supabase.realtime.setAuth()
             this.supabase?.from('profiles').select('*').eq('id', this.user.id).maybeSingle().then(({ data, error }) => {
                 if (error) {
                     console.error('Error fetching profile:', error);
@@ -53,11 +47,23 @@ export class UserState {
                     this.profile = data;
                 }
             });
+            this.realtime = this.supabase
+                .channel('realtime')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cw_air_data' }, (event) => {
+                    debugger;
+                })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cw_soil_data' }, (event) => this.handleDatabaseRealtimeEvent(event))
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cw_traffic2' }, (event) => this.handleDatabaseRealtimeEvent(event))
+                .subscribe((status) => {
+                    console.log('Realtime status:', status);
+                    return status;
+                });
         }
     }
 
     private handleDatabaseRealtimeEvent(event: any) {
         console.log('⚡ Change received!', event);
+        debugger;
         const device: IDevice = event.new;
         if (!this.allLocations || this.allLocations.length === 0) return;
         for (let i = 0; i < this.allLocations.length; i++) {
@@ -140,16 +146,6 @@ export class UserState {
         }
         const isHistorical = startDateTime?.getTime() !== endDateTime?.getTime();
 
-        // Only check cache for latest data, not historical
-        if (!isHistorical) {
-            const cacheKey = `${device.dev_eui}_latest`;
-            const cachedData = this.storage?.get<any>(cacheKey);
-            if (cachedData) {
-                device.latest_data = cachedData;
-                return device;
-            }
-        }
-
         if (!device.cw_device_type.data_table_v2) {
             console.error('Device type does not have a data table:', device);
             return;
@@ -170,10 +166,6 @@ export class UserState {
                 return;
             }
             if (data) {
-                const dataExpiresAfter = moment(data.created_at).add((device.cw_device_type.default_upload_interval ?? 10), 'minutes');
-                const minutesUntilExpiry = dataExpiresAfter.diff(moment(), 'minutes');
-                const cacheKey = `${device.dev_eui}_latest`;
-                this.storage?.set(cacheKey, data, minutesUntilExpiry || 10);
                 device.latest_data = data;
             } else {
                 return null;

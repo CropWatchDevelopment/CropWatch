@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import DashboardCard from '$lib/components/UI/dashboard/DashboardCard.svelte';
 	import DashboardFilter from '$lib/components/UI/dashboard/DashboardFilter.svelte';
 	import DataRowItem from '$lib/components/UI/dashboard/DataRowItem.svelte';
@@ -7,12 +7,21 @@
 	import type { ILocation } from '$lib/interfaces/ILocation.interface';
 	import { m } from '$lib/paraglide/messages';
 	import { getUserState } from '$lib/state/user-state.svelte';
-	import { mdiCheck, mdiMapMarker, mdiViewDashboard } from '@mdi/js';
+	import {
+		mdiCheck,
+		mdiCheckCircle,
+		mdiCloseCircle,
+		mdiHelp,
+		mdiMapMarker,
+		mdiTimerSand,
+		mdiViewDashboard
+	} from '@mdi/js';
 	import { droppable, type DragDropState } from '@thisux/sveltednd';
-	import { Avatar, Card, Header, Icon, ListItem } from 'svelte-ux';
+	import { Avatar, Card, Header, Icon, Tooltip } from 'svelte-ux';
 	import { flip } from 'svelte/animate';
 
 	// State initialization
+	let { data } = $props();
 	let userContext = getUserState();
 	let { user } = $derived(userContext);
 	let search: string = $state(browser ? (localStorage.getItem('dashboard_search') ?? '') : '');
@@ -75,6 +84,17 @@
 		<h2 class="mb-4 flex w-full flex-row items-center">
 			<Icon data={mdiViewDashboard} class="mr-2 h-6 w-6 items-center" />
 			{m.app_dashboard_title()}
+			<!-- <Tooltip title={`Realtime Status ${userContext.realtime?.state}`} class="flex items-center">
+				{#if userContext.realtime?.state == 'joined'}
+					<Icon data={mdiCheckCircle} class="ml-2 h-6 w-6 text-green-500" />
+				{:else if userContext.realtime?.state == 'joining'}
+					<Icon data={mdiTimerSand} class="ml-2 h-6 w-6 text-yellow-500" />
+				{:else if userContext.realtime?.state == 'errored'}
+					<Icon data={mdiCloseCircle} class="ml-2 h-6 w-6 text-red-500" />
+				{:else}
+				<Icon data={mdiHelp} class="ml-2 h-6 w-6 text-red-500" />
+				{/if}
+			</Tooltip> -->
 			<div class="ml-auto">
 				<DashboardFilter
 					bind:search
@@ -133,15 +153,15 @@
 				}) as location, index (location.location_id)}
 					<Card class="w-full">
 						<Header subheading="Subheading" slot="header">
-							<h1 class="text-2xl font-bold text-left" slot="title">
+							<h1 class="text-left text-2xl font-bold" slot="title">
 								<a href="/app/location/{location.location_id}">{location.name}</a>
-								</h1>
+							</h1>
 							<div slot="avatar">
-							  <Avatar class="bg-primary text-primary-content font-bold">
-								<Icon data={mdiMapMarker} class="text-xl" />
-							  </Avatar>
+								<Avatar class="bg-primary font-bold text-primary-content">
+									<Icon data={mdiMapMarker} class="text-xl" />
+								</Avatar>
 							</div>
-						  </Header>
+						</Header>
 						<ol class="w-full">
 							{#each location.cw_devices as device}
 								<DataRowItem {device} {location}></DataRowItem>

@@ -3,6 +3,8 @@
 	import Notification from '$lib/components/UI/Notification.svelte';
 	import { AppLayout } from 'svelte-ux';
 	import Header from '$lib/components/UI/Header.svelte';
+	import { RenderScan } from 'svelte-render-scan';
+	import { dev } from '$app/environment';
 
 	let { children } = $props();
 </script>
@@ -21,3 +23,6 @@
 		</section>
 	</main>
 </AppLayout>
+{#if dev}
+	<RenderScan />
+{/if}
