@@ -209,9 +209,6 @@ export const nameToJapaneseName = (name: string) => {
         case 'CO²':
         case 'co2':
             return 'CO²';
-        case 'CO²':
-        case 'co2':
-            return 'CO²';
         case 'EC':
         case 'ec':
             return 'EC';

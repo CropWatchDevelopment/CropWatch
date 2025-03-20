@@ -74,6 +74,7 @@
 						variant="fill-outline"
 						color="info"
 						class="w-full text-secondary"
+						href="/auth/login"
 						icon={mdiArrowLeft}>Return To Login</Button
 					>
 				</div>

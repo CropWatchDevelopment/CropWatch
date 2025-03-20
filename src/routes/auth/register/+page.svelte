@@ -68,7 +68,7 @@
 	<Card class="flex h-full w-full max-w-[480px] flex-col shadow sm:rounded-lg">
 		<Header
 			title="Create a CropWatch Account"
-			subheading="Join CropWatch to start managing your farm data"
+			subheading="Join CropWatch to start managing your sensors' data"
 			slot="header"
 		>
 			<div slot="avatar">
@@ -84,7 +84,7 @@
 				use:enhance
 				class="w-full space-y-6"
 			>
-
+				<input type="hidden" name="reCatchaToken" bind:value={$form.reCatchaToken} />
 				<div>
 					<input type="hidden" name="reCatchaToken" bind:value={$form.reCatchaToken} />
 					<TextField

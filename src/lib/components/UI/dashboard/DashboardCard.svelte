@@ -3,7 +3,7 @@
 
 	import { Button } from 'svelte-ux';
 	import { goto } from '$app/navigation';
-	import { mdiArrowRight, mdiTimerSand } from '@mdi/js';
+	import { mdiArrowRight, mdiCog, mdiTimerSand } from '@mdi/js';
 	import type { ILocation } from '$lib/interfaces/ILocation.interface';
 	import { draggable } from '@thisux/sveltednd';
 
@@ -58,12 +58,13 @@
 		{location.name}
 		<span class="flex flex-grow"></span>
 		<!-- COMING BACK SOON!!!-->
-		<!-- <Button
+		<Button
 			variant="fill"
 			color="primary"
 			icon={mdiArrowRight}
 			on:click={() => goto(`/app/location/${location.location_id}`)}
-		/> -->
+		/>
+
 	</h2>
 	<div class="flex flex-col gap-1 px-1 pb-4 text-sm text-primary-content">
 		{#each location.cw_devices as device}
