@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { mdiLogout } from '@mdi/js';
-	import { Icon, ProgressCircle, Duration, TweenedValue } from 'svelte-ux';
+	import { Icon, ProgressCircle, Duration, TweenedValue, Card } from 'svelte-ux';
 
 	export let data;
 	let countdown = 3;
@@ -19,12 +19,15 @@
 	});
 </script>
 
-<div class="logout-container">
+<!-- <div class="logout-container"> -->
+<Card class="flex flex-col items-center justify-center">
 	<Icon data={mdiLogout} class="logout-icon" />
 	<p>You are being logged out, Please wait while we direct you back to the login page.</p>
 	<ProgressCircle />
 	<TweenedValue value={countdown} format="integer" />
-</div>
+</Card>
+
+<!-- </div> -->
 
 <style>
 	.logout-container {

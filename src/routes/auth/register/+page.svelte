@@ -57,7 +57,7 @@
 </script>
 
 <svelte:head>
-	<title>Register - CropWatch</title>
+	<title>登録 - CropWatch</title>
 	<script
 		src="https://www.google.com/recaptcha/api.js?render={PUBLIC_RECAPTCHA_SITE_KEY}"
 		nonce="%sveltekit.nonce%"
@@ -67,8 +67,8 @@
 <div class="flex min-h-[calc(100vh-64px)] items-center justify-center">
 	<Card class="flex h-full w-full max-w-[480px] flex-col shadow sm:rounded-lg">
 		<Header
-			title="Create a CropWatch Account"
-			subheading="Join CropWatch to start managing your sensors' data"
+			title="CropWatchアカウントを作成"
+			subheading="CropWatchに参加して、センサーのデータ管理を始めましょう"
 			slot="header"
 		>
 			<div slot="avatar">
@@ -89,12 +89,12 @@
 					<input type="hidden" name="reCatchaToken" bind:value={$form.reCatchaToken} />
 					<TextField
 						id="username"
-						label="Username*"
+						label="ユーザー名*"
 						type="text"
 						name="username"
 						icon={mdiAccount}
 						autocomplete="username"
-						placeholder="Choose a username"
+						placeholder="ユーザー名を選択"
 						bind:value={$form.username}
 						error={$errors.username}
 						class="pb-2"
@@ -104,12 +104,12 @@
 				<div>
 					<TextField
 						id="full_name"
-						label="Full Name*"
+						label="氏名*"
 						type="text"
 						name="full_name"
 						icon={mdiCardAccountDetails}
 						autocomplete="name"
-						placeholder="Enter your full name"
+						placeholder="氏名を入力してください"
 						bind:value={$form.full_name}
 						error={$errors.full_name}
 						class="pb-2"
@@ -119,12 +119,12 @@
 				<div>
 					<TextField
 						id="employer"
-						label="Employer"
+						label="勤務先"
 						type="text"
 						name="employer"
 						icon={mdiBriefcase}
 						autocomplete="organization"
-						placeholder="Enter your employer's name (optional)"
+						placeholder="勤務先の名前を入力してください（任意）"
 						bind:value={$form.employer}
 						error={$errors.employer}
 						class="pb-2"
@@ -134,12 +134,12 @@
 				<div>
 					<TextField
 						id="email"
-						label="Email address*"
+						label="メールアドレス*"
 						type="email"
 						name="email"
 						icon={mdiEmail}
 						autocomplete="email"
-						placeholder="Enter your email address"
+						placeholder="メールアドレスを入力してください"
 						bind:value={$form.email}
 						error={$errors.email}
 						class="pb-2"
@@ -149,12 +149,12 @@
 				<div>
 					<TextField
 						id="password"
-						label="Password*"
+						label="パスワード*"
 						type="password"
 						name="password"
 						icon={mdiLock}
 						autocomplete="new-password"
-						placeholder="Create a password"
+						placeholder="パスワードを作成してください"
 						bind:value={$form.password}
 						error={$errors.password}
 						class="pb-2"
@@ -162,23 +162,14 @@
 				</div>
 
 				<div>
-					<!-- <div>
-						<Button on:click={() => steps} disabled={current.isFirst}>Previous</Button>
-						<Button
-							on:click={pagination.nextPage}
-							color="primary"
-							variant="fill"
-							disabled={current.isLast}>Next</Button
-						>
-					</div> -->
 					<TextField
 						id="passwordConfirm"
-						label="Confirm Password*"
+						label="パスワード確認*"
 						type="password"
 						name="passwordConfirm"
 						icon={mdiLock}
 						autocomplete="new-password"
-						placeholder="Confirm your password"
+						placeholder="パスワードを確認してください"
 						bind:value={$form.passwordConfirm}
 						error={$errors.passwordConfirm}
 						class="pb-2"
@@ -195,7 +186,7 @@
 					size="lg"
 					type="submit"
 				>
-					Create Account
+					アカウントを作成
 				</Button>
 			</form>
 
@@ -204,7 +195,7 @@
 			<div class="flex w-full flex-col">
 				<div class="relative mt-4">
 					<div class="relative flex justify-center text-sm/6 font-medium">
-						<span class="bg-white px-6 text-gray-900">Or</span>
+						<span class="bg-white px-6 text-gray-900">または</span>
 					</div>
 				</div>
 
@@ -212,7 +203,7 @@
 					href="/auth/login"
 					class="mt-3 flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
 				>
-					<span class="text-sm/6 font-semibold">Already have an account? Sign in</span>
+					<span class="text-sm/6 font-semibold">既にアカウントをお持ちですか？サインイン</span>
 				</a>
 			</div>
 		</div>
@@ -222,14 +213,14 @@
 		<Header slot="header" class="mx-5">
 			<div slot="avatar">
 				<Avatar class="font-bold text-primary-content">
-					<img src={FAILED_SVG} alt="Registration failed" />
+					<img src={FAILED_SVG} alt="登録に失敗しました" />
 				</Avatar>
 			</div>
-			<h2 slot="title">Registration Failed</h2>
+			<h2 slot="title">登録に失敗しました</h2>
 		</Header>
-		<p class="mx-2">Unable to create account. Please try again later.</p>
+		<p class="mx-2">アカウントを作成できませんでした。後でもう一度お試しください。</p>
 		<div slot="actions">
-			<Button variant="fill" color="primary" on:click={() => (open = false)}>Close</Button>
+			<Button variant="fill" color="primary" on:click={() => (open = false)}>閉じる</Button>
 		</div>
 	</Dialog>
 </div>

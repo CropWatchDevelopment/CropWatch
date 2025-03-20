@@ -32,63 +32,71 @@
 
 <section class="p-4">
 	<h2 class="mb-2 flex gap-4 border-b pb-4">
-		<Back />
-		<Tooltip title={`DevEUI: ${device?.dev_eui}`}>
-			<div class="flex flex-col gap-0">
-				<span>{device?.name} {$page.url.pathname.includes('settings') ? 'Settings' : ''}</span>
-				<span class="text-xs"
-					>{nameToJapaneseName('Last seen')}: <Duration
-						start={device?.latest_data?.created_at}
-						totalUnits={1}
-					/> {nameToJapaneseName('ago')}</span
-				>
+		<div class="flex flex-row w-full">
+			<div class="flex flex-row items-center gap-2">
+				<Back />
+				<Tooltip title={`DevEUI: ${device?.dev_eui}`}>
+					<div class="flex flex-col gap-0">
+						<span>{device?.name} {$page.url.pathname.includes('settings') ? 'Settings' : ''}</span>
+						<span class="text-xs"
+							>{nameToJapaneseName('Last seen')}: <Duration
+								start={device?.latest_data?.created_at}
+								totalUnits={1}
+							/>
+							{nameToJapaneseName('ago')}</span
+						>
+					</div>
+				</Tooltip>
 			</div>
-		</Tooltip>
-		<span class="flex-1"></span>
-		<Tooltip
-			title={device?.latest_data?.battery
-				? `Battery Level: ${device?.latest_data?.battery}%`
-				: 'Battery Level Unknown'}
-		>
-			<span class="flex items-center gap-1">
-				<Icon
-					data={device?.latest_data?.battery ? mdiBattery : mdiBatteryUnknown}
-					class={device?.latest_data?.battery ? 'text-surface-content/50' : 'text-warning'}
-					size="1em"
-					variant="fill-fight"
-				/>
-			</span>
-		</Tooltip>
-		<Tooltip title="Data Time Range"></Tooltip>
-		<Tooltip>
-			<DataDateRangeSelectDialog onrangeselect={handleRangeSelect} />
-		</Tooltip>
-		{#if device?.ai_provider}
-			<Tooltip title="AI Analysis">
-				<Button icon={mdiRobot} variant="fill-light" rounded="full"></Button>
-			</Tooltip>
-		{/if}
-		{#if device?.report_endpoint}
-			<Tooltip title={nameToJapaneseName('Report Download')}>
-				<ReportDownloadDialog devEui={device?.dev_eui} />
-			</Tooltip>
-		{/if}
-		<Tooltip title={nameToJapaneseName('CSV Download')}>
-			<CsvDownloadDialog devEui={device?.dev_eui} />
-		</Tooltip>
-		<Tooltip title="Settings">
-			<Button
-				icon={$page.url.pathname.includes('settings') ? mdiClose : mdiCog}
-				variant="fill-light"
-				rounded="full"
-				color={$page.url.pathname.includes('settings') ? 'accent' : 'default'}
-				href={$page.url.pathname.includes('settings')
-					? `/app/location/${location_id}/devices/${device?.dev_eui}/detail`
-					: `/app/location/${location_id}/devices/${device?.dev_eui}/settings`}
-			></Button>
-		</Tooltip>
+			<span class="flex-1"></span>
+			<div class="flex flex-row gap-2 justify-end">
+				{#if device?.latest_data?.battery}
+				<Tooltip
+					title={device?.latest_data?.battery
+						? `Battery Level: ${device?.latest_data?.battery}%`
+						: 'Battery Level Unknown'}
+				>
+					<span class="flex items-center gap-1">
+						<Icon
+							data={device?.latest_data?.battery ? mdiBattery : mdiBatteryUnknown}
+							class={device?.latest_data?.battery ? 'text-surface-content/50' : 'text-warning'}
+							size="1em"
+							variant="fill-fight"
+						/>
+					</span>
+				</Tooltip>
+				{/if}
+				<Tooltip title="Data Time Range"></Tooltip>
+				<Tooltip>
+					<DataDateRangeSelectDialog onrangeselect={handleRangeSelect} />
+				</Tooltip>
+				{#if device?.ai_provider}
+					<Tooltip title="AI Analysis">
+						<Button icon={mdiRobot} variant="fill-light" rounded="full"></Button>
+					</Tooltip>
+				{/if}
+				{#if device?.report_endpoint}
+					<Tooltip title={nameToJapaneseName('Report Download')}>
+						<ReportDownloadDialog devEui={device?.dev_eui} />
+					</Tooltip>
+				{/if}
+				<Tooltip title={nameToJapaneseName('CSV Download')}>
+					<CsvDownloadDialog devEui={device?.dev_eui} />
+				</Tooltip>
+				<Tooltip title="Settings">
+					<Button
+						icon={$page.url.pathname.includes('settings') ? mdiClose : mdiCog}
+						variant="fill-light"
+						rounded="full"
+						color={$page.url.pathname.includes('settings') ? 'accent' : 'default'}
+						href={$page.url.pathname.includes('settings')
+							? `/app/location/${location_id}/devices/${device?.dev_eui}/detail`
+							: `/app/location/${location_id}/devices/${device?.dev_eui}/settings`}
+					></Button>
+				</Tooltip>
+			</div>
+		</div>
 	</h2>
-
 	<section class="mb-5 flex flex-row justify-between gap-1">
 		<Button
 			variant="fill-outline"

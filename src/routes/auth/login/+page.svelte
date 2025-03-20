@@ -36,13 +36,8 @@
 </svelte:head>
 
 <Card class="flex h-full w-full max-w-[480px] flex-col shadow sm:rounded-lg">
-	<Header title={m.auth_login_social_login_title()} slot="header">
-		<div slot="avatar">
-			<Avatar class="font-bold text-primary-content">
-				<img src={LOGO_IMAGE} alt="CropWatch LLC" />
-			</Avatar>
-		</div>
-	</Header>
+	<img src={LOGO_IMAGE} class="w-24 block mx-auto" alt="CropWatch LLC" />
+	<h2 class="text-center">{m.auth_login_title()}</h2>
 
 	<!-- Container to fill remaining space and manage layout -->
 	<div class="flex flex-1 flex-col p-4">
