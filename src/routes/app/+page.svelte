@@ -127,14 +127,6 @@
 						return location.name.toLowerCase().includes(search.toLowerCase());
 					}) as location, index (location.location_id)}
 					<div
-						
-						class="aspect-square relative rounded-xl bg-primary-content/50 p-1 text-black backdrop-blur-sm
-								transition-all duration-300 hover:bg-primary-content/60"
-						
-					>
-						<DashboardCard {location} />
-					</div>
-					<div
 						class="aspect-square relative rounded-xl bg-primary-content/50 p-1 text-black backdrop-blur-sm
 								transition-all duration-300 hover:bg-primary-content/60"
 					>
