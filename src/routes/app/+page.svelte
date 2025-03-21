@@ -24,6 +24,8 @@
 	let { data } = $props();
 	let userContext = getUserState();
 	let { user } = $derived(userContext);
+	let innerWidth: number = $state(1);
+	let useDnD = $derived(innerWidth > 900);
 	let search: string = $state(browser ? (localStorage.getItem('dashboard_search') ?? '') : '');
 	let hideEmptyLocations: boolean = $state(
 		browser ? localStorage.getItem('hide_empty_locations') === 'true' : false
@@ -63,8 +65,15 @@
 			);
 	});
 
+	$effect(() => {
+		if (browser) {
+			window.mediaq
+		}
+	})
+
 	// Handle drag-and-drop reordering
 	function handleDrop(state: DragDropState<ILocation>) {
+		if (!useDnD) return;
 		const { draggedItem, sourceContainer, targetContainer } = state;
 		if (!targetContainer || sourceContainer === targetContainer) return;
 
@@ -79,6 +88,7 @@
 	}
 </script>
 
+<svelte:window bind:innerWidth />
 {#if user}
 	<section class="p-4">
 		<h2 class="mb-4 flex w-full flex-row items-center">
@@ -118,7 +128,7 @@
 						return location.name.toLowerCase().includes(search.toLowerCase());
 					}) as location, index (location.location_id)}
 					<div
-						use:droppable={{ container: index.toString(), callbacks: { onDrop: handleDrop } }}
+					use:droppable={{ container: index.toString(), callbacks: { onDrop: handleDrop } }}
 						class="aspect-square relative rounded-xl bg-primary-content/50 p-1 text-black backdrop-blur-sm
 	                           transition-all duration-300 hover:bg-primary-content/60"
 						animate:flip={{ duration: 300 }}
