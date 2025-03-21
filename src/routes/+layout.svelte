@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { goto, invalidate } from '$app/navigation';
 	import { appConfigDefaults } from '$lib/app.config';
-	import { settings } from 'svelte-ux';
+	import { Button, settings } from 'svelte-ux';
 	import { setUserState } from '$lib/state/user-state.svelte';
 	import type { PageProps } from './$types';
 
@@ -45,4 +45,10 @@
 	settings(appConfigDefaults);
 </script>
 
-{@render children()}
+<svelte:boundary>
+	{@render children()}
+	{#snippet failed(error)}
+		<p>Oops! an error occured: {error.message}</p>
+		<Button href="/auth/login">Return to Login</Button>
+	{/snippet}
+</svelte:boundary>
