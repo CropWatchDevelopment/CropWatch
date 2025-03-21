@@ -27,7 +27,7 @@
 					<div>{userContext.profile?.employer}</div>
 				</div>
 			</div>
-			<Menu {open} on:close={toggleOff} matchWidth>
+			<Menu {open} on:close={toggleOff}>
 				<MenuItem icon={mdiRefresh} on:click={() => location.reload()}>{nameToJapaneseName('Refresh')}</MenuItem>
 				<MenuItem icon={mdiCog} on:click={() => location.href="/app/app-settings"}>{nameToJapaneseName('Settings')}</MenuItem>
 				<MenuItem icon={mdiHelp} on:click={() => location.href="https://kb.cropwatch.io"}>{nameToJapaneseName('Help')}</MenuItem>
