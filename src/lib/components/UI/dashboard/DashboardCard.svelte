@@ -3,7 +3,7 @@
 
 	import { Button } from 'svelte-ux';
 	import { goto } from '$app/navigation';
-	import { mdiArrowRight, mdiCog, mdiTimerSand } from '@mdi/js';
+	import { mdiArrowRight } from '@mdi/js';
 	import type { ILocation } from '$lib/interfaces/ILocation.interface';
 	import { draggable } from '@thisux/sveltednd';
 
@@ -15,23 +15,7 @@
 </script>
 
 <div
-	use:draggable={{
-		container: location.location_id.toString(),
-		dragData: location
-	}}
-	class={`
-		svelte-dnd-touch-feedback
-		cursor-move
-		rounded-lg
-		bg-gradient-to-br
-		shadow-lg
-		transition-all
-		duration-300
-		hover:scale-[1.02]
-		hover:shadow-xl
-		active:scale-95
-		active:brightness-110
-	`}
+
 >
 	<div class="border-[rgb(121 121 121)] rounded-2xl border-[0.1em] bg-surface-content/30 p-0.5">
 		<div

@@ -67,13 +67,12 @@
 
 	$effect(() => {
 		if (browser) {
-			window.mediaq
+			window.mediaq;
 		}
-	})
+	});
 
 	// Handle drag-and-drop reordering
 	function handleDrop(state: DragDropState<ILocation>) {
-		if (!useDnD) return;
 		const { draggedItem, sourceContainer, targetContainer } = state;
 		if (!targetContainer || sourceContainer === targetContainer) return;
 
@@ -128,10 +127,16 @@
 						return location.name.toLowerCase().includes(search.toLowerCase());
 					}) as location, index (location.location_id)}
 					<div
-					use:droppable={{ container: index.toString(), callbacks: { onDrop: handleDrop } }}
+						
 						class="aspect-square relative rounded-xl bg-primary-content/50 p-1 text-black backdrop-blur-sm
-	                           transition-all duration-300 hover:bg-primary-content/60"
-						animate:flip={{ duration: 300 }}
+								transition-all duration-300 hover:bg-primary-content/60"
+						
+					>
+						<DashboardCard {location} />
+					</div>
+					<div
+						class="aspect-square relative rounded-xl bg-primary-content/50 p-1 text-black backdrop-blur-sm
+								transition-all duration-300 hover:bg-primary-content/60"
 					>
 						<DashboardCard {location} />
 					</div>
