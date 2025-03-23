@@ -4,7 +4,7 @@
 	import { error } from 'highcharts';
 
 	let { location, devices } = $props();
-	let latlong: LatLngTuple = $derived([location.lat, location.long]);
+	let latlong: LatLngTuple = $derived([location.lat ?? 0, location.long ?? 0]);
 	let marker;
 	let circle;
 	let mapOptions: MapOptions = $derived({
@@ -59,7 +59,7 @@
 </script>
 
 <div style="width:100%;height:500px;">
-	<Map options={mapOptions}>
+	<!-- <Map options={mapOptions}>
 		<Circle
 			latLng={latlong}
 			options={{
@@ -77,7 +77,7 @@
 			<Marker latLng={[device.lat, device.long]} />
 		{/each}
 		<TileLayer url={'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
-	</Map>
+	</Map> -->
 </div>
 <!-- <Input type="text" bind:value={address} />
 <Button on:click={() => getLatLongFromAddress(address)}>Get Address</Button> -->

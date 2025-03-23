@@ -112,6 +112,7 @@ export class UserState {
                 .eq('cw_location_owners.is_active', true)
                 .eq('cw_location_owners.user_id', this.user.id)
                 .eq('cw_devices.cw_device_owners.user_id', this.user.id)
+                .order('name', { ascending: true, referencedTable: 'cw_devices' });
 
 
             if (error) {

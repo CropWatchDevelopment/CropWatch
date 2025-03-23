@@ -1,5 +1,5 @@
 <script lang="ts">
-  import DataRowItem from './DataRowItem.svelte';
+	import DataRowItem from './DataRowItem.svelte';
 
 	import { Button } from 'svelte-ux';
 	import { goto } from '$app/navigation';
@@ -14,9 +14,7 @@
 	} = $props();
 </script>
 
-<div
-
->
+<div>
 	<div class="border-[rgb(121 121 121)] rounded-2xl border-[0.1em] bg-surface-content/30 p-0.5">
 		<div
 			class="custom-bg rounded-4xl relative h-20 w-full bg-cover bg-bottom bg-no-repeat bg-blend-overlay"
@@ -36,26 +34,30 @@
 			</div> -->
 		</div>
 	</div>
-	</div>
+</div>
 
-	<h2 class="text-primary-content my-3 flex flex-row items-center overflow-hidden text-ellipsis text-xl">
-		{location.name}
-		<span class="flex flex-grow"></span>
-		<!-- COMING BACK SOON!!!-->
-		<Button
-			variant="fill"
-			color="primary"
-			icon={mdiArrowRight}
-			on:click={() => goto(`/app/location/${location.location_id}`)}
-		/>
-
-	</h2>
-	<div class="flex flex-col gap-1 px-1 pb-4 text-sm text-primary-content">
+<h2
+	class="my-3 flex flex-row items-center overflow-hidden text-ellipsis text-xl text-primary-content"
+>
+	{location.name}
+	<span class="flex flex-grow"></span>
+	<!-- COMING BACK SOON!!!-->
+	<Button
+		variant="fill"
+		color="primary"
+		icon={mdiArrowRight}
+		on:click={() => goto(`/app/location/${location.location_id}`)}
+	/>
+</h2>
+<div class="flex flex-col gap-1 px-1 pb-4 text-sm text-primary-content">
+	{#if location.cw_devices.length === 0}
+		<p>No devices found</p>
+	{:else}
 		{#each location.cw_devices as device}
 			<DataRowItem {device} {location}></DataRowItem>
 		{/each}
-	</div>
-
+	{/if}
+</div>
 
 <style>
 	.text-shadow {
