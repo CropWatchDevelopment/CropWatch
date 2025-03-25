@@ -12,6 +12,7 @@
 	let { data } = $props();
 	let loading: boolean = $state(false);
 	let open: boolean = $state(false);
+	let lastError: string = $state('');
 
 	// Client API:
 	const { form, enhance, constraints, errors } = superForm(data, {
@@ -24,6 +25,7 @@
 				document.location.href = '/app';
 			} else {
 				console.error('Login failed');
+				lastError = event.result.data.form.errors._errors.join(',');
 				loading = false;
 				open = true;
 			}
@@ -153,7 +155,7 @@
 		</div>
 		<h2 slot="title">Login Failed</h2>
 	</Header>
-	<p class="mx-2">E-Mail OR Password Incorrect</p>
+	<p class="mx-2">{lastError ?? 'unknown reason'}</p>
 	<div slot="actions">
 		<Button variant="fill" color="primary" on:click={() => (open = false)}>Close</Button>
 	</div>

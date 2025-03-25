@@ -163,7 +163,7 @@
 							chartOptions: {
 								yAxis: [
 									{
-										tickInterval: 10
+										//tickInterval: 10
 									},
 									{}
 								]
@@ -196,7 +196,8 @@
 								color: 'red',
 								fontSize: '20px'
 							}
-						}
+						},
+						gridLineWidth: 0 // Hide grid lines for this axis
 					},
 					{
 						title: {
@@ -205,10 +206,10 @@
 								color: 'aqua'
 							}
 						},
-						softMax: 100,
+						ceiling: 100,
 						max: 100,
 						min: 0,
-						tickAmount: 10,
+						// tickAmount: 10,
 						labels: {
 							enabled: device?.all_data?.some((data) => data.humidity > 0),
 							format: '{value}%',
@@ -218,7 +219,8 @@
 							}
 						},
 						opposite: true,
-						showEmpty: false
+						showEmpty: false,
+						
 					}
 				],
 				series: [

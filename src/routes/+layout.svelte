@@ -18,17 +18,31 @@
 
 	$effect(() => {
 		const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
+			console.log(event, session);
+
+			if (event === 'INITIAL_SESSION') {
+				// handle initial session
+			} else if (event === 'SIGNED_IN') {
+				// handle sign in event
+			} else if (event === 'SIGNED_OUT') {
+				// handle sign out event
+				return;
+			} else if (event === 'PASSWORD_RECOVERY') {
+				// handle password recovery event
+				goto('/auth/update-password');
+				return;
+			} else if (event === 'TOKEN_REFRESHED') {
+				// handle token refreshed event
+			} else if (event === 'USER_UPDATED') {
+				// handle user updated event
+			}
+
 			userState.updateState({
 				session: newSession,
 				supabase,
 				user: newSession?.user || null,
 				profile: null
 			});
-
-			if (event == 'PASSWORD_RECOVERY') {
-				goto('/auth/update-password');
-				return;
-			}
 
 			if (!newSession && !window.location.pathname.includes('/auth')) {
 				// If the new session is null, the user is effectively logged out.

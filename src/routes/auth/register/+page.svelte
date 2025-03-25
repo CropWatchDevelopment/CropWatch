@@ -22,10 +22,12 @@
 		mdiCardAccountDetails
 	} from '@mdi/js';
 	import { PUBLIC_RECAPTCHA_SITE_KEY } from '$env/static/public';
+	import { dev } from '$app/environment';
 
 	let { data } = $props();
 	let loading: boolean = $state(false);
 	let open: boolean = $state(false);
+	let tokenState: string = $state('');
 
 	$effect(() => {
 		if (window.grecaptcha) {
@@ -33,6 +35,7 @@
 				window.grecaptcha
 					.execute(PUBLIC_RECAPTCHA_SITE_KEY, { action: 'submit' })
 					.then(async (token: string) => {
+						tokenState = token;
 						$form.reCatchaToken = token;
 					});
 			});
@@ -77,16 +80,11 @@
 				</Avatar>
 			</div>
 		</Header>
-
+{tokenState}
 		<div class="flex flex-1 flex-col p-4">
-			<form
-				method="POST"
-				use:enhance
-				class="w-full space-y-6"
-			>
-				<input type="hidden" name="reCatchaToken" bind:value={$form.reCatchaToken} />
+			<form method="POST" use:enhance class="w-full space-y-6">
 				<div>
-					<input type="hidden" name="reCatchaToken" bind:value={$form.reCatchaToken} />
+					<input type="hidden" id="reCatchaToken" name="reCatchaToken" bind:value={tokenState} />
 					<TextField
 						id="username"
 						label="ユーザー名*"
@@ -207,6 +205,9 @@
 				</a>
 			</div>
 		</div>
+		{#if dev}
+			<SuperDebug bind:data={$form} />
+		{/if}
 	</Card>
 
 	<Dialog {open} width="sm" on:close={() => (open = false)}>
