@@ -3,8 +3,9 @@
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import type { PageData } from './$types';
 	import { AddLocationForm } from '$lib/form-schemas/AddLocation.schema';
-	import { Avatar, Button, Card, Header, Icon, Input, TextField } from 'svelte-ux';
+	import { Avatar, Button, Card, Header, Icon, Input, NumberStepper, TextField } from 'svelte-ux';
 	import { mdiMapMarkerPlus, mdiPlus } from '@mdi/js';
+	import { goto } from '$app/navigation';
 
 	export let data: PageData;
 
@@ -14,11 +15,17 @@
 		onError: ({ result }) => {
 			console.error('Form submission error', result);
 		},
-		// Optional: success handling
-		onUpdate: ({ form }) => {
-			if (form.message) {
+		onResult: ({ result }) => {
+			console.log('Form submission result', result);
+			if (result.status === 200) {
 				// Handle success message or redirect
-				console.log(form.message);
+				if (result.data) {
+					document.location = result.data.redirect;
+				}
+			} else {
+				// Handle error message
+				console.error('Form submission error', result);
+				alert('An error occurred while submitting the form');
 			}
 		}
 	});
@@ -72,7 +79,9 @@
 			/>
 		</div>
 
-		<Button type="submit" variant="fill" icon={mdiPlus} disabled={$allErrors.length > 0}>Create Location</Button>
+		<Button type="submit" variant="fill" icon={mdiPlus} disabled={$allErrors.length > 0}
+			>Create Location</Button
+		>
 	</form>
 </Card>
 

@@ -36,8 +36,12 @@ export const load = async ({ params, fetch, locals: { supabase, safeGetSession }
     if (locationError) {
         return {
             status: 500,
-            error: new Error(locationError.message)
+            error: new Error(locationError.message),
         };
+    } else {
+        if (!location) {
+            return redirect(303, '/app');
+        }
     }
 
     const addUserPermissionForm = await superValidate({ email: undefined, permission_level: 5 }, zod(AddLocationUserPermission));
@@ -284,6 +288,55 @@ export const actions = {
         } else {
             return fail(400, { form });
         }
+    },
+    deleteLocation: async ({ request, params, locals: { supabase, safeGetSession } }) => {
+        const session = await safeGetSession();
+        if (!session || !session.user) {
+            return fail(401, { status: 401, message: 'Unauthorized' });
+        }
+
+        const location_id: number = +params.location_id;
+        if (!location_id) {
+            return fail(400, { status: 400, message: 'Invalid location ID' });
+        }
+
+        const { data: yourPermission, error: yourPermissionError } = await supabase
+            .from('cw_location_owners')
+            .select('*')
+            .eq('location_id', location_id)
+            .eq('user_id', session.user.id)
+            .eq('permission_level', 1)
+            .maybeSingle();
+        if (yourPermissionError) {
+            return fail(500, { status: 500, message: yourPermissionError.message });
+        }
+        if (!yourPermission) {
+            return fail(403, { status: 403, message: 'You do not have permission to delete this location' });
+        }
+
+        if (yourPermission?.permission_level !== 1) {
+            return fail(403, { status: 403, message: 'You do not have permission to delete this location' });
+        }
+
+        const { data: devices, error: devicesError } = await supabase
+            .from('cw_devices')
+            .update({ location_id: null })
+            .eq('location_id', location_id)
+            .select('dev_eui');
+        if (devicesError) {
+            return fail(500, { status: 500, message: devicesError.message });
+        }
+
+        const { data: deleteDataResult, error: deleteErrorResult } = await supabase
+            .from('cw_locations')
+            .delete()
+            .eq('location_id', location_id)
+            .select();
+        if (deleteErrorResult) {
+            return fail(500, { status: 500, message: deleteErrorResult.message });
+        }
+
+        return { status: 200 };
     },
 };
 
