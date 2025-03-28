@@ -153,4 +153,41 @@ export const actions = {
 
         return fail(400, { form: form });
     },
+    deleteDevice: async ({ request, fetch, params, url, locals: { supabase, safeGetSession } }) => {
+        const session = await safeGetSession();
+        if (!session || !session.user) {
+            return fail(401, { status: 401, message: 'Unauthorized' });
+        }
+
+        const devEui = params.dev_eui;
+        if (!devEui) {
+            return fail(400, { status: 400, message: 'No devEui provided' });
+        }
+
+        const { data: devicePermissions, error: errorDevicePermissions } = await supabase
+            .from('cw_device_owners')
+            .select('*')
+            .eq('dev_eui', devEui)
+            .eq('user_id', session.user.id)
+            .single();
+        if (errorDevicePermissions) {
+            return fail(400, { status: 400, message: 'Failed to fetch device permissions' });
+        }
+        if (!devicePermissions) {
+            return fail(404, { status: 404, message: 'Device not found' });
+        }
+        if (devicePermissions.permission_level !== 1) {
+            return fail(403, { status: 403, message: 'You do not have permission to delete this device' });
+        }
+        const { data: deleteDevice, error: errorDeleteDevice } = await supabase
+            .from('cw_devices')
+            .delete()
+            .eq('dev_eui', devEui)
+            .eq('user_id', session.user.id)
+            .select('*');
+        if (errorDeleteDevice) {
+            return fail(400, { status: 400, message: 'Failed to delete device' });
+        }
+        return { status: 200, deleteDevice };
+    },
 }

@@ -92,7 +92,7 @@
 	  <div class="space-y-2">
 		<p class="text-sm text-gray-400">Location (Lat, Long)</p>
 		<p class="text-lg font-medium">
-		  {device.lat.toFixed(4)}, {device.long.toFixed(4)}
+		  {device.lat ?? '?'}, {device.long ?? '?'}
 		</p>
 	  </div>
   

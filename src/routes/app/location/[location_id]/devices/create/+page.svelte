@@ -3,6 +3,7 @@
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
 	import {
 		Avatar,
+		Button,
 		Card,
 		Field,
 		Header,
@@ -12,7 +13,7 @@
 		SelectField,
 		TextField
 	} from 'svelte-ux';
-	import { mdiPackageVariantClosedPlus } from '@mdi/js';
+	import { mdiPackageVariantClosedPlus, mdiPlus } from '@mdi/js';
 	import { page } from '$app/stores';
 	import { dev } from '$app/environment';
 
@@ -22,9 +23,12 @@
 	let phyVersions = $derived(data.phyVersions);
 	let deviceTypes = $derived(data.device_types);
 	let group: number | undefined = $state(1);
+	let loading: boolean = $state(false);
 	let { form, errors, enhance } = superForm(data.form, {
+		onSubmit: async (form) => {
+			loading = true;
+		},
 		onResult: (result) => {
-			debugger;
 			if (result.result.data.status === 200) {
 				// Handle success
 				console.log('Form submitted successfully:', result);
@@ -32,6 +36,7 @@
 			} else {
 				// Handle error
 				console.error('Form submission failed:', result);
+				loading = false;
 			}
 		}
 	});
@@ -215,12 +220,16 @@
 					</div>
 				{/if}
 
-				<button
+				<Button
 					type="submit"
+					loading={loading}
+					disabled={loading}
+					icon={mdiPlus}
+					loadingText="Creating Device..."
 					class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
 				>
 					Create Device
-				</button>
+				</Button>
 			</form>
 		</div>
 	</Card>

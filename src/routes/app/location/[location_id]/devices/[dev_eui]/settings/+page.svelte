@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import DeviceDeleteDialog from '$lib/components/UI/device/DeviceDeleteDialog.svelte';
 	import DeviceGeneralSettings from '$lib/components/UI/device/DeviceGeneralSettings.svelte';
 	import DeviceInfo from '$lib/components/UI/device/DeviceInfo.svelte';
 	import DevicePermissions from '$lib/components/UI/device/DevicePermissions.svelte';
 	import DeviceRulesView from '$lib/components/UI/device/DeviceRulesView.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte.js';
+	import { mdiBomb } from '@mdi/js';
 	import { Button, Card, Tabs, TextField } from 'svelte-ux';
 	import { superForm } from 'sveltekit-superforms';
 
@@ -34,8 +36,9 @@
 
 	let searchparam = $page.url.searchParams.get('tab');
 	let optionsIndex = options.findIndex((option) => option.label === searchparam);
-	let value: number = $state(optionsIndex ? options[optionsIndex] ? options[optionsIndex].value: 1 : 1); // Clear as mud
-
+	let value: number = $state(
+		optionsIndex ? (options[optionsIndex] ? options[optionsIndex].value : 1) : 1
+	); // Clear as mud
 </script>
 
 <Tabs {options} bind:value>
@@ -43,12 +46,7 @@
 		{#if value === 1}
 			<DeviceGeneralSettings updateDeviceLocationForm={data.updateDeviceLocationForm} />
 			<Card class="p-4">
-				<form
-					method="POST"
-					action="?/updateDeviceLocation"
-
-					class="flex flex-col gap-2"
-				>
+				<form method="POST" action="?/updateDeviceLocation" class="flex flex-col gap-2">
 					<div class="grid grid-flow-col gap-2">
 						<input type="hidden" name="dev_eui" id="id" bind:value={$page.params.dev_eui} />
 						<TextField
@@ -61,13 +59,7 @@
 						/>
 					</div>
 					<div class="grid grid-flow-col gap-2">
-						<TextField
-							label="Latitude"
-							type="text"
-							name="lat"
-							id="lat"
-							bind:value={$form.lat}
-						/>
+						<TextField label="Latitude" type="text" name="lat" id="lat" bind:value={$form.lat} />
 					</div>
 					<div class="grid grid-flow-col gap-2">
 						<TextField
@@ -80,14 +72,7 @@
 					</div>
 
 					<div>
-						<Button
-							type="submit"
-							variant="fill"
-							color="primary"
-							class="w-full"
-						>
-							Submit
-						</Button>
+						<Button type="submit" variant="fill" color="primary" class="w-full">Submit</Button>
 					</div>
 				</form>
 				<!-- <SuperDebug data={$form} /> -->
@@ -98,6 +83,10 @@
 			<DeviceRulesView {rules} {addRuleForm} subjects={device_data_keys} />
 		{:else if value === 4}
 			<DeviceInfo {device} />
+			<h2>DANGER ZONE</h2>
+			<Card>
+				<DeviceDeleteDialog />
+			</Card>
 		{/if}
 	</svelte:fragment>
 </Tabs>
