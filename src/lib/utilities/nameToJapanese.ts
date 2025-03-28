@@ -215,6 +215,8 @@ export const nameToJapaneseName = (name: string) => {
         case 'ph':
         case 'PH':
             return 'pH';
+        case 'All Devices':
+            return 'すべてのデバイス';
         default:
             return '';
     }

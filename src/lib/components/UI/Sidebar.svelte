@@ -31,14 +31,16 @@
 			path="/app/location"
 			classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
 		/>
-		<!-- <NavItem
+		
+		<h1>Devices</h1>
+		<NavItem
 			class="text-primary-content"
-			text="All Devices"
-			icon={mdiRouterNetworkWireless}
+			text={nameToJapaneseName('All Devices')}
+			icon={mdiMapMarker}
 			currentUrl={$page.url}
-			path="/app/location/devices"
+			path="/app/all-devices"
 			classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
-		/> -->
+		/>
 
 		<span class="flex-grow"></span>
 

@@ -26,13 +26,15 @@
 
 <div
 	class="mr-2 border-l-8 text-primary-content
-		{device && device.latest_data && device.latest_data.created_at
-		? moment(device.latest_data.created_at).isBefore(
-				moment().subtract(device.upload_interval, 'minutes')
-			)
-			? 'border-l-red-500'
-			: 'border-l-green-500'
-		: 'border-l-yellow-500'}"
+        {device.upload_interval === -1
+		? 'border-l-green-500'
+		: device && device.latest_data && device.latest_data.created_at
+			? moment(device.latest_data.created_at).isBefore(
+					moment().subtract(device.upload_interval, 'minutes')
+				)
+				? 'border-l-red-500'
+				: 'border-l-green-500'
+			: 'border-l-yellow-500'}"
 >
 	<div class="flex px-3">
 		<h3 class="mb-2 basis-1/3 text-lg font-medium">{nameToJapaneseName('Details')}</h3>

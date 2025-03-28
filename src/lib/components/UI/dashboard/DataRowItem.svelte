@@ -17,12 +17,13 @@
 	} = $props();
 
 	let localStorageOpenState = localStorage.getItem(`${device.dev_eui}-collapseState`);
-	let defaultCollapse: boolean = $state(localStorageOpenState ? JSON.parse(localStorageOpenState) : false);
-	
+	let defaultCollapse: boolean = $state(
+		localStorageOpenState ? JSON.parse(localStorageOpenState) : false
+	);
+
 	function collapseStateChange(e: CustomEvent) {
 		defaultCollapse = e.detail.open;
 		localStorage.setItem(`${device.dev_eui}-collapseState`, JSON.stringify(e.detail.open));
-
 	}
 </script>
 
@@ -34,13 +35,15 @@
 	<div
 		slot="trigger"
 		class="flex-1 border-l-8
-				        {device.latest_data
-			? moment(device.latest_data.created_at).isBefore(
-					moment().subtract(device.upload_interval, 'minutes')
-				)
-				? '!border-l-red-500'
-				: '!border-l-green-500'
-			: '!border-l-yellow-500'}"
+				        {device.upload_interval === -1
+			? '!border-l-green-500'
+			: device.latest_data
+				? moment(device.latest_data.created_at).isBefore(
+						moment().subtract(device.upload_interval, 'minutes')
+					)
+					? '!border-l-red-500'
+					: '!border-l-green-500'
+				: '!border-l-yellow-500'}"
 	>
 		<div class="my-1 mr-2 border-r-2">
 			<div class="flex flex-col text-center text-base">
@@ -84,13 +87,15 @@
 		<DeviceDataList {device} />
 	{/if}
 	<div
-		class="border-l-8 pl-1 {device.latest_data
-			? moment(device.latest_data.created_at).isBefore(
-					moment().subtract(device.upload_interval, 'minutes')
-				)
-				? '!border-l-red-500'
-				: '!border-l-green-500'
-			: '!border-l-yellow-500'}"
+		class="border-l-8 pl-1 {device.upload_interval === -1
+			? '!border-l-green-500'
+			: device.latest_data
+				? moment(device.latest_data.created_at).isBefore(
+						moment().subtract(device.upload_interval, 'minutes')
+					)
+					? '!border-l-red-500'
+					: '!border-l-green-500'
+				: '!border-l-yellow-500'}"
 	>
 		{#if location}
 			<Button

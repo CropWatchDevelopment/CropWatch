@@ -20,7 +20,7 @@
 
 <div class="flex flex-col gap-5">
 	<Card>
-		<LocationGeneralSettings {location} {devices} />
+		<!-- <LocationGeneralSettings {location} {devices} /> -->
 	</Card>
 
 	<Card>

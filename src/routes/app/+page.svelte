@@ -8,17 +8,11 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import {
-		mdiCheck,
-		mdiCheckCircle,
-		mdiCloseCircle,
-		mdiHelp,
 		mdiMapMarker,
-		mdiTimerSand,
 		mdiViewDashboard
 	} from '@mdi/js';
 	import { droppable, type DragDropState } from '@thisux/sveltednd';
-	import { Avatar, Card, Header, Icon, Tooltip } from 'svelte-ux';
-	import { flip } from 'svelte/animate';
+	import { Avatar, Card, Header, Icon } from 'svelte-ux';
 
 	// State initialization
 	let { data } = $props();
@@ -63,12 +57,6 @@
 			userContext.allLocations.sort(
 				(a, b) => sorted.indexOf(a.location_id) - sorted.indexOf(b.location_id)
 			);
-	});
-
-	$effect(() => {
-		if (browser) {
-			window.mediaq;
-		}
 	});
 
 	// Handle drag-and-drop reordering

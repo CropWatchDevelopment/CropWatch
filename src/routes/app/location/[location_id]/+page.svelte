@@ -3,12 +3,13 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import DeleteLocationDialog from '$lib/components/dialogs/DeleteLocationDialog.svelte';
+	import TransferLocationOwnership from '$lib/components/dialogs/TransferLocationOwnership.svelte';
 	import Back from '$lib/components/UI/Back.svelte';
 	import DeviceGridView from '$lib/components/UI/device/DeviceGridView.svelte';
 	import DeviceListView from '$lib/components/UI/device/DeviceListView.svelte';
 	import LocationSettings from '$lib/components/UI/location/LocationSettings.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte.js';
-	import { mdiCog, mdiTrashCan, mdiViewGallery, mdiViewGrid, mdiViewList } from '@mdi/js';
+	import { mdiCog, mdiPlus, mdiTrashCan, mdiViewGallery, mdiViewGrid, mdiViewList } from '@mdi/js';
 	import { Button, Card, ProgressCircle, Tooltip } from 'svelte-ux';
 
 	let { data } = $props();
@@ -71,6 +72,15 @@
 					}}
 				/>
 			</Tooltip>
+			<Tooltip title="Add a device">
+				<Button
+					icon={mdiPlus}
+					variant="fill-light"
+					rounded="full"
+					color="success"
+					href={`${$page.params.location_id}/devices/create`}
+				/>
+			</Tooltip>
 			<Tooltip title="Settings">
 				<Button
 					icon={mdiCog}
@@ -82,6 +92,10 @@
 		</h2>
 
 		{#if viewType === 'list'}
+			{#if devices.length === 0}
+				<p>No devices have been added to this location yet!</p>
+				<Button variant="fill-outline" icon={mdiPlus} color="success" href={`/app/location/${$page.params.location_id}/devices/create`}>Add a device here</Button>
+			{/if}
 			<DeviceListView {devices} />
 		{:else if viewType === 'grid'}
 			<DeviceGridView {devices} />
@@ -96,13 +110,14 @@
 				locationGeneralForm={data.updateLocationGeneralForm}
 			/>
 
-			<Card class="mt-4">
+			<Card class="mt-4 flex flex-col gap-4 p-4">
 				<h3 class="text-lg font-semibold">Danger Zone</h3>
 				<p class="text-sm text-gray-500">
 					Deleting a location will also delete all devices and data associated with it.
 				</p>
 				{#if location_owner === userContext.profile?.id}
 					<DeleteLocationDialog />
+					<TransferLocationOwnership />
 				{:else}
 					<p class="text-sm text-gray-500">Only the owner of this location can delete it.</p>
 				{/if}
