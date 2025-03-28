@@ -87,7 +87,7 @@ export const actions: Actions = {
         }
         let form = await superValidate(request, zod(deviceWithoutSubscriptionSchema));
         if (!form.valid) {
-            return { form };
+            return fail(400, { form });
         }
 
         const { data: device_type, error: device_typeError } = await supabase.from('cw_device_type')
@@ -106,7 +106,7 @@ export const actions: Actions = {
             location_id: form.data.location_id,
             upload_interval: device_type.upload_interval,
             user_id: session.user.id,
-        }).select('*').single();;
+        }).select('*').single();
 
         if (createdDeviceError) {
             return fail(500, { form, message: createdDeviceError.message });

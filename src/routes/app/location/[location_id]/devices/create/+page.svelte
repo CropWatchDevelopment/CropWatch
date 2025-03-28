@@ -25,14 +25,13 @@
 	let { form, errors, enhance } = superForm(data.form, {
 		onResult: (result) => {
 			debugger;
-			if (result.result.status === 200) {
+			if (result.result.data.status === 200) {
 				// Handle success
 				console.log('Form submitted successfully:', result);
 				document.location.href = `/app`;
 			} else {
 				// Handle error
 				console.error('Form submission failed:', result);
-				alert('device add filed');
 			}
 		}
 	});

@@ -58,7 +58,7 @@ export const deviceWithoutSubscriptionSchema = z.object({
     location_id: z.number(),
     devEui: z
         .string()
-        .regex(/^[a-f0-9]{16}$/, 'DevEUI must be 16 hexadecimal characters'),
+        .regex(/^[A-F0-9]{16}$/, 'DevEUI must be 16 hexadecimal characters'),
 });
 
 export type DeviceSchema = typeof deviceWithSubscriptionSchema;
