@@ -171,7 +171,7 @@
 							type="text"
 							label="Device EUI"
 							mask="XXXXXXXXXXXXXXXX"
-							accept="[0-9a-f]"
+							accept="[0-9A-F]"
 							replace="X"
 							on:change={(e) => {
 								console.log(e.detail.value);
