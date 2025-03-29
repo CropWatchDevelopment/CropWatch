@@ -112,14 +112,38 @@ export const actions: Actions = {
             return fail(500, { form, message: createdDeviceError.message });
         }
 
+        // Add ME to the device_owners table with permission level 1
         const { data: devicePermission, error: devicePermissionError } = await supabase.from('cw_device_owners').insert({
             dev_eui: createdDevice.dev_eui,
             user_id: session.user.id,
             permission_level: 1,
         }).select('*');
-
         if (devicePermissionError) {
             return fail(500, { form, message: devicePermissionError.message });
+        }
+
+        // Add All other people that have access to this location to access this device
+        const { data: locationUsers, error: locationUsersError } = await supabase
+            .from('cw_location_owners')
+            .select('*')
+            .eq('location_id', form.data.location_id)
+            .neq('user_id', session.user.id);
+        if (locationUsersError) {
+            return fail(500, { form, message: locationUsersError.message });
+        }
+        if (locationUsers) {
+            const devicePermissionPromises = locationUsers.map(async (user) => {
+                const { data: devicePermission, error: devicePermissionError } = await supabase.from('cw_device_owners').insert({
+                    dev_eui: createdDevice.dev_eui,
+                    user_id: user.user_id,
+                    permission_level: 2,
+                }).select('*');
+                if (devicePermissionError) {
+                    return fail(500, { form, message: devicePermissionError.message });
+                }
+                return devicePermission;
+            });
+            await Promise.all(devicePermissionPromises);
         }
 
         return {

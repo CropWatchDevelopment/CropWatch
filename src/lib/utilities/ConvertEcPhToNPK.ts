@@ -1,72 +1,43 @@
-export function ConvertEcPhToNPK({
-  temperature,
-  moisture,
-  ec,
-  ph,
-  soilType,
-  actual_n,
-  actual_p,
-  actual_k,
-  n_months_ago
-}: SoilParams): { N: number; P: number; K: number } {
-  // EC adjustment based on soil type
-  let ecAdjustmentFactor: number;
-  switch (soilType) {
-    case "Sandy":
-      ecAdjustmentFactor = 1.1;
-      break;
-    case "Loamy":
-      ecAdjustmentFactor = 1.0;
-      break;
-    case "Clay":
-      ecAdjustmentFactor = 0.85;
-      break;
-    case "Silty":
-      ecAdjustmentFactor = 0.9;
-      break;
-    case "Peaty":
-      ecAdjustmentFactor = 1.1;
-      break;
-    case "Chalky":
-      ecAdjustmentFactor = 0.9;
-      break;
-    case "Saline":
-      ecAdjustmentFactor = 0.6;
-      break;
-    default:
-      ecAdjustmentFactor = 1.0;
-  }
+export interface SensorData {
+  ec_uS_cm: number; // EC in µS/cm
+  vwc: number;      // Volumetric water content in %
+  ph: number;       // pH value
+}
 
-  // Adjust EC
-  const adjustedEC = ec * ecAdjustmentFactor;
+export interface EstimatedNPK {
+  nitrogen_mgkg: number;
+  phosphorus_mgkg: number;
+  potassium_mgkg: number;
+}
 
-  // Stronger bias factor calculation (non-linear, stronger towards lab data)
-  const alpha = n_months_ago ? Math.max(0.1, Math.exp(-0.3 * n_months_ago)) : 0.5;
+export function estimateNPK({ ec_uS_cm, vwc, ph }: SensorData): EstimatedNPK {
+  // --- NITROGEN ---
+  let nitrogen = 0;
+  if (ec_uS_cm < 150) nitrogen = 10;
+  else if (ec_uS_cm < 300) nitrogen = 20;
+  else nitrogen = 40;
 
-  // pH adjustments
-  const pHAdjustmentN = ph >= 6 ? 10 * (ph - 6) : 0;
-  const pHAdjustmentP = ph >= 6 ? 15 * (ph - 6) : 0;
-  const pHAdjustmentK = ph >= 6 ? 5 * (ph - 6) : 0;
+  // Penalize nitrogen if soil is very wet (leaching)
+  if (vwc > 80) nitrogen *= 0.75;
 
-  // Formula-based estimates (from EC, moisture, pH)
-  let estimatedN = 0.1 * adjustedEC + 0.5 * moisture + pHAdjustmentN;
-  let estimatedP = 0.05 * adjustedEC + 0.2 * moisture + pHAdjustmentP;
-  let estimatedK = 0.2 * adjustedEC + 0.3 * moisture + pHAdjustmentK;
+  // --- PHOSPHORUS ---
+  let phosphorus = 0;
+  if (ph < 5.5) phosphorus = 8; // poor availability at low pH
+  else if (ph < 6.5) phosphorus = 15;
+  else phosphorus = 25;
 
-  // Ensure estimated values are not negative
-  estimatedN = Math.max(0, estimatedN);
-  estimatedP = Math.max(0, estimatedP);
-  estimatedK = Math.max(0, estimatedK);
+  // --- POTASSIUM ---
+  let potassium = 0;
+  if (ec_uS_cm < 150) potassium = 30;
+  else if (ec_uS_cm < 300) potassium = 45;
+  else potassium = 60;
 
-  // If lab data is provided, bias the calculation towards those values
-  const N = actual_n !== undefined ? alpha * estimatedN + (1 - alpha) * actual_n : estimatedN;
-  const P = actual_p !== undefined ? alpha * estimatedP + (1 - alpha) * actual_p : estimatedP;
-  const K = actual_k !== undefined ? alpha * estimatedK + (1 - alpha) * actual_k : estimatedK;
+  // Boost K if soil is wet (K is mobile and more available)
+  if (vwc > 70) potassium *= 1.1;
 
-  // Return the estimated NPK values
   return {
-    N: parseFloat(N.toFixed(2)),
-    P: parseFloat(P.toFixed(2)),
-    K: parseFloat(K.toFixed(2))
+    nitrogen_mgkg: Math.round(nitrogen),
+    phosphorus_mgkg: Math.round(phosphorus),
+    potassium_mgkg: Math.round(potassium),
   };
 }

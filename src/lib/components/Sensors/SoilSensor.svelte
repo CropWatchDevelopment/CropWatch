@@ -12,6 +12,7 @@
 	import { mdiFlash, mdiPh, mdiTriangleOutline } from '@mdi/js';
 	import EcOptions from '../dialogs/ECOptions.svelte';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
+	import { estimateNPK } from '$lib/utilities/ConvertEcPhToNPK';
 
 	// Initialize Highcharts-more and accessibility
 	more(Highcharts);
@@ -28,6 +29,11 @@
 	let latestMoisture = device?.latest_data?.moisture;
 	let latestEC = device?.latest_data?.ec;
 	let latestPH = device?.latest_data?.ph;
+	let npk = estimateNPK({
+		ec_uS_cm: latestEC,
+		vwc: latestMoisture,
+		ph: latestPH
+	});
 
 	$effect(() => {
 		if (device) {
@@ -188,7 +194,7 @@
 		{#if latestPH}
 			<Card class="w-full pb-5">
 				<Header slot="header" class="border-b">
-					<p slot="subheading" class="text-2xl">NPK</p>
+					<p slot="subheading" class="text-2xl">NPK Estimation</p>
 					<div slot="avatar">
 						<Avatar class="font-bold text-primary-content" icon={mdiTriangleOutline} />
 					</div>
@@ -197,8 +203,82 @@
 					</div>
 				</Header>
 				<div class="w-full text-center text-4xl">
-					<!-- N:{webGraph.series[0].data[0]} P:{webGraph.series[0].data[1]} K:{webGraph.series[0].data[2]}
-				<Chart options={webGraph} highcharts={Highcharts} /> -->
+					N:{npk.nitrogen_mgkg} P:{npk.phosphorus_mgkg} K:{npk.potassium_mgkg}
+					<Chart
+						options={{
+							chart: {
+								polar: true,
+								type: 'line',
+								backgroundColor: 'transparent'
+							},
+							title: {
+								text: '',
+								style: {
+									color: 'orange',
+									fontSize: '20px'
+								}
+							},
+							xAxis: {
+								categories: ['(N)', '(P)', '(K)'],
+								labels: {
+									style: {
+										color: 'orange',
+										fontSize: '16px'
+									}
+								}
+							},
+							yAxis: {
+								gridLineInterpolation: 'polygon',
+								lineWidth: 0,
+								min: 0
+							},
+							series: [
+								{
+									name: '',
+									data: [npk.nitrogen_mgkg, npk.phosphorus_mgkg, npk.potassium_mgkg],
+									color: 'aqua'
+								}
+							],
+							tooltip: {
+								pointFormat: '{series.name}: <b>{point.y} mg/kg</b>'
+							},
+							plotOptions: {
+								column: {
+									borderWidth: 0,
+									dataLabels: {
+										enabled: true,
+										style: {
+											color: 'orange',
+											fontSize: '14px'
+										}
+									}
+								}
+							},
+							responsive: {
+								rules: [
+									{
+										condition: {
+											maxWidth: 500
+										},
+										chartOptions: {
+											title: {
+												x: 0
+											},
+											// legend: {
+											// 	align: 'center',
+											// 	verticalAlign: 'bottom',
+											// 	layout: 'horizontal'
+											// },
+											pane: {
+												size: '70%'
+											}
+										}
+									}
+								]
+							}
+						}}
+						highcharts={Highcharts}
+					/>
 				</div>
 			</Card>
 
