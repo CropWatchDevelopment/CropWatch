@@ -157,7 +157,7 @@
 									.reverse()
 									.map((data) => [
 										new Date(moment(data.created_at).utc(true).local()).getTime(),
-										data.temperature_c
+										data?.temperature_c
 									]) ?? [],
 							tooltip: {
 								valueSuffix: ' °C'

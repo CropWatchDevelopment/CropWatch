@@ -7,19 +7,17 @@
 	import type { ILocation } from '$lib/interfaces/ILocation.interface';
 	import { m } from '$lib/paraglide/messages';
 	import { getUserState } from '$lib/state/user-state.svelte';
-	import {
-		mdiMapMarker,
-		mdiViewDashboard
-	} from '@mdi/js';
+	import { mdiCircle, mdiMapMarker, mdiViewDashboard } from '@mdi/js';
+	import { REALTIME_CHANNEL_STATES } from '@supabase/supabase-js';
 	import { droppable, type DragDropState } from '@thisux/sveltednd';
-	import { Avatar, Card, Header, Icon } from 'svelte-ux';
+	import { Avatar, Card, Header, Icon, Tooltip } from 'svelte-ux';
+	import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
 	// State initialization
 	let { data } = $props();
 	let userContext = getUserState();
 	let { user } = $derived(userContext);
 	let innerWidth: number = $state(1);
-	let useDnD = $derived(innerWidth > 900);
 	let search: string = $state(browser ? (localStorage.getItem('dashboard_search') ?? '') : '');
 	let hideEmptyLocations: boolean = $state(
 		browser ? localStorage.getItem('hide_empty_locations') === 'true' : false
@@ -81,17 +79,16 @@
 		<h2 class="mb-4 flex w-full flex-row items-center">
 			<Icon data={mdiViewDashboard} class="mr-2 h-6 w-6 items-center" />
 			{m.app_dashboard_title()}
-			<!-- <Tooltip title={`Realtime Status ${userContext.realtime?.state}`} class="flex items-center">
-				{#if userContext.realtime?.state == 'joined'}
-					<Icon data={mdiCheckCircle} class="ml-2 h-6 w-6 text-green-500" />
-				{:else if userContext.realtime?.state == 'joining'}
-					<Icon data={mdiTimerSand} class="ml-2 h-6 w-6 text-yellow-500" />
-				{:else if userContext.realtime?.state == 'errored'}
-					<Icon data={mdiCloseCircle} class="ml-2 h-6 w-6 text-red-500" />
-				{:else}
-				<Icon data={mdiHelp} class="ml-2 h-6 w-6 text-red-500" />
+			<Tooltip title="Real-Time Data Status" placement="right">
+				{#if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.SUBSCRIBED}
+					<Icon data={mdiCircle} class="text-green-400" size="1em" />
+				{:else if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.TIMED_OUT}
+					<Icon data={mdiCircle} class="text-yellow-500" size="1em" />
+				{:else if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR || userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.CLOSED}
+					<Icon data={mdiCircle} class="text-red-500" size="1em" />
 				{/if}
-			</Tooltip> -->
+			</Tooltip>
+
 			<div class="ml-auto">
 				<DashboardFilter
 					bind:search

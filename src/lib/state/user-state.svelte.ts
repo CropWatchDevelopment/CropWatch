@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import type { IDevice } from '$lib/interfaces/IDevice.interface';
 import type { ILocation } from '$lib/interfaces/ILocation.interface';
-import type { RealtimeChannel, Session, SupabaseClient, User } from '@supabase/supabase-js';
+import { REALTIME_SUBSCRIBE_STATES, type RealtimeChannel, type Session, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { getContext, setContext } from 'svelte';
 import { useLocalStorage } from '$lib/utilities/storage';
 import { browser } from '$app/environment';
@@ -26,6 +26,7 @@ export class UserState {
     allDevices = $state<IDevice[]>([]);
     storage = useLocalStorage();
     realtime: RealtimeChannel | undefined = $state<RealtimeChannel | undefined>();
+    realtimeJoinedStatus = $state<REALTIME_SUBSCRIBE_STATES>(REALTIME_SUBSCRIBE_STATES.CLOSED);
 
     constructor(data: UserStateProps) {
         this.updateState(data);
@@ -47,15 +48,35 @@ export class UserState {
                     this.profile = data;
                 }
             });
-            this.realtime = this.supabase
-                .channel('realtime')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cw_air_data' }, (event) => {
-                    debugger;
-                })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'cw_soil_data' }, (event) => this.handleDatabaseRealtimeEvent(event))
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cw_traffic2' }, (event) => this.handleDatabaseRealtimeEvent(event))
+            await this.supabase.realtime.setAuth() // Needed for Realtime Authorization
+
+            this.realtime = this.supabase.channel('realtime:public')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'cw_soil_data' },
+                    (payload) => {
+                        this.handleDatabaseRealtimeEvent(payload);
+                    }
+                )
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'cw_air_data' },
+                    (payload) => {
+                        this.handleDatabaseRealtimeEvent(payload);
+                    }
+                )
                 .subscribe((status) => {
                     console.log('Realtime status:', status);
+                    this.realtimeJoinedStatus = status;
+                    if (status === REALTIME_SUBSCRIBE_STATES.TIMED_OUT) {
+                        this.realtime?.unsubscribe();
+                        this.realtime = undefined;
+                        this.realtimeJoinedStatus = REALTIME_SUBSCRIBE_STATES.CLOSED;
+                    }
+                    if (status === REALTIME_SUBSCRIBE_STATES.CLOSED) {
+                        this.realtime?.unsubscribe();
+                        this.realtime = undefined;
+                    }
                     return status;
                 });
         }
@@ -63,7 +84,6 @@ export class UserState {
 
     private handleDatabaseRealtimeEvent(event: any) {
         console.log('⚡ Change received!', event);
-        debugger;
         const device: IDevice = event.new;
         if (!this.allLocations || this.allLocations.length === 0) return;
         for (let i = 0; i < this.allLocations.length; i++) {

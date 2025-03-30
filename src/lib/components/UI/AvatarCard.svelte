@@ -3,7 +3,7 @@
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import { mdiCog, mdiHelp, mdiLock, mdiRefresh } from '@mdi/js';
-	import { Button, Menu, MenuItem, Toggle } from 'svelte-ux';
+	import { Avatar, Button, Icon, Menu, MenuItem, Toggle } from 'svelte-ux';
 
 	let userContext = getUserState();
 	let { user } = $derived(userContext);
@@ -14,13 +14,19 @@
 		<Button on:click={toggle}>
 			<div class="flex flex-row items-center border-l">
 				<div class="mr-4 flex items-center">
-					<img
-						class="ml-2 h-7 w-7 rounded-full"
-						src={user?.user_metadata.avatar_url}
-						alt={user?.email}
-					/>
+					{#if user?.user_metadata.avatar_url}
+						<img
+							class="ml-2 h-7 w-7 rounded-full"
+							src={user?.user_metadata.avatar_url}
+							alt={user?.email}
+						/>
+					{:else}
+					<Avatar>
+						<Icon data={mdiLock} class="text-2xl" />
+					</Avatar>
+					{/if}
 				</div>
-				<div class="hidden sm:flex flex-col">
+				<div class="hidden flex-col sm:flex">
 					<div class="border-b p-1">
 						<p>{user?.email?.toUpperCase()}</p>
 					</div>
@@ -28,10 +34,17 @@
 				</div>
 			</div>
 			<Menu {open} on:close={toggleOff}>
-				<MenuItem icon={mdiRefresh} on:click={() => location.reload()}>{nameToJapaneseName('Refresh')}</MenuItem>
-				<MenuItem icon={mdiCog} on:click={() => location.href="/app/app-settings"}>{nameToJapaneseName('Settings')}</MenuItem>
-				<MenuItem icon={mdiHelp} on:click={() => location.href="https://kb.cropwatch.io"}>{nameToJapaneseName('Help')}</MenuItem>
-				<MenuItem icon={mdiLock}
+				<MenuItem icon={mdiRefresh} on:click={() => location.reload()}
+					>{nameToJapaneseName('Refresh')}</MenuItem
+				>
+				<MenuItem icon={mdiCog} on:click={() => (location.href = '/app/app-settings')}
+					>{nameToJapaneseName('Settings')}</MenuItem
+				>
+				<MenuItem icon={mdiHelp} on:click={() => (location.href = 'https://kb.cropwatch.io')}
+					>{nameToJapaneseName('Help')}</MenuItem
+				>
+				<MenuItem
+					icon={mdiLock}
 					onclick={() => {
 						document.location.href = '/auth/logout';
 					}}

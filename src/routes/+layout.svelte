@@ -63,6 +63,6 @@
 	{@render children()}
 	{#snippet failed(error)}
 		<p>Oops! an error occured: {error.message}</p>
-		<Button href="/auth/login">Return to Login</Button>
+		<a href="/auth/login">Return to login</a>
 	{/snippet}
 </svelte:boundary>

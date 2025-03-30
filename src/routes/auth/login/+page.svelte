@@ -53,7 +53,7 @@
 						type="email"
 						name="email"
 						icon={mdiEmail}
-						autocomplete="email"
+						autocomplete="username"
 						placeholder={m.auth_login_email_placeholder()}
 						bind:value={$form.email}
 						aria-invalid={$errors.email ? 'true' : undefined}
