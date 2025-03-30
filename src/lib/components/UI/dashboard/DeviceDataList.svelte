@@ -7,7 +7,7 @@
 	import type { IDevice } from '$lib/interfaces/IDevice.interface';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 
-	let { device }: { device: IDevice } = $props();
+	let { device, isActive }: { device: IDevice, isActive: boolean } = $props();
 
 	// 1. Convert the latest_data to an object
 	let convertedData = convertObject(device.latest_data);
@@ -26,15 +26,9 @@
 
 <div
 	class="mr-2 border-l-8 text-primary-content
-        {device.upload_interval === -1
-		? 'border-l-green-500'
-		: device && device.latest_data && device.latest_data.created_at
-			? moment(device.latest_data.created_at).isBefore(
-					moment().subtract(device.upload_interval, 'minutes')
-				)
-				? 'border-l-red-500'
-				: 'border-l-green-500'
-			: 'border-l-yellow-500'}"
+        {isActive ? 'border-l-green-500'
+				: 'border-l-red-500'}
+		{device.latest_data?.created_at === null ? 'opacity-50' : ''}"
 >
 	<div class="flex px-3">
 		<h3 class="mb-2 basis-1/3 text-lg font-medium">{nameToJapaneseName('Details')}</h3>

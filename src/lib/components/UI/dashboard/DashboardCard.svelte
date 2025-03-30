@@ -69,7 +69,7 @@
 		<p>No devices found</p>
 	{:else}
 		{#each location.cw_devices as device}
-			<DataRowItem {device} {location} />
+			<DataRowItem {device} />
 		{/each}
 	{/if}
 </div>

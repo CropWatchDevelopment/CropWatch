@@ -9,12 +9,14 @@
 	import { m } from '$lib/paraglide/messages';
 
 	let {
-		device,
-		location
+		device
 	}: {
 		device: any;
-		location: ILocation;
 	} = $props();
+	let isActive = $derived(
+		moment().diff(moment(device.latest_data?.created_at), 'minutes', false) <
+			device.cw_device_type.default_upload_interval
+	);
 
 	let localStorageOpenState = localStorage.getItem(`${device.dev_eui}-collapseState`);
 	let defaultCollapse: boolean = $state(
@@ -34,16 +36,7 @@
 >
 	<div
 		slot="trigger"
-		class="flex-1 border-l-8
-				        {device.upload_interval === -1
-			? '!border-l-green-500'
-			: device.latest_data
-				? moment(device.latest_data.created_at).isBefore(
-						moment().subtract(device.upload_interval, 'minutes')
-					)
-					? '!border-l-red-500'
-					: '!border-l-green-500'
-				: '!border-l-yellow-500'}"
+		class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
 	>
 		<div class="my-1 mr-2 border-r-2">
 			<div class="flex flex-col text-center text-base">
@@ -84,23 +77,15 @@
 		</div>
 	</div>
 	{#if device.latest_data}
-		<DeviceDataList {device} />
+		<DeviceDataList {device} {isActive} />
 	{/if}
 	<div
-		class="border-l-8 pl-1 {device.upload_interval === -1
-			? '!border-l-green-500'
-			: device.latest_data
-				? moment(device.latest_data.created_at).isBefore(
-						moment().subtract(device.upload_interval, 'minutes')
-					)
-					? '!border-l-red-500'
-					: '!border-l-green-500'
-				: '!border-l-yellow-500'}"
+		class="border-l-8 pl-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
 	>
 		{#if location}
 			<Button
 				on:click={() =>
-					goto(`/app/location/${location.location_id}/devices/${device.dev_eui}/detail`)}
+					goto(`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`)}
 				variant="fill"
 				color="info"
 				class="mb-1 w-full"
