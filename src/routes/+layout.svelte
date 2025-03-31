@@ -5,6 +5,10 @@
 	import { Button, settings } from 'svelte-ux';
 	import { setUserState } from '$lib/state/user-state.svelte';
 	import type { PageProps } from './$types';
+	import moment from 'moment';
+	import { page } from '$app/state';
+
+	let pathname = $derived(page.url.pathname);
 
 	let { children, data }: PageProps = $props();
 	let { session, supabase } = $derived(data);
@@ -22,6 +26,7 @@
 
 			if (event === 'INITIAL_SESSION') {
 				// handle initial session
+				
 			} else if (event === 'SIGNED_IN') {
 				// handle sign in event
 			} else if (event === 'SIGNED_OUT') {

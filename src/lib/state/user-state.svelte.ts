@@ -73,10 +73,6 @@ export class UserState {
                         this.realtime = undefined;
                         this.realtimeJoinedStatus = REALTIME_SUBSCRIBE_STATES.CLOSED;
                     }
-                    if (status === REALTIME_SUBSCRIBE_STATES.CLOSED) {
-                        this.realtime?.unsubscribe();
-                        this.realtime = undefined;
-                    }
                     return status;
                 });
         }
