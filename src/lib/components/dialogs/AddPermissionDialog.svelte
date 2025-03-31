@@ -8,15 +8,13 @@
 		mdiAccountPlus,
 		mdiAccountPlusOutline,
 		mdiEmail,
-		mdiLockPercent,
-		mdiPlus
+		mdiLockPercent
 	} from '@mdi/js';
 	import {
-	Avatar,
+		Avatar,
 		Button,
 		Card,
 		Checkbox,
-		cls,
 		Dialog,
 		Header,
 		Icon,
@@ -25,6 +23,7 @@
 		TextField,
 		Tooltip
 	} from 'svelte-ux';
+	import { cls } from '@layerstack/tailwind';
 	import { superForm } from 'sveltekit-superforms';
 	let {
 		data = $bindable(),
@@ -51,16 +50,22 @@
 	<Card class="p-4">
 		<Header title="Add a new user to this location" slot="header">
 			<div slot="subheading">
-				<p>This will also give the user the <b>'Disabled'</b> permission level for all sensors in this location.</p>
-				<p><b>IF</b> you check the <i>Apply Permission to All sensors in this location.</i> checkbox, then the user will
-					get the permission Selected in the permission dropdown for <b>ALL</b> sensors in this location</p>
+				<p>
+					This will also give the user the <b>'Disabled'</b> permission level for all sensors in this
+					location.
+				</p>
+				<p>
+					<b>IF</b> you check the <i>Apply Permission to All sensors in this location.</i> checkbox,
+					then the user will get the permission Selected in the permission dropdown for <b>ALL</b> sensors
+					in this location
+				</p>
 			</div>
 			<div slot="avatar">
-			  <Avatar class="bg-primary text-primary-content font-bold">
-				<Icon data={mdiAccountPlusOutline} />
-			  </Avatar>
+				<Avatar class="bg-primary text-primary-content font-bold">
+					<Icon data={mdiAccountPlusOutline} />
+				</Avatar>
 			</div>
-		  </Header>
+		</Header>
 		<div id="content">
 			<form
 				class="flex flex-col gap-2"
@@ -85,7 +90,7 @@
 					error={$errors._errors}
 				>
 					<div slot="prepend">
-						<Icon data={mdiEmail} class="mr-2 text-surface-content/50" />
+						<Icon data={mdiEmail} class="text-surface-content/50 mr-2" />
 					</div>
 				</TextField>
 				{#if $errors.email}<span class="invalid">{$errors.name}</span>{/if}

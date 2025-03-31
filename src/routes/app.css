@@ -5,7 +5,6 @@
 @import '@layerstack/tailwind/themes/all.css';
 
 @source '../../node_modules/svelte-ux/dist';
-/* @source '../../node_modules/layerchart/dist'; */
 @plugin '@tailwindcss/typography';
 
 :root {
@@ -92,64 +91,10 @@
 	@apply bg-surface-300;
   }
 
+  nav {
+	@apply bg-surface-300;
+  }
 
-
-
-
-/* @import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
-@import '@fontsource/fira-mono';
-
-h1,
-h2,
-p {
-	font-weight: 400;
-}
-
-p {
-	line-height: 1.5;
-}
-
-a {
-	color: var(--color-theme-1);
-	text-decoration: none;
-}
-
-a:hover {
-	text-decoration: underline;
-}
-
-h1 {
-	font-size: 2rem;
-	text-align: center;
-}
-
-h2 {
-	font-size: 1.6rem;
-}
-
-pre {
-	font-size: 16px;
-	font-family: var(--font-mono);
-	background-color: rgba(255, 255, 255, 0.45);
-	border-radius: 3px;
-	box-shadow: 2px 2px 6px rgb(255 255 255 / 25%);
-	padding: 0.5em;
-	overflow-x: auto;
-	color: var(--color-text);
-}
-
-@media (min-width: 720px) {
-	h1 {
-		font-size: 2.4rem;
-	}
-}
-
-nav h1 {
-	@apply py-2 pl-4 mt-4 text-sm text-surface-content font-bold bg-surface-200 border-t border-b;
-}
-
-nav h2 {
-	@apply pt-4 pb-2 pl-4 text-xs text-surface-content font-bold;
-} */
+  nav a {
+	@apply text-surface-content;
+  }

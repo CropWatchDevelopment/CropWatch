@@ -1,6 +1,5 @@
 <script lang="ts">
 	import DataRowItem from './DataRowItem.svelte';
-
 	import { Avatar, Button, Icon } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import { mdiAlert, mdiArrowRight, mdiCheck, mdiClose } from '@mdi/js';
@@ -52,9 +51,9 @@
 </div>
 
 <h2
-	class="my-3 flex flex-row items-center overflow-hidden text-ellipsis text-xl text-primary-content"
+	class="my-3 flex flex-row items-center overflow-hidden text-ellipsis text-xl"
 >
-	{location.name}
+	<p class="text-primary-text">{location.name}</p>
 	<span class="flex flex-grow"></span>
 	<!-- COMING BACK SOON!!!-->
 	<Button
@@ -64,7 +63,7 @@
 		on:click={() => goto(`/app/location/${location.location_id}`)}
 	/>
 </h2>
-<div class="flex flex-col gap-1 px-1 pb-4 text-sm text-primary-content">
+<div class="flex flex-col gap-1 px-1 pb-4 text-sm text-primary-text">
 	{#if location.cw_devices.length === 0}
 		<p>No devices found</p>
 	{:else}
@@ -75,25 +74,6 @@
 </div>
 
 <style>
-	/* .text-shadow {
-		text-shadow: black 5px 5px 3px;
-	}
-	.custom-bg::before {
-		content: ' ';
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;;
-		background-image: url($lib/images/weather/sunny_clouds.png);
-		background-size: cover;
-		background-position: center;
-		-webkit-border-radius: 15px;
-		-moz-border-radius: 15px;
-		border-radius: 15px;
-		filter: blur(1px) grayscale(20%);
-	} */
-
 	.custom-bg {
 		position: relative;
 		overflow: hidden;

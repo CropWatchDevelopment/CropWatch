@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
+	import type { PeriodType } from '@layerstack/utils';
 	import { mdiCalendar, mdiCheck, mdiClose } from '@mdi/js';
-	import { Dialog, Icon, DateRange, Button, PeriodType, DateRangeField } from 'svelte-ux';
+	import { Dialog, Icon, DateRange, Button, DateRangeField } from 'svelte-ux';
 
 	let dateRangeDialog: boolean = $state(false);
 	let selected: {

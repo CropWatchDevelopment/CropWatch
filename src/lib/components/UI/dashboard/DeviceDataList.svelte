@@ -39,7 +39,7 @@
 			<div class="py-1">
 				<div class="flex">
 					<p class="text-base">{nameToEmoji(dataPointKey)}</p>
-					<p class="ml-1 text-right">{nameToJapaneseName(dataPointKey)}</p>
+					<p class="ml-1 text-right text-primary-content">{nameToJapaneseName(dataPointKey)}</p>
 					<span class="flex-grow"></span>
 
 					{#if dataPointKey === 'created_at'}

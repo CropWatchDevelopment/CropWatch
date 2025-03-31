@@ -1,13 +1,9 @@
 <script lang="ts">
 	import './app.css';
 	import { goto, invalidate } from '$app/navigation';
-	// import { appConfigDefaults } from '$lib/.app.config';
 	import { Button, settings } from 'svelte-ux';
 	import { setUserState } from '$lib/state/user-state.svelte';
 	import type { PageProps } from './$types';
-	import { page } from '$app/state';
-
-	let pathname = $derived(page.url.pathname);
 
 	let { children, data }: PageProps = $props();
 	let { session, supabase } = $derived(data);
@@ -58,29 +54,52 @@
 		});
 		return () => data.subscription.unsubscribe();
 	});
+	settings({
+		components: {
+			AppLayout: {
+				classes: {
+					/* 
+          'aside' might just have a border or background.
+          We can set a border color that adjusts in dark mode by default.
+        */
+					aside: 'border-r border-surface-300',
+					nav: 'bg-surface-300'
+				}
+			},
+			AppBar: {
+				/* 
+        The top bar uses our primary color. 
+        We also apply text-primary-content for contrast.
+      */
+				classes:
+					'bg-primary text-primary-content shadow-md ' +
+					'[text-shadow:1px_1px_2px_var(--color-primary)]'
+			},
+			NavItem: {
+				classes: {
+					root: [
+						'text-sm',
+						'text-surface-content/70', // partial transparency
+						'pl-6 py-2 relative',
+						'hover:bg-surface-200/70', // a slightly lighter hover
+						'transition-colors' // smooth color transitions
+					].join(' '),
 
-	// settings(appConfigDefaults);
-	// settings({
-	// 	components: {
-	// 		AppLayout: {
-	// 			classes: {
-	// 				aside: 'border-r',
-	// 				nav: 'bg-surface-300'
-	// 			}
-	// 		},
-	// 		AppBar: {
-	// 			classes:
-	// 				'bg-primary text-primary-content shadow-md [text-shadow:1px_1px_2px_var(--color-primary-700)]'
-	// 		},
-	// 		NavItem: {
-	// 			classes: {
-	// 				root: 'text-sm text-surface-content/70 pl-6 py-2 hover:bg-surface-100/70 relative',
-	// 				active:
-	// 					'text-primary bg-surface-100 font-medium before:absolute before:bg-primary before:rounded-full before:w-1 before:h-2/3 before:left-[6px] shadow-sm z-10'
-	// 			}
-	// 		}
-	// 	}
-	// });
+					/* 
+          Active nav item: highlight the text in brand color,
+          with a subtle background. 
+        */
+					active: [
+						'text-primary',
+						'bg-surface-100',
+						'font-medium',
+						'before:absolute before:bg-primary before:rounded-full before:w-1 before:h-2/3 before:left-[6px]',
+						'shadow-sm z-10'
+					].join(' ')
+				}
+			}
+		}
+	});
 </script>
 
 <svelte:boundary>
