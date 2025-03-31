@@ -1,6 +1,6 @@
 <!-- +page.svelte -->
 <script lang="ts">
-	import SuperDebug, { superForm } from 'sveltekit-superforms';
+	import { superForm } from 'sveltekit-superforms';
 	import {
 		Avatar,
 		Button,
@@ -234,7 +234,3 @@
 		</div>
 	</Card>
 </div>
-
-{#if dev}
-	<SuperDebug data={form} />
-{/if}

@@ -170,8 +170,6 @@ export const nameToJapaneseName = (name: string) => {
             return 'ダッシュボードスタイル';
         case 'Hide/Show Empty':
             return '空を隠す/表示する';
-        case 'Dashboard Style':
-            return 'ダッシュボードスタイル';
         case '1d':
             return '1日';
         case '2d':

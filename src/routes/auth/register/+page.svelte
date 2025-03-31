@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SuperDebug, { superForm } from 'sveltekit-superforms';
+	import { superForm } from 'sveltekit-superforms';
 	import {
 		Avatar,
 		Button,
@@ -205,9 +205,6 @@
 				</a>
 			</div>
 		</div>
-		{#if dev}
-			<SuperDebug bind:data={$form} />
-		{/if}
 	</Card>
 
 	<Dialog {open} width="sm" on:close={() => (open = false)}>

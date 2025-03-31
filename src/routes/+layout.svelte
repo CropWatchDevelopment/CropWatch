@@ -1,11 +1,10 @@
 <script lang="ts">
-	import '../app.css';
+	import './app.css';
 	import { goto, invalidate } from '$app/navigation';
-	import { appConfigDefaults } from '$lib/app.config';
+	// import { appConfigDefaults } from '$lib/.app.config';
 	import { Button, settings } from 'svelte-ux';
 	import { setUserState } from '$lib/state/user-state.svelte';
 	import type { PageProps } from './$types';
-	import moment from 'moment';
 	import { page } from '$app/state';
 
 	let pathname = $derived(page.url.pathname);
@@ -26,7 +25,6 @@
 
 			if (event === 'INITIAL_SESSION') {
 				// handle initial session
-				
 			} else if (event === 'SIGNED_IN') {
 				// handle sign in event
 			} else if (event === 'SIGNED_OUT') {
@@ -61,7 +59,28 @@
 		return () => data.subscription.unsubscribe();
 	});
 
-	settings(appConfigDefaults);
+	// settings(appConfigDefaults);
+	// settings({
+	// 	components: {
+	// 		AppLayout: {
+	// 			classes: {
+	// 				aside: 'border-r',
+	// 				nav: 'bg-surface-300'
+	// 			}
+	// 		},
+	// 		AppBar: {
+	// 			classes:
+	// 				'bg-primary text-primary-content shadow-md [text-shadow:1px_1px_2px_var(--color-primary-700)]'
+	// 		},
+	// 		NavItem: {
+	// 			classes: {
+	// 				root: 'text-sm text-surface-content/70 pl-6 py-2 hover:bg-surface-100/70 relative',
+	// 				active:
+	// 					'text-primary bg-surface-100 font-medium before:absolute before:bg-primary before:rounded-full before:w-1 before:h-2/3 before:left-[6px] shadow-sm z-10'
+	// 			}
+	// 		}
+	// 	}
+	// });
 </script>
 
 <svelte:boundary>

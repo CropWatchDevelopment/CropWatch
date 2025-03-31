@@ -15,7 +15,7 @@
 		SelectField,
 		TextField
 	} from 'svelte-ux';
-	import SuperDebug, { superForm, superValidate, type FormPath } from 'sveltekit-superforms';
+	import { superForm, superValidate, type FormPath } from 'sveltekit-superforms';
 
 	let { data } = $props();
 
@@ -226,4 +226,3 @@
 	</form>
 </Card>
 
-<SuperDebug data={form} />

@@ -20,7 +20,6 @@
 	} from 'svelte-ux';
 	import QrCodeScanner from '$lib/components/dialogs/QRCodeScanner.svelte';
 	import type { Tables } from '$lib/types/database.types';
-	import SuperDebug from 'sveltekit-superforms';
 
 	let { addDeviceForm = $bindable(), location } = $props();
 
@@ -209,4 +208,3 @@
 		Checkout
 	</Button>
 </form>
-<SuperDebug data={addDeviceForm.data} />

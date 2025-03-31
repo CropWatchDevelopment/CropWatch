@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { Button, Collapse, Progress, ProgressCircle, stringify, TweenedValue } from 'svelte-ux';
+	import { Button, Collapse, TweenedValue } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import { mdiArrowRight, mdiTimerSand } from '@mdi/js';
 	import moment from 'moment';
 	import DeviceDataList from './DeviceDataList.svelte';
-	import type { ILocation } from '$lib/interfaces/ILocation.interface';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { m } from '$lib/paraglide/messages';
 
@@ -97,7 +96,7 @@
 	</div>
 </Collapse>
 
-<style>
+<!-- <style>
 	.text-shadow {
 		text-shadow: black 5px 5px 3px;
 	}
@@ -116,4 +115,4 @@
 		border-radius: 15px;
 		filter: blur(1px) grayscale(20%);
 	}
-</style>
+</style> -->

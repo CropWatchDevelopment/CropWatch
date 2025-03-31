@@ -7,7 +7,7 @@
 	import { validateResetValue } from '$lib/utilities/ValidateResetValue';
 	import { mdiAccountPlus, mdiCloseCircle, mdiContentSaveEdit, mdiEmail, mdiPlus } from '@mdi/js';
 	import { Button, Card, Dialog, Icon, ListItem, SelectField, TextField, Tooltip } from 'svelte-ux';
-	import SuperDebug, { superForm, type FormPath } from 'sveltekit-superforms';
+	import { superForm, type FormPath } from 'sveltekit-superforms';
 	import { zod } from 'sveltekit-superforms/adapters';
 
 	let { addRuleForm, subjects } = $props();
@@ -227,6 +227,4 @@
 		<Button type="submit" variant="fill" color="success">Save Rule</Button>
 		<Button on:click={() => (open = false)}>Cancel</Button>
 	</div>
-
-	<SuperDebug data={$form} />
 </Dialog>
