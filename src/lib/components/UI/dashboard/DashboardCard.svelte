@@ -53,7 +53,7 @@
 <h2
 	class="my-3 flex flex-row items-center overflow-hidden text-ellipsis text-xl"
 >
-	<p class="text-primary-text">{location.name}</p>
+	<p>{location.name}</p>
 	<span class="flex flex-grow"></span>
 	<!-- COMING BACK SOON!!!-->
 	<Button

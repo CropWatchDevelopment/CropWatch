@@ -100,7 +100,6 @@
 		</h2>
 
 		{#if dashboardViewType === 'grid'}
-			<!-- Grid view -->
 			<div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
 				{#each userContext.allLocations
 					.filter((location: ILocation) => {
@@ -113,7 +112,8 @@
 					}) as location, index (location.location_id)}
 					<div
 						class="flex flex-col aspect-square relative rounded-xl p-1 backdrop-blur-sm
-								transition-all duration-300 bg-primary-content/60"
+						border-2 shadow-md
+						transition-all duration-300 bg-primary-content/60"
 					>
 						<DashboardCard {location} />
 						<span class="flex flex-col flex-grow"></span>
@@ -121,14 +121,12 @@
 				{/each}
 			</div>
 		{:else if dashboardViewType === 'mozaic'}
-			<!-- Mozaic view -->
 			<div class="columns-[20rem] gap-4">
 				{#each userContext.allLocations.filter((location: ILocation) => {
 					if (!search?.trim()) return true;
 					return location.name.toLowerCase().includes(search.toLowerCase());
 				}) as location, index (location.location_id)}
 					<div
-						use:droppable={{ container: index.toString(), callbacks: { onDrop: handleDrop } }}
 						class="mb-4 break-inside-avoid
 					       rounded-xl bg-primary-content/50 p-1 text-black
 					       transition-all duration-300 hover:bg-primary-content/60"

@@ -52,7 +52,7 @@
 									format="decimal"
 								/>
 							</span>
-							<small class="text-secondary-900">
+							<small>
 								<sup>{device.cw_device_type.primary_data_notation}</sup>
 							</small>
 						</p>
