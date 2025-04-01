@@ -24,7 +24,7 @@
 		Tooltip
 	} from 'svelte-ux';
 	import { cls } from '@layerstack/tailwind';
-	import { superForm } from 'sveltekit-superforms';
+	import SuperDebug, { superForm } from 'sveltekit-superforms';
 	let {
 		data = $bindable(),
 		newUser = $bindable(),
@@ -71,35 +71,28 @@
 				class="flex flex-col gap-2"
 				method="POST"
 				action={`?/addLocationPermission`}
-				use:enhance={() => {
-					return async ({ result, update }) => {
-						if (result.status == 200) {
-							onUserAdded(result);
-							update();
-							open = false;
-						}
-					};
-				}}
+				use:enhance
 			>
 				<TextField
 					label="email"
 					type="email"
 					id="email"
 					name="email"
-					bind:value={newUser.email}
-					error={$errors._errors}
+					placeholder="Enter email"
+					bind:value={$form.email}
+					error={$errors.email}
+					aria-invalid={$errors.email ? 'true' : undefined}
 				>
 					<div slot="prepend">
 						<Icon data={mdiEmail} class="text-surface-content/50 mr-2" />
 					</div>
 				</TextField>
-				{#if $errors.email}<span class="invalid">{$errors.name}</span>{/if}
 
 				<SelectField
 					id="permission_level"
 					name="permission_level"
 					options={permissionOptionsWithIcon}
-					bind:value={newUser.permissonValue}
+					bind:value={$form.permissonValue}
 					placeholder="Select Permission Level"
 					error={$errors.permission_level}
 					activeOptionIcon={true}
@@ -136,5 +129,6 @@
 				</div>
 			</form>
 		</div>
+		<SuperDebug data={$form} />
 	</Card>
 </Dialog>

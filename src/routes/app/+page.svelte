@@ -8,8 +8,6 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { mdiCircle, mdiMapMarker, mdiViewDashboard } from '@mdi/js';
-	import { REALTIME_CHANNEL_STATES } from '@supabase/supabase-js';
-	import { droppable, type DragDropState } from '@thisux/sveltednd';
 	import { Avatar, Card, Header, Icon, Tooltip } from 'svelte-ux';
 	import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
@@ -56,21 +54,6 @@
 				(a, b) => sorted.indexOf(a.location_id) - sorted.indexOf(b.location_id)
 			);
 	});
-
-	// Handle drag-and-drop reordering
-	function handleDrop(state: DragDropState<ILocation>) {
-		const { draggedItem, sourceContainer, targetContainer } = state;
-		if (!targetContainer || sourceContainer === targetContainer) return;
-
-		// Reorder locations
-		userContext.allLocations = userContext.allLocations.filter(
-			(location: ILocation) => location.location_id !== draggedItem.location_id
-		);
-		userContext.allLocations.splice(parseInt(targetContainer), 0, draggedItem);
-
-		// Persist changes
-		userContext.percistLocationSortInLocalStorage();
-	}
 </script>
 
 <svelte:window bind:innerWidth />
@@ -81,7 +64,7 @@
 			{m.app_dashboard_title()}
 			<Tooltip title="Real-Time Data Status" placement="right">
 				{#if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.SUBSCRIBED}
-					<Icon data={mdiCircle} class="text-green-400" size="1em" />
+					<Icon data={mdiCircle} class="text-green-500" size="1em" />
 				{:else if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.TIMED_OUT}
 					<Icon data={mdiCircle} class="text-yellow-500" size="1em" />
 				{:else if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR || userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.CLOSED}
@@ -111,25 +94,29 @@
 						return location.name.toLowerCase().includes(search.toLowerCase());
 					}) as location, index (location.location_id)}
 					<div
-						class="flex flex-col aspect-square relative rounded-xl p-1 backdrop-blur-sm
-						border-2 shadow-md
-						transition-all duration-300 bg-primary-content/60"
+						class="bg-primary-content/60 relative flex h-full flex-col rounded-xl border-2
+						p-1 shadow-md
+						backdrop-blur-sm transition-all duration-300"
 					>
 						<DashboardCard {location} />
-						<span class="flex flex-col flex-grow"></span>
 					</div>
 				{/each}
 			</div>
 		{:else if dashboardViewType === 'mozaic'}
-			<div class="columns-[20rem] gap-4">
-				{#each userContext.allLocations.filter((location: ILocation) => {
-					if (!search?.trim()) return true;
-					return location.name.toLowerCase().includes(search.toLowerCase());
-				}) as location, index (location.location_id)}
+			<div class="columns-[20rem] gap-4 space-y-4">
+				{#each userContext.allLocations
+					.filter((location: ILocation) => {
+						if (hideEmptyLocations) return location.cw_devices.length > 0;
+						return location;
+					})
+					.filter((location: ILocation) => {
+						if (!search?.trim()) return true;
+						return location.name.toLowerCase().includes(search.toLowerCase());
+					}) as location, index (location.location_id)}
 					<div
-						class="mb-4 break-inside-avoid
-					       rounded-xl bg-primary-content/50 p-1 text-black
-					       transition-all duration-300 hover:bg-primary-content/60"
+						class="bg-primary-content/60 relative mb-4 flex break-inside-avoid-column flex-col rounded-xl
+						border-2 p-1 shadow-md
+						backdrop-blur-sm transition-all duration-300"
 					>
 						<DashboardCard {location} />
 					</div>
@@ -148,7 +135,7 @@
 								<a href="/app/location/{location.location_id}">{location.name}</a>
 							</h1>
 							<div slot="avatar">
-								<Avatar class="bg-primary font-bold text-primary-content">
+								<Avatar class="bg-primary text-primary-content font-bold">
 									<Icon data={mdiMapMarker} class="text-xl" />
 								</Avatar>
 							</div>

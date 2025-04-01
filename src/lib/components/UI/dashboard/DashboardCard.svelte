@@ -36,7 +36,7 @@
 				size="lg"
 				class="absolute top-3 flex flex-row {activeDevices == location.cw_devices.length
 					? 'bg-success'
-					: 'bg-warning'}{activeDevices === 0 ? ' bg-danger-500' : ''} rounded-full"
+					: 'bg-warning-600'}{activeDevices === 0 ? ' bg-danger-500' : ''} rounded-full"
 			>
 				{#if activeDevices === location.cw_devices.length}
 					<Icon class="absolute text-3xl text-white" path={mdiCheck} />
@@ -71,6 +71,7 @@
 			<DataRowItem {device} />
 		{/each}
 	{/if}
+	<span class="flex flex-grow"></span>
 </div>
 
 <style>
