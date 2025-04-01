@@ -2,7 +2,7 @@
 	import DataRowItem from './DataRowItem.svelte';
 	import { Avatar, Button, Icon } from 'svelte-ux';
 	import { goto } from '$app/navigation';
-	import { mdiAlert, mdiArrowRight, mdiCheck, mdiClose } from '@mdi/js';
+	import { mdiAlert, mdiArrowRight, mdiCheck, mdiClose, mdiMailboxUp } from '@mdi/js';
 	import type { ILocation } from '$lib/interfaces/ILocation.interface';
 	import moment from 'moment';
 
@@ -25,13 +25,19 @@
 </script>
 
 <div>
-	<div class="border-[rgb(121 121 121)] rounded-2xl border-[0.1em] bg-slate-500 p-0.5">
+	<div class="border-[rgb(121 121 121)] rounded-2xl border-[0.1em] bg-slate-600 p-0.5">
 		<div
-			class="custom-bg rounded-4xl relative h-20 w-full bg-cover bg-bottom bg-no-repeat p-1 bg-blend-overlay"
+			class="custom-bg relative h-20 w-full rounded-4xl bg-cover bg-bottom bg-no-repeat p-1 bg-blend-overlay"
 		>
 			<div
-				class="absolute right-0 top-0 flex h-full w-1/2 items-center justify-center rounded-2xl"
-			></div>
+				class="absolute top-0 right-0 flex h-full w-1/2 flex-row items-center justify-end rounded-2xl"
+			>
+				{#if location.cw_devices.some((devices) => devices?.cw_rules.length > 0)}
+					<Avatar size="lg" class="absolute top-3 flex flex-row rounded-full bg-red-300">
+						<Icon class="text-3xl text-white" path={mdiMailboxUp} />
+					</Avatar>
+				{/if}
+			</div>
 			<Avatar
 				size="lg"
 				class="absolute top-3 flex flex-row {activeDevices == location.cw_devices.length
@@ -50,10 +56,8 @@
 	</div>
 </div>
 
-<h2
-	class="my-3 flex flex-row items-center overflow-hidden text-ellipsis text-xl"
->
-	<p>{location.name}</p>
+<h2 class="my-3 flex flex-row items-center overflow-hidden text-xl text-ellipsis">
+	<p class="text-xl">{location.name}</p>
 	<span class="flex flex-grow"></span>
 	<!-- COMING BACK SOON!!!-->
 	<Button
@@ -63,7 +67,7 @@
 		on:click={() => goto(`/app/location/${location.location_id}`)}
 	/>
 </h2>
-<div class="flex flex-col gap-1 px-1 pb-4 text-sm text-primary-text">
+<div class="text-primary-text flex flex-col gap-1 px-1 pb-4 text-sm">
 	{#if location.cw_devices.length === 0}
 		<p>No devices found</p>
 	{:else}

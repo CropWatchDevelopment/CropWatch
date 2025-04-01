@@ -4,8 +4,6 @@ import type { ILocation } from '$lib/interfaces/ILocation.interface';
 import { REALTIME_SUBSCRIBE_STATES, type RealtimeChannel, type Session, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { getContext, setContext } from 'svelte';
 import { useLocalStorage } from '$lib/utilities/storage';
-import { browser } from '$app/environment';
-import moment from 'moment';
 import type { Tables } from '$lib/types/database.types';
 
 type profile = Tables<'profiles'> | null;
@@ -65,6 +63,13 @@ export class UserState {
                         this.handleDatabaseRealtimeEvent(payload);
                     }
                 )
+                .on(
+                    'postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'cw_rules' },
+                    (payload) => {
+                        this.handleRuleUpdate(payload);
+                    }
+                )
                 .subscribe((status) => {
                     console.log('Realtime status:', status);
                     this.realtimeJoinedStatus = status;
@@ -93,6 +98,26 @@ export class UserState {
         }
     }
 
+    private handleRuleUpdate(event: any) {
+        console.log('⚡ Rule Change received!', event);
+        const rule: Tables<'cw_rules'> = event.new;
+        if (!this.allLocations || this.allLocations.length === 0) return;
+        for (let i = 0; i < this.allLocations.length; i++) {
+            for (let j = 0; j < this.allLocations[i].cw_devices.length; j++) {
+                let oldDevice = this.allLocations[i].cw_devices.find(d => d.dev_eui === rule.dev_eui);
+                if (oldDevice) {
+                    debugger;
+                    if (rule.is_triggered) {
+                        oldDevice.cw_rules = [rule];
+                    } else {
+                        oldDevice.cw_rules = [];
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     async logout() {
         await this.realtime?.unsubscribe();
         await this.supabase?.auth.signOut();
@@ -115,19 +140,21 @@ export class UserState {
         }
 
         try {
-
             const { data: LocationsAndDevices, error } = await this.supabase
                 .from('cw_locations')
                 .select(`*,
-                cw_location_owners(*),
-                cw_devices(*,
-                    cw_device_owners(*),
-                    cw_device_type(*)
-                )
-            `)
+    cw_location_owners(*),
+    cw_devices(
+      *,
+      cw_device_owners(*),
+      cw_device_type(*),
+      cw_rules(*)
+    )
+  `)
                 .eq('cw_location_owners.is_active', true)
                 .eq('cw_location_owners.user_id', this.user.id)
                 .eq('cw_devices.cw_device_owners.user_id', this.user.id)
+                .eq('cw_devices.cw_rules.is_triggered', true)
                 .order('name', { ascending: true, referencedTable: 'cw_devices' });
 
 
@@ -136,6 +163,7 @@ export class UserState {
                 return;
             }
 
+            this.allDevices = [];
             this.allLocations = LocationsAndDevices || [];
             this.allLocations.forEach(async location => {
                 location.cw_devices.forEach(device => {

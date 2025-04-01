@@ -93,6 +93,7 @@
 
   nav {
 	@apply bg-surface-300;
+  @apply flex
   }
 
   nav a {

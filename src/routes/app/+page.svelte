@@ -21,7 +21,6 @@
 		browser ? localStorage.getItem('hide_empty_locations') === 'true' : false
 	);
 	let dashboardViewType: 'grid' | 'mozaic' | 'list' = $state(
-		// browser ? (localStorage.getItem('dashboard_view_type') === 'grid' ? 'grid' : 'mozaic') : 'grid'
 		browser
 			? localStorage.getItem('dashboard_view_type') === 'mozaic'
 				? 'mozaic'
@@ -54,6 +53,31 @@
 				(a, b) => sorted.indexOf(a.location_id) - sorted.indexOf(b.location_id)
 			);
 	});
+
+	// Function to get container class based on view type
+	function getContainerClass(viewType: string): string {
+		switch (viewType) {
+			case 'grid':
+				return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
+			case 'mozaic':
+				return 'columns-[20rem] gap-4 space-y-4';
+			case 'list':
+				return 'flex flex-col gap-4';
+			default:
+				return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
+		}
+	}
+
+	// Function to get item class based on view type
+	function getItemClass(viewType: string): string {
+		if (viewType === 'list') {
+			return 'w-full';
+		} else if (viewType === 'mozaic') {
+			return 'bg-primary-content/60 relative mb-4 flex break-inside-avoid-column flex-col rounded-xl border-2 p-1 shadow-md backdrop-blur-sm transition-all duration-300';
+		} else {
+			return 'bg-primary-content/60 relative flex h-full flex-col rounded-xl border-2 p-1 shadow-md backdrop-blur-sm transition-all duration-300';
+		}
+	}
 </script>
 
 <svelte:window bind:innerWidth />
@@ -82,53 +106,18 @@
 			</div>
 		</h2>
 
-		{#if dashboardViewType === 'grid'}
-			<div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-				{#each userContext.allLocations
-					.filter((location: ILocation) => {
-						if (hideEmptyLocations) return location.cw_devices.length > 0;
-						return location;
-					})
-					.filter((location: ILocation) => {
-						if (!search?.trim()) return true;
-						return location.name.toLowerCase().includes(search.toLowerCase());
-					}) as location, index (location.location_id)}
-					<div
-						class="bg-primary-content/60 relative flex h-full flex-col rounded-xl border-2
-						p-1 shadow-md
-						backdrop-blur-sm transition-all duration-300"
-					>
-						<DashboardCard {location} />
-					</div>
-				{/each}
-			</div>
-		{:else if dashboardViewType === 'mozaic'}
-			<div class="columns-[20rem] gap-4 space-y-4">
-				{#each userContext.allLocations
-					.filter((location: ILocation) => {
-						if (hideEmptyLocations) return location.cw_devices.length > 0;
-						return location;
-					})
-					.filter((location: ILocation) => {
-						if (!search?.trim()) return true;
-						return location.name.toLowerCase().includes(search.toLowerCase());
-					}) as location, index (location.location_id)}
-					<div
-						class="bg-primary-content/60 relative mb-4 flex break-inside-avoid-column flex-col rounded-xl
-						border-2 p-1 shadow-md
-						backdrop-blur-sm transition-all duration-300"
-					>
-						<DashboardCard {location} />
-					</div>
-				{/each}
-			</div>
-		{:else if dashboardViewType === 'list'}
-			<!-- List view -->
-			<div class="flex flex-col gap-4">
-				{#each userContext.allLocations.filter((location: ILocation) => {
+		<div class={getContainerClass(dashboardViewType)}>
+			{#each userContext.allLocations
+				.filter((location: ILocation) => {
+					if (hideEmptyLocations) return location.cw_devices.length > 0;
+					return location;
+				})
+				.filter((location: ILocation) => {
 					if (!search?.trim()) return true;
 					return location.name.toLowerCase().includes(search.toLowerCase());
 				}) as location, index (location.location_id)}
+				
+				{#if dashboardViewType === 'list'}
 					<Card class="w-full">
 						<Header subheading="Subheading" slot="header">
 							<h1 class="text-left text-2xl font-bold" slot="title">
@@ -146,9 +135,13 @@
 							{/each}
 						</ol>
 					</Card>
-				{/each}
-			</div>
-		{/if}
+				{:else}
+					<div class={getItemClass(dashboardViewType)}>
+						<DashboardCard {location} />
+					</div>
+				{/if}
+			{/each}
+		</div>
 	</section>
 {:else}
 	<NotLoggedIn />

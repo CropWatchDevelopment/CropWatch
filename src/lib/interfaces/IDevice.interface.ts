@@ -15,4 +15,5 @@ export interface IDeviceBase {
 
 export interface IDevice extends Tables<'cw_devices'>, IDeviceBase {
     cw_device_type: Tables<'cw_device_type'>;
+    cw_rules: Tables<'cw_rules'>[];
 }

@@ -53,7 +53,7 @@
 								/>
 							</span>
 							<small>
-								<sup>{device.cw_device_type.primary_data_notation}</sup>
+								<sup class="text-accent-300">{device.cw_device_type.primary_data_notation}</sup>
 							</small>
 						</p>
 						<p class="m-auto justify-center">
@@ -66,8 +66,8 @@
 									/>
 								{/if}
 							</span>
-							<small class="text-secondary-900">
-								<sup>{device.cw_device_type.secondary_data_notation}</sup>
+							<small>
+								<sup class="text-accent-300">{device.cw_device_type.secondary_data_notation}</sup>
 							</small>
 						</p>
 					{/if}
