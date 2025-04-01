@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Duration, DurationUnits, TweenedValue } from 'svelte-ux';
-	import moment from 'moment';
+	import { Duration, TweenedValue } from 'svelte-ux';
+	import { DurationUnits } from '@layerstack/utils';
 	import { convertObject } from '$lib/utilities/ConvertSensorDataObject';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { nameToNotation } from '$lib/utilities/NameToNotation';
@@ -25,7 +25,7 @@
 </script>
 
 <div
-	class="mr-2 border-l-8 text-primary-content
+	class="mr-2 border-l-8
         {isActive ? 'border-l-green-500'
 				: 'border-l-red-500'}
 		{device.latest_data?.created_at === null ? 'opacity-50' : ''}"
@@ -38,7 +38,7 @@
 		{#if device.latest_data[dataPointKey] !== null}
 			<div class="py-1">
 				<div class="flex">
-					<p class="text-base">{nameToEmoji(dataPointKey)}</p>
+					<p class="text-base text-primary">{nameToEmoji(dataPointKey)}</p>
 					<p class="ml-1 text-right">{nameToJapaneseName(dataPointKey)}</p>
 					<span class="flex-grow"></span>
 
@@ -52,8 +52,8 @@
 						</p>
 					{:else if device.latest_data[dataPointKey] !== null}
 						<TweenedValue value={device.latest_data[dataPointKey]} format="decimal" />
-						<small class="text-accent-content">
-							<sup>{nameToNotation(dataPointKey)}</sup>
+						<small >
+							<sup class="text-accent-300">{nameToNotation(dataPointKey)}</sup>
 						</small>
 					{/if}
 				</div>

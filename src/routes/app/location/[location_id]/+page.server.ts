@@ -81,7 +81,9 @@ export const actions = {
 
             const userExists = await doesUserAlreadyExistForLocation(supabase, profile_id, form.data.location_id);
             if (userExists) {
-                return setError(form, 'email', 'User already has permissions for this location');
+                return setError(form, 'email', 'User already has permissions for this location', {
+                    status: 400,
+                });
             }
 
             const valueToAdd = {
@@ -364,6 +366,7 @@ async function doesUserAlreadyExistForLocation(supabase: SupabaseClient, user_id
         .select('id')
         .eq('location_id', location_id)
         .eq('user_id', user_id)
+        .limit(1)
         .maybeSingle();
     if (error) {
         return null;

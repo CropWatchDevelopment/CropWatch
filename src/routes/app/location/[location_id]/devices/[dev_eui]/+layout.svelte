@@ -6,9 +6,10 @@
 	import Back from '$lib/components/UI/Back.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
+	import type { PeriodType } from '@layerstack/utils';
 	import { mdiBattery, mdiBatteryUnknown, mdiClose, mdiCog, mdiRobot } from '@mdi/js';
 	import moment from 'moment';
-	import { Button, Icon, Tooltip, Duration, PeriodType } from 'svelte-ux';
+	import { Button, Icon, Tooltip, Duration } from 'svelte-ux';
 
 	let { children } = $props();
 	let userContext = getUserState();

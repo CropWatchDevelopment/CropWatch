@@ -13,7 +13,6 @@
 	{#if user}
 		<h1>General</h1>
 		<NavItem
-			class="text-primary-content"
 			text={nameToJapaneseName('Dashboard')}
 			icon={mdiHome}
 			currentUrl={$page.url}
@@ -24,7 +23,6 @@
 
 		<h1>Locations</h1>
 		<NavItem
-			class="text-primary-content"
 			text={nameToJapaneseName('All Locations')}
 			icon={mdiMapMarker}
 			currentUrl={$page.url}
@@ -34,7 +32,6 @@
 		
 		<h1>Devices</h1>
 		<NavItem
-			class="text-primary-content"
 			text={nameToJapaneseName('All Devices')}
 			icon={mdiMapMarker}
 			currentUrl={$page.url}
@@ -46,7 +43,6 @@
 
 		<h1>Outside Links</h1>
 		<NavItem
-			class="text-primary-content"
 			text="CropWatch API"
 			icon={mdiApi}
 			currentUrl={$page.url}
@@ -55,7 +51,6 @@
 			classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
 		/>
 		<NavItem
-			class="text-primary-content"
 			text="CropWatch Support"
 			currentUrl={$page.url}
 			icon={mdiAccountSchool}
@@ -64,7 +59,6 @@
 			classes={{ root: 'pl-3', active: 'bg-primary/10 text-primary' }}
 		/>
 		<NavItem
-			class="text-primary-content"
 			text={nameToJapaneseName('Logout')}
 			icon={mdiExitToApp}
 			currentUrl={$page.url}
@@ -74,7 +68,6 @@
 	{/if}
 	{#if !user}
 		<NavItem
-			class="text-primary-content"
 			text={nameToJapaneseName('Login')}
 			currentUrl={$page.url}
 			path="/auth/login"

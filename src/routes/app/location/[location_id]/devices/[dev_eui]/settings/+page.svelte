@@ -6,7 +6,6 @@
 	import DevicePermissions from '$lib/components/UI/device/DevicePermissions.svelte';
 	import DeviceRulesView from '$lib/components/UI/device/DeviceRulesView.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte.js';
-	import { mdiBomb } from '@mdi/js';
 	import { Button, Card, Tabs, TextField } from 'svelte-ux';
 	import { superForm } from 'sveltekit-superforms';
 
@@ -75,7 +74,6 @@
 						<Button type="submit" variant="fill" color="primary" class="w-full">Submit</Button>
 					</div>
 				</form>
-				<!-- <SuperDebug data={$form} /> -->
 			</Card>
 		{:else if value === 2}
 			<DevicePermissions devicePermissions={data.devicePermissions} />

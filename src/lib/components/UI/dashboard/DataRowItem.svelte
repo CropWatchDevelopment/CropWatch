@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { Button, Collapse, Progress, ProgressCircle, stringify, TweenedValue } from 'svelte-ux';
+	import { Button, Collapse, TweenedValue } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import { mdiArrowRight, mdiTimerSand } from '@mdi/js';
 	import moment from 'moment';
 	import DeviceDataList from './DeviceDataList.svelte';
-	import type { ILocation } from '$lib/interfaces/ILocation.interface';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { m } from '$lib/paraglide/messages';
 
@@ -53,8 +52,8 @@
 									format="decimal"
 								/>
 							</span>
-							<small class="text-secondary-900">
-								<sup>{device.cw_device_type.primary_data_notation}</sup>
+							<small>
+								<sup class="text-accent-300">{device.cw_device_type.primary_data_notation}</sup>
 							</small>
 						</p>
 						<p class="m-auto justify-center">
@@ -67,8 +66,8 @@
 									/>
 								{/if}
 							</span>
-							<small class="text-secondary-900">
-								<sup>{device.cw_device_type.secondary_data_notation}</sup>
+							<small>
+								<sup class="text-accent-300">{device.cw_device_type.secondary_data_notation}</sup>
 							</small>
 						</p>
 					{/if}
@@ -97,7 +96,7 @@
 	</div>
 </Collapse>
 
-<style>
+<!-- <style>
 	.text-shadow {
 		text-shadow: black 5px 5px 3px;
 	}
@@ -116,4 +115,4 @@
 		border-radius: 15px;
 		filter: blur(1px) grayscale(20%);
 	}
-</style>
+</style> -->

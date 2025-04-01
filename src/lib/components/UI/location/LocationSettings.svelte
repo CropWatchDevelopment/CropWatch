@@ -2,7 +2,7 @@
 	import { Button, Card, Tabs, TextField } from 'svelte-ux';
 	import LocationPermissions from './LocationPermissions.svelte';
 	import LocationGeneralSettings from './LocationGeneralSettings.svelte';
-	import SuperDebug, { superForm } from 'sveltekit-superforms';
+	import { superForm } from 'sveltekit-superforms';
 
 	let {
 		data = $bindable(),
@@ -57,8 +57,5 @@
 				</Button>
 			</div>
 		</form>
-		<!-- <SuperDebug data={$form} /> -->
 	</Card>
-	<!-- <SuperDebug data={addDeviceForm} /> -->
-	<!-- <AddNewDevice bind:addDeviceForm {location} /> -->
 </div>

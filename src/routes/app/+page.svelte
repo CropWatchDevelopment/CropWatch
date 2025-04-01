@@ -8,8 +8,6 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { mdiCircle, mdiMapMarker, mdiViewDashboard } from '@mdi/js';
-	import { REALTIME_CHANNEL_STATES } from '@supabase/supabase-js';
-	import { droppable, type DragDropState } from '@thisux/sveltednd';
 	import { Avatar, Card, Header, Icon, Tooltip } from 'svelte-ux';
 	import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
@@ -23,7 +21,6 @@
 		browser ? localStorage.getItem('hide_empty_locations') === 'true' : false
 	);
 	let dashboardViewType: 'grid' | 'mozaic' | 'list' = $state(
-		// browser ? (localStorage.getItem('dashboard_view_type') === 'grid' ? 'grid' : 'mozaic') : 'grid'
 		browser
 			? localStorage.getItem('dashboard_view_type') === 'mozaic'
 				? 'mozaic'
@@ -57,19 +54,29 @@
 			);
 	});
 
-	// Handle drag-and-drop reordering
-	function handleDrop(state: DragDropState<ILocation>) {
-		const { draggedItem, sourceContainer, targetContainer } = state;
-		if (!targetContainer || sourceContainer === targetContainer) return;
+	// Function to get container class based on view type
+	function getContainerClass(viewType: string): string {
+		switch (viewType) {
+			case 'grid':
+				return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
+			case 'mozaic':
+				return 'columns-[20rem] gap-4 space-y-4';
+			case 'list':
+				return 'flex flex-col gap-4';
+			default:
+				return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
+		}
+	}
 
-		// Reorder locations
-		userContext.allLocations = userContext.allLocations.filter(
-			(location: ILocation) => location.location_id !== draggedItem.location_id
-		);
-		userContext.allLocations.splice(parseInt(targetContainer), 0, draggedItem);
-
-		// Persist changes
-		userContext.percistLocationSortInLocalStorage();
+	// Function to get item class based on view type
+	function getItemClass(viewType: string): string {
+		if (viewType === 'list') {
+			return 'w-full';
+		} else if (viewType === 'mozaic') {
+			return 'bg-primary-content/60 relative mb-4 flex break-inside-avoid-column flex-col rounded-xl border-2 p-1 shadow-md backdrop-blur-sm transition-all duration-300';
+		} else {
+			return 'bg-primary-content/60 relative flex h-full flex-col rounded-xl border-2 p-1 shadow-md backdrop-blur-sm transition-all duration-300';
+		}
 	}
 </script>
 
@@ -81,7 +88,7 @@
 			{m.app_dashboard_title()}
 			<Tooltip title="Real-Time Data Status" placement="right">
 				{#if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.SUBSCRIBED}
-					<Icon data={mdiCircle} class="text-green-400" size="1em" />
+					<Icon data={mdiCircle} class="text-green-500" size="1em" />
 				{:else if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.TIMED_OUT}
 					<Icon data={mdiCircle} class="text-yellow-500" size="1em" />
 				{:else if userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR || userContext.realtimeJoinedStatus == REALTIME_SUBSCRIBE_STATES.CLOSED}
@@ -99,57 +106,25 @@
 			</div>
 		</h2>
 
-		{#if dashboardViewType === 'grid'}
-			<!-- Grid view -->
-			<div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-				{#each userContext.allLocations
-					.filter((location: ILocation) => {
-						if (hideEmptyLocations) return location.cw_devices.length > 0;
-						return location;
-					})
-					.filter((location: ILocation) => {
-						if (!search?.trim()) return true;
-						return location.name.toLowerCase().includes(search.toLowerCase());
-					}) as location, index (location.location_id)}
-					<div
-						class="aspect-square relative rounded-xl bg-primary-content/50 p-1 text-black backdrop-blur-sm
-								transition-all duration-300 hover:bg-primary-content/60"
-					>
-						<DashboardCard {location} />
-					</div>
-				{/each}
-			</div>
-		{:else if dashboardViewType === 'mozaic'}
-			<!-- Mozaic view -->
-			<div class="columns-[20rem] gap-4">
-				{#each userContext.allLocations.filter((location: ILocation) => {
+		<div class={getContainerClass(dashboardViewType)}>
+			{#each userContext.allLocations
+				.filter((location: ILocation) => {
+					if (hideEmptyLocations) return location.cw_devices.length > 0;
+					return location;
+				})
+				.filter((location: ILocation) => {
 					if (!search?.trim()) return true;
 					return location.name.toLowerCase().includes(search.toLowerCase());
 				}) as location, index (location.location_id)}
-					<div
-						use:droppable={{ container: index.toString(), callbacks: { onDrop: handleDrop } }}
-						class="mb-4 break-inside-avoid
-					       rounded-xl bg-primary-content/50 p-1 text-black
-					       transition-all duration-300 hover:bg-primary-content/60"
-					>
-						<DashboardCard {location} />
-					</div>
-				{/each}
-			</div>
-		{:else if dashboardViewType === 'list'}
-			<!-- List view -->
-			<div class="flex flex-col gap-4">
-				{#each userContext.allLocations.filter((location: ILocation) => {
-					if (!search?.trim()) return true;
-					return location.name.toLowerCase().includes(search.toLowerCase());
-				}) as location, index (location.location_id)}
+				
+				{#if dashboardViewType === 'list'}
 					<Card class="w-full">
 						<Header subheading="Subheading" slot="header">
 							<h1 class="text-left text-2xl font-bold" slot="title">
 								<a href="/app/location/{location.location_id}">{location.name}</a>
 							</h1>
 							<div slot="avatar">
-								<Avatar class="bg-primary font-bold text-primary-content">
+								<Avatar class="bg-primary text-primary-content font-bold">
 									<Icon data={mdiMapMarker} class="text-xl" />
 								</Avatar>
 							</div>
@@ -160,9 +135,13 @@
 							{/each}
 						</ol>
 					</Card>
-				{/each}
-			</div>
-		{/if}
+				{:else}
+					<div class={getItemClass(dashboardViewType)}>
+						<DashboardCard {location} />
+					</div>
+				{/if}
+			{/each}
+		</div>
 	</section>
 {:else}
 	<NotLoggedIn />
