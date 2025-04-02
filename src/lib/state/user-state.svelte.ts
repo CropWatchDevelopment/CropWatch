@@ -148,7 +148,10 @@ export class UserState {
       *,
       cw_device_owners(*),
       cw_device_type(*),
-      cw_rules(*)
+      cw_rules(
+      *,
+      cw_rule_criteria(*)
+      )
     )
   `)
                 .eq('cw_location_owners.is_active', true)

@@ -20,6 +20,26 @@
 			.find((loc) => loc.location_id === location_id)
 			?.cw_devices.find((dev) => dev.dev_eui === $page.params.dev_eui)
 	);
+	let rules = $derived(device?.cw_rules.map((rule) => [...rule.cw_rule_criteria]).flatMap((rule) => rule));
+	let lines = $derived(
+		rules?.map(rule => ({
+			value: rule.trigger_value,
+			color: '#FF9900', // Orange color for visibility
+			width: 4,
+			zIndex: 5,
+			dashStyle: 'shortdash', // Makes it a dashed line
+			label: {
+				text: `Rule: ${rule.subject === 'temperature_c' ? 'Temp' : rule.subject} ${rule.operator} ${rule.trigger_value}°C`,
+				align: 'center',
+				style: {
+					fontSize: '25px',
+					color: '#FF9900',
+					fontWeight: 'bold'
+				}
+			}
+		}))
+	);
+	$inspect(lines);
 	let latestTemperature = device?.latest_data.temperature_c;
 	let latestHumidity = device?.latest_data.humidity;
 
@@ -197,7 +217,8 @@
 								fontSize: '20px'
 							}
 						},
-						gridLineWidth: 0 // Hide grid lines for this axis
+						gridLineWidth: 0, // Hide grid lines for this axis
+						plotLines: lines,
 					},
 					{
 						title: {
@@ -219,8 +240,7 @@
 							}
 						},
 						opposite: true,
-						showEmpty: false,
-						
+						showEmpty: false
 					}
 				],
 				series: [

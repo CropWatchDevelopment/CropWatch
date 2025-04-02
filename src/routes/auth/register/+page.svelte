@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { superForm } from 'sveltekit-superforms';
+	import SuperDebug, { superForm } from 'sveltekit-superforms';
 	import {
 		Avatar,
 		Button,
@@ -28,18 +28,39 @@
 	let loading: boolean = $state(false);
 	let open: boolean = $state(false);
 	let tokenState: string = $state('');
+	let recaptchaLoaded: boolean = $state(false);
 
-	$effect(() => {
+	// Function to load and execute reCAPTCHA
+	function executeRecaptcha() {
 		if (window.grecaptcha) {
-			window.grecaptcha.ready(async () => {
+			window.grecaptcha.ready(() => {
 				window.grecaptcha
 					.execute(PUBLIC_RECAPTCHA_SITE_KEY, { action: 'submit' })
-					.then(async (token: string) => {
+					.then((token: string) => {
 						tokenState = token;
 						$form.reCatchaToken = token;
+					})
+					.catch(err => {
+						console.error('reCAPTCHA execution failed:', err);
 					});
 			});
 		}
+	}
+
+	// Listen for reCAPTCHA script load
+	$effect(() => {
+		// If grecaptcha is already available, execute it
+		if (window.grecaptcha) {
+			recaptchaLoaded = true;
+			executeRecaptcha();
+			return;
+		}
+
+		// Otherwise, set up a callback for when it loads
+		window.onRecaptchaLoaded = () => {
+			recaptchaLoaded = true;
+			executeRecaptcha();
+		};
 	});
 
 	const { form, enhance, errors } = superForm(data.form, {
@@ -62,7 +83,7 @@
 <svelte:head>
 	<title>登録 - CropWatch</title>
 	<script
-		src="https://www.google.com/recaptcha/api.js?render={PUBLIC_RECAPTCHA_SITE_KEY}"
+		src="https://www.google.com/recaptcha/api.js?render={PUBLIC_RECAPTCHA_SITE_KEY}&onload=onRecaptchaLoaded"
 		nonce="%sveltekit.nonce%"
 	></script>
 </svelte:head>
@@ -80,7 +101,7 @@
 				</Avatar>
 			</div>
 		</Header>
-{tokenState}
+
 		<div class="flex flex-1 flex-col p-4">
 			<form method="POST" use:enhance class="w-full space-y-6">
 				<div>
@@ -222,3 +243,6 @@
 		</div>
 	</Dialog>
 </div>
+{#if dev}
+	<SuperDebug data={$form}/>
+{/if}
