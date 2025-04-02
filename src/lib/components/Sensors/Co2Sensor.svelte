@@ -39,7 +39,6 @@
 			}
 		}))
 	);
-	$inspect(lines);
 	let latestTemperature = device?.latest_data.temperature_c;
 	let latestHumidity = device?.latest_data.humidity;
 

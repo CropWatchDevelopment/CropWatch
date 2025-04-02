@@ -102,10 +102,4 @@
 	});
 </script>
 
-<svelte:boundary>
-	{@render children()}
-	{#snippet failed(error)}
-		<p>Oops! an error occured: {error.message}</p>
-		<a href="/auth/login">Return to login</a>
-	{/snippet}
-</svelte:boundary>
+{@render children()}

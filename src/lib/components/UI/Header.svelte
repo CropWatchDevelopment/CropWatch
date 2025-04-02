@@ -3,8 +3,9 @@
 	import AvatarCard from './AvatarCard.svelte';
 	import { browser } from '$app/environment';
 	import { getUserState } from '$lib/state/user-state.svelte';
-	import { mdiBell, mdiBellAlert } from '@mdi/js';
+	import { mdiBell, mdiBellAlert, mdiBellCheck, mdiClose } from '@mdi/js';
 	import { goto } from '$app/navigation';
+	import moment from 'moment';
 
 	let userContext = getUserState();
 	let { user } = $derived(userContext);
@@ -27,16 +28,39 @@
 	<div slot="actions" class="flex flex-row">
 		<Toggle let:on={open} let:toggle let:toggleOff>
 			<Button
-				icon={anyAlerts ? mdiBellAlert : mdiBell}
+				size="lg"
+				icon={anyAlerts ? mdiBellAlert : mdiBellCheck}
 				color={anyAlerts ? 'danger' : 'default'}
 				on:click={toggle}
 			>
 				<Menu {open} on:close={toggleOff}>
 					{#each userContext.allDevices as device}
 						{#if device.cw_rules.length > 0}
-							<MenuItem on:click={() => goto(`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`)}>
-								{device.name} has alerts
-							</MenuItem>
+							{#each device.cw_rules as rule}
+								{#if rule.cw_rule_criteria.length > 0}
+									<MenuItem
+										on:click={() =>
+											goto(`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`)}
+									>
+										<div class="flex flex-row gap-1 border-b">
+											<div class="flex flex-col items-start">
+												<p>Device: {device.name}</p>
+												<p class="text-left">Rule Name: {rule.name}</p>
+												<p class="w-full text-sm text-gray-500">
+													Triggered: {moment(rule.last_triggered).format('YYYY/MM/DD HH:mm a')}
+												</p>
+											</div>
+											<Button
+												size="sm"
+												rounded="full"
+												color="danger"
+												class="ml-2"
+												icon={mdiClose}
+											/>
+										</div>
+									</MenuItem>
+								{/if}
+							{/each}
 						{/if}
 					{/each}
 				</Menu>

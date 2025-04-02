@@ -113,7 +113,6 @@ export const actions = {
         if (!session || !session.user) {
             return fail(401, { status: 401, message: 'Unauthorized' });
         }
-        debugger;
 
         const id = url.searchParams.get('id');
         if (!id) {
