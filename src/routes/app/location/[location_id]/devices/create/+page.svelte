@@ -32,7 +32,7 @@
 			if (result.result.data.status === 200) {
 				// Handle success
 				console.log('Form submitted successfully:', result);
-				document.location.href = `/app`;
+				document.location.href = `/app/dashboard`;
 			} else {
 				// Handle error
 				console.error('Form submission failed:', result);

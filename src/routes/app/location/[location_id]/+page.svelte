@@ -32,7 +32,7 @@
 {#if location && devices}
 	<section class="h-full p-4">
 		<h2 class="mb-2 flex gap-4 border-b pb-4">
-			<Back url="/app" />
+			<Back url="/app/dashboard" />
 			{location.name ?? 'loading...'}
 			<span class="flex-1"></span>
 

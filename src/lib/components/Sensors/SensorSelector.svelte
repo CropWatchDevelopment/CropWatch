@@ -9,7 +9,7 @@
 
 	let { device }: { device: IDevice } = $props();
 	if (browser && (!device || !location)) {
-		goto('/app');
+		goto('/app/dashboard');
 	}
 	let sensorType = $derived(device.cw_device_type || null);
 </script>

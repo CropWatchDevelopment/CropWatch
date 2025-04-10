@@ -10,7 +10,7 @@
 	console.log(getLocale());
 	if (browser) {
 		console.log('Browser detected');
-		goto('/app');
+		goto('/app/dashboard');
 	}
 </script>
 

@@ -1,110 +1,3 @@
-// import { createServerClient } from "@supabase/ssr";
-// import {
-//   PUBLIC_SUPABASE_ANON_KEY,
-//   PUBLIC_SUPABASE_URL,
-// } from "$env/static/public";
-// import { redirect, type Handle } from "@sveltejs/kit";
-// import { sequence } from "@sveltejs/kit/hooks";
-// import { paraglideMiddleware } from '$lib/paraglide/server';
-
-
-// const supabase: Handle = async ({ event, resolve }) => {
-//   /**
-//    * Creates a Supabase client specific to this server request.
-//    *
-//    * The Supabase client gets the Auth token from the request cookies.
-//    */
-//   event.locals.supabase = createServerClient(
-//     PUBLIC_SUPABASE_URL,
-//     PUBLIC_SUPABASE_ANON_KEY,
-//     {
-//       cookies: {
-//         getAll: async () => event.cookies.getAll(),
-//         /**
-//          * SvelteKit's cookies API requires `path` to be explicitly set in
-//          * the cookie options. Setting `path` to `/` replicates previous/
-//          * standard behavior.
-//          */
-//         setAll: (cookiesToSet) => {
-//           cookiesToSet.forEach(({ name, value, options }) => {
-//             event.cookies.set(name, value, { ...options, path: "/" });
-//           });
-//         },
-//       },
-//     }
-//   );
-
-//   /**
-//    * Unlike `supabase.auth.getSession()`, which returns the session _without_
-//    * validating the JWT, this function also calls `getUser()` to validate the
-//    * JWT before returning the session.
-//    */
-//   event.locals.safeGetSession = async () => {
-//     const {
-//       data: { session },
-//     } = await event.locals.supabase.auth.getSession();
-//     if (!session) {
-//       return { session: null, user: null };
-//     }
-
-//     const {
-//       data: { user },
-//       error,
-//     } = await event.locals.supabase.auth.getUser();
-//     if (error) {
-//       // JWT validation has failed
-//       return { session: null, user: null };
-//     }
-
-//     return { session, user };
-//   };
-
-//   return resolve(event, {
-//     filterSerializedResponseHeaders(name) {
-//       /**
-//        * Supabase libraries use the `content-range` and `x-supabase-api-version`
-//        * headers, so we need to tell SvelteKit to pass it through.
-//        */
-//       return name === "content-range" || name === "x-supabase-api-version";
-//     },
-//   });
-// };
-
-// const authGuard: Handle = async ({ event, resolve }) => {
-//   const { session, user } = await event.locals.safeGetSession();
-//   event.locals.session = session;
-//   event.locals.user = user;
-
-//   if (!event.locals.session && event.url.pathname.startsWith("/app")) {
-//     // redirect(303, '/auth/login');
-//   }
-
-//   if (event.locals.session &&
-//     ['/auth/register', '/auth/login'].includes(event.url.pathname)) {
-//     redirect(303, '/app');
-//   }
-
-//   return resolve(event);
-// }
-
-
-// // creating a handle to use the paraglide middleware
-// const paraglideHandle: Handle = ({ event, resolve }) =>
-// 	paraglideMiddleware(event.request, ({ request: localizedRequest, locale }) => {
-// 		event.request = localizedRequest;
-// 		return resolve(event, {
-// 			transformPageChunk: ({ html }) => {
-// 				return html.replace('lang%', locale);
-// 			}
-// 		});
-// 	});
-
-
-
-// export const handle: Handle = sequence(supabase, authGuard, paraglideHandle);
-
-// src/hooks.server.ts
-import { PRIVATE_SUPABASE_SERVICE_ROLE } from "$env/static/private"
 import {
   PUBLIC_SUPABASE_ANON_KEY,
   PUBLIC_SUPABASE_URL,
@@ -157,30 +50,51 @@ export const supabase: Handle = async ({ event, resolve }) => {
    * JWT before returning the session.
    */
   event.locals.safeGetSession = async () => {
-    const {
-      data: { session },
-    } = await event.locals.supabase.auth.getSession()
-    if (!session) {
-      return { session: null, user: null, amr: null }
-    }
+    try {
+      const {
+        data: { session },
+      } = await event.locals.supabase.auth.getSession();
+      if (!session) {
+        return { session: null, user: null, amr: null };
+      }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await event.locals.supabase.auth.getUser()
-    if (userError) {
-      // JWT validation has failed
-      return { session: null, user: null, amr: null }
-    }
+      const {
+        data: { user },
+        error: userError,
+      } = await event.locals.supabase.auth.getUser();
+      if (userError) {
+        // JWT validation has failed
+        // Clear invalid session cookies when error occurs
+        await event.locals.supabase.auth.signOut({ scope: 'local' });
+        return { session: null, user: null, amr: null };
+      }
 
-    const { data: aal, error: amrError } =
-      await event.locals.supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-    if (amrError) {
-      return { session, user, amr: null }
+      // Try to get MFA status, but don't fail if it errors
+      try {
+        const { data: aal, error: amrError } =
+          await event.locals.supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        if (!amrError) {
+          return { session, user, amr: aal.currentAuthenticationMethods };
+        }
+      } catch (error) {
+        console.warn("Failed to get MFA status:", error);
+      }
+      
+      return { session, user, amr: null };
+    } catch (error) {
+      // Handle any auth errors, including "Invalid Refresh Token"
+      console.error("Auth error in safeGetSession:", error);
+      
+      // Clear invalid session cookies
+      try {
+        await event.locals.supabase.auth.signOut({ scope: 'local' });
+      } catch (signOutError) {
+        console.error("Failed to sign out after auth error:", signOutError);
+      }
+      
+      return { session: null, user: null, amr: null };
     }
-
-    return { session, user, amr: aal.currentAuthenticationMethods }
-  }
+  };
 
   return resolve(event, {
     filterSerializedResponseHeaders(name) {
@@ -200,12 +114,12 @@ const authGuard: Handle = async ({ event, resolve }) => {
   // send them to app.
   if (event.locals.session &&
     ['/auth/register', '/auth/login'].includes(event.url.pathname)) {
-    redirect(303, '/app');
+    redirect(303, '/app/dashboard');
   }
 
   // If user is NOT logged in,
   // send them to login page.
-  if (!event.locals.session && event.url.pathname.startsWith("/app")) {
+  if (!event.locals.session && event.url.pathname.startsWith("/app/dashboard")) {
     redirect(303, '/auth/login');
   }
 

@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
-	import { mdiCog, mdiHelp, mdiLock, mdiRefresh } from '@mdi/js';
+	import { mdiAccountCircle, mdiCog, mdiHelp, mdiLock, mdiRefresh } from '@mdi/js';
 	import { Avatar, Button, Icon, Menu, MenuItem, Toggle } from 'svelte-ux';
 
 	let userContext = getUserState();
@@ -22,7 +22,7 @@
 						/>
 					{:else}
 					<Avatar>
-						<Icon data={mdiLock} class="text-2xl" />
+						<Icon data={mdiAccountCircle} class="text-2xl" />
 					</Avatar>
 					{/if}
 				</div>

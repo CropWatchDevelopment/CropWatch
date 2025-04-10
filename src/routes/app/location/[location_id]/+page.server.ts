@@ -18,7 +18,7 @@ export const load = async ({ params, fetch, locals: { supabase, safeGetSession }
 
     const location_id = +params.location_id;
     if (!location_id) {
-        return redirect(303, '/app');
+        return redirect(303, '/app/dashboard');
     }
 
     const { data: location, error: locationError } = await supabase
@@ -40,7 +40,7 @@ export const load = async ({ params, fetch, locals: { supabase, safeGetSession }
         };
     } else {
         if (!location) {
-            return redirect(303, '/app');
+            return redirect(303, '/app/dashboard');
         }
     }
 
@@ -117,18 +117,18 @@ export const actions = {
                 return setError(form, '', devicesError.message);
             }
             for (const device of devices) {
-                const valueToAdd = {
-                    user_id: profile_id,
-                    dev_eui: device.dev_eui,
-                    permission_level: form.data.applyToAllSubDevices ? form.data.permission_level : 4, // 4 = no permission
-                };
-                const { data, error } = await supabase
+                // First insert - don't try to select at the same time
+                const { error: insertError } = await supabase
                     .from('cw_device_owners')
-                    .insert(valueToAdd)
-                    .select('*');
-                if (error) {
-                    console.log('FAILED TO INSERT DEVICE OWNER', error.message);
-                    return setError(form, '', error.message);
+                    .insert({
+                        user_id: profile_id,
+                        dev_eui: device.dev_eui,
+                        permission_level: form.data.permission_level ? form.data.permission_level : 4, // 4 = no permission
+                    });
+
+                if (insertError) {
+                    console.log('FAILED TO INSERT DEVICE OWNER', insertError.message);
+                    return setError(form, '', insertError.message);
                 }
             }
             return { status: 200, form, locationUsers };

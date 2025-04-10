@@ -26,7 +26,7 @@ const ruleSchema = z.object({
 export const load = async ({ params, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
     if (!session) {
-        return redirect(303, '/auth/login?redirect=/app&reason=unauthenticated');
+        return redirect(303, '/auth/login?redirect=/app/dashboard&reason=unauthenticated');
     }
     if (!session.user) {
         return redirect(303, '/auth/unauthorized');
@@ -34,15 +34,15 @@ export const load = async ({ params, locals: { supabase, safeGetSession } }) => 
 
     const location_id = +params.location_id;
     if (!location_id) {
-        return redirect(303, '/app');
+        return redirect(303, '/app/dashboard');
     }
     const dev_eui = params.dev_eui;
     if (!dev_eui) {
-        return redirect(303, '/app');
+        return redirect(303, '/app/dashboard');
     }
     const rule_id = params.rule_id;
     if (!rule_id) {
-        return redirect(303, '/app');
+        return redirect(303, '/app/dashboard');
     }
 
     const { data: device, error: deviceError } = await supabase

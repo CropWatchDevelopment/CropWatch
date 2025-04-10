@@ -27,7 +27,7 @@
             color="primary" 
             class="mt-2" 
             icon={mdiArrowLeft}
-            href="/app"
+            href="/app/dashboard"
         >
             Go back to dashboard
         </Button>

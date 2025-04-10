@@ -22,7 +22,7 @@
 		},
 		onResult: async (event) => {
 			if (event.result.status === 200) {
-				document.location.href = '/app';
+				document.location.href = '/app/dashboard';
 			} else {
 				console.error('Login failed');
 				lastError = event.result.data.form.errors._errors.join(',');

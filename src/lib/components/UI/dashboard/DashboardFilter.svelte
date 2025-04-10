@@ -56,7 +56,7 @@
 				<div class="p-2">
 					<!-- Add autofocus delay to keep the opening transition smooth  -->
 					<TextField
-					class="text-primary-content"
+					class="text-surface-content"
 						bind:value={search}
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {

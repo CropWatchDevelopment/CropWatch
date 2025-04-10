@@ -11,6 +11,10 @@
 	let { user } = $derived(userContext);
 	let anyAlerts = $derived(userContext.allDevices.some((device) => device.cw_rules.length > 0));
 
+	const resetRule = (rule_id: number) => {
+		
+	};
+
 	$effect(() => {
 		if (browser) {
 			userContext.fetchLocations();
@@ -53,8 +57,13 @@
 											<Button
 												size="sm"
 												rounded="full"
+												variant="outline"
 												color="danger"
 												class="ml-2"
+												on:click={(e) => {
+													e.stopPropagation();
+													resetRule(rule.rule_id);
+												}}
 												icon={mdiClose}
 											/>
 										</div>
