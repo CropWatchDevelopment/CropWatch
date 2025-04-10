@@ -19,7 +19,10 @@
 	</Header>
 	<ol>
 		{#each devices as device}
-			<ListItem title={device.name}>
+			<ListItem>
+				<div slot="title">
+					<small><b>({device.dev_eui})</b></small> - ${device.name}
+				</div>
 				<div slot="actions">
 					<Button icon={mdiEye} variant="fill-light" rounded="full" href={`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`} />
 				</div>

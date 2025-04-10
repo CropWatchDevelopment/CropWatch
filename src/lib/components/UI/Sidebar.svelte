@@ -60,13 +60,13 @@
 		/>
 
 		<h1>Reports</h1>
-		<NavItem
+		<!-- <NavItem
 			text="Device Reports"
 			icon={mdiMapMarker}
 			currentUrl={$page.url}
 			path="/app/all-devices"
 			classes={{ root: 'pl-3', active: 'bg-primary/20 font-bold' }}
-		/>
+		/> -->
 		<NavItem
 			text="Device Report Schedule"
 			icon={mdiFileChart}
