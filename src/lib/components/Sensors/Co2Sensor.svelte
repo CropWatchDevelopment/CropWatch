@@ -140,7 +140,7 @@
 										data.co2
 									]) ?? [],
 							tooltip: {
-								valueSuffix: ' °C'
+								valueSuffix: ' ppm'
 							},
 							lineWidth: 2,
 							color: 'lime'
