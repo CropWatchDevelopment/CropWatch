@@ -72,15 +72,6 @@
 					}}
 				/>
 			</Tooltip>
-			<Tooltip title="Add a device">
-				<Button
-					icon={mdiPlus}
-					variant="fill-light"
-					rounded="full"
-					color="success"
-					href={`${$page.params.location_id}/devices/create`}
-				/>
-			</Tooltip>
 			<Tooltip title="Settings">
 				<Button
 					icon={mdiCog}

@@ -25,7 +25,7 @@
 				document.location.href = '/app/dashboard';
 			} else {
 				console.error('Login failed');
-				lastError = event.result.data.form.errors._errors.join(',');
+				lastError = 'Login Failed';
 				loading = false;
 				open = true;
 			}
