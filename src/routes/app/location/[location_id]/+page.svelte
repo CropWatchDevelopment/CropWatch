@@ -100,19 +100,6 @@
 				locationUsers={data.locationUsers}
 				locationGeneralForm={data.updateLocationGeneralForm}
 			/>
-
-			<Card class="mt-4 flex flex-col gap-4 p-4">
-				<h3 class="text-lg font-semibold">Danger Zone</h3>
-				<p class="text-sm text-gray-500">
-					Deleting a location will also delete all devices and data associated with it.
-				</p>
-				{#if location_owner === userContext.profile?.id}
-					<DeleteLocationDialog />
-					<TransferLocationOwnership />
-				{:else}
-					<p class="text-sm text-gray-500">Only the owner of this location can delete it.</p>
-				{/if}
-			</Card>
 		{:else}
 			<DeviceListView {devices} />
 		{/if}

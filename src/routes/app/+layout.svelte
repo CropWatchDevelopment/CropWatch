@@ -8,7 +8,7 @@
 	let { children } = $props();
 </script>
 
-<AppLayout areas="'header' 'aside main'" classes={{ root: 'h-[calc(100%-64px)]' }}>
+<AppLayout areas="'header' 'aside main'" classes={{ root: 'h-[calc(100vh-64px)]' }}>
 	<svelte:fragment slot="nav">
 		<Sidebar />
 	</svelte:fragment>
@@ -17,7 +17,7 @@
 
 	<main class="min-[300px]: flex h-[calc(100%-64px)] flex-col">
 		<Notification />
-		<section class="h-[calc(100%-64px)] flex-col">
+		<section class="h-full flex-col">
 			{@render children()}
 		</section>
 	</main>

@@ -2,82 +2,49 @@
 	import { Circle, Map, Marker, Popup, TileLayer } from 'sveaflet';
 	import type { LatLngTuple, MapOptions } from 'leaflet';
 	import { error } from 'highcharts';
+	import { superForm } from 'sveltekit-superforms';
+	import { Avatar, Button, Card, Header, Icon, TextField } from 'svelte-ux';
+	import { mdiMapMarker } from '@mdi/js';
 
-	let { location, devices } = $props();
-	let latlong: LatLngTuple = $derived([location.lat ?? 0, location.long ?? 0]);
-	let marker;
-	let circle;
-	let mapOptions: MapOptions = $derived({
-		center: latlong,
-		zoom: 20,
-		attributionControl: false,
-		zoomControl: false
-	});
-	let address = $state('〒880-0805 Miyazaki, Tachibanadōrihigashi, 3-chōme−2−8');
-
-	function markerOpenPopup() {
-		marker && marker.openPopup();
-	}
-
-	function circleOpenPopup() {
-		circle && circle.openPopup();
-	}
-
-	async function getAddressFromLatLong(lat: number, long: number) {
-		const response = await fetch(
-			`https://nominatim.openstreetmap.org/search?format=json&q=${lat},${long}`
-		)
-			.then((res) => res.json())
-			.catch((err) => {
-				console.error(err);
-				return error;
-			});
-		if (await !response) {
-			const data = await response.json();
-			console.log(data);
-		}
-		const responseData = await response.json();
-		return responseData;
-	}
-
-	async function getLatLongFromAddress(address: string) {
-		const response = await fetch(
-			`https://nominatim.openstreetmap.org/search?q=${address}&format=geojson`
-		)
-			.then((res) => res.json())
-			.catch((err) => {
-				console.error(err);
-				return error;
-			});
-		if (await !response) {
-			const data = await response.json();
-			console.log(data);
-		}
-		const responseData = await response.json();
-		return responseData;
-	}
+	let { location, locationGeneralForm } = $props();
+	let { form, errors, enhance } = superForm(locationGeneralForm);
 </script>
 
-<div style="width:100%;height:500px;">
-	<!-- <Map options={mapOptions}>
-		<Circle
-			latLng={latlong}
-			options={{
-				color: 'red',
-				fillColor: 'lightblue',
-				fillOpacity: 0.5,
-				radius: 50
-			}}
-			bind:instance={circle}
-		>
-			<Marker latLng={[location.lat, location.long]} />
-			<Popup options={{ content: 'Hello Sveaflet. (Circle)' }} />
-		</Circle>
-		{#each devices as device}
-			<Marker latLng={[device.lat, device.long]} />
-		{/each}
-		<TileLayer url={'https://tile.openstreetmap.org/{z}/{x}/{y}.png'} />
-	</Map> -->
-</div>
-<!-- <Input type="text" bind:value={address} />
-<Button on:click={() => getLatLongFromAddress(address)}>Get Address</Button> -->
+<Card>
+	<Header title="Location's User Permissions" subheading="Subheading" slot="header">
+		<div slot="avatar">
+			<Avatar class="bg-primary text-primary-content font-bold">
+				<Icon data={mdiMapMarker} class="text-2xl" />
+			</Avatar>
+		</div>
+	</Header>
+	<form
+		method="POST"
+		action="?/updateLocationGeneralSettings"
+		use:enhance
+		class="flex flex-col gap-2"
+	>
+		<div class="grid grid-flow-col gap-2">
+			<TextField
+				label="Location Name"
+				name="name"
+				id="name"
+				bind:value={$form.name}
+				aria-invalid={$errors.name ? 'true' : undefined}
+				error={$errors.name}
+			/>
+		</div>
+		<div class="grid grid-flow-col gap-2">
+			<TextField label="Latitude" type="text" name="lat" id="lat" bind:value={$form.lat} />
+		</div>
+		<div class="grid grid-flow-col gap-2">
+			<TextField label="Longitude" type="text" name="long" id="long" bind:value={$form.long} />
+		</div>
+
+		<div>
+			<Button type="submit" variant="fill" color="primary" class="w-full" disabled={$form.valid}>
+				Submit
+			</Button>
+		</div>
+	</form>
+</Card>

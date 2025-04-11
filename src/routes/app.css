@@ -99,3 +99,7 @@
   nav a {
 	@apply text-surface-content;
   }
+
+  div:has(> .Header) {
+    @apply border-b border-surface-300;
+  }

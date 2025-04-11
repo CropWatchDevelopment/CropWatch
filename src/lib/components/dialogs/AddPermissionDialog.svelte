@@ -7,8 +7,10 @@
 		mdiAccountOff,
 		mdiAccountPlus,
 		mdiAccountPlusOutline,
+		mdiClose,
 		mdiEmail,
-		mdiLockPercent
+		mdiLockPercent,
+		mdiPoliceBadge
 	} from '@mdi/js';
 	import {
 		Avatar,
@@ -25,6 +27,7 @@
 	} from 'svelte-ux';
 	import { cls } from '@layerstack/tailwind';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
+	import { dev } from '$app/environment';
 	let {
 		data = $bindable(),
 		newUser = $bindable(),
@@ -88,39 +91,56 @@
 					</div>
 				</TextField>
 
-				<SelectField
-					id="permission_level"
-					name="permission_level"
-					options={permissionOptionsWithIcon}
-					bind:value={$form.permissonValue}
-					placeholder="Select Permission Level"
-					error={$errors.permission_level}
-					activeOptionIcon={true}
-					icon={mdiLockPercent}
-					aria-invalid={$errors.permission_level ? 'true' : undefined}
-				>
-					<svelte:fragment slot="option" let:option let:index let:selected let:highlightIndex>
-						<MenuItem
-							class={cls(
-								index === highlightIndex && 'bg-surface-content/5',
-								option === selected && 'font-semibold',
-								option.group ? 'px-4' : 'px-2'
-							)}
-							scrollIntoView={index === highlightIndex}
-							icon={{ data: option.icon }}
-						>
-							{option.label}
-						</MenuItem>
-					</svelte:fragment>
-				</SelectField>
-				<Checkbox name="applyToAllSubDevices"
-					>Apply Permission to ALL sensors in this location.</Checkbox
-				>
+				<Card class="bg-accent/10 flex p-2">
+					<Header title="Permissions Selection" subheading="Subheading" slot="header">
+						<div slot="avatar">
+							<Avatar class="bg-primary text-primary-content font-bold">
+								<Icon data={mdiPoliceBadge} class="text-2xl" />
+							</Avatar>
+						</div>
+					</Header>
+					<SelectField
+						class="mb-1 w-full"
+						id="permission_level"
+						name="permission_level"
+						options={permissionOptionsWithIcon}
+						bind:value={$form.permissonValue}
+						placeholder="Select Permission Level"
+						error={$errors.permission_level}
+						activeOptionIcon={true}
+						icon={mdiLockPercent}
+						autoPlacement={false}
+						placement="bottom-start"
+						aria-invalid={$errors.permission_level ? 'true' : undefined}
+					>
+						<svelte:fragment slot="option" let:option let:index let:selected let:highlightIndex>
+							<MenuItem
+								class={cls(
+									index === highlightIndex && 'bg-surface-content/5',
+									option === selected && 'font-semibold',
+									option.group ? 'px-4' : 'px-2'
+								)}
+								scrollIntoView={index === highlightIndex}
+								icon={{ data: option.icon }}
+							>
+								{option.label}
+							</MenuItem>
+						</svelte:fragment>
+					</SelectField>
+					<Checkbox name="applyToAllSubDevices"
+						>Apply Permission to ALL sensors in this location.</Checkbox
+					>
+				</Card>
 				<input type="hidden" name="location_id" value={$page.params.location_id} />
 
-				<div>
-					<Button type="submit" variant="fill" color="default">Yes, Add new User</Button>
+				<div class="flex w-full flex-row">
+					<Button type="submit" variant="fill" icon={mdiAccountPlus} color="default">Yes, Add new User</Button>
+					<span class="flex-1"></span>
 					<Button
+						class="justify-end"
+						variant="outline"
+						color="default"
+						icon={mdiClose}
 						on:click={() => {
 							open = false;
 							newUser = { email: '', permissonValue: 4 };
@@ -129,6 +149,8 @@
 				</div>
 			</form>
 		</div>
-		<SuperDebug data={$form} />
+		{#if dev}
+			<SuperDebug data={$form} />
+		{/if}
 	</Card>
 </Dialog>
