@@ -22,8 +22,7 @@
 		Icon,
 		MenuItem,
 		SelectField,
-		TextField,
-		Tooltip
+		TextField
 	} from 'svelte-ux';
 	import { cls } from '@layerstack/tailwind';
 	import SuperDebug, { superForm } from 'sveltekit-superforms';
@@ -45,9 +44,20 @@
 	];
 </script>
 
-<Tooltip title="+ Add User" position="bottom">
-	<Button icon={mdiAccountPlus} variant="outline" on:click={() => (open = true)} />
-</Tooltip>
+<Button
+	variant="fill"
+	rounded="full"
+	color="primary"
+	icon={mdiAccountPlus}
+	class="group justify-end"
+	on:click={() => (open = true)}
+>
+	<div
+		class="inline-block max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-[120px] group-hover:opacity-100"
+	>
+		Add New User
+	</div>
+</Button>
 
 <Dialog bind:open persistent>
 	<Card class="p-4">
@@ -134,7 +144,9 @@
 				<input type="hidden" name="location_id" value={$page.params.location_id} />
 
 				<div class="flex w-full flex-row">
-					<Button type="submit" variant="fill" icon={mdiAccountPlus} color="default">Yes, Add new User</Button>
+					<Button type="submit" variant="fill" icon={mdiAccountPlus} color="default"
+						>Yes, Add new User</Button
+					>
 					<span class="flex-1"></span>
 					<Button
 						class="justify-end"
