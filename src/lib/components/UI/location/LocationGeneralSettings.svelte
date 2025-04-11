@@ -11,7 +11,7 @@
 </script>
 
 <Card>
-	<Header title="Location's User Permissions" subheading="Subheading" slot="header">
+	<Header title="Location's General Settings" subheading="Update location details" slot="header">
 		<div slot="avatar">
 			<Avatar class="bg-primary text-primary-content font-bold">
 				<Icon data={mdiMapMarker} class="text-2xl" />
@@ -22,9 +22,9 @@
 		method="POST"
 		action="?/updateLocationGeneralSettings"
 		use:enhance
-		class="flex flex-col gap-2"
+		class="flex flex-col gap-3 p-2 sm:p-4"
 	>
-		<div class="grid grid-flow-col gap-2">
+		<div class="w-full">
 			<TextField
 				label="Location Name"
 				name="name"
@@ -32,18 +32,31 @@
 				bind:value={$form.name}
 				aria-invalid={$errors.name ? 'true' : undefined}
 				error={$errors.name}
+				class="w-full"
 			/>
 		</div>
-		<div class="grid grid-flow-col gap-2">
-			<TextField label="Latitude" type="text" name="lat" id="lat" bind:value={$form.lat} />
-		</div>
-		<div class="grid grid-flow-col gap-2">
-			<TextField label="Longitude" type="text" name="long" id="long" bind:value={$form.long} />
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+			<TextField 
+				label="Latitude" 
+				type="text" 
+				name="lat" 
+				id="lat" 
+				bind:value={$form.lat} 
+				class="w-full"
+			/>
+			<TextField 
+				label="Longitude" 
+				type="text" 
+				name="long" 
+				id="long" 
+				bind:value={$form.long}
+				class="w-full"
+			/>
 		</div>
 
-		<div>
+		<div class="mt-2">
 			<Button type="submit" variant="fill" color="primary" class="w-full" disabled={$form.valid}>
-				Submit
+				Save Changes
 			</Button>
 		</div>
 	</form>

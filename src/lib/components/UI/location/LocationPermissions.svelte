@@ -44,7 +44,7 @@
 </script>
 
 <Card>
-	<Header title="Location's User Permissions" subheading="Subheading" slot="header">
+	<Header title="Location's User Permissions" subheading="Manage access control" slot="header">
 		<div slot="avatar">
 			<Avatar class="bg-primary text-primary-content font-bold">
 				<Icon data={mdiMapMarkerAccount} class="text-2xl" />
@@ -72,56 +72,59 @@
 			</div>
 		</Card>
 	{/if}
-	{#each options as option}
-		<Card class="my-1 p-1">
-			<div class="flex flex-row items-center gap-1">
-				<Avatar class="bg-primary text-primary-content mr-2 font-bold" size="lg">
-					<Icon
-						class={option.permission_level
-							? permissionOptionsWithIcon.find((o) => o.value === option.permission_level)?.color
-							: 'text-danger'}
-						data={option.permission_level
-							? permissionOptionsWithIcon.find((o) => o.value === option.permission_level)?.icon
-							: mdiAccountOff}
-					/>
-				</Avatar>
-				<span class="flex w-1/2 flex-col">
-					<b>{option.profiles.email}</b>
-					<small>{option.profiles.full_name}</small>
-				</span>
-				<span class="flex flex-grow"></span>
-				<div class="flex flex-row">
-					<form
-						class="flex flex-row"
-						method="POST"
-						action={`?/updateLocationPermission`}
-						bind:this={updatePermissionLevelForm}
-						use:enhance={() => {
-							return async ({ result, update }) => {
-								if (result.status == 200) {
-									option['save'] = false;
-								}
-							};
-						}}
-					>
-						<input type="hidden" name="id" value={option.id} />
-						<SelectField
-							id="permission_level"
-							name="permission_level"
-							bind:value={option.permission_level}
-							options={permissionOptionsWithIcon}
-							on:change={() => {
-								option['save'] = true;
-							}}
-							clearable={false}
+	
+	<div class="max-h-[400px] overflow-y-auto px-1 py-2">
+		{#each options as option}
+			<Card class="my-1 p-1">
+				<div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+					<Avatar class="bg-primary text-primary-content mr-2 font-bold" size="lg">
+						<Icon
+							class={option.permission_level
+								? permissionOptionsWithIcon.find((o) => o.value === option.permission_level)?.color
+								: 'text-danger'}
+							data={option.permission_level
+								? permissionOptionsWithIcon.find((o) => o.value === option.permission_level)?.icon
+								: mdiAccountOff}
 						/>
-						{#if option.save}
-							<Button type="submit" variant="outline" icon={mdiFloppy} color="success">Save</Button>
-						{/if}
-					</form>
-					<DeleteDialog id={option.id} user_id={option.user_id} {onPermissionDelete} />
+					</Avatar>
+					<span class="flex flex-col sm:w-1/3">
+						<b class="break-words text-sm sm:text-base">{option.profiles.email}</b>
+						<small>{option.profiles.full_name}</small>
+					</span>
+					<span class="flex-grow"></span>
+					<div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2 mt-2 sm:mt-0">
+						<form
+							class="flex flex-row"
+							method="POST"
+							action={`?/updateLocationPermission`}
+							bind:this={updatePermissionLevelForm}
+							use:enhance={() => {
+								return async ({ result, update }) => {
+									if (result.status == 200) {
+										option['save'] = false;
+									}
+								};
+							}}
+						>
+							<input type="hidden" name="id" value={option.id} />
+							<SelectField
+								id="permission_level"
+								name="permission_level"
+								bind:value={option.permission_level}
+								options={permissionOptionsWithIcon}
+								on:change={() => {
+									option['save'] = true;
+								}}
+								clearable={false}
+							/>
+							{#if option.save}
+								<Button type="submit" variant="outline" icon={mdiFloppy} color="success">Save</Button>
+							{/if}
+						</form>
+						<DeleteDialog id={option.id} user_id={option.user_id} {onPermissionDelete} />
+					</div>
 				</div>
-			</div>
-		</Card>
-	{/each}
+			</Card>
+		{/each}
+	</div>
 </Card>
