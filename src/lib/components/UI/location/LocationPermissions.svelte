@@ -77,7 +77,7 @@
 		{#each options as option}
 			<Card class="my-1 p-1">
 				<div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-					<Avatar class="bg-primary text-primary-content mr-2 font-bold" size="lg">
+					<Avatar class="text-primary-content mr-2 font-bold" size="lg">
 						<Icon
 							class={option.permission_level
 								? permissionOptionsWithIcon.find((o) => o.value === option.permission_level)?.color

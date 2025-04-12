@@ -4,7 +4,7 @@
 	import { error } from 'highcharts';
 	import { superForm } from 'sveltekit-superforms';
 	import { Avatar, Button, Card, Header, Icon, TextField } from 'svelte-ux';
-	import { mdiMapMarker } from '@mdi/js';
+	import { mdiFloppy, mdiMapMarker } from '@mdi/js';
 
 	let { location, locationGeneralForm } = $props();
 	let { form, errors, enhance } = superForm(locationGeneralForm);
@@ -35,27 +35,34 @@
 				class="w-full"
 			/>
 		</div>
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-			<TextField 
-				label="Latitude" 
-				type="text" 
-				name="lat" 
-				id="lat" 
-				bind:value={$form.lat} 
+		<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+			<TextField
+				label="Latitude"
+				type="text"
+				name="lat"
+				id="lat"
+				bind:value={$form.lat}
 				class="w-full"
 			/>
-			<TextField 
-				label="Longitude" 
-				type="text" 
-				name="long" 
-				id="long" 
+			<TextField
+				label="Longitude"
+				type="text"
+				name="long"
+				id="long"
 				bind:value={$form.long}
 				class="w-full"
 			/>
 		</div>
 
 		<div class="mt-2">
-			<Button type="submit" variant="fill" color="primary" class="w-full" disabled={$form.valid}>
+			<Button
+				type="submit"
+				icon={mdiFloppy}
+				variant="fill"
+				color="primary"
+				class="w-full"
+				disabled={$form.valid}
+			>
 				Save Changes
 			</Button>
 		</div>
