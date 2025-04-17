@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser, dev } from '$app/environment';
-	import DashboardCard from '$lib/components/UI/dashboard/DashboardCard.svelte';
 	import DashboardFilter from '$lib/components/UI/dashboard/DashboardFilter.svelte';
 	import DataRowItem from '$lib/components/UI/dashboard/DataRowItem.svelte';
 	import NotLoggedIn from '$lib/components/UI/NotLoggedIn.svelte';
@@ -10,6 +9,9 @@
 	import { mdiCircle, mdiMapMarker, mdiViewDashboard } from '@mdi/js';
 	import { Avatar, Card, Header, Icon, Tooltip } from 'svelte-ux';
 	import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
+	import { DashboardCard } from '@cropwatchdevelopment/cwui';
+	import { onDestroy } from 'svelte';
+	import { createActiveTimer } from '$lib/utilities/ActiveTimer.js';
 
 	// State initialization
 	let { data } = $props();
@@ -78,6 +80,69 @@
 			return 'bg-primary-content/60 relative flex h-full flex-col rounded-xl border-2 p-1 shadow-md backdrop-blur-sm transition-all duration-300';
 		}
 	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// Simple reactive object to track device active status
+	const deviceActiveStatus = $state({});
+
+	// Store unsubscribe functions for cleanup
+	const unsubscribers = [];
+
+	// Initialize active timers for each device
+	$effect(() => {
+		// Clear previous timers
+		unsubscribers.forEach((unsub) => unsub());
+		unsubscribers.length = 0;
+
+		// Process each location and device
+		userContext.allLocations.forEach((location) => {
+			location.cw_devices.forEach((device) => {
+				const deviceKey: string = device.dev_eui;
+
+				// Create an active timer for this device with explicit Date conversion
+				const activeTimer = createActiveTimer(
+					new Date(device.latest_data?.created_at),
+					Number(device.upload_interval || device.cw_device_type?.default_upload_interval || 10)
+				);
+
+				// Subscribe to the timer and directly update our state object
+				const unsubscribe = activeTimer.subscribe((isActive) => {
+					console.log(`Device ${device.name} status updated: ${isActive}`);
+					deviceActiveStatus[deviceKey] = isActive;
+				});
+
+				// Store the unsubscribe function for cleanup
+				unsubscribers.push(unsubscribe);
+			});
+		});
+	});
+
+	// Cleanup on destroy
+	onDestroy(() => {
+		unsubscribers.forEach((unsub) => unsub());
+		unsubscribers.length = 0;
+	});
+
+	// Get active status for a specific device
+	function getDeviceActiveStatus(deviceKey: string) {
+		return deviceActiveStatus[deviceKey] ?? null;
+	}
+
+	// Helper function to get active status indicators for a location
+	function getLocationActiveStatus(location) {
+		if (!location?.cw_devices?.length)
+			return { activeDevices: [], allActive: false, allInactive: false };
+
+		const activeValues = location.cw_devices.map((device) => getDeviceActiveStatus(device.dev_eui));
+		const activeDevices = activeValues.filter((status: boolean | null) => status !== null);
+		const allActive =
+			activeDevices.length > 0 && activeDevices.every((status: boolean | null) => status === true);
+		const allInactive =
+			activeDevices.length > 0 && activeDevices.every((status: boolean | null) => status === false);
+
+		return { activeDevices, allActive, allInactive };
+	}
 </script>
 
 <svelte:window bind:innerWidth />
@@ -107,6 +172,41 @@
 		</h2>
 
 		<div class={getContainerClass(dashboardViewType)}>
+		{#each userContext.allLocations
+			.filter((location: ILocation) => {
+				if (hideEmptyLocations) return location.cw_devices.length > 0;
+				return location;
+			})
+			.filter((location: ILocation) => {
+				if (!search?.trim()) return true;
+				return location.name.toLowerCase().includes(search.toLowerCase());
+			}) as location, index (location.location_id)}
+			{@const { activeDevices, allActive, allInactive } = getLocationActiveStatus(location)}
+			<DashboardCard {location} href="#" {activeDevices} {allActive} {allInactive}>
+				{#snippet content()}
+					{#each location.cw_devices as device}
+						{@const deviceKey = device.dev_eui}
+						{@const isActive = getDeviceActiveStatus(deviceKey)}
+
+						<DataRowItem
+							{device}
+							{isActive}
+							dataPointPrimary={device.latest_data?.temperatureC}
+							primaryNotation={device.cw_device_type.primary_data_notation}
+							dataPointSecondary={device.latest_data?.humidity}
+							secondaryNotation={device.cw_device_type.secondary_data_notation}
+							detailHref={`/device/${device.dev_eui}`}
+						>
+							{#snippet children()}
+								<DeviceDataList {device} {isActive} />
+							{/snippet}
+						</DataRowItem>
+					{/each}
+				{/snippet}
+			</DashboardCard>
+		{/each}
+	</div>
+		<!--
 			{#each userContext.allLocations
 				.filter((location: ILocation) => {
 					if (hideEmptyLocations) return location.cw_devices.length > 0;
@@ -141,7 +241,7 @@
 					</div>
 				{/if}
 			{/each}
-		</div>
+		-->
 	</section>
 {:else}
 	<NotLoggedIn />

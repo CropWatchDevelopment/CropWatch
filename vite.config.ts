@@ -12,5 +12,10 @@ export default defineConfig({
 
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
+	},
+	
+	ssr: {
+		// Handle the circular dependency in svelte-ux package
+		noExternal: ['svelte-ux']
 	}
 });

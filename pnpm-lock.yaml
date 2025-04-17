@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@cropwatchdevelopment/cwui':
+        specifier: 0.0.17
+        version: 0.0.17(@mdi/js@7.4.47)(svelte-ux@2.0.0-next.3(postcss-load-config@4.0.2(postcss@8.5.3))(postcss@8.5.3)(svelte@5.25.3))(svelte@5.25.3)
       '@highcharts/svelte':
         specifier: ^1.1.1
         version: 1.1.1(highcharts@11.4.8)(svelte@5.25.3)
@@ -293,6 +296,13 @@ packages:
   '@babel/runtime@7.27.0':
     resolution: {integrity: sha512-VtPOkrdPHZsKc/clNqyi9WUA8TINkZ4cGk63UUE3u4pmB2k+ZMQRDuIOagv8UVd6j7k0T3+RRIb7beKTebNbcw==}
     engines: {node: '>=6.9.0'}
+
+  '@cropwatchdevelopment/cwui@0.0.17':
+    resolution: {integrity: sha512-8Nk0qfvsUqhuQAixonwG/w/5FGCqUbTxFk/BsnNuW6OabJs4rNBCY6Kb6R+P/7e5wQkdPvTS3VORLXPw4S260w==, tarball: https://npm.pkg.github.com/download/@cropwatchdevelopment/cwui/0.0.17/627427e7aca80ff7353b915430119fc57427e315}
+    peerDependencies:
+      '@mdi/js': ^7.0.0
+      svelte: ^5.0.0
+      svelte-ux: ^2.0.0-next.4
 
   '@dagrejs/dagre@1.1.4':
     resolution: {integrity: sha512-QUTc54Cg/wvmlEUxB+uvoPVKFazM1H18kVHBQNmK2NbrDR5ihOCR6CXLnDSZzMcSQKJtabPUWridBOlJM3WkDg==}
@@ -3579,6 +3589,18 @@ snapshots:
   '@babel/runtime@7.27.0':
     dependencies:
       regenerator-runtime: 0.14.1
+
+  '@cropwatchdevelopment/cwui@0.0.17(@mdi/js@7.4.47)(svelte-ux@2.0.0-next.3(postcss-load-config@4.0.2(postcss@8.5.3))(postcss@8.5.3)(svelte@5.25.3))(svelte@5.25.3)':
+    dependencies:
+      '@inlang/paraglide-js': 2.0.1
+      '@layerstack/tailwind': 2.0.0-next.2
+      '@layerstack/utils': 1.0.0
+      '@mdi/js': 7.4.47
+      moment: 2.30.1
+      svelte: 5.25.3
+      svelte-ux: 2.0.0-next.3(postcss-load-config@4.0.2(postcss@8.5.3))(postcss@8.5.3)(svelte@5.25.3)
+    transitivePeerDependencies:
+      - babel-plugin-macros
 
   '@dagrejs/dagre@1.1.4':
     dependencies:
