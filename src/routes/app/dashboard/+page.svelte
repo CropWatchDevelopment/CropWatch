@@ -182,7 +182,7 @@
 				return location.name.toLowerCase().includes(search.toLowerCase());
 			}) as location, index (location.location_id)}
 			{@const { activeDevices, allActive, allInactive } = getLocationActiveStatus(location)}
-			<DashboardCard {location} href="#" {activeDevices} {allActive} {allInactive}>
+			<DashboardCard {location} href={`/app/location/${location.location_id}`} {activeDevices} {allActive} {allInactive}>
 				{#snippet content()}
 					{#each location.cw_devices as device}
 						{@const deviceKey = device.dev_eui}

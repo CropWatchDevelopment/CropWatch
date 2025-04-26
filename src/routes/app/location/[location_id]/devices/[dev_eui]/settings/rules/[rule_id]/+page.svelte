@@ -299,7 +299,7 @@
 						{#if $form.notifier_type}
 							<b>THEN A <u>{messageType.name.toUpperCase()}</u> MESSAGE WILL BE SENT, AND</b>
 						{/if}
-						<b
+						<b class="flex flex-col"
 							>THE RULE WILL NOT SEND ANOTHER MESSAGE UNTIL {nameToJapaneseName($form.subject)} IS</b
 						>
 						<Field
