@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { PRIVATE_DISCORD_CLIENT_SECRET } from '$env/static/private';
+import { PRIVATE_DISCORD_CLIENT_ID, PRIVATE_DISCORD_CLIENT_SECRET } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ url, locals, cookies, fetch }) => {
 	// Get the code from the Discord callback
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ url, locals, cookies, fetch }) => {
 	
 	try {
 		// Exchange the authorization code for an access token
-		const clientId = '1332961064832204893';
+		const clientId = PRIVATE_DISCORD_CLIENT_ID;
 		 // Use the environment variable
 		const clientSecret = PRIVATE_DISCORD_CLIENT_SECRET;
 		
