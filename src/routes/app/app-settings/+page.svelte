@@ -1,14 +1,36 @@
 <script lang="ts">
 	import GeneralAppSettings from '$lib/components/UI/GeneralAppSettings.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte.js';
-	import { mdiCog, mdiCheck, mdiAlertCircle, mdiDisc } from '@mdi/js';
-	import { Icon, Tabs, Card, Avatar, Header, Button } from 'svelte-ux';
+	import { mdiCog, mdiCheck, mdiAlertCircle, mdiDisc, mdiAccount, mdiThemeLightDark, mdiBell, mdiWeb } from '@mdi/js';
+	import { Icon, Tabs, Card, Avatar, Header, Button, Checkbox, Toggle } from 'svelte-ux';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import { message, superForm } from 'sveltekit-superforms/client';
 
 	let { data } = $props();
 	const supabase = $derived(data.supabase);
+	const defaultFormData = {
+		username: '',
+		full_name: '',
+		employer: '',
+		website: '',
+		avatar_url: '',
+		discord_username: '',
+		measurement_system: 'metric',
+		color_theme: 'system',
+		notification_preferences: {
+			email: true,
+			push: true,
+			discord: false
+		}
+	};
+	
+	const { form, enhance, message: formMessage } = superForm(data.form ?? defaultFormData, {
+		resetForm: false,
+		taintedMessage: null,
+		dataType: 'json'
+	});
 
 	let size = $state(10);
 	let url: string = $state('')
@@ -43,9 +65,9 @@
 				throw error
 			}
 			url = filePath
-			// setTimeout(() => {
-			// 	dispatch('upload')
-			// }, 100)
+			form.avatar_url = filePath;
+			// Download immediately to show the user their uploaded avatar
+			await downloadImage(filePath);
 		} catch (error) {
 			if (error instanceof Error) {
 				alert(error.message)
@@ -56,7 +78,9 @@
 	}
 
 	$effect(() => {
-		if (url) downloadImage(url)
+		if (data.profile?.avatar_url) {
+			downloadImage(data.profile.avatar_url);
+		}
 	})
 
 	let userContext = getUserState();
@@ -64,7 +88,8 @@
 
 	let options = [
 		{ label: 'General', value: 1 },
-        { label: 'Notation Settings', value: 2 },
+        { label: 'Profile Settings', value: 2 },
+        { label: 'Notation Settings', value: 3 },
 	];
 
 	let value: number = $state(1);
@@ -151,7 +176,241 @@
 		{#if value === 1}
 			<GeneralAppSettings />
 		{:else if value === 2}
-			settings 2
+			<div class="space-y-8 py-4">
+				{#if $formMessage}
+					<div class={`p-4 rounded-md ${$formMessage.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+						<div class="flex">
+							<Icon data={$formMessage.type === 'success' ? mdiCheck : mdiAlertCircle} class="mr-2" />
+							<p>{$formMessage.text}</p>
+						</div>
+					</div>
+				{/if}
+				
+				<form method="POST" action="?/updateProfile" use:enhance>
+					<Card class="mb-6">
+						<Header title="Profile Information" subheading="Manage your personal information" slot="header">
+							<div slot="avatar">
+								<Avatar class="bg-blue-600 text-white p-1" size="lg">
+									<Icon data={mdiAccount} size="2x" />
+								</Avatar>
+							</div>
+						</Header>
+						
+						<div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+							<!-- Username -->
+							<div class="form-control">
+								<label for="username" class="form-label">Username</label>
+								<input 
+									type="text" 
+									id="username" 
+									name="username" 
+									bind:value={$form.username}
+									class="input input-bordered w-full"
+								/>
+								{#if $form.errors?.username}
+									<span class="text-sm text-red-600">{$form.errors.username}</span>
+								{/if}
+							</div>
+							
+							<!-- Full Name -->
+							<div class="form-control">
+								<label for="full_name" class="form-label">Full Name</label>
+								<input 
+									type="text" 
+									id="full_name" 
+									name="full_name" 
+									bind:value={$form.full_name}
+									class="input input-bordered w-full"
+								/>
+								{#if $form.errors?.full_name}
+									<span class="text-sm text-red-600">{$form.errors.full_name}</span>
+								{/if}
+							</div>
+							
+							<!-- Employer -->
+							<div class="form-control">
+								<label for="employer" class="form-label">Employer</label>
+								<input 
+									type="text" 
+									id="employer" 
+									name="employer" 
+									bind:value={$form.employer}
+									class="input input-bordered w-full"
+								/>
+								{#if $form.errors?.employer}
+									<span class="text-sm text-red-600">{$form.errors.employer}</span>
+								{/if}
+							</div>
+							
+							<!-- Website -->
+							<div class="form-control">
+								<label for="website" class="form-label">Website</label>
+								<div class="flex items-center">
+									<Icon data={mdiWeb} class="mr-2 text-gray-400" />
+									<input 
+										type="url" 
+										id="website" 
+										name="website" 
+										bind:value={$form.website}
+										placeholder="https://yourwebsite.com" 
+										class="input input-bordered w-full"
+									/>
+								</div>
+								{#if $form.errors?.website}
+									<span class="text-sm text-red-600">{$form.errors.website}</span>
+								{/if}
+							</div>
+							
+							<!-- Avatar Upload -->
+							<div class="form-control col-span-2">
+								<label for="avatar" class="form-label">Profile Picture</label>
+								<div class="flex items-center space-x-4">
+									{#if avatarUrl}
+										<img
+											src={avatarUrl}
+											alt="Avatar"
+											class="rounded-full object-cover"
+											style="height: {size}em; width: {size}em;"
+										/>
+									{:else}
+										<div class="avatar bg-gray-200 flex items-center justify-center rounded-full" style="height: {size}em; width: {size}em;">
+											<Icon data={mdiAccount} size="3x" class="text-gray-400" />
+										</div>
+									{/if}
+									<input type="hidden" id="avatar" name="avatar_url" bind:value={$form.avatar_url} />
+									<div>
+										<label class="btn btn-primary" for="single">
+											{uploading ? 'Uploading...' : 'Upload Image'}
+										</label>
+										<input
+											style="visibility: hidden; position:absolute;"
+											type="file"
+											id="single"
+											accept="image/*"
+											bind:files
+											on:change={(e) => uploadAvatar()}
+											disabled={uploading}
+										/>
+										<p class="text-sm text-gray-500 mt-1">Recommended size: 200x200px</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</Card>
+					
+					<!-- Display Preferences -->
+					<Card class="mb-6">
+						<Header title="Display Preferences" subheading="Customize your viewing experience" slot="header">
+							<div slot="avatar">
+								<Avatar class="bg-purple-600 text-white p-1" size="lg">
+									<Icon data={mdiThemeLightDark} size="2x" />
+								</Avatar>
+							</div>
+						</Header>
+						
+						<div class="p-4 space-y-6">
+							<!-- Theme Selection -->
+							<div class="form-control">
+								<label id="theme-label" class="form-label">Theme</label>
+								<div class="flex space-x-4">
+									<label class="flex items-center">
+										<input type="radio" name="color_theme" value="light" bind:group={$form.color_theme} class="radio mr-2"/>
+										Light
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="color_theme" value="dark" bind:group={$form.color_theme} class="radio mr-2"/>
+										Dark
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="color_theme" value="system" bind:group={$form.color_theme} class="radio mr-2"/>
+										System
+									</label>
+								</div>
+							</div>
+							
+							<!-- Measurement System -->
+							<div class="form-control">
+								<label id="measurement-label" class="form-label">Measurement System</label>
+								<div class="flex space-x-4">
+									<label class="flex items-center">
+										<input type="radio" name="measurement_system" value="metric" bind:group={$form.measurement_system} class="radio mr-2"/>
+										Metric (Celsius, kg, km)
+									</label>
+									<label class="flex items-center">
+										<input type="radio" name="measurement_system" value="imperial" bind:group={$form.measurement_system} class="radio mr-2"/>
+										Imperial (Fahrenheit, lb, mi)
+									</label>
+								</div>
+							</div>
+						</div>
+					</Card>
+					
+					<!-- Notification Settings -->
+					<Card class="mb-6">
+						<Header title="Notification Preferences" subheading="Manage how you receive updates" slot="header">
+							<div slot="avatar">
+								<Avatar class="bg-yellow-600 text-white p-1" size="lg">
+									<Icon data={mdiBell} size="2x" />
+								</Avatar>
+							</div>
+						</Header>
+						
+						<div class="p-4 space-y-4">
+							<div class="form-control">
+								<label class="flex items-center space-x-2" for="email_notifications">
+									<input 
+										type="checkbox" 
+										id="email_notifications"
+										name="notification_preferences.email" 
+										bind:checked={$form.notification_preferences.email} 
+										class="checkbox"
+									/>
+									<span>Email Notifications</span>
+								</label>
+								<p class="text-sm text-gray-500 mt-1 ml-7">Receive updates about your sensors, alerts, and account</p>
+							</div>
+							
+							<div class="form-control">
+								<label class="flex items-center space-x-2" for="push_notifications">
+									<input 
+										type="checkbox" 
+										id="push_notifications"
+										name="notification_preferences.push" 
+										bind:checked={$form.notification_preferences.push} 
+										class="checkbox"
+									/>
+									<span>Push Notifications</span>
+								</label>
+								<p class="text-sm text-gray-500 mt-1 ml-7">Get real-time alerts directly in your browser</p>
+							</div>
+							
+							<div class="form-control">
+								<label class="flex items-center space-x-2" for="discord_notifications">
+									<input 
+										type="checkbox" 
+										id="discord_notifications"
+										name="notification_preferences.discord" 
+										bind:checked={$form.notification_preferences.discord} 
+										class="checkbox"
+									/>
+									<span>Discord Notifications</span>
+								</label>
+								<p class="text-sm text-gray-500 mt-1 ml-7">Receive alerts through Discord (requires connection below)</p>
+							</div>
+						</div>
+					</Card>
+					
+					<div class="flex justify-end">
+						<Button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white">
+							Save Profile Settings
+						</Button>
+					</div>
+				</form>
+			</div>
+		{:else if value === 3}
+			<div class="py-4">
+				<p>Notation settings go here</p>
+			</div>
 		{/if}
 	</svelte:fragment>
 </Tabs>
@@ -209,31 +468,3 @@
 		{/if}
 	</div>
 </Card>
-
-<div>
-	{#if avatarUrl}
-		<img
-			src={avatarUrl}
-			alt={avatarUrl ? 'Avatar' : 'No image'}
-			class="avatar image"
-			style="height: {size}em; width: {size}em;"
-		/>
-	{:else}
-		<div class="avatar no-image" style="height: {size}em; width: {size}em;"></div>
-	{/if}
-	<input type="hidden" name="avatarUrl" value={url} />
-	<div style="width: {size}em;">
-		<label class="button primary block" for="single">
-			{uploading ? 'Uploading ...' : 'Upload'}
-		</label>
-		<input
-			style="visibility: hidden; position:absolute;"
-			type="file"
-			id="single"
-			accept="image/*"
-			bind:files
-			onchange={uploadAvatar}
-			disabled={uploading}
-		/>
-	</div>
-</div>
