@@ -61,22 +61,49 @@ export const actions: Actions = {
                 });
             }
 
-            // Build query object
-            const query: Record<string, any> = {
+            // First, check if the record exists for this device/user
+            let existingRecord;
+            
+            if (id !== undefined) {
+                // If ID is provided, find by ID
+                const { data: recordById } = await supabase
+                    .from('report_user_schedule')
+                    .select('*')
+                    .eq('report_user_schedule_id', id)
+                    .single();
+                    
+                existingRecord = recordById;
+            } else {
+                // Otherwise, try to find by device and user ID
+                const { data: recordByDeviceAndUser } = await supabase
+                    .from('report_user_schedule')
+                    .select('*')
+                    .eq('dev_eui', dev_eui)
+                    .eq('user_id', session.user.id)
+                    .single();
+                    
+                existingRecord = recordByDeviceAndUser;
+            }
+            
+            // Build update/insert query
+            const scheduleData: Record<string, any> = {
                 dev_eui,
                 user_id: session.user.id
             };
             
-            // Include ID if provided
-            if (id !== undefined) {
-                query.report_user_schedule_id = id;
-            }
-            
             // Set the appropriate schedule field based on time period
             if (time === 'week') {
-                query.end_of_week = state;
+                scheduleData.end_of_week = state;
+                // If updating an existing record, preserve the other time period setting
+                if (existingRecord) {
+                    scheduleData.end_of_month = existingRecord.end_of_month;
+                }
             } else if (time === 'month') {
-                query.end_of_month = state;
+                scheduleData.end_of_month = state;
+                // If updating an existing record, preserve the other time period setting
+                if (existingRecord) {
+                    scheduleData.end_of_week = existingRecord.end_of_week;
+                }
             } else {
                 return fail(400, { 
                     status: 400, 
@@ -84,32 +111,39 @@ export const actions: Actions = {
                 });
             }
             
-            // Determine conflict handling strategy
-            const onConflict = id !== undefined 
-                ? 'report_user_schedule_id'
-                : 'dev_eui,user_id';
-                
-            // Perform the upsert operation
-            const { data, error } = await supabase
-                .from('report_user_schedule')
-                .upsert(query, {
-                    onConflict,
-                    returning: 'representation'
-                })
-                .select();
-                
-            if (error) {
-                console.error('Error upserting report schedule:', error);
+            let result;
+            
+            if (existingRecord) {
+                // Update existing record
+                const { data, error } = await supabase
+                    .from('report_user_schedule')
+                    .update(scheduleData)
+                    .eq(id !== undefined ? 'report_user_schedule_id' : 'id', id !== undefined ? id : existingRecord.id)
+                    .select();
+                    
+                result = { data, error };
+            } else {
+                // Insert new record
+                const { data, error } = await supabase
+                    .from('report_user_schedule')
+                    .insert(scheduleData)
+                    .select();
+                    
+                result = { data, error };
+            }
+            
+            if (result.error) {
+                console.error('Error updating report schedule:', result.error);
                 return fail(500, { 
                     status: 500, 
                     message: 'Failed to update report schedule',
-                    details: error.message
+                    details: result.error.message
                 });
             }
 
             return { 
                 success: true, 
-                data 
+                data: result.data 
             };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';

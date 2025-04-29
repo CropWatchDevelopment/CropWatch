@@ -2,10 +2,54 @@
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import { mdiEye, mdiFunction, mdiRouterWireless } from '@mdi/js';
 	import moment from 'moment';
-	import { Avatar, Button, Card, ExpansionPanel, Header, Icon, ListItem } from 'svelte-ux';
+	import { Avatar, Button, Card, ExpansionPanel, Header, Icon, ListItem, Switch } from 'svelte-ux';
+	import { toast } from 'svelte-ux/actions';
 
 	const { data } = $props();
-	const deviceAndRules = $derived(data.devicesAndRules);
+	let deviceAndRules = $state(data.devicesAndRules);
+	
+	// Function to toggle rule status
+	const updateRuleStatus = async (ruleId: number, isTriggered: boolean) => {
+		try {
+			const formData = new FormData();
+			formData.append('rule_id', ruleId.toString());
+			formData.append('is_triggered', isTriggered.toString());
+			
+			const response = await fetch('/api/rules/update-status', {
+				method: 'POST',
+				body: formData
+			});
+			
+			if (!response.ok) {
+				const errorData = await response.json();
+				console.error('Error updating rule status', errorData);
+				toast.error('Failed to update rule status', { theme: 'error', timeout: 3000 });
+				return false;
+			}
+			
+			const result = await response.json();
+			
+			// Update the local state to reflect the change
+			deviceAndRules = deviceAndRules.map(device => {
+				if (device.cw_rules) {
+					device.cw_rules = device.cw_rules.map(rule => {
+						if (rule.id === ruleId) {
+							return { ...rule, is_triggered: isTriggered };
+						}
+						return rule;
+					});
+				}
+				return device;
+			});
+			
+			toast.message('Rule status updated successfully', { theme: 'success', timeout: 2000 });
+			return true;
+		} catch (error) {
+			console.error('Failed to update rule status:', error);
+			toast.error('An unexpected error occurred', { theme: 'error', timeout: 3000 });
+			return false;
+		}
+	};
 </script>
 
 <h1>All Reports</h1>
@@ -51,9 +95,16 @@
 												Last Triggered: {moment(criteria.last_triggered).format('YYYY/MM/DD HH:MM')}
 											</p>
 											<p>Trigger Count: {rule.trigger_count}</p>
-											{#if rule.is_triggered}
-												<p>Rule is currently triggered!</p>
-											{/if}
+											<div class="flex items-center mt-1">
+												<span class="mr-2">Status:</span>
+												<Switch
+													checked={rule.is_triggered}
+													on:change={(e) => updateRuleStatus(rule.id, e.target.checked)}
+												/>
+												<span class="ml-2 font-medium" class:text-amber-600={rule.is_triggered} class:text-green-600={!rule.is_triggered}>
+													{rule.is_triggered ? 'Triggered' : 'Not Triggered'}
+												</span>
+											</div>
 										</div>
 										<span class="flex flex-auto"></span>
 										<Button

@@ -43,11 +43,62 @@ export const GET: RequestHandler = async ({ url, params, locals: { supabase, saf
     });
 };
 
-export const POST: RequestHandler = async ({ request, locals: { supabase, safeGetSession } }) => {
+export const POST: RequestHandler = async ({ request, url, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
-    if (!session.user) {
+    if (!session?.user) {
         return redirect(301, '/auth/unauthorized');
     }
+
+    const path = url.pathname;
+
+    // Handle rule status update - specific endpoint for toggle operations
+    if (path === '/api/rules/update-status') {
+        try {
+            const formData = await request.formData();
+            const ruleId = formData.get('rule_id')?.toString();
+            const isTriggered = formData.get('is_triggered') === 'true';
+
+            if (!ruleId) {
+                throw error(400, 'Missing rule ID');
+            }
+
+            const cwRulesService = new CwRulesService(supabase);
+
+            // Get the current rule to preserve other fields
+            const currentRule = await cwRulesService.getById(parseInt(ruleId));
+            if (!currentRule) {
+                throw error(404, 'Rule not found');
+            }
+
+            // Update only the is_triggered field using direct database operation to avoid ON CONFLICT issues
+            const { data, error: updateError } = await supabase
+                .from('cw_rules')
+                .update({ is_triggered: isTriggered })
+                .eq('id', parseInt(ruleId))
+                .select();
+
+            if (updateError) {
+                console.error('Error updating rule status:', updateError);
+                throw error(500, 'Failed to update rule status: ' + updateError.message);
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Rule status updated successfully',
+                rule: data
+            }), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (e) {
+            console.error('Error handling rule status update:', e);
+            throw error(500, 'An unexpected error occurred');
+        }
+    }
+
+    // If it's a regular rule creation, proceed with existing logic
     const newRule = await request.json();
     console.log(newRule);
 
@@ -88,10 +139,7 @@ export const POST: RequestHandler = async ({ request, locals: { supabase, safeGe
             'Content-Type': 'application/json'
         }
     });
-}
-
-
-
+};
 
 export const PUT: RequestHandler = async ({ url, params, request, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
@@ -151,10 +199,7 @@ export const PUT: RequestHandler = async ({ url, params, request, locals: { supa
             'Content-Type': 'application/json'
         }
     });
-}
-
-
-
+};
 
 export const DELETE: RequestHandler = async ({ url, locals: { supabase, safeGetSession } }) => {
     const session = await safeGetSession();
@@ -182,4 +227,4 @@ export const DELETE: RequestHandler = async ({ url, locals: { supabase, safeGetS
         }
     });
 
-}
+};
