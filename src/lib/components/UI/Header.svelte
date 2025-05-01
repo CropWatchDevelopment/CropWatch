@@ -54,7 +54,8 @@
 													Triggered: {moment(rule.last_triggered).format('YYYY/MM/DD HH:mm a')}
 												</p>
 											</div>
-											<Button
+											<!-- Button to remove the alert, too tough to implement now, do it later-->
+											<!-- <Button
 												size="sm"
 												rounded="full"
 												variant="outline"
@@ -65,7 +66,7 @@
 													resetRule(rule.rule_id);
 												}}
 												icon={mdiClose}
-											/>
+											/> -->
 										</div>
 									</MenuItem>
 								{/if}

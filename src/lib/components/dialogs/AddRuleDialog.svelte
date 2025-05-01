@@ -95,12 +95,12 @@
 						/>
 						<SelectField
 							label="Notifier Type"
-							bind:value={$form.babylon_notifier_type}
-							name="babylon_notifier_type"
+							bind:value={$form.notifier_type}
+							name="notifier_type"
 							options={babylonNotifierOptions}
 							required
-							aria-invalid={$errors.babylon_notifier_type ? 'true' : undefined}
-							errors={$errors.babylon_notifier_type}
+							aria-invalid={$errors.notifier_type ? 'true' : undefined}
+							errors={$errors.notifier_type}
 						/>
 					</div>
 

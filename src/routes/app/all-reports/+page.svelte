@@ -3,7 +3,6 @@
 	import { mdiEye, mdiFunction, mdiRouterWireless } from '@mdi/js';
 	import moment from 'moment';
 	import { Avatar, Button, Card, ExpansionPanel, Header, Icon, ListItem, Switch } from 'svelte-ux';
-	import { toast } from 'svelte-ux/actions';
 
 	const { data } = $props();
 	let deviceAndRules = $state(data.devicesAndRules);
@@ -23,7 +22,6 @@
 			if (!response.ok) {
 				const errorData = await response.json();
 				console.error('Error updating rule status', errorData);
-				toast.error('Failed to update rule status', { theme: 'error', timeout: 3000 });
 				return false;
 			}
 			
@@ -42,11 +40,9 @@
 				return device;
 			});
 			
-			toast.message('Rule status updated successfully', { theme: 'success', timeout: 2000 });
 			return true;
 		} catch (error) {
 			console.error('Failed to update rule status:', error);
-			toast.error('An unexpected error occurred', { theme: 'error', timeout: 3000 });
 			return false;
 		}
 	};

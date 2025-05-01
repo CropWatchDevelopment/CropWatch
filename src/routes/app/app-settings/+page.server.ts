@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
-import { fail, setError } from '@sveltejs/kit';
-import { superValidate, message } from 'sveltekit-superforms/server';
+import { fail } from '@sveltejs/kit';
+import { superValidate, message, setError } from 'sveltekit-superforms/server';
 import { zod } from 'sveltekit-superforms/adapters';
 
 // Create a schema for profile settings

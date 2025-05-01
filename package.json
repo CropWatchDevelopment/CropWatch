@@ -54,7 +54,7 @@
 		"zod": "^3.24.2"
 	},
 	"dependencies": {
-		"@cropwatchdevelopment/cwui": "0.0.19",
+		"@cropwatchdevelopment/cwui": "0.0.20",
 		"@highcharts/svelte": "^1.1.1",
 		"@layerstack/tailwind": "2.0.0-next.2",
 		"@mdi/js": "^7.4.47",
@@ -81,7 +81,7 @@
 		"postcss": "^8.5.3",
 		"stripe": "^17.7.0",
 		"sveaflet": "^0.1.4",
-		"svelte-ux": "2.0.0-next.3",
+		"svelte-ux": "1.0.4",
 		"sveltekit-i18n": "^2.4.2",
 		"utf-8-validate": "^6.0.5"
 	}

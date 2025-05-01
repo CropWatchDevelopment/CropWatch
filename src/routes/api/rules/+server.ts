@@ -108,7 +108,7 @@ export const POST: RequestHandler = async ({ request, url, locals: { supabase, s
     const cwRulesService = new CwRulesService(supabase);
     const addedRule = await cwRulesService.add({
         action_recipient: newRule.action_recipient,
-        babylon_notifier_type: newRule.babylon_notifier_type,
+        notifier_type: newRule.notifier_type,
         dev_eui: newRule.dev_eui,
         is_triggered: false,
         name: newRule.name,
@@ -158,7 +158,7 @@ export const PUT: RequestHandler = async ({ url, params, request, locals: { supa
 
     const updateObject: Tables<'cw_rules'> = {
         action_recipient: ruleToEdit.action_recipient,
-        babylon_notifier_type: ruleToEdit.babylon_notifier_type,
+        notifier_type: ruleToEdit.notifier_type,
         dev_eui: devEui,
         is_triggered: ruleToEdit.is_triggered,
         name: ruleToEdit.name,

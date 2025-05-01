@@ -15,7 +15,7 @@ const ruleSchema = z.object({
     is_triggered: z.boolean().default(false),
     profile_id: z.string(),
     ruleGroupId: z.string(),
-    babylon_notifier_type: z.number().default(3),
+    notifier_type: z.number().default(3),
     subject: z.string().min(1, "Subject is required"),
     operator: z.string().min(1, "Operator is required"),
     trigger_value: z.number(),
@@ -81,7 +81,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase, safeGet
                 existingData = {
                     name: existingRule.name,
                     dev_eui: existingRule.dev_eui,
-                    babylon_notifier_type: existingRule.babylon_notifier_type,
+                    notifier_type: existingRule.notifier_type,
                     action_recipient: existingRule.action_recipient,
                     ruleGroupId: existingRule.ruleGroupId,
                     subject: existingRule.cw_rule_criteria[0]?.subject || '',
@@ -93,7 +93,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase, safeGet
         }
 
         const { data: notificationTypes, error: notificationError } = await supabase
-            .from('babylon_notifier_types')
+            .from('cw_notifier_types')
             .select('*');
 
         const form = await superValidate(existingData, zod(ruleSchema));
@@ -101,7 +101,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase, safeGet
         return {
             form,
             SubjectOptions: subjectOptions,
-            notificationTypes: notificationTypes,
+            notificationTypes: notificationTypes ?? [],
             session
         };
     } catch (error) {
@@ -130,7 +130,7 @@ export const actions: Actions = {
             const ruleData = {
                 name: form.data.name,
                 dev_eui: form.data.dev_eui,
-                babylon_notifier_type: form.data.babylon_notifier_type,
+                notifier_type: form.data.notifier_type,
                 action_recipient: form.data.action_recipient,
                 ruleGroupId: form.data.ruleGroupId,
                 profile_id: session.user.id,
@@ -213,7 +213,7 @@ export const actions: Actions = {
             const ruleData = {
                 name: form.data.name,
                 dev_eui: form.data.dev_eui,
-                babylon_notifier_type: form.data.babylon_notifier_type,
+                notifier_type: form.data.notifier_type,
                 action_recipient: form.data.action_recipient,
                 ruleGroupId: form.data.ruleGroupId,
             };

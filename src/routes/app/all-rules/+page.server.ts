@@ -6,6 +6,15 @@ export const load = async ({ params, fetch, locals: { supabase, safeGetSession }
         return redirect(303, '/auth/login?redirect=/app&reason=unauthenticated');
     }
 
+    // const { data: devices, error } = await supabase
+    //     .from('cw_devices')
+    //     .select(`
+    //         *,
+    //         cw_locations(*),
+    //         cw_rules!inner(*, cw_rule_criteria(*))
+    //     `)
+    //     .eq('user_id', session.user.id);
+    
     const { data: devices, error } = await supabase
         .from('cw_devices')
         .select(`
@@ -13,7 +22,7 @@ export const load = async ({ params, fetch, locals: { supabase, safeGetSession }
             cw_locations(*),
             cw_rules!inner(*, cw_rule_criteria(*))
         `)
-        .eq('user_id', session.user.id);
+        .eq('cw_rules.profile_id', session.user.id);
     if (error) {
         console.error('Error fetching devices:', error);
         return { devices: [] };

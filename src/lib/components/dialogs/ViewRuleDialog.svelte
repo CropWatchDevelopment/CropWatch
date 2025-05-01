@@ -1,72 +1,3 @@
-<!-- <script>
-	import { enhance } from '$app/forms';
-	import { ReverseOperator } from '$lib/utilities/ReverseOfOperators';
-	import { mdiEye } from '@mdi/js';
-	import { Button, Card, Dialog, Toggle, Tooltip } from 'svelte-ux';
-
-	let { rule } = $props();
-</script>
-
-<Toggle let:on={open} let:toggle let:toggleOff>
-	<Tooltip title="View Rule" position="bottom">
-		<Button icon={mdiEye} on:click={toggle} color="info" variant="outline" class="ml-5">
-			<b class="hidden md:inline">View Rule</b>
-		</Button>
-	</Tooltip>
-	<Dialog {open} on:close={toggleOff}>
-		<div slot="title">Rule Name: {rule.name}</div>
-        
-        <Card>
-            <h2>WHEN</h2>
-            {#each rule.cw_rule_criteria as criterium, i}
-                <p>{criterium.subject} is {criterium.operator} {criterium.trigger_value}</p>
-                {#if i < rule.cw_rule_criteria.length - 1}
-                    <p>AND</p>
-                {/if}
-            {/each}
-            <h2>THEN</h2>
-            <p>
-                an
-                {#if rule.babylon_notifier_type == 1}
-                    email
-                {/if}
-                {#if rule.babylon_notifier_type == 2}
-                    SMS
-                {/if}
-                {#if rule.babylon_notifier_type == 3}
-                    webhook
-                {/if}
-                {#if rule.babylon_notifier_type == 4}
-                    push notification
-                {/if}
-                will be sent to
-                {rule.action_recipient}
-            </p>
-
-            <p>This rule is currently {rule.is_triggered ? 'Triggered' : 'Not Triggered'}</p>
-
-            <h2>Finally</h2>
-            <p>
-                This rule will reset when:
-                {#each rule.cw_rule_criteria as criterium, i}
-                    {criterium.subject} is {ReverseOperator(criterium.operator)} {criterium.reset_value}
-                    {#if i < rule.cw_rule_criteria.length - 1}
-                        AND
-                    {/if}
-                {/each}
-            </p>
-
-            <small>(This rule has been triggered {rule.trigger_count} times.)</small>
-        </Card>
-        
-		<div slot="actions">
-            <Button on:click={toggleOff}>Close</Button>
-		</div>
-	</Dialog>
-</Toggle> -->
-
-
-
 <script>
 	import { enhance } from '$app/forms';
 	import { ReverseOperator } from '$lib/utilities/ReverseOfOperators';
@@ -109,13 +40,13 @@
                 <div class="pl-4 flex gap-1 flex-wrap">
                     <span>An</span>
                     <span class="font-medium">
-                        {#if rule.babylon_notifier_type == 1}
+                        {#if rule.notifier_type == 1}
                             email
-                        {:else if rule.babylon_notifier_type == 2}
+                        {:else if rule.notifier_type == 2}
                             SMS
-                        {:else if rule.babylon_notifier_type == 3}
+                        {:else if rule.notifier_type == 3}
                             webhook
-                        {:else if rule.babylon_notifier_type == 4}
+                        {:else if rule.notifier_type == 4}
                             push notification
                         {/if}
                     </span>

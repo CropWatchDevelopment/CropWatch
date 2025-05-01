@@ -5,6 +5,7 @@
   [![CodeQL - Master](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
   [![CodeQL - Develop](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=develop)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
   [![codecov](https://codecov.io/gh/CropWatchDevelopment/CropWatch/graph/badge.svg?token=H0LAIQ38KG)](https://codecov.io/gh/CropWatchDevelopment/CropWatch)
+  ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/CropWatchDevelopment/CropWatch?utm_source=oss&utm_medium=github&utm_campaign=CropWatchDevelopment%2FCropWatch&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 </div>
 <br>
@@ -38,14 +39,14 @@ Link : https://app.CropWatch.io
 - [x] [Dashboard]()
 - [x] [Locations]()
 - [x] [Location Details]()
-- [ ] [Sensor Details]()
-- [ ] [Sensor Rules]()
-- [ ] [Sensor Settings]()
+- [X] [Sensor Details]()
+- [X] [Sensor Rules]()
+- [X] [Sensor Settings]()
 - [ ] [Sensor Compare]()
 - [ ] [Many Many Sensor Pages...]()
 - [ ] [Settings Page with notations]()
 - [ ] [Push Notifications]()
-- [ ] [Real-Time Updates]()
+- [-] [Real-Time Updates]()
 
 # List of Tools & Packages Used:
 - [Svelte-UX](https://github.com/techniq/svelte-ux)

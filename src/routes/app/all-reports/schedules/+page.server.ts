@@ -22,6 +22,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
                 *,
                 report_user_schedule(*)
             `)
+            .not('report_endpoint', 'is', null)
             .eq('report_user_schedule.user_id', session.user.id);
 
         if (error) {

@@ -30,31 +30,6 @@
 	// Get page data from props
 	const { data } = $props<{ data: PageData }>();
 
-	// Initialize new email input field
-	let newEmail: string = $state('');
-
-	let messageType = $derived(
-		data.notificationTypes ? data.notificationTypes.find((type) => type.id === $form.notifier_type) : 0
-	);
-
-	console.log(data.notificationTypes);
-	let notificationTypeOptions = $derived(
-		data.notificationTypes.map((type) => ({
-			value: type.notifier_id,
-			label: type.name
-		}))
-	);
-
-	// Parse existing recipients or initialize empty
-	let recipients: EmailRecipient[] = $state(
-		data.form.data.action_recipient
-			? data.form.data.action_recipient
-					.split(',')
-					.filter((email) => email.trim() !== '')
-					.map((email) => ({ email, valid: isValidEmail(email) }))
-			: []
-	);
-
 	// Config for superForm - handles validation and submission
 	const { form, errors, enhance, submitting, message } = superForm(data.form, {
 		onUpdate({ form }) {
@@ -75,6 +50,31 @@
 			}
 		}
 	});
+
+	// Initialize new email input field
+	let newEmail: string = $state('');
+
+	// Now we can safely use $form since it's been initialized
+	let messageType = $derived(
+		data.notificationTypes ? data.notificationTypes.find((type) => type.id === $form.notifier_type) : 0
+	);
+
+	let notificationTypeOptions = $derived(
+		data.notificationTypes.map((type) => ({
+			value: type.notifier_id,
+			label: type.name
+		}))
+	);
+
+	// Parse existing recipients or initialize empty
+	let recipients: EmailRecipient[] = $state(
+		data.form.data.action_recipient
+			? data.form.data.action_recipient
+					.split(',')
+					.filter((email) => email.trim() !== '')
+					.map((email) => ({ email, valid: isValidEmail(email) }))
+			: []
+	);
 
 	// Determine if we're creating or editing
 	const isNewRule = $page.params.rule_id === 'new';
@@ -155,7 +155,7 @@
 			<!-- Hidden fields -->
 			<input type="hidden" name="dev_eui" bind:value={$page.params.dev_eui} />
 			<input type="hidden" name="profile_id" value={data.session?.user.id} />
-			<input type="hidden" name="babylon_notifier_type" value={$form.babylon_notifier_type} />
+			<input type="hidden" name="notifier_type" value={$form.notifier_type} />
 			<input type="hidden" name="ruleGroupId" value={$form.ruleGroupId || generateCustomUUIDv4()} />
 			<input type="hidden" name="action_recipient" bind:value={$form.action_recipient} />
 
@@ -195,10 +195,10 @@
 						options={notificationTypeOptions}
 						label="Notifier Type"
 						placeholder="Select notification type"
-						id="babylon_notifier_type"
-						name="babylon_notifier_type"
-						bind:value={$form.babylon_notifier_type}
-						error={$errors.babylon_notifier_type}
+						id="notifier_type"
+						name="notifier_type"
+						bind:value={$form.notifier_type}
+						error={$errors.notifier_type}
 						autoPlacement={false}
 						placement="bottom-start"
 						required
@@ -297,7 +297,7 @@
 					<!-- Trigger and Reset Values -->
 					<div class="flex flex-row gap-2.5">
 						{#if $form.notifier_type}
-							<b>THEN A <u>{messageType.name.toUpperCase()}</u> MESSAGE WILL BE SENT, AND</b>
+							<b>THEN A <u>{messageType?.name}</u> MESSAGE WILL BE SENT, AND</b>
 						{/if}
 						<b class="flex flex-col"
 							>THE RULE WILL NOT SEND ANOTHER MESSAGE UNTIL {nameToJapaneseName($form.subject)} IS</b
