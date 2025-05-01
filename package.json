@@ -62,7 +62,7 @@
 		"@sveltejs/adapter-vercel": "^5.6.3",
 		"@tailwindcss/postcss": "^4.0.17",
 		"@tailwindcss/vite": "^4.0.17",
-		"@thisux/sveltednd": "^0.0.16",
+		"@thisux/sveltednd": "^0.0.20",
 		"@zxing/library": "^0.21.3",
 		"bufferutil": "^4.0.9",
 		"d3": "^7.9.0",
