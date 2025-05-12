@@ -56,8 +56,10 @@ let dataPoints = $derived(
         {#if device.latestData[dataPointKey] !== null}
             <div class="py-1 pl-2">
                 <div class="flex items-center">
-                    <p class="text-base text-gray-500 dark:text-gray-300">{nameToEmoji(dataPointKey)}</p>
-                    <p class="ml-1 text-right text-gray-600 dark:text-gray-400 text-sm">{nameToJapaneseName(dataPointKey)}</p>
+                    <div class="flex items-center min-w-[120px]">
+                        <span class="text-gray-500 dark:text-gray-400 text-lg mr-1.5">{nameToEmoji(dataPointKey)}</span>
+                        <span class="text-gray-600 dark:text-gray-400 text-sm">{nameToJapaneseName(dataPointKey)}</span>
+                    </div>
                     <span class="flex-grow"></span>
 
                     {#if dataPointKey === 'created_at'}
@@ -69,12 +71,14 @@ let dataPoints = $derived(
                             />&nbsp;ago
                         </p>
                     {:else}
-                        <span class="text-gray-900 dark:text-gray-100 font-medium">
-                            <TweenedValue value={device.latestData[dataPointKey]} format="decimal" />
-                        </span>
-                        <small>
-                            <sup class="text-accent-700 dark:text-accent-400">{nameToNotation(dataPointKey)}</sup>
-                        </small>
+                        <div class="text-right">
+                            <span class="text-gray-900 dark:text-white font-bold text-lg">
+                                <TweenedValue value={device.latestData[dataPointKey]} format="decimal" />
+                            </span>
+                            <span class="text-accent-700 dark:text-accent-400 text-xs ml-0.5 align-top">
+                                {nameToNotation(dataPointKey)}
+                            </span>
+                        </div>
                     {/if}
                 </div>
 

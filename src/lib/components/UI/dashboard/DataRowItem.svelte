@@ -5,6 +5,7 @@
     import { mdiArrowRight } from '@mdi/js';
     import moment from 'moment';
     import { nameToEmoji } from '$lib/utilities/NameToEmoji';
+    import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
     import type { Device } from '$lib/models/Device';
     import type { Location } from '$lib/models/Location';
     import { createActiveTimer } from '$lib/utilities/ActiveTimer';
@@ -97,38 +98,37 @@
                 <div class="justify-left flex flex-row">
                     <b class="ml-4 text-sm text-gray-700 dark:text-gray-300 font-semibold tracking-wide pb-1">{device.name || `Device ${device.dev_eui}`}</b>
                 </div>
-                <div class="flex flex-row justify-center ">
+                <div class="flex flex-row justify-center space-x-4">
                     {#if device.latestData}
-                        <p class="m-auto justify-center">
-                            <span>
-                                <span class="text-gray-500 dark:text-gray-300">{nameToEmoji(primaryDataKey)}</span>
-                                <span class="text-gray-900 dark:text-gray-100 font-medium">
+                        <div class="flex items-center">
+                            <span class="text-gray-500 dark:text-gray-400 text-lg mr-1.5">{nameToEmoji(primaryDataKey)}</span>
+                            <div class="flex flex-col items-start">
+                                <span class="text-gray-900 dark:text-white font-bold text-lg leading-tight">
                                     <TweenedValue
                                         value={primaryValue}
                                         format="decimal"
                                     />
+                                    <span class="text-accent-700 dark:text-accent-400 text-xs font-normal ml-0.5 align-top">{primaryNotation}</span>
                                 </span>
-                            </span>
-                            <small>
-                                <sup class="text-accent-700 dark:text-accent-400">{primaryNotation}</sup>
-                            </small>
-                        </p>
-                        <p class="m-auto justify-center">
-                            <span>
-                                {#if secondaryDataKey}
-                                    <span class="text-gray-500 dark:text-gray-300">{nameToEmoji(secondaryDataKey)}</span>
-                                    <span class="text-gray-900 dark:text-gray-100 font-medium">
-                                        <TweenedValue
-                                            value={secondaryValue}
-                                            format="decimal"
-                                        />
-                                    </span>
-                                {/if}
-                            </span>
-                            <small>
-                                <sup class="text-accent-700 dark:text-accent-400">{secondaryNotation}</sup>
-                            </small>
-                        </p>
+                                <span class="text-gray-500 dark:text-gray-400 text-xs">{nameToJapaneseName(primaryDataKey)}</span>
+                            </div>
+                        </div>
+                        
+                        {#if secondaryDataKey}
+                        <div class="flex items-center">
+                            <span class="text-gray-500 dark:text-gray-400 text-lg mr-1.5">{nameToEmoji(secondaryDataKey)}</span>
+                            <div class="flex flex-col items-start">
+                                <span class="text-gray-900 dark:text-white font-bold text-lg leading-tight">
+                                    <TweenedValue
+                                        value={secondaryValue}
+                                        format="decimal"
+                                    />
+                                    <span class="text-accent-700 dark:text-accent-400 text-xs font-normal ml-0.5 align-top">{secondaryNotation}</span>
+                                </span>
+                                <span class="text-gray-500 dark:text-gray-400 text-xs">{nameToJapaneseName(secondaryDataKey)}</span>
+                            </div>
+                        </div>
+                        {/if}
                     {/if}
                 </div>
             </div>

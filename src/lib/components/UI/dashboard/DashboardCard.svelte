@@ -38,7 +38,7 @@
         <h2 class="flex justify-between items-center text-xl font-semibold py-3 px-2  text-yellow-600 dark:text-yellow-400">
             <span>{location.name}</span>
           <button 
-    class="bg-[var(--color-primary)] text-white w-9 h-9 rounded-full border-none inline-flex items-center justify-center p-0 ml-2 flex-shrink-0 cursor-pointer transition-colors duration-200 hover:bg-[var(--color-primary-hover,#005bbb)]"
+    class="bg-blue-50 dark:bg-gray-700 text-blue-700 dark:text-blue-300 w-9 h-9 rounded-full border border-blue-200 dark:border-gray-600 inline-flex items-center justify-center p-0 ml-2 flex-shrink-0 cursor-pointer transition-colors duration-200 hover:bg-blue-100 dark:hover:bg-gray-600"
     onclick={() => goto(href)}
     aria-label="View details"
 >
