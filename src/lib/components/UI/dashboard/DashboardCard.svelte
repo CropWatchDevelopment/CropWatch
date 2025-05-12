@@ -22,8 +22,8 @@
     }>();
 </script>
 
-<div class="dashboard-card">
-    <div class="card-header">
+<div class="dashboard-card ">
+    <div class="card-header ">
         <div class="pattern-bg">
             <div class="status-indicator {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
                 {#if allActive}
@@ -35,21 +35,21 @@
                 {/if}
             </div>
         </div>
-        <h2 class="location-title">
+        <h2 class="location-title py-3 px-1 mb-1">
             <span>{location.name}</span>
-            <button 
-                class="details-button"
-                onclick={() => goto(href)}
-            >
-                <span class="sr-only">View details</span>
-                <svg viewBox="0 0 24 24" class="h-6 w-6">
-                    <path fill="currentColor" d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
-                </svg>
-            </button>
+          <button 
+    class="details-button"
+    onclick={() => goto(href)}
+    aria-label="View details"
+>
+    <svg viewBox="0 0 24 24" class="icon">
+        <path fill="currentColor" d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
+    </svg>
+</button>
         </h2>
     </div>
 
-    <div class="card-content">
+    <div class="py-3 px-2">
         <div class="device-list">
             {#if content}
                 {@render content()}
@@ -153,39 +153,41 @@
         font-size: 1.5rem;
     }
 
-    .card-content {
-        padding: 1rem;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
     .location-title {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 0.75rem;
         font-size: 1.25rem;
         font-weight: 500;
     }
 
-    .details-button {
-        background-color: var(--color-primary);
-        color: white;
-        border: none;
-        border-radius: 0.25rem;
-        width: 2rem;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
+.details-button {
+    background-color: var(--color-primary);
+    color: white;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-left: 0.5rem; /* Add spacing from text */
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
 
-    .details-button:hover {
-        background-color: var(--color-primary-hover);
-    }
+.details-button:hover {
+    background-color: var(--color-primary-hover, #005bbb);
+}
+
+.details-button .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    pointer-events: none;
+}
+
 
     .device-list {
         display: flex;

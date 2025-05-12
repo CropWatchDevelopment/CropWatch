@@ -53,7 +53,7 @@
 .dark {
 	/* Base colors */
 	--color-primary: #3a8c3f;
-	--color-primary-hover: #2d6e31;
+	--color-primary-hover: #4caf50;
 	--color-background: #1a1a1a;
 	--color-foreground: #2d2d2d;
 	--color-foreground-light: #383838;
@@ -166,7 +166,6 @@ button.primary:hover {
 .dark .dark\:bg-card-dark {
 	background-color: var(--color-card, #2d2d2d);
 }
-
 
 /* Buttons */
 

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Button, Collapse, TweenedValue } from 'svelte-ux';
+    import { Collapse, TweenedValue } from 'svelte-ux';
+    import Button from './components/Button.svelte';
     import { goto } from '$app/navigation';
     import { mdiArrowRight } from '@mdi/js';
     import moment from 'moment';
@@ -83,67 +84,64 @@
 </script>
 
 <Collapse
-    classes={{ root: 'shadow-md pr-2 bg-surface-200/50 w-full', icon: 'data-[open=true]:rotate-90' }}
+    classes={{ root: 'shadow-md pr-2 mb-2 bg-surface-50/50 dark:bg-surface-900/50 w-full', icon: 'data-[open=true]:rotate-90' }}
     open={defaultCollapse}
     on:change={(e) => collapseStateChange(e)}
 >
-    <svelte:fragment slot="trigger">
-        <div class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}">
-            <div class="my-1 mr-2 border-r-2">
-                <div class="flex flex-col text-center text-base">
-                    <div class="justify-left flex flex-row">
-                        <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
-                    </div>
-                    <div class="flex flex-row justify-center">
-                        {#if device.latestData}
-                            <p class="m-auto justify-center">
-                                <span>
-                                    {nameToEmoji(primaryDataKey)}
+    <div
+        slot="trigger"
+        class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+    >
+        <div class="my-1 mr-2 border-r-2">
+            <div class="flex flex-col text-center text-base">
+                <div class="justify-left flex flex-row">
+                    <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
+                </div>
+                <div class="flex flex-row justify-center ">
+                    {#if device.latestData}
+                        <p class="m-auto justify-center">
+                            <span>
+                                {nameToEmoji(primaryDataKey)}
+                                <TweenedValue
+                                    value={primaryValue}
+                                    format="decimal"
+                                />
+                            </span>
+                            <small>
+                                <sup class="text-accent-300">{primaryNotation}</sup>
+                            </small>
+                        </p>
+                        <p class="m-auto justify-center">
+                            <span>
+                                {#if secondaryDataKey}
+                                    {nameToEmoji(secondaryDataKey)}
                                     <TweenedValue
-                                        value={primaryValue}
+                                        value={secondaryValue}
                                         format="decimal"
                                     />
-                                </span>
-                                <small>
-                                    <sup class="text-accent-300">{primaryNotation}</sup>
-                                </small>
-                            </p>
-                            <p class="m-auto justify-center">
-                                <span>
-                                    {#if secondaryDataKey}
-                                        {nameToEmoji(secondaryDataKey)}
-                                        <TweenedValue
-                                            value={secondaryValue}
-                                            format="decimal"
-                                        />
-                                    {/if}
-                                </span>
-                                <small>
-                                    <sup class="text-accent-300">{secondaryNotation}</sup>
-                                </small>
-                            </p>
-                        {/if}
-                    </div>
+                                {/if}
+                            </span>
+                            <small>
+                                <sup class="text-accent-300">{secondaryNotation}</sup>
+                            </small>
+                        </p>
+                    {/if}
                 </div>
             </div>
         </div>
-    </svelte:fragment>
+    </div>
     
     <slot></slot>
     
     <div
-        class="border-l-8 pl-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+        class="border-l-8 pl-1 pb-2 {isActive ? '!border-l-green-500' : 'border-l-red-500'} "
     >
         {#if detailHref || location}
-            <Button
-                onclick={() => goto(detailHref || `/location/${location?.location_id}/devices/${device.dev_eui}`)}
-                variant="fill"
-                color="info"
-                class="mb-1 w-full"
-                icon={mdiArrowRight}
-            >
-                View Details
-            </Button>
+      <Button
+  text="View Details"
+  iconPath={mdiArrowRight}
+  onClick={() => goto(`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`)}
+/>
         {/if}
     </div>
 </Collapse>
