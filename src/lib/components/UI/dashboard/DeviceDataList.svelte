@@ -43,7 +43,7 @@ let dataPoints = $derived(
 </script>
 
 <div
-    class="mr-2 border-l-8
+    class=" border-l-8
         {isActive ? 'border-l-green-500'
                 : 'border-l-red-500'}
         {device.latestData?.created_at === null ? 'opacity-50' : ''}"
@@ -54,7 +54,7 @@ let dataPoints = $derived(
 
     {#each dataPoints as dataPointKey, index}
         {#if device.latestData[dataPointKey] !== null}
-            <div class="py-1">
+            <div class="py-1 pl-2">
                 <div class="flex">
                     <p class="text-base text-primary">{nameToEmoji(dataPointKey)}</p>
                     <p class="ml-1 text-right">{nameToJapaneseName(dataPointKey)}</p>

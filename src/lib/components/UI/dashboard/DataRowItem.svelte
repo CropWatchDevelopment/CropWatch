@@ -84,7 +84,7 @@
 </script>
 
 <Collapse
-    classes={{ root: 'shadow-md pr-2 mb-2 bg-surface-50/50 dark:bg-surface-900/50 w-full', icon: 'data-[open=true]:rotate-90' }}
+    classes={{ root: 'mb-1 bg-surface-50/30 dark:bg-surface-900/30 w-full', icon: 'data-[open=true]:rotate-90' }}
     open={defaultCollapse}
     on:change={(e) => collapseStateChange(e)}
 >
@@ -93,7 +93,7 @@
         class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
     >
         <div class="my-1 mr-2 border-r-2">
-            <div class="flex flex-col text-center text-base">
+            <div class="flex flex-col text-base">
                 <div class="justify-left flex flex-row">
                     <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
                 </div>
@@ -134,7 +134,7 @@
     <slot></slot>
     
     <div
-        class="border-l-8 pl-1 pb-2 {isActive ? '!border-l-green-500' : 'border-l-red-500'} "
+        class="border-l-8 pl-2 pb-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'} "
     >
         {#if detailHref || location}
       <Button

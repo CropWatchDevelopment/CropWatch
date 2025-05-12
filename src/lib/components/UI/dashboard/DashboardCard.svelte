@@ -22,35 +22,35 @@
     }>();
 </script>
 
-<div class="dashboard-card ">
-    <div class="card-header ">
+<div class="bg-[var(--color-card)] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-md dark:shadow-gray-900/20 h-full w-full flex flex-col">
+    <div class="relative">
         <div class="pattern-bg">
-            <div class="status-indicator {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
+            <div class="status-indicator absolute top-3 left-3 h-10 w-10 rounded-full flex items-center justify-center {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
                 {#if allActive}
-                    <Icon class="status-icon" path={mdiCheck} />
+                    <Icon class="text-white text-2xl status-icon" path={mdiCheck} />
                 {:else if activeDevices.length > 0 && !allInactive}
-                    <Icon class="status-icon" path={mdiAlert} />
+                    <Icon class="text-white text-2xl status-icon" path={mdiAlert} />
                 {:else}
-                    <Icon class="status-icon" path={mdiClose} />
+                    <Icon class="text-white text-2xl status-icon" path={mdiClose} />
                 {/if}
             </div>
         </div>
-        <h2 class="location-title py-3 px-1 mb-1">
+        <h2 class="flex justify-between items-center text-xl font-medium py-3 px-2 mb-1">
             <span>{location.name}</span>
           <button 
-    class="details-button"
+    class="bg-[var(--color-primary)] text-white w-9 h-9 rounded-full border-none inline-flex items-center justify-center p-0 ml-2 flex-shrink-0 cursor-pointer transition-colors duration-200 hover:bg-[var(--color-primary-hover,#005bbb)]"
     onclick={() => goto(href)}
     aria-label="View details"
 >
-    <svg viewBox="0 0 24 24" class="icon">
+    <svg viewBox="0 0 24 24" class="w-5 h-5 pointer-events-none">
         <path fill="currentColor" d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
     </svg>
 </button>
         </h2>
     </div>
 
-    <div class="py-3 px-2">
-        <div class="device-list">
+    <div class="py-2 px-2">
+        <div class="flex flex-col gap-1 w-full items-start">
             {#if content}
                 {@render content()}
             {/if}
@@ -59,21 +59,7 @@
 </div>
 
 <style>
-    .dashboard-card {
-        background-color: var(--color-card);
-        border-radius: 0.5rem;
-        overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        height: 100%;
-        width: 100%; /* Ensure card takes full width of its container */
-        display: flex;
-        flex-direction: column;
-    }
-
-    .card-header {
-        position: relative;
-    }
-
+    /* Keeping complex gradient pattern in CSS */
     .pattern-bg {
         position: relative;
         height: 5rem;
@@ -124,18 +110,7 @@
         border-radius: 0.5rem 0.5rem 0 0;
     }
 
-    .status-indicator {
-        position: absolute;
-        top: 0.75rem;
-        left: 0.75rem;
-        height: 2.5rem;
-        width: 2.5rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
+    /* Status colors */
     .status-success {
         background-color: var(--color-success);
     }
@@ -146,54 +121,5 @@
 
     .status-danger {
         background-color: var(--color-danger);
-    }
-
-    .status-icon {
-        color: white;
-        font-size: 1.5rem;
-    }
-
-    .location-title {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 1.25rem;
-        font-weight: 500;
-    }
-
-.details-button {
-    background-color: var(--color-primary);
-    color: white;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 50%;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    margin-left: 0.5rem; /* Add spacing from text */
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-}
-
-.details-button:hover {
-    background-color: var(--color-primary-hover, #005bbb);
-}
-
-.details-button .icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    pointer-events: none;
-}
-
-
-    .device-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        width: 100%; /* Ensure the device list takes full width of the card */
-        align-items: flex-start; /* Left align items */
     }
 </style>
