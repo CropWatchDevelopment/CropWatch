@@ -84,7 +84,7 @@
 </script>
 
 <Collapse
-    classes={{ root: 'mb-1 bg-surface-50/30 dark:bg-surface-900/30 w-full', icon: 'data-[open=true]:rotate-90' }}
+    classes={{ root: 'mb-1 bg-gray-50/50 dark:bg-gray-800/30 w-full', icon: 'text-gray-400 dark:text-gray-500 data-[open=true]:rotate-90' }}
     open={defaultCollapse}
     on:change={(e) => collapseStateChange(e)}
 >
@@ -95,34 +95,38 @@
         <div class="my-1 mr-2 border-r-2">
             <div class="flex flex-col text-base">
                 <div class="justify-left flex flex-row">
-                    <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
+                    <b class="ml-4 text-sm text-gray-700 dark:text-gray-300 font-semibold tracking-wide pb-1">{device.name || `Device ${device.dev_eui}`}</b>
                 </div>
                 <div class="flex flex-row justify-center ">
                     {#if device.latestData}
                         <p class="m-auto justify-center">
                             <span>
-                                {nameToEmoji(primaryDataKey)}
-                                <TweenedValue
-                                    value={primaryValue}
-                                    format="decimal"
-                                />
+                                <span class="text-gray-500 dark:text-gray-300">{nameToEmoji(primaryDataKey)}</span>
+                                <span class="text-gray-900 dark:text-gray-100 font-medium">
+                                    <TweenedValue
+                                        value={primaryValue}
+                                        format="decimal"
+                                    />
+                                </span>
                             </span>
                             <small>
-                                <sup class="text-accent-300">{primaryNotation}</sup>
+                                <sup class="text-accent-700 dark:text-accent-400">{primaryNotation}</sup>
                             </small>
                         </p>
                         <p class="m-auto justify-center">
                             <span>
                                 {#if secondaryDataKey}
-                                    {nameToEmoji(secondaryDataKey)}
-                                    <TweenedValue
-                                        value={secondaryValue}
-                                        format="decimal"
-                                    />
+                                    <span class="text-gray-500 dark:text-gray-300">{nameToEmoji(secondaryDataKey)}</span>
+                                    <span class="text-gray-900 dark:text-gray-100 font-medium">
+                                        <TweenedValue
+                                            value={secondaryValue}
+                                            format="decimal"
+                                        />
+                                    </span>
                                 {/if}
                             </span>
                             <small>
-                                <sup class="text-accent-300">{secondaryNotation}</sup>
+                                <sup class="text-accent-700 dark:text-accent-400">{secondaryNotation}</sup>
                             </small>
                         </p>
                     {/if}

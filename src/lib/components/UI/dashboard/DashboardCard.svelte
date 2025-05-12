@@ -22,7 +22,7 @@
     }>();
 </script>
 
-<div class="bg-[var(--color-card)] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shadow-md dark:shadow-gray-900/20 h-full w-full flex flex-col">
+<div class="bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 shadow-md dark:shadow-gray-900/20 h-full w-full flex flex-col">
     <div class="relative">
         <div class="pattern-bg">
             <div class="status-indicator absolute top-3 left-3 h-10 w-10 rounded-full flex items-center justify-center {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
@@ -35,7 +35,7 @@
                 {/if}
             </div>
         </div>
-        <h2 class="flex justify-between items-center text-xl font-medium py-3 px-2 mb-1">
+        <h2 class="flex justify-between items-center text-xl font-semibold py-3 px-2  text-yellow-600 dark:text-yellow-400">
             <span>{location.name}</span>
           <button 
     class="bg-[var(--color-primary)] text-white w-9 h-9 rounded-full border-none inline-flex items-center justify-center p-0 ml-2 flex-shrink-0 cursor-pointer transition-colors duration-200 hover:bg-[var(--color-primary-hover,#005bbb)]"

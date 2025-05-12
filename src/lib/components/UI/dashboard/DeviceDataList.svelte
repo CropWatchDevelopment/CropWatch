@@ -49,19 +49,19 @@ let dataPoints = $derived(
         {device.latestData?.created_at === null ? 'opacity-50' : ''}"
 >
     <div class="flex px-3">
-        <h3 class="mb-2 basis-1/3 text-lg font-medium">{nameToJapaneseName('Details')}</h3>
+        <h3 class="mb-2 basis-1/3 text-lg font-semibold text-yellow-600 dark:text-yellow-400">{nameToJapaneseName('Details')}</h3>
     </div>
 
     {#each dataPoints as dataPointKey, index}
         {#if device.latestData[dataPointKey] !== null}
             <div class="py-1 pl-2">
-                <div class="flex">
-                    <p class="text-base text-primary">{nameToEmoji(dataPointKey)}</p>
-                    <p class="ml-1 text-right">{nameToJapaneseName(dataPointKey)}</p>
+                <div class="flex items-center">
+                    <p class="text-base text-gray-500 dark:text-gray-300">{nameToEmoji(dataPointKey)}</p>
+                    <p class="ml-1 text-right text-gray-600 dark:text-gray-400 text-sm">{nameToJapaneseName(dataPointKey)}</p>
                     <span class="flex-grow"></span>
 
                     {#if dataPointKey === 'created_at'}
-                        <p class="flex flex-row align-bottom text-base">
+                        <p class="flex flex-row align-bottom text-xs text-gray-500 dark:text-gray-400">
                             <Duration
                                 start={device.latestData.created_at}
                                 totalUnits={2}
@@ -69,9 +69,11 @@ let dataPoints = $derived(
                             />&nbsp;ago
                         </p>
                     {:else}
-                        <TweenedValue value={device.latestData[dataPointKey]} format="decimal" />
+                        <span class="text-gray-900 dark:text-gray-100 font-medium">
+                            <TweenedValue value={device.latestData[dataPointKey]} format="decimal" />
+                        </span>
                         <small>
-                            <sup class="text-accent-300">{nameToNotation(dataPointKey)}</sup>
+                            <sup class="text-accent-700 dark:text-accent-400">{nameToNotation(dataPointKey)}</sup>
                         </small>
                     {/if}
                 </div>
