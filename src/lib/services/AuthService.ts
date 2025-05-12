@@ -153,7 +153,7 @@ export class AuthService implements IAuthService {
   async resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${this.getRedirectUrl()}/auth/check-email`
+        redirectTo: `${this.getRedirectUrl()}/auth/reset-password`
       });
 
       if (error) {
