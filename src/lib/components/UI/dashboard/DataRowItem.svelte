@@ -87,51 +87,49 @@
     open={defaultCollapse}
     on:change={(e) => collapseStateChange(e)}
 >
-    <div
-        slot="trigger"
-        class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
-    >
-        <div class="my-1 mr-2 border-r-2">
-            <div class="flex flex-col text-center text-base">
-                <div class="justify-left flex flex-row">
-                    <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
-                </div>
-                <div class="flex flex-row justify-center">
-                    {#if device.latestData}
-                        <p class="m-auto justify-center">
-                            <span>
-                                {nameToEmoji(primaryDataKey)}
-                                <TweenedValue
-                                    value={primaryValue}
-                                    format="decimal"
-                                />
-                            </span>
-                            <small>
-                                <sup class="text-accent-300">{primaryNotation}</sup>
-                            </small>
-                        </p>
-                        <p class="m-auto justify-center">
-                            <span>
-                                {#if secondaryDataKey}
-                                    {nameToEmoji(secondaryDataKey)}
+    <svelte:fragment slot="trigger">
+        <div class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}">
+            <div class="my-1 mr-2 border-r-2">
+                <div class="flex flex-col text-center text-base">
+                    <div class="justify-left flex flex-row">
+                        <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
+                    </div>
+                    <div class="flex flex-row justify-center">
+                        {#if device.latestData}
+                            <p class="m-auto justify-center">
+                                <span>
+                                    {nameToEmoji(primaryDataKey)}
                                     <TweenedValue
-                                        value={secondaryValue}
+                                        value={primaryValue}
                                         format="decimal"
                                     />
-                                {/if}
-                            </span>
-                            <small>
-                                <sup class="text-accent-300">{secondaryNotation}</sup>
-                            </small>
-                        </p>
-                    {/if}
+                                </span>
+                                <small>
+                                    <sup class="text-accent-300">{primaryNotation}</sup>
+                                </small>
+                            </p>
+                            <p class="m-auto justify-center">
+                                <span>
+                                    {#if secondaryDataKey}
+                                        {nameToEmoji(secondaryDataKey)}
+                                        <TweenedValue
+                                            value={secondaryValue}
+                                            format="decimal"
+                                        />
+                                    {/if}
+                                </span>
+                                <small>
+                                    <sup class="text-accent-300">{secondaryNotation}</sup>
+                                </small>
+                            </p>
+                        {/if}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </svelte:fragment>
     
-    <!-- Slot for child content -->
-    <slot />
+    <slot></slot>
     
     <div
         class="border-l-8 pl-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"

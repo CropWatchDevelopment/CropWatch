@@ -176,7 +176,7 @@
 			addPermissionNames();
 			
 			// Reset form
-			selectedUserId = $state('')
+			selectedUserId = '';
 			
 			success('Permission added successfully');
 		} catch (err) {

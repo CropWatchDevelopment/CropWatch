@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	let { data } = $props();
-	let devEui = $derived(data.devEui);
 
+	let devEui = $page.params.devEui;
 	if (!devEui) {
 		goto('/dashboard'); // DevEui was not found, run to safety!
 	}

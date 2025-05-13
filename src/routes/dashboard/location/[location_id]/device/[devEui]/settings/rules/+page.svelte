@@ -94,7 +94,7 @@
 			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 			if (emailRegex.test(newRuleActionRecipient)) {
 				newRuleActionRecipients = [...newRuleActionRecipients, newRuleActionRecipient.trim()];
-				newRuleActionRecipient = $state('')
+				newRuleActionRecipient = '';
 			} else {
 				toastError('Please enter a valid email address');
 			}
@@ -171,10 +171,10 @@
 
 	// Reset the new rule form
 	function resetNewRuleForm() {
-		newRuleName = $state('')
+		newRuleName = '';
 		newRuleNotifierType =
 			notifierTypes && notifierTypes.length > 0 ? notifierTypes[0].notifier_id : 1;
-		newRuleActionRecipient = $state('')
+		newRuleActionRecipient = '';
 		newRuleActionRecipients = [];
 		
 		// Reset criteria to default
@@ -262,19 +262,21 @@
 				<input type="hidden" name="profile_id" value={data.session?.user.id} />
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div class="col-span-2">
-						<label class="mb-1 block text-sm font-medium text-gray-700">Rule Name*</label>
-						<input
-							type="text"
-							name="name"
-							bind:value={newRuleName}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-							required
-						/>
+							<label for="rule_name" class="mb-1 block text-sm font-medium text-gray-700">Rule Name*</label>
+							<input
+								id="rule_name"
+								type="text"
+								name="name"
+								bind:value={newRuleName}
+								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+								required
+							/>
 					</div>
 
 					<div>
-						<label class="mb-1 block text-sm font-medium text-gray-700">Send To Type*</label>
+						<label for="notifier_type" class="mb-1 block text-sm font-medium text-gray-700">Send To Type*</label>
 						<select
+							id="notifier_type"
 							name="notifier_type"
 							bind:value={newRuleNotifierType}
 							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -293,9 +295,10 @@
 					</div>
 
 					<div>
-						<label class="mb-1 block text-sm font-medium text-gray-700">Action Recipients*</label>
+						<label for="recipients" class="mb-1 block text-sm font-medium text-gray-700">Action Recipients*</label>
 						<div class="flex">
 							<input
+								id="recipients"
 								type="text"
 								placeholder="Enter email address"
 								bind:value={newRuleActionRecipient}
@@ -355,6 +358,7 @@
 									<button
 										type="button"
 										class="absolute top-2 right-2 text-red-500 hover:text-red-700"
+										aria-label="Remove condition"
 										onclick={() => {
 											newRuleCriteriaItems = newRuleCriteriaItems.filter((_, i) => i !== index);
 										}}
@@ -372,54 +376,58 @@
 
 								<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
 									<div>
-										<label class="mb-1 block text-sm font-medium text-gray-700">Subject*</label>
-										<select
-											bind:value={criteria.subject}
-											class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-											required
-										>
-											{#each deviceDataFields as field}
-												<option value={field}>{field.replace('_', ' ')}</option>
-											{/each}
-										</select>
-									</div>
+											<label for="criteria_subject_{index}" class="mb-1 block text-sm font-medium text-gray-700">Subject*</label>
+											<select
+												id="criteria_subject_{index}"
+												bind:value={criteria.subject}
+												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+												required
+											>
+												{#each deviceDataFields as field}
+													<option value={field}>{field.replace('_', ' ')}</option>
+												{/each}
+											</select>
+										</div>
 
-									<div>
-										<label class="mb-1 block text-sm font-medium text-gray-700">Operation*</label>
-										<select
-											bind:value={criteria.operator}
-											class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-											required
-										>
-											{#each operators as operator}
-												<option value={operator}>{operator}</option>
-											{/each}
-										</select>
-									</div>
+										<div>
+												<label for="criteria_operator_{index}" class="mb-1 block text-sm font-medium text-gray-700">Operation*</label>
+												<select
+													id="criteria_operator_{index}"
+													bind:value={criteria.operator}
+													class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+													required
+												>
+													{#each operators as operator}
+														<option value={operator}>{operator}</option>
+													{/each}
+												</select>
+										</div>
 
-									<div>
-										<label class="mb-1 block text-sm font-medium text-gray-700"
-											>Trigger Value*</label
-										>
-										<input
-											type="number"
-											bind:value={criteria.trigger_value}
-											step="0.01"
-											class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-											required
-										/>
-									</div>
+										<div>
+												<label for="criteria_trigger_{index}" class="mb-1 block text-sm font-medium text-gray-700"
+													>Trigger Value*</label
+												>
+												<input
+													id="criteria_trigger_{index}"
+													type="number"
+													bind:value={criteria.trigger_value}
+													step="0.01"
+													class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+													required
+												/>
+										</div>
 
-									<div>
-										<label class="mb-1 block text-sm font-medium text-gray-700">Reset Value</label
-										>
-										<input
-											type="number"
-											bind:value={criteria.reset_value}
-											step="0.01"
-											class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-										/>
-									</div>
+										<div>
+												<label for="criteria_reset_{index}" class="mb-1 block text-sm font-medium text-gray-700">Reset Value</label
+												>
+												<input
+													id="criteria_reset_{index}"
+													type="number"
+													bind:value={criteria.reset_value}
+													step="0.01"
+													class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+												/>
+										</div>
 								</div>
 							</div>
 						{/each}
@@ -710,19 +718,21 @@
 
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div class="col-span-2">
-							<label class="mb-1 block text-sm font-medium text-gray-700">Rule Name*</label>
-							<input
-								type="text"
-								name="name"
-								bind:value={editRuleName}
-								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-								required
-							/>
+								<label for="edit_rule_name" class="mb-1 block text-sm font-medium text-gray-700">Rule Name*</label>
+								<input
+									id="edit_rule_name"
+									type="text"
+									name="name"
+									bind:value={editRuleName}
+									class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+									required
+								/>
 						</div>
 
 						<div>
-							<label class="mb-1 block text-sm font-medium text-gray-700">Send To Type*</label>
+							<label for="edit_notifier_type" class="mb-1 block text-sm font-medium text-gray-700">Send To Type*</label>
 							<select
+								id="edit_notifier_type"
 								name="notifier_type"
 								bind:value={editRuleNotifierType}
 								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -741,58 +751,59 @@
 						</div>
 
 						<div>
-							<label class="mb-1 block text-sm font-medium text-gray-700">Action Recipients*</label>
-							<div class="flex">
-								<input
-									type="text"
-									placeholder="Enter email address"
-									bind:value={editRuleActionRecipient}
-									class="flex-1 rounded-l-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-								/>
-								<button
-									type="button"
-									class="rounded-r-md bg-gray-200 px-3 py-2 font-medium text-gray-800 hover:bg-gray-300"
-									onclick={() => {
-										if (editRuleActionRecipient.trim() !== '') {
-											editRuleActionRecipients = [
-												...editRuleActionRecipients,
-												editRuleActionRecipient.trim()
-											];
-											editRuleActionRecipient = $state('')
-										}
-									}}
-								>
-									Add
-								</button>
-							</div>
-
-							{#if editRuleActionRecipients.length > 0}
-								<div class="mt-2 flex flex-wrap gap-2">
-									{#each editRuleActionRecipients as recipient, index}
-										<div
-											class="inline-flex items-center rounded bg-blue-100 px-2 py-1 text-sm text-blue-800"
-										>
-											{recipient}
-											<button
-												type="button"
-												class="ml-1 text-blue-600 hover:text-blue-800"
-												onclick={() => {
-													editRuleActionRecipients = editRuleActionRecipients.filter(
-														(_, i) => i !== index
-													);
-												}}
-											>
-												×
-											</button>
-										</div>
-									{/each}
+								<label for="edit_recipients" class="mb-1 block text-sm font-medium text-gray-700">Action Recipients*</label>
+								<div class="flex">
+									<input
+										id="edit_recipients"
+										type="text"
+										placeholder="Enter email address"
+										bind:value={editRuleActionRecipient}
+										class="flex-1 rounded-l-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+									/>
+									<button
+										type="button"
+										class="rounded-r-md bg-gray-200 px-3 py-2 font-medium text-gray-800 hover:bg-gray-300"
+										onclick={() => {
+											if (editRuleActionRecipient.trim() !== '') {
+												editRuleActionRecipients = [
+													...editRuleActionRecipients,
+													editRuleActionRecipient.trim()
+												];
+												editRuleActionRecipient = '';
+											}
+										}}
+									>
+										Add
+									</button>
 								</div>
-								<input
-									type="hidden"
-									name="action_recipient"
-									value={editRuleActionRecipients.join(',')}
-								/>
-							{/if}
+
+								{#if editRuleActionRecipients.length > 0}
+									<div class="mt-2 flex flex-wrap gap-2">
+										{#each editRuleActionRecipients as recipient, index}
+											<div
+												class="inline-flex items-center rounded bg-blue-100 px-2 py-1 text-sm text-blue-800"
+											>
+												{recipient}
+												<button
+													type="button"
+													class="ml-1 text-blue-600 hover:text-blue-800"
+													onclick={() => {
+														editRuleActionRecipients = editRuleActionRecipients.filter(
+															(_, i) => i !== index
+														);
+													}}
+												>
+													×
+												</button>
+											</div>
+										{/each}
+									</div>
+									<input
+										type="hidden"
+										name="action_recipient"
+										value={editRuleActionRecipients.join(',')}
+									/>
+								{/if}
 						</div>
 
 						<div class="col-span-2 mt-4">
@@ -808,6 +819,7 @@
 										<button
 											type="button"
 											class="absolute top-2 right-2 text-red-500 hover:text-red-700"
+											aria-label="Remove condition"
 											onclick={() => {
 												if (criteria.id) {
 													deletedCriteriaIds = [...deletedCriteriaIds, criteria.id];
@@ -833,8 +845,9 @@
 										{/if}
 
 										<div>
-											<label class="mb-1 block text-sm font-medium text-gray-700">Subject*</label>
+											<label for="criteria_subject_{index}" class="mb-1 block text-sm font-medium text-gray-700">Subject*</label>
 											<select
+												id="criteria_subject_{index}"
 												bind:value={criteria.subject}
 												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 												required
@@ -846,8 +859,9 @@
 										</div>
 
 										<div>
-											<label class="mb-1 block text-sm font-medium text-gray-700">Operation*</label>
+											<label for="criteria_operator_{index}" class="mb-1 block text-sm font-medium text-gray-700">Operation*</label>
 											<select
+												id="criteria_operator_{index}"
 												bind:value={criteria.operator}
 												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 												required
@@ -859,10 +873,11 @@
 										</div>
 
 										<div>
-											<label class="mb-1 block text-sm font-medium text-gray-700"
+											<label for="criteria_trigger_{index}" class="mb-1 block text-sm font-medium text-gray-700"
 												>Trigger Value*</label
 											>
 											<input
+												id="criteria_trigger_{index}"
 												type="number"
 												bind:value={criteria.trigger_value}
 												step="0.01"
@@ -872,9 +887,10 @@
 										</div>
 
 										<div>
-											<label class="mb-1 block text-sm font-medium text-gray-700">Reset Value</label
+											<label for="criteria_reset_{index}" class="mb-1 block text-sm font-medium text-gray-700">Reset Value</label
 											>
 											<input
+												id="criteria_reset_{index}"
 												type="number"
 												bind:value={criteria.reset_value}
 												step="0.01"

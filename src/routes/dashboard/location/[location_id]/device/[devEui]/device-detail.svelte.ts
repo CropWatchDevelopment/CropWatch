@@ -165,7 +165,7 @@ export function setupDeviceDetail() {
 
         try {
             const response = await fetch(
-                `/api/devices/${device.dev_eui}/data?start=${startDate}&end=${$endDate}`
+                `/api/devices/${device.dev_eui}/data?start=${startDate}&end=${endDate}`
             );
 
             if (!response.ok) {
@@ -197,9 +197,9 @@ export function setupDeviceDetail() {
         }
         
         // Clear existing charts before redrawing
-        chart1Element.innerHTML = $state('')
-        chart1BrushElement.innerHTML = $state('')
-        dataGridElement.innerHTML = $state('')
+        if (chart1Element) chart1Element.innerHTML = '';
+        if (chart1BrushElement) chart1BrushElement.innerHTML = '';
+        if (dataGridElement) dataGridElement.innerHTML = '';
         
         // Import ApexCharts and ApexGrid
         ApexCharts = await import('apexcharts').then((module) => module.default);

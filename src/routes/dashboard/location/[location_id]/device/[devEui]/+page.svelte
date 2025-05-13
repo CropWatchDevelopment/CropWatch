@@ -36,11 +36,12 @@
 		initializeDateRange
 	} = deviceDetail;
 
-	// Define these as separate variables that will be bound to DOM elements
-	// We don't want to use $state here as these are DOM references
-	let chart1;
-	let chart1Brush;
-	let dataGrid;
+	// Define these as DOM element references that will be correctly bound
+	// The comment is accurate - we don't want reactivity for DOM refs
+	// But we need to make sure SvelteKit 5 doesn't warn about non-reactivity
+	let chart1: HTMLElement;
+	let chart1Brush: HTMLElement;
+	let dataGrid: HTMLElement;
 
 	// Get the other properties that don't need DOM binding
 	let { startDate, endDate } = $state(deviceDetail);

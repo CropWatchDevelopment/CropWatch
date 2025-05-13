@@ -339,7 +339,7 @@
 						<div class="ml-3 text-sm">
 							<label for="terms" class="text-text-light dark:text-text-dark font-medium">
 								I agree to the <a
-									href="#"
+									href="/terms"
 									class="text-primary-light dark:text-primary-dark hover:underline"
 									>Terms of Service</a
 								>
@@ -361,7 +361,7 @@
 						<div class="ml-3 text-sm">
 							<label for="privacy" class="text-text-light dark:text-text-dark font-medium">
 								I agree to the <a
-									href="#"
+									href="/privacy"
 									class="text-primary-light dark:text-primary-dark hover:underline"
 									>Privacy Policy</a
 								>
@@ -383,7 +383,7 @@
 						<div class="ml-3 text-sm">
 							<label for="cookies" class="text-text-light dark:text-text-dark font-medium">
 								I agree to the <a
-									href="#"
+									href="/cookies"
 									class="text-primary-light dark:text-primary-dark hover:underline">Cookie Policy</a
 								>
 							</label>
