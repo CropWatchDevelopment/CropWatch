@@ -1,118 +1,151 @@
 <script lang="ts">
-	import { Button, Collapse, TweenedValue } from 'svelte-ux';
-	import { goto } from '$app/navigation';
-	import { mdiArrowRight, mdiTimerSand } from '@mdi/js';
-	import moment from 'moment';
-	import DeviceDataList from './DeviceDataList.svelte';
-	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
-	import { m } from '$lib/paraglide/messages';
+    import { Button, Collapse, TweenedValue } from 'svelte-ux';
+    import { goto } from '$app/navigation';
+    import { mdiArrowRight } from '@mdi/js';
+    import moment from 'moment';
+    import { nameToEmoji } from '$lib/utilities/NameToEmoji';
+    import type { Device } from '$lib/models/Device';
+    import type { Location } from '$lib/models/Location';
+    import { createActiveTimer } from '$lib/utilities/ActiveTimer';
+    import { onMount, onDestroy } from 'svelte';
 
-	let {
-		device
-	}: {
-		device: any;
-	} = $props();
-	let isActive = $derived(
-		moment().diff(moment(device.latest_data?.created_at), 'minutes', false) <
-			device.cw_device_type.default_upload_interval
-	);
+    // Extend the Device type to include latestData
+    interface DeviceWithLatestData extends Device {
+        latestData: Record<string, any>;
+        cw_device_type: {
+            name: string;
+            default_upload_interval?: number;
+            primary_data_v2?: string;
+            secondary_data_v2?: string;
+            primary_data_notation?: string;
+            secondary_data_notation?: string;
+        };
+    }
 
-	let localStorageOpenState = localStorage.getItem(`${device.dev_eui}-collapseState`);
-	let defaultCollapse: boolean = $state(
-		localStorageOpenState ? JSON.parse(localStorageOpenState) : false
-	);
+    let {
+        device,
+        location,
+        isActive: externalIsActive,
+        detailHref
+    } = $props<{
+        device: DeviceWithLatestData;
+        location?: Location;
+        isActive?: boolean;
+        detailHref?: string;
+    }>();
+    
+    // Use the isActive prop directly from the parent component
+    // This simplifies the component and ensures consistent active status logic
+    let isActive = $derived(externalIsActive !== undefined ? Boolean(externalIsActive) : false);
+    
+    // Log the active status for debugging
+    $effect(() => {
+        console.log(`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}`);
+    });
+    
+    // Determine the primary and secondary data keys based on device type - using reactive declarations
+    let primaryDataKey = $derived(device.cw_device_type.primary_data_v2 || 'temperature_c');
+    let secondaryDataKey = $derived(device.cw_device_type.secondary_data_v2 || 
+        (device.cw_device_type.name?.toLowerCase().includes('soil') ? 'moisture' : 'humidity'));
 
-	function collapseStateChange(e: CustomEvent) {
-		defaultCollapse = e.detail.open;
-		localStorage.setItem(`${device.dev_eui}-collapseState`, JSON.stringify(e.detail.open));
-	}
+    // Get the data values - using reactive declarations so they update when latestData changes
+    let primaryValue = $derived(device.latestData?.[primaryDataKey]);
+    let secondaryValue = $derived(device.latestData?.[secondaryDataKey]);
+
+    // Get the notations - using reactive declarations
+    let primaryNotation = $derived(device.cw_device_type.primary_data_notation || '°C');
+    let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
+    
+    // Add a reactive effect to log when data changes
+    $effect(() => {
+        console.log(`DataRowItem: ${device.name} (${device.dev_eui}) data updated:`, {
+            primaryKey: primaryDataKey,
+            primaryValue,
+            secondaryKey: secondaryDataKey,
+            secondaryValue,
+            timestamp: device.latestData?.created_at
+        });
+    });
+
+    let localStorageOpenState = localStorage.getItem(`${device.dev_eui}-collapseState`);
+    let defaultCollapse = $state(
+        localStorageOpenState ? JSON.parse(localStorageOpenState) : false
+    );
+
+    function collapseStateChange(e: CustomEvent) {
+        defaultCollapse = e.detail.open;
+        localStorage.setItem(`${device.dev_eui}-collapseState`, JSON.stringify(e.detail.open));
+    }
+
+    $effect(() => {
+		$inspect('device', device, 'latestData', device.latestData);
+	});
 </script>
 
 <Collapse
-	classes={{ root: 'shadow-md pr-2 bg-surface-200/50', icon: 'data-[open=true]:rotate-90' }}
-	open={defaultCollapse}
-	on:change={(e) => collapseStateChange(e)}
+    classes={{ root: 'shadow-md pr-2 bg-surface-200/50 w-full', icon: 'data-[open=true]:rotate-90' }}
+    open={defaultCollapse}
+    on:change={(e) => collapseStateChange(e)}
 >
-	<div
-		slot="trigger"
-		class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
-	>
-		<div class="my-1 mr-2 border-r-2">
-			<div class="flex flex-col text-center text-base">
-				<div class="justify-left flex flex-row">
-					<b class="ml-4 text-sm">{device.name}</b>
-				</div>
-				<div class="flex flex-row justify-center">
-					{#if device.latest_data}
-						<p class="m-auto justify-center">
-							<span>
-								{nameToEmoji(device.cw_device_type.primary_data_v2 ?? '')}
-								<TweenedValue
-									value={device.latest_data[device.cw_device_type.primary_data_v2]}
-									format="decimal"
-								/>
-							</span>
-							<small>
-								<sup class="text-accent-300">{device.cw_device_type.primary_data_notation}</sup>
-							</small>
-						</p>
-						<p class="m-auto justify-center">
-							<span>
-								{#if device.cw_device_type.secondary_data_v2}
-									{nameToEmoji(device.cw_device_type.secondary_data_v2 ?? '')}
-									<TweenedValue
-										value={device.latest_data[device.cw_device_type.secondary_data_v2]}
-										format="decimal"
-									/>
-								{/if}
-							</span>
-							<small>
-								<sup class="text-accent-300">{device.cw_device_type.secondary_data_notation}</sup>
-							</small>
-						</p>
-					{/if}
-				</div>
-			</div>
-		</div>
-	</div>
-	{#if device.latest_data}
-		<DeviceDataList {device} {isActive} />
-	{/if}
-	<div
-		class="border-l-8 pl-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
-	>
-		{#if location}
-			<Button
-				on:click={() =>
-					goto(`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`)}
-				variant="fill"
-				color="info"
-				class="mb-1 w-full"
-				icon={mdiArrowRight}
-			>
-				{m.component_dataRowItem_detail_button()}
-			</Button>
-		{/if}
-	</div>
+    <div
+        slot="trigger"
+        class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+    >
+        <div class="my-1 mr-2 border-r-2">
+            <div class="flex flex-col text-center text-base">
+                <div class="justify-left flex flex-row">
+                    <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
+                </div>
+                <div class="flex flex-row justify-center">
+                    {#if device.latestData}
+                        <p class="m-auto justify-center">
+                            <span>
+                                {nameToEmoji(primaryDataKey)}
+                                <TweenedValue
+                                    value={primaryValue}
+                                    format="decimal"
+                                />
+                            </span>
+                            <small>
+                                <sup class="text-accent-300">{primaryNotation}</sup>
+                            </small>
+                        </p>
+                        <p class="m-auto justify-center">
+                            <span>
+                                {#if secondaryDataKey}
+                                    {nameToEmoji(secondaryDataKey)}
+                                    <TweenedValue
+                                        value={secondaryValue}
+                                        format="decimal"
+                                    />
+                                {/if}
+                            </span>
+                            <small>
+                                <sup class="text-accent-300">{secondaryNotation}</sup>
+                            </small>
+                        </p>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slot for child content -->
+    <slot />
+    
+    <div
+        class="border-l-8 pl-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+    >
+        {#if detailHref || location}
+            <Button
+                onclick={() => goto(detailHref || `/location/${location?.location_id}/devices/${device.dev_eui}`)}
+                variant="fill"
+                color="info"
+                class="mb-1 w-full"
+                icon={mdiArrowRight}
+            >
+                View Details
+            </Button>
+        {/if}
+    </div>
 </Collapse>
-
-<!-- <style>
-	.text-shadow {
-		text-shadow: black 5px 5px 3px;
-	}
-	.custom-bg::before {
-		content: ' ';
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background-image: url($lib/images/weather/sunny_clouds.png);
-		background-size: cover;
-		background-position: center;
-		-webkit-border-radius: 15px;
-		-moz-border-radius: 15px;
-		border-radius: 15px;
-		filter: blur(1px) grayscale(20%);
-	}
-</style> -->

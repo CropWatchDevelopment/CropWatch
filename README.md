@@ -1,80 +1,71 @@
-<h1 align="center">CropWatch Web UI</h1>
-<p align="center"><i>Our PWA Web Application for viewing and controlling your farm from anywhere and everywhere.</i></p>
-<div style="display:flex; flex-direction: row; gap: 5px;" align="center">
-  
-  [![CodeQL - Master](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
-  [![CodeQL - Develop](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=develop)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
-  [![codecov](https://codecov.io/gh/CropWatchDevelopment/CropWatch/graph/badge.svg?token=H0LAIQ38KG)](https://codecov.io/gh/CropWatchDevelopment/CropWatch)
-  ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/CropWatchDevelopment/CropWatch?utm_source=oss&utm_medium=github&utm_campaign=CropWatchDevelopment%2FCropWatch&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+# SvDesignPattern - Dynamic Device Data Service
 
-</div>
-<br>
-<p align="center"><i>Loved the project? Please visit our <a href="https://CropWatch.io">Website</a></i></p>
-<br>
-This repo aims to host a UI that everyone can update and add to so that we can make farming as easy as possible through the use of technology.
+## Overview
 
-If you are interested, please create a PR to add your `README` profile here.
+SvDesignPattern is a proof of concept (PoC) demonstrating an advanced pattern for retrieving device data from different database tables based on device type. This project showcases a flexible and scalable architecture for IoT device data management using SvelteKit, Supabase, and TypeScript.
 
-If you like this Repo, please click the :star:
+## Problem Statement
 
-List of `CropWatch UI` categories mentioned below
+In IoT systems with diverse device types, each device type may store its data in different database tables. Traditional approaches often lead to:
 
-## Contents
-  - [Contribute](#contribute)
+1. Tight coupling between application code and database schema
+2. Code duplication when handling different device types
+3. Scalability issues when adding new device types
+4. Performance challenges with large datasets
 
-## Website
+## Solution
 
-Link : https://app.CropWatch.io
+This PoC implements an abstraction layer that dynamically determines where to fetch device data based on device type configuration. The key components include:
 
-<a href="https://app.CropWatch.io">Current Production UI</a>
+- **Device Type Configuration**: Each device type specifies its `data_table_v2` value, indicating which table contains its data
+- **DeviceDataService**: A service that dynamically queries the appropriate table based on device type
+- **Optimized Query Strategies**: Different query approaches for different table sizes and types
+- **Error Resilience**: Graceful fallbacks and timeout handling to ensure API stability
 
-# Environments
-- [UAT](https://crop-watch-i2xiyd6mo-crop-watch-team.vercel.app/)
-- [PROD](https://app.cropwatch.io)
-- [QA](https://app-qa.cropwatch.io)
-- [DEV](http://localhost:5173)
+## Key Features
 
-## Github README PROFILE CATEGORY
+- **Dynamic Data Retrieval**: Fetch device data from any table without changing application code
+- **Performance Optimization**: Special handling for large tables with optimized queries and indexes
+- **Error Handling**: Graceful degradation when timeouts or errors occur
+- **IoC Container**: Dependency injection for testable and maintainable code
+- **Type Safety**: Full TypeScript implementation with strong typing
 
-- [x] [Dashboard]()
-- [x] [Locations]()
-- [x] [Location Details]()
-- [X] [Sensor Details]()
-- [X] [Sensor Rules]()
-- [X] [Sensor Settings]()
-- [ ] [Sensor Compare]()
-- [ ] [Many Many Sensor Pages...]()
-- [ ] [Settings Page with notations]()
-- [ ] [Push Notifications]()
-- [-] [Real-Time Updates]()
+## Technical Stack
 
-# List of Tools & Packages Used:
-- [Svelte-UX](https://github.com/techniq/svelte-ux)
-- [LayerChart](https://github.com/techniq/layerchart)
-- [Supabase](https://github.com/supabase/supabase)
+- **Frontend**: SvelteKit
+- **Backend**: Node.js with SvelteKit endpoints
+- **Database**: Supabase (PostgreSQL)
+- **Dependency Injection**: InversifyJS
+- **Testing**: Vitest
+- **Internationalization**: Paraglide
 
-# Chat, collaberate, and learn at our `community pages` Here:
-- <a href="https://kb.CropWatch.io">CropWatch WIKI</a>
-- <a href="https://forum.CropWatch.io">CropWatch Forum</a>
-- <a href="https://discord.gg/fXHUpx6G">Join our Discord Server</a>
+## Getting Started
 
-# Contribute
+1. Clone the repository
+2. Install dependencies with `pnpm install`
+3. Set up your Supabase project and add credentials to `.env`
+4. Run database migrations in the `supabase/migrations` directory
+5. Start the development server with `pnpm dev`
 
-Contributions are always welcome! Please create a PR to add your GitHub profile.
+## Use Cases
 
-# Debugging Server Side code using VSCode:
-- Press: Ctrl + Shift + P, Then choose "Debug: JavaScript Debug terminal" from the prompt.
-- In the terminal box that opens, type: pnpm dev
-- Set your breakpoint and run the code!
+This pattern is particularly valuable for:
 
-# Issues
+- IoT platforms with diverse sensor types
+- Systems where data schemas evolve over time
+- Applications requiring high performance with large datasets
+- Projects that need to scale with minimal code changes
 
-I love knowing when something is wrong, that way I can fix it ASAP! However, please take care when submitting an issue, be clear about what is wrong, what you did to make it happen, and if possible include your device and browser where it happened.
+## Lessons Learned
 
-## :pencil: License
+- Dynamically selecting data sources based on configuration provides great flexibility
+- Performance optimization is crucial when dealing with large IoT datasets
+- Implementing proper error handling and fallback strategies ensures system resilience
+- Using stored procedures for complex queries improves database performance
 
-This project is licensed under [MIT](https://opensource.org/licenses/MIT) license.
+## Future Enhancements
 
-## :man_astronaut: Show your support
-
-Give a ⭐️ if this project helped you!
+- Add caching layer for frequently accessed data
+- Implement real-time data subscriptions using Supabase realtime
+- Create a configuration UI for managing device types and their data mappings
+- Expand analytics capabilities with aggregated data views

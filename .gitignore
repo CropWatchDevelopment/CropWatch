@@ -4,6 +4,8 @@ node_modules
 # Output
 .output
 .vercel
+.netlify
+.wrangler
 /.svelte-kit
 /build
 
@@ -11,6 +13,8 @@ node_modules
 .DS_Store
 Thumbs.db
 
+# AI
+DOCS/*
 # Env
 .env
 .env.*
@@ -20,3 +24,6 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Paraglide
+src/lib/paraglide

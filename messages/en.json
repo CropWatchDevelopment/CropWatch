@@ -1,20 +1,4 @@
 {
-  "$schema": "https://inlang.com/schema/inlang-message-format",
-  "example_message": "Hello world {username}",
-  "auth_login_title": "Sign in to your CropWatch account",
-  "auth_login_email": "Email address",
-  "auth_login_email_label": "Email address",
-  "auth_login_email_placeholder": "Please enter your email address",
-  "auth_login_password": "Password",
-  "auth_login_password_label": "Password",
-  "auth_login_password_placeholder": "Please enter your password",
-  "auth_login_password_remember_me": "Remember me",
-  "auth_login_password_forgot": "Forgot password?",
-  "auth_login_submit": "Sign in",
-  "auth_login_social_login_title": "Or sign in with",
-  "auth_login_social_login_google": "Google",
-  "auth_login_social_login_discord": "Discord",
-  "auth_login_create_account": "Create a new CropWatch Account",
-  "app_dashboard_title": "Dashboard",
-  "component_dataRowItem_detail_button": "Detail"
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"hello_world": "Hello, {name} from en!"
 }

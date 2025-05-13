@@ -1,0 +1,196 @@
+/* Base dashboard styles using CSS variables */
+
+/* Panel containers - Base structure */
+.locations-panel {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.location-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.location-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.location-item {
+  padding: 0.625rem;
+  margin-bottom: 0.375rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.location-item:hover {
+  background-color: var(--color-card);
+}
+
+.location-item.selected {
+  background-color: var(--color-card);
+  font-weight: 700;
+}
+
+.location-item:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.location-name {
+  display: block;
+  font-weight: 500;
+  color: var(--color-text);
+  opacity: 0.85; /* Better visibility than var(--color-text-secondary) */
+}
+
+.location-description {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  opacity: 0.85; /* Better visibility than var(--color-text-secondary) */
+}
+
+.location-device-count {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  font-weight: 500; /* Make it slightly bolder for better visibility */
+  margin-top: 0.125rem;
+}
+
+.devices-panel {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .device-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .device-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.device-card {
+  background-color: var(--color-card);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.device-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Sensor data sections */
+.sensor-data {
+  margin: 0.625rem 0;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.air-data {
+  background-color: var(--color-air-bg);
+  border-left: 4px solid var(--color-air-border);
+}
+
+.soil-data {
+  background-color: var(--color-soil-bg);
+  border-left: 4px solid var(--color-soil-border);
+}
+
+.sensor-data h4 {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.sensor-data ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.75rem;
+}
+
+/* Status indicators */
+.loading, .error {
+  text-align: center;
+  padding: 1.25rem;
+  font-size: 1.125rem;
+}
+
+.loading-devices {
+  text-align: center;
+  padding: 1.25rem;
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  color: var(--color-error);
+  background-color: var(--color-error-bg);
+  border-left: 4px solid var(--color-error);
+  margin: 0.625rem 0;
+}
+
+/* Typography */
+h2, h3 {
+  margin-top: 0;
+}
+
+button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 0.625rem;
+}
+
+button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* Dashboard grid layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.dashboard-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+}

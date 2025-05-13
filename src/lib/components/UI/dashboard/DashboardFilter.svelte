@@ -51,7 +51,7 @@
 
 <Toggle let:on={open} let:toggle let:toggleOff>
 	<Badge value={search ? 1 : 0} circle small class="bg-warning text-black">
-		<Button icon={mdiFilterMenu} on:click={toggle}>
+		<Button icon={mdiFilterMenu} onclick={toggle}>
 			<ResponsiveMenu {open} on:close={toggleOff} menuProps={{ explicitClose: true }}>
 				<div class="p-2">
 					<!-- Add autofocus delay to keep the opening transition smooth  -->
@@ -73,7 +73,7 @@
 							<Button
 								icon={mdiClose}
 								class="p-2 text-surface-content/50"
-								on:click={() => {
+								onclick={() => {
 									search = '';
 									browser ? localStorage.removeItem('dashboard_search') : null;
 									toggle();
@@ -93,7 +93,7 @@
 								icon={hideNoDeviceLocations ? mdiEyeOff : mdiEye}
 								rounded
 								color={hideNoDeviceLocations ? 'warning' : 'success'}
-								on:click={() => {
+								onclick={() => {
 									hideNoDeviceLocations = !hideNoDeviceLocations;
 									browser
 										? localStorage.setItem(
@@ -110,11 +110,11 @@
 					<Tooltip title="Dashboard Layout">
 						<div class="flex flex-col">
 							<Toggle let:on={open} let:toggle let:toggleOff>
-								<Button on:click={toggle} icon={mdiMonitorDashboard}>
+								<Button onclick={toggle} icon={mdiMonitorDashboard}>
 									<Menu {open} on:close={toggleOff}>
 										<MenuItem
 											icon={mdiGrid}
-											on:click={() => {
+											onclick={() => {
 												dashboardViewType = 'grid';
 												browser
 													? localStorage.setItem('dashboard_view_type', dashboardViewType)
@@ -123,7 +123,7 @@
 										>
 										<MenuItem
 											icon={mdiViewDashboard}
-											on:click={() => {
+											onclick={() => {
 												dashboardViewType = 'mozaic';
 												browser
 													? localStorage.setItem('dashboard_view_type', dashboardViewType)
@@ -132,10 +132,10 @@
 										>
 										<MenuItem
 											icon={mdiViewList}
-											on:click={() => {
+											onclick={() => {
 												dashboardViewType = 'list';
 												browser
-													? localStorage.setItem('list_view_type', dashboardViewType)
+													? localStorage.setItem('dashboard_view_type', dashboardViewType)
 													: null;
 											}}>List</MenuItem
 										>
@@ -149,39 +149,39 @@
 					<Tooltip title="Dashboard Layout">
 						<div class="flex flex-col">
 							<Toggle let:on={open} let:toggle let:toggleOff>
-								<Button on:click={toggle} icon={mdiSort}>
+								<Button onclick={toggle} icon={mdiSort}>
 									<Menu {open} on:close={toggleOff}>
 										<MenuItem
 											icon={mdiSortAlphabeticalAscending}
-											on:click={() => {
-												dashboardViewType = 'alpha';
+											onclick={() => {
+												dashboardSortType = 'alpha';
 												browser
 													? localStorage.setItem('dashboard_sort_type', dashboardSortType)
 													: null;
-											}}>Alphabetic</MenuItem
-										>
-										<MenuItem
-											icon={mdiSortClockAscending}
-											on:click={() => {
-												dashboardViewType = 'location_created_at';
-												browser
-													? localStorage.setItem('dashboard_sort_type', dashboardSortType)
-													: null;
-											}}>Location New to Old</MenuItem
+											}}>Alpha</MenuItem
 										>
 										<MenuItem
 											icon={mdiSortCalendarAscending}
-											on:click={() => {
-												dashboardViewType = 'location_Updated_at';
+											onclick={() => {
+												dashboardSortType = 'date';
 												browser
 													? localStorage.setItem('dashboard_sort_type', dashboardSortType)
 													: null;
-											}}>Last Updated</MenuItem
+											}}>Date</MenuItem
+										>
+										<MenuItem
+											icon={mdiSortClockAscending}
+											onclick={() => {
+												dashboardSortType = 'time';
+												browser
+													? localStorage.setItem('dashboard_sort_type', dashboardSortType)
+													: null;
+											}}>Time</MenuItem
 										>
 									</Menu>
 								</Button>
 							</Toggle>
-							<span class="text-center text-xs">{nameToJapaneseName('Dashboard Style')}</span>
+							<span class="text-center text-xs">{nameToJapaneseName('Sort By')}</span>
 						</div>
 					</Tooltip>
 				</div>

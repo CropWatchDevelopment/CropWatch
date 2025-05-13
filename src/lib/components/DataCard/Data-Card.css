@@ -1,0 +1,36 @@
+.sensor-readings .readings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.reading-card {
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    background-color: var(--color-card, #ffffff);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid var(--card-color, #cccccc);
+    box-shadow: var(--shadow-sm);
+}
+
+.reading-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.reading-card h3 {
+    font-size: 1rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--color-text-secondary);
+}
+
+.reading-card .value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin: 0;
+    color: var(--card-color, var(--color-text));
+}
+
+/* Each sensor type will automatically get its border color from the CSS variable */

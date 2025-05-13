@@ -1,248 +1,410 @@
 <script lang="ts">
-	import SuperDebug, { superForm } from 'sveltekit-superforms';
-	import {
-		Avatar,
-		Button,
-		Card,
-		Dialog,
-		Header,
-		Paginate,
-		Step,
-		Steps,
-		TextField
-	} from 'svelte-ux';
-	import LOGO_IMAGE from '$lib/images/CropWatchLogo.svg';
-	import FAILED_SVG from '$lib/images/fail.svg';
-	import {
-		mdiEmail,
-		mdiLock,
-		mdiAccountPlus,
-		mdiAccount,
-		mdiBriefcase,
-		mdiCardAccountDetails
-	} from '@mdi/js';
-	import { PUBLIC_RECAPTCHA_SITE_KEY } from '$env/static/public';
-	import { dev } from '$app/environment';
+	import { applyAction, deserialize, enhance } from '$app/forms';
+	import { success, error as toastError } from '$lib/stores/toast.svelte';
+	import { goto, invalidateAll } from '$app/navigation';
+	import type { ActionResult } from '@sveltejs/kit';
 
+	// Get page data (form action results)
 	let { data } = $props();
-	let loading: boolean = $state(false);
-	let open: boolean = $state(false);
-	let tokenState: string = $state('');
-	let recaptchaLoaded: boolean = $state(false);
 
-	// Function to load and execute reCAPTCHA
-	function executeRecaptcha() {
-		if (window.grecaptcha) {
-			window.grecaptcha.ready(() => {
-				window.grecaptcha
-					.execute(PUBLIC_RECAPTCHA_SITE_KEY, { action: 'submit' })
-					.then((token: string) => {
-						tokenState = token;
-						$form.reCatchaToken = token;
-					})
-					.catch(err => {
-						console.error('reCAPTCHA execution failed:', err);
-					});
-			});
-		}
+	// Form data
+	let firstName = $state('');
+	let lastName = $state('');
+	let email = $state('');
+	let password = $state('');
+	let confirmPassword = $state('');
+	let company = $state('');
+	let agreedToTerms = $state(false);
+	let agreedToPrivacy = $state(false);
+	let agreedToCookies = $state(false);
+	let isSubmitting = $state(false);
+
+	// Form validation
+	let errors = $state({
+		firstName: '',
+		lastName: '',
+		email: '',
+		password: '',
+		confirmPassword: '',
+		company: '',
+		terms: ''
+	});
+
+	// Function to validate email format
+	function isValidEmail(email: string): boolean {
+		const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return regex.test(email);
 	}
 
-	// Listen for reCAPTCHA script load
+	// Function to validate the form
+	function validateForm(): boolean {
+		let isValid = true;
+		errors = {
+			firstName: '',
+			lastName: '',
+			email: '',
+			password: '',
+			confirmPassword: '',
+			company: '',
+			terms: ''
+		};
+
+		// Validate first name
+		if (!firstName.trim()) {
+			errors.firstName = 'First name is required';
+			isValid = false;
+		}
+
+		// Validate last name
+		if (!lastName.trim()) {
+			errors.lastName = 'Last name is required';
+			isValid = false;
+		}
+
+		// Validate email
+		if (!email.trim()) {
+			errors.email = 'Email is required';
+			isValid = false;
+		} else if (!isValidEmail(email)) {
+			errors.email = 'Please enter a valid email address';
+			isValid = false;
+		}
+
+		// Validate password
+		if (!password) {
+			errors.password = 'Password is required';
+			isValid = false;
+		} else if (password.length < 8) {
+			errors.password = 'Password must be at least 8 characters';
+			isValid = false;
+		}
+
+		// Validate password confirmation
+		if (password !== confirmPassword) {
+			errors.confirmPassword = 'Passwords do not match';
+			isValid = false;
+		}
+
+		// Validate company
+		if (!company.trim()) {
+			errors.company = 'Company name is required';
+			isValid = false;
+		}
+
+		// Validate terms agreement
+		if (!agreedToTerms || !agreedToPrivacy || !agreedToCookies) {
+			errors.terms = 'You must agree to all terms and policies';
+			isValid = false;
+		}
+
+		return isValid;
+	}
+
+	// Process server-side form errors
 	$effect(() => {
-		// If grecaptcha is already available, execute it
-		if (window.grecaptcha) {
-			recaptchaLoaded = true;
-			executeRecaptcha();
+		if (data?.errors) {
+			errors = { ...errors, ...data.errors };
+		}
+
+		if (data?.message) {
+			toastError(data.message);
+		}
+
+		// Populate form with returned values on error
+		if (data?.firstName) firstName = data.firstName;
+		if (data?.lastName) lastName = data.lastName;
+		if (data?.email) email = data.email;
+		if (data?.company) company = data.company;
+		if (data?.agreedToTerms) agreedToTerms = data.agreedToTerms;
+		if (data?.agreedToPrivacy) agreedToPrivacy = data.agreedToPrivacy;
+		if (data?.agreedToCookies) agreedToCookies = data.agreedToCookies;
+	});
+
+	async function handleSubmit(
+		event: SubmitEvent & { currentTarget: EventTarget & HTMLFormElement },
+		cancel: () => void
+	) {
+		if (!validateForm()) {
+			cancel();
 			return;
 		}
+		const data = new FormData(event.currentTarget);
 
-		// Otherwise, set up a callback for when it loads
-		window.onRecaptchaLoaded = () => {
-			recaptchaLoaded = true;
-			executeRecaptcha();
-		};
-	});
+		try {
+			// Manual form submission to the API endpoint
+			const response = await fetch('/api/auth/register', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					firstName,
+					lastName,
+					email,
+					password,
+					company
+				})
+			});
 
-	const { form, enhance, errors } = superForm(data.form, {
-		validationMethod: 'oninput',
-		dataType: 'json',
-		onSubmit: async () => {
-			loading = true;
-		},
-		onResult: async (event) => {
-			loading = false;
-			if (event.result.status === 200) {
-				document.location.href = '/auth/check-email';
-			} else {
-				open = true;
+			const result = await response.json();
+			if (!response.ok || !result.success) {
+				// Show error toast
+				toastError(result.error || 'Registration failed. Please try again.');
+				isSubmitting = false;
+				return;
 			}
+
+			// Registration successful - check if email confirmation required
+			await invalidateAll();
+			goto(`/auth/check-email?email=${encodeURIComponent(email)}`);
+		} catch (err) {
+			console.error('Registration error:', err);
+			toastError('An unexpected error occurred. Please try again.');
+			isSubmitting = false;
 		}
-	});
+	}
 </script>
 
 <svelte:head>
-	<title>登録 - CropWatch</title>
-	<script
-		src="https://www.google.com/recaptcha/api.js?render={PUBLIC_RECAPTCHA_SITE_KEY}&onload=onRecaptchaLoaded"
-		nonce="%sveltekit.nonce%"
-	></script>
+	<title>Register | IoT Dashboard</title>
 </svelte:head>
 
-<div class="flex min-h-[calc(100vh-64px)] items-center justify-center">
-	<Card class="flex h-full w-full max-w-[480px] flex-col shadow sm:rounded-lg">
-		<Header
-			title="CropWatchアカウントを作成"
-			subheading="CropWatchに参加して、センサーのデータ管理を始めましょう"
-			slot="header"
-		>
-			<div slot="avatar">
-				<Avatar class="font-bold text-primary-content">
-					<img src={LOGO_IMAGE} alt="CropWatch LLC" />
-				</Avatar>
-			</div>
-		</Header>
-
-		<div class="flex flex-1 flex-col p-4">
-			<form method="POST" use:enhance class="w-full space-y-6">
-				<div>
-					<input type="hidden" id="reCatchaToken" name="reCatchaToken" bind:value={tokenState} />
-					<TextField
-						id="username"
-						label="ユーザー名*"
-						type="text"
-						name="username"
-						icon={mdiAccount}
-						autocomplete="username"
-						placeholder="ユーザー名を選択"
-						bind:value={$form.username}
-						error={$errors.username}
-						class="pb-2"
-					/>
-				</div>
-
-				<div>
-					<TextField
-						id="full_name"
-						label="氏名*"
-						type="text"
-						name="full_name"
-						icon={mdiCardAccountDetails}
-						autocomplete="name"
-						placeholder="氏名を入力してください"
-						bind:value={$form.full_name}
-						error={$errors.full_name}
-						class="pb-2"
-					/>
-				</div>
-
-				<div>
-					<TextField
-						id="employer"
-						label="勤務先"
-						type="text"
-						name="employer"
-						icon={mdiBriefcase}
-						autocomplete="organization"
-						placeholder="勤務先の名前を入力してください（任意）"
-						bind:value={$form.employer}
-						error={$errors.employer}
-						class="pb-2"
-					/>
-				</div>
-
-				<div>
-					<TextField
-						id="email"
-						label="メールアドレス*"
-						type="email"
-						name="email"
-						icon={mdiEmail}
-						autocomplete="email"
-						placeholder="メールアドレスを入力してください"
-						bind:value={$form.email}
-						error={$errors.email}
-						class="pb-2"
-					/>
-				</div>
-
-				<div>
-					<TextField
-						id="password"
-						label="パスワード*"
-						type="password"
-						name="password"
-						icon={mdiLock}
-						autocomplete="new-password"
-						placeholder="パスワードを作成してください"
-						bind:value={$form.password}
-						error={$errors.password}
-						class="pb-2"
-					/>
-				</div>
-
-				<div>
-					<TextField
-						id="passwordConfirm"
-						label="パスワード確認*"
-						type="password"
-						name="passwordConfirm"
-						icon={mdiLock}
-						autocomplete="new-password"
-						placeholder="パスワードを確認してください"
-						bind:value={$form.passwordConfirm}
-						error={$errors.passwordConfirm}
-						class="pb-2"
-					/>
-				</div>
-
-				<Button
-					class="w-full"
-					{loading}
-					disabled={loading}
-					variant="fill"
-					color="primary"
-					icon={mdiAccountPlus}
-					size="lg"
-					type="submit"
+<div
+	class="bg-background-light dark:bg-background-dark flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8"
+>
+	<div class="bg-card-light dark:bg-card-dark w-full max-w-md space-y-8 rounded-xl p-8 shadow-md">
+		<div>
+			<h2 class="text-text-light dark:text-text-dark mt-6 text-center text-3xl font-extrabold">
+				Create your account
+			</h2>
+			<p class="text-text-light/70 dark:text-text-dark/70 mt-2 text-center text-sm">
+				Or
+				<a
+					href="/auth/login"
+					class="text-primary-light dark:text-primary-dark font-medium hover:underline"
 				>
-					アカウントを作成
-				</Button>
-			</form>
+					sign in to your existing account
+				</a>
+			</p>
+		</div>
 
-			<span class="flex-grow"></span>
+		<form class="mt-8 space-y-6" action="?/register" method="POST" use:enhance={handleSubmit}>
+			<div class="space-y-4">
+				<!-- First and Last Name -->
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div>
+						<label
+							for="firstName"
+							class="text-text-light dark:text-text-dark block text-sm font-medium"
+						>
+							First Name
+						</label>
+						<input
+							id="firstName"
+							name="firstName"
+							type="text"
+							bind:value={firstName}
+							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
+							placeholder="John"
+							disabled={isSubmitting}
+						/>
+						{#if errors.firstName}
+							<p class="mt-1 text-xs text-red-500">{errors.firstName}</p>
+						{/if}
+					</div>
 
-			<div class="flex w-full flex-col">
-				<div class="relative mt-4">
-					<div class="relative flex justify-center text-sm/6 font-medium">
-						<span class="bg-white px-6 text-gray-900">または</span>
+					<div>
+						<label
+							for="lastName"
+							class="text-text-light dark:text-text-dark block text-sm font-medium"
+						>
+							Last Name
+						</label>
+						<input
+							id="lastName"
+							name="lastName"
+							type="text"
+							bind:value={lastName}
+							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
+							placeholder="Doe"
+							disabled={isSubmitting}
+						/>
+						{#if errors.lastName}
+							<p class="mt-1 text-xs text-red-500">{errors.lastName}</p>
+						{/if}
 					</div>
 				</div>
 
-				<a
-					href="/auth/login"
-					class="mt-3 flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:ring-transparent"
-				>
-					<span class="text-sm/6 font-semibold">既にアカウントをお持ちですか？サインイン</span>
-				</a>
-			</div>
-		</div>
-	</Card>
+				<!-- Email -->
+				<div>
+					<label for="email" class="text-text-light dark:text-text-dark block text-sm font-medium">
+						Email address
+					</label>
+					<input
+						id="email"
+						name="email"
+						type="email"
+						autocomplete="email"
+						bind:value={email}
+						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
+						placeholder="you@example.com"
+						disabled={isSubmitting}
+					/>
+					{#if errors.email}
+						<p class="mt-1 text-xs text-red-500">{errors.email}</p>
+					{/if}
+				</div>
 
-	<Dialog {open} width="sm" on:close={() => (open = false)}>
-		<Header slot="header" class="mx-5">
-			<div slot="avatar">
-				<Avatar class="font-bold text-primary-content">
-					<img src={FAILED_SVG} alt="登録に失敗しました" />
-				</Avatar>
+				<!-- Password -->
+				<div>
+					<label
+						for="password"
+						class="text-text-light dark:text-text-dark block text-sm font-medium"
+					>
+						Password
+					</label>
+					<input
+						id="password"
+						name="password"
+						type="password"
+						autocomplete="new-password"
+						bind:value={password}
+						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
+						placeholder="••••••••"
+						disabled={isSubmitting}
+					/>
+					{#if errors.password}
+						<p class="mt-1 text-xs text-red-500">{errors.password}</p>
+					{/if}
+				</div>
+
+				<!-- Confirm Password -->
+				<div>
+					<label
+						for="confirmPassword"
+						class="text-text-light dark:text-text-dark block text-sm font-medium"
+					>
+						Confirm Password
+					</label>
+					<input
+						id="confirmPassword"
+						name="confirmPassword"
+						type="password"
+						autocomplete="new-password"
+						bind:value={confirmPassword}
+						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
+						placeholder="••••••••"
+						disabled={isSubmitting}
+					/>
+					{#if errors.confirmPassword}
+						<p class="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>
+					{/if}
+				</div>
+
+				<!-- Company -->
+				<div>
+					<label
+						for="company"
+						class="text-text-light dark:text-text-dark block text-sm font-medium"
+					>
+						Company
+					</label>
+					<input
+						id="company"
+						name="company"
+						type="text"
+						bind:value={company}
+						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
+						placeholder="Acme Inc."
+						disabled={isSubmitting}
+					/>
+					{#if errors.company}
+						<p class="mt-1 text-xs text-red-500">{errors.company}</p>
+					{/if}
+				</div>
+
+				<!-- Terms and Policies -->
+				<div class="space-y-2">
+					<div class="flex items-start">
+						<div class="flex h-5 items-center">
+							<input
+								id="terms"
+								name="terms"
+								type="checkbox"
+								bind:checked={agreedToTerms}
+								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
+								disabled={isSubmitting}
+							/>
+						</div>
+						<div class="ml-3 text-sm">
+							<label for="terms" class="text-text-light dark:text-text-dark font-medium">
+								I agree to the <a
+									href="#"
+									class="text-primary-light dark:text-primary-dark hover:underline"
+									>Terms of Service</a
+								>
+							</label>
+						</div>
+					</div>
+
+					<div class="flex items-start">
+						<div class="flex h-5 items-center">
+							<input
+								id="privacy"
+								name="privacy"
+								type="checkbox"
+								bind:checked={agreedToPrivacy}
+								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
+								disabled={isSubmitting}
+							/>
+						</div>
+						<div class="ml-3 text-sm">
+							<label for="privacy" class="text-text-light dark:text-text-dark font-medium">
+								I agree to the <a
+									href="#"
+									class="text-primary-light dark:text-primary-dark hover:underline"
+									>Privacy Policy</a
+								>
+							</label>
+						</div>
+					</div>
+
+					<div class="flex items-start">
+						<div class="flex h-5 items-center">
+							<input
+								id="cookies"
+								name="cookies"
+								type="checkbox"
+								bind:checked={agreedToCookies}
+								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
+								disabled={isSubmitting}
+							/>
+						</div>
+						<div class="ml-3 text-sm">
+							<label for="cookies" class="text-text-light dark:text-text-dark font-medium">
+								I agree to the <a
+									href="#"
+									class="text-primary-light dark:text-primary-dark hover:underline">Cookie Policy</a
+								>
+							</label>
+						</div>
+					</div>
+
+					{#if errors.terms}
+						<p class="mt-1 text-xs text-red-500">{errors.terms}</p>
+					{/if}
+				</div>
 			</div>
-			<h2 slot="title">登録に失敗しました</h2>
-		</Header>
-		<p class="mx-2">アカウントを作成できませんでした。後でもう一度お試しください。</p>
-		<div slot="actions">
-			<Button variant="fill" color="primary" on:click={() => (open = false)}>閉じる</Button>
-		</div>
-	</Dialog>
+
+			<div>
+				<button
+					type="submit"
+					class="group bg-primary-light dark:bg-primary-dark hover:bg-primary-light/90 dark:hover:bg-primary-dark/90 focus:ring-primary-light dark:focus:ring-primary-dark relative flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+					disabled={isSubmitting}
+				>
+					{isSubmitting ? 'Registering...' : 'Register'}
+				</button>
+			</div>
+		</form>
+	</div>
 </div>
-{#if dev}
-	<SuperDebug data={$form}/>
-{/if}

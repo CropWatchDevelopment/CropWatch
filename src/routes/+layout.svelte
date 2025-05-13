@@ -1,60 +1,84 @@
 <script lang="ts">
-	import './app.css';
-	import { goto, invalidate } from '$app/navigation';
-	import { Button } from 'svelte-ux';
-	import { setUserState } from '$lib/state/user-state.svelte';
-	import type { PageProps } from './$types';
+	import '../app.css';
+	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
+	import Header from '$lib/components/Header.svelte';
+	// Theme is now initialized directly in the theme module
+	import { invalidate } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { createBrowserClient } from '@supabase/ssr';
+	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+	import { page } from '$app/stores';
 
-	let { children, data }: PageProps = $props();
-	let { session, supabase } = $derived(data);
+	// No preloading needed - dashboard will load its data when navigated to
 
-	let userState = setUserState({
-		session: data.session,
-		supabase: data.supabase,
-		user: data.user,
-		profile: null
+	let { children, data } = $props();
+
+	// Create a browser client for client-side auth
+	const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		auth: {
+			persistSession: true,
+			detectSessionInUrl: true
+		}
 	});
 
+	// Use derived values instead of state to avoid infinite loops
+	let session = $derived(data.session);
+	let user = $derived(data.user);
+
+	// Log user updates without creating an infinite loop
 	$effect(() => {
-		const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
-			console.log(event, session);
-
-			if (event === 'INITIAL_SESSION') {
-				// handle initial session
-			} else if (event === 'SIGNED_IN') {
-				// handle sign in event
-			} else if (event === 'SIGNED_OUT') {
-				// handle sign out event
-				return;
-			} else if (event === 'PASSWORD_RECOVERY') {
-				// handle password recovery event
-				goto('/auth/update-password');
-				return;
-			} else if (event === 'TOKEN_REFRESHED') {
-				// handle token refreshed event
-			} else if (event === 'USER_UPDATED') {
-				// handle user updated event
-			}
-
-			userState.updateState({
-				session: newSession,
-				supabase,
-				user: newSession?.user || null,
-				profile: null
-			});
-
-			if (!newSession && !window.location.pathname.includes('/auth')) {
-				// If the new session is null, the user is effectively logged out.
-				goto('/auth/login');
-			}
-
-			if (newSession?.expires_at !== session?.expires_at) {
-				invalidate('supabase:auth');
-			}
-		});
-		return () => data.subscription.unsubscribe();
+		if (user) {
+			console.log('User data updated:', user.email || 'Guest');
+		}
 	});
-	// Removed settings call that was causing circular dependencies
+
+	// Improved auth listener to handle session initialization more robustly
+	onMount(() => {
+		console.log('Setting up auth listener');
+		const { data: authData } = supabase.auth.onAuthStateChange((event, _session) => {
+			console.log('Auth state change event:', event, _session?.user?.email);
+
+			if (_session) {
+				console.log('Session initialized:', _session);
+				session = _session;
+				user = _session.user;
+			} else {
+				console.warn('No session found during auth state change');
+				session = null;
+				user = null;
+			}
+
+			// Invalidate to refresh server data when session changes
+			invalidate('supabase:auth');
+		});
+
+		return () => authData.subscription.unsubscribe();
+	});
 </script>
 
-{@render children()}
+<div class="page-transition-container">
+	{#if !$page.url.pathname.startsWith('/auth')}
+		<Header userName={user?.email ?? 'Unknown User'} />
+	{/if}
+	<div
+		class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-colors duration-300"
+	>
+		{@render children()}
+		<ToastContainer position="top-right" />
+	</div>
+</div>
+
+<style>
+	.page-transition-container {
+		animation: fadeIn 0.3s ease-in-out;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+</style>

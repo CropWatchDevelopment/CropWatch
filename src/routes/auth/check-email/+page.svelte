@@ -1,136 +1,56 @@
 <script lang="ts">
-	import { Avatar, Button, Card, Header } from 'svelte-ux';
-	import LOGO_IMAGE from '$lib/images/CropWatchLogo.svg';
-	import { mdiArrowLeft } from '@mdi/js';
-
-	let { data } = $props();
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	
+	// Get the email address from URL parameters, if available
+	let email = $page.url.searchParams.get('email') || '';
 </script>
 
-<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-	<Card class="mx-auto w-full max-w-[480px] px-3 py-6 pb-6 shadow sm:rounded-lg sm:px-12">
-		<Header slot="header">
-			<h2 slot="title" class="text-2xl font-semibold">Email Sent successfully</h2>
-			<h3 slot="subheading">An E-Mail has been sent to your address</h3>
-			<div slot="avatar">
-				<Avatar class="font-bold text-primary-content">
-					<img src={LOGO_IMAGE} alt="CropWatch LLC" />
-				</Avatar>
+<svelte:head>
+	<title>Check Your Email | IoT Dashboard</title>
+</svelte:head>
+
+<div class="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark py-12 px-4 sm:px-6 lg:px-8">
+	<div class="max-w-md w-full space-y-8 bg-card-light dark:bg-card-dark p-8 rounded-xl shadow-md">
+		<div class="text-center">
+			<div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary-light/20 dark:bg-primary-dark/20 mb-6">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-light dark:text-primary-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+				</svg>
 			</div>
-		</Header>
-		<div class="flex w-full flex-col items-center justify-center p-6 text-center">
-			<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-				<!-- Stable blue circle -->
-				<circle cx="50" cy="50" r="45" fill="none" stroke="#007bff" stroke-width="5" />
-
-				<!-- Envelope Body (the lower rectangle of the envelope) -->
-				<path
-					d="M30 40 L30 60 L70 60 L70 40"
-					fill="none"
-					stroke="#007bff"
-					stroke-width="5"
-					stroke-linecap="round"
-					pathLength="100"
-					stroke-dasharray="100"
-					stroke-dashoffset="100"
-				>
-					<animate attributeName="stroke-dashoffset" from="100" to="0" dur="0.5s" fill="freeze" />
-				</path>
-
-				<!-- Envelope Flap (the triangular top of the envelope) -->
-				<path
-					d="M30 40 L50 25 L70 40"
-					fill="none"
-					stroke="#007bff"
-					stroke-width="5"
-					stroke-linecap="round"
-					pathLength="100"
-					stroke-dasharray="100"
-					stroke-dashoffset="100"
-				>
-					<animate attributeName="stroke-dashoffset" from="100" to="0" dur="0.5s" fill="freeze" />
-				</path>
-
-				<!-- Arrow Shaft (rising from the envelope to indicate sending) -->
-				<path
-					d="M50 40 L50 15"
-					fill="none"
-					stroke="#007bff"
-					stroke-width="5"
-					stroke-linecap="round"
-					pathLength="100"
-					stroke-dasharray="100"
-					stroke-dashoffset="100"
-				>
-					<!-- Begins after the envelope is drawn -->
-					<animate
-						attributeName="stroke-dashoffset"
-						from="100"
-						to="0"
-						begin="0.6s"
-						dur="0.5s"
-						fill="freeze"
-					/>
-				</path>
-
-				<!-- Arrow Head Left -->
-				<path
-					d="M50 15 L45 20"
-					fill="none"
-					stroke="#007bff"
-					stroke-width="5"
-					stroke-linecap="round"
-					pathLength="50"
-					stroke-dasharray="50"
-					stroke-dashoffset="50"
-				>
-					<animate
-						attributeName="stroke-dashoffset"
-						from="50"
-						to="0"
-						begin="1.1s"
-						dur="0.3s"
-						fill="freeze"
-					/>
-				</path>
-
-				<!-- Arrow Head Right -->
-				<path
-					d="M50 15 L55 20"
-					fill="none"
-					stroke="#007bff"
-					stroke-width="5"
-					stroke-linecap="round"
-					pathLength="50"
-					stroke-dasharray="50"
-					stroke-dashoffset="50"
-				>
-					<animate
-						attributeName="stroke-dashoffset"
-						from="50"
-						to="0"
-						begin="1.1s"
-						dur="0.3s"
-						fill="freeze"
-					/>
-				</path>
-			</svg>
-
-			<div class="mt-6 space-y-4">
-				<p class="text-lg font-medium">Check your email</p>
-				<p class="text-sm text-surface-content/70">
-					We've sent you a verification link to your email address. Please check your inbox and
-					click the link to continue.
-				</p>
-				<p class="text-xs text-surface-content/50">
-					If you don't see the email, check your spam folder.
-				</p>
+			
+			<h2 class="text-2xl font-bold text-text-light dark:text-text-dark mb-2">
+				Check your email
+			</h2>
+			
+			<div class="text-text-light/80 dark:text-text-dark/80 mb-8">
+				{#if email}
+					<p>We've sent a verification link to <strong class="font-medium">{email}</strong></p>
+				{:else}
+					<p>We've sent a verification link to your email address</p>
+				{/if}
+				<p class="mt-2">Click the link in the email to verify your account and complete your registration.</p>
 			</div>
-
-			<div class="mt-8">
-				<Button variant="outline" color="primary" icon={mdiArrowLeft} href="/auth/login">
-					Back to login
-				</Button>
+			
+			<div class="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-md p-4 mb-8">
+				<p class="text-sm">⚠️ <strong>Important:</strong> Please open the verification link on this same device you used to register.</p>
+			</div>
+			
+			<div class="space-y-4">
+				<div class="text-sm text-text-light/70 dark:text-text-dark/70">
+					<p>Didn't receive an email?</p>
+					<p>Check your spam folder or <button class="text-primary-light dark:text-primary-dark hover:underline">request a new verification email</button></p>
+				</div>
+				
+				<div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+					<button 
+						class="block w-full text-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-light dark:bg-primary-dark hover:bg-primary-light/90 dark:hover:bg-primary-dark/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light dark:focus:ring-primary-dark"
+						on:click={() => goto('/auth/login')}
+					>
+						Return to Login
+					</button>
+				</div>
 			</div>
 		</div>
-	</Card>
+	</div>
 </div>

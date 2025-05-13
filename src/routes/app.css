@@ -8,8 +8,8 @@
 @plugin '@tailwindcss/typography';
 
 :root {
-  --color-primary: var(--color-emerald-600);
-  --color-secondary: var(--color-blue-500);
+	--color-primary: var(--color-emerald-600);
+	--color-secondary: var(--color-blue-500);
 }
 
 /*
@@ -26,80 +26,80 @@
 	::before,
 	::backdrop,
 	::file-selector-button {
-	  border-color: color-mix(in oklab, var(--color-surface-content) 20%, transparent);
-	  outline-color: color-mix(in oklab, var(--color-surface-content) 20%, transparent);
+		border-color: color-mix(in oklab, var(--color-surface-content) 20%, transparent);
+		outline-color: color-mix(in oklab, var(--color-surface-content) 20%, transparent);
 	}
-  }
-  
-  html {
+}
+
+html {
 	@apply bg-surface-200 accent-primary;
-  }
-  
-  nav h1 {
-	@apply py-2 pl-4 mt-4 text-sm text-surface-content font-bold bg-surface-200 border-t border-b;
-  }
-  
-  nav h2 {
-	@apply pt-4 pb-2 pl-4 text-xs text-surface-content font-bold;
-  }
-  
-  .prose {
+}
+
+nav h1 {
+	@apply text-surface-content bg-surface-200 mt-4 border-t border-b py-2 pl-4 text-sm font-bold;
+}
+
+nav h2 {
+	@apply text-surface-content pt-4 pb-2 pl-4 text-xs font-bold;
+}
+
+.prose {
 	h1 {
-	  @apply text-2xl font-extrabold;
+		@apply text-2xl font-extrabold;
 	}
 	h2 {
-	  @apply text-xl font-bold mt-3;
+		@apply mt-3 text-xl font-bold;
 	}
 	h3 {
-	  @apply text-lg font-semibold;
+		@apply text-lg font-semibold;
 	}
-  }
-  
-  main :is(h1, h2, h3):not(.prose *, .related *, .ApiDocs *) {
+}
+
+main :is(h1, h2, h3):not(.prose *, .related *, .ApiDocs *) {
 	scroll-margin-top: calc(var(--headerHeight) + 148px); /* app header + docs header */
-  }
-  
-  main h1:not(.prose *, .related *, .ApiDocs *) {
-	@apply text-xl font-semibold mt-4 mb-2 border-b pb-1;
-  }
-  
-  main h2:not(.prose *, .related *, .ApiDocs *) {
-	@apply text-lg font-semibold mt-4 mb-1;
-  }
-  
-  main h3:not(.prose *, .related *, .ApiDocs *) {
-	@apply text-xs text-surface-content/50 mb-1;
-  }
-  main :not(.prose) h2 + h3 {
+}
+
+main h1:not(.prose *, .related *, .ApiDocs *) {
+	@apply mt-4 mb-2 border-b pb-1 text-xl font-semibold;
+}
+
+main h2:not(.prose *, .related *, .ApiDocs *) {
+	@apply mt-4 mb-1 text-lg font-semibold;
+}
+
+main h3:not(.prose *, .related *, .ApiDocs *) {
+	@apply text-surface-content/50 mb-1 text-xs;
+}
+main :not(.prose) h2 + h3 {
 	@apply -mt-1;
-  }
-  
-  main small {
-	@apply text-xs text-surface-content/50 inline-block;
-  }
-  
-  .TableOfContents small {
+}
+
+main small {
+	@apply text-surface-content/50 inline-block text-xs;
+}
+
+.TableOfContents small {
 	@apply hidden;
-  }
-  
-  /* Code/Preview backgrounds */
-  pre[class*='language-'] {
+}
+
+/* Code/Preview backgrounds */
+pre[class*='language-'] {
 	@apply bg-surface-content;
-  }
-  
-  .dark pre[class*='language-'] {
-	@apply bg-surface-300;
-  }
+}
 
-  nav {
+.dark pre[class*='language-'] {
 	@apply bg-surface-300;
-  @apply flex
-  }
+}
 
-  nav a {
+nav {
+	@apply bg-surface-300;
+	@apply flex;
+}
+
+nav a {
 	@apply text-surface-content;
-  }
+}
 
-  div:has(> .Header) {
-    @apply border-b border-surface-300;
-  }
+div:has(> .Header) {
+	@apply border-surface-300 border-b;
+}

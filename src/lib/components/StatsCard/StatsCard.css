@@ -1,0 +1,31 @@
+.stat-card {
+    padding: 1rem;
+    background-color: var(--color-card, #ffffff);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.stat-values {
+    display: flex;
+    justify-content: space-between;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    display: block;
+}
+
+.stat-value {
+    font-weight: bold;
+    font-size: 1.1rem;
+}

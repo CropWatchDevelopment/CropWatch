@@ -1,0 +1,292 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Keep your CSS variables */
+:root {
+  /* Base colors */
+  --color-primary: #4CAF50;
+  /* ... other variables ... */
+}
+
+.device-details-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.device-header {
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    margin-bottom: 1rem;
+}
+
+.back-link a {
+    color: #0077cc;
+    text-decoration: none;
+}
+
+.device-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    background-color: #f5f5f5;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.device-meta p {
+    margin: 0.25rem 0;
+}
+
+.device-meta span {
+    font-weight: 500;
+}
+
+.data-section {
+    margin-bottom: 3rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timestamp {
+    text-align: right;
+    color: #777;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.date-range-selector {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
+.date-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.fetch-btn {
+    padding: 0.5rem 1rem;
+    background-color: #0077cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.fetch-btn:hover {
+    background-color: #005fa3;
+}
+
+.fetch-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #e74c3c;
+    margin-top: 1rem;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+.stats-section {
+    margin: 2rem 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.charts-section {
+    margin: 2rem 0;
+}
+
+.chart-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.chart {
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.chart-placeholder {
+    height: 300px;
+    position: relative;
+    padding-top: 20px;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+}
+
+.chart-visual {
+    height: 400px;
+    border-bottom: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-visual .chart:first-child {
+    height: 350px;
+    margin-bottom: 10px;
+}
+
+.chart-visual .chart:last-child {
+    height: 150px;
+}
+
+/* ApexCharts styling overrides */
+.apexcharts-canvas {
+    background-color: transparent !important;
+}
+
+.apexcharts-tooltip {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+    border: none !important;
+}
+
+.apexcharts-yaxis-label,
+.apexcharts-xaxis-label {
+    font-size: 12px !important;
+}
+
+/* Make sure the chart doesn't overflow on mobile */
+@media (max-width: 768px) {
+    .chart-placeholder {
+        height: 450px;
+    }
+    
+    .chart-visual {
+        height: 450px;
+    }
+    
+    .chart-visual .chart:first-child {
+        height: 300px;
+    }
+    
+    .chart-visual .chart:last-child {
+        height: 120px;
+    }
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+    padding-top: 10px;
+    justify-content: space-around;
+}
+
+.chart-bar {
+    width: 10px;
+    background-color: #0077cc;
+    margin: 0 2px;
+    min-height: 1px;
+}
+
+.humidity-bar {
+    background-color: #4ecdc4;
+}
+
+.moisture-bar {
+    background-color: #45b7d8;
+}
+
+.time-axis {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.data-table-section {
+    margin: 2rem 0;
+    overflow-x: auto;
+}
+
+.table-container {
+    margin-top: 1rem;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th,
+td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f5f5f5;
+    font-weight: 500;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.no-data {
+    text-align: center;
+    padding: 2rem;
+    color: #777;
+    font-style: italic;
+}
+
+.bg-foreground-light { background-color: var(--color-foreground-light); }
+.bg-foreground-dark { background-color: var(--color-foreground-dark); }

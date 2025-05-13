@@ -1,0 +1,184 @@
+/* @import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography'; */
+
+@import 'tailwindcss';
+
+@import '@layerstack/tailwind/core.css';
+@import '@layerstack/tailwind/utils.css';
+@import '@layerstack/tailwind/themes/all.css';
+
+@source '../../node_modules/svelte-ux/dist';
+@plugin '@tailwindcss/typography';
+
+/* Define color variables for light mode */
+:root {
+	/* Base colors */
+	--color-primary: #4caf50;
+	--color-primary-hover: #3a8c3f;
+	--color-background: #cacaca;
+	--color-foreground: #938aee;
+	--color-foreground-light: #f0f0f0;
+	--color-foreground-dark: #2a2a2a;
+	--color-card: #ffffff;
+	--color-text: #333333;
+	--color-text-secondary: rgba(51, 51, 51, 0.7);
+
+	/* Specialized colors */
+	--color-air-bg: #e6f7ff;
+	--color-air-border: #1e88e5;
+	--color-soil-bg: #f6ffed;
+	--color-soil-border: #4caf50;
+
+	/* Utility colors */
+	--color-error: #e53935;
+	--color-error-bg: #ffebee;
+	--color-success: #43a047;
+	--color-success-bg: #e8f5e9;
+
+	--color-temperature: #ff6b6b;
+	--color-humidity: #4ecdc4;
+	--color-moisture: #45b7d8;
+	--color-co2: #a98248;
+	--color-ph: #6a0572;
+	--color-pressure: #505055;
+	--color-battery: #bdca01;
+
+	/* Shadow */
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Dark mode color variables */
+.dark {
+	/* Base colors */
+	--color-primary: #3a8c3f;
+	--color-primary-hover: #2d6e31;
+	--color-background: #1a1a1a;
+	--color-foreground: #2d2d2d;
+	--color-foreground-light: #383838;
+	--color-foreground-dark: #1f1f1f;
+	--color-card: #2d2d2d;
+	--color-text: #e0e0e0;
+	--color-text-secondary: rgba(224, 224, 224, 0.7);
+
+	/* Specialized colors */
+	--color-air-bg: #0d3b66;
+	--color-air-border: #0277bd;
+	--color-soil-bg: #1e4620;
+	--color-soil-border: #2e7d32;
+
+	/* Utility colors */
+	--color-error: #ef5350;
+	--color-error-bg: rgba(229, 57, 53, 0.2);
+	--color-success: #66bb6a;
+	--color-success-bg: rgba(67, 160, 71, 0.2);
+
+	/* Shadow */
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+html,
+body {
+	scroll-behavior: smooth;
+	height: 100%;
+	background-color: var(--color-background);
+	color: var(--color-text);
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease;
+}
+
+.grow {
+	flex-grow: 1;
+}
+
+/* Global card styles */
+.card {
+	background-color: var(--color-card);
+	color: var(--color-text);
+	border-radius: 0.375rem;
+	box-shadow: var(--shadow-sm);
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease,
+		box-shadow 0.3s ease;
+}
+.card:hover {
+	box-shadow: var(--shadow-md);
+}
+
+/* Button styles */
+button.primary {
+	background-color: var(--color-primary);
+	color: white;
+	transition: background-color 0.3s ease;
+}
+button.primary:hover {
+	background-color: var(--color-primary-hover);
+}
+
+/* Sensor data specific styles */
+.air-data {
+	background-color: var(--color-air-bg);
+	border-left: 4px solid var(--color-air-border);
+}
+
+.soil-data {
+	background-color: var(--color-soil-bg);
+	border-left: 4px solid var(--color-soil-border);
+}
+
+/* Utility classes */
+.text-secondary {
+	color: var(--color-text-secondary);
+}
+
+.error-message {
+	color: var(--color-error);
+	background-color: var(--color-error-bg);
+	border-left: 4px solid var(--color-error);
+	padding: 0.625rem;
+	margin: 0.625rem 0;
+	border-radius: 0.25rem;
+}
+
+/* Smooth transitions for light/dark mode */
+*,
+*::before,
+*::after {
+	transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
+	transition-duration: 200ms;
+}
+
+.bg-foreground-light {
+	background-color: var(--color-foreground-light);
+}
+.bg-foreground-dark {
+	background-color: var(--color-foreground-dark);
+}
+
+/* Explicit fallback utility classes for card backgrounds */
+.bg-card-light {
+	background-color: var(--color-card, #ffffff);
+}
+.dark .dark\:bg-card-dark {
+	background-color: var(--color-card, #2d2d2d);
+}
+
+
+/* Buttons */
+
+button {
+	@apply cursor-pointer;
+}
+
+button:disabled {
+	@apply cursor-not-allowed;
+}
+
+/* links */
+a {
+	@apply underline;
+}

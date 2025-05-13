@@ -1,140 +1,197 @@
 <script lang="ts">
-	import DataRowItem from './DataRowItem.svelte';
-	import { Avatar, Button, Icon } from 'svelte-ux';
-	import { goto } from '$app/navigation';
-	import { mdiAlert, mdiArrowRight, mdiCheck, mdiClose, mdiMailboxUp } from '@mdi/js';
-	import type { ILocation } from '$lib/interfaces/ILocation.interface';
-	import moment from 'moment';
+    import { Icon } from 'svelte-ux';
+    import { goto } from '$app/navigation';
+    import { mdiAlert, mdiCheck, mdiClose } from '@mdi/js';
+    import type { Location } from '$lib/models/Location';
+    import type { Snippet } from 'svelte';
 
-	let {
-		location
-	}: {
-		location: ILocation;
-	} = $props();
-	let activeDevices = $derived(
-		location.cw_devices
-			.map((device) => {
-				if (device.cw_device_type.default_upload_interval === -1) return true;
-				const dev =
-					moment().diff(moment(device.latest_data?.created_at), 'minutes', false) <
-					device.cw_device_type.default_upload_interval;
-				return dev;
-			})
-			.filter(Boolean).length
-	);
+    let {
+        location,
+        href,
+        content=undefined,
+        activeDevices = [],
+        allActive = false,
+        allInactive = false
+    } = $props<{
+        location: Location;
+        href: string;
+        content?: Snippet;
+        activeDevices?: any[];
+        allActive?: boolean;
+        allInactive?: boolean;
+    }>();
 </script>
 
-<div>
-	<div class="border-[rgb(121 121 121)] rounded-2xl border-[0.1em] bg-slate-600 p-0.5">
-		<div
-			class="custom-bg relative h-20 w-full rounded-4xl bg-cover bg-bottom bg-no-repeat p-1 bg-blend-overlay"
-		>
-			<div
-				class="absolute top-0 right-0 flex h-full w-1/2 flex-row items-center justify-end rounded-2xl"
-			>
-				{#if location.cw_devices.some((devices) => devices?.cw_rules.length > 0)}
-					<Avatar size="lg" class="absolute top-3 flex flex-row rounded-full bg-red-300">
-						<Icon class="text-3xl text-white" path={mdiMailboxUp} />
-					</Avatar>
-				{/if}
-			</div>
-			<Avatar
-				size="lg"
-				class="absolute top-3 flex flex-row {activeDevices == location.cw_devices.length
-					? 'bg-success'
-					: 'bg-warning-600'}{activeDevices === 0 ? ' bg-danger-500' : ''} rounded-full"
-			>
-				{#if activeDevices === location.cw_devices.length}
-					<Icon class="absolute text-3xl text-white" path={mdiCheck} />
-				{:else if activeDevices > 0}
-					<Icon class="absolute text-3xl text-white" path={mdiAlert} />
-				{:else if activeDevices === 0}
-					<Icon class="absolute text-3xl text-white" path={mdiClose} />
-				{/if}
-			</Avatar>
-		</div>
-	</div>
-</div>
+<div class="dashboard-card">
+    <div class="card-header">
+        <div class="pattern-bg">
+            <div class="status-indicator {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
+                {#if allActive}
+                    <Icon class="status-icon" path={mdiCheck} />
+                {:else if activeDevices.length > 0 && !allInactive}
+                    <Icon class="status-icon" path={mdiAlert} />
+                {:else}
+                    <Icon class="status-icon" path={mdiClose} />
+                {/if}
+            </div>
+        </div>
+        <h2 class="location-title">
+            <span>{location.name}</span>
+            <button 
+                class="details-button"
+                onclick={() => goto(href)}
+            >
+                <span class="sr-only">View details</span>
+                <svg viewBox="0 0 24 24" class="h-6 w-6">
+                    <path fill="currentColor" d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
+                </svg>
+            </button>
+        </h2>
+    </div>
 
-<h2 class="my-3 flex flex-row items-center overflow-hidden text-xl text-ellipsis">
-	<p class="text-xl">{location.name}</p>
-	<span class="flex flex-grow"></span>
-	<!-- COMING BACK SOON!!!-->
-	<Button
-		variant="fill"
-		color="primary"
-		icon={mdiArrowRight}
-		on:click={() => goto(`/app/location/${location.location_id}`)}
-	/>
-</h2>
-<div class="text-primary-text flex flex-col gap-1 px-1 pb-4 text-sm">
-	{#if location.cw_devices.length === 0}
-		<p>No devices found</p>
-	{:else}
-		{#each location.cw_devices as device}
-			<DataRowItem {device} />
-		{/each}
-	{/if}
-	<span class="flex flex-grow"></span>
+    <div class="card-content">
+        <div class="device-list">
+            {#if content}
+                {@render content()}
+            {/if}
+        </div>
+    </div>
 </div>
 
 <style>
-	.custom-bg {
-		position: relative;
-		overflow: hidden;
-	}
-	.custom-bg::before {
-		content: ' ';
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background-color: #4e7dd6;
-		background-image:
-			linear-gradient(
-				30deg,
-				#4676c8 12%,
-				transparent 12.5%,
-				transparent 87%,
-				#4676c8 87.5%,
-				#4676c8
-			),
-			linear-gradient(
-				150deg,
-				#4676c8 12%,
-				transparent 12.5%,
-				transparent 87%,
-				#4676c8 87.5%,
-				#4676c8
-			),
-			linear-gradient(
-				30deg,
-				#4676c8 12%,
-				transparent 12.5%,
-				transparent 87%,
-				#4676c8 87.5%,
-				#4676c8
-			),
-			linear-gradient(
-				150deg,
-				#4676c8 12%,
-				transparent 12.5%,
-				transparent 87%,
-				#4676c8 87.5%,
-				#4676c8
-			),
-			linear-gradient(60deg, #4d86e8 25%, transparent 25.5%, transparent 75%, #4d86e8 75%, #4d86e8),
-			linear-gradient(60deg, #4d86e8 25%, transparent 25.5%, transparent 75%, #4d86e8 75%, #4d86e8);
-		background-size: 40px 70px;
-		background-position:
-			0 0,
-			0 0,
-			20px 35px,
-			20px 35px,
-			0 0,
-			20px 35px;
-		border-radius: 15px;
-		opacity: 0.9; /* Increased from 0.7 to make the pattern more visible */
-	}
+    .dashboard-card {
+        background-color: var(--color-card);
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        height: 100%;
+        width: 100%; /* Ensure card takes full width of its container */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-header {
+        position: relative;
+    }
+
+    .pattern-bg {
+        position: relative;
+        height: 5rem;
+        background-color: #4e7dd6;
+        background-image:
+            linear-gradient(
+                30deg,
+                #4676c8 12%,
+                transparent 12.5%,
+                transparent 87%,
+                #4676c8 87.5%,
+                #4676c8
+            ),
+            linear-gradient(
+                150deg,
+                #4676c8 12%,
+                transparent 12.5%,
+                transparent 87%,
+                #4676c8 87.5%,
+                #4676c8
+            ),
+            linear-gradient(
+                30deg,
+                #4676c8 12%,
+                transparent 12.5%,
+                transparent 87%,
+                #4676c8 87.5%,
+                #4676c8
+            ),
+            linear-gradient(
+                150deg,
+                #4676c8 12%,
+                transparent 12.5%,
+                transparent 87%,
+                #4676c8 87.5%,
+                #4676c8
+            ),
+            linear-gradient(60deg, #4d86e8 25%, transparent 25.5%, transparent 75%, #4d86e8 75%, #4d86e8),
+            linear-gradient(60deg, #4d86e8 25%, transparent 25.5%, transparent 75%, #4d86e8 75%, #4d86e8);
+        background-size: 40px 70px;
+        background-position:
+            0 0,
+            0 0,
+            20px 35px,
+            20px 35px,
+            0 0,
+            20px 35px;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .status-indicator {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        height: 2.5rem;
+        width: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .status-success {
+        background-color: var(--color-success);
+    }
+
+    .status-warning {
+        background-color: var(--color-warning);
+    }
+
+    .status-danger {
+        background-color: var(--color-danger);
+    }
+
+    .status-icon {
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .card-content {
+        padding: 1rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .location-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+
+    .details-button {
+        background-color: var(--color-primary);
+        color: white;
+        border: none;
+        border-radius: 0.25rem;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .details-button:hover {
+        background-color: var(--color-primary-hover);
+    }
+
+    .device-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        width: 100%; /* Ensure the device list takes full width of the card */
+        align-items: flex-start; /* Left align items */
+    }
 </style>

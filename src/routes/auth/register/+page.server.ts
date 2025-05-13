@@ -1,108 +1,135 @@
-import { fail } from '@sveltejs/kit';
-import { message, superValidate } from 'sveltekit-superforms/server';
-import { registerSchema } from './form/register.schema';
-import { zod } from 'sveltekit-superforms/adapters';
-import { PRIVATE_GOOGLE_RECAPTCHA_SECRET_KEY } from '$env/static/private';
-import type { Actions, PageServerLoad } from './$types';
-
-/**
- * Load the registration form
- */
-export const load: PageServerLoad = async () => {
-    const form = await superValidate(zod(registerSchema));
-    return { form };
-};
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
+import { container } from '$lib/server/ioc.config';
+import { TYPES } from '$lib/server/ioc.types';
+import { AuthService } from '$lib/services/AuthService';
+import type { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 
 export const actions: Actions = {
-    /**
-     * Process registration form submission
-     */
-    default: async ({ request, locals: { supabase } }) => {
-        const form = await superValidate(request, zod(registerSchema));
+	register: async ({ request, locals }) => {
+		const data = await request.formData();
+		
+		// Get form values
+		const firstName = data.get('firstName')?.toString() || '';
+		const lastName = data.get('lastName')?.toString() || '';
+		const email = data.get('email')?.toString() || '';
+		const password = data.get('password')?.toString() || '';
+		const confirmPassword = data.get('confirmPassword')?.toString() || '';
+		const company = data.get('company')?.toString() || '';
+		const agreedToTerms = data.get('terms') === 'on';
+		const agreedToPrivacy = data.get('privacy') === 'on';
+		const agreedToCookies = data.get('cookies') === 'on';
 
-        if (!form.valid) {
-            return fail(400, { form });
-        }
+		// Server-side validation
+		const errors: Record<string, string> = {};
 
-        // Verify reCAPTCHA token
-        const isValidToken = await validateRecaptchaToken(form.data.reCatchaToken);
-        if (!isValidToken) {
-            return fail(400, {
-                form: message(form, 'reCAPTCHA verification failed, please try again')
-            });
-        }
+		if (!firstName.trim()) {
+			errors.firstName = 'First name is required';
+		}
 
-        try {
-            // Register the user with Supabase Auth
-            const { error } = await supabase.auth.signUp({
-                email: form.data.email,
-                password: form.data.password,
-                options: {
-                    emailRedirectTo: 'https://cropwatch.io/legal/sign-forms',
-                    data: {
-                        username: form.data.username,
-                        full_name: form.data.full_name,
-                        employer: form.data.employer,
-                        email: form.data.email
-                    }
-                }
-            });
+		if (!lastName.trim()) {
+			errors.lastName = 'Last name is required';
+		}
 
-            if (error) {
-                console.error('Registration error:', error.message);
-                return fail(400, {
-                    form: message(form, error.message)
-                });
-            }
+		if (!email.trim()) {
+			errors.email = 'Email is required';
+		} else {
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (!emailRegex.test(email)) {
+				errors.email = 'Please enter a valid email address';
+			}
+		}
 
-            return { 
-                form, 
-                success: true 
-            };
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-            console.error('Unexpected registration error:', error);
-            return fail(500, {
-                form: message(form, errorMessage)
-            });
-        }
-    }
+		if (!password) {
+			errors.password = 'Password is required';
+		} else if (password.length < 8) {
+			errors.password = 'Password must be at least 8 characters';
+		}
+
+		if (password !== confirmPassword) {
+			errors.confirmPassword = 'Passwords do not match';
+		}
+
+		if (!company.trim()) {
+			errors.company = 'Company name is required';
+		}
+
+		if (!agreedToTerms || !agreedToPrivacy || !agreedToCookies) {
+			errors.terms = 'You must agree to all terms and policies';
+		}
+
+		// If there are validation errors, return them
+		if (Object.keys(errors).length > 0) {
+			return fail(400, {
+				errors,
+				firstName,
+				lastName,
+				email,
+				company,
+				agreedToTerms,
+				agreedToPrivacy,
+				agreedToCookies
+			});
+		}
+
+		try {
+			// Get error handler from container
+			const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+			
+			// Create AuthService with the request's Supabase client
+			const authService = new AuthService(locals.supabase, errorHandler);
+			
+			// Register the user
+			const result = await authService.register({
+				email,
+				password,
+				firstName,
+				lastName,
+				company
+			});
+
+			if (!result.success) {
+				// Registration failed
+				return fail(400, {
+					message: result.error || 'Registration failed',
+					errors: {},
+					firstName,
+					lastName,
+					email,
+					company,
+					agreedToTerms,
+					agreedToPrivacy,
+					agreedToCookies
+				});
+			}
+
+			 // Check if email verification is needed
+			if (!result.emailConfirmationRequired) {
+				// Redirect to check-email page with email parameter
+				throw redirect(303, `/auth/check-email?email=${encodeURIComponent(email)}`);
+			} else {
+				// No email confirmation needed, redirect to login
+				throw redirect(303, '/auth/login?registered=true');
+			}
+		} catch (err) {
+			console.error('Registration error:', err);
+			
+			// If this is a redirect, let it pass through
+			if (err instanceof Response && err.status === 303) {
+				throw err;
+			}
+			
+			return fail(500, { 
+				message: 'An unexpected error occurred during registration', 
+				errors: {},
+				firstName,
+				lastName,
+				email,
+				company,
+				agreedToTerms,
+				agreedToPrivacy,
+				agreedToCookies
+			});
+		}
+	}
 };
-
-/**
- * Validates a reCAPTCHA token with Google's verification API
- * 
- * @param token - The reCAPTCHA token to validate
- * @returns A boolean indicating whether the token is valid
- */
-async function validateRecaptchaToken(token: string): Promise<boolean> {
-    try {
-        // Verify the reCAPTCHA token with Google
-        const verificationUrl = 'https://www.google.com/recaptcha/api/siteverify';
-        const params = new URLSearchParams();
-        params.append('secret', PRIVATE_GOOGLE_RECAPTCHA_SECRET_KEY);
-        params.append('response', token);
-
-        const recaptchaResponse = await fetch(verificationUrl, {
-            method: 'POST',
-            body: params
-        });
-        
-        if (!recaptchaResponse.ok) {
-            console.error('reCAPTCHA API error:', await recaptchaResponse.text());
-            return false;
-        }
-        
-        const recaptchaResult = await recaptchaResponse.json();
-
-        if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
-            console.error('reCAPTCHA validation failed:', recaptchaResult);
-            return false;
-        }
-
-        return true;
-    } catch (error) {
-        console.error('Error validating reCAPTCHA token:', error);
-        return false;
-    }
-}

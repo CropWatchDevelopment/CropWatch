@@ -1,84 +1,110 @@
 <script lang="ts">
-	import { superForm } from 'sveltekit-superforms';
-	import { Avatar, Button, Card, Header, TextField } from 'svelte-ux';
-	import LOGO_IMAGE from '$lib/images/CropWatchLogo.svg';
-	import { mdiArrowLeft, mdiEmail, mdiEmailArrowRight, mdiLock } from '@mdi/js';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { success, error, warning, info, neutral } from '$lib/stores/toast.svelte';
 
 	let { data } = $props();
-	let loading : boolean = $state(false);
+	let form = $derived(data.form);
 
-	const { form, enhance, constraints, errors } = superForm(data, {
-		validationMethod: 'oninput',
-		onChange: async (values) => {
-			console.log(values);
-		},
-		onSubmit: async (values) => {
-			console.log('Logging In...');
+	let email = $state('');
+	let loading = $state(false);
+
+	function handleSubmit() {
+		return () => {
 			loading = true;
-		},
-		onResult(event) {
-			loading = false;
-			if (event.result.status === 200) {
-				document.location.href = '/auth/check-email';
-			} else {
-				alert(`Password Send FAILED`);
-				console.log(event);
-			}
-		}
-	});
+
+			return async ({ result, update }) => {
+				loading = false;
+				await update();
+				if (result.status === 200) {
+					success('Password reset link sent to your email.');
+					goto('/auth/check-email');
+				} else {
+					error(result.error);
+				}
+			};
+		};
+	}
 </script>
 
-<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
-	<Card class="mx-auto w-full max-w-[480px] px-3 py-6 pb-6 shadow sm:rounded-lg sm:px-12">
-		<Header slot="header">
-			<h2 slot="title" class="text-2xl font-semibold">Forgot Password?</h2>
-			<h3 slot="subheading">Enter your E-Mail Address below, we will send a recovery link.</h3>
-			<div slot="avatar">
-				<Avatar class="font-bold text-primary-content">
-					<img src={LOGO_IMAGE} alt="CropWatch LLC" />
-				</Avatar>
+<svelte:head>
+	<title>Forgot Password | CropWatch</title>
+</svelte:head>
+
+<div
+	class="bg-background-light dark:bg-background-dark flex min-h-screen items-center justify-center p-5 transition-colors duration-300"
+>
+	<div
+		class="bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark w-full max-w-md rounded-lg p-6 shadow-md"
+	>
+		<h1 class="mb-6 text-center text-2xl font-bold">Reset Password</h1>
+
+		{#if form?.success}
+			<div
+				class="mb-4 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
+			>
+				<p>
+					If an account exists with the email <strong>{form.email}</strong>, you'll receive a
+					password reset link shortly.
+				</p>
+
+				<a
+					href="/auth/login"
+					class="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+				>
+					← Back to login
+				</a>
 			</div>
-		</Header>
-		<div class="flex w-full flex-col items-center justify-center">
-			<form method="POST" use:enhance class="w-full">
+		{:else}
+			<p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+				Enter your email address and we'll send you a link to reset your password.
+			</p>
+
+			<form method="POST" use:enhance={handleSubmit()} class="space-y-4">
 				<div>
-					<label for="email" class="block text-sm/6 font-medium">Email address</label>
-					<div class="mt-2">
-						<TextField
-							id="email"
-							label="Email address"
-							type="email"
-							name="email"
-							icon={mdiEmail}
-							autocomplete="email"
-							placeholder="Please enter your email address"
-							bind:value={$form.email}
-							aria-invalid={$errors.email ? 'true' : undefined}
-							error={$errors.email}
-							class="pb-2"
-						/>
-					</div>
+					<label for="email" class="mb-1 block text-sm font-medium">Email address</label>
+					<input
+						type="email"
+						id="email"
+						name="email"
+						bind:value={email}
+						autocomplete="email"
+						required
+						placeholder="✉️ Enter your email"
+						disabled={loading}
+						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
+                   bg-white px-3 py-2 focus:border-transparent
+                   focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+					/>
 				</div>
 
-				<div class="flex flex-col gap-1 pt-4">
-					<Button
+				{#if form?.error}
+					<div
+						class="mb-4 rounded-md bg-red-100 p-3 text-center text-red-700 dark:bg-red-900/30 dark:text-red-400"
+					>
+						{form.error}
+					</div>
+				{/if}
+
+				<div>
+					<button
 						type="submit"
-						variant="fill"
+						class="bg-primary hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
 						disabled={loading}
-						loading={loading}
-						color="primary"
-						class="w-full text-secondary"
-						icon={mdiEmailArrowRight}>{loading ? 'Please wait while we process your request' : 'Send Email'}</Button
 					>
-					<Button
-						variant="fill-outline"
-						color="info"
-						class="w-full text-secondary"
+						{loading ? 'Sending...' : '📧 Send reset link'}
+					</button>
+				</div>
+
+				<div class="mt-4 text-center">
+					<a
 						href="/auth/login"
-						icon={mdiArrowLeft}>Return To Login</Button
+						class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
 					>
+						Back to login
+					</a>
 				</div>
 			</form>
-		</div>
-	</Card>
+		{/if}
+	</div>
 </div>
