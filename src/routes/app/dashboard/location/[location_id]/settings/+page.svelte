@@ -138,7 +138,7 @@
 <div class="container mx-auto px-4 py-8">
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-2xl font-bold">Location Settings: {location.name}</h1>
-		<a href="/dashboard/location/{location.location_id}" class="text-blue-500 hover:text-blue-700">
+		<a href="/app/dashboard/location/{location.location_id}/" class="text-blue-500 hover:text-blue-700">
 			Back to Location
 		</a>
 	</div>
