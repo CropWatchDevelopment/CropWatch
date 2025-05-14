@@ -109,8 +109,7 @@
 
 	<Collapsible.Content>
 		<div
-			class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
-			style="border: 1px solid rgba(255, 255, 255, 0.1);"
+			class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 		>
 			<!-- Search input -->
 			<div class="p-3">
@@ -203,8 +202,7 @@
 										</button>
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content
-										class="dropdown-animation z-50 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-										style="border: 1px solid rgba(255, 255, 255, 0.08);"
+										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 									>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-blue-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-blue-600/40 {dashboardViewType ===
@@ -221,7 +219,10 @@
 											</div>
 											{#if dashboardViewType === 'grid'}
 												<svg viewBox="0 0 24 24" width="16" height="16">
-													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+													<path
+														fill="currentColor"
+														d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+													/>
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
@@ -240,7 +241,10 @@
 											</div>
 											{#if dashboardViewType === 'mozaic'}
 												<svg viewBox="0 0 24 24" width="16" height="16">
-													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+													<path
+														fill="currentColor"
+														d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+													/>
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
@@ -259,7 +263,10 @@
 											</div>
 											{#if dashboardViewType === 'list'}
 												<svg viewBox="0 0 24 24" width="16" height="16">
-													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+													<path
+														fill="currentColor"
+														d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+													/>
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
@@ -295,8 +302,7 @@
 										</button>
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content
-										class="dropdown-animation z-50 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-										style="border: 1px solid rgba(255, 255, 255, 0.08);"
+										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 									>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-purple-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-purple-600/40 {dashboardSortType ===
@@ -313,7 +319,10 @@
 											</div>
 											{#if dashboardSortType === 'alpha'}
 												<svg viewBox="0 0 24 24" width="16" height="16">
-													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+													<path
+														fill="currentColor"
+														d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+													/>
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
@@ -332,7 +341,10 @@
 											</div>
 											{#if dashboardSortType === 'date'}
 												<svg viewBox="0 0 24 24" width="16" height="16">
-													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+													<path
+														fill="currentColor"
+														d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+													/>
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
@@ -351,7 +363,10 @@
 											</div>
 											{#if dashboardSortType === 'time'}
 												<svg viewBox="0 0 24 24" width="16" height="16">
-													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+													<path
+														fill="currentColor"
+														d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+													/>
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
