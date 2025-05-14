@@ -43,25 +43,27 @@ let dataPoints = $derived(
 </script>
 
 <div
-    class="mr-2 border-l-8
+    class=" border-l-8
         {isActive ? 'border-l-green-500'
                 : 'border-l-red-500'}
         {device.latestData?.created_at === null ? 'opacity-50' : ''}"
 >
     <div class="flex px-3">
-        <h3 class="mb-2 basis-1/3 text-lg font-medium">{nameToJapaneseName('Details')}</h3>
+        <h3 class="mb-2 basis-1/3 text-lg font-semibold text-yellow-600 dark:text-yellow-400">{nameToJapaneseName('Details')}</h3>
     </div>
 
     {#each dataPoints as dataPointKey, index}
         {#if device.latestData[dataPointKey] !== null}
-            <div class="py-1">
-                <div class="flex">
-                    <p class="text-base text-primary">{nameToEmoji(dataPointKey)}</p>
-                    <p class="ml-1 text-right">{nameToJapaneseName(dataPointKey)}</p>
+            <div class="py-1 pl-2">
+                <div class="flex items-center">
+                    <div class="flex items-center min-w-[120px]">
+                        <span class="text-gray-500 dark:text-gray-400 text-lg mr-1.5">{nameToEmoji(dataPointKey)}</span>
+                        <span class="text-gray-600 dark:text-gray-400 text-sm">{nameToJapaneseName(dataPointKey)}</span>
+                    </div>
                     <span class="flex-grow"></span>
 
                     {#if dataPointKey === 'created_at'}
-                        <p class="flex flex-row align-bottom text-base">
+                        <p class="flex flex-row align-bottom text-xs text-gray-500 dark:text-gray-400">
                             <Duration
                                 start={device.latestData.created_at}
                                 totalUnits={2}
@@ -69,10 +71,14 @@ let dataPoints = $derived(
                             />&nbsp;ago
                         </p>
                     {:else}
-                        <TweenedValue value={device.latestData[dataPointKey]} format="decimal" />
-                        <small>
-                            <sup class="text-accent-300">{nameToNotation(dataPointKey)}</sup>
-                        </small>
+                        <div class="text-right">
+                            <span class="text-gray-900 dark:text-white font-bold text-lg">
+                                <TweenedValue value={device.latestData[dataPointKey]} format="decimal" />
+                            </span>
+                            <span class="text-accent-700 dark:text-accent-400 text-xs ml-0.5 align-top">
+                                {nameToNotation(dataPointKey)}
+                            </span>
+                        </div>
                     {/if}
                 </div>
 

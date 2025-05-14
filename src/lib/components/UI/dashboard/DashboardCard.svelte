@@ -22,35 +22,35 @@
     }>();
 </script>
 
-<div class="dashboard-card">
-    <div class="card-header">
+<div class="bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 shadow-md dark:shadow-gray-900/20 h-full w-full flex flex-col">
+    <div class="relative">
         <div class="pattern-bg">
-            <div class="status-indicator {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
+            <div class="status-indicator absolute top-3 left-3 h-10 w-10 rounded-full flex items-center justify-center {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
                 {#if allActive}
-                    <Icon class="status-icon" path={mdiCheck} />
+                    <Icon class="text-white text-2xl status-icon" path={mdiCheck} />
                 {:else if activeDevices.length > 0 && !allInactive}
-                    <Icon class="status-icon" path={mdiAlert} />
+                    <Icon class="text-white text-2xl status-icon" path={mdiAlert} />
                 {:else}
-                    <Icon class="status-icon" path={mdiClose} />
+                    <Icon class="text-white text-2xl status-icon" path={mdiClose} />
                 {/if}
             </div>
         </div>
-        <h2 class="location-title">
+        <h2 class="flex justify-between items-center text-xl font-semibold py-3 px-2  text-yellow-600 dark:text-yellow-400">
             <span>{location.name}</span>
-            <button 
-                class="details-button"
-                onclick={() => goto(href)}
-            >
-                <span class="sr-only">View details</span>
-                <svg viewBox="0 0 24 24" class="h-6 w-6">
-                    <path fill="currentColor" d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
-                </svg>
-            </button>
+          <button 
+    class="bg-blue-50 dark:bg-gray-700 text-blue-700 dark:text-blue-300 w-9 h-9 rounded-full border border-blue-200 dark:border-gray-600 inline-flex items-center justify-center p-0 ml-2 flex-shrink-0 cursor-pointer transition-colors duration-200 hover:bg-blue-100 dark:hover:bg-gray-600"
+    onclick={() => goto(href)}
+    aria-label="View details"
+>
+    <svg viewBox="0 0 24 24" class="w-5 h-5 pointer-events-none">
+        <path fill="currentColor" d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
+    </svg>
+</button>
         </h2>
     </div>
 
-    <div class="card-content">
-        <div class="device-list">
+    <div class="py-2 px-2">
+        <div class="flex flex-col gap-1 w-full items-start">
             {#if content}
                 {@render content()}
             {/if}
@@ -59,21 +59,7 @@
 </div>
 
 <style>
-    .dashboard-card {
-        background-color: var(--color-card);
-        border-radius: 0.5rem;
-        overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        height: 100%;
-        width: 100%; /* Ensure card takes full width of its container */
-        display: flex;
-        flex-direction: column;
-    }
-
-    .card-header {
-        position: relative;
-    }
-
+    /* Keeping complex gradient pattern in CSS */
     .pattern-bg {
         position: relative;
         height: 5rem;
@@ -124,18 +110,7 @@
         border-radius: 0.5rem 0.5rem 0 0;
     }
 
-    .status-indicator {
-        position: absolute;
-        top: 0.75rem;
-        left: 0.75rem;
-        height: 2.5rem;
-        width: 2.5rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
+    /* Status colors */
     .status-success {
         background-color: var(--color-success);
     }
@@ -146,52 +121,5 @@
 
     .status-danger {
         background-color: var(--color-danger);
-    }
-
-    .status-icon {
-        color: white;
-        font-size: 1.5rem;
-    }
-
-    .card-content {
-        padding: 1rem;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .location-title {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.75rem;
-        font-size: 1.25rem;
-        font-weight: 500;
-    }
-
-    .details-button {
-        background-color: var(--color-primary);
-        color: white;
-        border: none;
-        border-radius: 0.25rem;
-        width: 2rem;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .details-button:hover {
-        background-color: var(--color-primary-hover);
-    }
-
-    .device-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        width: 100%; /* Ensure the device list takes full width of the card */
-        align-items: flex-start; /* Left align items */
     }
 </style>

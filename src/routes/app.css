@@ -103,3 +103,13 @@ nav a {
 div:has(> .Header) {
 	@apply border-surface-300 border-b;
 }
+
+/* Buttons */
+
+button {
+	@apply cursor-pointer;
+}
+
+button:disabled {
+	@apply cursor-not-allowed;
+}

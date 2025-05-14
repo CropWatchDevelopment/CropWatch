@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { Button, Collapse, TweenedValue } from 'svelte-ux';
+    import { Collapse, TweenedValue } from 'svelte-ux';
+    import Button from './components/Button.svelte';
     import { goto } from '$app/navigation';
     import { mdiArrowRight } from '@mdi/js';
     import moment from 'moment';
     import { nameToEmoji } from '$lib/utilities/NameToEmoji';
+    import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
     import type { Device } from '$lib/models/Device';
     import type { Location } from '$lib/models/Location';
     import { createActiveTimer } from '$lib/utilities/ActiveTimer';
@@ -83,67 +85,67 @@
 </script>
 
 <Collapse
-    classes={{ root: 'shadow-md pr-2 bg-surface-200/50 w-full', icon: 'data-[open=true]:rotate-90' }}
+    classes={{ root: 'mb-1 bg-gray-50/50 dark:bg-gray-800/30 w-full', icon: 'text-gray-400 dark:text-gray-500 data-[open=true]:rotate-90' }}
     open={defaultCollapse}
     on:change={(e) => collapseStateChange(e)}
 >
-    <svelte:fragment slot="trigger">
-        <div class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}">
-            <div class="my-1 mr-2 border-r-2">
-                <div class="flex flex-col text-center text-base">
-                    <div class="justify-left flex flex-row">
-                        <b class="ml-4 text-sm">{device.name || `Device ${device.dev_eui}`}</b>
-                    </div>
-                    <div class="flex flex-row justify-center">
-                        {#if device.latestData}
-                            <p class="m-auto justify-center">
-                                <span>
-                                    {nameToEmoji(primaryDataKey)}
+    <div
+        slot="trigger"
+        class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+    >
+        <div class="my-1 mr-2 border-r-2">
+            <div class="flex flex-col text-base">
+                <div class="justify-left flex flex-row">
+                    <b class="ml-4 text-sm text-gray-700 dark:text-gray-300 font-semibold tracking-wide pb-1">{device.name || `Device ${device.dev_eui}`}</b>
+                </div>
+                <div class="flex flex-row justify-center space-x-4">
+                    {#if device.latestData}
+                        <div class="flex items-center">
+                            <span class="text-gray-500 dark:text-gray-400 text-lg mr-1.5">{nameToEmoji(primaryDataKey)}</span>
+                            <div class="flex flex-col items-start">
+                                <span class="text-gray-900 dark:text-white font-bold text-lg leading-tight">
                                     <TweenedValue
                                         value={primaryValue}
                                         format="decimal"
                                     />
+                                    <span class="text-accent-700 dark:text-accent-400 text-xs font-normal ml-0.5 align-top">{primaryNotation}</span>
                                 </span>
-                                <small>
-                                    <sup class="text-accent-300">{primaryNotation}</sup>
-                                </small>
-                            </p>
-                            <p class="m-auto justify-center">
-                                <span>
-                                    {#if secondaryDataKey}
-                                        {nameToEmoji(secondaryDataKey)}
-                                        <TweenedValue
-                                            value={secondaryValue}
-                                            format="decimal"
-                                        />
-                                    {/if}
+                                <span class="text-gray-500 dark:text-gray-400 text-xs">{nameToJapaneseName(primaryDataKey)}</span>
+                            </div>
+                        </div>
+                        
+                        {#if secondaryDataKey}
+                        <div class="flex items-center">
+                            <span class="text-gray-500 dark:text-gray-400 text-lg mr-1.5">{nameToEmoji(secondaryDataKey)}</span>
+                            <div class="flex flex-col items-start">
+                                <span class="text-gray-900 dark:text-white font-bold text-lg leading-tight">
+                                    <TweenedValue
+                                        value={secondaryValue}
+                                        format="decimal"
+                                    />
+                                    <span class="text-accent-700 dark:text-accent-400 text-xs font-normal ml-0.5 align-top">{secondaryNotation}</span>
                                 </span>
-                                <small>
-                                    <sup class="text-accent-300">{secondaryNotation}</sup>
-                                </small>
-                            </p>
+                                <span class="text-gray-500 dark:text-gray-400 text-xs">{nameToJapaneseName(secondaryDataKey)}</span>
+                            </div>
+                        </div>
                         {/if}
-                    </div>
+                    {/if}
                 </div>
             </div>
         </div>
-    </svelte:fragment>
+    </div>
     
     <slot></slot>
     
     <div
-        class="border-l-8 pl-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+        class="border-l-8 pl-2 pb-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'} "
     >
         {#if detailHref || location}
-            <Button
-                onclick={() => goto(detailHref || `/location/${location?.location_id}/devices/${device.dev_eui}`)}
-                variant="fill"
-                color="info"
-                class="mb-1 w-full"
-                icon={mdiArrowRight}
-            >
-                View Details
-            </Button>
+      <Button
+  text="View Details"
+  iconPath={mdiArrowRight}
+  onClick={() => goto(`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`)}
+/>
         {/if}
     </div>
 </Collapse>
