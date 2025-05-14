@@ -552,7 +552,7 @@ function setupPolling() {
 										created_at: currentLocation?.created_at || new Date().toISOString(),
 										description: currentLocation?.description || ''
 									} as Location}
-									href={`/dashboard/location/${currentLocation?.location_id}`}
+									href={`/app/dashboard/location/${currentLocation?.location_id}`}
 									activeDevices={activeDevices}
 									allActive={allActive}
 									allInactive={allInactive}

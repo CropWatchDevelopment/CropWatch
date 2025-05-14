@@ -11,46 +11,50 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
    * The table name in the database
    */
   protected abstract tableName: string;
-  
+
   /**
    * The primary key column name
    */
   protected abstract primaryKey: string;
-  
+
   /**
    * Human readable entity name for error messages
    */
   protected abstract entityName: string;
-  
+
   /**
    * Constructor with SupabaseClient and ErrorHandlingService dependencies
    */
   constructor(
     protected supabase: SupabaseClient,
     protected errorHandler: ErrorHandlingService
-  ) {}
-  
+  ) { }
+
   /**
    * Find an entity by its primary key
    * @param id The primary key value
    */
   async findById(id: K): Promise<T | null> {
-    const { data, error } = await this.supabase
+    const supabaseRequest = this.supabase
       .from(this.tableName)
       .select('*')
       .eq(this.primaryKey, id)
       .single();
+
       
+
+    const { data, error } = await supabaseRequest;
+
     if (error) {
       this.errorHandler.handleDatabaseError(
-        error, 
+        error,
         `Error finding ${this.entityName} with ID: ${String(id)}`
       );
     }
-    
+
     return data as T;
   }
-  
+
   /**
    * Get all entities
    */
@@ -58,17 +62,17 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
     const { data, error } = await this.supabase
       .from(this.tableName)
       .select('*');
-      
+
     if (error) {
       this.errorHandler.handleDatabaseError(
-        error, 
+        error,
         `Error finding all ${this.entityName} records`
       );
     }
-    
+
     return data as T[] || [];
   }
-  
+
   /**
    * Create a new entity
    * @param entity The entity to create
@@ -79,17 +83,17 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
       .insert(entity)
       .select()
       .single();
-      
+
     if (error) {
       this.errorHandler.handleDatabaseError(
-        error, 
+        error,
         `Error creating ${this.entityName}`
       );
     }
-    
+
     return data as T;
   }
-  
+
   /**
    * Update an existing entity
    * @param id The primary key value
@@ -102,21 +106,21 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
       .eq(this.primaryKey, id)
       .select()
       .single();
-      
+
     if (error) {
       this.errorHandler.handleDatabaseError(
-        error, 
+        error,
         `Error updating ${this.entityName} with ID: ${String(id)}`
       );
     }
-    
+
     if (!data) {
       this.errorHandler.handleNotFound(this.entityName, String(id));
     }
-    
+
     return data as T;
   }
-  
+
   /**
    * Delete an entity by its primary key
    * @param id The primary key value
@@ -127,19 +131,19 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
     if (!existing) {
       this.errorHandler.handleNotFound(this.entityName, String(id));
     }
-    
+
     const { error } = await this.supabase
       .from(this.tableName)
       .delete()
       .eq(this.primaryKey, id);
-      
+
     if (error) {
       this.errorHandler.handleDatabaseError(
-        error, 
+        error,
         `Error deleting ${this.entityName} with ID: ${String(id)}`
       );
     }
-    
+
     return true;
   }
 }
