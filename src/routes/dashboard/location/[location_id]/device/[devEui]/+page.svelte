@@ -36,9 +36,8 @@
 		initializeDateRange
 	} = deviceDetail;
 
-	// Define these as DOM element references that will be correctly bound
-	// The comment is accurate - we don't want reactivity for DOM refs
-	// But we need to make sure SvelteKit 5 doesn't warn about non-reactivity
+	// Define these as element references - using the new Svelte 5 approach for DOM bindings
+	// For DOM elements that don't need reactivity, we can use let declarations without $state
 	let chart1: HTMLElement;
 	let chart1Brush: HTMLElement;
 	let dataGrid: HTMLElement;

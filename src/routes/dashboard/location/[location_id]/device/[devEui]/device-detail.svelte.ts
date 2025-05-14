@@ -32,20 +32,18 @@ export function setupDeviceDetail() {
 
     // States for the component
     let loading = $state(false);
-    let error: string | null = $state(null);
+    let error = $state<string | null>(null);
 
     // Date range selection
-    let startDate: string = $state('');
-    let endDate: string = $state('');
+    let startDate = $state('');
+    let endDate = $state('');
 
     // Libraries and elements
-    let ApexCharts: any = $state();
-    let ApexGrid: any = $state();
+    let ApexCharts = $state<any>(undefined);
+    let ApexGrid = $state<any>(undefined);
     
     // ApexGrid instance
-    let grid: any = $state();
-
-    
+    let grid = $state<any>(undefined);
 
     // Function to process historical data and calculate stats
     function processHistoricalData(historicalData: any[], dataType: string) {
@@ -196,10 +194,10 @@ export function setupDeviceDetail() {
             return;
         }
         
-        // Clear existing charts before redrawing
-        chart1Element.innerHTML = $state('')
-        chart1BrushElement.innerHTML = $state('')
-        dataGridElement.innerHTML = $state('')
+        // Clear existing charts before redrawing - fixed $state usage
+        chart1Element.innerHTML = "";
+        chart1BrushElement.innerHTML = "";
+        dataGridElement.innerHTML = "";
         
         // Import ApexCharts and ApexGrid
         ApexCharts = await import('apexcharts').then((module) => module.default);
