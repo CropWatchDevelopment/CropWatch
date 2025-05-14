@@ -97,7 +97,7 @@
 						bind:value={search}
 						class="w-full rounded-md border border-gray-300 bg-white py-2 pr-8 pl-8 text-sm placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500"
 						placeholder={nameToJapaneseName('Search')}
-						on:keydown={(e) => {
+						onkeydown={(e) => {
 							if (e.key === 'Enter') {
 								browser ? localStorage.setItem('dashboard_search', search) : null;
 							}
@@ -106,7 +106,8 @@
 					{#if search}
 						<button
 							class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-							on:click={clearSearch}
+							onclick={clearSearch}
+							aria-label="Clear search"
 						>
 							<svg viewBox="0 0 24 24" width="16" height="16">
 								<path fill="currentColor" d={mdiClose} />
@@ -118,7 +119,7 @@
 
 			<!-- Filter options -->
 			<div
-				class="flex flex-row items-center justify-center border-t border-gray-200 p-1 dark:border-gray-700"
+				class="flex flex-row items-center justify-center border-t border-gray-200 px-2 py-3 dark:border-gray-700"
 			>
 				<!-- Hide/Show Empty Locations -->
 				<Tooltip.Provider>
@@ -129,7 +130,8 @@
 									class="flex h-8 w-8 items-center justify-center rounded-full {hideNoDeviceLocations
 										? 'bg-yellow-500 text-white'
 										: 'bg-green-500 text-white'} hover:opacity-90"
-									on:click={toggleHideEmpty}
+									onclick={toggleHideEmpty}
+									aria-label="Toggle empty locations"
 								>
 									<svg viewBox="0 0 24 24" width="16" height="16">
 										<path fill="currentColor" d={hideNoDeviceLocations ? mdiEyeOff : mdiEye} />
@@ -160,6 +162,7 @@
 									<DropdownMenu.Trigger>
 										<button
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600"
+											aria-label="Dashboard layout options"
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16">
 												<path fill="currentColor" d={mdiMonitorDashboard} />
@@ -171,7 +174,7 @@
 									>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-											on:click={() => setDashboardViewType('grid')}
+											onSelect={() => setDashboardViewType('grid')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
 												<path fill="currentColor" d={mdiGrid} />
@@ -180,7 +183,7 @@
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-											on:click={() => setDashboardViewType('mozaic')}
+											onSelect={() => setDashboardViewType('mozaic')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
 												<path fill="currentColor" d={mdiViewDashboard} />
@@ -189,7 +192,7 @@
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-											on:click={() => setDashboardViewType('list')}
+											onSelect={() => setDashboardViewType('list')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
 												<path fill="currentColor" d={mdiViewList} />
@@ -219,6 +222,7 @@
 									<DropdownMenu.Trigger>
 										<button
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white hover:bg-purple-600"
+											aria-label="Sort options"
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16">
 												<path fill="currentColor" d={mdiSort} />
@@ -230,7 +234,7 @@
 									>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-											on:click={() => setDashboardSortType('alpha')}
+											onSelect={() => setDashboardSortType('alpha')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
 												<path fill="currentColor" d={mdiSortAlphabeticalAscending} />
@@ -239,7 +243,7 @@
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-											on:click={() => setDashboardSortType('date')}
+											onSelect={() => setDashboardSortType('date')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
 												<path fill="currentColor" d={mdiSortCalendarAscending} />
@@ -248,7 +252,7 @@
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center rounded-md px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-											on:click={() => setDashboardSortType('time')}
+											onSelect={() => setDashboardSortType('time')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
 												<path fill="currentColor" d={mdiSortClockAscending} />
