@@ -14,7 +14,7 @@
 	import DashboardCard from '$lib/components/UI/dashboard/DashboardCard.svelte';
 	import DeviceDataList from '$lib/components/UI/dashboard/DeviceDataList.svelte';
 	import DataRowItem from '$lib/components/UI/dashboard/DataRowItem.svelte';
-	import DashboardFilter from '$lib/components/UI/dashboard/DashboardFilter.svelte';
+	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
 
 	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
 	import { mdiViewDashboard } from '@mdi/js';
@@ -485,7 +485,7 @@
 					<Icon path={mdiViewDashboard} class="mr-2" />
 					Locations
 					<div class="ml-auto">
-						<DashboardFilter
+						<DashboardFilterBits
 							bind:search
 							bind:hideNoDeviceLocations={hideEmptyLocations}
 							bind:dashboardViewType

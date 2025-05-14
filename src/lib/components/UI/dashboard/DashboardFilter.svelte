@@ -16,16 +16,7 @@
 		mdiViewDashboard,
 		mdiViewList
 	} from '@mdi/js';
-	import {
-		Badge,
-		Button,
-		Menu,
-		MenuItem,
-		ResponsiveMenu,
-		TextField,
-		Toggle,
-		Tooltip
-	} from 'svelte-ux';
+	import { Collapsible, DropdownMenu, Button, Tooltip } from 'bits-ui';
 
 	let {
 		search = $bindable(''),
@@ -49,10 +40,16 @@
 	});
 </script>
 
-<Toggle let:on={open} let:toggle let:toggleOff>
-	<!-- <Badge value={search ? 1 : 0} circle small class="bg-success text-black"></Badge> -->
-	<Button icon={mdiFilterMenu} onclick={toggle}>
-		<ResponsiveMenu {open} on:close={toggleOff} menuProps={{ explicitClose: true }}>
+<Collapsible.Root let:open bind:open>
+	<Collapsible.Trigger>
+		<Button.Root class="flex items-center justify-center p-2 rounded-md bg-background-alt hover:bg-background-alt/90">
+			<svg viewBox="0 0 24 24" width="24" height="24" class="text-current">
+				<path fill="currentColor" d={mdiFilterMenu} />
+			</svg>
+		</Button.Root>
+	</Collapsible.Trigger>
+	<Collapsible.Content>
+		<div class="absolute z-50 mt-2 w-auto min-w-[200px] rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
 			<div class="p-2">
 				<!-- Add autofocus delay to keep the opening transition smooth  -->
 				<TextField

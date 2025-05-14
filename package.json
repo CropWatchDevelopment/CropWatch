@@ -53,6 +53,7 @@
 		"@supabase/ssr": "^0.6.1",
 		"@supabase/supabase-js": "^2.49.4",
 		"apexcharts": "^4.7.0",
+		"bits-ui": "^1.4.8",
 		"bufferutil": "^4.0.9",
 		"d3": "^7.9.0",
 		"d3-axis": "^3.0.0",
