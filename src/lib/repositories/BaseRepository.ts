@@ -35,24 +35,33 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
    * @param id The primary key value
    */
   async findById(id: K): Promise<T | null> {
-    const supabaseRequest = this.supabase
-      .from(this.tableName)
-      .select('*')
-      .eq(this.primaryKey, id)
-      .single();
+    try {
+      const { data, error } = await this.supabase
+        .from(this.tableName)
+        .select('*')
+        .eq(this.primaryKey, id)
+        .single();
 
-      
+      if (error) {
+        // If the error is specifically that no rows were found, return null
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        
+        this.errorHandler.handleDatabaseError(
+          error,
+          `Error finding ${this.entityName} with ID: ${String(id)}`
+        );
+      }
 
-    const { data, error } = await supabaseRequest;
-
-    if (error) {
+      return data as T;
+    } catch (err) {
       this.errorHandler.handleDatabaseError(
-        error,
+        err as Error,
         `Error finding ${this.entityName} with ID: ${String(id)}`
       );
+      return null;
     }
-
-    return data as T;
   }
 
   /**

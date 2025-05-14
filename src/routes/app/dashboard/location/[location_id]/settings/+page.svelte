@@ -107,7 +107,7 @@ asdfasdf
 		</a>
 	</div>
 
-	<div class="mb-8 rounded-lg bg-white p-6 shadow-lg">
+	<div class="mb-8 rounded-lg bg-foreground-light dark:bg-foreground-dark p-6 shadow-lg">
 		<h2 class="mb-4 text-xl font-bold">User Permissions</h2>
 		<p class="mb-4">
 			Manage which users have access to this location and with what permission level.
@@ -115,9 +115,9 @@ asdfasdf
 
 		{#if locationUsers.length > 0}
 			<div class="overflow-x-auto">
-				<table class="min-w-full bg-white">
+				<table class="min-w-full">
 					<thead>
-						<tr class="border-b bg-gray-100">
+						<tr class="border-b">
 							<th class="px-4 py-3 text-left">User</th>
 							<th class="px-4 py-3 text-left">Email</th>
 							<th class="px-4 py-3 text-left">Permission</th>
@@ -126,7 +126,7 @@ asdfasdf
 					</thead>
 					<tbody>
 						{#each locationUsers as user}
-							<tr class="border-b hover:bg-gray-50">
+							<tr class="border-b bg-foreground-light dark:bg-foreground-dark">
 								<td class="px-4 py-3">{getUserDisplayName(user)}</td>
 								<td class="px-4 py-3">{user.profile?.email || 'No email'}</td>
 								<td class="px-4 py-3">
@@ -311,7 +311,7 @@ asdfasdf
 		</div>
 	</div>
 
-	<div class="rounded-lg bg-white p-6 shadow-lg">
+	<div class="rounded-lg bg-foreground-light dark:bg-foreground-dark p-6 shadow-lg">
 		<h2 class="mb-4 text-xl font-bold">About Permissions</h2>
 
 		<div class="prose max-w-none">

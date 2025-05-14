@@ -6,6 +6,9 @@ import type { ILocationService } from '$lib/interfaces/ILocationService';
 import { PermissionLevel } from '$lib/models/LocationUser';
 import type { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { AuthService } from '$lib/services/AuthService';
+import { LocationService } from '$lib/services/LocationService';
+import { LocationRepository } from '$lib/repositories/LocationRepository';
+import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
     const locationId = parseInt(params.location_id, 10);
@@ -17,15 +20,22 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
     const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
     const authService = new AuthService(supabase, errorHandler);
     const session = await authService.getSession();
-    
+
     if (!session || !session.user) {
         throw redirect(302, '/auth/login');
     }
 
-    const locationService = container.get<ILocationService>(TYPES.LocationService);
+    const user = session.user;
+    
+    // Create a repository with the authenticated supabase client
+    const locationRepo = new LocationRepository(supabase, errorHandler);
+    const deviceRepo = new DeviceRepository(supabase, errorHandler);
+    // Create a service with the authenticated repository
+    const locationService = new LocationService(locationRepo, deviceRepo);
 
-    // Get location details
+    // Get location details using the service with authenticated client
     const location = await locationService.getLocationById(locationId);
+    const devices = await deviceRepo.findByLocation(locationId);
 
     if (!location) {
         throw error(404, 'Location not found');
@@ -45,19 +55,16 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
     // Get all users with access to this location
     const locationUsers = await locationService.getLocationUsers(locationId);
 
-    // Get all devices in this location
-    const devices = await locationService.getDeviceCountForLocation(locationId);
-
     return {
         location,
         locationUsers,
-        deviceCount: devices,
+        deviceCount: devices ? devices.length : 0,
         currentUser: user
     };
 };
 
 export const actions: Actions = {
-    addUser: async ({ request, params }) => {
+    addUser: async ({ request, params, locals: { supabase } }) => {
         const formData = await request.formData();
         const email = formData.get('email') as string;
         const permissionLevel = parseInt(formData.get('permissionLevel') as string, 10);
@@ -68,7 +75,10 @@ export const actions: Actions = {
             return { success: false, error: 'Invalid input data' };
         }
 
-        const locationService = container.get<ILocationService>(TYPES.LocationService);
+        const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+        const locationRepo = new LocationRepository(supabase, errorHandler);
+        const deviceRepo = new DeviceRepository(supabase, errorHandler);
+        const locationService = new LocationService(locationRepo, deviceRepo);
 
         const result = await locationService.addUserToLocation(
             locationId,
@@ -80,7 +90,7 @@ export const actions: Actions = {
         return result;
     },
 
-    updatePermission: async ({ request, params }) => {
+    updatePermission: async ({ request, params, locals: { supabase } }) => {
         const formData = await request.formData();
         const userId = formData.get('userId') as string;
         const permissionLevel = parseInt(formData.get('permissionLevel') as string, 10);
@@ -92,7 +102,10 @@ export const actions: Actions = {
             return { success: false, error: 'Invalid input data' };
         }
 
-        const locationService = container.get<ILocationService>(TYPES.LocationService);
+        const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+        const locationRepo = new LocationRepository(supabase, errorHandler);
+        const deviceRepo = new DeviceRepository(supabase, errorHandler);
+        const locationService = new LocationService(locationRepo, deviceRepo);
 
         const result = await locationService.updateUserPermission(
             locationId,
@@ -105,7 +118,7 @@ export const actions: Actions = {
         return result;
     },
 
-    removeUser: async ({ request, params }) => {
+    removeUser: async ({ request, params, locals: { supabase } }) => {
         const formData = await request.formData();
         const userId = formData.get('userId') as string;
         const locationOwnerId = parseInt(formData.get('locationOwnerId') as string, 10);
@@ -115,7 +128,10 @@ export const actions: Actions = {
             return { success: false, error: 'Invalid input data' };
         }
 
-        const locationService = container.get<ILocationService>(TYPES.LocationService);
+        const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+        const locationRepo = new LocationRepository(supabase, errorHandler);
+        const deviceRepo = new DeviceRepository(supabase, errorHandler);
+        const locationService = new LocationService(locationRepo, deviceRepo);
 
         const result = await locationService.removeUserFromLocation(
             locationId,
