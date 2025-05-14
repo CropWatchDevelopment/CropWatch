@@ -47,17 +47,18 @@
 		if (browser) {
 			setTimeout(() => {
 				// Check if dark mode is active
-				const isDarkMode = document.documentElement.classList.contains('dark') || 
+				const isDarkMode =
+					document.documentElement.classList.contains('dark') ||
 					window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 				if (!isDarkMode) {
 					const dropdownContents = document.querySelectorAll('.dropdown-menu-content');
-					dropdownContents.forEach(menu => {
+					dropdownContents.forEach((menu) => {
 						menu.classList.add('light-mode-tint');
 					});
 
 					const dropdownItems = document.querySelectorAll('.dropdown-menu-item');
-					dropdownItems.forEach(item => {
+					dropdownItems.forEach((item) => {
 						item.addEventListener('mouseenter', () => {
 							item.classList.add('light-mode-hover');
 						});
@@ -95,109 +96,6 @@
 	}
 </script>
 
-<style>
-	/* Animation for dropdown opening */
-	@keyframes fadeInDown {
-		from {
-			opacity: 0;
-			transform: translateY(-10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes scaleIn {
-		from {
-			opacity: 0;
-			transform: scale(0.95);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
-	}
-
-	/* Icon button hover effects */
-	:global(.icon-btn) {
-		transition: all 0.2s ease;
-		position: relative;
-		overflow: hidden;
-	}
-
-	:global(.icon-btn:hover) {
-		transform: translateY(-1px);
-		filter: brightness(1.1);
-		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-		background-color: rgba(255, 255, 255, 0.1);
-	}
-
-	:global(.icon-btn:active) {
-		transform: translateY(0);
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-	}
-
-	:global(.icon-btn:focus) {
-		outline: none;
-		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
-	}
-
-	:global(.icon-btn::after) {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-		opacity: 0;
-		transition: opacity 0.3s ease;
-	}
-
-	:global(.icon-btn:hover::after) {
-		opacity: 1;
-	}
-
-	/* Spacing between icon and text */
-	:global(.icon-text-spacing) {
-		margin-top: 0.5rem;
-	}
-
-	/* Dropdown animation */
-	:global(.dropdown-animation) {
-		animation: fadeInDown 0.2s ease forwards;
-	}
-
-	/* Sub-dropdown animation and styling */
-	:global(.sub-dropdown-animation) {
-		animation: scaleIn 0.15s ease-out forwards;
-	}
-
-	:global(.dropdown-content) {
-		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 0.5rem;
-	}
-
-	/* Selected state for dropdown items */
-	:global(.dropdown-item-selected) {
-		position: relative;
-	}
-
-	:global(.dropdown-item-selected::before) {
-		content: '';
-		position: absolute;
-		left: 0;
-		top: 0;
-		bottom: 0;
-		width: 3px;
-		background: currentColor;
-		border-radius: 0 3px 3px 0;
-		opacity: 0.8;
-	}
-</style>
-
 <Collapsible.Root>
 	<Collapsible.Trigger>
 		<Button.Root
@@ -211,7 +109,7 @@
 
 	<Collapsible.Content>
 		<div
-			class="absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dropdown-animation"
+			class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)]"
 			style="border: 1px solid rgba(255, 255, 255, 0.1);"
 		>
 			<!-- Search input -->
@@ -249,7 +147,7 @@
 
 			<!-- Filter options -->
 			<div
-				class="flex flex-row items-center justify-center border-t border-gray-200 px-4 py-6 mt-2 dark:border-gray-600 gap-7"
+				class="mt-2 flex flex-row items-center justify-center gap-7 border-t border-gray-200 px-4 py-6 dark:border-gray-600"
 			>
 				<!-- Hide/Show Empty Locations -->
 				<Tooltip.Provider>
@@ -257,17 +155,22 @@
 						<Tooltip.Trigger>
 							<div class="mx-2 flex flex-col items-center">
 								<button
-									class="flex h-8 w-8 items-center justify-center rounded-full {hideNoDeviceLocations
-										? 'bg-yellow-500 text-white'
-										: 'bg-green-500 text-white'} icon-btn transition-all duration-200 hover:bg-white/10 focus:outline-none focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)]"
+									class={`flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-200 focus:ring-2 focus:ring-white/20 focus:outline-none ${
+										hideNoDeviceLocations
+											? 'bg-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-400'
+											: 'bg-green-500 hover:bg-green-600 dark:hover:bg-green-400'
+									}`}
 									onclick={toggleHideEmpty}
-									aria-label="Toggle empty locations"
+									aria-label={hideNoDeviceLocations
+										? 'Show empty locations'
+										: 'Hide empty locations'}
 								>
 									<svg viewBox="0 0 24 24" width="16" height="16">
 										<path fill="currentColor" d={hideNoDeviceLocations ? mdiEyeOff : mdiEye} />
 									</svg>
 								</button>
-								<span class="icon-text-spacing text-center text-xs">{nameToJapaneseName('Hide/Show Empty')}</span
+								<span class="icon-text-spacing text-center text-xs"
+									>{nameToJapaneseName('Hide/Show Empty')}</span
 								>
 							</div>
 						</Tooltip.Trigger>
@@ -291,7 +194,7 @@
 								<DropdownMenu.Root bind:open={layoutMenuOpen}>
 									<DropdownMenu.Trigger>
 										<button
-											class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white icon-btn transition-all duration-200 hover:bg-white/10 focus:outline-none focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)]"
+											class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition-all duration-200 hover:bg-blue-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-blue-400"
 											aria-label="Dashboard layout options"
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16">
@@ -300,11 +203,14 @@
 										</button>
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content
-										class="z-50 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_4px_12px_rgba(0,0,0,0.5)] dropdown-animation"
+										class="dropdown-animation z-50 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
 										style="border: 1px solid rgba(255, 255, 255, 0.08);"
 									>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600/90 hover:shadow-sm transition-all duration-150 {dashboardViewType === 'grid' ? 'bg-blue-50 dark:bg-blue-900/30 font-medium dropdown-item-selected' : ''}"
+											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardViewType ===
+											'grid'
+												? 'dropdown-item-selected bg-blue-50 font-medium dark:bg-blue-900/30'
+												: ''}"
 											onSelect={() => setDashboardViewType('grid')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -313,7 +219,10 @@
 											Grid
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600/90 hover:shadow-sm transition-all duration-150 {dashboardViewType === 'mozaic' ? 'bg-blue-50 dark:bg-blue-900/30 font-medium dropdown-item-selected' : ''}"
+											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardViewType ===
+											'mozaic'
+												? 'dropdown-item-selected bg-blue-50 font-medium dark:bg-blue-900/30'
+												: ''}"
 											onSelect={() => setDashboardViewType('mozaic')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -322,7 +231,10 @@
 											Mozaic
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600/90 hover:shadow-sm transition-all duration-150 {dashboardViewType === 'list' ? 'bg-blue-50 dark:bg-blue-900/30 font-medium dropdown-item-selected' : ''}"
+											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardViewType ===
+											'list'
+												? 'dropdown-item-selected bg-blue-50 font-medium dark:bg-blue-900/30'
+												: ''}"
 											onSelect={() => setDashboardViewType('list')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -332,7 +244,9 @@
 										</DropdownMenu.Item>
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
-								<span class="icon-text-spacing text-center text-xs">{nameToJapaneseName('Dashboard Style')}</span>
+								<span class="icon-text-spacing text-center text-xs"
+									>{nameToJapaneseName('Dashboard Style')}</span
+								>
 							</div>
 						</Tooltip.Trigger>
 						<Tooltip.Content>
@@ -351,7 +265,7 @@
 								<DropdownMenu.Root bind:open={sortMenuOpen}>
 									<DropdownMenu.Trigger>
 										<button
-											class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white icon-btn transition-all duration-200 hover:bg-white/10 focus:outline-none focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)]"
+											class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white transition-all duration-200 hover:bg-purple-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-purple-400"
 											aria-label="Sort options"
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16">
@@ -360,11 +274,14 @@
 										</button>
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content
-										class="z-50 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_4px_12px_rgba(0,0,0,0.5)] dropdown-animation"
+										class="dropdown-animation z-50 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-lg dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
 										style="border: 1px solid rgba(255, 255, 255, 0.08);"
 									>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600/90 hover:shadow-sm transition-all duration-150 {dashboardSortType === 'alpha' ? 'bg-purple-50 dark:bg-purple-900/30 font-medium dropdown-item-selected' : ''}"
+											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardSortType ===
+											'alpha'
+												? 'dropdown-item-selected bg-purple-50 font-medium dark:bg-purple-900/30'
+												: ''}"
 											onSelect={() => setDashboardSortType('alpha')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -373,7 +290,10 @@
 											Alpha
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600/90 hover:shadow-sm transition-all duration-150 {dashboardSortType === 'date' ? 'bg-purple-50 dark:bg-purple-900/30 font-medium dropdown-item-selected' : ''}"
+											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardSortType ===
+											'date'
+												? 'dropdown-item-selected bg-purple-50 font-medium dark:bg-purple-900/30'
+												: ''}"
 											onSelect={() => setDashboardSortType('date')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -382,7 +302,10 @@
 											Date
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600/90 hover:shadow-sm transition-all duration-150 {dashboardSortType === 'time' ? 'bg-purple-50 dark:bg-purple-900/30 font-medium dropdown-item-selected' : ''}"
+											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardSortType ===
+											'time'
+												? 'dropdown-item-selected bg-purple-50 font-medium dark:bg-purple-900/30'
+												: ''}"
 											onSelect={() => setDashboardSortType('time')}
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -392,7 +315,9 @@
 										</DropdownMenu.Item>
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
-								<span class="icon-text-spacing text-center text-xs">{nameToJapaneseName('Sort By')}</span>
+								<span class="icon-text-spacing text-center text-xs"
+									>{nameToJapaneseName('Sort By')}</span
+								>
 							</div>
 						</Tooltip.Trigger>
 						<Tooltip.Content>
@@ -404,3 +329,117 @@
 		</div>
 	</Collapsible.Content>
 </Collapsible.Root>
+
+<style>
+	/* Animation for dropdown opening */
+	@keyframes fadeInDown {
+		from {
+			opacity: 0;
+			transform: translateY(-10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes scaleIn {
+		from {
+			opacity: 0;
+			transform: scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	/* Icon button hover effects */
+	.icon-btn {
+		transition: all 0.2s ease;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.icon-btn:hover {
+		transform: translateY(-1px);
+		filter: brightness(1.1);
+		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+
+	.icon-btn:active {
+		transform: translateY(0);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	}
+
+	.icon-btn:focus {
+		outline: none;
+		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+	}
+
+	.icon-btn::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	}
+
+	.icon-btn:hover::after {
+		opacity: 1;
+	}
+
+	/* Spacing between icon and text */
+	.icon-text-spacing {
+		margin-top: 0.5rem;
+	}
+
+	/* Dropdown animation */
+	.dropdown-animation {
+		animation: fadeInDown 0.2s ease forwards;
+	}
+
+	/* Sub-dropdown animation and styling */
+	.sub-dropdown-animation {
+		animation: scaleIn 0.15s ease-out forwards;
+	}
+
+	.dropdown-content {
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 0.5rem;
+	}
+
+	/* Selected state for dropdown items */
+	.dropdown-item-selected {
+		position: relative;
+	}
+
+	.dropdown-item-selected::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 3px;
+		background: currentColor;
+		border-radius: 0 3px 3px 0;
+		opacity: 0.8;
+	}
+
+	.dropdown-item-selected::after {
+		content: '✓';
+		position: absolute;
+		right: 10px;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 0.8rem;
+		opacity: 0.9;
+		color: currentColor;
+	}
+</style>
