@@ -1,15 +1,12 @@
 <script lang="ts">
-    import { Collapse, TweenedValue } from 'svelte-ux';
+    import { TweenedValue } from 'svelte-ux';
     import Button from './components/Button.svelte';
     import { goto } from '$app/navigation';
     import { mdiArrowRight } from '@mdi/js';
-    import moment from 'moment';
     import { nameToEmoji } from '$lib/utilities/NameToEmoji';
     import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
     import type { Device } from '$lib/models/Device';
     import type { Location } from '$lib/models/Location';
-    import { createActiveTimer } from '$lib/utilities/ActiveTimer';
-    import { onMount, onDestroy } from 'svelte';
 
     // Extend the Device type to include latestData
     interface DeviceWithLatestData extends Device {
@@ -28,24 +25,20 @@
         device,
         location,
         isActive: externalIsActive,
-        detailHref
+        detailHref,
+        children
     } = $props<{
         device: DeviceWithLatestData;
         location?: Location;
         isActive?: boolean;
         detailHref?: string;
+        children?: any;
     }>();
     
     // Use the isActive prop directly from the parent component
-    // This simplifies the component and ensures consistent active status logic
     let isActive = $derived(externalIsActive !== undefined ? Boolean(externalIsActive) : false);
     
-    // Log the active status for debugging
-    $effect(() => {
-        console.log(`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}`);
-    });
-    
-    // Determine the primary and secondary data keys based on device type - using reactive declarations
+    // Determine the primary and secondary data keys based on device type
     let primaryDataKey = $derived(device.cw_device_type.primary_data_v2 || 'temperature_c');
     let secondaryDataKey = $derived(device.cw_device_type.secondary_data_v2 || 
         (device.cw_device_type.name?.toLowerCase().includes('soil') ? 'moisture' : 'humidity'));
@@ -54,49 +47,36 @@
     let primaryValue = $derived(device.latestData?.[primaryDataKey]);
     let secondaryValue = $derived(device.latestData?.[secondaryDataKey]);
 
-    // Get the notations - using reactive declarations
+    // Get the notations
     let primaryNotation = $derived(device.cw_device_type.primary_data_notation || '°C');
     let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
-    
-    // Add a reactive effect to log when data changes
-    $effect(() => {
-        console.log(`DataRowItem: ${device.name} (${device.dev_eui}) data updated:`, {
-            primaryKey: primaryDataKey,
-            primaryValue,
-            secondaryKey: secondaryDataKey,
-            secondaryValue,
-            timestamp: device.latestData?.created_at
-        });
-    });
 
     let localStorageOpenState = localStorage.getItem(`${device.dev_eui}-collapseState`);
-    let defaultCollapse = $state(
+    let isOpen = $state(
         localStorageOpenState ? JSON.parse(localStorageOpenState) : false
     );
 
-    function collapseStateChange(e: CustomEvent) {
-        defaultCollapse = e.detail.open;
-        localStorage.setItem(`${device.dev_eui}-collapseState`, JSON.stringify(e.detail.open));
+    function toggleCollapse() {
+        isOpen = !isOpen;
+        localStorage.setItem(`${device.dev_eui}-collapseState`, JSON.stringify(isOpen));
     }
-
-    $effect(() => {
-		$inspect('device', device, 'latestData', device.latestData);
-	});
 </script>
 
-<Collapse
-    classes={{ root: 'mb-1 bg-gray-50/50 dark:bg-gray-800/30 w-full', icon: 'text-gray-400 dark:text-gray-500 data-[open=true]:rotate-90' }}
-    open={defaultCollapse}
-    on:change={(e) => collapseStateChange(e)}
->
-    <div
-        slot="trigger"
-        class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+<div class="mb-1 bg-gray-50/50 dark:bg-gray-800/30 w-full">
+    <!-- Trigger area -->
+    <button 
+        type="button"
+        class="flex-1 w-full text-left border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'} cursor-pointer"
+        onclick={toggleCollapse}
+        aria-expanded={isOpen}
+        aria-controls="device-content-{device.dev_eui}"
     >
         <div class="my-1 mr-2 border-r-2">
             <div class="flex flex-col text-base">
                 <div class="justify-left flex flex-row">
-                    <b class="ml-4 text-sm text-gray-700 dark:text-gray-300 font-semibold tracking-wide pb-1">{device.name || `Device ${device.dev_eui}`}</b>
+                    <b class="ml-4 text-sm text-gray-700 dark:text-gray-300 font-semibold tracking-wide pb-1">
+                        {device.name || `Device ${device.dev_eui}`}
+                    </b>
                 </div>
                 <div class="flex flex-row justify-center space-x-4">
                     {#if device.latestData}
@@ -133,19 +113,25 @@
                 </div>
             </div>
         </div>
-    </div>
+    </button>
     
-    <slot></slot>
-    
-    <div
-        class="border-l-8 pl-2 pb-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'} "
-    >
-        {#if detailHref || location}
-      <Button
-  text="View Details"
-  iconPath={mdiArrowRight}
-  onClick={() => goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}
-/>
-        {/if}
-    </div>
-</Collapse>
+    {#if isOpen}
+        <!-- Content area -->
+        <div id="device-content-{device.dev_eui}" class="content-area">
+            {#if children}
+                {@render children()}
+            {/if}
+            
+            <!-- Details button -->
+            <div class="border-l-8 pl-2 pb-1 {isActive ? '!border-l-green-500' : 'border-l-red-500'}">
+                {#if detailHref || location}
+                    <Button
+                        text="View Details"
+                        iconPath={mdiArrowRight}
+                        onClick={() => goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}
+                    />
+                {/if}
+            </div>
+        </div>
+    {/if}
+</div>
