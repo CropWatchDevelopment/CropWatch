@@ -5,7 +5,6 @@ import type { LocationUser } from '../models/LocationUser';
 import { DeviceRepository } from '../repositories/DeviceRepository';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '$lib/server/ioc.types';
-import { AppError } from '$lib/errors/AppError';
 
 /**
  * Implementation of LocationService

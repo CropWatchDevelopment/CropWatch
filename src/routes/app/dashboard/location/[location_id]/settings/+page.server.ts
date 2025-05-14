@@ -64,6 +64,73 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 };
 
 export const actions: Actions = {
+    updateLocation: async ({ request, params, locals: { supabase } }) => {
+        const locationId = parseInt(params.location_id, 10);
+        
+        if (isNaN(locationId)) {
+            return { success: false, error: 'Invalid location ID' };
+        }
+        
+        const formData = await request.formData();
+        const name = formData.get('name') as string;
+        const latString = formData.get('lat') as string;
+        const longString = formData.get('long') as string;
+        
+        // Validate name is provided
+        if (!name || name.trim() === '') {
+            return { success: false, error: 'Location name is required' };
+        }
+        
+        // Parse latitude and longitude
+        let lat: number | null = null;
+        let long: number | null = null;
+        
+        if (latString && latString.trim() !== '') {
+            lat = parseFloat(latString);
+            if (isNaN(lat) || lat < -90 || lat > 90) {
+                return { success: false, error: 'Invalid latitude value' };
+            }
+        }
+        
+        if (longString && longString.trim() !== '') {
+            long = parseFloat(longString);
+            if (isNaN(long) || long < -180 || long > 180) {
+                return { success: false, error: 'Invalid longitude value' };
+            }
+        }
+        
+        // Only set coordinates if both values are provided
+        if ((lat !== null && long === null) || (lat === null && long !== null)) {
+            return { success: false, error: 'Both latitude and longitude must be provided or left empty' };
+        }
+        
+        try {
+            const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+            const locationRepo = new LocationRepository(supabase, errorHandler);
+            const deviceRepo = new DeviceRepository(supabase, errorHandler);
+            const locationService = new LocationService(locationRepo, deviceRepo);
+            
+            // Update the location
+            const updatedLocation = await locationService.updateLocation(locationId, {
+                name,
+                lat,
+                long
+            });
+            
+            if (!updatedLocation) {
+                return { success: false, error: 'Failed to update location' };
+            }
+            
+            return { success: true, data: updatedLocation };
+        } catch (err) {
+            console.error('Error updating location:', err);
+            return { 
+                success: false, 
+                error: err instanceof Error ? err.message : 'An unexpected error occurred' 
+            };
+        }
+    },
+
     addUser: async ({ request, params, locals: { supabase } }) => {
         const formData = await request.formData();
         const email = formData.get('email') as string;
@@ -140,5 +207,7 @@ export const actions: Actions = {
         );
 
         return result;
-    }
+    },
+
+    
 };

@@ -6,6 +6,42 @@
 
 	const { location, locationUsers, deviceCount, permissionTypes, currentUser } = data;
 
+	// Location details editing
+	let editingLocationDetails = false;
+	let locationName = location.name;
+	let locationLatitude = location.lat || null;
+	let locationLongitude = location.long || null;
+	let isUpdatingLocation = false;
+
+	const startEditLocation = () => {
+		editingLocationDetails = true;
+		locationName = location.name;
+		locationLatitude = location.lat || null;
+		locationLongitude = location.long || null;
+	};
+
+	const cancelEditLocation = () => {
+		editingLocationDetails = false;
+	};
+
+	const handleLocationUpdateSuccess = (result) => {
+		isUpdatingLocation = false;
+
+		if (result.type === 'success') {
+			if (result.data.success) {
+				success('Location details updated successfully');
+				editingLocationDetails = false;
+
+				// Refresh the page to show updated location details
+				window.location.reload();
+			} else {
+				errorToast(result.data.error || 'Failed to update location details');
+			}
+		} else {
+			errorToast('An error occurred');
+		}
+	};
+
 	let newUserEmail = '';
 	let newUserPermission = 3; // Default to Viewer
 	let applyPermissionToDevices = false;
@@ -98,13 +134,123 @@
 <svelte:head>
 	<title>Location Settings - {location.name}</title>
 </svelte:head>
-asdfasdf
+
 <div class="container mx-auto px-4 py-8">
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-2xl font-bold">Location Settings: {location.name}</h1>
 		<a href="/dashboard/location/{location.location_id}" class="text-blue-500 hover:text-blue-700">
 			Back to Location
 		</a>
+	</div>
+
+	<!-- Location Details Section -->
+	<div class="mb-8 rounded-lg bg-foreground-light dark:bg-foreground-dark p-6 shadow-lg">
+		<div class="flex items-center justify-between mb-4">
+			<h2 class="text-xl font-bold">Location Details</h2>
+			{#if !editingLocationDetails}
+				<button 
+					type="button" 
+					class="text-blue-500 hover:text-blue-700"
+					on:click={startEditLocation}
+				>
+					Edit Details
+				</button>
+			{/if}
+		</div>
+
+		{#if editingLocationDetails}
+			<form
+				method="POST"
+				action="?/updateLocation"
+				class="max-w-md"
+				use:enhance={() => {
+					isUpdatingLocation = true;
+
+					return ({ result }) => {
+						handleLocationUpdateSuccess(result);
+					};
+				}}
+			>
+				<div class="mb-4">
+					<label for="locationName" class="mb-1 block font-medium">Location Name</label>
+					<input
+						type="text"
+						id="locationName"
+						name="name"
+						required
+						placeholder="Location Name"
+						class="w-full rounded border px-3 py-2"
+						bind:value={locationName}
+					/>
+				</div>
+
+				<div class="mb-4">
+					<label for="locationLatitude" class="mb-1 block font-medium">Latitude</label>
+					<input
+						type="number"
+						id="locationLatitude"
+						name="lat"
+						step="any"
+						placeholder="Latitude (e.g. 51.5074)"
+						class="w-full rounded border px-3 py-2"
+						bind:value={locationLatitude}
+					/>
+					<p class="mt-1 text-sm text-gray-500">
+						Decimal format (e.g. 51.5074)
+					</p>
+				</div>
+
+				<div class="mb-4">
+					<label for="locationLongitude" class="mb-1 block font-medium">Longitude</label>
+					<input
+						type="number"
+						id="locationLongitude"
+						name="long"
+						step="any"
+						placeholder="Longitude (e.g. -0.1278)"
+						class="w-full rounded border px-3 py-2"
+						bind:value={locationLongitude}
+					/>
+					<p class="mt-1 text-sm text-gray-500">
+						Decimal format (e.g. -0.1278)
+					</p>
+				</div>
+
+				<div class="flex gap-2">
+					<button
+						type="submit"
+						class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
+						disabled={isUpdatingLocation || !locationName}
+					>
+						{isUpdatingLocation ? 'Updating...' : 'Update Location'}
+					</button>
+					<button
+						type="button"
+						class="rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
+						on:click={cancelEditLocation}
+					>
+						Cancel
+					</button>
+				</div>
+			</form>
+		{:else}
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<h3 class="text-sm font-medium text-gray-500">Name</h3>
+					<p>{location.name}</p>
+				</div>
+				<div>
+					<h3 class="text-sm font-medium text-gray-500">Coordinates</h3>
+					<p>
+						{#if location.lat !== null && location.long !== null}
+							{location.lat.toFixed(6)}, {location.long.toFixed(6)}
+						{:else}
+							Not set
+						{/if}
+					</p>
+				</div>
+			</div>
+		{/if}
 	</div>
 
 	<div class="mb-8 rounded-lg bg-foreground-light dark:bg-foreground-dark p-6 shadow-lg">
