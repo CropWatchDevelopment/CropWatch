@@ -98,7 +98,7 @@
 <svelte:head>
 	<title>Location Settings - {location.name}</title>
 </svelte:head>
-
+asdfasdf
 <div class="container mx-auto px-4 py-8">
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-2xl font-bold">Location Settings: {location.name}</h1>

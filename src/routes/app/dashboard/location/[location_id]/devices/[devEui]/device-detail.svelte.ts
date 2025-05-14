@@ -197,9 +197,9 @@ export function setupDeviceDetail() {
         }
         
         // Clear existing charts before redrawing
-        chart1Element.innerHTML = $state('')
-        chart1BrushElement.innerHTML = $state('')
-        dataGridElement.innerHTML = $state('')
+        chart1Element.innerHTML = '';
+        chart1BrushElement.innerHTML = '';
+        dataGridElement.innerHTML = '';
         
         // Import ApexCharts and ApexGrid
         ApexCharts = await import('apexcharts').then((module) => module.default);

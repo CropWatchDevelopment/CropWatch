@@ -144,7 +144,7 @@
       <Button
   text="View Details"
   iconPath={mdiArrowRight}
-  onClick={() => goto(`/app/location/${device.location_id}/devices/${device.dev_eui}/detail`)}
+  onClick={() => goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}
 />
         {/if}
     </div>
