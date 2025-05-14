@@ -119,7 +119,7 @@
         <!-- Content area -->
         <div id="device-content-{device.dev_eui}" class="content-area">
             {#if children}
-                {children}
+                {@render children()}
             {/if}
             
             <!-- Details button -->
