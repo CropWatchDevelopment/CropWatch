@@ -14,7 +14,7 @@
 	import DashboardCard from '$lib/components/UI/dashboard/DashboardCard.svelte';
 	import DeviceDataList from '$lib/components/UI/dashboard/DeviceDataList.svelte';
 	import DataRowItem from '$lib/components/UI/dashboard/DataRowItem.svelte';
-	import DashboardFilter from '$lib/components/UI/dashboard/DashboardFilter.svelte';
+	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
 
 	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
 	import { mdiViewDashboard } from '@mdi/js';
@@ -48,10 +48,10 @@
 	let deviceActiveStatus: Record<string, boolean> = $state({});
 	let pollingIntervalId: number | null = $state(null);
 	let lastRefreshTimestamp: Record<number, number> = $state({}); // Cache timestamp by location ID
-	
+
 	// Store unsubscribe functions for cleanup
 	const unsubscribers: (() => void)[] = [];
-	
+
 	// Polling interval ID
 
 	// View state variables
@@ -93,7 +93,11 @@
 
 	// Function to get device active status
 	function getDeviceActiveStatus(devEui: string | null): boolean {
-		if (!devEui || deviceActiveStatus[devEui] === null || deviceActiveStatus[devEui] === undefined) {
+		if (
+			!devEui ||
+			deviceActiveStatus[devEui] === null ||
+			deviceActiveStatus[devEui] === undefined
+		) {
 			return false;
 		}
 		return Boolean(deviceActiveStatus[devEui]);
@@ -111,25 +115,25 @@
 			// Fetch locations for the current user
 			const response = await fetch(`/api/locations?userId=${user.id}`);
 			if (!response.ok) throw new Error('Failed to fetch location data');
-			
+
 			const userLocations = await response.json();
-			
+
 			// Process locations and load devices for each location
 			const locationPromises = userLocations.map(async (location) => {
 				try {
 					// Fetch devices for this location
 					const devicesResponse = await fetch(`/api/locations/${location.location_id}/devices`);
 					if (!devicesResponse.ok) return { ...location, deviceCount: 0, cw_devices: [] };
-					
+
 					const locationDevices = await devicesResponse.json();
-					
+
 					// Setup active timers for each device
 					locationDevices.forEach((device: DeviceWithSensorData) => {
 						if (device.latestData?.created_at) {
 							setupDeviceActiveTimer(device);
 						}
 					});
-					
+
 					return {
 						...location,
 						deviceCount: locationDevices.length,
@@ -140,10 +144,10 @@
 					return { ...location, deviceCount: 0, cw_devices: [] };
 				}
 			});
-			
+
 			// Wait for all location device data to be loaded
 			locations = await Promise.all(locationPromises);
-			console.log('LOOC', locations)
+			console.log('LOOC', locations);
 			loadingLocations = false;
 
 			// If there are locations, select the first one by default
@@ -159,26 +163,26 @@
 	});
 
 	// Set up polling for device data updates
-function setupPolling() {
-    console.log('setupPolling called');
-    // Clear any existing polling interval
-    if (pollingIntervalId !== null) {
-        clearInterval(pollingIntervalId);
-        pollingIntervalId = null;
-    }
-    
-    // Set up new polling interval (every 2 minutes)
-    const intervalId = setInterval(async () => {
-        console.log(`[Polling] Device data polling triggered at ${new Date().toLocaleString()}`);
-        if (selectedLocation) {
-            await refreshDevicesForLocation(selectedLocation);
-        }
-    }, 120000); // 2 minutes
-    
-    // Store the interval ID for cleanup
-    pollingIntervalId = intervalId as unknown as number;
-}
-	
+	function setupPolling() {
+		console.log('setupPolling called');
+		// Clear any existing polling interval
+		if (pollingIntervalId !== null) {
+			clearInterval(pollingIntervalId);
+			pollingIntervalId = null;
+		}
+
+		// Set up new polling interval (every 2 minutes)
+		const intervalId = setInterval(async () => {
+			console.log(`[Polling] Device data polling triggered at ${new Date().toLocaleString()}`);
+			if (selectedLocation) {
+				await refreshDevicesForLocation(selectedLocation);
+			}
+		}, 120000); // 2 minutes
+
+		// Store the interval ID for cleanup
+		pollingIntervalId = intervalId as unknown as number;
+	}
+
 	// Function to clean up all timers and polling
 	function cleanupTimers() {
 		// Clear polling interval
@@ -186,26 +190,26 @@ function setupPolling() {
 			clearInterval(pollingIntervalId);
 			pollingIntervalId = null;
 		}
-		
+
 		// Clear all active timers
-		unsubscribers.forEach(unsub => unsub());
+		unsubscribers.forEach((unsub) => unsub());
 		unsubscribers.length = 0;
 	}
 
 	// Function to update the location's devices and trigger a UI refresh
 	function updateLocationDevices(locationId: number, updatedDevices: DeviceWithSensorData[]) {
 		if (locations && locations.length > 0) {
-			const currentLocationIndex = locations.findIndex(loc => loc.location_id === locationId);
+			const currentLocationIndex = locations.findIndex((loc) => loc.location_id === locationId);
 			if (currentLocationIndex >= 0) {
 				locations[currentLocationIndex].cw_devices = [...updatedDevices];
-				
+
 				// Log the updated active status
 				const status = getLocationActiveStatus(locations[currentLocationIndex]);
-				console.log('Location status updated after refresh:', { 
-					location: locations[currentLocationIndex].name, 
-					activeDevices: status.activeDevices.length, 
-					allActive: status.allActive, 
-					allInactive: status.allInactive 
+				console.log('Location status updated after refresh:', {
+					location: locations[currentLocationIndex].name,
+					activeDevices: status.activeDevices.length,
+					allActive: status.allActive,
+					allInactive: status.allInactive
 				});
 			}
 		}
@@ -218,20 +222,22 @@ function setupPolling() {
 			const now = Date.now();
 			const lastRefresh = lastRefreshTimestamp[locationId] || 0;
 			const timeSinceLastRefresh = now - lastRefresh;
-			
+
 			// Only refresh if it's been at least 30 seconds since the last refresh
 			// This prevents excessive DB calls while still allowing the active timer to work
 			if (timeSinceLastRefresh < 30000) {
-				console.log(`Skipping refresh for location ${locationId}, last refresh was ${timeSinceLastRefresh/1000}s ago`);
+				console.log(
+					`Skipping refresh for location ${locationId}, last refresh was ${timeSinceLastRefresh / 1000}s ago`
+				);
 				return true;
 			}
-			
+
 			// Fetch devices for the selected location
 			const response = await fetch(`/api/locations/${locationId}/devices`);
 			if (!response.ok) throw new Error('Failed to fetch devices');
-			
+
 			const locationDevices = await response.json();
-			
+
 			// Update devices and setup active timers
 			devices = locationDevices.map((device: DeviceWithSensorData) => {
 				if (device.latestData?.created_at) {
@@ -239,18 +245,18 @@ function setupPolling() {
 				}
 				return device;
 			});
-			
+
 			// Update the location's devices to trigger UI refresh
 			updateLocationDevices(locationId, devices);
-			
+
 			// Update the refresh timestamp
 			lastRefreshTimestamp[locationId] = now;
-			
+
 			console.log('Devices refreshed:', {
 				deviceCount: devices.length,
-				activeCount: devices.filter(d => deviceActiveStatus[d.dev_eui as string]).length
+				activeCount: devices.filter((d) => deviceActiveStatus[d.dev_eui as string]).length
 			});
-			
+
 			return true;
 		} catch (err) {
 			console.error('Error refreshing devices:', err);
@@ -267,16 +273,16 @@ function setupPolling() {
 			// Show loading indicator for devices
 			loadingDevices = true;
 			devices = [];
-			
+
 			// Clean up any existing timers
 			cleanupTimers();
 
 			// Fetch devices for the selected location
 			const response = await fetch(`/api/locations/${locationId}/devices`);
 			if (!response.ok) throw new Error('Failed to fetch devices');
-			
+
 			const locationDevices = await response.json();
-			
+
 			// Setup active timers for each device
 			devices = locationDevices.map((device: DeviceWithSensorData) => {
 				if (device.latestData?.created_at) {
@@ -284,10 +290,10 @@ function setupPolling() {
 				}
 				return device;
 			});
-			
+
 			// Set up polling for updates
 			setupPolling();
-			
+
 			loadingDevices = false;
 		} catch (err) {
 			deviceError = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -299,21 +305,18 @@ function setupPolling() {
 	function setupDeviceActiveTimer(device: DeviceWithSensorData) {
 		if (!device.latestData?.created_at) return;
 		const deviceId = device.dev_eui as string;
-		
+
 		// Clear any existing timer for this device
 		cleanupDeviceTimer(deviceId);
-		
-		const uploadInterval = device.upload_interval || 
-			device.deviceType?.default_upload_interval || 10;
-		
+
+		const uploadInterval =
+			device.upload_interval || device.deviceType?.default_upload_interval || 10;
+
 		// Create a closure to capture the current timestamp
 		const currentTimestamp = device.latestData.created_at;
-			
-		const activeTimer = createActiveTimer(
-			new Date(currentTimestamp),
-			Number(uploadInterval)
-		);
-		
+
+		const activeTimer = createActiveTimer(new Date(currentTimestamp), Number(uploadInterval));
+
 		// Update device active status when timer changes
 		const unsubscribe = activeTimer.subscribe((isActive) => {
 			// Only update if this is still the current device data
@@ -332,13 +335,13 @@ function setupPolling() {
 				});
 			}
 		});
-		
+
 		// Store the unsubscribe function for cleanup and track its index
 		const timerIndex = unsubscribers.length;
 		unsubscribers.push(unsubscribe);
 		deviceTimers[deviceId] = timerIndex;
 	}
-	
+
 	// Map to track device timers by device ID
 	let deviceTimers: Record<string, number> = $state({});
 
@@ -346,15 +349,15 @@ function setupPolling() {
 	function cleanupDeviceTimer(deviceId: string) {
 		// Find the index of the timer for this device
 		const timerIndex = deviceTimers[deviceId];
-		
+
 		// If we have a timer index for this device
 		if (timerIndex !== undefined && timerIndex >= 0 && timerIndex < unsubscribers.length) {
 			// Call the unsubscribe function
 			unsubscribers[timerIndex]();
-			
+
 			// Remove the unsubscribe function from the array (replace with a no-op)
 			unsubscribers[timerIndex] = () => {};
-			
+
 			// Remove the device from the timers map
 			delete deviceTimers[deviceId];
 		}
@@ -392,57 +395,58 @@ function setupPolling() {
 			handleLocationClick(location);
 		}
 	}
-	
+
 	// Function to check if a device is active
 	function isDeviceActive(device: DeviceWithSensorData): boolean {
 		if (!device) return false;
-		
+
 		// Get the device ID
 		const devEui = device.dev_eui as string;
-		
+
 		// Special handling for devices with negative upload intervals (always active)
-		const uploadInterval = device.upload_interval || device.deviceType?.default_upload_interval || 10;
+		const uploadInterval =
+			device.upload_interval || device.deviceType?.default_upload_interval || 10;
 		if (uploadInterval <= 0) {
 			return true;
 		}
-		
+
 		// Special handling for soil sensors
 		if (isSoilSensor(device)) {
 			if (device.deviceType?.isActive !== undefined) {
 				return Boolean(device.deviceType.isActive);
 			}
-			
+
 			// If the soil sensor has moisture data, consider it active
-			if (device.latestData && ('moisture' in device.latestData)) {
+			if (device.latestData && 'moisture' in device.latestData) {
 				return true;
 			}
 		}
-		
+
 		return getDeviceActiveStatus(devEui);
 	}
-	
+
 	// Helper function to determine if a device is a soil sensor
 	function isSoilSensor(device: DeviceWithSensorData): boolean {
 		// Check device name for soil-related terms
 		const deviceName = device.name?.toLowerCase() || '';
 		const deviceTypeName = device.deviceType?.name?.toLowerCase() || '';
-		
+
 		// Check device type (type 17 is soil sensor in your system)
 		if (device.type === 17) {
 			return true;
 		}
-		
+
 		// Check if the device name or type contains soil-related terms
 		return (
-			deviceName.includes('soil') || 
-			deviceName.includes('moisture') || 
-			deviceTypeName.includes('soil') || 
+			deviceName.includes('soil') ||
+			deviceName.includes('moisture') ||
+			deviceTypeName.includes('soil') ||
 			deviceTypeName.includes('moisture') ||
 			// Check if the device has soil-specific data points
 			(device.latestData && 'moisture' in device.latestData)
 		);
 	}
-	
+
 	// Helper function to get active status indicators for a location
 	function getLocationActiveStatus(location: LocationWithCount) {
 		if (!location || !location.cw_devices || location.cw_devices.length === 0) {
@@ -451,14 +455,14 @@ function setupPolling() {
 
 		const locationDevices = location.cw_devices;
 		// Use isDeviceActive instead of getDeviceActiveStatus for consistency
-		const activeDevices = locationDevices.filter(device => isDeviceActive(device));
-		const allActive = locationDevices.length > 0 && locationDevices.every(device => isDeviceActive(device));
-		const allInactive = locationDevices.length > 0 && locationDevices.every(device => !isDeviceActive(device));
+		const activeDevices = locationDevices.filter((device) => isDeviceActive(device));
+		const allActive =
+			locationDevices.length > 0 && locationDevices.every((device) => isDeviceActive(device));
+		const allInactive =
+			locationDevices.length > 0 && locationDevices.every((device) => !isDeviceActive(device));
 
 		return { activeDevices, allActive, allInactive };
 	}
-
-
 </script>
 
 <svelte:head>
@@ -481,7 +485,7 @@ function setupPolling() {
 					<Icon path={mdiViewDashboard} class="mr-2" />
 					Locations
 					<div class="ml-auto">
-						<DashboardFilter
+						<DashboardFilterBits
 							bind:search
 							bind:hideNoDeviceLocations={hideEmptyLocations}
 							bind:dashboardViewType
@@ -493,13 +497,15 @@ function setupPolling() {
 					<p>No locations found.</p>
 				{:else}
 					<ul class="location-list" role="listbox" aria-label="Select a location">
-						{#each locations.filter(location => {
-							if (hideEmptyLocations) return location.deviceCount > 0;
-							return true;
-						}).filter(location => {
-							if (!search?.trim()) return true;
-							return location.name.toLowerCase().includes(search.toLowerCase());
-						}) as location (location.location_id)}
+						{#each locations
+							.filter((location) => {
+								if (hideEmptyLocations) return location.deviceCount > 0;
+								return true;
+							})
+							.filter((location) => {
+								if (!search?.trim()) return true;
+								return location.name.toLowerCase().includes(search.toLowerCase());
+							}) as location (location.location_id)}
 							<li>
 								<button
 									class="location-item"
@@ -522,7 +528,7 @@ function setupPolling() {
 			</div>
 
 			<!-- Device display panel -->
-			<div class="devices-panel ">
+			<div class="devices-panel">
 				{#if selectedLocation !== null && currentLocation}
 					<h2>Devices at {currentLocation.name}</h2>
 
@@ -533,79 +539,88 @@ function setupPolling() {
 					{:else if devices.length > 0}
 						<div class={`device-cards-grid ${getContainerClass(dashboardViewType)}`}>
 							{#if true}
-								{@const activeDevices = devices.filter(d => isDeviceActive(d))}
+								{@const activeDevices = devices.filter((d) => isDeviceActive(d))}
 								{@const allActive = devices.length > 0 && activeDevices.length === devices.length}
 								{@const allInactive = devices.length > 0 && activeDevices.length === 0}
-								{@const debugInfo = console.log('Dashboard active status:', { 
+								{@const debugInfo = console.log('Dashboard active status:', {
 									locationName: currentLocation?.name,
-									deviceCount: devices.length, 
-									activeCount: activeDevices.length, 
-									allActive, 
+									deviceCount: devices.length,
+									activeCount: activeDevices.length,
+									allActive,
 									allInactive,
-									activeDevices: activeDevices.map(d => d.dev_eui)
+									activeDevices: activeDevices.map((d) => d.dev_eui)
 								})}
 								<div class="device-card-wrapper">
-									<DashboardCard 
-									location={{
-										name: currentLocation?.name || 'Unknown Location',
-										location_id: currentLocation?.location_id || 0,
-										created_at: currentLocation?.created_at || new Date().toISOString(),
-										description: currentLocation?.description || ''
-									} as Location}
-									href={`/app/dashboard/location/${currentLocation?.location_id}`}
-									activeDevices={activeDevices}
-									allActive={allActive}
-									allInactive={allInactive}
-								>
-									{#snippet content()}
-										{#each devices as device (device.dev_eui)}
-										{@const isActive = isDeviceActive(device)}
-										{@const debugActiveStatus = console.log(`Dashboard passing isActive=${isActive} to DataRowItem for ${device.name} (${device.dev_eui})`, {
-											deviceId: device.dev_eui,
-											deviceType: device.type,
-											uploadInterval: device.upload_interval,
-											isSoilSensor: isSoilSensor(device),
-											hasNegativeInterval: (device.upload_interval || 10) <= 0
-										})}
-										<DataRowItem
-											device={{
-												...device,
-												latestData: device.latestData || {},
-												cw_device_type: {
-													name: device.deviceType?.name || 'Unknown',
-													default_upload_interval: device.deviceType?.default_upload_interval || 10,
-													primary_data_notation: device.deviceType?.primary_data_notation || '°C',
-													secondary_data_notation: device.deviceType?.secondary_data_notation || '%',
-													primary_data_v2: 'temperature_c',
-													secondary_data_v2: isSoilSensor(device) ? 'moisture' : 'humidity'
-												}
-											}}
-											isActive={isActive}
-											detailHref={`/dashboard/location/${device.location_id}/device/${device.dev_eui}`}
-										>
-											{#snippet children()}
-												<DeviceDataList 
+									<DashboardCard
+										location={{
+											name: currentLocation?.name || 'Unknown Location',
+											location_id: currentLocation?.location_id || 0,
+											created_at: currentLocation?.created_at || new Date().toISOString(),
+											description: currentLocation?.description || ''
+										} as Location}
+										href={`/app/dashboard/location/${currentLocation?.location_id}`}
+										{activeDevices}
+										{allActive}
+										{allInactive}
+									>
+										{#snippet content()}
+											{#each devices as device (device.dev_eui)}
+												{@const isActive = isDeviceActive(device)}
+												{@const debugActiveStatus = console.log(
+													`Dashboard passing isActive=${isActive} to DataRowItem for ${device.name} (${device.dev_eui})`,
+													{
+														deviceId: device.dev_eui,
+														deviceType: device.type,
+														uploadInterval: device.upload_interval,
+														isSoilSensor: isSoilSensor(device),
+														hasNegativeInterval: (device.upload_interval || 10) <= 0
+													}
+												)}
+												<DataRowItem
 													device={{
 														...device,
 														latestData: device.latestData || {},
 														cw_device_type: {
 															name: device.deviceType?.name || 'Unknown',
-															default_upload_interval: device.deviceType?.default_upload_interval || 10,
-															primary_data_notation: device.deviceType?.primary_data_notation || '°C',
-															secondary_data_notation: device.deviceType?.secondary_data_notation || '%',
+															default_upload_interval:
+																device.deviceType?.default_upload_interval || 10,
+															primary_data_notation:
+																device.deviceType?.primary_data_notation || '°C',
+															secondary_data_notation:
+																device.deviceType?.secondary_data_notation || '%',
 															primary_data_v2: 'temperature_c',
 															secondary_data_v2: isSoilSensor(device) ? 'moisture' : 'humidity'
 														}
-													}} 
-													isActive={isActive} 
-												/>
-											{/snippet}
-										</DataRowItem>
-									{/each}
-								{/snippet}
-							</DashboardCard>
-							</div>
-						{/if}
+													}}
+													{isActive}
+													detailHref={`/dashboard/location/${device.location_id}/device/${device.dev_eui}`}
+												>
+													{#snippet children()}
+														<DeviceDataList
+															device={{
+																...device,
+																latestData: device.latestData || {},
+																cw_device_type: {
+																	name: device.deviceType?.name || 'Unknown',
+																	default_upload_interval:
+																		device.deviceType?.default_upload_interval || 10,
+																	primary_data_notation:
+																		device.deviceType?.primary_data_notation || '°C',
+																	secondary_data_notation:
+																		device.deviceType?.secondary_data_notation || '%',
+																	primary_data_v2: 'temperature_c',
+																	secondary_data_v2: isSoilSensor(device) ? 'moisture' : 'humidity'
+																}
+															}}
+															{isActive}
+														/>
+													{/snippet}
+												</DataRowItem>
+											{/each}
+										{/snippet}
+									</DashboardCard>
+								</div>
+							{/if}
 						</div>
 					{:else}
 						<p>No devices found for this location.</p>
@@ -641,11 +656,14 @@ function setupPolling() {
 		}
 	}
 
-	.locations-panel, .devices-panel {
+	.locations-panel,
+	.devices-panel {
 		background-color: var(--color-card);
 		border-radius: 0.5rem;
 		padding: 1rem;
-		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+		box-shadow:
+			0 4px 6px -1px rgba(0, 0, 0, 0.1),
+			0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	}
 
 	.locations-panel h2 {
@@ -712,30 +730,30 @@ function setupPolling() {
 		max-width: 1200px;
 		margin: 0; /* Remove auto margin to align left */
 	}
-	
+
 	/* When in grid mode, the container class will handle the grid layout */
 	.device-cards-grid.grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 	}
-	
+
 	/* When in mozaic mode, use columns layout */
 	.device-cards-grid.columns-\[20rem\] {
 		column-count: 1;
 	}
-	
+
 	@media (min-width: 640px) {
 		.device-cards-grid.columns-\[20rem\] {
 			column-count: 2;
 		}
 	}
-	
+
 	@media (min-width: 1024px) {
 		.device-cards-grid.columns-\[20rem\] {
 			column-count: 3;
 		}
 	}
-	
+
 	@media (min-width: 1280px) {
 		.device-cards-grid.columns-\[20rem\] {
 			column-count: 4;
@@ -747,18 +765,18 @@ function setupPolling() {
 		width: 100%;
 		max-width: 320px;
 	}
-	
+
 	/* In list view, make cards take full width */
 	.device-cards-grid.flex .device-card-wrapper {
 		max-width: 100%;
 		width: 100%;
 	}
-	
+
 	/* Make sure the DashboardCard component takes full width in list view */
 	.device-cards-grid.flex .device-card-wrapper :global(.dashboard-card) {
 		width: 100%;
 	}
-	
+
 	/* In mozaic view, ensure cards break properly */
 	.device-cards-grid.columns-\[20rem\] .device-card-wrapper {
 		display: inline-block;
@@ -766,7 +784,9 @@ function setupPolling() {
 		break-inside: avoid;
 	}
 
-	.loading, .loading-devices, .error {
+	.loading,
+	.loading-devices,
+	.error {
 		display: flex;
 		justify-content: center;
 		align-items: center;
