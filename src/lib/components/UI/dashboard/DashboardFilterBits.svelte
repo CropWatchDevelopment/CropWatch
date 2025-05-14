@@ -207,40 +207,61 @@
 										style="border: 1px solid rgba(255, 255, 255, 0.08);"
 									>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardViewType ===
+											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-blue-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-blue-600/40 {dashboardViewType ===
 											'grid'
-												? 'dropdown-item-selected bg-blue-50 font-medium dark:bg-blue-900/30'
+												? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-white'
 												: ''}"
 											onSelect={() => setDashboardViewType('grid')}
 										>
-											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
-												<path fill="currentColor" d={mdiGrid} />
-											</svg>
-											Grid
+											<div class="flex items-center">
+												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
+													<path fill="currentColor" d={mdiGrid} />
+												</svg>
+												Grid
+											</div>
+											{#if dashboardViewType === 'grid'}
+												<svg viewBox="0 0 24 24" width="16" height="16">
+													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+												</svg>
+											{/if}
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardViewType ===
+											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-blue-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-blue-600/40 {dashboardViewType ===
 											'mozaic'
-												? 'dropdown-item-selected bg-blue-50 font-medium dark:bg-blue-900/30'
+												? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-white'
 												: ''}"
 											onSelect={() => setDashboardViewType('mozaic')}
 										>
-											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
-												<path fill="currentColor" d={mdiViewDashboard} />
-											</svg>
-											Mozaic
+											<div class="flex items-center">
+												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
+													<path fill="currentColor" d={mdiViewDashboard} />
+												</svg>
+												Mozaic
+											</div>
+											{#if dashboardViewType === 'mozaic'}
+												<svg viewBox="0 0 24 24" width="16" height="16">
+													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+												</svg>
+											{/if}
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardViewType ===
+											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-blue-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-blue-600/40 {dashboardViewType ===
 											'list'
-												? 'dropdown-item-selected bg-blue-50 font-medium dark:bg-blue-900/30'
+												? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-white'
 												: ''}"
 											onSelect={() => setDashboardViewType('list')}
 										>
-											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
-												<path fill="currentColor" d={mdiViewList} />
-											</svg>
-											List
+											<div class="flex items-center">
+												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
+													<path fill="currentColor" d={mdiViewList} />
+												</svg>
+												List
+											</div>
+											{#if dashboardViewType === 'list'}
+												<svg viewBox="0 0 24 24" width="16" height="16">
+													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+												</svg>
+											{/if}
 										</DropdownMenu.Item>
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
@@ -278,40 +299,61 @@
 										style="border: 1px solid rgba(255, 255, 255, 0.08);"
 									>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardSortType ===
+											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-purple-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-purple-600/40 {dashboardSortType ===
 											'alpha'
-												? 'dropdown-item-selected bg-purple-50 font-medium dark:bg-purple-900/30'
+												? 'bg-purple-50 font-medium text-purple-700 dark:bg-purple-900/30 dark:text-white'
 												: ''}"
 											onSelect={() => setDashboardSortType('alpha')}
 										>
-											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
-												<path fill="currentColor" d={mdiSortAlphabeticalAscending} />
-											</svg>
-											Alpha
+											<div class="flex items-center">
+												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
+													<path fill="currentColor" d={mdiSortAlphabeticalAscending} />
+												</svg>
+												Alpha
+											</div>
+											{#if dashboardSortType === 'alpha'}
+												<svg viewBox="0 0 24 24" width="16" height="16">
+													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+												</svg>
+											{/if}
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardSortType ===
+											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-purple-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-purple-600/40 {dashboardSortType ===
 											'date'
-												? 'dropdown-item-selected bg-purple-50 font-medium dark:bg-purple-900/30'
+												? 'bg-purple-50 font-medium text-purple-700 dark:bg-purple-900/30 dark:text-white'
 												: ''}"
 											onSelect={() => setDashboardSortType('date')}
 										>
-											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
-												<path fill="currentColor" d={mdiSortCalendarAscending} />
-											</svg>
-											Date
+											<div class="flex items-center">
+												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
+													<path fill="currentColor" d={mdiSortCalendarAscending} />
+												</svg>
+												Date
+											</div>
+											{#if dashboardSortType === 'date'}
+												<svg viewBox="0 0 24 24" width="16" height="16">
+													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+												</svg>
+											{/if}
 										</DropdownMenu.Item>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-gray-200 hover:shadow-sm dark:text-gray-200 dark:hover:bg-gray-600/90 {dashboardSortType ===
+											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-purple-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-purple-600/40 {dashboardSortType ===
 											'time'
-												? 'dropdown-item-selected bg-purple-50 font-medium dark:bg-purple-900/30'
+												? 'bg-purple-50 font-medium text-purple-700 dark:bg-purple-900/30 dark:text-white'
 												: ''}"
 											onSelect={() => setDashboardSortType('time')}
 										>
-											<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
-												<path fill="currentColor" d={mdiSortClockAscending} />
-											</svg>
-											Time
+											<div class="flex items-center">
+												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
+													<path fill="currentColor" d={mdiSortClockAscending} />
+												</svg>
+												Time
+											</div>
+											{#if dashboardSortType === 'time'}
+												<svg viewBox="0 0 24 24" width="16" height="16">
+													<path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+												</svg>
+											{/if}
 										</DropdownMenu.Item>
 									</DropdownMenu.Content>
 								</DropdownMenu.Root>
