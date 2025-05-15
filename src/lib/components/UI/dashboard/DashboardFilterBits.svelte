@@ -17,7 +17,8 @@
 		mdiSortCalendarAscending,
 		mdiSortClockAscending,
 		mdiViewDashboard,
-		mdiViewList
+		mdiViewList,
+		mdiTune
 	} from '@mdi/js';
 	import { DropdownMenu, Button, Tooltip } from 'bits-ui';
 
@@ -82,11 +83,6 @@
 		}, 100);
 	});
 
-	function clearSearch() {
-		search = '';
-		browser ? localStorage.removeItem('dashboard_search') : null;
-	}
-
 	function toggleHideEmpty() {
 		hideNoDeviceLocations = !hideNoDeviceLocations;
 		browser
@@ -122,7 +118,7 @@
 				class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md p-2"
 			>
 				<svg viewBox="0 0 24 24" width="24" height="24" class="text-current">
-					<path fill="currentColor" d={mdiFilterMenu} />
+					<path fill="currentColor" d={mdiTune} />
 				</svg>
 			</Button.Root>
 		</DropdownMenu.Trigger>
@@ -132,42 +128,11 @@
 			align="start"
 			class="dropdown-animation z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 		>
-			<!-- Search input -->
-			<div class="p-3">
-				<div class="relative">
-					<div class="absolute inset-y-0 left-0 flex items-center pl-2">
-						<svg viewBox="0 0 24 24" width="16" height="16" class="text-gray-500">
-							<path fill="currentColor" d={mdiMagnify} />
-						</svg>
-					</div>
-					<input
-						type="text"
-						bind:value={search}
-						class="w-full rounded-md border border-gray-300 bg-white py-2 pr-8 pl-8 text-sm placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500"
-						placeholder={nameToJapaneseName('Search')}
-						onkeydown={(e) => {
-							if (e.key === 'Enter') {
-								browser ? localStorage.setItem('dashboard_search', search) : null;
-							}
-						}}
-					/>
-					{#if search}
-						<button
-							class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-							onclick={clearSearch}
-							aria-label="Clear search"
-						>
-							<svg viewBox="0 0 24 24" width="16" height="16">
-								<path fill="currentColor" d={mdiClose} />
-							</svg>
-						</button>
-					{/if}
-				</div>
-			</div>
+			<!-- Search input  -> moved to Locations panel -->
 
 			<!-- Filter options -->
 			<div
-				class="mt-2 flex flex-row items-center justify-center gap-2 border-t border-gray-200 px-4 py-6 dark:border-gray-600"
+				class="flex flex-row items-center justify-center gap-2 border-gray-200 px-4 py-6 dark:border-gray-600"
 			>
 				<!-- Hide/Show Empty Locations -->
 				<Tooltip.Provider>

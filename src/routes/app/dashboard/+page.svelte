@@ -17,7 +17,8 @@
 	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
 
 	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
-	import { mdiViewDashboard } from '@mdi/js';
+	import { mdiViewDashboard, mdiMagnify, mdiClose } from '@mdi/js';
+	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import { Icon } from 'svelte-ux';
 
 	// Get user data from the server load function
@@ -463,6 +464,11 @@
 
 		return { activeDevices, allActive, allInactive };
 	}
+
+	function clearSearch() {
+		search = '';
+		browser ? localStorage.removeItem('dashboard_search') : null;
+	}
 </script>
 
 <svelte:head>
@@ -493,6 +499,38 @@
 						/>
 					</div>
 				</h2>
+				<div class="pb-6">
+					<div class="relative">
+						<div class="absolute inset-y-0 left-0 flex items-center pl-2">
+							<svg viewBox="0 0 24 24" width="16" height="16" class="text-gray-500">
+								<path fill="currentColor" d={mdiMagnify} />
+							</svg>
+						</div>
+						<input
+							type="text"
+							bind:value={search}
+							class="w-full rounded-md border border-zinc-300 bg-white py-2 pr-8 pl-8 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 focus:outline-none
+	       dark:border-zinc-600 dark:bg-zinc-600 dark:text-white dark:placeholder-zinc-400 dark:focus:border-zinc-400 dark:focus:ring-zinc-500"
+							placeholder={nameToJapaneseName('Search')}
+							onkeydown={(e) => {
+								if (e.key === 'Enter') {
+									browser ? localStorage.setItem('dashboard_search', search) : null;
+								}
+							}}
+						/>
+						{#if search}
+							<button
+								class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+								onclick={clearSearch}
+								aria-label="Clear search"
+							>
+								<svg viewBox="0 0 24 24" width="16" height="16">
+									<path fill="currentColor" d={mdiClose} />
+								</svg>
+							</button>
+						{/if}
+					</div>
+				</div>
 				{#if locations.length === 0}
 					<p>No locations found.</p>
 				{:else}
@@ -530,8 +568,9 @@
 			<!-- Device display panel -->
 			<div class="devices-panel">
 				{#if selectedLocation !== null && currentLocation}
-					<h2>Devices at {currentLocation.name}</h2>
-
+					<div class="flex justify-between">
+						<h2>Devices at {currentLocation.name}</h2>
+					</div>
 					{#if loadingDevices}
 						<div class="loading-devices">Loading devices...</div>
 					{:else if deviceError}
