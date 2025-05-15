@@ -20,19 +20,19 @@
 		mdiViewList
 	} from '@mdi/js';
 	import { DropdownMenu, Button, Tooltip } from 'bits-ui';
-	
+
 	// Define TypeScript type for onSelect prop
 	interface DropdownItemProps extends HTMLAttributes<HTMLDivElement> {
 		onSelect?: (event: Event) => void;
 		'data-state'?: string;
 	}
-	
+
 	// Define props with defaults
 	export let search = '';
 	export let hideNoDeviceLocations = false;
 	export let dashboardViewType = 'mozaic';
 	export let dashboardSortType = 'alpha';
-	
+
 	// State for dropdown menus
 	let mainMenuOpen = false;
 	let layoutSubMenuOpen = false;
@@ -40,7 +40,7 @@
 
 	onMount(() => {
 		if (!browser) return;
-		
+
 		// Handle escape key press
 		document.onkeydown = function (evt: any) {
 			var isEscape = false;
@@ -116,20 +116,20 @@
 </script>
 
 <div>
-<DropdownMenu.Root bind:open={mainMenuOpen}>
-	<DropdownMenu.Trigger asChild>
-		<Button.Root
-			class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md p-2"
-		>
-			<svg viewBox="0 0 24 24" width="24" height="24" class="text-current">
-				<path fill="currentColor" d={mdiFilterMenu} />
-			</svg>
-		</Button.Root>
-	</DropdownMenu.Trigger>
+	<DropdownMenu.Root bind:open={mainMenuOpen}>
+		<DropdownMenu.Trigger asChild>
+			<Button.Root
+				class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md p-2"
+			>
+				<svg viewBox="0 0 24 24" width="24" height="24" class="text-current">
+					<path fill="currentColor" d={mdiFilterMenu} />
+				</svg>
+			</Button.Root>
+		</DropdownMenu.Trigger>
 
-	<DropdownMenu.Content
-		class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
-	>
+		<DropdownMenu.Content
+			class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
+		>
 			<!-- Search input -->
 			<div class="p-3">
 				<div class="relative">
@@ -165,7 +165,7 @@
 
 			<!-- Filter options -->
 			<div
-				class="mt-2 flex flex-row items-center justify-center gap-7 border-t border-gray-200 px-4 py-6 dark:border-gray-600"
+				class="mt-2 flex flex-row items-center justify-center gap-2 border-t border-gray-200 px-4 py-6 dark:border-gray-600"
 			>
 				<!-- Hide/Show Empty Locations -->
 				<Tooltip.Provider>
@@ -187,7 +187,7 @@
 										<path fill="currentColor" d={hideNoDeviceLocations ? mdiEyeOff : mdiEye} />
 									</svg>
 								</button>
-								<span class="icon-text-spacing text-center text-xs min-w-[60px] block"
+								<span class="icon-text-spacing block min-w-[100px] text-center text-xs"
 									>{nameToJapaneseName('Hide/Show Empty')}</span
 								>
 							</div>
@@ -290,7 +290,7 @@
 										</DropdownMenu.Item>
 									</DropdownMenu.SubContent>
 								</DropdownMenu.Sub>
-								<span class="icon-text-spacing text-center text-xs min-w-[60px] block"
+								<span class="icon-text-spacing block min-w-[150px] text-center text-xs"
 									>{nameToJapaneseName('Dashboard Style')}</span
 								>
 							</div>
@@ -389,7 +389,7 @@
 										</DropdownMenu.Item>
 									</DropdownMenu.SubContent>
 								</DropdownMenu.Sub>
-								<span class="icon-text-spacing text-center text-xs min-w-[60px] block"
+								<span class="icon-text-spacing block min-w-[60px] text-center text-xs"
 									>{nameToJapaneseName('Sort By')}</span
 								>
 							</div>
@@ -400,8 +400,8 @@
 					</Tooltip.Root>
 				</Tooltip.Provider>
 			</div>
-	</DropdownMenu.Content>
-</DropdownMenu.Root>
+		</DropdownMenu.Content>
+	</DropdownMenu.Root>
 </div>
 
 <style>
