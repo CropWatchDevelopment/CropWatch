@@ -128,7 +128,9 @@
 		</DropdownMenu.Trigger>
 
 		<DropdownMenu.Content
-			class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
+			side="bottom"
+			align="start"
+			class="dropdown-animation z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 		>
 			<!-- Search input -->
 			<div class="p-3">
@@ -220,6 +222,8 @@
 										</div>
 									</DropdownMenu.SubTrigger>
 									<DropdownMenu.SubContent
+										side="bottom"
+										align="start"
 										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 									>
 										<DropdownMenu.Item
@@ -319,6 +323,8 @@
 										</div>
 									</DropdownMenu.SubTrigger>
 									<DropdownMenu.SubContent
+										side="bottom"
+										align="start"
 										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 									>
 										<DropdownMenu.Item

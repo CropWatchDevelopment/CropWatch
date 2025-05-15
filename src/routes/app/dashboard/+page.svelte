@@ -480,7 +480,7 @@
 	{:else}
 		<div class="dashboard-grid">
 			<!-- Location selector panel -->
-			<div class="locations-panel">
+			<div class="locations-panel w-[300px]">
 				<h2 class="flex items-center">
 					<Icon path={mdiViewDashboard} class="mr-2" />
 					Locations
