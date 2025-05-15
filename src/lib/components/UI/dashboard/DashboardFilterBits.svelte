@@ -1,6 +1,9 @@
 <script lang="ts">
+	// Import statements
 	import { browser } from '$app/environment';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
+	import { onMount } from 'svelte';
+	import type { HTMLAttributes } from 'svelte/elements';
 	import {
 		mdiClose,
 		mdiEye,
@@ -16,20 +19,29 @@
 		mdiViewDashboard,
 		mdiViewList
 	} from '@mdi/js';
-	import { Collapsible, DropdownMenu, Button, Tooltip } from 'bits-ui';
-
-	let {
-		search = $bindable(''),
-		hideNoDeviceLocations = $bindable(false),
-		dashboardViewType = $bindable('mozaic'),
-		dashboardSortType = $bindable('alpha')
-	} = $props();
-
+	import { DropdownMenu, Button, Tooltip } from 'bits-ui';
+	
+	// Define TypeScript type for onSelect prop
+	interface DropdownItemProps extends HTMLAttributes<HTMLDivElement> {
+		onSelect?: (event: Event) => void;
+		'data-state'?: string;
+	}
+	
+	// Define props with defaults
+	export let search = '';
+	export let hideNoDeviceLocations = false;
+	export let dashboardViewType = 'mozaic';
+	export let dashboardSortType = 'alpha';
+	
 	// State for dropdown menus
-	let layoutMenuOpen = $state(false);
-	let sortMenuOpen = $state(false);
+	let mainMenuOpen = false;
+	let layoutSubMenuOpen = false;
+	let sortSubMenuOpen = false;
 
-	$effect(() => {
+	onMount(() => {
+		if (!browser) return;
+		
+		// Handle escape key press
 		document.onkeydown = function (evt: any) {
 			var isEscape = false;
 			if ('key' in evt) {
@@ -39,36 +51,35 @@
 			}
 			if (isEscape) {
 				search = '';
-				browser ? localStorage.removeItem('dashboard_search') : null;
+				localStorage.removeItem('dashboard_search');
+				// We'll rely on bits-ui's built-in functionality for handling clicks outside
 			}
 		};
 
 		// Apply light mode tint to dropdown menus only when not in dark mode
-		if (browser) {
-			setTimeout(() => {
-				// Check if dark mode is active
-				const isDarkMode =
-					document.documentElement.classList.contains('dark') ||
-					window.matchMedia('(prefers-color-scheme: dark)').matches;
+		setTimeout(() => {
+			// Check if dark mode is active
+			const isDarkMode =
+				document.documentElement.classList.contains('dark') ||
+				window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-				if (!isDarkMode) {
-					const dropdownContents = document.querySelectorAll('.dropdown-menu-content');
-					dropdownContents.forEach((menu) => {
-						menu.classList.add('light-mode-tint');
-					});
+			if (!isDarkMode) {
+				const dropdownContents = document.querySelectorAll('.dropdown-menu-content');
+				dropdownContents.forEach((menu) => {
+					menu.classList.add('light-mode-tint');
+				});
 
-					const dropdownItems = document.querySelectorAll('.dropdown-menu-item');
-					dropdownItems.forEach((item) => {
-						item.addEventListener('mouseenter', () => {
-							item.classList.add('light-mode-hover');
-						});
-						item.addEventListener('mouseleave', () => {
-							item.classList.remove('light-mode-hover');
-						});
+				const dropdownItems = document.querySelectorAll('.dropdown-menu-item');
+				dropdownItems.forEach((item) => {
+					item.addEventListener('mouseenter', () => {
+						item.classList.add('light-mode-hover');
 					});
-				}
-			}, 100);
-		}
+					item.addEventListener('mouseleave', () => {
+						item.classList.remove('light-mode-hover');
+					});
+				});
+			}
+		}, 100);
 	});
 
 	function clearSearch() {
@@ -83,21 +94,30 @@
 			: null;
 	}
 
-	function setDashboardViewType(type: 'grid' | 'mozaic' | 'list') {
+	function setDashboardViewType(type: 'grid' | 'mozaic' | 'list', event?: Event) {
+		// Prevent the menu from closing when selecting an option
+		if (event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
 		dashboardViewType = type;
 		browser ? localStorage.setItem('dashboard_view_type', dashboardViewType) : null;
-		layoutMenuOpen = false;
 	}
 
-	function setDashboardSortType(type: 'alpha' | 'date' | 'time') {
+	function setDashboardSortType(type: 'alpha' | 'date' | 'time', event?: Event) {
+		// Prevent the menu from closing when selecting an option
+		if (event) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
 		dashboardSortType = type;
 		browser ? localStorage.setItem('dashboard_sort_type', dashboardSortType) : null;
-		sortMenuOpen = false;
 	}
 </script>
 
-<Collapsible.Root>
-	<Collapsible.Trigger>
+<div>
+<DropdownMenu.Root bind:open={mainMenuOpen}>
+	<DropdownMenu.Trigger asChild>
 		<Button.Root
 			class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md p-2"
 		>
@@ -105,12 +125,11 @@
 				<path fill="currentColor" d={mdiFilterMenu} />
 			</svg>
 		</Button.Root>
-	</Collapsible.Trigger>
+	</DropdownMenu.Trigger>
 
-	<Collapsible.Content>
-		<div
-			class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
-		>
+	<DropdownMenu.Content
+		class="dropdown-animation absolute z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
+	>
 			<!-- Search input -->
 			<div class="p-3">
 				<div class="relative">
@@ -168,7 +187,7 @@
 										<path fill="currentColor" d={hideNoDeviceLocations ? mdiEyeOff : mdiEye} />
 									</svg>
 								</button>
-								<span class="icon-text-spacing text-center text-xs"
+								<span class="icon-text-spacing text-center text-xs min-w-[60px] block"
 									>{nameToJapaneseName('Hide/Show Empty')}</span
 								>
 							</div>
@@ -190,18 +209,17 @@
 					<Tooltip.Root>
 						<Tooltip.Trigger>
 							<div class="mx-2 flex flex-col items-center">
-								<DropdownMenu.Root bind:open={layoutMenuOpen}>
-									<DropdownMenu.Trigger>
-										<button
+								<DropdownMenu.Sub>
+									<DropdownMenu.SubTrigger asChild>
+										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition-all duration-200 hover:bg-blue-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-blue-400"
-											aria-label="Dashboard layout options"
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16">
 												<path fill="currentColor" d={mdiMonitorDashboard} />
 											</svg>
-										</button>
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content
+										</div>
+									</DropdownMenu.SubTrigger>
+									<DropdownMenu.SubContent
 										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 									>
 										<DropdownMenu.Item
@@ -209,7 +227,7 @@
 											'grid'
 												? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-white'
 												: ''}"
-											onSelect={() => setDashboardViewType('grid')}
+											onSelect={(e) => setDashboardViewType('grid', e)}
 										>
 											<div class="flex items-center">
 												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -231,7 +249,7 @@
 											'mozaic'
 												? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-white'
 												: ''}"
-											onSelect={() => setDashboardViewType('mozaic')}
+											onSelect={(e) => setDashboardViewType('mozaic', e)}
 										>
 											<div class="flex items-center">
 												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -253,7 +271,7 @@
 											'list'
 												? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-white'
 												: ''}"
-											onSelect={() => setDashboardViewType('list')}
+											onSelect={(e) => setDashboardViewType('list', e)}
 										>
 											<div class="flex items-center">
 												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -270,9 +288,9 @@
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
-								<span class="icon-text-spacing text-center text-xs"
+									</DropdownMenu.SubContent>
+								</DropdownMenu.Sub>
+								<span class="icon-text-spacing text-center text-xs min-w-[60px] block"
 									>{nameToJapaneseName('Dashboard Style')}</span
 								>
 							</div>
@@ -290,18 +308,17 @@
 					<Tooltip.Root>
 						<Tooltip.Trigger>
 							<div class="mx-2 flex flex-col items-center">
-								<DropdownMenu.Root bind:open={sortMenuOpen}>
-									<DropdownMenu.Trigger>
-										<button
+								<DropdownMenu.Sub>
+									<DropdownMenu.SubTrigger asChild>
+										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white transition-all duration-200 hover:bg-purple-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-purple-400"
-											aria-label="Sort options"
 										>
 											<svg viewBox="0 0 24 24" width="16" height="16">
 												<path fill="currentColor" d={mdiSort} />
 											</svg>
-										</button>
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content
+										</div>
+									</DropdownMenu.SubTrigger>
+									<DropdownMenu.SubContent
 										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
 									>
 										<DropdownMenu.Item
@@ -309,7 +326,7 @@
 											'alpha'
 												? 'bg-purple-50 font-medium text-purple-700 dark:bg-purple-900/30 dark:text-white'
 												: ''}"
-											onSelect={() => setDashboardSortType('alpha')}
+											onSelect={(e) => setDashboardSortType('alpha', e)}
 										>
 											<div class="flex items-center">
 												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -331,7 +348,7 @@
 											'date'
 												? 'bg-purple-50 font-medium text-purple-700 dark:bg-purple-900/30 dark:text-white'
 												: ''}"
-											onSelect={() => setDashboardSortType('date')}
+											onSelect={(e) => setDashboardSortType('date', e)}
 										>
 											<div class="flex items-center">
 												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -353,7 +370,7 @@
 											'time'
 												? 'bg-purple-50 font-medium text-purple-700 dark:bg-purple-900/30 dark:text-white'
 												: ''}"
-											onSelect={() => setDashboardSortType('time')}
+											onSelect={(e) => setDashboardSortType('time', e)}
 										>
 											<div class="flex items-center">
 												<svg viewBox="0 0 24 24" width="16" height="16" class="mr-2">
@@ -370,9 +387,9 @@
 												</svg>
 											{/if}
 										</DropdownMenu.Item>
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
-								<span class="icon-text-spacing text-center text-xs"
+									</DropdownMenu.SubContent>
+								</DropdownMenu.Sub>
+								<span class="icon-text-spacing text-center text-xs min-w-[60px] block"
 									>{nameToJapaneseName('Sort By')}</span
 								>
 							</div>
@@ -383,9 +400,9 @@
 					</Tooltip.Root>
 				</Tooltip.Provider>
 			</div>
-		</div>
-	</Collapsible.Content>
-</Collapsible.Root>
+	</DropdownMenu.Content>
+</DropdownMenu.Root>
+</div>
 
 <style>
 	/* Animation for dropdown opening */
