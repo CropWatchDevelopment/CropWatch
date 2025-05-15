@@ -20,7 +20,8 @@
 		{
 			name: '🔠 Company Name',
 			prop: 'company_name',
-			size: 300
+			size: 300,
+			
 		},
 		{
 			name: '',
@@ -67,7 +68,8 @@
 			name: '💰 Price',
 			prop: 'price',
 			columnType: 'numeric',
-			sortable: true
+			sortable: true,
+			
 		},
 		{
 			name: '⬆️ Change',
@@ -318,5 +320,27 @@ success('Custom message', {
 		font-family: monospace;
 		font-size: 0.9rem;
 		line-height: 1.5;
+	}
+	
+	/* RevoGrid dark/light mode styles */
+	:global(.dark) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-data) {
+		--rgb-text: 255, 255, 255; /* White text for dark mode */
+		--color-text: rgb(var(--rgb-text));
+	}
+	
+	:global(:not(.dark)) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-data) {
+		--rgb-text: 0, 0, 0; /* Black text for light mode */
+		--color-text: rgb(var(--rgb-text));
+	}
+	
+	/* Optional: Ensure header text has good contrast in both modes */
+	:global(.dark) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-header) {
+		--rgb-header-text: 255, 255, 255;
+		--header-text-color: rgb(var(--rgb-header-text));
+	}
+	
+	:global(:not(.dark)) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-header) {
+		--rgb-header-text: 0, 0, 0;
+		--header-text-color: rgb(var(--rgb-header-text));
 	}
 </style>

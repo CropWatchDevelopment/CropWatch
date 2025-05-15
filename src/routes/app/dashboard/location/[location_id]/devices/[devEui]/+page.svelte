@@ -85,7 +85,7 @@
 <div class="device-details-container">
 	<div class="device-header">
 		<div class="back-link">
-			<a href="/dashboard">&larr; Back to Dashboard</a>
+			<a href="/app/dashboard">&larr; Back to Dashboard</a>
 		</div>
 		<h1>{device?.name || 'Device'} Details</h1>
 		<div class="device-meta">

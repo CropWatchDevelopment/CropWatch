@@ -104,7 +104,7 @@
 				<p>{successMessage}</p>
 				<button
 					class="bg-primary hover:bg-primary-hover mt-4 w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200"
-					onclick={() => goto('/dashboard')}
+					onclick={() => goto('/app/dashboard')}
 				>
 					Go to Dashboard
 				</button>

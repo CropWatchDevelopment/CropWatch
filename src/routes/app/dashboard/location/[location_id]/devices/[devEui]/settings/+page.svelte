@@ -8,5 +8,5 @@
 	}
 </script>
 
-<button class="btn btn-primary" onclick={() => goto('/dashboard')}> Go to Dashboard </button>
+<button class="btn btn-primary" onclick={() => goto('/app/dashboard')}> Go to Dashboard </button>
 <button onclick={() => goto(`settings/rules`)}>📜 Rules</button>
