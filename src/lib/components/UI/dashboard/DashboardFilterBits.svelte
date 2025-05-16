@@ -136,35 +136,38 @@
 			>
 				<!-- Hide/Show Empty Locations -->
 				<Tooltip.Provider>
-					<Tooltip.Root>
+					<Tooltip.Root delayDuration={300} disableHoverableContent={true}>
+						<div tabindex="-1"></div>
 						<Tooltip.Trigger>
-							<div class="mx-2 flex flex-col items-center">
-								<button
-									class={`flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-200 focus:ring-2 focus:ring-white/20 focus:outline-none ${
-										hideNoDeviceLocations
-											? 'bg-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-400'
-											: 'bg-green-500 hover:bg-green-600 dark:hover:bg-green-400'
-									}`}
-									onclick={toggleHideEmpty}
-									aria-label={hideNoDeviceLocations
-										? 'Show empty locations'
-										: 'Hide empty locations'}
-								>
-									<svg viewBox="0 0 24 24" width="16" height="16">
-										<path fill="currentColor" d={hideNoDeviceLocations ? mdiEyeOff : mdiEye} />
-									</svg>
-								</button>
-								<span class="icon-text-spacing block min-w-[100px] text-center text-xs"
-									>{nameToJapaneseName('Hide/Show Empty')}</span
-								>
+							<div tabindex="-1">
+								<div class="mx-2 flex flex-col items-center">
+									<button
+										class={`flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-200 focus:ring-2 focus:ring-white/20 focus:outline-none ${
+											hideNoDeviceLocations
+												? 'bg-yellow-500 hover:bg-yellow-600 dark:hover:bg-yellow-400'
+												: 'bg-green-500 hover:bg-green-600 dark:hover:bg-green-400'
+										}`}
+										onclick={toggleHideEmpty}
+										aria-label={hideNoDeviceLocations
+											? 'Show empty locations'
+											: 'Hide empty locations'}
+									>
+										<svg viewBox="0 0 24 24" width="16" height="16">
+											<path fill="currentColor" d={hideNoDeviceLocations ? mdiEyeOff : mdiEye} />
+										</svg>
+									</button>
+									<span class="icon-text-spacing block min-w-[100px] text-center text-xs"
+										>{nameToJapaneseName('Hide/Show Empty')}</span
+									>
+								</div>
 							</div>
 						</Tooltip.Trigger>
 						<Tooltip.Content>
-							<div class="rounded bg-gray-800 px-2 py-1 text-xs text-white">
+							<!-- <div class="rounded bg-gray-800 px-2 py-1 text-xs text-white">
 								{hideNoDeviceLocations
 									? 'Click to include empty locations'
 									: 'Click to hide locations without devices'}
-							</div>
+							</div> -->
 						</Tooltip.Content>
 					</Tooltip.Root>
 				</Tooltip.Provider>
