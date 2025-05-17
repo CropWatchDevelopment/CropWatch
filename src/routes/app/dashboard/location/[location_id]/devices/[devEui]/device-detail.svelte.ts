@@ -272,19 +272,19 @@ export function setupDeviceDetail() {
 					enabled: false
 				}
 			},
-			colors: ['#FF4560', '#00E396'],
+			colors: ['#f97316', '#3b82f6'],
 			stroke: {
 				curve: 'smooth',
-				width: [3, 3]
+				width: [1, 1]
 			},
 			dataLabels: {
 				enabled: false
 			},
 			markers: {
-				size: 3,
+				size: 1,
 				strokeWidth: 0,
 				hover: {
-					size: 5
+					size: 4
 				}
 			},
 			xaxis: {
@@ -298,14 +298,10 @@ export function setupDeviceDetail() {
 					seriesName: mainLabel,
 					title: {
 						text: mainLabel,
-						style: {
-							color: '#FF4560'
-						}
+						style: { color: '#f97316' } // orange-500
 					},
 					labels: {
-						style: {
-							colors: '#FF4560'
-						}
+						style: { colors: '#f97316' }
 					}
 				},
 				{
@@ -313,14 +309,10 @@ export function setupDeviceDetail() {
 					opposite: true,
 					title: {
 						text: secondaryLabel,
-						style: {
-							color: '#00E396'
-						}
+						style: { color: '#3b82f6' } // blue-500
 					},
 					labels: {
-						style: {
-							colors: '#00E396'
-						}
+						style: { colors: '#3b82f6' }
 					}
 				}
 			],
@@ -383,7 +375,7 @@ export function setupDeviceDetail() {
 					}
 				}
 			},
-			colors: ['#FF4560', '#00E396'],
+			colors: ['#f97316', '#3b82f6'],
 			fill: {
 				type: 'gradient',
 				gradient: {
