@@ -8,13 +8,28 @@
 
 	const avgPercent = percent(min, max, avg);
 
-	const color = title.toLowerCase().includes('temp')
-		? 'rose-500'
-		: title.toLowerCase().includes('moisture')
-			? 'green-500'
-			: title.toLowerCase().includes('ph')
-				? 'yellow-400'
-				: 'blue-400';
+	// Get the appropriate color based on the sensor type
+	function getColorForSensorType(title: string): string {
+		const titleLower = title.toLowerCase();
+		
+		if (titleLower.includes('temp')) {
+			return 'orange-500';
+		} else if (titleLower.includes('moisture')) {
+			return 'sky-500';
+		} else if (titleLower.includes('ph')) {
+			return 'yellow-500';
+		} else if (titleLower.includes('conduct') || titleLower.includes('ec')) {
+			return 'violet-500';
+		} else if (titleLower.includes('co2')) {
+			return 'purple-500';
+		} else if (titleLower.includes('humid')) {
+			return 'blue-500';
+		} else {
+			return 'zinc-400';
+		}
+	}
+	
+	const color = getColorForSensorType(title);
 </script>
 
 <div
@@ -56,8 +71,15 @@
 
 		<!-- Avg dot colored -->
 		<div
-			class={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-${color}`}
+			class="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full"
+			class:bg-orange-500={color === 'orange-500'}
+			class:bg-sky-500={color === 'sky-500'}
+			class:bg-yellow-500={color === 'yellow-500'}
+			class:bg-violet-500={color === 'violet-500'}
+			class:bg-purple-500={color === 'purple-500'}
+			class:bg-blue-500={color === 'blue-500'}
+			class:bg-zinc-400={color === 'zinc-400'}
 			style="left: {avgPercent}%;"
-		/>
+		></div>
 	</div>
 </div>

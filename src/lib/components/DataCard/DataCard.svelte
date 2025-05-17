@@ -45,30 +45,30 @@
 		if (isMetadata) return 'border-transparent';
 		
 		const colorMap: Record<string, string> = {
-			temperature: 'border-red-500',
+			temperature: 'border-orange-500',
 			humidity: 'border-blue-500',
-			moisture: 'border-green-500',
+			moisture: 'border-sky-500',
 			co2: 'border-purple-500',
 			ph: 'border-yellow-500',
-			ec: 'border-indigo-500'
+			ec: 'border-violet-500'
 		};
-		return colorMap[sensorType] || 'border-gray-300';
+		return colorMap[sensorType] || 'border-zinc-400';
 	}
 
 	// Get text color class based on sensor type
 	function getTextColorClass(sensorType: string, isMetadata: boolean): string {
 		// Neutral colors for metadata
-		if (isMetadata) return 'text-gray-700 dark:text-gray-300';
+		if (isMetadata) return 'text-gray-400 dark:text-gray-400';
 		
 		const colorMap: Record<string, string> = {
-			temperature: 'text-red-600 dark:text-red-400',
-			humidity: 'text-blue-600 dark:text-blue-400',
-			moisture: 'text-green-600 dark:text-green-400',
-			co2: 'text-purple-600 dark:text-purple-400',
-			ph: 'text-yellow-600 dark:text-yellow-400',
-			ec: 'text-indigo-600 dark:text-indigo-400'
+			temperature: 'text-orange-500 dark:text-orange-400',
+			humidity: 'text-blue-500 dark:text-blue-400',
+			moisture: 'text-sky-500 dark:text-sky-400',
+			co2: 'text-purple-500 dark:text-purple-400',
+			ph: 'text-yellow-500 dark:text-yellow-400',
+			ec: 'text-violet-500 dark:text-violet-400'
 		};
-		return colorMap[sensorType] || 'text-gray-700 dark:text-gray-300';
+		return colorMap[sensorType] || 'text-zinc-400 dark:text-zinc-400';
 	}
 	
 	// Determine if this is a metadata card

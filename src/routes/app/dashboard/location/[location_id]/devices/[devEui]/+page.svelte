@@ -168,32 +168,39 @@
 		<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-gray-100">Historical Data</h2>
 
 		<div class="mb-6 rounded-lg bg-gray-50 p-4 dark:bg-zinc-800">
-			<div class="flex flex-wrap items-end gap-4">
-				<div class="flex flex-col">
-					<label class="mb-1 text-sm">Start Date:</label>
-					<input
-						type="date"
-						bind:value={startDate}
-						max={endDate}
-						class="rounded border border-gray-300 bg-white p-2 text-sm dark:border-zinc-600 dark:bg-zinc-700"
-					/>
-				</div>
+			<div class="flex flex-wrap items-center gap-2 md:gap-4">
+				<!-- Group date inputs in a flex container with proper spacing -->
+				<div class="inline-flex items-end gap-2 md:gap-3">
+					<div class="flex flex-col">
+						<label class="mb-1 text-sm">Start Date:</label>
+						<input
+							type="date"
+							bind:value={startDate}
+							max={endDate}
+							class="rounded border border-gray-300 bg-white p-2 text-sm dark:border-zinc-600 dark:bg-zinc-700"
+						/>
+					</div>
 
-				<div class="flex flex-col">
-					<label class="mb-1 text-sm">End Date:</label>
-					<input
-						type="date"
-						bind:value={endDate}
-						min={startDate}
-						class="rounded border border-gray-300 bg-white p-2 text-sm dark:border-zinc-600 dark:bg-zinc-700"
-					/>
+					<div class="flex flex-col">
+						<label class="mb-1 text-sm">End Date:</label>
+						<input
+							type="date"
+							bind:value={endDate}
+							min={startDate}
+							class="rounded border border-gray-300 bg-white p-2 text-sm dark:border-zinc-600 dark:bg-zinc-700"
+						/>
+					</div>
 				</div>
 
 				<button
 					onclick={handleDateRangeSubmit}
-					class="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 shadow-sm
-						ring-1 ring-white/20 ring-inset dark:bg-blue-500 dark:hover:bg-blue-600 dark:ring-white/30 
-						focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-800"
+					class="rounded bg-blue-600 px-4 py-2 text-sm text-white 
+						hover:bg-blue-700 border border-blue-700 shadow-md 
+						disabled:opacity-50 disabled:hover:bg-blue-600 disabled:cursor-not-allowed
+						dark:bg-blue-600 dark:border-blue-800 dark:hover:bg-blue-500/90 
+						focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-800
+						transition-all duration-200 ease-in-out
+						self-end mb-0"
 					disabled={loading}
 				>
 					{loading ? 'Loading…' : 'Fetch Data'}
