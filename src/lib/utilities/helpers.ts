@@ -7,15 +7,27 @@ export function formatDateForInput(date: Date): string {
 export function formatDateForDisplay(dateStr: string): string {
     const date = new Date(dateStr);
     
-    // Format: May 17, 2025, 10:59 AM
+    // Format: 17 May 2025, 11:10
     return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
-    });
+        hour12: false
+    }).replace(',', '').replace(/\s+/g, ' ');
+}
+
+// Helper function to format date only (no time) in a consistent format
+export function formatDateOnly(dateStr: string): string {
+    const date = new Date(dateStr);
+    
+    // Format as "17 May 2025"
+    return date.toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+    }).replace(',', '');
 }
 
 // Helper function to calculate average

@@ -9,6 +9,7 @@
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
 	import { goto } from '$app/navigation';
+	import { formatDateOnly } from '$lib/utilities/helpers';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -123,7 +124,7 @@
 					<div>
 						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
 						<strong class="ml-1 text-gray-900 dark:text-white">
-							{new Date(device.installed_at).toLocaleDateString()}
+							{formatDateOnly(device.installed_at)}
 						</strong>
 					</div>
 				{/if}
@@ -141,29 +142,14 @@
 			<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{#each Object.keys(latestData) as key}
-						{#if key === 'created_at'}
-							<DataCard
-								{latestData}
-								name={key}
-								{key}
-								type={key}
-								notation={key === 'created_at' || key === 'dev_eui' ? '' : '°C'}
-								metadata={key === 'created_at' || key === 'dev_eui'}
-								class="w-full"
-							/>
-						{/if}
-
-						{#if key !== 'created_at'}
-							<DataCard
-								{latestData}
-								name={key}
-								{key}
-								type={key}
-								notation={key === 'created_at' || key === 'dev_eui' ? '' : '°C'}
-								metadata={key === 'created_at' || key === 'dev_eui'}
-								class="w-full"
-							/>
-						{/if}
+						<DataCard
+							{latestData}
+							name={key}
+							{key}
+							type={key}
+							metadata={key === 'created_at' || key === 'dev_eui'}
+							class="w-full"
+						/>
 					{/each}
 				</div>
 
@@ -205,7 +191,9 @@
 
 				<button
 					onclick={handleDateRangeSubmit}
-					class="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+					class="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 shadow-sm
+						ring-1 ring-white/20 ring-inset dark:bg-blue-500 dark:hover:bg-blue-600 dark:ring-white/30 
+						focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-800"
 					disabled={loading}
 				>
 					{loading ? 'Loading…' : 'Fetch Data'}
