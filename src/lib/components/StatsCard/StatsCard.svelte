@@ -11,24 +11,16 @@
 	// Get the appropriate color based on the sensor type
 	function getColorForSensorType(title: string): string {
 		const titleLower = title.toLowerCase();
-		
-		if (titleLower.includes('temp')) {
-			return 'orange-500';
-		} else if (titleLower.includes('moisture')) {
-			return 'sky-500';
-		} else if (titleLower.includes('ph')) {
-			return 'yellow-500';
-		} else if (titleLower.includes('conduct') || titleLower.includes('ec')) {
-			return 'violet-500';
-		} else if (titleLower.includes('co2')) {
-			return 'purple-500';
-		} else if (titleLower.includes('humid')) {
-			return 'blue-500';
-		} else {
-			return 'zinc-400';
-		}
+
+		if (titleLower.includes('temp')) return 'orange-500';
+		if (titleLower.includes('moisture')) return 'sky-500';
+		if (titleLower.includes('ph')) return 'yellow-500';
+		if (titleLower.includes('conduct') || titleLower.includes('ec')) return 'violet-500';
+		if (titleLower.includes('co2')) return 'purple-500';
+		if (titleLower.includes('humid')) return 'blue-500';
+		return 'zinc-400';
 	}
-	
+
 	const color = getColorForSensorType(title);
 </script>
 
