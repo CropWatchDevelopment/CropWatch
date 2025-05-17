@@ -141,11 +141,34 @@
 			<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{#each Object.keys(latestData) as key}
-						<DataCard {latestData} name={key} {key} notation="°C" type={key} class="w-full" />
+						{#if key === 'created_at'}
+							<DataCard
+								{latestData}
+								name={key}
+								{key}
+								type={key}
+								notation={key === 'created_at' || key === 'dev_eui' ? '' : '°C'}
+								metadata={key === 'created_at' || key === 'dev_eui'}
+								class="w-full"
+							/>
+						{/if}
+
+						{#if key !== 'created_at'}
+							<DataCard
+								{latestData}
+								name={key}
+								{key}
+								type={key}
+								notation={key === 'created_at' || key === 'dev_eui' ? '' : '°C'}
+								metadata={key === 'created_at' || key === 'dev_eui'}
+								class="w-full"
+							/>
+						{/if}
 					{/each}
 				</div>
-				<p class="mt-4 text-right text-sm text-gray-500 dark:text-gray-400">
-					Last updated: {new Date(latestData.created_at).toLocaleString()}
+
+				<p class="mt-4 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+					Last updated: {formatDateForDisplay(latestData.created_at)}
 				</p>
 			</div>
 		{:else}

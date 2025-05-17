@@ -5,7 +5,17 @@ export function formatDateForInput(date: Date): string {
 
 // Helper function to format date for display
 export function formatDateForDisplay(dateStr: string): string {
-    return new Date(dateStr).toLocaleString();
+    const date = new Date(dateStr);
+    
+    // Format: May 17, 2025, 10:59 AM
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 // Helper function to calculate average
