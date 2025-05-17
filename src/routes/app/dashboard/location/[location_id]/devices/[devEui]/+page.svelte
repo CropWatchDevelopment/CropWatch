@@ -82,120 +82,198 @@
 
 <div id="chart-line"></div>
 
-<div class="device-details-container">
-	<div class="device-header">
-		<div class="back-link">
-			<a href="/app/dashboard">&larr; Back to Dashboard</a>
+<div class="mx-auto max-w-6xl p-4">
+	<section class="mb-8">
+		<!-- Back to Dashboard link -->
+		<div class="mb-2">
+			<a href="/app/dashboard" class="text-sm text-blue-500 hover:underline">
+				&larr; Back to Dashboard
+			</a>
 		</div>
-		<h1>{device?.name || 'Device'} Details</h1>
-		<div class="device-meta">
-			<p>Type: <span class="device-type">{deviceTypeName}</span></p>
-			<p>EUI: <span class="device-eui">{device?.dev_eui}</span></p>
-			{#if device?.location_id}
-				<p>Location ID: <span class="device-location">{device.location_id}</span></p>
-			{/if}
-			{#if device?.installed_at}
-				<p>
-					Installed: <span class="device-installed"
-						>{new Date(device.installed_at).toLocaleDateString()}</span
-					>
-				</p>
-			{/if}
+
+		<!-- Heading -->
+		<h1 class="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">Soil Device Details</h1>
+
+		<!-- Device metadata container -->
+		<div class="rounded-lg bg-gray-100 p-4 shadow-sm dark:bg-zinc-800">
+			<!-- Responsive: 1 col on mobile, 2 on md, 4 on lg -->
+			<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2 lg:grid-cols-4">
+				<!-- Type -->
+				<div>
+					<span class="text-gray-500 dark:text-gray-300">Type:</span>
+					<strong class="ml-1 break-words text-gray-900 dark:text-white">{deviceTypeName}</strong>
+				</div>
+
+				<!-- EUI -->
+				<div>
+					<span class="text-gray-500 dark:text-gray-300">EUI:</span>
+					<strong class="ml-1 break-words text-gray-900 dark:text-white">{device.dev_eui}</strong>
+				</div>
+
+				<!-- Location ID -->
+				{#if device?.location_id}
+					<div>
+						<span class="text-gray-500 dark:text-gray-300">Location ID:</span>
+						<strong class="ml-1 text-gray-900 dark:text-white">{device.location_id}</strong>
+					</div>
+				{/if}
+
+				<!-- Installed At -->
+				{#if device?.installed_at}
+					<div>
+						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
+						<strong class="ml-1 text-gray-900 dark:text-white">
+							{new Date(device.installed_at).toLocaleDateString()}
+						</strong>
+					</div>
+				{/if}
+			</div>
 		</div>
-		<button onclick={() => goto(`${device?.dev_eui}/settings`)}>⚙️ Settings</button>
-	</div>
+	</section>
 
 	<!-- Latest data section -->
-	<section class="data-section latest-data bg-foreground-light dark:bg-foreground-dark">
-		<h2>Latest Sensor Readings</h2>
+	<section class="mb-12">
+		<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+			Latest Sensor Readings
+		</h2>
+
 		{#if latestData}
-			<div class="sensor-readings">
-				<div class="grid grid-cols-3 gap-4">
+			<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{#each Object.keys(latestData) as key}
-						<DataCard
-							{latestData}
-							name={key}
-							{key}
-							notation="°C"
-							type={key}
-							class="w-full"
-						/>
+						<DataCard {latestData} name={key} {key} notation="°C" type={key} class="w-full" />
 					{/each}
 				</div>
-				<p class="timestamp">Last updated: {new Date(latestData.created_at).toLocaleString()}</p>
+				<p class="mt-4 text-right text-sm text-gray-500 dark:text-gray-400">
+					Last updated: {new Date(latestData.created_at).toLocaleString()}
+				</p>
 			</div>
 		{:else}
-			<p class="no-data">No recent data available for this device.</p>
+			<p class="py-8 text-center text-gray-500 italic">No recent data available for this device.</p>
 		{/if}
 	</section>
 
 	<!-- Historical data section -->
-	<section class="data-section historical-data bg-foreground-light dark:bg-foreground-dark">
-		<h2>Historical Data</h2>
 
-		<div class="date-range-selector bg-card-light dark:bg-card-dark rounded-lg shadow p-4 mb-6">
-			<div class="date-inputs">
-				<div class="form-group">
-					<label for="startDate">Start Date:</label>
-					<input type="date" id="startDate" bind:value={startDate} max={endDate} />
+	<section class="mb-12">
+		<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-gray-100">Historical Data</h2>
+
+		<div class="mb-6 rounded-lg bg-gray-50 p-4 dark:bg-zinc-800">
+			<div class="flex flex-wrap items-end gap-4">
+				<div class="flex flex-col">
+					<label class="mb-1 text-sm">Start Date:</label>
+					<input
+						type="date"
+						bind:value={startDate}
+						max={endDate}
+						class="rounded border border-gray-300 bg-white p-2 text-sm dark:border-zinc-600 dark:bg-zinc-700"
+					/>
 				</div>
-				<div class="form-group">
-					<label for="endDate">End Date:</label>
-					<input type="date" id="endDate" bind:value={endDate} min={startDate} />
+
+				<div class="flex flex-col">
+					<label class="mb-1 text-sm">End Date:</label>
+					<input
+						type="date"
+						bind:value={endDate}
+						min={startDate}
+						class="rounded border border-gray-300 bg-white p-2 text-sm dark:border-zinc-600 dark:bg-zinc-700"
+					/>
 				</div>
-				<button class="fetch-btn" onclick={handleDateRangeSubmit} disabled={loading}>
-					{loading ? 'Loading...' : 'Fetch Data'}
+
+				<button
+					onclick={handleDateRangeSubmit}
+					class="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+					disabled={loading}
+				>
+					{loading ? 'Loading…' : 'Fetch Data'}
 				</button>
 			</div>
 
 			{#if error}
-				<div class="error-message">{error}</div>
+				<p class="mt-2 text-sm text-red-600">{error}</p>
 			{/if}
 		</div>
-
+	</section>
+	<section class="mb-12">
 		{#if loading}
-			<div class="loading-container">
+			<!-- Loading State -->
+			<div
+				class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-100 p-8 shadow dark:bg-zinc-800"
+			>
 				<Spinner />
-				<p>Loading historical data...</p>
+				<p class="text-gray-700 dark:text-gray-300">Loading historical data...</p>
 			</div>
 		{:else if historicalData.length === 0}
-			<p class="no-data">No historical data available for the selected date range.</p>
+			<!-- Empty State -->
+			<div
+				class="rounded-lg bg-gray-100 p-6 text-center text-gray-500 italic shadow dark:bg-zinc-800 dark:text-gray-400"
+			>
+				No historical data available for the selected date range.
+			</div>
 		{:else}
 			<!-- Statistical Summary -->
-			<div class="stats-section ">
-				<h3>Statistical Summary</h3>
-				<div class="stats-grid">
+			<div class="mb-8">
+				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+					Statistical Summary
+				</h3>
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{#if temperatureChartVisible}
-						<StatsCard notation="°C" title="Temperature" min={stats.temperature.min} max={stats.temperature.max} avg={stats.temperature.avg} />
+						<StatsCard
+							notation="°C"
+							title="Temperature"
+							min={stats.temperature.min}
+							max={stats.temperature.max}
+							avg={stats.temperature.avg}
+						/>
 					{/if}
-
 					{#if humidityChartVisible}
-          <StatsCard notation="%" title="Humidity" min={stats.humidity.min} max={stats.humidity.max} avg={stats.humidity.avg} />
+						<StatsCard
+							notation="%"
+							title="Humidity"
+							min={stats.humidity.min}
+							max={stats.humidity.max}
+							avg={stats.humidity.avg}
+						/>
 					{/if}
-
 					{#if moistureChartVisible}
-          <StatsCard notation="%" title="Moisture" min={stats.moisture.min} max={stats.moisture.max} avg={stats.moisture.avg} />
+						<StatsCard
+							notation="%"
+							title="Moisture"
+							min={stats.moisture.min}
+							max={stats.moisture.max}
+							avg={stats.moisture.avg}
+						/>
 					{/if}
-
 					{#if co2ChartVisible}
-          <StatsCard title="ppm" min={stats.co2.min} max={stats.co2.max} avg={stats.co2.avg} />
+						<StatsCard
+							title="CO₂ (ppm)"
+							min={stats.co2.min}
+							max={stats.co2.max}
+							avg={stats.co2.avg}
+						/>
 					{/if}
-
 					{#if phChartVisible}
-          <StatsCard title="pH" min={stats.ph.min} max={stats.ph.max} avg={stats.ph.avg} />
+						<StatsCard title="pH" min={stats.ph.min} max={stats.ph.max} avg={stats.ph.avg} />
 					{/if}
 				</div>
 			</div>
 
+			<!-- Charts -->
 			<!-- Chart Visualizations -->
-			<div class="charts-section">
-				<h3>Data Visualization</h3>
+			<div class="mb-12">
+				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+					Data Visualization
+				</h3>
 
-				<!-- Full-width chart container for both temperature and humidity/moisture -->
+				<!-- Main Line + Brush Chart -->
 				{#if temperatureChartVisible}
-					<div class="chart-container full-width">
-						<div class="chart temperature-chart">
-							<h4>Sensor Data Over Time</h4>
+					<div class="mb-10 rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
+						<h4 class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200">
+							Sensor Data Over Time
+						</h4>
+
+						<!-- Chart grows to full width, no scrollbars -->
+						<div class="w-full">
 							<div class="chart-placeholder">
 								<div class="chart-visual">
 									<div class="chart main-chart" bind:this={chart1}></div>
@@ -206,48 +284,48 @@
 					</div>
 				{/if}
 
-				<!-- Statistical individual charts - these remain in grid layout -->
-				<div class="chart-container stats-charts">
+				<!-- Individual Chart Stats -->
+				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 					{#if humidityChartVisible || moistureChartVisible}
-						<div class="chart humidity-moisture-chart">
-							<h4>{dataType === 'air' ? 'Humidity' : 'Moisture'} Statistics</h4>
-							<div class="chart-stats">
-								<div class="chart-legend">
-									{#if humidityChartVisible}
-										<span class="min">Min: {stats.humidity.min}%</span>
-										<span class="avg">Avg: {stats.humidity.avg}%</span>
-										<span class="max">Max: {stats.humidity.max}%</span>
-									{:else}
-										<span class="min">Min: {stats.moisture.min}%</span>
-										<span class="avg">Avg: {stats.moisture.avg}%</span>
-										<span class="max">Max: {stats.moisture.max}%</span>
-									{/if}
-								</div>
+						<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
+							<h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">
+								{dataType === 'air' ? 'Humidity' : 'Moisture'} Statistics
+							</h4>
+							<div class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+								{#if humidityChartVisible}
+									<p>Min: {stats.humidity.min}%</p>
+									<p>Avg: {stats.humidity.avg}%</p>
+									<p>Max: {stats.humidity.max}%</p>
+								{:else}
+									<p>Min: {stats.moisture.min}%</p>
+									<p>Avg: {stats.moisture.avg}%</p>
+									<p>Max: {stats.moisture.max}%</p>
+								{/if}
 							</div>
 						</div>
 					{/if}
 
 					{#if temperatureChartVisible}
-						<div class="chart temperature-stats-chart">
-							<h4>Temperature Statistics</h4>
-							<div class="chart-stats">
-								<div class="chart-legend">
-									<span class="min">Min: {stats.temperature.min}°C</span>
-									<span class="avg">Avg: {stats.temperature.avg}°C</span>
-									<span class="max">Max: {stats.temperature.max}°C</span>
-								</div>
+						<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
+							<h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">
+								Temperature Statistics
+							</h4>
+							<div class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+								<p>Min: {stats.temperature.min}°C</p>
+								<p>Avg: {stats.temperature.avg}°C</p>
+								<p>Max: {stats.temperature.max}°C</p>
 							</div>
 						</div>
 					{/if}
 
-					<!-- Similar chart sections for CO2 and pH would go here -->
+					<!-- If you want to render CO₂ or pH here, you can add similar blocks -->
 				</div>
 			</div>
 
-			<!-- Data Table -->
-			<div class="data-table-section">
-				<h3>Raw Data</h3>
-				<div class="table-container">
+			<!-- Raw Data Table -->
+			<div>
+				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
+				<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
 					<div class="data-grid" bind:this={dataGrid}></div>
 				</div>
 			</div>
@@ -256,5 +334,58 @@
 </div>
 
 <style>
-	@import 'device-detail.css';
+	/* Chart container structure */
+	.chart-placeholder {
+		position: relative;
+		padding-top: 10px;
+		width: 100%;
+	}
+
+	.chart-visual {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+	}
+
+	.chart-visual .chart {
+		width: 100%;
+	}
+
+	/* These classes are critical for ApexCharts rendering size */
+	.chart-visual .main-chart {
+		height: 350px;
+	}
+
+	.chart-visual .brush-chart {
+		height: 150px;
+		margin-top: 10px;
+	}
+
+	/* ApexCharts style overrides */
+	.apexcharts-canvas {
+		background-color: transparent !important;
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+
+	.apexcharts-tooltip {
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+		border: none !important;
+	}
+
+	.apexcharts-yaxis-label,
+	.apexcharts-xaxis-label {
+		font-size: 12px !important;
+	}
+
+	/* Responsive layout for mobile */
+	@media (max-width: 768px) {
+		.chart-visual .main-chart {
+			height: 300px;
+		}
+
+		.chart-visual .brush-chart {
+			height: 120px;
+		}
+	}
 </style>
