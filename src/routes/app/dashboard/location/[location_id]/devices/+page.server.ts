@@ -30,10 +30,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
         const locationRepo = new LocationRepository(locals.supabase, errorHandler);
         const locationService = new LocationService(locationRepo, deviceRepo);
-        const location = await locationService.getLocationById(locationId);
+        const deviceService = new DeviceService(deviceRepo);
+
+        const devices = await deviceService.getDevicesByLocation(locationId);
 
         return {
-            location,
+            devices,
             locationId,
         };
     } catch (err) {

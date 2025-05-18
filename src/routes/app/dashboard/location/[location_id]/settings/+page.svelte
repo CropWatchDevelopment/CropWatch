@@ -1,17 +1,93 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { error as errorToast, success } from '$lib/stores/toast.svelte';
+	import { RevoGrid, type ColumnRegular } from '@revolist/svelte-datagrid';
 
-	export let data;
+	let data = $props();
 
 	const { location, locationUsers, deviceCount, permissionTypes, currentUser } = data;
 
 	// Location details editing
-	let editingLocationDetails = false;
-	let locationName = location.name;
-	let locationLatitude = location.lat || null;
-	let locationLongitude = location.long || null;
-	let isUpdatingLocation = false;
+	let editingLocationDetails = $state(false);
+	let locationName = $derived(location.name);
+	let locationLatitude = $derived(location.lat || null);
+	let locationLongitude = $derived(location.long || null);
+	let isUpdatingLocation = $state(false);
+	let grid_component_instance = $state(); // To bind the component instance if needed
+	const columns: ColumnRegular[] = $state([
+		{
+			name: '🎰 Ticker',
+			prop: 'symbol',
+			sortable: true,
+			pin: 'colPinStart',
+			cellTemplate: (h, { model, prop }) => h('strong', null, model[prop])
+		},
+		{
+			name: '🔠 Company Name',
+			prop: 'company_name',
+			size: 300,
+			
+		},
+		{
+			name: '',
+			prop: '📉 graph',
+			readonly: true,
+			// Custom cell render
+			cellTemplate(h) {
+				const barWidth = 5;
+				const barSpacing = 5;
+				const maxHeight = 30;
+				const bars = [];
+
+				// Draw 5 vertical bars with random heights
+				for (let i = 0; i < 5; i++) {
+					const barHeight = Math.random() * maxHeight;
+					const x = i * (barWidth + barSpacing);
+					const y = maxHeight - barHeight + 5;
+
+					// Create the rectangle element for the bar
+					const rect = h('rect', {
+						key: i,
+						x,
+						y,
+						width: barWidth,
+						height: barHeight,
+						fill: 'blue',
+						stroke: 'black'
+					});
+
+					// Append the rectangle to the group
+					bars.push(rect);
+				}
+				return h(
+					'svg',
+					{
+						width: '100%',
+						height: maxHeight + 10
+					},
+					h('g', {}, bars)
+				);
+			}
+		},
+		{
+			name: '💰 Price',
+			prop: 'price',
+			columnType: 'numeric',
+			sortable: true,
+			
+		},
+		{
+			name: '⬆️ Change',
+			prop: 'change',
+			columnType: 'numeric',
+			sortable: true
+		},
+		{
+			name: '% Change',
+			prop: 'percent_change'
+		}
+	]);
 
 	const startEditLocation = () => {
 		editingLocationDetails = true;
@@ -138,18 +214,21 @@
 <div class="container mx-auto px-4 py-8">
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-2xl font-bold">Location Settings: {location.name}</h1>
-		<a href="/app/dashboard/location/{location.location_id}/" class="text-blue-500 hover:text-blue-700">
+		<a
+			href="/app/dashboard/location/{location.location_id}/"
+			class="text-blue-500 hover:text-blue-700"
+		>
 			Back to Location
 		</a>
 	</div>
 
 	<!-- Location Details Section -->
-	<div class="mb-8 rounded-lg bg-foreground-light dark:bg-foreground-dark p-6 shadow-lg">
-		<div class="flex items-center justify-between mb-4">
+	<div class="bg-foreground-light dark:bg-foreground-dark mb-8 rounded-lg p-6 shadow-lg">
+		<div class="mb-4 flex items-center justify-between">
 			<h2 class="text-xl font-bold">Location Details</h2>
 			{#if !editingLocationDetails}
-				<button 
-					type="button" 
+				<button
+					type="button"
 					class="text-blue-500 hover:text-blue-700"
 					on:click={startEditLocation}
 				>
@@ -195,9 +274,7 @@
 						class="w-full rounded border px-3 py-2"
 						bind:value={locationLatitude}
 					/>
-					<p class="mt-1 text-sm text-gray-500">
-						Decimal format (e.g. 51.5074)
-					</p>
+					<p class="mt-1 text-sm text-gray-500">Decimal format (e.g. 51.5074)</p>
 				</div>
 
 				<div class="mb-4">
@@ -211,9 +288,7 @@
 						class="w-full rounded border px-3 py-2"
 						bind:value={locationLongitude}
 					/>
-					<p class="mt-1 text-sm text-gray-500">
-						Decimal format (e.g. -0.1278)
-					</p>
+					<p class="mt-1 text-sm text-gray-500">Decimal format (e.g. -0.1278)</p>
 				</div>
 
 				<div class="flex gap-2">
@@ -234,7 +309,7 @@
 				</div>
 			</form>
 		{:else}
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div>
 					<h3 class="text-sm font-medium text-gray-500">Name</h3>
 					<p>{location.name}</p>
@@ -253,13 +328,18 @@
 		{/if}
 	</div>
 
-	<div class="mb-8 rounded-lg bg-foreground-light dark:bg-foreground-dark p-6 shadow-lg">
+	<div class="bg-foreground-light dark:bg-foreground-dark mb-8 rounded-lg p-6 shadow-lg">
 		<h2 class="mb-4 text-xl font-bold">User Permissions</h2>
 		<p class="mb-4">
 			Manage which users have access to this location and with what permission level.
 		</p>
 
-		{#if locationUsers.length > 0}
+		{#if browser}
+			<RevoGrid />
+		{:else}
+			<p>RevoGrid is not available during server-side rendering.</p>
+		{/if}
+		<!-- {#if locationUsers.length > 0}
 			<div class="overflow-x-auto">
 				<table class="min-w-full">
 					<thead>
@@ -454,10 +534,10 @@
 					</button>
 				</div>
 			</form>
-		</div>
+		</div> -->
 	</div>
 
-	<div class="rounded-lg bg-foreground-light dark:bg-foreground-dark p-6 shadow-lg">
+	<div class="bg-foreground-light dark:bg-foreground-dark rounded-lg p-6 shadow-lg">
 		<h2 class="mb-4 text-xl font-bold">About Permissions</h2>
 
 		<div class="prose max-w-none">

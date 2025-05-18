@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     const { devEui } = params;
     const sessionService = new SessionService(locals.supabase);
     const sessionResult = await sessionService.getSafeSession();
-      
+
     // If no session exists, redirect to login
     if (!sessionResult || !sessionResult.user) {
         throw redirect(302, '/auth/login');
@@ -25,12 +25,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     try {
         // Get the error handler from the container
         const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-        
+
         // Create repositories with per-request Supabase client
         const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
         const airDataRepo = new AirDataRepository(locals.supabase, errorHandler);
         const soilDataRepo = new SoilDataRepository(locals.supabase, errorHandler);
-        
+
         // Create services with repositories
         const deviceService = new DeviceService(deviceRepo);
         const airDataService = new AirDataService(airDataRepo);
@@ -42,6 +42,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
         if (!device) {
             throw error(404, 'Device not found');
+        }
+
+        if (!device.cw_device_type) {
+            // throw error(404, 'Device type not found');
+            throw redirect(302, '/app/dashboard/location/' + device.location_id + '/devices');
         }
 
         // Get latest sensor data
