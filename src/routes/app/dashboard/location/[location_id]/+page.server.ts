@@ -31,13 +31,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         const locationRepo = new LocationRepository(locals.supabase, errorHandler);
         const locationService = new LocationService(locationRepo, deviceRepo);
         const location = await locationService.getLocationById(locationId);
+        // Fetch devices for this location
+        const deviceService = new DeviceService(deviceRepo);
+        const devices = await deviceService.getDevicesByLocation(locationId);
 
         return {
             location,
             locationId,
+            devices,
         };
     } catch (err) {
-        console.error(`Error loading device details for ${devEui}:`, err);
-        throw error(500, 'Failed to load device details');
+        console.error(`Error loading location ${locationId} details:`, err);
+        throw error(500, 'Failed to load location details');
     }
 };

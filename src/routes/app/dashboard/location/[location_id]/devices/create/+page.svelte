@@ -1,13 +1,17 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { PermissionLevel } from '$lib/models/LocationUser.js';
-	import { Button } from 'bits-ui';
+	import { Button, Select } from 'bits-ui';
 
 	let { data } = $props();
 
 	const location = $derived(data.location);
 	const users = $derived(data.usersInLocation);
 	const permissionTypes = data.permissionTypes; // Array<[label, level]>
+	const deviceTypes = data.deviceTypes; // Array<{ id: number, name: string }>
+
+	// Selected device type
+	let selectedDeviceType = $state<number | undefined>(undefined);
 
 	// Initialize user permissions state
 	let userPermissions: Array<{ userId: string; level: number }> = $state([]);
@@ -73,6 +77,29 @@
 			<label for="longitude" class="text-sm font-medium">Longitude</label>
 			<input name="longitude" id="longitude" type="number" step="any"
 				class="rounded-input border-2 border-input bg-background focus-visible:ring-ring h-12 px-3 text-sm" />
+		</div>
+	</div>
+	
+	<!-- Device Type selection -->
+	<div class="flex flex-col gap-2">
+		<label for="deviceType" class="text-sm font-medium">Device Type</label>
+		<div class="relative">
+			<select 
+				id="deviceType"
+				name="deviceType" 
+				bind:value={selectedDeviceType}
+				class="rounded-input border-2 border-input bg-background h-12 w-full px-3 appearance-none cursor-pointer"
+			>
+				<option value={undefined}>Select a device type...</option>
+				{#each deviceTypes as deviceType}
+					<option value={deviceType.id}>{deviceType.name}</option>
+				{/each}
+			</select>
+			<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+				</svg>
+			</div>
 		</div>
 	</div>
 	<!-- User permissions -->

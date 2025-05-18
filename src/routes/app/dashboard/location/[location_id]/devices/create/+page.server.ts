@@ -9,6 +9,7 @@ import { DeviceService } from '$lib/services/DeviceService';
 import { LocationService } from '$lib/services/LocationService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
+import { DeviceTypeRepository } from '$lib/repositories/DeviceTypeRepository';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -17,6 +18,7 @@ interface PageData {
   usersInLocation: LocationUser[];
   permissionTypes: Array<[string, PermissionLevel]>;
   locationId: number;
+  deviceTypes: Array<{ id: number; name: string }>;
 }
 
 export const load: PageServerLoad = async (event) => {
@@ -39,11 +41,12 @@ export const load: PageServerLoad = async (event) => {
   const locationRepository = new LocationRepository(supabase, errorHandler);
   const deviceRepository = new DeviceRepository(supabase, errorHandler);
   const locationService = new LocationService(locationRepository, deviceRepository);
-  const locationUsers = await locationService.getLocationUsers(location_id);
+  const deviceTypeRepository = new DeviceTypeRepository(supabase, errorHandler);
 
 
   try {
     const usersInLocation = await locationService.getLocationUsers(location_id);
+    const deviceTypes = await deviceTypeRepository.findAll();
     const permissionTypes = Object.entries(PermissionLevel)
       .filter(([key]) => isNaN(Number(key))) // Get string keys from enum
       .map(([key, value]) => [key, value as PermissionLevel]);
@@ -53,6 +56,7 @@ export const load: PageServerLoad = async (event) => {
       usersInLocation: usersInLocation.filter(u => u.user_id !== currentUser.id),
       permissionTypes,
       locationId: location_id,
+      deviceTypes,
     } as PageData;
   } catch (error) {
     console.error('Error loading data for create device page:', error);
@@ -82,9 +86,11 @@ export const actions: Actions = {
     const latitudeStr = formData.get('latitude') as string;
     const longitudeStr = formData.get('longitude') as string;
     const userPermissionsData = formData.get('userPermissionsData') as string;
+    const deviceTypeStr = formData.get('deviceType') as string;
     
     const latitude = latitudeStr ? parseFloat(latitudeStr) : undefined;
     const longitude = longitudeStr ? parseFloat(longitudeStr) : undefined;
+    const deviceType = deviceTypeStr ? parseInt(deviceTypeStr, 10) : undefined;
 
     if (!name || !devEui || userPermissionsData === null) { // lat/long can be optional depending on DB
       return fail(400, { message: 'Missing required device information or permissions data.' });
@@ -108,6 +114,7 @@ export const actions: Actions = {
     const deviceRepository = new DeviceRepository(supabase, errorHandler);
     const deviceService = new DeviceService(deviceRepository);
 
+
     const deviceToInsert: DeviceInsert = {
       dev_eui: devEui,
       name: name,
@@ -115,7 +122,8 @@ export const actions: Actions = {
       long: longitude, // Will be undefined if not provided, matching optional DB field
       location_id: location_id,
       user_id: currentUserId, // User who is creating the device
-      // type and upload_interval are omitted, assuming they are nullable or have DB defaults
+      type: deviceType, // Add device type from form
+      // upload_interval are omitted, assuming they are nullable or have DB defaults
     };
 
     try {
