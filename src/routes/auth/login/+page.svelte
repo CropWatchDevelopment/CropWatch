@@ -69,7 +69,7 @@
 			}
 
 			// Immediately redirect to dashboard - no delay, no success message
-			window.location.href = '/dashboard';
+			window.location.href = '/app/dashboard';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Login failed. Please try again.';
 			loading = false;

@@ -18,5 +18,5 @@ export interface IDeviceDataService {
    * @param startDate The start date
    * @param endDate The end date
    */
-  getDeviceDataByDateRange(devEui: string, deviceType: DeviceType, startDate: Date, endDate: Date): Promise<any[]>;
+  getDeviceDataByDateRange(devEui: string, startDate: Date, endDate: Date): Promise<any[]>;
 }

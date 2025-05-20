@@ -17,23 +17,11 @@ export interface DeviceDetailProps {
 
 export function setupDeviceDetail() {
 	// Stats for the data
-	const stats = $state({
-		temperature: { min: 0, max: 0, avg: 0 },
-		humidity: { min: 0, max: 0, avg: 0 },
-		moisture: { min: 0, max: 0, avg: 0 },
-		co2: { min: 0, max: 0, avg: 0 },
-		ph: { min: 0, max: 0, avg: 0 }
-	});
+	const stats: Record<string, { min: number; max: number; avg: number }> = $state({});
 
 	// Chart data
-	const chartData = $state({
-		labels: [] as string[],
-		temperature: [] as number[],
-		humidity: [] as number[],
-		moisture: [] as number[],
-		co2: [] as number[],
-		ph: [] as number[]
-	});
+	type ChartData = Record<string, number[] | string[]>;
+	const chartData: ChartData = $state({ labels: [] });
 
 	// States for the component
 	let loading = $state(false);
@@ -51,7 +39,7 @@ export function setupDeviceDetail() {
 	let grid = $state<any>(undefined);
 
 	// Function to process historical data and calculate stats
-	function processHistoricalData(historicalData: any[], dataType: string) {
+	function processHistoricalData(historicalData: any[]) {
 		if (!historicalData || historicalData.length === 0) return;
 
 		// Extract timestamps for chart labels (most recent to oldest)
@@ -59,104 +47,55 @@ export function setupDeviceDetail() {
 			.map((data) => formatDateForDisplay(data.created_at))
 			.reverse();
 
-		// Reset chart data arrays
-		chartData.temperature = [];
-		chartData.humidity = [];
-		chartData.moisture = [];
-		chartData.co2 = [];
-		chartData.ph = [];
+			// Determine numeric keys dynamically (excluding dev_eui, created_at)
+		const excludeKeys = ['dev_eui', 'created_at'];
+		const numericKeys = Object.keys(historicalData[0] || {})
+			.filter(
+				(key) =>
+					!excludeKeys.includes(key) &&
+					typeof historicalData[0][key] === 'number'
+			);
 
-		// Reset stats
-		let tempValues: number[] = [];
-		let humidityValues: number[] = [];
-		let moistureValues: number[] = [];
-		let co2Values: number[] = [];
-		let phValues: number[] = [];
-
-		// Process data points based on type (air or soil)
-		historicalData.forEach((data) => {
-			// Temperature (exists in both air and soil data)
-			if ('temperature_c' in data && data.temperature_c !== null) {
-				tempValues.push(data.temperature_c);
-				chartData.temperature.unshift(data.temperature_c);
-			}
-
-			// Air data specific
-			if (dataType === 'air') {
-				// Humidity
-				if ('humidity' in data && data.humidity !== null) {
-					humidityValues.push(data.humidity);
-					chartData.humidity.unshift(data.humidity);
-				}
-
-				// CO2
-				if ('co2' in data && data.co2 !== null) {
-					co2Values.push(data.co2);
-					chartData.co2.unshift(data.co2);
-				}
-			}
-
-			// Soil data specific
-			else if (dataType === 'soil') {
-				// Moisture
-				if ('moisture' in data && data.moisture !== null) {
-					moistureValues.push(data.moisture);
-					chartData.moisture.unshift(data.moisture);
-				}
-
-				// pH
-				if ('ph' in data && data.ph !== null) {
-					phValues.push(data.ph);
-					chartData.ph.unshift(data.ph);
-				}
-			}
+		// Reset chartData and stats for all numeric keys
+		numericKeys.forEach((key) => {
+			chartData[key] = [];
+			stats[key] = { min: 0, max: 0, avg: 0 };
 		});
 
-		// Calculate statistics for temperature
-		if (tempValues.length > 0) {
-			stats.temperature.min = Math.min(...tempValues);
-			stats.temperature.max = Math.max(...tempValues);
-			stats.temperature.avg = calculateAverage(tempValues);
-		}
+		// Prepare value arrays for stats
+		const valueArrays: Record<string, number[]> = {};
+		numericKeys.forEach((key) => {
+			valueArrays[key] = [];
+		});
 
-		// Calculate statistics for humidity
-		if (humidityValues.length > 0) {
-			stats.humidity.min = Math.min(...humidityValues);
-			stats.humidity.max = Math.max(...humidityValues);
-			stats.humidity.avg = calculateAverage(humidityValues);
-		}
+		// Fill chartData and value arrays
+		historicalData.forEach((data) => {
+			numericKeys.forEach((key) => {
+				if (typeof data[key] === 'number' && data[key] !== null) {
+					(chartData[key] as number[]).unshift(data[key]);
+					valueArrays[key].push(data[key]);
+				}
+			});
+		});
 
-		// Calculate statistics for moisture
-		if (moistureValues.length > 0) {
-			stats.moisture.min = Math.min(...moistureValues);
-			stats.moisture.max = Math.max(...moistureValues);
-			stats.moisture.avg = calculateAverage(moistureValues);
-		}
-
-		// Calculate statistics for CO2
-		if (co2Values.length > 0) {
-			stats.co2.min = Math.min(...co2Values);
-			stats.co2.max = Math.max(...co2Values);
-			stats.co2.avg = calculateAverage(co2Values);
-		}
-
-		// Calculate statistics for pH
-		if (phValues.length > 0) {
-			stats.ph.min = Math.min(...phValues);
-			stats.ph.max = Math.max(...phValues);
-			stats.ph.avg = calculateAverage(phValues);
-		}
+		// Calculate stats for each key
+		numericKeys.forEach((key) => {
+			const values = valueArrays[key];
+			if (values.length > 0) {
+				stats[key].min = Math.min(...values);
+				stats[key].max = Math.max(...values);
+				stats[key].avg = calculateAverage(values);
+			}
+		});
+		loading = false;
 	}
 
 	// Function to fetch data for a specific date range
-	async function fetchDataForDateRange(device: DeviceWithType) {
+	async function fetchDataForDateRange(device: DeviceWithType, start: Date, end: Date) {
 		if (!startDate || !endDate) {
 			error = 'Please select both start and end dates';
 			return;
 		}
-
-		const start = new Date(startDate);
-		const end = new Date(endDate);
 
 		if (start > end) {
 			error = 'Start date must be before end date';
@@ -168,7 +107,7 @@ export function setupDeviceDetail() {
 
 		try {
 			const response = await fetch(
-				`/api/devices/${device.dev_eui}/data?start=${startDate}&end=${endDate}`
+				`/api/devices/${device.dev_eui}/data?start=${start}&end=${end}`
 			);
 
 			if (!response.ok) {
@@ -176,6 +115,8 @@ export function setupDeviceDetail() {
 			}
 
 			const newHistoricalData = await response.json();
+			debugger;
+			processHistoricalData(newHistoricalData);
 			return newHistoricalData;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -539,7 +480,7 @@ export function setupDeviceDetail() {
 // Derived properties calculations
 export function getDeviceDetailDerived(device: DeviceWithType, dataType: string, latestData: any) {
 	// Determine device type name
-	const deviceTypeName = device?.cw_device_type?.name || 'Unknown Type';
+	const deviceTypeName = device?.deviceType?.name || 'Unknown Type';
 
 	// Reactive declarations for the charts
 	const temperatureChartVisible = dataType === 'air' || dataType === 'soil';

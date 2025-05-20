@@ -8,7 +8,6 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
-	import { goto } from '$app/navigation';
 	import { formatDateOnly } from '$lib/utilities/helpers';
 
 	// Get device data from server load function
@@ -27,7 +26,6 @@
 	const {
 		stats,
 		chartData,
-		loading,
 		error,
 		formatDateForDisplay,
 		hasValue,
@@ -39,9 +37,10 @@
 
 	// Define these as element references - using the new Svelte 5 approach for DOM bindings
 	// For DOM elements that don't need reactivity, we can use let declarations without $state
-	let chart1: HTMLElement;
-	let chart1Brush: HTMLElement;
-	let dataGrid: HTMLElement;
+	let chart1: HTMLElement = $state();;
+	let chart1Brush: HTMLElement = $state();;
+	let dataGrid: HTMLElement = $state();
+	let loading = $state(false);
 
 	// Get the other properties that don't need DOM binding
 	let { startDate, endDate } = $state(deviceDetail);
@@ -58,7 +57,7 @@
 	// Initialize the component
 	onMount(() => {
 		initializeDateRange();
-		processHistoricalData(historicalData, dataType);
+		processHistoricalData(historicalData);
 	});
 
 	// Effect to re-render visualization when historical data changes
@@ -69,11 +68,15 @@
 
 	// Function to handle fetching data for a specific date range
 	async function handleDateRangeSubmit() {
-		const newData = await fetchDataForDateRange(device);
+		loading = true;
+		debugger;
+		const newData = await fetchDataForDateRange(device, startDate, endDate);
 		if (newData && newData.length > 0) {
 			historicalData = newData;
-			processHistoricalData(historicalData, dataType);
+			await processHistoricalData(historicalData);
+			renderVisualization(historicalData, dataType, latestData);
 		}
+		loading = false;
 	}
 </script>
 
@@ -178,6 +181,7 @@
 						max={endDate}
 						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
 					/>
+					{JSON.stringify(startDate)}
 				</div>
 
 				<div class="flex flex-col">
@@ -188,11 +192,13 @@
 						min={startDate}
 						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
 					/>
+					{JSON.stringify(endDate)}
 				</div>
 
 				<!-- Button with alignment tweak -->
 				<div class="pt-[26px]">
 					<button
+						type="button"
 						onclick={handleDateRangeSubmit}
 						class="rounded border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
 					hover:border-blue-500 hover:bg-blue-500
@@ -285,24 +291,7 @@
 					Data Visualization
 				</h3>
 
-				<!-- Main Line + Brush Chart -->
-				{#if temperatureChartVisible}
-					<div class="mb-10 rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
-						<h4 class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200">
-							Sensor Data Over Time
-						</h4>
-
-						<!-- Chart grows to full width, no scrollbars -->
-						<div class="w-full">
-							<div class="chart-placeholder">
-								<div class="chart-visual">
-									<div class="chart main-chart" bind:this={chart1}></div>
-									<div class="chart brush-chart" bind:this={chart1Brush}></div>
-								</div>
-							</div>
-						</div>
-					</div>
-				{/if}
+				
 
 				<!-- Individual Chart Stats -->
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -343,13 +332,29 @@
 			</div>
 
 			<!-- Raw Data Table -->
-			<div>
-				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
-				<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
-					<div class="data-grid" bind:this={dataGrid}></div>
-				</div>
-			</div>
 		{/if}
+		<div>
+			<!-- Main Line + Brush Chart -->
+				<div class="mb-10 rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
+					<h4 class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200">
+						Sensor Data Over Time
+					</h4>
+
+					<!-- Chart grows to full width, no scrollbars -->
+					<div class="w-full">
+						<div class="chart-placeholder">
+							<div class="chart-visual">
+								<div class="chart main-chart" bind:this={chart1}></div>
+								<div class="chart brush-chart" bind:this={chart1Brush}></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
+			<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
+				<div class="data-grid" bind:this={dataGrid}></div>
+			</div>
+		</div>
 	</section>
 </div>
 

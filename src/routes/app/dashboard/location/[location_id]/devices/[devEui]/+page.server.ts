@@ -11,10 +11,12 @@ import { DeviceService } from '$lib/services/DeviceService';
 import { AirDataService } from '$lib/services/AirDataService';
 import { SoilDataService } from '$lib/services/SoilDataService';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
+import { url } from '@layerstack/utils/routing';
+import moment from 'moment';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ url, params, locals: { safeGetSession, supabase } }) => {
     const { devEui } = params;
-    const sessionService = new SessionService(locals.supabase);
+    const sessionService = new SessionService(supabase);
     const sessionResult = await sessionService.getSafeSession();
 
     // If no session exists, redirect to login
@@ -25,72 +27,36 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     try {
         // Get the error handler from the container
         const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+        const deviceDataService = await new DeviceDataService(supabase);
+        const deviceRepository = new DeviceRepository(supabase, errorHandler);
+        const deviceService = new DeviceService(deviceRepository);
 
-        // Create repositories with per-request Supabase client
-        const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
-        const airDataRepo = new AirDataRepository(locals.supabase, errorHandler);
-        const soilDataRepo = new SoilDataRepository(locals.supabase, errorHandler);
+        let startDate = url.searchParams.get('start');
+        let endDate = url.searchParams.get('end');
+        if (!startDate || !endDate) {
+            startDate = moment().subtract(7, 'days').toDate();
+            endDate = new Date();
+        }
 
-        // Create services with repositories
-        const deviceService = new DeviceService(deviceRepo);
-        const airDataService = new AirDataService(airDataRepo);
-        const soilDataService = new SoilDataService(soilDataRepo);
-        const deviceDataService = new DeviceDataService(locals.supabase);
+        // Get the latest data
+        const latestData = await deviceDataService.getLatestDeviceData(devEui);
+        if (!latestData) {
+            throw error(404, 'Device data not found');
+        }
 
-        // Get the device with its type info
+        let historicalData = await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
+
+        // get the device itsself
         const device = await deviceService.getDeviceWithTypeByEui(devEui);
-
         if (!device) {
             throw error(404, 'Device not found');
-        }
-
-        if (!device.cw_device_type) {
-            // throw error(404, 'Device type not found');
-            throw redirect(302, '/app/dashboard/location/' + device.location_id + '/devices');
-        }
-
-        // Get latest sensor data
-        let latestData = null;
-
-        // Try to get data dynamically based on device type
-        if (device.cw_device_type && device.cw_device_type.data_table_v2) {
-            try {
-                latestData = await deviceDataService.getLatestDeviceData(devEui, device.cw_device_type);
-            } catch (dataError) {
-                console.error(`Error fetching dynamic data for device ${devEui}:`, dataError);
-                // Will fall back to specific services below
-            }
-        }
-
-        // Fall back to specific services if dynamic approach fails or returns no data
-        if (!latestData) {
-            const latestAirData = await airDataService.getLatestAirDataByDevice(devEui);
-            const latestSoilData = await soilDataService.getLatestSoilDataByDevice(devEui);
-            latestData = latestAirData || latestSoilData || null;
-        }
-
-        // Determine data type (air or soil) for fetching historical data
-        const isAirData = latestData && 'temperature_c' in latestData && ('humidity' in latestData || 'co2' in latestData);
-        const isSoilData = latestData && 'moisture' in latestData;
-
-        // Set default date range for historical data (last 7 days)
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 7);
-
-        // Load historical data for the last 7 days
-        let historicalData = [];
-        if (isAirData) {
-            historicalData = await airDataService.getAirDataByDateRange(devEui, startDate, endDate);
-        } else if (isSoilData) {
-            historicalData = await soilDataService.getSoilDataByDateRange(devEui, startDate, endDate);
         }
 
         return {
             device,
             latestData,
             historicalData,
-            dataType: isAirData ? 'air' : (isSoilData ? 'soil' : 'unknown')
+            dataType: device.cw_device_type.data_table_v2,
         };
     } catch (err) {
         console.error(`Error loading device details for ${devEui}:`, err);
