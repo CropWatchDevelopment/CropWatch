@@ -1,0 +1,1082 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CropWatch API",
+    "description": "API for managing agricultural IoT devices and sensor data",
+    "version": "1.0.0",
+    "contact": {
+      "name": "CropWatch Support",
+      "email": "support@cropwatch.io"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "CropWatch API server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code"
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "dev_eui": {
+            "type": "string",
+            "description": "Device EUI (unique identifier)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Device name"
+          },
+          "type": {
+            "type": "integer",
+            "description": "Device type ID"
+          },
+          "location_id": {
+            "type": "integer",
+            "description": "Location ID where device is installed"
+          },
+          "installed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the device was installed"
+          },
+          "lat": {
+            "type": "number",
+            "format": "float",
+            "description": "Latitude coordinate"
+          },
+          "long": {
+            "type": "number",
+            "format": "float",
+            "description": "Longitude coordinate"
+          },
+          "serial_number": {
+            "type": "string",
+            "description": "Serial number of the device"
+          },
+          "upload_interval": {
+            "type": "integer",
+            "description": "Upload interval in seconds"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last time the device connected"
+          },
+          "battery_level": {
+            "type": "number",
+            "format": "float",
+            "description": "Current battery level percentage"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the device was created in the system"
+          }
+        }
+      },
+      "DeviceWithType": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Device"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "deviceType": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "data_type": {
+                    "type": "string",
+                    "enum": ["soil", "air"]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CreateDeviceDto": {
+        "type": "object",
+        "required": ["dev_eui", "name"],
+        "properties": {
+          "dev_eui": {
+            "type": "string",
+            "description": "Device EUI (unique identifier)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Device name"
+          },
+          "type": {
+            "type": "integer",
+            "description": "Device type ID"
+          },
+          "location_id": {
+            "type": "integer",
+            "description": "Location ID where device is installed"
+          },
+          "lat": {
+            "type": "number",
+            "format": "float",
+            "description": "Latitude coordinate"
+          },
+          "long": {
+            "type": "number",
+            "format": "float",
+            "description": "Longitude coordinate"
+          },
+          "serial_number": {
+            "type": "string",
+            "description": "Serial number of the device"
+          },
+          "upload_interval": {
+            "type": "integer",
+            "description": "Upload interval in seconds"
+          }
+        }
+      },
+      "UpdateDeviceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Device name"
+          },
+          "type": {
+            "type": "integer",
+            "description": "Device type ID"
+          },
+          "location_id": {
+            "type": "integer",
+            "description": "Location ID where device is installed"
+          },
+          "lat": {
+            "type": "number",
+            "format": "float",
+            "description": "Latitude coordinate"
+          },
+          "long": {
+            "type": "number",
+            "format": "float",
+            "description": "Longitude coordinate"
+          },
+          "serial_number": {
+            "type": "string",
+            "description": "Serial number of the device"
+          },
+          "upload_interval": {
+            "type": "integer",
+            "description": "Upload interval in seconds"
+          }
+        }
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "location_id": {
+            "type": "integer",
+            "description": "Unique identifier for the location"
+          },
+          "name": {
+            "type": "string",
+            "description": "Location name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Location description"
+          },
+          "address": {
+            "type": "string",
+            "description": "Physical address of the location"
+          },
+          "lat": {
+            "type": "number",
+            "format": "float",
+            "description": "Latitude coordinate"
+          },
+          "long": {
+            "type": "number",
+            "format": "float",
+            "description": "Longitude coordinate"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time when the location was created"
+          },
+          "deviceCount": {
+            "type": "integer",
+            "description": "Number of devices assigned to this location"
+          }
+        }
+      },
+      "CreateLocationDto": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Location name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Location description"
+          },
+          "address": {
+            "type": "string",
+            "description": "Physical address of the location"
+          },
+          "lat": {
+            "type": "number",
+            "format": "float",
+            "description": "Latitude coordinate"
+          },
+          "long": {
+            "type": "number",
+            "format": "float",
+            "description": "Longitude coordinate"
+          }
+        }
+      },
+      "SensorData": {
+        "type": "object",
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when data was recorded"
+          },
+          "dev_eui": {
+            "type": "string",
+            "description": "Device EUI (unique identifier)"
+          }
+        },
+        "additionalProperties": {
+          "type": "number",
+          "description": "Sensor readings with dynamic properties based on the device type"
+        }
+      },
+      "SoilData": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SensorData"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "temperature_c": {
+                "type": "number",
+                "description": "Temperature in Celsius"
+              },
+              "moisture": {
+                "type": "number",
+                "description": "Soil moisture percentage"
+              },
+              "ph": {
+                "type": "number",
+                "description": "Soil pH level"
+              }
+            }
+          }
+        ]
+      },
+      "AirData": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SensorData"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "temperature_c": {
+                "type": "number",
+                "description": "Temperature in Celsius"
+              },
+              "humidity": {
+                "type": "number",
+                "description": "Relative humidity percentage"
+              },
+              "co2": {
+                "type": "number",
+                "description": "CO2 level in ppm"
+              }
+            }
+          }
+        ]
+      },
+      "Rule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Rule identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Rule name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Rule description"
+          },
+          "device_id": {
+            "type": "string",
+            "description": "Device EUI this rule applies to"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the rule is active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the rule was created"
+          }
+        }
+      },
+      "CreateRuleDto": {
+        "type": "object",
+        "required": ["name", "device_id"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Rule name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Rule description"
+          },
+          "device_id": {
+            "type": "string",
+            "description": "Device EUI this rule applies to"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the rule is active"
+          }
+        }
+      },
+      "Permission": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Permission identifier"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "resource_id": {
+            "type": "string",
+            "description": "Resource ID (device EUI or location ID)"
+          },
+          "resource_type": {
+            "type": "string",
+            "description": "Type of resource (device or location)"
+          },
+          "permission_level": {
+            "type": "integer",
+            "description": "Permission level ID"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the permission was created"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "User's full name"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["email", "password", "full_name"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "User's full name"
+          }
+        }
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Access token is missing or invalid",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "User does not have permission to access this resource",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "The requested resource was not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/devices/{devEui}": {
+      "get": {
+        "summary": "Get device by EUI",
+        "description": "Returns detailed information about a specific device",
+        "operationId": "getDeviceByEui",
+        "parameters": [
+          {
+            "name": "devEui",
+            "in": "path",
+            "required": true,
+            "description": "Device EUI",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device details including type information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceWithType"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update device",
+        "description": "Updates the specified device",
+        "operationId": "updateDevice",
+        "parameters": [
+          {
+            "name": "devEui",
+            "in": "path",
+            "required": true,
+            "description": "Device EUI",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Device update data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Device updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete device",
+        "description": "Deletes the specified device",
+        "operationId": "deleteDevice",
+        "parameters": [
+          {
+            "name": "devEui",
+            "in": "path",
+            "required": true,
+            "description": "Device EUI",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device deleted successfully"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/devices/{devEui}/data": {
+      "get": {
+        "summary": "Get device data",
+        "description": "Returns sensor data for a specific device within a date range",
+        "operationId": "getDeviceData",
+        "parameters": [
+          {
+            "name": "devEui",
+            "in": "path",
+            "required": true,
+            "description": "Device EUI",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "description": "Start date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "description": "End date (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sensor data for the device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/SoilData"
+                      },
+                      {
+                        "$ref": "#/components/schemas/AirData"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing or invalid date parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/locations": {
+      "get": {
+        "summary": "Get all locations",
+        "description": "Returns all locations with device count",
+        "operationId": "getAllLocations",
+        "responses": {
+          "200": {
+            "description": "List of locations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Location"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create location",
+        "description": "Creates a new location",
+        "operationId": "createLocation",
+        "requestBody": {
+          "description": "Location data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLocationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Location created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Location"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/locations/{locationId}/devices": {
+      "get": {
+        "summary": "Get devices by location",
+        "description": "Returns devices for a specific location",
+        "operationId": "getDevicesByLocation",
+        "parameters": [
+          {
+            "name": "locationId",
+            "in": "path",
+            "required": true,
+            "description": "Location ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of devices at the location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Add device to location",
+        "description": "Adds a new device to a location",
+        "operationId": "addDeviceToLocation",
+        "parameters": [
+          {
+            "name": "locationId",
+            "in": "path",
+            "required": true,
+            "description": "Location ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Device data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Device added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "User login",
+        "description": "Authenticates a user and returns a JWT token",
+        "operationId": "login",
+        "security": [],
+        "requestBody": {
+          "description": "Login credentials",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful, returns session token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "session": {
+                      "type": "object",
+                      "properties": {
+                        "access_token": {
+                          "type": "string"
+                        },
+                        "expires_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "User registration",
+        "description": "Registers a new user",
+        "operationId": "register",
+        "security": [],
+        "requestBody": {
+          "description": "Registration data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid registration data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "User logout",
+        "description": "Logs out a user by invalidating the current session",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "Logout successful"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/auth/status": {
+      "get": {
+        "summary": "Authentication status",
+        "description": "Returns the current user and authentication status",
+        "operationId": "getAuthStatus",
+        "responses": {
+          "200": {
+            "description": "Current authentication status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "authenticated": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/{devEui}/rules": {
+      "get": {
+        "summary": "Get device rules",
+        "description": "Returns all rules for a specific device",
+        "operationId": "getDeviceRules",
+        "parameters": [
+          {
+            "name": "devEui",
+            "in": "path",
+            "required": true,
+            "description": "Device EUI",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of rules for the device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Rule"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create device rule",
+        "description": "Creates a new rule for a device",
+        "operationId": "createDeviceRule",
+        "parameters": [
+          {
+            "name": "devEui",
+            "in": "path",
+            "required": true,
+            "description": "Device EUI",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Rule data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rule created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rule"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    }
+  }
+}

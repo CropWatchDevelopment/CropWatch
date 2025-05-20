@@ -17,23 +17,11 @@ export interface DeviceDetailProps {
 
 export function setupDeviceDetail() {
 	// Stats for the data
-	const stats = $state({
-		temperature: { min: 0, max: 0, avg: 0 },
-		humidity: { min: 0, max: 0, avg: 0 },
-		moisture: { min: 0, max: 0, avg: 0 },
-		co2: { min: 0, max: 0, avg: 0 },
-		ph: { min: 0, max: 0, avg: 0 }
-	});
+	const stats: Record<string, { min: number; max: number; avg: number }> = $state({});
 
 	// Chart data
-	const chartData = $state({
-		labels: [] as string[],
-		temperature: [] as number[],
-		humidity: [] as number[],
-		moisture: [] as number[],
-		co2: [] as number[],
-		ph: [] as number[]
-	});
+	type ChartData = Record<string, number[] | string[]>;
+	const chartData: ChartData = $state({ labels: [] });
 
 	// States for the component
 	let loading = $state(false);
@@ -50,8 +38,12 @@ export function setupDeviceDetail() {
 	// ApexGrid instance
 	let grid = $state<any>(undefined);
 
+	// Chart instances
+	let mainChartInstance: any = null;
+	let brushChartInstance: any = null;
+
 	// Function to process historical data and calculate stats
-	function processHistoricalData(historicalData: any[], dataType: string) {
+	function processHistoricalData(historicalData: any[]) {
 		if (!historicalData || historicalData.length === 0) return;
 
 		// Extract timestamps for chart labels (most recent to oldest)
@@ -59,104 +51,55 @@ export function setupDeviceDetail() {
 			.map((data) => formatDateForDisplay(data.created_at))
 			.reverse();
 
-		// Reset chart data arrays
-		chartData.temperature = [];
-		chartData.humidity = [];
-		chartData.moisture = [];
-		chartData.co2 = [];
-		chartData.ph = [];
+			// Determine numeric keys dynamically (excluding dev_eui, created_at)
+		const excludeKeys = ['dev_eui', 'created_at'];
+		const numericKeys = Object.keys(historicalData[0] || {})
+			.filter(
+				(key) =>
+					!excludeKeys.includes(key) &&
+					typeof historicalData[0][key] === 'number'
+			);
 
-		// Reset stats
-		let tempValues: number[] = [];
-		let humidityValues: number[] = [];
-		let moistureValues: number[] = [];
-		let co2Values: number[] = [];
-		let phValues: number[] = [];
-
-		// Process data points based on type (air or soil)
-		historicalData.forEach((data) => {
-			// Temperature (exists in both air and soil data)
-			if ('temperature_c' in data && data.temperature_c !== null) {
-				tempValues.push(data.temperature_c);
-				chartData.temperature.unshift(data.temperature_c);
-			}
-
-			// Air data specific
-			if (dataType === 'air') {
-				// Humidity
-				if ('humidity' in data && data.humidity !== null) {
-					humidityValues.push(data.humidity);
-					chartData.humidity.unshift(data.humidity);
-				}
-
-				// CO2
-				if ('co2' in data && data.co2 !== null) {
-					co2Values.push(data.co2);
-					chartData.co2.unshift(data.co2);
-				}
-			}
-
-			// Soil data specific
-			else if (dataType === 'soil') {
-				// Moisture
-				if ('moisture' in data && data.moisture !== null) {
-					moistureValues.push(data.moisture);
-					chartData.moisture.unshift(data.moisture);
-				}
-
-				// pH
-				if ('ph' in data && data.ph !== null) {
-					phValues.push(data.ph);
-					chartData.ph.unshift(data.ph);
-				}
-			}
+		// Reset chartData and stats for all numeric keys
+		numericKeys.forEach((key) => {
+			chartData[key] = [];
+			stats[key] = { min: 0, max: 0, avg: 0 };
 		});
 
-		// Calculate statistics for temperature
-		if (tempValues.length > 0) {
-			stats.temperature.min = Math.min(...tempValues);
-			stats.temperature.max = Math.max(...tempValues);
-			stats.temperature.avg = calculateAverage(tempValues);
-		}
+		// Prepare value arrays for stats
+		const valueArrays: Record<string, number[]> = {};
+		numericKeys.forEach((key) => {
+			valueArrays[key] = [];
+		});
 
-		// Calculate statistics for humidity
-		if (humidityValues.length > 0) {
-			stats.humidity.min = Math.min(...humidityValues);
-			stats.humidity.max = Math.max(...humidityValues);
-			stats.humidity.avg = calculateAverage(humidityValues);
-		}
+		// Fill chartData and value arrays
+		historicalData.forEach((data) => {
+			numericKeys.forEach((key) => {
+				if (typeof data[key] === 'number' && data[key] !== null) {
+					(chartData[key] as number[]).unshift(data[key]);
+					valueArrays[key].push(data[key]);
+				}
+			});
+		});
 
-		// Calculate statistics for moisture
-		if (moistureValues.length > 0) {
-			stats.moisture.min = Math.min(...moistureValues);
-			stats.moisture.max = Math.max(...moistureValues);
-			stats.moisture.avg = calculateAverage(moistureValues);
-		}
-
-		// Calculate statistics for CO2
-		if (co2Values.length > 0) {
-			stats.co2.min = Math.min(...co2Values);
-			stats.co2.max = Math.max(...co2Values);
-			stats.co2.avg = calculateAverage(co2Values);
-		}
-
-		// Calculate statistics for pH
-		if (phValues.length > 0) {
-			stats.ph.min = Math.min(...phValues);
-			stats.ph.max = Math.max(...phValues);
-			stats.ph.avg = calculateAverage(phValues);
-		}
+		// Calculate stats for each key
+		numericKeys.forEach((key) => {
+			const values = valueArrays[key];
+			if (values.length > 0) {
+				stats[key].min = Math.min(...values);
+				stats[key].max = Math.max(...values);
+				stats[key].avg = calculateAverage(values);
+			}
+		});
+		loading = false;
 	}
 
 	// Function to fetch data for a specific date range
-	async function fetchDataForDateRange(device: DeviceWithType) {
+	async function fetchDataForDateRange(device: DeviceWithType, start: Date, end: Date) {
 		if (!startDate || !endDate) {
 			error = 'Please select both start and end dates';
 			return;
 		}
-
-		const start = new Date(startDate);
-		const end = new Date(endDate);
 
 		if (start > end) {
 			error = 'Start date must be before end date';
@@ -168,7 +111,7 @@ export function setupDeviceDetail() {
 
 		try {
 			const response = await fetch(
-				`/api/devices/${device.dev_eui}/data?start=${startDate}&end=${endDate}`
+				`/api/devices/${device.dev_eui}/data?start=${start}&end=${end}`
 			);
 
 			if (!response.ok) {
@@ -176,6 +119,7 @@ export function setupDeviceDetail() {
 			}
 
 			const newHistoricalData = await response.json();
+			processHistoricalData(newHistoricalData);
 			return newHistoricalData;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -189,6 +133,9 @@ export function setupDeviceDetail() {
 	async function renderVisualization(historicalData: any[], dataType: string, latestData: any) {
 		if (!browser || !historicalData || historicalData.length === 0) return;
 
+		 // Add a small delay to ensure DOM is fully ready
+		await new Promise(resolve => setTimeout(resolve, 50));
+
 		// Access the DOM elements through the elements available in the main component
 		const chart1Element = document.querySelector('.main-chart');
 		const chart1BrushElement = document.querySelector('.brush-chart');
@@ -199,309 +146,335 @@ export function setupDeviceDetail() {
 			return;
 		}
 
-		// Clear existing charts before redrawing
-		chart1Element.innerHTML = '';
-		chart1BrushElement.innerHTML = '';
-		dataGridElement.innerHTML = '';
-
-		// Import ApexCharts and ApexGrid
-		ApexCharts = await import('apexcharts').then((module) => module.default);
 		try {
-			//ApexGrid = await import('apex-grid').then((module) => module.default);
-		} catch (error) {
-			console.error('Failed to load ApexGrid:', error);
-		}
-
-		// Filter out any data points that have null values
-		const validData = historicalData.filter((data) =>
-			dataType === 'air'
-				? data.temperature_c !== null && data.humidity !== null
-				: data.temperature_c !== null && data.moisture !== null
-		);
-
-		if (validData.length === 0) {
-			console.warn('No valid data points with required values');
-			return;
-		}
-
-		// Format temperature data for the chart
-		const temperatureData = validData.map((data) => ({
-			x: new Date(data.created_at).getTime(),
-			y: data.temperature_c
-		}));
-
-		// Format humidity/moisture data depending on device type
-		const secondaryData = validData.map((data) => ({
-			x: new Date(data.created_at).getTime(),
-			y: dataType === 'air' ? data.humidity : data.moisture
-		}));
-
-		// Determine chart labels based on data type
-		const mainLabel = 'Temperature (°C)';
-		const secondaryLabel = dataType === 'air' ? 'Humidity (%)' : 'Moisture (%)';
-
-		// Determine min and max dates for chart selection
-		const dateValues = validData.map((d) => new Date(d.created_at).getTime());
-		const minDate = Math.min(...dateValues);
-		const maxDate = Math.max(...dateValues);
-
-		// Configure the main chart
-		const mainChartOptions = {
-			series: [
-				{
-					name: mainLabel,
-					data: temperatureData.slice().sort((a, b) => a.x - b.x)
-				},
-				{
-					name: secondaryLabel,
-					data: secondaryData.slice().sort((a, b) => a.x - b.x)
-				}
-			],
-			chart: {
-				id: 'mainChart',
-				type: 'line',
-				height: 350,
-				toolbar: {
-					autoSelected: 'pan',
-					show: false
-				},
-				animations: {
-					enabled: false
-				},
-				zoom: {
-					enabled: false
-				}
-			},
-			colors: ['#f97316', '#3b82f6'],
-			stroke: {
-				curve: 'smooth',
-				width: [1, 1]
-			},
-			dataLabels: {
-				enabled: false
-			},
-			markers: {
-				size: 1,
-				strokeWidth: 0,
-				hover: {
-					size: 4
-				}
-			},
-			xaxis: {
-				type: 'datetime',
-				labels: {
-					datetimeUTC: false
-				}
-			},
-			yaxis: [
-				{
-					seriesName: mainLabel,
-					title: {
-						text: mainLabel,
-						style: { color: '#f97316' } // orange-500
-					},
-					labels: {
-						style: { colors: '#f97316' }
-					}
-				},
-				{
-					seriesName: secondaryLabel,
-					opposite: true,
-					title: {
-						text: secondaryLabel,
-						style: { color: '#3b82f6' } // blue-500
-					},
-					labels: {
-						style: { colors: '#3b82f6' }
-					}
-				}
-			],
-			tooltip: {
-				theme: 'dark',
-				shared: true,
-				x: {
-					format: 'MMM dd HH:mm'
-				},
-				style: {
-					fontSize: '13px',
-					fontFamily: 'Inter, sans-serif'
-				},
-				marker: {
-					show: true
-				},
-				y: {
-					formatter: (val: number) => val.toFixed(1)
-				}
-			},
-			legend: {
-				position: 'top',
-				horizontalAlign: 'center'
-			},
-			grid: {
-				borderColor: '#2a2a2a',
-
-				row: {
-					colors: ['transparent', 'transparent'],
-					opacity: 0.1
-				}
+			// Destroy previous chart instances if they exist
+			if (mainChartInstance) {
+				try { mainChartInstance.destroy(); } catch {}
+				mainChartInstance = null;
 			}
-		};
+			if (brushChartInstance) {
+				try { brushChartInstance.destroy(); } catch {}
+				brushChartInstance = null;
+			}
 
-		// Configure the brush chart
-		const brushChartOptions = {
-			series: [
-				{
-					name: mainLabel,
-					data: temperatureData.slice().sort((a, b) => a.x - b.x)
-				},
-				{
-					name: secondaryLabel,
-					data: secondaryData.slice().sort((a, b) => a.x - b.x)
-				}
-			],
-			chart: {
-				id: 'brushChart',
-				height: 150,
-				type: 'area',
-				brush: {
-					target: 'mainChart',
-					enabled: true
-				},
-				selection: {
-					enabled: true,
-					xaxis: {
-						min: minDate,
-						max: maxDate
+			// Only clear the data grid, not the chart containers
+			dataGridElement.innerHTML = '';
+
+			// Import ApexCharts only once if not already loaded
+			if (!ApexCharts) {
+				ApexCharts = await import('apexcharts').then(module => module.default);
+			}
+
+			// Filter out any data points that have null values
+			const validData = historicalData.filter((data) =>
+				dataType === 'air'
+					? data.temperature_c !== null && data.humidity !== null
+					: data.temperature_c !== null && data.moisture !== null
+			);
+
+			if (validData.length === 0) {
+				console.warn('No valid data points with required values');
+				return;
+			}
+
+			// Format temperature data for the chart
+			const temperatureData = validData.map((data) => ({
+				x: new Date(data.created_at).getTime(),
+				y: data.temperature_c
+			}));
+
+			// Format humidity/moisture data depending on device type
+			const secondaryData = validData.map((data) => ({
+				x: new Date(data.created_at).getTime(),
+				y: dataType === 'air' ? data.humidity : data.moisture
+			}));
+
+			// Determine chart labels based on data type
+			const mainLabel = 'Temperature (°C)';
+			const secondaryLabel = dataType === 'air' ? 'Humidity (%)' : 'Moisture (%)';
+
+			// Determine min and max dates for chart selection
+			const dateValues = validData.map((d) => new Date(d.created_at).getTime());
+			const minDate = Math.min(...dateValues);
+			const maxDate = Math.max(...dateValues);
+
+			// Configure the main chart
+			const mainChartOptions = {
+				series: [
+					{
+						name: mainLabel,
+						data: temperatureData.slice().sort((a, b) => a.x - b.x)
+					},
+					{
+						name: secondaryLabel,
+						data: secondaryData.slice().sort((a, b) => a.x - b.x)
 					}
-				}
-			},
-			colors: ['#f97316', '#3b82f6'],
-			fill: {
-				type: 'gradient',
-				gradient: {
-					opacityFrom: 0.7,
-					opacityTo: 0.3
-				}
-			},
-			stroke: {
-				width: [1, 1]
-			},
-			xaxis: {
-				type: 'datetime',
-				tooltip: {
-					enabled: false
-				},
-				labels: {
-					datetimeUTC: false
-				}
-			},
-			yaxis: {
-				show: false,
-				tickAmount: 2
-			},
-			grid: {
-				borderColor: '#2a2a2a',
-				strokeDashArray: 2,
-				yaxis: {
-					lines: {
+				],
+				chart: {
+					id: 'mainChart',
+					type: 'line',
+					height: 350,
+					toolbar: {
+						autoSelected: 'pan',
 						show: false
+					},
+					animations: {
+						enabled: false
+					},
+					zoom: {
+						enabled: false
+					}
+				},
+				colors: ['#f97316', '#3b82f6'],
+				stroke: {
+					curve: 'smooth',
+					width: [1, 1]
+				},
+				dataLabels: {
+					enabled: false
+				},
+				markers: {
+					size: 1,
+					strokeWidth: 0,
+					hover: {
+						size: 4
+					}
+				},
+				xaxis: {
+					type: 'datetime',
+					labels: {
+						datetimeUTC: false
+					}
+				},
+				yaxis: [
+					{
+						seriesName: mainLabel,
+						title: {
+							text: mainLabel,
+							style: { color: '#f97316' } // orange-500
+						},
+						labels: {
+							style: { colors: '#f97316' }
+						}
+					},
+					{
+						seriesName: secondaryLabel,
+						opposite: true,
+						title: {
+							text: secondaryLabel,
+							style: { color: '#3b82f6' } // blue-500
+						},
+						labels: {
+							style: { colors: '#3b82f6' }
+						}
+					}
+				],
+				tooltip: {
+					theme: 'dark',
+					shared: true,
+					x: {
+						format: 'MMM dd HH:mm'
+					},
+					style: {
+						fontSize: '13px',
+						fontFamily: 'Inter, sans-serif'
+					},
+					marker: {
+						show: true
+					},
+					y: {
+						formatter: (val: number) => val.toFixed(1)
+					}
+				},
+				legend: {
+					position: 'top',
+					horizontalAlign: 'center'
+				},
+				grid: {
+					borderColor: '#2a2a2a',
+
+					row: {
+						colors: ['transparent', 'transparent'],
+						opacity: 0.1
 					}
 				}
-			},
-			legend: {
-				show: false
+			};
+
+			// Configure the brush chart
+			const brushChartOptions = {
+				series: [
+					{
+						name: mainLabel,
+						data: temperatureData.slice().sort((a, b) => a.x - b.x)
+					},
+					{
+						name: secondaryLabel,
+						data: secondaryData.slice().sort((a, b) => a.x - b.x)
+					}
+				],
+				chart: {
+					id: 'brushChart',
+					height: 150,
+					type: 'area',
+					brush: {
+						target: 'mainChart',
+						enabled: true
+					},
+					selection: {
+						enabled: true,
+						xaxis: {
+							min: minDate,
+							max: maxDate
+						}
+					}
+				},
+				colors: ['#f97316', '#3b82f6'],
+				fill: {
+					type: 'gradient',
+					gradient: {
+						opacityFrom: 0.7,
+						opacityTo: 0.3
+					}
+				},
+				stroke: {
+					width: [1, 1]
+				},
+				xaxis: {
+					type: 'datetime',
+					tooltip: {
+						enabled: false
+					},
+					labels: {
+						datetimeUTC: false
+					}
+				},
+				yaxis: {
+					show: false,
+					tickAmount: 2
+				},
+				grid: {
+					borderColor: '#2a2a2a',
+					strokeDashArray: 2,
+					yaxis: {
+						lines: {
+							show: false
+						}
+					}
+				},
+				legend: {
+					show: false
+				}
+			};
+
+			// Render the charts
+			if (ApexCharts && chart1Element && chart1BrushElement && 
+				document.body.contains(chart1Element) && 
+				document.body.contains(chart1BrushElement)) {
+				// Create new instances with the current options
+				mainChartInstance = new ApexCharts(chart1Element, mainChartOptions);
+				brushChartInstance = new ApexCharts(chart1BrushElement, brushChartOptions);
+
+				try {
+					await mainChartInstance.render();
+					await brushChartInstance.render();
+				} catch (err) {
+					console.error('Error rendering charts:', err);
+					
+					// Clean up failed instances
+					if (mainChartInstance) {
+						try { mainChartInstance.destroy(); } catch {}
+						mainChartInstance = null;
+					}
+					if (brushChartInstance) {
+						try { brushChartInstance.destroy(); } catch {}
+						brushChartInstance = null;
+					}
+				}
 			}
-		};
 
-		// Render the charts
-		if (ApexCharts && chart1Element && chart1BrushElement) {
-			const mainChart = new ApexCharts(chart1Element, mainChartOptions);
-			const brushChart = new ApexCharts(chart1BrushElement, brushChartOptions);
+			// Build columns for the data grid based on data type
+			const columns = [
+				{
+					field: 'created_at',
+					name: 'Timestamp',
+					type: 'datetime',
+					width: '180px',
+					formatter: (value: string) => formatDateForDisplay(value)
+				},
+				{
+					field: 'temperature_c',
+					name: 'Temperature (°C)',
+					type: 'number',
+					width: '130px',
+					formatter: (value: number | null) => (value !== null ? value : 'N/A')
+				}
+			];
 
-			await mainChart.render();
-			await brushChart.render();
-		}
-
-		// Build columns for the data grid based on data type
-		const columns = [
-			{
-				field: 'created_at',
-				name: 'Timestamp',
-				type: 'datetime',
-				width: '180px',
-				formatter: (value: string) => formatDateForDisplay(value)
-			},
-			{
-				field: 'temperature_c',
-				name: 'Temperature (°C)',
-				type: 'number',
-				width: '130px',
-				formatter: (value: number | null) => (value !== null ? value : 'N/A')
-			}
-		];
-
-		// Add columns based on data type
-		if (dataType === 'air') {
-			columns.push({
-				field: 'humidity',
-				name: 'Humidity (%)',
-				type: 'number',
-				width: '120px',
-				formatter: (value: number | null) => (value !== null ? value : 'N/A')
-			});
-
-			if (hasValue(latestData, 'co2')) {
+			// Add columns based on data type
+			if (dataType === 'air') {
 				columns.push({
-					field: 'co2',
-					name: 'CO2 (ppm)',
+					field: 'humidity',
+					name: 'Humidity (%)',
 					type: 'number',
 					width: '120px',
 					formatter: (value: number | null) => (value !== null ? value : 'N/A')
 				});
-			}
-		} else {
-			columns.push({
-				field: 'moisture',
-				name: 'Moisture (%)',
-				type: 'number',
-				width: '120px',
-				formatter: (value: number | null) => (value !== null ? value : 'N/A')
-			});
 
-			if (hasValue(latestData, 'ph')) {
+				if (hasValue(latestData, 'co2')) {
+					columns.push({
+						field: 'co2',
+						name: 'CO2 (ppm)',
+						type: 'number',
+						width: '120px',
+						formatter: (value: number | null) => (value !== null ? value : 'N/A')
+					});
+				}
+			} else {
 				columns.push({
-					field: 'ph',
-					name: 'pH Level',
+					field: 'moisture',
+					name: 'Moisture (%)',
 					type: 'number',
-					width: '100px',
+					width: '120px',
 					formatter: (value: number | null) => (value !== null ? value : 'N/A')
 				});
-			}
-		}
 
-		// Configure and render the data grid if element and library are available
-		if (dataGridElement && ApexGrid) {
-			const gridOptions = {
-				columns: columns,
-				data: historicalData,
-				theme: 'light',
-				pagination: {
-					enabled: true,
-					pageSize: 10,
-					pageSizes: [10, 25, 50, 100]
-				},
-				search: {
-					enabled: true,
-					placeholder: 'Search data...'
-				},
-				sorting: {
-					enabled: true,
-					multiColumn: false
+				if (hasValue(latestData, 'ph')) {
+					columns.push({
+						field: 'ph',
+						name: 'pH Level',
+						type: 'number',
+						width: '100px',
+						formatter: (value: number | null) => (value !== null ? value : 'N/A')
+					});
 				}
-			};
+			}
 
-			grid = new ApexGrid(dataGridElement, gridOptions);
-			grid.render();
+			// Configure and render the data grid if element and library are available
+			if (dataGridElement && ApexGrid) {
+				const gridOptions = {
+					columns: columns,
+					data: historicalData,
+					theme: 'light',
+					pagination: {
+						enabled: true,
+						pageSize: 10,
+						pageSizes: [10, 25, 50, 100]
+					},
+					search: {
+						enabled: true,
+						placeholder: 'Search data...'
+					},
+					sorting: {
+						enabled: true,
+						multiColumn: false
+					}
+				};
+
+				grid = new ApexGrid(dataGridElement, gridOptions);
+				grid.render();
+			}
+		} catch (error) {
+			console.error('Error rendering visualization:', error);
 		}
 	}
 
@@ -539,7 +512,7 @@ export function setupDeviceDetail() {
 // Derived properties calculations
 export function getDeviceDetailDerived(device: DeviceWithType, dataType: string, latestData: any) {
 	// Determine device type name
-	const deviceTypeName = device?.cw_device_type?.name || 'Unknown Type';
+	const deviceTypeName = device?.deviceType?.name || 'Unknown Type';
 
 	// Reactive declarations for the charts
 	const temperatureChartVisible = dataType === 'air' || dataType === 'soil';
