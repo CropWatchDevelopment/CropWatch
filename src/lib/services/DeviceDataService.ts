@@ -72,11 +72,9 @@ export class DeviceDataService implements IDeviceDataService {
     const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
 
     try {
-      const start = moment(startDate).utcOffset(+9).startOf('day').utc(true);
-      const end = moment(endDate).utcOffset(+9).endOf('day').utc(true);
 
       // get the number of uploads between the selected start and end dates
-      const monthsInRange = end.diff(start, 'months');
+      const monthsInRange = moment(endDate).diff(startDate, 'months');
       if (monthsInRange > 3) {
         // If the range is too large, limit the query to the last 3 months
         throw new Error('Date range too large');
@@ -86,8 +84,8 @@ export class DeviceDataService implements IDeviceDataService {
         .from(tableName)
         .select('*')
         .eq('dev_eui', devEui)
-        .gte('created_at', start.toISOString())
-        .lte('created_at', end.toISOString())
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: false })
       // .limit(maxDataToReturn);
 

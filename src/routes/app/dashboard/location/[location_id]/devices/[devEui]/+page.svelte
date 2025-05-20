@@ -9,6 +9,7 @@
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
 	import { formatDateOnly } from '$lib/utilities/helpers';
+	import moment from 'moment';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -69,12 +70,23 @@
 	// Function to handle fetching data for a specific date range
 	async function handleDateRangeSubmit() {
 		loading = true;
-		debugger;
 		const newData = await fetchDataForDateRange(device, startDate, endDate);
 		if (newData && newData.length > 0) {
 			historicalData = newData;
-			await processHistoricalData(historicalData);
-			renderVisualization(historicalData, dataType, latestData);
+			// processHistoricalData is already called inside fetchDataForDateRange
+			// No need to call renderVisualization here as the $effect will handle it
+		}
+		loading = false;
+	}
+	
+	// Function to handle fetching data for the default date range
+	async function defaultDateRange() {
+		loading = true;
+		const newData = await fetchDataForDateRange(device, moment().subtract(7, 'days').toDate(), new Date());
+		if (newData && newData.length > 0) {
+			historicalData = newData;
+			// processHistoricalData is already called inside fetchDataForDateRange
+			// No need to call renderVisualization here as the $effect will handle it
 		}
 		loading = false;
 	}
@@ -92,6 +104,11 @@
 		<div class="mb-2">
 			<a href="/app/dashboard" class="text-sm text-blue-500 hover:underline">
 				&larr; Back to Dashboard
+			</a>
+		</div>
+		<div class="mb-2">
+			<a href={`${device.dev_eui}/settings`} class="text-sm text-blue-500 hover:underline">
+				&larr; Settings
 			</a>
 		</div>
 
@@ -128,6 +145,16 @@
 						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
 						<strong class="ml-1 text-gray-900 dark:text-white">
 							{formatDateOnly(device.installed_at)}
+						</strong>
+					</div>
+				{/if}
+
+				<!-- Battery Level -->
+				{#if device?.installed_at}
+					<div>
+						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
+						<strong class="ml-1 text-gray-900 dark:text-white">
+							{formatDateOnly(device.battery_level)}
 						</strong>
 					</div>
 				{/if}
@@ -181,7 +208,6 @@
 						max={endDate}
 						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
 					/>
-					{JSON.stringify(startDate)}
 				</div>
 
 				<div class="flex flex-col">
@@ -192,7 +218,6 @@
 						min={startDate}
 						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
 					/>
-					{JSON.stringify(endDate)}
 				</div>
 
 				<!-- Button with alignment tweak -->
@@ -210,6 +235,20 @@
 						disabled={loading}
 					>
 						{loading ? 'Loading…' : 'Fetch Data'}
+					</button>
+					<button
+						type="button"
+						onclick={defaultDateRange}
+						class="rounded border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
+					hover:border-blue-500 hover:bg-blue-500
+					focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
+					disabled:border-blue-400 disabled:bg-blue-400 disabled:text-white
+					dark:border-blue-700 dark:bg-blue-500 dark:text-white
+					dark:hover:border-blue-400 dark:hover:bg-blue-400
+					dark:focus:ring-offset-zinc-800 dark:disabled:border-blue-800 dark:disabled:bg-blue-800"
+						disabled={loading}
+					>
+						{loading ? 'Loading…' : 'Reset to default'}
 					</button>
 				</div>
 			</div>

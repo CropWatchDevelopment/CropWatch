@@ -1,6 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
+import moment from 'moment';
 
 export const GET: RequestHandler = async ({ params, url, locals: { safeGetSession, supabase } }) => {
   const { devEui } = params;
@@ -19,16 +20,17 @@ export const GET: RequestHandler = async ({ params, url, locals: { safeGetSessio
       throw error(400, 'Start and end dates are required');
     }
 
-    const startDate = new Date(startDateParam);
-    const endDate = new Date(endDateParam);
+    let startDate = new Date(startDateParam);
+    let endDate = new Date(endDateParam);
 
     // Validate dates
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       throw error(400, 'Invalid date format');
     }
 
-    // Add one day to end date to include the full day in the results
-    endDate.setDate(endDate.getDate() + 1);
+    // include the full day in the results
+    startDate = moment(startDate).startOf('day').toDate();
+    endDate = moment(endDate).endOf('day').toDate();
 
     // Get services from the container
     const deviceDataService = new DeviceDataService(supabase);
