@@ -63,10 +63,10 @@
               <p class="text-sm"><strong>Coords:</strong> {device.lat.toFixed(4)}, {device.long.toFixed(4)}</p>
             {/if}
             <div class="mt-4 flex justify-end gap-2">
-              <Button.Root size="small" variant="secondary" on:click={() => goto(`/app/dashboard/location/${locationId}/devices/${device.dev_eui}`)}>
+              <Button.Root size="small" variant="secondary" href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}`}>
                 View
               </Button.Root>
-              <Button.Root size="small" variant="ghost" on:click={() => goto(`/app/dashboard/location/${locationId}/devices/${device.dev_eui}/settings`)}>
+              <Button.Root size="small" variant="ghost" href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}/settings`}>
                 Settings
               </Button.Root>
             </div>

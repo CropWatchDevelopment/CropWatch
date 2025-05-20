@@ -38,6 +38,10 @@
           Contact Support
         </button>
       </div>
+      <button
+        class="mt-4 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        on:click={() => goto(`${$page.params.devEui}/settings`)}
+      >Go to Device Settings</button>
     </div>
   </div>
 </div>
