@@ -8,8 +8,8 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
+	import { goto } from '$app/navigation';
 	import { formatDateOnly } from '$lib/utilities/helpers';
-	import moment from 'moment';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -27,6 +27,7 @@
 	const {
 		stats,
 		chartData,
+		loading,
 		error,
 		formatDateForDisplay,
 		hasValue,
@@ -38,10 +39,9 @@
 
 	// Define these as element references - using the new Svelte 5 approach for DOM bindings
 	// For DOM elements that don't need reactivity, we can use let declarations without $state
-	let chart1: HTMLElement = $state();;
-	let chart1Brush: HTMLElement = $state();;
-	let dataGrid: HTMLElement = $state();
-	let loading = $state(false);
+	let chart1: HTMLElement;
+	let chart1Brush: HTMLElement;
+	let dataGrid: HTMLElement;
 
 	// Get the other properties that don't need DOM binding
 	let { startDate, endDate } = $state(deviceDetail);
@@ -58,7 +58,7 @@
 	// Initialize the component
 	onMount(() => {
 		initializeDateRange();
-		processHistoricalData(historicalData);
+		processHistoricalData(historicalData, dataType);
 	});
 
 	// Effect to re-render visualization when historical data changes
@@ -69,26 +69,11 @@
 
 	// Function to handle fetching data for a specific date range
 	async function handleDateRangeSubmit() {
-		loading = true;
-		const newData = await fetchDataForDateRange(device, startDate, endDate);
+		const newData = await fetchDataForDateRange(device);
 		if (newData && newData.length > 0) {
 			historicalData = newData;
-			// processHistoricalData is already called inside fetchDataForDateRange
-			// No need to call renderVisualization here as the $effect will handle it
+			processHistoricalData(historicalData, dataType);
 		}
-		loading = false;
-	}
-	
-	// Function to handle fetching data for the default date range
-	async function defaultDateRange() {
-		loading = true;
-		const newData = await fetchDataForDateRange(device, moment().subtract(7, 'days').toDate(), new Date());
-		if (newData && newData.length > 0) {
-			historicalData = newData;
-			// processHistoricalData is already called inside fetchDataForDateRange
-			// No need to call renderVisualization here as the $effect will handle it
-		}
-		loading = false;
 	}
 </script>
 
@@ -104,11 +89,6 @@
 		<div class="mb-2">
 			<a href="/app/dashboard" class="text-sm text-blue-500 hover:underline">
 				&larr; Back to Dashboard
-			</a>
-		</div>
-		<div class="mb-2">
-			<a href={`${device.dev_eui}/settings`} class="text-sm text-blue-500 hover:underline">
-				&larr; Settings
 			</a>
 		</div>
 
@@ -145,16 +125,6 @@
 						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
 						<strong class="ml-1 text-gray-900 dark:text-white">
 							{formatDateOnly(device.installed_at)}
-						</strong>
-					</div>
-				{/if}
-
-				<!-- Battery Level -->
-				{#if device?.installed_at}
-					<div>
-						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
-						<strong class="ml-1 text-gray-900 dark:text-white">
-							{formatDateOnly(device.battery_level)}
 						</strong>
 					</div>
 				{/if}
@@ -201,8 +171,9 @@
 			<div class="flex flex-wrap items-end gap-2 md:gap-4">
 				<!-- Date inputs -->
 				<div class="flex flex-col">
-					<label class="mb-1 text-sm text-gray-600 dark:text-gray-400">Start Date:</label>
+					<label for="startDate" class="mb-1 text-sm text-gray-600 dark:text-gray-400">Start Date:</label>
 					<input
+						id="startDate"
 						type="date"
 						bind:value={startDate}
 						max={endDate}
@@ -211,8 +182,9 @@
 				</div>
 
 				<div class="flex flex-col">
-					<label class="mb-1 text-sm text-gray-600 dark:text-gray-400">End Date:</label>
+					<label for="endDate" class="mb-1 text-sm text-gray-600 dark:text-gray-400">End Date:</label>
 					<input
+						id="endDate"
 						type="date"
 						bind:value={endDate}
 						min={startDate}
@@ -223,7 +195,6 @@
 				<!-- Button with alignment tweak -->
 				<div class="pt-[26px]">
 					<button
-						type="button"
 						onclick={handleDateRangeSubmit}
 						class="rounded border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
 					hover:border-blue-500 hover:bg-blue-500
@@ -235,20 +206,6 @@
 						disabled={loading}
 					>
 						{loading ? 'Loading…' : 'Fetch Data'}
-					</button>
-					<button
-						type="button"
-						onclick={defaultDateRange}
-						class="rounded border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
-					hover:border-blue-500 hover:bg-blue-500
-					focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
-					disabled:border-blue-400 disabled:bg-blue-400 disabled:text-white
-					dark:border-blue-700 dark:bg-blue-500 dark:text-white
-					dark:hover:border-blue-400 dark:hover:bg-blue-400
-					dark:focus:ring-offset-zinc-800 dark:disabled:border-blue-800 dark:disabled:bg-blue-800"
-						disabled={loading}
-					>
-						{loading ? 'Loading…' : 'Reset to default'}
 					</button>
 				</div>
 			</div>
@@ -330,7 +287,24 @@
 					Data Visualization
 				</h3>
 
-				
+				<!-- Main Line + Brush Chart -->
+				{#if temperatureChartVisible}
+					<div class="mb-10 rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
+						<h4 class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200">
+							Sensor Data Over Time
+						</h4>
+
+						<!-- Chart grows to full width, no scrollbars -->
+						<div class="w-full">
+							<div class="chart-placeholder">
+								<div class="chart-visual">
+									<div class="chart main-chart" bind:this={chart1}></div>
+									<div class="chart brush-chart" bind:this={chart1Brush}></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				{/if}
 
 				<!-- Individual Chart Stats -->
 				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -371,29 +345,13 @@
 			</div>
 
 			<!-- Raw Data Table -->
-		{/if}
-		<div>
-			<!-- Main Line + Brush Chart -->
-				<div class="mb-10 rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
-					<h4 class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200">
-						Sensor Data Over Time
-					</h4>
-
-					<!-- Chart grows to full width, no scrollbars -->
-					<div class="w-full">
-						<div class="chart-placeholder">
-							<div class="chart-visual">
-								<div class="chart main-chart" bind:this={chart1}></div>
-								<div class="chart brush-chart" bind:this={chart1Brush}></div>
-							</div>
-						</div>
-					</div>
+			<div>
+				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
+				<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
+					<div class="data-grid" bind:this={dataGrid}></div>
 				</div>
-			<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
-			<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
-				<div class="data-grid" bind:this={dataGrid}></div>
 			</div>
-		</div>
+		{/if}
 	</section>
 </div>
 

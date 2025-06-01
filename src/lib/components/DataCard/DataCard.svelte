@@ -47,6 +47,7 @@
 			moisture: '%',
 			co2: 'ppm',
 			ec: 'mS/cm',
+			cm: 'cm',
 			battery_level: '%',
 			ph: '',
 			created_at: '',
