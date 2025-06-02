@@ -567,55 +567,51 @@
 
 			<!-- Device display panel -->
 			<div class="devices-panel">
-				{#if selectedLocation !== null && currentLocation}
-					<div class="flex justify-between">
-						<h2>Devices at {currentLocation.name}</h2>
-					</div>
-					{#if loadingDevices}
-						<div class="loading-devices">Loading devices...</div>
-					{:else if deviceError}
-						<div class="error">{deviceError}</div>
-					{:else if devices.length > 0}
-						<div class={`device-cards-grid ${getContainerClass(dashboardViewType)}`}>
-							{#if true}
-								{@const activeDevices = devices.filter((d) => isDeviceActive(d))}
-								{@const allActive = devices.length > 0 && activeDevices.length === devices.length}
-								{@const allInactive = devices.length > 0 && activeDevices.length === 0}
-								{@const debugInfo = console.log('Dashboard active status:', {
-									locationName: currentLocation?.name,
-									deviceCount: devices.length,
-									activeCount: activeDevices.length,
-									allActive,
-									allInactive,
-									activeDevices: activeDevices.map((d) => d.dev_eui)
-								})}
-								<div class="device-card-wrapper">
-									<DashboardCard
-										location={{
-											name: currentLocation?.name || 'Unknown Location',
-											location_id: currentLocation?.location_id || 0,
-											created_at: currentLocation?.created_at || new Date().toISOString(),
-											description: currentLocation?.description || ''
-										} as Location}
-										href={`/app/dashboard/location/${currentLocation?.location_id}`}
-										{activeDevices}
-										{allActive}
-										{allInactive}
-									>
-										{#snippet content()}
-											{#each devices as device (device.dev_eui)}
-												{@const isActive = isDeviceActive(device)}
-												{@const debugActiveStatus = console.log(
-													`Dashboard passing isActive=${isActive} to DataRowItem for ${device.name} (${device.dev_eui})`,
-													{
-														deviceId: device.dev_eui,
-														deviceType: device.type,
-														uploadInterval: device.upload_interval,
-														isSoilSensor: isSoilSensor(device),
-														hasNegativeInterval: (device.upload_interval || 10) <= 0
-													}
-												)}
-												<DataRowItem
+				<!-- All Locations as Cards with Devices -->
+				{#if loadingLocations}
+					<div class="loading-devices">Loading locations and devices...</div>
+				{:else if locationError}
+					<div class="error">{locationError}</div>
+				{:else if locations.length > 0}
+					<div
+						class="device-cards-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+					>
+						{#each locations as location (location.location_id)}
+							{@const activeDevices = (location.cw_devices ?? []).filter((d) => isDeviceActive(d))}
+							{@const allActive =
+								(location.cw_devices?.length ?? 0) > 0 &&
+								activeDevices.length === location.cw_devices.length}
+							{@const allInactive =
+								(location.cw_devices?.length ?? 0) > 0 && activeDevices.length === 0}
+							<DashboardCard
+								{location}
+								href={`/app/dashboard/location/${location.location_id}`}
+								{activeDevices}
+								{allActive}
+								{allInactive}
+							>
+								{#snippet content()}
+									{#each location.cw_devices ?? [] as device (device.dev_eui)}
+										{@const isActive = isDeviceActive(device)}
+										<DataRowItem
+											device={{
+												...device,
+												latestData: device.latestData || {},
+												cw_device_type: {
+													name: device.deviceType?.name || 'Unknown',
+													default_upload_interval: device.deviceType?.default_upload_interval || 10,
+													primary_data_notation: device.deviceType?.primary_data_notation || '°C',
+													secondary_data_notation:
+														device.deviceType?.secondary_data_notation || '%',
+													primary_data_v2: 'temperature_c',
+													secondary_data_v2: isSoilSensor(device) ? 'moisture' : 'humidity'
+												}
+											}}
+											{isActive}
+											detailHref={`/dashboard/location/${device.location_id}/device/${device.dev_eui}`}
+										>
+											{#snippet children()}
+												<DeviceDataList
 													device={{
 														...device,
 														latestData: device.latestData || {},
@@ -632,40 +628,16 @@
 														}
 													}}
 													{isActive}
-													detailHref={`/dashboard/location/${device.location_id}/device/${device.dev_eui}`}
-												>
-													{#snippet children()}
-														<DeviceDataList
-															device={{
-																...device,
-																latestData: device.latestData || {},
-																cw_device_type: {
-																	name: device.deviceType?.name || 'Unknown',
-																	default_upload_interval:
-																		device.deviceType?.default_upload_interval || 10,
-																	primary_data_notation:
-																		device.deviceType?.primary_data_notation || '°C',
-																	secondary_data_notation:
-																		device.deviceType?.secondary_data_notation || '%',
-																	primary_data_v2: 'temperature_c',
-																	secondary_data_v2: isSoilSensor(device) ? 'moisture' : 'humidity'
-																}
-															}}
-															{isActive}
-														/>
-													{/snippet}
-												</DataRowItem>
-											{/each}
-										{/snippet}
-									</DashboardCard>
-								</div>
-							{/if}
-						</div>
-					{:else}
-						<p>No devices found for this location.</p>
-					{/if}
+												/>
+											{/snippet}
+										</DataRowItem>
+									{/each}
+								{/snippet}
+							</DashboardCard>
+						{/each}
+					</div>
 				{:else}
-					<p>Select a location to view its devices</p>
+					<p>No locations found.</p>
 				{/if}
 			</div>
 		</div>
