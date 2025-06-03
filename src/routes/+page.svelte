@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 	import NewPoint from '$lib/components/Reports/NewPoint.svelte';
 	import NumberLine from '$lib/components/Reports/NumberLine.svelte';
 	import { success, error, warning, info, neutral } from '$lib/stores/toast.svelte';
@@ -193,6 +194,12 @@ success('Custom message', {
 
 <div class="container mx-auto p-8">
 	<h1 class="mb-6 text-3xl font-bold">Toast Notification Demo</h1>
+	<button
+				onclick={() => goto('/app/dashboard')}
+				class="bg-info rounded-md px-4 py-2 text-white transition-opacity hover:opacity-90"
+			>
+				Goto Dashboard
+			</button>
 
 	<div class="bg-card-light dark:bg-card-dark rounded-lg p-6 shadow-md">
 		<p class="mb-4">Click the buttons below to see different types of toast notifications:</p>

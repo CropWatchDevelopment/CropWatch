@@ -227,19 +227,6 @@
 						</div>
 					{/if}
 
-					{#if temperatureChartVisible}
-						<div class="chart temperature-stats-chart">
-							<h4>Temperature Statistics</h4>
-							<div class="chart-stats">
-								<div class="chart-legend">
-									<span class="min">Min: {stats.temperature.min}°C</span>
-									<span class="avg">Avg: {stats.temperature.avg}°C</span>
-									<span class="max">Max: {stats.temperature.max}°C</span>
-								</div>
-							</div>
-						</div>
-					{/if}
-
 					<!-- Similar chart sections for CO2 and pH would go here -->
 				</div>
 			</div>

@@ -18,8 +18,8 @@
 		cw_device_type: {
 			name: string;
 			default_upload_interval?: number;
-			primary_data_v2?: string;
-			secondary_data_v2?: string;
+			primary_data_v2?: string | null;
+			secondary_data_v2?: string | null;
 			primary_data_notation?: string;
 			secondary_data_notation?: string;
 		};
@@ -45,14 +45,13 @@
 
 	// Log the active status for debugging
 	$effect(() => {
-		console.log(`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}`);
+		console.log(`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}, cw_device_type: ${device.cw_device_type.name}`);
 	});
 
 	// Determine the primary and secondary data keys based on device type - using reactive declarations
-	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2 || 'temperature_c');
+	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2);
 	let secondaryDataKey = $derived(
-		device.cw_device_type.secondary_data_v2 ||
-			(device.cw_device_type.name?.toLowerCase().includes('soil') ? 'moisture' : 'humidity')
+		device.cw_device_type.secondary_data_v2
 	);
 
 	// Get the data values - using reactive declarations so they update when latestData changes

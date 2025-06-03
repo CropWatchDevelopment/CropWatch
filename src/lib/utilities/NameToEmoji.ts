@@ -51,6 +51,8 @@ export const nameToEmoji = (name: string) => {
         case 'wind_direction':
             return '🧭';
         case 'water_level':
+        case 'depth_cm':
+        case 'deapth_cm':
             return '📏';
         case 'battery_level':
         case 'battery':

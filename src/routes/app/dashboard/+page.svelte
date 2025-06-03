@@ -626,9 +626,9 @@
 															primary_data_notation:
 																device.deviceType?.primary_data_notation || '°C',
 															secondary_data_notation:
-																device.deviceType?.secondary_data_notation || '%',
-															primary_data_v2: 'temperature_c',
-															secondary_data_v2: isSoilSensor(device) ? 'moisture' : 'humidity'
+																device.deviceType?.secondary_data_notation || null,
+															primary_data_v2: device.deviceType?.primary_data_v2 || null,
+															secondary_data_v2: device.deviceType?.secondary_data_v2 || null,
 														}
 													}}
 													{isActive}

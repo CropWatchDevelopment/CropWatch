@@ -47,6 +47,7 @@
 			moisture: '%',
 			co2: 'ppm',
 			ec: 'mS/cm',
+			cm: 'cm',
 			battery_level: '%',
 			ph: '',
 			created_at: '',
@@ -68,6 +69,7 @@
 			temperature: 'border-orange-500',
 			humidity: 'border-blue-500',
 			moisture: 'border-sky-500',
+			deapth_cm: 'border-sky-500',
 			co2: 'border-purple-500',
 			ph: 'border-yellow-500',
 			ec: 'border-violet-500'
@@ -81,6 +83,7 @@
 			temperature: 'text-orange-500 dark:text-orange-500',
 			humidity: 'text-blue-500 dark:text-blue-400',
 			moisture: 'text-sky-500 dark:text-sky-400',
+			deapth_cm: 'text-sky-500 dark:text-sky-400',
 			co2: 'text-purple-500 dark:text-purple-400',
 			ph: 'text-yellow-500 dark:text-yellow-400',
 			ec: 'text-violet-500 dark:text-violet-400'
