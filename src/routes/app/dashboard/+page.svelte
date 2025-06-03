@@ -15,8 +15,9 @@
 	import DeviceDataList from '$lib/components/UI/dashboard/DeviceDataList.svelte';
 	import DataRowItem from '$lib/components/UI/dashboard/DataRowItem.svelte';
 	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
+	import LocationSidebar from '$lib/components/dashboard/LocationSidebar.svelte';
 
-	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
+	import { DeviceTimerManager } from '$lib/utilities/deviceTimerManager';
 	import { isSoilSensor, isDeviceActive, getDeviceActiveStatus, getLocationActiveStatus } from '$lib/utilities/dashboardHelpers';
 	import { mdiViewDashboard, mdiMagnify, mdiClose } from '@mdi/js';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
@@ -43,22 +44,20 @@
 		cw_rules?: any[];
 	}
 
-	// State variables
+	// Create a timer manager instance
+	const timerManager = new DeviceTimerManager();
+
+	// Reactive state variables
 	let locations: LocationWithCount[] = $state([]);
-	let selectedLocation: number | null = $state(null);
 	let devices: DeviceWithSensorData[] = $state([]);
+	let selectedLocation: number | null = $state(null);
 	let deviceActiveStatus: Record<string, boolean> = $state({});
-	let pollingIntervalId: number | null = $state(null);
-	let lastRefreshTimestamp: Record<number, number> = $state({}); // Cache timestamp by location ID
-
-	// Store unsubscribe functions for cleanup
-	const unsubscribers: (() => void)[] = [];
-
-	// Polling interval ID
-
-	// View state variables
-	let search: string = $state(browser ? (localStorage.getItem('dashboard_search') ?? '') : '');
-	let hideEmptyLocations: boolean = $state(
+	let loadingLocations = $state(true);
+	let loadingDevices = $state(false);
+	let locationError: string | null = $state(null);
+	let deviceError: string | null = $state(null);
+	let search = $state(browser ? (localStorage.getItem('dashboard_search') ?? '') : '');
+	let hideEmptyLocations = $state(
 		browser ? localStorage.getItem('hide_empty_locations') === 'true' : false
 	);
 	let dashboardViewType: 'grid' | 'mozaic' | 'list' = $state(
@@ -78,11 +77,7 @@
 			: 'alpha'
 	);
 
-	// Loading states
-	let loadingLocations = $state(true);
-	let loadingDevices = $state(false);
-	let locationError: string | null = $state(null);
-	let deviceError: string | null = $state(null);
+	// All polling and timer state is now managed by the DeviceTimerManager
 
 	// Persist dashboard view type changes
 	$effect(() => {
@@ -143,10 +138,11 @@
 			loadingLocations = false;
 
 			// If there are locations, select the first one by default
-			if (locations.length > 0) {
-				selectedLocation = locations[0].location_id;
-				// Devices are already loaded for each location
-				devices = locations[0].cw_devices || [];
+			if (userLocations.length > 0) {
+				await selectLocation(userLocations[0].location_id);
+				
+				// Set up polling for the selected location using the timer manager
+				timerManager.setupPolling(userLocations[0].location_id, refreshDevicesForLocation);
 			}
 		} catch (err) {
 			locationError = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -154,38 +150,16 @@
 		}
 	});
 
-	// Set up polling for device data updates
-	function setupPolling() {
-		console.log('setupPolling called');
-		// Clear any existing polling interval
-		if (pollingIntervalId !== null) {
-			clearInterval(pollingIntervalId);
-			pollingIntervalId = null;
-		}
-
-		// Set up new polling interval (every 2 minutes)
-		const intervalId = setInterval(async () => {
-			console.log(`[Polling] Device data polling triggered at ${new Date().toLocaleString()}`);
-			if (selectedLocation) {
-				await refreshDevicesForLocation(selectedLocation);
-			}
-		}, 120000); // 2 minutes
-
-		// Store the interval ID for cleanup
-		pollingIntervalId = intervalId as unknown as number;
-	}
+	// Note: Polling is now handled directly by the DeviceTimerManager
+	// in the selectLocation function and onMount lifecycle hook
 
 	// Function to clean up all timers and polling
 	function cleanupTimers() {
-		// Clear polling interval
-		if (pollingIntervalId !== null) {
-			clearInterval(pollingIntervalId);
-			pollingIntervalId = null;
-		}
+		// Clean up polling interval using the timer manager
+		timerManager.cleanupPolling();
 
-		// Clear all active timers
-		unsubscribers.forEach((unsub) => unsub());
-		unsubscribers.length = 0;
+		// Clean up all active timers using the timer manager
+		timerManager.cleanupTimers();
 	}
 
 	// Function to update the location's devices and trigger a UI refresh
@@ -210,14 +184,10 @@
 	// Function to refresh devices for a location without changing the selected location
 	async function refreshDevicesForLocation(locationId: number) {
 		try {
-			// Check if we need to refresh based on cache
-			const now = Date.now();
-			const lastRefresh = lastRefreshTimestamp[locationId] || 0;
-			const timeSinceLastRefresh = now - lastRefresh;
-
-			// Only refresh if it's been at least 30 seconds since the last refresh
-			// This prevents excessive DB calls while still allowing the active timer to work
-			if (timeSinceLastRefresh < 30000) {
+			// Check if we need to refresh based on cache using the timer manager
+			if (!timerManager.needsRefresh(locationId)) {
+				const lastRefresh = timerManager.getLastRefreshTimestamp(locationId);
+				const timeSinceLastRefresh = Date.now() - lastRefresh;
 				console.log(
 					`Skipping refresh for location ${locationId}, last refresh was ${timeSinceLastRefresh / 1000}s ago`
 				);
@@ -241,8 +211,8 @@
 			// Update the location's devices to trigger UI refresh
 			updateLocationDevices(locationId, devices);
 
-			// Update the refresh timestamp
-			lastRefreshTimestamp[locationId] = now;
+			// Update the refresh timestamp in the timer manager
+			timerManager.updateRefreshTimestamp(locationId);
 
 			console.log('Devices refreshed:', {
 				deviceCount: devices.length,
@@ -283,8 +253,8 @@
 				return device;
 			});
 
-			// Set up polling for updates
-			setupPolling();
+			// Set up polling for updates using the timer manager
+			timerManager.setupPolling(locationId, refreshDevicesForLocation);
 
 			loadingDevices = false;
 		} catch (err) {
@@ -298,69 +268,42 @@
 		if (!device.latestData?.created_at) return;
 		const deviceId = device.dev_eui as string;
 
-		// Clear any existing timer for this device
-		cleanupDeviceTimer(deviceId);
+		// Get the upload interval from the device
+		const uploadInterval = device.upload_interval || device.deviceType?.default_upload_interval || 10;
 
-		const uploadInterval =
-			device.upload_interval || device.deviceType?.default_upload_interval || 10;
-
-		// Create a closure to capture the current timestamp
-		const currentTimestamp = device.latestData.created_at;
-
-		const activeTimer = createActiveTimer(new Date(currentTimestamp), Number(uploadInterval));
-
-		// Update device active status when timer changes
-		const unsubscribe = activeTimer.subscribe((isActive) => {
-			// Only update if this is still the current device data
-			// This prevents old timers from incorrectly marking devices as inactive
-			if (device.latestData?.created_at === currentTimestamp) {
-				console.log(`Device ${device.name} (${deviceId}) status updated:`, {
-					isActive,
-					lastUpdate: currentTimestamp,
-					uploadInterval
-				});
-				deviceActiveStatus[deviceId] = isActive;
-			} else {
-				console.log(`Ignoring outdated timer update for ${device.name} (${deviceId})`, {
-					timerTimestamp: currentTimestamp,
-					currentTimestamp: device.latestData?.created_at
-				});
+		// Use the timer manager to set up a timer for this device
+		timerManager.setupDeviceActiveTimer(
+			device, 
+			uploadInterval,
+			(deviceId: string, isActive: boolean | null) => {
+				// Update the device active status in our component state
+				deviceActiveStatus[deviceId] = isActive === null ? false : isActive;
 			}
-		});
-
-		// Store the unsubscribe function for cleanup and track its index
-		const timerIndex = unsubscribers.length;
-		unsubscribers.push(unsubscribe);
-		deviceTimers[deviceId] = timerIndex;
+		);
 	}
-
-	// Map to track device timers by device ID
-	let deviceTimers: Record<string, number> = $state({});
 
 	// Function to clean up a device timer
 	function cleanupDeviceTimer(deviceId: string) {
-		// Find the index of the timer for this device
-		const timerIndex = deviceTimers[deviceId];
-
-		// If we have a timer index for this device
-		if (timerIndex !== undefined && timerIndex >= 0 && timerIndex < unsubscribers.length) {
-			// Call the unsubscribe function
-			unsubscribers[timerIndex]();
-
-			// Remove the unsubscribe function from the array (replace with a no-op)
-			unsubscribers[timerIndex] = () => {};
-
-			// Remove the device from the timers map
-			delete deviceTimers[deviceId];
-		}
+		// Use the timer manager to clean up the timer for this device
+		timerManager.cleanupDeviceTimer(deviceId);
 	}
 
 	// Function to select a location and load its devices
 	async function selectLocation(locationId: number) {
+		// If already selected with devices loaded, do nothing
 		if (selectedLocation === locationId && devices.length > 0) return;
 
+		// Clean up any existing polling before changing location
+		timerManager.cleanupPolling();
+		
+		// Update selected location
 		selectedLocation = locationId;
+		
+		// Load devices for the new location
 		await loadDevicesForLocation(locationId);
+		
+		// Set up polling for the newly selected location
+		timerManager.setupPolling(locationId, refreshDevicesForLocation);
 	}
 
 	// Function to get current selected location
@@ -381,18 +324,7 @@
 	}
 
 	// Function to handle keyboard navigation for location selection
-	function handleKeyDown(e: KeyboardEvent, location: Location) {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			selectLocation(location.location_id);
-		}
-	}
-
-
-
-
-
-
+	// Note: handleKeyDown is now handled in the LocationSidebar component
 
 	function clearSearch() {
 		search = '';
@@ -415,84 +347,15 @@
 	{:else}
 		<div class="dashboard-grid">
 			<!-- Location selector panel -->
-			<div class="locations-panel w-[300px]">
-				<h2 class="flex items-center">
-					<Icon path={mdiViewDashboard} class="mr-2" />
-					Locations
-					<div class="ml-auto">
-						<DashboardFilterBits
-							bind:search
-							bind:hideNoDeviceLocations={hideEmptyLocations}
-							bind:dashboardViewType
-							bind:dashboardSortType
-						/>
-					</div>
-				</h2>
-				<div class="pb-6">
-					<div class="relative">
-						<div class="absolute inset-y-0 left-0 flex items-center pl-2">
-							<svg viewBox="0 0 24 24" width="16" height="16" class="text-gray-500">
-								<path fill="currentColor" d={mdiMagnify} />
-							</svg>
-						</div>
-						<input
-							type="text"
-							bind:value={search}
-							class="w-full rounded-md border border-zinc-300 bg-white py-2 pr-8 pl-8 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 focus:outline-none
-	       dark:border-zinc-600 dark:bg-zinc-600 dark:text-white dark:placeholder-zinc-400 dark:focus:border-zinc-400 dark:focus:ring-zinc-500"
-							placeholder={nameToJapaneseName('Search')}
-							onkeydown={(e) => {
-								if (e.key === 'Enter') {
-									browser ? localStorage.setItem('dashboard_search', search) : null;
-								}
-							}}
-						/>
-						{#if search}
-							<button
-								class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-								onclick={clearSearch}
-								aria-label="Clear search"
-							>
-								<svg viewBox="0 0 24 24" width="16" height="16">
-									<path fill="currentColor" d={mdiClose} />
-								</svg>
-							</button>
-						{/if}
-					</div>
-				</div>
-				{#if locations.length === 0}
-					<p>No locations found.</p>
-				{:else}
-					<ul class="location-list" role="listbox" aria-label="Select a location">
-						{#each locations
-							.filter((location) => {
-								if (hideEmptyLocations) return location.deviceCount > 0;
-								return true;
-							})
-							.filter((location) => {
-								if (!search?.trim()) return true;
-								return location.name.toLowerCase().includes(search.toLowerCase());
-							}) as location (location.location_id)}
-							<li>
-								<button
-									class="location-item"
-									class:selected={selectedLocation === location.location_id}
-									onclick={() => selectLocation(location.location_id)}
-									onkeydown={(e) => handleKeyDown(e, location)}
-									role="option"
-									aria-selected={selectedLocation === location.location_id}
-								>
-									<p class="location-name">{location.name}</p>
-									{#if location.description}
-										<p class="location-description">{location.description}</p>
-									{/if}
-									<p class="location-device-count">{location.deviceCount} devices</p>
-								</button>
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			</div>
+			<LocationSidebar
+				{locations}
+				selectedLocation={selectedLocation}
+				bind:search={search}
+				bind:hideEmptyLocations={hideEmptyLocations}
+				bind:dashboardViewType={dashboardViewType}
+				bind:dashboardSortType={dashboardSortType}
+				onSelectLocation={selectLocation}
+			/>
 
 			<!-- Device display panel -->
 			<div class="devices-panel">
@@ -596,7 +459,6 @@
 		}
 	}
 
-	.locations-panel,
 	.devices-panel {
 		background-color: var(--color-card);
 		border-radius: 0.5rem;
@@ -606,62 +468,7 @@
 			0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	}
 
-	.locations-panel h2 {
-		font-size: 1.25rem;
-		font-weight: 600;
-		margin-bottom: 1rem;
-		display: flex;
-		align-items: center;
-	}
 
-	.location-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.location-item {
-		padding: 0.75rem;
-		margin-bottom: 0.5rem;
-		border-radius: 0.375rem;
-		background-color: var(--color-card-hover);
-		width: 100%;
-		text-align: left;
-		transition: background-color 0.2s;
-		border: none;
-		cursor: pointer;
-	}
-
-	.location-item:hover {
-		background-color: var(--color-card-active);
-	}
-
-	.location-item.selected {
-		background-color: var(--color-primary);
-		color: white;
-	}
-
-	.location-name {
-		font-weight: 500;
-		margin-bottom: 0.25rem;
-	}
-
-	.location-description {
-		font-size: 0.875rem;
-		color: var(--color-text-secondary);
-		margin-bottom: 0.25rem;
-	}
-
-	.location-device-count {
-		font-size: 0.75rem;
-		color: var(--color-text-secondary);
-	}
-
-	.devices-panel h2 {
-		font-size: 1.25rem;
-		font-weight: 600;
-		margin-bottom: 1rem;
-	}
 
 	.device-cards-grid {
 		/* Base styles that apply to all view modes */
@@ -677,51 +484,29 @@
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 	}
 
-	/* When in mozaic mode, use columns layout */
-	.device-cards-grid.columns-\[20rem\] {
-		column-count: 1;
-	}
-
+	/* Grid view responsive columns */
 	@media (min-width: 640px) {
-		.device-cards-grid.columns-\[20rem\] {
-			column-count: 2;
+		.device-cards-grid.grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 
 	@media (min-width: 1024px) {
-		.device-cards-grid.columns-\[20rem\] {
-			column-count: 3;
+		.device-cards-grid.grid {
+			grid-template-columns: repeat(3, 1fr);
 		}
 	}
 
 	@media (min-width: 1280px) {
-		.device-cards-grid.columns-\[20rem\] {
-			column-count: 4;
+		.device-cards-grid.grid {
+			grid-template-columns: repeat(4, 1fr);
 		}
 	}
 
-	.device-card-wrapper {
+	/* Card styling for dashboard components */
+	:global(.dashboard-card) {
 		margin-bottom: 1rem;
 		width: 100%;
-		max-width: 320px;
-	}
-
-	/* In list view, make cards take full width */
-	.device-cards-grid.flex .device-card-wrapper {
-		max-width: 100%;
-		width: 100%;
-	}
-
-	/* Make sure the DashboardCard component takes full width in list view */
-	.device-cards-grid.flex .device-card-wrapper :global(.dashboard-card) {
-		width: 100%;
-	}
-
-	/* In mozaic view, ensure cards break properly */
-	.device-cards-grid.columns-\[20rem\] .device-card-wrapper {
-		display: inline-block;
-		width: 100%;
-		break-inside: avoid;
 	}
 
 	.loading,
