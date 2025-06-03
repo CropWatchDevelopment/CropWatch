@@ -17,6 +17,7 @@
 	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
 
 	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
+	import { isSoilSensor, isDeviceActive, getDeviceActiveStatus, getLocationActiveStatus } from '$lib/utilities/dashboardHelpers';
 	import { mdiViewDashboard, mdiMagnify, mdiClose } from '@mdi/js';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import { Icon } from 'svelte-ux';
@@ -92,17 +93,7 @@
 		}
 	});
 
-	// Function to get device active status
-	function getDeviceActiveStatus(devEui: string | null): boolean {
-		if (
-			!devEui ||
-			deviceActiveStatus[devEui] === null ||
-			deviceActiveStatus[devEui] === undefined
-		) {
-			return false;
-		}
-		return Boolean(deviceActiveStatus[devEui]);
-	}
+
 
 	// Clean up timers and subscriptions when component is destroyed
 	onDestroy(() => {
@@ -205,7 +196,7 @@
 				locations[currentLocationIndex].cw_devices = [...updatedDevices];
 
 				// Log the updated active status
-				const status = getLocationActiveStatus(locations[currentLocationIndex]);
+				const status = getLocationActiveStatus(locations[currentLocationIndex], deviceActiveStatus);
 				console.log('Location status updated after refresh:', {
 					location: locations[currentLocationIndex].name,
 					activeDevices: status.activeDevices.length,
@@ -393,77 +384,15 @@
 	function handleKeyDown(e: KeyboardEvent, location: Location) {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
-			handleLocationClick(location);
+			selectLocation(location.location_id);
 		}
 	}
 
-	// Function to check if a device is active
-	function isDeviceActive(device: DeviceWithSensorData): boolean {
-		if (!device) return false;
 
-		// Get the device ID
-		const devEui = device.dev_eui as string;
 
-		// Special handling for devices with negative upload intervals (always active)
-		const uploadInterval =
-			device.upload_interval || device.deviceType?.default_upload_interval || 10;
-		if (uploadInterval <= 0) {
-			return true;
-		}
 
-		// Special handling for soil sensors
-		if (isSoilSensor(device)) {
-			if (device.deviceType?.isActive !== undefined) {
-				return Boolean(device.deviceType.isActive);
-			}
 
-			// If the soil sensor has moisture data, consider it active
-			if (device.latestData && 'moisture' in device.latestData) {
-				return true;
-			}
-		}
 
-		return getDeviceActiveStatus(devEui);
-	}
-
-	// Helper function to determine if a device is a soil sensor
-	function isSoilSensor(device: DeviceWithSensorData): boolean {
-		// Check device name for soil-related terms
-		const deviceName = device.name?.toLowerCase() || '';
-		const deviceTypeName = device.deviceType?.name?.toLowerCase() || '';
-
-		// Check device type (type 17 is soil sensor in your system)
-		if (device.type === 17) {
-			return true;
-		}
-
-		// Check if the device name or type contains soil-related terms
-		return (
-			deviceName.includes('soil') ||
-			deviceName.includes('moisture') ||
-			deviceTypeName.includes('soil') ||
-			deviceTypeName.includes('moisture') ||
-			// Check if the device has soil-specific data points
-			(device.latestData && 'moisture' in device.latestData)
-		);
-	}
-
-	// Helper function to get active status indicators for a location
-	function getLocationActiveStatus(location: LocationWithCount) {
-		if (!location || !location.cw_devices || location.cw_devices.length === 0) {
-			return { activeDevices: [], allActive: false, allInactive: false };
-		}
-
-		const locationDevices = location.cw_devices;
-		// Use isDeviceActive instead of getDeviceActiveStatus for consistency
-		const activeDevices = locationDevices.filter((device) => isDeviceActive(device));
-		const allActive =
-			locationDevices.length > 0 && locationDevices.every((device) => isDeviceActive(device));
-		const allInactive =
-			locationDevices.length > 0 && locationDevices.every((device) => !isDeviceActive(device));
-
-		return { activeDevices, allActive, allInactive };
-	}
 
 	function clearSearch() {
 		search = '';
@@ -577,10 +506,10 @@
 						class="device-cards-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
 					>
 						{#each locations as location (location.location_id)}
-							{@const activeDevices = (location.cw_devices ?? []).filter((d) => isDeviceActive(d))}
+							{@const activeDevices = (location.cw_devices ?? []).filter((d) => isDeviceActive(d, deviceActiveStatus))}
 							{@const allActive =
 								(location.cw_devices?.length ?? 0) > 0 &&
-								activeDevices.length === location.cw_devices.length}
+								activeDevices.length === (location.cw_devices?.length ?? 0)}
 							{@const allInactive =
 								(location.cw_devices?.length ?? 0) > 0 && activeDevices.length === 0}
 							<DashboardCard
@@ -592,7 +521,7 @@
 							>
 								{#snippet content()}
 									{#each location.cw_devices ?? [] as device (device.dev_eui)}
-										{@const isActive = isDeviceActive(device)}
+										{@const isActive = isDeviceActive(device, deviceActiveStatus)}
 										<DataRowItem
 											device={{
 												...device,
