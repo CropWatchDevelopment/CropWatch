@@ -53,7 +53,6 @@ export class DeviceDataService implements IDeviceDataService {
   /**
    * Get device data within a date range based on device type
    * @param devEui The device EUI
-   * @param deviceType The device type information containing data_table_v2
    * @param startDate The start date
    * @param endDate The end date
    */
@@ -72,24 +71,66 @@ export class DeviceDataService implements IDeviceDataService {
     const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
 
     try {
-
-      // get the number of uploads between the selected start and end dates
+      // Calculate the date range differences for aggregation strategy
+      const daysInRange = moment(endDate).diff(startDate, 'days');
       const monthsInRange = moment(endDate).diff(startDate, 'months');
+      const yearsInRange = moment(endDate).diff(startDate, 'years');
+
+      // Check if the range is too large (more than 3 months)
       if (monthsInRange > 3) {
-        // If the range is too large, limit the query to the last 3 months
         throw new Error('Date range too large');
       }
 
-      const { data, error } = await this.supabase
+      let query = this.supabase
         .from(tableName)
         .select('*')
         .eq('dev_eui', devEui)
         .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-        .order('created_at', { ascending: false })
-      // .limit(maxDataToReturn);
+        .lte('created_at', endDate.toISOString());
 
-      return data || [];
+      // For small ranges (≤ 1 day), return all data points without aggregation
+      if (daysInRange <= 1) {
+        query = query.order('created_at', { ascending: false });
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error(`Error fetching data from ${tableName}:`, error);
+          throw new Error(`Error fetching data: ${error.message}`);
+        }
+        
+        return data || [];
+      }
+      
+      // For larger ranges, we need to fetch the data and aggregate it in the application
+      const { data, error } = await query.order('created_at', { ascending: true });
+      
+      if (error) {
+        console.error(`Error fetching data from ${tableName}:`, error);
+        throw new Error(`Error fetching data: ${error.message}`);
+      }
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      // Determine aggregation period based on date range
+      let aggregationPeriod: 'hour' | 'day' | 'month';
+      
+      if (daysInRange > 1 && daysInRange < 7) {
+        // Between 1 day and 1 week - aggregate by hour
+        aggregationPeriod = 'hour';
+      } else if (daysInRange >= 7 && monthsInRange < 1) {
+        // Between 1 week and 1 month - aggregate by day
+        aggregationPeriod = 'day';
+      } else if (yearsInRange >= 1) {
+        // >= 1 year - aggregate by month
+        aggregationPeriod = 'month';
+      } else {
+        // Between 1 month and 1 year - aggregate by day
+        aggregationPeriod = 'day';
+      }
+
+      return this.aggregateData(data, aggregationPeriod);
     } catch (error) {
       // Handle errors with a generic response
       console.error(`Error in getDeviceDataByDateRange for ${devEui} in table ${tableName}:`, error);
@@ -107,6 +148,85 @@ export class DeviceDataService implements IDeviceDataService {
       // Re-throw other errors
       throw error;
     }
+  }
+
+  /**
+   * Aggregate device data based on the specified period
+   * @param data The data to aggregate
+   * @param period The aggregation period ('hour', 'day', or 'month')
+   * @returns The aggregated data
+   */
+  private aggregateData(data: any[], period: 'hour' | 'day' | 'month'): any[] {
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    const groupedData = new Map<string, any[]>();
+
+    // Group data by the specified period
+    data.forEach(item => {
+      const date = moment(item.created_at);
+      let key: string;
+
+      switch (period) {
+        case 'hour':
+          // Group by hour: YYYY-MM-DD HH:00
+          key = date.format('YYYY-MM-DD HH:00');
+          break;
+        case 'day':
+          // Group by day: YYYY-MM-DD
+          key = date.format('YYYY-MM-DD');
+          break;
+        case 'month':
+          // Group by month: YYYY-MM
+          key = date.format('YYYY-MM');
+          break;
+      }
+
+      if (!groupedData.has(key)) {
+        groupedData.set(key, []);
+      }
+      groupedData.get(key)?.push(item);
+    });
+
+    // Calculate averages for each group
+    const aggregatedData = Array.from(groupedData.entries()).map(([key, items]) => {
+      // Create a new object with device ID and created_at
+      const result: any = {
+        dev_eui: items[0].dev_eui,
+        created_at: key,
+      };
+
+      // Calculate average for each numeric field
+      const numericFields = Object.keys(items[0]).filter(field => 
+        typeof items[0][field] === 'number' && 
+        field !== 'id' && 
+        field !== 'dev_eui'
+      );
+
+      numericFields.forEach(field => {
+        const sum = items.reduce((total, item) => 
+          total + (typeof item[field] === 'number' ? item[field] : 0), 0);
+        result[field] = parseFloat((sum / items.length).toFixed(2));
+      });
+
+      // Copy non-numeric fields from the first item (except created_at which we've already set)
+      const nonNumericFields = Object.keys(items[0]).filter(field => 
+        typeof items[0][field] !== 'number' && 
+        field !== 'created_at'
+      );
+
+      nonNumericFields.forEach(field => {
+        result[field] = items[0][field];
+      });
+
+      return result;
+    });
+
+    // Sort by created_at in descending order
+    return aggregatedData.sort((a, b) => 
+      moment(b.created_at).valueOf() - moment(a.created_at).valueOf()
+    );
   }
 
   /**

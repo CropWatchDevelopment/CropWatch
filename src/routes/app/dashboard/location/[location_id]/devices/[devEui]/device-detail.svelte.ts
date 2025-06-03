@@ -17,7 +17,16 @@ export interface DeviceDetailProps {
 
 export function setupDeviceDetail() {
 	// Stats for the data
-	const stats: Record<string, { min: number; max: number; avg: number }> = $state({});
+	const stats: Record<string, { 
+		min: number; 
+		max: number; 
+		avg: number;
+		median: number;
+		stdDev: number;
+		count: number;
+		lastReading: number;
+		trend: 'up' | 'down' | 'stable' | null;
+	}> = $state({});
 
 	// Chart data
 	type ChartData = Record<string, number[] | string[]>;
@@ -28,15 +37,11 @@ export function setupDeviceDetail() {
 	let error = $state<string | null>(null);
 
 	// Date range selection
-	let startDate = $state('');
-	let endDate = $state('');
+	let startDate = $state(new Date()); // Should be Date object
+	let endDate = $state(new Date());   // Should be Date object
 
 	// Libraries and elements
 	let ApexCharts = $state<any>(undefined);
-	let ApexGrid = $state<any>(undefined);
-
-	// ApexGrid instance
-	let grid = $state<any>(undefined);
 
 	// Chart instances
 	let mainChartInstance: any = null;
@@ -63,7 +68,16 @@ export function setupDeviceDetail() {
 		// Reset chartData and stats for all numeric keys
 		numericKeys.forEach((key) => {
 			chartData[key] = [];
-			stats[key] = { min: 0, max: 0, avg: 0 };
+			stats[key] = { 
+				min: 0, 
+				max: 0, 
+				avg: 0,
+				median: 0,
+				stdDev: 0,
+				count: 0,
+				lastReading: 0,
+				trend: null
+			};
 		});
 
 		// Prepare value arrays for stats
@@ -86,9 +100,47 @@ export function setupDeviceDetail() {
 		numericKeys.forEach((key) => {
 			const values = valueArrays[key];
 			if (values.length > 0) {
+				// Basic stats
 				stats[key].min = Math.min(...values);
 				stats[key].max = Math.max(...values);
 				stats[key].avg = calculateAverage(values);
+				stats[key].count = values.length;
+				
+				// Last reading
+				stats[key].lastReading = values[values.length - 1];
+				
+				// Median calculation
+				const sortedValues = [...values].sort((a, b) => a - b);
+				const mid = Math.floor(sortedValues.length / 2);
+				stats[key].median = 
+					sortedValues.length % 2 === 0 
+						? (sortedValues[mid - 1] + sortedValues[mid]) / 2 
+						: sortedValues[mid];
+				
+				// Standard deviation
+				const mean = stats[key].avg;
+				const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
+				const avgSquaredDiff = calculateAverage(squaredDiffs);
+				stats[key].stdDev = Math.sqrt(avgSquaredDiff);
+				
+				// Trend (last 5 values if available)
+				if (values.length >= 3) {
+					const recentValues = values.slice(-5);
+					const firstVal = recentValues[0];
+					const lastVal = recentValues[recentValues.length - 1];
+					const difference = lastVal - firstVal;
+					const threshold = stats[key].stdDev * 0.1; // 10% of standard deviation as threshold
+					
+					if (Math.abs(difference) < threshold) {
+						stats[key].trend = 'stable';
+					} else if (difference > 0) {
+						stats[key].trend = 'up';
+					} else {
+						stats[key].trend = 'down';
+					}
+				} else {
+					stats[key].trend = null;
+				}
 			}
 		});
 		loading = false;
@@ -96,397 +148,192 @@ export function setupDeviceDetail() {
 
 	// Function to fetch data for a specific date range
 	async function fetchDataForDateRange(device: DeviceWithType, start: Date, end: Date) {
-		if (!startDate || !endDate) {
-			error = 'Please select both start and end dates';
-			return;
+		 // Parameters 'start' and 'end' are Date objects.
+		// The component's state variables 'startDate' and 'endDate' (if you were accessing them via this context, which you are not directly here) are also Date objects.
+		// This function uses the 'start' and 'end' parameters passed to it.
+
+		if (!start || !end) { // Validation using parameters
+			error = 'Please select both start and end dates'; // Set component's error state
+			return [];
 		}
 
-		if (start > end) {
-			error = 'Start date must be before end date';
-			return;
+		if (start > end) { // Validation using parameters
+			error = 'Start date must be before end date'; // Set component's error state
+			return [];
 		}
 
 		loading = true;
-		error = null;
+		error = null; // Clear previous errors
 
 		try {
+			// Format Date objects to ISO strings for robust API querying
+			const startQueryParam = start.toISOString(); // Use parameter
+			const endQueryParam = end.toISOString();     // Use parameter
+
 			const response = await fetch(
-				`/api/devices/${device.dev_eui}/data?start=${start}&end=${end}`
+				`/api/devices/${device.dev_eui}/data?start=${startQueryParam}&end=${endQueryParam}`
 			);
 
 			if (!response.ok) {
-				throw new Error('Failed to fetch data');
+				const errorText = await response.text();
+				console.error('Failed to fetch data:', response.status, errorText);
+				throw new Error(`Failed to fetch data. Server responded with ${response.status}.`);
 			}
 
 			const newHistoricalData = await response.json();
-			processHistoricalData(newHistoricalData);
+			if (!Array.isArray(newHistoricalData)) {
+				console.error('API did not return an array for historical data:', newHistoricalData);
+				throw new Error('Invalid data format received from server.');
+			}
+			processHistoricalData(newHistoricalData); // Process the newly fetched data
 			return newHistoricalData;
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Unknown error occurred';
-			return [];
+			console.error('Error in fetchDataForDateRange:', err);
+			error = err instanceof Error ? err.message : 'Unknown error occurred while fetching data.';
+			return []; // Return empty array on error
 		} finally {
 			loading = false;
 		}
 	}
 
-	// Function to setup and render the charts and grid
-	async function renderVisualization(historicalData: any[], dataType: string, latestData: any) {
+	/**
+	 * Renders a generic ApexCharts line chart with a brush (range selector) below.
+	 * This function is fully generic: it will plot all numeric keys in the data (except for ignored keys).
+	 *
+	 * @param historicalData Array of objects (rows) with at least a 'created_at' timestamp and numeric fields
+	 * @param dataType      (Unused, for compatibility)
+	 * @param latestData    (Unused, for compatibility)
+	 * @param chart1Element HTMLElement to render the main chart into
+	 * @param chart1BrushElement HTMLElement to render the brush chart into
+	 * @param _ignored      (Unused, for compatibility)
+	 * @param ignoredDataKeys Array of keys to ignore (default: ['id', 'dev_eui', 'created_at'])
+	 */
+	async function renderVisualization(
+		historicalData: any[],
+		dataType: string, // ignored for charting
+		latestData: any, // ignored for charting
+		chart1Element: HTMLElement | undefined,
+		chart1BrushElement: HTMLElement | undefined,
+		_ignored?: any, // placeholder for removed dataGridElement
+		ignoredDataKeys: string[] = ['id', 'dev_eui', 'created_at']
+	) {
 		if (!browser || !historicalData || historicalData.length === 0) return;
-
-		 // Add a small delay to ensure DOM is fully ready
 		await new Promise(resolve => setTimeout(resolve, 50));
+		if (!chart1Element || !chart1BrushElement) return;
 
-		// Access the DOM elements through the elements available in the main component
-		const chart1Element = document.querySelector('.main-chart');
-		const chart1BrushElement = document.querySelector('.brush-chart');
-		const dataGridElement = document.querySelector('.data-grid');
+		// Destroy previous chart instances if they exist
+		if (mainChartInstance) { try { mainChartInstance.destroy(); } catch {} mainChartInstance = null; }
+		if (brushChartInstance) { try { brushChartInstance.destroy(); } catch {} brushChartInstance = null; }
 
-		if (!chart1Element || !chart1BrushElement || !dataGridElement) {
-			console.error('Chart DOM elements not found');
-			return;
+		if (!ApexCharts) {
+			ApexCharts = await import('apexcharts').then(m => m.default);
 		}
 
+		// Find all numeric keys in the data (excluding ignored keys)
+		const sample = historicalData.find(row => row && typeof row === 'object');
+		if (!sample) return;
+		const numericKeys = Object.keys(sample).filter(
+			key => !ignoredDataKeys.includes(key) && typeof sample[key] === 'number'
+		);
+		if (numericKeys.length === 0) return;
+
+		// Build series for each numeric key
+		const series = numericKeys.map(key => ({
+			name: key,
+			data: historicalData
+				.filter(row => typeof row[key] === 'number' && row[key] !== null && row['created_at'])
+				.map(row => ({ x: new Date(row['created_at']).getTime(), y: row[key] }))
+		}));
+		series.forEach(s => s.data.sort((a, b) => a.x - b.x));
+
+		// Color palette (extendable)
+		const palette = [
+			'#f97316', '#3b82f6', '#10b981', '#eab308', '#ef4444', '#6366f1', '#14b8a6', '#f59e42',
+			'#8b5cf6', '#22d3ee', '#f472b6', '#a3e635', '#facc15', '#f87171', '#60a5fa', '#34d399'
+		];
+		const colors = numericKeys.map((_, i) => palette[i % palette.length]);
+
+		// Y-axis config for each series
+		const yaxis = numericKeys.map((key, idx) => ({
+			seriesName: key,
+			opposite: idx % 2 === 1,
+			title: { text: key, style: { color: colors[idx] } },
+			labels: { style: { colors: colors[idx] } }
+		}));
+
+		// X-axis range
+		const allDates = historicalData.map(row => new Date(row['created_at']).getTime()).filter(Boolean);
+		const minDate = Math.min(...allDates);
+		const maxDate = Math.max(...allDates);
+
+		// Main chart options
+		const mainChartOptions = {
+			series,
+			chart: {
+				id: 'mainChart',
+				type: 'line',
+				height: 350,
+				toolbar: { autoSelected: 'pan', show: false },
+				animations: { enabled: false },
+				zoom: { enabled: false }
+			},
+			colors,
+			stroke: { curve: 'smooth', width: numericKeys.map(() => 1) },
+			dataLabels: { enabled: false },
+			markers: { size: 1, strokeWidth: 0, hover: { size: 4 } },
+			xaxis: { type: 'datetime', labels: { datetimeUTC: false } },
+			yaxis,
+			tooltip: {
+				theme: 'dark',
+				shared: true,
+				x: { format: 'MMM dd HH:mm' },
+				style: { fontSize: '13px', fontFamily: 'Inter, sans-serif' },
+				marker: { show: true },
+				y: { formatter: (val: number) => val?.toFixed ? val.toFixed(1) : val }
+			},
+			legend: { position: 'top', horizontalAlign: 'center' },
+			grid: { borderColor: '#2a2a2a', row: { colors: ['transparent', 'transparent'], opacity: 0.1 } }
+		};
+
+		// Brush chart options
+		const brushChartOptions = {
+			series,
+			chart: {
+				id: 'brushChart',
+				height: 150,
+				type: 'area',
+				brush: { target: 'mainChart', enabled: true },
+				selection: { enabled: true, xaxis: { min: minDate, max: maxDate } }
+			},
+			colors,
+			fill: { type: 'gradient', gradient: { opacityFrom: 0.7, opacityTo: 0.3 } },
+			stroke: { width: numericKeys.map(() => 1) },
+			xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { datetimeUTC: false } },
+			yaxis: { show: false, tickAmount: 2 },
+			grid: { borderColor: '#2a2a2a', strokeDashArray: 2, yaxis: { lines: { show: false } } },
+			legend: { show: false }
+		};
+
+		// Render charts
+		mainChartInstance = new ApexCharts(chart1Element, mainChartOptions);
+		brushChartInstance = new ApexCharts(chart1BrushElement, brushChartOptions);
 		try {
-			// Destroy previous chart instances if they exist
-			if (mainChartInstance) {
-				try { mainChartInstance.destroy(); } catch {}
-				mainChartInstance = null;
-			}
-			if (brushChartInstance) {
-				try { brushChartInstance.destroy(); } catch {}
-				brushChartInstance = null;
-			}
-
-			// Only clear the data grid, not the chart containers
-			dataGridElement.innerHTML = '';
-
-			// Import ApexCharts only once if not already loaded
-			if (!ApexCharts) {
-				ApexCharts = await import('apexcharts').then(module => module.default);
-			}
-
-			// Filter out any data points that have null values
-			const validData = historicalData.filter((data) =>
-				dataType === 'air'
-					? data.temperature_c !== null && data.humidity !== null
-					: data.temperature_c !== null && data.moisture !== null
-			);
-
-			if (validData.length === 0) {
-				console.warn('No valid data points with required values');
-				return;
-			}
-
-			// Format temperature data for the chart
-			const temperatureData = validData.map((data) => ({
-				x: new Date(data.created_at).getTime(),
-				y: data.temperature_c
-			}));
-
-			// Format humidity/moisture data depending on device type
-			const secondaryData = validData.map((data) => ({
-				x: new Date(data.created_at).getTime(),
-				y: dataType === 'air' ? data.humidity : data.moisture
-			}));
-
-			// Determine chart labels based on data type
-			const mainLabel = 'Temperature (°C)';
-			const secondaryLabel = dataType === 'air' ? 'Humidity (%)' : 'Moisture (%)';
-
-			// Determine min and max dates for chart selection
-			const dateValues = validData.map((d) => new Date(d.created_at).getTime());
-			const minDate = Math.min(...dateValues);
-			const maxDate = Math.max(...dateValues);
-
-			// Configure the main chart
-			const mainChartOptions = {
-				series: [
-					{
-						name: mainLabel,
-						data: temperatureData.slice().sort((a, b) => a.x - b.x)
-					},
-					{
-						name: secondaryLabel,
-						data: secondaryData.slice().sort((a, b) => a.x - b.x)
-					}
-				],
-				chart: {
-					id: 'mainChart',
-					type: 'line',
-					height: 350,
-					toolbar: {
-						autoSelected: 'pan',
-						show: false
-					},
-					animations: {
-						enabled: false
-					},
-					zoom: {
-						enabled: false
-					}
-				},
-				colors: ['#f97316', '#3b82f6'],
-				stroke: {
-					curve: 'smooth',
-					width: [1, 1]
-				},
-				dataLabels: {
-					enabled: false
-				},
-				markers: {
-					size: 1,
-					strokeWidth: 0,
-					hover: {
-						size: 4
-					}
-				},
-				xaxis: {
-					type: 'datetime',
-					labels: {
-						datetimeUTC: false
-					}
-				},
-				yaxis: [
-					{
-						seriesName: mainLabel,
-						title: {
-							text: mainLabel,
-							style: { color: '#f97316' } // orange-500
-						},
-						labels: {
-							style: { colors: '#f97316' }
-						}
-					},
-					{
-						seriesName: secondaryLabel,
-						opposite: true,
-						title: {
-							text: secondaryLabel,
-							style: { color: '#3b82f6' } // blue-500
-						},
-						labels: {
-							style: { colors: '#3b82f6' }
-						}
-					}
-				],
-				tooltip: {
-					theme: 'dark',
-					shared: true,
-					x: {
-						format: 'MMM dd HH:mm'
-					},
-					style: {
-						fontSize: '13px',
-						fontFamily: 'Inter, sans-serif'
-					},
-					marker: {
-						show: true
-					},
-					y: {
-						formatter: (val: number) => val.toFixed(1)
-					}
-				},
-				legend: {
-					position: 'top',
-					horizontalAlign: 'center'
-				},
-				grid: {
-					borderColor: '#2a2a2a',
-
-					row: {
-						colors: ['transparent', 'transparent'],
-						opacity: 0.1
-					}
-				}
-			};
-
-			// Configure the brush chart
-			const brushChartOptions = {
-				series: [
-					{
-						name: mainLabel,
-						data: temperatureData.slice().sort((a, b) => a.x - b.x)
-					},
-					{
-						name: secondaryLabel,
-						data: secondaryData.slice().sort((a, b) => a.x - b.x)
-					}
-				],
-				chart: {
-					id: 'brushChart',
-					height: 150,
-					type: 'area',
-					brush: {
-						target: 'mainChart',
-						enabled: true
-					},
-					selection: {
-						enabled: true,
-						xaxis: {
-							min: minDate,
-							max: maxDate
-						}
-					}
-				},
-				colors: ['#f97316', '#3b82f6'],
-				fill: {
-					type: 'gradient',
-					gradient: {
-						opacityFrom: 0.7,
-						opacityTo: 0.3
-					}
-				},
-				stroke: {
-					width: [1, 1]
-				},
-				xaxis: {
-					type: 'datetime',
-					tooltip: {
-						enabled: false
-					},
-					labels: {
-						datetimeUTC: false
-					}
-				},
-				yaxis: {
-					show: false,
-					tickAmount: 2
-				},
-				grid: {
-					borderColor: '#2a2a2a',
-					strokeDashArray: 2,
-					yaxis: {
-						lines: {
-							show: false
-						}
-					}
-				},
-				legend: {
-					show: false
-				}
-			};
-
-			// Render the charts
-			if (ApexCharts && chart1Element && chart1BrushElement && 
-				document.body.contains(chart1Element) && 
-				document.body.contains(chart1BrushElement)) {
-				// Create new instances with the current options
-				mainChartInstance = new ApexCharts(chart1Element, mainChartOptions);
-				brushChartInstance = new ApexCharts(chart1BrushElement, brushChartOptions);
-
-				try {
-					await mainChartInstance.render();
-					await brushChartInstance.render();
-				} catch (err) {
-					console.error('Error rendering charts:', err);
-					
-					// Clean up failed instances
-					if (mainChartInstance) {
-						try { mainChartInstance.destroy(); } catch {}
-						mainChartInstance = null;
-					}
-					if (brushChartInstance) {
-						try { brushChartInstance.destroy(); } catch {}
-						brushChartInstance = null;
-					}
-				}
-			}
-
-			// Build columns for the data grid based on data type
-			const columns = [
-				{
-					field: 'created_at',
-					name: 'Timestamp',
-					type: 'datetime',
-					width: '180px',
-					formatter: (value: string) => formatDateForDisplay(value)
-				},
-				{
-					field: 'temperature_c',
-					name: 'Temperature (°C)',
-					type: 'number',
-					width: '130px',
-					formatter: (value: number | null) => (value !== null ? value : 'N/A')
-				}
-			];
-
-			// Add columns based on data type
-			if (dataType === 'air') {
-				columns.push({
-					field: 'humidity',
-					name: 'Humidity (%)',
-					type: 'number',
-					width: '120px',
-					formatter: (value: number | null) => (value !== null ? value : 'N/A')
-				});
-
-				if (hasValue(latestData, 'co2')) {
-					columns.push({
-						field: 'co2',
-						name: 'CO2 (ppm)',
-						type: 'number',
-						width: '120px',
-						formatter: (value: number | null) => (value !== null ? value : 'N/A')
-					});
-				}
-			} else {
-				columns.push({
-					field: 'moisture',
-					name: 'Moisture (%)',
-					type: 'number',
-					width: '120px',
-					formatter: (value: number | null) => (value !== null ? value : 'N/A')
-				});
-
-				if (hasValue(latestData, 'ph')) {
-					columns.push({
-						field: 'ph',
-						name: 'pH Level',
-						type: 'number',
-						width: '100px',
-						formatter: (value: number | null) => (value !== null ? value : 'N/A')
-					});
-				}
-			}
-
-			// Configure and render the data grid if element and library are available
-			if (dataGridElement && ApexGrid) {
-				const gridOptions = {
-					columns: columns,
-					data: historicalData,
-					theme: 'light',
-					pagination: {
-						enabled: true,
-						pageSize: 10,
-						pageSizes: [10, 25, 50, 100]
-					},
-					search: {
-						enabled: true,
-						placeholder: 'Search data...'
-					},
-					sorting: {
-						enabled: true,
-						multiColumn: false
-					}
-				};
-
-				grid = new ApexGrid(dataGridElement, gridOptions);
-				grid.render();
-			}
-		} catch (error) {
-			console.error('Error rendering visualization:', error);
+			await mainChartInstance.render();
+			await brushChartInstance.render();
+		} catch (err) {
+			if (mainChartInstance) { try { mainChartInstance.destroy(); } catch {} mainChartInstance = null; }
+			if (brushChartInstance) { try { brushChartInstance.destroy(); } catch {} brushChartInstance = null; }
 		}
 	}
 
 	// Initialize dates function
 	function initializeDateRange() {
-		// Set default date range (last 7 days)
-		const end = new Date();
-		const start = new Date();
-		start.setDate(start.getDate() - 7);
+		const today = new Date();
+		const sevenDaysAgo = new Date(today);
+		sevenDaysAgo.setDate(today.getDate() - 7);
 
-		startDate = formatDateForInput(start);
-		endDate = formatDateForInput(end);
+		startDate = sevenDaysAgo; // Assign Date object directly
+		endDate = today;          // Assign Date object directly
 	}
 
 	return {
@@ -495,8 +342,8 @@ export function setupDeviceDetail() {
 		chartData,
 		loading,
 		error,
-		startDate,
-		endDate,
+		startDate, // Exporting the state itself
+		endDate,   // Exporting the state itself
 
 		// Element refs
 		// Functions
@@ -505,7 +352,7 @@ export function setupDeviceDetail() {
 		processHistoricalData,
 		fetchDataForDateRange,
 		renderVisualization,
-		initializeDateRange
+		initializeDateRange // Exporting the function
 	};
 }
 
@@ -515,11 +362,11 @@ export function getDeviceDetailDerived(device: DeviceWithType, dataType: string,
 	const deviceTypeName = device?.deviceType?.name || 'Unknown Type';
 
 	// Reactive declarations for the charts
-	const temperatureChartVisible = dataType === 'air' || dataType === 'soil';
-	const humidityChartVisible = dataType === 'air';
-	const moistureChartVisible = dataType === 'soil';
-	const co2ChartVisible = dataType === 'air' && hasValue(latestData, 'co2');
-	const phChartVisible = dataType === 'soil' && hasValue(latestData, 'ph');
+	const temperatureChartVisible = dataType === 'cw_air_data' || dataType === 'cw_soil_data';
+	const humidityChartVisible = dataType === 'cw_air_data';
+	const moistureChartVisible = dataType === 'cw_soil_data';
+	const co2ChartVisible = dataType === 'cw_air_data' && hasValue(latestData, 'co2');
+	const phChartVisible = dataType === 'cw_soil_data' && hasValue(latestData, 'ph');
 
 	// Helper function to determine if a property exists and has a value
 	function hasValue(obj: any, prop: string): boolean {
