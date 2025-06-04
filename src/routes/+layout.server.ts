@@ -17,11 +17,11 @@ export const load: LayoutServerLoad = async (event) => {
 	const session = locals.session;
 	const user = locals.user;
 
-	// Added additional logging for debugging redirection logic
-	if (!session?.user && !isAuthRoute) {
-		console.warn('No session found, redirecting to login:', url.pathname);
-		throw redirect(302, '/auth/login');
-	}
+	// // Added additional logging for debugging redirection logic
+	// if (!session?.user && !isAuthRoute) {
+	// 	console.warn('No session found, redirecting to login:', url.pathname);
+	// 	throw redirect(302, '/auth/login');
+	// }
 
 	// Return everything needed by the client except the Supabase client (which is not serializable)
 	return {

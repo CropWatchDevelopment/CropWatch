@@ -1,12 +1,20 @@
 import 'reflect-metadata';
-import type { Handle } from '@sveltejs/kit';
+import { redirect, type Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 
+const PUBLIC_ROUTES = [
+	'/auth', // All routes under /auth/
+	'/api/auth' // Only authentication-related API routes
+];
+
+// Additional check for exact /api/ route
+const isExactApiRoute = (pathname: string) => pathname === '/api' || pathname === '/api/';
+
 // Handle for Paraglide internationalization
-const handleParaglide: Handle = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request, locale }) => {
+const handleParaglide: Handle = async ({ event, resolve }) =>
+	await paraglideMiddleware(event.request, ({ request, locale }) => {
 		event.request = request;
 
 		return resolve(event, {
@@ -16,6 +24,7 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 
 // Handle for Supabase authentication and session management
 const handleSupabase: Handle = async ({ event, resolve }) => {
+
 	// Create a Supabase client specific for server-side rendering (SSR)
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
@@ -59,6 +68,18 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 	// Execute session validation once and store results in locals
 	const sessionData = await event.locals.safeGetSession();
 
+	// We need to run this after Supabase handle to have access to session data
+	// This will be called in the correct order in our sequence
+	const pathname = event.url.pathname;
+
+	// Check if current route requires authentication
+	const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route)) || isExactApiRoute(pathname);
+
+	if (!isPublicRoute && !sessionData.session) {
+		console.log(`Redirecting unauthenticated user from protected route: ${pathname}`);
+		throw redirect(302, '/auth/login');
+	}
+
 	// Store validated session and user in locals for routes to use
 	event.locals.session = sessionData.session;
 	event.locals.user = sessionData.user;
@@ -98,15 +119,15 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 	return response;
 }
 
-// Combine the handles - Paraglide first, then Supabase
+// Combine the handles - Supabase first, then Paraglide
 export const handle: Handle = async ({ event, resolve }) => {
-	// First apply Paraglide for i18n
-	return handleParaglide({
+	// First apply Supabase handle (which includes route guards and may throw redirects)
+	return await handleSupabase({
 		event,
-		resolve: async (paraglideEvent) => {
-			// Then apply Supabase handle with the same event
-			return handleSupabase({
-				event: paraglideEvent,
+		resolve: async (supabaseEvent) => {
+			// Then apply Paraglide for i18n (after auth logic is complete)
+			return await handleParaglide({
+				event: supabaseEvent,
 				resolve
 			});
 		}
