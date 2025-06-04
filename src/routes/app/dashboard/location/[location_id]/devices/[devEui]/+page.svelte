@@ -8,8 +8,14 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
-	import { formatDateOnly } from '$lib/utilities/helpers';
-	import moment from 'moment';
+	import { goto } from '$app/navigation';
+	import {
+		formatDateOnly,
+		formatDateForInput,
+		formatDateForDisplay as utilFormatDateForDisplay
+	} from '$lib/utilities/helpers';
+	import WaterLevel from '$lib/components/charts/WaterLevel.svelte';
+	import DateRange from '$lib/components/UI/detail/DateRange.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -21,75 +27,100 @@
 	let historicalData = $state(data.historicalData || []);
 
 	// Setup device detail functionality
-	const deviceDetail = setupDeviceDetail();
+	const deviceDetail = $state(setupDeviceDetail());
 
-	// Extract values from setup function - make the DOM-bound elements mutable
+	// Destructure from deviceDetail - these are reactive states/functions
 	const {
 		stats,
-		chartData,
-		error,
-		formatDateForDisplay,
-		hasValue,
+		chartData, // Not directly used in template, but available
+		loading, // Bound to deviceDetail.loading
+		error, // Bound to deviceDetail.error
 		processHistoricalData,
-		fetchDataForDateRange,
-		renderVisualization,
-		initializeDateRange
+		fetchDataForDateRange, // This is deviceDetail.fetchDataForDateRange
+		renderVisualization, // This is deviceDetail.renderVisualization
+		initializeDateRange // This is deviceDetail.initializeDateRange
+		// deviceDetail.startDate and deviceDetail.endDate (Date objects) are accessed via deviceDetail
 	} = deviceDetail;
 
-	// Define these as element references - using the new Svelte 5 approach for DOM bindings
-	// For DOM elements that don't need reactivity, we can use let declarations without $state
-	let chart1: HTMLElement = $state();;
-	let chart1Brush: HTMLElement = $state();;
-	let dataGrid: HTMLElement = $state();
-	let loading = $state(false);
+	// DOM element references
+	let chart1: HTMLElement | undefined = $state();
+	let chart1Brush: HTMLElement | undefined = $state();
+	let dataGrid: HTMLElement | undefined = $state();
 
-	// Get the other properties that don't need DOM binding
-	let { startDate, endDate } = $state(deviceDetail);
+	// Local string states for date inputs, bound to the input fields
+	let startDateInputString = $state('');
+	let endDateInputString = $state('');
 
 	// Derived properties
 	const derived = $state(getDeviceDetailDerived(device, dataType, latestData));
-	const deviceTypeName = $state(derived.deviceTypeName);
-	const temperatureChartVisible = $state(derived.temperatureChartVisible);
-	const humidityChartVisible = $state(derived.humidityChartVisible);
-	const moistureChartVisible = $state(derived.moistureChartVisible);
-	const co2ChartVisible = $state(derived.co2ChartVisible);
-	const phChartVisible = $state(derived.phChartVisible);
+	const {
+		deviceTypeName,
+		temperatureChartVisible,
+		humidityChartVisible,
+		moistureChartVisible,
+		co2ChartVisible,
+		phChartVisible
+	} = derived;
 
-	// Initialize the component
 	onMount(() => {
-		initializeDateRange();
-		processHistoricalData(historicalData);
+		initializeDateRange(); // This sets deviceDetail.startDate and deviceDetail.endDate (Date objects)
+
+		// Sync input strings with initial Date objects from deviceDetail
+		startDateInputString = formatDateForInput(deviceDetail.startDate);
+		endDateInputString = formatDateForInput(deviceDetail.endDate);
+
+		processHistoricalData(historicalData); // Initial processing of server-loaded data
 	});
 
-	// Effect to re-render visualization when historical data changes
+	// Effect to re-render visualization when historicalData or DOM elements change
 	$effect(() => {
-		// Pass the DOM elements to the renderVisualization function
-		renderVisualization(historicalData, dataType, latestData);
+		renderVisualization(historicalData, dataType, latestData, chart1, chart1Brush, dataGrid);
+	});
+
+	// Effect to keep input strings in sync if deviceDetail.startDate/endDate change (e.g. by initializeDateRange)
+	$effect(() => {
+		if (deviceDetail.startDate) {
+			startDateInputString = formatDateForInput(deviceDetail.startDate);
+		}
+	});
+	$effect(() => {
+		if (deviceDetail.endDate) {
+			endDateInputString = formatDateForInput(deviceDetail.endDate);
+		}
 	});
 
 	// Function to handle fetching data for a specific date range
 	async function handleDateRangeSubmit() {
-		loading = true;
-		const newData = await fetchDataForDateRange(device, startDate, endDate);
-		if (newData && newData.length > 0) {
-			historicalData = newData;
-			// processHistoricalData is already called inside fetchDataForDateRange
-			// No need to call renderVisualization here as the $effect will handle it
+		if (!startDateInputString || !endDateInputString) {
+			deviceDetail.error = 'Please select both start and end dates.';
+			return;
 		}
-		loading = false;
-	}
-	
-	// Function to handle fetching data for the default date range
-	async function defaultDateRange() {
-		loading = true;
-		const newData = await fetchDataForDateRange(device, moment().subtract(7, 'days').toDate(), new Date());
-		if (newData && newData.length > 0) {
-			historicalData = newData;
-			// processHistoricalData is already called inside fetchDataForDateRange
-			// No need to call renderVisualization here as the $effect will handle it
+
+		// Parse local string dates from input into Date objects
+		// new Date('YYYY-MM-DD') can have timezone issues. Parsing components is safer.
+		const [sYear, sMonth, sDay] = startDateInputString.split('-').map(Number);
+		const finalStartDate = new Date(sYear, sMonth - 1, sDay); // Month is 0-indexed
+
+		const [eYear, eMonth, eDay] = endDateInputString.split('-').map(Number);
+		// Set end date to the end of the selected day to be inclusive for the query
+		const finalEndDate = new Date(eYear, eMonth - 1, eDay, 23, 59, 59, 999); // Month is 0-indexed
+
+		if (finalStartDate > finalEndDate) {
+			deviceDetail.error = 'Start date must be before end date.';
+			return;
 		}
-		loading = false;
+
+		deviceDetail.error = null; // Clear previous errors before fetching
+
+		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
+		if (newData) {
+			historicalData = newData; // This will trigger $effect for renderVisualization
+			// processHistoricalData is called within fetchDataForDateRange in device-detail.svelte.ts
+		}
 	}
+
+	// Expose formatDateForDisplay for the template, aliased from helpers
+	const formatDateForDisplay = utilFormatDateForDisplay;
 </script>
 
 <svelte:head>
@@ -104,11 +135,6 @@
 		<div class="mb-2">
 			<a href="/app/dashboard" class="text-sm text-blue-500 hover:underline">
 				&larr; Back to Dashboard
-			</a>
-		</div>
-		<div class="mb-2">
-			<a href={`${device.dev_eui}/settings`} class="text-sm text-blue-500 hover:underline">
-				&larr; Settings
 			</a>
 		</div>
 
@@ -148,16 +174,6 @@
 						</strong>
 					</div>
 				{/if}
-
-				<!-- Battery Level -->
-				{#if device?.installed_at}
-					<div>
-						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
-						<strong class="ml-1 text-gray-900 dark:text-white">
-							{formatDateOnly(device.battery_level)}
-						</strong>
-					</div>
-				{/if}
 			</div>
 		</div>
 	</section>
@@ -170,16 +186,18 @@
 
 		{#if latestData}
 			<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				<div class="flex flex-row justify-items-center">
 					{#each Object.keys(latestData) as key}
-						<DataCard
-							{latestData}
-							name={key}
-							{key}
-							type={key}
-							metadata={key === 'created_at' || key === 'dev_eui'}
-							class="w-full"
-						/>
+						{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected'].includes(key) && latestData[key] !== null}
+							<DataCard
+								{latestData}
+								name={key}
+								{key}
+								type={key}
+								metadata={key === 'created_at' || key === 'dev_eui'}
+								class="w-full"
+							/>
+						{/if}
 					{/each}
 				</div>
 
@@ -201,21 +219,27 @@
 			<div class="flex flex-wrap items-end gap-2 md:gap-4">
 				<!-- Date inputs -->
 				<div class="flex flex-col">
-					<label class="mb-1 text-sm text-gray-600 dark:text-gray-400">Start Date:</label>
+					<label for="startDate" class="mb-1 text-sm text-gray-600 dark:text-gray-400"
+						>Start Date:</label
+					>
 					<input
+						id="startDate"
 						type="date"
-						bind:value={startDate}
-						max={endDate}
+						bind:value={startDateInputString}
+						max={endDateInputString}
 						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
 					/>
 				</div>
 
 				<div class="flex flex-col">
-					<label class="mb-1 text-sm text-gray-600 dark:text-gray-400">End Date:</label>
+					<label for="endDate" class="mb-1 text-sm text-gray-600 dark:text-gray-400"
+						>End Date:</label
+					>
 					<input
+						id="endDate"
 						type="date"
-						bind:value={endDate}
-						min={startDate}
+						bind:value={endDateInputString}
+						min={startDateInputString}
 						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
 					/>
 				</div>
@@ -223,32 +247,17 @@
 				<!-- Button with alignment tweak -->
 				<div class="pt-[26px]">
 					<button
-						type="button"
 						onclick={handleDateRangeSubmit}
 						class="rounded border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
-					hover:border-blue-500 hover:bg-blue-500
-					focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
-					disabled:border-blue-400 disabled:bg-blue-400 disabled:text-white
-					dark:border-blue-700 dark:bg-blue-500 dark:text-white
-					dark:hover:border-blue-400 dark:hover:bg-blue-400
-					dark:focus:ring-offset-zinc-800 dark:disabled:border-blue-800 dark:disabled:bg-blue-800"
+							hover:border-blue-500 hover:bg-blue-500
+							focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
+							disabled:border-blue-400 disabled:bg-blue-400 disabled:text-white
+							dark:border-blue-700 dark:bg-blue-500 dark:text-white
+							dark:hover:border-blue-400 dark:hover:bg-blue-400
+							dark:focus:ring-offset-zinc-800 dark:disabled:border-blue-800 dark:disabled:bg-blue-800"
 						disabled={loading}
 					>
 						{loading ? 'Loading…' : 'Fetch Data'}
-					</button>
-					<button
-						type="button"
-						onclick={defaultDateRange}
-						class="rounded border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
-					hover:border-blue-500 hover:bg-blue-500
-					focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
-					disabled:border-blue-400 disabled:bg-blue-400 disabled:text-white
-					dark:border-blue-700 dark:bg-blue-500 dark:text-white
-					dark:hover:border-blue-400 dark:hover:bg-blue-400
-					dark:focus:ring-offset-zinc-800 dark:disabled:border-blue-800 dark:disabled:bg-blue-800"
-						disabled={loading}
-					>
-						{loading ? 'Loading…' : 'Reset to default'}
 					</button>
 				</div>
 			</div>
@@ -281,44 +290,76 @@
 				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
 					Statistical Summary
 				</h3>
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+				<!-- <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"> -->
+				 <div class="flex flex-row gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{#if temperatureChartVisible}
 						<StatsCard
 							notation="°C"
 							title="Temperature"
-							min={stats.temperature.min}
-							max={stats.temperature.max}
-							avg={stats.temperature.avg}
+							min={stats.temperature_c?.min}
+							max={stats.temperature_c?.max}
+							avg={stats.temperature_c?.avg}
+							median={stats.temperature_c?.median}
+							stdDev={stats.temperature_c?.stdDev}
+							count={stats.temperature_c?.count}
+							lastReading={stats.temperature_c?.lastReading}
+							trend={stats.temperature_c?.trend}
 						/>
 					{/if}
 					{#if humidityChartVisible}
 						<StatsCard
 							notation="%"
 							title="Humidity"
-							min={stats.humidity.min}
-							max={stats.humidity.max}
-							avg={stats.humidity.avg}
+							min={stats.humidity?.min}
+							max={stats.humidity?.max}
+							avg={stats.humidity?.avg}
+							median={stats.humidity?.median}
+							stdDev={stats.humidity?.stdDev}
+							count={stats.humidity?.count}
+							lastReading={stats.humidity?.lastReading}
+							trend={stats.humidity?.trend}
 						/>
 					{/if}
 					{#if moistureChartVisible}
 						<StatsCard
 							notation="%"
 							title="Moisture"
-							min={stats.moisture.min}
-							max={stats.moisture.max}
-							avg={stats.moisture.avg}
+							min={stats.moisture?.min}
+							max={stats.moisture?.max}
+							avg={stats.moisture?.avg}
+							median={stats.moisture?.median}
+							stdDev={stats.moisture?.stdDev}
+							count={stats.moisture?.count}
+							lastReading={stats.moisture?.lastReading}
+							trend={stats.moisture?.trend}
 						/>
 					{/if}
 					{#if co2ChartVisible}
 						<StatsCard
 							title="CO₂ (ppm)"
-							min={stats.co2.min}
-							max={stats.co2.max}
-							avg={stats.co2.avg}
+							min={stats.co2?.min}
+							max={stats.co2?.max}
+							avg={stats.co2?.avg}
+							median={stats.co2?.median}
+							stdDev={stats.co2?.stdDev}
+							count={stats.co2?.count}
+							lastReading={stats.co2?.lastReading}
+							trend={stats.co2?.trend}
 						/>
 					{/if}
 					{#if phChartVisible}
-						<StatsCard title="pH" min={stats.ph.min} max={stats.ph.max} avg={stats.ph.avg} />
+						<StatsCard
+							title="pH"
+							min={stats.ph?.min}
+							max={stats.ph?.max}
+							avg={stats.ph?.avg}
+							median={stats.ph?.median}
+							stdDev={stats.ph?.stdDev}
+							count={stats.ph?.count}
+							lastReading={stats.ph?.lastReading}
+							trend={stats.ph?.trend}
+						/>
 					{/if}
 				</div>
 			</div>
@@ -330,56 +371,11 @@
 					Data Visualization
 				</h3>
 
-				
-
-				<!-- Individual Chart Stats -->
-				<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-					{#if humidityChartVisible || moistureChartVisible}
-						<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
-							<h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">
-								{dataType === 'air' ? 'Humidity' : 'Moisture'} Statistics
-							</h4>
-							<div class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-								{#if humidityChartVisible}
-									<p>Min: {stats.humidity.min}%</p>
-									<p>Avg: {stats.humidity.avg}%</p>
-									<p>Max: {stats.humidity.max}%</p>
-								{:else}
-									<p>Min: {stats.moisture.min}%</p>
-									<p>Avg: {stats.moisture.avg}%</p>
-									<p>Max: {stats.moisture.max}%</p>
-								{/if}
-							</div>
-						</div>
-					{/if}
-
-					{#if temperatureChartVisible}
-						<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
-							<h4 class="mb-2 text-base font-medium text-gray-800 dark:text-gray-200">
-								Temperature Statistics
-							</h4>
-							<div class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-								<p>Min: {stats.temperature.min}°C</p>
-								<p>Avg: {stats.temperature.avg}°C</p>
-								<p>Max: {stats.temperature.max}°C</p>
-							</div>
-						</div>
-					{/if}
-
-					<!-- If you want to render CO₂ or pH here, you can add similar blocks -->
-				</div>
-			</div>
-
-			<!-- Raw Data Table -->
-		{/if}
-		<div>
-			<!-- Main Line + Brush Chart -->
+				<!-- Generic Main Line + Brush Chart (always rendered if historicalData exists) -->
 				<div class="mb-10 rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
 					<h4 class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200">
-						Sensor Data Over Time
+						All Sensor Data Over Time
 					</h4>
-
-					<!-- Chart grows to full width, no scrollbars -->
 					<div class="w-full">
 						<div class="chart-placeholder">
 							<div class="chart-visual">
@@ -389,11 +385,16 @@
 						</div>
 					</div>
 				</div>
-			<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
-			<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
-				<div class="data-grid" bind:this={dataGrid}></div>
 			</div>
-		</div>
+
+			<!-- Raw Data Table -->
+			<div>
+				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
+				<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
+					<div class="data-grid" bind:this={dataGrid}></div>
+				</div>
+			</div>
+		{/if}
 	</section>
 </div>
 

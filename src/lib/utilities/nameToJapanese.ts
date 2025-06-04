@@ -47,6 +47,9 @@ export const nameToJapaneseName = (name: string) => {
 			return '飽和水蒸気圧差';
 		case 'rainfall':
 			return '降雨量';
+		case 'deapth_cm':
+		case 'depth_cm':
+			return '深さ(cm)';
 		case 'pressure':
 			return '気圧';
 		case 'created_at':

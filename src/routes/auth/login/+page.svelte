@@ -151,7 +151,7 @@
 						{submitting ? 'Logging in...' : '🔑 Login'}
 					</button>
 				</div>
-				<div class="flex flex-col md:flex-row items-center md:justify-between gap-2 w-full">
+				<div class="flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
 					<GoogleAuthLogin />
 					<DiscordAuthLogin />
 				</div>
@@ -160,6 +160,15 @@
 			<div
 				class="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
 			>
+				<button
+					type="submit"
+					class="bg-slate-500 hover:bg-slate-600-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+					disabled={loading}
+					onclick={() => goto('/api/')}
+				>
+					🌐 Go to API
+				</button>
+
 				<button
 					type="submit"
 					class="bg-info hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"

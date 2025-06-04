@@ -35,7 +35,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			user: {
 				id: authData.user.id,
 				email: authData.user.email,
-				name: authData.user.user_metadata?.name || email.split('@')[0]
+				name: authData.user.user_metadata?.name || email.split('@')[0],
+				access_token: authData.session.access_token,
 			}
 		});
 	} catch (error) {

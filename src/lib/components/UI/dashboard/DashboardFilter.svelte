@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import DashboardFilterBits from './DashboardFilterBits.svelte';
 
 	let search = '';
