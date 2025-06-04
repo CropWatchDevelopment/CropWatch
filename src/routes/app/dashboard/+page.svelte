@@ -395,15 +395,15 @@
 													primary_data_notation: device.deviceType?.primary_data_notation || '°C',
 													secondary_data_notation:
 														device.deviceType?.secondary_data_notation || '%',
-													primary_data_v2: 'temperature_c',
-													secondary_data_v2: isSoilSensor(device) ? 'moisture' : 'humidity'
+													primary_data_v2: device.deviceType?.primary_data_v2 || null,
+													secondary_data_v2: device.deviceType?.secondary_data_v2 || null,
 												}
 											}}
 											{isActive}
 											detailHref={`/dashboard/location/${device.location_id}/device/${device.dev_eui}`}
 										>
-											{#snippet children()}
-												<DeviceDataList
+										{#snippet children()}
+										<DeviceDataList
 													device={{
 														...device,
 														latestData: device.latestData || {},
@@ -412,7 +412,7 @@
 															default_upload_interval:
 																device.deviceType?.default_upload_interval || 10,
 															primary_data_notation:
-																device.deviceType?.primary_data_notation || '°C',
+																device.deviceType?.primary_data_notation,
 															secondary_data_notation:
 																device.deviceType?.secondary_data_notation || null,
 															primary_data_v2: device.deviceType?.primary_data_v2 || null,

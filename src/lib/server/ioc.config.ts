@@ -6,33 +6,15 @@ import type { Database } from '../../database.types';
 import { TYPES } from './ioc.types';
 
 // Interfaces
-import type { IDeviceService } from '../interfaces/IDeviceService';
-import type { IAirDataService } from '../interfaces/IAirDataService';
-import type { ISoilDataService } from '../interfaces/ISoilDataService';
 import type { ILocationService } from '../interfaces/ILocationService';
-import type { IRuleService } from '../interfaces/IRuleService';
-import type { IAuthService } from '../interfaces/IAuthService';
-import type { IDeviceDataService } from '../interfaces/IDeviceDataService';
-import type { ISessionService } from '../interfaces/ISessionService';
 
 // Services
-import { DeviceService } from '../services/DeviceService';
-import { AirDataService } from '../services/AirDataService';
-import { SoilDataService } from '../services/SoilDataService';
 import { LocationService } from '../services/LocationService';
-import { RuleService } from '../services/RuleService';
-import { AuthService } from '../services/AuthService';
 import { ErrorHandlingService } from '../errors/ErrorHandlingService';
-import { DeviceDataService } from '../services/DeviceDataService';
-import { SessionService } from '../services/SessionService';
 
 // Repositories
-import { BaseRepository } from '../repositories/BaseRepository';
 import { DeviceRepository } from '../repositories/DeviceRepository';
-import { AirDataRepository } from '../repositories/AirDataRepository';
-import { SoilDataRepository } from '../repositories/SoilDataRepository';
 import { LocationRepository } from '../repositories/LocationRepository';
-import { RuleRepository } from '../repositories/RuleRepository';
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 // Create and configure the IoC container

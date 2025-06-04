@@ -7,10 +7,8 @@ import { TYPES } from '$lib/server/ioc.types';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { AirDataRepository } from '$lib/repositories/AirDataRepository';
-import { SoilDataRepository } from '$lib/repositories/SoilDataRepository';
 import { DeviceService } from '$lib/services/DeviceService';
 import { AirDataService } from '$lib/services/AirDataService';
-import { SoilDataService } from '$lib/services/SoilDataService';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
@@ -27,12 +25,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
     // Create repositories with per-request Supabase client
     const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
     const airDataRepo = new AirDataRepository(locals.supabase, errorHandler);
-    const soilDataRepo = new SoilDataRepository(locals.supabase, errorHandler);
     
     // Create services with repositories
     const deviceService = new DeviceService(deviceRepo);
     const airDataService = new AirDataService(airDataRepo);
-    const soilDataService = new SoilDataService(soilDataRepo);
     const deviceDataService = new DeviceDataService(locals.supabase);
 
     // Get devices for this location - now includes device type info directly
@@ -66,11 +62,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
             // Get latest air data for this device, if available
             const latestAirData = await airDataService.getLatestAirDataByDevice(device.dev_eui);
             
-            // Get latest soil data for this device, if available
-            const latestSoilData = await soilDataService.getLatestSoilDataByDevice(device.dev_eui);
-            
             // Set latestData to whichever data is available
-            latestData = latestAirData || latestSoilData || null;
+            latestData = latestAirData || null;
           }
           
           return {

@@ -37,6 +37,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				email: authData.user.email,
 				name: authData.user.user_metadata?.name || email.split('@')[0],
 				access_token: authData.session.access_token,
+				refresh_token: authData.session.refresh_token,
+				expires_at: authData.session.expires_at,
 			}
 		});
 	} catch (error) {

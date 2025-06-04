@@ -10,7 +10,6 @@ export const TYPES = {
   // Repositories
   DeviceRepository: Symbol.for('DeviceRepository'),
   AirDataRepository: Symbol.for('AirDataRepository'),
-  SoilDataRepository: Symbol.for('SoilDataRepository'),
   LocationRepository: Symbol.for('LocationRepository'),
   RuleRepository: Symbol.for('RuleRepository'),
   
