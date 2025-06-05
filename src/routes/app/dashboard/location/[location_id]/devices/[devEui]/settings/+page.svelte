@@ -2,6 +2,8 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { AlertDialog } from 'bits-ui';
+	import { enhance } from '$app/forms';
+	import { error, success } from '$lib/stores/toast.svelte.js';
 
   let { data } = $props();
   let locations = $derived(data.locations);
@@ -25,10 +27,16 @@
 			alert('Failed to delete device');
 		}
 	}
+
+  function showSuccessToast() {
+		success('Success! Operation completed successfully.');
+	}
+
+	function showErrorToast() {
+		error('Error! Something went wrong.');
+	}
 </script>
 
-<pre>{JSON.stringify(locations, null, 2)}</pre>
-<pre>{JSON.stringify(device, null, 2)}</pre>
 <div class="flex flex-col gap-4">
 	<h1 class="text-2xl font-bold">Device Settings</h1>
 	<p class="text-muted text-sm">Settings for device {devEui}</p>
@@ -40,14 +48,23 @@
 <div>
   <h2 class="text-xl font-semibold">Device Information</h2>
   <p class="text-muted text-sm">Here you can view and edit device information.</p>
-  <form class="flex flex-col gap-4" id="deviceSettingsForm">
+  <form class="flex flex-col gap-4" id="deviceSettingsForm" method="POST" action="?/updateGeneralSettings" use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+		return async ({ result, update }) => {
+			if (result.data.success) {
+        success('Settings updated successfully!');
+        update();
+      } else {
+        error('Failed to update settings');
+      }
+		};
+	}}>
     <div class="flex flex-col gap-2 mt-4">
       <label for="deviceName" class="text-sm font-medium">Device Name</label>
       <input id="deviceName" type="text" placeholder="Enter device name" value={device?.name} class="rounded-input bg-muted p-2" />
     </div>
     <div class="flex flex-col gap-2 mt-4">
       <label for="deviceName" class="text-sm font-medium">Device Location</label>
-      <select id="deviceLocation" value={device?.location_id} class="rounded-input bg-muted p-2">
+      <select id="deviceLocation" name="location_id" value={device?.location_id} class="rounded-input bg-muted p-2">
         {#each locations as loc}
           <option value={loc.location_id}>{loc.name}</option>
         {/each}
