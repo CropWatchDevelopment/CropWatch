@@ -40,6 +40,7 @@ export const load: PageServerLoad = async ({ params, locals: { safeGetSession, s
 
         return {
             devEui,
+            ownerId: sessionResult?.user?.id,
             locationId,
             locations,
             device,
