@@ -3,6 +3,10 @@
 	import { goto } from '$app/navigation';
 	import { AlertDialog } from 'bits-ui';
 
+  let { data } = $props();
+  let locations = $derived(data.locations);
+  let device = $derived(data.device);
+
 	let devEui = $page.params.devEui;
 	if (!devEui) {
 		goto('/dashboard'); // DevEui was not found, run to safety!
@@ -23,11 +27,33 @@
 	}
 </script>
 
+<pre>{JSON.stringify(locations, null, 2)}</pre>
+<pre>{JSON.stringify(device, null, 2)}</pre>
 <div class="flex flex-col gap-4">
 	<h1 class="text-2xl font-bold">Device Settings</h1>
 	<p class="text-muted text-sm">Settings for device {devEui}</p>
 	<button class="btn btn-primary" onclick={() => goto('/app/dashboard')}> Go to Dashboard </button>
 	<button onclick={() => goto(`settings/rules`)}>📜 Rules</button>
+</div>
+
+
+<div>
+  <h2 class="text-xl font-semibold">Device Information</h2>
+  <p class="text-muted text-sm">Here you can view and edit device information.</p>
+  <form class="flex flex-col gap-4" id="deviceSettingsForm">
+    <div class="flex flex-col gap-2 mt-4">
+      <label for="deviceName" class="text-sm font-medium">Device Name</label>
+      <input id="deviceName" type="text" placeholder="Enter device name" value={device?.name} class="rounded-input bg-muted p-2" />
+    </div>
+    <div class="flex flex-col gap-2 mt-4">
+      <label for="deviceName" class="text-sm font-medium">Device Location</label>
+      <select id="deviceLocation" value={device?.location_id} class="rounded-input bg-muted p-2">
+        {#each locations as loc}
+          <option value={loc.location_id}>{loc.name}</option>
+        {/each}
+    </div>
+    <button type="submit" class="btn btn-primary mt-4">Save Changes</button>
+  </form>
 </div>
 
 <div class="bg-danger flex flex-col gap-4">
