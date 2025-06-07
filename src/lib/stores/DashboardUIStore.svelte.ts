@@ -42,16 +42,5 @@ export function getDashboardUIStore() {
     return dashboardUIStore;
 }
 
-// Set up the effect at the module level
-if (browser) {
-    // Create the store first to ensure it exists
-    const store = getDashboardUIStore();
-    
-    // Then set up the persistence effect at module level
-    $effect(() => {
-        localStorage.setItem('dashboard_view_type', store.dashboardViewType);
-        localStorage.setItem('dashboard_search', store.search);
-        localStorage.setItem('hide_empty_locations', store.hideEmptyLocations.toString());
-        localStorage.setItem('dashboard_sort_type', store.dashboardSortType);
-    });
-}
+// The persistence effect should be set up in a Svelte component file
+// rather than at the module level in a .svelte.ts file

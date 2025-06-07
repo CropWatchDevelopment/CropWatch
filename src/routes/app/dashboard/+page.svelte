@@ -50,6 +50,16 @@
 	
 	// Initialize the dashboard UI store for preferences
 	const uiStore = getDashboardUIStore();
+	
+	// Persist UI store values to localStorage when they change
+	$effect(() => {
+		if (browser) {
+			localStorage.setItem('dashboard_view_type', uiStore.dashboardViewType);
+			localStorage.setItem('dashboard_search', uiStore.search);
+			localStorage.setItem('hide_empty_locations', uiStore.hideEmptyLocations.toString());
+			localStorage.setItem('dashboard_sort_type', uiStore.dashboardSortType);
+		}
+	});
 
 	// All polling and timer state is now managed by the DeviceTimerManager
 
