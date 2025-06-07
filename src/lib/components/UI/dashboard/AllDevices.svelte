@@ -6,6 +6,7 @@
 	import DashboardCard from './DashboardCard.svelte';
 	import DeviceCard from './DeviceCard.svelte';
 	import { isDeviceActive } from '$lib/utilities/dashboardHelpers';
+	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 
 	// Extended Location type to include cw_devices property
 	interface LocationWithDevices extends Location {
@@ -29,9 +30,26 @@
 		locations: LocationWithDevices[];
 		deviceActiveStatus: Record<string, boolean>;
 	}>()
+	
+	// Get the UI store to access the view type
+	const uiStore = getDashboardUIStore();
+	
+	// Function to get container class based on view type
+	function getContainerClass(viewType: string): string {
+		switch (viewType) {
+			case 'grid':
+				return 'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+			case 'mozaic':
+				return 'columns-[20rem] gap-4 space-y-4';
+			case 'list':
+				return 'flex flex-col gap-4';
+			default:
+				return 'grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+		}
+	}
 </script>
 
-<div class="device-cards-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+<div class="device-cards-grid {getContainerClass(uiStore.dashboardViewType)}">
 	{#each locations as location (location.location_id)}
 		{@const activeDevices = (location.cw_devices ?? []).filter((d: DeviceWithSensorData) =>
 			isDeviceActive(d, deviceActiveStatus)
