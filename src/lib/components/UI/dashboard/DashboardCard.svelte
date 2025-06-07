@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Icon } from 'svelte-ux';
     import { goto } from '$app/navigation';
-    import { mdiAlert, mdiCheck, mdiClose } from '@mdi/js';
+    import { mdiAlert, mdiCheck, mdiClose, mdiClockOutline } from '@mdi/js';
     import type { Location } from '$lib/models/Location';
     import type { Snippet } from 'svelte';
 
@@ -11,7 +11,8 @@
         content=undefined,
         activeDevices = [],
         allActive = false,
-        allInactive = false
+        allInactive = false,
+        loading = false
     } = $props<{
         location: Location;
         href: string;
@@ -19,14 +20,17 @@
         activeDevices?: any[];
         allActive?: boolean;
         allInactive?: boolean;
+        loading?: boolean;
     }>();
 </script>
 
 <div class="bg-white dark:bg-zinc-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 shadow-md dark:shadow-gray-900/20 h-full w-full flex flex-col">
     <div class="relative">
         <div class="pattern-bg">
-            <div class="status-indicator absolute top-3 left-3 h-10 w-10 rounded-full flex items-center justify-center {allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
-                {#if allActive}
+            <div class="status-indicator absolute top-3 left-3 h-10 w-10 rounded-full flex items-center justify-center {loading ? 'status-loading' : allActive ? 'status-success' : activeDevices.length > 0 && !allInactive ? 'status-warning' : 'status-danger'}">
+                {#if loading}
+                    <Icon class="text-white text-2xl status-icon" path={mdiClockOutline} />
+                {:else if allActive}
                     <Icon class="text-white text-2xl status-icon" path={mdiCheck} />
                 {:else if activeDevices.length > 0 && !allInactive}
                     <Icon class="text-white text-2xl status-icon" path={mdiAlert} />
@@ -121,5 +125,9 @@
 
     .status-danger {
         background-color: var(--color-danger);
+    }
+    
+    .status-loading {
+        background-color: #64748b; /* blue-gray-500 */
     }
 </style>

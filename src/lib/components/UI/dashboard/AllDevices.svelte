@@ -28,7 +28,7 @@
 
 	let { locations, deviceActiveStatus } = $props<{
 		locations: LocationWithDevices[];
-		deviceActiveStatus: Record<string, boolean>;
+		deviceActiveStatus: Record<string, boolean | null>;
 	}>()
 	
 	// Get the UI store to access the view type
@@ -51,6 +51,9 @@
 
 <div class="device-cards-grid {getContainerClass(uiStore.dashboardViewType)}">
 	{#each locations as location (location.location_id)}
+		{@const hasNullStatus = (location.cw_devices ?? []).some((d: DeviceWithSensorData) => 
+			deviceActiveStatus[d.dev_eui] === null
+		)}
 		{@const activeDevices = (location.cw_devices ?? []).filter((d: DeviceWithSensorData) =>
 			isDeviceActive(d, deviceActiveStatus)
 		)}
@@ -65,6 +68,7 @@
 			{activeDevices}
 			{allActive}
 			{allInactive}
+			loading={hasNullStatus}
 		>
 			{#snippet content()}
 				{#each location.cw_devices ?? [] as device (device.dev_eui)}

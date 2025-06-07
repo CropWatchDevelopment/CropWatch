@@ -24,7 +24,7 @@ export interface DeviceWithSensorData extends DeviceWithType {
 export function setupDeviceActiveTimer(
     device: DeviceWithSensorData, 
     timerManager: DeviceTimerManager,
-    deviceActiveStatus: Record<string, boolean>
+    deviceActiveStatus: Record<string, boolean | null>
 ) {
     if (!device.latestData?.created_at) return;
     const deviceId = device.dev_eui as string;

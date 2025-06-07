@@ -17,7 +17,11 @@ export function createActiveTimer(lastUpdated: Date | null | undefined, interval
 
 	// Function to check if a date is active
 	function checkActive(date: Date | null | undefined, interval: number): boolean | null {
-		if (interval <= 0) return null;
+		// Handle invalid intervals by using a default value
+		if (interval <= 0) {
+			interval = 10; // Default to 10 minutes
+		}
+
 		if (date === null || date === undefined) return false;
 
 		// Use milliseconds for more precise calculation to avoid truncation issues
@@ -26,6 +30,15 @@ export function createActiveTimer(lastUpdated: Date | null | undefined, interval
 		const timeDiffMs = now.getTime() - new Date(date).getTime();
 		const intervalMs = interval * 60 * 1000;
 
+		// Add a maximum threshold for device activity (35 minutes) regardless of interval
+		const MAX_ACTIVE_TIME_MS = 36 * 60 * 1000; // 35 minutes in milliseconds
+
+		// If time difference exceeds our maximum threshold, device is inactive
+		if (timeDiffMs > MAX_ACTIVE_TIME_MS) {
+			return false;
+		}
+
+		// Device is active if time difference is less than the configured interval
 		return timeDiffMs < intervalMs;
 	}
 

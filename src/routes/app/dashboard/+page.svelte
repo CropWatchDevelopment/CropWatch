@@ -40,13 +40,26 @@
 	// Create a timer manager instance
 	const timerManager = new DeviceTimerManager();
 	
+	// Initialize stores and managers
+	// Use writable store for device active status - initialize as null (unknown) for all devices
+	const deviceActiveStatus = $state<Record<string, boolean | null>>({});
 	// Initialize the locations store
 	const locationsStore = getLocationsStore();
 	
-	// Using store values directly in the template
-	
-	// Device active status tracking
-	let deviceActiveStatus: Record<string, boolean> = $state({});
+	// Pre-initialize all devices as null (unknown status) to prevent flash of green
+	$effect(() => {
+		if (locationsStore.locations.length > 0) {
+			locationsStore.locations.forEach(location => {
+				if (location.cw_devices && location.cw_devices.length > 0) {
+					location.cw_devices.forEach((device: DeviceWithSensorData) => {
+						if (device.dev_eui && !(device.dev_eui in deviceActiveStatus)) {
+							deviceActiveStatus[device.dev_eui] = null;
+						}
+					});
+				}
+			});
+		}
+	});
 	
 	// Initialize the dashboard UI store for preferences
 	const uiStore = getDashboardUIStore();

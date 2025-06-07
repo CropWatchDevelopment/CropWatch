@@ -42,11 +42,17 @@ let dataPoints = $derived(
 
 </script>
 
+<!-- Use a four-state color system for better UX:
+     - Blue-gray (loading): Initial state before status is confirmed
+     - Blue (neutral): When we don't have data
+     - Green: When device is confirmed active with recent data
+     - Red: When device is confirmed inactive (data too old)
+-->
 <div
-    class=" border-l-8
-        {isActive ? 'border-l-green-500'
-                : 'border-l-red-500'}
-        {device.latestData?.created_at === null ? 'opacity-50' : ''}"
+    class="border-l-8
+        {isActive === null ? 'border-l-blue-300' : 
+         device.latestData?.created_at === null ? 'border-l-blue-400 opacity-50' : 
+         isActive ? 'border-l-green-500' : 'border-l-red-500'}"
 >
     <div class="flex px-3">
         <h3 class="mb-2 basis-1/3 text-lg font-semibold text-yellow-600 dark:text-yellow-400">{nameToJapaneseName('Details')}</h3>

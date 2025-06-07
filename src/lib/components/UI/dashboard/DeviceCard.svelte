@@ -18,7 +18,7 @@
 
 	let { device, isActive, locationId } = $props<{
 		device: DeviceWithLatestData;
-		isActive: boolean;
+		isActive: boolean | null;
 		locationId: number;
 	}>()
 </script>
@@ -29,6 +29,9 @@
 	detailHref={`/dashboard/location/${locationId}/device/${device.dev_eui}`}
 >
 	{#snippet children()}
+		{#if device.upload_interval <= 0}
+			<div class="invalid-interval-warning">Device has invalid upload interval</div>
+		{/if}
 		<DeviceDataList
 			device={{
 				...device,
@@ -46,3 +49,12 @@
 		/>
 	{/snippet}
 </DataRowItem>
+
+<style>
+	.invalid-interval-warning {
+		color: #ff3333;
+		font-size: 0.75rem;
+		padding: 0 0.5rem;
+		margin-bottom: 0.25rem;
+	}
+</style>

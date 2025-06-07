@@ -41,18 +41,31 @@
 
 	// Use the isActive prop directly from the parent component
 	// This simplifies the component and ensures consistent active status logic
-	let isActive = $derived(externalIsActive !== undefined ? Boolean(externalIsActive) : false);
+	// Start with a neutral 'loading' state until we get confirmation from the timer logic
+	let isActive = $derived(externalIsActive !== undefined ? 
+		(externalIsActive === null ? null : Boolean(externalIsActive)) : null);
+
+	// Track whether we've received a definitive status update
+	let statusConfirmed = $state(false);
+
+	// Update statusConfirmed when we get a definitive status
+	$effect(() => {
+		// Only set statusConfirmed to true when we have a non-null status
+		if (externalIsActive !== undefined && externalIsActive !== null) {
+			statusConfirmed = true;
+		}
+	});
 
 	// Log the active status for debugging
 	$effect(() => {
-		console.log(`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}, cw_device_type: ${device.cw_device_type.name}`);
+		console.log(
+			`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}, statusConfirmed: ${statusConfirmed}, cw_device_type: ${device.cw_device_type.name}`
+		);
 	});
 
 	// Determine the primary and secondary data keys based on device type - using reactive declarations
 	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2);
-	let secondaryDataKey = $derived(
-		device.cw_device_type.secondary_data_v2
-	);
+	let secondaryDataKey = $derived(device.cw_device_type.secondary_data_v2);
 
 	// Get the data values - using reactive declarations so they update when latestData changes
 	let primaryValue = $derived(device.latestData?.[primaryDataKey]);
@@ -94,9 +107,23 @@
 	open={defaultCollapse}
 	on:change={(e) => collapseStateChange(e)}
 >
+	<!-- Use a four-state color system for better UX:
+	     - Blue-gray (loading): Initial state before status is confirmed
+	     - Blue (neutral): When we don't have data
+	     - Green: When device is confirmed active with recent data
+	     - Red: When device is confirmed inactive (data too old)
+	-->
 	<div
 		slot="trigger"
-		class="flex-1 border-l-8 {isActive ? '!border-l-green-500' : 'border-l-red-500'}"
+		class="flex-1 border-l-8 {!statusConfirmed
+			? 'border-l-blue-300'
+			: isActive === null
+				? 'border-l-blue-300'
+				: !device.latestData?.created_at
+					? 'border-l-blue-400'
+					: isActive
+						? '!border-l-green-500'
+						: 'border-l-red-500'}"
 	>
 		<div class="my-1 mr-2 border-r-2">
 			<div class="flex flex-col text-base">
@@ -155,7 +182,15 @@
 		{@render children()}
 	{/if}
 
-	<div class="border-l-8 pb-1 pl-2 {isActive ? '!border-l-green-500' : 'border-l-red-500'} ">
+	<div
+		class="border-l-8 pb-1 pl-2 {!statusConfirmed
+			? 'border-l-blue-300'
+			: isActive === null
+				? 'border-l-blue-300'
+				: isActive
+					? '!border-l-green-500'
+					: 'border-l-red-500'} "
+	>
 		{#if detailHref || location}
 			<Button
 				text="View Details"
