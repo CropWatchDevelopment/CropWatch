@@ -9,20 +9,15 @@
 	import type { DeviceWithType } from '$lib/models/Device';
 	import type { AirData } from '$lib/models/AirData';
 	import type { SoilData } from '$lib/models/SoilData';
-	import Header from '$lib/components/Header.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import DashboardCard from '$lib/components/UI/dashboard/DashboardCard.svelte';
-	import DeviceDataList from '$lib/components/UI/dashboard/DeviceDataList.svelte';
-	import DataRowItem from '$lib/components/UI/dashboard/DataRowItem.svelte';
-	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
 	import LocationSidebar from '$lib/components/dashboard/LocationSidebar.svelte';
+	import AllDevices from '$lib/components/UI/dashboard/AllDevices.svelte';
 
 	import { DeviceTimerManager } from '$lib/utilities/deviceTimerManager';
-	import { isSoilSensor, isDeviceActive, getDeviceActiveStatus, getLocationActiveStatus } from '$lib/utilities/dashboardHelpers';
-	import { mdiViewDashboard, mdiMagnify, mdiClose } from '@mdi/js';
-	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
-	import { Icon } from 'svelte-ux';
-
+	import {
+		isDeviceActive,
+		getLocationActiveStatus
+	} from '$lib/utilities/dashboardHelpers';
 	// Get user data from the server load function
 	let { data } = $props();
 	const user = data.user;
@@ -88,8 +83,6 @@
 		}
 	});
 
-
-
 	// Clean up timers and subscriptions when component is destroyed
 	onDestroy(() => {
 		console.log('Cleaning up dashboard resources');
@@ -140,7 +133,7 @@
 			// If there are locations, select the first one by default
 			if (userLocations.length > 0) {
 				await selectLocation(userLocations[0].location_id);
-				
+
 				// Set up polling for the selected location using the timer manager
 				timerManager.setupPolling(userLocations[0].location_id, refreshDevicesForLocation);
 			}
@@ -269,23 +262,18 @@
 		const deviceId = device.dev_eui as string;
 
 		// Get the upload interval from the device
-		const uploadInterval = device.upload_interval || device.deviceType?.default_upload_interval || 10;
+		const uploadInterval =
+			device.upload_interval || device.deviceType?.default_upload_interval || 10;
 
 		// Use the timer manager to set up a timer for this device
 		timerManager.setupDeviceActiveTimer(
-			device, 
+			device,
 			uploadInterval,
 			(deviceId: string, isActive: boolean | null) => {
 				// Update the device active status in our component state
 				deviceActiveStatus[deviceId] = isActive === null ? false : isActive;
 			}
 		);
-	}
-
-	// Function to clean up a device timer
-	function cleanupDeviceTimer(deviceId: string) {
-		// Use the timer manager to clean up the timer for this device
-		timerManager.cleanupDeviceTimer(deviceId);
 	}
 
 	// Function to select a location and load its devices
@@ -295,33 +283,19 @@
 
 		// Clean up any existing polling before changing location
 		timerManager.cleanupPolling();
-		
+
 		// Update selected location
 		selectedLocation = locationId;
-		
+
 		// Load devices for the new location
 		await loadDevicesForLocation(locationId);
-		
+
 		// Set up polling for the newly selected location
 		timerManager.setupPolling(locationId, refreshDevicesForLocation);
 	}
 
 	// Function to get current selected location
 	let currentLocation = $derived(locations.find((loc) => loc.location_id === selectedLocation));
-
-	// Function to get container class based on view type
-	function getContainerClass(viewType: string): string {
-		switch (viewType) {
-			case 'grid':
-				return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
-			case 'mozaic':
-				return 'columns-[20rem] gap-4 space-y-4';
-			case 'list':
-				return 'flex flex-col gap-4';
-			default:
-				return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
-		}
-	}
 
 	// Function to handle keyboard navigation for location selection
 	// Note: handleKeyDown is now handled in the LocationSidebar component
@@ -349,11 +323,11 @@
 			<!-- Location selector panel -->
 			<LocationSidebar
 				{locations}
-				selectedLocation={selectedLocation}
-				bind:search={search}
-				bind:hideEmptyLocations={hideEmptyLocations}
-				bind:dashboardViewType={dashboardViewType}
-				bind:dashboardSortType={dashboardSortType}
+				{selectedLocation}
+				bind:search
+				bind:hideEmptyLocations
+				bind:dashboardViewType
+				bind:dashboardSortType
 				onSelectLocation={selectLocation}
 			/>
 
@@ -365,69 +339,7 @@
 				{:else if locationError}
 					<div class="error">{locationError}</div>
 				{:else if locations.length > 0}
-					<div
-						class="device-cards-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-					>
-						{#each locations as location (location.location_id)}
-							{@const activeDevices = (location.cw_devices ?? []).filter((d) => isDeviceActive(d, deviceActiveStatus))}
-							{@const allActive =
-								(location.cw_devices?.length ?? 0) > 0 &&
-								activeDevices.length === (location.cw_devices?.length ?? 0)}
-							{@const allInactive =
-								(location.cw_devices?.length ?? 0) > 0 && activeDevices.length === 0}
-							<DashboardCard
-								{location}
-								href={`/app/dashboard/location/${location.location_id}`}
-								{activeDevices}
-								{allActive}
-								{allInactive}
-							>
-								{#snippet content()}
-									{#each location.cw_devices ?? [] as device (device.dev_eui)}
-										{@const isActive = isDeviceActive(device, deviceActiveStatus)}
-										<DataRowItem
-											device={{
-												...device,
-												latestData: device.latestData || {},
-												cw_device_type: {
-													name: device.deviceType?.name || 'Unknown',
-													default_upload_interval: device.deviceType?.default_upload_interval || 10,
-													primary_data_notation: device.deviceType?.primary_data_notation || '°C',
-													secondary_data_notation:
-														device.deviceType?.secondary_data_notation || '%',
-													primary_data_v2: device.deviceType?.primary_data_v2 || null,
-													secondary_data_v2: device.deviceType?.secondary_data_v2 || null,
-												}
-											}}
-											{isActive}
-											detailHref={`/dashboard/location/${device.location_id}/device/${device.dev_eui}`}
-										>
-										{#snippet children()}
-										<DeviceDataList
-													device={{
-														...device,
-														latestData: device.latestData || {},
-														cw_device_type: {
-															name: device.deviceType?.name || 'Unknown',
-															default_upload_interval:
-																device.deviceType?.default_upload_interval || 10,
-															primary_data_notation:
-																device.deviceType?.primary_data_notation,
-															secondary_data_notation:
-																device.deviceType?.secondary_data_notation || null,
-															primary_data_v2: device.deviceType?.primary_data_v2 || null,
-															secondary_data_v2: device.deviceType?.secondary_data_v2 || null,
-														}
-													}}
-													{isActive}
-												/>
-											{/snippet}
-										</DataRowItem>
-									{/each}
-								{/snippet}
-							</DashboardCard>
-						{/each}
-					</div>
+					<AllDevices {locations} {deviceActiveStatus} />
 				{:else}
 					<p>No locations found.</p>
 				{/if}
@@ -466,47 +378,6 @@
 		box-shadow:
 			0 4px 6px -1px rgba(0, 0, 0, 0.1),
 			0 2px 4px -1px rgba(0, 0, 0, 0.06);
-	}
-
-
-
-	.device-cards-grid {
-		/* Base styles that apply to all view modes */
-		gap: 1rem;
-		width: 100%;
-		max-width: 1200px;
-		margin: 0; /* Remove auto margin to align left */
-	}
-
-	/* When in grid mode, the container class will handle the grid layout */
-	.device-cards-grid.grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-	}
-
-	/* Grid view responsive columns */
-	@media (min-width: 640px) {
-		.device-cards-grid.grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-	}
-
-	@media (min-width: 1024px) {
-		.device-cards-grid.grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
-
-	@media (min-width: 1280px) {
-		.device-cards-grid.grid {
-			grid-template-columns: repeat(4, 1fr);
-		}
-	}
-
-	/* Card styling for dashboard components */
-	:global(.dashboard-card) {
-		margin-bottom: 1rem;
-		width: 100%;
 	}
 
 	.loading,
