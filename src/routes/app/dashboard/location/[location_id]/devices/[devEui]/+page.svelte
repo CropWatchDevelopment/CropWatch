@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Header from '$lib/components/Header.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import type { DeviceWithType } from '$lib/models/Device';
 
@@ -8,14 +7,13 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
-	import { goto } from '$app/navigation';
+
 	import {
 		formatDateOnly,
 		formatDateForInput,
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
-	import WaterLevel from '$lib/components/charts/WaterLevel.svelte';
-	import DateRange from '$lib/components/UI/detail/DateRange.svelte';
+	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -125,7 +123,13 @@
 
 <svelte:head>
 	<title>Device Details - {device?.name || device?.dev_eui}</title>
+	<link
+		rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/@event-calendar/build@4.4.0/dist/event-calendar.min.css"
+	/>
 </svelte:head>
+
+
 
 <div id="chart-line"></div>
 
@@ -292,7 +296,7 @@
 				</h3>
 
 				<!-- <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"> -->
-				 <div class="flex flex-row gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				<div class="flex flex-row gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{#if temperatureChartVisible}
 						<StatsCard
 							notation="°C"
@@ -396,6 +400,8 @@
 			</div>
 		{/if}
 	</section>
+
+	<WeatherCalendar />
 </div>
 
 <style>
