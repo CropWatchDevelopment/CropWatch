@@ -1,24 +1,37 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { mdiViewDashboard, mdiMagnify, mdiClose } from '@mdi/js';
+	import { mdiViewDashboard, mdiMagnify, mdiClose, mdiChevronLeft, mdiChevronRight } from '@mdi/js';
 	import { Icon } from 'svelte-ux';
 	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import type { Location } from '$lib/models/Location';
 	import type { DeviceWithType } from '$lib/models/Device';
-	
+
 	// Use the same interfaces as in the dashboard page
 	interface DeviceWithSensorData extends DeviceWithType {
 		// This is just a placeholder to match the dashboard page interface
 		// The actual properties would be defined in the dashboard page
 	}
-	
+
 	interface LocationWithDevices extends Location {
 		cw_devices?: DeviceWithSensorData[];
 	}
-	
+
 	interface LocationWithCount extends LocationWithDevices {
 		deviceCount: number;
+	}
+
+	// Define component props interface
+	interface LocationSidebarProps {
+		locations: LocationWithCount[];
+		selectedLocation: number | null;
+		search: string;
+		hideEmptyLocations: boolean;
+		dashboardViewType: string;
+		dashboardSortType: string;
+		collapsed: boolean;
+		onSelectLocation: (locationId: number) => void;
+		onToggleCollapse: () => void;
 	}
 
 	// Props
@@ -28,9 +41,11 @@
 	export let hideEmptyLocations: boolean = false;
 	export let dashboardViewType: string = 'grid';
 	export let dashboardSortType: string = 'name';
+	export let collapsed: boolean = false;
 
-	// Expose event handler for location selection
+	// Expose event handlers
 	export let onSelectLocation: (locationId: number) => void;
+	export let onToggleCollapse: () => void;
 
 	// Handle keyboard navigation
 	function handleKeyDown(e: KeyboardEvent, location: LocationWithCount) {
@@ -47,30 +62,42 @@
 	}
 </script>
 
-<div class="locations-panel w-[300px]">
-	<h2 class="flex items-center">
-		<Icon path={mdiViewDashboard} class="mr-2" />
-		Locations
-		<div class="ml-auto">
-			<DashboardFilterBits
-				bind:search
-				bind:hideNoDeviceLocations={hideEmptyLocations}
-				bind:dashboardViewType
-				bind:dashboardSortType
-			/>
-		</div>
-	</h2>
-	<div class="pb-6">
-		<div class="relative">
-			<div class="absolute inset-y-0 left-0 flex items-center pl-2">
-				<svg viewBox="0 0 24 24" width="16" height="16" class="text-gray-500">
+<div class="locations-panel" class:collapsed>
+	<div class="sidebar-header flex items-center">
+		<button
+			class="toggle-button flex h-8 items-center justify-center pr-4"
+			on:click={onToggleCollapse}
+			aria-label="{collapsed ? 'Expand' : 'Collapse'} sidebar"
+		>
+			<Icon class="" path={collapsed ? mdiChevronRight : mdiChevronLeft} size="1.25em" />
+		</button>
+
+		{#if !collapsed}
+			<h2 class="flex items-center">
+				<Icon path={mdiViewDashboard} class="mr-2" />
+				Locations
+				<div class="ml-auto">
+					<DashboardFilterBits
+						bind:search
+						bind:hideNoDeviceLocations={hideEmptyLocations}
+						bind:dashboardViewType
+						bind:dashboardSortType
+					/>
+				</div>
+			</h2>
+		{/if}
+	</div>
+	<div class=" pb-6" class:hidden={collapsed}>
+		<div class="relative px-1">
+			<div class="absolute inset-y-0 left-1 flex items-center pl-2">
+				<svg viewBox="0 0 24 24" width="16" height="16" class=" text-gray-500">
 					<path fill="currentColor" d={mdiMagnify} />
 				</svg>
 			</div>
 			<input
 				type="text"
 				bind:value={search}
-				class="w-full rounded-md border border-zinc-300 bg-white py-2 pr-8 pl-8 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 focus:outline-none
+				class="w-full rounded-md border border-zinc-300 bg-white py-2 pr-8 pl-7 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 focus:outline-none
        dark:border-zinc-600 dark:bg-zinc-600 dark:text-white dark:placeholder-zinc-400 dark:focus:border-zinc-400 dark:focus:ring-zinc-500"
 				placeholder={nameToJapaneseName('Search')}
 				on:keydown={(e) => {
@@ -92,9 +119,9 @@
 			{/if}
 		</div>
 	</div>
-	{#if locations.length === 0}
+	{#if locations.length === 0 && !collapsed}
 		<p>No locations found.</p>
-	{:else}
+	{:else if !collapsed}
 		<ul class="location-list" role="listbox" aria-label="Select a location">
 			{#each locations
 				.filter((location) => {
@@ -128,22 +155,60 @@
 
 <style>
 	.locations-panel {
-		background-color: var(--color-card-bg);
-		border-radius: 0.5rem;
-		padding: 1rem;
+		background-color: var(--color-card);
+		min-height: calc(100vh - 62px);
+		border-radius: 0.25rem;
+		padding: 0.25rem;
 		height: fit-content;
 		box-shadow: var(--shadow-sm);
+		transition:
+			width 0.3s ease,
+			padding 0.3s ease;
+		width: 100%;
+	}
+
+	.locations-panel.collapsed {
+		width: 100%;
+		padding: 0.5rem;
+		overflow: hidden;
+	}
+
+	.sidebar-header {
+		display: flex;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.toggle-button {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 0.25rem;
+		border-radius: 0.25rem;
+		color: var(--color-text);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-right: 0.5rem;
+	}
+
+	.toggle-button:hover {
+		background-color: var(--color-card-hover);
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	h2 {
 		font-size: 1.25rem;
 		font-weight: 600;
-		margin-bottom: 1rem;
+		margin-bottom: 0rem;
 	}
 
 	.location-list {
 		list-style: none;
-		padding: 0;
+		padding: 4px;
 		margin: 0;
 	}
 

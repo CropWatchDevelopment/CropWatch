@@ -5,7 +5,7 @@
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 	import { DeviceTimerManager } from '$lib/utilities/deviceTimerManager';
 	import { setupDeviceActiveTimer } from '$lib/utilities/deviceTimerSetup';
-	
+
 	// Get user data from the server load function
 	let { data } = $props();
 	const user = data.user;
@@ -18,6 +18,18 @@
 	import type { SoilData } from '$lib/models/SoilData';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import LocationSidebar from '$lib/components/dashboard/LocationSidebar.svelte';
+	// Define the interface for LocationSidebar props to match the component's exported props
+	interface LocationSidebarProps {
+		locations: LocationWithCount[];
+		selectedLocation: number | null;
+		search: string;
+		hideEmptyLocations: boolean;
+		dashboardViewType: string;
+		dashboardSortType: string;
+		collapsed: boolean;
+		onSelectLocation: (locationId: number) => void;
+		onToggleCollapse: () => void;
+	}
 	import AllDevices from '$lib/components/UI/dashboard/AllDevices.svelte';
 
 	// Enhanced location type with deviceCount property
@@ -39,17 +51,17 @@
 
 	// Create a timer manager instance
 	const timerManager = new DeviceTimerManager();
-	
+
 	// Initialize stores and managers
 	// Use writable store for device active status - initialize as null (unknown) for all devices
 	const deviceActiveStatus = $state<Record<string, boolean | null>>({});
 	// Initialize the locations store
 	const locationsStore = getLocationsStore();
-	
+
 	// Pre-initialize all devices as null (unknown status) to prevent flash of green
 	$effect(() => {
 		if (locationsStore.locations.length > 0) {
-			locationsStore.locations.forEach(location => {
+			locationsStore.locations.forEach((location) => {
 				if (location.cw_devices && location.cw_devices.length > 0) {
 					location.cw_devices.forEach((device: DeviceWithSensorData) => {
 						if (device.dev_eui && !(device.dev_eui in deviceActiveStatus)) {
@@ -60,10 +72,32 @@
 			});
 		}
 	});
-	
+
 	// Initialize the dashboard UI store for preferences
 	const uiStore = getDashboardUIStore();
-	
+
+	// Sidebar collapsed state
+	let sidebarCollapsed = $state(false);
+
+	// Toggle sidebar collapsed state
+	function toggleSidebar() {
+		sidebarCollapsed = !sidebarCollapsed;
+		if (browser) {
+			localStorage.setItem('sidebar_collapsed', sidebarCollapsed.toString());
+		}
+	}
+
+	// Load sidebar state from localStorage on mount
+	// Note: This is separate from the main onMount function to avoid conflicts
+	onMount(() => {
+		if (browser) {
+			const savedState = localStorage.getItem('sidebar_collapsed');
+			if (savedState !== null) {
+				sidebarCollapsed = savedState === 'true';
+			}
+		}
+	});
+
 	// Persist UI store values to localStorage when they change
 	$effect(() => {
 		if (browser) {
@@ -83,13 +117,14 @@
 	});
 
 	// Initialize dashboard on mount
+	// This is the main onMount function for the dashboard
 	onMount(async () => {
 		try {
 			// Fetch locations using the store - this also selects the first location
 			await locationsStore.fetchLocations(user.id);
-			
+
 			// Setup active timers for all devices in all locations
-			locationsStore.locations.forEach(location => {
+			locationsStore.locations.forEach((location) => {
 				if (location.cw_devices && location.cw_devices.length > 0) {
 					location.cw_devices.forEach((device: DeviceWithSensorData) => {
 						if (device.latestData?.created_at) {
@@ -98,13 +133,10 @@
 					});
 				}
 			});
-			
+
 			// Set up polling for the selected location
 			if (locationsStore.selectedLocationId) {
-				timerManager.setupPolling(
-					locationsStore.selectedLocationId, 
-					refreshDevicesForLocation
-				);
+				timerManager.setupPolling(locationsStore.selectedLocationId, refreshDevicesForLocation);
 			}
 		} catch (err) {
 			console.error('Error initializing dashboard:', err);
@@ -137,7 +169,7 @@
 
 			// Use the store to refresh devices
 			await locationsStore.refreshDevicesForLocation(locationId);
-			
+
 			// Setup active timers for each device
 			if (locationsStore.devices && Array.isArray(locationsStore.devices)) {
 				locationsStore.devices.forEach((device: DeviceWithSensorData) => {
@@ -151,8 +183,9 @@
 
 				console.log('Devices refreshed:', {
 					deviceCount: locationsStore.devices.length,
-					activeCount: locationsStore.devices.filter((d: DeviceWithSensorData) => 
-						deviceActiveStatus[d.dev_eui as string]).length
+					activeCount: locationsStore.devices.filter(
+						(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
+					).length
 				});
 			}
 
@@ -162,8 +195,6 @@
 			return false;
 		}
 	}
-
-
 
 	// Function to select a location and load its devices
 	async function selectLocation(locationId: number) {
@@ -203,7 +234,7 @@
 	{:else if locationsStore.locationError}
 		<div class="error">{locationsStore.locationError}</div>
 	{:else}
-		<div class="dashboard-grid">
+		<div class="dashboard-grid" class:sidebar-collapsed={sidebarCollapsed}>
 			<!-- Location selector panel -->
 			<LocationSidebar
 				locations={locationsStore.locations}
@@ -213,6 +244,8 @@
 				bind:dashboardViewType={uiStore.dashboardViewType}
 				bind:dashboardSortType={uiStore.dashboardSortType}
 				onSelectLocation={selectLocation}
+				collapsed={sidebarCollapsed}
+				onToggleCollapse={toggleSidebar}
 			/>
 
 			<!-- Device display panel -->
@@ -223,10 +256,7 @@
 				{:else if locationsStore.locationError}
 					<div class="error">{locationsStore.locationError}</div>
 				{:else if locationsStore.locations.length > 0}
-					<AllDevices 
-						locations={locationsStore.locations} 
-						{deviceActiveStatus} 
-					/>
+					<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
 				{:else}
 					<p>No locations found.</p>
 				{/if}
@@ -242,14 +272,34 @@
 		min-height: 100vh;
 		background-color: var(--color-bg);
 		color: var(--color-text);
+		--sidebar-expanded: 200px;
+		--sidebar-collapsed: 32px;
 	}
 
 	.dashboard-grid {
 		display: grid;
-		grid-template-columns: 300px 1fr;
-		gap: 1.5rem;
-		padding: 1.5rem;
+		grid-template-columns: var(--sidebar-expanded) 1fr;
+		gap: 0.25rem;
+		padding: 0.5rem;
 		flex: 1;
+		transition: grid-template-columns 0.3s ease;
+	}
+
+	.dashboard-grid.sidebar-collapsed {
+		grid-template-columns: var(--sidebar-collapsed) 1fr;
+	}
+
+	/* Ensure the devices panel grows when sidebar collapses */
+	.devices-panel {
+		transition: all 0.3s ease;
+		width: 100%;
+		overflow: auto;
+		background-color: var(--color-card);
+		border-radius: 0.5rem;
+		padding: 1rem;
+		box-shadow:
+			0 4px 6px -1px rgba(0, 0, 0, 0.1),
+			0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	}
 
 	@media (max-width: 768px) {
@@ -258,14 +308,7 @@
 		}
 	}
 
-	.devices-panel {
-		background-color: var(--color-card);
-		border-radius: 0.5rem;
-		padding: 1rem;
-		box-shadow:
-			0 4px 6px -1px rgba(0, 0, 0, 0.1),
-			0 2px 4px -1px rgba(0, 0, 0, 0.06);
-	}
+
 
 	.loading,
 	.loading-devices,

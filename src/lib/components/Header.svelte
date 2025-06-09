@@ -6,19 +6,21 @@
 	// Simplified logout function
 	function handleLogout() {
 		console.log('Logging out user:', userName);
-		
+
 		// Call the API endpoint for server-side logout
 		fetch('/api/auth/logout', {
 			method: 'POST'
-		}).then(() => {
-			console.log('Server logout successful');
-			// Redirect to login page
-			goto('/auth/login');
-		}).catch(err => {
-			console.error('Server logout error:', err);
-			// Redirect anyway
-			goto('/auth/login');
-		});
+		})
+			.then(() => {
+				console.log('Server logout successful');
+				// Redirect to login page
+				goto('/auth/login');
+			})
+			.catch((err) => {
+				console.error('Server logout error:', err);
+				// Redirect anyway
+				goto('/auth/login');
+			});
 	}
 
 	// Simple log when userName changes for debugging
@@ -27,12 +29,12 @@
 	});
 </script>
 
-<header class="dashboard-header bg-cyan-800 text-white p-4">
-	<h1>IoT Dashboard</h1>
+<header class="dashboard-header bg-cyan-800 p-4 pt-1 pb-2 text-white">
+	<h1 class="">IoT Dashboard</h1>
 	<div class="user-controls">
 		<span class="welcome-user">Welcome, {userName}</span>
 		<ThemeToggle />
-		<button class="logout-button" onclick={handleLogout}> Logout </button>
+		<button class="logout-button !px-3 !py-1" onclick={handleLogout}> Logout </button>
 	</div>
 </header>
 
@@ -58,7 +60,6 @@
 		background-color: #f44336;
 		color: white;
 		border: none;
-		padding: 8px 16px;
 		border-radius: 4px;
 		cursor: pointer;
 		font-size: 14px;
