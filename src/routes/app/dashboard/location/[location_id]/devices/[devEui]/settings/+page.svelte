@@ -43,6 +43,7 @@
 	<p class="text-muted text-sm">Settings for device {devEui}</p>
 	<button class="btn btn-primary" onclick={() => goto('/app/dashboard')}> Go to Dashboard </button>
 	<button onclick={() => goto(`settings/rules`)}>📜 Rules</button>
+	<button onclick={() => goto(`settings/permissions`)}>🔒 Permissions</button>
 </div>
 
 <div>
@@ -68,6 +69,7 @@
 			<label for="deviceName" class="text-sm font-medium">Device Name</label>
 			<input
 				id="deviceName"
+				name="name"
 				type="text"
 				placeholder="Enter device name"
 				value={device?.name}
