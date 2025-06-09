@@ -2,19 +2,17 @@
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { error as errorToast, success } from '$lib/stores/toast.svelte';
-	import { RevoGrid, type ColumnRegular } from '@revolist/svelte-datagrid';
 
-	let data = $props();
+	let { data } = $props();
 
 	const { location, locationUsers, deviceCount, permissionTypes, currentUser } = data;
 
 	// Location details editing
 	let editingLocationDetails = $state(false);
-	let locationName = $derived(location.name);
-	let locationLatitude = $derived(location.lat || null);
-	let locationLongitude = $derived(location.long || null);
+	let locationName = $state(location?.name ?? 'no name set');
+	let locationLatitude = $state(location.lat || null);
+	let locationLongitude = $state(location.long || null);
 	let isUpdatingLocation = $state(false);
-	let grid_component_instance = $state(); // To bind the component instance if needed
 	const columns: ColumnRegular[] = $state([
 		{
 			name: '🎰 Ticker',
@@ -128,7 +126,7 @@
 		user_id: string;
 		permission_level: number;
 		applyToDevices: boolean;
-	} | null = null;
+	} | null = $state(null);
 
 	const permissionMap = {
 		1: 'Admin',
@@ -208,7 +206,7 @@
 </script>
 
 <svelte:head>
-	<title>Location Settings - {location.name}</title>
+	<title>Location Settings - {locationName}</title>
 </svelte:head>
 
 <div class="container mx-auto px-4 py-8">
@@ -230,7 +228,7 @@
 				<button
 					type="button"
 					class="text-blue-500 hover:text-blue-700"
-					on:click={startEditLocation}
+					onclick={startEditLocation}
 				>
 					Edit Details
 				</button>
@@ -302,7 +300,7 @@
 					<button
 						type="button"
 						class="rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
-						on:click={cancelEditLocation}
+						onclick={() => cancelEditLocation()}
 					>
 						Cancel
 					</button>
@@ -317,8 +315,8 @@
 				<div>
 					<h3 class="text-sm font-medium text-gray-500">Coordinates</h3>
 					<p>
-						{#if location.lat !== null && location.long !== null}
-							{location.lat.toFixed(6)}, {location.long.toFixed(6)}
+						{#if locationLatitude !== null && locationLongitude !== null}
+							{locationLatitude.toFixed(6)}, {locationLongitude.toFixed(6)}
 						{:else}
 							Not set
 						{/if}
@@ -334,12 +332,7 @@
 			Manage which users have access to this location and with what permission level.
 		</p>
 
-		{#if browser}
-			<RevoGrid />
-		{:else}
-			<p>RevoGrid is not available during server-side rendering.</p>
-		{/if}
-		<!-- {#if locationUsers.length > 0}
+		{#if locationUsers.length > 0}
 			<div class="overflow-x-auto">
 				<table class="min-w-full">
 					<thead>
@@ -410,7 +403,7 @@
 											<button
 												type="button"
 												class="text-gray-600 hover:text-gray-800"
-												on:click={cancelEdit}
+												onclick={() => cancelEdit()}
 											>
 												Cancel
 											</button>
@@ -420,7 +413,7 @@
 											<button
 												type="button"
 												class="text-blue-600 hover:text-blue-800"
-												on:click={() => startEdit(user)}
+												onclick={() => startEdit(user)}
 											>
 												Edit
 											</button>
@@ -534,33 +527,6 @@
 					</button>
 				</div>
 			</form>
-		</div> -->
-	</div>
-
-	<div class="bg-foreground-light dark:bg-foreground-dark rounded-lg p-6 shadow-lg">
-		<h2 class="mb-4 text-xl font-bold">About Permissions</h2>
-
-		<div class="prose max-w-none">
-			<h3>Location Permissions</h3>
-			<p>Users can have one of four permission levels for any location:</p>
-			<ul>
-				<li>
-					<strong>Admin (1):</strong> Full control over the location, including managing users and all
-					devices
-				</li>
-				<li>
-					<strong>User (2):</strong> Can use and modify location settings except for user permissions
-				</li>
-				<li><strong>Viewer (3):</strong> Can only view location data but not make changes</li>
-				<li><strong>Disabled (4):</strong> No access to the location</li>
-			</ul>
-
-			<h3>Device Permissions</h3>
-			<p>
-				When a user is added to a location, they are automatically added to all devices in that
-				location with the "Disabled" permission level by default. You can choose to apply the same
-				permission level to all devices by checking the "Apply to all devices" option.
-			</p>
 		</div>
 	</div>
 </div>
