@@ -14,6 +14,7 @@
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
 	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
+	import moment from 'moment';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -23,6 +24,18 @@
 	let dataType = $state(data.dataType);
 	let latestData = $state(data.latestData);
 	let historicalData = $state(data.historicalData || []);
+
+	// Define the type for a calendar event
+	interface CalendarEvent {
+		id: Date;
+		start: Date;
+		end: Date;
+		allDay: boolean;
+		title: string;
+		display: string;
+	}
+
+	let calendarEvents = $state<CalendarEvent[]>([]);
 
 	// Setup device detail functionality
 	const deviceDetail = $state(setupDeviceDetail());
@@ -68,6 +81,7 @@
 		endDateInputString = formatDateForInput(deviceDetail.endDate);
 
 		processHistoricalData(historicalData); // Initial processing of server-loaded data
+		calendarEvents = updateEvents(); // Initialize calendar events based on historical data
 	});
 
 	// Effect to re-render visualization when historicalData or DOM elements change
@@ -86,6 +100,34 @@
 			endDateInputString = formatDateForInput(deviceDetail.endDate);
 		}
 	});
+
+	const updateEvents = (data: any[] = historicalData): CalendarEvent[] => {
+		// Group data by date
+		const dailyStats: { [date: string]: { date: Date; high: number; low: number } } = {};
+		data.forEach((event) => {
+			const dateStr = new Date(event.created_at).toISOString().split('T')[0];
+			const temp = Number(event.temperature_c);
+			if (!dailyStats[dateStr]) {
+				dailyStats[dateStr] = {
+					date: new Date(dateStr),
+					high: temp,
+					low: temp
+				};
+			} else {
+				dailyStats[dateStr].high = Math.max(dailyStats[dateStr].high, temp);
+				dailyStats[dateStr].low = Math.min(dailyStats[dateStr].low, temp);
+			}
+		});
+		// Create calendar events with daily highs and lows
+		return Object.values(dailyStats).map((day) => ({
+			id: day.date,
+			start: day.date,
+			end: day.date,
+			allDay: true,
+			title: `${day.low.toFixed(1)}° - ${day.high.toFixed(1)}°`,
+			display: 'auto'
+		}));
+	};
 
 	// Function to handle fetching data for a specific date range
 	async function handleDateRangeSubmit() {
@@ -111,9 +153,12 @@
 		deviceDetail.error = null; // Clear previous errors before fetching
 
 		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
+		console.log('Requested range:', finalStartDate, finalEndDate, 'Received:', newData);
 		if (newData) {
 			historicalData = newData; // This will trigger $effect for renderVisualization
-			// processHistoricalData is called within fetchDataForDateRange in device-detail.svelte.ts
+			calendarEvents = updateEvents(newData); // Use newData directly
+		} else {
+			calendarEvents = updateEvents(historicalData);
 		}
 	}
 
@@ -129,8 +174,6 @@
 	/>
 </svelte:head>
 
-
-
 <div id="chart-line"></div>
 
 <div class="mx-auto max-w-6xl p-4">
@@ -144,6 +187,11 @@
 
 		<!-- Heading -->
 		<h1 class="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">Soil Device Details</h1>
+
+		<a href="/app/dashboard/location/{device?.location_id}/devices/{device?.dev_eui}/settings"
+			class="mb-4 inline-flex items-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
+				hover:bg-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
+				dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-zinc-800">Settings</a>
 
 		<!-- Device metadata container -->
 		<div class="rounded-lg bg-gray-100 p-4 shadow-sm dark:bg-zinc-800">
@@ -400,9 +448,16 @@
 			</div>
 		{/if}
 	</section>
-
-	<WeatherCalendar />
 </div>
+<WeatherCalendar
+	events={calendarEvents}
+	onDateChange={(date: Date) => {
+		console.log(date);
+		startDateInputString = formatDateForInput(date);
+		endDateInputString = formatDateForInput(moment(date).endOf('month').toDate());
+		handleDateRangeSubmit();
+	}}
+/>
 
 <style>
 	/* Chart container structure */
@@ -433,7 +488,7 @@
 	}
 
 	/* ApexCharts style overrides */
-	.apexcharts-canvas {
+	/* .apexcharts-canvas {
 		background-color: transparent !important;
 		width: 100% !important;
 		max-width: 100% !important;
@@ -447,7 +502,7 @@
 	.apexcharts-yaxis-label,
 	.apexcharts-xaxis-label {
 		font-size: 12px !important;
-	}
+	} */
 
 	/* Responsive layout for mobile */
 	@media (max-width: 768px) {
