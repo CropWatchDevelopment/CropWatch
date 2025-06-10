@@ -272,8 +272,8 @@
 		min-height: 100vh;
 		background-color: var(--color-bg);
 		color: var(--color-text);
-		--sidebar-expanded: 200px;
-		--sidebar-collapsed: 32px;
+		--sidebar-expanded: 250px;
+		--sidebar-collapsed: 40px;
 	}
 
 	.dashboard-grid {
@@ -307,8 +307,6 @@
 			grid-template-columns: 1fr;
 		}
 	}
-
-
 
 	.loading,
 	.loading-devices,
