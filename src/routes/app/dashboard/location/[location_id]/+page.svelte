@@ -1,11 +1,20 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
   import { Button } from 'bits-ui';
 
-  export let data;
+  let { data } = $props();
   const location = data.location!;
   const devices = data.devices ?? [];
   const locationId = data.locationId;
+  
+  // State for clicked coordinates
+  let clickedCoords = $state<{lat: number, lon: number} | null>(null);
+  
+  function handleMapClick(lat: number, lon: number) {
+    clickedCoords = { lat, lon };
+    console.log(`Clicked at: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+  }
 </script>
 
 <svelte:head>
@@ -17,18 +26,30 @@
   <section class="space-y-2">
     <h1 class="text-2xl font-bold">{location.name}</h1>
     <p class="text-sm text-muted">{location.description}</p>
+    
+    <!-- Display clicked coordinates if available -->
+    {#if clickedCoords}
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+        <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+          Clicked Coordinates: 
+          <span class="font-mono">{clickedCoords.lat.toFixed(6)}, {clickedCoords.lon.toFixed(6)}</span>
+        </p>
+      </div>
+    {/if}
   </section>
 
   
   <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div class="h-64 w-full rounded-lg overflow-hidden shadow-md">
 		<!-- Do something about this horrible IFRAME later on -->
-      <iframe
-        class="w-full h-full"
-        src={`https://maps.google.com/maps?q=${location.lat},${location.long}&z=${location.map_zoom}&output=embed`}
-        frameborder="0"
-        allowfullscreen
-      ></iframe>
+      <LeafletMap
+        lat={location.lat || 0}
+        lon={location.long || 0}
+        zoom={location.map_zoom || 13}
+        markers={data.markers || []}
+        onclick={handleMapClick}
+        showClickMarker={true}
+      />
     </div>
     <!-- Details -->
     <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow-md space-y-2">

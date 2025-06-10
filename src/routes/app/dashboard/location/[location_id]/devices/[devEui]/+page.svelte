@@ -168,10 +168,6 @@
 
 <svelte:head>
 	<title>Device Details - {device?.name || device?.dev_eui}</title>
-	<link
-		rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/@event-calendar/build@4.4.0/dist/event-calendar.min.css"
-	/>
 </svelte:head>
 
 <div id="chart-line"></div>
@@ -452,7 +448,6 @@
 <WeatherCalendar
 	events={calendarEvents}
 	onDateChange={(date: Date) => {
-		console.log(date);
 		startDateInputString = formatDateForInput(date);
 		endDateInputString = formatDateForInput(moment(date).endOf('month').toDate());
 		handleDateRangeSubmit();

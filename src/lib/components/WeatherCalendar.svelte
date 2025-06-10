@@ -16,9 +16,9 @@
 		loading = true;
 		try {
 			const startDate = moment(date).startOf('month').toDate();
-			const endDate = moment(date).endOf('month').toDate();
+			let endDate = moment(date).endOf('month').toDate();
 			if (endDate > new Date()) {
-				endDate.setDate(endDate.getDate() - 1); // Adjust to yesterday if future date
+				endDate = new Date(); // Adjust to yesterday if future date
 			}
 
 			const data = await fetchHistoricalWeather(startDate, endDate);
