@@ -459,7 +459,7 @@
 			<form
 				method="POST"
 				action="?/addUser"
-				class="max-w-md"
+				class="max-w-md w-full"
 				use:enhance={() => {
 					isAdding = true;
 
@@ -510,7 +510,7 @@
 							value="true"
 							bind:checked={applyPermissionToDevices}
 						/>
-						<span>Apply same permission to all devices in this location ({deviceCount})</span>
+						<span>Apply same permission to all devices in this location (x{deviceCount} devices)</span>
 					</label>
 					<p class="mt-1 text-sm text-gray-500">
 						If unchecked, user will be added with "Disabled" permission to all devices.
