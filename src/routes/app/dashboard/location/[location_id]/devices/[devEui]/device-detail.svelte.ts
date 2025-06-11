@@ -287,7 +287,7 @@ export function setupDeviceDetail() {
 				theme: 'dark',
 				shared: true,
 				x: { format: 'MMM dd HH:mm' },
-				style: { fontSize: '13px', fontFamily: 'Inter, sans-serif' },
+				style: { fontSize: '13px', 'font-family': 'Inter, sans-serif' },
 				marker: { show: true },
 				y: { formatter: (val: number) => val?.toFixed ? val.toFixed(1) : val }
 			},
