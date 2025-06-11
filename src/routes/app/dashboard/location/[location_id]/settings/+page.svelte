@@ -116,10 +116,10 @@
 		}
 	};
 
-	let newUserEmail = '';
-	let newUserPermission = 3; // Default to Viewer
-	let applyPermissionToDevices = false;
-	let isAdding = false;
+        let newUserEmail = $state('');
+        let newUserPermission = $state(3); // Default to Viewer
+        let applyPermissionToDevices = $state(false);
+        let isAdding = $state(false);
 
 	let editingUser: {
 		id: number;

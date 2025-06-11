@@ -67,9 +67,12 @@
 </script>
 
 <div
-	class="flex w-full flex-col items-center rounded-lg bg-gray-100 p-4 text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
-	class:cursor-pointer={expandable}
-	onclick={toggleExpand}
+        class="flex w-full flex-col items-center rounded-lg bg-gray-100 p-4 text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+        class:cursor-pointer={expandable}
+        role="button"
+        tabindex="0"
+        onclick={toggleExpand}
+        onkeydown={(e) => e.key === 'Enter' && toggleExpand()}
 >
 	<!-- Title with Current reading and Trend -->
 	<div class="flex w-full items-center justify-between mb-2">
@@ -109,12 +112,12 @@
 	<!-- Bar with dots -->
 	<div class="relative h-2 w-full rounded-full bg-zinc-300 dark:bg-zinc-700">
 		<!-- Min and Max dots (gray in light mode, white in dark mode) -->
-		<div
-			class="absolute top-1/2 left-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
-		/>
-		<div
-			class="absolute top-1/2 right-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
-		/>
+                <div
+                        class="absolute top-1/2 left-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
+                ></div>
+                <div
+                        class="absolute top-1/2 right-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
+                ></div>
 
 		<!-- Avg dot colored -->
 		<div

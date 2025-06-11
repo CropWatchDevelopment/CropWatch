@@ -182,7 +182,7 @@
           
           <!-- Buildings -->
           {#each buildings as building (building.id)}
-            <g onclick={() => selectBuilding(building)} class="cursor-pointer" role="button" tabindex="0">
+            <g onclick={() => selectBuilding(building)} class="cursor-pointer" role="button" tabindex="0" onkeydown={(e) => e.key === 'Enter' && selectBuilding(building)}>
               <circle
                 cx={building.x}
                 cy={building.y}

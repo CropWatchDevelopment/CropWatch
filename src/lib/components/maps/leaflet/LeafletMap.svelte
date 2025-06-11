@@ -150,8 +150,8 @@
 		});
 	}
 
-	function createMarker(loc: [number, number]): L.Marker {
-		let count = $state(Math.ceil(Math.random() * 25));
+        function createMarker(loc: [number, number]): L.Marker {
+                let count = Math.ceil(Math.random() * 25);
 		let icon = markerIcon(count);
 		let marker = L.marker(loc, { icon });
 
@@ -262,7 +262,7 @@
 </svelte:head>
 <svelte:window onresize={resizeMap} />
 
-<div class="map" style="height:100%;width:100%" use:mapAction />
+<div class="map" style="height:100%;width:100%" use:mapAction></div>
 
 <style>
 	.map :global(.marker-text) {
