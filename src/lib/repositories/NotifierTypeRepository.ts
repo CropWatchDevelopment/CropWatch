@@ -15,8 +15,8 @@ export class NotifierTypeRepository extends BaseRepository<NotifierType, number>
 	protected entityName = 'NotifierType';
 
 	constructor(
-		@inject(TYPES.SupabaseClient) supabase: SupabaseClient,
-		@inject(ErrorHandlingService) errorHandler: ErrorHandlingService
+               @inject(TYPES.SupabaseClient) supabase: SupabaseClient,
+               @inject(TYPES.ErrorHandlingService) errorHandler: ErrorHandlingService
 	) {
 		super(supabase, errorHandler);
 	}

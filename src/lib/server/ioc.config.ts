@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import { Container } from 'inversify';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/private';
 import type { Database } from '../../database.types';
 import { TYPES } from './ioc.types';
 

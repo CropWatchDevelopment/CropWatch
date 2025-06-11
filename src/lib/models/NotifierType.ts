@@ -1,4 +1,3 @@
-import type { Database } from '../../../database.types';
 
 /**
  * NotifierType model representing notification types from the cw_notifier_types table
