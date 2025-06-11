@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { PermissionLevel } from '$lib/models/LocationUser.js';
-	import { Button, Select } from 'bits-ui';
+import { PermissionLevel } from '$lib/models/LocationUser.js';
+import { Button, Select } from 'bits-ui';
+import { formValidation } from '$lib/actions/formValidation';
 
 	let { data } = $props();
 
@@ -50,11 +51,12 @@
 </div>
 
 <form
-	id="create-device-form"
-	use:enhance
-	action="?/createDevice"
-	method="POST"
-	class="bg-card-light dark:bg-card-dark flex flex-col gap-6 rounded-lg p-6 shadow-md"
+       id="create-device-form"
+       use:enhance
+       use:formValidation
+       action="?/createDevice"
+       method="POST"
+       class="form-container"
 >
 	<!-- Device information -->
 	<div class="flex flex-col gap-2">
@@ -142,8 +144,12 @@
 	</div>
 	<!-- Submit button -->
 	<div class="flex justify-end">
-		<Button.Root type="submit" form="create-device-form" disabled={isSubmitting}
-			class="px-6 py-2 bg-primary text-white rounded">
+       <Button.Root
+               type="submit"
+               form="create-device-form"
+               disabled={isSubmitting}
+               class="px-6 py-2 bg-primary text-white rounded"
+       >
 			{isSubmitting ? 'Creating...' : 'Create Device'}
 		</Button.Root>
 	</div>

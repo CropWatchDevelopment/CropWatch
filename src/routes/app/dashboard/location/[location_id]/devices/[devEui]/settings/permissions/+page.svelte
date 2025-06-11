@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { enhance } from '$app/forms';
-	import { success, error } from '$lib/stores/toast.svelte.js';
+import { enhance } from '$app/forms';
+import { success, error } from '$lib/stores/toast.svelte.js';
+import { formValidation } from '$lib/actions/formValidation';
 	import type { DeviceOwnerWithProfile } from '$lib/models/DeviceOwner';
 
 	let { data } = $props();
@@ -92,39 +93,42 @@
 							{#if canManagePermissions() && !isDeviceOwner(owner.user_id)}
 								<div class="flex gap-1">
 									<!-- Update Permission Form -->
-									<form 
-										method="POST" 
-										action="?/updateDevicePermission"
-										class="inline"
-										use:enhance={({ formElement, formData, action, cancel, submitter }) => {
-											return async ({ result, update }) => {
-												if (result.type === 'success' && result.data?.success) {
-													success((result.data as any).message || 'Permission updated successfully');
-													await update();
-												} else if (result.type === 'success' && result.data?.error) {
-													error((result.data as any).error);
-												} else {
-													error('Failed to update permission');
-												}
-											};
-										}}
-									>
-										<input type="hidden" name="deviceOwnerId" value={owner.id} />
-										<select 
-											name="permissionLevel" 
-											class="text-xs px-2 py-1 border rounded"
-											onchange={(e) => {
-												const form = e.currentTarget.closest('form');
-												if (form) form.requestSubmit();
-											}}
-										>
-											{#each Object.entries(PERMISSION_LEVELS) as [level, name]}
-												<option value={level} selected={owner.permission_level == parseInt(level)}>
-													{name}
-												</option>
-											{/each}
-										</select>
-									</form>
+                                                                       <form
+                                                                              method="POST"
+                                                                              action="?/updateDevicePermission"
+                                                                              class="inline"
+                                                                              use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+                                                                                      return async ({ result, update }) => {
+                                                                                              if (result.type === 'success' && result.data?.success) {
+                                                                                                      success((result.data as any).message || 'Permission updated successfully');
+                                                                                                      await update();
+                                                                                              } else if (result.type === 'success' && result.data?.error) {
+                                                                                                      error((result.data as any).error);
+                                                                                              } else {
+                                                                                                      error('Failed to update permission');
+                                                                                              }
+                                                                                      };
+                                                                              }}
+                                                                              use:formValidation
+                                                                       >
+                                                                               <input type="hidden" name="deviceOwnerId" value={owner.id} />
+                                                                               <select
+                                                                               name="permissionLevel"
+                                                                               required
+                                                                               class="text-xs px-2 py-1 border rounded"
+                                                                               onchange={(e) => {
+                                                                               const form = e.currentTarget.closest('form');
+                                                                               if (form) form.requestSubmit();
+                                                                               }}
+                                                                               >
+                                                                               {#each Object.entries(PERMISSION_LEVELS) as [level, name]}
+                                                                               <option value={level} selected={owner.permission_level == parseInt(level)}>
+                                                                               {name}
+                                                                               </option>
+                                                                               {/each}
+                                                                               </select>
+                                                                               <button type="submit" class="hidden" aria-hidden="true">Update</button>
+                                                                       </form>
 								</div>
 							{/if}
 						</div>

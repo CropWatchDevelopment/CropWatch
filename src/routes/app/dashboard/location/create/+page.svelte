@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
-	import { onMount } from 'svelte';
+       import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
+       import { onMount } from 'svelte';
+       import { formValidation } from '$lib/actions/formValidation';
 
 	let name = $state('');
 	let description = $state('');
@@ -25,7 +26,12 @@
 <div>
 	<h1>Create Location</h1>
 
-	<form method="post" action="?/createLocation" class="flex flex-col">
+       <form
+               method="post"
+               action="?/createLocation"
+               class="form-container"
+               use:formValidation
+       >
 		<label for="name">Name:</label>
 		<input type="text" id="name" name="name" bind:value={name} required />
 
@@ -53,6 +59,6 @@
 			{/if}
 		</div>
 
-		<button type="submit">Create Location</button>
-	</form>
+               <button type="submit" disabled>Create Location</button>
+       </form>
 </div>

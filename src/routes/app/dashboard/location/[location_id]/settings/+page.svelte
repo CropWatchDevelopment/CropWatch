@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { enhance } from '$app/forms';
-	import { error as errorToast, success } from '$lib/stores/toast.svelte';
+import { enhance } from '$app/forms';
+import { error as errorToast, success } from '$lib/stores/toast.svelte';
+import { formValidation } from '$lib/actions/formValidation';
 
 	let { data } = $props();
 
@@ -236,18 +237,19 @@
 		</div>
 
 		{#if editingLocationDetails}
-			<form
-				method="POST"
-				action="?/updateLocation"
-				class="max-w-md"
-				use:enhance={() => {
-					isUpdatingLocation = true;
+                        <form
+                                method="POST"
+                                action="?/updateLocation"
+                                class="form-container max-w-md"
+                                use:enhance={() => {
+                                        isUpdatingLocation = true;
 
 					return ({ result }) => {
 						handleLocationUpdateSuccess(result);
 					};
-				}}
-			>
+                                }}
+                                use:formValidation
+                        >
 				<div class="mb-4">
 					<label for="locationName" class="mb-1 block font-medium">Location Name</label>
 					<input
@@ -374,15 +376,16 @@
 								<td class="px-4 py-3">
 									{#if editingUser && editingUser.id === user.id}
 										<div class="flex gap-2">
-											<form
-												method="POST"
-												action="?/updatePermission"
-												use:enhance={() => {
-													return ({ result }) => {
-														handleUpdatePermissionSuccess(result);
-													};
-												}}
-											>
+                                                                               <form
+                                                                               method="POST"
+                                                                               action="?/updatePermission"
+                                                                               use:enhance={() => {
+                                                                                       return ({ result }) => {
+                                                                                               handleUpdatePermissionSuccess(result);
+                                                                                       };
+                                                                               }}
+                                                                               use:formValidation
+                                                                               >
 												<input type="hidden" name="userId" value={user.user_id} />
 												<input type="hidden" name="locationOwnerId" value={user.id} />
 												<input
@@ -419,19 +422,20 @@
 											</button>
 
 											{#if user.user_id !== currentUser.id}
-												<form
-													method="POST"
-													action="?/removeUser"
-													use:enhance={() => {
-														if (!confirm('Are you sure you want to remove this user?')) {
-															return { action: () => {} };
-														}
+                                                                               <form
+                                                                               method="POST"
+                                                                               action="?/removeUser"
+                                                                               use:enhance={() => {
+                                                                                      if (!confirm('Are you sure you want to remove this user?')) {
+                                                                                              return { action: () => {} };
+                                                                                      }
 
 														return ({ result }) => {
 															handleRemoveUserSuccess(result);
 														};
-													}}
-												>
+                                                                               }}
+                                                                               use:formValidation
+                                                                               >
 													<input type="hidden" name="userId" value={user.user_id} />
 													<input type="hidden" name="locationOwnerId" value={user.id} />
 													<button type="submit" class="text-red-600 hover:text-red-800">
@@ -456,18 +460,19 @@
 		<div class="mt-6 border-t pt-4">
 			<h3 class="mb-2 text-lg font-medium">Add User</h3>
 
-			<form
-				method="POST"
-				action="?/addUser"
-				class="max-w-md w-full"
-				use:enhance={() => {
-					isAdding = true;
+                        <form
+                                method="POST"
+                                action="?/addUser"
+                                class="form-container max-w-md w-full"
+                                use:enhance={() => {
+                                        isAdding = true;
 
 					return ({ result }) => {
 						handleAddUserSuccess(result);
 					};
-				}}
-			>
+                                }}
+                                use:formValidation
+                        >
 				<div class="mb-4">
 					<label for="email" class="mb-1 block font-medium">Email Address</label>
 					<input
