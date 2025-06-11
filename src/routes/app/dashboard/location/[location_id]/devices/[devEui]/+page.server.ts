@@ -6,7 +6,7 @@ import { SessionService } from '$lib/services/SessionService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { DeviceService } from '$lib/services/DeviceService';
-import { DeviceDataService } from '$lib/services/DeviceDataService';
+import type { IDeviceDataService } from '$lib/interfaces/IDeviceDataService';
 import { url } from '@layerstack/utils/routing';
 import moment from 'moment';
 
@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ url, params, locals: { safeGetSessi
     try {
         // Get the error handler from the container
         const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-        const deviceDataService = await new DeviceDataService(supabase);
+        const deviceDataService = container.get<IDeviceDataService>(TYPES.DeviceDataService);
         const deviceRepository = new DeviceRepository(supabase, errorHandler);
         const deviceService = new DeviceService(deviceRepository);
 

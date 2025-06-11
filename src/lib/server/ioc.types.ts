@@ -11,6 +11,7 @@ export const TYPES = {
   DeviceRepository: Symbol.for('DeviceRepository'),
   DeviceOwnersRepository: Symbol.for('DeviceOwnersRepository'),
   AirDataRepository: Symbol.for('AirDataRepository'),
+  DeviceDataRepository: Symbol.for('DeviceDataRepository'),
   LocationRepository: Symbol.for('LocationRepository'),
   RuleRepository: Symbol.for('RuleRepository'),
   

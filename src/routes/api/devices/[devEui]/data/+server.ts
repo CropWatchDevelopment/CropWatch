@@ -1,6 +1,8 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { DeviceDataService } from '$lib/services/DeviceDataService';
+import type { IDeviceDataService } from '$lib/interfaces/IDeviceDataService';
+import { container } from '$lib/server/ioc.config';
+import { TYPES } from '$lib/server/ioc.types';
 import moment from 'moment';
 
 export const GET: RequestHandler = async ({ params, url, locals: { safeGetSession, supabase } }) => {
@@ -33,7 +35,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { safeGetSessio
     endDate = moment(endDate).endOf('day').toDate();
 
     // Get services from the container
-    const deviceDataService = new DeviceDataService(supabase);
+    const deviceDataService = container.get<IDeviceDataService>(TYPES.DeviceDataService);
 
     // First, try to determine if this is an air data or soil data device based on latest data
     let latestData = null;

@@ -9,7 +9,7 @@ import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { AirDataRepository } from '$lib/repositories/AirDataRepository';
 import { DeviceService } from '$lib/services/DeviceService';
 import { AirDataService } from '$lib/services/AirDataService';
-import { DeviceDataService } from '$lib/services/DeviceDataService';
+import type { IDeviceDataService } from '$lib/interfaces/IDeviceDataService';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
   try {
@@ -29,7 +29,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
     // Create services with repositories
     const deviceService = new DeviceService(deviceRepo);
     const airDataService = new AirDataService(airDataRepo);
-    const deviceDataService = new DeviceDataService(locals.supabase);
+    const deviceDataService = container.get<IDeviceDataService>(TYPES.DeviceDataService);
 
     // Get devices for this location - now includes device type info directly
     const devices = await deviceService.getDevicesByLocation(locationId);
