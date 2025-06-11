@@ -2,8 +2,9 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { AlertDialog } from 'bits-ui';
-	import { enhance } from '$app/forms';
-	import { error, success } from '$lib/stores/toast.svelte.js';
+import { enhance } from '$app/forms';
+import { error, success } from '$lib/stores/toast.svelte.js';
+import { formValidation } from '$lib/actions/formValidation';
 
 	let { data } = $props();
 	let locations = $derived(data.locations);
@@ -49,22 +50,23 @@
 <div>
 	<h2 class="text-xl font-semibold">Device Information</h2>
 	<p class="text-muted text-sm">Here you can view and edit device information.</p>
-	<form
-		class="flex flex-col gap-4"
-		id="deviceSettingsForm"
-		method="POST"
-		action="?/updateGeneralSettings"
-		use:enhance={({ formElement, formData, action, cancel, submitter }) => {
-			return async ({ result, update }) => {
-				if (result.data.success) {
-					success('Settings updated successfully!');
-					update();
-				} else {
-					error('Failed to update settings');
-				}
-			};
-		}}
-	>
+       <form
+               class="form-container"
+               id="deviceSettingsForm"
+               method="POST"
+               action="?/updateGeneralSettings"
+               use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+                       return async ({ result, update }) => {
+                               if (result.data.success) {
+                                       success('Settings updated successfully!');
+                                       update();
+                               } else {
+                                       error('Failed to update settings');
+                               }
+                       };
+               }}
+               use:formValidation
+       >
 		<div class="mt-4 flex flex-col gap-2">
 			<label for="deviceName" class="text-sm font-medium">Device Name</label>
 			<input
@@ -92,8 +94,8 @@
 				</select>
 			</div>
 		{/if}
-		<button type="submit" class="btn btn-primary mt-4">Save Changes</button>
-	</form>
+               <button type="submit" class="btn btn-primary mt-4" disabled>Save Changes</button>
+       </form>
 </div>
 
 <div class="bg-danger flex flex-col gap-4">

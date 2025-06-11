@@ -181,3 +181,21 @@ button:disabled {
 a {
 	@apply underline;
 }
+
+/* Uniform form styles */
+.form-container {
+    @apply flex flex-col gap-4 bg-card-light dark:bg-card-dark p-6 rounded-lg shadow-md;
+}
+.form-container label {
+    @apply text-sm font-medium;
+}
+.form-container input,
+.form-container textarea,
+.form-container select {
+    @apply rounded border border-gray-300 dark:border-gray-700 p-2;
+}
+.form-container button[type="submit"],
+.form-container input[type="submit"] {
+    @apply bg-primary text-white px-4 py-2 rounded disabled:opacity-50;
+}
+
