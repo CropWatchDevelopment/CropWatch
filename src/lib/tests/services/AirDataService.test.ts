@@ -38,11 +38,11 @@ describe('AirDataService', () => {
     airDataService = new AirDataService(mockRepository, errorHandlingService);
   });
   
-  describe('getByDeviceEui', () => {
+  describe('getAirDataByDevice', () => {
     it('should return air data for a device', async () => {
       mockRepository.findByDeviceEui.mockResolvedValue(mockAirData);
       
-      const result = await airDataService.getByDeviceEui('abc123');
+      const result = await airDataService.getAirDataByDevice('abc123');
       
       expect(mockRepository.findByDeviceEui).toHaveBeenCalledWith('abc123');
       expect(result).toHaveLength(2);
@@ -53,15 +53,15 @@ describe('AirDataService', () => {
     it('should handle errors when getting air data', async () => {
       mockRepository.findByDeviceEui.mockRejectedValue(new Error('Database error'));
       
-      await expect(airDataService.getByDeviceEui('abc123')).rejects.toThrow('Database error');
+      await expect(airDataService.getAirDataByDevice('abc123')).rejects.toThrow('Database error');
     });
   });
   
-  describe('getLatestByDeviceEui', () => {
+  describe('getLatestAirDataByDevice', () => {
     it('should return latest air data for a device', async () => {
       mockRepository.findLatestByDeviceEui.mockResolvedValue(mockAirData[1]);
       
-      const result = await airDataService.getLatestByDeviceEui('abc123');
+      const result = await airDataService.getLatestAirDataByDevice('abc123');
       
       expect(mockRepository.findLatestByDeviceEui).toHaveBeenCalledWith('abc123');
       expect(result).toBeDefined();
@@ -71,20 +71,20 @@ describe('AirDataService', () => {
     it('should return null when no data exists', async () => {
       mockRepository.findLatestByDeviceEui.mockResolvedValue(null);
       
-      const result = await airDataService.getLatestByDeviceEui('abc123');
+      const result = await airDataService.getLatestAirDataByDevice('abc123');
       
       expect(result).toBeNull();
     });
   });
   
-  describe('getByDateRange', () => {
+  describe('getAirDataByDateRange', () => {
     it('should return air data within a date range', async () => {
       mockRepository.findByDateRange.mockResolvedValue(mockAirData);
       
       const startDate = new Date('2025-05-01T00:00:00Z');
       const endDate = new Date('2025-05-02T00:00:00Z');
       
-      const result = await airDataService.getByDateRange('abc123', startDate, endDate);
+      const result = await airDataService.getAirDataByDateRange('abc123', startDate, endDate);
       
       expect(mockRepository.findByDateRange).toHaveBeenCalledWith('abc123', startDate, endDate);
       expect(result).toHaveLength(2);
@@ -106,7 +106,7 @@ describe('AirDataService', () => {
       
       mockRepository.create.mockResolvedValue(createdAirData);
       
-      const result = await airDataService.create(airDataDto);
+      const result = await airDataService.createAirData(airDataDto);
       
       expect(mockRepository.create).toHaveBeenCalledWith(airDataDto);
       expect(result).toBeDefined();

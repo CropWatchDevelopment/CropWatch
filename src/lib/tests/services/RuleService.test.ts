@@ -290,6 +290,8 @@ describe('RuleService', () => {
 
     it('should return true when deleting non-existent rule', async () => {
       vi.spyOn(ruleRepository, 'findById').mockResolvedValue(null);
+      vi.spyOn(ruleRepository, 'deleteCriteriaByGroup').mockResolvedValue(true);
+      vi.spyOn(ruleRepository, 'delete').mockResolvedValue(true);
       
       const result = await ruleService.deleteRule(999);
       expect(result).toBe(true);
