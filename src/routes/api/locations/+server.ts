@@ -2,22 +2,12 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { container } from '$lib/server/ioc.config';
 import { TYPES } from '$lib/server/ioc.types';
-import { LocationRepository } from '$lib/repositories/LocationRepository';
-import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationService } from '$lib/services/LocationService';
-import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 
 export const GET: RequestHandler = async ({ locals }) => {
   try {
-    // Get error handler from container
-    const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-    
-    // Create repositories with the per-request Supabase client
-    const locationRepo = new LocationRepository(locals.supabase, errorHandler);
-    const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
-    
-    // Create the location service with the repositories
-    const locationService = new LocationService(locationRepo, deviceRepo);
+    // Get LocationService from IoC container
+    const locationService = container.get<LocationService>(TYPES.LocationService);
     
     // Get all basic location data without devices
     const locations = await locationService.getAllLocations();

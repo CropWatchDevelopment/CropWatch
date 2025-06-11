@@ -1,10 +1,12 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { SessionService } from '$lib/services/SessionService';
+import { container } from '$lib/server/ioc.config';
+import { TYPES } from '$lib/server/ioc.types';
 
 export const load: PageServerLoad = async ({ locals }) => {
   // Create a new SessionService instance with the per-request Supabase client
-  const sessionService = new SessionService(locals.supabase);
+  const sessionService = container.get<SessionService>(TYPES.SessionService);
   const sessionResult = await sessionService.getSafeSession();
   
   // If no session exists, redirect to login
