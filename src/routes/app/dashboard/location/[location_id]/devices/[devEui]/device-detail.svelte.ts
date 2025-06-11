@@ -336,14 +336,18 @@ export function setupDeviceDetail() {
 		endDate = today;          // Assign Date object directly
 	}
 
-	return {
-		// State
-		stats,
-		chartData,
-		loading,
-		error,
-		startDate, // Exporting the state itself
-		endDate,   // Exporting the state itself
+        return {
+                // State
+                stats,
+                chartData,
+                get loading() { return loading; },
+                set loading(v: boolean) { loading = v; },
+                get error() { return error; },
+                set error(v: string | null) { error = v; },
+                get startDate() { return startDate; },
+                set startDate(v: Date) { startDate = v; },
+                get endDate() { return endDate; },
+                set endDate(v: Date) { endDate = v; },
 
 		// Element refs
 		// Functions
