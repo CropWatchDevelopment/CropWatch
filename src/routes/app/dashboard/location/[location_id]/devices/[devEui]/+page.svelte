@@ -238,7 +238,7 @@
 			<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
 				<div class="flex flex-row justify-items-center">
 					{#each Object.keys(latestData) as key}
-						{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected'].includes(key) && latestData[key] !== null}
+						{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
 							<DataCard
 								{latestData}
 								name={key}
