@@ -115,7 +115,7 @@
 	<DropdownMenu.Root bind:open={mainMenuOpen}>
 		<DropdownMenu.Trigger asChild>
 			<Button.Root
-				class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md p-2"
+				class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md px-2"
 			>
 				<svg viewBox="0 0 24 24" width="24" height="24" class="text-current">
 					<path fill="currentColor" d={mdiTune} />

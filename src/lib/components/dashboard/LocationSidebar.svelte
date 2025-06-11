@@ -14,6 +14,7 @@
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import type { Location } from '$lib/models/Location';
 	import type { DeviceWithType } from '$lib/models/Device';
+	import { fade } from 'svelte/transition';
 
 	// Use the same interfaces as in the dashboard page
 	interface DeviceWithSensorData extends DeviceWithType {
@@ -70,26 +71,32 @@
 	}
 </script>
 
-<div class="locations-panel" class:collapsed>
-	<div class="sidebar-header">
-		<div class="header-content">
+<div
+	class="bg-card-light h-fit min-h-[calc(100vh-62px)] w-full overflow-hidden rounded p-1 shadow-sm transition-[width,padding] duration-300 ease-in-out [&.collapsed]:w-10 [&.collapsed]:max-w-10 [&.collapsed]:min-w-10 [&.collapsed]:overflow-visible [&.collapsed]:px-1"
+	class:collapsed
+>
+	<div class="mb-4 flex items-center p-1">
+		<div class="mx-auto flex w-full items-center">
 			<!-- Toggle button - always visible -->
 			<button
-				class="toggle-button"
+				class="text-foreground hover:bg-card-hover flex cursor-pointer items-center justify-center rounded border-none bg-transparent p-1"
 				on:click={onToggleCollapse}
 				aria-label="{collapsed ? 'Expand' : 'Collapse'} sidebar"
 				title="{collapsed ? 'Expand' : 'Collapse'} sidebar"
 			>
-				<Icon path={collapsed ? mdiChevronRight : mdiChevronLeft} size="1.25em" />
+				<Icon
+					class="mx-auto h-6 w-6 translate-x-[-4px] {collapsed ? 'rotate-180' : ''}"
+					path={mdiChevronLeft}
+				/>
 			</button>
 
 			<!-- Title and filters - only visible when expanded -->
 			{#if !collapsed}
-				<div class="title-container">
+				<div class="ml-2 flex-1">
 					<h2>Locations</h2>
 				</div>
 
-				<div class="filters-container">
+				<div class="h-[24px]">
 					<DashboardFilterBits
 						bind:search
 						bind:hideNoDeviceLocations={hideEmptyLocations}
@@ -101,11 +108,11 @@
 		</div>
 	</div>
 	<!-- Search section - different display based on collapsed state -->
-	<div class="search-container">
+	<div class="mb-2 flex h-10 items-center justify-center">
 		{#if collapsed}
 			<!-- Search icon when collapsed - clicking expands the sidebar -->
 			<button
-				class="search-icon-button"
+				class="text-foreground hover:bg-card-hover b flex h-8 w-8 cursor-pointer items-center justify-center rounded border-none"
 				on:click={onToggleCollapse}
 				title="Expand sidebar to search"
 			>
@@ -147,10 +154,10 @@
 	</div>
 
 	{#if locations.length === 0 && !collapsed}
-		<p>No locations found.</p>
+		<p class="text-foreground p-4">No locations found.</p>
 	{:else}
 		<!-- Location list - different display based on collapsed state -->
-		<ul class="location-list" role="listbox" aria-label="Select a location">
+		<ul class="m-0 list-none p-1" role="listbox" aria-label="Select a location">
 			{#each locations
 				.filter((location) => {
 					if (hideEmptyLocations) return location.deviceCount > 0;
@@ -162,7 +169,12 @@
 				}) as location (location.location_id)}
 				<li>
 					<button
-						class="location-item"
+						in:fade={{ duration: 150 }}
+						out:fade={{ duration: 100 }}
+						class="text-foreground hover:bg-card-hover
+					[&.selected]:bg-primary-light [&.selected]:text-primary-dark
+					flex h-20 w-full cursor-pointer items-center rounded border-none bg-transparent p-2 text-left
+					[&.collapsed]:justify-center [&.collapsed]:overflow-hidden [&.collapsed]:px-1 [&.collapsed]:py-0 [&.collapsed]:whitespace-nowrap"
 						class:selected={selectedLocation === location.location_id}
 						class:collapsed
 						on:click={() => onSelectLocation(location.location_id)}
@@ -170,20 +182,31 @@
 						role="option"
 						aria-selected={selectedLocation === location.location_id}
 						title={location.name}
+						tabindex="0"
 					>
-						<!-- Icon - always visible -->
-						<div class="location-icon">
+						<!-- Icon: always present, visually centered in both modes -->
+						<div class="mx-auto flex h-6 w-6 translate-x-[-5px] items-center justify-center">
 							<Icon path={mdiHome} size="1.25em" />
 						</div>
 
-						<!-- Text content - only visible when expanded -->
+						<!-- Text content: fades in/out with sidebar, only visible when expanded -->
 						{#if !collapsed}
-							<div class="location-content">
-								<p class="location-name">{location.name}</p>
+							<div
+								class="ml-2 flex-1 overflow-hidden"
+								in:fade={{ duration: 150 }}
+								out:fade={{ duration: 10 }}
+							>
+								<p class="m-0 overflow-hidden font-medium text-ellipsis whitespace-nowrap">
+									{location.name}
+								</p>
 								{#if location.description}
-									<p class="location-description">{location.description}</p>
+									<p
+										class="text-foreground-dark mt-1 overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+									>
+										{location.description}
+									</p>
 								{/if}
-								<p class="location-device-count">{location.deviceCount} devices</p>
+								<p class="text-foreground-dark mt-1 text-xs">{location.deviceCount} devices</p>
 							</div>
 						{/if}
 					</button>
@@ -194,232 +217,8 @@
 </div>
 
 <style>
-	.locations-panel {
-		background-color: var(--color-card);
-		min-height: calc(100vh - 62px);
-		border-radius: 0.25rem;
-		padding: 0.25rem;
-		height: fit-content;
-		box-shadow: var(--shadow-sm);
-		transition:
-			width 0.3s ease,
-			padding 0.3s ease;
-		width: 100%;
-		overflow: hidden;
-	}
-
-	.locations-panel.collapsed {
-		width: 40px; /* <-- set your collapsed width here */
-		min-width: 40px;
-		max-width: 40px;
-		padding-left: 0.25rem;
-		padding-right: 0.25rem;
-		overflow: visible;
-	}
-
-	.sidebar-header {
-		display: flex;
-		align-items: center;
-		margin-bottom: 1rem;
-		padding: 0.25rem;
-	}
-
-	.header-content {
-		display: flex;
-		align-items: center;
-		width: 100%;
-	}
-
-	.icon-container {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 24px;
-		height: 24px;
-		color: var(--color-text);
-	}
-
-	.title-container {
-		flex: 1;
-		margin-left: 0.5rem;
-	}
-
-	.filters-container {
-		margin-left: auto;
-	}
-
-	.toggle-button {
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 0.25rem;
-		border-radius: 0.25rem;
-		color: var(--color-text);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-right: 0.5rem;
-	}
-
-	.toggle-button:hover {
-		background-color: var(--color-card-hover);
-	}
-
-	.location-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.search-container {
-		height: 40px;
-		margin-bottom: 0.5rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.search-icon-button {
-		width: 32px;
-		height: 32px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: none;
-		background: none;
-		cursor: pointer;
-		color: var(--color-text);
-		border-radius: 0.25rem;
-	}
-
-	.search-icon-button:hover {
-		background-color: var(--color-card-hover);
-	}
-
-	.location-item {
-		display: flex;
-		align-items: center;
-		width: 100%;
-		text-align: left;
-		padding: 0.25rem;
-		border: none;
-		background: none;
-		cursor: pointer;
-		border-radius: 0.25rem;
-		transition: background-color 0.2s ease;
-		color: var(--color-text);
-		height: 80px; /* Fixed height for location items */
-	}
-
-	.location-item.collapsed {
-		justify-content: center;
-		padding: 0.25rem 0;
-		white-space: nowrap;
-		overflow: hidden;
-	}
-
-	.location-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 24px;
-		width: 24px;
-		height: 24px;
-	}
-
-	.location-content {
-		flex: 1;
-		margin-left: 0.5rem;
-		overflow: hidden;
-	}
-
-	.location-item:hover {
-		background-color: var(--color-card-hover);
-	}
-
-	.location-item.selected {
-		background-color: var(--color-primary-light);
-		color: var(--color-primary-dark);
-	}
-
-	.location-name {
-		font-weight: 500;
-		margin: 0;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.location-description {
-		margin: 0.25rem 0 0;
-		font-size: 0.875rem;
-		color: var(--color-text-secondary);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.location-device-count {
-		margin: 0.25rem 0 0;
-		font-size: 0.75rem;
-		color: var(--color-text-secondary);
-	}
-
-	.hidden {
+	/* Minimal CSS for classes that can't be easily converted to Tailwind */
+	:global(.hidden) {
 		display: none;
-	}
-
-	h2 {
-		font-size: 1.25rem;
-		font-weight: 600;
-		margin-bottom: 0rem;
-	}
-
-	.location-list {
-		list-style: none;
-		padding: 4px;
-		margin: 0;
-	}
-
-	.location-item {
-		padding: 0.5rem;
-		margin-bottom: 0.5rem;
-		border-radius: 0.375rem;
-		background-color: var(--color-card-hover);
-		width: 100%;
-		text-align: left;
-		transition: background-color 0.2s;
-		border: none;
-		cursor: pointer;
-	}
-
-	.location-item:hover {
-		background-color: var(--color-card-active);
-	}
-
-	.location-item.selected {
-		background-color: var(--color-primary);
-		color: white;
-	}
-
-	.location-name {
-		font-weight: 500;
-		margin-bottom: 0.25rem;
-	}
-
-	.location-description {
-		font-size: 0.875rem;
-		color: var(--color-text-secondary);
-		margin-bottom: 0.25rem;
-	}
-
-	.location-device-count {
-		font-size: 0.75rem;
-		color: var(--color-text-secondary);
-	}
-
-	.location-item.selected .location-description,
-	.location-item.selected .location-device-count {
-		color: rgba(255, 255, 255, 0.8);
 	}
 </style>
