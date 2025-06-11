@@ -1,17 +1,20 @@
 import type { IAirDataService } from '../interfaces/IAirDataService';
 import { AirDataRepository } from '../repositories/AirDataRepository';
 import type { AirData, AirDataInsert } from '../models/AirData';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '$lib/server/ioc.types';
 
 /**
  * Implementation of AirDataService
  * This service handles all business logic related to air data
  */
+@injectable()
 export class AirDataService implements IAirDataService {
   /**
    * Constructor with AirDataRepository dependency
    */
   constructor(
-    private airDataRepository: AirDataRepository
+    @inject(TYPES.AirDataRepository) private airDataRepository: AirDataRepository
   ) {}
 
   /**

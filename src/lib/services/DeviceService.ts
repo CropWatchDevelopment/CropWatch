@@ -2,17 +2,20 @@ import type { IDeviceService } from '../interfaces/IDeviceService';
 import { DeviceRepository } from '../repositories/DeviceRepository';
 import type { Device, DeviceInsert, DeviceUpdate, DeviceWithType } from '../models/Device';
 import type { DeviceWithJoins } from '../repositories/DeviceRepository';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '$lib/server/ioc.types';
 
 /**
  * Implementation of DeviceService
  * This service handles all business logic related to devices
  */
+@injectable()
 export class DeviceService implements IDeviceService {
   /**
    * Constructor with DeviceRepository dependency
    */
   constructor(
-    private deviceRepository: DeviceRepository
+    @inject(TYPES.DeviceRepository) private deviceRepository: DeviceRepository
   ) {}
 
   /**
