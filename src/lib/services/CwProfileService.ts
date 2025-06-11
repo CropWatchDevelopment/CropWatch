@@ -1,11 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import CwPermissionLevelTypesRepository from '$lib/repositories/CwPermissionLevelTypesRepository';
 import type { Tables } from '$lib/types/supabaseSchema';
 import CwProfileRepository from '$lib/repositories/CwProfilesRepository';
 
 type CwProfile = Tables<'profiles'>;
 
-class CwPermissionLevelTypesService {
+class CwProfileService {
   private repository: CwProfileRepository;
 
   constructor(client: SupabaseClient) {
@@ -25,4 +24,4 @@ class CwPermissionLevelTypesService {
   }
 }
 
-export default CwPermissionLevelTypesService;
+export default CwProfileService;
