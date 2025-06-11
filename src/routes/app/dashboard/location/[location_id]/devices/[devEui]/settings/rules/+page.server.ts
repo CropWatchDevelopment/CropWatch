@@ -12,6 +12,7 @@ import { SessionService } from '$lib/services/SessionService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { RuleRepository } from '$lib/repositories/RuleRepository';
+import { NotifierTypeRepository } from '$lib/repositories/NotifierTypeRepository';
 import { DeviceService } from '$lib/services/DeviceService';
 import { RuleService } from '$lib/services/RuleService';
 
@@ -42,6 +43,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         // Create repositories with per-request Supabase client
         const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
         const ruleRepo = new RuleRepository(locals.supabase, errorHandler);
+        const notifierTypeRepo = new NotifierTypeRepository(locals.supabase, errorHandler);
         
         // Create services with repositories
         const deviceService = new DeviceService(deviceRepo);
@@ -58,9 +60,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
         const rules = await ruleService.getRulesByDevice(devEui);
 
         // Get notifier types
-        const { data: notifierTypes } = await locals.supabase
-            .from('cw_notifier_types')
-            .select('*');
+        const notifierTypes = await notifierTypeRepo.findAll();
 
         return {
             device,

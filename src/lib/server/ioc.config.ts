@@ -15,6 +15,7 @@ import { ErrorHandlingService } from '../errors/ErrorHandlingService';
 // Repositories
 import { DeviceRepository } from '../repositories/DeviceRepository';
 import { LocationRepository } from '../repositories/LocationRepository';
+import { NotifierTypeRepository } from '../repositories/NotifierTypeRepository';
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 // Create and configure the IoC container
@@ -46,6 +47,8 @@ container.bind<LocationRepository>(LocationRepository).toSelf().inSingletonScope
 container.bind<LocationRepository>(TYPES.LocationRepository).to(LocationRepository).inSingletonScope();
 container.bind<DeviceRepository>(DeviceRepository).toSelf().inSingletonScope();
 container.bind<DeviceRepository>(TYPES.DeviceRepository).to(DeviceRepository).inSingletonScope();
+container.bind<NotifierTypeRepository>(NotifierTypeRepository).toSelf().inSingletonScope();
+container.bind<NotifierTypeRepository>(TYPES.NotifierTypeRepository).to(NotifierTypeRepository).inSingletonScope();
 
 // Bind services
 container.bind<LocationService>(LocationService).toSelf().inSingletonScope();
