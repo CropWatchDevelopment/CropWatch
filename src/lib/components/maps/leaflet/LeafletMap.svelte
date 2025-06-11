@@ -15,7 +15,7 @@
 		showClickMarker?: boolean;
 	}
 
-	let { data, lat, lon, zoom, markers, onclick, showClickMarker = false }: Props = $props();
+	let { data, lat = $bindable(), lon = $bindable(), zoom = $bindable(10), markers = $bindable(), onclick, showClickMarker = false }: Props = $props();
 
 	let map = $state<L.Map | undefined>(undefined);
 	let clickMarker = $state<L.Marker | undefined>(undefined);
@@ -225,6 +225,22 @@
 				lineLayers.addTo(map);
 			} else {
 				lineLayers.remove();
+			}
+		}
+	});
+
+	// Add effect to update map view when lat/lon props change
+	$effect(() => {
+		if (map && lat !== undefined && lon !== undefined) {
+			const currentCenter = map.getCenter();
+			const newLat = lat;
+			const newLon = lon;
+			
+			// Only update if the coordinates have actually changed significantly
+			// (avoid unnecessary updates from tiny floating point differences)
+			if (Math.abs(currentCenter.lat - newLat) > 0.000001 || 
+				Math.abs(currentCenter.lng - newLon) > 0.000001) {
+				map.setView([newLat, newLon], map.getZoom(), { animate: true });
 			}
 		}
 	});

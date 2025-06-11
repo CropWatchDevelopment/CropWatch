@@ -54,7 +54,7 @@
     <!-- Details -->
     <div class="bg-card-light dark:bg-card-dark p-6 rounded-lg shadow-md space-y-2">
       <div><span class="font-medium">Location ID:</span> {location.location_id}</div>
-      <div><span class="font-medium">Coordinates:</span> {location.lat.toFixed(6)}, {location.long.toFixed(6)}</div>
+      <div><span class="font-medium">Coordinates:</span> {location.lat?.toFixed(6)}, {location.long?.toFixed(6)}</div>
       <div><span class="font-medium">Zoom Level:</span> {location.map_zoom}</div>
       <div><span class="font-medium">Created:</span> {new Date(location.created_at).toLocaleDateString()}</div>
       <div><span class="font-medium">Owner ID:</span> {location.owner_id}</div>

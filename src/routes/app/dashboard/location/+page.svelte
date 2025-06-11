@@ -123,7 +123,7 @@
       variant="fill"
       color="primary"
       icon={mdiPlus}
-      href="/app/location/create"
+      href="/app/dashboard/location/create"
       class="px-6 py-2"
     >
       Add Location
