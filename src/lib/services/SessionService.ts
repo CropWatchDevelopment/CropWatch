@@ -1,6 +1,8 @@
 import type { ISessionService } from '../interfaces/ISessionService';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Session, User } from '@supabase/supabase-js';
+import { ErrorHandlingService } from '../errors/ErrorHandlingService';
+import { info, debug } from '../utilities/logger';
 
 /**
  * Service for handling session-related operations
@@ -8,6 +10,7 @@ import type { Session, User } from '@supabase/supabase-js';
  */
 export class SessionService implements ISessionService {
   private supabaseClient: SupabaseClient;
+  private readonly errorHandler = new ErrorHandlingService();
 
   constructor(supabaseClient: SupabaseClient) {
     this.supabaseClient = supabaseClient;
@@ -23,7 +26,7 @@ export class SessionService implements ISessionService {
       const { data: { session } } = await this.supabaseClient.auth.getSession();
       
       if (!session) {
-        console.debug('SessionService: No session found');
+        debug('SessionService: No session found');
         return { session: null, user: null };
       }
 
@@ -31,14 +34,14 @@ export class SessionService implements ISessionService {
       const { data: { user }, error } = await this.supabaseClient.auth.getUser();
       
       if (error) {
-        console.error('SessionService: JWT validation failed:', error);
+        this.errorHandler.logError(error);
         return { session: null, user: null };
       }
 
-      console.log('SessionService: Session found and validated for user:', user.email);
+      info('SessionService: Session found and validated for user:', user.email);
       return { session, user };
     } catch (error) {
-      console.error('SessionService: Error getting safe session:', error);
+      this.errorHandler.logError(error as Error);
       return { session: null, user: null };
     }
   }

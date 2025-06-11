@@ -5,6 +5,8 @@ import type { LocationUser } from '../models/LocationUser';
 import { DeviceRepository } from '../repositories/DeviceRepository';
 import { injectable, inject } from 'inversify';
 import { TYPES } from '$lib/server/ioc.types';
+import { ErrorHandlingService } from '../errors/ErrorHandlingService';
+import { info } from '../utilities/logger';
 
 /**
  * Implementation of LocationService
@@ -17,9 +19,10 @@ export class LocationService implements ILocationService {
    */
   constructor(
     @inject(TYPES.LocationRepository) private locationRepository: LocationRepository,
-    @inject(TYPES.DeviceRepository) private deviceRepository: DeviceRepository
+    @inject(TYPES.DeviceRepository) private deviceRepository: DeviceRepository,
+    private errorHandler: ErrorHandlingService = new ErrorHandlingService()
   ) {
-    console.log('starting location service...');
+    info('starting location service...');
   }
 
   /**
@@ -153,10 +156,10 @@ export class LocationService implements ILocationService {
       
       return { success: true };
     } catch (error) {
-      console.error('Error adding user to location:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to add user to location' 
+      this.errorHandler.logError(error as Error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to add user to location'
       };
     }
   }
@@ -207,10 +210,10 @@ export class LocationService implements ILocationService {
       
       return { success: true };
     } catch (error) {
-      console.error('Error updating user permission:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to update permission' 
+      this.errorHandler.logError(error as Error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update permission'
       };
     }
   }
@@ -258,10 +261,10 @@ export class LocationService implements ILocationService {
       
       return { success: true };
     } catch (error) {
-      console.error('Error removing user from location:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to remove user from location' 
+      this.errorHandler.logError(error as Error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to remove user from location'
       };
     }
   }

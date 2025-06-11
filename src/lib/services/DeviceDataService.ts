@@ -1,18 +1,29 @@
 import moment from 'moment';
 import type { IDeviceDataService } from '../interfaces/IDeviceDataService';
 import type { DeviceType } from '../models/Device';
+import type { DeviceDataRecord } from '../models/DeviceDataRecord';
+import { ErrorHandlingService } from '../errors/ErrorHandlingService';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export class DeviceDataService implements IDeviceDataService {
+  private readonly errorHandler: ErrorHandlingService;
 
-  constructor(private readonly supabase: SupabaseClient) { }
+  constructor(
+    private readonly supabase: SupabaseClient,
+    errorHandler: ErrorHandlingService = new ErrorHandlingService()
+  ) {
+    this.errorHandler = errorHandler;
+  }
 
   /**
    * Get the latest data for a device based on its type, with optimized handling for large tables
    * @param devEui The device EUI
    * @param deviceType The device type information containing data_table_v2
    */
-  public async getLatestDeviceData(devEui: string): Promise<any> {
+  public async getLatestDeviceData(
+    devEui: string,
+    _deviceType: DeviceType
+  ): Promise<DeviceDataRecord | null> {
     if (!devEui) {
       throw new Error('Device EUI not specified');
     }
@@ -30,13 +41,13 @@ export class DeviceDataService implements IDeviceDataService {
         .single();
 
       if (error) {
-        console.error(`Error fetching columns for ${tableName}:`, error);
+        this.errorHandler.logError(error);
         throw new Error(`Error fetching columns: ${error.message}`);
       }
 
-      return data;
+      return data as DeviceDataRecord;
     } catch (error) {
-      console.error(`Error in getLatestDeviceData for ${devEui} in table ${tableName}:`, error);
+      this.errorHandler.logError(error as Error);
       if (error instanceof Error && error.message.includes('AbortError')) {
         return {
           error: 'Data retrieval timed out',
@@ -57,7 +68,11 @@ export class DeviceDataService implements IDeviceDataService {
    * @param startDate The start date
    * @param endDate The end date
    */
-  public async getDeviceDataByDateRange(devEui: string, startDate: Date, endDate: Date): Promise<any[]> {
+  public async getDeviceDataByDateRange(
+    devEui: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<DeviceDataRecord[]> {
     if (!devEui) {
       throw new Error('Device EUI not specified');
     }
@@ -89,10 +104,10 @@ export class DeviceDataService implements IDeviceDataService {
         .order('created_at', { ascending: false })
       // .limit(maxDataToReturn);
 
-      return data || [];
+      return (data || []) as DeviceDataRecord[];
     } catch (error) {
       // Handle errors with a generic response
-      console.error(`Error in getDeviceDataByDateRange for ${devEui} in table ${tableName}:`, error);
+      this.errorHandler.logError(error as Error);
 
       if (error instanceof Error && error.message.includes('AbortError')) {
         return [{
@@ -114,7 +129,9 @@ export class DeviceDataService implements IDeviceDataService {
    * @param devEui The device EUI
    * @param deviceType The device type information containing data_table_v2
    */
-  private async getDeviceAndType(devEui: string): Promise<any> {
+  private async getDeviceAndType(
+    devEui: string
+  ): Promise<{ cw_device_type: DeviceType } & Record<string, unknown>> {
     if (!devEui) {
       throw new Error('Device EUI not specified');
     }
@@ -126,7 +143,7 @@ export class DeviceDataService implements IDeviceDataService {
       .single();
 
     if (deviceError) {
-      console.error(`Error fetching device type for ${devEui}:`, deviceError);
+      this.errorHandler.logError(deviceError);
       throw new Error(`Error fetching device type: ${deviceError.message}`);
     }
 
