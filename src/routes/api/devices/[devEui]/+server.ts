@@ -1,9 +1,6 @@
-import type { ErrorHandlingService } from "$lib/errors/ErrorHandlingService";
 import type { IDeviceService } from "$lib/interfaces/IDeviceService";
-import { DeviceRepository } from "$lib/repositories/DeviceRepository";
 import { container } from "$lib/server/ioc.config";
 import { TYPES } from "$lib/server/ioc.types";
-import { DeviceService } from "$lib/services/DeviceService";
 import { error, json, type RequestHandler } from "@sveltejs/kit";
 
 export const GET: RequestHandler = async ({ params, url, locals: { safeGetSession } }) => {
@@ -41,7 +38,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { safeGetSessio
     }
 }
 
-export const DELETE: RequestHandler = async ({ params, url, locals: { safeGetSession, supabase } }) => {
+export const DELETE: RequestHandler = async ({ params, url, locals: { safeGetSession } }) => {
     const { devEui } = params;
     const { session, user } = await safeGetSession();
     if (!session) {
@@ -53,9 +50,7 @@ export const DELETE: RequestHandler = async ({ params, url, locals: { safeGetSes
     }
     try {
         // Get services from the container
-        const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-        const deviceRepo = new DeviceRepository(supabase, errorHandler);
-        const deviceService = new DeviceService(deviceRepo);
+        const deviceService = container.get<IDeviceService>(TYPES.DeviceService);
 
         const device = await deviceService.getDeviceByEui(devEui);
         if (!device) {

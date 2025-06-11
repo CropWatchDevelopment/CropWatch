@@ -3,15 +3,11 @@ import type { RequestHandler } from './$types';
 import { container } from '$lib/server/ioc.config';
 import { TYPES } from '$lib/server/ioc.types';
 import { AuthService } from '$lib/services/AuthService';
-import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 
 export const GET: RequestHandler = async ({ locals }) => {
   try {
-    // Get error handler from container
-    const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-    
-    // Create AuthService with the request's Supabase client
-    const authService = new AuthService(locals.supabase, errorHandler);
+    // Get AuthService from IoC container
+    const authService = container.get<AuthService>(TYPES.AuthService);
     
     // Get the current session
     const sessionData = await authService.getSession();
