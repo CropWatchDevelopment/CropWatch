@@ -1,11 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
 import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
 import type { PageServerLoad } from './$types';
 import { SessionService } from '$lib/services/SessionService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { DeviceService } from '$lib/services/DeviceService';
+import { DeviceDataRepository } from '$lib/repositories/DeviceDataRepository';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 import { url } from '@layerstack/utils/routing';
 import moment from 'moment';
@@ -22,9 +22,10 @@ export const load: PageServerLoad = async ({ url, params, locals: { safeGetSessi
 
     try {
         // Get the error handler from the container
-        const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-        const deviceDataService = await new DeviceDataService(supabase);
+        const errorHandler = container.get<ErrorHandlingService>(ErrorHandlingService);
         const deviceRepository = new DeviceRepository(supabase, errorHandler);
+        const deviceDataRepository = new DeviceDataRepository(supabase, errorHandler);
+        const deviceDataService = new DeviceDataService(deviceRepository, deviceDataRepository);
         const deviceService = new DeviceService(deviceRepository);
 
         let startDate = url.searchParams.get('start');

@@ -3,9 +3,9 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { DeviceType } from '$lib/models/Device';
 import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
+import { DeviceDataRepository } from '$lib/repositories/DeviceDataRepository';
 import { AirDataRepository } from '$lib/repositories/AirDataRepository';
 import { DeviceService } from '$lib/services/DeviceService';
 import { AirDataService } from '$lib/services/AirDataService';
@@ -20,16 +20,17 @@ export const GET: RequestHandler = async ({ params, locals }) => {
     }
 
     // Get error handler from container
-    const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+    const errorHandler = container.get<ErrorHandlingService>(ErrorHandlingService);
     
     // Create repositories with per-request Supabase client
     const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
     const airDataRepo = new AirDataRepository(locals.supabase, errorHandler);
+    const deviceDataRepo = new DeviceDataRepository(locals.supabase, errorHandler);
     
     // Create services with repositories
     const deviceService = new DeviceService(deviceRepo);
     const airDataService = new AirDataService(airDataRepo);
-    const deviceDataService = new DeviceDataService(locals.supabase);
+    const deviceDataService = new DeviceDataService(deviceRepo, deviceDataRepo);
 
     // Get devices for this location - now includes device type info directly
     const devices = await deviceService.getDevicesByLocation(locationId);
@@ -48,7 +49,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
           // Dynamically get latest data based on device type's data_table_v2 value
           if (deviceType && deviceType.data_table_v2) {
             try {
-              latestData = await deviceDataService.getLatestDeviceData(device.dev_eui, deviceType);
+              latestData = await deviceDataService.getLatestDeviceData(device.dev_eui);
             } catch (dataError) {
               console.error(`Error fetching dynamic data for device ${device.dev_eui}:`, dataError);
               // Fall back to specific services if dynamic approach fails
