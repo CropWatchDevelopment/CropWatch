@@ -1,6 +1,9 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { SessionService } from '$lib/services/SessionService';
+import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
+import { ReportTemplateRepository } from '$lib/repositories/ReportTemplateRepository';
+import { ReportTemplateService } from '$lib/services/ReportTemplateService';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
   const sessionService = new SessionService(supabase);
@@ -21,38 +24,17 @@ export const actions: Actions = {
 
     const formData = await request.formData();
     const name = formData.get('name') as string;
-    const values = formData.getAll('values');
-    const colors = formData.getAll('colors');
-    const interval = Number(formData.get('interval'));
-    const averaged = formData.get('averaged') === 'on';
-    const weekly = formData.get('weekly') === 'on';
-    const monthly = formData.get('monthly') === 'on';
-    const recipients = formData.get('recipients') as string;
+    const templateStr = formData.get('template') as string;
+    const template = templateStr ? JSON.parse(templateStr) : {};
 
     if (!name) {
       return fail(400, { success: false, error: 'Name is required' });
     }
 
-    const template = {
-      values,
-      colors,
-      interval,
-      averaged,
-      weekly,
-      monthly
-    };
+    const repo = new ReportTemplateRepository(supabase, new ErrorHandlingService());
+    const service = new ReportTemplateService(repo);
 
-    const { error } = await supabase.from('reports_templates').insert({
-      name,
-      owner_id: user.id,
-      recipients,
-      template
-    });
-
-    if (error) {
-      console.error('Failed to create report:', error.message);
-      return { success: false, error: 'Failed to create report' };
-    }
+    await service.createReport({ name, owner_id: user.id, template } as any);
 
     return { success: true };
   }

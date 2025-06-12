@@ -16,6 +16,8 @@ import { DeviceRepository } from '../repositories/DeviceRepository';
 import { LocationRepository } from '../repositories/LocationRepository';
 import { NotifierTypeRepository } from '../repositories/NotifierTypeRepository';
 import { UserRepository } from '../repositories/UserRepository';
+import { ReportTemplateRepository } from '../repositories/ReportTemplateRepository';
+import { ReportTemplateService } from '../services/ReportTemplateService';
 import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 // Create and configure the IoC container
@@ -51,10 +53,14 @@ container.bind<NotifierTypeRepository>(NotifierTypeRepository).toSelf().inSingle
 container.bind<NotifierTypeRepository>(TYPES.NotifierTypeRepository).to(NotifierTypeRepository).inSingletonScope();
 container.bind<UserRepository>(UserRepository).toSelf().inSingletonScope();
 container.bind<UserRepository>(TYPES.UserRepository).to(UserRepository).inSingletonScope();
+container.bind<ReportTemplateRepository>(ReportTemplateRepository).toSelf().inSingletonScope();
+container.bind<ReportTemplateRepository>(TYPES.ReportTemplateRepository).to(ReportTemplateRepository).inSingletonScope();
 
 // Bind services
 container.bind<LocationService>(LocationService).toSelf().inSingletonScope();
 container.bind<ILocationService>(TYPES.LocationService).to(LocationService).inSingletonScope();
+container.bind<ReportTemplateService>(ReportTemplateService).toSelf().inSingletonScope();
+container.bind<ReportTemplateService>(TYPES.ReportTemplateService).to(ReportTemplateService).inSingletonScope();
 
 // Other services and repositories can be added back as needed
 
