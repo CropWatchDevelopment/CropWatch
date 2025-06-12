@@ -1,9 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../../database.types';
+import type { Database } from '../../../database.types';
 import { BaseRepository } from './BaseRepository';
-import { injectable } from 'inversify';
+import { injectable, inject } from 'inversify';
 import { ErrorHandlingService } from '../errors/ErrorHandlingService';
 import type { ReportTemplate } from '../models/ReportTemplate';
+import { TYPES } from '../server/ioc.types';
 
 @injectable()
 export class ReportTemplateRepository extends BaseRepository<ReportTemplate, number> {
@@ -12,8 +13,8 @@ export class ReportTemplateRepository extends BaseRepository<ReportTemplate, num
   protected entityName = 'Report';
 
   constructor(
-    supabase: SupabaseClient<Database>,
-    errorHandler: ErrorHandlingService
+    @inject(TYPES.SupabaseClient) supabase: SupabaseClient<Database>,
+    @inject(TYPES.ErrorHandlingService) errorHandler: ErrorHandlingService
   ) {
     super(supabase, errorHandler);
   }

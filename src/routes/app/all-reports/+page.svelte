@@ -42,7 +42,7 @@
                   <AlertDialog.Description class="text-sm">This action cannot be undone.</AlertDialog.Description>
                   <div class="mt-4 flex gap-2 justify-end">
                     <AlertDialog.Cancel class="px-3 py-1 border rounded">Cancel</AlertDialog.Cancel>
-                    <AlertDialog.Action on:click={() => deleteReport(report.id)} class="px-3 py-1 bg-red-600 text-white rounded">Delete</AlertDialog.Action>
+                    <AlertDialog.Action onclick={() => deleteReport(report.id)} class="px-3 py-1 bg-red-600 text-white rounded">Delete</AlertDialog.Action>
                   </div>
                 </AlertDialog.Content>
               </AlertDialog.Portal>
