@@ -44,7 +44,8 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       .from(this.tableName)
       .select(`
         *,
-        cw_device_type(*)
+        cw_device_type(*),
+        ip_log(*)
       `)
       .eq(this.primaryKey, devEui)
       .single();
@@ -72,7 +73,8 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       .select(`
         *,
         cw_device_type(*),
-        cw_locations(*, cw_location_owners(*))
+        cw_locations(*, cw_location_owners(*)),
+        ip_log(*)
       `)
       .eq('location_id', locationId)
       .eq('cw_locations.cw_location_owners.user_id', session.data.session?.user.id);

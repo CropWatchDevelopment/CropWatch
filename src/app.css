@@ -159,25 +159,56 @@ button.primary:hover {
 	background-color: var(--color-foreground-dark);
 }
 
-/* Explicit fallback utility classes for card backgrounds */
-.bg-card-light {
-	background-color: var(--color-card, #ffffff);
-}
-.dark .dark\:bg-card-dark {
-	background-color: var(--color-card, #2d2d2d);
-}
-
 /* Buttons */
 
 button {
-	@apply cursor-pointer;
+	cursor: pointer;
 }
 
 button:disabled {
-	@apply cursor-not-allowed;
+	cursor: not-allowed;
 }
 
 /* links */
 a {
-	@apply underline;
+	text-decoration: underline;
 }
+
+/* Uniform form styles */
+.form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    background-color: var(--color-card);
+}
+.form-container label {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+.form-container input,
+.form-container textarea,
+.form-container select {
+    border-radius: 0.25rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+}
+.dark .form-container input,
+.dark .form-container textarea,
+.dark .form-container select {
+    border-color: #374151;
+}
+.form-container button[type="submit"],
+.form-container input[type="submit"] {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    background-color: var(--color-primary);
+    color: white;
+}
+.form-container button[type="submit"]:disabled,
+.form-container input[type="submit"]:disabled {
+    opacity: 0.5;
+}
+

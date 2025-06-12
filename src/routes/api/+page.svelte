@@ -16,7 +16,7 @@
 	<title>SwaggerUI</title>
 </svelte:head>
 
-<div id="swagger-ui-container" />
+<div id="swagger-ui-container"></div>
 
 <style>
 	#swagger-ui-container {

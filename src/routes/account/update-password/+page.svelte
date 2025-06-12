@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { success } from '$lib/stores/toast.svelte.js';
+import { enhance } from '$app/forms';
+import { success } from '$lib/stores/toast.svelte.js';
+import { formValidation } from '$lib/actions/formValidation';
 
 	let { data } = $props();
 	let form = $derived(data.form);
@@ -66,7 +67,12 @@
 			</div>
 		{/if}
 
-		<form method="POST" use:enhance={handleSubmit()} class="space-y-5">
+                <form
+                        method="POST"
+                        use:enhance={handleSubmit()}
+                        use:formValidation
+                        class="form-container"
+                >
 			<div>
 				<label for="newPassword" class="mb-1 block text-sm font-medium">New Password</label>
 				<input

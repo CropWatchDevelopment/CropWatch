@@ -287,7 +287,7 @@ export function setupDeviceDetail() {
 				theme: 'dark',
 				shared: true,
 				x: { format: 'MMM dd HH:mm' },
-				style: { fontSize: '13px', fontFamily: 'Inter, sans-serif' },
+				style: { fontSize: '13px', 'font-family': 'Inter, sans-serif' },
 				marker: { show: true },
 				y: { formatter: (val: number) => val?.toFixed ? val.toFixed(1) : val }
 			},
@@ -336,14 +336,18 @@ export function setupDeviceDetail() {
 		endDate = today;          // Assign Date object directly
 	}
 
-	return {
-		// State
-		stats,
-		chartData,
-		loading,
-		error,
-		startDate, // Exporting the state itself
-		endDate,   // Exporting the state itself
+        return {
+                // State
+                stats,
+                chartData,
+                get loading() { return loading; },
+                set loading(v: boolean) { loading = v; },
+                get error() { return error; },
+                set error(v: string | null) { error = v; },
+                get startDate() { return startDate; },
+                set startDate(v: Date) { startDate = v; },
+                get endDate() { return endDate; },
+                set endDate(v: Date) { endDate = v; },
 
 		// Element refs
 		// Functions

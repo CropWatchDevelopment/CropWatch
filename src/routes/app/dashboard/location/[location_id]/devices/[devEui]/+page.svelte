@@ -184,10 +184,12 @@
 		<!-- Heading -->
 		<h1 class="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">Soil Device Details</h1>
 
-		<a href="/app/dashboard/location/{device?.location_id}/devices/{device?.dev_eui}/settings"
+		<a
+			href="/app/dashboard/location/{device?.location_id}/devices/{device?.dev_eui}/settings"
 			class="mb-4 inline-flex items-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
 				hover:bg-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
-				dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-zinc-800">Settings</a>
+				dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-zinc-800">Settings</a
+		>
 
 		<!-- Device metadata container -->
 		<div class="rounded-lg bg-gray-100 p-4 shadow-sm dark:bg-zinc-800">
@@ -236,7 +238,7 @@
 			<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
 				<div class="flex flex-row justify-items-center">
 					{#each Object.keys(latestData) as key}
-						{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected'].includes(key) && latestData[key] !== null}
+						{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
 							<DataCard
 								{latestData}
 								name={key}
@@ -257,6 +259,21 @@
 			<p class="py-8 text-center text-gray-500 italic">No recent data available for this device.</p>
 		{/if}
 	</section>
+
+	<!-- Video Feed is IP is there -->
+	{#if device?.ip_log.length > 0}
+		<section>
+			{#each device.ip_log as log}
+				<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+					<img
+						class="sc-hHOBiw eJjIgh"
+						src="https://153.137.8.13:2223/mjpg/video.mjpg?camera=1&amp;audiocodec=aac&amp;audiosamplerate=16000&amp;audiobitrate=32000&amp;videozprofile=classic&amp;timestamp=0&amp;cachebust=1"
+						alt="Camera Stream"
+					/>
+				</h2>
+			{/each}
+		</section>
+	{/if}
 
 	<!-- Historical data section -->
 

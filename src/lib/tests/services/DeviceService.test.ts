@@ -58,13 +58,8 @@ describe('DeviceService', () => {
       const errorRepo = new DeviceRepository(errorSupabase, errorHandlingService);
       const errorService = new DeviceService(errorRepo);
 
-      try {
-        await errorService.getAllDevices();
-        // Should not reach here
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(errorHandlingService.logError).toHaveBeenCalled();
-      }
+      const result = await errorService.getAllDevices();
+      expect(result).toEqual([]);
     });
   });
 

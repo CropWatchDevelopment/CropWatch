@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
+import { enhance } from '$app/forms';
+import { goto } from '$app/navigation';
+import { formValidation } from '$lib/actions/formValidation';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import type { Rule, RuleCriteria } from '$lib/models/Rule';
 	import { success, error as toastError } from '$lib/stores/toast.svelte';
@@ -233,11 +234,12 @@
 		<div class="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-md">
 			<h2 class="mb-4 text-xl font-semibold">Create New Rule</h2>
 
-			<form
-				method="POST"
-				action="?/createRule"
-				use:enhance={() => {
-					isCreating = true;
+                        <form
+                                method="POST"
+                                action="?/createRule"
+                                class="form-container"
+                                use:enhance={() => {
+                                        isCreating = true;
 
 					return async ({ result }) => {
 						isCreating = false;
@@ -257,8 +259,9 @@
 							toastError('An error occurred');
 						}
 					};
-				}}
-			>
+                                }}
+                                use:formValidation
+                        >
 				<input type="hidden" name="profile_id" value={data.session?.user.id} />
 				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div class="col-span-2">
@@ -632,10 +635,11 @@
 						Cancel
 					</button>
 
-					<form
-						method="POST"
-						action="?/deleteRule"
-						use:enhance={() => {
+                                        <form
+                                                method="POST"
+                                                action="?/deleteRule"
+                                                class="form-container"
+                                                use:enhance={() => {
 							isDeleting = true;
 
 							return async ({ result }) => {
@@ -657,8 +661,9 @@
 									toastError('An error occurred');
 								}
 							};
-						}}
-					>
+                                                }}
+                                                use:formValidation
+                                        >
 						<input type="hidden" name="ruleId" value={deletingRuleId} />
 
 						<button
@@ -684,10 +689,11 @@
 			<div class="mx-4 w-full max-w-4xl rounded-lg bg-white p-6">
 				<h3 class="mb-4 text-lg font-medium text-gray-900">Edit Rule</h3>
 
-				<form
-					method="POST"
-					action="?/updateRule"
-					use:enhance={() => {
+                                <form
+                                        method="POST"
+                                        action="?/updateRule"
+                                        class="form-container"
+                                        use:enhance={() => {
 						isUpdating = true;
 
 						return async ({ result }) => {
@@ -712,8 +718,9 @@
 								toastError('An error occurred');
 							}
 						};
-					}}
-				>
+                                        }}
+                                        use:formValidation
+                                >
 					<input type="hidden" name="ruleId" value={editingRuleId} />
 
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
