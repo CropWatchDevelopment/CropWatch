@@ -15,6 +15,7 @@ export const TYPES = {
   RuleRepository: Symbol.for('RuleRepository'),
   NotifierTypeRepository: Symbol.for('NotifierTypeRepository'),
   UserRepository: Symbol.for('UserRepository'),
+  ReportTemplateRepository: Symbol.for('ReportTemplateRepository'),
   
   // Services
   DeviceService: Symbol.for('DeviceService'),
@@ -23,5 +24,6 @@ export const TYPES = {
   LocationService: Symbol.for('LocationService'),
   RuleService: Symbol.for('RuleService'),
   AuthService: Symbol.for('AuthService'),
-  DeviceDataService: Symbol.for('DeviceDataService')
+  DeviceDataService: Symbol.for('DeviceDataService'),
+  ReportTemplateService: Symbol.for('ReportTemplateService')
 };
