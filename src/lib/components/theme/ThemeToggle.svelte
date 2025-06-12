@@ -12,7 +12,7 @@
 
 <button
   type="button"
-  class="flex items-center justify-center p-2 rounded-full bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-200"
+  class="flex items-center justify-center p-2 rounded-full text-slate-200 text-text-light transition-colors duration-200"
   onclick={toggleTheme}
   aria-label={getDarkMode() ? "Switch to light mode" : "Switch to dark mode"}
 >
