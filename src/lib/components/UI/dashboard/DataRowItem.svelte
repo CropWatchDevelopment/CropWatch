@@ -118,19 +118,17 @@
 	     - Green: When device is confirmed active with recent data
 	     - Red: When device is confirmed inactive (data too old)
 	-->
-	<div
-		slot="trigger"
-		class="flex-1 border-l-8 {!statusConfirmed
-			? 'border-l-blue-300'
-			: isActive === null
-				? 'border-l-blue-300'
-				: !device.latestData?.created_at
-					? 'border-l-blue-400'
-					: isActive
-						? '!border-l-green-500'
-						: 'border-l-red-500'}"
-	>
-		<div class="my-1 mr-2 border-r-2">
+	<div slot="trigger" class="relative flex flex-1">
+		<!-- Status indicator -->
+		<div
+			class="absolute top-0 bottom-0 left-0 my-1 w-2 rounded-full"
+			class:bg-blue-300={!statusConfirmed || isActive === null}
+			class:bg-blue-400={statusConfirmed && !device.latestData?.created_at}
+			class:bg-green-500={statusConfirmed && isActive}
+			class:bg-red-500={statusConfirmed && !isActive && device.latestData?.created_at}
+		></div>
+
+		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
 			<div class="flex flex-col text-base">
 				<div class="justify-left flex flex-row">
 					<b class="ml-4 pb-1 text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-300"
@@ -187,22 +185,13 @@
 		{@render children()}
 	{/if}
 
-	<div
-		class="border-l-8 pb-1 pl-2 {!statusConfirmed
-			? 'border-l-blue-300'
-			: isActive === null
-				? 'border-l-blue-300'
-				: isActive
-					? '!border-l-green-500'
-					: 'border-l-red-500'} "
-	>
-		{#if detailHref || location}
-			<Button
-				text="View Details"
-				iconPath={mdiArrowRight}
-				onClick={() =>
-					goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}
-			/>
-		{/if}
-	</div>
+	{#if detailHref || location}
+	
+		<Button
+			text="View Details"
+			iconPath={mdiArrowRight}
+			onClick={() =>
+				goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}
+		/>
+	{/if}
 </Collapse>

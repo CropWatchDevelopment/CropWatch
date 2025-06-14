@@ -256,6 +256,7 @@
 				hideEmptyLocations={uiStore.hideEmptyLocations}
 				dashboardViewType={uiStore.dashboardViewType}
 				dashboardSortType={uiStore.dashboardSortType}
+				deviceActiveStatus={deviceActiveStatus}
 				onSelectLocation={selectLocation}
 				collapsed={sidebarCollapsed}
 				onToggleCollapse={toggleSidebar}

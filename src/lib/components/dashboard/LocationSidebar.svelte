@@ -9,7 +9,10 @@
 		mdiChevronRight,
 		mdiMapMarker,
 		mdiHome,
-		mdiEarth
+		mdiEarth,
+		mdiCheck,
+		mdiAlert,
+		mdiClockOutline
 	} from '@mdi/js';
 	import { Icon } from 'svelte-ux';
 	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
@@ -17,6 +20,7 @@
 	import type { Location } from '$lib/models/Location';
 	import type { DeviceWithType } from '$lib/models/Device';
 	import { fade } from 'svelte/transition';
+	import { getLocationActiveStatus, isDeviceActive } from '$lib/utilities/deviceUtils';
 
 	// Use the same interfaces as in the dashboard page
 	interface DeviceWithSensorData extends DeviceWithType {
@@ -41,6 +45,7 @@
 		dashboardViewType: string;
 		dashboardSortType: string;
 		collapsed: boolean;
+		deviceActiveStatus?: Record<string, boolean | null>;
 		onSelectLocation: (locationId: number | null) => void;
 		onToggleCollapse: () => void;
 		onsearch: (search: string) => void;
@@ -58,6 +63,7 @@
 		dashboardViewType = 'grid',
 		dashboardSortType = 'name',
 		collapsed = false,
+		deviceActiveStatus = {},
 		onSelectLocation = (locationId: number | null) => {},
 		onToggleCollapse = () => {},
 		onsearch = (value: string) => {},
@@ -72,6 +78,7 @@
 		dashboardViewType?: 'grid' | 'list' | string;
 		dashboardSortType?: 'name' | 'status' | string;
 		collapsed?: boolean;
+		deviceActiveStatus?: Record<string, boolean | null>;
 		onSelectLocation?: (locationId: number | null) => void;
 		onToggleCollapse?: () => void;
 		onsearch?: (value: string) => void;
@@ -145,7 +152,60 @@
 		uiStore.clearSearch();
 		console.log('LocationSidebar: uiStore.clearSearch called');
 	}
+
+	// Function to determine status class and icon for location
+	function getLocationStatus(location: LocationWithCount) {
+		if (!location || !location.cw_devices || location.cw_devices.length === 0) {
+			return { statusClass: 'status-loading', icon: mdiClockOutline };
+		}
+
+		// Convert deviceActiveStatus to a Record<string, boolean> for the utility function
+		const activeStatusMap: Record<string, boolean> = {};
+		for (const [key, value] of Object.entries(deviceActiveStatus)) {
+			activeStatusMap[key] = Boolean(value); // Convert null to false
+		}
+
+		// Check if any devices in this location have entries in the deviceActiveStatus map
+		const hasDevicesWithStatus = location.cw_devices.some(device => 
+			device.dev_eui && device.dev_eui in deviceActiveStatus
+		);
+
+		// If no devices have status yet, show loading
+		if (!hasDevicesWithStatus) {
+			return { statusClass: 'status-loading', icon: mdiClockOutline };
+		}
+
+		const { activeDevices, allActive, allInactive } = getLocationActiveStatus(location, activeStatusMap);
+
+		if (allActive) {
+			return { statusClass: 'status-success', icon: mdiCheck };
+		} else if (activeDevices.length > 0 && !allInactive) {
+			return { statusClass: 'status-warning', icon: mdiAlert };
+		} else {
+			// This is the case where all devices are inactive
+			return { statusClass: 'status-danger', icon: mdiClose };
+		}
+	}
 </script>
+
+<style>
+	/* Status colors */
+	.status-success {
+		background-color: var(--color-success);
+	}
+
+	.status-warning {
+		background-color: var(--color-warning, #f59e0b);
+	}
+
+	.status-danger {
+		background-color: var(--color-error, #e53935);
+	}
+	
+	.status-loading {
+		background-color: #64748b; /* blue-gray-500 */
+	}
+</style>
 
 <div
 	class="bg-card-light h-fit min-h-[calc(100vh-72px)] w-full overflow-hidden rounded p-1 shadow-sm transition-[width,padding] duration-300 ease-in-out [&.collapsed]:w-10 [&.collapsed]:max-w-10 [&.collapsed]:min-w-10 [&.collapsed]:overflow-visible [&.collapsed]:px-1"
@@ -245,7 +305,7 @@
 	>
 		<!-- Icon (always aligned) -->
 		<div class="ml-1.5 flex items-center justify-center">
-			<Icon path={mdiEarth} size="1.25em" />
+			<Icon path={mdiEarth} size="1.25em" class="text-blue-500" />
 		</div>
 
 		<!-- Label -->
@@ -283,7 +343,7 @@
 						tabindex="0"
 						title={location.name}
 						class={`
-	my-2 flex h-full  w-full items-center gap-3 rounded py-1 py-2 text-left transition-all duration-200
+	my-2 flex h-full  w-full items-center gap-3 rounded  py-2 text-left transition-all duration-200
 	${
 		selectedLocation === location.location_id
 			? 'text-foreground bg-emerald-500/30 font-medium shadow-sm'
@@ -293,14 +353,21 @@
 					>
 						<!-- Icon (always aligned) -->
 						<div class="ml-1.5 flex items-center justify-center">
-							<Icon path={mdiHome} size="1.25em" />
-						</div>
+						{#if location.cw_devices && location.cw_devices.length > 0}
+							{@const status = getLocationStatus(location)}
+							<div class="status-indicator h-6 w-6 rounded-full flex items-center justify-center {status.statusClass}">
+								<Icon path={status.icon} size="0.8em" class="text-white" />
+							</div>
+						{:else}
+							<Icon path={mdiHome} size="1.25em" class="text-gray-400" />
+						{/if}
+					</div>
 
 						<!-- Label and meta (only when expanded) -->
 						<div
 							class={`overflow-hidden transition-all duration-200
 			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'pointer-events-auto w-auto opacity-100 select-auto'}
-		`}
+						`}
 						>
 							<p class="overflow-hidden font-medium text-ellipsis whitespace-nowrap">
 								{location.name}
