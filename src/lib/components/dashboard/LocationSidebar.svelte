@@ -148,7 +148,7 @@
 </script>
 
 <div
-	class="bg-card-light h-fit min-h-[calc(100vh-62px)] w-full overflow-hidden rounded p-1 shadow-sm transition-[width,padding] duration-300 ease-in-out [&.collapsed]:w-10 [&.collapsed]:max-w-10 [&.collapsed]:min-w-10 [&.collapsed]:overflow-visible [&.collapsed]:px-1"
+	class="bg-card-light h-fit min-h-[calc(100vh-72px)] w-full overflow-hidden rounded p-1 shadow-sm transition-[width,padding] duration-300 ease-in-out [&.collapsed]:w-10 [&.collapsed]:max-w-10 [&.collapsed]:min-w-10 [&.collapsed]:overflow-visible [&.collapsed]:px-1"
 	class:collapsed
 >
 	<div class="mb-4 flex items-center">
@@ -230,58 +230,33 @@
 	</div>
 
 	<!-- All Locations filter option -->
-	{#if !collapsed}
-		<ul class="m-0 list-none" role="listbox" aria-label="Select all locations">
-			<li>
-				<button
-					in:fade={{ duration: 150 }}
-					out:fade={{ duration: 100 }}
-					class="
-							text-foreground hover:bg-card-hover relative
-							h-12 w-full cursor-pointer
-							rounded border-none
-							bg-transparent
-							text-left transition-all
-							duration-200 hover:shadow-sm
-							[&.collapsed]:overflow-hidden
-							[&.collapsed]:whitespace-nowrap
-							{selectedLocation === null ? 'bg-amber-500' : 'bg-red-300  text-2xl '}
-						"
-					class:collapsed
-					onclick={() => {
-						onSelectLocation(null);
-					}}
-					role="option"
-					aria-selected={selectedLocation === null}
-					title="All Locations"
-					tabindex="0"
-				>
-					<!-- Fixed position container for consistent layout -->
-					<div class="absolute top-1/2 left-[2px] flex -translate-y-1/2 items-center">
-						<!-- Icon: fixed position -->
-						<div class="flex h-6 w-6 flex-shrink-0 items-center justify-center">
-							<Icon path={mdiEarth} size="1.25em" />
-						</div>
-					</div>
+	<button
+		onclick={() => onSelectLocation(null)}
+		in:fade={{ duration: 150 }}
+		out:fade={{ duration: 100 }}
+		role="option"
+		aria-selected={selectedLocation === null}
+		tabindex="0"
+		title="All Locations"
+		class={`
+		my-3 flex h-10 w-full items-center gap-3 rounded text-left transition-all duration-200
+		${selectedLocation === null ? 'text-foreground bg-emerald-500/30' : 'hover:bg-card-hover text-white'}
+	`}
+	>
+		<!-- Icon (always aligned) -->
+		<div class="ml-1.5 flex items-center justify-center">
+			<Icon path={mdiEarth} size="1.25em" />
+		</div>
 
-					<!-- Ghost text block: always in DOM, fixed width, only visible when expanded -->
-					<div
-						class="absolute top-1/2 left-10 w-[160px] -translate-y-1/2 overflow-hidden transition-all duration-200"
-						class:opacity-0={collapsed}
-						class:pointer-events-none={collapsed}
-						class:select-none={collapsed}
-						class:opacity-100={!collapsed}
-						class:pointer-events-auto={!collapsed}
-						class:select-auto={!collapsed}
-					>
-						<p class="m-0 overflow-hidden font-medium text-ellipsis whitespace-nowrap">
-							All Locations
-						</p>
-					</div>
-				</button>
-			</li>
-		</ul>
-	{/if}
+		<!-- Label -->
+		<span
+			class={`overflow-hidden font-medium text-ellipsis whitespace-nowrap transition-all duration-200
+			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'w-auto opacity-100'}
+		`}
+		>
+			All Locations
+		</span>
+	</button>
 
 	{#if locations.length === 0 && !collapsed}
 		<p class="text-foreground p-4">No locations found.</p>
@@ -299,54 +274,38 @@
 				}) as location (location.location_id)}
 				<li>
 					<button
+						onclick={() => onSelectLocation(location.location_id)}
+						onkeydown={(e) => handleKeyDown(e, location)}
 						in:fade={{ duration: 150 }}
 						out:fade={{ duration: 100 }}
-						class="
-							text-foreground hover:bg-card-hover relative
-							h-16 w-full cursor-pointer
-							rounded border-none
-							bg-transparent
-							text-left transition-all
-							duration-200 hover:shadow-sm
-							[&.collapsed]:overflow-hidden
-							[&.collapsed]:whitespace-nowrap
-							{selectedLocation === location.location_id
-							? 'bg-primary-light text-primary-dark border-primary border-r-4 font-medium shadow-sm'
-							: ''}
-						"
-						class:selected={selectedLocation === location.location_id}
-						class:collapsed
-						onclick={() => {
-							console.log('Selecting location:', location.location_id);
-							onSelectLocation(location.location_id);
-						}}
-						onkeydown={(e) => handleKeyDown(e, location)}
 						role="option"
 						aria-selected={selectedLocation === location.location_id}
-						title={location.name}
 						tabindex="0"
+						title={location.name}
+						class={`
+	my-2 flex h-full  w-full items-center gap-3 rounded py-1 py-2 text-left transition-all duration-200
+	${
+		selectedLocation === location.location_id
+			? 'text-foreground bg-emerald-500/30 font-medium shadow-sm'
+			: 'text-foreground hover:bg-card-hover'
+	}
+`}
 					>
-						<!-- Fixed position container for consistent layout -->
-						<div class="absolute top-1/2 left-[2px] flex -translate-y-1/2 items-center">
-							<!-- Icon: fixed position -->
-							<div class="flex h-6 w-6 flex-shrink-0 items-center justify-center">
-								<Icon path={mdiHome} size="1.25em" />
-							</div>
+						<!-- Icon (always aligned) -->
+						<div class="ml-1.5 flex items-center justify-center">
+							<Icon path={mdiHome} size="1.25em" />
 						</div>
 
-						<!-- Ghost text block: always in DOM, fixed width, only visible when expanded -->
+						<!-- Label and meta (only when expanded) -->
 						<div
-							class="absolute top-1/2 left-10 w-[160px] -translate-y-1/2 overflow-hidden transition-all duration-200"
-							class:opacity-0={collapsed}
-							class:pointer-events-none={collapsed}
-							class:select-none={collapsed}
-							class:opacity-100={!collapsed}
-							class:pointer-events-auto={!collapsed}
-							class:select-auto={!collapsed}
+							class={`overflow-hidden transition-all duration-200
+			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'pointer-events-auto w-auto opacity-100 select-auto'}
+		`}
 						>
-							<p class="m-0 overflow-hidden font-medium text-ellipsis whitespace-nowrap">
+							<p class="overflow-hidden font-medium text-ellipsis whitespace-nowrap">
 								{location.name}
 							</p>
+
 							{#if location.description}
 								<p
 									class="text-foreground-dark mt-1 overflow-hidden text-sm text-ellipsis whitespace-nowrap"
@@ -354,7 +313,10 @@
 									{location.description}
 								</p>
 							{/if}
-							<p class="text-foreground-dark mt-1 text-xs">{location.deviceCount} devices</p>
+
+							<p class="text-foreground-dark mt-1 text-xs whitespace-nowrap">
+								{location.deviceCount} devices
+							</p>
 						</div>
 					</button>
 				</li>
