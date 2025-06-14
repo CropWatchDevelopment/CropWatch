@@ -106,7 +106,7 @@
 
 <Collapse
 	classes={{
-		root: 'mb-1 bg-gray-50/50 dark:bg-gray-800/30 w-full',
+		root: 'mb-1 bg-gray-200 dark:bg-gray-800/30 w-full ',
 		icon: 'text-gray-400 dark:text-gray-500 data-[open=true]:rotate-90'
 	}}
 	open={defaultCollapse}

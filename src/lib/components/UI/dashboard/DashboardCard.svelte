@@ -25,7 +25,7 @@
 </script>
 
 <div
-	class="flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-200 border-gray-200 bg-white text-gray-900 shadow-md
+	class="flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-200 text-gray-900 shadow-md
 	dark:border-gray-700 dark:bg-[#1f2532] dark:text-white dark:shadow-gray-900/20"
 >
 	<div
@@ -40,7 +40,7 @@
 				{:else if allActive}
 					<Icon class="text-xl text-green-500" path={mdiCheck} />
 				{:else if activeDevices.length > 0 && !allInactive}
-					<Icon class="text-xl text-orange-300 rounded-lg" path={mdiAlert} />
+					<Icon class="rounded-lg text-xl text-orange-300" path={mdiAlert} />
 				{:else}
 					<Icon class="text-xl text-red-500" path={mdiClose} />
 				{/if}
