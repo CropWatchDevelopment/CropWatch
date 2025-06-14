@@ -155,28 +155,41 @@
 
 	// Function to determine status class and icon for location
 	function getLocationStatus(location: LocationWithCount) {
+		// If location has no devices, show as inactive (red X)
 		if (!location || !location.cw_devices || location.cw_devices.length === 0) {
+			return { statusClass: 'status-danger', icon: mdiClose };
+		}
+
+		// Check if any devices have null status (loading state)
+		const hasNullStatus = location.cw_devices.some(device => 
+			device.dev_eui && deviceActiveStatus[device.dev_eui] === null
+		);
+
+		// If any device has null status, show loading
+		if (hasNullStatus) {
 			return { statusClass: 'status-loading', icon: mdiClockOutline };
 		}
 
 		// Convert deviceActiveStatus to a Record<string, boolean> for the utility function
+		// This matches how AllDevices.svelte handles it for the dashboard cards
 		const activeStatusMap: Record<string, boolean> = {};
 		for (const [key, value] of Object.entries(deviceActiveStatus)) {
-			activeStatusMap[key] = Boolean(value); // Convert null to false
+			activeStatusMap[key] = value === true; // Only true values are considered active
 		}
 
-		// Check if any devices in this location have entries in the deviceActiveStatus map
-		const hasDevicesWithStatus = location.cw_devices.some(device => 
-			device.dev_eui && device.dev_eui in deviceActiveStatus
+		// Filter active devices using the same logic as the dashboard
+		const activeDevices = location.cw_devices.filter(device => 
+			device.dev_eui && activeStatusMap[device.dev_eui] === true
 		);
 
-		// If no devices have status yet, show loading
-		if (!hasDevicesWithStatus) {
-			return { statusClass: 'status-loading', icon: mdiClockOutline };
-		}
+		// Calculate status flags using the same logic as the dashboard
+		const allActive = location.cw_devices.length > 0 && 
+			activeDevices.length === location.cw_devices.length;
+		
+		const allInactive = location.cw_devices.length > 0 && 
+			activeDevices.length === 0;
 
-		const { activeDevices, allActive, allInactive } = getLocationActiveStatus(location, activeStatusMap);
-
+		// Return status based on the same conditions as the dashboard
 		if (allActive) {
 			return { statusClass: 'status-success', icon: mdiCheck };
 		} else if (activeDevices.length > 0 && !allInactive) {
@@ -353,14 +366,21 @@
 					>
 						<!-- Icon (always aligned) -->
 						<div class="ml-1.5 flex items-center justify-center">
-						{#if location.cw_devices && location.cw_devices.length > 0}
-							{@const status = getLocationStatus(location)}
-							<div class="status-indicator h-6 w-6 rounded-full flex items-center justify-center {status.statusClass}">
-								<Icon path={status.icon} size="0.8em" class="text-white" />
-							</div>
-						{:else}
-							<Icon path={mdiHome} size="1.25em" class="text-gray-400" />
-						{/if}
+							{#if !location.cw_devices || location.cw_devices.length === 0}
+								<!-- Locations without devices show red X -->
+								<Icon path={mdiClose} size="1.25em" class="text-red-500" />
+							{:else}
+								{@const status = getLocationStatus(location)}
+								{#if status.statusClass === 'status-success'}
+									<Icon path={mdiCheck} size="1.25em" class="text-green-500" />
+								{:else if status.statusClass === 'status-warning'}
+									<Icon path={mdiAlert} size="1.25em" class="text-orange-300" />
+								{:else if status.statusClass === 'status-danger'}
+									<Icon path={mdiClose} size="1.25em" class="text-red-500" />
+								{:else}
+									<Icon path={mdiClockOutline} size="1.25em" class="text-blue-400" />
+								{/if}
+							{/if}
 					</div>
 
 						<!-- Label and meta (only when expanded) -->

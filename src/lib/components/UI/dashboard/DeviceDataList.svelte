@@ -47,16 +47,13 @@
 -->
 <div class="relative flex items-stretch">
 	<!-- Pill indicator -->
-	<div
-		class="absolute top-0 bottom-0 left-0 my-1 w-2 rounded-full"
-		class:bg-blue-300={isActive === null}
+	<div class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70"></div>
+	<!-- class:bg-blue-300={isActive === null}
 		class:bg-blue-400={device.latestData?.created_at === null}
 		class:bg-green-500={isActive}
-		class:bg-red-500={!isActive && device.latestData?.created_at}
-	></div>
-
+		class:bg-red-500={!isActive && device.latestData?.created_at} -->
 	<!-- Device data block -->
-	<div class="ml-2 flex-1 pl-3">
+	<div class="ml-2 flex-1 pl-0">
 		<div class="flex">
 			<h3 class="mb-2 basis-1/3 text-lg font-semibold text-yellow-600 dark:text-yellow-400">
 				{nameToJapaneseName('Details')}

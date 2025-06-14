@@ -40,7 +40,7 @@
 				{:else if allActive}
 					<Icon class="text-xl text-green-500" path={mdiCheck} />
 				{:else if activeDevices.length > 0 && !allInactive}
-					<Icon class="text-xl text-orange-400" path={mdiAlert} />
+					<Icon class="text-xl text-orange-300 rounded-lg" path={mdiAlert} />
 				{:else}
 					<Icon class="text-xl text-red-500" path={mdiClose} />
 				{/if}

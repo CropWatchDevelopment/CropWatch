@@ -121,7 +121,7 @@
 	<div slot="trigger" class="relative flex flex-1">
 		<!-- Status indicator -->
 		<div
-			class="absolute top-0 bottom-0 left-0 my-1 w-2 rounded-full"
+			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70"
 			class:bg-blue-300={!statusConfirmed || isActive === null}
 			class:bg-blue-400={statusConfirmed && !device.latestData?.created_at}
 			class:bg-green-500={statusConfirmed && isActive}
@@ -135,7 +135,7 @@
 						>{device.name || `Device ${device.dev_eui}`}</b
 					>
 				</div>
-				<div class="flex flex-row justify-center space-x-4">
+				<div class="flex flex-row justify-center space-x-5">
 					{#if device.latestData}
 						<div class="flex items-center">
 							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
@@ -186,7 +186,6 @@
 	{/if}
 
 	{#if detailHref || location}
-	
 		<Button
 			text="View Details"
 			iconPath={mdiArrowRight}
