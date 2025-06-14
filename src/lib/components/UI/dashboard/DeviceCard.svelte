@@ -20,7 +20,7 @@
 		device: DeviceWithLatestData;
 		isActive: boolean | null;
 		locationId: number;
-	}>()
+	}>();
 </script>
 
 <DataRowItem

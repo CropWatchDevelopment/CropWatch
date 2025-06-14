@@ -6,6 +6,16 @@ import { browser } from '$app/environment';
 export class DashboardUIStore {
     search = $state(browser ? (localStorage.getItem('dashboard_search') ?? '') : '');
     
+    // Method to explicitly clear search
+    clearSearch() {
+        console.log('DashboardUIStore: clearSearch called');
+        this.search = '';
+        if (browser) {
+            localStorage.removeItem('dashboard_search');
+        }
+        console.log('DashboardUIStore: search cleared');
+    }
+    
     hideEmptyLocations = $state(
         browser ? localStorage.getItem('hide_empty_locations') === 'true' : false
     );

@@ -42,8 +42,13 @@
 	// Use the isActive prop directly from the parent component
 	// This simplifies the component and ensures consistent active status logic
 	// Start with a neutral 'loading' state until we get confirmation from the timer logic
-	let isActive = $derived(externalIsActive !== undefined ? 
-		(externalIsActive === null ? null : Boolean(externalIsActive)) : null);
+	let isActive = $derived(
+		externalIsActive !== undefined
+			? externalIsActive === null
+				? null
+				: Boolean(externalIsActive)
+			: null
+	);
 
 	// Track whether we've received a definitive status update
 	let statusConfirmed = $state(false);

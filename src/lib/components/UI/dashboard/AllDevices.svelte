@@ -31,8 +31,40 @@
 		deviceActiveStatus: Record<string, boolean | null>;
 	}>()
 	
-	// Get the UI store to access the view type
+	// Get the UI store to access the view type and search
 	const uiStore = getDashboardUIStore();
+	
+	// Debug effect to log search changes
+	$effect(() => {
+		console.log('AllDevices: uiStore.search changed to:', uiStore.search);
+	});
+	
+	// Track filtered locations count for debugging
+	$effect(() => {
+		console.log('AllDevices: filteredLocations count:', filteredLocations.length);
+		console.log('AllDevices: total locations count:', locations.length);
+	});
+	
+	// Reactive filtered locations based on search
+	const filteredLocations = $derived(locations.filter((location: LocationWithDevices) => {
+
+		// If search is empty, show all locations
+		if (!uiStore.search?.trim()) return true;
+		
+		// Check if location name matches search
+		if (location.name.toLowerCase().includes(uiStore.search.toLowerCase())) return true;
+		
+		// Check if any device in the location matches search
+		if (location.cw_devices && location.cw_devices.length > 0) {
+			return location.cw_devices.some((device: DeviceWithSensorData) => 
+				device.name?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
+				device.dev_eui?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
+				device.deviceType?.name?.toLowerCase().includes(uiStore.search.toLowerCase())
+			);
+		}
+		
+		return false;
+	}));
 	
 	// Function to get container class based on view type
 	function getContainerClass(viewType: string): string {
@@ -50,53 +82,75 @@
 </script>
 
 <div class="device-cards-grid {getContainerClass(uiStore.dashboardViewType)}">
-	{#each locations as location (location.location_id)}
-		{@const hasNullStatus = (location.cw_devices ?? []).some((d: DeviceWithSensorData) => 
-			deviceActiveStatus[d.dev_eui] === null
-		)}
-		{@const activeDevices = (location.cw_devices ?? []).filter((d: DeviceWithSensorData) =>
-			isDeviceActive(d, deviceActiveStatus)
-		)}
-		{@const allActive =
-			(location.cw_devices?.length ?? 0) > 0 &&
-			activeDevices.length === (location.cw_devices?.length ?? 0)}
-		{@const allInactive =
-			(location.cw_devices?.length ?? 0) > 0 && activeDevices.length === 0}
-		<DashboardCard
-			{location}
-			href={`/app/dashboard/location/${location.location_id}`}
-			{activeDevices}
-			{allActive}
-			{allInactive}
-			loading={hasNullStatus}
-		>
-			{#snippet content()}
-				{#each location.cw_devices ?? [] as device (device.dev_eui)}
-					{@const isActive = isDeviceActive(device, deviceActiveStatus)}
-					{@const formattedDevice = {
-						...device,
-						latestData: device.latestData || {},
-						cw_device_type: {
-							name: device.deviceType?.name || 'Unknown',
-							default_upload_interval: device.deviceType?.default_upload_interval || 10,
-							primary_data_notation: device.deviceType?.primary_data_notation || '',
-							secondary_data_notation: device.deviceType?.secondary_data_notation || undefined,
-							primary_data_v2: device.deviceType?.primary_data_v2 || undefined,
-							secondary_data_v2: device.deviceType?.secondary_data_v2 || undefined
-						}
-					}}
-					<DeviceCard 
-						device={formattedDevice} 
-						{isActive} 
-						locationId={location.location_id} 
-					/>
-				{/each}
-			{/snippet}
-		</DashboardCard>
-	{/each}
+	{#if filteredLocations.length === 0}
+		<div class="no-results">
+			<p>No locations match your search criteria.</p>
+		</div>
+	{:else}
+		{#each filteredLocations as location (location.location_id)}
+			{@const hasNullStatus = (location.cw_devices ?? []).some((d: DeviceWithSensorData) => 
+				deviceActiveStatus[d.dev_eui] === null
+			)}
+			{@const activeDevices = (location.cw_devices ?? []).filter((d: DeviceWithSensorData) =>
+				isDeviceActive(d, deviceActiveStatus)
+			)}
+			{@const allActive =
+				(location.cw_devices?.length ?? 0) > 0 &&
+				activeDevices.length === (location.cw_devices?.length ?? 0)}
+			{@const allInactive =
+				(location.cw_devices?.length ?? 0) > 0 && activeDevices.length === 0}
+			<DashboardCard
+				{location}
+				href={`/app/dashboard/location/${location.location_id}`}
+				{activeDevices}
+				{allActive}
+				{allInactive}
+				loading={hasNullStatus}
+			>
+				{#snippet content()}
+					{#each location.cw_devices ?? [] as device (device.dev_eui)}
+						{@const isActive = isDeviceActive(device, deviceActiveStatus)}
+						{@const formattedDevice = {
+							...device,
+							latestData: device.latestData || {},
+							cw_device_type: {
+								name: device.deviceType?.name || 'Unknown',
+								default_upload_interval: device.deviceType?.default_upload_interval || 10,
+								primary_data_notation: device.deviceType?.primary_data_notation || '',
+								secondary_data_notation: device.deviceType?.secondary_data_notation || undefined,
+								primary_data_v2: device.deviceType?.primary_data_v2 || undefined,
+								secondary_data_v2: device.deviceType?.secondary_data_v2 || undefined
+							}
+						}}
+						<DeviceCard 
+							device={formattedDevice} 
+							{isActive} 
+							locationId={location.location_id} 
+						/>
+					{/each}
+				{/snippet}
+			</DashboardCard>
+		{/each}
+	{/if}
 </div>
 
 <style>
+	.no-results {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+		padding: 2rem;
+		background-color: var(--color-card);
+		border-radius: 0.5rem;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	}
+
+	.no-results p {
+		color: var(--color-text-secondary);
+		font-size: 1rem;
+	}
+
 	.device-cards-grid {
 		/* Base styles that apply to all view modes */
 		gap: 1rem;

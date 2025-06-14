@@ -197,15 +197,23 @@
 	}
 
 	// Function to select a location and load its devices
-	async function selectLocation(locationId: number) {
+	async function selectLocation(locationId: number | null) {
+		console.log('Dashboard selectLocation called with:', locationId);
+		console.log('Current selectedLocationId:', locationsStore.selectedLocationId);
+		
 		// If already selected, do nothing
-		if (locationsStore.selectedLocationId === locationId) return;
+		if (locationsStore.selectedLocationId === locationId) {
+			console.log('Location already selected, returning');
+			return;
+		}
 
 		// Clean up any existing polling before changing location
 		timerManager.cleanupPolling();
 
 		// Use the store to select location and load devices
+		console.log('Calling store.selectLocation with:', locationId);
 		await locationsStore.selectLocation(locationId);
+		console.log('After store.selectLocation, selectedLocationId is:', locationsStore.selectedLocationId);
 
 		// Setup active timers for each device
 		locationsStore.devices.forEach((device: DeviceWithSensorData) => {
@@ -214,8 +222,10 @@
 			}
 		});
 
-		// Set up polling for the newly selected location
-		timerManager.setupPolling(locationId, refreshDevicesForLocation);
+		// Set up polling only for specific locations, not for "All Locations"
+		if (locationId !== null) {
+			timerManager.setupPolling(locationId, refreshDevicesForLocation);
+		}
 	}
 
 	// Note: handleKeyDown is now handled in the LocationSidebar component
@@ -239,13 +249,21 @@
 			<LocationSidebar
 				locations={locationsStore.locations}
 				selectedLocation={locationsStore.selectedLocationId}
-				bind:search={uiStore.search}
-				bind:hideEmptyLocations={uiStore.hideEmptyLocations}
-				bind:dashboardViewType={uiStore.dashboardViewType}
-				bind:dashboardSortType={uiStore.dashboardSortType}
+				search={uiStore.search}
+				hideEmptyLocations={uiStore.hideEmptyLocations}
+				dashboardViewType={uiStore.dashboardViewType}
+				dashboardSortType={uiStore.dashboardSortType}
 				onSelectLocation={selectLocation}
 				collapsed={sidebarCollapsed}
 				onToggleCollapse={toggleSidebar}
+				onsearch={(value) => {
+					console.log('Dashboard: onsearch called with:', value);
+					uiStore.search = value;
+					console.log('Dashboard: uiStore.search set to:', uiStore.search);
+				}}
+				onhideEmptyLocationsChange={(value) => uiStore.hideEmptyLocations = value}
+				ondashboardViewTypeChange={(value) => uiStore.dashboardViewType = value as 'grid' | 'mozaic' | 'list'}
+				ondashboardSortTypeChange={(value) => uiStore.dashboardSortType = value as 'alpha' | 'custom'}
 			/>
 
 			<!-- Device display panel -->
@@ -256,7 +274,18 @@
 				{:else if locationsStore.locationError}
 					<div class="error">{locationsStore.locationError}</div>
 				{:else if locationsStore.locations.length > 0}
-					<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
+					{#if locationsStore.selectedLocationId !== null}
+						<!-- Show only the selected location -->
+						{@const selectedLoc = locationsStore.locations.find(loc => loc.location_id === locationsStore.selectedLocationId)}
+						{#if selectedLoc}
+							<AllDevices locations={[selectedLoc]} {deviceActiveStatus} />
+						{:else}
+							<div class="error">Selected location not found.</div>
+						{/if}
+					{:else}
+						<!-- Show all locations ("All Locations" is selected) -->
+						<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
+					{/if}
 				{:else}
 					<p>No locations found.</p>
 				{/if}
