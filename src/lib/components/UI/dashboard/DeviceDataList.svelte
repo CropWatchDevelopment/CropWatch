@@ -53,7 +53,7 @@
 		class:bg-green-500={isActive}
 		class:bg-red-500={!isActive && device.latestData?.created_at} -->
 	<!-- Device data block -->
-	<div class="ml-2 flex-1 pl-0">
+	<div class="ml-1 flex-1">
 		<div class="flex">
 			<h3 class="mb-2 basis-1/3 text-lg font-semibold text-yellow-600 dark:text-yellow-400">
 				{nameToJapaneseName('Details')}
@@ -62,7 +62,7 @@
 
 		{#each dataPoints as dataPointKey, index}
 			{#if device.latestData[dataPointKey] !== null}
-				<div class="py-1 pl-2">
+				<div class="py-1 pr-1">
 					<div class="flex items-center">
 						<div class="flex min-w-[120px] items-center">
 							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400">
