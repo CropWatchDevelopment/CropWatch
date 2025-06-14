@@ -305,7 +305,7 @@
 	>
 		<!-- Icon (always aligned) -->
 		<div class="ml-1.5 flex items-center justify-center">
-			<Icon path={mdiEarth} size="1.25em" class="text-blue-500" />
+			<Icon path={mdiEarth} size="1.25em" class="text-gray-600 dark:text-gray-400" />
 		</div>
 
 		<!-- Label -->
