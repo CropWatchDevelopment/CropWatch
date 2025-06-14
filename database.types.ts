@@ -44,141 +44,6 @@ export type Database = {
           },
         ]
       }
-      babylon_connection_types: {
-        Row: {
-          created_at: string
-          id: number
-          name: string
-          type_id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          name: string
-          type_id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          name?: string
-          type_id?: number
-        }
-        Relationships: []
-      }
-      babylon_decoders: {
-        Row: {
-          created_at: string
-          decoder: string | null
-          decoder_id: number
-          id: number
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          decoder?: string | null
-          decoder_id?: number
-          id?: number
-          name?: string
-        }
-        Update: {
-          created_at?: string
-          decoder?: string | null
-          decoder_id?: number
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      babylon_in_connections: {
-        Row: {
-          connection_id: number
-          connection_name: string
-          created_at: string
-          endpoint: string
-          id: number
-          password: string | null
-          port: number | null
-          profile_id: string
-          type: number
-          username: string | null
-        }
-        Insert: {
-          connection_id?: number
-          connection_name: string
-          created_at?: string
-          endpoint: string
-          id?: number
-          password?: string | null
-          port?: number | null
-          profile_id: string
-          type: number
-          username?: string | null
-        }
-        Update: {
-          connection_id?: number
-          connection_name?: string
-          created_at?: string
-          endpoint?: string
-          id?: number
-          password?: string | null
-          port?: number | null
-          profile_id?: string
-          type?: number
-          username?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "public_babylon_connections_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_babylon_in_connections_type_fkey"
-            columns: ["type"]
-            isOneToOne: false
-            referencedRelation: "babylon_connection_types"
-            referencedColumns: ["type_id"]
-          },
-        ]
-      }
-      babylon_input_output: {
-        Row: {
-          created_at: string
-          id: number
-          in_id: number
-          out_id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          in_id: number
-          out_id: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          in_id?: number
-          out_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "babylon_input_output_in_id_fkey"
-            columns: ["in_id"]
-            isOneToOne: false
-            referencedRelation: "babylon_in_connections"
-            referencedColumns: ["connection_id"]
-          },
-          {
-            foreignKeyName: "babylon_input_output_out_id_fkey"
-            columns: ["out_id"]
-            isOneToOne: false
-            referencedRelation: "babylon_out_connections"
-            referencedColumns: ["connection_id"]
-          },
-        ]
-      }
       babylon_notifiers: {
         Row: {
           api_key: string | null
@@ -221,149 +86,7 @@ export type Database = {
         }
         Relationships: []
       }
-      babylon_notifiers_out_connections: {
-        Row: {
-          created_at: string
-          id: number
-          notifier_id: number
-          out_connection_id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          notifier_id: number
-          out_connection_id: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          notifier_id?: number
-          out_connection_id?: number
-        }
-        Relationships: []
-      }
-      babylon_out_connections: {
-        Row: {
-          connection_id: number
-          connection_name: string
-          created_at: string
-          decoder: number | null
-          endpoint: string | null
-          id: number
-          password: string | null
-          port: number | null
-          profile_id: string
-          type: number
-          username: string | null
-        }
-        Insert: {
-          connection_id?: number
-          connection_name: string
-          created_at?: string
-          decoder?: number | null
-          endpoint?: string | null
-          id?: number
-          password?: string | null
-          port?: number | null
-          profile_id: string
-          type: number
-          username?: string | null
-        }
-        Update: {
-          connection_id?: number
-          connection_name?: string
-          created_at?: string
-          decoder?: number | null
-          endpoint?: string | null
-          id?: number
-          password?: string | null
-          port?: number | null
-          profile_id?: string
-          type?: number
-          username?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "public_babylon_out_connections_decoder_fkey"
-            columns: ["decoder"]
-            isOneToOne: false
-            referencedRelation: "babylon_decoders"
-            referencedColumns: ["decoder_id"]
-          },
-          {
-            foreignKeyName: "public_babylon_out_connections_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_babylon_out_connections_type_fkey"
-            columns: ["type"]
-            isOneToOne: false
-            referencedRelation: "babylon_connection_types"
-            referencedColumns: ["type_id"]
-          },
-        ]
-      }
       cw_air_data: {
-        Row: {
-          battery_level: number | null
-          co: number | null
-          co2: number | null
-          created_at: string
-          dev_eui: string
-          humidity: number | null
-          is_simulated: boolean
-          lux: number | null
-          pressure: number | null
-          rainfall: number | null
-          smoke_detected: boolean | null
-          temperature_c: number | null
-          uv_index: number | null
-          vape_detected: boolean | null
-          wind_direction: number | null
-          wind_speed: number | null
-        }
-        Insert: {
-          battery_level?: number | null
-          co?: number | null
-          co2?: number | null
-          created_at?: string
-          dev_eui: string
-          humidity?: number | null
-          is_simulated?: boolean
-          lux?: number | null
-          pressure?: number | null
-          rainfall?: number | null
-          smoke_detected?: boolean | null
-          temperature_c?: number | null
-          uv_index?: number | null
-          vape_detected?: boolean | null
-          wind_direction?: number | null
-          wind_speed?: number | null
-        }
-        Update: {
-          battery_level?: number | null
-          co?: number | null
-          co2?: number | null
-          created_at?: string
-          dev_eui?: string
-          humidity?: number | null
-          is_simulated?: boolean
-          lux?: number | null
-          pressure?: number | null
-          rainfall?: number | null
-          smoke_detected?: boolean | null
-          temperature_c?: number | null
-          uv_index?: number | null
-          vape_detected?: boolean | null
-          wind_direction?: number | null
-          wind_speed?: number | null
-        }
-        Relationships: []
-      }
-      cw_air_data_hpy: {
         Row: {
           battery_level: number | null
           co: number | null
@@ -976,6 +699,27 @@ export type Database = {
           },
         ]
       }
+      cw_notifier_types: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          notifier_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          notifier_id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          notifier_id?: number
+        }
+        Relationships: []
+      }
       cw_permission_level_types: {
         Row: {
           created_at: string
@@ -996,41 +740,6 @@ export type Database = {
           permission_level_id?: number
         }
         Relationships: []
-      }
-      cw_pulse_meters: {
-        Row: {
-          count: number
-          created_at: string
-          dev_eui: string
-          id: number
-          litersPerPulse: number
-          periodCount: number
-        }
-        Insert: {
-          count?: number
-          created_at?: string
-          dev_eui: string
-          id?: number
-          litersPerPulse?: number
-          periodCount?: number
-        }
-        Update: {
-          count?: number
-          created_at?: string
-          dev_eui?: string
-          id?: number
-          litersPerPulse?: number
-          periodCount?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "public_cw_pulse_meters_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
       }
       cw_rule_criteria: {
         Row: {
@@ -1128,7 +837,7 @@ export type Database = {
             foreignKeyName: "cw_rules_notifier_type_fkey"
             columns: ["notifier_type"]
             isOneToOne: false
-            referencedRelation: "notifier_types"
+            referencedRelation: "cw_notifier_types"
             referencedColumns: ["notifier_id"]
           },
           {
@@ -1141,33 +850,6 @@ export type Database = {
         ]
       }
       cw_soil_data: {
-        Row: {
-          created_at: string
-          dev_eui: string
-          ec: number | null
-          moisture: number | null
-          ph: number | null
-          temperature_c: number | null
-        }
-        Insert: {
-          created_at?: string
-          dev_eui: string
-          ec?: number | null
-          moisture?: number | null
-          ph?: number | null
-          temperature_c?: number | null
-        }
-        Update: {
-          created_at?: string
-          dev_eui?: string
-          ec?: number | null
-          moisture?: number | null
-          ph?: number | null
-          temperature_c?: number | null
-        }
-        Relationships: []
-      }
-      cw_soil_data_hpy: {
         Row: {
           created_at: string
           dev_eui: string
@@ -1253,118 +935,6 @@ export type Database = {
           },
         ]
       }
-      cw_ss_tme: {
-        Row: {
-          batteryVoltage: number | null
-          created_at: string
-          dev_eui: string
-          id: number
-          internalTemp: number | null
-          modbusAttempts: number | null
-          profile_id: string | null
-          soil_EC: number | null
-          soil_moisture: number
-          soil_temperatureC: number
-        }
-        Insert: {
-          batteryVoltage?: number | null
-          created_at?: string
-          dev_eui: string
-          id?: number
-          internalTemp?: number | null
-          modbusAttempts?: number | null
-          profile_id?: string | null
-          soil_EC?: number | null
-          soil_moisture: number
-          soil_temperatureC: number
-        }
-        Update: {
-          batteryVoltage?: number | null
-          created_at?: string
-          dev_eui?: string
-          id?: number
-          internalTemp?: number | null
-          modbusAttempts?: number | null
-          profile_id?: string | null
-          soil_EC?: number | null
-          soil_moisture?: number
-          soil_temperatureC?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cw_ss_tme_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
-      cw_ss_tmepnpk: {
-        Row: {
-          batteryVoltage: number | null
-          created_at: string
-          dev_eui: string
-          gateway_count: number | null
-          id: number
-          internalTemp: number | null
-          modbusAttempts: number | null
-          rssi: number | null
-          snr: number | null
-          soil_EC: number | null
-          soil_K: number | null
-          soil_moisture: number
-          soil_N: number | null
-          soil_P: number | null
-          soil_PH: number | null
-          soil_temperatureC: number
-        }
-        Insert: {
-          batteryVoltage?: number | null
-          created_at?: string
-          dev_eui: string
-          gateway_count?: number | null
-          id?: number
-          internalTemp?: number | null
-          modbusAttempts?: number | null
-          rssi?: number | null
-          snr?: number | null
-          soil_EC?: number | null
-          soil_K?: number | null
-          soil_moisture: number
-          soil_N?: number | null
-          soil_P?: number | null
-          soil_PH?: number | null
-          soil_temperatureC: number
-        }
-        Update: {
-          batteryVoltage?: number | null
-          created_at?: string
-          dev_eui?: string
-          gateway_count?: number | null
-          id?: number
-          internalTemp?: number | null
-          modbusAttempts?: number | null
-          rssi?: number | null
-          snr?: number | null
-          soil_EC?: number | null
-          soil_K?: number | null
-          soil_moisture?: number
-          soil_N?: number | null
-          soil_P?: number | null
-          soil_PH?: number | null
-          soil_temperatureC?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cw_ss_tmepnpk_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
       cw_traffic: {
         Row: {
           created_at: string
@@ -1439,6 +1009,44 @@ export type Database = {
           },
         ]
       }
+      cw_water_data: {
+        Row: {
+          created_at: string
+          deapth_cm: number | null
+          dev_eui: string
+          id: number
+          pressure: number | null
+          spo2: number | null
+          temperature_c: number | null
+        }
+        Insert: {
+          created_at?: string
+          deapth_cm?: number | null
+          dev_eui: string
+          id?: number
+          pressure?: number | null
+          spo2?: number | null
+          temperature_c?: number | null
+        }
+        Update: {
+          created_at?: string
+          deapth_cm?: number | null
+          dev_eui?: string
+          id?: number
+          pressure?: number | null
+          spo2?: number | null
+          temperature_c?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cw_water_data_dev_eui_fkey"
+            columns: ["dev_eui"]
+            isOneToOne: false
+            referencedRelation: "cw_devices"
+            referencedColumns: ["dev_eui"]
+          },
+        ]
+      }
       cw_watermeter_uplinks: {
         Row: {
           battery_level: number | null
@@ -1474,48 +1082,10 @@ export type Database = {
           },
         ]
       }
-      devices: {
-        Row: {
-          active: boolean
-          created_at: string | null
-          dev_eui: string
-          device_name: string | null
-          id: number
-          lat: number | null
-          linked_device_eui: string | null
-          lng: number | null
-          profile_id: string | null
-          type: string | null
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string | null
-          dev_eui: string
-          device_name?: string | null
-          id?: number
-          lat?: number | null
-          linked_device_eui?: string | null
-          lng?: number | null
-          profile_id?: string | null
-          type?: string | null
-        }
-        Update: {
-          active?: boolean
-          created_at?: string | null
-          dev_eui?: string
-          device_name?: string | null
-          id?: number
-          lat?: number | null
-          linked_device_eui?: string | null
-          lng?: number | null
-          profile_id?: string | null
-          type?: string | null
-        }
-        Relationships: []
-      }
       ip_log: {
         Row: {
           created_at: string
+          dev_eui: string | null
           device_id: string
           id: number
           ip: string | null
@@ -1523,6 +1093,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dev_eui?: string | null
           device_id: string
           id?: number
           ip?: string | null
@@ -1530,12 +1101,21 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dev_eui?: string | null
           device_id?: string
           id?: number
           ip?: string | null
           timestamp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ip_log_dev_eui_fkey"
+            columns: ["dev_eui"]
+            isOneToOne: false
+            referencedRelation: "cw_devices"
+            referencedColumns: ["dev_eui"]
+          },
+        ]
       }
       locations: {
         Row: {
@@ -1623,27 +1203,6 @@ export type Database = {
           },
         ]
       }
-      notifier_types: {
-        Row: {
-          created_at: string
-          id: number
-          name: string
-          notifier_id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          name: string
-          notifier_id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          name?: string
-          notifier_id?: number
-        }
-        Relationships: []
-      }
       permissions: {
         Row: {
           allowed_by_profile_id: string | null
@@ -1685,13 +1244,6 @@ export type Database = {
             columns: ["allowed_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "permissions_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
@@ -1738,6 +1290,50 @@ export type Database = {
         }
         Relationships: []
       }
+      report_alert_points: {
+        Row: {
+          created_at: string
+          hex_color: string | null
+          id: number
+          max: number | null
+          min: number | null
+          name: string
+          operator: string | null
+          report_id: string
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          hex_color?: string | null
+          id?: number
+          max?: number | null
+          min?: number | null
+          name: string
+          operator?: string | null
+          report_id: string
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          hex_color?: string | null
+          id?: number
+          max?: number | null
+          min?: number | null
+          name?: string
+          operator?: string | null
+          report_id?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_alert_points_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["report_id"]
+          },
+        ]
+      }
       report_user_schedule: {
         Row: {
           created_at: string
@@ -1746,6 +1342,7 @@ export type Database = {
           end_of_week: boolean
           id: number
           is_active: boolean
+          report_id: string
           report_user_schedule_id: number
           user_id: string
         }
@@ -1756,6 +1353,7 @@ export type Database = {
           end_of_week?: boolean
           id?: number
           is_active?: boolean
+          report_id: string
           report_user_schedule_id?: number
           user_id?: string
         }
@@ -1766,6 +1364,7 @@ export type Database = {
           end_of_week?: boolean
           id?: number
           is_active?: boolean
+          report_id?: string
           report_user_schedule_id?: number
           user_id?: string
         }
@@ -1778,6 +1377,13 @@ export type Database = {
             referencedColumns: ["dev_eui"]
           },
           {
+            foreignKeyName: "report_user_schedule_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["report_id"]
+          },
+          {
             foreignKeyName: "report_user_schedule_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1785,6 +1391,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          report_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          report_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          report_id?: string
+        }
+        Relationships: []
       }
       reports_templates: {
         Row: {
@@ -1825,477 +1452,6 @@ export type Database = {
           {
             foreignKeyName: "reports_templates_owner_id_fkey"
             columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      road_event_lines: {
-        Row: {
-          camera_id: string
-          camera_name: string
-          created_at: string | null
-          id: number
-          line_name: string
-        }
-        Insert: {
-          camera_id?: string
-          camera_name: string
-          created_at?: string | null
-          id?: number
-          line_name: string
-        }
-        Update: {
-          camera_id?: string
-          camera_name?: string
-          created_at?: string | null
-          id?: number
-          line_name?: string
-        }
-        Relationships: []
-      }
-      road_events: {
-        Row: {
-          camera_id: string | null
-          class: string
-          created_at: string | null
-          direction: number
-          id: number
-          line_id: string | null
-          server_event_datetime: string | null
-          source_datetime: string | null
-          track_id: number
-        }
-        Insert: {
-          camera_id?: string | null
-          class: string
-          created_at?: string | null
-          direction: number
-          id?: number
-          line_id?: string | null
-          server_event_datetime?: string | null
-          source_datetime?: string | null
-          track_id: number
-        }
-        Update: {
-          camera_id?: string | null
-          class?: string
-          created_at?: string | null
-          direction?: number
-          id?: number
-          line_id?: string | null
-          server_event_datetime?: string | null
-          source_datetime?: string | null
-          track_id?: number
-        }
-        Relationships: []
-      }
-      roles: {
-        Row: {
-          code: number | null
-          created_at: string | null
-          description: string | null
-          id: number
-          name: string
-        }
-        Insert: {
-          code?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name: string
-        }
-        Update: {
-          code?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      seeed_co2_lorawan_uplinks: {
-        Row: {
-          battery: number | null
-          co2_level: number | null
-          created_at: string | null
-          dev_eui: string
-          err: number | null
-          humidity: number | null
-          id: number
-          interval: number | null
-          payload: string | null
-          pressure: number | null
-          rssi: number | null
-          snr: number | null
-          temperature: number | null
-          valid: boolean | null
-        }
-        Insert: {
-          battery?: number | null
-          co2_level?: number | null
-          created_at?: string | null
-          dev_eui: string
-          err?: number | null
-          humidity?: number | null
-          id?: number
-          interval?: number | null
-          payload?: string | null
-          pressure?: number | null
-          rssi?: number | null
-          snr?: number | null
-          temperature?: number | null
-          valid?: boolean | null
-        }
-        Update: {
-          battery?: number | null
-          co2_level?: number | null
-          created_at?: string | null
-          dev_eui?: string
-          err?: number | null
-          humidity?: number | null
-          id?: number
-          interval?: number | null
-          payload?: string | null
-          pressure?: number | null
-          rssi?: number | null
-          snr?: number | null
-          temperature?: number | null
-          valid?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seeed_co2_lorawan_uplinks_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
-      seeed_sensecap_s2100_nimbol: {
-        Row: {
-          battery_level: number | null
-          created_at: string
-          dev_eui: string
-          gateway_count: number
-          id: number
-          rssi: number
-          snr: number
-          soil_ec: number
-          soil_humidity: number
-          soil_k: number | null
-          soil_n: number | null
-          soil_p: number | null
-          soil_ph: number
-          soil_temperature: number
-        }
-        Insert: {
-          battery_level?: number | null
-          created_at?: string
-          dev_eui?: string
-          gateway_count: number
-          id?: number
-          rssi: number
-          snr: number
-          soil_ec: number
-          soil_humidity: number
-          soil_k?: number | null
-          soil_n?: number | null
-          soil_p?: number | null
-          soil_ph: number
-          soil_temperature: number
-        }
-        Update: {
-          battery_level?: number | null
-          created_at?: string
-          dev_eui?: string
-          gateway_count?: number
-          id?: number
-          rssi?: number
-          snr?: number
-          soil_ec?: number
-          soil_humidity?: number
-          soil_k?: number | null
-          soil_n?: number | null
-          soil_p?: number | null
-          soil_ph?: number
-          soil_temperature?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seeed_sensecap_s2100_nimbol_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
-      seeed_sensecap_s2103_WaterLevel: {
-        Row: {
-          created_at: string
-          dev_eui: string
-          id: number
-          profile_id: string | null
-          water_level: number
-        }
-        Insert: {
-          created_at?: string
-          dev_eui: string
-          id?: number
-          profile_id?: string | null
-          water_level: number
-        }
-        Update: {
-          created_at?: string
-          dev_eui?: string
-          id?: number
-          profile_id?: string | null
-          water_level?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seeed_sensecap_s2103_WaterLevel_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
-      seeed_sensecap_s2104: {
-        Row: {
-          battery_level: number | null
-          created_at: string
-          dev_eui: string
-          id: number
-          moisture: number | null
-          temperature: number | null
-        }
-        Insert: {
-          battery_level?: number | null
-          created_at?: string
-          dev_eui: string
-          id?: number
-          moisture?: number | null
-          temperature?: number | null
-        }
-        Update: {
-          battery_level?: number | null
-          created_at?: string
-          dev_eui?: string
-          id?: number
-          moisture?: number | null
-          temperature?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seeed_sensecap_s210x_temp_moist_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
-      seeed_sensecap_s2120: {
-        Row: {
-          created_at: string
-          dev_eui: string
-          frame_id: number | null
-          humidity: number | null
-          id: number
-          lux: number | null
-          pressure: number | null
-          profile_id: string | null
-          rainfall: number | null
-          temperatureC: number | null
-          uv: number | null
-          wind_direction: number | null
-          wind_speed: number | null
-        }
-        Insert: {
-          created_at?: string
-          dev_eui: string
-          frame_id?: number | null
-          humidity?: number | null
-          id?: number
-          lux?: number | null
-          pressure?: number | null
-          profile_id?: string | null
-          rainfall?: number | null
-          temperatureC?: number | null
-          uv?: number | null
-          wind_direction?: number | null
-          wind_speed?: number | null
-        }
-        Update: {
-          created_at?: string
-          dev_eui?: string
-          frame_id?: number | null
-          humidity?: number | null
-          id?: number
-          lux?: number | null
-          pressure?: number | null
-          profile_id?: string | null
-          rainfall?: number | null
-          temperatureC?: number | null
-          uv?: number | null
-          wind_direction?: number | null
-          wind_speed?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "seeed_sensecap_s2120_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
-      seeed_t1000: {
-        Row: {
-          battery_level: number | null
-          created_at: string
-          dev_eui: string
-          id: number
-          lat: number
-          long: number
-          profile_id: string | null
-          sos: number | null
-          temperatureC: number | null
-        }
-        Insert: {
-          battery_level?: number | null
-          created_at?: string
-          dev_eui: string
-          id?: number
-          lat: number
-          long: number
-          profile_id?: string | null
-          sos?: number | null
-          temperatureC?: number | null
-        }
-        Update: {
-          battery_level?: number | null
-          created_at?: string
-          dev_eui?: string
-          id?: number
-          lat?: number
-          long?: number
-          profile_id?: string | null
-          sos?: number | null
-          temperatureC?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "SEEED_T1000_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "cw_devices"
-            referencedColumns: ["dev_eui"]
-          },
-          {
-            foreignKeyName: "seeed_t1000_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sensors: {
-        Row: {
-          address: number | null
-          connected_device: string | null
-          created_at: string
-          id: number
-          lat: number | null
-          lng: number | null
-          type: string | null
-        }
-        Insert: {
-          address?: number | null
-          connected_device?: string | null
-          created_at?: string
-          id?: number
-          lat?: number | null
-          lng?: number | null
-          type?: string | null
-        }
-        Update: {
-          address?: number | null
-          connected_device?: string | null
-          created_at?: string
-          id?: number
-          lat?: number | null
-          lng?: number | null
-          type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sensors_connected_device_fkey"
-            columns: ["connected_device"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["dev_eui"]
-          },
-        ]
-      }
-      temp_humid_co2_alert_settings: {
-        Row: {
-          action: number
-          cleared: boolean
-          created_at: string
-          dev_eui: string
-          id: number
-          OneSignalID: string | null
-          operator: string
-          profile_id: string
-          receiver: string
-          subject: string
-          value: number
-        }
-        Insert: {
-          action: number
-          cleared: boolean
-          created_at?: string
-          dev_eui: string
-          id?: number
-          OneSignalID?: string | null
-          operator: string
-          profile_id: string
-          receiver: string
-          subject: string
-          value: number
-        }
-        Update: {
-          action?: number
-          cleared?: boolean
-          created_at?: string
-          dev_eui?: string
-          id?: number
-          OneSignalID?: string | null
-          operator?: string
-          profile_id?: string
-          receiver?: string
-          subject?: string
-          value?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "temp_humid_co2_alert_settings_dev_eui_fkey"
-            columns: ["dev_eui"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["dev_eui"]
-          },
-          {
-            foreignKeyName: "temp_humid_co2_alert_settings_profile_id_fkey"
-            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

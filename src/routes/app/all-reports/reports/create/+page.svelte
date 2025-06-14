@@ -1,10 +1,21 @@
 <script lang="ts">
   import { success, error as errorToast } from '$lib/stores/toast.svelte';
+  let points = $state<any[]>([]);
+  let interval = $state(60);
+  let averaged = $state(false);
+  let weekly = $state(false);
+  let monthly = $state(false);
+
+  function addPoint() {
+    points.push({ name: '', min: null, max: null, color: '#000000' });
+  }
+  function removePoint(i: number) { points.splice(i,1); }
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     const form = event.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
+    formData.set('template', JSON.stringify({ alertPoints: points, interval, averaged, weekly, monthly }));
     const res = await fetch('?/createReport', { method: 'POST', body: formData });
     const result = await res.json();
     if (result.success) {
@@ -23,31 +34,23 @@
       Name
       <input name="name" class="border p-1 rounded" required />
     </label>
+    {#each points as p, i}
+      <div class="flex items-center gap-2">
+        <input type="text" bind:value={p.name} placeholder="Name" class="border p-1 rounded" />
+        <input type="number" bind:value={p.min} placeholder="Min" class="w-20 border p-1 rounded" />
+        <input type="number" bind:value={p.max} placeholder="Max" class="w-20 border p-1 rounded" />
+        <input type="color" bind:value={p.color} />
+        <button type="button" class="text-red-600" on:click={() => removePoint(i)}>X</button>
+      </div>
+    {/each}
+    <button type="button" on:click={addPoint} class="underline">Add Point</button>
     <label>
-      Values (comma separated)
-      <input name="values" class="border p-1 rounded" />
+      Interval (minutes)
+      <input type="number" bind:value={interval} class="border p-1 rounded" />
     </label>
-    <label>
-      Colors (comma separated)
-      <input name="colors" class="border p-1 rounded" />
-    </label>
-    <label>
-      Compression Interval (minutes)
-      <input name="interval" type="number" class="border p-1 rounded" />
-    </label>
-    <label class="flex gap-2">
-      <input type="checkbox" name="averaged" /> Average values
-    </label>
-    <label class="flex gap-2">
-      <input type="checkbox" name="weekly" /> Send weekly
-    </label>
-    <label class="flex gap-2">
-      <input type="checkbox" name="monthly" /> Send monthly
-    </label>
-    <label>
-      Recipients (comma separated emails)
-      <input name="recipients" class="border p-1 rounded" />
-    </label>
+    <label class="flex gap-2"><input type="checkbox" bind:checked={averaged} /> Average values</label>
+    <label class="flex gap-2"><input type="checkbox" bind:checked={weekly} /> Send weekly</label>
+    <label class="flex gap-2"><input type="checkbox" bind:checked={monthly} /> Send monthly</label>
     <button class="btn" type="submit">Create</button>
   </form>
 </div>
