@@ -66,7 +66,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
    */
   async findByLocation(locationId: number): Promise<DeviceWithJoins[]> {
     const session = await this.supabase.auth.getSession();
-    
+
     // Define the query with proper typing
     const query = this.supabase
       .from(this.tableName)
@@ -78,7 +78,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       `)
       .eq('location_id', locationId)
       .eq('cw_locations.cw_location_owners.user_id', session.data.session?.user.id);
-    
+
     const { data, error } = await query;
 
     if (error) {
@@ -101,7 +101,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       .from(this.tableName)
       .select('*')
       .eq('location_id', locationId);
-    
+
     const { data, error } = await query;
 
     if (error) {
@@ -133,27 +133,39 @@ export class DeviceRepository extends BaseRepository<Device, string> {
 
     return data as Device[] || [];
   }
-  
+
   /**
    * Find a device owner entry
    * @param devEui The device EUI
    * @param userId The user ID
    */
-  async findDeviceOwner(devEui: string, userId: string): Promise<{ id: number } | null> {
+  async findDeviceOwner(devEui: string, userId: string): Promise<{ id: number | string } | null> {
+
+    const { data: ownerData, error: ownerError } = await this.supabase
+      .from('cw_devices')
+      .select('user_id')
+      .eq('dev_eui', devEui)
+      .eq('user_id', userId)
+      .single();
+
+    if (ownerData) {
+      return ownerData.user_id;
+    }
+
     const { data, error } = await this.supabase
       .from('cw_device_owners')
       .select('id')
       .eq('dev_eui', devEui)
       .eq('user_id', userId)
       .single();
-      
+
     if (error) {
       return null;
     }
-    
+
     return data;
   }
-  
+
   /**
    * Add a user to a device with a specified permission level
    * @param devEui The device EUI
@@ -168,7 +180,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
         user_id: userId,
         permission_level: permissionLevel
       });
-      
+
     if (error) {
       this.errorHandler.handleDatabaseError(
         error,
@@ -176,7 +188,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       );
     }
   }
-  
+
   /**
    * Update a user's permission for a device
    * @param deviceOwnerId The device owner entry ID
@@ -187,7 +199,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       .from('cw_device_owners')
       .update({ permission_level: permissionLevel })
       .eq('id', deviceOwnerId);
-      
+
     if (error) {
       this.errorHandler.handleDatabaseError(
         error,
@@ -195,7 +207,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       );
     }
   }
-  
+
   /**
    * Remove a user from a device
    * @param devEui The device EUI
@@ -207,7 +219,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
       .delete()
       .eq('dev_eui', devEui)
       .eq('user_id', userId);
-      
+
     if (error) {
       this.errorHandler.handleDatabaseError(
         error,
