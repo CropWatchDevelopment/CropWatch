@@ -1,8 +1,15 @@
+import { sequence } from '@sveltejs/kit/hooks';
+import * as Sentry from '@sentry/sveltekit';
 import 'reflect-metadata';
 import { redirect, type Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+
+Sentry.init({
+	dsn: 'https://ba36cb18f97a466e35b23ed5ab9c916e@o4509301976530944.ingest.us.sentry.io/4509513210789888',
+	tracesSampleRate: 1
+});
 
 const PUBLIC_ROUTES = [
 	'/auth', // All routes under /auth/
@@ -24,7 +31,6 @@ const handleParaglide: Handle = async ({ event, resolve }) =>
 
 // Handle for Supabase authentication and session management
 const handleSupabase: Handle = async ({ event, resolve }) => {
-
 	// Create a Supabase client specific for server-side rendering (SSR)
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
@@ -32,8 +38,8 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 			setAll: (cookiesToSet) => {
 				// Store cookies to be set later instead of setting them immediately
 				event.locals.supabaseCookies = cookiesToSet;
-			},
-		},
+			}
+		}
 	});
 
 	// Enhance session validation to include explicit debug logging
@@ -41,7 +47,7 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 		try {
 			console.log(`Session validation for path: ${event.url.pathname}`);
 			const {
-				data: { session },
+				data: { session }
 			} = await event.locals.supabase.auth.getSession();
 			if (!session) {
 				console.warn(`No session found during validation for path: ${event.url.pathname}`);
@@ -50,17 +56,25 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 
 			const {
 				data: { user },
-				error,
+				error
 			} = await event.locals.supabase.auth.getUser();
 			if (error) {
-				console.error(`Error validating user session for path: ${event.url.pathname}`, error.message);
+				console.error(
+					`Error validating user session for path: ${event.url.pathname}`,
+					error.message
+				);
 				return { session: null, user: null };
 			}
 
-			console.log(`Session successfully validated for path: ${event.url.pathname}, user: ${user?.email}`);
+			console.log(
+				`Session successfully validated for path: ${event.url.pathname}, user: ${user?.email}`
+			);
 			return { session, user };
 		} catch (err) {
-			console.error(`Unexpected error during session validation for path: ${event.url.pathname}:`, err);
+			console.error(
+				`Unexpected error during session validation for path: ${event.url.pathname}:`,
+				err
+			);
 			return { session: null, user: null };
 		}
 	};
@@ -73,7 +87,8 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 	const pathname = event.url.pathname;
 
 	// Check if current route requires authentication
-	const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route)) || isExactApiRoute(pathname);
+	const isPublicRoute =
+		PUBLIC_ROUTES.some((route) => pathname.startsWith(route)) || isExactApiRoute(pathname);
 
 	if (!isPublicRoute && !sessionData.session) {
 		console.log(`Redirecting unauthenticated user from protected route: ${pathname}`);
@@ -88,8 +103,8 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 	// Resolve the response
 	const response = await resolve(event, {
 		filterSerializedResponseHeaders(name) {
-			return name === 'content-range' || name === 'x-supabase-api-version'
-		},
+			return name === 'content-range' || name === 'x-supabase-api-version';
+		}
 	});
 
 	// After the response is generated, apply the stored cookies if they exist
@@ -99,7 +114,8 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 			let sameSiteValue: string | undefined;
 			if (options.sameSite === true) sameSiteValue = 'Strict';
 			else if (options.sameSite === false) sameSiteValue = 'None';
-			else if (options.sameSite) sameSiteValue = options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1);
+			else if (options.sameSite)
+				sameSiteValue = options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1);
 
 			// Construct cookie string
 			const cookieHeader = [
@@ -110,17 +126,19 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 				sameSiteValue ? `SameSite=${sameSiteValue}` : '',
 				options.maxAge ? `Max-Age=${options.maxAge}` : '',
 				options.domain ? `Domain=${options.domain}` : ''
-			].filter(Boolean).join('; ');
+			]
+				.filter(Boolean)
+				.join('; ');
 
 			response.headers.append('set-cookie', cookieHeader);
 		});
 	}
 
 	return response;
-}
+};
 
 // Combine the handles - Supabase first, then Paraglide
-export const handle: Handle = async ({ event, resolve }) => {
+export const handle: Handle = sequence(Sentry.sentryHandle(), async ({ event, resolve }) => {
 	// First apply Supabase handle (which includes route guards and may throw redirects)
 	return await handleSupabase({
 		event,
@@ -132,4 +150,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 			});
 		}
 	});
-}
+});
+export const handleError = Sentry.handleErrorWithSentry();
