@@ -38,11 +38,11 @@
 		}
 	}
 
-	onMount(() => {
-		fetchStatus();
-		interval = setInterval(fetchStatus, 5000);
-		return () => clearInterval(interval);
-	});
+	// onMount(() => {
+	// 	fetchStatus();
+	// 	interval = setInterval(fetchStatus, 5000);
+	// 	return () => clearInterval(interval);
+	// });
 </script>
 
 <h1 class="mb-4 text-xl font-bold">Device Downlink Control: {devEui}</h1>

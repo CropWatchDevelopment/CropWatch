@@ -52,7 +52,7 @@ export const POST: RequestHandler = async ({ params, request, locals: { supabase
     throw error(500, 'TTI_API_KEY not configured');
   }
 
-  const url = `https://cropwatch.au1.cloud.thethings.industries/api/v3/as/applications/${appId}/devices/${device.dev_eui}/down/replace`;
+  const url = `https://cropwatch.au1.cloud.thethings.industries/api/v3/as/applications/${appId}/devices/${device.tti_name}/down/replace`;
 
   const payload = {
     downlinks: [
