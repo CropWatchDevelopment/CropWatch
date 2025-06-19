@@ -18,8 +18,8 @@
 		"postinstall": "husky install"
 	},
 	"lint-staged": {
-		"**/*.{svelte,ts,js}": [
-			"pnpm format",
+		"**/*.{ts,js,svelte}": [
+			"prettier --write",
 			"git add"
 		]
 	},

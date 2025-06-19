@@ -198,6 +198,7 @@
 			return { statusClass: 'status-danger', icon: mdiClose };
 		}
 	}
+	// just for testing
 </script>
 
 <div
