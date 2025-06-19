@@ -461,15 +461,15 @@
 			</div>
 		{/if}
 	</section>
+	<WeatherCalendar
+		events={calendarEvents}
+		onDateChange={(date: Date) => {
+			startDateInputString = formatDateForInput(date);
+			endDateInputString = formatDateForInput(moment(date).endOf('month').toDate());
+			handleDateRangeSubmit();
+		}}
+	/>
 </div>
-<WeatherCalendar
-	events={calendarEvents}
-	onDateChange={(date: Date) => {
-		startDateInputString = formatDateForInput(date);
-		endDateInputString = formatDateForInput(moment(date).endOf('month').toDate());
-		handleDateRangeSubmit();
-	}}
-/>
 
 <style>
 	/* Chart container structure */

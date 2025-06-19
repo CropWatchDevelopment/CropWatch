@@ -161,8 +161,8 @@
 		}
 
 		// Check if any devices have null status (loading state)
-		const hasNullStatus = location.cw_devices.some(device => 
-			device.dev_eui && deviceActiveStatus[device.dev_eui] === null
+		const hasNullStatus = location.cw_devices.some(
+			(device) => device.dev_eui && deviceActiveStatus[device.dev_eui] === null
 		);
 
 		// If any device has null status, show loading
@@ -178,16 +178,15 @@
 		}
 
 		// Filter active devices using the same logic as the dashboard
-		const activeDevices = location.cw_devices.filter(device => 
-			device.dev_eui && activeStatusMap[device.dev_eui] === true
+		const activeDevices = location.cw_devices.filter(
+			(device) => device.dev_eui && activeStatusMap[device.dev_eui] === true
 		);
 
 		// Calculate status flags using the same logic as the dashboard
-		const allActive = location.cw_devices.length > 0 && 
-			activeDevices.length === location.cw_devices.length;
-		
-		const allInactive = location.cw_devices.length > 0 && 
-			activeDevices.length === 0;
+		const allActive =
+			location.cw_devices.length > 0 && activeDevices.length === location.cw_devices.length;
+
+		const allInactive = location.cw_devices.length > 0 && activeDevices.length === 0;
 
 		// Return status based on the same conditions as the dashboard
 		if (allActive) {
@@ -201,27 +200,8 @@
 	}
 </script>
 
-<style>
-	/* Status colors */
-	.status-success {
-		background-color: var(--color-success);
-	}
-
-	.status-warning {
-		background-color: var(--color-warning, #f59e0b);
-	}
-
-	.status-danger {
-		background-color: var(--color-error, #e53935);
-	}
-	
-	.status-loading {
-		background-color: #64748b; /* blue-gray-500 */
-	}
-</style>
-
 <div
-	class="bg-card-light h-fit min-h-[calc(100vh-72px)] w-full overflow-hidden rounded p-1 shadow-sm transition-[width,padding] duration-300 ease-in-out [&.collapsed]:w-10 [&.collapsed]:max-w-10 [&.collapsed]:min-w-10 [&.collapsed]:overflow-visible [&.collapsed]:px-1"
+	class="bg-card-light h-fit min-h-screen w-full overflow-hidden rounded-md p-1 shadow-sm transition-[width,padding] duration-300 ease-in-out [&.collapsed]:w-10 [&.collapsed]:max-w-10 [&.collapsed]:min-w-10 [&.collapsed]:overflow-visible [&.collapsed]:px-1"
 	class:collapsed
 >
 	<div class="mb-4 flex items-center">
@@ -381,7 +361,7 @@
 									<Icon path={mdiClockOutline} size="1.25em" class="text-blue-400" />
 								{/if}
 							{/if}
-					</div>
+						</div>
 
 						<!-- Label and meta (only when expanded) -->
 						<div
@@ -411,3 +391,22 @@
 		</ul>
 	{/if}
 </div>
+
+<style>
+	/* Status colors */
+	.status-success {
+		background-color: var(--color-success);
+	}
+
+	.status-warning {
+		background-color: var(--color-warning, #f59e0b);
+	}
+
+	.status-danger {
+		background-color: var(--color-error, #e53935);
+	}
+
+	.status-loading {
+		background-color: #64748b; /* blue-gray-500 */
+	}
+</style>

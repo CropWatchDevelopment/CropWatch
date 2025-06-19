@@ -127,6 +127,9 @@ devDependencies:
   '@types/d3':
     specifier: ^7.4.3
     version: 7.4.3
+  '@types/event-calendar__core':
+    specifier: ^4.4.0
+    version: 4.4.0
   '@types/leaflet':
     specifier: ^1.9.18
     version: 1.9.18
@@ -2386,6 +2389,12 @@ packages:
 
   /@types/estree@1.0.7:
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
+
+  /@types/event-calendar__core@4.4.0:
+    resolution: {integrity: sha512-8Y4k+acsniRXn1bR0UGgDJE0Qquuk4+Dgx43VS1isIcAK00sfdu2hs726ikuWWzLZGm44ZfYtbq1eM84RtfT4g==}
+    dependencies:
+      svelte: 5.34.1
+    dev: true
 
   /@types/geojson@7946.0.16:
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
