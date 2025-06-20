@@ -30,7 +30,7 @@ export function setupDeviceDetail() {
 
 	// Chart data
 	type ChartData = Record<string, number[] | string[]>;
-	const chartData: ChartData = $state({ labels: [] });
+	let chartData: ChartData = $state({ labels: [] });
 
 	// States for the component
 	let loading = $state(false);
@@ -51,8 +51,12 @@ export function setupDeviceDetail() {
 	function processHistoricalData(historicalData: any[]) {
 		if (!historicalData || historicalData.length === 0) return;
 
+		// Placeholder for the chart data: Don’t update the `chartData` state directly in the loops below
+		// because the UI will be unresponsive due to repeated reactivity updates by Svelte.
+		const _chartData: ChartData = { labels: [] };
+
 		// Extract timestamps for chart labels (most recent to oldest)
-		chartData.labels = historicalData
+		_chartData.labels = historicalData
 			.map((data) => formatDateForDisplay(data.created_at))
 			.reverse();
 
@@ -67,7 +71,7 @@ export function setupDeviceDetail() {
 
 		// Reset chartData and stats for all numeric keys
 		numericKeys.forEach((key) => {
-			chartData[key] = [];
+			_chartData[key] = [];
 			stats[key] = { 
 				min: 0, 
 				max: 0, 
@@ -90,7 +94,7 @@ export function setupDeviceDetail() {
 		historicalData.forEach((data) => {
 			numericKeys.forEach((key) => {
 				if (typeof data[key] === 'number' && data[key] !== null) {
-					(chartData[key] as number[]).unshift(data[key]);
+					(_chartData[key] as number[]).unshift(data[key]);
 					valueArrays[key].push(data[key]);
 				}
 			});
@@ -143,6 +147,7 @@ export function setupDeviceDetail() {
 				}
 			}
 		});
+		chartData = _chartData;
 		loading = false;
 	}
 
