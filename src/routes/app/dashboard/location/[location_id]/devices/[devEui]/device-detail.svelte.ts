@@ -147,6 +147,7 @@ export function setupDeviceDetail() {
 				}
 			}
 		});
+
 		chartData = _chartData;
 		loading = false;
 	}
