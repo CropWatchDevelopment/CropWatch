@@ -7,6 +7,8 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
+		"prebuild": "node ./scripts/build-info.js",
+		"prestart:build": "node ./scripts/build-info.js",
 		"prepare": "svelte-kit sync && pnpm husky install",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
