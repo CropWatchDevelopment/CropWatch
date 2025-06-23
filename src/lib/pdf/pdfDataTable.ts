@@ -20,7 +20,7 @@ const DEFAULT_CONFIG: TableConfig = {
 	columnsPerPage: 4,
 	rowsPerColumn: 30,
 	cellWidth: 100,
-	cellHeight: 30,
+	cellHeight: 25,
 	margin: 40,
 	columnMargin: 10,
 	fontSize: 7,

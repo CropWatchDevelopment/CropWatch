@@ -1,10 +1,13 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
+import { DeviceDataService } from '$lib/services/DeviceDataService';
+import { SessionService } from '$lib/services/SessionService';
+import moment from 'moment';
 
 // Get the current file's directory
 const __filename = fileURLToPath(import.meta.url);
@@ -25,8 +28,22 @@ const possibleFontPaths = [
 	'static/fonts/NotoSansJP-Regular.ttf'
 ];
 
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({
+	url,
+	params,
+	locals: { safeGetSession, supabase }
+}) => {
+	const { devEui } = params;
+	const sessionService = new SessionService(supabase);
+	const sessionResult = await sessionService.getSafeSession();
+
+	// If no session exists, redirect to login
+	if (!sessionResult || !sessionResult.user) {
+		throw redirect(302, '/auth/login');
+	}
+
 	try {
+		const deviceDataService = new DeviceDataService(supabase);
 		// Create a new PDF document
 		const doc = new PDFDocument({
 			size: 'A4',
@@ -96,28 +113,25 @@ export const GET: RequestHandler = async () => {
 		});
 
 		// Generate sample data for the table
-		const dataa: { date: string; values: [number, number, number] }[] = [];
-		const start = new Date('2024-05-13T12:00:00');
-
-		const intervals = 30 * 48; // 30 days * (24h * 2 intervals per hour)
-		for (let i = 0; i < intervals; i++) {
-			const dt = new Date(start.getTime() + i * 30 * 60 * 1000);
-			const yyyy = dt.getFullYear();
-			const mm = String(dt.getMonth() + 1).padStart(2, '0');
-			const dd = String(dt.getDate()).padStart(2, '0');
-			const hh = String(dt.getHours()).padStart(2, '0');
-			const min = String(dt.getMinutes()).padStart(2, '0');
-			const date = `${yyyy}/${mm}/${dd} ${hh}:${min}`;
-
-			// Example: three random floats between 15.0 and 25.0, one decimal place
-			const values: [number, number, number] = [
-				parseFloat((15 + Math.random() * 10).toFixed(1)) as number,
-				parseFloat((15 + Math.random() * 10).toFixed(1)) as number,
-				parseFloat((15 + Math.random() * 10).toFixed(1)) as number
-			];
-
-			dataa.push({ date, values });
+		const dataa: { date: string; values: [] }[] = []; //////////////////////////////////////////////////////////////////
+		const deviceData = await deviceDataService.getDeviceDataForReport(
+			devEui,
+			moment().subtract(1, 'days').toDate(),
+			new Date(),
+			30,
+			'temperature_c',
+			'>',
+			-20
+		);
+		if (!deviceData || deviceData.length === 0) {
+			throw error(404, 'No data found for the specified device');
 		}
+		deviceData.forEach((data) => {
+			dataa.push({
+				date: moment(data.created_at).format('YYYY-MM-DD HH:mm'),
+				values: [data.temperature_c] // Assuming temperature_c is the only value we want to display
+			});
+		});
 
 		// Create the PDF data table
 		createPDFDataTable(doc, dataa);
