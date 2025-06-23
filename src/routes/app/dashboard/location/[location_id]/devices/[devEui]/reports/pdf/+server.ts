@@ -4,6 +4,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 
 // Get the current file's directory
 const __filename = fileURLToPath(import.meta.url);
@@ -94,120 +95,34 @@ export const GET: RequestHandler = async () => {
 			align: 'left'
 		});
 
-		// Use a completely different approach for the table
-		// Start with a clean position
-		doc.moveDown(2);
-		const startY = doc.y;
+		// Generate sample data for the table
+		const dataa: { date: string; values: [number, number, number] }[] = [];
+		const start = new Date('2024-05-13T12:00:00');
 
-		// Define table dimensions
-		const margin = 40;
-		const tableWidth = doc.page.width - margin * 2;
-		const rowHeight = 30;
-		// Define column widths as percentages of table width
-		const colWidths = [
-			tableWidth * 0.1, // ID (10%)
-			tableWidth * 0.3, // Name (30%)
-			tableWidth * 0.3, // Department (30%)
-			tableWidth * 0.3 // Role (30%)
-		];
+		const intervals = 30 * 48; // 30 days * (24h * 2 intervals per hour)
+		for (let i = 0; i < intervals; i++) {
+			const dt = new Date(start.getTime() + i * 30 * 60 * 1000);
+			const yyyy = dt.getFullYear();
+			const mm = String(dt.getMonth() + 1).padStart(2, '0');
+			const dd = String(dt.getDate()).padStart(2, '0');
+			const hh = String(dt.getHours()).padStart(2, '0');
+			const min = String(dt.getMinutes()).padStart(2, '0');
+			const date = `${yyyy}/${mm}/${dd} ${hh}:${min}`;
 
-		// Draw table header - as a filled rectangle with white text
-		doc.fillColor('#3498db');
-		doc.rect(margin, startY, tableWidth, rowHeight).fill();
-		doc.fillColor('white');
-		doc.fontSize(12);
+			// Example: three random floats between 15.0 and 25.0, one decimal place
+			const values: [number, number, number] = [
+				parseFloat((15 + Math.random() * 10).toFixed(1)) as number,
+				parseFloat((15 + Math.random() * 10).toFixed(1)) as number,
+				parseFloat((15 + Math.random() * 10).toFixed(1)) as number
+			];
 
-		// Draw header text
-		let xPos = margin;
-		['ID', '名前', '部署', '役職'].forEach((header, i) => {
-			doc.text(header, xPos + 5, startY + 10, {
-				width: colWidths[i],
-				align: 'left'
-			});
-			xPos += colWidths[i];
-		});
+			dataa.push({ date, values });
+		}
 
-		// Reset text color for data rows
-		doc.fillColor('black');
+		// Create the PDF data table
+		createPDFDataTable(doc, dataa);
 
-		// Table data
-		const data = [
-			{ id: '1', name: '田中 太郎', dept: '営業部', role: 'マネージャー' },
-			{ id: '2', name: '佐藤 花子', dept: '開発部', role: 'シニアエンジニア' },
-			{ id: '3', name: '鈴木 一郎', dept: 'マーケティング', role: 'ディレクター' },
-			{ id: '4', name: '高橋 美咲', dept: '人事部', role: 'スペシャリスト' },
-			{ id: '5', name: '伊藤 健太', dept: '財務部', role: 'アナリスト' }
-		];
-
-		// Draw each row separately with clear spacing
-		let yPos = startY + rowHeight;
-
-		// Draw each data row
-		data.forEach((row, i) => {
-			console.log(`Drawing row ${i + 1} at Y position: ${yPos}`);
-
-			// Check if we need a new page
-			if (yPos + rowHeight > doc.page.height - margin) {
-				doc.addPage();
-				yPos = margin;
-				console.log('Added new page for table continuation');
-			}
-
-			// Draw row background (alternating colors)
-			if (i % 2 === 1) {
-				doc.fillColor('#f9f9f9');
-				doc.rect(margin, yPos, tableWidth, rowHeight).fill();
-			} else {
-				doc.fillColor('white');
-				doc.rect(margin, yPos, tableWidth, rowHeight).fill();
-			}
-
-			// Draw row border
-			doc.strokeColor('#cccccc');
-			doc.rect(margin, yPos, tableWidth, rowHeight).stroke();
-
-			// Reset text color
-			doc.fillColor('black');
-
-			// Draw each cell separately with explicit positioning
-			xPos = margin;
-
-			// Draw ID cell
-			doc.text(row.id, xPos + 5, yPos + 10, {
-				width: colWidths[0],
-				align: 'left'
-			});
-			xPos += colWidths[0];
-
-			// Draw name cell
-			doc.text(row.name, xPos + 5, yPos + 10, {
-				width: colWidths[1],
-				align: 'left'
-			});
-			xPos += colWidths[1];
-
-			// Draw department cell
-			doc.text(row.dept, xPos + 5, yPos + 10, {
-				width: colWidths[2],
-				align: 'left'
-			});
-			xPos += colWidths[2];
-
-			// Draw role cell
-			doc.text(row.role, xPos + 5, yPos + 10, {
-				width: colWidths[3],
-				align: 'left'
-			});
-
-			// Move to next row position
-			yPos += rowHeight;
-		});
-
-		// Update document position
-		doc.y = yPos + 10;
-		console.log(`Table complete. Final Y position: ${doc.y}`);
-
-		doc.moveDown(2);
+		// Add generation timestamp
 		doc.fontSize(10).text(`生成日時: ${new Date().toLocaleString('ja-JP')}`, {
 			align: 'right'
 		});
