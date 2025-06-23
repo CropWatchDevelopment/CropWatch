@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 import { SessionService } from '$lib/services/SessionService';
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 // Get the current file's directory
 const __filename = fileURLToPath(import.meta.url);
@@ -116,8 +116,8 @@ export const GET: RequestHandler = async ({
 		const dataa: { date: string; values: [] }[] = []; //////////////////////////////////////////////////////////////////
 		const deviceData = await deviceDataService.getDeviceDataForReport(
 			devEui,
-			moment().subtract(1, 'days').toDate(),
-			new Date(),
+			moment().tz('Asia/Tokyo').subtract(1, 'month').startOf('month').toDate(),
+			moment().tz('Asia/Tokyo').subtract(1, 'month').endOf('month').toDate(),
 			30,
 			'temperature_c',
 			'>',
