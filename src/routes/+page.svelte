@@ -1,16 +1,20 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
+	import Vpd from '$lib/components/charts/Vpd.svelte';
 	import NewPoint from '$lib/components/Reports/NewPoint.svelte';
 	import NumberLine from '$lib/components/Reports/NumberLine.svelte';
 	import { success, error, warning, info, neutral } from '$lib/stores/toast.svelte';
-	import { RevoGrid, type ColumnRegular } from '@revolist/svelte-datagrid';
-	import { mount, onMount } from 'svelte';
+	import { onMount } from 'svelte';
+
+	// Dynamic import for RevoGrid to avoid SSR issues
+	let RevoGrid: any = $state(null);
+	let ColumnRegular: any = $state(null);
 
 	let { data } = $props();
 
-	let grid_component_instance: RevoGrid | undefined = $state(); // To bind the component instance if needed
-	const columns: ColumnRegular[] = $state([
+	let grid_component_instance: any = $state(); // To bind the component instance if needed
+	const columns: any[] = $state([
 		{
 			name: '🎰 Ticker',
 			prop: 'symbol',
@@ -21,8 +25,7 @@
 		{
 			name: '🔠 Company Name',
 			prop: 'company_name',
-			size: 300,
-			
+			size: 300
 		},
 		{
 			name: '',
@@ -69,8 +72,7 @@
 			name: '💰 Price',
 			prop: 'price',
 			columnType: 'numeric',
-			sortable: true,
-			
+			sortable: true
 		},
 		{
 			name: '⬆️ Change',
@@ -109,6 +111,14 @@
 	]);
 
 	onMount(() => {
+		// Dynamically import RevoGrid only on the client side
+		if (browser) {
+			import('@revolist/svelte-datagrid').then((module) => {
+				RevoGrid = module.RevoGrid;
+				ColumnRegular = module.ColumnRegular;
+			});
+		}
+
 		const interval = setInterval(() => {
 			source.forEach((item) => {
 				item.price = parseFloat((Math.random() * 3000).toFixed(2));
@@ -195,11 +205,11 @@ success('Custom message', {
 <div class="container mx-auto p-8">
 	<h1 class="mb-6 text-3xl font-bold">Toast Notification Demo</h1>
 	<button
-				onclick={() => goto('/app/dashboard')}
-				class="bg-info rounded-md px-4 py-2 text-white transition-opacity hover:opacity-90"
-			>
-				Goto Dashboard
-			</button>
+		onclick={() => goto('/app/dashboard')}
+		class="bg-info rounded-md px-4 py-2 text-white transition-opacity hover:opacity-90"
+	>
+		Goto Dashboard
+	</button>
 
 	<div class="bg-card-light dark:bg-card-dark rounded-lg p-6 shadow-md">
 		<p class="mb-4">Click the buttons below to see different types of toast notifications:</p>
@@ -300,27 +310,39 @@ success('Custom message', {
 </div>
 
 <div class="bg-foreground-light dark:bg-foreground-dark p-4 dark:text-white">
-	{#if browser}
-		<RevoGrid 
-			bind:this={grid_component_instance} 
-			{columns} 
+	{#if browser && RevoGrid}
+		<svelte:component
+			this={RevoGrid}
+			bind:this={grid_component_instance}
+			{columns}
 			{source}
 			filter={true}
 			canFocus={true}
 			sorters={true}
 			columnTypes={{
-				'numeric': {
+				numeric: {
 					name: 'Numeric',
 					autoSize: true,
-					// Numeric columns will have this default sorting 
+					// Numeric columns will have this default sorting
 					sortable: true
 				}
-			}} 
+			}}
 		/>
 	{:else}
-		<p>RevoGrid is not available during server-side rendering.</p>
+		<p>Loading data grid...</p>
 	{/if}
 </div>
+
+<section>
+	<Vpd
+		lineData={[
+			{ date: '2023-01-01', temp: 20, humidity: 60 },
+			{ date: '2023-01-02', temp: 22, humidity: 65 },
+			{ date: '2023-01-03', temp: 18, humidity: 55 },
+			{ date: '2023-01-04', temp: 25, humidity: 70 }
+		]}
+	/>
+</section>
 
 <style>
 	pre {
@@ -328,24 +350,24 @@ success('Custom message', {
 		font-size: 0.9rem;
 		line-height: 1.5;
 	}
-	
+
 	/* RevoGrid dark/light mode styles */
 	:global(.dark) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-data) {
 		--rgb-text: 255, 255, 255; /* White text for dark mode */
 		--color-text: rgb(var(--rgb-text));
 	}
-	
+
 	:global(:not(.dark)) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-data) {
 		--rgb-text: 0, 0, 0; /* Black text for light mode */
 		--color-text: rgb(var(--rgb-text));
 	}
-	
+
 	/* Optional: Ensure header text has good contrast in both modes */
 	:global(.dark) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-header) {
 		--rgb-header-text: 255, 255, 255;
 		--header-text-color: rgb(var(--rgb-header-text));
 	}
-	
+
 	:global(:not(.dark)) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-header) {
 		--rgb-header-text: 0, 0, 0;
 		--header-text-color: rgb(var(--rgb-header-text));

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-import { enhance } from '$app/forms';
-import { error as errorToast, success } from '$lib/stores/toast.svelte';
-import { formValidation } from '$lib/actions/formValidation';
+	import { enhance } from '$app/forms';
+	import { error as errorToast, success } from '$lib/stores/toast.svelte';
+	import { formValidation } from '$lib/actions/formValidation';
 
 	let { data } = $props();
 
-	const { location, locationUsers, deviceCount, permissionTypes, currentUser } = data;
+	const { location, locationUsers, deviceCount, currentUser } = data;
 
 	// Location details editing
 	let editingLocationDetails = $state(false);
@@ -14,79 +14,6 @@ import { formValidation } from '$lib/actions/formValidation';
 	let locationLatitude = $state(location.lat || null);
 	let locationLongitude = $state(location.long || null);
 	let isUpdatingLocation = $state(false);
-	const columns: ColumnRegular[] = $state([
-		{
-			name: '🎰 Ticker',
-			prop: 'symbol',
-			sortable: true,
-			pin: 'colPinStart',
-			cellTemplate: (h, { model, prop }) => h('strong', null, model[prop])
-		},
-		{
-			name: '🔠 Company Name',
-			prop: 'company_name',
-			size: 300,
-			
-		},
-		{
-			name: '',
-			prop: '📉 graph',
-			readonly: true,
-			// Custom cell render
-			cellTemplate(h) {
-				const barWidth = 5;
-				const barSpacing = 5;
-				const maxHeight = 30;
-				const bars = [];
-
-				// Draw 5 vertical bars with random heights
-				for (let i = 0; i < 5; i++) {
-					const barHeight = Math.random() * maxHeight;
-					const x = i * (barWidth + barSpacing);
-					const y = maxHeight - barHeight + 5;
-
-					// Create the rectangle element for the bar
-					const rect = h('rect', {
-						key: i,
-						x,
-						y,
-						width: barWidth,
-						height: barHeight,
-						fill: 'blue',
-						stroke: 'black'
-					});
-
-					// Append the rectangle to the group
-					bars.push(rect);
-				}
-				return h(
-					'svg',
-					{
-						width: '100%',
-						height: maxHeight + 10
-					},
-					h('g', {}, bars)
-				);
-			}
-		},
-		{
-			name: '💰 Price',
-			prop: 'price',
-			columnType: 'numeric',
-			sortable: true,
-			
-		},
-		{
-			name: '⬆️ Change',
-			prop: 'change',
-			columnType: 'numeric',
-			sortable: true
-		},
-		{
-			name: '% Change',
-			prop: 'percent_change'
-		}
-	]);
 
 	const startEditLocation = () => {
 		editingLocationDetails = true;
@@ -117,10 +44,10 @@ import { formValidation } from '$lib/actions/formValidation';
 		}
 	};
 
-        let newUserEmail = $state('');
-        let newUserPermission = $state(3); // Default to Viewer
-        let applyPermissionToDevices = $state(false);
-        let isAdding = $state(false);
+	let newUserEmail = $state('');
+	let newUserPermission = $state(3); // Default to Viewer
+	let applyPermissionToDevices = $state(false);
+	let isAdding = $state(false);
 
 	let editingUser: {
 		id: number;
@@ -204,6 +131,34 @@ import { formValidation } from '$lib/actions/formValidation';
 			errorToast('An error occurred');
 		}
 	};
+
+	const handleDeleteLocation = async () => {
+		if (!confirm('Are you sure you want to delete this location? This action cannot be undone.')) {
+			return;
+		}
+
+		try {
+			const response = await fetch(``, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ locationId: location.location_id })
+			});
+
+			if (response.ok) {
+				const result = await response.json();
+				if (result.success) {
+					success('Location deleted successfully');
+					window.location.href = '/app/dashboard/locations/';
+				} else {
+					errorToast(result.error || 'Failed to delete location');
+				}
+			} else {
+				errorToast('An error occurred while deleting the location');
+			}
+		} catch (error) {
+			errorToast('An error occurred while deleting the location');
+		}
+	};
 </script>
 
 <svelte:head>
@@ -226,30 +181,26 @@ import { formValidation } from '$lib/actions/formValidation';
 		<div class="mb-4 flex items-center justify-between">
 			<h2 class="text-xl font-bold">Location Details</h2>
 			{#if !editingLocationDetails}
-				<button
-					type="button"
-					class="text-blue-500 hover:text-blue-700"
-					onclick={startEditLocation}
-				>
+				<button type="button" class="text-blue-500 hover:text-blue-700" onclick={startEditLocation}>
 					Edit Details
 				</button>
 			{/if}
 		</div>
 
 		{#if editingLocationDetails}
-                        <form
-                                method="POST"
-                                action="?/updateLocation"
-                                class="form-container max-w-md"
-                                use:enhance={() => {
-                                        isUpdatingLocation = true;
+			<form
+				method="POST"
+				action="?/updateLocation"
+				class="form-container max-w-md"
+				use:enhance={() => {
+					isUpdatingLocation = true;
 
 					return ({ result }) => {
 						handleLocationUpdateSuccess(result);
 					};
-                                }}
-                                use:formValidation
-                        >
+				}}
+				use:formValidation
+			>
 				<div class="mb-4">
 					<label for="locationName" class="mb-1 block font-medium">Location Name</label>
 					<input
@@ -347,7 +298,7 @@ import { formValidation } from '$lib/actions/formValidation';
 					</thead>
 					<tbody>
 						{#each locationUsers as user}
-							<tr class="border-b bg-foreground-light dark:bg-foreground-dark">
+							<tr class="bg-foreground-light dark:bg-foreground-dark border-b">
 								<td class="px-4 py-3">{getUserDisplayName(user)}</td>
 								<td class="px-4 py-3">{user.profile?.email || 'No email'}</td>
 								<td class="px-4 py-3">
@@ -376,16 +327,16 @@ import { formValidation } from '$lib/actions/formValidation';
 								<td class="px-4 py-3">
 									{#if editingUser && editingUser.id === user.id}
 										<div class="flex gap-2">
-                                                                               <form
-                                                                               method="POST"
-                                                                               action="?/updatePermission"
-                                                                               use:enhance={() => {
-                                                                                       return ({ result }) => {
-                                                                                               handleUpdatePermissionSuccess(result);
-                                                                                       };
-                                                                               }}
-                                                                               use:formValidation
-                                                                               >
+											<form
+												method="POST"
+												action="?/updatePermission"
+												use:enhance={() => {
+													return ({ result }) => {
+														handleUpdatePermissionSuccess(result);
+													};
+												}}
+												use:formValidation
+											>
 												<input type="hidden" name="userId" value={user.user_id} />
 												<input type="hidden" name="locationOwnerId" value={user.id} />
 												<input
@@ -422,20 +373,20 @@ import { formValidation } from '$lib/actions/formValidation';
 											</button>
 
 											{#if user.user_id !== currentUser.id}
-                                                                               <form
-                                                                               method="POST"
-                                                                               action="?/removeUser"
-                                                                               use:enhance={() => {
-                                                                                      if (!confirm('Are you sure you want to remove this user?')) {
-                                                                                              return { action: () => {} };
-                                                                                      }
+												<form
+													method="POST"
+													action="?/removeUser"
+													use:enhance={() => {
+														if (!confirm('Are you sure you want to remove this user?')) {
+															return { action: () => {} };
+														}
 
 														return ({ result }) => {
 															handleRemoveUserSuccess(result);
 														};
-                                                                               }}
-                                                                               use:formValidation
-                                                                               >
+													}}
+													use:formValidation
+												>
 													<input type="hidden" name="userId" value={user.user_id} />
 													<input type="hidden" name="locationOwnerId" value={user.id} />
 													<button type="submit" class="text-red-600 hover:text-red-800">
@@ -460,19 +411,19 @@ import { formValidation } from '$lib/actions/formValidation';
 		<div class="mt-6 border-t pt-4">
 			<h3 class="mb-2 text-lg font-medium">Add User</h3>
 
-                        <form
-                                method="POST"
-                                action="?/addUser"
-                                class="form-container max-w-md w-full"
-                                use:enhance={() => {
-                                        isAdding = true;
+			<form
+				method="POST"
+				action="?/addUser"
+				class="form-container w-full max-w-md"
+				use:enhance={() => {
+					isAdding = true;
 
 					return ({ result }) => {
 						handleAddUserSuccess(result);
 					};
-                                }}
-                                use:formValidation
-                        >
+				}}
+				use:formValidation
+			>
 				<div class="mb-4">
 					<label for="email" class="mb-1 block font-medium">Email Address</label>
 					<input
@@ -515,7 +466,9 @@ import { formValidation } from '$lib/actions/formValidation';
 							value="true"
 							bind:checked={applyPermissionToDevices}
 						/>
-						<span>Apply same permission to all devices in this location (x{deviceCount} devices)</span>
+						<span
+							>Apply same permission to all devices in this location (x{deviceCount} devices)</span
+						>
 					</label>
 					<p class="mt-1 text-sm text-gray-500">
 						If unchecked, user will be added with "Disabled" permission to all devices.
@@ -535,3 +488,26 @@ import { formValidation } from '$lib/actions/formValidation';
 		</div>
 	</div>
 </div>
+<section class="container mx-auto rounded-lg bg-red-300 px-4 py-8 text-black shadow-lg">
+	<h1>Super dangerous section!!!</h1>
+	<form
+		method="POST"
+		action="?/deleteLocation"
+		class="form-container w-full max-w-md"
+		use:enhance={() => {
+			return ({ result }) => {
+				if (result.type === 'success' && result.data.success) {
+					success('Location deleted successfully');
+					window.location.href = '/app/dashboard/location/';
+				} else {
+					errorToast(result.data.error || 'Failed to delete location');
+				}
+			};
+		}}
+		use:formValidation
+	>
+		<button class="btn btn-danger" onclick={() => handleDeleteLocation()}>
+			Execute Dangerous Action
+		</button>
+	</form>
+</section>
