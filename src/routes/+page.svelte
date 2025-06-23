@@ -311,8 +311,7 @@ success('Custom message', {
 
 <div class="bg-foreground-light dark:bg-foreground-dark p-4 dark:text-white">
 	{#if browser && RevoGrid}
-		<svelte:component
-			this={RevoGrid}
+		<RevoGrid
 			bind:this={grid_component_instance}
 			{columns}
 			{source}

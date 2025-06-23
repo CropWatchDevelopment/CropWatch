@@ -17,16 +17,19 @@ export interface DeviceDetailProps {
 
 export function setupDeviceDetail() {
 	// Stats for the data
-	const stats: Record<string, { 
-		min: number; 
-		max: number; 
-		avg: number;
-		median: number;
-		stdDev: number;
-		count: number;
-		lastReading: number;
-		trend: 'up' | 'down' | 'stable' | null;
-	}> = $state({});
+	const stats: Record<
+		string,
+		{
+			min: number;
+			max: number;
+			avg: number;
+			median: number;
+			stdDev: number;
+			count: number;
+			lastReading: number;
+			trend: 'up' | 'down' | 'stable' | null;
+		}
+	> = $state({});
 
 	// Chart data
 	type ChartData = Record<string, number[] | string[]>;
@@ -38,7 +41,7 @@ export function setupDeviceDetail() {
 
 	// Date range selection
 	let startDate = $state(new Date()); // Should be Date object
-	let endDate = $state(new Date());   // Should be Date object
+	let endDate = $state(new Date()); // Should be Date object
 
 	// Libraries and elements
 	let ApexCharts = $state<any>(undefined);
@@ -60,21 +63,18 @@ export function setupDeviceDetail() {
 			.map((data) => formatDateForDisplay(data.created_at))
 			.reverse();
 
-			// Determine numeric keys dynamically (excluding dev_eui, created_at)
+		// Determine numeric keys dynamically (excluding dev_eui, created_at)
 		const excludeKeys = ['dev_eui', 'created_at'];
-		const numericKeys = Object.keys(historicalData[0] || {})
-			.filter(
-				(key) =>
-					!excludeKeys.includes(key) &&
-					typeof historicalData[0][key] === 'number'
-			);
+		const numericKeys = Object.keys(historicalData[0] || {}).filter(
+			(key) => !excludeKeys.includes(key) && typeof historicalData[0][key] === 'number'
+		);
 
 		// Reset chartData and stats for all numeric keys
 		numericKeys.forEach((key) => {
 			_chartData[key] = [];
-			stats[key] = { 
-				min: 0, 
-				max: 0, 
+			stats[key] = {
+				min: 0,
+				max: 0,
 				avg: 0,
 				median: 0,
 				stdDev: 0,
@@ -109,24 +109,24 @@ export function setupDeviceDetail() {
 				stats[key].max = Math.max(...values);
 				stats[key].avg = calculateAverage(values);
 				stats[key].count = values.length;
-				
+
 				// Last reading
 				stats[key].lastReading = values[values.length - 1];
-				
+
 				// Median calculation
 				const sortedValues = [...values].sort((a, b) => a - b);
 				const mid = Math.floor(sortedValues.length / 2);
-				stats[key].median = 
-					sortedValues.length % 2 === 0 
-						? (sortedValues[mid - 1] + sortedValues[mid]) / 2 
+				stats[key].median =
+					sortedValues.length % 2 === 0
+						? (sortedValues[mid - 1] + sortedValues[mid]) / 2
 						: sortedValues[mid];
-				
+
 				// Standard deviation
 				const mean = stats[key].avg;
-				const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
+				const squaredDiffs = values.map((value) => Math.pow(value - mean, 2));
 				const avgSquaredDiff = calculateAverage(squaredDiffs);
 				stats[key].stdDev = Math.sqrt(avgSquaredDiff);
-				
+
 				// Trend (last 5 values if available)
 				if (values.length >= 3) {
 					const recentValues = values.slice(-5);
@@ -134,7 +134,7 @@ export function setupDeviceDetail() {
 					const lastVal = recentValues[recentValues.length - 1];
 					const difference = lastVal - firstVal;
 					const threshold = stats[key].stdDev * 0.1; // 10% of standard deviation as threshold
-					
+
 					if (Math.abs(difference) < threshold) {
 						stats[key].trend = 'stable';
 					} else if (difference > 0) {
@@ -154,16 +154,18 @@ export function setupDeviceDetail() {
 
 	// Function to fetch data for a specific date range
 	async function fetchDataForDateRange(device: DeviceWithType, start: Date, end: Date) {
-		 // Parameters 'start' and 'end' are Date objects.
+		// Parameters 'start' and 'end' are Date objects.
 		// The component's state variables 'startDate' and 'endDate' (if you were accessing them via this context, which you are not directly here) are also Date objects.
 		// This function uses the 'start' and 'end' parameters passed to it.
 
-		if (!start || !end) { // Validation using parameters
+		if (!start || !end) {
+			// Validation using parameters
 			error = 'Please select both start and end dates'; // Set component's error state
 			return [];
 		}
 
-		if (start > end) { // Validation using parameters
+		if (start > end) {
+			// Validation using parameters
 			error = 'Start date must be before end date'; // Set component's error state
 			return [];
 		}
@@ -174,7 +176,7 @@ export function setupDeviceDetail() {
 		try {
 			// Format Date objects to ISO strings for robust API querying
 			const startQueryParam = start.toISOString(); // Use parameter
-			const endQueryParam = end.toISOString();     // Use parameter
+			const endQueryParam = end.toISOString(); // Use parameter
 
 			const response = await fetch(
 				`/api/devices/${device.dev_eui}/data?start=${startQueryParam}&end=${endQueryParam}`
@@ -224,38 +226,62 @@ export function setupDeviceDetail() {
 		ignoredDataKeys: string[] = ['id', 'dev_eui', 'created_at']
 	) {
 		if (!browser || !historicalData || historicalData.length === 0) return;
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		if (!chart1Element || !chart1BrushElement) return;
 
 		// Destroy previous chart instances if they exist
-		if (mainChartInstance) { try { mainChartInstance.destroy(); } catch {} mainChartInstance = null; }
-		if (brushChartInstance) { try { brushChartInstance.destroy(); } catch {} brushChartInstance = null; }
+		if (mainChartInstance) {
+			try {
+				mainChartInstance.destroy();
+			} catch {}
+			mainChartInstance = null;
+		}
+		if (brushChartInstance) {
+			try {
+				brushChartInstance.destroy();
+			} catch {}
+			brushChartInstance = null;
+		}
 
 		if (!ApexCharts) {
-			ApexCharts = await import('apexcharts').then(m => m.default);
+			ApexCharts = await import('apexcharts').then((m) => m.default);
 		}
 
 		// Find all numeric keys in the data (excluding ignored keys)
-		const sample = historicalData.find(row => row && typeof row === 'object');
+		const sample = historicalData.find((row) => row && typeof row === 'object');
 		if (!sample) return;
 		const numericKeys = Object.keys(sample).filter(
-			key => !ignoredDataKeys.includes(key) && typeof sample[key] === 'number'
+			(key) => !ignoredDataKeys.includes(key) && typeof sample[key] === 'number'
 		);
 		if (numericKeys.length === 0) return;
 
 		// Build series for each numeric key
-		const series = numericKeys.map(key => ({
+		const series = numericKeys.map((key) => ({
 			name: key,
 			data: historicalData
-				.filter(row => typeof row[key] === 'number' && row[key] !== null && row['created_at'])
-				.map(row => ({ x: new Date(row['created_at']).getTime(), y: row[key] }))
+				.filter((row) => typeof row[key] === 'number' && row[key] !== null && row['created_at'])
+				.map((row) => ({ x: new Date(row['created_at']).getTime(), y: row[key] }))
 		}));
-		series.forEach(s => s.data.sort((a, b) => a.x - b.x));
+		series.forEach((s) => s.data.sort((a, b) => a.x - b.x));
 
 		// Color palette (extendable)
 		const palette = [
-			'#f97316', '#3b82f6', '#10b981', '#eab308', '#ef4444', '#6366f1', '#14b8a6', '#f59e42',
-			'#8b5cf6', '#22d3ee', '#f472b6', '#a3e635', '#facc15', '#f87171', '#60a5fa', '#34d399'
+			'#f97316',
+			'#3b82f6',
+			'#10b981',
+			'#eab308',
+			'#ef4444',
+			'#6366f1',
+			'#14b8a6',
+			'#f59e42',
+			'#8b5cf6',
+			'#22d3ee',
+			'#f472b6',
+			'#a3e635',
+			'#facc15',
+			'#f87171',
+			'#60a5fa',
+			'#34d399'
 		];
 		const colors = numericKeys.map((_, i) => palette[i % palette.length]);
 
@@ -268,7 +294,9 @@ export function setupDeviceDetail() {
 		}));
 
 		// X-axis range
-		const allDates = historicalData.map(row => new Date(row['created_at']).getTime()).filter(Boolean);
+		const allDates = historicalData
+			.map((row) => new Date(row['created_at']).getTime())
+			.filter(Boolean);
 		const minDate = Math.min(...allDates);
 		const maxDate = Math.max(...allDates);
 
@@ -295,10 +323,13 @@ export function setupDeviceDetail() {
 				x: { format: 'MMM dd HH:mm' },
 				style: { fontSize: '13px', 'font-family': 'Inter, sans-serif' },
 				marker: { show: true },
-				y: { formatter: (val: number) => val?.toFixed ? val.toFixed(1) : val }
+				y: { formatter: (val: number) => (val?.toFixed ? val.toFixed(1) : val) }
 			},
 			legend: { position: 'top', horizontalAlign: 'center' },
-			grid: { borderColor: '#2a2a2a', row: { colors: ['transparent', 'transparent'], opacity: 0.1 } }
+			grid: {
+				borderColor: '#2a2a2a',
+				row: { colors: ['transparent', 'transparent'], opacity: 0.1 }
+			}
 		};
 
 		// Brush chart options
@@ -327,8 +358,18 @@ export function setupDeviceDetail() {
 			await mainChartInstance.render();
 			await brushChartInstance.render();
 		} catch (err) {
-			if (mainChartInstance) { try { mainChartInstance.destroy(); } catch {} mainChartInstance = null; }
-			if (brushChartInstance) { try { brushChartInstance.destroy(); } catch {} brushChartInstance = null; }
+			if (mainChartInstance) {
+				try {
+					mainChartInstance.destroy();
+				} catch {}
+				mainChartInstance = null;
+			}
+			if (brushChartInstance) {
+				try {
+					brushChartInstance.destroy();
+				} catch {}
+				brushChartInstance = null;
+			}
 		}
 	}
 
@@ -339,21 +380,39 @@ export function setupDeviceDetail() {
 		sevenDaysAgo.setDate(today.getDate() - 7);
 
 		startDate = sevenDaysAgo; // Assign Date object directly
-		endDate = today;          // Assign Date object directly
+		endDate = today; // Assign Date object directly
 	}
 
-        return {
-                // State
-                stats,
-                chartData,
-                get loading() { return loading; },
-                set loading(v: boolean) { loading = v; },
-                get error() { return error; },
-                set error(v: string | null) { error = v; },
-                get startDate() { return startDate; },
-                set startDate(v: Date) { startDate = v; },
-                get endDate() { return endDate; },
-                set endDate(v: Date) { endDate = v; },
+	return {
+		// State
+		stats,
+		get chartData() {
+			return chartData;
+		},
+		get loading() {
+			return loading;
+		},
+		set loading(v: boolean) {
+			loading = v;
+		},
+		get error() {
+			return error;
+		},
+		set error(v: string | null) {
+			error = v;
+		},
+		get startDate() {
+			return startDate;
+		},
+		set startDate(v: Date) {
+			startDate = v;
+		},
+		get endDate() {
+			return endDate;
+		},
+		set endDate(v: Date) {
+			endDate = v;
+		},
 
 		// Element refs
 		// Functions
