@@ -128,7 +128,7 @@ export const GET: RequestHandler = async ({
 		}
 		deviceData.forEach((data) => {
 			dataa.push({
-				date: moment(data.created_at).format('YYYY-MM-DD HH:mm'),
+				date: moment(data.created_at).tz('Asia/Tokyo').format('YYYY-MM-DD HH:mm'),
 				values: [data.temperature_c] // Assuming temperature_c is the only value we want to display
 			});
 		});
