@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 import { SessionService } from '$lib/services/SessionService';
-import moment from 'moment-timezone';
+import { DateTime } from 'luxon';
 
 // Get the current file's directory
 const __filename = fileURLToPath(import.meta.url);
@@ -114,10 +114,14 @@ export const GET: RequestHandler = async ({
 
 		// Generate sample data for the table
 		const dataa: { date: string; values: [] }[] = []; //////////////////////////////////////////////////////////////////
+		const tokyoNow = DateTime.now().setZone('Asia/Tokyo');
+		const startDate = tokyoNow.minus({ months: 1 }).startOf('month').toJSDate();
+		const endDate = tokyoNow.minus({ months: 1 }).endOf('month').toJSDate();
+
 		const deviceData = await deviceDataService.getDeviceDataForReport(
 			devEui,
-			moment().tz('Asia/Tokyo').subtract(1, 'month').startOf('month').toDate(),
-			moment().tz('Asia/Tokyo').subtract(1, 'month').endOf('month').toDate(),
+			startDate,
+			endDate,
 			30,
 			'temperature_c',
 			'>',
@@ -128,7 +132,7 @@ export const GET: RequestHandler = async ({
 		}
 		deviceData.forEach((data) => {
 			dataa.push({
-				date: moment(data.created_at).tz('Asia/Tokyo').format('YYYY-MM-DD HH:mm'),
+				date: DateTime.fromISO(data.created_at).setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm'),
 				values: [data.temperature_c] // Assuming temperature_c is the only value we want to display
 			});
 		});
@@ -137,9 +141,11 @@ export const GET: RequestHandler = async ({
 		createPDFDataTable(doc, dataa);
 
 		// Add generation timestamp
-		doc.fontSize(10).text(`生成日時: ${new Date().toLocaleString('ja-JP')}`, {
-			align: 'right'
-		});
+		doc
+			.fontSize(10)
+			.text(`生成日時: ${DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm:ss')}`, {
+				align: 'right'
+			});
 
 		// Finalize the PDF
 		doc.end();

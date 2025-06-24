@@ -4,13 +4,10 @@
 	import Button from './components/Button.svelte';
 	import { goto } from '$app/navigation';
 	import { mdiArrowRight } from '@mdi/js';
-	import moment from 'moment';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import type { Device } from '$lib/models/Device';
 	import type { Location } from '$lib/models/Location';
-	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
-	import { onMount, onDestroy } from 'svelte';
 
 	// Extend the Device type to include latestData
 	interface DeviceWithLatestData extends Device {

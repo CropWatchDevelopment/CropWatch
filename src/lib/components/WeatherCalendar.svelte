@@ -2,15 +2,14 @@
 	import { Calendar, DayGrid } from '@event-calendar/core';
 	import '@event-calendar/core/index.css'; // include default styles
 	import { fetchHistoricalWeather } from '$lib/utilities/monthWeatherHistory';
-	import moment from 'moment';
-	import { onMount } from 'svelte';
+	import { DateTime } from 'luxon';
 
-    interface WeatherCalendarProps {
+	interface WeatherCalendarProps {
 		events?: any[];
 		onDateChange?: (start: Date, end: Date) => void;
 	}
 
-    const { events = [], onDateChange = () => {} } = $props();
+	const { events = [], onDateChange = () => {} } = $props();
 
 	// 1. Declare weather state and current date with proper types
 	let weather: any[] = $state([]);
@@ -22,8 +21,8 @@
 	async function loadWeatherForMonth(date: Date) {
 		loading = true;
 		try {
-			const startDate = moment(date).startOf('month').toDate();
-			let endDate = moment(date).endOf('month').toDate();
+			const startDate = DateTime.fromJSDate(date).startOf('month').toJSDate();
+			let endDate = DateTime.fromJSDate(date).endOf('month').toJSDate();
 			if (endDate > new Date()) {
 				endDate = new Date(); // Adjust to yesterday if future date
 			}
@@ -48,7 +47,7 @@
 					precipitation: entry.weather.totalprecip_mm
 				}
 			}));
-            mappedEvents.push(...events);
+			mappedEvents.push(...events);
 			weather = mappedEvents;
 			console.log('Mapped weather events:', weather);
 		} catch (err) {
@@ -106,7 +105,7 @@
 	const options = $derived({
 		view: 'dayGridMonth',
 		date: currentDate, // Use tracked current date
-		events: weather.filter(event => event && event.start), // Filter out invalid events
+		events: weather.filter((event) => event && event.start), // Filter out invalid events
 		eventContent: eventContentRenderer,
 		dayMaxEvents: true, // Allow +more link when too many events
 		height: '700px',

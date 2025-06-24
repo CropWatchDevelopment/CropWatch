@@ -14,7 +14,7 @@
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
 	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
-	import moment from 'moment';
+	import { DateTime } from 'luxon';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
