@@ -68,6 +68,29 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 		}
 	});
 
+	// get headers from the request
+	const headers = new Headers(event.request.headers);
+	console.log('Request Headers:', Object.fromEntries(headers.entries()));
+	// get {"authorization" => Object} header
+	const authorizationHeader = headers.get('authorization');
+	const refresh_token = headers.get('x-refresh-token');
+	const jwt = authorizationHeader?.replace('Bearer ', '').trim();
+	const refreshToken = refresh_token?.replace('X-Refresh-Token: ', '').trim();
+	if (authorizationHeader) {
+		console.log('Authorization Header:', jwt);
+		const result = await event.locals.supabase.auth.setSession({
+			access_token: jwt,
+			refresh_token: refreshToken || null
+		}); // Set the JWT for Supabase auth
+		console.log('Supabase Auth Set Session Result:', result);
+		const {
+			data: { user }
+		} = await event.locals.supabase.auth.getUser(jwt); // THIS WORKS!
+		console.log('Supabase Auth Sign In Data:', user);
+	} else {
+		console.log('No Authorization Header found');
+	}
+
 	// Enhance session validation to include explicit debug logging
 	event.locals.safeGetSession = async () => {
 		try {
