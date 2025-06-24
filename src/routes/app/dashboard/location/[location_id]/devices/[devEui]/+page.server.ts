@@ -1,61 +1,35 @@
-import { error, redirect } from '@sveltejs/kit';
-import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { SessionService } from '$lib/services/SessionService';
-import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
-import { DeviceRepository } from '$lib/repositories/DeviceRepository';
-import { DeviceService } from '$lib/services/DeviceService';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
-import { url } from '@layerstack/utils/routing';
 import moment from 'moment';
 
-export const load: PageServerLoad = async ({ url, params, locals: { safeGetSession, supabase } }) => {
-    const { devEui } = params;
-    const sessionService = new SessionService(supabase);
-    const sessionResult = await sessionService.getSafeSession();
+/**
+ * Load the latest and historical device data for a specific device EUI.
+ * User session, `devEui` and `locationId` are already validated in the layout server load.
+ */
+export const load: PageServerLoad = async ({ url, params, locals: { supabase } }) => {
+	const { devEui } = params;
 
-    // If no session exists, redirect to login
-    if (!sessionResult || !sessionResult.user) {
-        throw redirect(302, '/auth/login');
-    }
+	try {
+		const deviceDataService = new DeviceDataService(supabase);
 
-    try {
-        // Get the error handler from the container
-        const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-        const deviceDataService = await new DeviceDataService(supabase);
-        const deviceRepository = new DeviceRepository(supabase, errorHandler);
-        const deviceService = new DeviceService(deviceRepository);
+		let startDate = url.searchParams.get('start');
+		let endDate = url.searchParams.get('end');
+		if (!startDate || !endDate) {
+			startDate = moment().subtract(7, 'days').toDate();
+			endDate = new Date();
+		}
 
-        let startDate = url.searchParams.get('start');
-        let endDate = url.searchParams.get('end');
-        if (!startDate || !endDate) {
-            startDate = moment().subtract(7, 'days').toDate();
-            endDate = new Date();
-        }
+		// Don’t `await` the promise, stream the data instead
+		const latestData = deviceDataService.getLatestDeviceData(devEui);
+		const historicalData = deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
 
-        // Get the latest data
-        const latestData = await deviceDataService.getLatestDeviceData(devEui);
-        if (!latestData) {
-            throw error(404, 'Device data not found');
-        }
-
-        let historicalData = await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
-
-        // get the device itsself
-        const device = await deviceService.getDeviceWithTypeByEui(devEui);
-        if (!device) {
-            throw error(404, 'Device not found');
-        }
-
-        return {
-            device,
-            latestData,
-            historicalData,
-            dataType: device.cw_device_type.data_table_v2,
-        };
-    } catch (err) {
-        console.error(`Error loading device details for ${devEui}:`, err);
-        throw error(500, 'Failed to load device details');
-    }
+		return {
+			latestData, // streamed
+			historicalData // streamed
+		};
+	} catch (err) {
+		console.error(`Error loading device details for ${devEui}:`, err);
+		throw error(500, 'Failed to load device details');
+	}
 };

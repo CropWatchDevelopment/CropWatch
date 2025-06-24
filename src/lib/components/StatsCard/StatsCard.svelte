@@ -2,11 +2,11 @@
 	import { mdiArrowDownBold, mdiArrowUpBold, mdiMinus } from '@mdi/js';
 	import { Icon } from 'svelte-ux';
 
-	let { 
-		title, 
-		notation = '', 
-		min, 
-		max, 
+	let {
+		title,
+		notation = '',
+		min,
+		max,
 		avg,
 		median,
 		stdDev,
@@ -58,7 +58,7 @@
 	}
 
 	const color = getColorForSensorType(title);
-	
+
 	function toggleExpand() {
 		if (expandable) {
 			expanded = !expanded;
@@ -67,22 +67,19 @@
 </script>
 
 <div
-        class="flex w-full flex-col items-center rounded-lg bg-gray-100 p-4 text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
-        class:cursor-pointer={expandable}
-        role="button"
-        tabindex="0"
-        onclick={toggleExpand}
-        onkeydown={(e) => e.key === 'Enter' && toggleExpand()}
+	class="flex w-full flex-col items-center rounded-lg bg-gray-50 p-4 text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+	class:cursor-pointer={expandable}
+	role="button"
+	tabindex="0"
+	onclick={toggleExpand}
+	onkeydown={(e) => e.key === 'Enter' && toggleExpand()}
 >
 	<!-- Title with Current reading and Trend -->
-	<div class="flex w-full items-center justify-between mb-2">
+	<div class="mb-2 flex w-full items-center justify-between">
 		<h4 class="text-sm font-medium text-gray-600 dark:text-gray-400">
 			{title}
-			{#if notation}
-				<span class="ml-1 text-xs text-gray-500 dark:text-gray-500">({notation})</span>
-			{/if}
 		</h4>
-		
+
 		{#if lastReading !== undefined && trend !== undefined}
 			<div class="flex items-center space-x-1">
 				<span class="text-sm font-bold">{formatValue(lastReading)}{notation}</span>
@@ -112,12 +109,12 @@
 	<!-- Bar with dots -->
 	<div class="relative h-2 w-full rounded-full bg-zinc-300 dark:bg-zinc-700">
 		<!-- Min and Max dots (gray in light mode, white in dark mode) -->
-                <div
-                        class="absolute top-1/2 left-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
-                ></div>
-                <div
-                        class="absolute top-1/2 right-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
-                ></div>
+		<div
+			class="absolute top-1/2 left-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
+		></div>
+		<div
+			class="absolute top-1/2 right-0 h-2 w-2 -translate-y-1/2 rounded-full bg-gray-400 dark:bg-white"
+		></div>
 
 		<!-- Avg dot colored -->
 		<div
@@ -131,7 +128,7 @@
 			class:bg-zinc-400={color === 'zinc-400'}
 			style="left: {avgPercent}%;"
 		></div>
-		
+
 		<!-- Median dot (if available) -->
 		{#if medianPercent !== null}
 			<div
@@ -147,36 +144,44 @@
 			></div>
 		{/if}
 	</div>
-	
+
 	<!-- Expanded Details -->
 	{#if expanded}
-		<div class="w-full mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm">
+		<div class="mt-4 w-full border-t border-gray-200 pt-3 text-sm dark:border-gray-700">
 			<div class="grid grid-cols-2 gap-y-2">
 				<div>
 					<span class="text-gray-400 dark:text-gray-500">Count:</span>
 					<span class="ml-1 font-medium">{count !== undefined ? count : 'N/A'}</span>
 				</div>
-				
+
 				<div>
 					<span class="text-gray-400 dark:text-gray-500">Median:</span>
-					<span class="ml-1 font-medium">{median !== undefined ? formatValue(median) + (notation || '') : 'N/A'}</span>
+					<span class="ml-1 font-medium">
+						{median !== undefined ? formatValue(median) + (notation || '') : 'N/A'}
+					</span>
 				</div>
-				
+
 				<div>
 					<span class="text-gray-400 dark:text-gray-500">Std Dev:</span>
-					<span class="ml-1 font-medium">{stdDev !== undefined ? formatValue(stdDev) + (notation || '') : 'N/A'}</span>
+					<span class="ml-1 font-medium">
+						{stdDev !== undefined ? formatValue(stdDev) + (notation || '') : 'N/A'}
+					</span>
 				</div>
-				
+
 				<div>
 					<span class="text-gray-400 dark:text-gray-500">Range:</span>
-					<span class="ml-1 font-medium">{(max !== undefined && min !== undefined) ? formatValue(max - min) + (notation || '') : 'N/A'}</span>
+					<span class="ml-1 font-medium">
+						{max !== undefined && min !== undefined
+							? formatValue(max - min) + (notation || '')
+							: 'N/A'}
+					</span>
 				</div>
 			</div>
 		</div>
 	{/if}
-	
+
 	{#if expandable}
-		<div class="w-full flex justify-center mt-1">
+		<div class="mt-1 flex w-full justify-center">
 			<div class="text-xs text-gray-400 dark:text-gray-500">
 				{expanded ? 'Click to collapse' : 'Click to expand'}
 			</div>
