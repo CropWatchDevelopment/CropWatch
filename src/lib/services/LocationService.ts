@@ -162,8 +162,9 @@ export class LocationService implements ILocationService {
 			} else {
 				// Add user to all devices with 'Disabled' permission (level 4)
 				await Promise.all(
-					devices.map((device) =>
-						this.deviceRepository.addUserToDevice(device.dev_eui, userToAdd.id, 4)
+					devices.map(
+						(device) => this.deviceRepository.addUserToDevice(device.dev_eui, userToAdd.id, 255) // Hardcoded 'Disabled' permission
+						// TODO: Move permission level to a constant or enum
 					)
 				);
 			}
@@ -265,8 +266,9 @@ export class LocationService implements ILocationService {
 				}
 			}
 
-			// Delete user from location
-			await this.locationRepository.removeUserFromLocation(locationOwnerId);
+			await this.locationRepository.removeUserFromLocationByUserId(userId);
+			// The user no longer has access to this location, thus they will no longer have access to any devices in this location.
+			// Delete the permission to all devices for this user too
 
 			// Get all devices in this location to remove user from device permissions
 			const devices = await this.deviceRepository.findByLocation(locationId);
