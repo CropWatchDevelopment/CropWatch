@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { success } from '$lib/stores/toast.svelte';
+	import { success, error as toastError } from '$lib/stores/toast.svelte';
 	import GoogleAuthLogin from './GoogleAuthLogin.svelte';
 	import DiscordAuthLogin from './DiscordAuthLogin.svelte';
 
@@ -69,10 +69,15 @@
 			}
 
 			// Immediately redirect to dashboard - no delay, no success message
-			window.location.href = '/app/dashboard';
+			// window.location.href = '/app/dashboard';
+			successMessage = 'Login successful! Redirecting to dashboard...';
+			success(successMessage);
+			goto('/app/dashboard');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Login failed. Please try again.';
 			loading = false;
+			submitting = false;
+			toastError(`Login error: ${error}`);
 		}
 	}
 </script>
@@ -89,13 +94,13 @@
 	>
 		<h1 class="mb-6 text-center text-2xl font-bold">Login</h1>
 
-		{#if error}
+		<!-- {#if error}
 			<div
 				class="mb-4 rounded-md bg-red-100 p-3 text-center text-red-700 dark:bg-red-900/30 dark:text-red-400"
 			>
 				{error}
 			</div>
-		{/if}
+		{/if} -->
 
 		{#if successMessage}
 			<div
@@ -162,7 +167,7 @@
 			>
 				<button
 					type="submit"
-					class="bg-slate-500 hover:bg-slate-600-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+					class="hover:bg-slate-600-hover w-full rounded bg-slate-500 px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
 					disabled={loading}
 					onclick={() => goto('/api/')}
 				>
