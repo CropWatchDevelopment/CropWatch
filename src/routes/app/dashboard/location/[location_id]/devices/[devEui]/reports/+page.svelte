@@ -493,7 +493,7 @@
 	<h1>PDF Generator</h1>
 
 	<div class="content">
-		<div class="flow-explanation">
+		<div class="flow-explanation text-gray-500">
 			<strong>How These PDF Generation Methods Work</strong><br />
 			<p>
 				<strong>Method 1 (jsPDF with Text):</strong> The frontend requests HTML content from the
@@ -506,8 +506,10 @@
 				selectable text, tables, and complex layouts. The PDF is sent directly to the browser for download.
 			</p>
 		</div>
-		<p>Click the button below to generate a PDF with Japanese text:</p>
-		<p class="japanese-text">日本語のサンプルテキストです。これはPDFレポートに変換されます。</p>
+		<p class="text-gray-500">Click the button below to generate a PDF with Japanese text:</p>
+		<p class="japanese-text text-gray-500">
+			日本語のサンプルテキストです。これはPDFレポートに変換されます。
+		</p>
 
 		{#if error}
 			<div class="error">
@@ -516,13 +518,15 @@
 		{/if}
 
 		<div class="status">
-			<p>
+			<p class="text-gray-500">
 				Font Status: <span class={fontLoaded ? 'success' : 'pending'}
 					>{fontLoaded ? 'Loaded' : 'Loading...'}</span
 				>
 			</p>
 			{#if fontLoaded && fontLoadingTime > 0}
-				<p>Font Loading Time: <span class="info">{fontLoadingTime.toFixed(2)} seconds</span></p>
+				<p class="text-gray-500">
+					Font Loading Time: <span class="info">{fontLoadingTime.toFixed(2)} seconds</span>
+				</p>
 			{/if}
 		</div>
 
