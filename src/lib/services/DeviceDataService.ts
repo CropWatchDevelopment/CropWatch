@@ -191,20 +191,34 @@ export class DeviceDataService implements IDeviceDataService {
 			throw new Error('Start date must be before end date');
 		}
 
-		const { data, error } = await this.supabase.rpc('get_filtered_device_report_data', {
-			dev_id: devEui,
-			start_time: startDate.toISOString(),
-			end_time: endDate.toISOString(),
-			interval_minutes: intervalMinutes,
-			target_column: targetColumn,
-			compare_operator: compareOperator,
-			compare_value_min: compareValueMin,
-			compare_value_max: compareValueMax
-		});
+		// const { data, error } = await this.supabase.rpc('get_filtered_device_report_data', {
+		// 	dev_id: devEui,
+		// 	start_time: startDate.toISOString(),
+		// 	end_time: endDate.toISOString(),
+		// 	interval_minutes: intervalMinutes,
+		// 	target_column: targetColumn,
+		// 	compare_operator: compareOperator,
+		// 	compare_value_min: compareValueMin,
+		// 	compare_value_max: compareValueMax
+		// });
 
-		if (error) {
+		const { data, error: rpcError } = await this.supabase.rpc(
+			'get_filtered_device_report_data_multi',
+			{
+				p_dev_id: devEui,
+				p_start_time: startDate.toISOString(),
+				p_end_time: endDate.toISOString(),
+				p_interval_minutes: intervalMinutes,
+				p_columns: ['temperature_c', 'humidity'],
+				p_ops: ['>', 'BETWEEN'],
+				p_mins: [-22, 55],
+				p_maxs: [null, 65]
+			}
+		);
+
+		if (rpcError) {
 			// You can inspect error.code or .details here for more nuance
-			throw new Error(`Error fetching device report data: ${error.message}`);
+			throw new Error(`Error fetching device report data: ${rpcError.message}`);
 		}
 
 		// Supabase returns JSONB rows; cast to your interface
