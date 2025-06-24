@@ -465,7 +465,7 @@
 		events={calendarEvents}
 		onDateChange={(date: Date) => {
 			startDateInputString = formatDateForInput(date);
-			endDateInputString = formatDateForInput(moment(date).endOf('month').toDate());
+			endDateInputString = formatDateForInput(DateTime.fromJSDate(date).endOf('month').toJSDate());
 			handleDateRangeSubmit();
 		}}
 	/>

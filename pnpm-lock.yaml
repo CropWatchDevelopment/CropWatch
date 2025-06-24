@@ -77,12 +77,6 @@ dependencies:
   luxon:
     specifier: ^3.6.1
     version: 3.6.1
-  moment:
-    specifier: ^2.30.1
-    version: 2.30.1
-  moment-timezone:
-    specifier: ^0.6.0
-    version: 0.6.0
   pdfkit:
     specifier: ^0.17.1
     version: 0.17.1
@@ -4882,12 +4876,6 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dev: true
-
-  /moment-timezone@0.6.0:
-    resolution: {integrity: sha512-ldA5lRNm3iJCWZcBCab4pnNL3HSZYXVb/3TYr75/1WCTWYuTqYUb5f/S384pncYjJ88lbO8Z4uPDvmoluHJc8Q==}
-    dependencies:
-      moment: 2.30.1
-    dev: false
 
   /moment@2.30.1:
     resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
