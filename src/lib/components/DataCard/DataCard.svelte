@@ -98,9 +98,8 @@
 {#if hasValue(latestData, key)}
 	<div
 		class={[
-			'rounded-lg bg-white p-4 text-center transition-all duration-200 ease-in-out dark:bg-zinc-800',
-			'shadow-sm hover:shadow-md',
-			isMetadata ? '' : 'hover:-translate-y-1',
+			'rounded-r-lg bg-gray-50 p-4 text-center shadow-sm transition-all duration-200 ease-in-out',
+			'dark:bg-zinc-800',
 			isMetadata ? 'border-l' : 'border-l-4',
 			getBorderColorClass(sensorType, isMetadata),
 			className

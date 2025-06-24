@@ -3,14 +3,8 @@
 	import '@event-calendar/core/index.css'; // include default styles
 	import { fetchHistoricalWeather } from '$lib/utilities/monthWeatherHistory';
 	import moment from 'moment';
-	import { onMount } from 'svelte';
 
-    interface WeatherCalendarProps {
-		events?: any[];
-		onDateChange?: (start: Date, end: Date) => void;
-	}
-
-    const { events = [], onDateChange = () => {} } = $props();
+	const { events = [], onDateChange = () => {} } = $props();
 
 	// 1. Declare weather state and current date with proper types
 	let weather: any[] = $state([]);
@@ -48,7 +42,7 @@
 					precipitation: entry.weather.totalprecip_mm
 				}
 			}));
-            mappedEvents.push(...events);
+			mappedEvents.push(...events);
 			weather = mappedEvents;
 			console.log('Mapped weather events:', weather);
 		} catch (err) {
@@ -76,13 +70,13 @@
 
 		if (icon) {
 			const tempDisplay =
-				maxTemp !== null && minTemp !== null ? `${maxTemp}°/${minTemp}°C` : 'No temp data';
+				maxTemp !== null && minTemp !== null ? `${maxTemp}/<wbr>${minTemp}℃` : 'No temp data';
 
 			return {
 				html: `
-					<div style="display:flex; flex-direction:row; font-size:1rem;">
-						<div style="font-size:2rem;margin-right:2px">${icon}</div>
-						<div style="font-size:1rem;">
+					<div class="weather-data">
+						<div class="icon">${icon}</div>
+						<div>
 							${tempDisplay}<br>
 							${precipitation}mm
 						</div>
@@ -106,7 +100,7 @@
 	const options = $derived({
 		view: 'dayGridMonth',
 		date: currentDate, // Use tracked current date
-		events: weather.filter(event => event && event.start), // Filter out invalid events
+		events: weather.filter((event) => event && event.start), // Filter out invalid events
 		eventContent: eventContentRenderer,
 		dayMaxEvents: true, // Allow +more link when too many events
 		height: '700px',
@@ -124,6 +118,10 @@
 					onDateChange(info.view.currentStart, info.view.currentEnd);
 				}
 			}
+		},
+		buttonText: {
+			today: 'Today',
+			dayGridMonth: 'Month'
 		},
 		// Add custom button handlers
 		customButtons: {
@@ -147,35 +145,108 @@
 	</div>
 </section>
 
-<style>
-	/* Fix for dark mode compatibility */
-	:global(.calendar-container .ec-button) {
-		color: var(--foreground, #000);
-		background-color: var(--background, #fff);
-		border: 1px solid var(--border, #ddd);
-	}
+<style lang="postcss">
+	@reference "tailwindcss";
 
-	:global(.calendar-container .ec-button:hover) {
-		background-color: var(--muted, #f5f5f5);
-	}
+	/* Override the default styles for the calendar */
+	:global {
+		/* Secondary button */
+		.calendar-container .ec-button {
+			@apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-md border-0 bg-gray-700 px-4 py-2 text-sm font-semibold text-nowrap text-white shadow-sm transition-colors hover:bg-gray-700/90 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:bg-gray-700/95 disabled:pointer-events-none disabled:cursor-default disabled:opacity-50;
+		}
 
-	:global(.calendar-container .ec-button.ec-button-active) {
-		background-color: var(--primary, #3788d8);
-		color: var(--primary-foreground, #fff);
-	}
+		.ec-header,
+		.ec-all-day,
+		.ec-body,
+		.ec-days,
+		.ec-day,
+		.ec-day-head {
+			@apply border-gray-300;
 
-	:global(.dark .calendar-container .ec-button) {
-		color: #fff;
-		background-color: #333;
-		border-color: #555;
-	}
+			.dark & {
+				@apply border-neutral-800;
+			}
+		}
 
-	:global(.dark .calendar-container .ec-button:hover) {
-		background-color: #444;
-	}
+		.ec-day-grid　 {
+			@apply !h-auto md:h-[700px];
+		}
 
-	:global(.dark .calendar-container .ec-button.ec-button-active) {
-		background-color: #3788d8;
-		color: #fff;
+		.ec-header {
+			@apply hidden border-0 sm:flex;
+
+			.ec-day {
+				@apply border-0 px-2 py-1 text-right text-sm text-neutral-100;
+			}
+		}
+
+		.ec-day-grid .ec-body {
+			@apply border-0 bg-gray-50 sm:rounded-lg sm:shadow;
+
+			.dark & {
+				@apply bg-zinc-800;
+			}
+		}
+
+		.ec-day-grid .ec-day-head {
+			@apply min-w-10 items-center justify-center px-3 py-2 md:min-w-auto;
+		}
+
+		.ec-day-grid .ec-uniform .ec-days {
+			@apply min-h-auto;
+		}
+
+		.ec-day-grid .ec-uniform .ec-day {
+			@apply flex min-h-12 items-center md:min-h-32 md:flex-col md:items-end;
+		}
+
+		.ec-days {
+			@apply flex-col border-none md:flex-row md:border-1;
+
+			&:first-child .ec-day {
+				@apply md:border-t-0;
+			}
+		}
+
+		.ec-day {
+			@apply border-t border-l-0 md:border-l-1;
+
+			&.ec-other-month {
+				@apply !hidden md:!flex;
+			}
+		}
+
+		.ec-events {
+			@apply m-0 !flex w-full flex-row items-center justify-between md:!flow-root;
+		}
+
+		.ec-event {
+			@apply !visible mx-3 !my-2 !w-auto bg-transparent text-xs text-inherit shadow-none;
+
+			/* Device data */
+			~ .ec-event {
+				@apply mx-2 !mt-2 rounded-sm bg-blue-100 px-2 py-1;
+
+				.dark & {
+					@apply bg-gray-700;
+				}
+
+				.ec-event-title {
+					@apply min-h-auto;
+				}
+			}
+		}
+
+		.weather-data {
+			@apply flex w-full flex-row items-center gap-1 md:-mt-9 md:flex-col md:items-start;
+
+			.icon {
+				@apply text-2xl md:text-3xl;
+			}
+		}
+
+		.ec-day-foot {
+			@apply !hidden;
+		}
 	}
 </style>
