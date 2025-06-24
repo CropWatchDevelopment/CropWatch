@@ -115,8 +115,8 @@ export const GET: RequestHandler = async ({
 		// Generate sample data for the table
 		const dataa: { date: string; values: [] }[] = []; //////////////////////////////////////////////////////////////////
 		const tokyoNow = DateTime.now().setZone('Asia/Tokyo');
-		const startDate = tokyoNow.minus({ months: 1 }).startOf('month').toJSDate();
-		const endDate = tokyoNow.minus({ months: 1 }).endOf('month').toJSDate();
+		const startDate = tokyoNow.minus({ months: 1 }).startOf('month').toUTC().toJSDate();
+		const endDate = tokyoNow.minus({ months: 1 }).endOf('month').toUTC().toJSDate();
 
 		const deviceData = await deviceDataService.getDeviceDataForReport(
 			devEui,
