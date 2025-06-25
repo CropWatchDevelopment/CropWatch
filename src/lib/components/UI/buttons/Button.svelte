@@ -28,9 +28,9 @@
 	}: Props & Record<string, any> = $props();
 
 	const colors = {
-		primary: 'blue',
-		secondary: 'green',
-		tertiary: 'gray',
+		primary: 'green',
+		secondary: 'gray',
+		tertiary: 'neutral',
 		danger: 'red',
 		ghost: 'transparent'
 	};

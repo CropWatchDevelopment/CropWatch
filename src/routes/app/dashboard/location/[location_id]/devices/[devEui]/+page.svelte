@@ -209,7 +209,7 @@
 
 <Header {device} {basePath}>
 	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
-		<Button variant="tertiary" href="{basePath}/settings">{$_('settings')}</Button>
+		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
 		<!-- Date range selector -->
 		<div class="flex flex-wrap items-end gap-2">
 			<!-- Date inputs -->
