@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import TextInput from '$lib/components/UI/form/TextInput.svelte';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
 	import type { DeviceWithType } from '$lib/models/Device';
 	import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
@@ -15,13 +17,16 @@
 	} from '$lib/utilities/helpers';
 	import moment from 'moment';
 	import { onMount } from 'svelte';
+	import { _, locale } from 'svelte-i18n';
 	import type { PageProps } from './$types';
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
+	import Header from './Header.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
 
-	let user = $state(data.user);
+	let { location_id, devEui } = page.params;
+	let basePath = `/app/dashboard/location/${location_id}/devices/${devEui}`;
 	let device = $state(data.device as DeviceWithType);
 	let dataType = $state(data.dataType);
 	let latestData: DeviceDataRecord | null = $state(null);
@@ -100,13 +105,22 @@
 		})();
 	});
 
-	// Effect to re-render visualization when historicalData or DOM elements change
+	const renderChart = async () => {
+		renderingVisualization = true;
+		await renderVisualization(historicalData, dataType, latestData, chart1, chart1Brush);
+		renderingVisualization = false;
+	};
+
+	// Re-render chart when historical data or DOM elements change
 	$effect(() => {
-		(async () => {
-			renderingVisualization = true;
-			await renderVisualization(historicalData, dataType, latestData, chart1, chart1Brush);
-			renderingVisualization = false;
-		})();
+		void [historicalData, dataType, latestData, chart1, chart1Brush];
+		renderChart();
+	});
+
+	// Re-render chart when the app locale changes, because the labels depend on it
+	$effect(() => {
+		void $locale;
+		renderChart();
 	});
 
 	// Effect to keep input strings in sync if deviceDetail.startDate/endDate change (e.g. by initializeDateRange)
@@ -193,16 +207,59 @@
 	<title>Device Details - {device?.name || device?.dev_eui}</title>
 </svelte:head>
 
+<Header {device} {basePath}>
+	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
+		<Button variant="tertiary" href="{basePath}/settings">{$_('settings')}</Button>
+		<!-- Date range selector -->
+		<div class="flex flex-wrap items-end gap-2">
+			<!-- Date inputs -->
+			<div class="flex flex-col">
+				<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400"
+					>Start Date:</label
+				>
+				<TextInput
+					id="startDate"
+					type="date"
+					bind:value={startDateInputString}
+					max={endDateInputString}
+					class="text-sm"
+				/>
+			</div>
+			<div class="flex flex-col">
+				<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">End Date:</label>
+				<TextInput
+					id="endDate"
+					type="date"
+					bind:value={endDateInputString}
+					min={startDateInputString}
+					class="text-sm"
+				/>
+			</div>
+			<div class="-ml-2">
+				<Button
+					variant="ghost"
+					iconic
+					onclick={handleDateRangeSubmit}
+					disabled={loadingHistoricalData}
+				>
+					<MaterialIcon name="refresh" aria-label={$_('refresh')} />
+				</Button>
+			</div>
+			{#if error}
+				<p class="mt-2 text-sm text-red-600">{'error'}</p>
+			{/if}
+		</div>
+	</div>
+</Header>
+
 <div class="flex flex-col gap-4 p-4 xl:flex-row">
 	<!-- Left pane -->
 	<div
-		class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:flex xl:w-1/4 xl:min-w-[320px] xl:grid-cols-1 xl:flex-col xl:gap-6"
+		class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:flex xl:w-[320px] xl:grid-cols-1 xl:flex-col xl:gap-6"
 	>
 		<!-- Latest data section -->
 		<section class="flex-auto lg:w-auto xl:flex-none">
-			<h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
-				Latest Sensor Readings
-			</h2>
+			<h2>Latest Sensor Readings</h2>
 			{#if latestData}
 				<div>
 					<div class="grid grid-cols-2 gap-2">
@@ -219,7 +276,7 @@
 						{/each}
 					</div>
 
-					<p class="mt-4 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+					<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
 						Last updated: {formatDateForDisplay(latestData.created_at)}
 					</p>
 				</div>
@@ -230,7 +287,7 @@
 
 		<!-- Video Feed is IP is there -->
 		<section class="flex-none">
-			<h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Camera Stream</h2>
+			<h2>Camera Stream</h2>
 			{#if device?.ip_log.length > 0}
 				{#each device.ip_log as log}
 					<img
@@ -246,8 +303,8 @@
 
 		{#if device}
 			<section class="flex-none">
-				<h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Map</h2>
-				<div class="h-64">
+				<h2>Map</h2>
+				<div class="aspect-square">
 					<LeafletMap
 						lat={device.lat || 0}
 						lon={device.long || 0}
@@ -260,42 +317,49 @@
 
 		<!-- Device metadata container -->
 		<section class="flex-none">
-			<h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Device Info</h2>
+			<h2>Device Info</h2>
 			<div class="rounded-lg bg-gray-50 p-4 shadow-sm dark:bg-zinc-800">
 				<!-- Responsive: 1 col on mobile, 2 on md, 4 on lg -->
-				<div class="grid grid-rows-1 gap-4 text-sm">
+				<div class="grid grid-rows-1 gap-2 text-sm">
 					<!-- Type -->
 					<div>
-						<span class="text-gray-500 dark:text-gray-300">Type:</span>
-						<strong class="ml-1 break-words text-gray-900 dark:text-white">{deviceTypeName}</strong>
+						<span class="text-gray-500/80 dark:text-gray-300/80">Type:</span>
+						<span class="ml-1 break-words text-gray-900 dark:text-white">{deviceTypeName}</span>
 					</div>
 
 					<!-- EUI -->
 					<div>
-						<span class="text-gray-500 dark:text-gray-300">EUI:</span>
-						<strong class="ml-1 break-words text-gray-900 dark:text-white">{device.dev_eui}</strong>
+						<span class="text-gray-500/80 dark:text-gray-300/80">EUI:</span>
+						<span class="ml-1 break-words text-gray-900 dark:text-white">{device.dev_eui}</span>
 					</div>
 
 					<!-- Location ID -->
 					{#if device?.location_id}
 						<div>
-							<span class="text-gray-500 dark:text-gray-300">Location ID:</span>
-							<strong class="ml-1 text-gray-900 dark:text-white">{device.location_id}</strong>
+							<span class="text-gray-500/80 dark:text-gray-300/80">Location ID:</span>
+							<span class="ml-1 text-gray-900 dark:text-white">{device.location_id}</span>
 						</div>
 					{/if}
 
 					<!-- Installed At -->
 					{#if device?.installed_at}
 						<div>
-							<span class="text-gray-500 dark:text-gray-300">Installed:</span>
-							<strong class="ml-1 text-gray-900 dark:text-white">
+							<span class="text-gray-500/80 dark:text-gray-300/80">Installed:</span>
+							<span class="ml-1 text-gray-900 dark:text-white">
 								{formatDateOnly(device.installed_at)}
-							</strong>
+							</span>
 						</div>
 					{/if}
 
-					<!-- We could add some more data -->
-					<!-- <pre class="text-xs">{JSON.stringify(device, null, 2)}</pre> -->
+					<div>
+						<a
+							href="https://kb.cropwatch.io/doku.php?id=co2_sensors"
+							target="_blank"
+							class="text-gray-500/80 dark:text-gray-300/80"
+						>
+							Sensor Datasheet
+						</a>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -316,53 +380,6 @@
 				Loading historical data...
 			</div>
 		{/if}
-		<!-- Date range selector -->
-		<section class="flex justify-end">
-			<div>
-				<div class="flex flex-wrap items-end gap-2 md:gap-2">
-					<!-- Date inputs -->
-					<div class="flex flex-col">
-						<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400"
-							>Start Date:</label
-						>
-						<TextInput
-							id="startDate"
-							type="date"
-							bind:value={startDateInputString}
-							max={endDateInputString}
-							class="text-sm"
-						/>
-					</div>
-
-					<div class="flex flex-col">
-						<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400"
-							>End Date:</label
-						>
-						<TextInput
-							id="endDate"
-							type="date"
-							bind:value={endDateInputString}
-							min={startDateInputString}
-							class="text-sm"
-						/>
-					</div>
-
-					<div>
-						<Button
-							variant="primary"
-							onclick={handleDateRangeSubmit}
-							disabled={loadingHistoricalData}
-						>
-							{loadingHistoricalData ? 'Updating…' : 'Update'}
-						</Button>
-					</div>
-				</div>
-
-				{#if error}
-					<p class="mt-2 text-sm text-red-600">{error}</p>
-				{/if}
-			</div>
-		</section>
 		<section class="mb-12">
 			{#if loading}
 				<!-- Loading State -->
@@ -380,75 +397,22 @@
 			{:else}
 				<!-- Statistical Summary -->
 				<div class="mb-8">
-					<h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Stats Summary</h2>
+					<h2>Stats Summary</h2>
 					<div class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3">
 						{#if temperatureChartVisible}
-							<StatsCard
-								notation="°C"
-								title="Temperature"
-								min={stats.temperature_c?.min}
-								max={stats.temperature_c?.max}
-								avg={stats.temperature_c?.avg}
-								median={stats.temperature_c?.median}
-								stdDev={stats.temperature_c?.stdDev}
-								count={stats.temperature_c?.count}
-								lastReading={stats.temperature_c?.lastReading}
-								trend={stats.temperature_c?.trend}
-							/>
+							<StatsCard key="temperature_c" {stats} />
 						{/if}
 						{#if humidityChartVisible}
-							<StatsCard
-								notation="%"
-								title="Humidity"
-								min={stats.humidity?.min}
-								max={stats.humidity?.max}
-								avg={stats.humidity?.avg}
-								median={stats.humidity?.median}
-								stdDev={stats.humidity?.stdDev}
-								count={stats.humidity?.count}
-								lastReading={stats.humidity?.lastReading}
-								trend={stats.humidity?.trend}
-							/>
+							<StatsCard key="humidity" {stats} />
 						{/if}
 						{#if moistureChartVisible}
-							<StatsCard
-								notation="%"
-								title="Moisture"
-								min={stats.moisture?.min}
-								max={stats.moisture?.max}
-								avg={stats.moisture?.avg}
-								median={stats.moisture?.median}
-								stdDev={stats.moisture?.stdDev}
-								count={stats.moisture?.count}
-								lastReading={stats.moisture?.lastReading}
-								trend={stats.moisture?.trend}
-							/>
+							<StatsCard key="moisture" {stats} />
 						{/if}
 						{#if co2ChartVisible}
-							<StatsCard
-								title="CO₂ (ppm)"
-								min={stats.co2?.min}
-								max={stats.co2?.max}
-								avg={stats.co2?.avg}
-								median={stats.co2?.median}
-								stdDev={stats.co2?.stdDev}
-								count={stats.co2?.count}
-								lastReading={stats.co2?.lastReading}
-								trend={stats.co2?.trend}
-							/>
+							<StatsCard key="co2" {stats} />
 						{/if}
 						{#if phChartVisible}
-							<StatsCard
-								title="pH"
-								min={stats.ph?.min}
-								max={stats.ph?.max}
-								avg={stats.ph?.avg}
-								median={stats.ph?.median}
-								stdDev={stats.ph?.stdDev}
-								count={stats.ph?.count}
-								lastReading={stats.ph?.lastReading}
-								trend={stats.ph?.trend}
-							/>
+							<StatsCard key="ph" {stats} />
 						{/if}
 					</div>
 				</div>
@@ -456,7 +420,7 @@
 				<!-- Charts -->
 				<!-- Chart Visualizations -->
 				<section class="mb-12" inert={renderingVisualization} aria-busy={renderingVisualization}>
-					<h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Data Chart</h2>
+					<h2>Data Chart</h2>
 
 					<!-- Generic Main Line + Brush Chart (always rendered if historicalData exists) -->
 					<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
@@ -485,7 +449,7 @@
 		</section>
 		<div class="mt-4">
 			<section>
-				<h2 class="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Weather History</h2>
+				<h2>Weather History</h2>
 				<WeatherCalendar
 					events={calendarEvents}
 					onDateChange={(date: Date) => {
@@ -499,7 +463,9 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
+	@reference "tailwindcss";
+
 	/* Chart container structure */
 	.chart-placeholder {
 		position: relative;
@@ -511,20 +477,42 @@
 		display: flex;
 		flex-direction: column;
 		width: 100%;
-	}
 
-	.chart-visual .chart {
-		width: 100%;
-	}
+		.chart {
+			width: 100%;
+		}
 
-	/* These classes are critical for ApexCharts rendering size */
-	.chart-visual .main-chart {
-		height: 350px;
-	}
+		/* These classes are critical for ApexCharts rendering size */
+		.main-chart {
+			height: 350px;
+		}
 
-	.chart-visual .brush-chart {
-		height: 150px;
-		margin-top: 10px;
+		.brush-chart {
+			height: 150px;
+			margin-top: 10px;
+		}
+
+		:global {
+			.apexcharts-legend-series {
+				@apply gap-1;
+			}
+
+			.apexcharts-legend-text {
+				@apply !text-gray-500;
+
+				.dark & {
+					@apply !text-gray-400;
+				}
+			}
+
+			text {
+				@apply fill-gray-500;
+
+				.dark & {
+					@apply fill-gray-400;
+				}
+			}
+		}
 	}
 
 	/* ApexCharts style overrides */
@@ -552,6 +540,14 @@
 
 		.chart-visual .brush-chart {
 			height: 120px;
+		}
+	}
+
+	h2 {
+		@apply mb-2 text-xl font-semibold text-gray-600;
+
+		:global(.dark) & {
+			@apply text-gray-300;
 		}
 	}
 </style>

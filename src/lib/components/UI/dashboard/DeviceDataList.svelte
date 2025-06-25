@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Duration, TweenedValue } from 'svelte-ux';
-	import { DurationUnits } from '@layerstack/utils';
+	import type { Device } from '$lib/models/Device';
 	import { convertObject } from '$lib/utilities/ConvertSensorDataObject';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { nameToNotation } from '$lib/utilities/NameToNotation';
-	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
-	import type { Device } from '$lib/models/Device';
+	import { formatNumber } from '$lib/utilities/stats';
+	import { DurationUnits } from '@layerstack/utils';
+	import { _ } from 'svelte-i18n';
+	import { Duration } from 'svelte-ux';
 
 	// Extend the Device type to include latestData
 	interface DeviceWithLatestData extends Device {
@@ -56,7 +57,7 @@
 	<div class="ml-1 flex-1">
 		<div class="flex">
 			<h3 class="mb-2 basis-1/3 text-lg font-semibold text-yellow-600 dark:text-yellow-400">
-				{nameToJapaneseName('Details')}
+				{$_('Details')}
 			</h3>
 		</div>
 
@@ -69,7 +70,7 @@
 								{nameToEmoji(dataPointKey)}
 							</span>
 							<span class="text-sm text-gray-600 dark:text-gray-400">
-								{nameToJapaneseName(dataPointKey)}
+								{$_(dataPointKey)}
 							</span>
 						</div>
 						<span class="flex-grow"></span>
@@ -86,7 +87,7 @@
 						{:else}
 							<div class="text-right">
 								<span class="text-lg font-bold text-gray-900 dark:text-white">
-									<TweenedValue value={device.latestData[dataPointKey]} format="decimal" />
+									{formatNumber({ key: dataPointKey, value: device.latestData[dataPointKey] })}
 								</span>
 								<span class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs">
 									{nameToNotation(dataPointKey)}

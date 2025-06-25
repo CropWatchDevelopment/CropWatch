@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import type { DeviceWithType } from '$lib/models/Device';
 	import type { Snippet } from 'svelte';
+	import Header from '../Header.svelte';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 	let { location_id, devEui } = page.params;
+	let device = data.device as DeviceWithType;
 	let basePath = `/app/dashboard/location/${location_id}/devices/${devEui}`;
 
 	if (!devEui) {
@@ -18,6 +21,8 @@
 		{ href: `${basePath}/settings/permissions`, label: 'Permissions' }
 	];
 </script>
+
+<Header {device} {basePath} />
 
 <div class="flex min-h-screen flex-col lg:flex-row">
 	<div

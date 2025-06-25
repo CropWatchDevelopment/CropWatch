@@ -1,11 +1,10 @@
 import { browser } from '$app/environment';
 import type { DeviceWithType } from '$lib/models/Device';
-import {
-	calculateAverage,
-	formatDateForDisplay,
-	formatDateForInput,
-	hasValue
-} from '$lib/utilities/helpers';
+import type { DeviceStats } from '$lib/models/DeviceDataRecord';
+import { calculateAverage, formatDateForDisplay, hasValue } from '$lib/utilities/helpers';
+import { getTextColorByKey } from '$lib/utilities/stats';
+import { _ } from 'svelte-i18n';
+import { get } from 'svelte/store';
 
 export interface DeviceDetailProps {
 	user: any;
@@ -17,19 +16,7 @@ export interface DeviceDetailProps {
 
 export function setupDeviceDetail() {
 	// Stats for the data
-	const stats: Record<
-		string,
-		{
-			min: number;
-			max: number;
-			avg: number;
-			median: number;
-			stdDev: number;
-			count: number;
-			lastReading: number;
-			trend: 'up' | 'down' | 'stable' | null;
-		}
-	> = $state({});
+	const stats: DeviceStats = $state({});
 
 	// Chart data
 	type ChartData = Record<string, number[] | string[]>;
@@ -257,40 +244,22 @@ export function setupDeviceDetail() {
 
 		// Build series for each numeric key
 		const series = numericKeys.map((key) => ({
-			name: key,
+			name: get(_)(key),
 			data: historicalData
 				.filter((row) => typeof row[key] === 'number' && row[key] !== null && row['created_at'])
 				.map((row) => ({ x: new Date(row['created_at']).getTime(), y: row[key] }))
 		}));
 		series.forEach((s) => s.data.sort((a, b) => a.x - b.x));
 
-		// Color palette (extendable)
-		const palette = [
-			'#f97316',
-			'#3b82f6',
-			'#10b981',
-			'#eab308',
-			'#ef4444',
-			'#6366f1',
-			'#14b8a6',
-			'#f59e42',
-			'#8b5cf6',
-			'#22d3ee',
-			'#f472b6',
-			'#a3e635',
-			'#facc15',
-			'#f87171',
-			'#60a5fa',
-			'#34d399'
-		];
-		const colors = numericKeys.map((_, i) => palette[i % palette.length]);
+		const colorMap = Object.fromEntries(numericKeys.map((key) => [key, getTextColorByKey(key)]));
+		const colors = Object.values(colorMap);
 
 		// Y-axis config for each series
 		const yaxis = numericKeys.map((key, idx) => ({
 			seriesName: key,
 			opposite: idx % 2 === 1,
-			title: { text: key, style: { color: colors[idx] } },
-			labels: { style: { colors: colors[idx] } }
+			title: { text: get(_)(key), style: { color: colorMap[key] } },
+			labels: { style: { colors: colorMap[key] } }
 		}));
 
 		// X-axis range
@@ -428,7 +397,7 @@ export function setupDeviceDetail() {
 // Derived properties calculations
 export function getDeviceDetailDerived(device: DeviceWithType, dataType: string, latestData: any) {
 	// Determine device type name
-	const deviceTypeName = device?.deviceType?.name || 'Unknown Type';
+	const deviceTypeName = device?.cw_device_type?.name || 'Unknown Type';
 
 	// Reactive declarations for the charts
 	const temperatureChartVisible = dataType === 'cw_air_data' || dataType === 'cw_soil_data';
