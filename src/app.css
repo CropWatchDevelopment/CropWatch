@@ -212,7 +212,6 @@ a {
 }
 .form-container button[type='submit'],
 .form-container input[type='submit'] {
-	background-color: var(--color-primary);
 	color: white;
 	padding: 0.5rem 1rem;
 	border-radius: 0.25rem;

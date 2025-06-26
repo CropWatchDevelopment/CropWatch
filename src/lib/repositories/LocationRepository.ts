@@ -314,8 +314,13 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	 * Remove a user from a location
 	 * @param locationOwnerId The location owner entry ID
 	 */
-	async removeUserFromLocationByUserId(userId: string): Promise<void> {
-		const { error } = await this.supabase.from('cw_location_owners').delete().eq('user_id', userId);
+	async removeUserFromLocationByUserId(userId: string, location_id: number): Promise<void> {
+		const { error } = await this.supabase
+			.from('cw_location_owners')
+			.delete()
+			.eq('user_id', userId)
+			.eq('location_id', location_id)
+			.single();
 
 		if (error) {
 			this.errorHandler.handleDatabaseError(
