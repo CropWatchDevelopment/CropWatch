@@ -34,7 +34,7 @@ importers:
         version: 4.0.17(vite@5.4.15(@types/node@22.13.14)(lightningcss@1.29.2))
       '@thisux/sveltednd':
         specifier: ^0.0.16
-        version: 0.0.16(svelte@5.25.3)
+        version: 0.0.16
       '@zxing/library':
         specifier: ^0.21.3
         version: 0.21.3
@@ -72,8 +72,8 @@ importers:
         specifier: ^2.30.1
         version: 2.30.1
       moment-timezone:
-        specifier: ^0.5.48
-        version: 0.5.48
+        specifier: ^0.6.0
+        version: 0.6.0
       ol:
         specifier: ^10.4.0
         version: 10.4.0
@@ -1305,20 +1305,8 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6
 
-  '@thisux/sveltednd@0.0.12':
-    resolution: {integrity: sha512-9edVcakYkoCzU6pNIwmJ6Cf+9anECod26Ue/rL3Ssf5LyuLaBLXtBx4H4U8YwQCkwtMeSGFf0OsiMpPpFjvCcg==}
-    peerDependencies:
-      svelte: ^5.0.0
-
-  '@thisux/sveltednd@0.0.14':
-    resolution: {integrity: sha512-Vbq69SU3HUomPg6oCXtb89OG89hka0YIkdaErYibn3waK7tYE66IcQxD/Fzg8YNW3EVsXoA9kc7kW5EUBCSQGg==}
-    peerDependencies:
-      svelte: ^5.0.0
-
   '@thisux/sveltednd@0.0.16':
     resolution: {integrity: sha512-LpJNhPSsrqYvZd5qtPjIipFZx1TlPO4oxWK5R6u4v7YpIKJzrHAPIT0XJRVLmwMkLPivBbh1BEo60Xn2czre8w==}
-    peerDependencies:
-      svelte: ^5.0.0
 
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
@@ -2552,8 +2540,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  moment-timezone@0.5.48:
-    resolution: {integrity: sha512-f22b8LV1gbTO2ms2j2z13MuPogNoh5UzxL3nzNAYKGraILnbGc9NEE6dyiiiLv46DGRb8A4kg8UKWLjPthxBHw==}
+  moment-timezone@0.6.0:
+    resolution: {integrity: sha512-ldA5lRNm3iJCWZcBCab4pnNL3HSZYXVb/3TYr75/1WCTWYuTqYUb5f/S384pncYjJ88lbO8Z4uPDvmoluHJc8Q==}
 
   moment@2.30.1:
     resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
@@ -4445,19 +4433,7 @@ snapshots:
       tailwindcss: 4.0.17
       vite: 5.4.15(@types/node@22.13.14)(lightningcss@1.29.2)
 
-  '@thisux/sveltednd@0.0.12(svelte@5.25.3)':
-    dependencies:
-      svelte: 5.25.3
-
-  '@thisux/sveltednd@0.0.14(svelte@5.25.3)':
-    dependencies:
-      '@thisux/sveltednd': 0.0.12(svelte@5.25.3)
-      svelte: 5.25.3
-
-  '@thisux/sveltednd@0.0.16(svelte@5.25.3)':
-    dependencies:
-      '@thisux/sveltednd': 0.0.14(svelte@5.25.3)
-      svelte: 5.25.3
+  '@thisux/sveltednd@0.0.16': {}
 
   '@types/cookie@0.6.0': {}
 
@@ -5816,7 +5792,7 @@ snapshots:
 
   mkdirp@3.0.1: {}
 
-  moment-timezone@0.5.48:
+  moment-timezone@0.6.0:
     dependencies:
       moment: 2.30.1
 
