@@ -110,11 +110,11 @@ export const actions: Actions = {
 	/**
 	 * Update user permissions for a device
 	 */
-	updateDevicePermission: async ({ request, params, locals }) => {
+	updatePermission: async ({ request, params, locals }) => {
 		try {
 			const devEui = params.devEui;
 			const data = await request.formData();
-			const deviceOwnerId = parseInt(data.get('deviceOwnerId') as string);
+			const deviceOwnerId = parseInt(data.get('ownerId') as string);
 			const permissionLevel = parseInt(data.get('permissionLevel') as string);
 
 			// Create SessionService with per-request Supabase client

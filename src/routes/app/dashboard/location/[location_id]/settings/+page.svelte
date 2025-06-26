@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import { formValidation } from '$lib/actions/formValidation';
+	import UserPermissionsSelector from '$lib/components/UI/form/UserPermissionsSelector.svelte';
 	import { error as errorToast, success } from '$lib/stores/toast.svelte';
 	import Header from '../Header.svelte';
 
@@ -15,6 +16,7 @@
 	let locationLatitude = $state(location.lat || null);
 	let locationLongitude = $state(location.long || null);
 	let isUpdatingLocation = $state(false);
+	let ownersList = $state(data.locationUsers || []);
 
 	const startEditLocation = () => {
 		editingLocationDetails = true;
@@ -64,24 +66,6 @@
 		4: 'Disabled'
 	};
 
-	const getUserDisplayName = (user) => {
-		if (!user?.profile) return 'Unknown User';
-		return user.profile.full_name || user.profile.username || user.profile.email || 'Unknown User';
-	};
-
-	const startEdit = (user) => {
-		editingUser = {
-			id: user.id,
-			user_id: user.user_id,
-			permission_level: user.permission_level || 4,
-			applyToDevices: false
-		};
-	};
-
-	const cancelEdit = () => {
-		editingUser = null;
-	};
-
 	const handleAddUserSuccess = (result) => {
 		isAdding = false;
 
@@ -96,37 +80,6 @@
 				window.location.reload();
 			} else {
 				errorToast(result.data.error || 'Failed to add user');
-			}
-		} else {
-			errorToast('An error occurred');
-		}
-	};
-
-	const handleUpdatePermissionSuccess = (result) => {
-		if (result.type === 'success') {
-			if (result.data.success) {
-				success('Permission updated successfully');
-				editingUser = null;
-
-				// Refresh the page to show updated permissions
-				window.location.reload();
-			} else {
-				errorToast(result.data.error || 'Failed to update permission');
-			}
-		} else {
-			errorToast('An error occurred');
-		}
-	};
-
-	const handleRemoveUserSuccess = (result) => {
-		if (result.type === 'success') {
-			if (result.data.success) {
-				success('User removed successfully');
-
-				// Refresh the page to show updated user list
-				window.location.reload();
-			} else {
-				errorToast(result.data.error || 'Failed to remove user');
 			}
 		} else {
 			errorToast('An error occurred');
@@ -282,128 +235,7 @@
 			Manage which users have access to this location and with what permission level.
 		</p>
 
-		{#if locationUsers.length > 0}
-			<div class="overflow-x-auto">
-				<table class="min-w-full">
-					<thead>
-						<tr class="border-b">
-							<th class="px-4 py-3 text-left">User</th>
-							<th class="px-4 py-3 text-left">Email</th>
-							<th class="px-4 py-3 text-left">Permission</th>
-							<th class="px-4 py-3 text-left">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each locationUsers as user}
-							<tr class="bg-foreground-light dark:bg-foreground-dark border-b">
-								<td class="px-4 py-3">{getUserDisplayName(user)}</td>
-								<td class="px-4 py-3">{user.profile?.email || 'No email'}</td>
-								<td class="px-4 py-3">
-									{#if editingUser && editingUser.id === user.id}
-										<div class="flex flex-col gap-2">
-											<select
-												class="rounded border px-2 py-1"
-												bind:value={editingUser.permission_level}
-											>
-												{#each [1, 2, 3, 4] as level}
-													<option value={level}>{permissionMap[level]}</option>
-												{/each}
-											</select>
-
-											<label class="flex items-center gap-2 text-sm">
-												<input type="checkbox" bind:checked={editingUser.applyToDevices} />
-												<span>Apply to all devices ({deviceCount})</span>
-											</label>
-										</div>
-									{:else}
-										<span class={user.permission_level === 1 ? 'font-medium text-green-600' : ''}>
-											{permissionMap[user.permission_level] || 'Unknown'}
-										</span>
-									{/if}
-								</td>
-								<td class="px-4 py-3">
-									{#if editingUser && editingUser.id === user.id}
-										<div class="flex gap-2">
-											<form
-												method="POST"
-												action="?/updatePermission"
-												use:enhance={() => {
-													return ({ result }) => {
-														handleUpdatePermissionSuccess(result);
-													};
-												}}
-												use:formValidation
-											>
-												<input type="hidden" name="userId" value={user.user_id} />
-												<input type="hidden" name="locationOwnerId" value={user.id} />
-												<input
-													type="hidden"
-													name="permissionLevel"
-													value={editingUser.permission_level}
-												/>
-												<input
-													type="hidden"
-													name="applyToDevices"
-													value={editingUser.applyToDevices}
-												/>
-												<button type="submit" class="text-green-600 hover:text-green-800">
-													Save
-												</button>
-											</form>
-
-											<button
-												type="button"
-												class="text-gray-600 hover:text-gray-800"
-												onclick={() => cancelEdit()}
-											>
-												Cancel
-											</button>
-										</div>
-									{:else}
-										<div class="flex gap-2">
-											<button
-												type="button"
-												class="text-blue-600 hover:text-blue-800"
-												onclick={() => startEdit(user)}
-											>
-												Edit
-											</button>
-
-											{#if user.user_id !== currentUser.id}
-												<form
-													method="POST"
-													action="?/removeUser"
-													use:enhance={() => {
-														if (!confirm('Are you sure you want to remove this user?')) {
-															return { action: () => {} };
-														}
-
-														return ({ result }) => {
-															handleRemoveUserSuccess(result);
-														};
-													}}
-													use:formValidation
-												>
-													<input type="hidden" name="userId" value={user.user_id} />
-													<input type="hidden" name="locationOwnerId" value={user.id} />
-													<button type="submit" class="text-red-600 hover:text-red-800">
-														Remove
-													</button>
-												</form>
-											{:else}
-												<span class="text-gray-400" title="Cannot remove yourself">Remove</span>
-											{/if}
-										</div>
-									{/if}
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else}
-			<p class="text-gray-500">No users have access to this location yet.</p>
-		{/if}
+		<UserPermissionsSelector {data} {ownersList} canDelete={true} />
 
 		<div class="mt-6 border-t pt-4">
 			<h3 class="mb-2 text-lg font-medium">Add User</h3>
