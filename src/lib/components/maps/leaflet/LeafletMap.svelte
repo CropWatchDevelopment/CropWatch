@@ -1,9 +1,19 @@
 <script lang="ts">
-	import L from 'leaflet';
+	import {
+		Control,
+		DivIcon,
+		LayerGroup,
+		Map,
+		Marker,
+		Polyline,
+		TileLayer,
+		type LeafletMouseEvent
+	} from 'leaflet';
+	import 'leaflet/dist/leaflet.css';
+	import { mount, unmount } from 'svelte';
 	import MapToolbar from './MapToolbar.svelte';
 	import MarkerPopup from './MarkerPopup.svelte';
 	import * as markerIcons from './markers.js';
-	import { mount, unmount } from 'svelte';
 
 	interface Props {
 		data?: any;
@@ -11,24 +21,32 @@
 		lon: number;
 		zoom?: number;
 		markers: [number, number][];
-		onclick?: (lat: number, lon: number, event: L.LeafletMouseEvent) => void;
+		onclick?: (lat: number, lon: number, event: LeafletMouseEvent) => void;
 		showClickMarker?: boolean;
 	}
 
-	let { data, lat = $bindable(), lon = $bindable(), zoom = $bindable(10), markers = $bindable(), onclick, showClickMarker = false }: Props = $props();
+	let {
+		data,
+		lat = $bindable(),
+		lon = $bindable(),
+		zoom = $bindable(10),
+		markers = $bindable(),
+		onclick,
+		showClickMarker = false
+	}: Props = $props();
 
-	let map = $state<L.Map | undefined>(undefined);
-	let clickMarker = $state<L.Marker | undefined>(undefined);
+	let map = $state<Map | undefined>(undefined);
+	let clickMarker = $state<Marker | undefined>(undefined);
 
 	const markerLocations = $state(markers as [number, number][]);
 
 	const initialView: [number, number] = $derived([lat, lon]);
 
-	function createMap(container: HTMLElement): L.Map {
-		let m = L.map(container, { preferCanvas: true }).setView(initialView, zoom || 5, {
+	function createMap(container: HTMLElement): Map {
+		let m = new Map(container, { preferCanvas: true }).setView(initialView, zoom || 5, {
 			animate: true
 		});
-		L.tileLayer(
+		new TileLayer(
 			'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 			{
 				attribution:
@@ -37,22 +55,22 @@
 		).addTo(m);
 
 		// Add click event listener to the map
-		m.on('click', (e: L.LeafletMouseEvent) => {
+		m.on('click', (e: LeafletMouseEvent) => {
 			const { lat: clickLat, lng: clickLng } = e.latlng;
-			
+
 			// Call the onclick callback if provided
 			onclick?.(clickLat, clickLng, e);
-			
+
 			// Show click marker if enabled
 			if (showClickMarker) {
 				// Remove existing click marker
 				if (clickMarker) {
 					m.removeLayer(clickMarker);
 				}
-				
+
 				// Create new click marker with a distinct style
-				clickMarker = L.marker([clickLat, clickLng], {
-					icon: L.divIcon({
+				clickMarker = new Marker([clickLat, clickLng], {
+					icon: new DivIcon({
 						html: `<div style="
 							background: #ff0000;
 							width: 12px;
@@ -67,15 +85,19 @@
 						iconAnchor: [6, 6]
 					})
 				}).addTo(m);
-				
+
 				// Add popup with coordinates
-				clickMarker.bindPopup(`
-					<div style="text-align: center;">
-						<strong>Clicked Location</strong><br>
-						<small>Lat: ${clickLat.toFixed(6)}<br>
-						Lng: ${clickLng.toFixed(6)}</small>
-					</div>
-				`).openPopup();
+				clickMarker
+					.bindPopup(
+						`
+							<div style="text-align: center;">
+								<strong>Clicked Location</strong><br>
+								<small>Lat: ${clickLat.toFixed(6)}<br>
+								Lng: ${clickLng.toFixed(6)}</small>
+							</div>
+						`
+					)
+					.openPopup();
 			}
 		});
 
@@ -85,11 +107,11 @@
 	let eye = $state(true);
 	let lines = $state(true);
 
-	let toolbar = L.control({ position: 'topright' });
+	let toolbar = new Control({ position: 'topright' });
 	let toolbarComponent: any = $state(null);
 
-	toolbar.onAdd = (map: L.Map) => {
-		let div = L.DomUtil.create('div');
+	toolbar.onAdd = (map: Map) => {
+		let div = document.createElement('div');
 		toolbarComponent = mount(MapToolbar, {
 			target: div,
 			props: {
@@ -122,10 +144,10 @@
 
 	// Create a popup with a Svelte component inside it and handle removal when the popup is torn down.
 	// `createFn` will be called whenever the popup is being created, and should create and return the component.
-	function bindPopup(marker: L.Marker, createFn: (container: HTMLElement) => any) {
+	function bindPopup(marker: Marker, createFn: (container: HTMLElement) => any) {
 		let popupComponent: any;
 		marker.bindPopup(() => {
-			let container = L.DomUtil.create('div');
+			let container = document.createElement('div');
 			popupComponent = createFn(container);
 			return container;
 		});
@@ -142,18 +164,18 @@
 		});
 	}
 
-	function markerIcon(count: number): L.DivIcon {
+	function markerIcon(count: number): DivIcon {
 		let html = `<div class="map-marker"><div>${markerIcons.library}</div><div class="marker-text">${count}</div></div>`;
-		return L.divIcon({
+		return new DivIcon({
 			html,
 			className: 'map-marker'
 		});
 	}
 
-        function createMarker(loc: [number, number]): L.Marker {
-                let count = Math.ceil(Math.random() * 25);
+	function createMarker(loc: [number, number]): Marker {
+		let count = Math.ceil(Math.random() * 25);
 		let icon = markerIcon(count);
-		let marker = L.marker(loc, { icon });
+		let marker = new Marker(loc, { icon });
 
 		bindPopup(marker, (m: HTMLElement) => {
 			let c = mount(MarkerPopup, {
@@ -173,18 +195,18 @@
 		return marker;
 	}
 
-	function createLines(): L.Polyline {
-		return L.polyline(markerLocations, { color: '#E4E', opacity: 0.5 });
+	function createLines(): Polyline {
+		return new Polyline(markerLocations, { color: '#E4E', opacity: 0.5 });
 	}
 
-	let markerLayers: L.LayerGroup | undefined = $state(undefined);
-	let lineLayers: L.Polyline | undefined = $state(undefined);
+	let markerLayers: LayerGroup | undefined = $state(undefined);
+	let lineLayers: Polyline | undefined = $state(undefined);
 
 	function mapAction(container: HTMLElement) {
 		map = createMap(container);
 		toolbar.addTo(map);
 
-		markerLayers = L.layerGroup();
+		markerLayers = new LayerGroup();
 		for (let location of markerLocations) {
 			let m = createMarker(location);
 			markerLayers.addLayer(m);
@@ -235,11 +257,13 @@
 			const currentCenter = map.getCenter();
 			const newLat = lat;
 			const newLon = lon;
-			
+
 			// Only update if the coordinates have actually changed significantly
 			// (avoid unnecessary updates from tiny floating point differences)
-			if (Math.abs(currentCenter.lat - newLat) > 0.000001 || 
-				Math.abs(currentCenter.lng - newLon) > 0.000001) {
+			if (
+				Math.abs(currentCenter.lat - newLat) > 0.000001 ||
+				Math.abs(currentCenter.lng - newLon) > 0.000001
+			) {
 				map.setView([newLat, newLon], map.getZoom(), { animate: true });
 			}
 		}
@@ -252,19 +276,16 @@
 	}
 </script>
 
-<svelte:head>
-	<link
-		rel="stylesheet"
-		href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
-		integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
-		crossorigin=""
-	/>
-</svelte:head>
 <svelte:window onresize={resizeMap} />
 
-<div class="map" style="height:100%;width:100%" use:mapAction></div>
+<div class="map" use:mapAction></div>
 
 <style>
+	.map {
+		width: 100%;
+		height: 100%;
+	}
+
 	.map :global(.marker-text) {
 		width: 100%;
 		text-align: center;

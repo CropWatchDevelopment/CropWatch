@@ -66,8 +66,8 @@ importers:
         specifier: 7.0.0-alpha.5
         version: 7.0.0-alpha.5(reflect-metadata@0.2.2)
       leaflet:
-        specifier: ^1.9.4
-        version: 1.9.4
+        specifier: 2.0.0-alpha
+        version: 2.0.0-alpha
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -133,8 +133,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       '@types/leaflet':
-        specifier: ^1.9.18
-        version: 1.9.18
+        specifier: ^1.9.19
+        version: 1.9.19
       '@types/swagger-ui':
         specifier: ^5.21.1
         version: 5.21.1
@@ -1398,8 +1398,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/leaflet@1.9.18':
-    resolution: {integrity: sha512-ht2vsoPjezor5Pmzi5hdsA7F++v5UGq9OlUduWHmMZiuQGIpJ2WS5+Gg9HaAA79gNh1AIPtCqhzejcIZ3lPzXQ==}
+  '@types/leaflet@1.9.19':
+    resolution: {integrity: sha512-pB+n2daHcZPF2FDaWa+6B0a0mSDf4dPU35y5iTXsx7x/PzzshiX5atYiS1jlBn43X7XvM8AP+AB26lnSk0J4GA==}
 
   '@types/lodash@4.17.18':
     resolution: {integrity: sha512-KJ65INaxqxmU6EoCiJmRPZC9H9RVWCRd349tXM2M3O5NA7cY6YL7c0bHAHQ93NOfTObEQ004kd2QVHs/r0+m4g==}
@@ -2587,8 +2587,8 @@ packages:
     resolution: {integrity: sha512-FIyV/64EkKhJmjgC0g2hygpBv5RNWVPyNCqSAD7eTCv6eFWNIi4PN1UvdSJGicN/o35bnevgis4Y0UDC0qi8jQ==}
     engines: {node: '>=14.0.0'}
 
-  leaflet@1.9.4:
-    resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
+  leaflet@2.0.0-alpha:
+    resolution: {integrity: sha512-RnEJ3UYcuHPFFsDq0e2/QovyIaR3hhwiQpq3wrKnvprA/lsiAJpcxvkRZL3UwQ2xnKm1r2pYcMa+rcSKVwEQag==}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -5362,7 +5362,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/leaflet@1.9.18':
+  '@types/leaflet@1.9.19':
     dependencies:
       '@types/geojson': 7946.0.16
 
@@ -6635,7 +6635,7 @@ snapshots:
 
   kysely@0.27.6: {}
 
-  leaflet@1.9.4: {}
+  leaflet@2.0.0-alpha: {}
 
   levn@0.4.1:
     dependencies:

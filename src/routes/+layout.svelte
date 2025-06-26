@@ -4,10 +4,9 @@
 	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 	import Header from '$lib/components/Header.svelte';
 	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
-	import { initI18n } from '$lib/i18n';
+	import { i18n } from '$lib/i18n/index.svelte';
 	import { createBrowserClient } from '@supabase/ssr';
 	import { onMount } from 'svelte';
-	import { isLoading } from 'svelte-i18n';
 	import '../app.css';
 
 	// No preloading needed - dashboard will load its data when navigated to
@@ -57,12 +56,12 @@
 	});
 
 	onMount(() => {
-		initI18n();
+		i18n.initialize();
 	});
 </script>
 
 <!-- Wait until svelte-i18n is initialized -->
-{#if !$isLoading}
+{#if i18n.initialized}
 	<div class="page-transition-container">
 		{#if !page.url.pathname.startsWith('/auth')}
 			<Header userName={user?.email ?? 'Unknown User'} />
