@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
-	import { error as errorToast, success } from '$lib/stores/toast.svelte';
+	import { page } from '$app/state';
 	import { formValidation } from '$lib/actions/formValidation';
+	import { error as errorToast, success } from '$lib/stores/toast.svelte';
+	import Header from '../Header.svelte';
 
 	let { data } = $props();
 
@@ -165,15 +166,11 @@
 	<title>Location Settings - {locationName}</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8">
+<Header {location} basePath={`/app/dashboard/location/${page.params.location_id}`} />
+
+<div class="container mx-auto my-4">
 	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-2xl font-bold">Location Settings: {location.name}</h1>
-		<a
-			href="/app/dashboard/location/{location.location_id}/"
-			class="text-blue-500 hover:text-blue-700"
-		>
-			Back to Location
-		</a>
+		<h1 class="text-2xl font-bold">Location Settings</h1>
 	</div>
 
 	<!-- Location Details Section -->

@@ -252,13 +252,13 @@
 	</div>
 </Header>
 
-<div class="flex flex-col gap-4 p-4 xl:flex-row">
+<div class="flex flex-col gap-4 p-4 lg:flex-row">
 	<!-- Left pane -->
 	<div
-		class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:flex xl:w-[320px] xl:grid-cols-1 xl:flex-col xl:gap-6"
+		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
 	>
 		<!-- Latest data section -->
-		<section class="flex-auto lg:w-auto xl:flex-none">
+		<section class="flex-auto lg:w-auto lg:flex-none">
 			<h2>Latest Sensor Readings</h2>
 			{#if latestData}
 				<div>
@@ -367,7 +367,7 @@
 
 	<!-- Right pane -->
 	<div
-		class="relative flex-1 border-t-1 border-neutral-400 pt-4 xl:border-t-0 xl:pt-0"
+		class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0"
 		inert={loadingHistoricalData}
 		aria-busy={loadingHistoricalData}
 	>

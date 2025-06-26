@@ -154,7 +154,7 @@ export class LocationRepository extends BaseRepository<Location, number> {
 			.eq('owner_id', userId)
 			.single();
 
-		if (locationOwner.owner_id) {
+		if (locationOwner?.owner_id) {
 			return true; // User is the owner, automatically has full permissions
 		}
 

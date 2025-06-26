@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
-	import { Button } from 'bits-ui';
+	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import { locale } from 'svelte-i18n';
+	import Header from './Header.svelte';
 
 	let { data } = $props();
 	const location = data.location!;
@@ -20,105 +21,128 @@
 	<title>Location: {location.name} | CropWatch</title>
 </svelte:head>
 
-<div class="space-y-8">
-	<!-- Location Header -->
-	<section class="space-y-2">
-		<h1 class="text-2xl font-bold">{location.name}</h1>
-		<p class="text-muted text-sm">{location.description}</p>
+<Header {location} basePath={`/app/dashboard/location/${locationId}`}>
+	<Button variant="secondary" href={`/app/dashboard/location/${locationId}/settings`}>
+		Settings
+	</Button>
+	<Button variant="primary" href={`/app/dashboard/location/${locationId}/devices/create`}>
+		Add Device
+	</Button>
+</Header>
 
-		<!-- Display clicked coordinates if available -->
-		{#if clickedCoords}
-			<div
-				class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20"
-			>
-				<p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-					Clicked Coordinates:
-					<span class="font-mono"
-						>{clickedCoords.lat.toFixed(6)}, {clickedCoords.lon.toFixed(6)}</span
-					>
-				</p>
+<div class="flex flex-col gap-4 p-4 lg:flex-row">
+	<!-- Left pane -->
+	<div
+		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+	>
+		<!-- Map -->
+		<div class="w-full overflow-hidden rounded-lg shadow-md">
+			<div class="aspect-square">
+				<!-- Do something about this horrible IFRAME later on -->
+				<LeafletMap
+					lat={location.lat || 0}
+					lon={location.long || 0}
+					zoom={location.map_zoom || 13}
+					markers={data.markers || []}
+					onclick={handleMapClick}
+					showClickMarker={true}
+				/>
 			</div>
-		{/if}
-	</section>
-
-	<section class="grid grid-cols-1 gap-6 md:grid-cols-2">
-		<div class="h-64 w-full overflow-hidden rounded-lg shadow-md">
-			<!-- Do something about this horrible IFRAME later on -->
-			<LeafletMap
-				lat={location.lat || 0}
-				lon={location.long || 0}
-				zoom={location.map_zoom || 13}
-				markers={data.markers || []}
-				onclick={handleMapClick}
-				showClickMarker={true}
-			/>
+			<!-- Display clicked coordinates if available -->
+			{#if clickedCoords}
+				<div
+					class="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20"
+				>
+					<p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+						Clicked Coordinates:
+						<span class="font-mono"
+							>{clickedCoords.lat.toFixed(6)}, {clickedCoords.lon.toFixed(6)}</span
+						>
+					</p>
+				</div>
+			{/if}
 		</div>
 		<!-- Details -->
-		<div class="bg-card-light dark:bg-card-dark space-y-2 rounded-lg p-6 shadow-md">
-			<div><span class="font-medium">Location ID:</span> {location.location_id}</div>
-			<div>
-				<span class="font-medium">Coordinates:</span>
-				{location.lat?.toFixed(6)}, {location.long?.toFixed(6)}
-			</div>
-			<div><span class="font-medium">Zoom Level:</span> {location.map_zoom}</div>
-			<div>
-				<span class="font-medium">Created:</span>
-				{new Date(location.created_at).toLocaleDateString()}
-			</div>
-			<div><span class="font-medium">Owner ID:</span> {location.owner_id}</div>
-		</div>
-	</section>
-
-	<!-- Action buttons -->
-	<section class="flex gap-4">
-		<Button.Root href={`/app/dashboard/location/${locationId}/settings`}>
-			Location Settings
-		</Button.Root>
-		<Button.Root href={`/app/dashboard/location/${locationId}/devices/create`}>
-			Add Device
-		</Button.Root>
-	</section>
-
-	<!-- Devices List -->
-	<section class="space-y-4">
-		<h2 class="text-xl font-semibold">Devices</h2>
-		{#await data.devices}
-			Loading devices...
-		{:then devices}
-			{#if devices.length > 0}
-				<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-					{#each devices as device}
-						<div class="rounded-lg border p-4 shadow-sm">
-							<h3 class="mb-2 truncate text-lg font-medium">{device.name}</h3>
-							<p class="text-sm"><strong>EUI:</strong> {device.dev_eui}</p>
-							{#if device.lat != null && device.long != null}
-								<p class="text-sm">
-									<strong>Coords:</strong>
-									{device.lat.toFixed(4)}, {device.long.toFixed(4)}
-								</p>
-							{/if}
-							<div class="mt-4 flex justify-end gap-2">
-								<Button.Root
-									size="small"
-									variant="secondary"
-									href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}`}
-								>
-									View
-								</Button.Root>
-								<Button.Root
-									size="small"
-									variant="ghost"
-									href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}/settings`}
-								>
-									Settings
-								</Button.Root>
-							</div>
-						</div>
-					{/each}
+		<section>
+			<h2>Location Details</h2>
+			<div
+				class="grid grid-rows-1 gap-2 rounded-lg bg-gray-50 p-4 text-sm shadow-sm dark:bg-zinc-800"
+			>
+				<div>
+					<span class="text-gray-500/80 dark:text-gray-300/80">Location ID:</span>
+					{location.location_id}
 				</div>
-			{:else}
-				<p class="text-muted text-center">No devices found for this location.</p>
-			{/if}
-		{/await}
-	</section>
+				<div>
+					<span class="text-gray-500/80 dark:text-gray-300/80">Created:</span>
+					{new Date(location.created_at).toLocaleDateString($locale ?? undefined, {
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric'
+					})}
+				</div>
+				<div>
+					<span class="text-gray-500/80 dark:text-gray-300/80">Coordinates:</span>
+					{location.lat?.toFixed(6)}, {location.long?.toFixed(6)}
+				</div>
+			</div>
+		</section>
+	</div>
+	<!-- Right pane -->
+	<div class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0">
+		<!-- Devices List -->
+		<section>
+			<h2>Devices</h2>
+			{#await data.devices}
+				Loading devices...
+			{:then devices}
+				{#if devices.length > 0}
+					<div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+						{#each devices as device}
+							<div
+								class="flex flex-row items-center gap-2 rounded-lg bg-gray-50 p-4 shadow-sm dark:bg-gray-800/50"
+							>
+								<div class="flex-1 overflow-hidden">
+									<h3 class="mb-1 truncate text-lg font-medium">
+										<a
+											href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}`}
+											class="text-blue-500 !no-underline hover:text-blue-600 hover:!underline dark:text-blue-400 dark:hover:text-blue-500"
+										>
+											{device.name}
+										</a>
+									</h3>
+									<p class="text-xs text-gray-500">
+										<strong>EUI:</strong>
+										{device.dev_eui}
+									</p>
+								</div>
+								<div class="flex justify-end gap-2">
+									<Button
+										size="sm"
+										variant="ghost"
+										href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}/settings`}
+									>
+										Settings
+									</Button>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<p class="text-muted text-center">No devices found for this location.</p>
+				{/if}
+			{/await}
+		</section>
+	</div>
 </div>
+
+<style lang="postcss">
+	@reference "tailwindcss";
+
+	h2 {
+		@apply mb-2 text-xl font-semibold text-gray-600;
+
+		:global(.dark) & {
+			@apply text-gray-300;
+		}
+	}
+</style>
