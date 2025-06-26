@@ -1,26 +1,23 @@
 <script lang="ts">
 	// Import statements
 	import { browser } from '$app/environment';
-	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
-	import { onMount } from 'svelte';
-	import type { HTMLAttributes } from 'svelte/elements';
 	import {
-		mdiClose,
 		mdiEye,
 		mdiEyeOff,
-		mdiFilterMenu,
 		mdiGrid,
-		mdiMagnify,
 		mdiMonitorDashboard,
 		mdiSort,
 		mdiSortAlphabeticalAscending,
 		mdiSortCalendarAscending,
 		mdiSortClockAscending,
+		mdiTune,
 		mdiViewDashboard,
-		mdiViewList,
-		mdiTune
+		mdiViewList
 	} from '@mdi/js';
-	import { DropdownMenu, Button, Tooltip } from 'bits-ui';
+	import { Button, DropdownMenu, Tooltip } from 'bits-ui';
+	import { onMount } from 'svelte';
+	import { _ } from 'svelte-i18n';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	// Define TypeScript type for onSelect prop
 	interface DropdownItemProps extends HTMLAttributes<HTMLDivElement> {
@@ -157,7 +154,7 @@
 										</svg>
 									</button>
 									<span class="icon-text-spacing block min-w-[100px] text-center text-xs"
-										>{nameToJapaneseName('Hide/Show Empty')}</span
+										>{$_('Hide/Show Empty')}</span
 									>
 								</div>
 							</div>
@@ -263,7 +260,7 @@
 									</DropdownMenu.SubContent>
 								</DropdownMenu.Sub>
 								<span class="icon-text-spacing block min-w-[150px] text-center text-xs"
-									>{nameToJapaneseName('Dashboard Style')}</span
+									>{$_('Dashboard Style')}</span
 								>
 							</div>
 						</Tooltip.Trigger>
@@ -364,7 +361,7 @@
 									</DropdownMenu.SubContent>
 								</DropdownMenu.Sub>
 								<span class="icon-text-spacing block min-w-[60px] text-center text-xs"
-									>{nameToJapaneseName('Sort By')}</span
+									>{$_('Sort By')}</span
 								>
 							</div>
 						</Tooltip.Trigger>

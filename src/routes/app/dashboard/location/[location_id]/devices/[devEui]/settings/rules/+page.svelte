@@ -10,8 +10,8 @@
 	import type { NotifierType } from '$lib/models/NotifierType';
 	import type { Rule } from '$lib/models/Rule';
 	import { success, error as toastError } from '$lib/stores/toast.svelte';
-	import { dbColumnToName } from '$lib/utilities/dbColumnToName.js';
 	import { onMount } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	let { data } = $props();
 	let { device, locationId } = $derived(data);
@@ -293,7 +293,7 @@
 									{#if rule.cw_rule_criteria && rule.cw_rule_criteria.length > 0}
 										{#each rule.cw_rule_criteria as criteria}
 											<div>
-												{dbColumnToName(criteria.subject) || 'Unknown'}
+												{$_(criteria.subject, { default: 'Unknown' })}
 												{criteria.operator || '>'}
 												{criteria.trigger_value || 0}
 												{#if criteria.reset_value}
@@ -569,7 +569,7 @@
 											class="w-full"
 										>
 											{#each deviceDataFields as field}
-												<option value={field}>{dbColumnToName(field)}</option>
+												<option value={field}>{$_(field)}</option>
 											{/each}
 										</Select>
 									</div>

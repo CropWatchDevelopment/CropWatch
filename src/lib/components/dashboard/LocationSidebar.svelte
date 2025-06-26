@@ -1,26 +1,21 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
+	import type { DeviceWithType } from '$lib/models/Device';
+	import type { Location } from '$lib/models/Location';
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 	import {
-		mdiViewDashboard,
-		mdiMagnify,
-		mdiClose,
-		mdiChevronLeft,
-		mdiChevronRight,
-		mdiMapMarker,
-		mdiHome,
-		mdiEarth,
-		mdiCheck,
 		mdiAlert,
-		mdiClockOutline
+		mdiCheck,
+		mdiChevronLeft,
+		mdiClockOutline,
+		mdiClose,
+		mdiEarth,
+		mdiMagnify
 	} from '@mdi/js';
+	import { _ } from 'svelte-i18n';
 	import { Icon } from 'svelte-ux';
-	import DashboardFilterBits from '$lib/components/UI/dashboard/DashboardFilterBits.svelte';
-	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
-	import type { Location } from '$lib/models/Location';
-	import type { DeviceWithType } from '$lib/models/Device';
 	import { fade } from 'svelte/transition';
-	import { getLocationActiveStatus, isDeviceActive } from '$lib/utilities/deviceUtils';
 
 	// Use the same interfaces as in the dashboard page
 	interface DeviceWithSensorData extends DeviceWithType {
@@ -261,7 +256,7 @@
 					bind:value={localSearch}
 					class="w-full rounded-md border border-zinc-300 bg-white py-[5px] pr-14 pl-7 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 focus:outline-none
 				dark:border-zinc-600 dark:bg-zinc-600 dark:text-white dark:placeholder-zinc-400 dark:focus:border-zinc-400 dark:focus:ring-zinc-500"
-					placeholder={nameToJapaneseName('Search')}
+					placeholder={$_('Search')}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') {
 							browser ? localStorage.setItem('dashboard_search', localSearch) : null;

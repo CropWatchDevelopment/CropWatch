@@ -143,6 +143,11 @@
 	<div class="calendar-container">
 		<Calendar plugins={[DayGrid]} {options} bind:this={calendarRef} />
 	</div>
+	<p class="mt-4 text-center text-xs text-gray-500">
+		Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer"
+			>Open-Meteo</a
+		>
+	</p>
 </section>
 
 <style lang="postcss">
@@ -170,6 +175,10 @@
 
 		.ec-day-grid　 {
 			@apply !h-auto md:h-[700px];
+		}
+
+		.ec-title {
+			@apply text-lg;
 		}
 
 		.ec-header {

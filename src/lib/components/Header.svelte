@@ -76,10 +76,12 @@
 	import { page } from '$app/state';
 	import CropWatchLogo from '$lib/images/favicon.svg';
 	import { onMount } from 'svelte';
+	import { locale } from 'svelte-i18n';
 	import Breadcrumbs from './global/Breadcrumbs.svelte';
 	import { getDarkMode } from './theme/theme.svelte';
 	import ThemeToggle from './theme/ThemeToggle.svelte';
 	import Button from './UI/buttons/Button.svelte';
+	import MaterialIcon from './UI/icons/MaterialIcon.svelte';
 
 	let { userName } = $props();
 
@@ -281,14 +283,29 @@
 		: 'border-gray-200/30 bg-white/50'}"
 >
 	<div class="mx-auto px-4 py-3">
-		<div class="flex flex-wrap items-center justify-between gap-4">
+		<div class="flex flex-wrap items-center gap-4">
 			<!-- Breadcrumb or secondary nav -->
 			<div
 				class="flex items-center gap-2 text-sm {getDarkMode() ? 'text-slate-400' : 'text-gray-600'}"
 			>
 				<Breadcrumbs />
 			</div>
-
+			<div class="flex-1"></div>
+			<div class="text-sm">
+				<a
+					href="/"
+					onclick={(event) => {
+						event.preventDefault();
+						$locale = $locale === 'ja' ? 'en' : 'ja';
+					}}
+					class="flex items-center gap-1 transition-colors hover:text-green-400 {getDarkMode()
+						? 'text-slate-400'
+						: 'text-gray-600'}"
+				>
+					<MaterialIcon name="globe" size="small" style="float:left" />
+					{$locale === 'ja' ? 'English' : '日本語'}
+				</a>
+			</div>
 			<!-- Quick actions -->
 			<div class="hidden items-center gap-4 text-sm md:flex">
 				<a
