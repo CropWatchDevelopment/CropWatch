@@ -72,12 +72,17 @@
 </style> -->
 
 <script>
-	import { onMount } from 'svelte';
-	import CropWatchLogo from '$lib/images/favicon.svg';
-	import ThemeToggle from './theme/ThemeToggle.svelte';
-	import { getDarkMode } from './theme/theme.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import CropWatchLogo from '$lib/images/favicon.svg';
+	import { onMount } from 'svelte';
+	import { locale } from 'svelte-i18n';
+	import Breadcrumbs from './global/Breadcrumbs.svelte';
+	import { getDarkMode } from './theme/theme.svelte';
+	import ThemeToggle from './theme/ThemeToggle.svelte';
+	import Button from './UI/buttons/Button.svelte';
+	import MaterialIcon from './UI/icons/MaterialIcon.svelte';
+
 	let { userName } = $props();
 
 	let mobileMenuOpen = $state(false);
@@ -145,7 +150,10 @@
 
 	<nav class="relative z-10 flex w-full p-4">
 		<!-- Logo -->
-		<a href="/" class="flex items-center gap-3 transition-transform hover:scale-105 mr-5 no-underline">
+		<a
+			href="/"
+			class="mr-5 flex items-center gap-3 no-underline transition-transform hover:scale-105"
+		>
 			<!-- <div class="relative w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30"> -->
 			<img src={CropWatchLogo} alt="CropWatch Logo" class="h-10" width="40px" height="40px" />
 			<!-- </div> -->
@@ -238,15 +246,11 @@
 		<span class="flex-1"></span>
 		<div class="hidden items-center gap-3 md:flex">
 			<ThemeToggle />
-			<a
-				href="/contact-us"
-				class="group relative inline-flex items-center overflow-hidden rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 px-6 py-3 font-semibold text-white shadow-lg shadow-green-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-green-500/40"
-			>
-				<button class="logout-button" onclick={handleLogout}> Logout </button>
-				<div
-					class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full"
-				></div>
-			</a>
+			{#if page.data.session?.user}
+				<Button variant="secondary" onclick={handleLogout}>Logout</Button>
+			{:else}
+				<Button variant="primary" href="/auth/login">Login</Button>
+			{/if}
 		</div>
 
 		<!-- Mobile menu button -->
@@ -278,21 +282,30 @@
 		? 'border-slate-700/30 bg-slate-800/50'
 		: 'border-gray-200/30 bg-white/50'}"
 >
-	<div class="mx-auto max-w-6xl px-4 py-3 lg:px-8">
-		<div class="flex items-center justify-between">
+	<div class="mx-auto px-4 py-3">
+		<div class="flex flex-wrap items-center gap-4">
 			<!-- Breadcrumb or secondary nav -->
 			<div
 				class="flex items-center gap-2 text-sm {getDarkMode() ? 'text-slate-400' : 'text-gray-600'}"
 			>
-				<a href="/" class="transition-colors hover:text-green-400">Home</a>
-				<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-				</svg>
-				<span class={getDarkMode() ? 'text-white' : 'text-gray-900'}
-					>Somehow get current Route???</span
-				>
+				<Breadcrumbs />
 			</div>
-
+			<div class="flex-1"></div>
+			<div class="text-sm">
+				<a
+					href="/"
+					onclick={(event) => {
+						event.preventDefault();
+						$locale = $locale === 'ja' ? 'en' : 'ja';
+					}}
+					class="flex items-center gap-1 transition-colors hover:text-green-400 {getDarkMode()
+						? 'text-slate-400'
+						: 'text-gray-600'}"
+				>
+					<MaterialIcon name="globe" size="small" style="float:left" />
+					{$locale === 'ja' ? 'English' : '日本語'}
+				</a>
+			</div>
 			<!-- Quick actions -->
 			<div class="hidden items-center gap-4 text-sm md:flex">
 				<a
@@ -341,13 +354,10 @@
 <!-- Mobile Menu -->
 {#if mobileMenuOpen}
 	<div
-		class="mobile-menu absolute top-full right-0 left-0 z-50 border-t backdrop-blur-lg transition-colors duration-300 lg:hidden text-slate-200"
+		class="mobile-menu absolute top-full right-0 left-0 z-50 border-t text-slate-200 backdrop-blur-lg transition-colors duration-300 lg:hidden"
 	>
 		<div class="space-y-2 p-4">
-			<a
-				href="/app/dashboard"
-				class="block rounded-lg px-4 py-3 transition-colors text-slate-200"
-			>
+			<a href="/app/dashboard" class="block rounded-lg px-4 py-3 text-slate-200 transition-colors">
 				Dashboard
 			</a>
 			<a

@@ -1,47 +1,33 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { container } from '$lib/server/ioc.config';
 import { TYPES } from '$lib/server/ioc.types';
 import type { PageServerLoad } from './$types';
-import { SessionService } from '$lib/services/SessionService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { DeviceService } from '$lib/services/DeviceService';
-import { LocationRepository } from '$lib/repositories/LocationRepository';
-import { LocationService } from '$lib/services/LocationService';
 
+/**
+ * Load `devices` for a specific location.
+ * User session and `locationId` are already validated in the layout server load.
+ */
 export const load: PageServerLoad = async ({ params, locals }) => {
-    const { location_id } = params;
-    const sessionService = new SessionService(locals.supabase);
-    const sessionResult = await sessionService.getSafeSession();
+	const locationId = parseInt(params.location_id, 10);
 
-    // If no session exists, redirect to login
-    if (!sessionResult || !sessionResult.user) {
-        throw redirect(302, '/auth/login');
-    }
+	try {
+		// Get the error handler from the container
+		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
+		const deviceService = new DeviceService(deviceRepo);
 
-    const locationId = parseInt(location_id);
-    if (!locationId) {
-        throw error(400, 'Invalid location ID');
-    }
+		// Fetch devices for this location
+		// Don’t `await` the promise, stream the data instead
+		const devices = deviceService.getDevicesByLocation(locationId);
 
-    try {
-        // Get the error handler from the container
-        const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-        const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
-        const locationRepo = new LocationRepository(locals.supabase, errorHandler);
-        const locationService = new LocationService(locationRepo, deviceRepo);
-        const location = await locationService.getLocationById(locationId);
-        // Fetch devices for this location
-        const deviceService = new DeviceService(deviceRepo);
-        const devices = await deviceService.getDevicesByLocation(locationId);
-
-        return {
-            location,
-            locationId,
-            devices,
-        };
-    } catch (err) {
-        console.error(`Error loading location ${locationId} details:`, err);
-        throw error(500, 'Failed to load location details');
-    }
+		return {
+			devices // streamed
+		};
+	} catch (err) {
+		console.error(`Error loading location ${locationId} details:`, err);
+		throw error(500, 'Failed to load location details');
+	}
 };

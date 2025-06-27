@@ -73,6 +73,7 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const name = formData.get('name') as string;
+		const description = formData.get('description') as string;
 		const latString = formData.get('lat') as string;
 		const longString = formData.get('long') as string;
 
@@ -116,6 +117,7 @@ export const actions: Actions = {
 			// Update the location
 			const updatedLocation = await locationService.updateLocation(locationId, {
 				name,
+				description,
 				lat,
 				long
 			});
@@ -160,11 +162,16 @@ export const actions: Actions = {
 		return result;
 	},
 
-	updatePermission: async ({ request, params, locals: { supabase } }) => {
+	updatePermission: async ({ request, params, locals: { supabase, safeGetSession } }) => {
+		const { session, user } = await safeGetSession();
+		if (!session || !user) {
+			return { success: false, error: 'Authentication required' };
+		}
+
 		const formData = await request.formData();
-		const userId = formData.get('userId') as string;
+		const userId = user.id;
 		const permissionLevel = parseInt(formData.get('permissionLevel') as string, 10);
-		const locationOwnerId = parseInt(formData.get('locationOwnerId') as string, 10);
+		const locationOwnerId = parseInt(formData.get('ownerId') as string, 10);
 		const applyToDevices = formData.get('applyToDevices') === 'true';
 		const locationId = parseInt(params.location_id, 10);
 
@@ -188,10 +195,15 @@ export const actions: Actions = {
 		return result;
 	},
 
-	removeUser: async ({ request, params, locals: { supabase } }) => {
+	removeUser: async ({ request, params, locals: { supabase, safeGetSession } }) => {
+		const { session, user } = await safeGetSession();
+		if (!session || !user) {
+			return { success: false, error: 'Authentication required' };
+		}
 		const formData = await request.formData();
 		const userId = formData.get('userId') as string;
-		const locationOwnerId = parseInt(formData.get('locationOwnerId') as string, 10);
+		const me = user.id;
+		const locationOwnerId = parseInt(params.location_id, 10);
 		const locationId = parseInt(params.location_id, 10);
 
 		if (!userId || isNaN(locationOwnerId) || isNaN(locationId)) {
@@ -206,7 +218,8 @@ export const actions: Actions = {
 		const result = await locationService.removeUserFromLocation(
 			locationId,
 			userId,
-			locationOwnerId
+			locationOwnerId,
+			me
 		);
 
 		return result;

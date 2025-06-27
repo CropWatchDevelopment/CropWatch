@@ -1,13 +1,14 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	import { Collapse, TweenedValue } from 'svelte-ux';
-	import Button from './components/Button.svelte';
 	import { goto } from '$app/navigation';
-	import { mdiArrowRight } from '@mdi/js';
-	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
-	import { nameToJapaneseName } from '$lib/utilities/nameToJapanese';
 	import type { Device } from '$lib/models/Device';
 	import type { Location } from '$lib/models/Location';
+	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
+	import { formatNumber } from '$lib/utilities/stats';
+	import { mdiArrowRight } from '@mdi/js';
+	import type { Snippet } from 'svelte';
+	import { _ } from 'svelte-i18n';
+	import { Collapse } from 'svelte-ux';
+	import Button from './components/Button.svelte';
 
 	// Extend the Device type to include latestData
 	interface DeviceWithLatestData extends Device {
@@ -140,15 +141,13 @@
 							>
 							<div class="flex flex-col items-start">
 								<span class="text-lg leading-tight font-bold text-gray-900 dark:text-white">
-									<TweenedValue value={primaryValue} format="decimal" />
+									{formatNumber({ key: primaryDataKey, value: primaryValue })}
 									<span
 										class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
 										>{primaryNotation}</span
 									>
 								</span>
-								<span class="text-xs text-gray-500 dark:text-gray-400"
-									>{nameToJapaneseName(primaryDataKey)}</span
-								>
+								<span class="text-xs text-gray-500 dark:text-gray-400">{$_(primaryDataKey)}</span>
 							</div>
 						</div>
 
@@ -159,14 +158,14 @@
 								>
 								<div class="flex flex-col items-start">
 									<span class="text-lg leading-tight font-bold text-gray-900 dark:text-white">
-										<TweenedValue value={secondaryValue} format="decimal" />
+										{formatNumber({ key: secondaryDataKey, value: secondaryValue })}
 										<span
 											class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
 											>{secondaryNotation}</span
 										>
 									</span>
 									<span class="text-xs text-gray-500 dark:text-gray-400"
-										>{nameToJapaneseName(secondaryDataKey)}</span
+										>{$_(secondaryDataKey)}</span
 									>
 								</div>
 							</div>

@@ -1,144 +1,111 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
-	import { error as errorToast, success } from '$lib/stores/toast.svelte';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import { formValidation } from '$lib/actions/formValidation';
+	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import Select from '$lib/components/UI/form/Select.svelte';
+	import TextInput from '$lib/components/UI/form/TextInput.svelte';
+	import UserPermissionsSelector from '$lib/components/UI/form/UserPermissionsSelector.svelte';
+	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
+	import type { LocationUser } from '$lib/models/LocationUser';
+	import { error as errorToast, success as successToast } from '$lib/stores/toast.svelte';
+	import type { ActionResult } from '@sveltejs/kit';
+	import Header from '../Header.svelte';
 
-	let { data } = $props();
-
-	const { location, locationUsers, deviceCount, currentUser } = data;
-
-	// Location details editing
-	let editingLocationDetails = $state(false);
-	let locationName = $state(location?.name ?? 'no name set');
-	let locationLatitude = $state(location.lat || null);
-	let locationLongitude = $state(location.long || null);
-	let isUpdatingLocation = $state(false);
-
-	const startEditLocation = () => {
-		editingLocationDetails = true;
-		locationName = location.name;
-		locationLatitude = location.lat || null;
-		locationLongitude = location.long || null;
+	type NewUserFormDataProps = {
+		email: string;
+		permission: string; // Cannot be number
+		allDevices: boolean;
 	};
 
-	const cancelEditLocation = () => {
-		editingLocationDetails = false;
+	type LocationFormDataProps = {
+		name: string;
+		description: string;
+		lat: number | undefined;
+		long: number | undefined;
 	};
 
-	const handleLocationUpdateSuccess = (result) => {
-		isUpdatingLocation = false;
-
-		if (result.type === 'success') {
-			if (result.data.success) {
-				success('Location details updated successfully');
-				editingLocationDetails = false;
-
-				// Refresh the page to show updated location details
-				window.location.reload();
-			} else {
-				errorToast(result.data.error || 'Failed to update location details');
-			}
-		} else {
-			errorToast('An error occurred');
-		}
+	const locationFormDataPlaceholder: LocationFormDataProps = {
+		name: '',
+		description: '',
+		lat: undefined,
+		long: undefined
 	};
 
-	let newUserEmail = $state('');
-	let newUserPermission = $state(3); // Default to Viewer
-	let applyPermissionToDevices = $state(false);
-	let isAdding = $state(false);
+	const newUserFormDataPlaceholder: NewUserFormDataProps = {
+		email: '',
+		permission: '3', // Default to Viewer
+		allDevices: false
+	};
 
-	let editingUser: {
-		id: number;
-		user_id: string;
-		permission_level: number;
-		applyToDevices: boolean;
-	} | null = $state(null);
-
-	const permissionMap = {
+	const permissionMap: Record<string, string> = {
 		1: 'Admin',
 		2: 'User',
 		3: 'Viewer',
 		4: 'Disabled'
 	};
 
-	const getUserDisplayName = (user) => {
-		if (!user?.profile) return 'Unknown User';
-		return user.profile.full_name || user.profile.username || user.profile.email || 'Unknown User';
+	let { data } = $props();
+	let { location, locationUsers, deviceCount } = $derived(data);
+
+	let locationFormData: LocationFormDataProps = $state({ ...locationFormDataPlaceholder });
+	let ownerList: LocationUser[] = $state([]);
+	let newUserFormData: NewUserFormDataProps = $state({ ...newUserFormDataPlaceholder });
+
+	let updatingLocation: boolean = $state(false);
+	let editingLocation: boolean = $state(false);
+	let addingUser = $state(false);
+	let showingRemoveConfirmation = $state(false);
+
+	const startEditLocation = () => {
+		editingLocation = true;
+		locationFormData = { ...locationFormDataPlaceholder };
+		locationFormData.name ||= '';
 	};
 
-	const startEdit = (user) => {
-		editingUser = {
-			id: user.id,
-			user_id: user.user_id,
-			permission_level: user.permission_level || 4,
-			applyToDevices: false
-		};
+	const cancelEditLocation = () => {
+		editingLocation = false;
+		locationFormData = { ...locationFormDataPlaceholder };
 	};
 
-	const cancelEdit = () => {
-		editingUser = null;
-	};
-
-	const handleAddUserSuccess = (result) => {
-		isAdding = false;
-
+	const handleLocationUpdateSuccess = async (result: ActionResult) => {
 		if (result.type === 'success') {
-			if (result.data.success) {
-				success('User added successfully');
-				newUserEmail = '';
-				newUserPermission = 3;
-				applyPermissionToDevices = false;
-
-				// Refresh the page to show updated user list
-				window.location.reload();
+			if (result.data?.success) {
+				// Refresh the page data to show updated location details
+				await invalidateAll();
+				editingLocation = false;
+				successToast('Location details updated successfully');
 			} else {
-				errorToast(result.data.error || 'Failed to add user');
+				errorToast(result.data?.error || 'Failed to update location details');
 			}
 		} else {
 			errorToast('An error occurred');
 		}
+
+		updatingLocation = false;
 	};
 
-	const handleUpdatePermissionSuccess = (result) => {
+	const handleAddUserSuccess = async (result: ActionResult) => {
 		if (result.type === 'success') {
-			if (result.data.success) {
-				success('Permission updated successfully');
-				editingUser = null;
-
-				// Refresh the page to show updated permissions
-				window.location.reload();
+			if (result.data?.success) {
+				// Refresh the page data to show updated user list
+				await invalidateAll();
+				newUserFormData = { ...newUserFormDataPlaceholder };
+				successToast('User added successfully');
 			} else {
-				errorToast(result.data.error || 'Failed to update permission');
+				errorToast(result.data?.error || 'Failed to add user');
 			}
 		} else {
 			errorToast('An error occurred');
 		}
+
+		addingUser = false;
 	};
 
-	const handleRemoveUserSuccess = (result) => {
-		if (result.type === 'success') {
-			if (result.data.success) {
-				success('User removed successfully');
-
-				// Refresh the page to show updated user list
-				window.location.reload();
-			} else {
-				errorToast(result.data.error || 'Failed to remove user');
-			}
-		} else {
-			errorToast('An error occurred');
-		}
-	};
-
-	const handleDeleteLocation = async () => {
-		if (!confirm('Are you sure you want to delete this location? This action cannot be undone.')) {
-			return;
-		}
-
+	const removeLocation = async () => {
 		try {
-			const response = await fetch(``, {
+			const response = await fetch('', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ locationId: location.location_id })
@@ -147,367 +114,303 @@
 			if (response.ok) {
 				const result = await response.json();
 				if (result.success) {
-					success('Location deleted successfully');
-					window.location.href = '/app/dashboard/locations/';
+					successToast('Location removed successfully');
+					await goto('/app/dashboard/location', { replaceState: true });
 				} else {
-					errorToast(result.error || 'Failed to delete location');
+					errorToast(result.error || 'Failed to remove location');
 				}
 			} else {
-				errorToast('An error occurred while deleting the location');
+				errorToast('An error occurred while removing the location');
 			}
-		} catch (error) {
-			errorToast('An error occurred while deleting the location');
+		} catch {
+			errorToast('An error occurred while removing the location');
 		}
 	};
+
+	$effect(() => {
+		// Update the form data when the data is loaded
+		if (location && locationUsers) {
+			locationFormData.name = location.name ?? '';
+			locationFormData.description = location.description ?? '';
+			locationFormData.lat = location.lat ?? undefined;
+			locationFormData.long = location.long ?? undefined;
+			ownerList = locationUsers;
+		}
+	});
 </script>
 
 <svelte:head>
-	<title>Location Settings - {locationName}</title>
+	<title>Location Settings - {location.name || 'No name set'}</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8">
+<Header {location} basePath={`/app/dashboard/location/${page.params.location_id}`} />
+
+<div class="w-full p-4">
 	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-2xl font-bold">Location Settings: {location.name}</h1>
-		<a
-			href="/app/dashboard/location/{location.location_id}/"
-			class="text-blue-500 hover:text-blue-700"
-		>
-			Back to Location
-		</a>
+		<h1 class="text-2xl font-bold">Location Settings</h1>
 	</div>
 
-	<!-- Location Details Section -->
-	<div class="bg-foreground-light dark:bg-foreground-dark mb-8 rounded-lg p-6 shadow-lg">
-		<div class="mb-4 flex items-center justify-between">
-			<h2 class="text-xl font-bold">Location Details</h2>
-			{#if !editingLocationDetails}
-				<button type="button" class="text-blue-500 hover:text-blue-700" onclick={startEditLocation}>
-					Edit Details
-				</button>
-			{/if}
+	<div class="flex flex-col gap-4 lg:flex-row">
+		<!-- Left pane -->
+		<div class="flex flex-none flex-col gap-4 lg:w-[30%] lg:min-w-[360px]">
+			<!-- Location Details Section -->
+			<section class="bg-foreground-light dark:bg-foreground-dark rounded-lg p-6 shadow-lg">
+				<div class="mb-4 flex items-center justify-between">
+					<h2 class="text-xl font-bold">Location Details</h2>
+					{#if !editingLocation}
+						<Button variant="secondary" onclick={startEditLocation}>Edit Details</Button>
+					{/if}
+				</div>
+
+				{#if editingLocation}
+					<form
+						method="POST"
+						action="?/updateLocation"
+						class="grid !w-full grid-cols-1 gap-4"
+						use:enhance={() => {
+							updatingLocation = true;
+
+							return ({ result }) => {
+								handleLocationUpdateSuccess(result);
+							};
+						}}
+						use:formValidation
+					>
+						<div>
+							<label for="locationName" class="mb-1 block font-medium">Location Name</label>
+							<TextInput
+								id="locationName"
+								name="name"
+								required
+								placeholder="Location Name"
+								class="w-full"
+								bind:value={locationFormData.name}
+							/>
+						</div>
+
+						<div>
+							<label for="locationName" class="mb-1 block font-medium">Description</label>
+							<TextInput
+								id="locationName"
+								name="description"
+								required
+								placeholder="Description"
+								class="w-full"
+								bind:value={locationFormData.description}
+							/>
+						</div>
+
+						<div>
+							<label for="locationLatitude" class="mb-1 block font-medium">Latitude</label>
+							<TextInput
+								type="number"
+								id="locationLatitude"
+								name="lat"
+								step="any"
+								placeholder="Latitude (e.g. 51.5074)"
+								class="w-full"
+								bind:value={locationFormData.lat}
+							/>
+							<p class="mt-1 text-sm text-gray-500">Decimal format (e.g. 51.5074)</p>
+						</div>
+
+						<div>
+							<label for="locationLongitude" class="mb-1 block font-medium">Longitude</label>
+							<TextInput
+								type="number"
+								id="locationLongitude"
+								name="long"
+								step="any"
+								placeholder="Longitude (e.g. -0.1278)"
+								class="w-full"
+								bind:value={locationFormData.long}
+							/>
+							<p class="mt-1 text-sm text-gray-500">Decimal format (e.g. -0.1278)</p>
+						</div>
+
+						<div class="flex gap-2">
+							<Button
+								type="submit"
+								variant="primary"
+								disabled={updatingLocation || !locationFormData.name}
+							>
+								{updatingLocation ? 'Updating...' : 'Update Location'}
+							</Button>
+							<Button variant="secondary" onclick={() => cancelEditLocation()}>Cancel</Button>
+						</div>
+					</form>
+				{:else}
+					<div class="grid grid-cols-1 gap-4">
+						<div>
+							<h3 class="text-sm font-medium text-gray-500">Name</h3>
+							<p>{location.name || 'No name set'}</p>
+						</div>
+						<div>
+							<h3 class="text-sm font-medium text-gray-500">Description</h3>
+							<p>{location.description}</p>
+						</div>
+						<div>
+							<h3 class="text-sm font-medium text-gray-500">Coordinates</h3>
+							<p>
+								{#if location.lat && location.long}
+									{location.lat.toFixed(6)}, {location.long.toFixed(6)}
+								{:else}
+									Not set
+								{/if}
+							</p>
+						</div>
+					</div>
+				{/if}
+			</section>
 		</div>
 
-		{#if editingLocationDetails}
-			<form
-				method="POST"
-				action="?/updateLocation"
-				class="form-container max-w-md"
-				use:enhance={() => {
-					isUpdatingLocation = true;
+		<!-- Right pane -->
+		<div class="flex flex-1 flex-col gap-4">
+			<section class="bg-foreground-light dark:bg-foreground-dark rounded-lg p-6 shadow-lg">
+				<h2 class="mb-4 text-xl font-bold">User Permissions</h2>
+				<p class="mb-4">
+					Manage which users have access to this location and with what permission level.
+				</p>
 
-					return ({ result }) => {
-						handleLocationUpdateSuccess(result);
-					};
-				}}
-				use:formValidation
-			>
-				<div class="mb-4">
-					<label for="locationName" class="mb-1 block font-medium">Location Name</label>
-					<input
-						type="text"
-						id="locationName"
-						name="name"
-						required
-						placeholder="Location Name"
-						class="w-full rounded border px-3 py-2"
-						bind:value={locationName}
-					/>
-				</div>
+				<UserPermissionsSelector {data} {ownerList} canDelete={true} />
 
-				<div class="mb-4">
-					<label for="locationLatitude" class="mb-1 block font-medium">Latitude</label>
-					<input
-						type="number"
-						id="locationLatitude"
-						name="lat"
-						step="any"
-						placeholder="Latitude (e.g. 51.5074)"
-						class="w-full rounded border px-3 py-2"
-						bind:value={locationLatitude}
-					/>
-					<p class="mt-1 text-sm text-gray-500">Decimal format (e.g. 51.5074)</p>
-				</div>
+				<div class="mt-6">
+					<h3 class="mb-2 text-lg font-medium">Add New User</h3>
 
-				<div class="mb-4">
-					<label for="locationLongitude" class="mb-1 block font-medium">Longitude</label>
-					<input
-						type="number"
-						id="locationLongitude"
-						name="long"
-						step="any"
-						placeholder="Longitude (e.g. -0.1278)"
-						class="w-full rounded border px-3 py-2"
-						bind:value={locationLongitude}
-					/>
-					<p class="mt-1 text-sm text-gray-500">Decimal format (e.g. -0.1278)</p>
-				</div>
+					<form
+						method="POST"
+						action="?/addUser"
+						class="form-container !grid w-full grid-cols-1 gap-4 xl:grid-cols-2"
+						use:enhance={() => {
+							addingUser = true;
 
-				<div class="flex gap-2">
-					<button
-						type="submit"
-						class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-						disabled={isUpdatingLocation || !locationName}
+							return ({ result }) => {
+								handleAddUserSuccess(result);
+							};
+						}}
+						use:formValidation
 					>
-						{isUpdatingLocation ? 'Updating...' : 'Update Location'}
-					</button>
-					<button
-						type="button"
-						class="rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400"
-						onclick={() => cancelEditLocation()}
+						<div>
+							<label for="email" class="mb-1 block font-medium">Email Address</label>
+							<TextInput
+								type="email"
+								id="email"
+								name="email"
+								required
+								placeholder="user@example.com"
+								class="w-full"
+								bind:value={newUserFormData.email}
+							/>
+						</div>
+
+						<div>
+							<label for="permissionLevel" class="mb-1 block font-medium">Permission Level</label>
+							<Select
+								id="permissionLevel"
+								name="permissionLevel"
+								required
+								class="w-full rounded border px-3 py-2"
+								bind:value={newUserFormData.permission}
+							>
+								{#each Object.entries(permissionMap) as [level, label]}
+									<option value={level}>{label}</option>
+								{/each}
+							</Select>
+							<p class="mt-1 text-sm text-gray-500">
+								<strong>Admin:</strong> Full control over location and devices<br />
+								<strong>User:</strong> Can use and configure devices<br />
+								<strong>Viewer:</strong> Can only view data<br />
+								<strong>Disabled:</strong> No access
+							</p>
+						</div>
+
+						<div>
+							<label class="flex items-center gap-2">
+								<input
+									type="checkbox"
+									name="applyToDevices"
+									value="true"
+									bind:checked={newUserFormData.allDevices}
+								/>
+								<span
+									>Apply same permission to all devices in this location (x{deviceCount} devices)</span
+								>
+							</label>
+							<p class="mt-1 text-sm text-gray-500">
+								If unchecked, user will be added with "Disabled" permission to all devices.
+							</p>
+						</div>
+
+						<div>
+							<Button
+								variant="primary"
+								type="submit"
+								disabled={addingUser || !newUserFormData.email}
+							>
+								{addingUser ? 'Adding...' : 'Add User'}
+							</Button>
+						</div>
+					</form>
+				</div>
+			</section>
+
+			<section class="border-danger/50 flex flex-col gap-2 rounded-lg border p-4">
+				<h2 class="text-danger text-lg font-semibold">Dangerous Zone</h2>
+				<form
+					method="POST"
+					action="?/deleteLocation"
+					use:enhance={() => {
+						return ({ result }: { result: ActionResult }) => {
+							if (result.type === 'success' && result.data?.success) {
+								successToast('Location removed successfully');
+								window.location.href = '/app/dashboard/location/';
+							} else {
+								// @ts-ignore
+								errorToast(result.data?.error || 'Failed to remove location');
+							}
+						};
+					}}
+					use:formValidation
+				>
+					<Button
+						variant="danger"
+						onclick={(event) => {
+							event.stopPropagation();
+							showingRemoveConfirmation = true;
+						}}
 					>
-						Cancel
-					</button>
-				</div>
-			</form>
-		{:else}
-			<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<div>
-					<h3 class="text-sm font-medium text-gray-500">Name</h3>
-					<p>{location.name}</p>
-				</div>
-				<div>
-					<h3 class="text-sm font-medium text-gray-500">Coordinates</h3>
-					<p>
-						{#if locationLatitude !== null && locationLongitude !== null}
-							{locationLatitude.toFixed(6)}, {locationLongitude.toFixed(6)}
-						{:else}
-							Not set
-						{/if}
-					</p>
-				</div>
-			</div>
-		{/if}
-	</div>
-
-	<div class="bg-foreground-light dark:bg-foreground-dark mb-8 rounded-lg p-6 shadow-lg">
-		<h2 class="mb-4 text-xl font-bold">User Permissions</h2>
-		<p class="mb-4">
-			Manage which users have access to this location and with what permission level.
-		</p>
-
-		{#if locationUsers.length > 0}
-			<div class="overflow-x-auto">
-				<table class="min-w-full">
-					<thead>
-						<tr class="border-b">
-							<th class="px-4 py-3 text-left">User</th>
-							<th class="px-4 py-3 text-left">Email</th>
-							<th class="px-4 py-3 text-left">Permission</th>
-							<th class="px-4 py-3 text-left">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each locationUsers as user}
-							<tr class="bg-foreground-light dark:bg-foreground-dark border-b">
-								<td class="px-4 py-3">{getUserDisplayName(user)}</td>
-								<td class="px-4 py-3">{user.profile?.email || 'No email'}</td>
-								<td class="px-4 py-3">
-									{#if editingUser && editingUser.id === user.id}
-										<div class="flex flex-col gap-2">
-											<select
-												class="rounded border px-2 py-1"
-												bind:value={editingUser.permission_level}
-											>
-												{#each [1, 2, 3, 4] as level}
-													<option value={level}>{permissionMap[level]}</option>
-												{/each}
-											</select>
-
-											<label class="flex items-center gap-2 text-sm">
-												<input type="checkbox" bind:checked={editingUser.applyToDevices} />
-												<span>Apply to all devices ({deviceCount})</span>
-											</label>
-										</div>
-									{:else}
-										<span class={user.permission_level === 1 ? 'font-medium text-green-600' : ''}>
-											{permissionMap[user.permission_level] || 'Unknown'}
-										</span>
-									{/if}
-								</td>
-								<td class="px-4 py-3">
-									{#if editingUser && editingUser.id === user.id}
-										<div class="flex gap-2">
-											<form
-												method="POST"
-												action="?/updatePermission"
-												use:enhance={() => {
-													return ({ result }) => {
-														handleUpdatePermissionSuccess(result);
-													};
-												}}
-												use:formValidation
-											>
-												<input type="hidden" name="userId" value={user.user_id} />
-												<input type="hidden" name="locationOwnerId" value={user.id} />
-												<input
-													type="hidden"
-													name="permissionLevel"
-													value={editingUser.permission_level}
-												/>
-												<input
-													type="hidden"
-													name="applyToDevices"
-													value={editingUser.applyToDevices}
-												/>
-												<button type="submit" class="text-green-600 hover:text-green-800">
-													Save
-												</button>
-											</form>
-
-											<button
-												type="button"
-												class="text-gray-600 hover:text-gray-800"
-												onclick={() => cancelEdit()}
-											>
-												Cancel
-											</button>
-										</div>
-									{:else}
-										<div class="flex gap-2">
-											<button
-												type="button"
-												class="text-blue-600 hover:text-blue-800"
-												onclick={() => startEdit(user)}
-											>
-												Edit
-											</button>
-
-											{#if user.user_id !== currentUser.id}
-												<form
-													method="POST"
-													action="?/removeUser"
-													use:enhance={() => {
-														if (!confirm('Are you sure you want to remove this user?')) {
-															return { action: () => {} };
-														}
-
-														return ({ result }) => {
-															handleRemoveUserSuccess(result);
-														};
-													}}
-													use:formValidation
-												>
-													<input type="hidden" name="userId" value={user.user_id} />
-													<input type="hidden" name="locationOwnerId" value={user.id} />
-													<button type="submit" class="text-red-600 hover:text-red-800">
-														Remove
-													</button>
-												</form>
-											{:else}
-												<span class="text-gray-400" title="Cannot remove yourself">Remove</span>
-											{/if}
-										</div>
-									{/if}
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{:else}
-			<p class="text-gray-500">No users have access to this location yet.</p>
-		{/if}
-
-		<div class="mt-6 border-t pt-4">
-			<h3 class="mb-2 text-lg font-medium">Add User</h3>
-
-			<form
-				method="POST"
-				action="?/addUser"
-				class="form-container w-full max-w-md"
-				use:enhance={() => {
-					isAdding = true;
-
-					return ({ result }) => {
-						handleAddUserSuccess(result);
-					};
-				}}
-				use:formValidation
-			>
-				<div class="mb-4">
-					<label for="email" class="mb-1 block font-medium">Email Address</label>
-					<input
-						type="email"
-						id="email"
-						name="email"
-						required
-						placeholder="user@example.com"
-						class="w-full rounded border px-3 py-2"
-						bind:value={newUserEmail}
-					/>
-				</div>
-
-				<div class="mb-4">
-					<label for="permissionLevel" class="mb-1 block font-medium">Permission Level</label>
-					<select
-						id="permissionLevel"
-						name="permissionLevel"
-						required
-						class="w-full rounded border px-3 py-2"
-						bind:value={newUserPermission}
-					>
-						{#each [1, 2, 3, 4] as level}
-							<option value={level}>{permissionMap[level]}</option>
-						{/each}
-					</select>
-					<p class="mt-1 text-sm text-gray-500">
-						<strong>Admin:</strong> Full control over location and devices<br />
-						<strong>User:</strong> Can use and configure devices<br />
-						<strong>Viewer:</strong> Can only view data<br />
-						<strong>Disabled:</strong> No access
-					</p>
-				</div>
-
-				<div class="mb-4">
-					<label class="flex items-center gap-2">
-						<input
-							type="checkbox"
-							name="applyToDevices"
-							value="true"
-							bind:checked={applyPermissionToDevices}
-						/>
-						<span
-							>Apply same permission to all devices in this location (x{deviceCount} devices)</span
-						>
-					</label>
-					<p class="mt-1 text-sm text-gray-500">
-						If unchecked, user will be added with "Disabled" permission to all devices.
-					</p>
-				</div>
-
-				<div class="flex gap-2">
-					<button
-						type="submit"
-						class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-						disabled={isAdding || !newUserEmail}
-					>
-						{isAdding ? 'Adding...' : 'Add User'}
-					</button>
-				</div>
-			</form>
+						Remove Location
+					</Button>
+				</form>
+			</section>
 		</div>
 	</div>
 </div>
-<section class="container mx-auto rounded-lg bg-red-300 px-4 py-8 text-black shadow-lg">
-	<h1>Super dangerous section!!!</h1>
-	<form
-		method="POST"
-		action="?/deleteLocation"
-		class="form-container w-full max-w-md"
-		use:enhance={() => {
-			return ({ result }) => {
-				if (result.type === 'success' && result.data.success) {
-					success('Location deleted successfully');
-					window.location.href = '/app/dashboard/location/';
-				} else {
-					errorToast(result.data.error || 'Failed to delete location');
-				}
-			};
-		}}
-		use:formValidation
-	>
-		<button class="btn btn-danger" onclick={() => handleDeleteLocation()}>
-			Execute Dangerous Action
-		</button>
-	</form>
-</section>
+
+<Dialog bind:open={showingRemoveConfirmation}>
+	{#snippet title()}
+		Remove Location
+	{/snippet}
+	{#snippet body()}
+		Are you sure you want to remove this location? This action cannot be undone.
+	{/snippet}
+	{#snippet footer()}
+		<Button
+			variant="secondary"
+			onclick={() => {
+				showingRemoveConfirmation = false;
+			}}
+		>
+			Cancel
+		</Button>
+		<Button
+			variant="danger"
+			onclick={() => {
+				showingRemoveConfirmation = false;
+				removeLocation();
+			}}
+		>
+			Remove
+		</Button>
+	{/snippet}
+</Dialog>

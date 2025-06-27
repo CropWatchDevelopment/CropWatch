@@ -1,29 +1,35 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import Spinner from '$lib/components/Spinner.svelte';
-	import type { DeviceWithType } from '$lib/models/Device';
-
-	import type { PageProps } from './$types';
-	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
+	import { page } from '$app/state';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
+	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
-
+	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import TextInput from '$lib/components/UI/form/TextInput.svelte';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
+	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
+	import type { DeviceWithType } from '$lib/models/Device';
+	import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 	import {
-		formatDateOnly,
 		formatDateForInput,
+		formatDateOnly,
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
-	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
-	import { DateTime } from 'luxon';
+	import { onMount } from 'svelte';
+	import { _, locale } from 'svelte-i18n';
+	import type { PageProps } from './$types';
+	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
+	import Header from './Header.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
 
-	let user = $state(data.user);
+	let { location_id, devEui } = page.params;
+	let basePath = `/app/dashboard/location/${location_id}/devices/${devEui}`;
 	let device = $state(data.device as DeviceWithType);
 	let dataType = $state(data.dataType);
-	let latestData = $state(data.latestData);
-	let historicalData = $state(data.historicalData || []);
+	let latestData: DeviceDataRecord | null = $state(null);
+	let historicalData: DeviceDataRecord[] = $state([]);
 
 	// Define the type for a calendar event
 	interface CalendarEvent {
@@ -56,14 +62,15 @@
 	// DOM element references
 	let chart1: HTMLElement | undefined = $state();
 	let chart1Brush: HTMLElement | undefined = $state();
-	let dataGrid: HTMLElement | undefined = $state();
 
 	// Local string states for date inputs, bound to the input fields
 	let startDateInputString = $state('');
 	let endDateInputString = $state('');
 
+	let loadingHistoricalData = $state(true); // Local loading state for historical data fetch
+	let renderingVisualization = $state(true); // Local rendering state for visualization
+
 	// Derived properties
-	const derived = $state(getDeviceDetailDerived(device, dataType, latestData));
 	const {
 		deviceTypeName,
 		temperatureChartVisible,
@@ -71,7 +78,7 @@
 		moistureChartVisible,
 		co2ChartVisible,
 		phChartVisible
-	} = derived;
+	} = $derived(getDeviceDetailDerived(device, dataType, latestData));
 
 	onMount(() => {
 		initializeDateRange(); // This sets deviceDetail.startDate and deviceDetail.endDate (Date objects)
@@ -79,14 +86,40 @@
 		// Sync input strings with initial Date objects from deviceDetail
 		startDateInputString = formatDateForInput(deviceDetail.startDate);
 		endDateInputString = formatDateForInput(deviceDetail.endDate);
-
-		processHistoricalData(historicalData); // Initial processing of server-loaded data
-		calendarEvents = updateEvents(); // Initialize calendar events based on historical data
 	});
 
-	// Effect to re-render visualization when historicalData or DOM elements change
 	$effect(() => {
-		renderVisualization(historicalData, dataType, latestData, chart1, chart1Brush, dataGrid);
+		(async () => {
+			latestData = await data.latestData;
+		})();
+	});
+
+	$effect(() => {
+		(async () => {
+			loadingHistoricalData = true;
+			historicalData = await data.historicalData;
+			processHistoricalData(historicalData); // Initial processing of server-loaded data
+			calendarEvents = updateEvents(); // Initialize calendar events based on historical data
+			loadingHistoricalData = false;
+		})();
+	});
+
+	const renderChart = async () => {
+		renderingVisualization = true;
+		await renderVisualization(historicalData, dataType, latestData, chart1, chart1Brush);
+		renderingVisualization = false;
+	};
+
+	// Re-render chart when historical data or DOM elements change
+	$effect(() => {
+		void [historicalData, dataType, latestData, chart1, chart1Brush];
+		renderChart();
+	});
+
+	// Re-render chart when the app locale changes, because the labels depend on it
+	$effect(() => {
+		void $locale;
+		renderChart();
 	});
 
 	// Effect to keep input strings in sync if deviceDetail.startDate/endDate change (e.g. by initializeDateRange)
@@ -150,6 +183,7 @@
 			return;
 		}
 
+		loadingHistoricalData = true;
 		deviceDetail.error = null; // Clear previous errors before fetching
 
 		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
@@ -160,6 +194,8 @@
 		} else {
 			calendarEvents = updateEvents(historicalData);
 		}
+
+		loadingHistoricalData = false;
 	}
 
 	// Expose formatDateForDisplay for the template, aliased from helpers
@@ -170,308 +206,265 @@
 	<title>Device Details - {device?.name || device?.dev_eui}</title>
 </svelte:head>
 
-<div id="chart-line"></div>
-
-<div class="mx-auto max-w-6xl p-4">
-	<section class="mb-8">
-		<!-- Back to Dashboard link -->
-		<div class="mb-2">
-			<a href="/app/dashboard" class="text-sm text-blue-500 hover:underline">
-				&larr; Back to Dashboard
-			</a>
-		</div>
-
-		<!-- Heading -->
-		<h1 class="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-100">Soil Device Details</h1>
-
-		<a
-			href="/app/dashboard/location/{device?.location_id}/devices/{device?.dev_eui}/settings"
-			class="mb-4 inline-flex items-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
-				hover:bg-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
-				dark:bg-blue-500 dark:hover:bg-blue-400 dark:focus:ring-offset-zinc-800">Settings</a
-		>
-
-		<!-- Device metadata container -->
-		<div class="rounded-lg bg-gray-100 p-4 shadow-sm dark:bg-zinc-800">
-			<!-- Responsive: 1 col on mobile, 2 on md, 4 on lg -->
-			<div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2 lg:grid-cols-4">
-				<!-- Type -->
-				<div>
-					<span class="text-gray-500 dark:text-gray-300">Type:</span>
-					<strong class="ml-1 break-words text-gray-900 dark:text-white">{deviceTypeName}</strong>
-				</div>
-
-				<!-- EUI -->
-				<div>
-					<span class="text-gray-500 dark:text-gray-300">EUI:</span>
-					<strong class="ml-1 break-words text-gray-900 dark:text-white">{device.dev_eui}</strong>
-				</div>
-
-				<!-- Location ID -->
-				{#if device?.location_id}
-					<div>
-						<span class="text-gray-500 dark:text-gray-300">Location ID:</span>
-						<strong class="ml-1 text-gray-900 dark:text-white">{device.location_id}</strong>
-					</div>
-				{/if}
-
-				<!-- Installed At -->
-				{#if device?.installed_at}
-					<div>
-						<span class="text-gray-500 dark:text-gray-300">Installed:</span>
-						<strong class="ml-1 text-gray-900 dark:text-white">
-							{formatDateOnly(device.installed_at)}
-						</strong>
-					</div>
-				{/if}
+<Header {device} {basePath}>
+	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
+		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
+		<!-- Date range selector -->
+		<div class="flex flex-wrap items-end gap-2">
+			<!-- Date inputs -->
+			<div class="flex flex-col">
+				<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400"
+					>Start Date:</label
+				>
+				<TextInput
+					id="startDate"
+					type="date"
+					bind:value={startDateInputString}
+					max={endDateInputString}
+					class="text-sm"
+				/>
 			</div>
-		</div>
-	</section>
-
-	<!-- Latest data section -->
-	<section class="mb-12">
-		<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-			Latest Sensor Readings
-		</h2>
-
-		{#if latestData}
-			<div class="rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
-				<div class="flex flex-row justify-items-center">
-					{#each Object.keys(latestData) as key}
-						{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
-							<DataCard
-								{latestData}
-								name={key}
-								{key}
-								type={key}
-								metadata={key === 'created_at' || key === 'dev_eui'}
-								class="w-full"
-							/>
-						{/if}
-					{/each}
-				</div>
-
-				<p class="mt-4 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
-					Last updated: {formatDateForDisplay(latestData.created_at)}
-				</p>
+			<div class="flex flex-col">
+				<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">End Date:</label>
+				<TextInput
+					id="endDate"
+					type="date"
+					bind:value={endDateInputString}
+					min={startDateInputString}
+					class="text-sm"
+				/>
 			</div>
-		{:else}
-			<p class="py-8 text-center text-gray-500 italic">No recent data available for this device.</p>
-		{/if}
-	</section>
+			<div class="-ml-2">
+				<Button
+					variant="ghost"
+					iconic
+					onclick={handleDateRangeSubmit}
+					disabled={loadingHistoricalData}
+				>
+					<MaterialIcon name="refresh" aria-label={$_('refresh')} />
+				</Button>
+			</div>
+			{#if error}
+				<p class="mt-2 text-sm text-red-600">{'error'}</p>
+			{/if}
+		</div>
+	</div>
+</Header>
 
-	<!-- Video Feed is IP is there -->
-	{#if device?.ip_log.length > 0}
-		<section>
-			{#each device.ip_log as log}
-				<h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+<div class="flex flex-col gap-4 p-4 lg:flex-row">
+	<!-- Left pane -->
+	<div
+		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+	>
+		<!-- Latest data section -->
+		<section class="flex-auto lg:w-auto lg:flex-none">
+			<h2>Latest Sensor Readings</h2>
+			{#if latestData}
+				<div>
+					<div class="grid grid-cols-2 gap-2">
+						{#each Object.keys(latestData) as key}
+							{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
+								<DataCard
+									{latestData}
+									name={key}
+									{key}
+									type={key}
+									metadata={key === 'created_at' || key === 'dev_eui'}
+								/>
+							{/if}
+						{/each}
+					</div>
+
+					<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+						Last updated: {formatDateForDisplay(latestData.created_at)}
+					</p>
+				</div>
+			{:else}
+				<p class="pt-4 text-center text-gray-500 italic">No recent data available</p>
+			{/if}
+		</section>
+
+		<!-- Video Feed is IP is there -->
+		<section class="flex-none">
+			<h2>Camera Stream</h2>
+			{#if device?.ip_log.length > 0}
+				{#each device.ip_log as log}
 					<img
 						class="sc-hHOBiw eJjIgh"
 						src="https://153.137.8.13:2223/mjpg/video.mjpg?camera=1&amp;audiocodec=aac&amp;audiosamplerate=16000&amp;audiobitrate=32000&amp;videozprofile=classic&amp;timestamp=0&amp;cachebust=1"
 						alt="Camera Stream"
 					/>
-				</h2>
-			{/each}
-		</section>
-	{/if}
-
-	<!-- Historical data section -->
-
-	<section class="mb-12">
-		<h2 class="mb-6 text-lg font-semibold text-gray-900 dark:text-gray-100">Historical Data</h2>
-
-		<div class="mb-6 rounded-lg bg-gray-50 p-4 dark:bg-zinc-800">
-			<div class="flex flex-wrap items-end gap-2 md:gap-4">
-				<!-- Date inputs -->
-				<div class="flex flex-col">
-					<label for="startDate" class="mb-1 text-sm text-gray-600 dark:text-gray-400"
-						>Start Date:</label
-					>
-					<input
-						id="startDate"
-						type="date"
-						bind:value={startDateInputString}
-						max={endDateInputString}
-						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
-					/>
-				</div>
-
-				<div class="flex flex-col">
-					<label for="endDate" class="mb-1 text-sm text-gray-600 dark:text-gray-400"
-						>End Date:</label
-					>
-					<input
-						id="endDate"
-						type="date"
-						bind:value={endDateInputString}
-						min={startDateInputString}
-						class="rounded border border-gray-300 bg-white p-2 text-sm text-gray-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
-					/>
-				</div>
-
-				<!-- Button with alignment tweak -->
-				<div class="pt-[26px]">
-					<button
-						onclick={handleDateRangeSubmit}
-						class="rounded border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 ease-in-out
-							hover:border-blue-500 hover:bg-blue-500
-							focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none
-							disabled:border-blue-400 disabled:bg-blue-400 disabled:text-white
-							dark:border-blue-700 dark:bg-blue-500 dark:text-white
-							dark:hover:border-blue-400 dark:hover:bg-blue-400
-							dark:focus:ring-offset-zinc-800 dark:disabled:border-blue-800 dark:disabled:bg-blue-800"
-						disabled={loading}
-					>
-						{loading ? 'Loading…' : 'Fetch Data'}
-					</button>
-				</div>
-			</div>
-
-			{#if error}
-				<p class="mt-2 text-sm text-red-600">{error}</p>
+				{/each}
+			{:else}
+				<p class="pt-4 text-center text-gray-500 italic">No stream available</p>
 			{/if}
-		</div>
-	</section>
+		</section>
 
-	<section class="mb-12">
-		{#if loading}
-			<!-- Loading State -->
-			<div
-				class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-100 p-8 shadow dark:bg-zinc-800"
-			>
-				<Spinner />
-				<p class="text-gray-700 dark:text-gray-300">Loading historical data...</p>
-			</div>
-		{:else if historicalData.length === 0}
-			<!-- Empty State -->
-			<div
-				class="rounded-lg bg-gray-100 p-6 text-center text-gray-500 italic shadow dark:bg-zinc-800 dark:text-gray-400"
-			>
-				No historical data available for the selected date range.
-			</div>
-		{:else}
-			<!-- Statistical Summary -->
-			<div class="mb-8">
-				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-					Statistical Summary
-				</h3>
-
-				<!-- <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"> -->
-				<div class="flex flex-row gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{#if temperatureChartVisible}
-						<StatsCard
-							notation="°C"
-							title="Temperature"
-							min={stats.temperature_c?.min}
-							max={stats.temperature_c?.max}
-							avg={stats.temperature_c?.avg}
-							median={stats.temperature_c?.median}
-							stdDev={stats.temperature_c?.stdDev}
-							count={stats.temperature_c?.count}
-							lastReading={stats.temperature_c?.lastReading}
-							trend={stats.temperature_c?.trend}
-						/>
-					{/if}
-					{#if humidityChartVisible}
-						<StatsCard
-							notation="%"
-							title="Humidity"
-							min={stats.humidity?.min}
-							max={stats.humidity?.max}
-							avg={stats.humidity?.avg}
-							median={stats.humidity?.median}
-							stdDev={stats.humidity?.stdDev}
-							count={stats.humidity?.count}
-							lastReading={stats.humidity?.lastReading}
-							trend={stats.humidity?.trend}
-						/>
-					{/if}
-					{#if moistureChartVisible}
-						<StatsCard
-							notation="%"
-							title="Moisture"
-							min={stats.moisture?.min}
-							max={stats.moisture?.max}
-							avg={stats.moisture?.avg}
-							median={stats.moisture?.median}
-							stdDev={stats.moisture?.stdDev}
-							count={stats.moisture?.count}
-							lastReading={stats.moisture?.lastReading}
-							trend={stats.moisture?.trend}
-						/>
-					{/if}
-					{#if co2ChartVisible}
-						<StatsCard
-							title="CO₂ (ppm)"
-							min={stats.co2?.min}
-							max={stats.co2?.max}
-							avg={stats.co2?.avg}
-							median={stats.co2?.median}
-							stdDev={stats.co2?.stdDev}
-							count={stats.co2?.count}
-							lastReading={stats.co2?.lastReading}
-							trend={stats.co2?.trend}
-						/>
-					{/if}
-					{#if phChartVisible}
-						<StatsCard
-							title="pH"
-							min={stats.ph?.min}
-							max={stats.ph?.max}
-							avg={stats.ph?.avg}
-							median={stats.ph?.median}
-							stdDev={stats.ph?.stdDev}
-							count={stats.ph?.count}
-							lastReading={stats.ph?.lastReading}
-							trend={stats.ph?.trend}
-						/>
-					{/if}
+		{#if device}
+			<section class="flex-none">
+				<h2>Map</h2>
+				<div class="aspect-square">
+					<LeafletMap
+						lat={device.lat || 0}
+						lon={device.long || 0}
+						zoom={13}
+						markers={[[device.lat || 0, device.long || 0]]}
+					/>
 				</div>
-			</div>
+			</section>
+		{/if}
 
-			<!-- Charts -->
-			<!-- Chart Visualizations -->
-			<div class="mb-12">
-				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-					Data Visualization
-				</h3>
+		<!-- Device metadata container -->
+		<section class="flex-none">
+			<h2>Device Info</h2>
+			<div class="rounded-lg bg-gray-50 p-4 shadow-sm dark:bg-zinc-800">
+				<!-- Responsive: 1 col on mobile, 2 on md, 4 on lg -->
+				<div class="grid grid-rows-1 gap-2 text-sm">
+					<!-- Type -->
+					<div>
+						<span class="text-gray-500/80 dark:text-gray-300/80">Type:</span>
+						<span class="ml-1 break-words text-gray-900 dark:text-white">{deviceTypeName}</span>
+					</div>
 
-				<!-- Generic Main Line + Brush Chart (always rendered if historicalData exists) -->
-				<div class="mb-10 rounded-lg bg-white p-4 shadow dark:bg-zinc-900">
-					<h4 class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200">
-						All Sensor Data Over Time
-					</h4>
-					<div class="w-full">
-						<div class="chart-placeholder">
-							<div class="chart-visual">
-								<div class="chart main-chart" bind:this={chart1}></div>
-								<div class="chart brush-chart" bind:this={chart1Brush}></div>
-							</div>
+					<!-- EUI -->
+					<div>
+						<span class="text-gray-500/80 dark:text-gray-300/80">EUI:</span>
+						<span class="ml-1 break-words text-gray-900 dark:text-white">{device.dev_eui}</span>
+					</div>
+
+					<!-- Location ID -->
+					{#if device?.location_id}
+						<div>
+							<span class="text-gray-500/80 dark:text-gray-300/80">Location ID:</span>
+							<span class="ml-1 text-gray-900 dark:text-white">{device.location_id}</span>
 						</div>
+					{/if}
+
+					<!-- Installed At -->
+					{#if device?.installed_at}
+						<div>
+							<span class="text-gray-500/80 dark:text-gray-300/80">Installed:</span>
+							<span class="ml-1 text-gray-900 dark:text-white">
+								{formatDateOnly(device.installed_at)}
+							</span>
+						</div>
+					{/if}
+
+					<div>
+						<a
+							href="https://kb.cropwatch.io/doku.php?id=co2_sensors"
+							target="_blank"
+							class="text-gray-500/80 dark:text-gray-300/80"
+						>
+							Sensor Datasheet
+						</a>
 					</div>
 				</div>
 			</div>
+		</section>
+	</div>
 
-			<!-- Raw Data Table -->
-			<div>
-				<h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Raw Data</h3>
-				<div class="overflow-x-auto rounded-lg bg-white p-2 shadow dark:bg-zinc-900">
-					<div class="data-grid" bind:this={dataGrid}></div>
-				</div>
+	<!-- Right pane -->
+	<div
+		class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0"
+		inert={loadingHistoricalData}
+		aria-busy={loadingHistoricalData}
+	>
+		<!-- Loading overlay -->
+		{#if loadingHistoricalData}
+			<div
+				class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-gray-50 backdrop-blur-xs dark:bg-zinc-900/75"
+			>
+				<Spinner />
+				Loading historical data...
 			</div>
 		{/if}
-	</section>
-	<WeatherCalendar
-		events={calendarEvents}
-		onDateChange={(date: Date) => {
-			startDateInputString = formatDateForInput(date);
-			endDateInputString = formatDateForInput(DateTime.fromJSDate(date).endOf('month').toJSDate());
-			handleDateRangeSubmit();
-		}}
-	/>
+		<section class="mb-12">
+			{#if loading}
+				<!-- Loading State -->
+				<div
+					class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
+				>
+					<Spinner />
+					<p class="text-gray-700 dark:text-gray-300">Loading historical data...</p>
+				</div>
+			{:else if historicalData.length === 0}
+				<!-- Empty State -->
+				<div class="pt-4 text-center text-gray-500 italic">
+					No historical data available for the selected date range.
+				</div>
+			{:else}
+				<!-- Statistical Summary -->
+				<div class="mb-8">
+					<h2>Stats Summary</h2>
+					<div class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3">
+						{#if temperatureChartVisible}
+							<StatsCard key="temperature_c" {stats} />
+						{/if}
+						{#if humidityChartVisible}
+							<StatsCard key="humidity" {stats} />
+						{/if}
+						{#if moistureChartVisible}
+							<StatsCard key="moisture" {stats} />
+						{/if}
+						{#if co2ChartVisible}
+							<StatsCard key="co2" {stats} />
+						{/if}
+						{#if phChartVisible}
+							<StatsCard key="ph" {stats} />
+						{/if}
+					</div>
+				</div>
+
+				<!-- Charts -->
+				<!-- Chart Visualizations -->
+				<section class="mb-12" inert={renderingVisualization} aria-busy={renderingVisualization}>
+					<h2>Data Chart</h2>
+
+					<!-- Generic Main Line + Brush Chart (always rendered if historicalData exists) -->
+					<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
+						{#if renderingVisualization}
+							<div class="absolute inset-0 z-10 flex items-center justify-center">
+								Rendering chart...
+							</div>
+						{/if}
+						<h4
+							class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200"
+							hidden={renderingVisualization}
+						>
+							All Sensor Data Over Time
+						</h4>
+						<div class="w-full">
+							<div class="chart-placeholder">
+								<div class="chart-visual">
+									<div class="chart main-chart" bind:this={chart1}></div>
+									<div class="chart brush-chart" bind:this={chart1Brush}></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+			{/if}
+		</section>
+		<div class="mt-4">
+			<section>
+				<h2>Weather History</h2>
+				<WeatherCalendar
+					events={calendarEvents}
+					onDateChange={(date: Date) => {
+						startDateInputString = formatDateForInput(date);
+						endDateInputString = formatDateForInput(deviceDetail.endDate);
+						handleDateRangeSubmit();
+					}}
+				/>
+			</section>
+		</div>
+	</div>
 </div>
 
-<style>
+<style lang="postcss">
+	@reference "tailwindcss";
+
 	/* Chart container structure */
 	.chart-placeholder {
 		position: relative;
@@ -483,20 +476,42 @@
 		display: flex;
 		flex-direction: column;
 		width: 100%;
-	}
 
-	.chart-visual .chart {
-		width: 100%;
-	}
+		.chart {
+			width: 100%;
+		}
 
-	/* These classes are critical for ApexCharts rendering size */
-	.chart-visual .main-chart {
-		height: 350px;
-	}
+		/* These classes are critical for ApexCharts rendering size */
+		.main-chart {
+			height: 350px;
+		}
 
-	.chart-visual .brush-chart {
-		height: 150px;
-		margin-top: 10px;
+		.brush-chart {
+			height: 150px;
+			margin-top: 10px;
+		}
+
+		:global {
+			.apexcharts-legend-series {
+				@apply gap-1;
+			}
+
+			.apexcharts-legend-text {
+				@apply !text-gray-500;
+
+				.dark & {
+					@apply !text-gray-400;
+				}
+			}
+
+			text {
+				@apply fill-gray-500;
+
+				.dark & {
+					@apply fill-gray-400;
+				}
+			}
+		}
 	}
 
 	/* ApexCharts style overrides */
@@ -524,6 +539,14 @@
 
 		.chart-visual .brush-chart {
 			height: 120px;
+		}
+	}
+
+	h2 {
+		@apply mb-2 text-xl font-semibold text-gray-600;
+
+		:global(.dark) & {
+			@apply text-gray-300;
 		}
 	}
 </style>

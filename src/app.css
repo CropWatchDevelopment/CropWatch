@@ -16,7 +16,7 @@
 	/* Base colors */
 	--color-primary: #4caf50;
 	--color-primary-hover: #3a8c3f;
-	--color-background: #cacaca;
+	--color-background: #eaeaea;
 	--color-foreground: #938aee;
 	--color-foreground-light: #f0f0f0;
 	--color-foreground-dark: #2a2a2a;
@@ -212,7 +212,6 @@ a {
 }
 .form-container button[type='submit'],
 .form-container input[type='submit'] {
-	background-color: var(--color-primary);
 	color: white;
 	padding: 0.5rem 1rem;
 	border-radius: 0.25rem;

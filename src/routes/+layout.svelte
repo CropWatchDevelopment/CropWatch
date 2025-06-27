@@ -1,13 +1,13 @@
 <script lang="ts">
-	import '../app.css';
-	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
-	import Header from '$lib/components/Header.svelte';
-	// Theme is now initialized directly in the theme module
 	import { invalidate } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+	import Header from '$lib/components/Header.svelte';
+	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
+	import { i18n } from '$lib/i18n/index.svelte';
 	import { createBrowserClient } from '@supabase/ssr';
-	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
+	import '../app.css';
 
 	// No preloading needed - dashboard will load its data when navigated to
 
@@ -54,19 +54,26 @@
 
 		return () => authData.subscription.unsubscribe();
 	});
+
+	onMount(() => {
+		i18n.initialize();
+	});
 </script>
 
-<div class="page-transition-container">
-	{#if !$page.url.pathname.startsWith('/auth')}
-		<Header userName={user?.email ?? 'Unknown User'} />
-	{/if}
-	<div
-		class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-colors duration-300"
-	>
-		{@render children()}
-		<ToastContainer position="top-right" />
+<!-- Wait until svelte-i18n is initialized -->
+{#if i18n.initialized}
+	<div class="page-transition-container">
+		{#if !page.url.pathname.startsWith('/auth')}
+			<Header userName={user?.email ?? 'Unknown User'} />
+		{/if}
+		<div
+			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-colors duration-300"
+		>
+			{@render children()}
+			<ToastContainer position="top-right" />
+		</div>
 	</div>
-</div>
+{/if}
 
 <style>
 	.page-transition-container {

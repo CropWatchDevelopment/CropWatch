@@ -154,7 +154,7 @@ export class LocationRepository extends BaseRepository<Location, number> {
 			.eq('owner_id', userId)
 			.single();
 
-		if (locationOwner.owner_id) {
+		if (locationOwner?.owner_id) {
 			return true; // User is the owner, automatically has full permissions
 		}
 
@@ -215,11 +215,29 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	 * Get a location owner entry by ID
 	 * @param id The location owner entry ID
 	 */
-	async getLocationOwnerById(id: number): Promise<{ permission_level: number } | null> {
+	async getLocationOwnerById(id: number): Promise<{ LocationUser: any } | null> {
 		const { data, error } = await this.supabase
 			.from('cw_location_owners')
-			.select('permission_level')
+			.select('*')
 			.eq('id', id)
+			.single();
+
+		if (error) {
+			return null;
+		}
+
+		return data;
+	}
+
+	/**
+	 * Get a location owner entry by ID
+	 * @param id The location owner entry ID
+	 */
+	async getLocationUserById(userId: string): Promise<{ user_id: string } | null> {
+		const { data, error } = await this.supabase
+			.from('cw_location_owners')
+			.select('user_id')
+			.eq('user_id', userId)
 			.single();
 
 		if (error) {
@@ -278,16 +296,36 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	 * Remove a user from a location
 	 * @param locationOwnerId The location owner entry ID
 	 */
-	async removeUserFromLocation(locationOwnerId: number): Promise<void> {
+	async removeUserFromLocationByRecordId(userRecordId: number): Promise<void> {
 		const { error } = await this.supabase
 			.from('cw_location_owners')
 			.delete()
-			.eq('id', locationOwnerId);
+			.eq('id', userRecordId);
 
 		if (error) {
 			this.errorHandler.handleDatabaseError(
 				error,
-				`Error removing user from location (ID: ${locationOwnerId})`
+				`Error removing user from location (ID: ${userRecordId})`
+			);
+		}
+	}
+
+	/**
+	 * Remove a user from a location
+	 * @param locationOwnerId The location owner entry ID
+	 */
+	async removeUserFromLocationByUserId(userId: string, location_id: number): Promise<void> {
+		const { error } = await this.supabase
+			.from('cw_location_owners')
+			.delete()
+			.eq('user_id', userId)
+			.eq('location_id', location_id)
+			.single();
+
+		if (error) {
+			this.errorHandler.handleDatabaseError(
+				error,
+				`Error removing user from location (ID: ${userRecordId})`
 			);
 		}
 	}
@@ -300,7 +338,7 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	async countOtherAdmins(locationId: number, excludeUserId: string): Promise<number> {
 		const { data, error } = await this.supabase
 			.from('cw_location_owners')
-			.select('id', { count: 'exact', head: true })
+			.select('id')
 			.eq('location_id', locationId)
 			.eq('permission_level', 1) // Admin
 			.neq('user_id', excludeUserId);
@@ -312,6 +350,6 @@ export class LocationRepository extends BaseRepository<Location, number> {
 			);
 		}
 
-		return data?.count ?? 0;
+		return data?.length ?? 0;
 	}
 }

@@ -1,22 +1,38 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
-import { goto } from '$app/navigation';
-import { formValidation } from '$lib/actions/formValidation';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { formValidation } from '$lib/actions/formValidation';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import type { Rule, RuleCriteria } from '$lib/models/Rule';
+	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import Select from '$lib/components/UI/form/Select.svelte';
+	import TextInput from '$lib/components/UI/form/TextInput.svelte';
+	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
+	import type { NotifierType } from '$lib/models/NotifierType';
+	import type { Rule } from '$lib/models/Rule';
 	import { success, error as toastError } from '$lib/stores/toast.svelte';
 	import { onMount } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	let { data } = $props();
-	let { device, rules, locationId, notifierTypes } = $derived(data);
+	let { device, locationId } = $derived(data);
+
+	let rules: Rule[] = $derived([]);
+	let notifierTypes: NotifierType[] = $derived([]);
+
+	$effect(() => {
+		(async () => {
+			rules = await data.rules;
+		})();
+	});
+
+	$effect(() => {
+		(async () => {
+			notifierTypes = await data.notifierTypes;
+		})();
+	});
 
 	// For creating a new rule
-	let showNewRuleForm = $state(false);
-	let newRuleName = $state('');
-	let newRuleNotifierType = $derived(
-		notifierTypes && notifierTypes.length > 0 ? notifierTypes[0].notifier_id : 1);
-	let newRuleActionRecipient = $state('');
-	let newRuleActionRecipients: string[] = $state([]);
+	let showForm = $state(false);
 
 	// Type definition for rule criteria
 	type RuleCriteriaItem = {
@@ -26,9 +42,6 @@ import { formValidation } from '$lib/actions/formValidation';
 		trigger_value: number;
 		reset_value: number;
 	};
-
-	// Array to store multiple rule criteria for new rules
-	let newRuleCriteriaItems: RuleCriteriaItem[] = $state([]);
 
 	// Available device data fields for subject dropdown
 	let deviceDataFields: string[] = $state([]);
@@ -42,7 +55,7 @@ import { formValidation } from '$lib/actions/formValidation';
 
 	// Array to store multiple rule criteria for editing
 	let editRuleCriteriaItems: RuleCriteriaItem[] = $state([]);
-	
+
 	// Track deleted criteria IDs to remove from database
 	let deletedCriteriaIds: number[] = $state([]);
 
@@ -55,6 +68,8 @@ import { formValidation } from '$lib/actions/formValidation';
 	let isUpdating = $state(false);
 	let isDeleting = $state(false);
 
+	const creatingNewRule = $derived(editingRuleId === null);
+
 	// Set up operators
 	const operators = ['>', '>=', '=', '<=', '<', '!='];
 
@@ -62,7 +77,7 @@ import { formValidation } from '$lib/actions/formValidation';
 	onMount(() => {
 		// In a real app, this would be fetched from the server based on device type
 		// For now, we'll use some common fields as examples
-		switch (device.type_name?.toLowerCase()) {
+		switch (device?.type_name?.toLowerCase()) {
 			case 'soil sensor':
 				deviceDataFields = ['moisture', 'temperature_c', 'ph', 'ec', 'k', 'n', 'p'];
 				break;
@@ -79,44 +94,14 @@ import { formValidation } from '$lib/actions/formValidation';
 		// Set default subject if available
 		if (deviceDataFields.length > 0) {
 			// Initialize with first criteria for new rule
-			newRuleCriteriaItems = [
-				{ subject: deviceDataFields[0], operator: '>', trigger_value: 0, reset_value: 0 }
-			];
-			
 			editRuleCriteriaItems = [
 				{ subject: deviceDataFields[0], operator: '>', trigger_value: 0, reset_value: 0 }
 			];
 		}
 	});
 
-	function addRecipient() {
-		if (newRuleActionRecipient.trim() !== '') {
-			// Check if the email is valid using a simple regex
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-			if (emailRegex.test(newRuleActionRecipient)) {
-				newRuleActionRecipients = [...newRuleActionRecipients, newRuleActionRecipient.trim()];
-				newRuleActionRecipient = '';
-			} else {
-				toastError('Please enter a valid email address');
-			}
-		}
-	}
-
-	function addCurrentUserEmail() {
-		// Add the current user's email from session if available
-		if (data.session?.user?.email) {
-			const userEmail = data.session.user.email;
-			if (!newRuleActionRecipients.includes(userEmail)) {
-				newRuleActionRecipients = [...newRuleActionRecipients, userEmail];
-			}
-		}
-	}
-
-	function removeRecipient(index: number) {
-		newRuleActionRecipients = newRuleActionRecipients.filter((_, i) => i !== index);
-	}
-
 	function handleEditRule(rule: Rule) {
+		showForm = true;
 		editingRuleId = rule.id;
 		editRuleName = rule.name;
 		editRuleNotifierType = rule.notifier_type || 1;
@@ -152,6 +137,7 @@ import { formValidation } from '$lib/actions/formValidation';
 	}
 
 	function cancelEdit() {
+		showForm = false;
 		editingRuleId = null;
 	}
 
@@ -172,47 +158,43 @@ import { formValidation } from '$lib/actions/formValidation';
 
 	// Reset the new rule form
 	function resetNewRuleForm() {
-		newRuleName = '';
-		newRuleNotifierType =
+		editingRuleId = null;
+		editRuleName = '';
+		editRuleNotifierType =
 			notifierTypes && notifierTypes.length > 0 ? notifierTypes[0].notifier_id : 1;
-		newRuleActionRecipient = '';
-		newRuleActionRecipients = [];
-		
+		editRuleActionRecipient = '';
+		editRuleActionRecipients = [];
+
 		// Reset criteria to default
 		if (deviceDataFields.length > 0) {
-			newRuleCriteriaItems = [
+			editRuleCriteriaItems = [
 				{ subject: deviceDataFields[0], operator: '>', trigger_value: 0, reset_value: 0 }
 			];
 		} else {
-			newRuleCriteriaItems = [];
+			editRuleCriteriaItems = [];
 		}
-		
-		showNewRuleForm = false;
-	}
-
-	// Open the new rule form
-	function openNewRuleForm() {
-		showNewRuleForm = true;
 	}
 </script>
 
 <svelte:head>
-	<title>Device Rules - CropWatch</title>
+	<title>Notifications - CropWatch</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8">
-	<div
-		class="bg-foreground-light dark:bg-foreground-dark mb-6 flex flex-wrap items-center justify-between rounded-lg p-4 shadow-md"
-	>
+<section class="flex flex-col gap-6">
+	<header class="flex flex-row items-center justify-between gap-4">
 		<div>
-			<h1 class="text-2xl font-bold">Device Rules</h1>
-			<p class="">Manage rules for device: {device.name}</p>
+			<h1 class="mb-1 text-2xl font-semibold">Notifications</h1>
+			<p class="text-sm text-neutral-100">
+				Get notified when the device meets a specific condition.
+			</p>
 		</div>
 
 		<div class="mt-4 md:mt-0">
-			<button
-				class="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
-				onclick={openNewRuleForm}
+			<Button
+				onclick={() => {
+					resetNewRuleForm();
+					showForm = true;
+				}}
 			>
 				<svg
 					class="mr-2 h-4 w-4"
@@ -224,66 +206,249 @@ import { formValidation } from '$lib/actions/formValidation';
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"
 					></path>
 				</svg>
-				Add New Rule
-			</button>
+				Add Rule
+			</Button>
 		</div>
+	</header>
+
+	<!-- Rules List -->
+	<div class="form-container overflow-hidden">
+		{#if rules.length === 0}
+			<div class="p-8 text-center text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+				No rules found.
+			</div>
+		{:else}
+			<table class="min-w-full divide-y divide-gray-300 dark:divide-neutral-400">
+				<thead
+					class="hidden border-gray-300 text-left md:table-header-group dark:border-neutral-400"
+				>
+					<tr>
+						<th
+							scope="col"
+							class="py-2 text-sm font-medium text-neutral-50 md:px-2 lg:px-4 lg:py-4"
+						>
+							Name
+						</th>
+						<th
+							scope="col"
+							class="py-2 text-sm font-medium text-neutral-50 md:px-2 lg:px-4 lg:py-4"
+						>
+							Method
+						</th>
+						<th
+							scope="col"
+							class="py-2 text-sm font-medium text-neutral-50 md:px-2 lg:px-4 lg:py-4"
+						>
+							Recipients
+						</th>
+						<th
+							scope="col"
+							class="py-2 text-sm font-medium text-neutral-50 md:px-2 lg:px-4 lg:py-4"
+						>
+							Conditions
+						</th>
+						<th
+							scope="col"
+							class="w-0 py-2 text-sm font-medium text-neutral-50 md:px-2 lg:px-4 lg:py-4"
+							>Actions</th
+						>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-gray-300 dark:divide-neutral-400">
+					{#each rules as rule (rule.id)}
+						<tr class="mb-2 block pb-2 md:table-row">
+							<td
+								class="flex flex-row items-center gap-4 py-2 whitespace-nowrap md:table-cell md:px-2 lg:px-4 lg:py-4"
+							>
+								<div class="min-w-24 text-sm font-medium text-neutral-50 md:hidden">Name</div>
+								<div class="font-semibold">{rule.name}</div>
+							</td>
+							<td
+								class="flex flex-row items-center gap-4 py-2 whitespace-nowrap md:table-cell md:px-2 lg:px-4 lg:py-4"
+							>
+								<div class="min-w-24 text-sm font-medium text-neutral-50 md:hidden">Method</div>
+								<div class="">{getNotifierTypeLabel(rule.notifier_type || 1)}</div>
+							</td>
+							<td
+								class="flex flex-row items-center gap-4 py-2 whitespace-nowrap md:table-cell md:px-2 lg:px-4 lg:py-4"
+							>
+								<div class="min-w-24 text-sm font-medium text-neutral-50 md:hidden">Recipients</div>
+								<div>
+									{#if rule.action_recipient}
+										{#each rule.action_recipient.split(',') as recipient}
+											<div>{recipient.trim()}</div>
+										{/each}
+									{:else}
+										<span class="text-sm text-gray-500 italic opacity-70 dark:text-gray-400"
+											>No recipients</span
+										>
+									{/if}
+								</div>
+							</td>
+							<td
+								class="flex flex-row items-center gap-4 py-2 whitespace-nowrap md:table-cell md:px-2 lg:px-4 lg:py-4"
+							>
+								<div class="min-w-24 text-sm font-medium text-neutral-50 md:hidden">Conditions</div>
+								<div>
+									{#if rule.cw_rule_criteria && rule.cw_rule_criteria.length > 0}
+										{#each rule.cw_rule_criteria as criteria}
+											<div>
+												{$_(criteria.subject, { default: 'Unknown' })}
+												{criteria.operator || '>'}
+												{criteria.trigger_value || 0}
+												{#if criteria.reset_value}
+													<span class="text-xs text-gray-400">(Reset: {criteria.reset_value})</span>
+												{/if}
+											</div>
+										{/each}
+									{:else}
+										<span class="text-sm text-gray-500 italic opacity-70 dark:text-gray-400"
+											>No criteria defined</span
+										>
+									{/if}
+								</div>
+							</td>
+							<td
+								class="flex flex-row items-center justify-end gap-2 py-2 whitespace-nowrap md:table-cell
+							md:px-2 lg:px-4 lg:py-4"
+							>
+								<Button variant="primary" onclick={() => handleEditRule(rule)}>Edit</Button>
+								<Button variant="secondary" onclick={() => handleDeleteConfirm(rule.id)}>
+									Delete
+								</Button>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		{/if}
 	</div>
 
-	<!-- New Rule Form -->
-	{#if showNewRuleForm}
-		<div class="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-md">
-			<h2 class="mb-4 text-xl font-semibold">Create New Rule</h2>
+	<!-- Delete Confirmation Modal -->
+	<Dialog bind:open={confirmDeleteOpen}>
+		{#snippet title()}
+			Delete Rule
+		{/snippet}
+		{#snippet body()}
+			<p class="mb-6 text-gray-600 dark:text-white">
+				Are you sure you want to delete this rule? This action cannot be undone.
+			</p>
+			<div class="flex justify-end space-x-3">
+				<Button variant="secondary" onclick={cancelDelete}>Cancel</Button>
+				<form
+					method="POST"
+					action="?/deleteRule"
+					use:enhance={() => {
+						isDeleting = true;
 
-                        <form
-                                method="POST"
-                                action="?/createRule"
-                                class="form-container"
-                                use:enhance={() => {
-                                        isCreating = true;
+						return async ({ result }) => {
+							isDeleting = false;
+							confirmDeleteOpen = false;
+
+							if (result.type === 'success') {
+								if (result.data?.success) {
+									success('Rule deleted successfully');
+									// Refresh the page to show updated data
+									goto(
+										`/app/dashboard/location/${locationId}/devices/${device.dev_eui}/settings/rules`,
+										{ invalidateAll: true }
+									);
+								} else {
+									toastError(result.data?.error || 'Failed to delete rule');
+								}
+							} else {
+								toastError('An error occurred');
+							}
+						};
+					}}
+					use:formValidation
+				>
+					<input type="hidden" name="ruleId" value={deletingRuleId} />
+
+					<Button type="submit" variant="primary" disabled={isDeleting}>
+						{#if isDeleting}
+							<Spinner size="sm" class="mr-2" /> Deleting...
+						{:else}
+							Delete
+						{/if}
+					</Button>
+				</form>
+			</div>
+		{/snippet}
+	</Dialog>
+
+	<!-- Edit Form Modal -->
+	<Dialog bind:open={showForm}>
+		{#snippet title()}
+			{creatingNewRule ? 'Create New Rule' : 'Edit Rule'}
+		{/snippet}
+		{#snippet body()}
+			<form
+				method="POST"
+				action={creatingNewRule ? '?/createRule' : '?/updateRule'}
+				use:enhance={() => {
+					isCreating = creatingNewRule;
+					isUpdating = !creatingNewRule;
 
 					return async ({ result }) => {
 						isCreating = false;
+						isUpdating = false;
 
 						if (result.type === 'success') {
 							if (result.data?.success) {
-								success('Rule created successfully');
-								resetNewRuleForm();
-								// Refresh the page to show the new rule
-								goto(`/dashboard/location/${locationId}/device/${device.dev_eui}/settings/rules`, {
-									invalidateAll: true
+								success(
+									creatingNewRule ? 'Rule created successfully' : 'Rule updated successfully'
+								);
+								showForm = false;
+								editingRuleId = null;
+								// Force reload all data to update the grid
+								goto(
+									`/app/dashboard/location/${locationId}/devices/${device.dev_eui}/settings/rules`,
+									{ invalidateAll: true, replaceState: false }
+								).then(() => {
+									// Force a complete page reload to ensure fresh data
+									// @todo Replace with `invalidateAll`
+									window.location.reload();
 								});
 							} else {
-								toastError(result.data?.error || 'Failed to create rule');
+								toastError(
+									result.data?.error ||
+										(creatingNewRule ? 'Failed to create rule' : 'Failed to update rule')
+								);
 							}
 						} else {
 							toastError('An error occurred');
 						}
 					};
-                                }}
-                                use:formValidation
-                        >
+				}}
+				use:formValidation
+			>
+				<input type="hidden" name="ruleId" value={editingRuleId} />
+				<input type="hidden" name="dev_eui" value={device?.dev_eui} />
 				<input type="hidden" name="profile_id" value={data.session?.user.id} />
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<div class="col-span-2">
-							<label for="rule_name" class="mb-1 block text-sm font-medium text-gray-700">Rule Name*</label>
-							<input
-								id="rule_name"
-								type="text"
-								name="name"
-								bind:value={newRuleName}
-								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-								required
-							/>
+
+				<div
+					class="grid grid-cols-1 gap-4 text-gray-700 md:grid-cols-2 lg:grid-cols-3 dark:text-gray-300"
+				>
+					<div class="col-span-2 lg:col-span-1">
+						<label for="edit_rule_name" class="mb-1 block text-sm font-medium">Name*</label>
+						<TextInput
+							id="edit_rule_name"
+							name="name"
+							bind:value={editRuleName}
+							required
+							class="w-full"
+						/>
 					</div>
 
-					<div>
-						<label for="notifier_type" class="mb-1 block text-sm font-medium text-gray-700">Send To Type*</label>
-						<select
-							id="notifier_type"
+					<div class="col-span-2 md:col-span-1">
+						<label for="edit_notifier_type" class="mb-1 block text-sm font-medium">Method*</label>
+						<Select
+							id="edit_notifier_type"
 							name="notifier_type"
-							bind:value={newRuleNotifierType}
-							class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							bind:value={editRuleNotifierType}
 							required
+							class="w-full"
 						>
 							{#if notifierTypes}
 								{#each notifierTypes as notifierType}
@@ -294,38 +459,40 @@ import { formValidation } from '$lib/actions/formValidation';
 								<option value="2">SMS</option>
 								<option value="3">Push Notification</option>
 							{/if}
-						</select>
+						</Select>
 					</div>
 
-					<div>
-						<label for="recipients" class="mb-1 block text-sm font-medium text-gray-700">Action Recipients*</label>
+					<div class="col-span-2 md:col-span-1">
+						<label for="edit_recipients" class="mb-1 block text-sm font-medium">
+							Recipients*
+						</label>
 						<div class="flex">
-							<input
-								id="recipients"
-								type="text"
+							<TextInput
+								id="edit_recipients"
 								placeholder="Enter email address"
-								bind:value={newRuleActionRecipient}
-								class="flex-1 rounded-l-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+								bind:value={editRuleActionRecipient}
+								class="w-full rounded-r-none"
 							/>
-							<button
-								type="button"
-								class="rounded-r-md bg-gray-200 px-3 py-2 font-medium text-gray-800 hover:bg-gray-300"
-								onclick={addRecipient}
+							<Button
+								variant="secondary"
+								class="rounded-l-none"
+								onclick={() => {
+									if (editRuleActionRecipient.trim() !== '') {
+										editRuleActionRecipients = [
+											...editRuleActionRecipients,
+											editRuleActionRecipient.trim()
+										];
+										editRuleActionRecipient = '';
+									}
+								}}
 							>
 								Add
-							</button>
+							</Button>
 						</div>
-						<button
-							type="button"
-							class="mt-2 text-xs text-blue-600 hover:text-blue-800"
-							onclick={addCurrentUserEmail}
-						>
-							Add my email
-						</button>
 
-						{#if newRuleActionRecipients.length > 0}
+						{#if editRuleActionRecipients.length > 0}
 							<div class="mt-2 flex flex-wrap gap-2">
-								{#each newRuleActionRecipients as recipient, index}
+								{#each editRuleActionRecipients as recipient, index}
 									<div
 										class="inline-flex items-center rounded bg-blue-100 px-2 py-1 text-sm text-blue-800"
 									>
@@ -333,7 +500,11 @@ import { formValidation } from '$lib/actions/formValidation';
 										<button
 											type="button"
 											class="ml-1 text-blue-600 hover:text-blue-800"
-											onclick={() => removeRecipient(index)}
+											onclick={() => {
+												editRuleActionRecipients = editRuleActionRecipients.filter(
+													(_, i) => i !== index
+												);
+											}}
 										>
 											×
 										</button>
@@ -343,27 +514,32 @@ import { formValidation } from '$lib/actions/formValidation';
 							<input
 								type="hidden"
 								name="action_recipient"
-								value={newRuleActionRecipients.join(',')}
+								value={editRuleActionRecipients.join(',')}
 							/>
 						{/if}
 					</div>
 
-					<div class="col-span-2 mt-4">
-						<h3 class="mb-2 font-medium text-gray-900">Rule Conditions</h3>
-						<p class="mb-3 text-sm text-gray-600">
+					<div class="col-span-1 mt-4 md:col-span-2 lg:col-span-3">
+						<h3 class="mb-2 text-sm font-medium">Conditions</h3>
+						<p class="mb-3 text-sm text-gray-400">
 							Define one or more conditions that will trigger this rule.
 						</p>
 
 						<!-- Criteria List -->
-						{#each newRuleCriteriaItems as criteria, index}
-							<div class="relative mb-4 rounded-lg border bg-gray-50 p-4">
-								{#if newRuleCriteriaItems.length > 1}
+						{#each editRuleCriteriaItems as criteria, index}
+							<div
+								class="relative mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800"
+							>
+								{#if editRuleCriteriaItems.length > 1}
 									<button
 										type="button"
-										class="absolute top-2 right-2 text-red-500 hover:text-red-700"
+										class="absolute top-2 right-2"
 										aria-label="Remove condition"
 										onclick={() => {
-											newRuleCriteriaItems = newRuleCriteriaItems.filter((_, i) => i !== index);
+											if (criteria.id) {
+												deletedCriteriaIds = [...deletedCriteriaIds, criteria.id];
+											}
+											editRuleCriteriaItems = editRuleCriteriaItems.filter((_, i) => i !== index);
 										}}
 									>
 										<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,70 +554,79 @@ import { formValidation } from '$lib/actions/formValidation';
 								{/if}
 
 								<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+									<!-- If there's an existing ID for the criteria, keep it as a hidden field -->
+									{#if criteria.id}
+										<input type="hidden" name={`criteria[${index}].id`} value={criteria.id} />
+									{/if}
+
 									<div>
-											<label for="criteria_subject_{index}" class="mb-1 block text-sm font-medium text-gray-700">Subject*</label>
-											<select
-												id="criteria_subject_{index}"
-												bind:value={criteria.subject}
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-												required
-											>
-												{#each deviceDataFields as field}
-													<option value={field}>{field.replace('_', ' ')}</option>
-												{/each}
-											</select>
-										</div>
+										<label for="criteria_subject_{index}" class="mb-2 text-sm font-medium">
+											Subject*
+										</label>
+										<Select
+											id="criteria_subject_{index}"
+											bind:value={criteria.subject}
+											required
+											class="w-full"
+										>
+											{#each deviceDataFields as field}
+												<option value={field}>{$_(field)}</option>
+											{/each}
+										</Select>
+									</div>
 
-										<div>
-												<label for="criteria_operator_{index}" class="mb-1 block text-sm font-medium text-gray-700">Operation*</label>
-												<select
-													id="criteria_operator_{index}"
-													bind:value={criteria.operator}
-													class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-													required
-												>
-													{#each operators as operator}
-														<option value={operator}>{operator}</option>
-													{/each}
-												</select>
-										</div>
+									<div>
+										<label for="criteria_operator_{index}" class="mb-2 text-sm font-medium"
+											>Operation*
+										</label>
+										<Select
+											id="criteria_operator_{index}"
+											bind:value={criteria.operator}
+											required
+											class="w-full"
+										>
+											{#each operators as operator}
+												<option value={operator}>{operator}</option>
+											{/each}
+										</Select>
+									</div>
 
-										<div>
-												<label for="criteria_trigger_{index}" class="mb-1 block text-sm font-medium text-gray-700"
-													>Trigger Value*</label
-												>
-												<input
-													id="criteria_trigger_{index}"
-													type="number"
-													bind:value={criteria.trigger_value}
-													step="0.01"
-													class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-													required
-												/>
-										</div>
+									<div>
+										<label for="criteria_trigger_{index}" class="mb-2 text-sm font-medium">
+											Trigger Value*
+										</label>
+										<TextInput
+											id="criteria_trigger_{index}"
+											type="number"
+											bind:value={criteria.trigger_value}
+											step="0.01"
+											class="w-full"
+											required
+										/>
+									</div>
 
-										<div>
-												<label for="criteria_reset_{index}" class="mb-1 block text-sm font-medium text-gray-700">Reset Value</label
-												>
-												<input
-													id="criteria_reset_{index}"
-													type="number"
-													bind:value={criteria.reset_value}
-													step="0.01"
-													class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-												/>
-										</div>
+									<div>
+										<label for="criteria_reset_{index}" class="mb-2 text-sm font-medium">
+											Reset Value
+										</label>
+										<TextInput
+											id="criteria_reset_{index}"
+											type="number"
+											bind:value={criteria.reset_value}
+											step="0.01"
+											class="w-full"
+										/>
+									</div>
 								</div>
 							</div>
 						{/each}
 
 						<!-- Add more criteria button -->
-						<button
-							type="button"
-							class="inline-flex items-center rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-500 hover:text-gray-900"
+						<Button
+							variant="secondary"
 							onclick={() => {
-								newRuleCriteriaItems = [
-									...newRuleCriteriaItems,
+								editRuleCriteriaItems = [
+									...editRuleCriteriaItems,
 									{
 										subject: deviceDataFields[0] || '',
 										operator: '>',
@@ -460,514 +645,43 @@ import { formValidation } from '$lib/actions/formValidation';
 								></path>
 							</svg>
 							Add Another Condition
-						</button>
+						</Button>
 
 						<!-- Pass all criteria data as JSON -->
-						<input type="hidden" name="criteria" value={JSON.stringify(newRuleCriteriaItems)} />
+						<input type="hidden" name="criteria" value={JSON.stringify(editRuleCriteriaItems)} />
+						<!-- Pass deleted criteria IDs as JSON -->
+						<input
+							type="hidden"
+							name="deletedCriteriaIds"
+							value={JSON.stringify(deletedCriteriaIds)}
+						/>
 					</div>
 				</div>
-
-				<!-- Add the device EUI as a hidden field -->
-				<input type="hidden" name="dev_eui" value={device.dev_eui} />
 
 				<div class="mt-6 flex justify-end space-x-3">
-					<button
-						type="button"
-						class="rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
-						onclick={resetNewRuleForm}
-					>
-						Cancel
-					</button>
+					<Button variant="secondary" onclick={cancelEdit}>Cancel</Button>
 
-					<button
+					<Button
 						type="submit"
-						class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-						disabled={isCreating || newRuleName === '' || newRuleActionRecipients.length === 0}
+						disabled={isUpdating ||
+							editRuleName === '' ||
+							editRuleActionRecipients.length === 0 ||
+							editRuleCriteriaItems.length === 0}
 					>
-						{#if isCreating}
-							<Spinner size="sm" class="mr-2" /> Creating...
+						{#if creatingNewRule}
+							{#if isCreating}
+								Creating...
+							{:else}
+								Create Rule
+							{/if}
+						{:else if isUpdating}
+							Updating...
 						{:else}
-							Create Rule
+							Update Rule
 						{/if}
-					</button>
+					</Button>
 				</div>
 			</form>
-		</div>
-	{/if}
-
-	<!-- Rules List -->
-	<div class="overflow-hidden rounded-lg bg-white shadow-md">
-		{#if rules.length === 0}
-			<div class="p-8 text-center">
-				<svg
-					class="mx-auto h-12 w-12 text-gray-400"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-					aria-hidden="true"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-					></path>
-				</svg>
-				<h3 class="mt-2 text-sm font-medium text-gray-900">No rules</h3>
-				<p class="mt-1 text-sm">Get started by creating a new rule.</p>
-				<div class="mt-6">
-					<button
-						class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
-						onclick={openNewRuleForm}
-					>
-						<svg
-							class="mr-2 -ml-1 h-5 w-5"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							xmlns="http://www.w3.org/2000/svg"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 4v16m8-8H4"
-							></path>
-						</svg>
-						New Rule
-					</button>
-				</div>
-			</div>
-		{:else}
-			<table class="min-w-full divide-y divide-gray-200">
-				<thead class="bg-foreground-light dark:bg-foreground-dark">
-					<tr>
-						<th scope="col" class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
-							>Name</th
-						>
-						<th scope="col" class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
-							>Notification Type</th
-						>
-						<th scope="col" class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
-							>Recipients</th
-						>
-						<th scope="col" class="px-6 py-3 text-left text-xs font-medium tracking-wider uppercase"
-							>Condition</th
-						>
-						<th
-							scope="col"
-							class="px-6 py-3 text-right text-xs font-medium tracking-wider uppercase">Actions</th
-						>
-					</tr>
-				</thead>
-				<tbody class="bg-foreground-light dark:bg-foreground-dark divide-y divide-gray-200">
-					{#each rules as rule (rule.id)}
-						<tr>
-							<td class="px-6 py-4 whitespace-nowrap">
-								<div class="text-sm font-bold">{rule.name}</div>
-							</td>
-							<td class="px-6 py-4 whitespace-nowrap">
-								<div class="text-sm">{getNotifierTypeLabel(rule.notifier_type || 1)}</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="text-sm">
-									{#if rule.action_recipient}
-										{#each rule.action_recipient.split(',') as recipient}
-											<div>{recipient.trim()}</div>
-										{/each}
-									{:else}
-										<span class="italic">No recipients</span>
-									{/if}
-								</div>
-							</td>
-							<td class="px-6 py-4">
-								<div class="text-sm">
-									{#if rule.cw_rule_criteria && rule.cw_rule_criteria.length > 0}
-										{#each rule.cw_rule_criteria as criteria}
-											<div>
-												{criteria.subject || 'Unknown'}
-												{criteria.operator || '>'}
-												{criteria.trigger_value || 0}
-												{#if criteria.reset_value}
-													<span class="text-xs text-gray-400">(Reset: {criteria.reset_value})</span>
-												{/if}
-											</div>
-										{/each}
-									{:else}
-										<span class="italic">No criteria defined</span>
-									{/if}
-								</div>
-							</td>
-							<td class="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-								<button
-									class="light:text-indigo-600 mr-3 hover:text-indigo-900"
-									onclick={() => handleEditRule(rule)}
-								>
-									 ✏️ Edit
-								</button>
-								<button
-									class="text-red-600 hover:text-red-900"
-									onclick={() => handleDeleteConfirm(rule.id)}
-								>
-									 🗑️ Delete
-								</button>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		{/if}
-	</div>
-
-	<!-- Delete Confirmation Modal -->
-	{#if confirmDeleteOpen}
-		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-600">
-			<div class="mx-4 max-w-md rounded-lg bg-white p-6">
-				<h3 class="mb-4 text-lg font-medium text-gray-900">Confirm Deletion</h3>
-				<p class="mb-6 text-gray-600">
-					Are you sure you want to delete this rule? This action cannot be undone.
-				</p>
-				<div class="flex justify-end space-x-3">
-					<button
-						class="rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
-						onclick={cancelDelete}
-					>
-						Cancel
-					</button>
-
-                                        <form
-                                                method="POST"
-                                                action="?/deleteRule"
-                                                class="form-container"
-                                                use:enhance={() => {
-							isDeleting = true;
-
-							return async ({ result }) => {
-								isDeleting = false;
-								confirmDeleteOpen = false;
-
-								if (result.type === 'success') {
-									if (result.data?.success) {
-										success('Rule deleted successfully');
-										// Refresh the page to show updated data
-										goto(
-											`/dashboard/location/${locationId}/device/${device.dev_eui}/settings/rules`,
-											{ invalidateAll: true }
-										);
-									} else {
-										toastError(result.data?.error || 'Failed to delete rule');
-									}
-								} else {
-									toastError('An error occurred');
-								}
-							};
-                                                }}
-                                                use:formValidation
-                                        >
-						<input type="hidden" name="ruleId" value={deletingRuleId} />
-
-						<button
-							type="submit"
-							class="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700"
-							disabled={isDeleting}
-						>
-							{#if isDeleting}
-								<Spinner size="sm" class="mr-2" /> Deleting...
-							{:else}
-								Delete Rule
-							{/if}
-						</button>
-					</form>
-				</div>
-			</div>
-		</div>
-	{/if}
-
-	<!-- Edit Form Modal -->
-	{#if editingRuleId !== null}
-		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-gray-600">
-			<div class="mx-4 w-full max-w-4xl rounded-lg bg-white p-6">
-				<h3 class="mb-4 text-lg font-medium text-gray-900">Edit Rule</h3>
-
-                                <form
-                                        method="POST"
-                                        action="?/updateRule"
-                                        class="form-container"
-                                        use:enhance={() => {
-						isUpdating = true;
-
-						return async ({ result }) => {
-							isUpdating = false;
-
-							if (result.type === 'success') {
-								if (result.data?.success) {
-									success('Rule updated successfully');
-									editingRuleId = null;
-										// Force reload all data to update the grid
-									goto(
-										`/dashboard/location/${locationId}/device/${device.dev_eui}/settings/rules`,
-										{ invalidateAll: true, replaceState: false }
-									).then(() => {
-										// Force a complete page reload to ensure fresh data
-										window.location.reload();
-									});
-								} else {
-									toastError(result.data?.error || 'Failed to update rule');
-								}
-							} else {
-								toastError('An error occurred');
-							}
-						};
-                                        }}
-                                        use:formValidation
-                                >
-					<input type="hidden" name="ruleId" value={editingRuleId} />
-
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-						<div class="col-span-2">
-								<label for="edit_rule_name" class="mb-1 block text-sm font-medium text-gray-700">Rule Name*</label>
-								<input
-									id="edit_rule_name"
-									type="text"
-									name="name"
-									bind:value={editRuleName}
-									class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-									required
-								/>
-						</div>
-
-						<div>
-							<label for="edit_notifier_type" class="mb-1 block text-sm font-medium text-gray-700">Send To Type*</label>
-							<select
-								id="edit_notifier_type"
-								name="notifier_type"
-								bind:value={editRuleNotifierType}
-								class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-								required
-							>
-								{#if notifierTypes}
-									{#each notifierTypes as notifierType}
-										<option value={notifierType.notifier_id}>{notifierType.name}</option>
-									{/each}
-								{:else}
-									<option value="1">Email</option>
-									<option value="2">SMS</option>
-									<option value="3">Push Notification</option>
-								{/if}
-							</select>
-						</div>
-
-						<div>
-								<label for="edit_recipients" class="mb-1 block text-sm font-medium text-gray-700">Action Recipients*</label>
-								<div class="flex">
-									<input
-										id="edit_recipients"
-										type="text"
-										placeholder="Enter email address"
-										bind:value={editRuleActionRecipient}
-										class="flex-1 rounded-l-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-									/>
-									<button
-										type="button"
-										class="rounded-r-md bg-gray-200 px-3 py-2 font-medium text-gray-800 hover:bg-gray-300"
-										onclick={() => {
-											if (editRuleActionRecipient.trim() !== '') {
-												editRuleActionRecipients = [
-													...editRuleActionRecipients,
-													editRuleActionRecipient.trim()
-												];
-												editRuleActionRecipient = '';
-											}
-										}}
-									>
-										Add
-									</button>
-								</div>
-
-								{#if editRuleActionRecipients.length > 0}
-									<div class="mt-2 flex flex-wrap gap-2">
-										{#each editRuleActionRecipients as recipient, index}
-											<div
-												class="inline-flex items-center rounded bg-blue-100 px-2 py-1 text-sm text-blue-800"
-											>
-												{recipient}
-												<button
-													type="button"
-													class="ml-1 text-blue-600 hover:text-blue-800"
-													onclick={() => {
-														editRuleActionRecipients = editRuleActionRecipients.filter(
-															(_, i) => i !== index
-														);
-													}}
-												>
-													×
-												</button>
-											</div>
-										{/each}
-									</div>
-									<input
-										type="hidden"
-										name="action_recipient"
-										value={editRuleActionRecipients.join(',')}
-									/>
-								{/if}
-						</div>
-
-						<div class="col-span-2 mt-4">
-							<h3 class="mb-2 font-medium text-gray-900">Rule Conditions</h3>
-							<p class="mb-3 text-sm text-gray-600">
-								Define one or more conditions that will trigger this rule.
-							</p>
-
-							<!-- Criteria List -->
-							{#each editRuleCriteriaItems as criteria, index}
-								<div class="relative mb-4 rounded-lg border bg-gray-50 p-4">
-									{#if editRuleCriteriaItems.length > 1}
-										<button
-											type="button"
-											class="absolute top-2 right-2 text-red-500 hover:text-red-700"
-											aria-label="Remove condition"
-											onclick={() => {
-												if (criteria.id) {
-													deletedCriteriaIds = [...deletedCriteriaIds, criteria.id];
-												}
-												editRuleCriteriaItems = editRuleCriteriaItems.filter((_, i) => i !== index);
-											}}
-										>
-											<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M6 18L18 6M6 6l12 12"
-												></path>
-											</svg>
-										</button>
-									{/if}
-
-									<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-										<!-- If there's an existing ID for the criteria, keep it as a hidden field -->
-										{#if criteria.id}
-											<input type="hidden" name={`criteria[${index}].id`} value={criteria.id} />
-										{/if}
-
-										<div>
-											<label for="criteria_subject_{index}" class="mb-1 block text-sm font-medium text-gray-700">Subject*</label>
-											<select
-												id="criteria_subject_{index}"
-												bind:value={criteria.subject}
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-												required
-											>
-												{#each deviceDataFields as field}
-													<option value={field}>{field.replace('_', ' ')}</option>
-												{/each}
-											</select>
-										</div>
-
-										<div>
-											<label for="criteria_operator_{index}" class="mb-1 block text-sm font-medium text-gray-700">Operation*</label>
-											<select
-												id="criteria_operator_{index}"
-												bind:value={criteria.operator}
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-												required
-											>
-												{#each operators as operator}
-													<option value={operator}>{operator}</option>
-												{/each}
-											</select>
-										</div>
-
-										<div>
-											<label for="criteria_trigger_{index}" class="mb-1 block text-sm font-medium text-gray-700"
-												>Trigger Value*</label
-											>
-											<input
-												id="criteria_trigger_{index}"
-												type="number"
-												bind:value={criteria.trigger_value}
-												step="0.01"
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-												required
-											/>
-										</div>
-
-										<div>
-											<label for="criteria_reset_{index}" class="mb-1 block text-sm font-medium text-gray-700">Reset Value</label
-											>
-											<input
-												id="criteria_reset_{index}"
-												type="number"
-												bind:value={criteria.reset_value}
-												step="0.01"
-												class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-											/>
-										</div>
-									</div>
-								</div>
-							{/each}
-
-							<!-- Add more criteria button -->
-							<button
-								type="button"
-								class="inline-flex items-center rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-500 hover:text-gray-900"
-								onclick={() => {
-									editRuleCriteriaItems = [
-										...editRuleCriteriaItems,
-										{
-											subject: deviceDataFields[0] || '',
-											operator: '>',
-											trigger_value: 0,
-											reset_value: 0
-										}
-									];
-								}}
-							>
-								<svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-									></path>
-								</svg>
-								Add Another Condition
-							</button>
-
-							<!-- Pass all criteria data as JSON -->
-							<input type="hidden" name="criteria" value={JSON.stringify(editRuleCriteriaItems)} />
-							<!-- Pass deleted criteria IDs as JSON -->
-							<input type="hidden" name="deletedCriteriaIds" value={JSON.stringify(deletedCriteriaIds)} />
-						</div>
-					</div>
-
-					<div class="mt-6 flex justify-end space-x-3">
-						<button
-							type="button"
-							class="rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-800 hover:bg-gray-200"
-							onclick={cancelEdit}
-						>
-							Cancel
-						</button>
-
-						<button
-							type="submit"
-							class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
-							disabled={isUpdating ||
-								editRuleName === '' ||
-								editRuleActionRecipients.length === 0 ||
-								editRuleCriteriaItems.length === 0}
-						>
-							{#if isUpdating}
-								<Spinner size="sm" class="mr-2" /> Updating...
-							{:else}
-								Update Rule
-							{/if}
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	{/if}
-</div>
+		{/snippet}
+	</Dialog>
+</section>

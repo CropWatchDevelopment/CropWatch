@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { dbColumnToName } from '$lib/utilities/dbColumnToName';
-	import { formatDateForDisplay, hasValue } from '$lib/utilities/helpers';
+	import { hasValue } from '$lib/utilities/helpers';
+	import { nameToNotation } from '$lib/utilities/NameToNotation';
+	import { formatNumber, getBorderColorByKey, getTextColorByKey } from '$lib/utilities/stats';
+	import { _ } from 'svelte-i18n';
 
 	let {
 		latestData,
 		key,
 		name,
-		notation = '',
 		class: className,
 		type,
 		metadata = false
@@ -14,7 +15,6 @@
 		latestData: any;
 		key: string;
 		name: string;
-		notation?: string;
 		class?: string;
 		type?: string;
 		metadata?: boolean;
@@ -37,89 +37,40 @@
 		return map[key] || key;
 	}
 
-	const sensorType = normalizeSensorType(type || key);
-
-	function getNotation(key: string): string {
-		const notationMap: Record<string, string> = {
-			temperature_c: '°C',
-			temperature: '°C',
-			humidity: '%',
-			moisture: '%',
-			co2: 'ppm',
-			ec: 'mS/cm',
-			cm: 'cm',
-			battery_level: '%',
-			ph: '',
-			created_at: '',
-			dev_eui: ''
-		};
-		return notationMap[key] || notation || '';
-	}
-
-	function formatValue(key: string, value: any): string {
-		if (key === 'created_at') {
-			return formatDateForDisplay(value);
-		}
-		return value;
-	}
-
-	function getBorderColorClass(sensorType: string, isMetadata: boolean): string {
-		if (isMetadata) return 'border-transparent';
-		const colorMap: Record<string, string> = {
-			temperature: 'border-orange-500',
-			humidity: 'border-blue-500',
-			moisture: 'border-sky-500',
-			deapth_cm: 'border-sky-500',
-			co2: 'border-purple-500',
-			ph: 'border-yellow-500',
-			ec: 'border-violet-500'
-		};
-		return colorMap[sensorType] || 'border-zinc-400';
-	}
-
-	function getTextColorClass(sensorType: string, isMetadata: boolean): string {
-		if (isMetadata) return 'text-gray-400 dark:text-gray-400';
-		const colorMap: Record<string, string> = {
-			temperature: 'text-orange-500 dark:text-orange-500',
-			humidity: 'text-blue-500 dark:text-blue-400',
-			moisture: 'text-sky-500 dark:text-sky-400',
-			deapth_cm: 'text-sky-500 dark:text-sky-400',
-			co2: 'text-purple-500 dark:text-purple-400',
-			ph: 'text-yellow-500 dark:text-yellow-400',
-			ec: 'text-violet-500 dark:text-violet-400'
-		};
-		return colorMap[sensorType] || 'text-zinc-400 dark:text-zinc-400';
-	}
-
 	const isMetadata = metadata || key === 'created_at' || key === 'dev_eui';
-	const displayNotation = getNotation(key);
+	const sensorType = normalizeSensorType(type || key);
+	const displayNotation = nameToNotation(key);
+
+	// Use `$derived` to ensure these values are reactive when UI theme changes
+	const borderColor = $derived(getBorderColorByKey(sensorType, isMetadata));
+	const textColor = $derived(getTextColorByKey(sensorType, isMetadata));
 </script>
 
 {#if hasValue(latestData, key)}
+	{@const value = latestData[key]}
 	<div
-		class={[
-			'rounded-lg bg-white p-4 text-center transition-all duration-200 ease-in-out dark:bg-zinc-800',
-			'shadow-sm hover:shadow-md',
-			isMetadata ? '' : 'hover:-translate-y-1',
-			isMetadata ? 'border-l' : 'border-l-4',
-			getBorderColorClass(sensorType, isMetadata),
-			className
-		]
-			.filter(Boolean)
-			.join(' ')}
+		class="flex flex-col justify-center gap-1 rounded-r-lg bg-gray-50 p-4 text-center shadow-sm transition-all duration-200 ease-in-out dark:bg-zinc-800 {isMetadata
+			? 'border-l'
+			: 'border-l-4'} {className}"
+		style:border-color={borderColor}
 	>
 		<!-- Label -->
 		<h3
-			class={`m-0 ${isMetadata ? 'mb-1 text-xs text-gray-400 dark:text-gray-500' : 'mb-2 text-sm text-gray-500 dark:text-gray-400'}`}
+			class={`m-0 leading-5 ${isMetadata ? 'text-xs text-gray-400 dark:text-gray-500' : 'text-md text-gray-500 dark:text-gray-400'}`}
 		>
-			{dbColumnToName(name)}
+			{$_(name)}
 		</h3>
 
 		<!-- Value -->
 		<p
-			class={`m-0 ${isMetadata ? 'mt-1 mb-1 text-base font-medium' : 'mb-0 text-2xl font-bold'} ${getTextColorClass(sensorType, isMetadata)}`}
+			class="m-0 {isMetadata ? 'text-base font-medium' : 'mb-0 text-2xl font-bold'}"
+			style:color={textColor}
 		>
-			{formatValue(key, latestData[key])}
+			{#if typeof value === 'number'}
+				{formatNumber({ key, value })}
+			{:else}
+				{value}
+			{/if}
 			{#if displayNotation}
 				<sup><small class="text-xs">{displayNotation}</small></sup>
 			{/if}

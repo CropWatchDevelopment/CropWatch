@@ -19,7 +19,7 @@ export type DeviceUpdate = Database['public']['Tables']['cw_devices']['Update'];
  * Type for device with detailed device type information
  */
 export interface DeviceWithType extends Device {
-  deviceType?: DeviceType;
+	cw_device_type?: DeviceType;
 }
 
 /**
