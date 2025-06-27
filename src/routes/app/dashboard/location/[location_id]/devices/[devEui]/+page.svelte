@@ -15,6 +15,7 @@
 		formatDateOnly,
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
+	import { formatNumber } from '$lib/utilities/stats';
 	import { onMount } from 'svelte';
 	import { _, locale } from 'svelte-i18n';
 	import type { PageProps } from './$types';
@@ -37,7 +38,7 @@
 		start: Date;
 		end: Date;
 		allDay: boolean;
-		title: string;
+		title: string | { html: string };
 		display: string;
 	}
 
@@ -116,10 +117,11 @@
 		renderChart();
 	});
 
-	// Re-render chart when the app locale changes, because the labels depend on it
+	// Re-render chart and calendar when the app locale changes, because the labels depend on it
 	$effect(() => {
 		void $locale;
 		renderChart();
+		calendarEvents = updateEvents(historicalData);
 	});
 
 	// Effect to keep input strings in sync if deviceDetail.startDate/endDate change (e.g. by initializeDateRange)
@@ -136,28 +138,55 @@
 
 	const updateEvents = (data: any[] = historicalData): CalendarEvent[] => {
 		// Group data by date
-		const dailyStats: { [date: string]: { date: Date; high: number; low: number } } = {};
+		const dailyStats: { [date: string]: Record<string, any> } = {};
+
 		data.forEach((event) => {
 			const dateStr = new Date(event.created_at).toISOString().split('T')[0];
-			const temp = Number(event.temperature_c);
-			if (!dailyStats[dateStr]) {
-				dailyStats[dateStr] = {
-					date: new Date(dateStr),
-					high: temp,
-					low: temp
-				};
-			} else {
+			const date = new Date(dateStr);
+
+			if (event.temperature_c) {
+				const temp = Number(event.temperature_c);
+
+				dailyStats[dateStr] ??= { key: 'temperature_c', date, high: -Infinity, low: Infinity };
 				dailyStats[dateStr].high = Math.max(dailyStats[dateStr].high, temp);
 				dailyStats[dateStr].low = Math.min(dailyStats[dateStr].low, temp);
 			}
+
+			if (event.car_count || event.people_count || event.bicycle_count) {
+				dailyStats[dateStr] ??= { date, cars: 0, people: 0, bicycles: 0 };
+				dailyStats[dateStr].cars += event.car_count ?? 0;
+				dailyStats[dateStr].bicycles += event.bicycle_count ?? 0;
+				dailyStats[dateStr].people += event.people_count ?? 0;
+			}
 		});
+
+		const formatTitle = ({ key, low, high, cars, people, bicycles }: Record<string, any>) => {
+			if (typeof low === 'number') {
+				return [
+					`${formatNumber({ key, value: low })}`,
+					`${formatNumber({ key, value: high })}°C`
+				].join('/');
+			}
+
+			if (typeof cars === 'number') {
+				return [
+					`${$_('car_count')}: ${cars}`,
+					`${$_('bicycle_count')}: ${bicycles}`,
+					`${$_('people_count')}: ${people}`
+				].join('<br>');
+			}
+
+			return '';
+		};
+
 		// Create calendar events with daily highs and lows
-		return Object.values(dailyStats).map((day) => ({
-			id: day.date,
-			start: day.date,
-			end: day.date,
+		return Object.values(dailyStats).map(({ date, ...rest }) => ({
+			id: date,
+			start: date,
+			end: date,
 			allDay: true,
-			title: `${day.low.toFixed(1)}° - ${day.high.toFixed(1)}°`,
+			// HTML is allowed https://www.npmjs.com/package/@event-calendar/core#content
+			title: { html: formatTitle(rest) },
 			display: 'auto'
 		}));
 	};
@@ -448,7 +477,7 @@
 		</section>
 		<div class="mt-4">
 			<section>
-				<h2>Weather History</h2>
+				<h2>Weather &amp; Data</h2>
 				<WeatherCalendar
 					events={calendarEvents}
 					onDateChange={(date: Date) => {
