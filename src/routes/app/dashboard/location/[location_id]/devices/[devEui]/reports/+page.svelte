@@ -205,7 +205,6 @@
 		error = '';
 
 		try {
-			debugger;
 			// Call the server endpoint to get the PDF directly
 			const response = await fetch('reports/pdf', {
 				method: 'GET'

@@ -158,28 +158,46 @@ export class DeviceDataService implements IDeviceDataService {
 	}
 
 	/**
-	 * Fetch filtered device data for reporting by calling the
-	 * `get_filtered_device_report_data` Supabase RPC.
+	 * Calls the `get_report_data_for_device` stored procedure to fetch:
+	 *   1. Sampled device telemetry (`device_data`) at a regular interval or
+	 *      whenever an alert condition is hit.
+	 *   2. The associated report metadata (`report_info`), including alert thresholds,
+	 *      recipient lists, and schedule rules.
 	 *
-	 * @param devEui            The device EUI to query.
-	 * @param startDate         The inclusive start of the time range.
-	 * @param endDate           The inclusive end of the time range.
-	 * @param intervalMinutes   How often (in minutes) to sample rows.
-	 * @param targetColumn      The column name to test for exceptions.
-	 * @param compareOperator   Comparison operator ('=', '>', '<', 'between', etc.).
-	 * @param compareValueMin   The threshold value (or lower bound for BETWEEN).
-	 * @param compareValueMax   The upper bound for BETWEEN (null otherwise).
-	 * @returns                 An array of DeviceDataRecord objects.
+	 * @param devEui
+	 *   The LoRaWAN DevEUI of the target device (e.g. '373632336F32840A').
+	 * @param start
+	 *   ISO-8601 timestamp marking the inclusive lower bound for data selection.
+	 *   Can include a timezone offset (e.g. '2025-06-01T00:00:00+09').
+	 * @param end
+	 *   ISO-8601 timestamp marking the exclusive upper bound for data selection.
+	 *   Can include a timezone offset (e.g. '2025-06-09T00:00:00+09').
+	 * @param timezone
+	 *   IANA time zone name used to shift `created_at` from UTC into local time
+	 *   for formatting in the result (default: 'UTC').
+	 * @param intervalMinutes
+	 *   Sampling interval in minutes. Records will be returned at each multiple
+	 *   of this interval from `start` onward, plus any rows that trigger an alert
+	 *   threshold (default: 60).
+	 *
+	 * @returns
+	 *   A promise resolving to an object with two arrays:
+	 *   - `device_data`: Array of telemetry objects with null fields stripped
+	 *     and unwanted keys removed.
+	 *   - `report_info`: Array of report definitions, each with:
+	 *       • `alert_points[]`
+	 *       • `recipients[]`
+	 *       • `schedules[]`
+	 *
+	 * @throws
+	 *   Rethrows any Supabase RPC error if the call fails.
 	 */
 	public async getDeviceDataForReport(
 		devEui: string,
 		startDate: Date,
 		endDate: Date,
-		intervalMinutes: number,
-		targetColumn: string,
-		compareOperator: string,
-		compareValueMin: number,
-		compareValueMax: number | null = null
+		intervalMinutes: number = 30,
+		timezone: string = 'Asia/Tokyo'
 	): Promise<DeviceDataRecord[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
@@ -191,34 +209,17 @@ export class DeviceDataService implements IDeviceDataService {
 			throw new Error('Start date must be before end date');
 		}
 
-		// const { data, error } = await this.supabase.rpc('get_filtered_device_report_data', {
-		// 	dev_id: devEui,
-		// 	start_time: startDate.toISOString(),
-		// 	end_time: endDate.toISOString(),
-		// 	interval_minutes: intervalMinutes,
-		// 	target_column: targetColumn,
-		// 	compare_operator: compareOperator,
-		// 	compare_value_min: compareValueMin,
-		// 	compare_value_max: compareValueMax
-		// });
+		const { data, error } = await this.supabase.rpc('get_report_data_for_device', {
+			input_dev_eui: devEui,
+			input_start: startDate,
+			input_end: endDate,
+			input_timezone: timezone,
+			input_interval_minutes: intervalMinutes
+		});
 
-		const { data, error: rpcError } = await this.supabase.rpc(
-			'get_filtered_device_report_data_multi',
-			{
-				p_dev_id: devEui,
-				p_start_time: startDate.toISOString(),
-				p_end_time: endDate.toISOString(),
-				p_interval_minutes: intervalMinutes,
-				p_columns: ['temperature_c', 'humidity'],
-				p_ops: ['>', 'BETWEEN'],
-				p_mins: [-22, 55],
-				p_maxs: [null, 65]
-			}
-		);
-
-		if (rpcError) {
+		if (error) {
 			// You can inspect error.code or .details here for more nuance
-			throw new Error(`Error fetching device report data: ${rpcError.message}`);
+			throw new Error(`Error fetching device report data: ${error.message}`);
 		}
 
 		// Supabase returns JSONB rows; cast to your interface

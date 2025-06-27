@@ -123,22 +123,22 @@ export const GET: RequestHandler = async ({
 			startDate,
 			endDate,
 			30,
-			'temperature_c',
-			'>',
-			-20
+			'Asia/Tokyo'
 		);
 		if (!deviceData || deviceData.length === 0) {
 			throw error(404, 'No data found for the specified device');
 		}
-		deviceData.forEach((data) => {
-			dataa.push({
-				date: DateTime.fromISO(data.created_at).setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm'),
-				values: [data.temperature_c] // Assuming temperature_c is the only value we want to display
-			});
-		});
 
 		// Create the PDF data table
-		createPDFDataTable(doc, dataa);
+		const data = deviceData.device_data;
+		if (!data || data.length === 0) {
+			throw error(404, 'No data found for the specified device');
+		}
+		if (!deviceData.report_info || deviceData.report_info.length === 0) {
+			throw error(404, 'No report info found for the specified device');
+		}
+		const alertPoints = deviceData.report_info[0].alert_points;
+		createPDFDataTable(doc, data, alertPoints);
 
 		// Add generation timestamp
 		doc

@@ -1,8 +1,24 @@
 import PDFDocument from 'pdfkit';
+import { DateTime } from 'luxon';
 
 interface TableData {
-	date: string;
-	values: number[];
+	created_at: string;
+	dev_eui: string;
+	humidity?: number;
+	temperature_c?: number;
+	[key: string]: any; // Allow for other sensor data properties
+}
+
+interface AlertPointData {
+	id: number;
+	name: string;
+	operator: string | null;
+	min: number | null;
+	max: number | null;
+	report_id: string;
+	created_at: string;
+	hex_color: string | null;
+	data_point_key: string | null;
 }
 
 interface TableConfig {
@@ -36,6 +52,7 @@ const DEFAULT_CONFIG: TableConfig = {
 export function createPDFDataTable(
 	doc: InstanceType<typeof PDFDocument>,
 	data: TableData[],
+	alertPointData: AlertPointData[],
 	config: Partial<TableConfig> = {}
 ): void {
 	const conf = { ...DEFAULT_CONFIG, ...config };
@@ -51,12 +68,6 @@ export function createPDFDataTable(
 	const totalColumnWidth = conf.cellWidth + conf.columnMargin;
 	const actualColumnsPerPage = Math.floor(availableWidth / totalColumnWidth);
 	const finalColumnsPerPage = Math.min(conf.columnsPerPage, actualColumnsPerPage);
-
-	console.log('Page width:', pageWidth);
-	console.log('Available width:', availableWidth);
-	console.log('Column width + margin:', totalColumnWidth);
-	console.log('Calculated columns per page:', actualColumnsPerPage);
-	console.log('Final columns per page:', finalColumnsPerPage);
 
 	let currentPage = 0;
 	let dataIndex = 0;
@@ -77,7 +88,7 @@ export function createPDFDataTable(
 			const startX = conf.margin + col * (conf.cellWidth + conf.columnMargin);
 			const endIndex = Math.min(dataIndex + actualRowsPerColumn, data.length);
 
-			drawColumn(doc, data.slice(dataIndex, endIndex), startX, startY, conf);
+			drawColumn(doc, data.slice(dataIndex, endIndex), alertPointData, startX, startY, conf);
 			dataIndex = endIndex;
 		}
 
@@ -88,6 +99,7 @@ export function createPDFDataTable(
 function drawColumn(
 	doc: InstanceType<typeof PDFDocument>,
 	columnData: TableData[],
+	alertPointData: AlertPointData[],
 	startX: number,
 	startY: number,
 	config: TableConfig
@@ -113,13 +125,19 @@ function drawColumn(
 
 	// Add value headers if we have data
 	if (columnData.length > 0) {
-		const valueCount = columnData[0].values.length;
-		for (let i = 0; i < valueCount; i++) {
-			doc.fontSize(config.fontSize).text(`値${i + 1}`, startX + 40 + i * 20, currentY + 8, {
+		// Get sensor value properties (exclude metadata fields)
+		const sensorProperties = Object.keys(columnData[0]).filter(
+			(key) => !['created_at', 'dev_eui'].includes(key) && typeof columnData[0][key] === 'number'
+		);
+
+		sensorProperties.forEach((prop, i) => {
+			const headerText =
+				prop === 'temperature_c' ? '温度' : prop === 'humidity' ? '湿度' : prop.substring(0, 4); // Shortened property name
+			doc.fontSize(config.fontSize).text(headerText, startX + 40 + i * 20, currentY + 8, {
 				width: 15,
 				align: 'center'
 			});
-		}
+		});
 	}
 
 	currentY += config.headerHeight;
@@ -139,7 +157,9 @@ function drawColumn(
 		doc.strokeColor('#ccc').rect(startX, currentY, config.cellWidth, config.cellHeight).stroke();
 
 		// Date cell - split date and time
-		const [datePart, timePart] = row.date.split(' ');
+		const [datePart, timePart] = DateTime.fromJSDate(new Date(row.created_at))
+			.toFormat('yyyy/MM/dd HH:mm')
+			.split(' ');
 
 		doc
 			.fillColor('#000')
@@ -157,20 +177,28 @@ function drawColumn(
 		}
 
 		// Value cells
-		row.values.forEach((value, valueIndex) => {
+		// Get sensor value properties (exclude metadata fields)
+		const sensorProperties = Object.keys(row).filter(
+			(key) => !['created_at', 'dev_eui'].includes(key) && typeof row[key] === 'number'
+		);
+
+		sensorProperties.forEach((prop, valueIndex) => {
+			const value = row[prop] as number;
 			const cellX = startX + 40 + valueIndex * 20;
 			const displayValue = value.toFixed(1);
 
-			// Color coding based on value ranges (similar to your images)
+			// Color coding based on alert points
 			let bgColor = '#ffffff';
-			if (value >= 25)
-				bgColor = '#ff4444'; // Red
-			else if (value >= 20)
-				bgColor = '#ff8800'; // Orange
-			else if (value >= 15)
-				bgColor = '#ffff00'; // Yellow
-			else if (value >= 10) bgColor = '#88ff88'; // Light green
 
+			// Check alert points for this value and property
+			for (const alertPoint of alertPointData) {
+				if (alertPoint.data_point_key === prop && evaluateAlertCondition(value, alertPoint)) {
+					bgColor = alertPoint.hex_color || '#ffffff';
+					break; // Use the first matching alert point
+				}
+			}
+
+			// Apply background color if not white
 			if (bgColor !== '#ffffff') {
 				doc.fillColor(bgColor).rect(cellX, currentY, 20, config.cellHeight).fill();
 			}
@@ -190,4 +218,55 @@ function drawColumn(
 
 		currentY += config.cellHeight;
 	});
+}
+
+/**
+ * Evaluates whether a value meets the alert condition
+ * @param value - The data value to check
+ * @param alertPoint - The alert point configuration
+ * @returns boolean indicating if the condition is met
+ */
+function evaluateAlertCondition(value: number, alertPoint: AlertPointData): boolean {
+	if (!alertPoint.operator) {
+		return false;
+	}
+
+	switch (alertPoint.operator) {
+		case '>':
+			return alertPoint.min !== null && value > alertPoint.min;
+		case '>=':
+			return alertPoint.min !== null && value >= alertPoint.min;
+		case '<':
+			return alertPoint.max !== null && value < alertPoint.max;
+		case '<=':
+			return alertPoint.max !== null && value <= alertPoint.max;
+		case '==':
+		case '=':
+			return (
+				(alertPoint.min !== null && value === alertPoint.min) ||
+				(alertPoint.max !== null && value === alertPoint.max)
+			);
+		case '!=':
+			return (
+				alertPoint.min !== null &&
+				value !== alertPoint.min &&
+				alertPoint.max !== null &&
+				value !== alertPoint.max
+			);
+		case 'between':
+			return (
+				alertPoint.min !== null &&
+				alertPoint.max !== null &&
+				value >= alertPoint.min &&
+				value <= alertPoint.max
+			);
+		case 'outside':
+			return (
+				alertPoint.min !== null &&
+				alertPoint.max !== null &&
+				(value < alertPoint.min || value > alertPoint.max)
+			);
+		default:
+			return false;
+	}
 }
