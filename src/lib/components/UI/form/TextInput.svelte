@@ -2,7 +2,7 @@
 	type Props = {
 		type?: 'text' | 'password' | 'email' | 'number' | 'date';
 		name?: string;
-		value?: string | number;
+		value?: string | number | undefined;
 		placeholder?: string;
 		disabled?: boolean;
 		class?: string;

@@ -1,13 +1,29 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { formValidation } from '$lib/actions/formValidation';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import Select from '$lib/components/UI/form/Select.svelte';
-	import { error, success } from '$lib/stores/toast.svelte.js';
+	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
+	import type { DeviceWithType } from '$lib/models/Device';
+	import type { LocationUser } from '$lib/models/LocationUser';
+	import { error as errorToast, success as successToast } from '$lib/stores/toast.svelte';
+	import MaterialIcon from '../icons/MaterialIcon.svelte';
 
-	let { data, ownersList, onDelete = $bindable(), canDelete = false } = $props();
+	type Props = {
+		data: { device?: DeviceWithType; ownerId: string };
+		ownerList: LocationUser[];
+		canDelete: boolean;
+	};
+
+	let { data, ownerList, canDelete = false }: Props = $props();
 	let device = $derived(data.device);
 	let currentUserId = $derived(data.ownerId);
+	let showingRemoveConfirmation = $state(false);
+	let updatingUser: boolean = $state(false);
+	let updatingUserId: string | undefined = $state();
+	let removingUser: boolean = $state(false);
+	let removingUserId: string | undefined = $state();
 
 	// Permission levels (lower numbers = higher permissions)
 	const PERMISSION_LEVELS = {
@@ -29,11 +45,34 @@
 		if (!currentUserId) return false;
 		return (
 			isDeviceOwner(currentUserId) ||
-			ownersList.some(
-				(owner) => owner.user_id === currentUserId && owner.permission_level <= 1 // Admin level or higher
+			ownerList.some(
+				(owner) => owner.user_id === currentUserId && (owner.permission_level as number) <= 1 // Admin level or higher
 			)
 		);
 	}
+
+	const removeUser = async () => {
+		removingUser = true;
+
+		try {
+			const formData = new FormData();
+
+			formData.append('userId', removingUserId as string);
+
+			const response = await fetch('?/removeUser', { method: 'POST', body: formData });
+
+			if (response.ok) {
+				await invalidateAll();
+				successToast('User removed successfully');
+			} else {
+				errorToast('An error occurred while removing the user');
+			}
+		} catch {
+			errorToast('An error occurred while removing the user');
+		}
+
+		removingUser = false;
+	};
 </script>
 
 <section class="form-container bg-card !gap-0 rounded-lg">
@@ -41,12 +80,12 @@
 		<h3 class="text-lg font-semibold">Current Users</h3>
 	</div>
 	<div class="divide-y">
-		{#if !ownersList || ownersList?.length === 0}
+		{#if !ownerList || ownerList?.length === 0}
 			<div class="text-muted-foreground p-4 text-center">
 				No additional users have access to this device.
 			</div>
 		{:else}
-			{#each ownersList as owner (owner.id)}
+			{#each ownerList as owner (owner.id)}
 				<div
 					class="item-start flex flex-col justify-between gap-3 border-gray-300 p-3 sm:flex-row sm:items-center dark:border-neutral-400"
 				>
@@ -84,35 +123,46 @@
 									method="POST"
 									action="?/updatePermission"
 									class="inline"
-									use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+									use:enhance={() => {
+										updatingUserId = owner.user_id;
+										updatingUser = true;
+
 										return async ({ result, update }) => {
 											if (result.type === 'success' && result.data?.success) {
-												success((result.data as any).message || 'Permission updated successfully');
-												await update();
+												await update({ invalidateAll: true });
+												successToast(
+													(result.data as any).message || 'Permission updated successfully'
+												);
 											} else if (result.type === 'success' && result.data?.error) {
-												error((result.data as any).error);
+												errorToast((result.data as any).error);
 											} else {
-												error('Failed to update permission');
+												errorToast('Failed to update permission');
 											}
+
+											updatingUser = false;
 										};
 									}}
 									use:formValidation
 								>
 									<input type="hidden" name="ownerId" value={owner.id} />
-									<Select
-										name="permissionLevel"
-										required
-										onchange={(e) => {
-											const form = e.currentTarget.closest('form');
-											if (form) form.requestSubmit();
-										}}
-									>
-										{#each Object.entries(PERMISSION_LEVELS) as [level, name]}
-											<option value={level} selected={owner.permission_level == parseInt(level)}>
-												{name}
-											</option>
-										{/each}
-									</Select>
+									{#if updatingUser && updatingUserId === owner.user_id}
+										Updating...
+									{:else}
+										<Select
+											name="permissionLevel"
+											required
+											onchange={(e) => {
+												const form = (e.currentTarget as HTMLElement)?.closest('form');
+												if (form) form.requestSubmit();
+											}}
+										>
+											{#each Object.entries(PERMISSION_LEVELS) as [level, name]}
+												<option value={level} selected={owner.permission_level == parseInt(level)}>
+													{name}
+												</option>
+											{/each}
+										</Select>
+									{/if}
 									<button type="submit" class="hidden" aria-hidden="true">Update</button>
 								</form>
 							</div>
@@ -120,14 +170,28 @@
 							<span
 								class="bg-primary/60 dark:bg-primary/30 text-gray rounded px-3 py-1 text-sm dark:text-white"
 							>
-								{getPermissionName(owner.permission_level)}
+								{getPermissionName(owner.permission_level as number)}
 							</span>
 						{/if}
 						{#if canDelete}
-							<form action="?/removeUser" method="POST" class="inline">
-								<Button type="submit" variant="danger" class="ml-4">🗑️</Button>
-								<input type="hidden" name="userId" value={owner.user_id} />
-							</form>
+							{@const disabled = removingUser && removingUserId === owner.user_id}
+							<Button
+								type="submit"
+								variant="secondary"
+								iconic
+								{disabled}
+								onclick={(event) => {
+									event.preventDefault();
+									showingRemoveConfirmation = true;
+									removingUserId = owner.user_id;
+								}}
+							>
+								{#if disabled}
+									Removing...
+								{:else}
+									<MaterialIcon name="delete" />
+								{/if}
+							</Button>
 						{/if}
 					</div>
 				</div>
@@ -135,3 +199,31 @@
 		{/if}
 	</div>
 </section>
+
+<Dialog bind:open={showingRemoveConfirmation}>
+	{#snippet title()}
+		Remove User
+	{/snippet}
+	{#snippet body()}
+		Are you sure you want to remove this user?
+	{/snippet}
+	{#snippet footer()}
+		<Button
+			variant="secondary"
+			onclick={() => {
+				showingRemoveConfirmation = false;
+			}}
+		>
+			Cancel
+		</Button>
+		<Button
+			variant="danger"
+			onclick={() => {
+				showingRemoveConfirmation = false;
+				removeUser();
+			}}
+		>
+			Remove
+		</Button>
+	{/snippet}
+</Dialog>

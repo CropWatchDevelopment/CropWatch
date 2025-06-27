@@ -73,6 +73,7 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const name = formData.get('name') as string;
+		const description = formData.get('description') as string;
 		const latString = formData.get('lat') as string;
 		const longString = formData.get('long') as string;
 
@@ -116,6 +117,7 @@ export const actions: Actions = {
 			// Update the location
 			const updatedLocation = await locationService.updateLocation(locationId, {
 				name,
+				description,
 				lat,
 				long
 			});

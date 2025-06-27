@@ -108,8 +108,7 @@
 
 {#if isOwner}
 	<section class="border-danger/50 mt-6 flex flex-col gap-2 rounded-lg border p-4">
-		<h2 class="text-danger text-lg font-semibold">Super danger dangerous zone</h2>
-		<p class="text-muted text-sm">This is a super dangerous zone. Do not touch anything here.</p>
+		<h2 class="text-danger text-lg font-semibold">Dangerous Zone</h2>
 		<div>
 			<Button
 				variant="danger"
