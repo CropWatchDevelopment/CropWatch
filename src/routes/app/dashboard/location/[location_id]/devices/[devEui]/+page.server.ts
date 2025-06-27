@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
-import moment from 'moment';
+import { DateTime } from 'luxon';
 
 /**
  * Load the latest and historical device data for a specific device EUI.
@@ -13,11 +13,16 @@ export const load: PageServerLoad = async ({ url, params, locals: { supabase } }
 	try {
 		const deviceDataService = new DeviceDataService(supabase);
 
+		const startParam = url.searchParams.get('start');
+		const endParam = url.searchParams.get('end');
 		let startDate = url.searchParams.get('start');
 		let endDate = url.searchParams.get('end');
-		if (!startDate || !endDate) {
-			startDate = moment().subtract(7, 'days').toDate();
-			endDate = new Date();
+		if (!startParam || !endParam) {
+			startDate = DateTime.now().minus({ days: 7 }).startOf('day').toJSDate();
+			endDate = DateTime.now().endOf('day').toJSDate();
+		} else {
+			startDate = DateTime.fromISO(startParam).startOf('day').toJSDate();
+			endDate = DateTime.fromISO(endParam).endOf('day').toJSDate();
 		}
 
 		// Don’t `await` the promise, stream the data instead

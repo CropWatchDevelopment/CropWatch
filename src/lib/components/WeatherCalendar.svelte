@@ -2,7 +2,12 @@
 	import { Calendar, DayGrid } from '@event-calendar/core';
 	import '@event-calendar/core/index.css'; // include default styles
 	import { fetchHistoricalWeather } from '$lib/utilities/monthWeatherHistory';
-	import moment from 'moment';
+	import { DateTime } from 'luxon';
+
+	interface WeatherCalendarProps {
+		events?: any[];
+		onDateChange?: (start: Date, end: Date) => void;
+	}
 
 	const { events = [], onDateChange = () => {} } = $props();
 
@@ -16,8 +21,8 @@
 	async function loadWeatherForMonth(date: Date) {
 		loading = true;
 		try {
-			const startDate = moment(date).startOf('month').toDate();
-			let endDate = moment(date).endOf('month').toDate();
+			const startDate = DateTime.fromJSDate(date).startOf('month').toJSDate();
+			let endDate = DateTime.fromJSDate(date).endOf('month').toJSDate();
 			if (endDate > new Date()) {
 				endDate = new Date(); // Adjust to yesterday if future date
 			}

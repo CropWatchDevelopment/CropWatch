@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { DateTime } from 'luxon';
 import type { IDeviceDataService } from '../interfaces/IDeviceDataService';
 import type { DeviceType } from '../models/Device';
 import type { DeviceDataRecord } from '../models/DeviceDataRecord';
@@ -88,7 +88,9 @@ export class DeviceDataService implements IDeviceDataService {
 
 		try {
 			// get the number of uploads between the selected start and end dates
-			const monthsInRange = moment(endDate).diff(startDate, 'months');
+			const monthsInRange = Math.floor(
+				DateTime.fromJSDate(endDate).diff(DateTime.fromJSDate(startDate), 'months').months
+			);
 			if (monthsInRange > 3) {
 				// If the range is too large, limit the query to the last 3 months
 				throw new Error('Date range too large');

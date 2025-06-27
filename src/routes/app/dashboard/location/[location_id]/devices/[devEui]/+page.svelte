@@ -15,7 +15,6 @@
 		formatDateOnly,
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
-	import moment from 'moment';
 	import { onMount } from 'svelte';
 	import { _, locale } from 'svelte-i18n';
 	import type { PageProps } from './$types';
@@ -454,7 +453,7 @@
 					events={calendarEvents}
 					onDateChange={(date: Date) => {
 						startDateInputString = formatDateForInput(date);
-						endDateInputString = formatDateForInput(moment(date).endOf('month').toDate());
+						endDateInputString = formatDateForInput(deviceDetail.endDate);
 						handleDateRangeSubmit();
 					}}
 				/>
