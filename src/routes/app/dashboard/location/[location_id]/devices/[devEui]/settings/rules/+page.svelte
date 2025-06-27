@@ -407,6 +407,7 @@
 									{ invalidateAll: true, replaceState: false }
 								).then(() => {
 									// Force a complete page reload to ensure fresh data
+									// @todo Replace with `invalidateAll`
 									window.location.reload();
 								});
 							} else {
