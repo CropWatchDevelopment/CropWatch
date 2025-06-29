@@ -2,11 +2,8 @@ import PDFDocument from 'pdfkit';
 import { DateTime } from 'luxon';
 
 interface TableData {
-	created_at: string;
-	dev_eui: string;
-	humidity?: number;
-	temperature_c?: number;
-	[key: string]: any; // Allow for other sensor data properties
+	date: string;
+	values: number[];
 }
 
 interface AlertPointData {
@@ -19,6 +16,15 @@ interface AlertPointData {
 	created_at: string;
 	hex_color: string | null;
 	data_point_key: string | null;
+}
+
+interface AlertData {
+	alert_points: AlertPointData[];
+	created_at: string;
+	dev_eui: string;
+	id: number;
+	name: string;
+	report_id: string;
 }
 
 interface TableConfig {
@@ -52,7 +58,7 @@ const DEFAULT_CONFIG: TableConfig = {
 export function createPDFDataTable(
 	doc: InstanceType<typeof PDFDocument>,
 	data: TableData[],
-	alertPointData: AlertPointData[],
+	alertPointData: AlertData,
 	config: Partial<TableConfig> = {}
 ): void {
 	const conf = { ...DEFAULT_CONFIG, ...config };
@@ -99,7 +105,7 @@ export function createPDFDataTable(
 function drawColumn(
 	doc: InstanceType<typeof PDFDocument>,
 	columnData: TableData[],
-	alertPointData: AlertPointData[],
+	alertPointData: AlertData,
 	startX: number,
 	startY: number,
 	config: TableConfig
@@ -125,19 +131,16 @@ function drawColumn(
 
 	// Add value headers if we have data
 	if (columnData.length > 0) {
-		// Get sensor value properties (exclude metadata fields)
-		const sensorProperties = Object.keys(columnData[0]).filter(
-			(key) => !['created_at', 'dev_eui'].includes(key) && typeof columnData[0][key] === 'number'
-		);
+		// Number of values determines how many columns we need
+		const valueCount = columnData[0].values.length;
 
-		sensorProperties.forEach((prop, i) => {
-			const headerText =
-				prop === 'temperature_c' ? '温度' : prop === 'humidity' ? '湿度' : prop.substring(0, 4); // Shortened property name
+		for (let i = 0; i < valueCount; i++) {
+			const headerText = `値${i + 1}`; // "Value 1", "Value 2", etc. in Japanese
 			doc.fontSize(config.fontSize).text(headerText, startX + 40 + i * 20, currentY + 8, {
 				width: 15,
 				align: 'center'
 			});
-		});
+		}
 	}
 
 	currentY += config.headerHeight;
@@ -157,7 +160,7 @@ function drawColumn(
 		doc.strokeColor('#ccc').rect(startX, currentY, config.cellWidth, config.cellHeight).stroke();
 
 		// Date cell - split date and time
-		const [datePart, timePart] = DateTime.fromJSDate(new Date(row.created_at))
+		const [datePart, timePart] = DateTime.fromJSDate(new Date(row.date))
 			.toFormat('yyyy/MM/dd HH:mm')
 			.split(' ');
 
@@ -177,22 +180,16 @@ function drawColumn(
 		}
 
 		// Value cells
-		// Get sensor value properties (exclude metadata fields)
-		const sensorProperties = Object.keys(row).filter(
-			(key) => !['created_at', 'dev_eui'].includes(key) && typeof row[key] === 'number'
-		);
-
-		sensorProperties.forEach((prop, valueIndex) => {
-			const value = row[prop] as number;
+		row.values.forEach((value, valueIndex) => {
 			const cellX = startX + 40 + valueIndex * 20;
 			const displayValue = value.toFixed(1);
 
 			// Color coding based on alert points
 			let bgColor = '#ffffff';
 
-			// Check alert points for this value and property
-			for (const alertPoint of alertPointData) {
-				if (alertPoint.data_point_key === prop && evaluateAlertCondition(value, alertPoint)) {
+			// Check alert points for this value
+			for (const alertPoint of alertPointData.alert_points) {
+				if (evaluateAlertCondition(value, alertPoint)) {
 					bgColor = alertPoint.hex_color || '#ffffff';
 					break; // Use the first matching alert point
 				}

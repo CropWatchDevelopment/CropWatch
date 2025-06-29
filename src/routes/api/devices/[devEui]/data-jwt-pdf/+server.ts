@@ -19,66 +19,19 @@ import path from 'path';
  *
  * Returns: PDF file as binary response
  */
-export const GET: RequestHandler = async ({ params, url, request }) => {
+export const GET: RequestHandler = async ({
+	params,
+	url,
+	request,
+	locals: { supabase, safeGetSession }
+}) => {
 	const { devEui } = params;
 
-	// Extract JWT token from Authorization header
-	const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
-	const jwt = authHeader?.replace(/^Bearer\s+/i, '').trim();
-
-	if (!jwt) {
-		console.error('No JWT token provided for PDF generation API');
-		return json({ error: 'Authorization header with Bearer token is required' }, { status: 401 });
-	}
-
-	// Create a new Supabase client with JWT context for RLS to work properly
-	const jwtSupabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		global: {
-			headers: { Authorization: `Bearer ${jwt}` }
-		},
-		auth: { persistSession: false }
-	});
-
-	// Validate JWT token and get user
-	let user = null;
-	try {
-		console.log('Validating JWT token for PDF generation');
-		const { data, error: authError } = await jwtSupabase.auth.getUser(jwt);
-
-		if (authError || !data?.user) {
-			console.error('Invalid JWT token:', authError?.message);
-			return json({ error: 'Invalid or expired JWT token' }, { status: 401 });
-		}
-
-		user = data.user;
-		console.log(
-			`JWT-authenticated PDF generation request from user: ${user.email} for device: ${devEui}`
-		);
-
-		// Check if user has permission to access this device
-		const { data: deviceOwnership, error: permissionError } = await jwtSupabase
-			.from('cw_device_owners')
-			.select('permission_level')
-			.eq('dev_eui', devEui)
-			.eq('user_id', user.id)
-			.maybeSingle();
-
-		if (permissionError) {
-			console.error('Error checking device ownership:', permissionError);
-			return json({ error: 'Failed to verify device permissions' }, { status: 500 });
-		}
-
-		if (!deviceOwnership) {
-			console.warn(`User ${user.email} does not have permission to access device ${devEui}`);
-			return json({ error: 'You do not have permission to access this device' }, { status: 403 });
-		}
-
-		console.log(
-			`User ${user.email} has permission level ${deviceOwnership.permission_level} for device ${devEui}`
-		);
-	} catch (authErr) {
-		console.error('JWT validation error:', authErr);
-		return json({ error: 'Failed to validate JWT token' }, { status: 401 });
+	console.log(supabase);
+	const session = await safeGetSession();
+	if (!session || !session.user) {
+		console.error('No session found for JWT PDF generation');
+		return json({ error: 'Unauthorized - No session found' }, { status: 401 });
 	}
 
 	try {
@@ -128,77 +81,61 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 		);
 
 		// Get device data using JWT-authenticated client (same method as browser version)
-		const deviceDataService = new DeviceDataService(jwtSupabase);
+		const deviceDataService = new DeviceDataService(supabase);
 		let deviceData: any[] = [];
+		let reportInfo: any = {};
+
+		console.log('No data from simple query, trying getDeviceDataForReport...');
 
 		try {
-			console.log('Using simple date range query (avoiding column errors)...');
-
-			// Use simple date range query to avoid column-specific errors
-			deviceData = await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
-
-			console.log(`Raw data count: ${deviceData?.length || 0}`);
-
-			// If no data, try getDeviceDataForReport as fallback (but handle errors)
-			if (!deviceData || deviceData.length === 0) {
-				console.log('No data from simple query, trying getDeviceDataForReport...');
-
-				try {
-					deviceData = await deviceDataService.getDeviceDataForReport(
-						devEui,
-						startDate,
-						endDate,
-						30, // interval in minutes - sample every 30 minutes
-						'temperature_c', // target column for filtering
-						'>', // comparison operator
-						-20 // minimum temperature threshold (filters out invalid readings)
-					);
-				} catch (reportError) {
-					console.log(
-						'getDeviceDataForReport failed, continuing with empty data:',
-						reportError instanceof Error ? reportError.message : 'Unknown error'
-					);
-					deviceData = [];
-				}
-			}
-
-			if (!deviceData || deviceData.length === 0) {
-				return json(
-					{
-						error: `No data found for device ${devEui} in the specified date range`,
-						device: devEui,
-						dateRange: { start: startDateParam, end: endDateParam },
-						user: user.email,
-						suggestion: 'Try a different date range or check if the device has been sending data'
-					},
-					{ status: 404 }
+			const deviceDataResponse = await deviceDataService.getDeviceDataForReport(
+				devEui,
+				startDate,
+				endDate,
+				'Asia/Tokyo',
+				30 // Default interval in minutes
+			);
+			if (deviceDataResponse.device_data) {
+				deviceData = deviceDataResponse.device_data;
+				reportInfo = deviceDataResponse.report_info[0];
+			} else {
+				throw new Error(
+					`No device data found for ${devEui} in the specified date range: ${startDate.toISOString()} to ${endDate.toISOString()}`
 				);
 			}
-
+		} catch (reportError) {
 			console.log(
-				`Found ${deviceData.length} records for PDF generation using professional method`
+				'getDeviceDataForReport failed, continuing with empty data:',
+				reportError instanceof Error ? reportError.message : 'Unknown error'
 			);
+			deviceData = [];
+		}
 
-			// Sort data chronologically (oldest first) to ensure proper date order in PDF
-			deviceData.sort((a, b) => {
-				const dateA = new Date(a.created_at).getTime();
-				const dateB = new Date(b.created_at).getTime();
-				return dateA - dateB; // Ascending order (oldest first)
-			});
-
-			console.log(
-				`Data sorted chronologically from ${deviceData[0]?.created_at} to ${deviceData[deviceData.length - 1]?.created_at}`
-			);
-		} catch (dataError) {
-			console.error('Error fetching device data:', dataError);
+		if (!deviceData || deviceData.length === 0) {
 			return json(
 				{
-					error: 'Failed to fetch device data',
-					details: dataError instanceof Error ? dataError.message : 'Unknown error'
+					error: `No data found for device ${devEui} in the specified date range`,
+					device: devEui,
+					dateRange: { start: startDateParam, end: endDateParam },
+					user: user.email,
+					suggestion: 'Try a different date range or check if the device has been sending data'
 				},
-				{ status: 500 }
+				{ status: 404 }
 			);
 		}
+
+		console.log(`Found ${deviceData.length} records for PDF generation using professional method`);
+
+		// Step 3: Sort the array by `created_at`
+		deviceData.sort((a, b) => {
+			const dateA = new Date(a.created_at).getTime();
+			const dateB = new Date(b.created_at).getTime();
+			return dateA - dateB; // Ascending
+		});
+
+		console.log(
+			`Data sorted chronologically from ${deviceData[0]?.created_at} to ${deviceData[deviceData.length - 1]?.created_at}`
+		);
 
 		// Generate professional PDF using PDFKit (same as browser version)
 		const doc = new PDFDocument({
@@ -206,7 +143,7 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 			margin: 40,
 			info: {
 				Title: `Device ${devEui} Report`,
-				Author: `CropWatch - ${user.email}`,
+				Author: `CropWatch API`,
 				Subject: `Data report for device ${devEui} from ${startDateParam} to ${endDateParam}`,
 				Creator: 'CropWatch API'
 			}
@@ -251,7 +188,7 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 		doc
 			.fontSize(12)
 			.text(`期間: ${startDateParam} ～ ${endDateParam}`, { align: 'left' })
-			.text(`生成者: ${user.email}`, { align: 'left' })
+			// .text(`生成者: ${user.email}`, { align: 'left' })
 			.text(`生成日時: ${DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm:ss')}`, {
 				align: 'left'
 			})
@@ -282,7 +219,7 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 
 		// Create the professional data table (same as browser version)
 		if (dataa.length > 0) {
-			createPDFDataTable(doc, dataa);
+			createPDFDataTable(doc, dataa, reportInfo);
 		} else {
 			doc.text('指定された期間にデータが見つかりませんでした。', { align: 'center' });
 		}

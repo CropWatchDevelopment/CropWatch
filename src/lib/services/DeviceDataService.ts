@@ -167,4 +167,63 @@ export class DeviceDataService implements IDeviceDataService {
 
 		return cw_device;
 	}
+
+	public async getDeviceDataForReport(
+		devEui: string,
+		startDate: Date,
+		endDate: Date,
+		timezone: string,
+		intervalMinutes: number
+	): Promise<DeviceDataRecord[]> {
+		if (!devEui) {
+			throw new Error('Device EUI not specified');
+		}
+		if (!startDate || !endDate) {
+			throw new Error('Start date and end date must be specified');
+		}
+		if (startDate > endDate) {
+			throw new Error('Start date must be before end date');
+		}
+
+		try {
+			const { data, error: deviceError } = await this.supabase.rpc('get_report_data_for_device', {
+				input_dev_eui: devEui,
+				input_start: startDate,
+				input_end: endDate,
+				input_timezone: timezone,
+				input_interval_minutes: intervalMinutes
+			});
+
+			if (deviceError) {
+				this.errorHandler.logError(deviceError);
+				throw new Error(`Error fetching report data: ${deviceError.message}`);
+			}
+			if (!data || data.length === 0) {
+				return [
+					{
+						error: 'No data found for the specified date range',
+						partial: false,
+						dev_eui: devEui,
+						created_at: new Date().toISOString(),
+						note: 'No data available for this device in the specified range'
+					}
+				];
+			}
+			return data as DeviceDataRecord[];
+		} catch (error) {
+			this.errorHandler.logError(error as Error);
+			if (error instanceof Error && error.message.includes('AbortError')) {
+				return [
+					{
+						error: 'Data retrieval timed out',
+						partial: true,
+						dev_eui: devEui,
+						created_at: new Date().toISOString(),
+						note: 'This is a placeholder due to query timeout'
+					}
+				];
+			}
+			throw error;
+		}
+	}
 }
