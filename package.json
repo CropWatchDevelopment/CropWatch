@@ -40,6 +40,7 @@
 		"@testing-library/svelte": "^5.2.4",
 		"@types/d3": "^7.4.3",
 		"@types/event-calendar__core": "^4.4.0",
+		"@types/luxon": "^3.6.2",
 		"@types/swagger-ui": "^5.21.1",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",

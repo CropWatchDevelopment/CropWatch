@@ -138,6 +138,9 @@ importers:
       '@types/event-calendar__core':
         specifier: ^4.4.0
         version: 4.4.0
+      '@types/luxon':
+        specifier: ^3.6.2
+        version: 3.6.2
       '@types/swagger-ui':
         specifier: ^5.21.1
         version: 5.21.1
@@ -1403,6 +1406,9 @@ packages:
 
   '@types/lodash@4.17.18':
     resolution: {integrity: sha512-KJ65INaxqxmU6EoCiJmRPZC9H9RVWCRd349tXM2M3O5NA7cY6YL7c0bHAHQ93NOfTObEQ004kd2QVHs/r0+m4g==}
+
+  '@types/luxon@3.6.2':
+    resolution: {integrity: sha512-R/BdP7OxEMc44l2Ex5lSXHoIXTB2JLNa3y2QISIbr58U/YcsffyQrYW//hZSdrfxrjRZj3GcUoxMPGdO8gSYuw==}
 
   '@types/node@24.0.3':
     resolution: {integrity: sha512-R4I/kzCYAdRLzfiCabn9hxWfbuHS573x+r0dJMkkzThEa7pbrcDWK+9zu3e7aBOouf+rQAciqPFMnxwr0aWgKg==}
@@ -5478,6 +5484,8 @@ snapshots:
   '@types/json-schema@7.0.15': {}
 
   '@types/lodash@4.17.18': {}
+
+  '@types/luxon@3.6.2': {}
 
   '@types/node@24.0.3':
     dependencies:
