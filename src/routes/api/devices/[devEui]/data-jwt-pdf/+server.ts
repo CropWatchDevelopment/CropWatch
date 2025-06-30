@@ -8,6 +8,8 @@ import PDFDocument from 'pdfkit';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 import fs from 'fs';
 import path from 'path';
+import { createPDFLineChart } from '$lib/pdf/pdfLineChart';
+import { addPageNumbers } from '$lib/pdf/pdfFooterPageNumber';
 
 /**
  * JWT-authenticated PDF generation endpoint for device data reports
@@ -30,7 +32,10 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 		let { data: userData, error: userError } = await supabase.auth.getUser();
 		if (userError || !userData) {
 			console.error('Failed to get user from JWT:', userError?.message);
-			return json({ error: 'Unauthorized access' }, { status: 401 });
+			return json(
+				{ error: `Unauthorized access - ${userError?.message}` },
+				{ status: userError?.status }
+			);
 		}
 		let user = userData.user;
 		// Get query parameters for date range
@@ -127,7 +132,7 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 		);
 
 		// Generate professional PDF using PDFKit (same as browser version)
-		const doc = new PDFDocument({
+		const doc: PDFDocument = new PDFDocument({
 			size: 'A4',
 			margin: 40,
 			info: {
@@ -183,10 +188,6 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 				align: 'left'
 			})
 			.text(`総レコード数: ${deviceData.length}`, { align: 'left' });
-
-		doc.moveDown();
-		doc.fontSize(14).text('データテーブル', { align: 'left' });
-
 		// Transform data for the professional table format (exactly like browser version)
 		const dataa: { date: string; values: number[] }[] = [];
 
@@ -205,6 +206,13 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 			}
 		});
 
+		createPDFLineChart(doc, dataa, reportInfo.alert_points, {
+			title: 'センサーデータトレンド',
+			width: 600,
+			height: 400,
+			xAxisLabel: '時間',
+			yAxisLabel: '測定値'
+		});
 		createPDFDataTable(doc, dataa, reportInfo);
 
 		// Finalize the PDF
