@@ -78,6 +78,31 @@ export function createPDFDataTable(
 	let currentPage = 0;
 	let dataIndex = 0;
 
+	doc.addPage(); // Add Page break because the data table should always start on a new page.
+
+	// add header with legend of colors and alert points
+	doc
+		.fillColor('black')
+		.fontSize(conf.fontSize)
+		.text('アラートポイントの色分け:', conf.margin, conf.margin, {
+			width: pageWidth - conf.margin * 2,
+			align: 'left'
+		});
+	const legendStartY = conf.margin + 15;
+	// Draw alert points legend
+	alertPointData.alert_points.forEach((point, index) => {
+		const color = point.hex_color || '#ffffff';
+		const legendX =
+			conf.margin + (index % finalColumnsPerPage) * (conf.cellWidth + conf.columnMargin);
+		// const legendY = legendStartY + Math.floor(index / finalColumnsPerPage) * 15;
+
+		doc.fillColor(color).rect(0, 0, 10, 10).fill();
+		doc.fillColor('black').text(point.name, legendX + 15, 0, {
+			width: conf.cellWidth - 25,
+			align: 'left'
+		});
+	});
+
 	while (dataIndex < data.length) {
 		if (currentPage > 0) {
 			doc.addPage();

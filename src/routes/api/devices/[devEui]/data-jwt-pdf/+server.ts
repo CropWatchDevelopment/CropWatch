@@ -2,7 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 import { DateTime } from 'luxon';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import PDFDocument from 'pdfkit';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
@@ -19,22 +19,20 @@ import path from 'path';
  *
  * Returns: PDF file as binary response
  */
-export const GET: RequestHandler = async ({
-	params,
-	url,
-	request,
-	locals: { supabase, safeGetSession }
-}) => {
+export const GET: RequestHandler = async ({ params, url, request }) => {
 	const { devEui } = params;
 
-	console.log(supabase);
-	const session = await safeGetSession();
-	if (!session || !session.user) {
-		console.error('No session found for JWT PDF generation');
-		return json({ error: 'Unauthorized - No session found' }, { status: 401 });
-	}
-
 	try {
+		const supabase = await validateAuth(request);
+		if (!supabase || supabase === null) {
+			return json({ error: 'Unauthorized access' }, { status: 401 });
+		}
+		let { data: userData, error: userError } = await supabase.auth.getUser();
+		if (userError || !userData) {
+			console.error('Failed to get user from JWT:', userError?.message);
+			return json({ error: 'Unauthorized access' }, { status: 401 });
+		}
+		let user = userData.user;
 		// Get query parameters for date range
 		const startDateParam = url.searchParams.get('start');
 		const endDateParam = url.searchParams.get('end');
@@ -70,15 +68,6 @@ export const GET: RequestHandler = async ({
 		// Convert back to UTC for database queries
 		startDate = tokyoStartDate.toUTC().toJSDate();
 		endDate = tokyoEndDate.toUTC().toJSDate();
-
-		console.log(
-			`Tokyo date range: ${tokyoStartDate.toFormat('yyyy-MM-dd HH:mm')} to ${tokyoEndDate.toFormat('yyyy-MM-dd HH:mm')}`
-		);
-		console.log(`UTC date range for DB: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-
-		console.log(
-			`[JWT PDF API] Generating PDF report for device ${devEui} from ${startDate.toISOString()} to ${endDate.toISOString()}`
-		);
 
 		// Get device data using JWT-authenticated client (same method as browser version)
 		const deviceDataService = new DeviceDataService(supabase);
@@ -146,7 +135,8 @@ export const GET: RequestHandler = async ({
 				Author: `CropWatch API`,
 				Subject: `Data report for device ${devEui} from ${startDateParam} to ${endDateParam}`,
 				Creator: 'CropWatch API'
-			}
+			},
+			bufferPages: true
 		});
 
 		// Define possible font paths for NotoSansJP (Japanese font support)
@@ -188,7 +178,7 @@ export const GET: RequestHandler = async ({
 		doc
 			.fontSize(12)
 			.text(`期間: ${startDateParam} ～ ${endDateParam}`, { align: 'left' })
-			// .text(`生成者: ${user.email}`, { align: 'left' })
+			.text(`生成者: ${user.email}`, { align: 'left' })
 			.text(`生成日時: ${DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm:ss')}`, {
 				align: 'left'
 			})
@@ -215,14 +205,7 @@ export const GET: RequestHandler = async ({
 			}
 		});
 
-		console.log(`Processed ${dataa.length} temperature records for PDF table`);
-
-		// Create the professional data table (same as browser version)
-		if (dataa.length > 0) {
-			createPDFDataTable(doc, dataa, reportInfo);
-		} else {
-			doc.text('指定された期間にデータが見つかりませんでした。', { align: 'center' });
-		}
+		createPDFDataTable(doc, dataa, reportInfo);
 
 		// Finalize the PDF
 		doc.end();
@@ -277,4 +260,25 @@ export const GET: RequestHandler = async ({
 			{ status: 500 }
 		);
 	}
+};
+
+const validateAuth = async (request: Request): Promise<SupabaseClient> => {
+	// Extract JWT token from Authorization header
+	const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+	const jwt = authHeader?.replace(/^Bearer\s+/i, '').trim();
+
+	if (!jwt) {
+		console.error('No JWT token provided for PDF generation API');
+		throw error(401, 'Unauthorized access: No JWT token provided');
+	}
+
+	// Create a new Supabase client with JWT context for RLS to work properly
+	const jwtSupabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		global: {
+			headers: { Authorization: `Bearer ${jwt}` }
+		},
+		auth: { persistSession: false }
+	});
+
+	return jwtSupabase;
 };

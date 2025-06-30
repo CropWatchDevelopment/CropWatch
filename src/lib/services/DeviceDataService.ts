@@ -27,7 +27,9 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-
+		if (!this.checkUserHasAccess(devEui)) {
+			throw new Error('User does not have access to this device');
+		}
 		const cw_device = await this.getDeviceAndType(devEui);
 		const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
 
@@ -75,6 +77,9 @@ export class DeviceDataService implements IDeviceDataService {
 	): Promise<DeviceDataRecord[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
+		}
+		if (!this.checkUserHasAccess(devEui)) {
+			throw new Error('User does not have access to this device');
 		}
 		if (!startDate || !endDate) {
 			throw new Error('Start date and end date must be specified');
@@ -149,7 +154,9 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-
+		if (!this.checkUserHasAccess(devEui)) {
+			throw new Error('User does not have access to this device');
+		}
 		const { data: cw_device, error: deviceError } = await this.supabase
 			.from('cw_devices')
 			.select('*, cw_device_type(*)')
@@ -177,6 +184,9 @@ export class DeviceDataService implements IDeviceDataService {
 	): Promise<DeviceDataRecord[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
+		}
+		if (!this.checkUserHasAccess(devEui)) {
+			throw new Error('User does not have access to this device');
 		}
 		if (!startDate || !endDate) {
 			throw new Error('Start date and end date must be specified');
@@ -225,5 +235,30 @@ export class DeviceDataService implements IDeviceDataService {
 			}
 			throw error;
 		}
+	}
+
+	private async checkUserHasAccess(dev_eui: string): Promise<boolean> {
+		// Placeholder for user access check logic
+		// This should be implemented based on your authentication and authorization system
+		const session = await this.supabase.auth.getSession();
+		if (!session || !session.data.session) {
+			return false; // No session means no access
+		}
+		const user = session.data.session.user;
+		if (!user || !user.email) {
+			return false; // No user or email means no access
+		}
+
+		const { data, error } = await this.supabase
+			.from('cw_device_owners')
+			.select('*')
+			.eq('dev_eui', dev_eui)
+			.eq('user_id', user.id)
+			.single();
+		if (error) {
+			this.errorHandler.logError(error);
+			return false; // Error checking access
+		}
+		return true; // Default to true for now
 	}
 }
