@@ -107,6 +107,7 @@
 </section>
 
 {#if isOwner}
+	<span class="flex flex-1"></span>
 	<section class="border-danger/50 mt-6 flex flex-col gap-2 rounded-lg border p-4">
 		<h2 class="text-danger text-lg font-semibold">Dangerous Zone</h2>
 		<div>

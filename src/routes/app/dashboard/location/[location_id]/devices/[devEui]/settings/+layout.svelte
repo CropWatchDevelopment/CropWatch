@@ -18,6 +18,7 @@
 	const links = [
 		{ href: `${basePath}/settings`, label: 'General' },
 		{ href: `${basePath}/settings/rules`, label: 'Notifications' },
+		{ href: `${basePath}/settings/reports`, label: 'Reports' },
 		{ href: `${basePath}/settings/permissions`, label: 'Permissions' }
 	];
 </script>
