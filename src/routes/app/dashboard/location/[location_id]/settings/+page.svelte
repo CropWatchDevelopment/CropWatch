@@ -272,6 +272,7 @@
 					Manage which users have access to this location and with what permission level.
 				</p>
 
+				<pre>{JSON.stringify(data.ownerId, null, 2)}</pre>
 				<UserPermissionsSelector {data} {ownerList} canDelete={true} />
 
 				<div class="mt-6">

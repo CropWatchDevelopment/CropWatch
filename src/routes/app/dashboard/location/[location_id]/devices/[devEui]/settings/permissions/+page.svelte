@@ -6,12 +6,12 @@
 	let { data } = $props();
 
 	let device = $derived(data.device);
-	let ownersList: DeviceOwnerWithProfile[] = $derived([]);
+	let ownerList: DeviceOwnerWithProfile[] = $derived([]);
 	let currentUserId = $derived(data.ownerId);
 
 	$effect(() => {
 		(async () => {
-			ownersList = await data.deviceOwners;
+			ownerList = await data.deviceOwners;
 		})();
 	});
 </script>
@@ -29,5 +29,6 @@
 			</p>
 		</div>
 	</header>
-	<UserPermissionsSelector {data} {ownersList} />
+	<pre>{JSON.stringify(data.ownerId, null, 2)}</pre>
+	<UserPermissionsSelector {data} {ownerList} />
 </section>
