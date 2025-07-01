@@ -5,6 +5,7 @@
 	import { success, error as toastError } from '$lib/stores/toast.svelte';
 	import GoogleAuthLogin from './GoogleAuthLogin.svelte';
 	import DiscordAuthLogin from './DiscordAuthLogin.svelte';
+	import { _ } from 'svelte-i18n';
 
 	// Form state
 	let email = $state('');
@@ -32,7 +33,7 @@
 			isLoggedIn = data.authenticated;
 
 			if (isLoggedIn) {
-				successMessage = 'You are already logged in';
+				successMessage = $_('You are already logged in');
 				console.log('Login page: User is logged in, showing success message');
 
 				// Add a button for manual navigation rather than automatic redirect
@@ -70,7 +71,7 @@
 
 			// Immediately redirect to dashboard - no delay, no success message
 			// window.location.href = '/app/dashboard';
-			successMessage = 'Login successful! Redirecting to dashboard...';
+			successMessage = $_('Login successful! Redirecting to dashboard...');
 			success(successMessage);
 			goto('/app/dashboard');
 		} catch (err) {
@@ -83,7 +84,7 @@
 </script>
 
 <svelte:head>
-	<title>Login | IoT Dashboard</title>
+	<title>{$_('Login')} | {$_('IoT Dashboard')}</title>
 </svelte:head>
 
 <div
@@ -92,7 +93,7 @@
 	<div
 		class="bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark w-full max-w-md rounded-lg p-6 shadow-md"
 	>
-		<h1 class="mb-6 text-center text-2xl font-bold">Login</h1>
+		<h1 class="mb-6 text-center text-2xl font-bold">{$_('Login')}</h1>
 
 		<!-- {#if error}
 			<div
@@ -111,19 +112,19 @@
 					class="bg-primary hover:bg-primary-hover mt-4 w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200"
 					onclick={() => goto('/app/dashboard')}
 				>
-					Go to Dashboard
+					{$_('Go to Dashboard')}
 				</button>
 			</div>
 		{:else if !isLoggedIn}
 			<form onsubmit={handleSubmit} class="space-y-4">
 				<div>
-					<label for="email" class="mb-1 block text-sm font-medium">Email</label>
+					<label for="email" class="mb-1 block text-sm font-medium">{$_('Email')}</label>
 					<input
 						type="email"
 						id="email"
 						bind:value={email}
 						required
-						placeholder="✉️ Enter your email"
+						placeholder="✉️ {$_('Enter your email')}"
 						disabled={loading}
 						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
                                bg-white px-3 py-2 focus:border-transparent
@@ -132,13 +133,13 @@
 				</div>
 
 				<div>
-					<label for="password" class="mb-1 block text-sm font-medium">Password</label>
+					<label for="password" class="mb-1 block text-sm font-medium">{$_('Password')}</label>
 					<input
 						type="password"
 						id="password"
 						bind:value={password}
 						required
-						placeholder="🔒 Enter your password"
+						placeholder="🔒 {$_('Enter your password')}"
 						disabled={loading}
 						autocomplete="current-password"
 						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
@@ -153,7 +154,7 @@
 						class="bg-primary hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
 						disabled={submitting}
 					>
-						{submitting ? 'Logging in...' : '🔑 Login'}
+						{submitting ? $_('Logging in...') : `🔑 ${$_('Login')}`}
 					</button>
 				</div>
 				<div class="flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
@@ -171,7 +172,7 @@
 					disabled={loading}
 					onclick={() => goto('/api/')}
 				>
-					🌐 Go to API
+					🌐 {$_('Go to API')}
 				</button>
 
 				<button
@@ -180,7 +181,7 @@
 					disabled={loading}
 					onclick={() => goto('/auth/register')}
 				>
-					🚀 Create an account
+					🚀 {$_('Create an account')}
 				</button>
 
 				<button
@@ -189,7 +190,7 @@
 					disabled={loading}
 					onclick={() => goto('/auth/forgot-password')}
 				>
-					❓ Forgot Password
+					❓ {$_('Forgot Password')}
 				</button>
 			</div>
 		{/if}

@@ -177,13 +177,13 @@
 </script>
 
 <svelte:head>
-	<title>Notifications - CropWatch</title>
+	<title>{$_('Notifications')} - CropWatch</title>
 </svelte:head>
 
 <section class="flex flex-col gap-6">
 	<header class="flex flex-row items-center justify-between gap-4">
 		<div>
-			<h1 class="mb-1 text-2xl font-semibold">Notifications</h1>
+			<h1 class="mb-1 text-2xl font-semibold">{$_('Notifications')}</h1>
 			<p class="text-sm text-neutral-100">
 				Get notified when the device meets a specific condition.
 			</p>

@@ -82,7 +82,7 @@
 									totalUnits={2}
 									minUnits={DurationUnits.Second}
 								/>
-								&nbsp;ago
+								&nbsp;{$_('ago')}
 							</p>
 						{:else}
 							<div class="text-right">

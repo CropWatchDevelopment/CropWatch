@@ -239,7 +239,7 @@
 <Header {device} {basePath}>
 	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
 		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
-		<Button variant="secondary" href="{basePath}/settings">{$_('csv')}</Button>
+		<CsvDownloadButton {devEui} />
 		<Button variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
 		<!-- Date range selector -->
 		<div class="flex flex-wrap items-end gap-2">
@@ -290,7 +290,7 @@
 	>
 		<!-- Latest data section -->
 		<section class="flex-auto lg:w-auto lg:flex-none">
-			<h2>Latest Sensor Readings</h2>
+			<h2>{$_('Latest Sensor Readings')}</h2>
 			{#if latestData}
 				<div>
 					<div class="grid grid-cols-2 gap-2">
@@ -308,17 +308,18 @@
 					</div>
 
 					<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
-						Last updated: {formatDateForDisplay(latestData.created_at)}
+						{$_('Last updated:')}
+						{formatDateForDisplay(latestData.created_at)}
 					</p>
 				</div>
 			{:else}
-				<p class="pt-4 text-center text-gray-500 italic">No recent data available</p>
+				<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
 			{/if}
 		</section>
 
 		<!-- Video Feed is IP is there -->
 		<section class="flex-none {device?.ip_log.length > 0 ? 'visible' : 'invisible'}">
-			<h2>Camera Stream</h2>
+			<h2>{$_('Camera Stream')}</h2>
 			{#if device?.ip_log.length > 0}
 				{#each device.ip_log as log}
 					<img
@@ -328,13 +329,13 @@
 					/>
 				{/each}
 			{:else}
-				<p class="pt-4 text-center text-gray-500 italic">No stream available</p>
+				<p class="pt-4 text-center text-gray-500 italic">{$_('No stream available')}</p>
 			{/if}
 		</section>
 
 		{#if device}
 			<section class="flex-none">
-				<h2>Map</h2>
+				<h2>{$_('Map')}</h2>
 				<div class="aspect-square">
 					<LeafletMap
 						lat={device.lat || 0}
@@ -348,26 +349,26 @@
 
 		<!-- Device metadata container -->
 		<section class="flex-none">
-			<h2>Device Info</h2>
+			<h2>{$_('Device Info')}</h2>
 			<div class="rounded-lg bg-gray-50 p-4 shadow-sm dark:bg-zinc-800">
 				<!-- Responsive: 1 col on mobile, 2 on md, 4 on lg -->
 				<div class="grid grid-rows-1 gap-2 text-sm">
 					<!-- Type -->
 					<div>
-						<span class="text-gray-500/80 dark:text-gray-300/80">Type:</span>
+						<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Type:')}</span>
 						<span class="ml-1 break-words text-gray-900 dark:text-white">{deviceTypeName}</span>
 					</div>
 
 					<!-- EUI -->
 					<div>
-						<span class="text-gray-500/80 dark:text-gray-300/80">EUI:</span>
+						<span class="text-gray-500/80 dark:text-gray-300/80">{$_('EUI:')}</span>
 						<span class="ml-1 break-words text-gray-900 dark:text-white">{device.dev_eui}</span>
 					</div>
 
 					<!-- Location ID -->
 					{#if device?.location_id}
 						<div>
-							<span class="text-gray-500/80 dark:text-gray-300/80">Location ID:</span>
+							<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Location ID:')}</span>
 							<span class="ml-1 text-gray-900 dark:text-white">{device.location_id}</span>
 						</div>
 					{/if}
@@ -375,7 +376,7 @@
 					<!-- Installed At -->
 					{#if device?.installed_at}
 						<div>
-							<span class="text-gray-500/80 dark:text-gray-300/80">Installed:</span>
+							<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Installed:')}</span>
 							<span class="ml-1 text-gray-900 dark:text-white">
 								{formatDateOnly(device.installed_at)}
 							</span>
@@ -388,7 +389,7 @@
 							target="_blank"
 							class="text-gray-500/80 dark:text-gray-300/80"
 						>
-							Sensor Datasheet
+							{$_('Sensor Datasheet')}
 						</a>
 					</div>
 				</div>
@@ -408,7 +409,7 @@
 				class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-gray-50 backdrop-blur-xs dark:bg-zinc-900/75"
 			>
 				<Spinner />
-				Loading historical data...
+				{$_('Loading historical data...')}
 			</div>
 		{/if}
 		<section class="mb-12">
@@ -418,17 +419,17 @@
 					class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
 				>
 					<Spinner />
-					<p class="text-gray-700 dark:text-gray-300">Loading historical data...</p>
+					<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
 				</div>
 			{:else if historicalData.length === 0}
 				<!-- Empty State -->
 				<div class="pt-4 text-center text-gray-500 italic">
-					No historical data available for the selected date range.
+					{$_('No historical data available for the selected date range.')}
 				</div>
 			{:else}
 				<!-- Statistical Summary -->
 				<div class="mb-8">
-					<h2>Stats Summary</h2>
+					<h2>{$_('Stats Summary')}</h2>
 					<div class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3">
 						{#if temperatureChartVisible}
 							<StatsCard key="temperature_c" {stats} />
@@ -451,7 +452,7 @@
 				<!-- Charts -->
 				<!-- Chart Visualizations -->
 				<section class="mb-12" inert={renderingVisualization} aria-busy={renderingVisualization}>
-					<h2>Data Chart</h2>
+					<h2>{$_('Data Chart')}</h2>
 
 					<!-- Generic Main Line + Brush Chart (always rendered if historicalData exists) -->
 					<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
@@ -464,7 +465,7 @@
 							class="mb-4 text-center text-base text-xl font-medium text-gray-800 dark:text-gray-200"
 							hidden={renderingVisualization}
 						>
-							All Sensor Data Over Time
+							{$_('All Sensor Data Over Time')}
 						</h4>
 						<div class="w-full">
 							<div class="chart-placeholder">
@@ -480,7 +481,7 @@
 		</section>
 		<div class="mt-4">
 			<section>
-				<h2>Weather &amp; Data</h2>
+				<h2>{$_('Weather & Data')}</h2>
 				<WeatherCalendar
 					events={calendarEvents}
 					onDateChange={(date: Date) => {

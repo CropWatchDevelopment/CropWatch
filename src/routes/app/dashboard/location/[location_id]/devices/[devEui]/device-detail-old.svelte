@@ -107,19 +107,12 @@
 
 	<!-- Latest data section -->
 	<section class="data-section latest-data bg-foreground-light dark:bg-foreground-dark">
-		<h2>Latest Sensor Readings</h2>
+		<h2>{$_('Latest Sensor Readings')}</h2>
 		{#if latestData}
 			<div class="sensor-readings">
 				<div class="grid grid-cols-3 gap-4">
 					{#each Object.keys(latestData) as key}
-						<DataCard
-							{latestData}
-							name={key}
-							{key}
-							notation="°C"
-							type={key}
-							class="w-full"
-						/>
+						<DataCard {latestData} name={key} {key} notation="°C" type={key} class="w-full" />
 					{/each}
 				</div>
 				<p class="timestamp">Last updated: {new Date(latestData.created_at).toLocaleString()}</p>
@@ -133,7 +126,7 @@
 	<section class="data-section historical-data bg-foreground-light dark:bg-foreground-dark">
 		<h2>Historical Data</h2>
 
-		<div class="date-range-selector bg-card-light dark:bg-card-dark rounded-lg shadow p-4 mb-6">
+		<div class="date-range-selector bg-card-light dark:bg-card-dark mb-6 rounded-lg p-4 shadow">
 			<div class="date-inputs">
 				<div class="form-group">
 					<label for="startDate">Start Date:</label>
@@ -162,27 +155,45 @@
 			<p class="no-data">No historical data available for the selected date range.</p>
 		{:else}
 			<!-- Statistical Summary -->
-			<div class="stats-section ">
+			<div class="stats-section">
 				<h3>Statistical Summary</h3>
 				<div class="stats-grid">
 					{#if temperatureChartVisible}
-						<StatsCard notation="°C" title="Temperature" min={stats.temperature.min} max={stats.temperature.max} avg={stats.temperature.avg} />
+						<StatsCard
+							notation="°C"
+							title="Temperature"
+							min={stats.temperature.min}
+							max={stats.temperature.max}
+							avg={stats.temperature.avg}
+						/>
 					{/if}
 
 					{#if humidityChartVisible}
-          <StatsCard notation="%" title="Humidity" min={stats.humidity.min} max={stats.humidity.max} avg={stats.humidity.avg} />
+						<StatsCard
+							notation="%"
+							title="Humidity"
+							min={stats.humidity.min}
+							max={stats.humidity.max}
+							avg={stats.humidity.avg}
+						/>
 					{/if}
 
 					{#if moistureChartVisible}
-          <StatsCard notation="%" title="Moisture" min={stats.moisture.min} max={stats.moisture.max} avg={stats.moisture.avg} />
+						<StatsCard
+							notation="%"
+							title="Moisture"
+							min={stats.moisture.min}
+							max={stats.moisture.max}
+							avg={stats.moisture.avg}
+						/>
 					{/if}
 
 					{#if co2ChartVisible}
-          <StatsCard title="ppm" min={stats.co2.min} max={stats.co2.max} avg={stats.co2.avg} />
+						<StatsCard title="ppm" min={stats.co2.min} max={stats.co2.max} avg={stats.co2.avg} />
 					{/if}
 
 					{#if phChartVisible}
-          <StatsCard title="pH" min={stats.ph.min} max={stats.ph.max} avg={stats.ph.avg} />
+						<StatsCard title="pH" min={stats.ph.min} max={stats.ph.max} avg={stats.ph.avg} />
 					{/if}
 				</div>
 			</div>

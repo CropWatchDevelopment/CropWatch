@@ -30,12 +30,12 @@
 </script>
 
 <header class="dashboard-header bg-cyan-800 p-4 pt-1 pb-2 text-white">
-	<h1 class="">IoT Dashboard</h1>
-	<div class="user-controls">
-		<span class="welcome-user">Welcome, {userName}</span>
-		<ThemeToggle />
-		<button class="logout-button !px-3 !py-1" onclick={handleLogout}> Logout </button>
-	</div>
+        <h1 class="">{$_('IoT Dashboard')}</h1>
+        <div class="user-controls">
+                <span class="welcome-user">{$_('Welcome')}, {userName}</span>
+                <ThemeToggle />
+                <button class="logout-button !px-3 !py-1" onclick={handleLogout}> {$_('Logout')} </button>
+        </div>
 </header>
 
 <style>
@@ -76,7 +76,7 @@
 	import { page } from '$app/state';
 	import CropWatchLogo from '$lib/images/favicon.svg';
 	import { onMount } from 'svelte';
-	import { locale } from 'svelte-i18n';
+	import { _, locale } from 'svelte-i18n';
 	import Breadcrumbs from './global/Breadcrumbs.svelte';
 	import { getDarkMode } from './theme/theme.svelte';
 	import ThemeToggle from './theme/ThemeToggle.svelte';
@@ -181,9 +181,9 @@
 		<div class="hidden items-center gap-3 md:flex">
 			<ThemeToggle />
 			{#if page.data.session?.user}
-				<Button variant="secondary" onclick={handleLogout}>Logout</Button>
+				<Button variant="secondary" onclick={handleLogout}>{$_('Logout')}</Button>
 			{:else}
-				<Button variant="primary" href="/auth/login">Login</Button>
+				<Button variant="primary" href="/auth/login">{$_('Login')}</Button>
 			{/if}
 		</div>
 
@@ -292,7 +292,7 @@
 	>
 		<div class="space-y-2 p-4">
 			<a href="/app/dashboard" class="block rounded-lg px-4 py-3 text-slate-200 transition-colors">
-				Dashboard
+				{$_('Dashboard')}
 			</a>
 			<a
 				href="#pricing"
@@ -300,7 +300,7 @@
 					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 			>
-				Pricing
+				{$_('Pricing')}
 			</a>
 			<a
 				href="#devices"
@@ -308,7 +308,7 @@
 					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 			>
-				Devices
+				{$_('Devices')}
 			</a>
 			<a
 				href="#resources"
@@ -316,7 +316,7 @@
 					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 			>
-				Resources
+				{$_('Resources')}
 			</a>
 			<a
 				href="#about"
@@ -324,7 +324,7 @@
 					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 			>
-				About
+				{$_('About')}
 			</a>
 			<div class="space-y-2 border-t pt-2 {getDarkMode() ? 'border-white/10' : 'border-gray-200'}">
 				<a
@@ -333,13 +333,13 @@
 						? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 						: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 				>
-					Demo
+					{$_('Demo')}
 				</a>
 				<a
 					href="/contact-us"
 					class="block rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-3 text-center font-semibold text-white"
 				>
-					Get Started
+					{$_('Get Started')}
 				</a>
 			</div>
 		</div>

@@ -20,9 +20,9 @@
 	onclick={handleClick}
 	class="flex w-full items-center justify-center gap-2 rounded-md border border-transparent
 		bg-transparent px-3 py-1.5 text-sm font-medium text-blue-600
-		transition-colors duration-200 hover:bg-blue-50 hover:text-blue-700
+		transition-colors duration-200 hover:bg-blue-50 hover:text-zinc-300
 		focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 focus-visible:ring-offset-1
-		dark:text-blue-300 dark:hover:bg-white/5 dark:focus-visible:ring-blue-500"
+		dark:bg-white/8 dark:text-zinc-300 dark:hover:bg-slate-700 dark:focus-visible:ring-blue-500"
 	aria-label="View details"
 >
 	{text}

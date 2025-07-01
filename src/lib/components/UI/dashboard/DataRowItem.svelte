@@ -147,7 +147,7 @@
 										>{primaryNotation}</span
 									>
 								</span>
-								<span class="text-xs text-gray-500 dark:text-gray-400">{$_(primaryDataKey)}</span>
+								<!-- <span class="text-xs text-gray-500 dark:text-gray-400">{$_(primaryDataKey)}</span> -->
 							</div>
 						</div>
 
@@ -164,9 +164,9 @@
 											>{secondaryNotation}</span
 										>
 									</span>
-									<span class="text-xs text-gray-500 dark:text-gray-400"
+									<!-- <span class="text-xs text-gray-500 dark:text-gray-400"
 										>{$_(secondaryDataKey)}</span
-									>
+									> -->
 								</div>
 							</div>
 						{/if}
@@ -183,7 +183,7 @@
 
 	{#if detailHref || location}
 		<Button
-			text="View Details"
+			text={$_('View Details')}
 			iconPath={mdiArrowRight}
 			onClick={() =>
 				goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}

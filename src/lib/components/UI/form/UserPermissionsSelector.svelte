@@ -12,7 +12,7 @@
 
 	type Props = {
 		data: { device?: DeviceWithType; ownerId: string };
-		ownerList: LocationUser[];
+		ownerList: any[];
 		canDelete: boolean;
 	};
 
@@ -38,7 +38,7 @@
 	}
 
 	function isDeviceOwner(userId: string): boolean {
-		return device?.user_id === userId;
+		return device?.user_id === userId || data.ownerId === userId;
 	}
 
 	function canManagePermissions(): boolean {
@@ -173,7 +173,7 @@
 								{getPermissionName(owner.permission_level as number)}
 							</span>
 						{/if}
-						{#if canDelete}
+						{#if canDelete && !isDeviceOwner(owner.user_id)}
 							{@const disabled = removingUser && removingUserId === owner.user_id}
 							<Button
 								type="submit"

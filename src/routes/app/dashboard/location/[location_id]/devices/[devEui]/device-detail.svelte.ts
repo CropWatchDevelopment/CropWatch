@@ -345,10 +345,10 @@ export function setupDeviceDetail() {
 	// Initialize dates function
 	function initializeDateRange() {
 		const today = new Date();
-		const sevenDaysAgo = new Date(today);
-		sevenDaysAgo.setDate(today.getDate() - 7);
+		const yesterday = new Date(today);
+		yesterday.setDate(today.getDate() - 1);
 
-		startDate = sevenDaysAgo; // Assign Date object directly
+		startDate = yesterday; // Assign Date object directly
 		endDate = today; // Assign Date object directly
 	}
 
