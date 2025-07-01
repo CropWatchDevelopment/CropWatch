@@ -141,5 +141,39 @@ export const strings = {
 	ec: 'EC',
 	ph: 'pH',
 	PH: 'pH',
-	'All Devices': 'すべてのデバイス'
+	'All Devices': 'すべてのデバイス',
+
+	// Header
+	'IoT Dashboard': 'IoTダッシュボード',
+	Welcome: 'ようこそ',
+	Pricing: '価格',
+	Devices: 'デバイス',
+	Resources: 'リソース',
+	About: '概要',
+	Demo: 'デモ',
+	'Get Started': '始める',
+
+	// Stats labels
+	Min: '最小',
+	Avg: '平均',
+	Max: '最大',
+	Count: '数',
+	Median: '中央値',
+	'Std Dev': '標準偏差',
+	Range: '範囲',
+	'Click to expand': 'クリックして展開',
+	'Click to collapse': 'クリックして折りたたむ',
+
+	// Login page
+	'Go to Dashboard': 'ダッシュボードへ',
+	'Go to API': 'APIへ',
+	'Create an account': 'アカウントを作成',
+	'Login with Discord': 'Discordでログイン',
+	'N/A': 'N/A',
+	'Enter your email': 'メールアドレスを入力',
+	'Enter your password': 'パスワードを入力',
+	'Logging in...': 'ログイン中...',
+	'You are already logged in': 'すでにログインしています',
+	'Login successful! Redirecting to dashboard...':
+		'ログイン成功！ダッシュボードにリダイレクトしています...'
 };

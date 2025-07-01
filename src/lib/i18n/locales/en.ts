@@ -141,5 +141,38 @@ export const strings = {
 	ec: 'EC',
 	ph: 'pH',
 	PH: 'pH',
-	'All Devices': 'All Devices'
+	'All Devices': 'All Devices',
+
+	// Header
+	'IoT Dashboard': 'IoT Dashboard',
+	Welcome: 'Welcome',
+	Pricing: 'Pricing',
+	Devices: 'Devices',
+	Resources: 'Resources',
+	About: 'About',
+	Demo: 'Demo',
+	'Get Started': 'Get Started',
+
+	// Stats labels
+	Min: 'Min',
+	Avg: 'Avg',
+	Max: 'Max',
+	Count: 'Count',
+	Median: 'Median',
+	'Std Dev': 'Std Dev',
+	Range: 'Range',
+	'Click to expand': 'Click to expand',
+	'Click to collapse': 'Click to collapse',
+
+	// Login page
+	'Go to Dashboard': 'Go to Dashboard',
+	'Go to API': 'Go to API',
+	'Create an account': 'Create an account',
+	'Login with Discord': 'Login with Discord',
+	'N/A': 'N/A',
+	'Enter your email': 'Enter your email',
+	'Enter your password': 'Enter your password',
+	'Logging in...': 'Logging in...',
+	'You are already logged in': 'You are already logged in',
+	'Login successful! Redirecting to dashboard...': 'Login successful! Redirecting to dashboard...'
 };
