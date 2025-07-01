@@ -47,8 +47,8 @@
 <section class="flex flex-col gap-4">
 	<header class="flex flex-row items-center justify-between gap-4">
 		<div>
-			<h2 class="mb-1 text-2xl font-semibold">General</h2>
-			<p class="text-sm text-neutral-100">Manage the device information.</p>
+			<h2 class="mb-1 text-2xl font-semibold">{$_('General')}</h2>
+			<p class="text-sm text-neutral-100">{$_('Manage the device information.')}</p>
 		</div>
 	</header>
 	<form
@@ -101,7 +101,7 @@
 			{/await}
 		</div>
 		{#if isOwner}
-			<Button type="submit">Update</Button>
+			<Button type="submit">{$_('Update')}</Button>
 		{/if}
 	</form>
 </section>
@@ -109,7 +109,7 @@
 {#if isOwner}
 	<span class="flex flex-1"></span>
 	<section class="border-danger/50 mt-6 flex flex-col gap-2 rounded-lg border p-4">
-		<h2 class="text-danger text-lg font-semibold">Dangerous Zone</h2>
+		<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
 		<div>
 			<Button
 				variant="danger"
@@ -117,12 +117,12 @@
 					showDeleteDialog = true;
 				}}
 			>
-				Delete Device & Associated Data
+				{$_('Delete Device & Associated Data')}
 			</Button>
 		</div>
 		<Dialog bind:open={showDeleteDialog} size="sm">
 			{#snippet title()}
-				Delete Device & Associated Data
+				{$_('Delete Device & Associated Data')}
 			{/snippet}
 			{#snippet body()}
 				DELETING THIS DEVICE WILL BE PERMANENT AND IRREVERSIBLE. ALL DATA ASSOCIATED WITH THIS
@@ -136,7 +136,7 @@
 						showDeleteDialog = false;
 					}}
 				>
-					Cancel
+					{$_('Cancel')}
 				</Button>
 				<Button
 					variant="danger"
@@ -145,7 +145,7 @@
 						deleteDevice();
 					}}
 				>
-					Delete
+					{$_('Delete')}
 				</Button>
 			{/snippet}
 		</Dialog>

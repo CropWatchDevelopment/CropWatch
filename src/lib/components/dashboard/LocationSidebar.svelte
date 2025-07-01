@@ -218,7 +218,7 @@
 			<!-- Title and filters - only visible when expanded -->
 			{#if !collapsed}
 				<div class="ml-2 flex-1">
-					<h2>Locations</h2>
+					<h2>{$_('Locations')}</h2>
 				</div>
 
 				<div class="h-[24px]">
@@ -286,7 +286,7 @@
 		role="option"
 		aria-selected={selectedLocation === null}
 		tabindex="0"
-		title="All Locations"
+		title={$_('All Locations')}
 		class={`
 		my-3 flex h-10 w-full items-center gap-3 rounded text-left transition-all duration-200
 		${selectedLocation === null ? 'text-foreground bg-emerald-500/30' : 'hover:bg-card-hover text-white'}
@@ -308,7 +308,7 @@
 	</button>
 
 	{#if locations.length === 0 && !collapsed}
-		<p class="text-foreground p-4">No locations found.</p>
+		<p class="text-foreground p-4">{$_('No locations found.')}</p>
 	{:else}
 		<!-- Location list - different display based on collapsed state -->
 		<ul class="m-0 list-none" role="listbox" aria-label="Select a location">
