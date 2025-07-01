@@ -59,7 +59,7 @@
 >
 	<!-- Title with Current reading and Trend -->
 	<div class="mb-2 flex w-full items-center justify-between">
-		<h4 class="text-lg font-medium text-gray-500 dark:text-gray-200">
+		<h4 class="text-xl font-medium text-gray-500 dark:text-gray-200">
 			{title}
 		</h4>
 

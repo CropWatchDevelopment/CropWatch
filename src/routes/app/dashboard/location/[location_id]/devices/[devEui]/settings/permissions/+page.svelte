@@ -1,6 +1,7 @@
 <script lang="ts">
 	import UserPermissionsSelector from '$lib/components/UI/form/UserPermissionsSelector.svelte';
 	import type { DeviceOwnerWithProfile } from '$lib/models/DeviceOwner';
+	import { _ } from 'svelte-i18n';
 
 	let { data } = $props();
 
