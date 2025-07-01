@@ -1,76 +1,3 @@
-<!-- <script lang="ts">
-	import { goto } from '$app/navigation';
-	import ThemeToggle from './theme/ThemeToggle.svelte';
-	let { userName } = $props();
-
-	// Simplified logout function
-	function handleLogout() {
-		console.log('Logging out user:', userName);
-
-		// Call the API endpoint for server-side logout
-		fetch('/api/auth/logout', {
-			method: 'POST'
-		})
-			.then(() => {
-				console.log('Server logout successful');
-				// Redirect to login page
-				goto('/auth/login');
-			})
-			.catch((err) => {
-				console.error('Server logout error:', err);
-				// Redirect anyway
-				goto('/auth/login');
-			});
-	}
-
-	// Simple log when userName changes for debugging
-	$effect(() => {
-		console.log('Header userName updated:', userName);
-	});
-</script>
-
-<header class="dashboard-header bg-cyan-800 p-4 pt-1 pb-2 text-white">
-        <h1 class="">{$_('IoT Dashboard')}</h1>
-        <div class="user-controls">
-                <span class="welcome-user">{$_('Welcome')}, {userName}</span>
-                <ThemeToggle />
-                <button class="logout-button !px-3 !py-1" onclick={handleLogout}> {$_('Logout')} </button>
-        </div>
-</header>
-
-<style>
-	.dashboard-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		/* margin-bottom: 20px; */
-	}
-
-	.user-controls {
-		display: flex;
-		align-items: center;
-		gap: 15px;
-	}
-
-	.welcome-user {
-		font-weight: 500;
-	}
-
-	.logout-button {
-		background-color: #f44336;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 14px;
-		transition: background-color 0.2s;
-	}
-
-	.logout-button:hover {
-		background-color: #d32f2f;
-	}
-</style> -->
-
 <script>
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -134,8 +61,8 @@
 <!-- Main Header -->
 <header
 	class="relative overflow-hidden border-b transition-colors duration-300 {getDarkMode()
-		? 'border-green-500/20 bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-700'
-		: 'border-green-500/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700'}"
+		? 'border-emerald-900 bg-gradient-to-br to-emerald-700/30'
+		: 'border-emerald-500/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700'}"
 >
 	<!-- Animated background pattern -->
 	<div class="absolute inset-0 opacity-10">
@@ -152,12 +79,14 @@
 		<!-- Logo -->
 		<a
 			href="/"
-			class="mr-5 flex items-center gap-3 no-underline transition-transform hover:scale-105"
+			class="mr-5 flex items-center gap-3 no-underline transition-transform hover:scale-105 hover:no-underline focus:no-underline"
+			style="text-decoration: none !important;"
 		>
-			<!-- <div class="relative w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30"> -->
 			<img src={CropWatchLogo} alt="CropWatch Logo" class="h-10" width="40px" height="40px" />
-			<!-- </div> -->
-			<div class="text-2xl font-bold tracking-tight text-white transition-colors duration-300">
+			<div
+				class="text-2xl font-bold tracking-tight text-white transition-colors duration-300"
+				style="text-decoration: none !important;"
+			>
 				CropWatch<sup><small>®</small></sup>
 			</div>
 		</a>

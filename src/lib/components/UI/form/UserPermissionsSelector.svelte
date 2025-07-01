@@ -86,115 +86,120 @@
 			</div>
 		{:else}
 			{#each ownerList as owner (owner.id)}
-				<div
-					class="item-start flex flex-col justify-between gap-3 border-gray-300 p-3 sm:flex-row sm:items-center dark:border-neutral-400"
-				>
-					<div class="flex items-center gap-3">
-						<div
-							class="bg-secondary/70 dark:bg-secondary/20 flex h-10 w-10 items-center justify-center rounded-full text-xl
+				{#if !owner.profile.email.includes('@cropwatch.io')}
+					<div
+						class="item-start flex flex-col justify-between gap-3 border-gray-300 p-3 sm:flex-row sm:items-center dark:border-neutral-400"
+					>
+						<div class="flex items-center gap-3">
+							<div
+								class="bg-secondary/70 dark:bg-secondary/20 flex h-10 w-10 items-center justify-center rounded-full text-xl
 							text-white uppercase"
-						>
-							<span class="font-medium">
-								{owner.profile?.full_name?.charAt(0) || owner.profile?.email?.charAt(0) || 'U'}
-							</span>
-						</div>
-						<div>
-							<div class="font-medium">
-								{owner.profile?.full_name || owner.profile?.email || `User ${owner.user_id}`}
-							</div>
-							<div class="text-sm text-neutral-50">
-								{owner.profile?.email || ''}
-							</div>
-						</div>
-					</div>
-
-					<div class="flex items-center gap-2">
-						{#if isDeviceOwner(owner.user_id)}
-							<span
-								class="bg-primary/60 dark:bg-primary/30 text-gray rounded px-3 py-1 text-sm dark:text-white"
 							>
-								Owner
-							</span>
-						{/if}
-						{#if canManagePermissions() && !isDeviceOwner(owner.user_id)}
-							<div class="flex gap-1">
-								<!-- Update Permission Form -->
-								<form
-									method="POST"
-									action="?/updatePermission"
-									class="inline"
-									use:enhance={() => {
-										updatingUserId = owner.user_id;
-										updatingUser = true;
+								<span class="font-medium">
+									{owner.profile?.full_name?.charAt(0) || owner.profile?.email?.charAt(0) || 'U'}
+								</span>
+							</div>
+							<div>
+								<div class="font-medium">
+									{owner.profile?.full_name || owner.profile?.email || `User ${owner.user_id}`}
+								</div>
+								<div class="text-sm text-neutral-50">
+									{owner.profile?.email || ''}
+								</div>
+							</div>
+						</div>
 
-										return async ({ result, update }) => {
-											if (result.type === 'success' && result.data?.success) {
-												await update({ invalidateAll: true });
-												successToast(
-													(result.data as any).message || 'Permission updated successfully'
-												);
-											} else if (result.type === 'success' && result.data?.error) {
-												errorToast((result.data as any).error);
-											} else {
-												errorToast('Failed to update permission');
-											}
-
-											updatingUser = false;
-										};
-									}}
-									use:formValidation
+						<div class="flex items-center gap-2">
+							{#if isDeviceOwner(owner.user_id)}
+								<span
+									class="bg-primary/60 dark:bg-primary/30 text-gray rounded px-3 py-1 text-sm dark:text-white"
 								>
-									<input type="hidden" name="ownerId" value={owner.id} />
-									{#if updatingUser && updatingUserId === owner.user_id}
-										Updating...
+									Owner
+								</span>
+							{/if}
+							{#if canManagePermissions() && !isDeviceOwner(owner.user_id)}
+								<div class="flex gap-1">
+									<!-- Update Permission Form -->
+									<form
+										method="POST"
+										action="?/updatePermission"
+										class="inline"
+										use:enhance={() => {
+											updatingUserId = owner.user_id;
+											updatingUser = true;
+
+											return async ({ result, update }) => {
+												if (result.type === 'success' && result.data?.success) {
+													await update({ invalidateAll: true });
+													successToast(
+														(result.data as any).message || 'Permission updated successfully'
+													);
+												} else if (result.type === 'success' && result.data?.error) {
+													errorToast((result.data as any).error);
+												} else {
+													errorToast('Failed to update permission');
+												}
+
+												updatingUser = false;
+											};
+										}}
+										use:formValidation
+									>
+										<input type="hidden" name="ownerId" value={owner.id} />
+										{#if updatingUser && updatingUserId === owner.user_id}
+											Updating...
+										{:else}
+											<Select
+												name="permissionLevel"
+												required
+												onchange={(e) => {
+													const form = (e.currentTarget as HTMLElement)?.closest('form');
+													if (form) form.requestSubmit();
+												}}
+											>
+												{#each Object.entries(PERMISSION_LEVELS) as [level, name]}
+													<option
+														value={level}
+														selected={owner.permission_level == parseInt(level)}
+													>
+														{name}
+													</option>
+												{/each}
+											</Select>
+										{/if}
+										<button type="submit" class="hidden" aria-hidden="true">Update</button>
+									</form>
+								</div>
+							{:else}
+								<span
+									class="bg-primary/60 dark:bg-primary/30 text-gray rounded px-3 py-1 text-sm dark:text-white"
+								>
+									{getPermissionName(owner.permission_level as number)}
+								</span>
+							{/if}
+							{#if canDelete && !isDeviceOwner(owner.user_id)}
+								{@const disabled = removingUser && removingUserId === owner.user_id}
+								<Button
+									type="submit"
+									variant="secondary"
+									iconic
+									{disabled}
+									onclick={(event) => {
+										event.preventDefault();
+										showingRemoveConfirmation = true;
+										removingUserId = owner.user_id;
+									}}
+								>
+									{#if disabled}
+										Removing...
 									{:else}
-										<Select
-											name="permissionLevel"
-											required
-											onchange={(e) => {
-												const form = (e.currentTarget as HTMLElement)?.closest('form');
-												if (form) form.requestSubmit();
-											}}
-										>
-											{#each Object.entries(PERMISSION_LEVELS) as [level, name]}
-												<option value={level} selected={owner.permission_level == parseInt(level)}>
-													{name}
-												</option>
-											{/each}
-										</Select>
+										<MaterialIcon name="delete" />
 									{/if}
-									<button type="submit" class="hidden" aria-hidden="true">Update</button>
-								</form>
-							</div>
-						{:else}
-							<span
-								class="bg-primary/60 dark:bg-primary/30 text-gray rounded px-3 py-1 text-sm dark:text-white"
-							>
-								{getPermissionName(owner.permission_level as number)}
-							</span>
-						{/if}
-						{#if canDelete && !isDeviceOwner(owner.user_id)}
-							{@const disabled = removingUser && removingUserId === owner.user_id}
-							<Button
-								type="submit"
-								variant="secondary"
-								iconic
-								{disabled}
-								onclick={(event) => {
-									event.preventDefault();
-									showingRemoveConfirmation = true;
-									removingUserId = owner.user_id;
-								}}
-							>
-								{#if disabled}
-									Removing...
-								{:else}
-									<MaterialIcon name="delete" />
-								{/if}
-							</Button>
-						{/if}
+								</Button>
+							{/if}
+						</div>
 					</div>
-				</div>
+				{/if}
 			{/each}
 		{/if}
 	</div>

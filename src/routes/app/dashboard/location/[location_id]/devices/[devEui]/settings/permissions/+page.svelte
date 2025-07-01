@@ -29,6 +29,5 @@
 			</p>
 		</div>
 	</header>
-	<pre>{JSON.stringify(data.ownerId, null, 2)}</pre>
 	<UserPermissionsSelector {data} {ownerList} />
 </section>

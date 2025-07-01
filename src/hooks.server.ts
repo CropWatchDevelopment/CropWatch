@@ -13,16 +13,6 @@ const PUBLIC_ROUTES = [
 // Additional check for exact /api/ route
 const isExactApiRoute = (pathname: string) => pathname === '/api' || pathname === '/api/';
 
-// Handle for Paraglide internationalization
-const handleParaglide: Handle = async ({ event, resolve }) =>
-	await paraglideMiddleware(event.request, ({ request, locale }) => {
-		event.request = request;
-
-		return resolve(event, {
-			transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
-		});
-	});
-
 // Handle for CORS
 const handleCORS: Handle = async ({ event, resolve }) => {
 	// Apply CORS header for API routes and preflight requests
@@ -370,13 +360,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// Then apply Supabase handle (which includes route guards and may throw redirects)
 			return await handleSupabase({
 				event: corsEvent,
-				resolve: async (supabaseEvent) => {
-					// Finally apply Paraglide for i18n (after auth logic is complete)
-					return await handleParaglide({
-						event: supabaseEvent,
-						resolve
-					});
-				}
+				resolve
 			});
 		}
 	});
