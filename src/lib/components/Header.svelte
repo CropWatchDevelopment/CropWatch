@@ -164,73 +164,7 @@
 
 		<!-- Desktop Navigation -->
 		<ul class="hidden items-center gap-8 lg:flex">
-			<li class="group relative">
-				<a
-					href="#solutions"
-					class="relative flex items-center gap-1 rounded-lg px-4 py-2 font-medium backdrop-blur-sm transition-all duration-300 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-green-500 after:to-emerald-500 after:transition-all after:duration-300 hover:-translate-y-0.5 hover:after:w-4/5 {getDarkMode()
-						? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-						: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-				>
-					Solutions
-					<svg
-						class="h-4 w-4 transition-transform group-hover:rotate-180"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M19 9l-7 7-7-7"
-						/>
-					</svg>
-				</a>
-			</li>
-			<li>
-				<a
-					href="#pricing"
-					class="relative rounded-lg px-4 py-2 font-medium backdrop-blur-sm transition-all duration-300 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-green-500 after:to-emerald-500 after:transition-all after:duration-300 hover:-translate-y-0.5 hover:after:w-4/5 {getDarkMode()
-						? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-						: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-				>
-					Pricing
-				</a>
-			</li>
-			<li class="group relative">
-				<a
-					href="#devices"
-					class="relative flex items-center gap-1 rounded-lg px-4 py-2 font-medium backdrop-blur-sm transition-all duration-300 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-green-500 after:to-emerald-500 after:transition-all after:duration-300 hover:-translate-y-0.5 hover:after:w-4/5 {getDarkMode()
-						? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-						: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-				>
-					Devices
-					<svg
-						class="h-4 w-4 transition-transform group-hover:rotate-180"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M19 9l-7 7-7-7"
-						/>
-					</svg>
-				</a>
-			</li>
-			<li>
-				<a
-					href="#resources"
-					class="relative rounded-lg px-4 py-2 font-medium backdrop-blur-sm transition-all duration-300 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-green-500 after:to-emerald-500 after:transition-all after:duration-300 hover:-translate-y-0.5 hover:after:w-4/5 {getDarkMode()
-						? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-						: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-				>
-					Resources
-				</a>
-			</li>
-			<li>
+			<!-- <li>
 				<a
 					href="#about"
 					class="relative rounded-lg px-4 py-2 font-medium backdrop-blur-sm transition-all duration-300 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-green-500 after:to-emerald-500 after:transition-all after:duration-300 hover:-translate-y-0.5 hover:after:w-4/5 {getDarkMode()
@@ -239,7 +173,7 @@
 				>
 					About
 				</a>
-			</li>
+			</li> -->
 		</ul>
 
 		<!-- CTA Button -->
@@ -308,7 +242,7 @@
 			</div>
 			<!-- Quick actions -->
 			<div class="hidden items-center gap-4 text-sm md:flex">
-				<a
+				<!-- <a
 					href="/marketplace"
 					class="flex items-center gap-1 transition-colors hover:text-green-400 {getDarkMode()
 						? 'text-slate-400'
@@ -345,7 +279,7 @@
 						/>
 					</svg>
 					Help
-				</a>
+				</a> -->
 			</div>
 		</div>
 	</div>

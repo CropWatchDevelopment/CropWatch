@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ url, params, locals: { supabase } }
 		let startDate = url.searchParams.get('start');
 		let endDate = url.searchParams.get('end');
 		if (!startParam || !endParam) {
-			startDate = DateTime.now().minus({ days: 7 }).startOf('day').toJSDate();
+			startDate = DateTime.now().minus({ days: 1 }).startOf('day').toJSDate();
 			endDate = DateTime.now().endOf('day').toJSDate();
 		} else {
 			startDate = DateTime.fromISO(startParam).startOf('day').toJSDate();

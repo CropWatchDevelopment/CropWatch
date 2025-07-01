@@ -59,7 +59,7 @@
 >
 	<!-- Title with Current reading and Trend -->
 	<div class="mb-2 flex w-full items-center justify-between">
-		<h4 class="text-md font-medium text-gray-500 dark:text-gray-400">
+		<h4 class="text-lg font-medium text-gray-500 dark:text-gray-200">
 			{title}
 		</h4>
 
@@ -86,7 +86,7 @@
 	</div>
 
 	<!-- Values -->
-	<div class="mb-2 flex w-full justify-between px-1 text-lg font-bold">
+	<div class="mb-2 flex w-full justify-between px-1 text-2xl font-bold">
 		<span>
 			{formatNumber({ key, value: min })}
 			{#if notation}
@@ -137,7 +137,7 @@
 
 	<!-- Expanded Details -->
 	{#if expanded}
-		<div class="mt-4 w-full border-t border-gray-200 pt-3 text-sm dark:border-gray-700">
+		<div class="mt-4 w-full border-t border-gray-200 pt-3 text-lg dark:border-gray-700">
 			<div class="grid grid-cols-2 gap-y-2">
 				<div>
 					<span class="text-gray-400 dark:text-gray-500">Count:</span>

@@ -1,8 +1,9 @@
 import 'reflect-metadata';
-import { redirect, type Handle } from '@sveltejs/kit';
+import { error, redirect, type Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { createClient } from '@supabase/supabase-js';
 
 const PUBLIC_ROUTES = [
 	'/auth', // All routes under /auth/
@@ -89,81 +90,98 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 		event.url.pathname.startsWith('/api') || event.url.pathname.includes('/reports/pdf');
 
 	if (jwt && isApiOrAppRoute) {
-		try {
-			console.log('Processing JWT token for API request:', event.url.pathname);
-			console.log('Token starts with:', jwt.substring(0, 10) + '...');
-
-			// Try different validation approaches for maximum compatibility
-
-			// 1. First try to set the session with both tokens if available
-			if (refreshToken) {
-				console.log('Using both access and refresh tokens');
-				const sessionResult = await event.locals.supabase.auth.setSession({
-					access_token: jwt,
-					refresh_token: refreshToken
-				});
-
-				if (sessionResult.error) {
-					console.error('Failed to set session with tokens:', sessionResult.error.message);
-				} else if (sessionResult.data?.session && sessionResult.data?.user) {
-					console.log(
-						'Successfully set session with tokens for user:',
-						sessionResult.data.user.email
-					);
-					tokenSession = sessionResult.data.session;
-					tokenUser = sessionResult.data.user;
-
-					// Set the user in event.locals immediately
-					event.locals.user = tokenUser;
-					event.locals.session = tokenSession;
-				}
-			}
-
-			// 2. If that didn't work or no refresh token, try to validate the access token
-			if (!tokenUser) {
-				console.log('Trying to validate access token directly');
-				const { data, error } = await event.locals.supabase.auth.getUser(jwt);
-
-				if (error) {
-					console.error('Invalid JWT token:', error.message);
-				} else if (data?.user) {
-					console.log('Valid JWT token for user:', data.user.email);
-					tokenUser = data.user;
-
-					// Get the session
-					const sessionResult = await event.locals.supabase.auth.getSession();
-					tokenSession = sessionResult.data.session;
-
-					// Set the user in event.locals immediately
-					event.locals.user = tokenUser;
-					event.locals.session = tokenSession;
-				}
-			}
-
-			// 3. Last resort: Try to verify the token as an API token
-			if (!tokenUser && event.url.pathname.startsWith('/api/')) {
-				console.log('Trying to validate as API token for:', event.url.pathname);
-				try {
-					// For API endpoints, we'll bypass normal authentication for API tokens
-					// This is just for testing purposes - in production, you'd verify the token
-					// Create a user object that matches the User type from Supabase
-					const apiUser = await event.locals.supabase.auth.getUser(jwt);
-					if (apiUser.data?.user) {
-						tokenUser = apiUser.data.user;
-						console.log('Created API user for token access:', apiUser.data.user.email);
-
-						// Set the user in event.locals immediately
-						event.locals.user = tokenUser;
-					}
-				} catch (apiErr) {
-					console.error('Failed to create API user:', apiErr);
-				}
-			}
-		} catch (err) {
-			console.error('Error processing JWT token:', err);
+		const jwt = authorizationHeader?.replace(/^Bearer\s+/i, '').trim();
+		if (!jwt) {
+			throw error(401, 'Unauthorized access: No JWT token provided');
 		}
-	} else if (event.url.pathname.startsWith('/api')) {
-		console.log('No Authorization token found for API request:', event.url.pathname);
+		const jwtSupabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+			global: {
+				headers: { Authorization: `Bearer ${jwt}` }
+			},
+			auth: { persistSession: false }
+		});
+		event.locals.supabase = jwtSupabase;
+		return await resolve(event, {
+			filterSerializedResponseHeaders(name) {
+				return name === 'content-range' || name === 'x-supabase-api-version';
+			}
+		});
+
+		// try {
+		// 	console.log('Processing JWT token for API request:', event.url.pathname);
+		// 	console.log('Token starts with:', jwt.substring(0, 10) + '...');
+
+		// 	// Try different validation approaches for maximum compatibility
+
+		// 	// 1. First try to set the session with both tokens if available
+		// 	if (refreshToken) {
+		// 		console.log('Using both access and refresh tokens');
+		// 		const sessionResult = await event.locals.supabase.auth.setSession({
+		// 			access_token: jwt,
+		// 			refresh_token: refreshToken
+		// 		});
+
+		// 		if (sessionResult.error) {
+		// 			console.error('Failed to set session with tokens:', sessionResult.error.message);
+		// 		} else if (sessionResult.data?.session && sessionResult.data?.user) {
+		// 			console.log(
+		// 				'Successfully set session with tokens for user:',
+		// 				sessionResult.data.user.email
+		// 			);
+		// 			tokenSession = sessionResult.data.session;
+		// 			tokenUser = sessionResult.data.user;
+
+		// 			// Set the user in event.locals immediately
+		// 			event.locals.user = tokenUser;
+		// 			event.locals.session = tokenSession;
+		// 		}
+		// 	}
+
+		// 	// 2. If that didn't work or no refresh token, try to validate the access token
+		// 	if (!tokenUser) {
+		// 		console.log('Trying to validate access token directly');
+		// 		const { data, error } = await event.locals.supabase.auth.getUser(jwt);
+
+		// 		if (error) {
+		// 			console.error('Invalid JWT token:', error.message);
+		// 		} else if (data?.user) {
+		// 			console.log('Valid JWT token for user:', data.user.email);
+		// 			tokenUser = data.user;
+
+		// 			// Get the session
+		// 			const sessionResult = await event.locals.supabase.auth.getSession();
+		// 			tokenSession = sessionResult.data.session;
+
+		// 			// Set the user in event.locals immediately
+		// 			event.locals.user = tokenUser;
+		// 			event.locals.session = tokenSession;
+		// 		}
+		// 	}
+
+		// 	// 3. Last resort: Try to verify the token as an API token
+		// 	if (!tokenUser && event.url.pathname.startsWith('/api/')) {
+		// 		console.log('Trying to validate as API token for:', event.url.pathname);
+		// 		try {
+		// 			// For API endpoints, we'll bypass normal authentication for API tokens
+		// 			// This is just for testing purposes - in production, you'd verify the token
+		// 			// Create a user object that matches the User type from Supabase
+		// 			const apiUser = await event.locals.supabase.auth.getUser(jwt);
+		// 			if (apiUser.data?.user) {
+		// 				tokenUser = apiUser.data.user;
+		// 				console.log('Created API user for token access:', apiUser.data.user.email);
+
+		// 				// Set the user in event.locals immediately
+		// 				event.locals.user = tokenUser;
+		// 			}
+		// 		} catch (apiErr) {
+		// 			console.error('Failed to create API user:', apiErr);
+		// 		}
+		// 	}
+		// } catch (err) {
+		// 	console.error('Error processing JWT token:', err);
+		// }
+		// } else if (event.url.pathname.startsWith('/api')) {
+		// 	console.log('No Authorization token found for API request:', event.url.pathname);
 	}
 
 	// Enhance session validation to include explicit debug logging

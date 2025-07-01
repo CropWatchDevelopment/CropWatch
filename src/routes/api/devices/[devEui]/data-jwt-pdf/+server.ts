@@ -9,7 +9,7 @@ import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 import fs from 'fs';
 import path from 'path';
 import { createPDFLineChart } from '$lib/pdf/pdfLineChart';
-import { addPageNumbers } from '$lib/pdf/pdfFooterPageNumber';
+import { addFooterPageNumber } from '$lib/pdf/pdfFooterPageNumber';
 
 /**
  * JWT-authenticated PDF generation endpoint for device data reports
@@ -21,11 +21,11 @@ import { addPageNumbers } from '$lib/pdf/pdfFooterPageNumber';
  *
  * Returns: PDF file as binary response
  */
-export const GET: RequestHandler = async ({ params, url, request }) => {
+export const GET: RequestHandler = async ({ params, url, request, locals: { supabase } }) => {
 	const { devEui } = params;
 
 	try {
-		const supabase = await validateAuth(request);
+		// const supabase = await validateAuth(request);
 		if (!supabase || supabase === null) {
 			return json({ error: 'Unauthorized access' }, { status: 401 });
 		}
@@ -79,8 +79,6 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 		let deviceData: any[] = [];
 		let reportInfo: any = {};
 
-		console.log('No data from simple query, trying getDeviceDataForReport...');
-
 		try {
 			const deviceDataResponse = await deviceDataService.getDeviceDataForReport(
 				devEui,
@@ -118,18 +116,12 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 			);
 		}
 
-		console.log(`Found ${deviceData.length} records for PDF generation using professional method`);
-
 		// Step 3: Sort the array by `created_at`
 		deviceData.sort((a, b) => {
 			const dateA = new Date(a.created_at).getTime();
 			const dateB = new Date(b.created_at).getTime();
 			return dateA - dateB; // Ascending
 		});
-
-		console.log(
-			`Data sorted chronologically from ${deviceData[0]?.created_at} to ${deviceData[deviceData.length - 1]?.created_at}`
-		);
 
 		// Generate professional PDF using PDFKit (same as browser version)
 		const doc: PDFDocument = new PDFDocument({
@@ -215,7 +207,9 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 		});
 		createPDFDataTable(doc, dataa, reportInfo);
 
-		// Finalize the PDF
+		addFooterPageNumber(doc, devEui, startDateParam, endDateParam);
+
+		// 5) finalize
 		doc.end();
 
 		// Get the PDF as a buffer (async operation)
@@ -263,30 +257,24 @@ export const GET: RequestHandler = async ({ params, url, request }) => {
 				error: 'Failed to generate PDF report',
 				details: err instanceof Error ? err.message : 'Unknown error',
 				device: devEui,
-				user: user?.email || 'Unknown user'
+				user: 'Unknown user'
 			},
 			{ status: 500 }
 		);
 	}
 };
 
-const validateAuth = async (request: Request): Promise<SupabaseClient> => {
-	// Extract JWT token from Authorization header
-	const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
-	const jwt = authHeader?.replace(/^Bearer\s+/i, '').trim();
-
-	if (!jwt) {
-		console.error('No JWT token provided for PDF generation API');
-		throw error(401, 'Unauthorized access: No JWT token provided');
-	}
-
-	// Create a new Supabase client with JWT context for RLS to work properly
-	const jwtSupabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		global: {
-			headers: { Authorization: `Bearer ${jwt}` }
-		},
-		auth: { persistSession: false }
-	});
-
-	return jwtSupabase;
-};
+// const validateAuth = async (request: Request): Promise<SupabaseClient> => {
+// 	const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+// 	const jwt = authHeader?.replace(/^Bearer\s+/i, '').trim();
+// 	if (!jwt) {
+// 		throw error(401, 'Unauthorized access: No JWT token provided');
+// 	}
+// 	const jwtSupabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+// 		global: {
+// 			headers: { Authorization: `Bearer ${jwt}` }
+// 		},
+// 		auth: { persistSession: false }
+// 	});
+// 	return jwtSupabase;
+// };

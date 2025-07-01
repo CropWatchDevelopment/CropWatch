@@ -21,6 +21,7 @@
 	import type { PageProps } from './$types';
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
+	import CsvDownloadButton from '$lib/csv/CsvDownloadButton.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -238,6 +239,8 @@
 <Header {device} {basePath}>
 	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
 		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
+		<Button variant="secondary" href="{basePath}/settings">{$_('csv')}</Button>
+		<Button variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
 		<!-- Date range selector -->
 		<div class="flex flex-wrap items-end gap-2">
 			<!-- Date inputs -->
@@ -314,7 +317,7 @@
 		</section>
 
 		<!-- Video Feed is IP is there -->
-		<section class="flex-none">
+		<section class="flex-none {device?.ip_log.length > 0 ? 'visible' : 'invisible'}">
 			<h2>Camera Stream</h2>
 			{#if device?.ip_log.length > 0}
 				{#each device.ip_log as log}
@@ -458,7 +461,7 @@
 							</div>
 						{/if}
 						<h4
-							class="mb-4 text-center text-base font-medium text-gray-800 dark:text-gray-200"
+							class="mb-4 text-center text-base text-xl font-medium text-gray-800 dark:text-gray-200"
 							hidden={renderingVisualization}
 						>
 							All Sensor Data Over Time
