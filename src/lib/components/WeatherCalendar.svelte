@@ -254,7 +254,7 @@
 			@apply flex w-full flex-row items-center gap-1 md:-mt-9 md:flex-col md:items-start;
 
 			.icon {
-				@apply text-2xl md:text-3xl;
+				@apply text-lg md:text-2xl;
 			}
 		}
 

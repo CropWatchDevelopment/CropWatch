@@ -14,7 +14,7 @@ export const i18n = {
 	 */
 	async initialize({
 		fallbackLocale = 'en',
-		initialLocale = 'en'
+		initialLocale = 'ja'
 	}: { fallbackLocale?: string; initialLocale?: string } = {}) {
 		const modules: Record<string, { strings: Record<string, string> }> = import.meta.glob(
 			'./locales/*.ts',

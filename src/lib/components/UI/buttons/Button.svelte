@@ -10,6 +10,7 @@
 		href?: string | undefined;
 		iconic?: boolean;
 		disabled?: boolean;
+		loading?: boolean;
 		children?: Snippet;
 		onclick?: (event: MouseEvent) => void;
 	};
@@ -22,6 +23,7 @@
 		href = undefined,
 		iconic = false,
 		disabled = false,
+		loading = false,
 		children = undefined,
 		onclick = undefined,
 		...rest
@@ -47,7 +49,7 @@
 
 <button
 	{type}
-	{disabled}
+	disabled={disabled == true || loading == true}
 	class="focus-visible:ring-ring bg-{color}-700 text-white hover:bg-{color}-700/90 active:bg-{color}-700/95 inline-flex cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-nowrap shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:cursor-default disabled:opacity-50 {variant} {className}"
 	class:iconic
 	onclick={(event) => {
@@ -65,6 +67,9 @@
 	}}
 	{...rest}
 >
+	{#if loading}
+		<span class="loader"></span>
+	{/if}
 	{@render children?.()}
 </button>
 

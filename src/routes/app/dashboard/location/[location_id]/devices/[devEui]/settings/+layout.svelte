@@ -5,6 +5,7 @@
 	import type { Snippet } from 'svelte';
 	import Header from '../Header.svelte';
 	import type { LayoutData } from './$types';
+	import { _, locale } from 'svelte-i18n';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 	let { location_id, devEui } = page.params;

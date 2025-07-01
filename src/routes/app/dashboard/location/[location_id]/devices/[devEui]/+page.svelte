@@ -239,7 +239,7 @@
 <Header {device} {basePath}>
 	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
 		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
-		<Button variant="secondary" href="{basePath}/settings">{$_('csv')}</Button>
+		<CsvDownloadButton {devEui} />
 		<Button variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
 		<!-- Date range selector -->
 		<div class="flex flex-wrap items-end gap-2">

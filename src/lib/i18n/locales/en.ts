@@ -55,6 +55,11 @@ export const strings = {
 	bus_count: 'Buses',
 	'Data Date Range': 'Data Date Range',
 	data_date_range: 'Data Date Range',
+	// CSVDownloadButton translations
+	select_date_range: 'Select Date Range',
+	select_start_end_dates: 'Select start and end dates',
+	start_date: 'Start Date',
+	end_date: 'End Date',
 	Close: 'Close',
 	close: 'Close',
 	Open: 'Open',

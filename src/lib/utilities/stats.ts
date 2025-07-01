@@ -4,9 +4,11 @@ import { getDarkMode } from '$lib/components/theme/theme.svelte';
  * Color selection for various statistics keys.
  */
 const colors: Record<string, string> = {
-	humidity: 'sky',
-	moisture: 'sky',
-	soil_moisture: 'sky',
+	humidity: 'blue',
+	Humidity: 'blue',
+	moisture: 'blue',
+	Moisture: 'blue',
+	soil_moisture: 'blue',
 	Temperature: 'orange',
 	temperature: 'orange',
 	temperatureC: 'orange',
@@ -57,7 +59,7 @@ const colors: Record<string, string> = {
 /**
  * Get a color name associated with a given key. If the key is not found, it defaults to 'zinc'.
  */
-export const getColorNameByKey = (key: string): string => colors[key] ?? 'zinc';
+export const getColorNameByKey = (key: string): string => colors[key] ?? 'red';
 
 /**
  * Get the background color based on the key. If isMetadata is true, it returns a transparent color.

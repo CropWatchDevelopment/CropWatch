@@ -8,6 +8,7 @@
 	import TextInput from '$lib/components/UI/form/TextInput.svelte';
 	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
 	import { error, success } from '$lib/stores/toast.svelte.js';
+	import { _, locale } from 'svelte-i18n';
 
 	let { data } = $props();
 	const device = $derived(data.device);

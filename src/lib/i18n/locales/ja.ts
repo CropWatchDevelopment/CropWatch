@@ -205,5 +205,10 @@ export const strings = {
 	Cancel: 'キャンセル',
 	Update: '更新',
 	Permissions: '権限',
-	Notifications: '通知'
+	Notifications: '通知',
+	// CSVDownloadButton translations
+	select_date_range: '日付範囲を選択',
+	select_start_end_dates: '開始日と終了日を選択してください',
+	start_date: '開始日',
+	end_date: '終了日'
 };
