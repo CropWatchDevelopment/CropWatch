@@ -183,7 +183,7 @@
 
 	{#if detailHref || location}
 		<Button
-			text="View Details"
+			text={$_('View Details')}
 			iconPath={mdiArrowRight}
 			onClick={() =>
 				goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}

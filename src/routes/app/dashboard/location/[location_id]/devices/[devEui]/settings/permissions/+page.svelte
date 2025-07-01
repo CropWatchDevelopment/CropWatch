@@ -16,13 +16,13 @@
 </script>
 
 <svelte:head>
-	<title>Permissions - CropWatch</title>
+	<title>{$_('Permissions')} - CropWatch</title>
 </svelte:head>
 
 <section class="flex flex-col gap-6">
 	<header class="flex flex-row items-center justify-between gap-4">
 		<div>
-			<h1 class="mb-1 text-2xl font-semibold">Permissions</h1>
+			<h1 class="mb-1 text-2xl font-semibold">{$_('Permissions')}</h1>
 			<p class="text-sm text-neutral-100">
 				Manage who has access to {device?.name || 'this device'} and their permission levels.
 			</p>

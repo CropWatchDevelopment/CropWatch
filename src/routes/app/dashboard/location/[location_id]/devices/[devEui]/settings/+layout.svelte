@@ -16,9 +16,9 @@
 	}
 
 	const links = [
-		{ href: `${basePath}/settings`, label: 'General' },
-		{ href: `${basePath}/settings/rules`, label: 'Notifications' },
-		{ href: `${basePath}/settings/permissions`, label: 'Permissions' }
+		{ href: `${basePath}/settings`, label: $_('General') },
+		{ href: `${basePath}/settings/rules`, label: $_('Notifications') },
+		{ href: `${basePath}/settings/permissions`, label: $_('Permissions') }
 	];
 </script>
 
@@ -28,7 +28,7 @@
 	<div
 		class="min-w-60 border-b border-gray-300 p-4 lg:border-r lg:border-b-0 dark:border-neutral-400"
 	>
-		<h2 class="text-lg font-semibold">Device Settings</h2>
+		<h2 class="text-lg font-semibold">{$_('Device Settings')}</h2>
 		<nav class="mt-4 flex flex-row flex-wrap lg:flex-col">
 			{#each links as { href, label }}
 				<div>
