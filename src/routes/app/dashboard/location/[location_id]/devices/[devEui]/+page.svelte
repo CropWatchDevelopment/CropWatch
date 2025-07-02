@@ -265,6 +265,7 @@
 					type="date"
 					bind:value={endDateInputString}
 					min={startDateInputString}
+					max={new Date().toISOString().split('T')[0]}
 					class="text-sm"
 				/>
 			</div>

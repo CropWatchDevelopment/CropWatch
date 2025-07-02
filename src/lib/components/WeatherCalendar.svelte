@@ -108,6 +108,7 @@
 		eventContent: eventContentRenderer,
 		dayMaxEvents: true, // Allow +more link when too many events
 		height: '700px',
+		locale: 'ja',
 		headerToolbar: {
 			start: 'prev,next today',
 			center: 'title',
