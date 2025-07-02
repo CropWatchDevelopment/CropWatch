@@ -32,11 +32,11 @@ if (typeof window !== 'undefined') {
 	// Run immediately for initial setup
 	_theme.darkMode = initializeTheme();
 	_theme.systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-	
+
 	// Apply theme immediately
 	applyTheme(_theme.darkMode);
-	console.log('Theme initialized from localStorage:', _theme.darkMode ? 'dark' : 'light');
-	
+	//console.log('Theme initialized from localStorage:', _theme.darkMode ? 'dark' : 'light');
+
 	// Add a MutationObserver to monitor for any class changes on html element
 	// This will help detect if something else is modifying the theme
 	const observer = new MutationObserver((mutations) => {
@@ -44,17 +44,17 @@ if (typeof window !== 'undefined') {
 			if (mutation.attributeName === 'class') {
 				const htmlElement = document.documentElement;
 				const hasDarkClass = htmlElement.classList.contains('dark');
-				
+
 				// If there's a mismatch between state and DOM, fix it
 				if (hasDarkClass !== _theme.darkMode) {
-					console.log('Theme mismatch detected, resynchronizing');
+					//console.log('Theme mismatch detected, resynchronizing');
 					// Update DOM to match our state
 					applyTheme(_theme.darkMode);
 				}
 			}
 		});
 	});
-	
+
 	// Start observing the document with the configured parameters
 	observer.observe(document.documentElement, { attributes: true });
 }
@@ -114,9 +114,9 @@ if (typeof window !== 'undefined') {
 		if (!savedTheme) {
 			_theme.darkMode = e.matches;
 			applyTheme(e.matches);
-			console.log('System preference changed, applying:', e.matches ? 'dark' : 'light');
+			//console.log('System preference changed, applying:', e.matches ? 'dark' : 'light');
 		} else {
-			console.log('System preference changed, but keeping user preference:', savedTheme);
+			//console.log('System preference changed, but keeping user preference:', savedTheme);
 		}
 	});
 

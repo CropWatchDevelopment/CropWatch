@@ -7,7 +7,6 @@
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import Header from '../../Header.svelte';
 	import { _ } from 'svelte-i18n';
-	import { AndOrButton } from '@revolist/revogrid';
 
 	let { data } = $props();
 

@@ -29,7 +29,7 @@
 	detailHref={`/dashboard/location/${locationId}/device/${device.dev_eui}`}
 >
 	{#snippet children()}
-		{#if device.upload_interval <= 0}
+		{#if !device.upload_interval === null && device.upload_interval <= 0}
 			<div class="invalid-interval-warning">Device has invalid upload interval</div>
 		{/if}
 		<DeviceDataList

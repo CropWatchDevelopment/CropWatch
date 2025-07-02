@@ -26,9 +26,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				{ status: 401 }
 			);
 		}
-		
-		 // Login successful - cookies are automatically handled by the per-request client
-		console.log('Successfully authenticated user:', email);
+
+		// Login successful - cookies are automatically handled by the per-request client
+		//console.log('Successfully authenticated user:', email);
 
 		return json({
 			success: true,
@@ -38,7 +38,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				name: authData.user.user_metadata?.name || email.split('@')[0],
 				access_token: authData.session.access_token,
 				refresh_token: authData.session.refresh_token,
-				expires_at: authData.session.expires_at,
+				expires_at: authData.session.expires_at
 			}
 		});
 	} catch (error) {

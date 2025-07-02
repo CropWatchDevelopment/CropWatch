@@ -126,9 +126,7 @@
 				{$_('Delete Device & Associated Data')}
 			{/snippet}
 			{#snippet body()}
-				DELETING THIS DEVICE WILL BE PERMANENT AND IRREVERSIBLE. ALL DATA ASSOCIATED WITH THIS
-				DEVICE WILL BE LOST. WE WILL NOT BE ABLE TO RECOVER THIS DATA. DO NOT DO THIS UNLESS YOU
-				KNOW WHAT YOU ARE DOING!
+				{$_('delete_device_warning')}
 			{/snippet}
 			{#snippet footer()}
 				<Button

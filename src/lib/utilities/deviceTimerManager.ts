@@ -60,7 +60,8 @@ export class DeviceTimerManager {
 		this.cleanupDeviceTimer(deviceId);
 
 		// Use provided uploadInterval or fallback to device settings
-		const effectiveInterval = uploadInterval || device.upload_interval || device.deviceType?.default_upload_interval || 10;
+		const effectiveInterval =
+			uploadInterval || device.upload_interval || device.deviceType?.default_upload_interval || 10;
 
 		// Create a closure to capture the current timestamp
 		const currentTimestamp = device.latestData.created_at;
@@ -72,22 +73,22 @@ export class DeviceTimerManager {
 			// Only update if this is still the current device data
 			// This prevents old timers from incorrectly marking devices as inactive
 			if (device.latestData?.created_at === currentTimestamp) {
-				console.log(`Device ${device.name} (${deviceId}) status updated:`, {
-					isActive,
-					lastUpdate: currentTimestamp,
-					uploadInterval
-				});
+				//console.log(`Device ${device.name} (${deviceId}) status updated:`, {
+				// 	isActive,
+				// 	lastUpdate: currentTimestamp,
+				// 	uploadInterval
+				// });
 				this.deviceActiveStatus[deviceId] = isActive;
-				
+
 				// Call the callback if provided
 				if (onStatusChange) {
 					onStatusChange(deviceId, isActive);
 				}
 			} else {
-				console.log(`Ignoring outdated timer update for ${device.name} (${deviceId})`, {
-					timerTimestamp: currentTimestamp,
-					currentTimestamp: device.latestData?.created_at
-				});
+				//console.log(`Ignoring outdated timer update for ${device.name} (${deviceId})`, {
+				// 	timerTimestamp: currentTimestamp,
+				// 	currentTimestamp: device.latestData?.created_at
+				// });
 			}
 		});
 
@@ -137,13 +138,13 @@ export class DeviceTimerManager {
 	 * @param intervalMs Optional polling interval in milliseconds (default: 120000 - 2 minutes)
 	 */
 	setupPolling(locationId: number, refreshCallback: RefreshCallback, intervalMs: number = 120000) {
-		console.log('setupPolling called');
+		//console.log('setupPolling called');
 		// Clean up any existing polling interval
 		this.cleanupPolling();
 
 		// Set up new polling interval
 		const intervalId = setInterval(async () => {
-			console.log(`[Polling] Device data polling triggered at ${new Date().toLocaleString()}`);
+			//console.log(`[Polling] Device data polling triggered at ${new Date().toLocaleString()}`);
 			if (locationId) {
 				await refreshCallback(locationId);
 			}

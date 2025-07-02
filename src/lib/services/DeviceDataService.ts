@@ -36,7 +36,7 @@ export class DeviceDataService implements IDeviceDataService {
 				.eq('dev_eui', devEui)
 				.order('created_at', { ascending: false })
 				.limit(1)
-				.single();
+				.maybeSingle();
 
 			if (error) {
 				this.errorHandler.logError(error);

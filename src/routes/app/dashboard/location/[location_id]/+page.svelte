@@ -13,7 +13,7 @@
 
 	function handleMapClick(lat: number, lon: number) {
 		clickedCoords = { lat, lon };
-		console.log(`Clicked at: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+		//console.log(`Clicked at: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
 	}
 </script>
 

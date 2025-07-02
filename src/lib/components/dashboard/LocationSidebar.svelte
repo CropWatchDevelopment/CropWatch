@@ -104,10 +104,10 @@
 
 	// Update parent component when local state changes
 	$effect(() => {
-		console.log('LocationSidebar: localSearch changed to:', localSearch);
-		console.log('LocationSidebar: search prop is:', search);
+		//console.log('LocationSidebar: localSearch changed to:', localSearch);
+		//console.log('LocationSidebar: search prop is:', search);
 		if (localSearch !== search) {
-			console.log('LocationSidebar: Calling onsearch with:', localSearch);
+			//console.log('LocationSidebar: Calling onsearch with:', localSearch);
 			onsearch(localSearch);
 		}
 	});
@@ -134,18 +134,18 @@
 
 	// Clear search function
 	function clearSearch() {
-		console.log('LocationSidebar: clearSearch called');
+		//console.log('LocationSidebar: clearSearch called');
 		localSearch = '';
-		console.log('LocationSidebar: localSearch set to empty string');
+		//console.log('LocationSidebar: localSearch set to empty string');
 
 		// Notify parent component through callback
 		onsearch('');
-		console.log('LocationSidebar: onsearch called with empty string');
+		//console.log('LocationSidebar: onsearch called with empty string');
 
 		// Also directly clear the search in the UI store for redundancy
 		const uiStore = getDashboardUIStore();
 		uiStore.clearSearch();
-		console.log('LocationSidebar: uiStore.clearSearch called');
+		//console.log('LocationSidebar: uiStore.clearSearch called');
 	}
 
 	// Function to determine status class and icon for location

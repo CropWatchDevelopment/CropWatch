@@ -96,10 +96,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 				);
 			}
 		} catch (reportError) {
-			console.log(
-				'getDeviceDataForReport failed, continuing with empty data:',
-				reportError instanceof Error ? reportError.message : 'Unknown error'
-			);
+			//console.log('getDeviceDataForReport failed, continuing with empty data:', reportError instanceof Error ? reportError.message : 'Unknown error');
 			deviceData = [];
 		}
 
@@ -109,7 +106,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 					error: `No data found for device ${devEui} in the specified date range`,
 					device: devEui,
 					dateRange: { start: startDateParam, end: endDateParam },
-					user: user.email,
+					user: user?.email || 'Unknown user',
 					suggestion: 'Try a different date range or check if the device has been sending data'
 				},
 				{ status: 404 }
@@ -149,19 +146,19 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 		for (const fontPath of possibleFontPaths) {
 			try {
 				if (fs.existsSync(fontPath)) {
-					console.log(`Loading Japanese font from: ${fontPath}`);
+					//console.log(`Loading Japanese font from: ${fontPath}`);
 					doc.registerFont('NotoSansJP', fontPath);
 					doc.font('NotoSansJP');
 					fontLoaded = true;
 					break;
 				}
 			} catch (e) {
-				console.log(`Could not load font from: ${fontPath}`);
+				//console.log(`Could not load font from: ${fontPath}`);
 			}
 		}
 
 		if (!fontLoaded) {
-			console.log('Using default font - Japanese characters may not display correctly');
+			//console.log('Using default font - Japanese characters may not display correctly');
 		}
 
 		// Professional header with Japanese styling
@@ -175,7 +172,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 		doc
 			.fontSize(12)
 			.text(`期間: ${startDateParam} ～ ${endDateParam}`, { align: 'left' })
-			.text(`生成者: ${user.email}`, { align: 'left' })
+			.text(`生成者: ${user?.email || 'Unknown user'}`, { align: 'left' })
 			.text(`生成日時: ${DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm:ss')}`, {
 				align: 'left'
 			})
@@ -214,7 +211,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 
 		// Get the PDF as a buffer (async operation)
 		const chunks: Buffer[] = [];
-		doc.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+		doc.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
 
 		return new Promise<Response>((resolve, reject) => {
 			doc.on('end', () => {
@@ -236,7 +233,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 				);
 			});
 
-			doc.on('error', (err) => {
+			doc.on('error', (err: any) => {
 				reject(
 					json(
 						{

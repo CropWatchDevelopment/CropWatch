@@ -28,18 +28,18 @@
 	// Log user updates without creating an infinite loop
 	$effect(() => {
 		if (user) {
-			console.log('User data updated:', user.email || 'Guest');
+			//console.log('User data updated:', user.email || 'Guest');
 		}
 	});
 
 	// Improved auth listener to handle session initialization more robustly
 	onMount(() => {
-		console.log('Setting up auth listener');
+		//console.log('Setting up auth listener');
 		const { data: authData } = supabase.auth.onAuthStateChange((event, _session) => {
-			console.log('Auth state change event:', event, _session?.user?.email);
+			//console.log('Auth state change event:', event, _session?.user?.email);
 
 			if (_session) {
-				console.log('Session initialized:', _session);
+				//console.log('Session initialized:', _session);
 				session = _session;
 				user = _session.user;
 			} else {

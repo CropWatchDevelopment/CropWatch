@@ -29,7 +29,7 @@
 		const urlObj = window.URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = urlObj;
-		a.download = `${devEui}.csv`;
+		a.download = `${startDate.toString()} - ${endDate.toString()} ${devEui}.csv`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);

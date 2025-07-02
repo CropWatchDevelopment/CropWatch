@@ -48,7 +48,7 @@
 				}
 			}));
 			weather = mappedEvents;
-			console.log('Mapped weather events:', weather);
+			//console.log('Mapped weather events:', weather);
 		} catch (err) {
 			console.error('Weather fetch failed:', err);
 			weather = [];

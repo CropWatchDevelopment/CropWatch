@@ -56,6 +56,7 @@ export const strings = {
 	bus_count: 'Buses',
 	'Data Date Range': 'Data Date Range',
 	data_date_range: 'Data Date Range',
+
 	// CSVDownloadButton translations
 	select_date_range: 'Select Date Range',
 	select_start_end_dates: 'Select start and end dates',
@@ -274,6 +275,7 @@ export const strings = {
 	'Set All User': 'Set All User',
 	'Set All Viewer': 'Set All Viewer',
 	'Set All Disabled': 'Set All Disabled',
+	User: 'User',
 	'Creating...': 'Creating...',
 	'Create Device': 'Create Device',
 	'Get notified when the device meets a specific condition.':

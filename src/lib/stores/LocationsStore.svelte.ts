@@ -68,7 +68,7 @@ async function fetchLocations(userId: string) {
 
 		// Select "All Locations" by default (null)
 		await selectLocation(null);
-		console.log('LocationsStore: Initially selected All Locations (null)');
+		//console.log('LocationsStore: Initially selected All Locations (null)');
 		// Note: We're no longer auto-selecting the first location by default
 
 		return locations;

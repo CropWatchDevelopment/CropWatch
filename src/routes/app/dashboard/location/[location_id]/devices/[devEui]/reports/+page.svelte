@@ -34,7 +34,7 @@
 
 				// Mark as loaded
 				fontLoaded = true;
-				console.log(`Font loaded successfully in ${fontLoadingTime.toFixed(2)} seconds`);
+				//console.log(`Font loaded successfully in ${fontLoadingTime.toFixed(2)} seconds`);
 			} catch (fontError) {
 				console.error('Failed to load font:', fontError);
 				error = 'Failed to load Japanese font';
@@ -173,7 +173,7 @@
 			// Clean up
 			document.body.removeChild(tempDiv);
 
-			console.log('PDF generated successfully on client');
+			//console.log('PDF generated successfully on client');
 		} catch (err) {
 			console.error('Error generating PDF on client:', err);
 			error =
@@ -231,7 +231,7 @@
 			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
 
-			console.log('PDF generated successfully with PDFKit');
+			//console.log('PDF generated successfully with PDFKit');
 		} catch (err) {
 			console.error('Error generating PDF with PDFKit:', err);
 			error =
@@ -306,7 +306,7 @@
 			// Clean up
 			document.body.removeChild(tempDiv);
 
-			console.log('PDF generated successfully with selectable Japanese text');
+			//console.log('PDF generated successfully with selectable Japanese text');
 		} catch (err) {
 			console.error('Error generating PDF from HTML:', err);
 			error =
@@ -471,7 +471,7 @@
 			// Clean up
 			document.body.removeChild(simplifiedDiv);
 			document.body.removeChild(tempDiv);
-			console.log('PDF generated successfully with selectable text');
+			//console.log('PDF generated successfully with selectable text');
 		} catch (err) {
 			console.error('Error generating selectable PDF:', err);
 			error =

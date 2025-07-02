@@ -32,8 +32,7 @@
 
 			if (isLoggedIn) {
 				successMessage = $_('You are already logged in');
-				console.log('Login page: User is logged in, showing success message');
-
+				//console.log('Login page: User is logged in, showing success message');
 				// Add a button for manual navigation rather than automatic redirect
 				// This prevents potential redirect loops
 			}

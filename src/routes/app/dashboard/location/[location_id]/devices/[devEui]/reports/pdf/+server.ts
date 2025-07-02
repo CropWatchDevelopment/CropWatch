@@ -61,15 +61,15 @@ export const GET: RequestHandler = async ({
 		for (const fontPath of possibleFontPaths) {
 			try {
 				if (fs.existsSync(fontPath)) {
-					console.log(`Found font at: ${fontPath}`);
+					//console.log(`Found font at: ${fontPath}`);
 					doc.registerFont('NotoSansJP', fontPath);
 					doc.font('NotoSansJP');
-					console.log('Successfully registered font');
+					//console.log('Successfully registered font');
 					fontLoaded = true;
 					break;
 				}
 			} catch (e) {
-				console.log(`Could not load font from: ${fontPath}`);
+				//console.log(`Could not load font from: ${fontPath}`);
 			}
 		}
 
@@ -77,14 +77,14 @@ export const GET: RequestHandler = async ({
 		if (!fontLoaded) {
 			try {
 				// Log the current directory and available files for debugging
-				console.log('Current directory:', process.cwd());
-				console.log('__dirname:', __dirname);
+				//console.log('Current directory:', process.cwd());
+				//console.log('__dirname:', __dirname);
 
 				// Try one more approach - use a direct path that should work in Vercel
-				console.log('Trying fallback approach with direct path');
+				//console.log('Trying fallback approach with direct path');
 				doc.registerFont('NotoSansJP', 'server/fonts/NotoSansJP-Regular.ttf');
 				doc.font('NotoSansJP');
-				console.log('Successfully registered font using fallback approach');
+				//console.log('Successfully registered font using fallback approach');
 			} catch (fontErr) {
 				console.error('All font loading attempts failed:', fontErr);
 				console.error(

@@ -164,7 +164,7 @@ export const actions: Actions = {
 				deviceOwnerId,
 				permissionLevel
 			);
-			console.log('Update result:', updateResult);
+			//console.log('Update result:', updateResult);
 
 			return { success: true, message: 'Permission updated successfully' };
 		} catch (err) {

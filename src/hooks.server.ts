@@ -184,7 +184,7 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 
 		// 🧪 Else, try to get session from Supabase client (cookie-based)
 		try {
-			console.log(`Session validation for path: ${event.url.pathname}`);
+			// console.log(`Session validation for path: ${event.url.pathname}`);
 			const {
 				data: { session }
 			} = await event.locals.supabase.auth.getSession();
@@ -207,15 +207,15 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 				return { session: null, user: null };
 			}
 
-			console.log(
-				`Session successfully validated for path: ${event.url.pathname}, user: ${user?.email}`
-			);
+			//console.log(
+			//	`Session successfully validated for path: ${event.url.pathname}, user: ${user?.email}`
+			//);
 			return { session, user };
 		} catch (err) {
-			console.error(
-				`Unexpected error during session validation for path: ${event.url.pathname}:`,
-				err
-			);
+			// console.error(
+			// 	`Unexpected error during session validation for path: ${event.url.pathname}:`,
+			// 	err
+			// );
 			return { session: null, user: null };
 		}
 	};
@@ -239,14 +239,14 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 		const authHeader = headers.get('authorization') || headers.get('Authorization');
 		const apiToken = authHeader?.replace(/^Bearer\s+/i, '').trim();
 
-		console.log(
-			'API route access with token:',
-			apiToken ? `${apiToken.substring(0, 10)}...` : 'none'
-		);
+		// console.log(
+		// 	'API route access with token:',
+		// 	apiToken ? `${apiToken.substring(0, 10)}...` : 'none'
+		// );
 
 		// If we have a token, validate it before proceeding
 		if (apiToken) {
-			console.log('Validating API token for:', pathname);
+			// console.log('Validating API token for:', pathname);
 
 			try {
 				// Validate the token using Supabase auth
@@ -267,7 +267,7 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 				}
 
 				// Token is valid, set the user from the validated token
-				console.log('Valid API token for user:', data.user.email);
+				//console.log('Valid API token for user:', data.user.email);
 				event.locals.user = data.user;
 
 				// Continue processing the request
@@ -296,7 +296,7 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 	if (!isPublicRoute && !sessionData.session) {
 		// For API routes, return 401 Unauthorized instead of redirecting
 		if (pathname.startsWith('/api')) {
-			console.log(`Unauthorized API access attempt: ${pathname}`);
+			// console.log(`Unauthorized API access attempt: ${pathname}`);
 			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 				status: 401,
 				headers: {
@@ -305,14 +305,14 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 			});
 		}
 
-		console.log(`Redirecting unauthenticated user from protected route: ${pathname}`);
+		// console.log(`Redirecting unauthenticated user from protected route: ${pathname}`);
 		throw redirect(302, '/auth/login');
 	}
 
 	// Store validated session and user in locals for routes to use
 	event.locals.session = sessionData.session;
 	event.locals.user = sessionData.user;
-	console.log('Session validated and stored in locals:', sessionData.user?.email || 'Guest');
+	// console.log('Session validated and stored in locals:', sessionData.user?.email || 'Guest');
 
 	// Resolve the response
 	const response = await resolve(event, {

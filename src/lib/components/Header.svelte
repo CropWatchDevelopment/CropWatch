@@ -31,14 +31,14 @@
 	}
 
 	function handleLogout() {
-		console.log('Logging out user:', userName);
+		//console.log('Logging out user:', userName);
 
 		// Call the API endpoint for server-side logout
 		fetch('/api/auth/logout', {
 			method: 'POST'
 		})
 			.then(() => {
-				console.log('Server logout successful');
+				//console.log('Server logout successful');
 				// Redirect to login page
 				goto('/auth/login');
 			})

@@ -24,8 +24,8 @@
 		return ((val - min) / (max - min)) * 100;
 	}
 
-	const avgPercent = percent(min, max, avg);
-	const medianPercent = median !== undefined ? percent(min, max, median) : null;
+	const avgPercent = $derived(percent(min, max, avg));
+	const medianPercent = $derived(median !== undefined ? percent(min, max, median) : null);
 
 	// Use `$derived` to ensure these values are reactive when UI theme changes
 	const textColor = $derived(getTextColorByKey(key));

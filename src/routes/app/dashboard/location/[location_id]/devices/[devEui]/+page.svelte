@@ -217,7 +217,7 @@
 		deviceDetail.error = null; // Clear previous errors before fetching
 
 		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
-		console.log('Requested range:', finalStartDate, finalEndDate, 'Received:', newData);
+		//console.log('Requested range:', finalStartDate, finalEndDate, 'Received:', newData);
 		if (newData) {
 			historicalData = newData; // This will trigger $effect for renderVisualization
 			calendarEvents = updateEvents(newData); // Use newData directly
@@ -240,7 +240,7 @@
 	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
 		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
 		<CsvDownloadButton {devEui} />
-		<Button variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
+		<Button class="invisible" variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
 		<!-- Date range selector -->
 		<div class="flex flex-wrap items-end gap-2">
 			<!-- Date inputs -->
@@ -343,7 +343,7 @@
 					<LeafletMap
 						lat={device.lat || 0}
 						lon={device.long || 0}
-						zoom={13}
+						zoom={17}
 						markers={[[device.lat || 0, device.long || 0]]}
 					/>
 				</div>

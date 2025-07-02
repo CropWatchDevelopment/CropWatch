@@ -45,15 +45,16 @@ const colors: Record<string, string> = {
 	soil_humidity: 'sky',
 	wind_direction: 'red',
 	water_level: 'blue',
+	deapth_cm: 'blue',
 	battery_level: 'red',
 	battery: 'red',
 	Battery: 'red',
 	sos: 'red',
-	people_count: 'orange',
-	car_count: 'yellow',
-	bicycle_count: 'red',
-	truck_count: 'blue',
-	bus_count: 'green'
+	people_count: 'yellow',
+	car_count: 'red',
+	bicycle_count: 'green',
+	truck_count: 'orange',
+	bus_count: 'blue'
 };
 
 /**

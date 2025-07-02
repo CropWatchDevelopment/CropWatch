@@ -112,7 +112,7 @@
 
 	// Clean up timers and subscriptions when component is destroyed
 	onDestroy(() => {
-		console.log('Cleaning up dashboard resources');
+		//console.log('Cleaning up dashboard resources');
 		cleanupTimers();
 	});
 
@@ -161,9 +161,9 @@
 			if (!timerManager.needsRefresh(locationId)) {
 				const lastRefresh = timerManager.getLastRefreshTimestamp(locationId);
 				const timeSinceLastRefresh = Date.now() - lastRefresh;
-				console.log(
-					`Skipping refresh for location ${locationId}, last refresh was ${timeSinceLastRefresh / 1000}s ago`
-				);
+				//console.log(
+				//	`Skipping refresh for location ${locationId}, last refresh was ${timeSinceLastRefresh / 1000}s ago`
+				//);
 				return true;
 			}
 
@@ -181,12 +181,12 @@
 				// Update the refresh timestamp in the timer manager
 				timerManager.updateRefreshTimestamp(locationId);
 
-				console.log('Devices refreshed:', {
-					deviceCount: locationsStore.devices.length,
-					activeCount: locationsStore.devices.filter(
-						(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
-					).length
-				});
+				//console.log('Devices refreshed:', {
+				// 	deviceCount: locationsStore.devices.length,
+				// 	activeCount: locationsStore.devices.filter(
+				// 		(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
+				// 	).length
+				// });
 			}
 
 			return true;
@@ -198,12 +198,12 @@
 
 	// Function to select a location and load its devices
 	async function selectLocation(locationId: number | null) {
-		console.log('Dashboard selectLocation called with:', locationId);
-		console.log('Current selectedLocationId:', locationsStore.selectedLocationId);
+		//console.log('Dashboard selectLocation called with:', locationId);
+		//console.log('Current selectedLocationId:', locationsStore.selectedLocationId);
 
 		// If already selected, do nothing
 		if (locationsStore.selectedLocationId === locationId) {
-			console.log('Location already selected, returning');
+			//console.log('Location already selected, returning');
 			return;
 		}
 
@@ -211,12 +211,12 @@
 		timerManager.cleanupPolling();
 
 		// Use the store to select location and load devices
-		console.log('Calling store.selectLocation with:', locationId);
+		//console.log('Calling store.selectLocation with:', locationId);
 		await locationsStore.selectLocation(locationId);
-		console.log(
-			'After store.selectLocation, selectedLocationId is:',
-			locationsStore.selectedLocationId
-		);
+		//console.log(
+		// 	'After store.selectLocation, selectedLocationId is:',
+		// 	locationsStore.selectedLocationId
+		// );
 
 		// Setup active timers for each device
 		locationsStore.devices.forEach((device: DeviceWithSensorData) => {
@@ -256,14 +256,14 @@
 				hideEmptyLocations={uiStore.hideEmptyLocations}
 				dashboardViewType={uiStore.dashboardViewType}
 				dashboardSortType={uiStore.dashboardSortType}
-				deviceActiveStatus={deviceActiveStatus}
+				{deviceActiveStatus}
 				onSelectLocation={selectLocation}
 				collapsed={sidebarCollapsed}
 				onToggleCollapse={toggleSidebar}
 				onsearch={(value) => {
-					console.log('Dashboard: onsearch called with:', value);
+					//console.log('Dashboard: onsearch called with:', value);
 					uiStore.search = value;
-					console.log('Dashboard: uiStore.search set to:', uiStore.search);
+					//console.log('Dashboard: uiStore.search set to:', uiStore.search);
 				}}
 				onhideEmptyLocationsChange={(value) => (uiStore.hideEmptyLocations = value)}
 				ondashboardViewTypeChange={(value) =>

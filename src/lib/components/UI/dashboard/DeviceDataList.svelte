@@ -25,7 +25,7 @@
 
 	// Log the active status for debugging
 	$effect(() => {
-		console.log(`[DeviceDataList] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}`);
+		//console.log(`[DeviceDataList] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}`);
 	});
 
 	// 1. Convert the latestData to an object

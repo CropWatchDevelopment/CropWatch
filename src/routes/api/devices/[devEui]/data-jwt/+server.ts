@@ -40,7 +40,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 	// Validate JWT token and get user
 	let user = null;
 	try {
-		console.log('Validating JWT token for device data access');
+		//console.log('Validating JWT token for device data access');
 		const { data, error: authError } = await jwtSupabase.auth.getUser(jwt);
 
 		if (authError || !data?.user) {
@@ -49,10 +49,10 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 		}
 
 		user = data.user;
-		console.log(
-			`JWT-authenticated device data request from user: ${user.email} for device: ${devEui}`
-		);
-		console.log('User ID from JWT:', user.id); // Confirm JWT identity
+		//console.log(
+		// 	`JWT-authenticated device data request from user: ${user.email} for device: ${devEui}`
+		// );
+		//console.log('User ID from JWT:', user.id); // Confirm JWT identity
 
 		// Check if user has permission to access this device using JWT client
 		const { data: deviceOwnership, error: permissionError } = await jwtSupabase
@@ -72,9 +72,9 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 			throw error(403, 'You do not have permission to access this device');
 		}
 
-		console.log(
-			`User ${user.email} has permission level ${deviceOwnership.permission_level} for device ${devEui}`
-		);
+		//console.log(
+		// 	`User ${user.email} has permission level ${deviceOwnership.permission_level} for device ${devEui}`
+		// );
 	} catch (authErr) {
 		console.error('JWT validation error:', authErr);
 		throw error(401, 'Failed to validate JWT token');
@@ -107,27 +107,27 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 		startDate = DateTime.fromJSDate(startDate).startOf('day').toJSDate();
 		endDate = DateTime.fromJSDate(endDate).endOf('day').toJSDate();
 
-		console.log(
-			`[JWT API] Fetching data for device ${devEui} from ${startDate.toISOString()} to ${endDate.toISOString()}`
-		);
+		//console.log(
+		// 	`[JWT API] Fetching data for device ${devEui} from ${startDate.toISOString()} to ${endDate.toISOString()}`
+		// );
 
 		let historicalData: DeviceDataRecord[] = [];
 
 		try {
 			// Use the JWT-authenticated Supabase client for all queries
 			// This ensures RLS sees the correct user context
-			console.log('Using JWT-authenticated Supabase client for data queries...');
+			//console.log('Using JWT-authenticated Supabase client for data queries...');
 
 			// First attempt: Use DeviceDataService with JWT-authenticated client
 			const deviceDataService = new DeviceDataService(jwtSupabase, undefined, jwt);
 			historicalData = await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
 
 			if (historicalData && historicalData.length > 0) {
-				console.log(
-					`[JWT API] DeviceDataService succeeded: Found ${historicalData.length} records`
-				);
+				//console.log(
+				// 	`[JWT API] DeviceDataService succeeded: Found ${historicalData.length} records`
+				// );
 			} else {
-				console.log('DeviceDataService returned no data, trying direct table queries...');
+				//console.log('DeviceDataService returned no data, trying direct table queries...');
 
 				// Second attempt: Direct table queries using JWT client
 				// Try cw_air_data first (most common)
@@ -145,7 +145,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 
 				if (airData && airData.length > 0) {
 					historicalData = airData as DeviceDataRecord[];
-					console.log(`[JWT API] Found ${airData.length} air data records`);
+					//console.log(`[JWT API] Found ${airData.length} air data records`);
 				} else {
 					// Try cw_soil_data if no air data found
 					const { data: soilData, error: soilError } = await jwtSupabase
@@ -162,11 +162,11 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 
 					if (soilData && soilData.length > 0) {
 						historicalData = soilData as DeviceDataRecord[];
-						console.log(`[JWT API] Found ${soilData.length} soil data records`);
+						//console.log(`[JWT API] Found ${soilData.length} soil data records`);
 					} else {
-						console.log(
-							`[JWT API] No data found in either air or soil tables for device ${devEui}`
-						);
+						//console.log(
+						// 	`[JWT API] No data found in either air or soil tables for device ${devEui}`
+						// );
 					}
 				}
 			}
@@ -191,7 +191,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 				});
 			}
 
-			console.log(`[JWT API] Found ${historicalData.length} records for device ${devEui}`);
+			//console.log(`[JWT API] Found ${historicalData.length} records for device ${devEui}`);
 
 			// Return structured response for API consumption
 			return json({

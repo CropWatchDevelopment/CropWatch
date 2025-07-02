@@ -60,11 +60,11 @@
 	});
 
 	// Log the active status for debugging
-	$effect(() => {
-		console.log(
-			`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}, statusConfirmed: ${statusConfirmed}, cw_device_type: ${device.cw_device_type.name}`
-		);
-	});
+	// $effect(() => {
+	// 	//console.log(
+	// 		`[DataRowItem] Device ${device.name} (${device.dev_eui}) isActive: ${isActive}, statusConfirmed: ${statusConfirmed}, cw_device_type: ${device.cw_device_type.name}`
+	// 	);
+	// });
 
 	// Determine the primary and secondary data keys based on device type - using reactive declarations
 	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2);
@@ -79,15 +79,15 @@
 	let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
 
 	// Add a reactive effect to log when data changes
-	$effect(() => {
-		console.log(`DataRowItem: ${device.name} (${device.dev_eui}) data updated:`, {
-			primaryKey: primaryDataKey,
-			primaryValue,
-			secondaryKey: secondaryDataKey,
-			secondaryValue,
-			timestamp: device.latestData?.created_at
-		});
-	});
+	// $effect(() => {
+	// 	//console.log(`DataRowItem: ${device.name} (${device.dev_eui}) data updated:`, {
+	// 		primaryKey: primaryDataKey,
+	// 		primaryValue,
+	// 		secondaryKey: secondaryDataKey,
+	// 		secondaryValue,
+	// 		timestamp: device.latestData?.created_at
+	// 	});
+	// });
 
 	let localStorageOpenState = localStorage.getItem(`${device.dev_eui}-collapseState`);
 	let defaultCollapse = $state(localStorageOpenState ? JSON.parse(localStorageOpenState) : false);
@@ -97,9 +97,9 @@
 		localStorage.setItem(`${device.dev_eui}-collapseState`, JSON.stringify(e.detail.open));
 	}
 
-	$effect(() => {
-		$inspect('device', device, 'latestData', device.latestData);
-	});
+	// $effect(() => {
+	// 	$inspect('device', device, 'latestData', device.latestData);
+	// });
 </script>
 
 <Collapse

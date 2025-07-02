@@ -141,7 +141,7 @@ function setWeatherCache(weatherData: WeatherCacheEntry[]): void {
 		});
 
 		localStorage.setItem(CACHE_KEY, JSON.stringify(existingCache));
-		console.log(`Cached ${weatherData.length} weather entries`);
+		//console.log(`Cached ${weatherData.length} weather entries`);
 	} catch (error) {
 		console.warn('Failed to save weather cache:', error);
 	}
@@ -180,9 +180,9 @@ export async function fetchHistoricalWeather(
 	latitude: number = 34.6937,
 	longitude: number = 135.5023
 ): Promise<any[]> {
-	console.log(
-		`Fetching weather data from ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`
-	);
+	//console.log(
+	//	`Fetching weather data from ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`
+	//);
 
 	// Check cache first
 	const cache = getWeatherCache();
@@ -204,7 +204,7 @@ export async function fetchHistoricalWeather(
 	const missingRange = getMissingDates(startDate, endDate);
 
 	if (!missingRange) {
-		console.log('All data available in cache');
+		//console.log('All data available in cache');
 		return cachedResults.sort((a, b) => a.date.localeCompare(b.date));
 	}
 
@@ -213,13 +213,13 @@ export async function fetchHistoricalWeather(
 	const startDateStr = missingRange.start.toISOString().split('T')[0];
 	const endDateStr = missingRange.end.toISOString().split('T')[0];
 
-	console.log(`Fetching missing data from ${startDateStr} to ${endDateStr}`);
+	//console.log(`Fetching missing data from ${startDateStr} to ${endDateStr}`);
 
 	// Open-Meteo Historical Weather API
 	const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startDateStr}&end_date=${endDateStr}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&timezone=auto`;
 
 	try {
-		console.log('Fetching weather from Open-Meteo:', url);
+		//console.log('Fetching weather from Open-Meteo:', url);
 		const response = await fetch(url);
 
 		if (!response.ok) {
@@ -227,7 +227,7 @@ export async function fetchHistoricalWeather(
 		}
 
 		const data = await response.json();
-		console.log('Open-Meteo response:', data);
+		//console.log('Open-Meteo response:', data);
 
 		let newResults: WeatherCacheEntry[] = [];
 
@@ -250,7 +250,7 @@ export async function fetchHistoricalWeather(
 
 			// Cache the new results
 			setWeatherCache(newResults);
-			console.log(`Fetched and cached ${newResults.length} new entries`);
+			//console.log(`Fetched and cached ${newResults.length} new entries`);
 		} else {
 			console.warn('No weather data available in response:', data);
 		}
@@ -266,13 +266,13 @@ export async function fetchHistoricalWeather(
 			})
 			.sort((a, b) => a.date.localeCompare(b.date));
 
-		console.log(`Returning ${filteredResults.length} total weather entries`);
+		//console.log(`Returning ${filteredResults.length} total weather entries`);
 		return filteredResults;
 	} catch (error) {
 		console.error('Failed to fetch weather data:', error);
 		// Return cached data even if API fails
 		if (cachedResults.length > 0) {
-			console.log('API failed, returning cached data only');
+			//console.log('API failed, returning cached data only');
 			return cachedResults.sort((a, b) => a.date.localeCompare(b.date));
 		}
 		return [];
@@ -283,7 +283,7 @@ export async function fetchHistoricalWeather(
 export function clearWeatherCache(): void {
 	if (typeof window !== 'undefined') {
 		localStorage.removeItem(CACHE_KEY);
-		console.log('Weather cache cleared');
+		//console.log('Weather cache cleared');
 	}
 }
 
