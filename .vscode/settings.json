@@ -1,7 +1,8 @@
 {
     "i18n-ally.localesPaths": [
         "messages",
-        "src/paraglide/messages",
+        "src/lib/i18n",
+        "src/lib/i18n/locales",
         "src/lib/paraglide/messages"
     ]
 }
