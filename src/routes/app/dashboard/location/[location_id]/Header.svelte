@@ -2,6 +2,7 @@
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import type { Location } from '$lib/models/Location';
 	import type { Snippet } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	type Props = {
 		location: Location;
@@ -28,7 +29,7 @@
 		{#if children}
 			{@render children?.()}
 		{:else if basePath}
-			<Button variant="secondary" href={basePath}>« Back to Location Overview</Button>
+			<Button variant="secondary" href={basePath}>{$_('« Back to Location Overview')}</Button>
 		{/if}
 	</div>
 </header>

@@ -206,8 +206,8 @@
 			<button
 				class="text-foreground hover:bg-card-hover flex cursor-pointer items-center justify-center rounded border-none bg-transparent p-1"
 				onclick={onToggleCollapse}
-				aria-label="{collapsed ? 'Expand' : 'Collapse'} sidebar"
-				title="{collapsed ? 'Expand' : 'Collapse'} sidebar"
+				aria-label={collapsed ? $_('Expand sidebar to search') : $_('Collapse sidebar')}
+				title={collapsed ? $_('Expand sidebar to search') : $_('Collapse sidebar')}
 			>
 				<Icon
 					class="h-7  w-7 translate-x-[-4px] {collapsed ? 'rotate-180' : ''}"
@@ -303,7 +303,7 @@
 			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'w-auto opacity-100'}
 		`}
 		>
-			All Locations
+			{$_('All Locations')}
 		</span>
 	</button>
 
@@ -378,7 +378,8 @@
 							{/if}
 
 							<p class="text-foreground-dark mt-1 text-xs whitespace-nowrap">
-								{location.deviceCount} devices
+								{location.deviceCount}
+								{$_('Devices')}
 							</p>
 						</div>
 					</button>

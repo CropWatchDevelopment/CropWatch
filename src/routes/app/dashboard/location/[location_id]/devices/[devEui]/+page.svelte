@@ -245,9 +245,9 @@
 		<div class="flex flex-wrap items-end gap-2">
 			<!-- Date inputs -->
 			<div class="flex flex-col">
-				<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400"
-					>Start Date:</label
-				>
+				<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
+					{$_('Start Date:')}
+				</label>
 				<TextInput
 					id="startDate"
 					type="date"
@@ -257,7 +257,9 @@
 				/>
 			</div>
 			<div class="flex flex-col">
-				<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">End Date:</label>
+				<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
+					{$_('End Date:')}
+				</label>
 				<TextInput
 					id="endDate"
 					type="date"

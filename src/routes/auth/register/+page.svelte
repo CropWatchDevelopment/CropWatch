@@ -3,6 +3,7 @@
 	import { success, error as toastError } from '$lib/stores/toast.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import type { ActionResult } from '@sveltejs/kit';
+	import { _ } from 'svelte-i18n';
 
 	// Get page data (form action results)
 	let { data } = $props();
@@ -107,7 +108,7 @@
 		}
 
 		if (data?.message) {
-			toastError(data.message);
+			toastError($_(data.message));
 		}
 
 		// Populate form with returned values on error
@@ -149,7 +150,7 @@
 			const result = await response.json();
 			if (!response.ok || !result.success) {
 				// Show error toast
-				toastError(result.error || 'Registration failed. Please try again.');
+				toastError(result.error ? $_(result.error) : $_('Registration failed. Please try again.'));
 				isSubmitting = false;
 				return;
 			}
@@ -159,14 +160,14 @@
 			goto(`/auth/check-email?email=${encodeURIComponent(email)}`);
 		} catch (err) {
 			console.error('Registration error:', err);
-			toastError('An unexpected error occurred. Please try again.');
+			toastError($_('An unexpected error occurred. Please try again.'));
 			isSubmitting = false;
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Register | IoT Dashboard</title>
+	<title>{$_('Register')} | IoT Dashboard</title>
 </svelte:head>
 
 <div
@@ -175,15 +176,15 @@
 	<div class="bg-card-light dark:bg-card-dark w-full max-w-md space-y-8 rounded-xl p-8 shadow-md">
 		<div>
 			<h2 class="text-text-light dark:text-text-dark mt-6 text-center text-3xl font-extrabold">
-				Create your account
+				{$_('Create your account')}
 			</h2>
 			<p class="text-text-light/70 dark:text-text-dark/70 mt-2 text-center text-sm">
-				Or
+				{$_('Or')}
 				<a
 					href="/auth/login"
 					class="text-primary-light dark:text-primary-dark font-medium hover:underline"
 				>
-					sign in to your existing account
+					{$_('sign in to your existing account')}
 				</a>
 			</p>
 		</div>
@@ -197,7 +198,7 @@
 							for="firstName"
 							class="text-text-light dark:text-text-dark block text-sm font-medium"
 						>
-							First Name
+							{$_('First Name')}
 						</label>
 						<input
 							id="firstName"
@@ -205,11 +206,11 @@
 							type="text"
 							bind:value={firstName}
 							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
-							placeholder="John"
+							placeholder={$_('John')}
 							disabled={isSubmitting}
 						/>
 						{#if errors.firstName}
-							<p class="mt-1 text-xs text-red-500">{errors.firstName}</p>
+							<p class="mt-1 text-xs text-red-500">{$_(errors.firstName)}</p>
 						{/if}
 					</div>
 
@@ -218,7 +219,7 @@
 							for="lastName"
 							class="text-text-light dark:text-text-dark block text-sm font-medium"
 						>
-							Last Name
+							{$_('Last Name')}
 						</label>
 						<input
 							id="lastName"
@@ -226,11 +227,11 @@
 							type="text"
 							bind:value={lastName}
 							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
-							placeholder="Doe"
+							placeholder={$_('Doe')}
 							disabled={isSubmitting}
 						/>
 						{#if errors.lastName}
-							<p class="mt-1 text-xs text-red-500">{errors.lastName}</p>
+							<p class="mt-1 text-xs text-red-500">{$_(errors.lastName)}</p>
 						{/if}
 					</div>
 				</div>
@@ -238,7 +239,7 @@
 				<!-- Email -->
 				<div>
 					<label for="email" class="text-text-light dark:text-text-dark block text-sm font-medium">
-						Email address
+						{$_('Email address')}
 					</label>
 					<input
 						id="email"
@@ -247,11 +248,11 @@
 						autocomplete="email"
 						bind:value={email}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
-						placeholder="you@example.com"
+						placeholder={$_('you@example.com')}
 						disabled={isSubmitting}
 					/>
 					{#if errors.email}
-						<p class="mt-1 text-xs text-red-500">{errors.email}</p>
+						<p class="mt-1 text-xs text-red-500">{$_(errors.email)}</p>
 					{/if}
 				</div>
 
@@ -261,7 +262,7 @@
 						for="password"
 						class="text-text-light dark:text-text-dark block text-sm font-medium"
 					>
-						Password
+						{$_('Password')}
 					</label>
 					<input
 						id="password"
@@ -270,11 +271,11 @@
 						autocomplete="new-password"
 						bind:value={password}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
-						placeholder="••••••••"
+						placeholder={$_('••••••••')}
 						disabled={isSubmitting}
 					/>
 					{#if errors.password}
-						<p class="mt-1 text-xs text-red-500">{errors.password}</p>
+						<p class="mt-1 text-xs text-red-500">{$_(errors.password)}</p>
 					{/if}
 				</div>
 
@@ -284,7 +285,7 @@
 						for="confirmPassword"
 						class="text-text-light dark:text-text-dark block text-sm font-medium"
 					>
-						Confirm Password
+						{$_('Confirm Password')}
 					</label>
 					<input
 						id="confirmPassword"
@@ -293,11 +294,11 @@
 						autocomplete="new-password"
 						bind:value={confirmPassword}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
-						placeholder="••••••••"
+						placeholder={$_('••••••••')}
 						disabled={isSubmitting}
 					/>
 					{#if errors.confirmPassword}
-						<p class="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>
+						<p class="mt-1 text-xs text-red-500">{$_(errors.confirmPassword)}</p>
 					{/if}
 				</div>
 
@@ -307,7 +308,7 @@
 						for="company"
 						class="text-text-light dark:text-text-dark block text-sm font-medium"
 					>
-						Company
+						{$_('Company')}
 					</label>
 					<input
 						id="company"
@@ -315,11 +316,11 @@
 						type="text"
 						bind:value={company}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800"
-						placeholder="Acme Inc."
+						placeholder={$_('Acme Inc.')}
 						disabled={isSubmitting}
 					/>
 					{#if errors.company}
-						<p class="mt-1 text-xs text-red-500">{errors.company}</p>
+						<p class="mt-1 text-xs text-red-500">{$_(errors.company)}</p>
 					{/if}
 				</div>
 
@@ -338,10 +339,9 @@
 						</div>
 						<div class="ml-3 text-sm">
 							<label for="terms" class="text-text-light dark:text-text-dark font-medium">
-								I agree to the <a
-									href="/terms"
-									class="text-primary-light dark:text-primary-dark hover:underline"
-									>Terms of Service</a
+								{$_('I agree to the')}
+								<a href="/terms" class="text-primary-light dark:text-primary-dark hover:underline"
+									>{$_('Terms of Service')}</a
 								>
 							</label>
 						</div>
@@ -360,10 +360,9 @@
 						</div>
 						<div class="ml-3 text-sm">
 							<label for="privacy" class="text-text-light dark:text-text-dark font-medium">
-								I agree to the <a
-									href="/privacy"
-									class="text-primary-light dark:text-primary-dark hover:underline"
-									>Privacy Policy</a
+								{$_('I agree to the')}
+								<a href="/privacy" class="text-primary-light dark:text-primary-dark hover:underline"
+									>{$_('Privacy Policy')}</a
 								>
 							</label>
 						</div>
@@ -382,16 +381,16 @@
 						</div>
 						<div class="ml-3 text-sm">
 							<label for="cookies" class="text-text-light dark:text-text-dark font-medium">
-								I agree to the <a
-									href="/cookies"
-									class="text-primary-light dark:text-primary-dark hover:underline">Cookie Policy</a
+								{$_('I agree to the')}
+								<a href="/cookies" class="text-primary-light dark:text-primary-dark hover:underline"
+									>{$_('Cookie Policy')}</a
 								>
 							</label>
 						</div>
 					</div>
 
 					{#if errors.terms}
-						<p class="mt-1 text-xs text-red-500">{errors.terms}</p>
+						<p class="mt-1 text-xs text-red-500">{$_(errors.terms)}</p>
 					{/if}
 				</div>
 			</div>
@@ -402,7 +401,7 @@
 					class="group bg-primary-light dark:bg-primary-dark hover:bg-primary-light/90 dark:hover:bg-primary-dark/90 focus:ring-primary-light dark:focus:ring-primary-dark relative flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
 					disabled={isSubmitting}
 				>
-					{isSubmitting ? 'Registering...' : 'Register'}
+					{isSubmitting ? $_('Registering...') : $_('Register')}
 				</button>
 			</div>
 		</form>

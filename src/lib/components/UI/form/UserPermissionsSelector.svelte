@@ -9,6 +9,7 @@
 	import type { LocationUser } from '$lib/models/LocationUser';
 	import { error as errorToast, success as successToast } from '$lib/stores/toast.svelte';
 	import MaterialIcon from '../icons/MaterialIcon.svelte';
+	import { _ } from 'svelte-i18n';
 
 	type Props = {
 		data: { device?: DeviceWithType; ownerId: string };
@@ -77,12 +78,12 @@
 
 <section class="form-container bg-card !gap-0 rounded-lg">
 	<div class="border-b border-gray-300 pb-4 dark:border-neutral-400">
-		<h3 class="text-lg font-semibold">Current Users</h3>
+		<h3 class="text-lg font-semibold">{$_('current_users')}</h3>
 	</div>
 	<div class="divide-y">
 		{#if !ownerList || ownerList?.length === 0}
 			<div class="text-muted-foreground p-4 text-center">
-				No additional users have access to this device.
+				{$_('no_additional_users')}
 			</div>
 		{:else}
 			{#each ownerList as owner (owner.id)}
@@ -114,7 +115,7 @@
 								<span
 									class="bg-primary/60 dark:bg-primary/30 text-gray rounded px-3 py-1 text-sm dark:text-white"
 								>
-									Owner
+									{$_('owner')}
 								</span>
 							{/if}
 							{#if canManagePermissions() && !isDeviceOwner(owner.user_id)}
@@ -147,7 +148,7 @@
 									>
 										<input type="hidden" name="ownerId" value={owner.id} />
 										{#if updatingUser && updatingUserId === owner.user_id}
-											Updating...
+											{$_('updating')}
 										{:else}
 											<Select
 												name="permissionLevel"
@@ -207,10 +208,10 @@
 
 <Dialog bind:open={showingRemoveConfirmation}>
 	{#snippet title()}
-		Remove User
+		{$_('remove_user')}
 	{/snippet}
 	{#snippet body()}
-		Are you sure you want to remove this user?
+		{$_('confirm_remove_user')}
 	{/snippet}
 	{#snippet footer()}
 		<Button
@@ -219,7 +220,7 @@
 				showingRemoveConfirmation = false;
 			}}
 		>
-			Cancel
+			{$_('cancel')}
 		</Button>
 		<Button
 			variant="danger"
@@ -228,7 +229,7 @@
 				removeUser();
 			}}
 		>
-			Remove
+			{$_('remove')}
 		</Button>
 	{/snippet}
 </Dialog>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import { locale } from 'svelte-i18n';
+	import { locale, _ } from 'svelte-i18n';
 	import Header from './Header.svelte';
 
 	let { data } = $props();
@@ -23,10 +23,10 @@
 
 <Header {location} basePath={`/app/dashboard/location/${locationId}`}>
 	<Button variant="secondary" href={`/app/dashboard/location/${locationId}/settings`}>
-		Settings
+		{$_('Settings')}
 	</Button>
 	<Button variant="primary" href={`/app/dashboard/location/${locationId}/devices/create`}>
-		Add Device
+		{$_('Add Device')}
 	</Button>
 </Header>
 
@@ -64,16 +64,16 @@
 		</div>
 		<!-- Details -->
 		<section>
-			<h2>Location Details</h2>
+			<h2>{$_('Location Details')}</h2>
 			<div
 				class="grid grid-rows-1 gap-2 rounded-lg bg-gray-50 p-4 text-sm shadow-sm dark:bg-zinc-800"
 			>
 				<div>
-					<span class="text-gray-500/80 dark:text-gray-300/80">Location ID:</span>
+					<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Location ID')}:</span>
 					{location.location_id}
 				</div>
 				<div>
-					<span class="text-gray-500/80 dark:text-gray-300/80">Created:</span>
+					<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Created')}:</span>
 					{new Date(location.created_at).toLocaleDateString($locale ?? undefined, {
 						year: 'numeric',
 						month: 'long',
@@ -81,7 +81,7 @@
 					})}
 				</div>
 				<div>
-					<span class="text-gray-500/80 dark:text-gray-300/80">Coordinates:</span>
+					<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Coordinates')}:</span>
 					{location.lat?.toFixed(6)}, {location.long?.toFixed(6)}
 				</div>
 			</div>
@@ -91,7 +91,7 @@
 	<div class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0">
 		<!-- Devices List -->
 		<section>
-			<h2>Devices</h2>
+			<h2>{$_('Devices')}</h2>
 			{#await data.devices}
 				Loading devices...
 			{:then devices}
@@ -121,14 +121,14 @@
 										variant="ghost"
 										href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}/settings`}
 									>
-										Settings
+										{$_('Settings')}
 									</Button>
 								</div>
 							</div>
 						{/each}
 					</div>
 				{:else}
-					<p class="text-muted text-center">No devices found for this location.</p>
+					<p class="text-muted text-center">{$_('No devices found for this location.')}</p>
 				{/if}
 			{/await}
 		</section>

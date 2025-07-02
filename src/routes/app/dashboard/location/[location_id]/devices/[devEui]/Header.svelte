@@ -2,6 +2,7 @@
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import type { DeviceWithType } from '$lib/models/Device';
 	import type { Snippet } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	type Props = {
 		device: DeviceWithType;
@@ -22,6 +23,6 @@
 	{#if children}
 		{@render children?.()}
 	{:else if basePath}
-		<Button variant="secondary" href={basePath}>« Back to Device</Button>
+		<Button variant="secondary" href={basePath}>« {$_('Back to Device')}</Button>
 	{/if}
 </header>

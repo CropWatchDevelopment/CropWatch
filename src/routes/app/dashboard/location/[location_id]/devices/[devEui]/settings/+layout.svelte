@@ -17,10 +17,10 @@
 	}
 
 	const links = [
-		{ href: `${basePath}/settings`, label: 'General' },
-		{ href: `${basePath}/settings/rules`, label: 'Notifications' },
-		{ href: `${basePath}/settings/reports`, label: 'Reports' },
-		{ href: `${basePath}/settings/permissions`, label: 'Permissions' }
+		{ href: `${basePath}/settings`, label: $_('General') },
+		{ href: `${basePath}/settings/rules`, label: $_('Notifications') },
+		{ href: `${basePath}/settings/reports`, label: $_('Reports') },
+		{ href: `${basePath}/settings/permissions`, label: $_('Permissions') }
 	];
 </script>
 

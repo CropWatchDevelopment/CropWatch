@@ -12,6 +12,7 @@
 	import { error as errorToast, success as successToast } from '$lib/stores/toast.svelte';
 	import type { ActionResult } from '@sveltejs/kit';
 	import Header from '../Header.svelte';
+	import { _ } from 'svelte-i18n';
 
 	type NewUserFormDataProps = {
 		email: string;
@@ -147,7 +148,7 @@
 
 <div class="w-full p-4">
 	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-2xl font-bold">Location Settings</h1>
+		<h1 class="text-2xl font-bold">{$_('Location Settings')}</h1>
 	</div>
 
 	<div class="flex flex-col gap-4 lg:flex-row">
@@ -156,9 +157,9 @@
 			<!-- Location Details Section -->
 			<section class="bg-foreground-light dark:bg-foreground-dark rounded-lg p-6 shadow-lg">
 				<div class="mb-4 flex items-center justify-between">
-					<h2 class="text-xl font-bold">Location Details</h2>
+					<h2 class="text-xl font-bold">{$_('Location Details')}</h2>
 					{#if !editingLocation}
-						<Button variant="secondary" onclick={startEditLocation}>Edit Details</Button>
+						<Button variant="secondary" onclick={startEditLocation}>{$_('Edit Details')}</Button>
 					{/if}
 				</div>
 
@@ -177,24 +178,24 @@
 						use:formValidation
 					>
 						<div>
-							<label for="locationName" class="mb-1 block font-medium">Location Name</label>
+							<label for="locationName" class="mb-1 block font-medium">{$_('Location Name')}</label>
 							<TextInput
 								id="locationName"
 								name="name"
 								required
-								placeholder="Location Name"
+								placeholder={$_('Location Name')}
 								class="w-full"
 								bind:value={locationFormData.name}
 							/>
 						</div>
 
 						<div>
-							<label for="locationName" class="mb-1 block font-medium">Description</label>
+							<label for="locationName" class="mb-1 block font-medium">{$_('Description')}</label>
 							<TextInput
 								id="locationName"
 								name="description"
 								required
-								placeholder="Description"
+								placeholder={$_('Description')}
 								class="w-full"
 								bind:value={locationFormData.description}
 							/>
@@ -234,28 +235,30 @@
 								variant="primary"
 								disabled={updatingLocation || !locationFormData.name}
 							>
-								{updatingLocation ? 'Updating...' : 'Update Location'}
+								{updatingLocation ? $_('Updating...') : $_('Update Location')}
 							</Button>
-							<Button variant="secondary" onclick={() => cancelEditLocation()}>Cancel</Button>
+							<Button variant="secondary" onclick={() => cancelEditLocation()}
+								>{$_('Cancel')}</Button
+							>
 						</div>
 					</form>
 				{:else}
 					<div class="grid grid-cols-1 gap-4">
 						<div>
-							<h3 class="text-sm font-medium text-gray-500">Name</h3>
-							<p>{location.name || 'No name set'}</p>
+							<h3 class="text-sm font-medium text-gray-500">{$_('Name')}</h3>
+							<p>{location.name || $_('No name set')}</p>
 						</div>
 						<div>
-							<h3 class="text-sm font-medium text-gray-500">Description</h3>
+							<h3 class="text-sm font-medium text-gray-500">{$_('Description')}</h3>
 							<p>{location.description}</p>
 						</div>
 						<div>
-							<h3 class="text-sm font-medium text-gray-500">Coordinates</h3>
+							<h3 class="text-sm font-medium text-gray-500">{$_('Coordinates')}</h3>
 							<p>
 								{#if location.lat && location.long}
 									{location.lat.toFixed(6)}, {location.long.toFixed(6)}
 								{:else}
-									Not set
+									{$_('Not set')}
 								{/if}
 							</p>
 						</div>
@@ -267,15 +270,15 @@
 		<!-- Right pane -->
 		<div class="flex flex-1 flex-col gap-4">
 			<section class="bg-foreground-light dark:bg-foreground-dark rounded-lg p-6 shadow-lg">
-				<h2 class="mb-4 text-xl font-bold">User Permissions</h2>
+				<h2 class="mb-4 text-xl font-bold">{$_('User Permissions')}</h2>
 				<p class="mb-4">
-					Manage which users have access to this location and with what permission level.
+					{$_('manage_permissions_description')}
 				</p>
 
 				<UserPermissionsSelector {data} {ownerList} canDelete={true} />
 
 				<div class="mt-6">
-					<h3 class="mb-2 text-lg font-medium">Add New User</h3>
+					<h3 class="mb-2 text-lg font-medium">{$_('Add New User')}</h3>
 
 					<form
 						method="POST"
@@ -291,7 +294,7 @@
 						use:formValidation
 					>
 						<div>
-							<label for="email" class="mb-1 block font-medium">Email Address</label>
+							<label for="email" class="mb-1 block font-medium">{$_('Email Address')}</label>
 							<TextInput
 								type="email"
 								id="email"
@@ -304,7 +307,9 @@
 						</div>
 
 						<div>
-							<label for="permissionLevel" class="mb-1 block font-medium">Permission Level</label>
+							<label for="permissionLevel" class="mb-1 block font-medium"
+								>{$_('Permission Level')}</label
+							>
 							<Select
 								id="permissionLevel"
 								name="permissionLevel"
@@ -317,10 +322,14 @@
 								{/each}
 							</Select>
 							<p class="mt-1 text-sm text-gray-500">
-								<strong>Admin:</strong> Full control over location and devices<br />
-								<strong>User:</strong> Can use and configure devices<br />
-								<strong>Viewer:</strong> Can only view data<br />
-								<strong>Disabled:</strong> No access
+								<strong>{$_('Admin:')}</strong>
+								{$_('Full control over location and devices')}<br />
+								<strong>{$_('User:')}</strong>
+								{$_('Can use and configure devices')}<br />
+								<strong>{$_('Viewer:')}</strong>
+								{$_('Can only view data')}<br />
+								<strong>{$_('Disabled:')}</strong>
+								{$_('No access')}
 							</p>
 						</div>
 
@@ -332,12 +341,12 @@
 									value="true"
 									bind:checked={newUserFormData.allDevices}
 								/>
-								<span
-									>Apply same permission to all devices in this location (x{deviceCount} devices)</span
-								>
+								<span>
+									{$_('Apply same permission to all devices in this location')} (x{deviceCount} devices)
+								</span>
 							</label>
 							<p class="mt-1 text-sm text-gray-500">
-								If unchecked, user will be added with "Disabled" permission to all devices.
+								{$_('If unchecked, user will be added with "Disabled" permission to all devices.')}
 							</p>
 						</div>
 
@@ -347,7 +356,7 @@
 								type="submit"
 								disabled={addingUser || !newUserFormData.email}
 							>
-								{addingUser ? 'Adding...' : 'Add User'}
+								{addingUser ? $_('Adding...') : $_('Add User')}
 							</Button>
 						</div>
 					</form>
@@ -355,18 +364,18 @@
 			</section>
 
 			<section class="border-danger/50 flex flex-col gap-2 rounded-lg border p-4">
-				<h2 class="text-danger text-lg font-semibold">Dangerous Zone</h2>
+				<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
 				<form
 					method="POST"
 					action="?/deleteLocation"
 					use:enhance={() => {
 						return ({ result }: { result: ActionResult }) => {
 							if (result.type === 'success' && result.data?.success) {
-								successToast('Location removed successfully');
+								successToast($_('Location removed successfully'));
 								window.location.href = '/app/dashboard/location/';
 							} else {
 								// @ts-ignore
-								errorToast(result.data?.error || 'Failed to remove location');
+								errorToast(result.data?.error || $_('Failed to remove location'));
 							}
 						};
 					}}
@@ -379,7 +388,7 @@
 							showingRemoveConfirmation = true;
 						}}
 					>
-						Remove Location
+						{$_('Remove Location')}
 					</Button>
 				</form>
 			</section>
@@ -389,10 +398,10 @@
 
 <Dialog bind:open={showingRemoveConfirmation}>
 	{#snippet title()}
-		Remove Location
+		{$_('Remove Location')}
 	{/snippet}
 	{#snippet body()}
-		Are you sure you want to remove this location? This action cannot be undone.
+		{$_('Are you sure you want to remove this location? This action cannot be undone.')}
 	{/snippet}
 	{#snippet footer()}
 		<Button
@@ -401,7 +410,7 @@
 				showingRemoveConfirmation = false;
 			}}
 		>
-			Cancel
+			{$_('Cancel')}
 		</Button>
 		<Button
 			variant="danger"
@@ -410,7 +419,7 @@
 				removeLocation();
 			}}
 		>
-			Remove
+			{$_('Remove')}
 		</Button>
 	{/snippet}
 </Dialog>

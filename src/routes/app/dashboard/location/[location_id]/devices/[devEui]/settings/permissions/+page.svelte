@@ -25,7 +25,7 @@
 		<div>
 			<h1 class="mb-1 text-2xl font-semibold">{$_('Permissions')}</h1>
 			<p class="text-sm text-neutral-100">
-				Manage who has access to {device?.name || 'this device'} and their permission levels.
+				{$_('manage_permissions_description', { device: device?.name || '' })}
 			</p>
 		</div>
 	</header>
