@@ -401,5 +401,7 @@ export const strings = {
 	"Didn't receive an email?": 'メールが届いていませんか？',
 	'Check your spam folder or': '迷惑メールフォルダを確認するか',
 	'request a new verification email': '新しい確認メールをリクエスト',
-	'Return to Login': 'ログインに戻る'
+	'Return to Login': 'ログインに戻る',
+	loginErrorMessage: 'ログインエラー：メールアドレスまたはパスワードが正しくありません',
+	'Invalid email or password': 'メールアドレスまたはパスワードが正しくありません'
 };

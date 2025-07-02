@@ -26,10 +26,8 @@
 
 		// Check if user is already logged in
 		try {
-			console.log('Login page: Checking auth status');
 			const response = await fetch('/api/auth/status');
 			const data = await response.json();
-			console.log('Login page: Auth status response', data);
 			isLoggedIn = data.authenticated;
 
 			if (isLoggedIn) {
@@ -40,7 +38,7 @@
 				// This prevents potential redirect loops
 			}
 		} catch (err) {
-			console.error('Login page: Error checking auth status', err);
+			console.error($_('loginErrorMessage'), err);
 			// Ignore error, assume not logged in
 			isLoggedIn = false;
 		}
@@ -78,7 +76,7 @@
 			error = err instanceof Error ? err.message : 'Login failed. Please try again.';
 			loading = false;
 			submitting = false;
-			toastError(`Login error: ${error}`);
+			toastError($_('loginErrorMessage'));
 		}
 	}
 </script>

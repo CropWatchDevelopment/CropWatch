@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { _ } from 'svelte-i18n';
 
 	type BreadcrumbProps = {
 		path: string;
@@ -19,7 +20,7 @@
 	const getRoutes = (): Route[] => [
 		{
 			path: '/app/dashboard',
-			label: 'Dashboard'
+			label: $_('Dashboard')
 		},
 		// {
 		// 	path: '/app/dashboard/location',
@@ -27,7 +28,7 @@
 		// },
 		{
 			path: `/app/dashboard/location/[location_id]`,
-			label: page.data.location?.name ?? 'Location Details'
+			label: page.data.location?.name ?? $_('Location Details')
 		},
 		// {
 		// 	path: `/app/dashboard/location/[location_id]/devices`,
@@ -35,11 +36,11 @@
 		// },
 		{
 			path: `/app/dashboard/location/[location_id]/devices/[devEui]`,
-			label: page.data.device?.name ?? 'Device Details'
+			label: page.data.device?.name ?? $_('Device Details')
 		},
 		{
 			path: `/app/dashboard/location/[location_id]/devices/[devEui]/settings`,
-			label: 'Settings'
+			label: $_('Settings')
 		}
 	];
 </script>
