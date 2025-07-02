@@ -1,5 +1,8 @@
 {
   "recommendations": [
-    "inlang.vs-code-extension"
+    "svelte.svelte-vscode",
+    "svelte.svelte-vscode-sveltekit",
+    "svelte.svelte-vscode-tailwindcss",
+    "svelte.svelte-vscode-testing-library",
   ]
 }

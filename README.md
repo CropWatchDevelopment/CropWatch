@@ -82,7 +82,7 @@ Link : https://app.CropWatch.io
 - Data Visualization: D3.js, ApexCharts
 - Mapping: Leaflet
 - PDF Generation: jspdf, pdfkit, html2canvas
-- Localization: svelte-i18n, @inlang/paraglide-js
+- Localization: svelte-i18n,
 - Backend & SSR: @supabase/supabase-js, @supabase/ssr
 - Routing & Testing: Vite, Vitest, Playwright, @playwright/test, @testing-library/svelte, @testing-library/jest-dom
 - Linting & Formatting: ESLint, Prettier, eslint-plugin-svelte, prettier-plugin-svelte, prettier-plugin-tailwindcss
