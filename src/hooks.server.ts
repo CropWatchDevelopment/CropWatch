@@ -350,7 +350,7 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-// Combine the handles - CORS first, then Supabase, then Paraglide
+// Combine the handles - CORS first, then Supabase
 export const handle: Handle = async ({ event, resolve }) => {
 	// First apply CORS (handles preflight requests immediately)
 	return await handleCORS({
