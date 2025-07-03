@@ -20,12 +20,6 @@ importers:
       '@mdi/js':
         specifier: ^7.4.47
         version: 7.4.47
-      '@revolist/revogrid':
-        specifier: ^4.15.8
-        version: 4.15.8
-      '@revolist/svelte-datagrid':
-        specifier: ^4.15.8
-        version: 4.15.8
       '@stencil/store':
         specifier: ^2.1.3
         version: 2.1.3(@stencil/core@4.35.1)
@@ -1270,12 +1264,6 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
-
-  '@revolist/revogrid@4.15.8':
-    resolution: {integrity: sha512-XP6EvH2D+VukmGDunGQieOTX3rjXmfx4YCEMerzzZMjD1lrztUQFqOxkPR9U4E5KvhU79nn/K9WPo8u7b6VCVw==}
-
-  '@revolist/svelte-datagrid@4.15.8':
-    resolution: {integrity: sha512-QNwAMlEhqpeLBvJ36vFg8Q+3NVjAuHlbn8dvy9s+k3LV32SQ4ZJY0l/vFF325mRWQWWHydrfh/uOanTENTUUjA==}
 
   '@rollup/plugin-babel@5.3.1':
     resolution: {integrity: sha512-WFfdLWU/xVWKeRQnKmIAQULUI7Il0gZnBIH/ZFO069wYIfPu+8zrfp/KMW0atmELoRDq8FbiP3VCss9MhCut7Q==}
@@ -6334,8 +6322,8 @@ snapshots:
 
   '@jridgewell/source-map@0.3.10':
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.8
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/gen-mapping': 0.3.12
+      '@jridgewell/trace-mapping': 0.3.29
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
@@ -6460,12 +6448,6 @@ snapshots:
       playwright: 1.53.1
 
   '@polka/url@1.0.0-next.29': {}
-
-  '@revolist/revogrid@4.15.8': {}
-
-  '@revolist/svelte-datagrid@4.15.8':
-    dependencies:
-      '@revolist/revogrid': 4.15.8
 
   '@rollup/plugin-babel@5.3.1(@babel/core@7.28.0)(rollup@2.79.2)':
     dependencies:
