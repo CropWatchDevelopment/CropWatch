@@ -29,12 +29,30 @@
 	dark:border-gray-700 dark:bg-[#1f2532] dark:text-white dark:shadow-gray-900/20"
 >
 	<div
-		class="relative min-h-[130px] bg-gray-100
-		text-yellow-600 dark:bg-[#2c3546] dark:text-yellow-300"
+		class="relative flex min-h-[60px] flex-row bg-teal-800
+		text-yellow-300 dark:bg-[#2c3546] dark:text-yellow-300"
 	>
-		<div class="pt-12">
-			<!-- Icon-only status indicator with color based on state -->
-			<div class="absolute top-3 left-3 flex h-10 w-10 items-center justify-center">
+		<!-- <div class="pt-12"> -->
+		<!-- Icon-only status indicator with color based on state -->
+		<!-- <div class="absolute top-3 left-3 flex h-10 w-10 items-center justify-center bg-white/20 rounded-full shadow-lg dark:bg-gray-800">
+				{#if loading}
+					<Icon class="text-xl text-blue-400" path={mdiClockOutline} />
+				{:else if allActive}
+					<Icon class="text-xl text-green-500" path={mdiCheck} />
+				{:else if activeDevices.length > 0 && !allInactive}
+					<Icon class="rounded-lg text-xl text-orange-300" path={mdiAlert} />
+				{:else}
+					<Icon class="text-xl text-red-500" path={mdiClose} />
+				{/if}
+			</div> -->
+		<!-- </div> -->
+
+		<h2
+			class="flex w-full flex-row justify-between px-2 pt-3 text-lg font-semibold text-yellow-600 dark:text-yellow-400"
+		>
+			<div
+				class="top-3 left-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 shadow-lg dark:bg-gray-800"
+			>
 				{#if loading}
 					<Icon class="text-xl text-blue-400" path={mdiClockOutline} />
 				{:else if allActive}
@@ -45,14 +63,9 @@
 					<Icon class="text-xl text-red-500" path={mdiClose} />
 				{/if}
 			</div>
-		</div>
-
-		<h2
-			class="flex items-center justify-between px-2 py-3 text-lg font-semibold text-yellow-600 dark:text-yellow-400"
-		>
-			<span>{location.name}</span>
+			<span class="ml-5 flex flex-auto">{location.name}</span>
 			<button
-				class="ml-2 inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 p-0 text-blue-700 transition-colors duration-200 hover:bg-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-gray-600"
+				class="ml-2 flex inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 p-0 text-blue-700 transition-colors duration-200 hover:bg-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-gray-600"
 				onclick={() => goto(href)}
 				aria-label="View details"
 			>

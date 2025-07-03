@@ -5,8 +5,12 @@ import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/publi
 import { createClient } from '@supabase/supabase-js';
 
 const PUBLIC_ROUTES = [
+	'/offline.html',
 	'/auth', // All routes under /auth/
-	'/api/auth' // Only authentication-related API routes
+	'/api/auth', // Only authentication-related API routes
+	'/static', // All static assets
+	'/static/icons',
+	'/static/screenshots'
 ];
 
 // Additional check for exact /api/ route
@@ -352,6 +356,17 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 
 // Combine the handles - CORS first, then Supabase
 export const handle: Handle = async ({ event, resolve }) => {
+	const { url } = event;
+	if (
+		url.pathname.startsWith('/sw.js') ||
+		url.pathname.startsWith('/workbox-') ||
+		url.pathname.startsWith('/manifest.webmanifest') ||
+		url.pathname.startsWith('/registerSW.js') ||
+		url.pathname.startsWith('/offline.html')
+	) {
+		return resolve(event);
+	}
+
 	// First apply CORS (handles preflight requests immediately)
 	return await handleCORS({
 		event,
