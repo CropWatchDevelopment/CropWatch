@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline | CropWatch</title>
+    <link rel="icon" href="/favicon.ico" />
+    <style>
+        /* CSS Variables for consistent theming */
+        :root {
+            --color-primary: #4caf50;
+            --color-primary-hover: #3a8c3f;
+            --color-background: #eaeaea;
+            --color-card: #ffffff;
+            --color-text: #333333;
+            --color-text-secondary: rgba(51, 51, 51, 0.7);
+            --color-error: #e53935;
+            --color-error-bg: #ffebee;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Dark mode detection */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-primary: #3a8c3f;
+                --color-primary-hover: #4caf50;
+                --color-background: #1a1a1a;
+                --color-card: #2d2d2d;
+                --color-text: #e0e0e0;
+                --color-text-secondary: rgba(224, 224, 224, 0.7);
+                --color-error: #ef5350;
+                --color-error-bg: rgba(229, 57, 53, 0.2);
+                --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--color-card);
+            color: var(--color-text);
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--color-text);
+        }
+
+        .message {
+            color: var(--color-text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .error-box {
+            background-color: var(--color-error-bg);
+            color: var(--color-error);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--color-error);
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--color-text);
+            border: 1px solid var(--color-text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--color-text-secondary);
+            color: var(--color-card);
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .status.checking {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .status.online {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.offline {
+            background-color: var(--color-error-bg);
+            color: var(--color-error);
+        }
+
+        /* Dark mode status colors */
+        @media (prefers-color-scheme: dark) {
+            .status.checking {
+                background-color: rgba(21, 101, 192, 0.2);
+                color: #64b5f6;
+            }
+
+            .status.online {
+                background-color: rgba(46, 125, 50, 0.2);
+                color: #81c784;
+            }
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- CropWatch Logo -->
+        <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="var(--color-primary)"/>
+            <path d="M12 16L13.09 22.26L20 23L13.09 23.74L12 30L10.91 23.74L4 23L10.91 22.26L12 16Z" fill="var(--color-primary)" opacity="0.6"/>
+        </svg>
+
+        <div class="icon">🌾</div>
+        <h1>You're Offline</h1>
+        
+        <div class="message">
+            <p>It looks like you're not connected to the internet. CropWatch needs an internet connection to sync your IoT device data and provide real-time monitoring.</p>
+        </div>
+
+        <div class="error-box">
+            <strong>📡 No Internet Connection</strong><br>
+            Please check your network connection and try again.
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-primary" onclick="checkConnection()">
+                🔄 Check Connection
+            </button>
+            <button class="btn btn-secondary" onclick="goHome()">
+                🏠 Go to Home
+            </button>
+            <button class="btn btn-secondary" onclick="refreshPage()">
+                ↻ Refresh Page
+            </button>
+        </div>
+
+        <div id="status" class="status offline">
+            📴 Currently offline
+        </div>
+    </div>
+
+    <script>
+        // Function to check internet connection
+        async function checkConnection() {
+            const statusElement = document.getElementById('status');
+            statusElement.className = 'status checking';
+            statusElement.innerHTML = '🔍 Checking connection...';
+
+            try {
+                // Try to fetch a small resource to test connectivity
+                const response = await fetch('/favicon.ico?' + Date.now(), {
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                });
+
+                if (response.ok) {
+                    statusElement.className = 'status online';
+                    statusElement.innerHTML = '✅ Connection restored!';
+                    
+                    // Redirect to home after showing success message
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    throw new Error('No connection');
+                }
+            } catch (error) {
+                statusElement.className = 'status offline';
+                statusElement.innerHTML = '❌ Still offline';
+                
+                // Reset status after 3 seconds
+                setTimeout(() => {
+                    statusElement.className = 'status offline';
+                    statusElement.innerHTML = '📴 Currently offline';
+                }, 3000);
+            }
+        }
+
+        // Function to go to home page
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        // Function to refresh the page
+        function refreshPage() {
+            window.location.reload();
+        }
+
+        // Automatically check connection every 30 seconds
+        setInterval(checkConnection, 30000);
+
+        // Listen for online/offline events
+        window.addEventListener('online', function() {
+            const statusElement = document.getElementById('status');
+            statusElement.className = 'status online';
+            statusElement.innerHTML = '✅ Connection restored!';
+            
+            // Redirect to home after showing success message
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        });
+
+        window.addEventListener('offline', function() {
+            const statusElement = document.getElementById('status');
+            statusElement.className = 'status offline';
+            statusElement.innerHTML = '📴 Connection lost';
+        });
+
+        // Initial connection check on page load
+        setTimeout(checkConnection, 1000);
+    </script>
+</body>
+</html>

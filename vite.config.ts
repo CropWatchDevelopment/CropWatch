@@ -10,6 +10,9 @@ export default defineConfig({
 		sveltekit(),
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
+			srcDir: 'static',
+			filename: 'sw.js',
+			strategies: 'injectManifest',
 			manifest: {
 				name: 'CropWatch UI',
 				short_name: 'CW UI',
