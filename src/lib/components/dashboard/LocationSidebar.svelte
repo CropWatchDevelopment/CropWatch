@@ -202,7 +202,6 @@
 >
 	<div class="mb-4 flex items-center">
 		<div class="mx-auto flex w-full items-center">
-			<!-- Toggle button - always visible -->
 			<button
 				class="text-foreground hover:bg-card-hover flex cursor-pointer items-center justify-center rounded border-none bg-transparent p-1"
 				onclick={onToggleCollapse}
@@ -215,7 +214,6 @@
 				/>
 			</button>
 
-			<!-- Title and filters - only visible when expanded -->
 			{#if !collapsed}
 				<div class="ml-2 flex-1">
 					<h2>{$_('Locations')}</h2>
@@ -232,10 +230,8 @@
 			{/if}
 		</div>
 	</div>
-	<!-- Search section - different display based on collapsed state -->
 	<div class="mb-1 flex h-10 items-center">
 		{#if collapsed}
-			<!-- Search icon when collapsed - clicking expands the sidebar -->
 			<button
 				class="text-foreground hover:bg-card-hover flex h-8 w-8 cursor-pointer items-center rounded border-none pl-1"
 				onclick={onToggleCollapse}
@@ -244,7 +240,6 @@
 				<Icon path={mdiMagnify} size="1.25em" />
 			</button>
 		{:else}
-			<!-- Full search bar when expanded -->
 			<div class="relative">
 				<div class="absolute inset-y-0 flex items-center pl-2">
 					<svg viewBox="0 0 24 24" width="16" height="16" class=" text-gray-500">
@@ -278,7 +273,6 @@
 		{/if}
 	</div>
 
-	<!-- All Locations filter option -->
 	<button
 		onclick={() => onSelectLocation(null)}
 		in:fade={{ duration: 150 }}
@@ -292,12 +286,10 @@
 		${selectedLocation === null ? 'text-foreground bg-emerald-500/30' : 'hover:bg-card-hover text-white'}
 	`}
 	>
-		<!-- Icon (always aligned) -->
 		<div class="ml-1.5 flex items-center justify-center">
 			<Icon path={mdiEarth} size="1.25em" class="text-gray-600 dark:text-gray-400" />
 		</div>
 
-		<!-- Label -->
 		<span
 			class={`overflow-hidden font-medium text-ellipsis whitespace-nowrap transition-all duration-200
 			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'w-auto opacity-100'}
@@ -310,7 +302,6 @@
 	{#if locations.length === 0 && !collapsed}
 		<p class="text-foreground p-4">{$_('No locations found.')}</p>
 	{:else}
-		<!-- Location list - different display based on collapsed state -->
 		<ul class="m-0 list-none" role="listbox" aria-label="Select a location">
 			{#each locations
 				.filter((location: LocationWithCount) => {
@@ -340,10 +331,8 @@
 	}
 `}
 					>
-						<!-- Icon (always aligned) -->
 						<div class="ml-1.5 flex items-center justify-center">
 							{#if !location.cw_devices || location.cw_devices.length === 0}
-								<!-- Locations without devices show red X -->
 								<Icon path={mdiClose} size="1.25em" class="text-red-500" />
 							{:else}
 								{@const status = getLocationStatus(location)}
@@ -359,7 +348,6 @@
 							{/if}
 						</div>
 
-						<!-- Label and meta (only when expanded) -->
 						<div
 							class={`overflow-hidden transition-all duration-200
 			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'pointer-events-auto w-auto opacity-100 select-auto'}
