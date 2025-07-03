@@ -7,135 +7,6 @@
 	import { success, error, warning, info, neutral } from '$lib/stores/toast.svelte';
 	import { onMount } from 'svelte';
 
-	// Dynamic import for RevoGrid to avoid SSR issues
-	let RevoGrid: any = $state(null);
-	let ColumnRegular: any = $state(null);
-
-	let { data } = $props();
-
-	let grid_component_instance: any = $state(); // To bind the component instance if needed
-	const columns: any[] = $state([
-		{
-			name: '🎰 Ticker',
-			prop: 'symbol',
-			sortable: true,
-			pin: 'colPinStart',
-			cellTemplate: (h, { model, prop }) => h('strong', null, model[prop])
-		},
-		{
-			name: '🔠 Company Name',
-			prop: 'company_name',
-			size: 300
-		},
-		{
-			name: '',
-			prop: '📉 graph',
-			readonly: true,
-			// Custom cell render
-			cellTemplate(h) {
-				const barWidth = 5;
-				const barSpacing = 5;
-				const maxHeight = 30;
-				const bars = [];
-
-				// Draw 5 vertical bars with random heights
-				for (let i = 0; i < 5; i++) {
-					const barHeight = Math.random() * maxHeight;
-					const x = i * (barWidth + barSpacing);
-					const y = maxHeight - barHeight + 5;
-
-					// Create the rectangle element for the bar
-					const rect = h('rect', {
-						key: i,
-						x,
-						y,
-						width: barWidth,
-						height: barHeight,
-						fill: 'blue',
-						stroke: 'black'
-					});
-
-					// Append the rectangle to the group
-					bars.push(rect);
-				}
-				return h(
-					'svg',
-					{
-						width: '100%',
-						height: maxHeight + 10
-					},
-					h('g', {}, bars)
-				);
-			}
-		},
-		{
-			name: '💰 Price',
-			prop: 'price',
-			columnType: 'numeric',
-			sortable: true
-		},
-		{
-			name: '⬆️ Change',
-			prop: 'change',
-			columnType: 'numeric',
-			sortable: true
-		},
-		{
-			name: '% Change',
-			prop: 'percent_change'
-		}
-	]);
-
-	const source = $state([
-		{
-			symbol: 'AAPL',
-			company_name: 'Apple Inc.',
-			price: 150.25,
-			change: 1.5,
-			percent_change: '1.01%'
-		},
-		{
-			symbol: 'MSFT',
-			company_name: 'Microsoft Corp.',
-			price: 280.75,
-			change: -0.5,
-			percent_change: '-0.18%'
-		},
-		{
-			symbol: 'GOOGL',
-			company_name: 'Alphabet Inc.',
-			price: 2700.5,
-			change: 10.2,
-			percent_change: '0.38%'
-		}
-	]);
-
-	onMount(() => {
-		// Dynamically import RevoGrid only on the client side
-		if (browser) {
-			import('@revolist/svelte-datagrid').then((module) => {
-				RevoGrid = module.RevoGrid;
-				ColumnRegular = module.ColumnRegular;
-			});
-		}
-
-		const interval = setInterval(() => {
-			source.forEach((item) => {
-				item.price = parseFloat((Math.random() * 3000).toFixed(2));
-				item.change = parseFloat((Math.random() * 20 - 10).toFixed(2)); // Random change between -10 and 10
-				const priceForCalc = item.price === 0 ? 1 : item.price; // Avoid division by zero
-				item.percent_change = `${((item.change / priceForCalc) * 100).toFixed(2)}%`;
-			});
-			// With Svelte 5 runes, direct modification of $state array items should be reactive.
-			// If the grid doesn't update, uncommenting the next line might be necessary if RevoGrid needs an explicit push.
-			// source = [...source];
-		}, 2000); // Update every 2 seconds
-
-		return () => {
-			clearInterval(interval); // Clear interval on component destroy
-		};
-	});
-
 	// Define the AlertPoint type locally to match the one in NumberLine.svelte
 	type AlertPoint = {
 		id: number;
@@ -309,29 +180,6 @@ success('Custom message', {
 	</div>
 </div>
 
-<div class="bg-foreground-light dark:bg-foreground-dark p-4 dark:text-white">
-	{#if browser && RevoGrid}
-		<RevoGrid
-			bind:this={grid_component_instance}
-			{columns}
-			{source}
-			filter={true}
-			canFocus={true}
-			sorters={true}
-			columnTypes={{
-				numeric: {
-					name: 'Numeric',
-					autoSize: true,
-					// Numeric columns will have this default sorting
-					sortable: true
-				}
-			}}
-		/>
-	{:else}
-		<p>Loading data grid...</p>
-	{/if}
-</div>
-
 <section>
 	<Vpd
 		lineData={[
@@ -348,27 +196,5 @@ success('Custom message', {
 		font-family: monospace;
 		font-size: 0.9rem;
 		line-height: 1.5;
-	}
-
-	/* RevoGrid dark/light mode styles */
-	:global(.dark) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-data) {
-		--rgb-text: 255, 255, 255; /* White text for dark mode */
-		--color-text: rgb(var(--rgb-text));
-	}
-
-	:global(:not(.dark)) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-data) {
-		--rgb-text: 0, 0, 0; /* Black text for light mode */
-		--color-text: rgb(var(--rgb-text));
-	}
-
-	/* Optional: Ensure header text has good contrast in both modes */
-	:global(.dark) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-header) {
-		--rgb-header-text: 255, 255, 255;
-		--header-text-color: rgb(var(--rgb-header-text));
-	}
-
-	:global(:not(.dark)) .bg-foreground-light.dark\:bg-foreground-dark :global(revogr-header) {
-		--rgb-header-text: 0, 0, 0;
-		--header-text-color: rgb(var(--rgb-header-text));
 	}
 </style>

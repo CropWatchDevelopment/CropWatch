@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Worker Test</title>
+</head>
+<body>
+    <h1>Service Worker Test</h1>
+    <div id="status"></div>
+    <button id="register">Register SW</button>
+    <button id="unregister">Unregister SW</button>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        
+        function updateStatus(message) {
+            statusDiv.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        // Check if service worker is supported
+        if ('serviceWorker' in navigator) {
+            updateStatus('✅ Service Worker is supported');
+            
+            // Check for existing registrations
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                updateStatus('📋 Found ' + registrations.length + ' existing registrations');
+                registrations.forEach((registration, index) => {
+                    updateStatus(`Registration ${index + 1}: ${registration.scope}`);
+                });
+            });
+            
+            // Listen for registration changes
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                updateStatus('🔄 Controller changed');
+            });
+            
+        } else {
+            updateStatus('❌ Service Worker not supported');
+        }
+        
+        // Manual registration test
+        document.getElementById('register').addEventListener('click', () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .then(registration => {
+                        updateStatus('✅ SW registered successfully');
+                        updateStatus('Scope: ' + registration.scope);
+                        updateStatus('State: ' + registration.installing?.state || registration.waiting?.state || registration.active?.state);
+                    })
+                    .catch(error => {
+                        updateStatus('❌ SW registration failed: ' + error.message);
+                    });
+            }
+        });
+        
+        // Unregister all
+        document.getElementById('unregister').addEventListener('click', () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                    updateStatus('🗑️ All registrations removed');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

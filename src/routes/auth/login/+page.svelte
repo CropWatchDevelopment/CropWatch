@@ -121,6 +121,7 @@
 						id="email"
 						bind:value={email}
 						required
+						autocomplete="email"
 						placeholder="✉️ {$_('Enter your email')}"
 						disabled={loading}
 						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
