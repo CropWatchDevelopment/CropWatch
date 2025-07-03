@@ -67,6 +67,7 @@
 		"@mdi/js": "^7.4.47",
 		"@revolist/revogrid": "^4.15.8",
 		"@revolist/svelte-datagrid": "^4.15.8",
+		"@sentry/sveltekit": "^9.34.0",
 		"@stencil/store": "^2.1.3",
 		"@supabase/ssr": "^0.6.1",
 		"@supabase/supabase-js": "^2.49.4",
