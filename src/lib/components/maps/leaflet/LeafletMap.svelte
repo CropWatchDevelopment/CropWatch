@@ -53,6 +53,8 @@
 					'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 			}
 		).addTo(m);
+		m.dragging.disable(); // Disable dragging for now
+		m.touchZoom.disable(); // Disable touch zoom for now
 
 		// Add click event listener to the map
 		m.on('click', (e: LeafletMouseEvent) => {

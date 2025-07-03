@@ -16,9 +16,9 @@ const colors: Record<string, string> = {
 	dew_point: 'orange',
 	dew_pointC: 'orange',
 	dewPointC: 'orange',
-	soil_EC: 'violet',
-	soil_ec: 'violet',
-	ec: 'violet',
+	soil_EC: 'green',
+	soil_ec: 'green',
+	ec: 'green',
 	soil_N: 'red',
 	soil_n: 'red',
 	soil_nitrogen: 'red',
@@ -28,8 +28,8 @@ const colors: Record<string, string> = {
 	soil_K: 'red',
 	soil_k: 'red',
 	soil_potassium: 'red',
-	soil_PH: 'yellow',
-	ph: 'yellow',
+	soil_PH: 'purple',
+	ph: 'purple',
 	soil_ph: 'yellow',
 	co2_level: 'purple',
 	co2: 'purple',
@@ -53,7 +53,7 @@ const colors: Record<string, string> = {
 	people_count: 'yellow',
 	car_count: 'red',
 	bicycle_count: 'green',
-	truck_count: 'orange',
+	truck_count: 'silver',
 	bus_count: 'blue'
 };
 
