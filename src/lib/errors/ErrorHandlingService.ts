@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import { AppError } from './AppError';
 import { DatabaseError, NotFoundError } from './SpecificErrors';
 import type { PostgrestError } from '@supabase/supabase-js';
-// import * as Sentry from '@sentry/sveltekit';
+import * as Sentry from '@sentry/sveltekit';
 
 /**
  * Service for handling errors in a centralized way
@@ -78,17 +78,17 @@ export class ErrorHandlingService {
 
 		// Here you could add additional logging to external services
 		// like Sentry, LogRocket, etc.
-		// try {
-		// 	let isConnected = true;
-		// 	const result = await Sentry.diagnoseSdkConnectivity();
-		// 	isConnected = result !== 'sentry-unreachable';
-		// 	if (isConnected) {
-		// 		Sentry.captureException(error);
-		// 	} else {
-		// 		console.warn('Sentry is unreachable, error not reported');
-		// 	}
-		// } catch (error) {
-		// 	console.error('failed to even contact Sentry to report error, all is lost');
-		// }
+		try {
+			let isConnected = true;
+			const result = await Sentry.diagnoseSdkConnectivity();
+			isConnected = result !== 'sentry-unreachable';
+			if (isConnected) {
+				Sentry.captureException(error);
+			} else {
+				console.warn('Sentry is unreachable, error not reported');
+			}
+		} catch (error) {
+			console.error('failed to even contact Sentry to report error, all is lost');
+		}
 	}
 }
