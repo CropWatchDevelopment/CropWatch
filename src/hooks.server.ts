@@ -6,10 +6,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const PUBLIC_ROUTES = [
 	'/offline.html',
-	'/registerSW.js',
-	'/sw.js',
-	'/manifest.webmanifest',
-	'/workbox-',
 	'/auth', // All routes under /auth/
 	'/api/auth', // Only authentication-related API routes
 	'/static', // All static assets
