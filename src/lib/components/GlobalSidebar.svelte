@@ -63,10 +63,11 @@
 
 <!-- Sidebar -->
 <aside
-	class="fixed top-0 left-0 z-50 flex h-full flex-col border-r transition-all duration-300 ease-in-out
+	class="fixed top-0 left-0 z-50 flex flex-col border-r transition-all duration-300 ease-in-out
 		{getDarkMode() ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-white/95'}
 		shadow-lg backdrop-blur-sm"
-	style="margin-top: 119px; 
+	style="top: 119px; 
+		height: calc(100vh - 119px);
 		width: {sidebarStore.isOpen ? '256px' : sidebarStore.isSmallIconMode ? '64px' : '64px'};
 		transform: translateX({sidebarStore.isOpen ? '0' : sidebarStore.isSmallIconMode ? '0' : '-100%'});"
 	class:mobile-hidden={!sidebarStore.isOpen}

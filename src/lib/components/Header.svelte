@@ -66,12 +66,12 @@
 
 <!-- Main Header -->
 <header
-	class="relative overflow-hidden border-b transition-colors duration-300 {getDarkMode()
-		? 'border-emerald-900 bg-gradient-to-br to-emerald-700/30'
-		: 'border-emerald-500/20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700'}"
+	class="fixed top-0 right-0 left-0 z-50 overflow-hidden border-b transition-colors duration-300 {getDarkMode()
+		? 'border-emerald-900 bg-emerald-800'
+		: 'border-emerald-500 bg-slate-800'}"
 >
 	<!-- Animated background pattern -->
-	<div class="absolute inset-0 opacity-10">
+	<!-- <div class="absolute inset-0">
 		<div
 			class="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_{getDarkMode()
 				? '#22c55e'
@@ -79,7 +79,7 @@
 				? '#10b981'
 				: '#059669'}_1px,_transparent_1px)] animate-[drift_20s_linear_infinite] bg-[length:60px_60px]"
 		></div>
-	</div>
+	</div> -->
 
 	<nav class="relative z-10 flex w-full p-4">
 		<!-- Logo -->
@@ -147,9 +147,9 @@
 	<!-- Mobile Menu -->
 	{#if mobileMenuOpen}
 		<div
-			class="mobile-menu absolute top-full right-0 left-0 z-50 border-b backdrop-blur-sm transition-all duration-300 lg:hidden {getDarkMode()
-				? 'border-slate-700/30 bg-slate-800/95'
-				: 'border-gray-200/30 bg-white/95'}"
+			class="mobile-menu absolute top-full right-0 left-0 z-50 border-b transition-all duration-300 lg:hidden {getDarkMode()
+				? 'border-slate-700 bg-slate-800'
+				: 'border-gray-200 bg-white'}"
 		>
 			<div class="px-4 py-4">
 				<!-- Mobile Navigation Links -->
@@ -290,9 +290,10 @@
 
 <!-- Secondary Navigation/Breadcrumb Bar -->
 <div
-	class="border-b backdrop-blur-sm transition-colors duration-300 {getDarkMode()
-		? 'border-slate-700/30 bg-slate-800/50'
-		: 'border-gray-200/30 bg-white/50'}"
+	class="fixed right-0 left-0 z-40 border-b transition-colors duration-300 {getDarkMode()
+		? 'border-slate-700 bg-slate-800'
+		: 'border-gray-200 bg-white'}"
+	style="top: 73px;"
 >
 	<div class="mx-auto px-4 py-3">
 		<div class="flex flex-wrap items-center gap-4">

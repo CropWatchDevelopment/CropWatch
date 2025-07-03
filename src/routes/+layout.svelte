@@ -85,6 +85,7 @@
 		<main
 			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-all duration-300"
 			style="margin-left: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'}; 
+				   padding-top: 119px;
 				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'};"
 		>
 			{@render children()}
@@ -111,6 +112,7 @@
 	@media (max-width: 1023px) {
 		main {
 			margin-left: 0 !important;
+			padding-top: 119px !important;
 		}
 	}
 </style>
