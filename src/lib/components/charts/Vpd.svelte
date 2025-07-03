@@ -221,14 +221,3 @@
 </script>
 
 <div bind:this={container}></div>
-
-<!-- <section>
-	<Vpd
-		lineData={[
-			{ date: '2023-01-01', temp: 20, humidity: 60 },
-			{ date: '2023-01-02', temp: 22, humidity: 65 },
-			{ date: '2023-01-03', temp: 18, humidity: 55 },
-			{ date: '2023-01-04', temp: 25, humidity: 70 }
-		]}
-	/>
-</section> -->

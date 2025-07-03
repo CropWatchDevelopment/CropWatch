@@ -63,29 +63,3 @@ export function info(message: string, options = {}) {
 export function neutral(message: string, options = {}) {
 	return add({ type: 'neutral', message, ...options });
 }
-
-// USEAGE:
-// Toast demo functions
-// function showSuccessToast() {
-// 	success('Success! Operation completed successfully.');
-// }
-
-// function showErrorToast() {
-// 	error('Error! Something went wrong.');
-// }
-
-// function showWarningToast() {
-// 	warning('Warning! Please be careful with this action.');
-// }
-
-// function showInfoToast() {
-// 	info('Info: This is an informational message.');
-// }
-
-// function showNeutralToast() {
-// 	neutral('This is a neutral notification.');
-// }
-
-// function showCustomToast() {
-// 	success('Custom toast with longer timeout!', { timeout: 10000 });
-// }
