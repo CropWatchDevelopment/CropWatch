@@ -63,7 +63,7 @@
 					<Icon class="text-xl text-red-500" path={mdiClose} />
 				{/if}
 			</div>
-			<span class="ml-5 flex flex-auto">{location.name}</span>
+			<span class="ml-5 flex flex-auto pt-1">{location.name}</span>
 			<button
 				class="ml-2 flex inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 p-0 text-blue-700 transition-colors duration-200 hover:bg-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-blue-300 dark:hover:bg-gray-600"
 				onclick={() => goto(href)}

@@ -237,10 +237,12 @@
 </svelte:head>
 
 <Header {device} {basePath}>
-	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
-		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
+	{#snippet controls()}
 		<CsvDownloadButton {devEui} />
 		<Button class="invisible" variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
+		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
+	{/snippet}
+	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
 		<!-- Date range selector -->
 		<div class="flex flex-wrap items-end gap-2">
 			<!-- Date inputs -->

@@ -214,67 +214,6 @@
 	</div>
 </div>
 
-<!-- Mobile Menu -->
-{#if mobileMenuOpen}
-	<div
-		class="mobile-menu absolute top-full right-0 left-0 z-50 border-t text-slate-200 backdrop-blur-lg transition-colors duration-300 lg:hidden"
-	>
-		<div class="space-y-2 p-4">
-			<a href="/app/dashboard" class="block rounded-lg px-4 py-3 text-slate-200 transition-colors">
-				{$_('Dashboard')}
-			</a>
-			<a
-				href="#pricing"
-				class="block rounded-lg px-4 py-3 transition-colors {getDarkMode()
-					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-			>
-				{$_('Pricing')}
-			</a>
-			<a
-				href="#devices"
-				class="block rounded-lg px-4 py-3 transition-colors {getDarkMode()
-					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-			>
-				{$_('Devices')}
-			</a>
-			<a
-				href="#resources"
-				class="block rounded-lg px-4 py-3 transition-colors {getDarkMode()
-					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-			>
-				{$_('Resources')}
-			</a>
-			<a
-				href="#about"
-				class="block rounded-lg px-4 py-3 transition-colors {getDarkMode()
-					? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-					: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-			>
-				{$_('About')}
-			</a>
-			<div class="space-y-2 border-t pt-2 {getDarkMode() ? 'border-white/10' : 'border-gray-200'}">
-				<a
-					href="/demo"
-					class="block rounded-lg px-4 py-3 transition-colors {getDarkMode()
-						? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-						: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-				>
-					{$_('Demo')}
-				</a>
-				<a
-					href="/contact-us"
-					class="block rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-3 text-center font-semibold text-white"
-				>
-					{$_('Get Started')}
-				</a>
-			</div>
-		</div>
-	</div>
-{/if}
-
 <style>
 	@keyframes drift {
 		0% {
