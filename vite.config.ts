@@ -22,6 +22,14 @@ export default defineConfig({
 				theme_color: '#50C878',
 				orientation: 'portrait-primary',
 				handle_links: 'preferred',
+				iarc_rating_id: 'e1234567890',
+				dir: 'ltr',
+				prefer_related_applications: false,
+				scope_extensions: [
+					{
+						origin: 'https://api.cropwatch.io'
+					}
+				],
 				edge_side_panel: {
 					preferred_width: 300
 				},
@@ -64,6 +72,12 @@ export default defineConfig({
 						type: 'image/png',
 						label: 'Dashboard'
 					}
+				],
+				categories: [
+					'Smart Agriculture',
+					'Cold Chain Management',
+					'IoT Applications',
+					'Data Analytics'
 				],
 				launch_handler: {
 					client_mode: 'navigate-existing' // or 'focus-existing', 'auto'
