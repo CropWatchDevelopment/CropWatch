@@ -76,7 +76,7 @@ Link : https://app.CropWatch.io
 
 # List of Tools & Packages Used:
 - PWA Framework: Svelte, SvelteKit
-- UI Components: @cropwatchdevelopment/cwui, bits-ui, @revolist/revogrid, @revolist/svelte-datagrid
+- UI Components: @cropwatchdevelopment/cwui, bits-ui, @revolist/svelte-datagrid
 - Styling: Tailwind CSS, @layerstack/tailwind, @tailwindcss/forms, @tailwindcss/typography
 - State & IoC: @stencil/store, inversify
 - Data Visualization: D3.js, ApexCharts
