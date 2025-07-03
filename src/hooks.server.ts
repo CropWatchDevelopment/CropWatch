@@ -7,7 +7,8 @@ import { createClient } from '@supabase/supabase-js';
 const PUBLIC_ROUTES = [
 	'/auth', // All routes under /auth/
 	'/api/auth', // Only authentication-related API routes
-	'/static' // All static assets
+	'/static', // All static assets
+	'/static/icons'
 ];
 
 // Additional check for exact /api/ route
