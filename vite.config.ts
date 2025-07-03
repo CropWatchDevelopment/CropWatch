@@ -12,11 +12,33 @@ export default defineConfig({
 			registerType: 'autoUpdate',
 			manifest: {
 				name: 'CropWatch UI',
-				short_name: 'CW',
+				short_name: 'CW UI',
+				description: 'CropWatch User Interface',
 				start_url: '/',
+				id: '/',
 				display: 'standalone',
+				display_override: ['window-controls-overlay', 'standalone'],
 				background_color: '#ffffff',
-				theme_color: '#317EFB',
+				theme_color: '#50C878',
+				orientation: 'portrait-primary',
+				handle_links: 'preferred',
+				edge_side_panel: {
+					preferred_width: 300
+				},
+				protocol_handlers: [
+					{
+						protocol: 'web+cropwatch',
+						url: '/handle-protocol?url=%s'
+					}
+				],
+				file_handlers: [
+					{
+						action: '/open-file',
+						accept: {
+							'application/json': ['.json']
+						}
+					}
+				],
 				icons: [
 					{
 						src: '/icons/icon-192x192.png',
@@ -28,7 +50,24 @@ export default defineConfig({
 						sizes: '512x512',
 						type: 'image/png'
 					}
-				]
+				],
+				screenshots: [
+					{
+						src: '/screenshots/screenshot-1280x720.png',
+						sizes: '1280x720',
+						type: 'image/png',
+						label: 'Login screen'
+					},
+					{
+						src: '/screenshots/screenshot-dashboard-1280x720.png',
+						sizes: '1280x720',
+						type: 'image/png',
+						label: 'Dashboard'
+					}
+				],
+				launch_handler: {
+					client_mode: 'navigate-existing' // or 'focus-existing', 'auto'
+				}
 			}
 		})
 	],

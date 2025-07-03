@@ -8,7 +8,8 @@ const PUBLIC_ROUTES = [
 	'/auth', // All routes under /auth/
 	'/api/auth', // Only authentication-related API routes
 	'/static', // All static assets
-	'/static/icons'
+	'/static/icons',
+	'/static/screenshots'
 ];
 
 // Additional check for exact /api/ route
