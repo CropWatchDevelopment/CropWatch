@@ -1,8 +1,8 @@
 === Build Info ===
-Commit      : 98425a9
+Commit      : 83ff35d
 Branch      : pwa
 Author      : Kevin Cantrell
-Date        : 2025-07-03T11:05:01.345Z
+Date        : 2025-07-03T11:47:24.951Z
 Builder     : kevin@kevin-desktop
 IP Address  : 192.168.1.100
 ==================

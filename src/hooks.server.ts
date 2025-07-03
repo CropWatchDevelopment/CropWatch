@@ -5,6 +5,10 @@ import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/publi
 import { createClient } from '@supabase/supabase-js';
 
 const PUBLIC_ROUTES = [
+	'/registerSW.js',
+	'/sw.js',
+	'/manifest.webmanifest',
+	'/workbox-',
 	'/auth', // All routes under /auth/
 	'/api/auth', // Only authentication-related API routes
 	'/static', // All static assets

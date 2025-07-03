@@ -10,6 +10,27 @@ export default defineConfig({
 		sveltekit(),
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
+			injectRegister: 'script-defer',
+			strategies: 'generateSW',
+			devOptions: {
+				enabled: true,
+				type: 'module'
+			},
+			workbox: {
+				navigateFallback: '/offline.html',
+				navigateFallbackDenylist: [/^\/api\//, /^\/auth\/api\//, /^\/_app\//],
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+				runtimeCaching: [
+					{
+						urlPattern: ({ request }) => request.destination === 'document',
+						handler: 'NetworkFirst',
+						options: {
+							cacheName: 'pages-cache',
+							networkTimeoutSeconds: 3
+						}
+					}
+				]
+			},
 			manifest: {
 				name: 'CropWatch UI',
 				short_name: 'CW UI',
