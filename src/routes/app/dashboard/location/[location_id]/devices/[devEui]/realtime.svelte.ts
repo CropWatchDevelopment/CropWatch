@@ -11,7 +11,7 @@ export function setupRealtimeSubscription(
 	supabase: SupabaseClient,
 	deviceDataTable: string,
 	devEui: string,
-	dataRef: any,
+	onDataUpdate: (newData: any) => void,
 	retryCount = 0
 ) {
 	if (!browser) return;
@@ -30,11 +30,8 @@ export function setupRealtimeSubscription(
 			(payload) => {
 				// Handle real-time updates for users
 				if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-					// You can handle user updates here if needed
-					console.log('old data', dataRef);
-					debugger;
-					dataRef = payload.new;
-					console.log('new data', payload.new);
+					console.log('📡 Real-time data received:', payload.new);
+					onDataUpdate(payload.new);
 				}
 			}
 		)

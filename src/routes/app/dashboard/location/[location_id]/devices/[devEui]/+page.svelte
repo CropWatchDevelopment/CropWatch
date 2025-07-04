@@ -100,7 +100,9 @@
 					data.supabase,
 					device.cw_device_type?.data_table_v2,
 					devEui,
-					latestData,
+					(newData) => {
+						latestData = newData;
+					},
 					0 // Retry count starts at 0
 				);
 			}
