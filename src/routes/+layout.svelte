@@ -3,8 +3,10 @@
 	import { page } from '$app/state';
 	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 	import Header from '$lib/components/Header.svelte';
+	import GlobalSidebar from '$lib/components/GlobalSidebar.svelte';
 	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
 	import { i18n } from '$lib/i18n/index.svelte';
+	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
 	import { createBrowserClient } from '@supabase/ssr';
 	import { onMount } from 'svelte';
 	import '../app.css';
@@ -24,6 +26,17 @@
 	// Use derived values instead of state to avoid infinite loops
 	let session = $derived(data.session);
 	let user = $derived(data.user);
+
+	// Check if we should show the sidebar (not on auth pages)
+	let showSidebar = $derived(!page.url.pathname.startsWith('/auth'));
+
+	// Dynamic margin based on sidebar state
+	let mainMargin = $derived(() => {
+		if (!showSidebar) return '';
+		if (sidebarStore.isOpen) return 'lg:ml-64';
+		if (sidebarStore.isSmallIconMode) return 'lg:ml-16';
+		return 'lg:ml-16'; // default collapsed state on desktop
+	});
 
 	// Log user updates without creating an infinite loop
 	$effect(() => {
@@ -66,12 +79,18 @@
 		{#if !page.url.pathname.startsWith('/auth')}
 			<Header userName={user?.email ?? 'Unknown User'} />
 		{/if}
-		<div
-			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-colors duration-300"
+		{#if showSidebar}
+			<GlobalSidebar />
+		{/if}
+		<main
+			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-all duration-300"
+			style="margin-left: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'}; 
+				   padding-top: 119px;
+				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'};"
 		>
 			{@render children()}
 			<ToastContainer position="top-right" />
-		</div>
+		</main>
 	</div>
 {/if}
 
@@ -86,6 +105,14 @@
 		}
 		to {
 			opacity: 1;
+		}
+	}
+
+	/* Mobile: no sidebar margin */
+	@media (max-width: 1023px) {
+		main {
+			margin-left: 0 !important;
+			padding-top: 119px !important;
 		}
 	}
 </style>

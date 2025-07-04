@@ -25,8 +25,8 @@
 </script>
 
 <div
-	class="flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-200 text-gray-900 shadow-md
-	dark:border-gray-700 dark:bg-[#1f2532] dark:text-white dark:shadow-gray-900/20"
+	class="flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-200 bg-gray-400/40 text-gray-900
+	shadow-lg dark:border-gray-700 dark:bg-[#1f2532] dark:bg-gray-800/80 dark:text-white dark:shadow-gray-900/20"
 >
 	<div
 		class="relative flex min-h-[60px] flex-row bg-teal-800

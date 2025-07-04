@@ -247,9 +247,8 @@
 	{:else if locationsStore.locationError}
 		<div class="error">{locationsStore.locationError}</div>
 	{:else}
-		<div class="dashboard-grid" class:sidebar-collapsed={sidebarCollapsed}>
-			<!-- Location selector panel -->
-			<LocationSidebar
+		<!-- <div class="dashboard-grid" class:sidebar-collapsed={sidebarCollapsed}> -->
+		<!-- <LocationSidebar
 				locations={locationsStore.locations}
 				selectedLocation={locationsStore.selectedLocationId}
 				search={uiStore.search}
@@ -270,40 +269,39 @@
 					(uiStore.dashboardViewType = value as 'grid' | 'mozaic' | 'list')}
 				ondashboardSortTypeChange={(value) =>
 					(uiStore.dashboardSortType = value as 'alpha' | 'custom')}
-			/>
+			/> -->
 
-			<!-- Device display panel -->
-			<div class="devices-panel">
-				<!-- All Locations as Cards with Devices -->
-				{#if locationsStore.loadingLocations}
-					<div class="loading-devices">Loading locations and devices...</div>
-				{:else if locationsStore.locationError}
-					<div class="error">{locationsStore.locationError}</div>
-				{:else if locationsStore.locations.length > 0}
-					{#if locationsStore.selectedLocationId !== null}
-						<!-- Show only the selected location -->
-						{@const selectedLoc = locationsStore.locations.find(
-							(loc) => loc.location_id === locationsStore.selectedLocationId
-						)}
-						{#if selectedLoc}
-							<AllDevices locations={[selectedLoc]} {deviceActiveStatus} />
-						{:else}
-							<div class="error">Selected location not found.</div>
-						{/if}
+		<div class="devices-panel">
+			<!-- All Locations as Cards with Devices -->
+			{#if locationsStore.loadingLocations}
+				<div class="loading-devices">Loading locations and devices...</div>
+			{:else if locationsStore.locationError}
+				<div class="error">{locationsStore.locationError}</div>
+			{:else if locationsStore.locations.length > 0}
+				{#if locationsStore.selectedLocationId !== null}
+					<!-- Show only the selected location -->
+					{@const selectedLoc = locationsStore.locations.find(
+						(loc) => loc.location_id === locationsStore.selectedLocationId
+					)}
+					{#if selectedLoc}
+						<AllDevices locations={[selectedLoc]} {deviceActiveStatus} />
 					{:else}
-						<!-- Show all locations ("All Locations" is selected) -->
-						<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
+						<div class="error">Selected location not found.</div>
 					{/if}
 				{:else}
-					<p>No locations found.</p>
+					<!-- Show all locations ("All Locations" is selected) -->
+					<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
 				{/if}
-			</div>
+			{:else}
+				<p>No locations found.</p>
+			{/if}
 		</div>
+		<!-- </div> -->
 	{/if}
 </div>
 
 <style>
-	.dashboard-container {
+	/* .dashboard-container {
 		display: flex;
 		flex-direction: column;
 		min-height: 100vh;
@@ -311,27 +309,28 @@
 		color: var(--color-text);
 		--sidebar-expanded: 250px;
 		--sidebar-collapsed: 40px;
-	}
+	} */
 
-	.dashboard-grid {
+	/* .dashboard-grid {
 		display: grid;
 		grid-template-columns: var(--sidebar-expanded) 1fr;
 		gap: 0.25rem;
 		padding: 0.5rem;
 		flex: 1;
 		transition: grid-template-columns 0.3s ease;
-	}
+	} */
 
-	.dashboard-grid.sidebar-collapsed {
+	/* .dashboard-grid.sidebar-collapsed {
 		grid-template-columns: var(--sidebar-collapsed) 1fr;
-	}
+	} */
 
 	/* Ensure the devices panel grows when sidebar collapses */
 	.devices-panel {
+		/* background-color: var(--color-bg); */
 		transition: all 0.3s ease;
 		width: 100%;
 		overflow: auto;
-		background-color: var(--color-card);
+		/* background-color: var(--color-card); */
 		border-radius: 0.5rem;
 		padding: 1rem;
 		box-shadow:
@@ -339,11 +338,11 @@
 			0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	}
 
-	@media (max-width: 768px) {
+	/* @media (max-width: 768px) {
 		.dashboard-grid {
 			grid-template-columns: 1fr;
 		}
-	}
+	} */
 
 	.loading,
 	.loading-devices,

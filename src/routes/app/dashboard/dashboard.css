@@ -68,7 +68,6 @@
 }
 
 .devices-panel {
-	background-color: var(--color-background);
 	color: var(--color-text);
 	padding: 1rem;
 	border-radius: 0.5rem;
