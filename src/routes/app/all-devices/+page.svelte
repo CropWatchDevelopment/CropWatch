@@ -62,7 +62,9 @@
 							<div class="device-icon">
 								<Icon class="text-xl text-blue-400" path={mdiDevices} />
 							</div>
-							<h2 class="device-title">{device.name || device.dev_eui || 'Unnamed Device'}</h2>
+							<h2 class="device-title" title={device.name || device.dev_eui || 'Unnamed Device'}>
+								{device.name || device.dev_eui || 'Unnamed Device'}
+							</h2>
 							<button
 								class="device-action-btn"
 								onclick={() => {
@@ -219,6 +221,8 @@
 		display: flex;
 		align-items: center;
 		min-height: 60px;
+		max-height: 60px;
+		height: 60px;
 		background-color: rgb(15 118 110);
 		color: rgb(253 224 71);
 		padding: 0.75rem 0.5rem;
@@ -253,6 +257,12 @@
 		font-weight: 600;
 		color: rgb(217 119 6);
 		padding-top: 0.25rem;
+
+		/* Text truncation */
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		min-width: 0; /* Allow flex item to shrink below content size */
 	}
 
 	:global(.dark) .device-title {
