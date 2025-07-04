@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { page } from '$app/stores';
 	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
 	import { getDarkMode } from '$lib/components/theme/theme.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
@@ -42,7 +42,14 @@
 
 	// Check if current route matches navigation item
 	function isActiveRoute(matcher: string): boolean {
-		return page.url.pathname.startsWith(matcher);
+		return $page.url.pathname.startsWith(matcher);
+	}
+
+	// Get transform value based on screen size and sidebar state
+	function getTransformValue(): string {
+		// On mobile (handled by CSS), we don't need inline transform
+		// On desktop, we handle the transform here
+		return sidebarStore.isOpen || sidebarStore.isSmallIconMode ? '0' : '-100%';
 	}
 
 	// Initialize responsive behavior
@@ -68,8 +75,7 @@
 		shadow-lg backdrop-blur-sm"
 	style="top: 119px; 
 		height: calc(100vh - 119px);
-		width: {sidebarStore.isOpen ? '256px' : sidebarStore.isSmallIconMode ? '64px' : '64px'};
-		transform: translateX({sidebarStore.isOpen ? '0' : sidebarStore.isSmallIconMode ? '0' : '-100%'});"
+		width: {sidebarStore.isOpen ? '256px' : '64px'};"
 	class:mobile-hidden={!sidebarStore.isOpen}
 	aria-label="Sidebar navigation"
 >
@@ -96,18 +102,7 @@
 	{/if}
 
 	<!-- Navigation Items -->
-	<nav
-		class="flex-1 overflow-y-auto p-2"
-		onmouseover={() => {
-			sidebarStore.open();
-			sidebarStore.isOpen = true;
-		}}
-		onmouseleave={(e) => {
-			sidebarStore.close();
-			sidebarStore.isOpen = false;
-		}}
-		onfocus={(e) => sidebarStore.open()}
-	>
+	<nav class="flex-1 overflow-y-auto p-2">
 		<ul class="space-y-1">
 			{#each navigationItems as item}
 				<li>
@@ -151,8 +146,27 @@
 	{/if}
 </aside>
 
+<!-- Debug button (remove in production) -->
+<button
+	onclick={() => sidebarStore.toggle()}
+	class="fixed right-4 bottom-4 z-50 rounded-full bg-blue-500 p-3 text-white shadow-lg hover:bg-blue-600"
+	style="display: {sidebarStore.isOpen || sidebarStore.isSmallIconMode ? 'none' : 'block'}"
+>
+	☰
+</button>
+
 <style>
+	/* Mobile: sidebar hidden by default, only shows when opened */
 	@media (max-width: 1023px) {
+		aside {
+			transform: translateX(-100%);
+		}
+
+		/* Only show sidebar on mobile when isOpen is true */
+		aside:not(.mobile-hidden) {
+			transform: translateX(0);
+		}
+
 		.mobile-hidden {
 			transform: translateX(-100%) !important;
 		}

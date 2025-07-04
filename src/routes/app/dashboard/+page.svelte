@@ -326,10 +326,11 @@
 
 	/* Ensure the devices panel grows when sidebar collapses */
 	.devices-panel {
+		/* background-color: var(--color-bg); */
 		transition: all 0.3s ease;
 		width: 100%;
 		overflow: auto;
-		background-color: var(--color-card);
+		/* background-color: var(--color-card); */
 		border-radius: 0.5rem;
 		padding: 1rem;
 		box-shadow:

@@ -8,17 +8,32 @@ export class SidebarStore {
 	isOpen = $state(browser ? this.getInitialState() : false);
 
 	// Small icon mode (collapsed but still visible)
-	isSmallIconMode = $state(
-		browser ? localStorage.getItem('sidebar_small_icon_mode') === 'true' : false
-	);
+	isSmallIconMode = $state(browser ? this.getInitialSmallIconMode() : false);
+
+	private getInitialSmallIconMode(): boolean {
+		// Check if user has a saved preference
+		const savedMode = localStorage.getItem('sidebar_small_icon_mode');
+		if (savedMode !== null) {
+			return savedMode === 'true';
+		}
+
+		// Default to small icon mode on desktop if sidebar is not open
+		const isMobile = window.innerWidth < 1024;
+		const savedOpen = localStorage.getItem('sidebar_open');
+
+		if (!isMobile && (savedOpen === null || savedOpen === 'false')) {
+			return true; // Default to small icon mode on desktop
+		}
+
+		return false;
+	}
 
 	private getInitialState(): boolean {
-		// Check if we're on mobile/tablet vs desktop
-		const isMobile = window.innerWidth < 768; // md breakpoint
-		const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024; // lg breakpoint
+		// Check if we're on mobile vs desktop (align with CSS breakpoints)
+		const isMobile = window.innerWidth < 1024; // lg breakpoint to match CSS
 
 		// For mobile: closed by default
-		// For tablet/desktop: open by default
+		// For desktop: small icon mode by default (unless user has preference)
 		const defaultState = !isMobile;
 
 		// Check if user has a saved preference
@@ -65,21 +80,22 @@ export class SidebarStore {
 
 	// Initialize responsive behavior
 	initializeResponsive() {
-		if (!browser) return;
+		if (!browser) return () => {};
 
 		const handleResize = () => {
-			const isMobile = window.innerWidth < 768;
-			const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+			const isMobile = window.innerWidth < 1024; // Align with CSS breakpoint
 
-			// Auto-close on mobile, auto-open on desktop if no user preference
+			// Auto-close on mobile, enable small icon mode on desktop if no user preference
 			if (isMobile && this.isOpen && !localStorage.getItem('sidebar_open')) {
 				this.close();
 			} else if (
-				window.innerWidth >= 1024 &&
+				!isMobile &&
 				!this.isOpen &&
+				!this.isSmallIconMode &&
 				!localStorage.getItem('sidebar_open')
 			) {
-				this.open();
+				// On desktop, default to small icon mode
+				this.isSmallIconMode = true;
 			}
 		};
 
