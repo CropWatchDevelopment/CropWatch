@@ -23,6 +23,7 @@
 	import Header from './Header.svelte';
 	import CsvDownloadButton from '$lib/csv/CsvDownloadButton.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -82,6 +83,7 @@
 		co2ChartVisible,
 		phChartVisible
 	} = $derived(getDeviceDetailDerived(device, dataType, latestData));
+	let channel: RealtimeChannel | undefined = $state(undefined); // Channel for realtime updates
 
 	onMount(() => {
 		initializeDateRange(); // This sets deviceDetail.startDate and deviceDetail.endDate (Date objects)
@@ -94,19 +96,22 @@
 	$effect(() => {
 		(async () => {
 			latestData = await data.latestData;
-			debugger;
-			if (device.cw_device_type?.data_table_v2) {
-				setupRealtimeSubscription(
-					data.supabase,
-					device.cw_device_type?.data_table_v2,
-					devEui,
-					(newData) => {
-						latestData = newData;
-					},
-					0 // Retry count starts at 0
-				);
-			}
 		})();
+	});
+
+	$effect(() => {
+		debugger;
+		if (device.cw_device_type?.data_table_v2 && !channel) {
+			channel = setupRealtimeSubscription(
+				data.supabase,
+				device.cw_device_type?.data_table_v2,
+				devEui,
+				(newData) => {
+					latestData = newData;
+				},
+				0 // Retry count starts at 0
+			);
+		}
 	});
 
 	$effect(() => {

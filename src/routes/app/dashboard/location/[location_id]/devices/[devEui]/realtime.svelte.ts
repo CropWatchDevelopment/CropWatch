@@ -36,6 +36,7 @@ export function setupRealtimeSubscription(
 			}
 		)
 		.subscribe();
+	return channel;
 }
 
 export function removeRealtimeSubscription(supabase: SupabaseClient) {
