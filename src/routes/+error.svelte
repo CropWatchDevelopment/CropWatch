@@ -42,17 +42,10 @@
 
 			<div class="flex w-full flex-col gap-4 sm:flex-row">
 				<button
-					class="bg-primary hover:bg-primary-hover flex-1 rounded px-4 py-2 font-medium text-white transition-colors duration-200"
+					class="bg-primary nowrap hover:bg-primary-hover flex-1 rounded px-4 py-2 font-medium text-white transition-colors duration-200"
 					on:click={() => goto('/app/dashboard')}
 				>
 					🏠 {$_('Go to Dashboard')}
-				</button>
-
-				<button
-					class="flex-1 rounded border border-gray-300 px-4 py-2 font-medium transition-colors duration-200 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"
-					on:click={() => goto('/')}
-				>
-					🔙 {$_('Go Home')}
 				</button>
 			</div>
 

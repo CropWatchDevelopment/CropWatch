@@ -21,16 +21,16 @@
 			matcher: '/app/dashboard/location'
 		},
 		{
-			href: '/app/devices',
+			href: '/app/all-devices',
 			icon: 'devices',
 			label: 'Devices',
-			matcher: '/app/devices'
+			matcher: '/app/all-devices'
 		},
 		{
-			href: '/app/reports',
+			href: '/app/all-reports',
 			icon: 'analytics',
 			label: 'Reports',
-			matcher: '/app/reports'
+			matcher: '/app/all-reports'
 		},
 		{
 			href: '/app/settings',
@@ -42,25 +42,57 @@
 
 	// Check if current route matches navigation item
 	function isActiveRoute(matcher: string): boolean {
-		return $page.url.pathname.startsWith(matcher);
+		const pathname = $page.url.pathname;
+
+		// Find the most specific matcher that matches the current pathname
+		const matchingItems = navigationItems.filter((item) => {
+			if (pathname === item.matcher) {
+				return true;
+			}
+			// Check if pathname starts with matcher and next char is '/' or end
+			if (pathname.startsWith(item.matcher)) {
+				const nextChar = pathname[item.matcher.length];
+				return nextChar === '/' || nextChar === undefined;
+			}
+			return false;
+		});
+
+		// If we have matches, find the most specific one (longest matcher)
+		if (matchingItems.length > 0) {
+			const mostSpecificMatch = matchingItems.reduce((prev, current) =>
+				current.matcher.length > prev.matcher.length ? current : prev
+			);
+			// Return true only if this matcher is the most specific match
+			return matcher === mostSpecificMatch.matcher;
+		}
+
+		return false;
 	}
 
-	// Get transform value based on screen size and sidebar state
-	function getTransformValue(): string {
-		// On mobile (handled by CSS), we don't need inline transform
-		// On desktop, we handle the transform here
-		return sidebarStore.isOpen || sidebarStore.isSmallIconMode ? '0' : '-100%';
-	}
+	// Local reactive variables that sync with store
+	let isOpen = $state(false);
+	let isSmallIconMode = $state(false);
 
 	// Initialize responsive behavior
 	onMount(() => {
 		const cleanup = sidebarStore.initializeResponsive();
+
+		// Sync local state with store state
+		isOpen = sidebarStore.isOpen;
+		isSmallIconMode = sidebarStore.isSmallIconMode;
+
 		return cleanup;
+	});
+
+	// Keep local state in sync with store
+	$effect(() => {
+		isOpen = sidebarStore.isOpen;
+		isSmallIconMode = sidebarStore.isSmallIconMode;
 	});
 </script>
 
 <!-- Sidebar Overlay (for mobile) -->
-{#if sidebarStore.isOpen}
+{#if isOpen}
 	<div
 		class="bg-opacity-50 fixed inset-0 z-40 bg-black backdrop-blur-sm transition-opacity duration-300 lg:hidden"
 		onclick={() => sidebarStore.close()}
@@ -75,8 +107,8 @@
 		shadow-lg backdrop-blur-sm"
 	style="top: 119px; 
 		height: calc(100vh - 119px);
-		width: {sidebarStore.isOpen ? '256px' : '64px'};"
-	class:mobile-hidden={!sidebarStore.isOpen}
+		width: {isOpen ? '256px' : '64px'};"
+	class:mobile-hidden={!isOpen}
 	aria-label="Sidebar navigation"
 >
 	<!-- Sidebar Header -->
@@ -130,8 +162,7 @@
 			{/each}
 		</ul>
 		<span class="flex flex-auto"></span>
-		<a
-			href={'?sidebar-open=true'}
+		<button
 			onclick={() => sidebarStore.toggle()}
 			class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
 				{getDarkMode() ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
@@ -140,15 +171,15 @@
 				: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 		>
 			{#if sidebarStore.isOpen}
-				<MaterialIcon name="arrow_menu_open" size="medium" />
-			{:else}
 				<MaterialIcon name="arrow_menu_close" size="medium" />
+				<span class="font-medium">{$_('Close')}</span>
+			{:else}
+				<MaterialIcon name="arrow_menu_open" size="medium" />
 			{/if}
-		</a>
+		</button>
 	</nav>
-	{sidebarStore.isOpen}
 	<!-- Sidebar Footer -->
-	{#if sidebarStore.isOpen}
+	<!-- {#if sidebarStore.isOpen}
 		<div class="border-t p-4 {getDarkMode() ? 'border-slate-700/30' : 'border-gray-200/30'}">
 			<button
 				onclick={() => sidebarStore.close()}
@@ -161,7 +192,7 @@
 				<span class="font-medium">{$_('Close')}</span>
 			</button>
 		</div>
-	{/if}
+	{/if} -->
 </aside>
 
 <!-- Debug button (remove in production) -->
