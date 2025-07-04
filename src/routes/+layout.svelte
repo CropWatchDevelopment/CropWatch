@@ -10,6 +10,7 @@
 	import { createBrowserClient } from '@supabase/ssr';
 	import { onMount } from 'svelte';
 	import '../app.css';
+	import { warning } from '$lib/stores/toast.svelte';
 
 	// No preloading needed - dashboard will load its data when navigated to
 
@@ -56,6 +57,7 @@
 				session = _session;
 				user = _session.user;
 			} else {
+				warning('Your session has expired. Please login again.');
 				console.warn('No session found during auth state change');
 				session = null;
 				user = null;

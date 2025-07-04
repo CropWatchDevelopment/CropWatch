@@ -133,7 +133,7 @@
 						>{device.name || `Device ${device.dev_eui}`}</b
 					>
 				</div>
-				<div class="flex flex-row justify-center space-x-5">
+				<div class="flex flex-row justify-center space-x-5 px-10">
 					{#if device.latestData}
 						<div class="flex items-center">
 							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
@@ -152,6 +152,7 @@
 						</div>
 
 						{#if secondaryDataKey}
+							<span class="flex flex-grow-1"></span>
 							<div class="flex items-center">
 								<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
 									>{nameToEmoji(secondaryDataKey)}</span

@@ -22,6 +22,7 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
 	import CsvDownloadButton from '$lib/csv/CsvDownloadButton.svelte';
+	import { setupRealtimeSubscription } from './realtime.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -93,6 +94,16 @@
 	$effect(() => {
 		(async () => {
 			latestData = await data.latestData;
+			debugger;
+			if (device.cw_device_type?.data_table_v2) {
+				setupRealtimeSubscription(
+					data.supabase,
+					device.cw_device_type?.data_table_v2,
+					devEui,
+					latestData,
+					0 // Retry count starts at 0
+				);
+			}
 		})();
 	});
 

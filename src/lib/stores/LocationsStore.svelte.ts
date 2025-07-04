@@ -184,7 +184,6 @@ function updateSingleDevice(devEui: string, updatedData: AirData | SoilData) {
 	if (devices && devices.length > 0) {
 		const deviceIndex = devices.findIndex((dev) => dev.dev_eui === devEui);
 		if (deviceIndex >= 0) {
-			console.log('Old Data:', devices[deviceIndex].latestData);
 			// Create a new device object to ensure reactivity
 			devices[deviceIndex] = {
 				...devices[deviceIndex],
