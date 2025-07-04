@@ -293,7 +293,7 @@
 	class="fixed right-0 left-0 z-40 border-b transition-colors duration-300 {getDarkMode()
 		? 'border-slate-700 bg-slate-800'
 		: 'border-gray-200 bg-white'}"
-	style="top: 73px;"
+	style="top: 72px; left: 64;"
 >
 	<div class="mx-auto px-4 py-3">
 		<div class="flex flex-wrap items-center gap-4">

@@ -136,7 +136,7 @@
 	<!-- Navigation Items -->
 	<nav class="flex flex-1 flex-col overflow-y-auto p-2">
 		<ul class="space-y-1">
-			{#each navigationItems as item}
+			{#each navigationItems as item, index}
 				<li>
 					<a
 						href={item.href}
@@ -159,6 +159,11 @@
 						{/if}
 					</a>
 				</li>
+				{#if index < navigationItems.length - 1}
+					<li
+						class="mx-3 border-t {getDarkMode() ? 'border-slate-700/30' : 'border-gray-200/30'}"
+					></li>
+				{/if}
 			{/each}
 		</ul>
 		<span class="flex flex-auto"></span>

@@ -57,7 +57,7 @@
 	>
 {/snippet}
 
-<nav class="flex flex-wrap items-center gap-1">
+<nav class="ml-16 flex flex-wrap items-center gap-1">
 	{#key page}
 		{#each getRoutes() as { path, label }, index}
 			{#if page.route.id?.startsWith(path)}
