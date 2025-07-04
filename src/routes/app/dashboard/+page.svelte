@@ -31,6 +31,8 @@
 		onToggleCollapse: () => void;
 	}
 	import AllDevices from '$lib/components/UI/dashboard/AllDevices.svelte';
+	import { updated } from '$app/state';
+	import { date } from 'svelte-i18n';
 
 	// Enhanced location type with deviceCount property
 	interface LocationWithCount extends LocationWithDevices {
@@ -78,6 +80,26 @@
 
 	// Sidebar collapsed state
 	let sidebarCollapsed = $state(false);
+
+	const updatedTables = data.supabase.channel(new Date().toISOString()).on(
+		'postgres_changes',
+		{
+			event: '*',
+			tables: ['cw_air_data', 'cw_soil_data', 'cw_traffic_data', 'cw_water_data'],
+			schema: 'public'
+		},
+		(payload) => {
+			console.log(payload);
+			getLocationsStore().updateSingleDevice(payload.new.dev_eui, {
+				...payload.new
+			} as AirData | SoilData);
+		}
+	);
+
+	if (browser && updatedTables.state === 'closed') {
+		// Subscribe to the channel only in the browser environment
+		updatedTables.subscribe();
+	}
 
 	// Toggle sidebar collapsed state
 	function toggleSidebar() {

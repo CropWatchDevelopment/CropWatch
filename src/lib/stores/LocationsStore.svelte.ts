@@ -175,6 +175,23 @@ function updateLocationDevices(locationId: number, updatedDevices: DeviceWithSen
 	}
 }
 
+function updateSingleDevice(devEui: string, updatedData: AirData | SoilData) {
+	if (devices && devices.length > 0) {
+		const deviceIndex = devices.findIndex((dev) => dev.dev_eui === devEui);
+		const newData = Object.fromEntries(
+			Object.entries(updatedData).filter(
+				([k, v]) => v != null && k !== 'is_simulated' && k !== 'dev_eui'
+			)
+		);
+		if (deviceIndex >= 0) {
+			console.log('Update Data', newData);
+			console.log('Old Data', devices[deviceIndex].latestData);
+			devices[deviceIndex].latestData = newData as AirData | SoilData;
+			console.log('New Data', devices[deviceIndex].latestData);
+		}
+	}
+}
+
 // Export the store functions and state
 export function getLocationsStore() {
 	return {
@@ -210,6 +227,7 @@ export function getLocationsStore() {
 		loadDevicesForLocation,
 		loadAllDevices,
 		refreshDevicesForLocation,
-		updateLocationDevices
+		updateLocationDevices,
+		updateSingleDevice
 	};
 }
