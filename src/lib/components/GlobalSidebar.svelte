@@ -102,7 +102,7 @@
 	{/if}
 
 	<!-- Navigation Items -->
-	<nav class="flex-1 overflow-y-auto p-2">
+	<nav class="flex flex-1 flex-col overflow-y-auto p-2">
 		<ul class="space-y-1">
 			{#each navigationItems as item}
 				<li>
@@ -120,6 +120,8 @@
 						title={sidebarStore.isSmallIconMode && !sidebarStore.isOpen ? $_(item.label) : ''}
 					>
 						<MaterialIcon name={item.icon} size="medium" />
+						<input type="hidden" value={sidebarStore.isOpen} />
+
 						{#if sidebarStore.isOpen}
 							<span class="font-medium">{$_(item.label)}</span>
 						{/if}
@@ -127,8 +129,24 @@
 				</li>
 			{/each}
 		</ul>
+		<span class="flex flex-auto"></span>
+		<a
+			href={'?sidebar-open=true'}
+			onclick={() => sidebarStore.toggle()}
+			class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
+				{getDarkMode() ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
+				{getDarkMode()
+				? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+				: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+		>
+			{#if sidebarStore.isOpen}
+				<MaterialIcon name="arrow_menu_open" size="medium" />
+			{:else}
+				<MaterialIcon name="arrow_menu_close" size="medium" />
+			{/if}
+		</a>
 	</nav>
-
+	{sidebarStore.isOpen}
 	<!-- Sidebar Footer -->
 	{#if sidebarStore.isOpen}
 		<div class="border-t p-4 {getDarkMode() ? 'border-slate-700/30' : 'border-gray-200/30'}">
