@@ -42,12 +42,6 @@
 	// Enhanced device type with latest sensor data
 	interface DeviceWithSensorData extends DeviceWithType {
 		latestData: AirData | SoilData | null;
-		cw_device_type?: {
-			name: string;
-			default_upload_interval?: number;
-			primary_data_notation?: string;
-			secondary_data_notation?: string;
-		};
 		cw_rules?: any[];
 	}
 
@@ -81,24 +75,116 @@
 	// Sidebar collapsed state
 	let sidebarCollapsed = $state(false);
 
-	const updatedTables = data.supabase.channel(new Date().toISOString()).on(
-		'postgres_changes',
-		{
-			event: '*',
-			tables: ['cw_air_data', 'cw_soil_data', 'cw_traffic_data', 'cw_water_data'],
-			schema: 'public'
-		},
-		(payload) => {
-			console.log(payload);
-			getLocationsStore().updateSingleDevice(payload.new.dev_eui, {
-				...payload.new
-			} as AirData | SoilData);
-		}
-	);
+	// Real-time channel for database updates
+	let realtimeChannel: any = null;
 
-	if (browser && updatedTables.state === 'closed') {
-		// Subscribe to the channel only in the browser environment
-		updatedTables.subscribe();
+	// Setup real-time subscriptions with retry logic
+	function setupRealtimeSubscription(retryCount = 0) {
+		if (!browser) return;
+
+		console.log('🔄 Setting up real-time subscription...');
+		const channel = data.supabase
+			.channel('db-changes')
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'cw_air_data'
+				},
+				(payload) => {
+					console.log('Real-time message payload:', payload);
+					// Handle real-time updates for messages
+					if (payload.eventType === 'INSERT') {
+						handleRealtimeUpdate(payload);
+					}
+				}
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: 'INSERT',
+					schema: 'public',
+					table: 'cw_soil_data'
+				},
+				(payload) => {
+					console.log('Real-time user payload:', payload);
+					// Handle real-time updates for users
+					if (payload.eventType === 'INSERT') {
+						// You can handle user updates here if needed
+						console.log('New user added:', payload.new);
+					}
+				}
+			)
+			.subscribe();
+	}
+
+	// Handle real-time update
+	function handleRealtimeUpdate(payload: any) {
+		// Only process if we have valid data
+		if (payload.new && payload.new.dev_eui) {
+			try {
+				locationsStore.updateSingleDevice(payload.new.dev_eui, payload.new as AirData | SoilData);
+
+				// Update device active timer for the updated device
+				const device = locationsStore.devices.find((d) => d.dev_eui === payload.new.dev_eui);
+				if (device && device.latestData?.created_at) {
+					setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+				}
+			} catch (error) {
+				console.error('Error updating device from real-time:', error);
+			}
+		}
+	}
+
+	// Alternative real-time setup with simplified approach
+	function setupFallbackRealtimeSubscription() {
+		if (!browser) return;
+
+		console.log('🔄 Setting up fallback real-time subscription...');
+
+		try {
+			// Clean up existing channel
+			if (realtimeChannel) {
+				data.supabase.removeChannel(realtimeChannel);
+				realtimeChannel = null;
+			}
+
+			// Create a simpler channel setup
+			const channelName = `fallback_${Date.now()}`;
+			console.log('Creating fallback channel:', channelName);
+
+			realtimeChannel = data.supabase
+				.channel(channelName)
+				.on(
+					'postgres_changes',
+					{
+						event: 'INSERT',
+						schema: 'public',
+						table: 'cw_air_data'
+					},
+					handleRealtimeUpdate
+				)
+				.subscribe((status: string) => {
+					console.log('Fallback real-time status:', status);
+					if (status === 'SUBSCRIBED') {
+						console.log('✅ Fallback real-time subscription successful');
+					} else if (status === 'CHANNEL_ERROR') {
+						console.error('❌ Fallback real-time also failed');
+						// If fallback also fails, disable real-time and rely on polling
+						console.log('📊 Falling back to polling-only mode');
+						cleanupRealtimeSubscription();
+					}
+				});
+		} catch (error) {
+			console.error('Error setting up fallback real-time:', error);
+		}
+	}
+	function cleanupRealtimeSubscription() {
+		if (realtimeChannel) {
+			data.supabase.removeChannel(realtimeChannel);
+			realtimeChannel = null;
+		}
 	}
 
 	// Toggle sidebar collapsed state
@@ -136,12 +222,60 @@
 	onDestroy(() => {
 		//console.log('Cleaning up dashboard resources');
 		cleanupTimers();
+		cleanupRealtimeSubscription();
 	});
+
+	// Refresh session if needed
+	async function refreshSessionIfNeeded() {
+		try {
+			const { data: sessionData, error: sessionError } = await data.supabase.auth.getSession();
+
+			if (sessionError) {
+				console.error('❌ Error getting session:', sessionError);
+				return false;
+			}
+
+			if (!sessionData.session) {
+				console.error('❌ No session found');
+				return false;
+			}
+
+			const expiresAt = sessionData.session.expires_at;
+			if (expiresAt) {
+				const expirationDate = new Date(expiresAt * 1000);
+				const now = new Date();
+				const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+
+				// If expired or expiring soon, refresh
+				if (expirationDate < fiveMinutesFromNow) {
+					console.log('🔄 Session expiring soon, refreshing...');
+					const { data: refreshData, error: refreshError } =
+						await data.supabase.auth.refreshSession();
+
+					if (refreshError) {
+						console.error('❌ Failed to refresh session:', refreshError);
+						return false;
+					}
+
+					console.log('✅ Session refreshed successfully');
+					return true;
+				}
+			}
+
+			return true;
+		} catch (error) {
+			console.error('❌ Error refreshing session:', error);
+			return false;
+		}
+	}
 
 	// Initialize dashboard on mount
 	// This is the main onMount function for the dashboard
 	onMount(async () => {
 		try {
+			// Setup real-time subscription
+			setupRealtimeSubscription();
+
 			// Fetch locations using the store - this also selects the first location
 			await locationsStore.fetchLocations(user.id);
 
@@ -203,12 +337,13 @@
 				// Update the refresh timestamp in the timer manager
 				timerManager.updateRefreshTimestamp(locationId);
 
-				//console.log('Devices refreshed:', {
-				// 	deviceCount: locationsStore.devices.length,
-				// 	activeCount: locationsStore.devices.filter(
-				// 		(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
-				// 	).length
-				// });
+				console.log('Devices refreshed:', {
+					locationId,
+					deviceCount: locationsStore.devices.length,
+					activeCount: locationsStore.devices.filter(
+						(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
+					).length
+				});
 			}
 
 			return true;

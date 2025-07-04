@@ -7,12 +7,6 @@ import type { SoilData } from '$lib/models/SoilData';
 // Define DeviceWithSensorData type
 interface DeviceWithSensorData extends DeviceWithType {
 	latestData: AirData | SoilData | null;
-	cw_device_type?: {
-		name: string;
-		default_upload_interval?: number;
-		primary_data_notation?: string;
-		secondary_data_notation?: string;
-	};
 	cw_rules?: any[];
 }
 
@@ -61,7 +55,10 @@ export class DeviceTimerManager {
 
 		// Use provided uploadInterval or fallback to device settings
 		const effectiveInterval =
-			uploadInterval || device.upload_interval || device.deviceType?.default_upload_interval || 10;
+			uploadInterval ||
+			device.upload_interval ||
+			device.cw_device_type?.default_upload_interval ||
+			10;
 
 		// Create a closure to capture the current timestamp
 		const currentTimestamp = device.latestData.created_at;
