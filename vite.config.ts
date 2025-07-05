@@ -1,3 +1,4 @@
+import { sentrySvelteKit } from '@sentry/sveltekit';
 import tailwindcss from '@tailwindcss/vite';
 import { svelteTesting } from '@testing-library/svelte/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
@@ -6,6 +7,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [
+		sentrySvelteKit({
+			sourceMapsUploadOptions: {
+				org: 'cropwatch',
+				project: 'cropwatch'
+			}
+		}),
 		tailwindcss(),
 		sveltekit(),
 		SvelteKitPWA({

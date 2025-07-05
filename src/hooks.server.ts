@@ -1,8 +1,15 @@
+import { sequence } from '@sveltejs/kit/hooks';
+import * as Sentry from '@sentry/sveltekit';
 import 'reflect-metadata';
 import { error, redirect, type Handle } from '@sveltejs/kit';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
+
+Sentry.init({
+	dsn: 'https://ba36cb18f97a466e35b23ed5ab9c916e@o4509301976530944.ingest.us.sentry.io/4509513210789888',
+	tracesSampleRate: 1
+});
 
 const PUBLIC_ROUTES = [
 	'/offline.html',
@@ -355,7 +362,7 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 };
 
 // Combine the handles - CORS first, then Supabase
-export const handle: Handle = async ({ event, resolve }) => {
+export const handle: Handle = sequence(Sentry.sentryHandle(), async ({ event, resolve }) => {
 	const { url } = event;
 	if (
 		url.pathname.startsWith('/sw.js') ||
@@ -378,4 +385,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 			});
 		}
 	});
-};
+});
+export const handleError = Sentry.handleErrorWithSentry();
