@@ -10,6 +10,7 @@
 	import Button from './UI/buttons/Button.svelte';
 	import MaterialIcon from './UI/icons/MaterialIcon.svelte';
 	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
+	import LanguageSelector from './UI/form/LanguageSelector.svelte';
 
 	let { userName } = $props();
 
@@ -71,7 +72,7 @@
 		: 'border-emerald-500 bg-slate-800'}"
 >
 	<!-- Animated background pattern -->
-	<!-- <div class="absolute inset-0">
+	<div class="absolute inset-0">
 		<div
 			class="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_{getDarkMode()
 				? '#22c55e'
@@ -79,7 +80,7 @@
 				? '#10b981'
 				: '#059669'}_1px,_transparent_1px)] animate-[drift_20s_linear_infinite] bg-[length:60px_60px]"
 		></div>
-	</div> -->
+	</div>
 
 	<nav class="relative z-10 flex w-full p-4">
 		<!-- Logo -->
@@ -90,10 +91,10 @@
 		>
 			<img src={CropWatchLogo} alt="CropWatch Logo" class="h-10" width="40px" height="40px" />
 			<div
-				class="text-2xl font-bold tracking-tight text-white transition-colors duration-300"
+				class="cropwatch-shine rounded-md text-2xl font-bold tracking-tight text-white transition-colors duration-300"
 				style="text-decoration: none !important;"
 			>
-				CropWatch<sup><small>®</small></sup>
+				<h1>𝘾𝙧𝙤𝙥𝙒𝙖𝙩𝙘𝙝<sup><small>®</small></sup></h1>
 			</div>
 		</a>
 
@@ -290,10 +291,10 @@
 
 <!-- Secondary Navigation/Breadcrumb Bar -->
 <div
-	class="fixed right-0 left-0 z-40 border-b transition-colors duration-300 {getDarkMode()
+	class="fixed right-0 left-0 z-40 border-b transition-colors {getDarkMode()
 		? 'border-slate-700 bg-slate-800'
-		: 'border-gray-200 bg-white'}"
-	style="top: 72px; left: 64;"
+		: 'border-gray-200 bg-slate-200 shadow-sm'} titlebar-safe-area"
+	style="top: 72px;"
 >
 	<div class="mx-auto px-4 py-3">
 		<div class="flex flex-wrap items-center gap-4">
@@ -304,39 +305,9 @@
 				<Breadcrumbs />
 			</div>
 			<div class="flex-1"></div>
-			<div class="text-sm">
-				<a
-					href="/"
-					onclick={(event) => {
-						event.preventDefault();
-						$locale = $locale === 'ja' ? 'en' : 'ja';
-					}}
-					class="flex items-center gap-1 transition-colors hover:text-green-400 {getDarkMode()
-						? 'text-slate-400'
-						: 'text-gray-600'}"
-				>
-					<MaterialIcon name="globe" size="small" style="float:left" />
-					{$locale === 'ja' ? 'English' : '日本語'}
-				</a>
-			</div>
+			<LanguageSelector />
 			<!-- Quick actions -->
 			<div class="hidden items-center gap-4 text-sm md:flex">
-				<!-- <a
-					href="/marketplace"
-					class="flex items-center gap-1 transition-colors hover:text-green-400 {getDarkMode()
-						? 'text-slate-400'
-						: 'text-gray-600'}"
-				>
-					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-						/>
-					</svg>
-					Marketplace
-				</a>
 				<a
 					href={`https://kb.cropwatch.io/doku.php?id=${page.route.id}`}
 					target="_blank"
@@ -358,13 +329,56 @@
 						/>
 					</svg>
 					Help
-				</a> -->
+				</a>
 			</div>
 		</div>
 	</div>
 </div>
 
 <style>
+	.titlebar-safe-area {
+		padding-top: env(titlebar-area-height, 0px);
+	}
+
+	/* Math Sans Bold Italic for CropWatch header */
+	.cropwatch-shine {
+		position: relative;
+		overflow: hidden;
+	}
+
+	.cropwatch-shine::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: -100%;
+		width: 100%;
+		height: 100%;
+		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+		animation: shine 2s ease-in-out 0.5s;
+		pointer-events: none;
+	}
+
+	@keyframes shine {
+		0% {
+			left: -100%;
+		}
+		100% {
+			left: 100%;
+		}
+	}
+
+	/* Alternative brighter shine effect */
+	.cropwatch-shine-bright::before {
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgba(255, 255, 255, 0.8),
+			rgba(255, 255, 255, 0.4),
+			rgba(255, 255, 255, 0.8),
+			transparent
+		);
+		animation: shine 2.5s ease-in-out 0.5s;
+	}
 	@keyframes drift {
 		0% {
 			transform: translateX(0) translateY(0);

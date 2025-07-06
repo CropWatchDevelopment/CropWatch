@@ -27,17 +27,29 @@
 			matcher: '/app/all-devices'
 		},
 		{
+			href: '/app/all-notifications',
+			icon: 'notifications',
+			label: 'Notifications',
+			matcher: '/app/all-notifications'
+		},
+		{
 			href: '/app/all-reports',
 			icon: 'analytics',
 			label: 'Reports',
 			matcher: '/app/all-reports'
 		},
 		{
-			href: '/app/settings',
-			icon: 'settings',
-			label: 'Settings',
-			matcher: '/app/settings'
+			href: '/app/all-gateways',
+			icon: 'router',
+			label: 'Gateways',
+			matcher: '/app/all-gateways'
 		}
+		// {
+		// 	href: '/app/account-settings/general',
+		// 	icon: 'settings',
+		// 	label: 'Settings',
+		// 	matcher: '/app/account-settings/general'
+		// }
 	];
 
 	// Check if current route matches navigation item
@@ -161,7 +173,7 @@
 				</li>
 				{#if index < navigationItems.length - 1}
 					<li
-						class="mx-3 border-t {getDarkMode() ? 'border-slate-700/30' : 'border-gray-200/30'}"
+						class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}"
 					></li>
 				{/if}
 			{/each}
@@ -182,32 +194,29 @@
 				<MaterialIcon name="arrow_menu_open" size="medium" />
 			{/if}
 		</button>
+		<ul class="space-y-1">
+			<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
+			<li>
+				<a
+					href="/app/account-settings/general"
+					class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
+							{isActiveRoute('/app/account-settings/general')
+						? getDarkMode()
+							? 'bg-emerald-600/30 text-emerald-400'
+							: 'bg-emerald-100 text-emerald-700'
+						: getDarkMode()
+							? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+							: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+					aria-current={isActiveRoute('/app/account-settings/general') ? 'page' : undefined}
+					title={sidebarStore.isSmallIconMode && !sidebarStore.isOpen ? $_('settings') : ''}
+				>
+					<MaterialIcon name="settings" size="medium" />
+					<input type="hidden" value={sidebarStore.isOpen} />
+				</a>
+			</li>
+		</ul>
 	</nav>
-	<!-- Sidebar Footer -->
-	<!-- {#if sidebarStore.isOpen}
-		<div class="border-t p-4 {getDarkMode() ? 'border-slate-700/30' : 'border-gray-200/30'}">
-			<button
-				onclick={() => sidebarStore.close()}
-				class="flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
-					{getDarkMode()
-					? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
-					: 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
-			>
-				<MaterialIcon name="close" size="medium" />
-				<span class="font-medium">{$_('Close')}</span>
-			</button>
-		</div>
-	{/if} -->
 </aside>
-
-<!-- Debug button (remove in production) -->
-<button
-	onclick={() => sidebarStore.toggle()}
-	class="fixed right-4 bottom-4 z-50 rounded-full bg-blue-500 p-3 text-white shadow-lg hover:bg-blue-600"
-	style="display: {sidebarStore.isOpen || sidebarStore.isSmallIconMode ? 'none' : 'block'}"
->
-	☰
-</button>
 
 <style>
 	/* Mobile: sidebar hidden by default, only shows when opened */

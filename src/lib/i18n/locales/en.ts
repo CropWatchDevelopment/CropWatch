@@ -316,6 +316,9 @@ export const strings = {
 	Method: 'Method',
 	Recipients: 'Recipients',
 
+	// Settings page
+	'Units & Display Settings': 'Units & Display Settings',
+
 	// Error pages
 	'Device Error': 'Device Error',
 	'There was an error loading the device. Please try again or contact our support team for assistance.':
@@ -326,5 +329,72 @@ export const strings = {
 	'Start Date:': 'Start Date:',
 	'End Date:': 'End Date:',
 	'Expand sidebar to search': 'Expand sidebar to search',
-	'Collapse sidebar': 'Collapse sidebar'
+	'Collapse sidebar': 'Collapse sidebar',
+
+	// Account Settings
+	'General Account Settings': 'General Account Settings',
+	'Settings that affect your entire account, including your profile and preferences.':
+		'Settings that affect your entire account, including your profile and preferences.',
+	'Profile Information': 'Profile Information',
+	'Profile Picture': 'Profile Picture',
+	'Click to upload a new profile picture': 'Click to upload a new profile picture',
+	'Your email address cannot be changed': 'Your email address cannot be changed',
+	'Enter your full name': 'Enter your full name',
+	'Enter your username': 'Enter your username',
+	'https://example.com': 'https://example.com',
+	'Account Actions': 'Account Actions',
+	'Need help with your account?': 'Need help with your account?',
+	'Contact support': 'Contact support',
+
+	// Display Settings
+	'Choose your preferred units of measurement and display options for your account.':
+		'Choose your preferred units of measurement and display options for your account.',
+	'Unit Preferences': 'Unit Preferences',
+	'Display Preferences': 'Display Preferences',
+	Timezone: 'Timezone',
+	UTC: 'UTC',
+	'Eastern Time (EST)': 'Eastern Time (EST)',
+	'Central Time (CST)': 'Central Time (CST)',
+	'Mountain Time (MT)': 'Mountain Time (MT)',
+	'Pacific Time (PST)': 'Pacific Time (PST)',
+	'Greenwich Mean Time (GMT)': 'Greenwich Mean Time (GMT)',
+	'Central European Summer Time (CEST)': 'Central European Summer Time (CEST)',
+	'Central European Time (CET)': 'Central European Time (CET)',
+	'Indian Standard Time (IST)': 'Indian Standard Time (IST)',
+	'Japan Standard Time (JST)': 'Japan Standard Time (JST)',
+	'Australian Eastern Standard Time (AEST)': 'Australian Eastern Standard Time (AEST)',
+	'New Zealand Standard Time (NZST)': 'New Zealand Standard Time (NZST)',
+	'Temperature Unit': 'Temperature Unit',
+	Celsius: 'Celsius',
+	Fahrenheit: 'Fahrenheit',
+	Kelvin: 'Kelvin',
+	'Distance Unit': 'Distance Unit',
+	Meters: 'Meters',
+	Millimeters: 'Millimeters',
+	Centimetre: 'Centimetre',
+	Feet: 'Feet',
+	Inches: 'Inches',
+	Yards: 'Yards',
+	'EC Unit': 'EC Unit',
+	'Date Format': 'Date Format',
+	'DD-MM-YYYY': 'DD-MM-YYYY',
+	'MM-DD-YYYY': 'MM-DD-YYYY',
+	'YYYY-MM-DD': 'YYYY-MM-DD',
+	'DD/MM/YYYY': 'DD/MM/YYYY',
+	'MM/DD/YYYY': 'MM/DD/YYYY',
+	'YYYY/MM/DD': 'YYYY/MM/DD',
+	'DD.MM.YYYY': 'DD.MM.YYYY',
+	'MM.DD.YYYY': 'MM.DD.YYYY',
+	'YYYY.MM.DD': 'YYYY.MM.DD',
+	'ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)': 'ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)',
+	'Time Format': 'Time Format',
+	'12-Hour': '12-Hour',
+	'24-Hour': '24-Hour',
+	'ISO 8601 (HH:mm:ss)': 'ISO 8601 (HH:mm:ss)',
+	'Number Format': 'Number Format',
+	'No Decimal Places': 'No Decimal Places',
+	'One Decimal Place': 'One Decimal Place',
+	'Two Decimal Places': 'Two Decimal Places',
+	'Three Decimal Places': 'Three Decimal Places',
+	'Save Settings': 'Save Settings'
 };

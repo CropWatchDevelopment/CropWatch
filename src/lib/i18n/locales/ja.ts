@@ -367,6 +367,9 @@ export const strings = {
 	'Expand sidebar to search': 'サイドバーを展開して検索',
 	'Collapse sidebar': 'サイドバーを折りたたむ',
 
+	// Settings page
+	'Units & Display Settings': '単位と表示設定',
+
 	// Error page
 	'Device Error': 'デバイスエラー',
 	'There was an error loading the device. Please try again or contact our support team for assistance.':
@@ -394,5 +397,72 @@ export const strings = {
 	'request a new verification email': '新しい確認メールをリクエスト',
 	'Return to Login': 'ログインに戻る',
 	loginErrorMessage: 'ログインエラー：メールアドレスまたはパスワードが正しくありません',
-	'Invalid email or password': 'メールアドレスまたはパスワードが正しくありません'
+	'Invalid email or password': 'メールアドレスまたはパスワードが正しくありません',
+
+	// Account Settings
+	'General Account Settings': '一般アカウント設定',
+	'Settings that affect your entire account, including your profile and preferences.':
+		'プロフィールや設定を含む、アカウント全体に影響する設定。',
+	'Profile Information': 'プロフィール情報',
+	'Profile Picture': 'プロフィール画像',
+	'Click to upload a new profile picture': '新しいプロフィール画像をアップロードするにはクリック',
+	'Your email address cannot be changed': 'メールアドレスは変更できません',
+	'Enter your full name': 'フルネームを入力',
+	'Enter your username': 'ユーザー名を入力',
+	'https://example.com': 'https://example.com',
+	'Account Actions': 'アカウントアクション',
+	'Need help with your account?': 'アカウントについてお困りですか？',
+	'Contact support': 'サポートに連絡',
+
+	// Display Settings
+	'Choose your preferred units of measurement and display options for your account.':
+		'アカウントの測定単位と表示オプションを選択してください。',
+	'Unit Preferences': '単位設定',
+	'Display Preferences': '表示設定',
+	Timezone: 'タイムゾーン',
+	UTC: 'UTC',
+	'Eastern Time (EST)': '東部時間 (EST)',
+	'Central Time (CST)': '中部時間 (CST)',
+	'Mountain Time (MT)': '山岳時間 (MT)',
+	'Pacific Time (PST)': '太平洋時間 (PST)',
+	'Greenwich Mean Time (GMT)': 'グリニッジ標準時 (GMT)',
+	'Central European Summer Time (CEST)': '中央ヨーロッパ夏時間 (CEST)',
+	'Central European Time (CET)': '中央ヨーロッパ時間 (CET)',
+	'Indian Standard Time (IST)': 'インド標準時 (IST)',
+	'Japan Standard Time (JST)': '日本標準時 (JST)',
+	'Australian Eastern Standard Time (AEST)': 'オーストラリア東部標準時 (AEST)',
+	'New Zealand Standard Time (NZST)': 'ニュージーランド標準時 (NZST)',
+	'Temperature Unit': '温度単位',
+	Celsius: '摂氏',
+	Fahrenheit: '華氏',
+	Kelvin: 'ケルビン',
+	'Distance Unit': '距離単位',
+	Meters: 'メートル',
+	Millimeters: 'ミリメートル',
+	Centimetre: 'センチメートル',
+	Feet: 'フィート',
+	Inches: 'インチ',
+	Yards: 'ヤード',
+	'EC Unit': 'EC単位',
+	'Date Format': '日付形式',
+	'DD-MM-YYYY': 'DD-MM-YYYY',
+	'MM-DD-YYYY': 'MM-DD-YYYY',
+	'YYYY-MM-DD': 'YYYY-MM-DD',
+	'DD/MM/YYYY': 'DD/MM/YYYY',
+	'MM/DD/YYYY': 'MM/DD/YYYY',
+	'YYYY/MM/DD': 'YYYY/MM/DD',
+	'DD.MM.YYYY': 'DD.MM.YYYY',
+	'MM.DD.YYYY': 'MM.DD.YYYY',
+	'YYYY.MM.DD': 'YYYY.MM.DD',
+	'ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)': 'ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)',
+	'Time Format': '時間形式',
+	'12-Hour': '12時間制',
+	'24-Hour': '24時間制',
+	'ISO 8601 (HH:mm:ss)': 'ISO 8601 (HH:mm:ss)',
+	'Number Format': '数値形式',
+	'No Decimal Places': '小数点なし',
+	'One Decimal Place': '小数点第1位',
+	'Two Decimal Places': '小数点第2位',
+	'Three Decimal Places': '小数点第3位',
+	'Save Settings': '設定を保存'
 };

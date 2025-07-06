@@ -79,14 +79,6 @@
 					/>
 				</div>
 			</div>
-			<a
-				href="/app/all-reports/reports/create"
-				class="create-report-btn"
-				aria-label="Create new report"
-			>
-				<Icon path={mdiPlus} size="20" />
-				<span>Create Report</span>
-			</a>
 		</div>
 	</div>
 
@@ -180,12 +172,6 @@
 				<p class="text-gray-500 dark:text-gray-300">
 					{searchTerm ? 'No reports match your search.' : 'No reports found.'}
 				</p>
-				{#if !searchTerm}
-					<a href="/app/all-reports/reports/create" class="create-report-btn mt-4">
-						<Icon path={mdiPlus} size="20" />
-						<span>Create Your First Report</span>
-					</a>
-				{/if}
 			</div>
 		{/if}
 	</div>

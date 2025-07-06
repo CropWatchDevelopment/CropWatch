@@ -24,6 +24,7 @@
 	import CsvDownloadButton from '$lib/csv/CsvDownloadButton.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
+	import { DateTime } from 'luxon';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -100,7 +101,6 @@
 	});
 
 	$effect(() => {
-		debugger;
 		if (device.cw_device_type?.data_table_v2 && !channel) {
 			channel = setupRealtimeSubscription(
 				data.supabase,
@@ -211,7 +211,7 @@
 	};
 
 	// Function to handle fetching data for a specific date range
-	async function handleDateRangeSubmit() {
+	async function handleDateRangeSubmit(units?: number) {
 		if (!startDateInputString || !endDateInputString) {
 			deviceDetail.error = 'Please select both start and end dates.';
 			return;
@@ -233,6 +233,27 @@
 
 		loadingHistoricalData = true;
 		deviceDetail.error = null; // Clear previous errors before fetching
+
+		// If units is provided, slide the date range forward or backward
+		if (units !== undefined) {
+			debugger;
+			//get range between start and end dates
+			let endDateTime = DateTime.fromJSDate(finalEndDate);
+			let startDateTime = DateTime.fromJSDate(finalStartDate);
+			const diffInDays = Math.round(Math.abs(startDateTime.diff(endDateTime, ['days']).days));
+			if (units < 0) {
+				// Slide back
+				startDateTime = startDateTime.minus({ days: diffInDays });
+				endDateTime = endDateTime.minus({ days: diffInDays });
+			} else if (units > 0) {
+				// Slide forward
+				startDateTime.plus({ days: diffInDays }).toJSDate();
+				endDateTime.plus({ days: diffInDays }).toJSDate();
+			}
+			// update input strings to reflect the new range
+			startDateInputString = formatDateForInput(startDateTime.toJSDate());
+			endDateInputString = formatDateForInput(endDateTime.toJSDate());
+		}
 
 		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
 		//console.log('Requested range:', finalStartDate, finalEndDate, 'Received:', newData);
@@ -268,26 +289,45 @@
 				<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
 					{$_('Start Date:')}
 				</label>
-				<TextInput
-					id="startDate"
-					type="date"
-					bind:value={startDateInputString}
-					max={endDateInputString}
-					class="text-sm"
-				/>
+				<div class="gap=0 flex flex-row">
+					<Button
+						variant="ghost"
+						class="p-0!important m-0 max-w-6 rounded border border-gray-300"
+						onclick={() => handleDateRangeSubmit(-1)}
+					>
+						<MaterialIcon name="fast_rewind" size="small" />
+					</Button>
+					<TextInput
+						id="startDate"
+						type="date"
+						bind:value={startDateInputString}
+						max={endDateInputString}
+						class="text-sm"
+					/>
+				</div>
 			</div>
 			<div class="flex flex-col">
 				<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
 					{$_('End Date:')}
 				</label>
-				<TextInput
-					id="endDate"
-					type="date"
-					bind:value={endDateInputString}
-					min={startDateInputString}
-					max={new Date().toISOString().split('T')[0]}
-					class="text-sm"
-				/>
+				<div class="gap=0 flex flex-row">
+					<TextInput
+						id="endDate"
+						type="date"
+						bind:value={endDateInputString}
+						min={startDateInputString}
+						max={new Date().toISOString().split('T')[0]}
+						class="text-sm"
+					/>
+					<Button
+						disabled={new Date(endDateInputString) >= DateTime.now().minus({ days: 1 }).toJSDate()}
+						variant="ghost"
+						class="p-0!important m-0 max-w-6 rounded border border-gray-300"
+						onclick={() => handleDateRangeSubmit(1)}
+					>
+						<MaterialIcon name="fast_forward" size="small" />
+					</Button>
+				</div>
 			</div>
 			<div class="-ml-2">
 				<Button
