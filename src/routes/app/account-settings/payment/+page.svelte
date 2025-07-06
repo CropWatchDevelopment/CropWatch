@@ -2,11 +2,11 @@
 	import { onMount } from 'svelte';
 	import { loadStripe } from '@stripe/stripe-js';
 	import type { Stripe, StripeElements, StripeCardElement } from '@stripe/stripe-js';
-	import { PUBLIC_STRIPE_PUBLISHABLE_KEY } from '$env/static/public';
+	import { PUBLIC_STRIPE_PUBLISHABLE } from '$env/static/public';
 	import { getDarkMode } from '$lib/components/theme/theme.svelte';
 
 	// Replace with your actual Stripe publishable key
-	const STRIPE_PUBLISHABLE_KEY = PUBLIC_STRIPE_PUBLISHABLE_KEY;
+	const STRIPE_PUBLISHABLE_KEY = PUBLIC_STRIPE_PUBLISHABLE;
 
 	let stripe: Stripe | null = null;
 	let elements: StripeElements | null = null;
