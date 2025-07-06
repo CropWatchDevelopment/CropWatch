@@ -65,9 +65,9 @@ export class ReportService implements IReportService {
 	 */
 	async createReport(report: ReportInsert): Promise<Report> {
 		// Generate a unique report ID if not provided
-		if (!report.report_id) {
-			report.report_id = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-		}
+		// if (!report.report_id) {
+		// 	report.report_id = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		// }
 
 		return this.reportRepository.create(report as any);
 	}

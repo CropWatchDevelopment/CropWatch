@@ -165,6 +165,12 @@
 										class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
 										disabled
 									>
+										Generate Report
+									</button>
+									<button
+										class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+										disabled
+									>
 										View
 									</button>
 									<a

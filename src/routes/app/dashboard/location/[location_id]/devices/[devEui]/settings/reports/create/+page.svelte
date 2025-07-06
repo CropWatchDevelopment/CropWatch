@@ -8,6 +8,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import type { ActionResult } from '@sveltejs/kit';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 
 	let { data, form } = $props();
 
@@ -209,6 +210,7 @@
 			href="/app/dashboard/location/{locationId}/devices/{devEui}/settings/reports"
 			variant="secondary"
 		>
+			<MaterialIcon name="cancel" />
 			Cancel
 		</Button>
 	</header>
@@ -242,7 +244,10 @@
 		>
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-lg font-medium">Alert Points</h2>
-				<Button type="button" onclick={addAlertPoint} variant="secondary">Add Alert Point</Button>
+				<Button type="button" onclick={addAlertPoint} variant="secondary">
+					<MaterialIcon name="notification_add" />
+					Add Alert Point</Button
+				>
 			</div>
 
 			{#if validationErrors.length > 0}
@@ -294,6 +299,7 @@
 									variant="danger"
 									size="sm"
 								>
+									<MaterialIcon name="notifications_off" />
 									Remove
 								</Button>
 							</div>
@@ -396,7 +402,10 @@
 		>
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-lg font-medium">Recipients</h2>
-				<Button type="button" onclick={addRecipient} variant="secondary">Add Recipient</Button>
+				<Button type="button" onclick={addRecipient} variant="secondary">
+					<MaterialIcon name="group_add" />
+					Add Recipient</Button
+				>
 			</div>
 
 			{#if recipients.length > 0}
@@ -411,6 +420,7 @@
 									variant="danger"
 									size="sm"
 								>
+									<MaterialIcon name="group_remove" />
 									Remove
 								</Button>
 							</div>
@@ -463,7 +473,10 @@
 		>
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-lg font-medium">Schedules</h2>
-				<Button type="button" onclick={addSchedule} variant="secondary">Add Schedule</Button>
+				<Button type="button" onclick={addSchedule} variant="secondary">
+					<MaterialIcon name="calendar_add_on" />
+					Add Schedule</Button
+				>
 			</div>
 
 			{#if schedules.length > 0}
@@ -478,6 +491,7 @@
 									variant="danger"
 									size="sm"
 								>
+									<MaterialIcon name="event_busy" />
 									Remove
 								</Button>
 							</div>
@@ -534,7 +548,12 @@
 				href="/app/dashboard/location/{locationId}/devices/{devEui}/settings/reports"
 				variant="secondary"
 			>
+				<MaterialIcon name="cancel" />
 				Cancel
+			</Button>
+			<Button type="button" variant="secondary">
+				<MaterialIcon name="Lab_Research" />
+				Generate Sample Report
 			</Button>
 			<Button
 				type="submit"
@@ -544,7 +563,7 @@
 				{#if isSubmitting}
 					Creating Report...
 				{:else}
-					Create Report
+					<MaterialIcon name="save" /> Save Report
 				{/if}
 			</Button>
 		</div>
