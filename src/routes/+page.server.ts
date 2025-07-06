@@ -1,17 +1,17 @@
-import 'reflect-metadata';
-import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
 import type { PageServerLoad } from './$types';
-import type { IDeviceService } from '$lib/interfaces/IDeviceService';
 
-// export const load: PageServerLoad = async () => {
-//   // Get the device service from the IoC container
-//   const deviceService = container.get<IDeviceService>(TYPES.DeviceService);
+export const load: PageServerLoad = async ({ locals: { supabase } }) => {
+	// Check if there are any devices in the database
+	const { data: devices, error } = await supabase.from('CW_DEVICES').select('id').limit(1);
 
-//   // Use the service to fetch devices
-//   const devices = await deviceService.getAllDevices();
+	if (error) {
+		console.error('Error checking devices:', error);
+		return {
+			hasDevices: false
+		};
+	}
 
-//   return {
-//     devices
-//   };
-// };
+	return {
+		hasDevices: devices && devices.length > 0
+	};
+};

@@ -78,7 +78,7 @@ Link : https://app.CropWatch.io
 - PWA Framework: Svelte, SvelteKit
 - UI Components: @cropwatchdevelopment/cwui, bits-ui, @revolist/svelte-datagrid
 - Styling: Tailwind CSS, @layerstack/tailwind, @tailwindcss/forms, @tailwindcss/typography
-- State & IoC: @stencil/store, inversify
+- State Management: @stencil/store
 - Data Visualization: D3.js, ApexCharts
 - Mapping: Leaflet
 - PDF Generation: jspdf, pdfkit, html2canvas

@@ -1,10 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
-import type { ILocationService } from '$lib/interfaces/ILocationService';
 import { PermissionLevel } from '$lib/models/LocationUser';
-import type { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
+import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { AuthService } from '$lib/services/AuthService';
 import { LocationService } from '$lib/services/LocationService';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
@@ -17,7 +14,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 		throw error(400, 'Invalid location ID');
 	}
 
-	const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+	const errorHandler = new ErrorHandlingService();
 	const authService = new AuthService(supabase, errorHandler);
 	const session = await authService.getSession();
 
@@ -109,7 +106,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+			const errorHandler = new ErrorHandlingService();
 			const locationRepo = new LocationRepository(supabase, errorHandler);
 			const deviceRepo = new DeviceRepository(supabase, errorHandler);
 			const locationService = new LocationService(locationRepo, deviceRepo);
@@ -147,7 +144,7 @@ export const actions: Actions = {
 			return { success: false, error: 'Invalid input data' };
 		}
 
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		const errorHandler = new ErrorHandlingService();
 		const locationRepo = new LocationRepository(supabase, errorHandler);
 		const deviceRepo = new DeviceRepository(supabase, errorHandler);
 		const locationService = new LocationService(locationRepo, deviceRepo);
@@ -179,7 +176,7 @@ export const actions: Actions = {
 			return { success: false, error: 'Invalid input data' };
 		}
 
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		const errorHandler = new ErrorHandlingService();
 		const locationRepo = new LocationRepository(supabase, errorHandler);
 		const deviceRepo = new DeviceRepository(supabase, errorHandler);
 		const locationService = new LocationService(locationRepo, deviceRepo);
@@ -210,7 +207,7 @@ export const actions: Actions = {
 			return { success: false, error: 'Invalid input data' };
 		}
 
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		const errorHandler = new ErrorHandlingService();
 		const locationRepo = new LocationRepository(supabase, errorHandler);
 		const deviceRepo = new DeviceRepository(supabase, errorHandler);
 		const locationService = new LocationService(locationRepo, deviceRepo);
@@ -237,7 +234,7 @@ export const actions: Actions = {
 			return { success: false, error: 'Authentication required' };
 		}
 
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		const errorHandler = new ErrorHandlingService();
 		const locationRepo = new LocationRepository(supabase, errorHandler);
 		const deviceRepo = new DeviceRepository(supabase, errorHandler);
 		const locationService = new LocationService(locationRepo, deviceRepo);
