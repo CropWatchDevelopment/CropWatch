@@ -14,13 +14,24 @@
 	// Extract data properties
 	const devEui = $derived(data.devEui);
 	const locationId = $derived(data.locationId);
+	const report = $derived(data.report);
+	const alertPoints = $derived(data.alertPoints);
+	const recipients = $derived(data.recipients);
+	const schedules = $derived(data.schedules);
 
 	// Form state
 	let reportName = $state('');
 	let isSubmitting = $state(false);
 
+	// Initialize reportName reactively
+	$effect(() => {
+		if (report) {
+			reportName = report.name || '';
+		}
+	});
+
 	// Alert points state - using $state for deep reactivity
-	let alertPoints = $state<
+	let currentAlertPoints = $state<
 		Array<{
 			id: string;
 			name: string;
@@ -33,7 +44,7 @@
 	>([]);
 
 	// Recipients state
-	let recipients = $state<
+	let currentRecipients = $state<
 		Array<{
 			id: string;
 			email: string;
@@ -42,7 +53,7 @@
 	>([]);
 
 	// Schedules state
-	let schedules = $state<
+	let currentSchedules = $state<
 		Array<{
 			id: string;
 			frequency: 'daily' | 'weekly' | 'monthly';
@@ -54,26 +65,85 @@
 	// Validation errors
 	let validationErrors = $state<string[]>([]);
 
+	// Initialize data from props
+	$effect(() => {
+		if (alertPoints) {
+			currentAlertPoints.splice(
+				0,
+				currentAlertPoints.length,
+				...alertPoints.map((point: any) => ({
+					id: point.id?.toString() || crypto.randomUUID(),
+					name: point.name || '',
+					operator:
+						point.operator === 'range'
+							? 'range'
+							: point.operator || ('=' as '=' | '>' | '<' | 'range'),
+					value:
+						point.operator === '=' || point.operator === '>' || point.operator === '<'
+							? point.min || point.max || 0
+							: undefined,
+					min: point.min || undefined,
+					max: point.max || undefined,
+					color: point.hex_color || '#3B82F6'
+				}))
+			);
+		}
+
+		if (recipients) {
+			currentRecipients.splice(
+				0,
+				currentRecipients.length,
+				...recipients.map((recipient: any) => ({
+					id: recipient.id?.toString() || crypto.randomUUID(),
+					email: recipient.profile_id, // This would need proper user lookup
+					name: recipient.profile_id
+				}))
+			);
+		}
+
+		if (schedules) {
+			currentSchedules.splice(
+				0,
+				currentSchedules.length,
+				...schedules.map((schedule: any) => ({
+					id: schedule.id?.toString() || crypto.randomUUID(),
+					frequency: (schedule.end_of_week
+						? 'weekly'
+						: schedule.end_of_month
+							? 'monthly'
+							: 'daily') as 'daily' | 'weekly' | 'monthly',
+					time: '09:00',
+					days: []
+				}))
+			);
+		}
+	});
+
+	// Validate ranges whenever alert points change
+	$effect(() => {
+		validateRanges();
+	});
+
 	// Color palette for alert points
 	const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
 
 	function addAlertPoint() {
 		const newPoint = {
 			id: crypto.randomUUID(),
-			name: `Alert Point ${alertPoints.length + 1}`,
+			name: `Alert Point ${currentAlertPoints.length + 1}`,
 			operator: '=' as const,
 			value: 0,
 			min: undefined,
 			max: undefined,
-			color: colors[alertPoints.length % colors.length]
+			color: colors[currentAlertPoints.length % colors.length]
 		};
-		alertPoints.push(newPoint);
+		currentAlertPoints.push(newPoint);
 	}
 
 	function removeAlertPoint(id: string) {
-		const index = alertPoints.findIndex((p) => p.id === id);
+		const index = currentAlertPoints.findIndex((p) => p.id === id);
 		if (index >= 0) {
-			alertPoints.splice(index, 1);
+			currentAlertPoints.splice(index, 1);
 		}
 	}
 
@@ -83,13 +153,13 @@
 			email: '',
 			name: ''
 		};
-		recipients.push(newRecipient);
+		currentRecipients.push(newRecipient);
 	}
 
 	function removeRecipient(id: string) {
-		const index = recipients.findIndex((r) => r.id === id);
+		const index = currentRecipients.findIndex((r) => r.id === id);
 		if (index >= 0) {
-			recipients.splice(index, 1);
+			currentRecipients.splice(index, 1);
 		}
 	}
 
@@ -100,13 +170,13 @@
 			time: '09:00',
 			days: []
 		};
-		schedules.push(newSchedule);
+		currentSchedules.push(newSchedule);
 	}
 
 	function removeSchedule(id: string) {
-		const index = schedules.findIndex((s) => s.id === id);
+		const index = currentSchedules.findIndex((s) => s.id === id);
 		if (index >= 0) {
-			schedules.splice(index, 1);
+			currentSchedules.splice(index, 1);
 		}
 	}
 
@@ -117,7 +187,7 @@
 		// Check for overlapping ranges
 		const ranges: Array<{ start: number; end: number; name: string }> = [];
 
-		alertPoints.forEach((point) => {
+		currentAlertPoints.forEach((point) => {
 			// Ensure values are numbers
 			const value = Number(point.value);
 			const min = Number(point.min);
@@ -165,7 +235,7 @@
 
 	// Derived number line points for visualization
 	const numberLinePoints = $derived(
-		alertPoints
+		currentAlertPoints
 			.filter((point) => {
 				// Filter out points with invalid values
 				if (point.operator === '=') {
@@ -200,9 +270,9 @@
 <section class="flex flex-col gap-6">
 	<header class="flex flex-row items-center justify-between gap-4">
 		<div>
-			<h1 class="mb-1 text-2xl font-semibold">Create Report</h1>
+			<h1 class="mb-1 text-2xl font-semibold">Edit Report</h1>
 			<p class="text-sm text-neutral-600 dark:text-neutral-400">
-				Create a new report for device: {devEui}
+				Edit report for device: {devEui}
 			</p>
 		</div>
 		<Button
@@ -271,7 +341,7 @@
 				</div>
 			{/if}
 
-			{#if alertPoints.length > 0}
+			{#if currentAlertPoints.length > 0}
 				<div class="mb-6">
 					<NumberLine points={numberLinePoints}>
 						<div class="text-sm text-gray-600 dark:text-gray-400">
@@ -281,7 +351,7 @@
 				</div>
 
 				<div class="space-y-4">
-					{#each alertPoints as point, i}
+					{#each currentAlertPoints as point, i}
 						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
 							<div class="mb-3 flex items-start justify-between">
 								<div class="flex items-center space-x-2">
@@ -301,13 +371,13 @@
 							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 								<div>
 									<label
-										for="alert-point-name-{i}"
+										for="edit-alert-point-name-{i}"
 										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
 									>
 										Name
 									</label>
 									<TextInput
-										id="alert-point-name-{i}"
+										id="edit-alert-point-name-{i}"
 										bind:value={point.name}
 										placeholder="Alert point name"
 										class="w-full"
@@ -316,12 +386,16 @@
 
 								<div>
 									<label
-										for="alert-point-condition-{i}"
+										for="edit-alert-point-condition-{i}"
 										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
 									>
 										Condition
 									</label>
-									<Select id="alert-point-condition-{i}" bind:value={point.operator} class="w-full">
+									<Select
+										id="edit-alert-point-condition-{i}"
+										bind:value={point.operator}
+										class="w-full"
+									>
 										<option value="=">Equals (=)</option>
 										<option value=">">Greater than (&gt;)</option>
 										<option value="<">Less than (&lt;)</option>
@@ -334,13 +408,13 @@
 								{#if point.operator === '=' || point.operator === '>' || point.operator === '<'}
 									<div>
 										<label
-											for="alert-point-value-{i}"
+											for="edit-alert-point-value-{i}"
 											class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
 										>
 											Value
 										</label>
 										<TextInput
-											id="alert-point-value-{i}"
+											id="edit-alert-point-value-{i}"
 											type="number"
 											bind:value={point.value}
 											placeholder="Enter value"
@@ -350,13 +424,13 @@
 								{:else if point.operator === 'range'}
 									<div>
 										<label
-											for="alert-point-min-{i}"
+											for="edit-alert-point-min-{i}"
 											class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
 										>
 											Min Value
 										</label>
 										<TextInput
-											id="alert-point-min-{i}"
+											id="edit-alert-point-min-{i}"
 											type="number"
 											bind:value={point.min}
 											placeholder="Min value"
@@ -365,13 +439,13 @@
 									</div>
 									<div>
 										<label
-											for="alert-point-max-{i}"
+											for="edit-alert-point-max-{i}"
 											class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
 										>
 											Max Value
 										</label>
 										<TextInput
-											id="alert-point-max-{i}"
+											id="edit-alert-point-max-{i}"
 											type="number"
 											bind:value={point.max}
 											placeholder="Max value"
@@ -386,143 +460,6 @@
 			{:else}
 				<div class="py-8 text-center text-gray-500 dark:text-gray-400">
 					<p>No alert points configured. Add an alert point to get started.</p>
-				</div>
-			{/if}
-		</div>
-
-		<!-- Recipients -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
-		>
-			<div class="mb-4 flex items-center justify-between">
-				<h2 class="text-lg font-medium">Recipients</h2>
-				<Button type="button" onclick={addRecipient} variant="secondary">Add Recipient</Button>
-			</div>
-
-			{#if recipients.length > 0}
-				<div class="space-y-4">
-					{#each recipients as recipient, i}
-						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
-							<div class="mb-3 flex items-start justify-between">
-								<span class="font-medium">Recipient {i + 1}</span>
-								<Button
-									type="button"
-									onclick={() => removeRecipient(recipient.id)}
-									variant="danger"
-									size="sm"
-								>
-									Remove
-								</Button>
-							</div>
-
-							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-								<div>
-									<label
-										for="recipient-name-{i}"
-										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-									>
-										Name
-									</label>
-									<TextInput
-										id="recipient-name-{i}"
-										bind:value={recipient.name}
-										placeholder="Recipient name"
-										class="w-full"
-									/>
-								</div>
-
-								<div>
-									<label
-										for="recipient-email-{i}"
-										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-									>
-										Email
-									</label>
-									<TextInput
-										id="recipient-email-{i}"
-										type="email"
-										bind:value={recipient.email}
-										placeholder="recipient@example.com"
-										class="w-full"
-									/>
-								</div>
-							</div>
-						</div>
-					{/each}
-				</div>
-			{:else}
-				<div class="py-8 text-center text-gray-500 dark:text-gray-400">
-					<p>No recipients configured. Add a recipient to get started.</p>
-				</div>
-			{/if}
-		</div>
-
-		<!-- Schedules -->
-		<div
-			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
-		>
-			<div class="mb-4 flex items-center justify-between">
-				<h2 class="text-lg font-medium">Schedules</h2>
-				<Button type="button" onclick={addSchedule} variant="secondary">Add Schedule</Button>
-			</div>
-
-			{#if schedules.length > 0}
-				<div class="space-y-4">
-					{#each schedules as schedule, i}
-						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
-							<div class="mb-3 flex items-start justify-between">
-								<span class="font-medium">Schedule {i + 1}</span>
-								<Button
-									type="button"
-									onclick={() => removeSchedule(schedule.id)}
-									variant="danger"
-									size="sm"
-								>
-									Remove
-								</Button>
-							</div>
-
-							<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-								<div>
-									<label
-										for="schedule-frequency-{i}"
-										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-									>
-										Frequency
-									</label>
-									<Select
-										id="schedule-frequency-{i}"
-										bind:value={schedule.frequency}
-										class="w-full"
-									>
-										<option value="daily">Daily</option>
-										<option value="weekly">Weekly</option>
-										<option value="monthly">Monthly</option>
-									</Select>
-								</div>
-
-								<div>
-									<label
-										for="schedule-time-{i}"
-										class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-									>
-										Time (24h format)
-									</label>
-									<TextInput
-										id="schedule-time-{i}"
-										type="text"
-										bind:value={schedule.time}
-										placeholder="09:00"
-										class="w-full"
-									/>
-								</div>
-							</div>
-						</div>
-					{/each}
-				</div>
-			{:else}
-				<div class="py-8 text-center text-gray-500 dark:text-gray-400">
-					<p>No schedules configured. Add a schedule to get started.</p>
 				</div>
 			{/if}
 		</div>
@@ -542,16 +479,16 @@
 				disabled={isSubmitting || !reportName.trim() || validationErrors.length > 0}
 			>
 				{#if isSubmitting}
-					Creating Report...
+					Updating Report...
 				{:else}
-					Create Report
+					Update Report
 				{/if}
 			</Button>
 		</div>
 
 		<!-- Hidden fields for form submission -->
-		<input type="hidden" name="alertPoints" value={JSON.stringify(alertPoints)} />
-		<input type="hidden" name="recipients" value={JSON.stringify(recipients)} />
-		<input type="hidden" name="schedules" value={JSON.stringify(schedules)} />
+		<input type="hidden" name="alertPoints" value={JSON.stringify(currentAlertPoints)} />
+		<input type="hidden" name="recipients" value={JSON.stringify(currentRecipients)} />
+		<input type="hidden" name="schedules" value={JSON.stringify(currentSchedules)} />
 	</form>
 </section>

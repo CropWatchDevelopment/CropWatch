@@ -115,7 +115,7 @@
 <!-- Sidebar -->
 <aside
 	class="fixed top-0 left-0 z-50 flex flex-col border-r transition-all duration-300 ease-in-out
-		{getDarkMode() ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-white/95'}
+		{getDarkMode() ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-slate-200'}
 		shadow-lg backdrop-blur-sm"
 	style="top: 73px; 
 		height: calc(100vh - 73px);
