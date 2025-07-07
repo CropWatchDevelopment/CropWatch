@@ -119,6 +119,14 @@ export const actions: Actions = {
 			// Create recipients - For now, we'll skip this since it requires profile_id
 			// This would need to be implemented with proper user management
 
+			for (const recipient of recipients) {
+				await reportService.createRecipient({
+					report_id: report.report_id,
+					profile_id: recipient.profile_id, // Assuming profile_id is part of recipient
+					communication_method: 1 //recipient.communication_method,
+				});
+			}
+
 			// Create schedules
 			for (const schedule of schedules) {
 				await reportService.createSchedule({

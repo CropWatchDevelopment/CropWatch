@@ -290,7 +290,8 @@
 						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
 							<div class="mb-3 flex items-start justify-between">
 								<div class="flex items-center space-x-2">
-									<div class="h-4 w-4 rounded" style="background-color: {point.color}"></div>
+									<input type="color" class="h-6 w-5 rounded-xl" bind:value={point.color} />
+									<!-- <div  style="background-color: {point.color}"></div> -->
 									<span class="font-medium">Alert Point {i + 1}</span>
 								</div>
 								<Button

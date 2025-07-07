@@ -5,8 +5,10 @@
 	import { _ } from 'svelte-i18n';
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import type { Report } from '$lib/models/Report';
 	import type { ActionResult } from '@sveltejs/kit';
+	import { success } from '$lib/stores/toast.svelte.js';
 
 	// Get data from the page server load function
 	let { data, form } = $props();
@@ -44,7 +46,8 @@
 			if (result.type === 'success') {
 				showCreateModal = false;
 				createReportName = '';
-				// Page will automatically reload with new data
+				// Force page data to refresh to update the reports list
+				await invalidateAll();
 			}
 		};
 	}
@@ -56,7 +59,12 @@
 			if (result.type === 'success') {
 				showDeleteModal = false;
 				reportToDelete = null;
-				// Page will automatically reload with new data
+				success('Report deleted successfully');
+				// Force page data to refresh to update the reports list
+				await invalidateAll();
+			} else {
+				// Handle error case
+				console.error('Error deleting report');
 			}
 		};
 	}
@@ -115,16 +123,16 @@
 
 				<div class="divide-y divide-neutral-200 dark:divide-neutral-700">
 					{#each reports as report}
-						<div class="p-4 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700">
+						<div class="p-4 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-700">
 							<div class="flex items-start justify-between">
 								<div class="flex-1">
-									<h3 class="font-medium text-neutral-900 dark:text-neutral-100">
+									<h3 class="font-medium text-neutral-900 dark:text-white">
 										{report.name}
 									</h3>
-									<p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+									<p class="mt-1 text-sm text-neutral-600 dark:text-gray-100">
 										Report ID: {report.report_id}
 									</p>
-									<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-500">
+									<p class="mt-1 text-xs text-neutral-500 dark:text-gray-300">
 										Created: {formatDate(report.created_at)}
 									</p>
 

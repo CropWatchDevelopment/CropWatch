@@ -7,6 +7,7 @@
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { untrack } from 'svelte';
 	import type { ActionResult } from '@sveltejs/kit';
 
 	let { data, form } = $props();
@@ -62,66 +63,119 @@
 		}>
 	>([]);
 
-	// Validation errors
-	let validationErrors = $state<string[]>([]);
-
-	// Initialize data from props
-	$effect(() => {
-		if (alertPoints) {
-			currentAlertPoints.splice(
-				0,
-				currentAlertPoints.length,
-				...alertPoints.map((point: any) => ({
-					id: point.id?.toString() || crypto.randomUUID(),
-					name: point.name || '',
-					operator:
-						point.operator === 'range'
-							? 'range'
-							: point.operator || ('=' as '=' | '>' | '<' | 'range'),
-					value:
-						point.operator === '=' || point.operator === '>' || point.operator === '<'
-							? point.min || point.max || 0
-							: undefined,
-					min: point.min || undefined,
-					max: point.max || undefined,
-					color: point.hex_color || '#3B82F6'
-				}))
-			);
+	// Validation errors - computed as derived value to avoid infinite loops
+	const validationErrors = $derived(() => {
+		// Skip validation if currentAlertPoints is not initialized
+		if (!currentAlertPoints || currentAlertPoints.length === 0) {
+			return [];
 		}
 
-		if (recipients) {
-			currentRecipients.splice(
-				0,
-				currentRecipients.length,
-				...recipients.map((recipient: any) => ({
-					id: recipient.id?.toString() || crypto.randomUUID(),
-					email: recipient.profile_id, // This would need proper user lookup
-					name: recipient.profile_id
-				}))
-			);
-		}
+		const errors: string[] = [];
 
-		if (schedules) {
-			currentSchedules.splice(
-				0,
-				currentSchedules.length,
-				...schedules.map((schedule: any) => ({
-					id: schedule.id?.toString() || crypto.randomUUID(),
-					frequency: (schedule.end_of_week
-						? 'weekly'
-						: schedule.end_of_month
-							? 'monthly'
-							: 'daily') as 'daily' | 'weekly' | 'monthly',
-					time: '09:00',
-					days: []
-				}))
-			);
-		}
+		// Check for overlapping ranges
+		const ranges: Array<{ start: number; end: number; name: string }> = [];
+
+		currentAlertPoints.forEach((point) => {
+			// Skip points without names or with invalid operators
+			if (!point.name || !point.operator) return;
+
+			// Ensure values are numbers
+			const value = Number(point.value);
+			const min = Number(point.min);
+			const max = Number(point.max);
+
+			let start: number, end: number;
+
+			if (point.operator === '=') {
+				if (isNaN(value)) return;
+				start = end = value;
+			} else if (point.operator === 'range') {
+				if (isNaN(min) || isNaN(max)) return;
+				start = min;
+				end = max;
+			} else if (point.operator === '>') {
+				if (isNaN(value)) return;
+				start = value;
+				end = Infinity;
+			} else if (point.operator === '<') {
+				if (isNaN(value)) return;
+				start = -Infinity;
+				end = value;
+			} else {
+				return; // Skip invalid points
+			}
+
+			// Check for overlaps with existing ranges
+			for (const existingRange of ranges) {
+				if (
+					(start <= existingRange.end && end >= existingRange.start) ||
+					(existingRange.start <= end && existingRange.end >= start)
+				) {
+					errors.push(`"${point.name}" overlaps with "${existingRange.name}"`);
+				}
+			}
+
+			ranges.push({ start, end, name: point.name });
+		});
+
+		return errors;
 	});
 
-	// Validate ranges whenever alert points change
+	// Initialize data from props - FIXED VERSION
 	$effect(() => {
-		validateRanges();
+		// Use untrack to prevent reactivity to the state arrays we're modifying
+		untrack(() => {
+			if (alertPoints) {
+				currentAlertPoints.splice(
+					0,
+					currentAlertPoints.length,
+					...alertPoints.map((point: any) => ({
+						id: point.id?.toString() || crypto.randomUUID(),
+						name: point.name || '',
+						operator:
+							point.operator === 'range'
+								? 'range'
+								: point.operator || ('=' as '=' | '>' | '<' | 'range'),
+						value:
+							point.operator === '=' || point.operator === '>' || point.operator === '<'
+								? point.min || point.max || 0
+								: undefined,
+						min: point.min || undefined,
+						max: point.max || undefined,
+						color: point.hex_color || '#3B82F6'
+					}))
+				);
+			}
+
+			if (recipients) {
+				currentRecipients.splice(
+					0,
+					currentRecipients.length,
+					...recipients.map((recipient: any) => ({
+						id: recipient.id?.toString() || crypto.randomUUID(),
+						email: recipient.profile_id, // This would need proper user lookup
+						name: recipient.profile_id
+					}))
+				);
+			}
+
+			if (schedules) {
+				currentSchedules.splice(
+					0,
+					currentSchedules.length,
+					...schedules.map((schedule: any) => ({
+						id: schedule.id?.toString() || crypto.randomUUID(),
+						frequency: (schedule.end_of_week
+							? 'weekly'
+							: schedule.end_of_month
+								? 'monthly'
+								: 'daily') as 'daily' | 'weekly' | 'monthly',
+						time: '09:00',
+						days: []
+					}))
+				);
+			}
+		});
 	});
 
 	// Color palette for alert points
@@ -180,59 +234,6 @@
 		}
 	}
 
-	// Validation logic
-	function validateRanges() {
-		validationErrors.splice(0, validationErrors.length);
-
-		// Check for overlapping ranges
-		const ranges: Array<{ start: number; end: number; name: string }> = [];
-
-		currentAlertPoints.forEach((point) => {
-			// Ensure values are numbers
-			const value = Number(point.value);
-			const min = Number(point.min);
-			const max = Number(point.max);
-
-			let start: number, end: number;
-
-			if (point.operator === '=') {
-				if (isNaN(value)) return;
-				start = end = value;
-			} else if (point.operator === 'range') {
-				if (isNaN(min) || isNaN(max)) return;
-				start = min;
-				end = max;
-			} else if (point.operator === '>') {
-				if (isNaN(value)) return;
-				start = value;
-				end = Infinity;
-			} else if (point.operator === '<') {
-				if (isNaN(value)) return;
-				start = -Infinity;
-				end = value;
-			} else {
-				return; // Skip invalid points
-			}
-
-			// Check for overlaps with existing ranges
-			for (const existingRange of ranges) {
-				if (
-					(start <= existingRange.end && end >= existingRange.start) ||
-					(existingRange.start <= end && existingRange.end >= start)
-				) {
-					validationErrors.push(`"${point.name}" overlaps with "${existingRange.name}"`);
-				}
-			}
-
-			ranges.push({ start, end, name: point.name });
-		});
-	}
-
-	// Watch for changes to alert points
-	$effect(() => {
-		validateRanges();
-	});
-
 	// Derived number line points for visualization
 	const numberLinePoints = $derived(
 		currentAlertPoints
@@ -283,7 +284,7 @@
 		</Button>
 	</header>
 
-	<form method="POST" use:enhance={handleSubmit} class="space-y-8">
+	<form method="POST" action="?/default" use:enhance={handleSubmit} class="space-y-8">
 		<!-- Report Basic Info -->
 		<div
 			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
@@ -315,7 +316,7 @@
 				<Button type="button" onclick={addAlertPoint} variant="secondary">Add Alert Point</Button>
 			</div>
 
-			{#if validationErrors.length > 0}
+			{#if validationErrors().length > 0}
 				<div class="mb-4 rounded-md bg-red-50 p-4 dark:bg-red-900/20">
 					<div class="flex">
 						<div class="flex-shrink-0">
@@ -331,7 +332,7 @@
 							<h3 class="text-sm font-medium text-red-800 dark:text-red-200">Validation Errors</h3>
 							<div class="mt-2 text-sm text-red-700 dark:text-red-300">
 								<ul class="list-inside list-disc space-y-1">
-									{#each validationErrors as error}
+									{#each validationErrors() as error}
 										<li>{error}</li>
 									{/each}
 								</ul>
@@ -473,11 +474,7 @@
 			>
 				Cancel
 			</Button>
-			<Button
-				type="submit"
-				variant="primary"
-				disabled={isSubmitting || !reportName.trim() || validationErrors.length > 0}
-			>
+			<Button type="submit" variant="primary" disabled={isSubmitting || !reportName.trim()}>
 				{#if isSubmitting}
 					Updating Report...
 				{:else}

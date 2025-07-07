@@ -82,6 +82,10 @@ export const load = async ({ params, locals }: any) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals, params }: any) => {
+		console.log('=== EDIT REPORT ACTION CALLED ===');
+		console.log('Request method:', request.method);
+		console.log('Params:', params);
+
 		try {
 			const devEui = params.devEui;
 			const location_id = params.location_id;
