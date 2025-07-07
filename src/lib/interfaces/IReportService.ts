@@ -50,6 +50,11 @@ export interface IReportService {
 	updateReport(reportId: string, updates: ReportUpdate): Promise<Report>;
 
 	/**
+	 * Upsert a report
+	 */
+	upsertReport(report: ReportInsert): Promise<Report>;
+
+	/**
 	 * Delete a report and all related data
 	 */
 	deleteReport(reportId: string): Promise<void>;
@@ -75,6 +80,11 @@ export interface IReportService {
 	updateAlertPoint(id: number, updates: ReportAlertPointUpdate): Promise<ReportAlertPoint>;
 
 	/**
+	 * Upsert an alert point
+	 */
+	upsertAlertPoint(alertPoint: ReportAlertPointInsert): Promise<ReportAlertPoint>;
+
+	/**
 	 * Delete alert points for a report
 	 */
 	deleteAlertPointsByReportId(reportId: string): Promise<void>;
@@ -93,6 +103,11 @@ export interface IReportService {
 	 * Update a recipient
 	 */
 	updateRecipient(id: number, updates: ReportRecipientUpdate): Promise<ReportRecipient>;
+
+	/**
+	 * Upsert a recipient
+	 */
+	upsertRecipient(recipient: ReportRecipientInsert): Promise<ReportRecipient>;
 
 	/**
 	 * Delete recipients for a report
@@ -128,6 +143,11 @@ export interface IReportService {
 	 * Update a schedule
 	 */
 	updateSchedule(id: number, updates: ReportUserScheduleUpdate): Promise<ReportUserSchedule>;
+
+	/**
+	 * Upsert a schedule
+	 */
+	upsertSchedule(schedule: ReportUserScheduleInsert): Promise<ReportUserSchedule>;
 
 	/**
 	 * Delete schedules for a report

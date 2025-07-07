@@ -128,6 +128,29 @@ export class ReportRecipientRepository extends BaseRepository<ReportRecipient, n
 	}
 
 	/**
+	 * Upsert a recipient
+	 * @param recipient Recipient data to upsert
+	 */
+	async upsertRecipient(recipient: ReportRecipientInsert): Promise<ReportRecipient> {
+		try {
+			const { data, error } = await this.supabase
+				.from(this.tableName)
+				.upsert(recipient)
+				.select()
+				.single();
+
+			if (error) {
+				throw error;
+			}
+
+			return data;
+		} catch (error) {
+			this.errorHandler.handleDatabaseError(error as any, 'Error upserting recipient');
+			throw error;
+		}
+	}
+
+	/**
 	 * Delete recipients by report ID
 	 * @param reportId Report ID to delete recipients for
 	 */

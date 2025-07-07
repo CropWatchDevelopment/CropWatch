@@ -94,6 +94,29 @@ export class ReportAlertPointRepository extends BaseRepository<ReportAlertPoint,
 	}
 
 	/**
+	 * Upsert an alert point
+	 * @param alertPoint Alert point data to upsert
+	 */
+	async upsertAlertPoint(alertPoint: ReportAlertPointInsert): Promise<ReportAlertPoint> {
+		try {
+			const { data, error } = await this.supabase
+				.from(this.tableName)
+				.upsert(alertPoint)
+				.select()
+				.single();
+
+			if (error) {
+				throw error;
+			}
+
+			return data;
+		} catch (error) {
+			this.errorHandler.handleDatabaseError(error as any, 'Error upserting alert point');
+			throw error;
+		}
+	}
+
+	/**
 	 * Delete alert points by report ID
 	 * @param reportId Report ID to delete alert points for
 	 */

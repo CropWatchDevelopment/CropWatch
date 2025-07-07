@@ -147,6 +147,29 @@ export class ReportUserScheduleRepository extends BaseRepository<ReportUserSched
 	}
 
 	/**
+	 * Upsert a schedule
+	 * @param schedule Schedule data to upsert
+	 */
+	async upsertSchedule(schedule: ReportUserScheduleInsert): Promise<ReportUserSchedule> {
+		try {
+			const { data, error } = await this.supabase
+				.from(this.tableName)
+				.upsert(schedule)
+				.select()
+				.single();
+
+			if (error) {
+				throw error;
+			}
+
+			return data;
+		} catch (error) {
+			this.errorHandler.handleDatabaseError(error as any, 'Error upserting schedule');
+			throw error;
+		}
+	}
+
+	/**
 	 * Delete schedules by report ID
 	 * @param reportId Report ID to delete schedules for
 	 */

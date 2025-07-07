@@ -32,6 +32,7 @@
 	const colors = {
 		primary: 'green',
 		secondary: 'gray',
+		info: 'blue',
 		tertiary: 'neutral',
 		danger: 'red',
 		ghost: 'transparent'

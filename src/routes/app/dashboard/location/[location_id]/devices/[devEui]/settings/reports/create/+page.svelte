@@ -4,9 +4,10 @@
 	import Select from '$lib/components/UI/form/Select.svelte';
 	import NumberLine from '$lib/components/Reports/NumberLine.svelte';
 	import { _ } from 'svelte-i18n';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { untrack } from 'svelte';
 	import type { ActionResult } from '@sveltejs/kit';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 
@@ -15,6 +16,9 @@
 	// Extract data properties
 	const devEui = $derived(data.devEui);
 	const locationId = $derived(data.locationId);
+	const report = $derived(data.report);
+	const isEditing = $derived(data.isEditing);
+	const recipientsData = $derived(data.recipients);
 
 	// Form state
 	let reportName = $state('');
@@ -51,6 +55,73 @@
 			days?: number[];
 		}>
 	>([]);
+
+	// Initialize form data from loaded report if editing
+	$effect(() => {
+		if (isEditing && report) {
+			untrack(() => {
+				reportName = report.name || '';
+			});
+		}
+
+		if (isEditing && data.alertPoints) {
+			untrack(() => {
+				alertPoints.splice(
+					0,
+					alertPoints.length,
+					...data.alertPoints.map((point: any) => ({
+						id: point.id?.toString() || crypto.randomUUID(),
+						name: point.name || '',
+						operator:
+							point.operator === 'range'
+								? 'range'
+								: point.operator || ('=' as '=' | '>' | '<' | 'range'),
+						value:
+							point.operator === '=' || point.operator === '>' || point.operator === '<'
+								? point.min || point.max || 0
+								: undefined,
+						min: point.min || undefined,
+						max: point.max || undefined,
+						value: point.value || undefined,
+						color: point.hex_color || '#3B82F6'
+					}))
+				);
+			});
+		}
+
+		if (isEditing && recipientsData) {
+			untrack(() => {
+				recipients.splice(
+					0,
+					recipients.length,
+					...data.recipients.map((recipient: any) => ({
+						id: recipient.id?.toString() || crypto.randomUUID(),
+						email: recipient.email || '',
+						name: recipient.name || ''
+					}))
+				);
+			});
+		}
+
+		if (isEditing && data.schedules) {
+			untrack(() => {
+				schedules.splice(
+					0,
+					schedules.length,
+					...data.schedules.map((schedule: any) => ({
+						id: schedule.id?.toString() || crypto.randomUUID(),
+						frequency: schedule.end_of_week
+							? 'weekly'
+							: schedule.end_of_month
+								? 'monthly'
+								: 'daily',
+						time: schedule.time || '09:00',
+						days: schedule.days || []
+					}))
+				);
+			});
+		}
+	});
 
 	// Validation errors
 	let validationErrors = $state<string[]>([]);
@@ -161,7 +232,12 @@
 
 	// Watch for changes to alert points
 	$effect(() => {
-		validateRanges();
+		// Only track alertPoints changes, not validationErrors changes
+		const points = alertPoints;
+		// Use untrack to prevent reactive loops when updating validationErrors
+		untrack(() => {
+			validateRanges();
+		});
 	});
 
 	// Derived number line points for visualization
@@ -201,9 +277,9 @@
 <section class="flex flex-col gap-6">
 	<header class="flex flex-row items-center justify-between gap-4">
 		<div>
-			<h1 class="mb-1 text-2xl font-semibold">Create Report</h1>
+			<h1 class="mb-1 text-2xl font-semibold">{isEditing ? 'Edit Report' : 'Create Report'}</h1>
 			<p class="text-sm text-neutral-600 dark:text-neutral-400">
-				Create a new report for device: {devEui}
+				{isEditing ? 'Edit' : 'Create a new'} report for device: {devEui}
 			</p>
 		</div>
 		<Button
@@ -216,6 +292,10 @@
 	</header>
 
 	<form method="POST" use:enhance={handleSubmit} class="space-y-8">
+		{#if isEditing && report}
+			<input type="hidden" name="reportId" value={report.report_id} />
+		{/if}
+
 		<!-- Report Basic Info -->
 		<div
 			class="rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-800"
@@ -562,9 +642,9 @@
 				disabled={isSubmitting || !reportName.trim() || validationErrors.length > 0}
 			>
 				{#if isSubmitting}
-					Creating Report...
+					{isEditing ? 'Updating Report...' : 'Creating Report...'}
 				{:else}
-					<MaterialIcon name="save" /> Save Report
+					<MaterialIcon name="save" /> {isEditing ? 'Update Report' : 'Save Report'}
 				{/if}
 			</Button>
 		</div>

@@ -5,10 +5,11 @@
 	import { _ } from 'svelte-i18n';
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import type { Report } from '$lib/models/Report';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { success } from '$lib/stores/toast.svelte.js';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 
 	// Get data from the page server load function
 	let { data, form } = $props();
@@ -169,31 +170,31 @@
 								</div>
 
 								<div class="ml-4 flex items-center space-x-2">
-									<button
-										class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-										disabled
-									>
+									<Button type="button" onclick={() => {}} variant="primary" size="sm">
+										<MaterialIcon name="edit" />
 										Generate Report
-									</button>
-									<button
-										class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-										disabled
+									</Button>
+									<Button
+										type="button"
+										onclick={() =>
+											goto(
+												`/app/dashboard/location/${$page.params.location_id}/devices/${devEui}/settings/reports/create?reportId=${report.report_id}`
+											)}
+										variant="info"
+										size="sm"
 									>
-										View
-									</button>
-									<a
-										href="/app/dashboard/location/{$page.params
-											.location_id}/devices/{devEui}/settings/reports/{report.report_id}/edit"
-										class="text-sm font-medium text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
-									>
+										<MaterialIcon name="edit" />
 										Edit
-									</a>
-									<button
-										class="text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+									</Button>
+									<Button
+										type="button"
 										onclick={() => openDeleteModal(report)}
+										variant="danger"
+										size="sm"
 									>
-										Delete
-									</button>
+										<MaterialIcon name="delete_forever" />
+										Remove
+									</Button>
 								</div>
 							</div>
 						</div>

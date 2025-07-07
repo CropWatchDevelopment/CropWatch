@@ -84,6 +84,13 @@ export class ReportService implements IReportService {
 	}
 
 	/**
+	 * Upsert a report (create or update)
+	 */
+	async upsertReport(report: ReportInsert): Promise<Report> {
+		return this.reportRepository.upsert(report as any);
+	}
+
+	/**
 	 * Delete a report and all related data
 	 */
 	async deleteReport(reportId: string): Promise<void> {
@@ -125,6 +132,13 @@ export class ReportService implements IReportService {
 	}
 
 	/**
+	 * Upsert an alert point
+	 */
+	async upsertAlertPoint(alertPoint: ReportAlertPointInsert): Promise<ReportAlertPoint> {
+		return this.alertPointRepository.upsertAlertPoint(alertPoint);
+	}
+
+	/**
 	 * Delete alert points for a report
 	 */
 	async deleteAlertPointsByReportId(reportId: string): Promise<void> {
@@ -150,6 +164,13 @@ export class ReportService implements IReportService {
 	 */
 	async updateRecipient(id: number, updates: ReportRecipientUpdate): Promise<ReportRecipient> {
 		return this.recipientRepository.updateRecipient(id, updates);
+	}
+
+	/**
+	 * Upsert a recipient
+	 */
+	async upsertRecipient(recipient: ReportRecipientInsert): Promise<ReportRecipient> {
+		return this.recipientRepository.upsertRecipient(recipient);
 	}
 
 	/**
@@ -199,6 +220,13 @@ export class ReportService implements IReportService {
 	 */
 	async updateSchedule(id: number, updates: ReportUserScheduleUpdate): Promise<ReportUserSchedule> {
 		return this.scheduleRepository.updateSchedule(id, updates);
+	}
+
+	/**
+	 * Upsert a schedule
+	 */
+	async upsertSchedule(schedule: ReportUserScheduleInsert): Promise<ReportUserSchedule> {
+		return this.scheduleRepository.upsertSchedule(schedule);
 	}
 
 	/**
