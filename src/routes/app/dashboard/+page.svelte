@@ -31,6 +31,7 @@
 		onToggleCollapse: () => void;
 	}
 	import AllDevices from '$lib/components/UI/dashboard/AllDevices.svelte';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	// Enhanced location type with deviceCount property
 	interface LocationWithCount extends LocationWithDevices {
@@ -40,17 +41,13 @@
 	// Enhanced device type with latest sensor data
 	interface DeviceWithSensorData extends DeviceWithType {
 		latestData: AirData | SoilData | null;
-		cw_device_type?: {
-			name: string;
-			default_upload_interval?: number;
-			primary_data_notation?: string;
-			secondary_data_notation?: string;
-		};
 		cw_rules?: any[];
 	}
 
 	// Create a timer manager instance
 	const timerManager = new DeviceTimerManager();
+
+	let channel: RealtimeChannel | undefined = $state();
 
 	// Initialize stores and managers
 	// Use writable store for device active status - initialize as null (unknown) for all devices
@@ -79,11 +76,85 @@
 	// Sidebar collapsed state
 	let sidebarCollapsed = $state(false);
 
-	// Toggle sidebar collapsed state
-	function toggleSidebar() {
-		sidebarCollapsed = !sidebarCollapsed;
-		if (browser) {
-			localStorage.setItem('sidebar_collapsed', sidebarCollapsed.toString());
+	// Real-time channel for database updates
+	let realtimeChannel: any = null;
+
+	// Setup real-time subscriptions with retry logic
+	function setupRealtimeSubscription(retryCount = 0) {
+		if (!browser) return;
+
+		console.log('🔄 Setting up real-time subscription...');
+		channel = data.supabase
+			.channel('db-changes')
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'cw_air_data'
+				},
+				(payload) => {
+					// Handle real-time updates for messages
+					if (payload.eventType === 'INSERT') {
+						handleRealtimeUpdate(payload);
+					}
+				}
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: 'INSERT',
+					schema: 'public',
+					table: 'cw_soil_data'
+				},
+				(payload) => {
+					// Handle real-time updates for users
+					if (payload.eventType === 'INSERT') {
+						// You can handle user updates here if needed
+						handleRealtimeUpdate(payload);
+					}
+				}
+			)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'cw_traffic2'
+				},
+				(payload) => {
+					// Handle real-time updates for users
+					if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+						// You can handle user updates here if needed
+						handleRealtimeUpdate(payload);
+					}
+				}
+			)
+			.subscribe();
+	}
+
+	// Handle real-time update
+	function handleRealtimeUpdate(payload: any) {
+		// Only process if we have valid data
+		if (payload.new && payload.new.dev_eui) {
+			try {
+				locationsStore.updateSingleDevice(payload.new.dev_eui, payload.new as AirData | SoilData);
+
+				// Update device active timer for the updated device
+				const device = locationsStore.devices.find((d) => d.dev_eui === payload.new.dev_eui);
+				if (device && device.latestData?.created_at) {
+					setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+				}
+			} catch (error) {
+				console.error('Error updating device from real-time:', error);
+			}
+		}
+	}
+
+	function cleanupRealtimeSubscription() {
+		if (realtimeChannel) {
+			data.supabase.removeAllChannels();
+			realtimeChannel = null;
 		}
 	}
 
@@ -95,6 +166,13 @@
 			if (savedState !== null) {
 				sidebarCollapsed = savedState === 'true';
 			}
+		}
+	});
+	onDestroy(() => {
+		console.log('the component is being destroyed');
+		data.supabase.removeAllChannels();
+		if (channel) {
+			data.supabase.realtime.removeChannel(channel);
 		}
 	});
 
@@ -114,12 +192,60 @@
 	onDestroy(() => {
 		//console.log('Cleaning up dashboard resources');
 		cleanupTimers();
+		cleanupRealtimeSubscription();
 	});
+
+	// // Refresh session if needed
+	// async function refreshSessionIfNeeded() {
+	// 	try {
+	// 		const { data: sessionData, error: sessionError } = await data.supabase.auth.getSession();
+
+	// 		if (sessionError) {
+	// 			console.error('❌ Error getting session:', sessionError);
+	// 			return false;
+	// 		}
+
+	// 		if (!sessionData.session) {
+	// 			console.error('❌ No session found');
+	// 			return false;
+	// 		}
+
+	// 		const expiresAt = sessionData.session.expires_at;
+	// 		if (expiresAt) {
+	// 			const expirationDate = new Date(expiresAt * 1000);
+	// 			const now = new Date();
+	// 			const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+
+	// 			// If expired or expiring soon, refresh
+	// 			if (expirationDate < fiveMinutesFromNow) {
+	// 				console.log('🔄 Session expiring soon, refreshing...');
+	// 				const { data: refreshData, error: refreshError } =
+	// 					await data.supabase.auth.refreshSession();
+
+	// 				if (refreshError) {
+	// 					console.error('❌ Failed to refresh session:', refreshError);
+	// 					return false;
+	// 				}
+
+	// 				console.log('✅ Session refreshed successfully');
+	// 				return true;
+	// 			}
+	// 		}
+
+	// 		return true;
+	// 	} catch (error) {
+	// 		console.error('❌ Error refreshing session:', error);
+	// 		return false;
+	// 	}
+	// }
 
 	// Initialize dashboard on mount
 	// This is the main onMount function for the dashboard
 	onMount(async () => {
 		try {
+			// Setup real-time subscription
+			setupRealtimeSubscription();
+
 			// Fetch locations using the store - this also selects the first location
 			await locationsStore.fetchLocations(user.id);
 
@@ -181,12 +307,13 @@
 				// Update the refresh timestamp in the timer manager
 				timerManager.updateRefreshTimestamp(locationId);
 
-				//console.log('Devices refreshed:', {
-				// 	deviceCount: locationsStore.devices.length,
-				// 	activeCount: locationsStore.devices.filter(
-				// 		(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
-				// 	).length
-				// });
+				console.log('Devices refreshed:', {
+					locationId,
+					deviceCount: locationsStore.devices.length,
+					activeCount: locationsStore.devices.filter(
+						(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
+					).length
+				});
 			}
 
 			return true;
@@ -247,9 +374,8 @@
 	{:else if locationsStore.locationError}
 		<div class="error">{locationsStore.locationError}</div>
 	{:else}
-		<div class="dashboard-grid" class:sidebar-collapsed={sidebarCollapsed}>
-			<!-- Location selector panel -->
-			<LocationSidebar
+		<!-- <div class="dashboard-grid" class:sidebar-collapsed={sidebarCollapsed}> -->
+		<!-- <LocationSidebar
 				locations={locationsStore.locations}
 				selectedLocation={locationsStore.selectedLocationId}
 				search={uiStore.search}
@@ -270,40 +396,39 @@
 					(uiStore.dashboardViewType = value as 'grid' | 'mozaic' | 'list')}
 				ondashboardSortTypeChange={(value) =>
 					(uiStore.dashboardSortType = value as 'alpha' | 'custom')}
-			/>
+			/> -->
 
-			<!-- Device display panel -->
-			<div class="devices-panel">
-				<!-- All Locations as Cards with Devices -->
-				{#if locationsStore.loadingLocations}
-					<div class="loading-devices">Loading locations and devices...</div>
-				{:else if locationsStore.locationError}
-					<div class="error">{locationsStore.locationError}</div>
-				{:else if locationsStore.locations.length > 0}
-					{#if locationsStore.selectedLocationId !== null}
-						<!-- Show only the selected location -->
-						{@const selectedLoc = locationsStore.locations.find(
-							(loc) => loc.location_id === locationsStore.selectedLocationId
-						)}
-						{#if selectedLoc}
-							<AllDevices locations={[selectedLoc]} {deviceActiveStatus} />
-						{:else}
-							<div class="error">Selected location not found.</div>
-						{/if}
+		<div class="devices-panel">
+			<!-- All Locations as Cards with Devices -->
+			{#if locationsStore.loadingLocations}
+				<div class="loading-devices">Loading locations and devices...</div>
+			{:else if locationsStore.locationError}
+				<div class="error">{locationsStore.locationError}</div>
+			{:else if locationsStore.locations.length > 0}
+				{#if locationsStore.selectedLocationId !== null}
+					<!-- Show only the selected location -->
+					{@const selectedLoc = locationsStore.locations.find(
+						(loc) => loc.location_id === locationsStore.selectedLocationId
+					)}
+					{#if selectedLoc}
+						<AllDevices locations={[selectedLoc]} {deviceActiveStatus} />
 					{:else}
-						<!-- Show all locations ("All Locations" is selected) -->
-						<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
+						<div class="error">Selected location not found.</div>
 					{/if}
 				{:else}
-					<p>No locations found.</p>
+					<!-- Show all locations ("All Locations" is selected) -->
+					<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
 				{/if}
-			</div>
+			{:else}
+				<p>No locations found.</p>
+			{/if}
 		</div>
+		<!-- </div> -->
 	{/if}
 </div>
 
 <style>
-	.dashboard-container {
+	/* .dashboard-container {
 		display: flex;
 		flex-direction: column;
 		min-height: 100vh;
@@ -311,27 +436,28 @@
 		color: var(--color-text);
 		--sidebar-expanded: 250px;
 		--sidebar-collapsed: 40px;
-	}
+	} */
 
-	.dashboard-grid {
+	/* .dashboard-grid {
 		display: grid;
 		grid-template-columns: var(--sidebar-expanded) 1fr;
 		gap: 0.25rem;
 		padding: 0.5rem;
 		flex: 1;
 		transition: grid-template-columns 0.3s ease;
-	}
+	} */
 
-	.dashboard-grid.sidebar-collapsed {
+	/* .dashboard-grid.sidebar-collapsed {
 		grid-template-columns: var(--sidebar-collapsed) 1fr;
-	}
+	} */
 
 	/* Ensure the devices panel grows when sidebar collapses */
 	.devices-panel {
+		/* background-color: var(--color-bg); */
 		transition: all 0.3s ease;
 		width: 100%;
 		overflow: auto;
-		background-color: var(--color-card);
+		/* background-color: var(--color-card); */
 		border-radius: 0.5rem;
 		padding: 1rem;
 		box-shadow:
@@ -339,11 +465,11 @@
 			0 2px 4px -1px rgba(0, 0, 0, 0.06);
 	}
 
-	@media (max-width: 768px) {
+	/* @media (max-width: 768px) {
 		.dashboard-grid {
 			grid-template-columns: 1fr;
 		}
-	}
+	} */
 
 	.loading,
 	.loading-devices,

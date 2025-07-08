@@ -6,12 +6,6 @@ import type { SoilData } from '$lib/models/SoilData';
 // Define DeviceWithSensorData type for use in the store
 interface DeviceWithSensorData extends DeviceWithType {
 	latestData: AirData | SoilData | null;
-	cw_device_type?: {
-		name: string;
-		default_upload_interval?: number;
-		primary_data_notation?: string;
-		secondary_data_notation?: string;
-	};
 	cw_rules?: any[];
 }
 
@@ -175,6 +169,51 @@ function updateLocationDevices(locationId: number, updatedDevices: DeviceWithSen
 	}
 }
 
+function updateSingleDevice(devEui: string, updatedData: AirData | SoilData) {
+	if (!devEui || !updatedData) return;
+
+	// Filter out null values and unwanted properties
+	const newData = Object.fromEntries(
+		Object.entries(updatedData).filter(
+			([k, v]) => v != null && k !== 'is_simulated' && k !== 'dev_eui'
+		)
+	) as AirData | SoilData;
+
+	console.log('Updating device:', devEui, 'with data:', newData);
+	// Update device in the devices array (current view)
+	if (devices && devices.length > 0) {
+		const deviceIndex = devices.findIndex((dev) => dev.dev_eui === devEui);
+		if (deviceIndex >= 0) {
+			// Create a new device object to ensure reactivity
+			devices[deviceIndex] = {
+				...devices[deviceIndex],
+				latestData: newData
+			};
+		}
+	}
+
+	// Also update the device in the locations array to keep data consistent
+	if (locations && locations.length > 0) {
+		for (const location of locations) {
+			if (location.cw_devices && location.cw_devices.length > 0) {
+				const deviceIndex = location.cw_devices.findIndex((dev) => dev.dev_eui === devEui);
+				if (deviceIndex >= 0) {
+					// Create a new device object to ensure reactivity
+					location.cw_devices[deviceIndex] = {
+						...location.cw_devices[deviceIndex],
+						latestData: newData
+					};
+					// Trigger reactivity by reassigning the array
+					location.cw_devices = [...location.cw_devices];
+					break;
+				}
+			}
+		}
+		// Trigger reactivity by reassigning the locations array
+		locations = [...locations];
+	}
+}
+
 // Export the store functions and state
 export function getLocationsStore() {
 	return {
@@ -210,6 +249,7 @@ export function getLocationsStore() {
 		loadDevicesForLocation,
 		loadAllDevices,
 		refreshDevicesForLocation,
-		updateLocationDevices
+		updateLocationDevices,
+		updateSingleDevice
 	};
 }

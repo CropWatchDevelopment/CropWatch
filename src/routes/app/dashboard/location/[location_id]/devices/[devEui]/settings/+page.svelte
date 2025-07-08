@@ -8,12 +8,18 @@
 	import TextInput from '$lib/components/UI/form/TextInput.svelte';
 	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
 	import { error, success } from '$lib/stores/toast.svelte.js';
-	import { _, locale } from 'svelte-i18n';
+	import { formatDateOnly } from '$lib/utilities/helpers.js';
+	import { _ } from 'svelte-i18n';
 
 	let { data } = $props();
 	const device = $derived(data.device);
 	const ownerId = $derived(data.ownerId);
 	const isOwner = $derived(device?.user_id === ownerId);
+
+	// @todo Use a proper sensor datasheet link when wiki pages are created
+	const deviceLinkId = $derived(
+		device?.cw_device_type?.data_table_v2 === 'cw_soil_data' ? 'soil_sensors' : 'co2_sensors'
+	);
 
 	let showDeleteDialog = $state(false);
 	let devEui = page.params.devEui;
@@ -42,7 +48,7 @@
 </script>
 
 <svelte:head>
-	<title>Device Settings - CropWatch</title>
+	<title>{$_('Device Settings')} - CropWatch</title>
 </svelte:head>
 
 <section class="flex flex-col gap-4">
@@ -53,7 +59,7 @@
 		</div>
 	</header>
 	<form
-		class="form-container flex !flex-col gap-4 lg:!flex-row lg:items-end"
+		class="form-container !grid grid-cols-1 gap-4 md:grid-cols-2"
 		id="deviceSettingsForm"
 		method="POST"
 		action="?/updateGeneralSettings"
@@ -70,7 +76,48 @@
 		use:formValidation
 	>
 		<div class="flex flex-1 flex-col gap-1">
-			<label for="deviceName" class="text-sm font-medium text-neutral-50">Device Name</label>
+			<span class="text-sm font-medium text-neutral-50">
+				{$_('Device Type')}
+			</span>
+			{#if device?.cw_device_type?.name}
+				<a
+					href="https://kb.cropwatch.io/doku.php?id={deviceLinkId}"
+					target="_blank"
+					class="text-gray-500/80 dark:text-gray-300/80"
+				>
+					{device.cw_device_type.name}
+				</a>
+			{:else}
+				{$_('Unknown')}
+			{/if}
+		</div>
+		<div class="flex flex-1 flex-col gap-1">
+			<span class="text-sm font-medium text-neutral-50">
+				{$_('EUI')}
+			</span>
+			{device?.dev_eui || $_('Unknown')}
+		</div>
+		<div class="flex flex-1 flex-col gap-1">
+			<span class="text-sm font-medium text-neutral-50">
+				{$_('Installed Date')}
+			</span>
+			{device?.installed_at ? formatDateOnly(device.installed_at) : $_('Unknown')}
+		</div>
+		<div class="flex flex-1 flex-col gap-1">
+			<span class="text-sm font-medium text-neutral-50">
+				{$_('Coordinates')}
+			</span>
+			{#if device?.lat && device?.long}
+				<!-- @todo Make the coordinates editable -->
+				{device.lat}, {device.long}
+			{:else}
+				{$_('Unknown')}
+			{/if}
+		</div>
+		<div class="flex flex-1 flex-col gap-1">
+			<label for="deviceName" class="text-sm font-medium text-neutral-50">
+				{$_('Device Name')}
+			</label>
 			{#if isOwner}
 				<TextInput
 					id="deviceName"
@@ -83,27 +130,34 @@
 			{/if}
 		</div>
 		<div class="flex flex-1 flex-col gap-1">
-			<label for="deviceName" class="text-sm font-medium text-neutral-50">Device Location</label>
+			<label for="deviceName" class="text-sm font-medium text-neutral-50">
+				{$_('Device Location')}
+			</label>
 			{#await data.locations}
-				Loading...
+				{$_('Loading...')}
 			{:then locations}
 				{#if isOwner}
 					<Select id="deviceLocation" name="location_id">
 						{#each locations as loc}
-							<option value={loc.location_id} selected={loc.location_id === device?.location_id}
-								>{loc.name}</option
-							>
+							<option value={loc.location_id} selected={loc.location_id === device?.location_id}>
+								{loc.name} ({loc.location_id})
+							</option>
 						{/each}
 					</Select>
 				{:else}
 					{locations.find((loc) => loc.location_id === device?.location_id)?.name ||
 						'Unknown Location'}
+					{#if device?.location_id}
+						({device.location_id})
+					{/if}
 				{/if}
 			{/await}
 		</div>
-		{#if isOwner}
-			<Button type="submit">{$_('Update')}</Button>
-		{/if}
+		<div class="col-span-1 flex flex-1 flex-col items-end gap-1 md:col-span-2">
+			{#if isOwner}
+				<Button variant="primary" type="submit">{$_('Update')}</Button>
+			{/if}
+		</div>
 	</form>
 </section>
 

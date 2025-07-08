@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = [
 	'/offline.html',
 	'/auth', // All routes under /auth/
 	'/api/auth', // Only authentication-related API routes
+	'/api/webhook', // Webhook endpoints (authenticated via webhook signatures)
 	'/static', // All static assets
 	'/static/icons',
 	'/static/screenshots'

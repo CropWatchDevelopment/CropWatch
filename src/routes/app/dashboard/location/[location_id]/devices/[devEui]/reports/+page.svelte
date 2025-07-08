@@ -242,7 +242,6 @@
 	}
 
 	async function generateServerPDF() {
-		debugger;
 		serverLoading = true;
 		error = '';
 

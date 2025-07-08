@@ -17,12 +17,6 @@
 	// Enhanced device type with latest sensor data
 	interface DeviceWithSensorData extends DeviceWithType {
 		latestData: AirData | SoilData | null;
-		cw_device_type?: {
-			name: string;
-			default_upload_interval?: number;
-			primary_data_notation?: string;
-			secondary_data_notation?: string;
-		};
 		cw_rules?: any[];
 	}
 
@@ -60,7 +54,7 @@
 					(device: DeviceWithSensorData) =>
 						device.name?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
 						device.dev_eui?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
-						device.deviceType?.name?.toLowerCase().includes(uiStore.search.toLowerCase())
+						device.cw_device_type?.name?.toLowerCase().includes(uiStore.search.toLowerCase())
 				);
 			}
 
@@ -115,12 +109,13 @@
 							...device,
 							latestData: device.latestData || {},
 							cw_device_type: {
-								name: device.deviceType?.name || 'Unknown',
-								default_upload_interval: device.deviceType?.default_upload_interval || 10,
-								primary_data_notation: device.deviceType?.primary_data_notation || '',
-								secondary_data_notation: device.deviceType?.secondary_data_notation || undefined,
-								primary_data_v2: device.deviceType?.primary_data_v2 || undefined,
-								secondary_data_v2: device.deviceType?.secondary_data_v2 || undefined
+								name: device.cw_device_type?.name || 'Unknown',
+								default_upload_interval: device.cw_device_type?.default_upload_interval || 10,
+								primary_data_notation: device.cw_device_type?.primary_data_notation || '',
+								secondary_data_notation:
+									device.cw_device_type?.secondary_data_notation || undefined,
+								primary_data_v2: device.cw_device_type?.primary_data_v2 || undefined,
+								secondary_data_v2: device.cw_device_type?.secondary_data_v2 || undefined
 							}
 						}}
 						<DeviceCard device={formattedDevice} {isActive} locationId={location.location_id} />

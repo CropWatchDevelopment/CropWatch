@@ -35,27 +35,35 @@ function getLocalIP() {
 }
 const ipAddress = getLocalIP();
 
-// format output
-const lines = [
-	'=== Build Info ===',
-	`Commit      : ${commitHash}`,
-	`Branch      : ${branch}`,
-	`Author      : ${commitUser}`,
-	`Date        : ${buildDate}`,
-	`Builder     : ${user}@${host}`,
-	`IP Address  : ${ipAddress}`,
-	'=================='
-];
-const output = lines.join('\n');
+// format output as JSON
+const buildInfo = {
+	commit: commitHash,
+	branch: branch,
+	author: commitUser,
+	date: buildDate,
+	builder: `${user}@${host}`,
+	ipAddress: ipAddress,
+	timestamp: Date.now()
+};
+
+const jsonOutput = JSON.stringify(buildInfo, null, 2);
 
 // print to console
-console.log('\n\x1b[33m' + lines[0] + '\x1b[0m');
-lines
-	.slice(1, -1)
-	.forEach((line) => console.log(`  • ${line.split(': ')[0].padEnd(12)} ${line.split(': ')[1]}`));
-console.log('\x1b[33m' + lines[lines.length - 1] + '\x1b[0m\n');
+console.log('\n\x1b[33m=== Build Info ===\x1b[0m');
+console.log(`  • Commit      : ${buildInfo.commit}`);
+console.log(`  • Branch      : ${buildInfo.branch}`);
+console.log(`  • Author      : ${buildInfo.author}`);
+console.log(`  • Date        : ${buildInfo.date}`);
+console.log(`  • Builder     : ${buildInfo.builder}`);
+console.log(`  • IP Address  : ${buildInfo.ipAddress}`);
+console.log('\x1b[33m==================\x1b[0m\n');
 
-// write to file at project root
-const filePath = path.join(process.cwd(), 'build-info.txt');
-fs.writeFileSync(filePath, output + '\n', { encoding: 'utf8' });
+// write to JSON file in static directory
+const staticDir = path.join(process.cwd(), 'static');
+if (!fs.existsSync(staticDir)) {
+	fs.mkdirSync(staticDir, { recursive: true });
+}
+
+const filePath = path.join(staticDir, 'build-info.json');
+fs.writeFileSync(filePath, jsonOutput + '\n', { encoding: 'utf8' });
 console.log(`Build info written to ${filePath}\n`);
