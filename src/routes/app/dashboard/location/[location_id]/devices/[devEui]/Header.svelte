@@ -8,10 +8,9 @@
 		device: DeviceWithType;
 		basePath: string;
 		children?: Snippet;
-		controls?: Snippet;
 	};
 
-	let { device, basePath, children, controls }: Props = $props();
+	let { device, basePath, children }: Props = $props();
 </script>
 
 <header
@@ -22,7 +21,6 @@
 		<div class="w-full text-2xl font-semibold text-gray-900 lg:text-3xl dark:text-gray-100">
 			{device.name}
 		</div>
-		<div class="flex w-full justify-end">{@render controls?.()}</div>
 	</h1>
 	{#if children}
 		{@render children?.()}

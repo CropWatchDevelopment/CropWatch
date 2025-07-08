@@ -32,7 +32,7 @@
 	const colors = {
 		primary: 'green',
 		secondary: 'gray',
-		tertiary: 'neutral',
+		tertiary: 'transparent',
 		danger: 'red',
 		ghost: 'transparent'
 	};
@@ -50,7 +50,7 @@
 <button
 	{type}
 	disabled={disabled == true || loading == true}
-	class="focus-visible:ring-ring bg-{color}-700 text-white hover:bg-{color}-700/90 active:bg-{color}-700/95 inline-flex cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-nowrap shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:cursor-default disabled:opacity-50 {variant} {className}"
+	class="focus-visible:ring-ring bg-{color}-700 text-white hover:bg-{color}-700/90 active:bg-{color}-700/95 inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-0 text-sm font-semibold text-nowrap shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:cursor-default disabled:opacity-50 {variant} {className}"
 	class:iconic
 	onclick={(event) => {
 		if (disabled) return;
@@ -77,12 +77,21 @@
 	@reference "tailwindcss";
 
 	button {
+		/* Same as text input */
+		&.tertiary {
+			@apply rounded border !border-gray-300 !bg-white !text-gray-900 text-inherit shadow-none;
+
+			:global(.dark) & {
+				@apply !border-zinc-700 !bg-zinc-800 !text-white;
+			}
+		}
+
 		&.ghost {
 			@apply text-inherit shadow-none;
 		}
 
 		&.iconic {
-			@apply !p-2;
+			@apply aspect-square !p-0;
 		}
 	}
 </style>

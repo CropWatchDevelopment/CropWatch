@@ -1,30 +1,29 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import CameraStream from '$lib/components/dashboard/CameraStream.svelte';
+	import DateRangeSelector from '$lib/components/dashboard/DateRangeSelector.svelte';
+	import DeviceMap from '$lib/components/dashboard/DeviceMap.svelte';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
-	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import TextInput from '$lib/components/UI/form/TextInput.svelte';
-	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
+	import CsvDownloadButton from '$lib/csv/CsvDownloadButton.svelte';
 	import type { DeviceWithType } from '$lib/models/Device';
 	import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 	import {
 		formatDateForInput,
-		formatDateOnly,
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
 	import { formatNumber } from '$lib/utilities/stats';
-	import { onMount } from 'svelte';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
+	import { DateTime } from 'luxon';
+	import { onMount, untrack } from 'svelte';
 	import { _, locale } from 'svelte-i18n';
 	import type { PageProps } from './$types';
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
-	import CsvDownloadButton from '$lib/csv/CsvDownloadButton.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
-	import type { RealtimeChannel } from '@supabase/supabase-js';
-	import { DateTime } from 'luxon';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -46,6 +45,7 @@
 		display: string;
 	}
 
+	let numericKeys: string[] = $state([]); // Holds numeric keys from historical data
 	let calendarEvents = $state<CalendarEvent[]>([]);
 
 	// Setup device detail functionality
@@ -58,6 +58,7 @@
 		loading, // Bound to deviceDetail.loading
 		error, // Bound to deviceDetail.error
 		processHistoricalData,
+		getNumericKeys,
 		fetchDataForDateRange, // This is deviceDetail.fetchDataForDateRange
 		renderVisualization, // This is deviceDetail.renderVisualization
 		initializeDateRange // This is deviceDetail.initializeDateRange
@@ -65,15 +66,15 @@
 	} = deviceDetail;
 
 	// DOM element references
-	let chart1: HTMLElement | undefined = $state();
-	let chart1Brush: HTMLElement | undefined = $state();
+	let mainChartElements: HTMLElement[] = $state([]); // Holds chart elements for rendering
+	let blushChartElements: HTMLElement[] = $state([]); // Holds brush elements for rendering
 
 	// Local string states for date inputs, bound to the input fields
 	let startDateInputString = $state('');
 	let endDateInputString = $state('');
 
-	let loadingHistoricalData = $state(true); // Local loading state for historical data fetch
-	let renderingVisualization = $state(true); // Local rendering state for visualization
+	let loadingHistoricalData = $state(false); // Local loading state for historical data fetch
+	let renderingVisualization = $state(false); // Local rendering state for visualization
 
 	// Derived properties
 	const {
@@ -117,29 +118,50 @@
 	$effect(() => {
 		(async () => {
 			loadingHistoricalData = true;
-			historicalData = await data.historicalData;
-			processHistoricalData(historicalData); // Initial processing of server-loaded data
+
+			const _historicalData = await data.historicalData;
+
+			processHistoricalData(_historicalData); // Initial processing of server-loaded data
+			historicalData = _historicalData; // Set historical data state
+			numericKeys = getNumericKeys(historicalData);
 			calendarEvents = updateEvents(); // Initialize calendar events based on historical data
 			loadingHistoricalData = false;
 		})();
 	});
 
 	const renderChart = async () => {
+		if (renderingVisualization || !numericKeys.length) {
+			return;
+		}
+
 		renderingVisualization = true;
-		await renderVisualization(historicalData, dataType, latestData, chart1, chart1Brush);
+
+		await Promise.all(
+			numericKeys.map((key, index) =>
+				renderVisualization({
+					historicalData,
+					chart1Element: mainChartElements[index],
+					chart1BrushElement: blushChartElements[index],
+					key
+				})
+			)
+		);
+
 		renderingVisualization = false;
 	};
 
-	// Re-render chart when historical data or DOM elements change
+	// Re-render chart when historical data changes
 	$effect(() => {
-		void [historicalData, dataType, latestData, chart1, chart1Brush];
-		renderChart();
+		void [$locale, historicalData];
+
+		untrack(() => {
+			renderChart();
+		});
 	});
 
 	// Re-render chart and calendar when the app locale changes, because the labels depend on it
 	$effect(() => {
 		void $locale;
-		renderChart();
 		calendarEvents = updateEvents(historicalData);
 	});
 
@@ -276,77 +298,23 @@
 </svelte:head>
 
 <Header {device} {basePath}>
-	{#snippet controls()}
+	<div class="flex w-full justify-end gap-2 md:w-auto">
 		<CsvDownloadButton {devEui} />
-		<Button class="invisible" variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
+		<Button class="!hidden" variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
 		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
-	{/snippet}
-	<div class="flex flex-wrap items-end gap-4 sm:flex-row-reverse">
-		<!-- Date range selector -->
-		<div class="flex flex-wrap items-end gap-2">
-			<!-- Date inputs -->
-			<div class="flex flex-col">
-				<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
-					{$_('Start Date:')}
-				</label>
-				<div class="gap=0 flex flex-row">
-					<Button
-						variant="ghost"
-						class="p-0!important m-0 max-w-6 rounded border border-gray-300"
-						onclick={() => handleDateRangeSubmit(-1)}
-					>
-						<MaterialIcon name="fast_rewind" size="small" />
-					</Button>
-					<TextInput
-						id="startDate"
-						type="date"
-						bind:value={startDateInputString}
-						max={endDateInputString}
-						class="text-sm"
-					/>
-				</div>
-			</div>
-			<div class="flex flex-col">
-				<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
-					{$_('End Date:')}
-				</label>
-				<div class="gap=0 flex flex-row">
-					<TextInput
-						id="endDate"
-						type="date"
-						bind:value={endDateInputString}
-						min={startDateInputString}
-						max={new Date().toISOString().split('T')[0]}
-						class="text-sm"
-					/>
-					<Button
-						disabled={new Date(endDateInputString) >= DateTime.now().minus({ days: 1 }).toJSDate()}
-						variant="ghost"
-						class="p-0!important m-0 max-w-6 rounded border border-gray-300"
-						onclick={() => handleDateRangeSubmit(1)}
-					>
-						<MaterialIcon name="fast_forward" size="small" />
-					</Button>
-				</div>
-			</div>
-			<div class="-ml-2">
-				<Button
-					variant="ghost"
-					iconic
-					onclick={handleDateRangeSubmit}
-					disabled={loadingHistoricalData}
-				>
-					<MaterialIcon name="refresh" aria-label={$_('refresh')} />
-				</Button>
-			</div>
-			{#if error}
-				<p class="mt-2 text-sm text-red-600">{'error'}</p>
-			{/if}
-		</div>
+	</div>
+	<!-- Data range selector on large screen -->
+	<div class="hidden border-l border-neutral-400 pl-4 lg:block">
+		<DateRangeSelector
+			{startDateInputString}
+			{endDateInputString}
+			{handleDateRangeSubmit}
+			{loadingHistoricalData}
+		/>
 	</div>
 </Header>
 
-<div class="flex flex-col gap-4 p-4 lg:flex-row">
+<div class="wrapper flex flex-col gap-4 p-4 lg:flex-row">
 	<!-- Left pane -->
 	<div
 		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
@@ -380,84 +348,9 @@
 			{/if}
 		</section>
 
-		<!-- Video Feed is IP is there -->
-		<section class="flex-none {device?.ip_log.length > 0 ? 'visible' : 'invisible'}">
-			<h2>{$_('Camera Stream')}</h2>
-			{#if device?.ip_log.length > 0}
-				{#each device.ip_log as log}
-					<img
-						class="sc-hHOBiw eJjIgh"
-						src="https://153.137.8.13:2223/mjpg/video.mjpg?camera=1&amp;audiocodec=aac&amp;audiosamplerate=16000&amp;audiobitrate=32000&amp;videozprofile=classic&amp;timestamp=0&amp;cachebust=1"
-						alt="Camera Stream"
-					/>
-				{/each}
-			{:else}
-				<p class="pt-4 text-center text-gray-500 italic">{$_('No stream available')}</p>
-			{/if}
-		</section>
-
-		{#if device}
-			<section class="flex-none">
-				<h2>{$_('Map')}</h2>
-				<div class="aspect-square">
-					<LeafletMap
-						lat={device.lat || 0}
-						lon={device.long || 0}
-						zoom={17}
-						markers={[[device.lat || 0, device.long || 0]]}
-					/>
-				</div>
-			</section>
-		{/if}
-
-		<!-- Device metadata container -->
-		<section class="flex-none">
-			<h2>{$_('Device Info')}</h2>
-			<div class="rounded-lg bg-gray-50 p-4 shadow-sm dark:bg-zinc-800">
-				<!-- Responsive: 1 col on mobile, 2 on md, 4 on lg -->
-				<div class="grid grid-rows-1 gap-2 text-sm">
-					<!-- Type -->
-					<div>
-						<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Type:')}</span>
-						<span class="ml-1 break-words text-gray-900 dark:text-white">{deviceTypeName}</span>
-					</div>
-
-					<!-- EUI -->
-					<div>
-						<span class="text-gray-500/80 dark:text-gray-300/80">{$_('EUI:')}</span>
-						<span class="ml-1 break-words text-gray-900 dark:text-white">{device.dev_eui}</span>
-					</div>
-
-					<!-- Location ID -->
-					{#if device?.location_id}
-						<div>
-							<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Location ID:')}</span>
-							<span class="ml-1 text-gray-900 dark:text-white">{device.location_id}</span>
-						</div>
-					{/if}
-
-					<!-- Installed At -->
-					{#if device?.installed_at}
-						<div>
-							<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Installed:')}</span>
-							<span class="ml-1 text-gray-900 dark:text-white">
-								{formatDateOnly(device.installed_at)}
-							</span>
-						</div>
-					{/if}
-
-					<div>
-						<a
-							href="https://kb.cropwatch.io/doku.php?id=co2_sensors"
-							target="_blank"
-							class="text-gray-500/80 dark:text-gray-300/80"
-						>
-							{$_('Sensor Datasheet')}
-						</a>
-					</div>
-				</div>
-			</div>
-		</section>
+		<!-- Video feed and map on large screen -->
+		<CameraStream {device} class="hidden flex-none lg:block" />
+		<DeviceMap {device} class="hidden flex-none lg:block" />
 	</div>
 
 	<!-- Right pane -->
@@ -475,6 +368,15 @@
 				{$_('Loading historical data...')}
 			</div>
 		{/if}
+		<!-- Data range selector on small/medium screen -->
+		<div class="mb-4 border-b border-neutral-400 pb-4 lg:hidden">
+			<DateRangeSelector
+				{startDateInputString}
+				{endDateInputString}
+				{handleDateRangeSubmit}
+				{loadingHistoricalData}
+			/>
+		</div>
 		<section class="mb-12">
 			{#if loading}
 				<!-- Loading State -->
@@ -524,24 +426,28 @@
 								Rendering chart...
 							</div>
 						{/if}
-						<h4
-							class="mb-4 text-center text-base text-xl font-medium text-gray-800 dark:text-gray-200"
-							hidden={renderingVisualization}
-						>
-							{$_('All Sensor Data Over Time')}
-						</h4>
 						<div class="w-full">
-							<div class="chart-placeholder">
-								<div class="chart-visual">
-									<div class="chart main-chart" bind:this={chart1}></div>
-									<div class="chart brush-chart" bind:this={chart1Brush}></div>
-								</div>
+							<div class="chart-placeholder grid grid-cols-1 gap-4 md:grid-cols-2">
+								{#each numericKeys as key, index (key)}
+									<section class="chart-visual">
+										<h3 class="text-center font-semibold">{$_(key)}</h3>
+										<div class="chart main-chart" bind:this={mainChartElements[index]}></div>
+										<div class="chart brush-chart" bind:this={blushChartElements[index]}></div>
+									</section>
+								{/each}
 							</div>
 						</div>
 					</div>
 				</section>
 			{/if}
 		</section>
+
+		<!-- Video feed and map on small/medium screen -->
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:hidden">
+			<CameraStream {device} />
+			<DeviceMap {device} />
+		</div>
+
 		<div class="mt-4">
 			<section>
 				<h2>{$_('Weather & Data')}</h2>
@@ -579,12 +485,11 @@
 
 		/* These classes are critical for ApexCharts rendering size */
 		.main-chart {
-			height: 350px;
+			height: 200px;
 		}
 
 		.brush-chart {
-			height: 150px;
-			margin-top: 10px;
+			height: 100px;
 		}
 
 		:global {
@@ -627,22 +532,15 @@
 		font-size: 12px !important;
 	} */
 
-	/* Responsive layout for mobile */
-	@media (max-width: 768px) {
-		.chart-visual .main-chart {
-			height: 300px;
-		}
+	.wrapper {
+		:global {
+			h2 {
+				@apply mb-2 text-xl font-semibold text-gray-600;
 
-		.chart-visual .brush-chart {
-			height: 120px;
-		}
-	}
-
-	h2 {
-		@apply mb-2 text-xl font-semibold text-gray-600;
-
-		:global(.dark) & {
-			@apply text-gray-300;
+				:global(.dark) & {
+					@apply text-gray-300;
+				}
+			}
 		}
 	}
 </style>

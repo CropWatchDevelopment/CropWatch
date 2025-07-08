@@ -115,6 +115,8 @@
 		<!-- CTA Button -->
 		<span class="flex-1"></span>
 		<div class="hidden items-center gap-3 md:flex">
+			<!-- @todo Move the language and theme selectors to the user settings page -->
+			<LanguageSelector />
 			<ThemeToggle />
 			{#if page.data.session?.user}
 				<Button variant="secondary" onclick={handleLogout}>{$_('Logout')}</Button>
@@ -305,7 +307,6 @@
 				<Breadcrumbs />
 			</div>
 			<div class="flex-1"></div>
-			<LanguageSelector />
 			<!-- Quick actions -->
 			<div class="hidden items-center gap-4 text-sm md:flex">
 				<a
