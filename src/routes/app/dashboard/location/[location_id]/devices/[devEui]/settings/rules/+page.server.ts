@@ -1,6 +1,3 @@
-import 'reflect-metadata';
-import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Actions } from './$types';
@@ -28,8 +25,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		const sessionService = new SessionService(locals.supabase);
 		const sessionResult = await sessionService.getSafeSession();
 
-		// Get error handler from container
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		// Create error handler and repositories
+		const errorHandler = new ErrorHandlingService();
 
 		// Create repositories with per-request Supabase client
 		const ruleRepo = new RuleRepository(locals.supabase, errorHandler);
@@ -136,8 +133,8 @@ export const actions: Actions = {
 				ruleGroupId
 			}));
 
-			// Get error handler from container
-			const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+			// Create error handler and dependencies
+			const errorHandler = new ErrorHandlingService();
 
 			// Create repository with per-request Supabase client
 			const ruleRepo = new RuleRepository(locals.supabase, errorHandler);
@@ -184,8 +181,8 @@ export const actions: Actions = {
 				notifier_type
 			};
 
-			// Get error handler from container
-			const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+			// Create error handler and dependencies
+			const errorHandler = new ErrorHandlingService();
 
 			// Create repository with per-request Supabase client
 			const ruleRepo = new RuleRepository(locals.supabase, errorHandler);
@@ -299,8 +296,8 @@ export const actions: Actions = {
 				return { success: false, error: 'Invalid rule ID' };
 			}
 
-			// Get error handler from container
-			const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+			// Create error handler and dependencies
+			const errorHandler = new ErrorHandlingService();
 
 			// Create repository with per-request Supabase client
 			const ruleRepo = new RuleRepository(locals.supabase, errorHandler);

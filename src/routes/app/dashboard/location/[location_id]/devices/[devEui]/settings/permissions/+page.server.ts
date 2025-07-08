@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { error, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { SessionService } from '$lib/services/SessionService';

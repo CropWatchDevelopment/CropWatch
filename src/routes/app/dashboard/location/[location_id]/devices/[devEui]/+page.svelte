@@ -259,7 +259,6 @@
 
 		// If units is provided, slide the date range forward or backward
 		if (units !== undefined) {
-			debugger;
 			//get range between start and end dates
 			let endDateTime = DateTime.fromJSDate(finalEndDate);
 			let startDateTime = DateTime.fromJSDate(finalStartDate);

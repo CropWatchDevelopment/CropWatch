@@ -1,14 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
 import { AuthService } from '$lib/services/AuthService';
-import type { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
+import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 
 export const actions: Actions = {
 	register: async ({ request, locals }) => {
 		const data = await request.formData();
-		
+
 		// Get form values
 		const firstName = data.get('firstName')?.toString() || '';
 		const lastName = data.get('lastName')?.toString() || '';
@@ -73,12 +71,12 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Get error handler from container
-			const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
-			
+			// Get error handler
+			const errorHandler = new ErrorHandlingService();
+
 			// Create AuthService with the request's Supabase client
 			const authService = new AuthService(locals.supabase, errorHandler);
-			
+
 			// Register the user
 			const result = await authService.register({
 				email,
@@ -103,7 +101,7 @@ export const actions: Actions = {
 				});
 			}
 
-			 // Check if email verification is needed
+			// Check if email verification is needed
 			if (!result.emailConfirmationRequired) {
 				// Redirect to check-email page with email parameter
 				throw redirect(303, `/auth/check-email?email=${encodeURIComponent(email)}`);
@@ -113,14 +111,14 @@ export const actions: Actions = {
 			}
 		} catch (err) {
 			console.error('Registration error:', err);
-			
+
 			// If this is a redirect, let it pass through
 			if (err instanceof Response && err.status === 303) {
 				throw err;
 			}
-			
-			return fail(500, { 
-				message: 'An unexpected error occurred during registration', 
+
+			return fail(500, {
+				message: 'An unexpected error occurred during registration',
 				errors: {},
 				firstName,
 				lastName,

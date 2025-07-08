@@ -54,13 +54,9 @@
 
 			if (_session) {
 				//console.log('Session initialized:', _session);
-				session = _session;
-				user = _session.user;
 			} else {
 				warning('Your session has expired. Please login again.');
 				console.warn('No session found during auth state change');
-				session = null;
-				user = null;
 			}
 
 			// Invalidate to refresh server data when session changes

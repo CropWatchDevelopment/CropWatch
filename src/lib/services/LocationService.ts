@@ -3,8 +3,6 @@ import { LocationRepository } from '../repositories/LocationRepository';
 import type { Location, LocationInsert, LocationUpdate } from '../models/Location';
 import type { LocationUser } from '../models/LocationUser';
 import { DeviceRepository } from '../repositories/DeviceRepository';
-import { injectable, inject } from 'inversify';
-import { TYPES } from '$lib/server/ioc.types';
 import { ErrorHandlingService } from '../errors/ErrorHandlingService';
 import { info } from '../utilities/logger';
 
@@ -12,14 +10,13 @@ import { info } from '../utilities/logger';
  * Implementation of LocationService
  * This service handles all business logic related to locations
  */
-@injectable()
 export class LocationService implements ILocationService {
 	/**
 	 * Constructor with repository dependencies
 	 */
 	constructor(
-		@inject(TYPES.LocationRepository) private locationRepository: LocationRepository,
-		@inject(TYPES.DeviceRepository) private deviceRepository: DeviceRepository,
+		private locationRepository: LocationRepository,
+		private deviceRepository: DeviceRepository,
 		private errorHandler: ErrorHandlingService = new ErrorHandlingService()
 	) {
 		info('starting location service...');
