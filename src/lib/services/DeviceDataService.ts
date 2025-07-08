@@ -256,7 +256,11 @@ export class DeviceDataService implements IDeviceDataService {
 		startDate: Date,
 		endDate: Date,
 		timezone: string,
-		intervalMinutes: number
+		intervalMinutes: number,
+		columns?: string[],
+		ops?: string[],
+		mins?: number[],
+		maxs?: (number | null)[]
 	): Promise<DeviceDataRecord[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
@@ -272,13 +276,59 @@ export class DeviceDataService implements IDeviceDataService {
 		}
 
 		try {
-			const { data, error: deviceError } = await this.supabase.rpc('get_report_data_for_device', {
-				input_dev_eui: devEui,
-				input_start: startDate,
-				input_end: endDate,
-				input_timezone: timezone,
-				input_interval_minutes: intervalMinutes
-			});
+			// If no filtering parameters provided, get alert points from the device's reports
+			let p_columns = columns || ['temperature_c', 'humidity'];
+			let p_ops = ops || ['>', 'BETWEEN'];
+			let p_mins = mins || [25.0, 55.0];
+			let p_maxs = maxs || [null, 65.0];
+
+			// If no explicit filters provided, try to get from device reports
+			if (!columns && !ops && !mins && !maxs) {
+				try {
+					// Get the first report for this device to extract alert points
+					const { data: reports, error: reportError } = await this.supabase
+						.from('reports')
+						.select('report_id, report_alert_points(*)')
+						.eq('dev_eui', devEui)
+						.limit(1);
+
+					if (!reportError && reports && reports.length > 0 && reports[0].report_alert_points) {
+						const alertPoints = reports[0].report_alert_points;
+						if (alertPoints && alertPoints.length > 0) {
+							p_columns = [];
+							p_ops = [];
+							p_mins = [];
+							p_maxs = [];
+
+							alertPoints.forEach((point: any) => {
+								if (point.data_point_key) {
+									p_columns.push(point.data_point_key);
+									p_ops.push(point.operator || '>');
+									p_mins.push(point.min || point.value || 0);
+									p_maxs.push(point.max || null);
+								}
+							});
+						}
+					}
+				} catch (alertError) {
+					// If we can't get alert points, use default values
+					console.warn('Could not load alert points, using defaults:', alertError);
+				}
+			}
+
+			const { data, error: deviceError } = await this.supabase.rpc(
+				'get_filtered_device_report_data_multi',
+				{
+					p_dev_id: devEui,
+					p_start_time: startDate,
+					p_end_time: endDate,
+					p_interval_minutes: intervalMinutes,
+					p_columns: p_columns,
+					p_ops: p_ops,
+					p_mins: p_mins,
+					p_maxs: p_maxs
+				}
+			);
 
 			if (deviceError) {
 				this.errorHandler.logError(deviceError);
@@ -310,6 +360,35 @@ export class DeviceDataService implements IDeviceDataService {
 				];
 			}
 			throw error;
+		}
+	}
+
+	/**
+	 * Get alert points for a device from its reports
+	 * @param devEui The device EUI
+	 */
+	public async getAlertPointsForDevice(devEui: string): Promise<any[]> {
+		if (!devEui) {
+			throw new Error('Device EUI not specified');
+		}
+		if (!this.checkUserHasAccess(devEui)) {
+			throw new Error('User does not have access to this device');
+		}
+
+		try {
+			const { data: reports, error: reportError } = await this.supabase
+				.from('reports')
+				.select('report_id, name, report_alert_points(*)')
+				.eq('dev_eui', devEui)
+				.limit(1);
+
+			if (!reportError && reports && reports.length > 0 && reports[0].report_alert_points) {
+				return reports[0].report_alert_points || [];
+			}
+			return [];
+		} catch (error) {
+			this.errorHandler.logError(error as Error);
+			return [];
 		}
 	}
 

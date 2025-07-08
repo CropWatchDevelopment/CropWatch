@@ -19,6 +19,7 @@
 	const report = $derived(data.report);
 	const isEditing = $derived(data.isEditing);
 	const recipientsData = $derived(data.recipients);
+	const dataKeys = $derived(data.dataKeys);
 
 	// Form state
 	let reportName = $state('');
@@ -33,6 +34,7 @@
 			value?: number;
 			min?: number;
 			max?: number;
+			data_point_key?: string;
 			color: string;
 		}>
 	>([]);
@@ -373,6 +375,16 @@
 									<input type="color" class="h-6 w-5 rounded-xl" bind:value={point.color} />
 									<!-- <div  style="background-color: {point.color}"></div> -->
 									<span class="font-medium">Alert Point {i + 1}</span>
+									<Select
+										id="alert-point-data-key-{i}"
+										bind:value={point.data_point_key}
+										class="w-full"
+									>
+										<option value="" disabled>Select Data Key</option>
+										{#each dataKeys as key}
+											<option value={key}>{key}</option>
+										{/each}
+									</Select>
 								</div>
 								<Button
 									type="button"

@@ -122,23 +122,41 @@ export const GET: RequestHandler = async ({
 			devEui,
 			startDate,
 			endDate,
-			30,
-			'Asia/Tokyo'
+			'Asia/Tokyo',
+			30
 		);
 		if (!deviceData || deviceData.length === 0) {
 			throw error(404, 'No data found for the specified device');
 		}
 
-		// Create the PDF data table
-		const data = deviceData.device_data;
+		// Transform DeviceDataRecord[] to TableData[] format
+		const data = deviceData.map((record) => ({
+			date: record.created_at,
+			values: Object.entries(record)
+				.filter(
+					([key, value]) =>
+						key !== 'dev_eui' && key !== 'created_at' && typeof value === 'number' && value !== null
+				)
+				.map(([_, value]) => value as number)
+		}));
+
 		if (!data || data.length === 0) {
 			throw error(404, 'No data found for the specified device');
 		}
-		if (!deviceData.report_info || deviceData.report_info.length === 0) {
-			throw error(404, 'No report info found for the specified device');
-		}
-		const alertPoints = deviceData.report_info[0].alert_points;
-		createPDFDataTable(doc, data, alertPoints);
+
+		// Get alert points for the device
+		const alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
+
+		// Create the alert data structure
+		const alertData = {
+			alert_points: alertPoints,
+			created_at: new Date().toISOString(),
+			dev_eui: devEui,
+			id: 1,
+			name: 'Device Report',
+			report_id: '1'
+		};
+		createPDFDataTable(doc, data, alertData);
 
 		// Add generation timestamp
 		doc

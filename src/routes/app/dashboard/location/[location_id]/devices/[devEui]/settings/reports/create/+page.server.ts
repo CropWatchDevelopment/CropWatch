@@ -7,6 +7,7 @@ import { ReportUserScheduleRepository } from '$lib/repositories/ReportUserSchedu
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ReportAlertPoint, ReportRecipient, ReportUserSchedule } from '$lib/models/Report';
+import { DeviceDataService } from '$lib/services/DeviceDataService';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	try {
@@ -28,15 +29,30 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			throw error(401, 'Authentication required');
 		}
 
+		const errorHandler = new ErrorHandlingService();
+		const deviceRepo = new ReportRepository(locals.supabase, errorHandler);
+		const dataService = new DeviceDataService(locals.supabase, deviceRepo);
 		// If reportId is provided, load existing report data
 		let report = null;
 		let alertPoints: ReportAlertPoint[] = [];
 		let recipients: ReportRecipient[] = [];
 		let schedules: ReportUserSchedule[] = [];
+		let dataKeys = null;
+		const latestData = await dataService.getLatestDeviceData(devEui); // pull the latest data for the device keys
+		if (!latestData) {
+			throw error(404, 'No data found for this device');
+		}
+
+		dataKeys = Object.keys(latestData)
+			.filter((k) => latestData[k] != null)
+			.reduce((a, k) => ({ ...a, [k]: latestData[k] }), {});
+		delete dataKeys['dev_eui']; // remove dev_eui as it's not a data key
+		delete dataKeys['created_at']; // remove created_at as it's not a data key
+		delete dataKeys['is_simulated']; // remove updated_at as it's not a data key
+		dataKeys = Object.keys(dataKeys); // get only the keys
 
 		if (reportId) {
 			// Create service dependencies
-			const errorHandler = new ErrorHandlingService();
 			const reportRepo = new ReportRepository(locals.supabase, errorHandler);
 			const alertPointRepo = new ReportAlertPointRepository(locals.supabase, errorHandler);
 			const recipientRepo = new ReportRecipientRepository(locals.supabase, errorHandler);
@@ -73,6 +89,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			alertPoints,
 			recipients,
 			schedules,
+			dataKeys,
 			isEditing: !!reportId
 		};
 	} catch (err) {
@@ -171,7 +188,8 @@ export const actions: Actions = {
 					min: point.min,
 					max: point.max,
 					value: point.value,
-					hex_color: point.color
+					hex_color: point.color,
+					data_point_key: point.data_point_key
 				});
 			}
 

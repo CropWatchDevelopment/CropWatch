@@ -90,7 +90,8 @@ export function createPDFDataTable(
 		});
 	const legendStartY = conf.margin + 15;
 	// Draw alert points legend
-	alertPointData.alert_points.forEach((point, index) => {
+	const alertPoints = alertPointData.alert_points || [];
+	alertPoints.forEach((point, index) => {
 		const color = point.hex_color || '#ffffff';
 		const legendX =
 			conf.margin + (index % finalColumnsPerPage) * (conf.cellWidth + conf.columnMargin);
@@ -213,7 +214,7 @@ function drawColumn(
 			let bgColor = '#ffffff';
 
 			// Check alert points for this value
-			for (const alertPoint of alertPointData.alert_points) {
+			for (const alertPoint of alertPointData.alert_points || []) {
 				if (evaluateAlertCondition(value, alertPoint)) {
 					bgColor = alertPoint.hex_color || '#ffffff';
 					break; // Use the first matching alert point
