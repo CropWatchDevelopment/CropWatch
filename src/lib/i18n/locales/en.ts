@@ -175,12 +175,6 @@ export const strings = {
 	'Camera Stream': 'Camera Stream',
 	'No stream available': 'No stream available',
 	Map: 'Map',
-	'Device Info': 'Device Info',
-	'Type:': 'Type:',
-	'EUI:': 'EUI:',
-	'Location ID:': 'Location ID:',
-	'Installed:': 'Installed:',
-	'Sensor Datasheet': 'Sensor Datasheet',
 	'Last updated:': 'Last updated:',
 	'Stats Summary': 'Stats Summary',
 	'Data Chart': 'Data Chart',
@@ -317,6 +311,10 @@ export const strings = {
 	Recipients: 'Recipients',
 
 	// Settings page
+	Unknown: 'Unknown',
+	EUI: 'EUI',
+	'Installed Date': 'Installed Date',
+	'Device Location': 'Device Location',
 	'Units & Display Settings': 'Units & Display Settings',
 
 	// Error pages

@@ -25,6 +25,6 @@
 	bind:value
 	{placeholder}
 	{disabled}
-	class="rounded border border-gray-300 bg-white p-2 text-gray-900 text-inherit dark:border-zinc-700 dark:bg-zinc-800 dark:text-white {className}"
+	class="min-h-9 rounded border border-gray-300 bg-white px-2 py-0 text-gray-900 text-inherit dark:border-zinc-700 dark:bg-zinc-800 dark:text-white {className}"
 	{...rest}
 />
