@@ -5,6 +5,9 @@
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import { _ } from 'svelte-i18n';
 	import { onMount } from 'svelte';
+	import LanguageSelector from './UI/form/LanguageSelector.svelte';
+	import { globalLoading, startLoading } from '$lib/stores/loadingStore';
+	import ThemeToggle from './theme/ThemeToggle.svelte';
 
 	// Navigation items for the sidebar
 	const navigationItems = [
@@ -134,7 +137,10 @@
 				{$_('Navigation')}
 			</h2>
 			<button
-				onclick={() => sidebarStore.toggle()}
+				onclick={() => {
+					sidebarStore.toggle();
+					startLoading();
+				}}
 				class="rounded-lg p-2 transition-all duration-200 hover:scale-105 {getDarkMode()
 					? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
 					: 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
@@ -146,12 +152,16 @@
 	{/if}
 
 	<!-- Navigation Items -->
-	<nav class="flex flex-1 flex-col overflow-y-auto p-2">
+	<nav class="z-10 flex flex-1 flex-col overflow-y-auto pr-2" style="z-index: 10000;">
 		<ul class="space-y-1">
 			{#each navigationItems as item, index}
 				<li>
 					<a
 						href={item.href}
+						onclick={() => {
+							sidebarStore.close();
+							startLoading();
+						}}
 						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
 							{isActiveRoute(item.matcher)
 							? getDarkMode()
@@ -180,7 +190,10 @@
 		</ul>
 		<span class="flex flex-auto"></span>
 		<button
-			onclick={() => sidebarStore.toggle()}
+			onclick={() => {
+				sidebarStore.toggle();
+				startLoading();
+			}}
 			class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
 				{getDarkMode() ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
 				{getDarkMode()
@@ -197,22 +210,32 @@
 		<ul class="space-y-1">
 			<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
 			<li>
-				<a
-					href="/app/account-settings/general"
-					class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
+				<div class="flex flex-row">
+					<a
+						href="/app/account-settings/general"
+						onclick={() => {
+							sidebarStore.close();
+							startLoading();
+						}}
+						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
 							{isActiveRoute('/app/account-settings/general')
-						? getDarkMode()
-							? 'bg-emerald-600/30 text-emerald-400'
-							: 'bg-emerald-100 text-emerald-700'
-						: getDarkMode()
-							? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-							: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
-					aria-current={isActiveRoute('/app/account-settings/general') ? 'page' : undefined}
-					title={sidebarStore.isSmallIconMode && !sidebarStore.isOpen ? $_('settings') : ''}
-				>
-					<MaterialIcon name="settings" size="medium" />
-					<input type="hidden" value={sidebarStore.isOpen} />
-				</a>
+							? getDarkMode()
+								? 'bg-emerald-600/30 text-emerald-400'
+								: 'bg-emerald-100 text-emerald-700'
+							: getDarkMode()
+								? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+								: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+						aria-current={isActiveRoute('/app/account-settings/general') ? 'page' : undefined}
+						title={sidebarStore.isSmallIconMode && !sidebarStore.isOpen ? $_('settings') : ''}
+					>
+						<MaterialIcon name="settings" size="medium" />
+						<input type="hidden" value={sidebarStore.isOpen} />
+					</a>
+					<span class="flex flex-1 border-l md:hidden"></span>
+					<ThemeToggle class="flex w-full md:hidden" outlineColor="black" />
+					<span class="flex flex-1 border-l md:hidden"></span>
+					<LanguageSelector class="flex w-full md:hidden" />
+				</div>
 			</li>
 		</ul>
 	</nav>

@@ -128,9 +128,7 @@
 		<!-- Mobile menu button -->
 		<button
 			onclick={toggleSidebar}
-			class="mobile-menu-btn rounded-lg p-2 transition-colors lg:hidden {getDarkMode()
-				? 'text-white hover:bg-white/10'
-				: 'text-gray-700 hover:bg-gray-200/50'}"
+			class="mobile-menu-btn rounded-lg p-2 text-white transition-colors lg:hidden"
 			aria-label="Toggle mobile menu"
 			aria-expanded={mobileMenuOpen}
 			aria-controls="mobile-menu"

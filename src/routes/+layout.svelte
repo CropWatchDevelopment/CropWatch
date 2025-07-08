@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { invalidate, beforeNavigate, afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 	import Header from '$lib/components/Header.svelte';
@@ -7,6 +7,7 @@
 	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
 	import { i18n } from '$lib/i18n/index.svelte';
 	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
+	import { globalLoading, startLoading, stopLoading } from '$lib/stores/loadingStore';
 	import { createBrowserClient } from '@supabase/ssr';
 	import { onMount } from 'svelte';
 	import '../app.css';
@@ -68,6 +69,15 @@
 
 	onMount(() => {
 		i18n.initialize();
+	});
+
+	// Handle navigation loading states
+	beforeNavigate(() => {
+		startLoading();
+	});
+
+	afterNavigate(() => {
+		stopLoading();
 	});
 </script>
 
