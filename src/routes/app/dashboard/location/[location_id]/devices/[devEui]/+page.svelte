@@ -24,6 +24,7 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -300,8 +301,13 @@
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
 		<CsvDownloadButton {devEui} />
-		<Button class="!hidden" variant="secondary" href="{basePath}/settings">{$_('report')}</Button>
-		<Button variant="secondary" href="{basePath}/settings">{$_('settings')}</Button>
+		<Button class="!hidden" variant="secondary" href="{basePath}/settings">
+			{$_('report')}
+		</Button>
+		<Button variant="secondary" href="{basePath}/settings">
+			<MaterialIcon name="Settings" />
+			{$_('settings')}
+		</Button>
 	</div>
 	<!-- Data range selector on large screen -->
 	<div class="hidden border-l border-neutral-400 pl-4 lg:block">
@@ -317,7 +323,7 @@
 <div class="wrapper flex flex-col gap-4 p-4 lg:flex-row">
 	<!-- Left pane -->
 	<div
-		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+		class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
 	>
 		<!-- Latest data section -->
 		<section class="flex-auto lg:w-auto lg:flex-none">
