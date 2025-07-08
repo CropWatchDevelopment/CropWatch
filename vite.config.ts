@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import { svelteTesting } from '@testing-library/svelte/vite';
+import { sentrySvelteKit } from '@sentry/sveltekit';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
@@ -8,6 +9,15 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit(),
+		sentrySvelteKit({
+			adapter: 'vercel',
+			sourceMapsUploadOptions: {
+				org: 'cropwatch',
+				project: 'cropwatch',
+				// store your auth token in an environment variable
+				authToken: process.env.SENTRY_AUTH_TOKEN
+			}
+		}),
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
 			injectRegister: 'script-defer',
