@@ -1,6 +1,8 @@
 <script>
 	import { getDarkMode, toggleTheme } from './theme.svelte';
 
+	let { class: className = '', outlineColor = 'white' } = $props();
+
 	// Use the darkMode state from theme.svelte.ts
 	$effect(() => {
 		// This effect will run whenever getDarkMode() changes
@@ -12,7 +14,7 @@
 
 <button
 	type="button"
-	class="text-text-light flex items-center justify-center rounded-full p-2 text-slate-200 transition-colors duration-200"
+	class="{className} text-text-light flex items-center justify-center rounded-full p-2 text-slate-200 transition-colors duration-200"
 	onclick={toggleTheme}
 	aria-label={getDarkMode() ? 'Switch to light mode' : 'Switch to dark mode'}
 >
@@ -23,7 +25,7 @@
 			class="h-5 w-5"
 			fill="none"
 			viewBox="0 0 24 24"
-			stroke="currentColor"
+			stroke={outlineColor}
 		>
 			<path
 				stroke-linecap="round"
@@ -39,7 +41,7 @@
 			class="h-5 w-5"
 			fill="none"
 			viewBox="0 0 24 24"
-			stroke="currentColor"
+			stroke={outlineColor}
 		>
 			<path
 				stroke-linecap="round"

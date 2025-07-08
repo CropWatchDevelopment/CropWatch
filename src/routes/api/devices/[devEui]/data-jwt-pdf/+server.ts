@@ -87,9 +87,17 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 				'Asia/Tokyo',
 				30 // Default interval in minutes
 			);
-			if (deviceDataResponse.device_data) {
-				deviceData = deviceDataResponse.device_data;
-				reportInfo = deviceDataResponse.report_info[0];
+			if (deviceDataResponse && deviceDataResponse.length > 0) {
+				deviceData = deviceDataResponse;
+
+				// Get alert points for the device
+				const alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
+
+				// Create proper report info structure
+				reportInfo = {
+					dev_eui: devEui,
+					alert_points: alertPoints
+				};
 			} else {
 				throw new Error(
 					`No device data found for ${devEui} in the specified date range: ${startDate.toISOString()} to ${endDate.toISOString()}`
