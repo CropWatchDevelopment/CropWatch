@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { error, redirect, type Handle } from '@sveltejs/kit';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';

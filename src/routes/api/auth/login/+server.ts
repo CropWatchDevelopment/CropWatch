@@ -1,9 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { TYPES } from '$lib/server/ioc.types';
 import { AuthService } from '$lib/services/AuthService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
-import { container } from '$lib/server/ioc.config';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
@@ -12,7 +10,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// Create a new AuthService instance with the per-request Supabase client
 		// This ensures authentication state is isolated per user/request
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		const errorHandler = new ErrorHandlingService();
 		const authService = new AuthService(locals.supabase, errorHandler);
 
 		// Attempt to sign in with the per-request auth service

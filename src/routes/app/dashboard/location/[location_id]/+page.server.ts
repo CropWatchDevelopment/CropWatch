@@ -1,6 +1,4 @@
 import { error } from '@sveltejs/kit';
-import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
 import type { PageServerLoad } from './$types';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
@@ -14,8 +12,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const locationId = parseInt(params.location_id, 10);
 
 	try {
-		// Get the error handler from the container
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		// Create error handler and dependencies
+		const errorHandler = new ErrorHandlingService();
 		const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
 		const deviceService = new DeviceService(deviceRepo);
 

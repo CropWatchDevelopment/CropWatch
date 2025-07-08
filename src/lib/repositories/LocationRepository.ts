@@ -3,13 +3,10 @@ import { BaseRepository } from './BaseRepository';
 import type { Location, LocationInsert, LocationUpdate } from '../models/Location';
 import type { LocationUser } from '../models/LocationUser';
 import { ErrorHandlingService } from '../errors/ErrorHandlingService';
-import { injectable, inject } from 'inversify';
-import { TYPES } from '$lib/server/ioc.types';
 
 /**
  * Repository for location data access
  */
-@injectable()
 export class LocationRepository extends BaseRepository<Location, number> {
 	protected tableName = 'cw_locations';
 	protected primaryKey = 'location_id';
@@ -18,10 +15,7 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	/**
 	 * Constructor with Supabase client and error handler dependencies
 	 */
-	constructor(
-		@inject(TYPES.SupabaseClient) supabase: SupabaseClient,
-		@inject(TYPES.ErrorHandlingService) errorHandler: ErrorHandlingService
-	) {
+	constructor(supabase: SupabaseClient, errorHandler: ErrorHandlingService) {
 		super(supabase, errorHandler);
 	}
 

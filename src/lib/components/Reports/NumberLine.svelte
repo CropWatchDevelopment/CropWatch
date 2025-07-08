@@ -47,7 +47,12 @@
 		// Render points/ranges
 		points.forEach((pt) => {
 			if (pt.operator === '=') {
-				const cx = xScale(pt.value as number);
+				const value = Number(pt.value);
+				if (isNaN(value)) return;
+
+				const cx = xScale(value);
+				if (isNaN(cx)) return;
+
 				svg
 					.append('circle')
 					.attr('cx', cx)
@@ -64,29 +69,43 @@
 			} else {
 				let startC: number, endC: number;
 				if (pt.min != null && pt.max != null) {
-					startC = pt.min;
-					endC = pt.max;
+					startC = Number(pt.min);
+					endC = Number(pt.max);
 				} else if (pt.operator === '>') {
-					startC = pt.value as number;
+					startC = Number(pt.value);
 					endC = domain[1];
 				} else if (pt.operator === '<') {
 					startC = domain[0];
-					endC = pt.value as number;
+					endC = Number(pt.value);
 				} else return;
+
+				// Check for NaN values
+				if (isNaN(startC) || isNaN(endC)) return;
 
 				const x1 = xScale(startC);
 				const x2 = xScale(endC);
+
+				// Check for NaN coordinates
+				if (isNaN(x1) || isNaN(x2)) return;
+
+				const rectX = Math.min(x1, x2);
+				const rectWidth = Math.abs(x2 - x1);
+				const textX = (x1 + x2) / 2;
+
+				// Check final values
+				if (isNaN(rectX) || isNaN(rectWidth) || isNaN(textX)) return;
+
 				svg
 					.append('rect')
-					.attr('x', Math.min(x1, x2))
+					.attr('x', rectX)
 					.attr('y', height / 2 - 10)
-					.attr('width', Math.abs(x2 - x1))
+					.attr('width', rectWidth)
 					.attr('height', 20)
 					.attr('fill', pt.color)
 					.attr('opacity', 0.4);
 				svg
 					.append('text')
-					.attr('x', (x1 + x2) / 2)
+					.attr('x', textX)
 					.attr('y', height / 2 + 5)
 					.text(pt.name)
 					.attr('fill', '#000')

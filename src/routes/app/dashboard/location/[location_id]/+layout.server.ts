@@ -1,8 +1,6 @@
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
-import { container } from '$lib/server/ioc.config';
-import { TYPES } from '$lib/server/ioc.types';
 import { LocationService } from '$lib/services/LocationService';
 import { SessionService } from '$lib/services/SessionService';
 import { error, redirect } from '@sveltejs/kit';
@@ -27,8 +25,8 @@ export const load = (async ({ params, locals: { supabase } }) => {
 	}
 
 	try {
-		// Get the error handler from the container
-		const errorHandler = container.get<ErrorHandlingService>(TYPES.ErrorHandlingService);
+		// Create services directly
+		const errorHandler = new ErrorHandlingService();
 		const deviceRepo = new DeviceRepository(supabase, errorHandler);
 		const locationRepo = new LocationRepository(supabase, errorHandler);
 		const locationService = new LocationService(locationRepo, deviceRepo);
