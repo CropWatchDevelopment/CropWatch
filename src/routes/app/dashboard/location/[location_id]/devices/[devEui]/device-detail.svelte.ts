@@ -34,8 +34,33 @@ export function setupDeviceDetail() {
 	let ApexCharts = $state<any>(undefined);
 
 	// Chart instances
-	let mainChartInstance: any = null;
-	let brushChartInstance: any = null;
+	const mainChartInstances: Record<string, any> = {};
+	const brushChartInstances: Record<string, any> = {};
+
+	/**
+	 * Gets all numeric keys from the historical data, excluding specified ignored keys.
+	 * @param historicalData Historical data array.
+	 * @param ignoredDataKeys Array of keys to ignore.
+	 * @returns Array of numeric keys found in the data.
+	 */
+	function getNumericKeys(
+		historicalData: any[],
+		ignoredDataKeys: string[] = ['id', 'dev_eui', 'created_at']
+	): string[] {
+		if (!historicalData || !historicalData.length) {
+			return [];
+		}
+
+		const sample = historicalData.find((row) => row && typeof row === 'object');
+
+		if (!sample) {
+			return [];
+		}
+
+		return Object.keys(sample).filter(
+			(key) => !ignoredDataKeys.includes(key) && typeof sample[key] === 'number'
+		);
+	}
 
 	// Function to process historical data and calculate stats
 	function processHistoricalData(historicalData: any[]) {
@@ -51,10 +76,7 @@ export function setupDeviceDetail() {
 			.reverse();
 
 		// Determine numeric keys dynamically (excluding dev_eui, created_at)
-		const excludeKeys = ['dev_eui', 'created_at'];
-		const numericKeys = Object.keys(historicalData[0] || {}).filter(
-			(key) => !excludeKeys.includes(key) && typeof historicalData[0][key] === 'number'
-		);
+		const numericKeys = getNumericKeys(historicalData);
 
 		// Reset chartData and stats for all numeric keys
 		numericKeys.forEach((key) => {
@@ -192,42 +214,47 @@ export function setupDeviceDetail() {
 	}
 
 	/**
-	 * Renders a generic ApexCharts line chart with a brush (range selector) below.
-	 * This function is fully generic: it will plot all numeric keys in the data (except for ignored keys).
-	 *
-	 * @param historicalData Array of objects (rows) with at least a 'created_at' timestamp and numeric fields
-	 * @param dataType      (Unused, for compatibility)
-	 * @param latestData    (Unused, for compatibility)
-	 * @param chart1Element HTMLElement to render the main chart into
-	 * @param chart1BrushElement HTMLElement to render the brush chart into
-	 * @param _ignored      (Unused, for compatibility)
-	 * @param ignoredDataKeys Array of keys to ignore (default: ['id', 'dev_eui', 'created_at'])
+	 * Renders a generic ApexCharts line chart with a brush (range selector) below. This function is
+	 * fully generic: it will plot all numeric keys in the data (except for ignored keys).
+	 * @param params
+	 * @param params.historicalData Array of objects (rows) with at least a 'created_at' timestamp and
+	 * numeric fields
+	 * @param params.chart1Element HTMLElement to render the main chart into
+	 * @param params.chart1BrushElement HTMLElement to render the brush chart into
+	 * @param params.key Optional key to render a specific chart (if not provided, all numeric keys
+	 * will be rendered)
+	 * @param params.ignoredDataKeys Array of keys to ignore (default: ['id', 'dev_eui',
+	 * 'created_at'])
 	 */
-	async function renderVisualization(
-		historicalData: any[],
-		dataType: string, // ignored for charting
-		latestData: any, // ignored for charting
-		chart1Element: HTMLElement | undefined,
-		chart1BrushElement: HTMLElement | undefined,
-		_ignored?: any, // placeholder for removed dataGridElement
-		ignoredDataKeys: string[] = ['id', 'dev_eui', 'created_at']
-	) {
+	async function renderVisualization({
+		historicalData,
+		chart1Element,
+		chart1BrushElement,
+		key = '_all',
+		ignoredDataKeys = ['id', 'dev_eui', 'created_at']
+	}: {
+		historicalData: any[];
+		chart1Element?: HTMLElement;
+		chart1BrushElement?: HTMLElement;
+		key?: string;
+		ignoredDataKeys?: string[];
+	}) {
 		if (!browser || !historicalData || historicalData.length === 0) return;
 		await new Promise((resolve) => setTimeout(resolve, 50));
 		if (!chart1Element || !chart1BrushElement) return;
 
 		// Destroy previous chart instances if they exist
-		if (mainChartInstance) {
+		if (mainChartInstances[key]) {
 			try {
-				mainChartInstance.destroy();
+				mainChartInstances[key].destroy();
 			} catch {}
-			mainChartInstance = null;
+			mainChartInstances[key] = null;
 		}
-		if (brushChartInstance) {
+		if (brushChartInstances[key]) {
 			try {
-				brushChartInstance.destroy();
+				brushChartInstances[key].destroy();
 			} catch {}
-			brushChartInstance = null;
+			brushChartInstances[key] = null;
 		}
 
 		if (!ApexCharts) {
@@ -235,15 +262,22 @@ export function setupDeviceDetail() {
 		}
 
 		// Find all numeric keys in the data (excluding ignored keys)
-		const sample = historicalData.find((row) => row && typeof row === 'object');
-		if (!sample) return;
-		const numericKeys = Object.keys(sample).filter(
-			(key) => !ignoredDataKeys.includes(key) && typeof sample[key] === 'number'
-		);
+		const numericKeys = getNumericKeys(historicalData, ignoredDataKeys);
 		if (numericKeys.length === 0) return;
 
+		let keys = [...numericKeys];
+
+		if (key !== '_all') {
+			// Filter numeric keys based on the provided key
+			if (numericKeys.includes(key)) {
+				keys = [key];
+			} else {
+				return;
+			}
+		}
+
 		// Build series for each numeric key
-		const series = numericKeys.map((key) => ({
+		const series = keys.map((key) => ({
 			name: get(_)(key),
 			data: historicalData
 				.filter((row) => typeof row[key] === 'number' && row[key] !== null && row['created_at'])
@@ -251,14 +285,17 @@ export function setupDeviceDetail() {
 		}));
 		series.forEach((s) => s.data.sort((a, b) => a.x - b.x));
 
-		const colorMap = Object.fromEntries(numericKeys.map((key) => [key, getTextColorByKey(key)]));
+		const colorMap = Object.fromEntries(keys.map((key) => [key, getTextColorByKey(key)]));
 		const colors = Object.values(colorMap);
 
 		// Y-axis config for each series
-		const yaxis = numericKeys.map((key, idx) => ({
+		const yaxis = keys.map((key, idx) => ({
 			seriesName: key,
 			opposite: idx % 2 === 1,
-			title: { text: get(_)(key), style: { color: colorMap[key] } },
+			title:
+				key === '_all'
+					? { text: get(_)(key), style: { fontSize: '16px', color: colorMap[key] } }
+					: {},
 			labels: { style: { colors: colorMap[key] } }
 		}));
 
@@ -273,15 +310,15 @@ export function setupDeviceDetail() {
 		const mainChartOptions = {
 			series,
 			chart: {
-				id: 'mainChart',
+				id: `chart-${key}-main`,
 				type: 'line',
-				height: 350,
+				height: 200,
 				toolbar: { autoSelected: 'pan', show: false },
 				animations: { enabled: false },
 				zoom: { enabled: false }
 			},
 			colors,
-			stroke: { curve: 'smooth', width: numericKeys.map(() => 1) },
+			stroke: { curve: 'smooth', width: keys.map(() => 1) },
 			dataLabels: { enabled: false },
 			markers: { size: 1, strokeWidth: 0, hover: { size: 4 } },
 			xaxis: { type: 'datetime', labels: { datetimeUTC: false } },
@@ -305,15 +342,15 @@ export function setupDeviceDetail() {
 		const brushChartOptions = {
 			series,
 			chart: {
-				id: 'brushChart',
-				height: 150,
+				id: `chart-${key}-brush`,
+				height: 100,
 				type: 'area',
-				brush: { target: 'mainChart', enabled: true },
+				brush: { target: `chart-${key}-main`, enabled: true },
 				selection: { enabled: true, xaxis: { min: minDate, max: maxDate } }
 			},
 			colors,
 			fill: { type: 'gradient', gradient: { opacityFrom: 0.7, opacityTo: 0.3 } },
-			stroke: { width: numericKeys.map(() => 1) },
+			stroke: { width: keys.map(() => 1) },
 			xaxis: { type: 'datetime', tooltip: { enabled: false }, labels: { datetimeUTC: false } },
 			yaxis: { show: false, tickAmount: 2 },
 			grid: { borderColor: '#2a2a2a', strokeDashArray: 2, yaxis: { lines: { show: false } } },
@@ -321,23 +358,23 @@ export function setupDeviceDetail() {
 		};
 
 		// Render charts
-		mainChartInstance = new ApexCharts(chart1Element, mainChartOptions);
-		brushChartInstance = new ApexCharts(chart1BrushElement, brushChartOptions);
+		mainChartInstances[key] = new ApexCharts(chart1Element, mainChartOptions);
+		brushChartInstances[key] = new ApexCharts(chart1BrushElement, brushChartOptions);
 		try {
-			await mainChartInstance.render();
-			await brushChartInstance.render();
+			await mainChartInstances[key].render();
+			await brushChartInstances[key].render();
 		} catch (err) {
-			if (mainChartInstance) {
+			if (mainChartInstances[key]) {
 				try {
-					mainChartInstance.destroy();
+					mainChartInstances[key].destroy();
 				} catch {}
-				mainChartInstance = null;
+				mainChartInstances[key] = null;
 			}
-			if (brushChartInstance) {
+			if (brushChartInstances[key]) {
 				try {
-					brushChartInstance.destroy();
+					brushChartInstances[key].destroy();
 				} catch {}
-				brushChartInstance = null;
+				brushChartInstances[key] = null;
 			}
 		}
 	}
@@ -387,6 +424,7 @@ export function setupDeviceDetail() {
 		// Functions
 		formatDateForDisplay,
 		hasValue,
+		getNumericKeys,
 		processHistoricalData,
 		fetchDataForDateRange,
 		renderVisualization,

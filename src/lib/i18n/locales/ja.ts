@@ -69,8 +69,8 @@ export const strings = {
 	load_selected_data: '選択したデータを読み込む',
 	'Load Selected Range': '選択したデータを読み込む',
 	load_selected_range: '選択したデータを読み込む',
-	'Download CSV': 'CSVをダウンロード',
-	download_csv: 'CSVをダウンロード',
+	'Download CSV': 'CSV',
+	download_csv: 'CSV',
 	'Download Excel': 'Excelをダウンロード',
 	download_excel: 'Excelをダウンロード',
 	'Download PDF': 'PDFをダウンロード',
@@ -215,12 +215,6 @@ export const strings = {
 	'Camera Stream': 'カメラストリーム',
 	'No stream available': 'ストリームは利用できません',
 	Map: '地図',
-	'Device Info': 'デバイス情報',
-	'Type:': 'タイプ:',
-	'EUI:': 'EUI:',
-	'Location ID': 'ロケーションID',
-	'Installed:': '設置日:',
-	'Sensor Datasheet': 'センサーデータシート',
 	'Last updated:': '最終更新:',
 	'Stats Summary': '統計概要',
 	'Data Chart': 'データチャート',
@@ -368,6 +362,10 @@ export const strings = {
 	'Collapse sidebar': 'サイドバーを折りたたむ',
 
 	// Settings page
+	Unknown: '不明',
+	EUI: 'EUI',
+	'Installed Date': '設置日',
+	'Device Location': 'デバイスの場所',
 	'Units & Display Settings': '単位と表示設定',
 
 	// Error page

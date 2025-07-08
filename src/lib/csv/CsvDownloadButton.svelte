@@ -2,6 +2,7 @@
 	import { _ } from 'svelte-i18n';
 	import { Dialog } from 'bits-ui';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 
 	let { devEui } = $props();
 
@@ -40,7 +41,10 @@
 <div class="hidden md:flex md:items-center md:justify-end">
 	<Dialog.Root bind:open={modalOpen}>
 		<Dialog.Trigger asChild>
-			<Button variant="secondary" loading={false}>{$_('download_csv')}</Button>
+			<Button variant="secondary" loading={false}>
+				<MaterialIcon name="download" />
+				{$_('download_csv')}
+			</Button>
 		</Dialog.Trigger>
 
 		<Dialog.Portal>
@@ -82,8 +86,11 @@
 						onclick={() => {
 							startDownload();
 							modalOpen = false;
-						}}>{$_('download_csv')}</Button
+						}}
 					>
+						<MaterialIcon name="download" class="mr-2" />
+						{$_('download_csv')}
+					</Button>
 				</div>
 			</Dialog.Content>
 		</Dialog.Portal>
