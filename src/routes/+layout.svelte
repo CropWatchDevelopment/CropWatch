@@ -93,8 +93,9 @@
 		<main
 			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-all duration-300"
 			style="margin-left: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'}; 
-				   padding-top: 119px;
+				   padding-top: {showSidebar ? '119px' : '0'};
 				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'};"
+			data-auth-page={page.url.pathname.startsWith('/auth') ? 'true' : undefined}
 		>
 			{@render children()}
 			<ToastContainer position="top-right" />
@@ -121,6 +122,11 @@
 		main {
 			margin-left: 0 !important;
 			padding-top: 119px !important;
+		}
+
+		/* Auth pages should have no padding even on mobile */
+		main[data-auth-page] {
+			padding-top: 0 !important;
 		}
 	}
 </style>

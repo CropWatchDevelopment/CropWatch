@@ -91,7 +91,6 @@
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
-			"@sentry/cli",
 			"esbuild",
 			"svelte-preprocess"
 		]
