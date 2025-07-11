@@ -7,6 +7,10 @@
 	import DiscordAuthLogin from './DiscordAuthLogin.svelte';
 	import { _ } from 'svelte-i18n';
 
+	let { data } = $props();
+
+	let { supabase } = $derived(data);
+
 	// Form state
 	let email = $state('');
 	let password = $state('');
@@ -76,6 +80,24 @@
 			loading = false;
 			submitting = false;
 			toastError($_('loginErrorMessage'));
+		}
+	}
+
+	async function googleLogin() {
+		try {
+			const { data, error } = await supabase.auth.signInWithOAuth({
+				provider: 'google',
+				options: {
+					queryParams: {
+						access_type: 'offline',
+						prompt: 'consent'
+					}
+				}
+			});
+			if (error) throw error;
+		} catch (err) {
+			toastError($_('Google login failed'));
+			console.error('Google login error:', err);
 		}
 	}
 </script>
@@ -156,7 +178,7 @@
 					</button>
 				</div>
 				<div class="flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
-					<GoogleAuthLogin />
+					<GoogleAuthLogin {data} />
 					<DiscordAuthLogin />
 				</div>
 			</form>
