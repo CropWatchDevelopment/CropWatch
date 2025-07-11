@@ -1,15 +1,16 @@
 <script lang="ts">
-	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import TextInput from '$lib/components/UI/form/TextInput.svelte';
-	import Select from '$lib/components/UI/form/Select.svelte';
-	import NumberLine from '$lib/components/Reports/NumberLine.svelte';
-	import { _ } from 'svelte-i18n';
-	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { untrack } from 'svelte';
-	import type { ActionResult } from '@sveltejs/kit';
+	import NumberLine from '$lib/components/Reports/NumberLine.svelte';
+	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import Select from '$lib/components/UI/form/Select.svelte';
+	import TextInput from '$lib/components/UI/form/TextInput.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
+	import ExportButton from '$lib/components/devices/ExportButton.svelte';
+	import type { ReportAlertPoint } from '$lib/models/Report.js';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { untrack } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	let { data, form } = $props();
 
@@ -35,7 +36,7 @@
 			min?: number;
 			max?: number;
 			data_point_key?: string;
-			color: string;
+			hex_color: string;
 		}>
 	>([]);
 
@@ -85,7 +86,7 @@
 						min: point.min || undefined,
 						max: point.max || undefined,
 						value: point.value || undefined,
-						color: point.hex_color || '#3B82F6'
+						hex_color: point.hex_color || '#3B82F6'
 					}))
 				);
 			});
@@ -139,7 +140,7 @@
 			value: 0,
 			min: undefined,
 			max: undefined,
-			color: colors[alertPoints.length % colors.length]
+			hex_color: colors[alertPoints.length % colors.length]
 		};
 		alertPoints.push(newPoint);
 	}
@@ -372,7 +373,7 @@
 						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
 							<div class="mb-3 flex items-start justify-between">
 								<div class="flex items-center space-x-2">
-									<input type="color" class="h-6 w-5 rounded-xl" bind:value={point.color} />
+									<input type="color" class="h-6 w-5 rounded-xl" bind:value={point.hex_color} />
 									<!-- <div  style="background-color: {point.color}"></div> -->
 									<span class="font-medium">Alert Point {i + 1}</span>
 									<Select
@@ -382,7 +383,7 @@
 									>
 										<option value="" disabled>Select Data Key</option>
 										{#each dataKeys as key}
-											<option value={key}>{key}</option>
+											<option value={key}>{$_(key)}</option>
 										{/each}
 									</Select>
 								</div>
@@ -642,12 +643,23 @@
 				variant="secondary"
 			>
 				<MaterialIcon name="cancel" />
-				Cancel
+				{$_('cancel')}
 			</Button>
-			<Button type="button" variant="secondary">
-				<MaterialIcon name="Lab_Research" />
-				Generate Sample Report
-			</Button>
+			<ExportButton
+				{devEui}
+				buttonLabel={$_('generate_sample_report')}
+				disabled={!alertPoints.some(
+					(p) =>
+						// Ensure at least one alert point has a valid data key and operator
+						// @todo Filter out non-numeric data keys
+						p.data_point_key !== 'id' && !!p.operator && p.value !== undefined
+				)}
+				showDatePicker={false}
+				types={['pdf']}
+				alertPoints={alertPoints
+					.filter((p) => !!p.data_point_key)
+					.map((point) => ({ ...point, id: 0, created_at: '', user_id: '' }) as ReportAlertPoint)}
+			/>
 			<Button
 				type="submit"
 				variant="primary"

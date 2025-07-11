@@ -188,7 +188,7 @@ export const actions: Actions = {
 					min: point.min,
 					max: point.max,
 					value: point.value,
-					hex_color: point.color,
+					hex_color: point.hex_color,
 					data_point_key: point.data_point_key
 				});
 			}

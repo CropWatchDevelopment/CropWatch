@@ -27,31 +27,41 @@ export interface IDeviceDataService {
 
 	/**
 	 * Get device data for report with optional filtering
-	 * @param devEui The device EUI
-	 * @param startDate The start date
-	 * @param endDate The end date
-	 * @param timezone The timezone
-	 * @param intervalMinutes The interval in minutes
-	 * @param columns Optional columns to filter
-	 * @param ops Optional operators for filtering
-	 * @param mins Optional minimum values
-	 * @param maxs Optional maximum values
+	 * @param params.devEui The device EUI
+	 * @param params.startDate The start date
+	 * @param params.endDate The end date
+	 * @param params.timezone The timezone
+	 * @param params.intervalMinutes The interval in minutes
+	 * @param params.columns Optional columns to filter
+	 * @param params.ops Optional operators for filtering
+	 * @param params.mins Optional minimum values
+	 * @param params.maxs Optional maximum values
 	 */
-	getDeviceDataForReport(
-		devEui: string,
-		startDate: Date,
-		endDate: Date,
-		timezone: string,
-		intervalMinutes: number,
-		columns?: string[],
-		ops?: string[],
-		mins?: number[],
-		maxs?: (number | null)[]
-	): Promise<DeviceDataRecord[]>;
+	getDeviceDataForReport({
+		devEui,
+		startDate,
+		endDate,
+		timezone,
+		intervalMinutes,
+		columns,
+		ops,
+		mins,
+		maxs
+	}: {
+		devEui: string;
+		startDate: Date;
+		endDate: Date;
+		timezone: string;
+		intervalMinutes: number;
+		columns?: string[];
+		ops?: string[];
+		mins?: number[];
+		maxs?: (number | null)[];
+	}): Promise<DeviceDataRecord[]>;
 
 	/**
 	 * Get alert points for a device from its reports
 	 * @param devEui The device EUI
 	 */
-	getAlertPointsForDevice(devEui: string): Promise<any[]>;
+	getAlertPointsForDevice(devEui: string): Promise<DeviceDataRecord[]>;
 }

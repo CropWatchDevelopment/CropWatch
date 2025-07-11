@@ -4,18 +4,19 @@
 	import DateRangeSelector from '$lib/components/dashboard/DateRangeSelector.svelte';
 	import DeviceMap from '$lib/components/dashboard/DeviceMap.svelte';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
+	import ExportButton from '$lib/components/devices/ExportButton.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import StatsCard from '$lib/components/StatsCard/StatsCard.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
-	import CsvDownloadButton from '$lib/csv/CsvDownloadButton.svelte';
 	import type { DeviceWithType } from '$lib/models/Device';
 	import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 	import {
 		formatDateForInput,
 		formatDateForDisplay as utilFormatDateForDisplay
 	} from '$lib/utilities/helpers';
-	import { formatNumber } from '$lib/utilities/stats';
+	import { formatNumber, getNumericKeys } from '$lib/utilities/stats';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
 	import { DateTime } from 'luxon';
 	import { onMount, untrack } from 'svelte';
@@ -24,7 +25,6 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
-	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -59,7 +59,6 @@
 		loading, // Bound to deviceDetail.loading
 		error, // Bound to deviceDetail.error
 		processHistoricalData,
-		getNumericKeys,
 		fetchDataForDateRange, // This is deviceDetail.fetchDataForDateRange
 		renderVisualization, // This is deviceDetail.renderVisualization
 		initializeDateRange // This is deviceDetail.initializeDateRange
@@ -299,10 +298,9 @@
 
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
-		<CsvDownloadButton {devEui} />
-		<Button class="!hidden" variant="secondary" href="{basePath}/settings">
-			{$_('report')}
-		</Button>
+		{#if numericKeys.length}
+			<ExportButton {devEui} {startDateInputString} {endDateInputString} dataKeys={numericKeys} />
+		{/if}
 		<Button variant="secondary" href="{basePath}/settings">
 			<MaterialIcon name="Settings" />
 			{$_('settings')}

@@ -1,4 +1,5 @@
 import { getDarkMode } from '$lib/components/theme/theme.svelte';
+import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 
 /**
  * Color selection for various statistics keys.
@@ -114,11 +115,13 @@ const customNumberFormatOptions: Record<string, Intl.NumberFormatOptions> = {
 export const formatNumber = ({
 	locale = 'en',
 	key,
-	value
+	value,
+	adjustFractionDigits = false
 }: {
 	locale?: string;
 	key: string;
 	value: number | string | undefined;
+	adjustFractionDigits?: boolean;
 }): string => {
 	if (value === undefined) {
 		return 'N/A';
@@ -126,5 +129,34 @@ export const formatNumber = ({
 
 	const options = customNumberFormatOptions[key] ?? defaultNumberFormatOptions;
 
+	if (adjustFractionDigits) {
+		options.minimumFractionDigits = options.maximumFractionDigits;
+	}
+
 	return Intl.NumberFormat(locale, options).format(Number(value));
 };
+
+/**
+ * Gets all numeric keys from the historical data, excluding specified ignored keys.
+ * @param historicalData Historical data array.
+ * @param ignoredDataKeys Array of keys to ignore.
+ * @returns Array of numeric keys found in the data.
+ */
+export function getNumericKeys(
+	historicalData: DeviceDataRecord[],
+	ignoredDataKeys: string[] = ['id', 'dev_eui', 'created_at']
+): string[] {
+	if (!historicalData || !historicalData.length) {
+		return [];
+	}
+
+	const sample = historicalData.find((row) => row && typeof row === 'object');
+
+	if (!sample) {
+		return [];
+	}
+
+	return Object.keys(sample).filter(
+		(key) => !ignoredDataKeys.includes(key) && typeof sample[key] === 'number'
+	);
+}

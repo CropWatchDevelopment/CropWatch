@@ -321,7 +321,7 @@
 								class="flex flex-row items-center justify-end gap-2 py-2 whitespace-nowrap md:table-cell
 							md:px-2 lg:px-4 lg:py-4"
 							>
-								<Button variant="primary" onclick={() => handleEditRule(rule)}>{$_('Edit')}</Button>
+								<Button variant="primary" onclick={() => handleEditRule(rule)}>{$_('edit')}</Button>
 								<Button variant="secondary" onclick={() => handleDeleteConfirm(rule.id)}
 									>{$_('Delete')}</Button
 								>

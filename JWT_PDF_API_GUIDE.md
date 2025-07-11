@@ -2,7 +2,7 @@
 
 ## 📋 **New Endpoint Created**
 
-### **Endpoint:** `/api/devices/{devEui}/data-jwt-pdf`
+### **Endpoint:** `/api/devices/{devEui}/pdf`
 - **Method:** `GET`
 - **Authentication:** JWT Bearer token required
 - **Purpose:** Generate PDF reports for device data (server-to-server)
@@ -42,7 +42,7 @@ curl -X POST "http://localhost:5173/api/auth/login" \
 
 ### **Postman/cURL Example:**
 ```bash
-curl -X GET "http://localhost:5173/api/devices/2CF7F1C0630000AC/data-jwt-pdf?start=2025-05-01&end=2025-06-06" \
+curl -X GET "http://localhost:5173/api/devices/2CF7F1C0630000AC/pdf?start=2025-05-01&end=2025-06-06" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
   --output "device-report.pdf"
 ```
@@ -104,7 +104,7 @@ curl -X GET "http://localhost:5173/api/devices/2CF7F1C0630000AC/data-jwt-pdf?sta
 
 ### **HTTP Request Node Configuration:**
 - **Method:** `GET`
-- **URL:** `http://your-domain.com/api/devices/{devEui}/data-jwt-pdf?start=2025-05-01&end=2025-06-06`
+- **URL:** `http://your-domain.com/api/devices/{devEui}/pdf?start=2025-05-01&end=2025-06-06`
 - **Headers:** 
   ```json
   {
