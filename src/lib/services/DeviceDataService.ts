@@ -1,9 +1,10 @@
+import type { ReportAlertPoint } from '$lib/models/Report';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { DateTime } from 'luxon';
+import { ErrorHandlingService } from '../errors/ErrorHandlingService';
 import type { IDeviceDataService } from '../interfaces/IDeviceDataService';
 import type { DeviceType } from '../models/Device';
 import type { DeviceDataRecord } from '../models/DeviceDataRecord';
-import { ErrorHandlingService } from '../errors/ErrorHandlingService';
-import type { SupabaseClient } from '@supabase/supabase-js';
 
 export class DeviceDataService implements IDeviceDataService {
 	private readonly errorHandler: ErrorHandlingService;
@@ -251,17 +252,27 @@ export class DeviceDataService implements IDeviceDataService {
 		return cw_device;
 	}
 
-	public async getDeviceDataForReport(
-		devEui: string,
-		startDate: Date,
-		endDate: Date,
-		timezone: string,
-		intervalMinutes: number,
-		columns?: string[],
-		ops?: string[],
-		mins?: number[],
-		maxs?: (number | null)[]
-	): Promise<DeviceDataRecord[]> {
+	public async getDeviceDataForReport({
+		devEui,
+		startDate,
+		endDate,
+		timezone,
+		intervalMinutes,
+		columns,
+		ops,
+		mins,
+		maxs
+	}: {
+		devEui: string;
+		startDate: Date;
+		endDate: Date;
+		timezone: string;
+		intervalMinutes: number;
+		columns?: string[];
+		ops?: string[];
+		mins?: number[];
+		maxs?: (number | null)[];
+	}): Promise<DeviceDataRecord[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
@@ -367,7 +378,7 @@ export class DeviceDataService implements IDeviceDataService {
 	 * Get alert points for a device from its reports
 	 * @param devEui The device EUI
 	 */
-	public async getAlertPointsForDevice(devEui: string): Promise<any[]> {
+	public async getAlertPointsForDevice(devEui: string): Promise<ReportAlertPoint[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
