@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	if (browser) {
-		document.location.href = '/auth/login';
-	}
+	import { page } from '$app/stores';
+	import { _ } from 'svelte-i18n';
 </script>
+
+<a href="/auth/login" class="text-blue-500 hover:underline">
+	{$_('Login')}
+</a>
