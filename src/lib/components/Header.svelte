@@ -85,7 +85,7 @@
 	<nav class="relative z-10 flex w-full p-4">
 		<!-- Logo -->
 		<a
-			href="/"
+			href="/app/dashboard"
 			class="mr-5 flex items-center gap-3 no-underline transition-transform hover:scale-105 hover:no-underline focus:no-underline"
 			style="text-decoration: none !important;"
 		>
