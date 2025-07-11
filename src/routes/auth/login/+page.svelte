@@ -22,7 +22,22 @@
 	// Check if already logged in
 	let isLoggedIn = $state(false);
 
+	// Random background image selection
+	const backgroundImages = [
+		'/login-background-images/greenhouse.jpg',
+		'/login-background-images/field1.jpg',
+		'/login-background-images/field2.jpg',
+		'/login-background-images/beach.jpg'
+	];
+
+	let selectedBackground = $state('');
+
+	// Select random background on component mount
 	onMount(async () => {
+		// Select random background image
+		const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+		selectedBackground = backgroundImages[randomIndex];
+
 		// Check if user has just registered
 		if ($page.url.searchParams.get('registered') === 'true') {
 			success('Registration successful! You can now log in.');
@@ -82,24 +97,6 @@
 			toastError($_('loginErrorMessage'));
 		}
 	}
-
-	async function googleLogin() {
-		try {
-			const { data, error } = await supabase.auth.signInWithOAuth({
-				provider: 'google',
-				options: {
-					queryParams: {
-						access_type: 'offline',
-						prompt: 'consent'
-					}
-				}
-			});
-			if (error) throw error;
-		} catch (err) {
-			toastError($_('Google login failed'));
-			console.error('Google login error:', err);
-		}
-	}
 </script>
 
 <svelte:head>
@@ -107,14 +104,20 @@
 </svelte:head>
 
 <div
-	class="bg-background-light dark:bg-background-dark flex min-h-screen items-center justify-center p-5 transition-colors duration-300"
+	class="bg-background-light dark:bg-background-dark relative flex h-screen items-center justify-center overflow-hidden p-5 transition-colors duration-300"
+	style="background-image: url('{selectedBackground}'); background-size: cover; background-position: center; background-repeat: no-repeat;"
 >
-	<div
-		class="bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark w-full max-w-md rounded-lg p-6 shadow-md"
-	>
-		<h1 class="mb-6 text-center text-2xl font-bold">{$_('Login')}</h1>
+	<!-- Background overlay for better readability -->
+	<div class="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
 
-		<!-- {#if error}
+	<!-- Content container with higher z-index -->
+	<div class="relative z-10 w-full max-w-md">
+		<div
+			class="bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark rounded-lg border border-white/20 p-6 shadow-xl backdrop-blur-lg dark:border-gray-700/50"
+		>
+			<h1 class="mb-6 text-center text-2xl font-bold">{$_('Login')}</h1>
+
+			<!-- {#if error}
 			<div
 				class="mb-4 rounded-md bg-red-100 p-3 text-center text-red-700 dark:bg-red-900/30 dark:text-red-400"
 			>
@@ -122,97 +125,98 @@
 			</div>
 		{/if} -->
 
-		{#if successMessage}
-			<div
-				class="mb-4 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
-			>
-				<p>{successMessage}</p>
-				<button
-					class="bg-primary hover:bg-primary-hover mt-4 w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200"
-					onclick={() => goto('/app/dashboard')}
+			{#if successMessage}
+				<div
+					class="mb-4 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
 				>
-					{$_('Go to Dashboard')}
-				</button>
-			</div>
-		{:else if !isLoggedIn}
-			<form onsubmit={handleSubmit} class="space-y-4">
-				<div>
-					<label for="email" class="mb-1 block text-sm font-medium">{$_('Email')}</label>
-					<input
-						type="email"
-						id="email"
-						bind:value={email}
-						required
-						autocomplete="email"
-						placeholder="✉️ {$_('Enter your email')}"
-						disabled={loading}
-						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
-                               bg-white px-3 py-2 focus:border-transparent
-                               focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
-					/>
-				</div>
-
-				<div>
-					<label for="password" class="mb-1 block text-sm font-medium">{$_('Password')}</label>
-					<input
-						type="password"
-						id="password"
-						bind:value={password}
-						required
-						placeholder="🔒 {$_('Enter your password')}"
-						disabled={loading}
-						autocomplete="current-password"
-						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
-                               bg-white px-3 py-2 focus:border-transparent
-                               focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
-					/>
-				</div>
-
-				<div>
+					<p>{successMessage}</p>
 					<button
-						type="submit"
-						class="bg-primary hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
-						disabled={submitting}
+						class="bg-primary hover:bg-primary-hover mt-4 w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200"
+						onclick={() => goto('/app/dashboard')}
 					>
-						{submitting ? $_('Logging in...') : `🔑 ${$_('Login')}`}
+						{$_('Go to Dashboard')}
 					</button>
 				</div>
-			</form>
-			<div class="mt-2 flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
-				<GoogleAuthLogin {data} />
-				<DiscordAuthLogin {data} />
-			</div>
+			{:else if !isLoggedIn}
+				<form onsubmit={handleSubmit} class="space-y-4">
+					<div>
+						<label for="email" class="mb-1 block text-sm font-medium">{$_('Email')}</label>
+						<input
+							type="email"
+							id="email"
+							bind:value={email}
+							required
+							autocomplete="email"
+							placeholder="✉️ {$_('Enter your email')}"
+							disabled={loading}
+							class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
+                               bg-white px-3 py-2 focus:border-transparent
+                               focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+						/>
+					</div>
 
-			<div
-				class="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
-			>
-				<button
-					type="submit"
-					class="hover:bg-slate-600-hover w-full rounded bg-slate-500 px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
-					disabled={loading}
-					onclick={() => goto('/api/')}
-				>
-					🌐 {$_('Go to API')}
-				</button>
+					<div>
+						<label for="password" class="mb-1 block text-sm font-medium">{$_('Password')}</label>
+						<input
+							type="password"
+							id="password"
+							bind:value={password}
+							required
+							placeholder="🔒 {$_('Enter your password')}"
+							disabled={loading}
+							autocomplete="current-password"
+							class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
+                               bg-white px-3 py-2 focus:border-transparent
+                               focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+						/>
+					</div>
 
-				<button
-					type="submit"
-					class="bg-info hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
-					disabled={loading}
-					onclick={() => goto('/auth/register')}
-				>
-					🚀 {$_('Create an account')}
-				</button>
+					<div>
+						<button
+							type="submit"
+							class="bg-primary hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+							disabled={submitting}
+						>
+							{submitting ? $_('Logging in...') : `🔑 ${$_('Login')}`}
+						</button>
+					</div>
+				</form>
+				<div class="mt-2 flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
+					<GoogleAuthLogin {data} />
+					<DiscordAuthLogin {data} />
+				</div>
 
-				<button
-					type="submit"
-					class="bg-warning hover:bg-primary-hover w-full rounded border px-4 py-2 font-medium text-black shadow-sm transition-colors duration-200 disabled:opacity-50"
-					disabled={loading}
-					onclick={() => goto('/auth/forgot-password')}
+				<div
+					class="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
 				>
-					❓ {$_('Forgot Password')}
-				</button>
-			</div>
-		{/if}
+					<button
+						type="submit"
+						class="hover:bg-slate-600-hover w-full rounded bg-slate-500 px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+						disabled={loading}
+						onclick={() => goto('/api/')}
+					>
+						🌐 {$_('Go to API')}
+					</button>
+
+					<button
+						type="submit"
+						class="bg-info hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+						disabled={loading}
+						onclick={() => goto('/auth/register')}
+					>
+						🚀 {$_('Create an account')}
+					</button>
+
+					<button
+						type="submit"
+						class="bg-warning hover:bg-primary-hover w-full rounded border px-4 py-2 font-medium text-black shadow-sm transition-colors duration-200 disabled:opacity-50"
+						disabled={loading}
+						onclick={() => goto('/auth/forgot-password')}
+					>
+						❓ {$_('Forgot Password')}
+					</button>
+				</div>
+			{/if}
+		</div>
 	</div>
 </div>
