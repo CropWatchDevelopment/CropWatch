@@ -2,14 +2,6 @@ import { error, redirect, type Handle } from '@sveltejs/kit';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
-import * as Sentry from '@sentry/sveltekit';
-
-Sentry.init({
-	dsn: 'https://ba36cb18f97a466e35b23ed5ab9c916e@o4509301976530944.ingest.us.sentry.io/4509513210789888',
-	// Adds request headers and IP for users, for more info visit:
-	// https://docs.sentry.io/platforms/javascript/guides/sveltekit/configuration/options/#sendDefaultPii
-	sendDefaultPii: true
-});
 
 const PUBLIC_ROUTES = [
 	'/offline.html',
@@ -20,11 +12,6 @@ const PUBLIC_ROUTES = [
 	'/static/icons',
 	'/static/screenshots'
 ];
-
-const myErrorHandler = ({ error, event }) => {
-	console.error('An error occurred on the server side:', error, event);
-};
-export const handleError = Sentry.handleErrorWithSentry(myErrorHandler);
 
 // Additional check for exact /api/ route
 const isExactApiRoute = (pathname: string) => pathname === '/api' || pathname === '/api/';
