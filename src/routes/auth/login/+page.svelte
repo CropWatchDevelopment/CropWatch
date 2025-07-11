@@ -177,11 +177,11 @@
 						{submitting ? $_('Logging in...') : `🔑 ${$_('Login')}`}
 					</button>
 				</div>
-				<div class="flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
-					<GoogleAuthLogin {data} />
-					<DiscordAuthLogin />
-				</div>
 			</form>
+			<div class="mt-2 flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
+				<GoogleAuthLogin {data} />
+				<DiscordAuthLogin {data} />
+			</div>
 
 			<div
 				class="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
@@ -206,7 +206,7 @@
 
 				<button
 					type="submit"
-					class="bg-default hover:bg-primary-hover w-full rounded border px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+					class="bg-warning hover:bg-primary-hover w-full rounded border px-4 py-2 font-medium text-black shadow-sm transition-colors duration-200 disabled:opacity-50"
 					disabled={loading}
 					onclick={() => goto('/auth/forgot-password')}
 				>
