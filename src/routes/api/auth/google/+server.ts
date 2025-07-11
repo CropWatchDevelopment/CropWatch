@@ -2,6 +2,7 @@ import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { AuthService } from '$lib/services/AuthService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
+import { PUBLIC_DOMAIN } from '$env/static/public';
 
 export const POST: RequestHandler = async ({ request, locals: { supabase } }) => {
 	try {
@@ -14,9 +15,11 @@ export const POST: RequestHandler = async ({ request, locals: { supabase } }) =>
 		const { data: authData, error } = await supabase.auth.signInWithOAuth({
 			provider: 'google',
 			options: {
+				redirectTo: `${PUBLIC_DOMAIN}/auth/callback`,
 				queryParams: {
 					access_type: 'offline',
-					prompt: 'consent'
+					prompt: 'consent',
+					next: '/app/dashboard' // Redirect after successful login
 				}
 			}
 		});
