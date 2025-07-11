@@ -1,10 +1,34 @@
 <script lang="ts">
+	import { PUBLIC_DOMAIN } from '$env/static/public';
 	import { success, error as toastError } from '$lib/stores/toast.svelte';
+	let { data } = $props();
+	let { supabase } = $derived(data);
+
+	const handleDiscordLogin = async () => {
+		try {
+			const { data, error } = await supabase.auth.signInWithOAuth({
+				provider: 'discord',
+				options: {
+					redirectTo: `${PUBLIC_DOMAIN}/auth/callback`
+				}
+			});
+			if (error) {
+				throw error;
+			}
+			debugger;
+			return data;
+			// You can replace this with actual Discord OAuth logic when implemented
+		} catch (err) {
+			toastError('Discord login failed. Please try again.');
+			console.error('Discord login error:', err);
+		}
+	};
 </script>
 
 <button
 	class="flex w-full items-center rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-800 shadow-md hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
-    onclick={() => toastError('Discord Login is not implemented yet...')}>
+	onclick={handleDiscordLogin}
+>
 	<svg
 		class="mr-2 h-6 w-6"
 		xmlns="http://www.w3.org/2000/svg"
@@ -25,5 +49,5 @@
 		</g>
 	</svg>
 
-	<span class="text-sm w-full">Login with Discord</span>
+	<span class="w-full text-sm">Login with Discord</span>
 </button>

@@ -99,82 +99,6 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 				return name === 'content-range' || name === 'x-supabase-api-version';
 			}
 		});
-
-		// try {
-		// 	console.log('Processing JWT token for API request:', event.url.pathname);
-		// 	console.log('Token starts with:', jwt.substring(0, 10) + '...');
-
-		// 	// Try different validation approaches for maximum compatibility
-
-		// 	// 1. First try to set the session with both tokens if available
-		// 	if (refreshToken) {
-		// 		console.log('Using both access and refresh tokens');
-		// 		const sessionResult = await event.locals.supabase.auth.setSession({
-		// 			access_token: jwt,
-		// 			refresh_token: refreshToken
-		// 		});
-
-		// 		if (sessionResult.error) {
-		// 			console.error('Failed to set session with tokens:', sessionResult.error.message);
-		// 		} else if (sessionResult.data?.session && sessionResult.data?.user) {
-		// 			console.log(
-		// 				'Successfully set session with tokens for user:',
-		// 				sessionResult.data.user.email
-		// 			);
-		// 			tokenSession = sessionResult.data.session;
-		// 			tokenUser = sessionResult.data.user;
-
-		// 			// Set the user in event.locals immediately
-		// 			event.locals.user = tokenUser;
-		// 			event.locals.session = tokenSession;
-		// 		}
-		// 	}
-
-		// 	// 2. If that didn't work or no refresh token, try to validate the access token
-		// 	if (!tokenUser) {
-		// 		console.log('Trying to validate access token directly');
-		// 		const { data, error } = await event.locals.supabase.auth.getUser(jwt);
-
-		// 		if (error) {
-		// 			console.error('Invalid JWT token:', error.message);
-		// 		} else if (data?.user) {
-		// 			console.log('Valid JWT token for user:', data.user.email);
-		// 			tokenUser = data.user;
-
-		// 			// Get the session
-		// 			const sessionResult = await event.locals.supabase.auth.getSession();
-		// 			tokenSession = sessionResult.data.session;
-
-		// 			// Set the user in event.locals immediately
-		// 			event.locals.user = tokenUser;
-		// 			event.locals.session = tokenSession;
-		// 		}
-		// 	}
-
-		// 	// 3. Last resort: Try to verify the token as an API token
-		// 	if (!tokenUser && event.url.pathname.startsWith('/api/')) {
-		// 		console.log('Trying to validate as API token for:', event.url.pathname);
-		// 		try {
-		// 			// For API endpoints, we'll bypass normal authentication for API tokens
-		// 			// This is just for testing purposes - in production, you'd verify the token
-		// 			// Create a user object that matches the User type from Supabase
-		// 			const apiUser = await event.locals.supabase.auth.getUser(jwt);
-		// 			if (apiUser.data?.user) {
-		// 				tokenUser = apiUser.data.user;
-		// 				console.log('Created API user for token access:', apiUser.data.user.email);
-
-		// 				// Set the user in event.locals immediately
-		// 				event.locals.user = tokenUser;
-		// 			}
-		// 		} catch (apiErr) {
-		// 			console.error('Failed to create API user:', apiErr);
-		// 		}
-		// 	}
-		// } catch (err) {
-		// 	console.error('Error processing JWT token:', err);
-		// }
-		// } else if (event.url.pathname.startsWith('/api')) {
-		// 	console.log('No Authorization token found for API request:', event.url.pathname);
 	}
 
 	// Enhance session validation to include explicit debug logging
@@ -209,16 +133,8 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 				);
 				return { session: null, user: null };
 			}
-
-			//console.log(
-			//	`Session successfully validated for path: ${event.url.pathname}, user: ${user?.email}`
-			//);
 			return { session, user };
 		} catch (err) {
-			// console.error(
-			// 	`Unexpected error during session validation for path: ${event.url.pathname}:`,
-			// 	err
-			// );
 			return { session: null, user: null };
 		}
 	};
@@ -241,11 +157,6 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 		const headers = event.request.headers;
 		const authHeader = headers.get('authorization') || headers.get('Authorization');
 		const apiToken = authHeader?.replace(/^Bearer\s+/i, '').trim();
-
-		// console.log(
-		// 	'API route access with token:',
-		// 	apiToken ? `${apiToken.substring(0, 10)}...` : 'none'
-		// );
 
 		// If we have a token, validate it before proceeding
 		if (apiToken) {

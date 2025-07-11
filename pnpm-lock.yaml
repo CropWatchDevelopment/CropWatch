@@ -132,6 +132,9 @@ importers:
       '@types/luxon':
         specifier: ^3.6.2
         version: 3.6.2
+      '@types/pdfkit':
+        specifier: ^0.17.0
+        version: 0.17.0
       '@types/swagger-ui':
         specifier: ^5.21.1
         version: 5.21.1
@@ -1920,6 +1923,9 @@ packages:
 
   '@types/node@24.0.3':
     resolution: {integrity: sha512-R4I/kzCYAdRLzfiCabn9hxWfbuHS573x+r0dJMkkzThEa7pbrcDWK+9zu3e7aBOouf+rQAciqPFMnxwr0aWgKg==}
+
+  '@types/pdfkit@0.17.0':
+    resolution: {integrity: sha512-krED/Otct47bF6yVQNWD34k2+bdyMt1isBvRoC/PubRO37uCNUg2FOtbjn+OPWEXb947QIhQ09q8SOWYXX8B1A==}
 
   '@types/phoenix@1.6.6':
     resolution: {integrity: sha512-PIzZZlEppgrpoT2QgbnDU+MMzuR6BbCjllj0bM70lWoejMeNJAxCchxnv7J3XFkI8MpygtRpzXrIlmWUBclP5A==}
@@ -7346,6 +7352,10 @@ snapshots:
   '@types/node@24.0.3':
     dependencies:
       undici-types: 7.8.0
+
+  '@types/pdfkit@0.17.0':
+    dependencies:
+      '@types/node': 24.0.3
 
   '@types/phoenix@1.6.6': {}
 

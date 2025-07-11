@@ -1,15 +1,16 @@
 <script lang="ts">
-	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
-	import TextInput from '$lib/components/UI/form/TextInput.svelte';
-	import { _ } from 'svelte-i18n';
-	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
 	import { goto, invalidateAll } from '$app/navigation';
-	import type { Report } from '$lib/models/Report';
-	import type { ActionResult } from '@sveltejs/kit';
-	import { success } from '$lib/stores/toast.svelte.js';
+	import { page } from '$app/stores';
+	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import TextInput from '$lib/components/UI/form/TextInput.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
+	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
+	import ExportButton from '$lib/components/devices/ExportButton.svelte';
+	import type { Report } from '$lib/models/Report';
+	import { success } from '$lib/stores/toast.svelte.js';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { _ } from 'svelte-i18n';
 
 	// Get data from the page server load function
 	let { data, form } = $props();
@@ -104,7 +105,7 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"
 					></path>
 				</svg>
-				{$_('Add Report')}
+				{$_('add_report')}
 			</Button>
 		</div>
 	</header>
@@ -170,30 +171,26 @@
 								</div>
 
 								<div class="ml-4 flex items-center space-x-2">
-									<Button type="button" onclick={() => {}} variant="primary" size="sm">
-										<MaterialIcon name="edit" />
-										Generate Report
-									</Button>
+									<ExportButton
+										{devEui}
+										buttonLabel={$_('generate_report')}
+										types={['pdf']}
+										alertPoints={report.alert_points}
+									/>
 									<Button
-										type="button"
 										onclick={() =>
 											goto(
 												`/app/dashboard/location/${$page.params.location_id}/devices/${devEui}/settings/reports/create?reportId=${report.report_id}`
 											)}
-										variant="info"
+										variant="secondary"
 										size="sm"
 									>
 										<MaterialIcon name="edit" />
-										Edit
+										{$_('edit')}
 									</Button>
-									<Button
-										type="button"
-										onclick={() => openDeleteModal(report)}
-										variant="danger"
-										size="sm"
-									>
+									<Button onclick={() => openDeleteModal(report)} variant="danger">
 										<MaterialIcon name="delete_forever" />
-										Remove
+										{$_('remove')}
 									</Button>
 								</div>
 							</div>

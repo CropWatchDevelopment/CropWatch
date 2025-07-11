@@ -1,8 +1,44 @@
 <script lang="ts">
+	import { PUBLIC_DOMAIN } from '$env/static/public';
 	import { success, error as toastError } from '$lib/stores/toast.svelte';
+
+	let { data } = $props();
+	let { supabase } = $derived(data);
+
+	const handleGoogleLogin = async () => {
+		try {
+			debugger;
+			let response = await supabase.auth.signInWithOAuth({
+				provider: 'google',
+				options: {
+					redirectTo: `${PUBLIC_DOMAIN}/auth/callback`
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to initiate Google login');
+			}
+			if (response.status === 200) {
+				// If the response is a redirect, handle it
+				debugger;
+				const redirectUrl = await response.json();
+				if (redirectUrl) {
+					window.location.href = redirectUrl; // Redirect to Google's OAuth page
+				} else {
+					throw new Error('No redirect URL provided in response');
+				}
+			}
+
+			const data = await response.json();
+			window.location.href = data.redirectUrl; // Redirect to Google's OAuth page
+		} catch (err) {
+			toastError('Google login failed. Please try again.');
+			console.error('Google login error:', err);
+		}
+	};
 </script>
 
-<button class="gsi-material-button w-full" onclick={() => toastError('Google Login is not implemented yet...')}>
+<button class="gsi-material-button w-full" onclick={handleGoogleLogin}>
 	<div class="gsi-material-button-state"></div>
 	<div class="gsi-material-button-content-wrapper">
 		<div class="gsi-material-button-icon">

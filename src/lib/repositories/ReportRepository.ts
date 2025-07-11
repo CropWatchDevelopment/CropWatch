@@ -1,13 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { BaseRepository } from './BaseRepository';
 import type { ErrorHandlingService } from '../errors/ErrorHandlingService';
-import type {
-	Report,
-	ReportInsert,
-	ReportUpdate,
-	ReportWithDetails,
-	ReportWithRecipients
-} from '../models/Report';
+import type { Report, ReportWithDetails, ReportWithRecipients } from '../models/Report';
+import { BaseRepository } from './BaseRepository';
 
 /**
  * Repository for report data operations
@@ -99,7 +93,21 @@ export class ReportRepository extends BaseRepository<Report, string> {
 				throw error;
 			}
 
-			return data || [];
+			if (!data || !data.length) {
+				return [];
+			}
+
+			// Transform data to match ReportWithDetails structure
+			return data.map((item) => {
+				const {
+					report_alert_points: alert_points,
+					report_recipients: recipients,
+					report_user_schedule: schedules,
+					...rest
+				} = item;
+
+				return { ...rest, alert_points, recipients, schedules };
+			});
 		} catch (error) {
 			this.errorHandler.handleDatabaseError(
 				error as any,

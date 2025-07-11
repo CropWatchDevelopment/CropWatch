@@ -1,10 +1,7 @@
 import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-
-import type { IAuthService } from '$lib/interfaces/IAuthService';
-import type { ISessionService } from '$lib/interfaces/ISessionService';
 import { AuthService } from '$lib/services/AuthService';
-import type { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
+import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 
 export const POST: RequestHandler = async ({ locals, cookies }) => {
 	try {
