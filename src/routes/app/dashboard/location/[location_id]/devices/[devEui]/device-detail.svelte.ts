@@ -1,8 +1,8 @@
 import { browser } from '$app/environment';
 import type { DeviceWithType } from '$lib/models/Device';
-import type { DeviceStats } from '$lib/models/DeviceDataRecord';
+import type { DeviceDataRecord, DeviceStats } from '$lib/models/DeviceDataRecord';
 import { calculateAverage, formatDateForDisplay, hasValue } from '$lib/utilities/helpers';
-import { getTextColorByKey } from '$lib/utilities/stats';
+import { getNumericKeys, getTextColorByKey } from '$lib/utilities/stats';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
@@ -11,7 +11,7 @@ export interface DeviceDetailProps {
 	device: DeviceWithType;
 	dataType: string;
 	latestData: any;
-	historicalData: any[];
+	historicalData: DeviceDataRecord[];
 }
 
 export function setupDeviceDetail() {
@@ -36,31 +36,6 @@ export function setupDeviceDetail() {
 	// Chart instances
 	const mainChartInstances: Record<string, any> = {};
 	const brushChartInstances: Record<string, any> = {};
-
-	/**
-	 * Gets all numeric keys from the historical data, excluding specified ignored keys.
-	 * @param historicalData Historical data array.
-	 * @param ignoredDataKeys Array of keys to ignore.
-	 * @returns Array of numeric keys found in the data.
-	 */
-	function getNumericKeys(
-		historicalData: any[],
-		ignoredDataKeys: string[] = ['id', 'dev_eui', 'created_at']
-	): string[] {
-		if (!historicalData || !historicalData.length) {
-			return [];
-		}
-
-		const sample = historicalData.find((row) => row && typeof row === 'object');
-
-		if (!sample) {
-			return [];
-		}
-
-		return Object.keys(sample).filter(
-			(key) => !ignoredDataKeys.includes(key) && typeof sample[key] === 'number'
-		);
-	}
 
 	// Function to process historical data and calculate stats
 	function processHistoricalData(historicalData: any[]) {
@@ -233,7 +208,7 @@ export function setupDeviceDetail() {
 		key = '_all',
 		ignoredDataKeys = ['id', 'dev_eui', 'created_at']
 	}: {
-		historicalData: any[];
+		historicalData: DeviceDataRecord[];
 		chart1Element?: HTMLElement;
 		chart1BrushElement?: HTMLElement;
 		key?: string;
@@ -424,7 +399,6 @@ export function setupDeviceDetail() {
 		// Functions
 		formatDateForDisplay,
 		hasValue,
-		getNumericKeys,
 		processHistoricalData,
 		fetchDataForDateRange,
 		renderVisualization,

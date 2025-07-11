@@ -1,13 +1,13 @@
-import { error, redirect } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
-import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 import { SessionService } from '$lib/services/SessionService';
+import { error, redirect } from '@sveltejs/kit';
+import fs from 'fs';
 import { DateTime } from 'luxon';
+import path from 'path';
+import PDFDocument from 'pdfkit';
+import { fileURLToPath } from 'url';
+import type { RequestHandler } from './$types';
 
 // Get the current file's directory
 const __filename = fileURLToPath(import.meta.url);
@@ -118,13 +118,13 @@ export const GET: RequestHandler = async ({
 		const startDate = tokyoNow.minus({ months: 1 }).startOf('month').toUTC().toJSDate();
 		const endDate = tokyoNow.minus({ months: 1 }).endOf('month').toUTC().toJSDate();
 
-		const deviceData = await deviceDataService.getDeviceDataForReport(
+		const deviceData = await deviceDataService.getDeviceDataForReport({
 			devEui,
 			startDate,
 			endDate,
-			'Asia/Tokyo',
-			30
-		);
+			timezone: 'Asia/Tokyo',
+			intervalMinutes: 30
+		});
 		if (!deviceData || deviceData.length === 0) {
 			throw error(404, 'No data found for the specified device');
 		}

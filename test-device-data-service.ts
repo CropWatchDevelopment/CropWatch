@@ -5,20 +5,26 @@ function testMethod() {
 	// Test with all parameters
 	const service = new DeviceDataService({} as any);
 
-	const result1 = service.getDeviceDataForReport(
-		'test',
-		new Date(),
-		new Date(),
-		'UTC',
-		30,
-		['temperature_c'],
-		['>'],
-		[25.0],
-		[null]
-	);
+	const result1 = service.getDeviceDataForReport({
+		devEui: 'test',
+		startDate: new Date(),
+		endDate: new Date(),
+		timezone: 'UTC',
+		intervalMinutes: 30,
+		columns: ['temperature_c'],
+		ops: ['>'],
+		mins: [25.0],
+		maxs: [null]
+	});
 
 	// Test with default parameters
-	const result2 = service.getDeviceDataForReport('test', new Date(), new Date(), 'UTC', 30);
+	const result2 = service.getDeviceDataForReport({
+		devEui: 'test',
+		startDate: new Date(),
+		endDate: new Date(),
+		timezone: 'UTC',
+		intervalMinutes: 30
+	});
 
 	console.log('Method signatures compile correctly');
 }
