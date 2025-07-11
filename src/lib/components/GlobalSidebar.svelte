@@ -8,6 +8,7 @@
 	import LanguageSelector from './UI/form/LanguageSelector.svelte';
 	import { globalLoading, startLoading } from '$lib/stores/loadingStore';
 	import ThemeToggle from './theme/ThemeToggle.svelte';
+	import { goto } from '$app/navigation';
 
 	// Navigation items for the sidebar
 	const navigationItems = [
@@ -104,6 +105,25 @@
 		isOpen = sidebarStore.isOpen;
 		isSmallIconMode = sidebarStore.isSmallIconMode;
 	});
+
+	function handleLogout() {
+		//console.log('Logging out user:', userName);
+
+		// Call the API endpoint for server-side logout
+		fetch('/api/auth/logout', {
+			method: 'POST'
+		})
+			.then(() => {
+				//console.log('Server logout successful');
+				// Redirect to login page
+				goto('/auth/login');
+			})
+			.catch((err) => {
+				console.error('Server logout error:', err);
+				// Redirect anyway
+				goto('/auth/login');
+			});
+	}
 </script>
 
 <!-- Sidebar Overlay (for mobile) -->
@@ -190,22 +210,21 @@
 		</ul>
 		<span class="flex flex-auto"></span>
 		<button
-			onclick={() => {
-				sidebarStore.toggle();
-				startLoading();
-			}}
+			onclick={handleLogout}
 			class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
 				{getDarkMode() ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
 				{getDarkMode()
 				? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
 				: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 		>
-			{#if sidebarStore.isOpen}
+			<!-- {#if sidebarStore.isOpen}
 				<MaterialIcon name="arrow_menu_close" size="medium" />
 				<span class="font-medium">{$_('Close')}</span>
 			{:else}
 				<MaterialIcon name="arrow_menu_open" size="medium" />
-			{/if}
+			{/if} -->
+			<MaterialIcon name="logout" size="medium" />
+			{$_('Logout')}
 		</button>
 		<ul class="space-y-1">
 			<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
