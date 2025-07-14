@@ -134,6 +134,32 @@ export const strings = {
 		'An unexpected error occurred. Please try again.',
 	'Registration failed. Please try again.': 'Registration failed. Please try again.',
 
+	// Password Reset/Update
+	'Forgot Password': 'Forgot Password',
+	'Reset Password': 'Reset Password',
+	'Update Password': 'Update Password',
+	'New Password': 'New Password',
+	'Confirm New Password': 'Confirm New Password',
+	'Enter your new password': 'Enter your new password',
+	'Confirm your new password': 'Confirm your new password',
+	'Minimum 8 characters required': 'Minimum 8 characters required',
+	'Please enter your new password below.': 'Please enter your new password below.',
+	'Your password has been successfully updated!': 'Your password has been successfully updated!',
+	'You can now log in with your new password.': 'You can now log in with your new password.',
+	'Go to login': 'Go to login',
+	'Updating Password...': 'Updating Password...',
+	'Password updated successfully! You can now log in with your new password.':
+		'Password updated successfully! You can now log in with your new password.',
+	'Failed to update password': 'Failed to update password',
+	"Enter your email address and we'll send you a link to reset your password.":
+		"Enter your email address and we'll send you a link to reset your password.",
+	'Send reset link': 'Send reset link',
+	'Sending...': 'Sending...',
+	'Password reset link sent to your email.': 'Password reset link sent to your email.',
+	'Back to login': 'Back to login',
+	'If an account exists with the email': 'If an account exists with the email',
+	"you'll receive a password reset link shortly.": "you'll receive a password reset link shortly.",
+
 	// Header
 	'IoT Dashboard': 'IoT Dashboard',
 	Welcome: 'Welcome',

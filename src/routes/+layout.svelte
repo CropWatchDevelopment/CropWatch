@@ -11,7 +11,7 @@
 	import { createBrowserClient } from '@supabase/ssr';
 	import { onMount } from 'svelte';
 	import '../app.css';
-	import { warning } from '$lib/stores/toast.svelte';
+	import { info, warning } from '$lib/stores/toast.svelte';
 
 	// No preloading needed - dashboard will load its data when navigated to
 
@@ -51,15 +51,18 @@
 	onMount(() => {
 		//console.log('Setting up auth listener');
 		const { data: authData } = supabase.auth.onAuthStateChange((event, _session) => {
-			//console.log('Auth state change event:', event, _session?.user?.email);
+			console.log('Auth state change event:', event);
+			switch (event) {
+				case 'TOKEN_REFRESHED':
+					info('Your session was refreshed successfully.');
+					break;
 
-			if (_session) {
-				//console.log('Session initialized:', _session);
-			} else {
-				warning('Your session has expired. Please login again.');
-				console.warn('No session found during auth state change');
+				case 'SIGNED_OUT':
+					warning('Your session has ended. Please login again.');
+					break;
+				default:
+					break;
 			}
-
 			// Invalidate to refresh server data when session changes
 			invalidate('supabase:auth');
 		});
