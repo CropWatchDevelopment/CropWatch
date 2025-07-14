@@ -32,7 +32,6 @@
 			const data = await response.json();
 			window.location.href = data.redirectUrl; // Redirect to Google's OAuth page
 		} catch (err) {
-			toastError('Google login failed. Please try again.');
 			console.error('Google login error:', err);
 		}
 	};
