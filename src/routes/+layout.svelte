@@ -12,7 +12,6 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import { info, warning } from '$lib/stores/toast.svelte';
-	import { AuthChangeEvent } from '@supabase/supabase-js';
 
 	// No preloading needed - dashboard will load its data when navigated to
 
@@ -51,24 +50,22 @@
 	// Improved auth listener to handle session initialization more robustly
 	onMount(() => {
 		//console.log('Setting up auth listener');
-		const { data: authData } = supabase.auth.onAuthStateChange(
-			(event: AuthChangeEvent, _session) => {
-				console.log('Auth state change event:', event);
-				switch (event) {
-					case 'TOKEN_REFRESHED':
-						info('Your session was refreshed successfully.');
-						break;
+		const { data: authData } = supabase.auth.onAuthStateChange((event, _session) => {
+			console.log('Auth state change event:', event);
+			switch (event) {
+				case 'TOKEN_REFRESHED':
+					info('Your session was refreshed successfully.');
+					break;
 
-					case 'SIGNED_OUT':
-						warning('Your session has ended. Please login again.');
-						break;
-					default:
-						break;
-				}
-				// Invalidate to refresh server data when session changes
-				invalidate('supabase:auth');
+				case 'SIGNED_OUT':
+					warning('Your session has ended. Please login again.');
+					break;
+				default:
+					break;
 			}
-		);
+			// Invalidate to refresh server data when session changes
+			invalidate('supabase:auth');
+		});
 
 		return () => authData.subscription.unsubscribe();
 	});
