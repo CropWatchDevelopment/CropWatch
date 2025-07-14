@@ -174,6 +174,22 @@
 	<!-- Navigation Items -->
 	<nav class="z-10 flex flex-1 flex-col overflow-y-auto pr-2" style="z-index: 10000;">
 		<ul class="space-y-1">
+			{#if !sidebarStore.isOpen}
+				<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}">
+					<a
+						onclick={() => {
+							sidebarStore.toggle();
+							startLoading();
+						}}
+						class="flex items-center justify-center rounded-lg p-2 transition-all duration-200 hover:scale-105
+							{getDarkMode()
+							? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
+							: 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
+					>
+						<MaterialIcon name="menu" size="medium" />
+					</a>
+				</li>
+			{/if}
 			{#each navigationItems as item, index}
 				<li>
 					<a
@@ -209,23 +225,19 @@
 			{/each}
 		</ul>
 		<span class="flex flex-auto"></span>
-		<button
-			onclick={handleLogout}
-			class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
+		{#if sidebarStore.isOpen}
+			<button
+				onclick={handleLogout}
+				class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
 				{getDarkMode() ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
 				{getDarkMode()
-				? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-				: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
-		>
-			<!-- {#if sidebarStore.isOpen}
-				<MaterialIcon name="arrow_menu_close" size="medium" />
-				<span class="font-medium">{$_('Close')}</span>
-			{:else}
-				<MaterialIcon name="arrow_menu_open" size="medium" />
-			{/if} -->
-			<MaterialIcon name="logout" size="medium" />
-			{$_('Logout')}
-		</button>
+					? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+					: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+			>
+				<MaterialIcon name="logout" size="medium" />
+				{$_('Logout')}
+			</button>
+		{/if}
 		<ul class="space-y-1">
 			<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
 			<li>
