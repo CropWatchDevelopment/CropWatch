@@ -313,11 +313,12 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 					value: new Date(data.created_at)
 				},
 				cells: keys.map((key) => {
-					const value = data[key] as number;
+					const rawValue = data[key];
+					const value = typeof rawValue === 'number' && !isNaN(rawValue) ? rawValue : 0;
 
 					return {
 						label:
-							typeof data[key] === 'number'
+							typeof rawValue === 'number' && !isNaN(rawValue)
 								? formatNumber({ key, value, adjustFractionDigits: true })
 								: '',
 						value,

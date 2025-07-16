@@ -288,44 +288,44 @@ export class DeviceDataService implements IDeviceDataService {
 
 		try {
 			// If no filtering parameters provided, get alert points from the device's reports
-			let p_columns = columns || ['temperature_c', 'humidity'];
+			let p_columns = columns.length === 0 ? columns : ['temperature_c', 'humidity'];
 			let p_ops = ops || ['>', 'BETWEEN'];
 			let p_mins = mins || [25.0, 55.0];
 			let p_maxs = maxs || [null, 65.0];
 
 			// If no explicit filters provided, try to get from device reports
-			if (!columns && !ops && !mins && !maxs) {
-				try {
-					// Get the first report for this device to extract alert points
-					const { data: reports, error: reportError } = await this.supabase
-						.from('reports')
-						.select('report_id, report_alert_points(*)')
-						.eq('dev_eui', devEui)
-						.limit(1);
+			// if (!columns && !ops && !mins && !maxs) {
+			try {
+				// Get the first report for this device to extract alert points
+				const { data: reports, error: reportError } = await this.supabase
+					.from('reports')
+					.select('report_id, report_alert_points(*)')
+					.eq('dev_eui', devEui)
+					.limit(1);
 
-					if (!reportError && reports && reports.length > 0 && reports[0].report_alert_points) {
-						const alertPoints = reports[0].report_alert_points;
-						if (alertPoints && alertPoints.length > 0) {
-							p_columns = [];
-							p_ops = [];
-							p_mins = [];
-							p_maxs = [];
+				if (!reportError && reports && reports.length > 0 && reports[0].report_alert_points) {
+					const alertPoints = reports[0].report_alert_points;
+					if (alertPoints && alertPoints.length > 0) {
+						p_columns = [];
+						p_ops = [];
+						p_mins = [];
+						p_maxs = [];
 
-							alertPoints.forEach((point: any) => {
-								if (point.data_point_key) {
-									p_columns.push(point.data_point_key);
-									p_ops.push(point.operator || '>');
-									p_mins.push(point.min || point.value || 0);
-									p_maxs.push(point.max || null);
-								}
-							});
-						}
+						alertPoints.forEach((point: any) => {
+							if (point.data_point_key) {
+								p_columns.push(point.data_point_key);
+								p_ops.push(point.operator || '>');
+								p_mins.push(point.min || point.value || 0);
+								p_maxs.push(point.max || null);
+							}
+						});
 					}
-				} catch (alertError) {
-					// If we can't get alert points, use default values
-					console.warn('Could not load alert points, using defaults:', alertError);
 				}
+			} catch (alertError) {
+				// If we can't get alert points, use default values
+				console.warn('Could not load alert points, using defaults:', alertError);
 			}
+			// }
 
 			const { data, error: deviceError } = await this.supabase.rpc(
 				'get_filtered_device_report_data_multi',
