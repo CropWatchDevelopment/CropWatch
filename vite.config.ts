@@ -3,9 +3,13 @@ import { svelteTesting } from '@testing-library/svelte/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import commonjs from 'vite-plugin-commonjs';
 
 export default defineConfig({
 	plugins: [
+		commonjs({
+			filter: (id) => id.includes('node_modules/canvas')
+		}),
 		tailwindcss(),
 		sveltekit(),
 		SvelteKitPWA({
