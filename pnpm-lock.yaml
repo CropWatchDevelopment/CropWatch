@@ -168,9 +168,6 @@ importers:
       lint-staged:
         specifier: ^16.1.2
         version: 16.1.2
-      logrocket:
-        specifier: ^10.1.0
-        version: 10.1.0
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -3668,9 +3665,6 @@ packages:
   log-update@6.1.0:
     resolution: {integrity: sha512-9ie8ItPR6tjY5uYJh8K/Zrv/RMZ5VOlOWvtZdEHYSTFKZfIBPQa9tOAEeAWhd+AnIneLJ22w5fjOYtoutpWq5w==}
     engines: {node: '>=18'}
-
-  logrocket@10.1.0:
-    resolution: {integrity: sha512-wcVb+fkM7V6+nhUkhpTdnY/b31C5xy0hlEEs8UOMZiHFUrv0/2kIV+NjtmOlksniIQmUawC5ozw6ZID4qbJmUg==}
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -9377,8 +9371,6 @@ snapshots:
       slice-ansi: 7.1.0
       strip-ansi: 7.1.0
       wrap-ansi: 9.0.0
-
-  logrocket@10.1.0: {}
 
   loose-envify@1.4.0:
     dependencies:
