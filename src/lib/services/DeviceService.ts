@@ -2,80 +2,96 @@ import type { IDeviceService } from '../interfaces/IDeviceService';
 import { DeviceRepository } from '../repositories/DeviceRepository';
 import type { Device, DeviceInsert, DeviceUpdate, DeviceWithType } from '../models/Device';
 import type { DeviceWithJoins } from '../repositories/DeviceRepository';
+import type { DeviceDataService } from './DeviceDataService';
 
 /**
  * Implementation of DeviceService
  * This service handles all business logic related to devices
  */
 export class DeviceService implements IDeviceService {
-  /**
-   * Constructor with DeviceRepository dependency
-   */
-  constructor(
-    private deviceRepository: DeviceRepository
-  ) {}
+	/**
+	 * Constructor with DeviceRepository dependency
+	 */
+	constructor(
+		private deviceRepository: DeviceRepository,
+		private deviceDataService?: DeviceDataService // Optional, if you need to access device data
+	) {}
 
-  /**
-   * Get a device by its EUI
-   * @param devEui The device EUI
-   */
-  async getDeviceByEui(devEui: string): Promise<Device | null> {
-    return this.deviceRepository.findById(devEui);
-  }
+	/**
+	 * Get a device by its EUI
+	 * @param devEui The device EUI
+	 */
+	async getDeviceByEui(devEui: string): Promise<Device | null> {
+		return this.deviceRepository.findById(devEui);
+	}
 
-  /**
-   * Get a device with its type information
-   * @param devEui The device EUI
-   */
-  async getDeviceWithTypeByEui(devEui: string): Promise<DeviceWithType | null> {
-    return this.deviceRepository.getDeviceWithType(devEui);
-  }
+	/**
+	 * Get a device with its type information
+	 * @param devEui The device EUI
+	 */
+	async getDeviceWithTypeByEui(devEui: string): Promise<DeviceWithType | null> {
+		return this.deviceRepository.getDeviceWithType(devEui);
+	}
 
-  /**
-   * Get all devices
-   */
-  async getAllDevices(): Promise<Device[]> {
-    return this.deviceRepository.findAll();
-  }
+	/**
+	 * Get all devices
+	 */
+	async getAllDevices(): Promise<Device[]> {
+		return this.deviceRepository.findAll();
+	}
 
-  /**
-   * Get devices by location ID
-   * @param locationId The location ID
-   */
-  async getDevicesByLocation(locationId: number): Promise<DeviceWithJoins[]> {
-    return this.deviceRepository.findByLocation(locationId);
-  }
+	async getAllDevicesWithTypes(): Promise<Device[]> {
+		if (!this.deviceDataService) {
+			throw new Error('DeviceDataRepository is not provided');
+		}
 
-  /**
-   * Get devices by type ID
-   * @param typeId The device type ID
-   */
-  async getDevicesByType(typeId: number): Promise<Device[]> {
-    return this.deviceRepository.findByType(typeId);
-  }
+		let allDevices = this.getAllDevices();
+		// Fetch latest device data and merge with devices
+		for (const device of await allDevices) {
+			const latestData = await this.deviceDataService.getLatestDeviceData(device.dev_eui);
+			device['latest_data'] = latestData;
+		}
+		return allDevices;
+	}
 
-  /**
-   * Create a new device
-   * @param device The device to create
-   */
-  async createDevice(device: DeviceInsert): Promise<Device> {
-    return this.deviceRepository.create(device);
-  }
+	/**
+	 * Get devices by location ID
+	 * @param locationId The location ID
+	 */
+	async getDevicesByLocation(locationId: number): Promise<DeviceWithJoins[]> {
+		return this.deviceRepository.findByLocation(locationId);
+	}
 
-  /**
-   * Update an existing device
-   * @param devEui The device EUI
-   * @param device The device with updated values
-   */
-  async updateDevice(devEui: string, device: DeviceUpdate): Promise<Device | null> {
-    return this.deviceRepository.update(devEui, device);
-  }
+	/**
+	 * Get devices by type ID
+	 * @param typeId The device type ID
+	 */
+	async getDevicesByType(typeId: number): Promise<Device[]> {
+		return this.deviceRepository.findByType(typeId);
+	}
 
-  /**
-   * Delete a device
-   * @param devEui The device EUI
-   */
-  async deleteDevice(devEui: string): Promise<boolean> {
-    return this.deviceRepository.delete(devEui);
-  }
+	/**
+	 * Create a new device
+	 * @param device The device to create
+	 */
+	async createDevice(device: DeviceInsert): Promise<Device> {
+		return this.deviceRepository.create(device);
+	}
+
+	/**
+	 * Update an existing device
+	 * @param devEui The device EUI
+	 * @param device The device with updated values
+	 */
+	async updateDevice(devEui: string, device: DeviceUpdate): Promise<Device | null> {
+		return this.deviceRepository.update(devEui, device);
+	}
+
+	/**
+	 * Delete a device
+	 * @param devEui The device EUI
+	 */
+	async deleteDevice(devEui: string): Promise<boolean> {
+		return this.deviceRepository.delete(devEui);
+	}
 }
