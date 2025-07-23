@@ -1,55 +1,29 @@
-<script>
+<script lang="ts">
 	import Chart from 'chart.js/auto';
 	import { getDarkMode } from '$lib/components/theme/theme.svelte';
 	import { DateTime } from 'luxon';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
-	async function getSuccsessOrErrorRate() {
-		if (data && data.allDevicesWithTypes) {
-			let allDevices = await data.allDevicesWithTypes;
-			if (allDevices && allDevices.length > 0) {
-				let successRate = allDevices.reduce((acc, device) => {
-					if (device.cw_device_types.upload_interval) {
-						let lastSeen = DateTime.fromJSDate(device.cw_device_types.upload_interval);
-						if (
-							lastSeen > DateTime.now().minus({ minutes: device.cw_device_types.upload_interval })
-						) {
-							return acc; // Device is active
-						} else {
-							return acc; // Device is not active
-						}
-					} else {
-						return acc; // No upload interval defined
-					}
-				}, 0);
-
-				return Promise.resolve(successRate);
-			} else {
-				return Promise.resolve({ success: 0, error: 0 });
-			}
-		}
-	}
-
-	// Reactive variables
-	let dataReceived = getSuccsessOrErrorRate();
-	let successRate = $state(99.7);
-	let activeAlerts = $state(3);
-	let alertQuota = $state(67);
+	// Reactive variables using real data from the server
+	let dataReceived = $state(data.dashboardMetrics?.dataReceived?.formatted || '0 bytes');
+	let successRate = $state(data.dashboardMetrics?.successRate || 99.7);
+	let activeAlerts = $state(data.dashboardMetrics?.activeAlerts || 0);
+	let alertQuota = $state(data.dashboardMetrics?.alertQuota?.used || 0);
 	let throughputChart = $state();
 	let deviceChart = $state();
 
-	// Gateway data
-	let gatewaysOnline = $state(5);
-	let gatewaysOffline = $state(1);
-	let gateways = $state([
-		{ id: 'GW-001', status: 'UP', online: true },
-		{ id: 'GW-002', status: 'UP', online: true },
-		{ id: 'GW-003', status: 'DOWN', online: false },
-		{ id: 'GW-004', status: 'UP', online: true },
-		{ id: 'GW-005', status: 'UP', online: true },
-		{ id: 'GW-006', status: 'UP', online: true }
-	]);
+	// Gateway data from database
+	let paginatedGateways = $state(data.paginatedGateways);
+
+	// Computed values for gateway stats
+	let gatewaysOnline = $derived(
+		paginatedGateways?.gateways?.filter((g) => g.is_online).length || 0
+	);
+	let gatewaysOffline = $derived(
+		paginatedGateways?.gateways?.filter((g) => !g.is_online).length || 0
+	);
 
 	// Battery levels
 	let batteryLevels = $state([
@@ -59,12 +33,29 @@
 		{ name: 'Sensor Group D', level: 12, color: 'bg-red-500' }
 	]);
 
-	// Alerts data
-	let recentAlerts = $state([
-		{ message: 'High CPU usage on Device #45', time: '2 minutes ago', severity: 'yellow' },
-		{ message: 'Temperature sensor offline', time: '15 minutes ago', severity: 'orange' },
-		{ message: 'Network latency increase', time: '1 hour ago', severity: 'blue' }
-	]);
+	// Recent alerts using real data
+	let recentAlerts = $state(
+		data.dashboardMetrics?.recentAlerts || [
+			{
+				message: 'High CPU usage on Device #45',
+				timestamp: '2 minutes ago',
+				severity: 'medium',
+				deviceEui: 'DEV-001'
+			},
+			{
+				message: 'Temperature sensor offline',
+				timestamp: '15 minutes ago',
+				severity: 'high',
+				deviceEui: 'DEV-002'
+			},
+			{
+				message: 'Network latency increase',
+				timestamp: '1 hour ago',
+				severity: 'low',
+				deviceEui: 'DEV-003'
+			}
+		]
+	);
 
 	// Scheduled reports
 	let scheduledReports = $state([
@@ -80,16 +71,28 @@
 		const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
 		// Data Throughput Chart
-		const throughputCtx = document.getElementById('throughputChart')?.getContext('2d');
+		const throughputCtx = (
+			document.getElementById('throughputChart') as HTMLCanvasElement
+		)?.getContext('2d');
 		if (throughputCtx) {
+			const throughputData = data.dashboardMetrics?.throughputData || [
+				{ timestamp: '00:00', value: 45 },
+				{ timestamp: '04:00', value: 35 },
+				{ timestamp: '08:00', value: 60 },
+				{ timestamp: '12:00', value: 85 },
+				{ timestamp: '16:00', value: 95 },
+				{ timestamp: '20:00', value: 75 },
+				{ timestamp: '24:00', value: 55 }
+			];
+
 			throughputChart = new Chart(throughputCtx, {
 				type: 'line',
 				data: {
-					labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+					labels: throughputData.map((d) => d.timestamp),
 					datasets: [
 						{
 							label: 'Data Received (MB/h)',
-							data: [45, 35, 60, 85, 95, 75, 55],
+							data: throughputData.map((d) => d.value),
 							borderColor: 'rgb(59, 130, 246)',
 							backgroundColor: 'rgba(59, 130, 246, 0.1)',
 							fill: true,
@@ -120,15 +123,29 @@
 		}
 
 		// Device Status Chart
-		const deviceCtx = document.getElementById('deviceChart')?.getContext('2d');
+		const deviceCtx = (document.getElementById('deviceChart') as HTMLCanvasElement)?.getContext(
+			'2d'
+		);
 		if (deviceCtx) {
+			const deviceStatus = data.dashboardMetrics?.deviceStatusDistribution || {
+				online: 214,
+				idle: 25,
+				error: 5,
+				offline: 3
+			};
+
 			deviceChart = new Chart(deviceCtx, {
 				type: 'doughnut',
 				data: {
 					labels: ['Online', 'Idle', 'Error', 'Offline'],
 					datasets: [
 						{
-							data: [214, 25, 5, 3],
+							data: [
+								deviceStatus.online,
+								deviceStatus.idle,
+								deviceStatus.error,
+								deviceStatus.offline
+							],
 							backgroundColor: [
 								'rgb(34, 197, 94)',
 								'rgb(59, 130, 246)',
@@ -156,26 +173,49 @@
 		}
 	}
 
-	function getSeverityClasses(severity) {
-		const classes = {
-			yellow: 'bg-yellow-100 dark:bg-yellow-500/10 border-yellow-500',
-			orange: 'bg-orange-100 dark:bg-orange-500/10 border-orange-500',
-			blue: 'bg-blue-100 dark:bg-blue-500/10 border-blue-500'
+	function getSeverityClasses(severity: string) {
+		const classes: Record<string, string> = {
+			low: 'bg-blue-100 dark:bg-blue-500/10 border-blue-500',
+			medium: 'bg-yellow-100 dark:bg-yellow-500/10 border-yellow-500',
+			high: 'bg-red-100 dark:bg-red-500/10 border-red-500'
 		};
 		return classes[severity] || 'bg-gray-100 dark:bg-gray-500/10 border-gray-500';
 	}
 
-	function getSeverityDotColor(severity) {
-		const colors = {
-			yellow: 'bg-yellow-500',
-			orange: 'bg-orange-500',
-			blue: 'bg-blue-500'
+	// Gateway pagination navigation
+	function navigateGateways(direction: 'prev' | 'next') {
+		if (!paginatedGateways) return;
+
+		const currentPage = paginatedGateways.currentPage;
+		let newPage = currentPage;
+
+		if (direction === 'prev' && paginatedGateways.hasPreviousPage) {
+			newPage = currentPage - 1;
+		} else if (direction === 'next' && paginatedGateways.hasNextPage) {
+			newPage = currentPage + 1;
+		}
+
+		if (newPage !== currentPage) {
+			// Update URL with new page parameter
+			const url = new URL(window.location.href);
+			url.searchParams.set('gatewayPage', newPage.toString());
+
+			// Navigate to the new URL which will trigger a page reload
+			window.location.href = url.toString();
+		}
+	}
+
+	function getSeverityDotColor(severity: string) {
+		const colors: Record<string, string> = {
+			low: 'bg-blue-500',
+			medium: 'bg-yellow-500',
+			high: 'bg-red-500'
 		};
 		return colors[severity] || 'bg-gray-500';
 	}
 
-	function getReportColorClasses(color) {
-		const classes = {
+	function getReportColorClasses(color: string) {
+		const classes: Record<string, string> = {
 			blue: 'bg-blue-100 dark:bg-blue-500/10 border-blue-500',
 			purple: 'bg-purple-100 dark:bg-purple-500/10 border-purple-500',
 			green: 'bg-green-100 dark:bg-green-500/10 border-green-500',
@@ -184,8 +224,8 @@
 		return classes[color] || 'bg-gray-100 dark:bg-gray-500/10 border-gray-500';
 	}
 
-	function getReportDotColor(color) {
-		const colors = {
+	function getReportDotColor(color: string) {
+		const colors: Record<string, string> = {
 			blue: 'bg-blue-500',
 			purple: 'bg-purple-500',
 			green: 'bg-green-500',
@@ -209,7 +249,7 @@
 
 <svelte:head>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
 	<link
 		href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
 		rel="stylesheet"
@@ -232,6 +272,7 @@
 					<span class="text-sm text-gray-600 dark:text-gray-300">System Online</span>
 				</div>
 				<button
+					onclick={() => goto('/app/dashboard')}
 					class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
 				>
 					Dashboard →
@@ -290,13 +331,10 @@
 						<p class="text-sm text-gray-500 dark:text-gray-400">Data Received Today</p>
 						<p class="text-3xl font-bold text-blue-600 dark:text-blue-400">
 							{dataReceived}
-							{#await dataReceived}
-								Loading...
-							{:then parsedDataRecieved}
-								{JSON.stringify(parsedDataRecieved, null, 2)} MB
-							{/await}
 						</p>
-						<p class="text-xs text-blue-500 dark:text-blue-300">+5.2% vs yesterday</p>
+						<p class="text-xs text-blue-500 dark:text-blue-300">
+							{data.dashboardMetrics?.dataReceived?.bytes || 0} bytes total
+						</p>
 					</div>
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20"
@@ -463,10 +501,13 @@
 							<div class="h-2 w-2 {getSeverityDotColor(alert.severity)} rounded-full"></div>
 							<div class="flex-1">
 								<p class="text-sm font-medium text-gray-900 dark:text-white">{alert.message}</p>
-								<p class="text-xs text-gray-500 dark:text-gray-400">{alert.time}</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400">{alert.timestamp}</p>
 							</div>
 						</div>
 					{/each}
+					{#if recentAlerts.length === 0}
+						<p class="text-sm text-gray-500 dark:text-gray-400">No recent alerts</p>
+					{/if}
 				</div>
 			</div>
 
@@ -512,6 +553,9 @@
 							</div>
 						</div>
 					{/each}
+					{#if batteryLevels.length === 0}
+						<p class="text-sm text-gray-500 dark:text-gray-400">No battery data available</p>
+					{/if}
 				</div>
 			</div>
 
@@ -535,26 +579,65 @@
 
 				<!-- Individual Gateways -->
 				<div class="space-y-2">
-					{#each gateways as gateway}
-						<div
-							class="flex items-center justify-between p-2 {gateway.online
-								? 'bg-green-100 dark:bg-green-500/10'
-								: 'bg-red-100 dark:bg-red-500/10'} rounded-lg"
-						>
-							<div class="flex items-center space-x-2">
-								<div
-									class="h-2 w-2 {gateway.online ? 'bg-green-500' : 'bg-red-500'} rounded-full"
-								></div>
-								<span class="text-xs text-gray-900 dark:text-white">{gateway.id}</span>
-							</div>
-							<span
-								class="text-xs {gateway.online
-									? 'text-green-600 dark:text-green-400'
-									: 'text-red-600 dark:text-red-400'}">{gateway.status}</span
+					{#if paginatedGateways?.gateways?.length > 0}
+						{#each paginatedGateways.gateways as gateway}
+							<div
+								class="flex items-center justify-between p-2 {gateway.is_online
+									? 'bg-green-100 dark:bg-green-500/10'
+									: 'bg-red-100 dark:bg-red-500/10'} rounded-lg"
 							>
+								<div class="flex items-center space-x-2">
+									<div
+										class="h-2 w-2 {gateway.is_online ? 'bg-green-500' : 'bg-red-500'} rounded-full"
+									></div>
+									<span class="text-xs text-gray-900 dark:text-white"
+										>{gateway.gateway_name || gateway.gateway_id}</span
+									>
+								</div>
+								<span
+									class="text-xs {gateway.is_online
+										? 'text-green-600 dark:text-green-400'
+										: 'text-red-600 dark:text-red-400'}"
+								>
+									{gateway.is_online ? 'ONLINE' : 'OFFLINE'}
+								</span>
+							</div>
+						{/each}
+					{:else}
+						<div class="py-4 text-center">
+							<p class="text-xs text-gray-500 dark:text-gray-400">No gateways found</p>
 						</div>
-					{/each}
+					{/if}
 				</div>
+
+				<!-- Gateway Pagination Controls -->
+				{#if paginatedGateways && paginatedGateways.totalPages > 1}
+					<div class="mt-3 flex items-center justify-between">
+						<button
+							class="rounded px-2 py-1 text-xs {paginatedGateways.hasPreviousPage
+								? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20'
+								: 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'}"
+							disabled={!paginatedGateways.hasPreviousPage}
+							onclick={() => navigateGateways('prev')}
+						>
+							← Prev
+						</button>
+
+						<span class="text-xs text-gray-600 dark:text-gray-300">
+							Page {paginatedGateways.currentPage} of {paginatedGateways.totalPages}
+						</span>
+
+						<button
+							class="rounded px-2 py-1 text-xs {paginatedGateways.hasNextPage
+								? 'bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20'
+								: 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'}"
+							disabled={!paginatedGateways.hasNextPage}
+							onclick={() => navigateGateways('next')}
+						>
+							Next →
+						</button>
+					</div>
+				{/if}
 
 				<div class="mt-4 text-center">
 					<p class="text-xs text-gray-500 dark:text-gray-400">
