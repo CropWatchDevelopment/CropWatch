@@ -5,7 +5,7 @@ import type { ReportAlertPoint } from '$lib/models/Report';
 import type { TableCell, TableRow } from '$lib/pdf';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 import { addFooterPageNumber } from '$lib/pdf/pdfFooterPageNumber';
-import { createPDFLineChart } from '$lib/pdf/pdfLineChart';
+import { createPDFLineChartImage } from '$lib/pdf/pdfLineChartImage';
 import { checkMatch, getValue } from '$lib/pdf/utils';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
@@ -73,19 +73,57 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			.map((key) => key.trim())
 			.filter(Boolean);
 
-		const requestedAlertPoints = (() => {
-			try {
-				const points = alertPointsParam ? JSON.parse(alertPointsParam) : [];
+		// const requestedAlertPoints = (() => {
+		// 	try {
+		// 		const points = alertPointsParam ? JSON.parse(alertPointsParam) : [];
 
-				if (!Array.isArray(points)) {
-					throw new Error('alertPoints must be an array');
-				}
+		// 		if (!Array.isArray(points)) {
+		// 			throw new Error('alertPoints must be an array');
+		// 		}
 
-				return points;
-			} catch {
-				return [];
+		// 		return points;
+		// 	} catch {
+		// 		return [];
+		// 	}
+		// })() as ReportAlertPoint[];
+		// Pull alert points from the database if not provided
+		const { data: reportParams, error } = await supabase
+			.from('reports')
+			.select('report_id, report_alert_points(*)')
+			.eq('dev_eui', devEui)
+			.limit(1) // This intruduces a bug where it will ignore multiple reports....
+			.single();
+		console.log('alertPointsParamData', reportParams);
+
+		if (error) {
+			console.error('Error fetching report parameters:', error.message);
+			return json(
+				{ error: `Failed to fetch report parameters - ${error.message}` },
+				{ status: 500 }
+			);
+		}
+
+		let requestedAlertPoints: ReportAlertPoint[] = [];
+		for (const point of reportParams?.report_alert_points || []) {
+			if (!point.data_point_key) {
+				console.warn(`Alert point with ID ${point.id} has no data_point_key, skipping this point`);
+				continue;
 			}
-		})() as ReportAlertPoint[];
+			const pooint = {
+				created_at: point.created_at,
+				data_point_key: point.data_point_key,
+				hex_color: point.hex_color || '#ffffff',
+				id: point.id,
+				max: point.max ?? null,
+				min: point.min ?? null,
+				name: point.name || point.data_point_key,
+				operator: point.operator || 'eq',
+				report_id: point.report_id,
+				user_id: point.user_id,
+				value: point.value ?? 0
+			};
+			requestedAlertPoints.push(pooint as ReportAlertPoint);
+		}
 
 		// Determine if this is a report or a specific data request
 		const isReport = !requestedAlertPoints.length;
@@ -219,6 +257,15 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			bufferPages: true
 		});
 
+		const {
+			top: marginTop,
+			right: marginRight,
+			bottom: marginBottom,
+			left: marginLeft
+		} = doc.page.margins;
+
+		const contentWidth = doc.page.width - marginLeft - marginRight;
+
 		// Define possible font paths for NotoSansJP (Japanese font support)
 		const possibleFontPaths = [
 			path.join(process.cwd(), 'static/fonts/NotoSansJP-Regular.ttf'),
@@ -249,42 +296,56 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 
 		// Professional header with Japanese styling
 		doc.fontSize(16).text(`CropWatch ${$_('device_report')}`);
-		doc.fontSize(10).moveDown();
+
+		// Signature section
+		doc.fontSize(7).strokeColor('#ccc');
+		doc.rect(400, marginTop, 50, 60).stroke();
+		doc.rect(450, marginTop, 50, 60).stroke();
+		doc.rect(500, marginTop, 50, 60).stroke();
+		doc.text($_('created'), 405, 45);
+		doc.text($_('verified'), 455, 45);
+		doc.text($_('approved'), 505, 45);
+
+		doc.x = marginLeft;
+		doc.y = 70;
+
+		const metaTextOptions = { width: 320 };
 
 		// Report metadata
 		doc
+			.fontSize(8)
 			.text(
 				`${$_('generated_at')}: ${DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm:ss')}`,
-				{ width: 280 }
+				metaTextOptions
 			)
-			.text(`${$_('generated_by')}: ${userProfile?.full_name || user.email || $_('Unknown')}`, {
-				width: 280
-			})
-			.text(`${$_('Company')}: ${userProfile?.employer || $_('Unknown')}`, { width: 280 })
-			.text(`${$_('Device Type')}: ${device.cw_device_type?.name || $_('Unknown')}`, {
-				width: 280
-			})
-			.text(`${$_('Device Name')}: ${device.name || $_('Unknown')}`, { width: 280 })
-			.text(`${$_('EUI')}: ${devEui}`, { width: 280 })
-			.text(`${$_('installed_at')}: ${location.name || $_('Unknown')}`, { width: 280 });
+			.text(
+				`${$_('generated_by')}: ${userProfile?.full_name || user.email || $_('Unknown')}`,
+				metaTextOptions
+			);
 
-		// Date, signature section
-		doc.rect(320, 40, 240, 40).stroke();
-		doc.fontSize(10).text($_('date'), 325, 45);
-		doc.rect(320, 85, 80, 100).stroke();
-		doc.text($_('created'), 325, 90);
-		doc.rect(400, 85, 80, 100).stroke();
-		doc.text($_('verified'), 405, 90);
-		doc.rect(480, 85, 80, 100).stroke();
-		doc.text($_('approved'), 485, 90);
-		doc.fontSize(12).text($_('comment'), 320, 200);
+		if (userProfile?.employer) {
+			doc.text(`${$_('Company')}: ${userProfile?.employer || $_('Unknown')}`, metaTextOptions);
+		}
 
 		doc
-			.fontSize(10)
-			.text(`${$_('date_range')}: ${startDateParam} – ${endDateParam}`, 40, 200)
+			.moveDown(0.5)
+			.text(`${$_('installed_at')}: ${location.name || $_('Unknown')}`, metaTextOptions)
+			.text(
+				`${$_('Device Type')}: ${device.cw_device_type?.name || $_('Unknown')}`,
+				metaTextOptions
+			)
+			.text(`${$_('Device Name')}: ${device.name || $_('Unknown')}`, metaTextOptions)
+			.text(`${$_('EUI')}: ${devEui}`, metaTextOptions);
+
+		doc.moveUp(2);
+		doc.x = 400;
+
+		doc
+			.text(`${$_('date_range')}: ${startDateParam} – ${endDateParam}`)
 			.text(`${$_('sampling_size')}: ${deviceData.length}`);
 
-		doc.moveDown(4);
+		doc.x = marginLeft;
+		doc.moveDown();
 
 		const numericKeys = getNumericKeys(deviceData);
 		const validKeys =
@@ -295,65 +356,52 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const keyColumns: TableCell[] = validKeys.map((key) => ({
 			label: $_(key),
 			value: '',
-			width: 40,
+			width: 30,
 			color: getColorNameByKey(key)
 		}));
 
 		const dataHeader: TableRow = {
-			header: { label: $_('datetime'), value: '', width: 60 },
-			cells: [...keyColumns, { label: $_('comment'), width: 60 }]
+			header: { label: $_('datetime'), value: '', width: 40 },
+			cells: [...keyColumns, { label: $_('comment'), width: 40 }]
 		};
 
 		const getDataRows = (keys: string[] = validKeys): TableRow[] =>
-			deviceData.map((data) => ({
-				header: {
-					label: DateTime.fromISO(data.created_at)
-						.setZone('Asia/Tokyo')
-						.toFormat('yyyy-MM-dd HH:mm'),
-					value: new Date(data.created_at)
-				},
-				cells: keys.map((key) => {
-					const value = data[key] as number;
+			deviceData.map((data, index) => {
+				const date = DateTime.fromISO(data.created_at).setZone('Asia/Tokyo');
+				const previousData = index > 0 ? deviceData[index - 1] : null;
+				const previousDate = previousData
+					? DateTime.fromISO(previousData.created_at).setZone('Asia/Tokyo')
+					: null;
+				const fullDateTime = date.toFormat('M/d H:mm');
 
-					return {
-						label:
-							typeof data[key] === 'number'
-								? formatNumber({ key, value, adjustFractionDigits: true })
-								: '',
-						value,
-						bgColor:
-							alertPoints.find((point) => point.data_point_key === key && checkMatch(value, point))
-								?.hex_color ?? '#ffffff'
-					};
-				})
-			}));
+				return {
+					header: {
+						value: new Date(data.created_at),
+						label: fullDateTime,
+						shortLabel:
+							// If the date is the same as the previous entry, show only time
+							previousDate?.toFormat('M/d') === date.toFormat('M/d')
+								? date.toFormat('H:mm')
+								: fullDateTime
+					},
+					cells: keys.map((key) => {
+						const rawValue = data[key];
+						const value = typeof rawValue === 'number' && !isNaN(rawValue) ? rawValue : 0;
 
-		// Chart
-		for (const key of validKeys) {
-			createPDFLineChart({
-				doc,
-				dataHeader: {
-					header: { label: $_('datetime'), value: '', width: 60 },
-					cells: [
-						{
-							label: $_(key),
-							value: '',
-							width: 40,
-							color: getColorNameByKey(key)
-						}
-					]
-				},
-				dataRows: getDataRows([key]),
-				alertPoints,
-				config: {
-					title: $_(key),
-					width: 600,
-					height: 300
-				}
+						return {
+							value,
+							label:
+								typeof rawValue === 'number' && !isNaN(rawValue)
+									? formatNumber({ key, value, adjustFractionDigits: true })
+									: '',
+							bgColor:
+								alertPoints.find(
+									(point) => point.data_point_key === key && checkMatch(value, point)
+								)?.hex_color ?? '#ffffff'
+						};
+					})
+				} as TableRow;
 			});
-		}
-
-		doc.moveUp(2);
 
 		// Prepare data rows for the table
 		const dataRows = getDataRows();
@@ -366,7 +414,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			},
 			dataHeader: {
 				header: { label: $_('status'), width: 60 },
-				cells: [...keyColumns, { label: `${$_('comment')}:`, width: 60 }]
+				cells: [...keyColumns, { label: $_('comment'), width: 60 }]
 			},
 			dataRows: [
 				...alertPoints.map((alertPoint) => {
@@ -404,25 +452,61 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			]
 		});
 
-		doc.addPage(); // Add Page break because the data table should always start on a new page.
+		const chartWidth = contentWidth;
+		const chartHeight = contentWidth * 0.4;
+
+		// Charts
+		for (const key of validKeys) {
+			// Add a new page if the content exceeds the current page height
+			if (doc.y > doc.page.height - marginBottom - chartHeight + 20) {
+				doc.addPage();
+			} else {
+				doc.moveDown(2);
+			}
+
+			createPDFLineChartImage({
+				doc,
+				dataHeader: {
+					header: { label: $_('datetime'), value: '', width: 60 },
+					cells: [
+						{
+							label: $_(key),
+							value: '',
+							width: 40,
+							color: getColorNameByKey(key)
+						}
+					]
+				},
+				dataRows: getDataRows([key]),
+				alertPoints,
+				config: {
+					title: $_(key),
+					width: chartWidth,
+					height: chartHeight
+				}
+			});
+		}
+
+		doc.moveDown(2);
 
 		// Full data table
-		createPDFDataTable({
-			doc,
-			config: {
-				caption: $_('data_history')
-			},
-			dataHeader,
-			dataRows
-		});
+		createPDFDataTable({ doc, dataHeader, dataRows });
 
-		addFooterPageNumber(doc, `${device.name} | ${devEui} | ${startDateParam} - ${endDateParam}`);
+		const footerText = [
+			location.name,
+			device.name,
+			devEui,
+			`${startDateParam} - ${endDateParam}`
+		].join(' | ');
+
+		addFooterPageNumber(doc, footerText);
 
 		// 5) finalize
 		doc.end();
 
 		// Get the PDF as a buffer (async operation)
 		const chunks: Buffer[] = [];
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		doc.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
 
 		return new Promise<Response>((resolve, reject) => {
@@ -445,6 +529,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				);
 			});
 
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			doc.on('error', (err: any) => {
 				reject(
 					json(

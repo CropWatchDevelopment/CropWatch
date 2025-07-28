@@ -94,23 +94,38 @@ export function createPDFLineChart({
 	const allValues = dataRows.flatMap((d) =>
 		d.cells.map(({ value }) => value).filter((value) => typeof value === 'number' && !isNaN(value))
 	) as number[];
+
+	// Handle case where there are no valid numeric values
+	if (allValues.length === 0) {
+		console.warn('No valid numeric values found for line chart');
+		return;
+	}
+
 	const minValue = Math.min(...allValues);
 	const maxValue = Math.max(...allValues);
 	const valueRange = maxValue - minValue;
-	const paddedMin = minValue - valueRange * 0.1;
-	const paddedMax = maxValue + valueRange * 0.1;
+
+	// Handle case where all values are the same (valueRange = 0)
+	const paddedMin = valueRange === 0 ? minValue - 1 : minValue - valueRange * 0.1;
+	const paddedMax = valueRange === 0 ? maxValue + 1 : maxValue + valueRange * 0.1;
 
 	// Time range
 	const minTime = Math.min(...timestamps.map((t) => t.getTime()));
 	const maxTime = Math.max(...timestamps.map((t) => t.getTime()));
+	const timeRange = maxTime - minTime;
 
 	// Scaling functions
 	const xScale = (timestamp: Date) => {
-		return chartX + ((timestamp.getTime() - minTime) / (maxTime - minTime)) * chartWidth;
+		return timeRange === 0
+			? chartX + chartWidth / 2
+			: chartX + ((timestamp.getTime() - minTime) / timeRange) * chartWidth;
 	};
 
 	const yScale = (value: number) => {
-		return chartY + chartHeight - ((value - paddedMin) / (paddedMax - paddedMin)) * chartHeight;
+		const paddedRange = paddedMax - paddedMin;
+		return paddedRange === 0
+			? chartY + chartHeight / 2
+			: chartY + chartHeight - ((value - paddedMin) / paddedRange) * chartHeight;
 	};
 
 	// Draw title
@@ -259,7 +274,7 @@ export function createPDFLineChart({
 	if (conf.yAxisLabel) {
 		doc
 			.save()
-			.rotate(-90, chartX - 60, chartY + chartHeight / 2)
+			.rotate(-90)
 			.fontSize(fontSize)
 			.text(conf.yAxisLabel, chartX - 60, chartY + chartHeight / 2, {
 				align: 'center'
