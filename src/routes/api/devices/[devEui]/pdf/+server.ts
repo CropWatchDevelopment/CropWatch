@@ -519,7 +519,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 						status: 200,
 						headers: {
 							'Content-Type': 'application/pdf',
-							'Content-Disposition': `attachment; filename="device-${devEui}-report-${startDateParam}-to-${endDateParam}.pdf"`,
+							'Content-Disposition': `attachment; filename=device-${devEui}-report-${startDateParam}-to-${endDateParam}.pdf`,
 							'Content-Length': pdfBuffer.length.toString(),
 							'Access-Control-Allow-Origin': '*',
 							'Access-Control-Allow-Methods': 'GET',
