@@ -73,19 +73,57 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			.map((key) => key.trim())
 			.filter(Boolean);
 
-		const requestedAlertPoints = (() => {
-			try {
-				const points = alertPointsParam ? JSON.parse(alertPointsParam) : [];
+		// const requestedAlertPoints = (() => {
+		// 	try {
+		// 		const points = alertPointsParam ? JSON.parse(alertPointsParam) : [];
 
-				if (!Array.isArray(points)) {
-					throw new Error('alertPoints must be an array');
-				}
+		// 		if (!Array.isArray(points)) {
+		// 			throw new Error('alertPoints must be an array');
+		// 		}
 
-				return points;
-			} catch {
-				return [];
+		// 		return points;
+		// 	} catch {
+		// 		return [];
+		// 	}
+		// })() as ReportAlertPoint[];
+		// Pull alert points from the database if not provided
+		const { data: reportParams, error } = await supabase
+			.from('reports')
+			.select('report_id, report_alert_points(*)')
+			.eq('dev_eui', devEui)
+			.limit(1) // This intruduces a bug where it will ignore multiple reports....
+			.single();
+		console.log('alertPointsParamData', reportParams);
+
+		if (error) {
+			console.error('Error fetching report parameters:', error.message);
+			return json(
+				{ error: `Failed to fetch report parameters - ${error.message}` },
+				{ status: 500 }
+			);
+		}
+
+		let requestedAlertPoints: ReportAlertPoint[] = [];
+		for (const point of reportParams?.report_alert_points || []) {
+			if (!point.data_point_key) {
+				console.warn(`Alert point with ID ${point.id} has no data_point_key, skipping this point`);
+				continue;
 			}
-		})() as ReportAlertPoint[];
+			const pooint = {
+				created_at: point.created_at,
+				data_point_key: point.data_point_key,
+				hex_color: point.hex_color || '#ffffff',
+				id: point.id,
+				max: point.max ?? null,
+				min: point.min ?? null,
+				name: point.name || point.data_point_key,
+				operator: point.operator || 'eq',
+				report_id: point.report_id,
+				user_id: point.user_id,
+				value: point.value ?? 0
+			};
+			requestedAlertPoints.push(pooint as ReportAlertPoint);
+		}
 
 		// Determine if this is a report or a specific data request
 		const isReport = !requestedAlertPoints.length;
