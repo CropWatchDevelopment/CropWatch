@@ -187,17 +187,6 @@ export class DeviceDataService implements IDeviceDataService {
 				.order(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', { ascending: false }) // SHIT FIX #3, traffic camera specific
 				.csv();
 
-			// SHIT FIX #4, traffic camera specific
-			if (tableName == 'cw_traffic2') {
-				return (data || []).map((record: any) => ({
-					...record,
-					created_at: record.traffic_hour,
-					dev_eui: record.dev_eui,
-					note: 'Traffic data formatted'
-				})) as DeviceDataRecord[];
-			}
-			// END OF SHIT FIX
-
 			return (data || []) as DeviceDataRecord[];
 		} catch (error) {
 			// Handle errors with a generic response

@@ -5,6 +5,7 @@
 	import { mdiArrowDownBold, mdiArrowUpBold, mdiMinus } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import { Icon } from 'svelte-ux';
+	import MaterialIcon from '../UI/icons/MaterialIcon.svelte';
 
 	type Props = {
 		key: string;
@@ -140,26 +141,26 @@
 		<div class="mt-4 w-full border-t border-gray-200 pt-3 text-lg dark:border-gray-700">
 			<div class="grid grid-cols-2 gap-y-2">
 				<div>
-					<span class="text-gray-400 dark:text-gray-500">{$_('Count')}:</span>
+					<span class="text-gray-400 dark:text-gray-400">{$_('Count')}:</span>
 					<span class="ml-1 font-medium">{count !== undefined ? count : $_('N/A')}</span>
 				</div>
 
 				<div>
-					<span class="text-gray-400 dark:text-gray-500">{$_('Median')}:</span>
+					<span class="text-gray-400 dark:text-gray-400">{$_('Median')}:</span>
 					<span class="ml-1 font-medium">
 						{median !== undefined ? formatNumber({ key, value: median }) + (notation || '') : 'N/A'}
 					</span>
 				</div>
 
 				<div>
-					<span class="text-gray-400 dark:text-gray-500">{$_('Std Dev')}:</span>
+					<span class="text-gray-400 dark:text-gray-400">{$_('Std Dev')}:</span>
 					<span class="ml-1 font-medium">
 						{stdDev !== undefined ? formatNumber({ key, value: stdDev }) + (notation || '') : 'N/A'}
 					</span>
 				</div>
 
 				<div>
-					<span class="text-gray-400 dark:text-gray-500">{$_('Range')}:</span>
+					<span class="text-gray-400 dark:text-gray-400">{$_('Range')}:</span>
 					<span class="ml-1 font-medium">
 						{max !== undefined && min !== undefined
 							? formatNumber({ key, value: max - min }) + (notation || '')
@@ -172,7 +173,12 @@
 
 	{#if expandable}
 		<div class="mt-2 flex w-full justify-center">
-			<div class="text-xs text-gray-400 dark:text-gray-500">
+			<div class="text-xs text-gray-400 dark:text-gray-300">
+				<MaterialIcon
+					name={expanded ? 'expand_circle_up' : 'expand_circle_down'}
+					size="small"
+					class="mr-1 inline-block"
+				/>
 				{expanded ? $_('Click to collapse') : $_('Click to expand')}
 			</div>
 		</div>

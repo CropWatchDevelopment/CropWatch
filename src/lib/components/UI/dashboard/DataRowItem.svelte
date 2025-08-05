@@ -140,14 +140,15 @@
 								>{nameToEmoji(primaryDataKey)}</span
 							>
 							<div class="flex flex-col items-start">
-								<span class="text-lg leading-tight font-bold text-gray-900 dark:text-white">
+								<span
+									class="text-lg leading-tight font-bold whitespace-nowrap text-gray-900 dark:text-white"
+								>
 									{formatNumber({ key: primaryDataKey, value: primaryValue })}
 									<span
 										class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
 										>{primaryNotation}</span
 									>
 								</span>
-								<!-- <span class="text-xs text-gray-500 dark:text-gray-400">{$_(primaryDataKey)}</span> -->
 							</div>
 						</div>
 
@@ -157,17 +158,15 @@
 								<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
 									>{nameToEmoji(secondaryDataKey)}</span
 								>
-								<div class="flex flex-col items-start">
-									<span class="text-lg leading-tight font-bold text-gray-900 dark:text-white">
-										{formatNumber({ key: secondaryDataKey, value: secondaryValue })}
-										<span
-											class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
-											>{secondaryNotation}</span
-										>
+								<div class="no-wrap flex flex-col items-start">
+									<span
+										class="flex flex-nowrap items-baseline text-lg leading-tight font-bold text-gray-900 dark:text-white"
+									>
+										<span>{formatNumber({ key: secondaryDataKey, value: secondaryValue })}</span>
+										<span class="text-accent-700 dark:text-accent-400 ml-0.5 text-xs font-normal">
+											{secondaryNotation}
+										</span>
 									</span>
-									<!-- <span class="text-xs text-gray-500 dark:text-gray-400"
-										>{$_(secondaryDataKey)}</span
-									> -->
 								</div>
 							</div>
 						{/if}

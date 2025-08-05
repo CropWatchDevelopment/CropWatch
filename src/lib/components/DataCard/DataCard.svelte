@@ -63,7 +63,7 @@
 
 		<!-- Value -->
 		<p
-			class="m-0 {isMetadata ? 'text-base font-medium' : 'mb-0 text-2xl font-bold'}"
+			class="m-0 {isMetadata ? 'text-base font-medium' : 'mb-0 text-3xl font-bold'}"
 			style:color={textColor}
 		>
 			{#if typeof value === 'number'}
