@@ -234,50 +234,15 @@
 
 	// Function to handle fetching data for a specific date range
 	async function handleDateRangeSubmit(units?: number) {
+		debugger;
 		if (!startDateInputString || !endDateInputString) {
 			deviceDetail.error = 'Please select both start and end dates.';
 			return;
 		}
-
-		// Parse local string dates from input into Date objects
-		// new Date('YYYY-MM-DD') can have timezone issues. Parsing components is safer.
-		const [sYear, sMonth, sDay] = startDateInputString.split('-').map(Number);
-		const finalStartDate = new Date(sYear, sMonth - 1, sDay); // Month is 0-indexed
-
-		const [eYear, eMonth, eDay] = endDateInputString.split('-').map(Number);
-		// Set end date to the end of the selected day to be inclusive for the query
-		const finalEndDate = new Date(eYear, eMonth - 1, eDay, 23, 59, 59, 999); // Month is 0-indexed
-
-		if (finalStartDate > finalEndDate) {
-			deviceDetail.error = 'Start date must be before end date.';
-			return;
-		}
-
-		loadingHistoricalData = true;
-		deviceDetail.error = null; // Clear previous errors before fetching
-
-		// If units is provided, slide the date range forward or backward
-		if (units !== undefined) {
-			//get range between start and end dates
-			let endDateTime = DateTime.fromJSDate(finalEndDate);
-			let startDateTime = DateTime.fromJSDate(finalStartDate);
-			const diffInDays = Math.round(Math.abs(startDateTime.diff(endDateTime, ['days']).days));
-			if (units < 0) {
-				// Slide back
-				startDateTime = startDateTime.minus({ days: diffInDays });
-				endDateTime = endDateTime.minus({ days: diffInDays });
-			} else if (units > 0) {
-				// Slide forward
-				startDateTime.plus({ days: diffInDays }).toJSDate();
-				endDateTime.plus({ days: diffInDays }).toJSDate();
-			}
-			// update input strings to reflect the new range
-			startDateInputString = formatDateForInput(startDateTime.toJSDate());
-			endDateInputString = formatDateForInput(endDateTime.toJSDate());
-		}
+		let derivedDate = $derived(startDateInputString);
+		console.log('Fetching data for range:', derivedDate, endDateInputString);
 
 		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
-		//console.log('Requested range:', finalStartDate, finalEndDate, 'Received:', newData);
 		if (newData) {
 			historicalData = newData; // This will trigger $effect for renderVisualization
 			calendarEvents = updateEvents(newData); // Use newData directly
@@ -353,7 +318,7 @@
 
 		<!-- Video feed and map on large screen -->
 		<CameraStream {device} class="hidden flex-none lg:block" />
-		<DeviceMap {device} class="hidden flex-none lg:block" />
+		<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
 	</div>
 
 	<!-- Right pane -->
@@ -376,8 +341,8 @@
 			<DateRangeSelector
 				{startDateInputString}
 				{endDateInputString}
-				{handleDateRangeSubmit}
 				{loadingHistoricalData}
+				onDateChange={() => handleDateRangeSubmit()}
 			/>
 		</div>
 		<section class="mb-12">
@@ -448,7 +413,7 @@
 		<!-- Video feed and map on small/medium screen -->
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:hidden">
 			<CameraStream {device} />
-			<DeviceMap {device} />
+			<!-- <DeviceMap {device} /> -->
 		</div>
 
 		<div class="mt-4">

@@ -229,3 +229,22 @@ a {
 .ec-dayGridMonth, .ec-today {
 	display: none !important;
 }
+
+/* in your global CSS (e.g. app.css), *after* the Tailwind layers */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  /* position relative to the <input> */
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;           /* tweak to exactly your taste */
+  transform: translateY(-50%);
+  /* keep it clickable: */
+  pointer-events: all;
+}
+
+/* if you need Firefox support (Gecko), you can also add: */
+input[type="date"]::-moz-calendar-picker-indicator {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+}
