@@ -128,12 +128,12 @@
 
 		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
 			<div class="flex flex-col text-base">
-				<div class="justify-left flex flex-row">
+				<div class="justify-left flex flex-row pl-0">
 					<b class="ml-4 pb-1 text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-300"
 						>{device.name || `Device ${device.dev_eui}`}</b
 					>
 				</div>
-				<div class="flex flex-row justify-center space-x-5 px-10">
+				<div class="flex w-full flex-row justify-between justify-center space-x-5">
 					{#if device.latestData}
 						<div class="flex items-center">
 							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
@@ -153,7 +153,7 @@
 						</div>
 
 						{#if secondaryDataKey}
-							<span class="flex flex-grow-1"></span>
+							<span class="flex flex-grow-[0.2]"></span>
 							<div class="flex items-center">
 								<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
 									>{nameToEmoji(secondaryDataKey)}</span

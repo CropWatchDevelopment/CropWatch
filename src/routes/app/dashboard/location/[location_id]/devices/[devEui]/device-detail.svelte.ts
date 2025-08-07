@@ -3,6 +3,7 @@ import type { DeviceWithType } from '$lib/models/Device';
 import type { DeviceDataRecord, DeviceStats } from '$lib/models/DeviceDataRecord';
 import { calculateAverage, formatDateForDisplay, hasValue } from '$lib/utilities/helpers';
 import { getNumericKeys, getTextColorByKey } from '$lib/utilities/stats';
+import { DateTime } from 'luxon';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
@@ -26,9 +27,9 @@ export function setupDeviceDetail() {
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
-	// Date range selection
-	let startDate = $state(new Date()); // Should be Date object
-	let endDate = $state(new Date()); // Should be Date object
+	// Date range selection - initialize without cached values
+	let startDate = $state<Date>(new Date(Date.now() - 24 * 60 * 60 * 1000)); // 24 hours ago
+	let endDate = $state<Date>(new Date(Date.now())); // Current time
 
 	// Libraries and elements
 	let ApexCharts = $state<any>(undefined);
@@ -356,10 +357,10 @@ export function setupDeviceDetail() {
 
 	// Initialize dates function
 	function initializeDateRange() {
-		const today = new Date();
-		const yesterday = new Date(today);
-		yesterday.setDate(today.getDate() - 1);
+		const today = new Date(Date.now()); // Force fresh date
+		const yesterday = DateTime.fromJSDate(today).minus({ days: 1 }).toJSDate();
 
+		console.log('device-detail initializeDateRange called:', { yesterday, today });
 		startDate = yesterday; // Assign Date object directly
 		endDate = today; // Assign Date object directly
 	}

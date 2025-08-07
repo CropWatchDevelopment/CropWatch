@@ -69,9 +69,24 @@
 	let mainChartElements: HTMLElement[] = $state([]); // Holds chart elements for rendering
 	let blushChartElements: HTMLElement[] = $state([]); // Holds brush elements for rendering
 
-	// Local string states for date inputs, bound to the input fields
-	let startDateInputString = $state('');
-	let endDateInputString = $state('');
+	// Initialize date range - default to past 24 hours
+	function initializeComponentDateRange(): { start: Date; end: Date } {
+		// Always default to current date
+		const endDate: Date = new Date(); // Default to now
+		const startDate: Date = new Date(endDate.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+
+		console.log('Initializing date range with defaults:', { start: startDate, end: endDate });
+		return { start: startDate, end: endDate };
+	}
+
+	// Initialize dates - force fresh date creation
+	let startDateInput: Date = $state(new Date(Date.now() - 24 * 60 * 60 * 1000)); // 24 hours ago
+	let endDateInput: Date = $state(new Date()); // Current date
+
+	console.log('Date inputs initialized:', {
+		startDateInput: startDateInput.toISOString(),
+		endDateInput: endDateInput.toISOString()
+	});
 
 	let loadingHistoricalData = $state(false); // Local loading state for historical data fetch
 	let renderingVisualization = $state(false); // Local rendering state for visualization
@@ -88,11 +103,8 @@
 	let channel: RealtimeChannel | undefined = $state(undefined); // Channel for realtime updates
 
 	onMount(() => {
+		// Initialize the device detail date range (this might be used internally by deviceDetail)
 		initializeDateRange(); // This sets deviceDetail.startDate and deviceDetail.endDate (Date objects)
-
-		// Sync input strings with initial Date objects from deviceDetail
-		startDateInputString = formatDateForInput(deviceDetail.startDate);
-		endDateInputString = formatDateForInput(deviceDetail.endDate);
 	});
 
 	$effect(() => {
@@ -166,16 +178,16 @@
 	});
 
 	// Effect to keep input strings in sync if deviceDetail.startDate/endDate change (e.g. by initializeDateRange)
-	$effect(() => {
-		if (deviceDetail.startDate) {
-			startDateInputString = formatDateForInput(deviceDetail.startDate);
-		}
-	});
-	$effect(() => {
-		if (deviceDetail.endDate) {
-			endDateInputString = formatDateForInput(deviceDetail.endDate);
-		}
-	});
+	// $effect(() => {
+	// 	if (deviceDetail.startDate) {
+	// startDateInputString = formatDateForInput(deviceDetail.startDate);
+	// 	}
+	// });
+	// $effect(() => {
+	// 	if (deviceDetail.endDate) {
+	// 		endDateInputString = formatDateForInput(deviceDetail.endDate);
+	// 	}
+	// });
 
 	const updateEvents = (data: any[] = historicalData): CalendarEvent[] => {
 		// Group data by date
@@ -233,24 +245,43 @@
 	};
 
 	// Function to handle fetching data for a specific date range
-	async function handleDateRangeSubmit(units?: number) {
-		debugger;
-		if (!startDateInputString || !endDateInputString) {
+	async function handleDateRangeSubmit() {
+		if (!startDateInput || !endDateInput) {
 			deviceDetail.error = 'Please select both start and end dates.';
 			return;
 		}
-		let derivedDate = $derived(startDateInputString);
-		console.log('Fetching data for range:', derivedDate, endDateInputString);
 
-		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
-		if (newData) {
-			historicalData = newData; // This will trigger $effect for renderVisualization
-			calendarEvents = updateEvents(newData); // Use newData directly
-		} else {
-			calendarEvents = updateEvents(historicalData);
+		console.log('Fetching data for range:', startDateInput, endDateInput);
+
+		// Validate dates
+		if (startDateInput > endDateInput) {
+			deviceDetail.error = 'Start date cannot be after end date.';
+			return;
 		}
 
-		loadingHistoricalData = false;
+		const today = new Date();
+		today.setHours(23, 59, 59, 999);
+		if (endDateInput > today) {
+			deviceDetail.error = 'End date cannot be in the future.';
+			return;
+		}
+
+		loadingHistoricalData = true;
+
+		try {
+			const newData = await fetchDataForDateRange(device, startDateInput, endDateInput);
+			if (newData) {
+				historicalData = newData; // This will trigger $effect for renderVisualization
+				calendarEvents = updateEvents(newData); // Use newData directly
+			} else {
+				calendarEvents = updateEvents(historicalData);
+			}
+		} catch (error) {
+			console.error('Error fetching date range data:', error);
+			deviceDetail.error = 'Failed to fetch data for the selected date range.';
+		} finally {
+			loadingHistoricalData = false;
+		}
 	}
 
 	// Expose formatDateForDisplay for the template, aliased from helpers
@@ -264,7 +295,12 @@
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
 		{#if numericKeys.length}
-			<ExportButton {devEui} {startDateInputString} {endDateInputString} dataKeys={numericKeys} />
+			<ExportButton
+				{devEui}
+				startDateInputString={startDateInput.toDateString()}
+				endDateInputString={endDateInput.toDateString()}
+				dataKeys={numericKeys}
+			/>
 		{/if}
 		<Button variant="secondary" href="{basePath}/settings">
 			<MaterialIcon name="Settings" />
@@ -274,10 +310,10 @@
 	<!-- Data range selector on large screen -->
 	<div class="hidden border-l border-neutral-400 pl-4 lg:block">
 		<DateRangeSelector
-			{startDateInputString}
-			{endDateInputString}
-			{handleDateRangeSubmit}
+			bind:startDateInput
+			bind:endDateInput
 			{loadingHistoricalData}
+			onDateChange={handleDateRangeSubmit}
 		/>
 	</div>
 </Header>
@@ -339,10 +375,10 @@
 		<!-- Data range selector on small/medium screen -->
 		<div class="mb-4 border-b border-neutral-400 pb-4 lg:hidden">
 			<DateRangeSelector
-				{startDateInputString}
-				{endDateInputString}
+				bind:startDateInput
+				bind:endDateInput
 				{loadingHistoricalData}
-				onDateChange={() => handleDateRangeSubmit()}
+				onDateChange={handleDateRangeSubmit}
 			/>
 		</div>
 		<section class="mb-12">
@@ -422,8 +458,8 @@
 				<WeatherCalendar
 					events={calendarEvents}
 					onDateChange={(date: Date) => {
-						startDateInputString = formatDateForInput(date);
-						endDateInputString = formatDateForInput(deviceDetail.endDate);
+						startDateInput = date;
+						endDateInput = new Date(date);
 						handleDateRangeSubmit();
 					}}
 				/>
