@@ -95,12 +95,6 @@
 	});
 
 	$effect(() => {
-		(async () => {
-			latestData = await data.latestData;
-		})();
-	});
-
-	$effect(() => {
 		if (device.cw_device_type?.data_table_v2 && !channel) {
 			channel = setupRealtimeSubscription(
 				data.supabase,
@@ -231,7 +225,9 @@
 		try {
 			const newData = await fetchDataForDateRange(device, startDateInput, endDateInput);
 			if (newData) {
-				historicalData = newData; // This will trigger $effect for renderVisualization
+				historicalData = newData; // Set the historical data
+				processHistoricalData(newData); // Process the new data to update stats and chartData
+				numericKeys = getNumericKeys(newData); // Update numeric keys for the new data
 				calendarEvents = updateEvents(newData); // Use newData directly
 			} else {
 				calendarEvents = updateEvents(historicalData);

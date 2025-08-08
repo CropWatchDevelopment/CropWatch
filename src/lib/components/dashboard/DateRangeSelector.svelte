@@ -67,7 +67,20 @@
 	<!-- Date range selector -->
 	<!-- <div class="flex flex-wrap items-end gap-2"> -->
 	<div class="sm:order-1">
-		<Button variant="tertiary" class="h-[45px] w-[25px]" iconic onclick={() => handleDateChange()}>
+		<Button
+			variant="tertiary"
+			class="h-[45px] w-[25px]"
+			iconic
+			onclick={() => {
+				let dayDiff = DateTime.fromJSDate(endDateInput).diff(
+					DateTime.fromJSDate(startDateInput),
+					'days'
+				).days;
+				startDateInput = DateTime.fromJSDate(startDateInput).minus({ days: dayDiff }).toJSDate();
+				endDateInput = DateTime.fromJSDate(endDateInput).minus({ days: dayDiff }).toJSDate();
+				handleDateChange();
+			}}
+		>
 			<MaterialIcon name="fast_rewind" />
 		</Button>
 	</div>

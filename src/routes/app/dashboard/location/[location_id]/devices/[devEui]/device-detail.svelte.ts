@@ -144,7 +144,7 @@ export function setupDeviceDetail() {
 		// Parameters 'start' and 'end' are Date objects.
 		// The component's state variables 'startDate' and 'endDate' (if you were accessing them via this context, which you are not directly here) are also Date objects.
 		// This function uses the 'start' and 'end' parameters passed to it.
-
+		debugger;
 		if (!start || !end) {
 			// Validation using parameters
 			error = 'Please select both start and end dates'; // Set component's error state
@@ -159,6 +159,36 @@ export function setupDeviceDetail() {
 
 		loading = true;
 		error = null; // Clear previous errors
+
+		try {
+			// Format Date objects to ISO strings for robust API querying
+			const startQueryParam = start.toISOString(); // Use parameter
+			const endQueryParam = end.toISOString(); // Use parameter
+
+			const response = await fetch(
+				`/api/devices/${device.dev_eui}/data?start=${startQueryParam}&end=${endQueryParam}`
+			);
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error('Failed to fetch data:', response.status, errorText);
+				throw new Error(`Failed to fetch data. Server responded with ${response.status}.`);
+			}
+
+			const newHistoricalData = await response.json();
+			if (!Array.isArray(newHistoricalData)) {
+				console.error('API did not return an array for historical data:', newHistoricalData);
+				throw new Error('Invalid data format received from server.');
+			}
+			processHistoricalData(newHistoricalData); // Process the newly fetched data
+			return newHistoricalData;
+		} catch (err) {
+			console.error('Error in fetchDataForDateRange:', err);
+			error = err instanceof Error ? err.message : 'Unknown error occurred while fetching data.';
+			return []; // Return empty array on error
+		} finally {
+			loading = false;
+		}
 	}
 
 	/**
