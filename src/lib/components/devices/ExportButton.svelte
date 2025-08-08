@@ -121,7 +121,7 @@
 								id="start-date"
 								type="date"
 								bind:value={startDate}
-								class="w-full rounded border border-gray-300 px-2 py-1"
+								class="relative w-full rounded border border-gray-300 px-2 py-1 pr-10"
 							/>
 						</div>
 						<div>
@@ -130,7 +130,7 @@
 								id="end-date"
 								type="date"
 								bind:value={endDate}
-								class="w-full rounded border border-gray-300 px-2 py-1"
+								class="relative w-full rounded border border-gray-300 px-2 py-1 pr-10"
 							/>
 						</div>
 					</div>
