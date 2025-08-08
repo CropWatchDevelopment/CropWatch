@@ -27,9 +27,11 @@ export function setupDeviceDetail() {
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
-	// Date range selection - initialize without cached values
-	let startDate = $state<Date>(new Date(Date.now() - 24 * 60 * 60 * 1000)); // 24 hours ago
-	let endDate = $state<Date>(new Date(Date.now())); // Current time
+	// Date range selection - initialize in LOCAL time (today end-of-day and 24h before)
+	const __endInit = new Date();
+	__endInit.setHours(23, 59, 59, 999);
+	let endDate = $state<Date>(__endInit);
+	let startDate = $state<Date>(new Date(__endInit.getTime() - 24 * 60 * 60 * 1000));
 
 	// Libraries and elements
 	let ApexCharts = $state<any>(undefined);
@@ -157,36 +159,6 @@ export function setupDeviceDetail() {
 
 		loading = true;
 		error = null; // Clear previous errors
-
-		try {
-			// Format Date objects to ISO strings for robust API querying
-			const startQueryParam = start.toISOString(); // Use parameter
-			const endQueryParam = end.toISOString(); // Use parameter
-
-			const response = await fetch(
-				`/api/devices/${device.dev_eui}/data?start=${startQueryParam}&end=${endQueryParam}`
-			);
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error('Failed to fetch data:', response.status, errorText);
-				throw new Error(`Failed to fetch data. Server responded with ${response.status}.`);
-			}
-
-			const newHistoricalData = await response.json();
-			if (!Array.isArray(newHistoricalData)) {
-				console.error('API did not return an array for historical data:', newHistoricalData);
-				throw new Error('Invalid data format received from server.');
-			}
-			processHistoricalData(newHistoricalData); // Process the newly fetched data
-			return newHistoricalData;
-		} catch (err) {
-			console.error('Error in fetchDataForDateRange:', err);
-			error = err instanceof Error ? err.message : 'Unknown error occurred while fetching data.';
-			return []; // Return empty array on error
-		} finally {
-			loading = false;
-		}
 	}
 
 	/**
@@ -357,12 +329,10 @@ export function setupDeviceDetail() {
 
 	// Initialize dates function
 	function initializeDateRange() {
-		const today = new Date(Date.now()); // Force fresh date
-		const yesterday = DateTime.fromJSDate(today).minus({ days: 1 }).toJSDate();
-
-		console.log('device-detail initializeDateRange called:', { yesterday, today });
-		startDate = yesterday; // Assign Date object directly
-		endDate = today; // Assign Date object directly
+		const end = new Date();
+		end.setHours(23, 59, 59, 999);
+		endDate = end;
+		startDate = new Date(end.getTime() - 24 * 60 * 60 * 1000);
 	}
 
 	return {

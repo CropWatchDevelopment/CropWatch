@@ -21,31 +21,38 @@
 		onDateChange
 	}: Props = $props();
 
-	let startDateInputString = $state(startDateInput.toISOString().split('T')[0]);
-	let endDateInputString = $state(endDateInput.toISOString().split('T')[0]);
+	// Helpers to format/parse dates for <input type="date"> in LOCAL time
+	function toInputDateString(d: Date): string {
+		const y = d.getFullYear();
+		const m = String(d.getMonth() + 1).padStart(2, '0');
+		const day = String(d.getDate()).padStart(2, '0');
+		return `${y}-${m}-${day}`;
+	}
+	function parseInputDateLocal(value: string): Date | null {
+		if (!value) return null;
+		const [y, m, d] = value.split('-').map(Number);
+		if (!y || !m || !d) return null;
+		return new Date(y, m - 1, d); // local midnight
+	}
+
+	// Ensure end defaults to end-of-today and start to 24h before end (only once at initial mount)
+	let __initialized = $state(false);
+	$effect(() => {
+		if (!__initialized) {
+			const end = new Date();
+			end.setHours(23, 59, 59, 999); // end of current local day
+			endDateInput = end;
+			startDateInput = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+			__initialized = true;
+		}
+	});
+
+	let startDateInputString = $derived(toInputDateString(startDateInput));
+	let endDateInputString = $derived(toInputDateString(endDateInput));
+	const todayString = $derived(toInputDateString(new Date()));
 
 	const handleDateChange = () => {
 		if (startDateInput && endDateInput) {
-			// Validate that end date is not in the future (allow today)
-			debugger;
-			const today = new Date();
-			today.setHours(23, 59, 59, 999); // Set to end of today
-
-			if (endDateInput > today) {
-				error = 'End date cannot be in the future.';
-				// Reset to today
-				endDateInput = new Date();
-				return;
-			}
-
-			// Validate that start date is not after end date
-			if (startDateInput > endDateInput) {
-				error = 'Start date cannot be after end date.';
-				// Reset start date to match end date
-				startDateInput = new Date(endDateInput);
-				return;
-			}
-
 			// Clear any previous error
 			error = undefined;
 			// Call the parent's callback
@@ -74,19 +81,22 @@
 			type="date"
 			bind:value={startDateInputString}
 			onchange={() => {
-				const newStartDate = new Date(startDateInputString);
+				const parsed = parseInputDateLocal(startDateInputString);
 
-				// Validate the date is not invalid
-				if (isNaN(newStartDate.getTime())) {
+				if (!parsed) {
 					error = 'Invalid start date format.';
 					return;
 				}
 
-				startDateInput = newStartDate;
+				// Normalize start to start-of-day
+				parsed.setHours(0, 0, 0, 0);
+				startDateInput = parsed;
 
-				// If start date is after end date, adjust end date
+				// If start date is after end date, align end to end-of-day of start
 				if (startDateInput > endDateInput) {
-					endDateInput = new Date(startDateInput);
+					const end = new Date(startDateInput);
+					end.setHours(23, 59, 59, 999);
+					endDateInput = end;
 				}
 
 				handleDateChange();
@@ -104,36 +114,29 @@
 			type="date"
 			bind:value={endDateInputString}
 			onchange={() => {
-				const newEndDate = new Date(endDateInputString);
-
-				// Validate the date is not invalid
-				if (isNaN(newEndDate.getTime())) {
-					error = 'Invalid end date format.';
+				const parsed = parseInputDateLocal(endDateInputString);
+				if (!parsed) {
 					return;
 				}
+				// Normalize end to end-of-day
+				parsed.setHours(23, 59, 59, 999);
 
-				// Check if end date is in the future
-				const today = new Date();
-				today.setHours(23, 59, 59, 999);
+				// Cap to today end-of-day
+				const todayEnd = new Date();
+				todayEnd.setHours(23, 59, 59, 999);
+				endDateInput = parsed > todayEnd ? todayEnd : parsed;
 
-				if (newEndDate > today) {
-					error = 'End date cannot be in the future.';
-					// Reset to today
-					endDateInput = new Date();
-					return;
-				}
-
-				endDateInput = newEndDate;
-
-				// If end date is before start date, adjust start date
+				// If end before start, align start to start-of-day of end
 				if (endDateInput < startDateInput) {
-					startDateInput = new Date(endDateInput);
+					const start = new Date(endDateInput);
+					start.setHours(0, 0, 0, 0);
+					startDateInput = start;
 				}
 
 				handleDateChange();
 			}}
 			min={startDateInputString}
-			max={new Date().toISOString().split('T')[0]}
+			max={todayString}
 			class="relative flex w-full rounded border border-gray-300 bg-white px-2 py-2 pr-10 text-sm text-xl text-gray-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
 		/>
 	</div>
@@ -143,7 +146,7 @@
 			class="h-[45px] w-[25px]"
 			variant="tertiary"
 			iconic
-			disabled={new Date(endDateInput) >= DateTime.now().minus({ days: 1 }).toJSDate()}
+			disabled={endDateInput >= new Date(new Date().setHours(23, 59, 59, 999))}
 			onclick={() => {
 				let dayDiff = DateTime.fromJSDate(endDateInput).diff(
 					DateTime.fromJSDate(startDateInput),

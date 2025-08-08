@@ -69,24 +69,11 @@
 	let mainChartElements: HTMLElement[] = $state([]); // Holds chart elements for rendering
 	let blushChartElements: HTMLElement[] = $state([]); // Holds brush elements for rendering
 
-	// Initialize date range - default to past 24 hours
-	function initializeComponentDateRange(): { start: Date; end: Date } {
-		// Always default to current date
-		const endDate: Date = new Date(); // Default to now
-		const startDate: Date = new Date(endDate.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
-
-		console.log('Initializing date range with defaults:', { start: startDate, end: endDate });
-		return { start: startDate, end: endDate };
-	}
-
-	// Initialize dates - force fresh date creation
-	let startDateInput: Date = $state(new Date(Date.now() - 24 * 60 * 60 * 1000)); // 24 hours ago
-	let endDateInput: Date = $state(new Date()); // Current date
-
-	console.log('Date inputs initialized:', {
-		startDateInput: startDateInput.toISOString(),
-		endDateInput: endDateInput.toISOString()
-	});
+	// Date range selection - initialize in LOCAL time (end: today 23:59:59.999, start: end - 24h)
+	const __endInit = new Date();
+	__endInit.setHours(23, 59, 59, 999);
+	let endDateInput = $state<Date>(__endInit);
+	let startDateInput = $state<Date>(new Date(__endInit.getTime() - 24 * 60 * 60 * 1000));
 
 	let loadingHistoricalData = $state(false); // Local loading state for historical data fetch
 	let renderingVisualization = $state(false); // Local rendering state for visualization
@@ -177,18 +164,6 @@
 		calendarEvents = updateEvents(historicalData);
 	});
 
-	// Effect to keep input strings in sync if deviceDetail.startDate/endDate change (e.g. by initializeDateRange)
-	// $effect(() => {
-	// 	if (deviceDetail.startDate) {
-	// startDateInputString = formatDateForInput(deviceDetail.startDate);
-	// 	}
-	// });
-	// $effect(() => {
-	// 	if (deviceDetail.endDate) {
-	// 		endDateInputString = formatDateForInput(deviceDetail.endDate);
-	// 	}
-	// });
-
 	const updateEvents = (data: any[] = historicalData): CalendarEvent[] => {
 		// Group data by date
 		const dailyStats: { [date: string]: Record<string, any> } = {};
@@ -248,21 +223,6 @@
 	async function handleDateRangeSubmit() {
 		if (!startDateInput || !endDateInput) {
 			deviceDetail.error = 'Please select both start and end dates.';
-			return;
-		}
-
-		console.log('Fetching data for range:', startDateInput, endDateInput);
-
-		// Validate dates
-		if (startDateInput > endDateInput) {
-			deviceDetail.error = 'Start date cannot be after end date.';
-			return;
-		}
-
-		const today = new Date();
-		today.setHours(23, 59, 59, 999);
-		if (endDateInput > today) {
-			deviceDetail.error = 'End date cannot be in the future.';
 			return;
 		}
 
@@ -455,14 +415,8 @@
 		<div class="mt-4">
 			<section>
 				<h2>{$_('Weather & Data')}</h2>
-				<WeatherCalendar
-					events={calendarEvents}
-					onDateChange={(date: Date) => {
-						startDateInput = date;
-						endDateInput = new Date(date);
-						handleDateRangeSubmit();
-					}}
-				/>
+				<!-- Removed onDateChange: it fired on month-view load with the start of the month, which overwrote the DateRangeSelector defaults to the 1st of the month. -->
+				<WeatherCalendar events={calendarEvents} />
 			</section>
 		</div>
 	</div>
