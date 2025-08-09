@@ -2,7 +2,7 @@
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import type { ReportAlertPoint } from '$lib/models/Report';
-	import { neutral } from '$lib/stores/toast.svelte';
+	import { error, neutral, warning } from '$lib/stores/toast.svelte';
 	import { Dialog } from 'bits-ui';
 	import { _, locale as appLocale } from 'svelte-i18n';
 
@@ -67,6 +67,11 @@
 
 		if (!response.ok) {
 			console.error(`Failed to download ${type} for device ${devEui}:`, response.statusText);
+			if (response.status === 404) {
+				warning('Report Not Found, Please create a reaport first.');
+			} else {
+				error('Error Generating Report, contact support.');
+			}
 			return;
 		}
 

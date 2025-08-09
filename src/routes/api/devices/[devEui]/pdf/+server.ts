@@ -99,7 +99,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			console.error('Error fetching report parameters:', error.message);
 			return json(
 				{ error: `Failed to fetch report parameters - ${error.message}` },
-				{ status: 500 }
+				{ status: 404 }
 			);
 		}
 

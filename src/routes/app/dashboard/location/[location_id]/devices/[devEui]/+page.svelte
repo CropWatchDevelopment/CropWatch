@@ -122,6 +122,31 @@
 		})();
 	});
 
+	$effect(() => {
+		// Initialize latestData from the streamed promise once
+		if (latestData === null && data.latestData) {
+			(async () => {
+				try {
+					const _latest = await data.latestData;
+					if (_latest) {
+						latestData = _latest as DeviceDataRecord;
+					} else if (historicalData.length) {
+						// Fallback: use most recent historical record if available
+						latestData = historicalData[historicalData.length - 1];
+					}
+				} catch (e) {
+					console.error('Failed to resolve latestData promise:', e);
+				}
+			})();
+		}
+	});
+
+	$effect(() => {
+		if (latestData === null && historicalData.length) {
+			latestData = historicalData[historicalData.length - 1];
+		}
+	});
+
 	const renderChart = async () => {
 		if (renderingVisualization || !numericKeys.length) {
 			return;
@@ -274,149 +299,134 @@
 	</div>
 </Header>
 
-<div class="wrapper flex flex-col gap-4 p-4 lg:flex-row">
-	<!-- Left pane -->
-	<div
-		class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
-	>
-		<!-- Latest data section -->
-		<section class="flex-auto lg:w-auto lg:flex-none">
-			<h2>{$_('Latest Sensor Readings')}</h2>
-			{#if latestData}
-				<div>
-					<div class="grid grid-cols-2 gap-2">
-						{#each Object.keys(latestData) as key}
-							{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
-								<DataCard
-									{latestData}
-									name={key}
-									{key}
-									type={key}
-									metadata={key === 'created_at' || key === 'dev_eui'}
-								/>
-							{/if}
-						{/each}
+<!-- Updated layout: outer wrapper always column; inner two-column row contains latest + stats; charts moved below for full-width -->
+<div class="wrapper flex flex-col gap-4 p-4">
+	<div class="flex flex-col gap-4 lg:flex-row">
+		<!-- Left pane -->
+		<div
+			class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+		>
+			<!-- Latest data section -->
+			<section class="flex-auto lg:w-auto lg:flex-none">
+				<h2>{$_('Latest Sensor Readings')}</h2>
+				{#if latestData}
+					<div>
+						<div class="grid grid-cols-2 gap-2">
+							{#each Object.keys(latestData) as key}
+								{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
+									<DataCard
+										{latestData}
+										name={key}
+										{key}
+										type={key}
+										metadata={key === 'created_at' || key === 'dev_eui'}
+									/>
+								{/if}
+							{/each}
+						</div>
+
+						<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+							{$_('Last updated:')}
+							{formatDateForDisplay(latestData.created_at)}
+						</p>
 					</div>
+				{:else}
+					<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
+				{/if}
+			</section>
 
-					<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
-						{$_('Last updated:')}
-						{formatDateForDisplay(latestData.created_at)}
-					</p>
-				</div>
-			{:else}
-				<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
-			{/if}
-		</section>
-
-		<!-- Video feed and map on large screen -->
-		<CameraStream {device} class="hidden flex-none lg:block" />
-		<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
-	</div>
-
-	<!-- Right pane -->
-	<div
-		class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0"
-		inert={loadingHistoricalData}
-		aria-busy={loadingHistoricalData}
-	>
-		<!-- Loading overlay -->
-		{#if loadingHistoricalData}
-			<div
-				class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-gray-50 backdrop-blur-xs dark:bg-zinc-900/75"
-			>
-				<Spinner />
-				{$_('Loading historical data...')}
-			</div>
-		{/if}
-		<!-- Data range selector on small/medium screen -->
-		<div class="mb-4 border-b border-neutral-400 pb-4 lg:hidden">
-			<DateRangeSelector
-				bind:startDateInput
-				bind:endDateInput
-				{loadingHistoricalData}
-				onDateChange={handleDateRangeSubmit}
-			/>
+			<!-- Video feed and map on large screen -->
+			<CameraStream {device} class="hidden flex-none lg:block" />
+			<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
 		</div>
-		<section class="mb-12">
-			{#if loading}
-				<!-- Loading State -->
+
+		<!-- Right pane (now only summary + calendar) -->
+		<div
+			class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0"
+			inert={loadingHistoricalData}
+			aria-busy={loadingHistoricalData}
+		>
+			{#if loadingHistoricalData}
 				<div
-					class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
+					class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-gray-50 backdrop-blur-xs dark:bg-zinc-900/75"
 				>
 					<Spinner />
-					<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
+					{$_('Loading historical data...')}
 				</div>
-			{:else if historicalData.length === 0}
-				<!-- Empty State -->
-				<div class="pt-4 text-center text-gray-500 italic">
-					{$_('No historical data available for the selected date range.')}
-				</div>
-			{:else}
-				<!-- Statistical Summary -->
-				<div class="mb-8">
-					<h2>{$_('Stats Summary')}</h2>
-					<div class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3">
-						{#if temperatureChartVisible}
-							<StatsCard key="temperature_c" {stats} />
-						{/if}
-						{#if humidityChartVisible}
-							<StatsCard key="humidity" {stats} />
-						{/if}
-						{#if moistureChartVisible}
-							<StatsCard key="moisture" {stats} />
-						{/if}
-						{#if co2ChartVisible}
-							<StatsCard key="co2" {stats} />
-						{/if}
-						{#if phChartVisible}
-							<StatsCard key="ph" {stats} />
-						{/if}
+			{/if}
+			<div class="mb-4 border-b border-neutral-400 pb-4 lg:hidden">
+				<DateRangeSelector
+					bind:startDateInput
+					bind:endDateInput
+					{loadingHistoricalData}
+					onDateChange={handleDateRangeSubmit}
+				/>
+			</div>
+			<section class="mb-12">
+				{#if loading}
+					<div
+						class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
+					>
+						<Spinner />
+						<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
 					</div>
-				</div>
-
-				<!-- Charts -->
-				<!-- Chart Visualizations -->
-				<section class="mb-12" inert={renderingVisualization} aria-busy={renderingVisualization}>
-					<h2>{$_('Data Chart')}</h2>
-
-					<!-- Generic Main Line + Brush Chart (always rendered if historicalData exists) -->
-					<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
-						{#if renderingVisualization}
-							<div class="absolute inset-0 z-10 flex items-center justify-center">
-								Rendering chart...
-							</div>
-						{/if}
-						<div class="w-full">
-							<div class="chart-placeholder grid grid-cols-1 gap-4 md:grid-cols-2">
-								{#each numericKeys as key, index (key)}
-									<section class="chart-visual">
-										<h3 class="text-center font-semibold">{$_(key)}</h3>
-										<div class="chart main-chart" bind:this={mainChartElements[index]}></div>
-										<div class="chart brush-chart" bind:this={blushChartElements[index]}></div>
-									</section>
-								{/each}
-							</div>
+				{:else if historicalData.length === 0}
+					<div class="pt-4 text-center text-gray-500 italic">
+						{$_('No historical data available for the selected date range.')}
+					</div>
+				{:else}
+					<div class="mb-8">
+						<h2>{$_('Stats Summary')}</h2>
+						<div
+							class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3"
+						>
+							{#if temperatureChartVisible}<StatsCard key="temperature_c" {stats} />{/if}
+							{#if humidityChartVisible}<StatsCard key="humidity" {stats} />{/if}
+							{#if moistureChartVisible}<StatsCard key="moisture" {stats} />{/if}
+							{#if co2ChartVisible}<StatsCard key="co2" {stats} />{/if}
+							{#if phChartVisible}<StatsCard key="ph" {stats} />{/if}
 						</div>
 					</div>
-				</section>
-			{/if}
-		</section>
-
-		<!-- Video feed and map on small/medium screen -->
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:hidden">
-			<CameraStream {device} />
-			<!-- <DeviceMap {device} /> -->
-		</div>
-
-		<div class="mt-4">
-			<section>
-				<h2>{$_('Weather & Data')}</h2>
-				<!-- Removed onDateChange: it fired on month-view load with the start of the month, which overwrote the DateRangeSelector defaults to the 1st of the month. -->
-				<WeatherCalendar events={calendarEvents} />
+				{/if}
 			</section>
+
+			<!-- Video feed and map on small/medium screen -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:hidden">
+				<CameraStream {device} />
+				<!-- <DeviceMap {device} /> -->
+			</div>
 		</div>
 	</div>
 </div>
+
+<!-- Full-width Charts Section (desktop + mobile) -->
+{#if !loading && !loadingHistoricalData && historicalData.length > 0}
+	<section class="mb-12 px-4" inert={renderingVisualization} aria-busy={renderingVisualization}>
+		<h2>{$_('Data Chart')}</h2>
+		<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
+			{#if renderingVisualization}
+				<div class="absolute inset-0 z-10 flex items-center justify-center">Rendering chart...</div>
+			{/if}
+			<div class="w-full">
+				<div class="chart-placeholder grid grid-cols-1 gap-4 md:grid-cols-2">
+					{#each numericKeys as key, index (key)}
+						<section class="chart-visual">
+							<h3 class="text-center font-semibold">{$_(key)}</h3>
+							<div class="chart main-chart" bind:this={mainChartElements[index]}></div>
+							<div class="chart brush-chart" bind:this={blushChartElements[index]}></div>
+						</section>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</section>
+{/if}
+
+<!-- Full-width Calendar Section -->
+<section class="mb-12 px-4">
+	<h2>{$_('Weather & Data')}</h2>
+	<WeatherCalendar events={calendarEvents} />
+</section>
 
 <style lang="postcss">
 	@reference "tailwindcss";
