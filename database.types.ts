@@ -43,6 +43,268 @@ export type Database = {
 					}
 				];
 			};
+			babylon_connection_types: {
+				Row: {
+					created_at: string;
+					id: number;
+					name: string;
+					type_id: number;
+				};
+				Insert: {
+					created_at?: string;
+					id?: number;
+					name: string;
+					type_id?: number;
+				};
+				Update: {
+					created_at?: string;
+					id?: number;
+					name?: string;
+					type_id?: number;
+				};
+				Relationships: [];
+			};
+			babylon_decoders: {
+				Row: {
+					created_at: string;
+					decoder: string | null;
+					decoder_id: number;
+					id: number;
+					name: string;
+				};
+				Insert: {
+					created_at?: string;
+					decoder?: string | null;
+					decoder_id?: number;
+					id?: number;
+					name?: string;
+				};
+				Update: {
+					created_at?: string;
+					decoder?: string | null;
+					decoder_id?: number;
+					id?: number;
+					name?: string;
+				};
+				Relationships: [];
+			};
+			babylon_in_connections: {
+				Row: {
+					connection_id: number;
+					connection_name: string;
+					created_at: string;
+					endpoint: string;
+					id: number;
+					password: string | null;
+					port: number | null;
+					profile_id: string;
+					type: number;
+					username: string | null;
+				};
+				Insert: {
+					connection_id?: number;
+					connection_name: string;
+					created_at?: string;
+					endpoint: string;
+					id?: number;
+					password?: string | null;
+					port?: number | null;
+					profile_id: string;
+					type: number;
+					username?: string | null;
+				};
+				Update: {
+					connection_id?: number;
+					connection_name?: string;
+					created_at?: string;
+					endpoint?: string;
+					id?: number;
+					password?: string | null;
+					port?: number | null;
+					profile_id?: string;
+					type?: number;
+					username?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'public_babylon_connections_profile_id_fkey';
+						columns: ['profile_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'public_babylon_in_connections_type_fkey';
+						columns: ['type'];
+						isOneToOne: false;
+						referencedRelation: 'babylon_connection_types';
+						referencedColumns: ['type_id'];
+					}
+				];
+			};
+			babylon_input_output: {
+				Row: {
+					created_at: string;
+					id: number;
+					in_id: number;
+					out_id: number;
+				};
+				Insert: {
+					created_at?: string;
+					id?: number;
+					in_id: number;
+					out_id: number;
+				};
+				Update: {
+					created_at?: string;
+					id?: number;
+					in_id?: number;
+					out_id?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'babylon_input_output_in_id_fkey';
+						columns: ['in_id'];
+						isOneToOne: false;
+						referencedRelation: 'babylon_in_connections';
+						referencedColumns: ['connection_id'];
+					},
+					{
+						foreignKeyName: 'babylon_input_output_out_id_fkey';
+						columns: ['out_id'];
+						isOneToOne: false;
+						referencedRelation: 'babylon_out_connections';
+						referencedColumns: ['connection_id'];
+					}
+				];
+			};
+			babylon_notifiers: {
+				Row: {
+					api_key: string | null;
+					created_at: string;
+					host: string | null;
+					id: number;
+					isSecure: boolean;
+					name: string;
+					notifier_id: number | null;
+					password: string | null;
+					port: number | null;
+					type: number | null;
+					username: string | null;
+				};
+				Insert: {
+					api_key?: string | null;
+					created_at?: string;
+					host?: string | null;
+					id?: number;
+					isSecure?: boolean;
+					name: string;
+					notifier_id?: number | null;
+					password?: string | null;
+					port?: number | null;
+					type?: number | null;
+					username?: string | null;
+				};
+				Update: {
+					api_key?: string | null;
+					created_at?: string;
+					host?: string | null;
+					id?: number;
+					isSecure?: boolean;
+					name?: string;
+					notifier_id?: number | null;
+					password?: string | null;
+					port?: number | null;
+					type?: number | null;
+					username?: string | null;
+				};
+				Relationships: [];
+			};
+			babylon_notifiers_out_connections: {
+				Row: {
+					created_at: string;
+					id: number;
+					notifier_id: number;
+					out_connection_id: number;
+				};
+				Insert: {
+					created_at?: string;
+					id?: number;
+					notifier_id: number;
+					out_connection_id: number;
+				};
+				Update: {
+					created_at?: string;
+					id?: number;
+					notifier_id?: number;
+					out_connection_id?: number;
+				};
+				Relationships: [];
+			};
+			babylon_out_connections: {
+				Row: {
+					connection_id: number;
+					connection_name: string;
+					created_at: string;
+					decoder: number | null;
+					endpoint: string | null;
+					id: number;
+					password: string | null;
+					port: number | null;
+					profile_id: string;
+					type: number;
+					username: string | null;
+				};
+				Insert: {
+					connection_id?: number;
+					connection_name: string;
+					created_at?: string;
+					decoder?: number | null;
+					endpoint?: string | null;
+					id?: number;
+					password?: string | null;
+					port?: number | null;
+					profile_id: string;
+					type: number;
+					username?: string | null;
+				};
+				Update: {
+					connection_id?: number;
+					connection_name?: string;
+					created_at?: string;
+					decoder?: number | null;
+					endpoint?: string | null;
+					id?: number;
+					password?: string | null;
+					port?: number | null;
+					profile_id?: string;
+					type?: number;
+					username?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'public_babylon_out_connections_decoder_fkey';
+						columns: ['decoder'];
+						isOneToOne: false;
+						referencedRelation: 'babylon_decoders';
+						referencedColumns: ['decoder_id'];
+					},
+					{
+						foreignKeyName: 'public_babylon_out_connections_profile_id_fkey';
+						columns: ['profile_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'public_babylon_out_connections_type_fkey';
+						columns: ['type'];
+						isOneToOne: false;
+						referencedRelation: 'babylon_connection_types';
+						referencedColumns: ['type_id'];
+					}
+				];
+			};
 			communication_methods: {
 				Row: {
 					communication_method_id: number;
@@ -67,46 +329,9 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			customers: {
-				Row: {
-					created_at: string | null;
-					email: string | null;
-					id: string;
-					name: string | null;
-					stripe_customer_id: string;
-					updated_at: string | null;
-					user_id: string;
-				};
-				Insert: {
-					created_at?: string | null;
-					email?: string | null;
-					id: string;
-					name?: string | null;
-					stripe_customer_id: string;
-					updated_at?: string | null;
-					user_id: string;
-				};
-				Update: {
-					created_at?: string | null;
-					email?: string | null;
-					id?: string;
-					name?: string | null;
-					stripe_customer_id?: string;
-					updated_at?: string | null;
-					user_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'customers_user_id_fkey';
-						columns: ['user_id'];
-						isOneToOne: false;
-						referencedRelation: 'profiles';
-						referencedColumns: ['id'];
-					}
-				];
-			};
 			cw_air_data: {
 				Row: {
+					battery_level: number | null;
 					co: number | null;
 					co2: number | null;
 					created_at: string;
@@ -116,12 +341,15 @@ export type Database = {
 					lux: number | null;
 					pressure: number | null;
 					rainfall: number | null;
+					smoke_detected: boolean | null;
 					temperature_c: number | null;
 					uv_index: number | null;
+					vape_detected: boolean | null;
 					wind_direction: number | null;
 					wind_speed: number | null;
 				};
 				Insert: {
+					battery_level?: number | null;
 					co?: number | null;
 					co2?: number | null;
 					created_at?: string;
@@ -131,12 +359,15 @@ export type Database = {
 					lux?: number | null;
 					pressure?: number | null;
 					rainfall?: number | null;
+					smoke_detected?: boolean | null;
 					temperature_c?: number | null;
 					uv_index?: number | null;
+					vape_detected?: boolean | null;
 					wind_direction?: number | null;
 					wind_speed?: number | null;
 				};
 				Update: {
+					battery_level?: number | null;
 					co?: number | null;
 					co2?: number | null;
 					created_at?: string;
@@ -146,8 +377,10 @@ export type Database = {
 					lux?: number | null;
 					pressure?: number | null;
 					rainfall?: number | null;
+					smoke_detected?: boolean | null;
 					temperature_c?: number | null;
 					uv_index?: number | null;
+					vape_detected?: boolean | null;
 					wind_direction?: number | null;
 					wind_speed?: number | null;
 				};
@@ -198,107 +431,6 @@ export type Database = {
 						isOneToOne: false;
 						referencedRelation: 'profiles';
 						referencedColumns: ['id'];
-					}
-				];
-			};
-			cw_co2_alerts: {
-				Row: {
-					action: string;
-					cleared: boolean;
-					created_at: string;
-					dev_eui: string;
-					id: number;
-					OneSignalID: string | null;
-					operator: string;
-					profile_id: string;
-					receiver: string;
-					subject: string;
-					value: number;
-				};
-				Insert: {
-					action: string;
-					cleared: boolean;
-					created_at?: string;
-					dev_eui: string;
-					id?: number;
-					OneSignalID?: string | null;
-					operator: string;
-					profile_id: string;
-					receiver: string;
-					subject: string;
-					value: number;
-				};
-				Update: {
-					action?: string;
-					cleared?: boolean;
-					created_at?: string;
-					dev_eui?: string;
-					id?: number;
-					OneSignalID?: string | null;
-					operator?: string;
-					profile_id?: string;
-					receiver?: string;
-					subject?: string;
-					value?: number;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'cw_co2_alerts_dev_eui_fkey';
-						columns: ['dev_eui'];
-						isOneToOne: false;
-						referencedRelation: 'cw_devices';
-						referencedColumns: ['dev_eui'];
-					},
-					{
-						foreignKeyName: 'cw_co2_alerts_profile_id_fkey';
-						columns: ['profile_id'];
-						isOneToOne: false;
-						referencedRelation: 'profiles';
-						referencedColumns: ['id'];
-					}
-				];
-			};
-			cw_co2_uplinks: {
-				Row: {
-					battery: number | null;
-					co2_level: number | null;
-					created_at: string;
-					dev_eui: string | null;
-					humidity: number;
-					id: number;
-					pressure: number | null;
-					profile_id: string | null;
-					temperature: number;
-				};
-				Insert: {
-					battery?: number | null;
-					co2_level?: number | null;
-					created_at?: string;
-					dev_eui?: string | null;
-					humidity: number;
-					id?: number;
-					pressure?: number | null;
-					profile_id?: string | null;
-					temperature: number;
-				};
-				Update: {
-					battery?: number | null;
-					co2_level?: number | null;
-					created_at?: string;
-					dev_eui?: string | null;
-					humidity?: number;
-					id?: number;
-					pressure?: number | null;
-					profile_id?: string | null;
-					temperature?: number;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'cw_co2_uplinks_dev_eui_fkey';
-						columns: ['dev_eui'];
-						isOneToOne: false;
-						referencedRelation: 'cw_devices';
-						referencedColumns: ['dev_eui'];
 					}
 				];
 			};
@@ -503,7 +635,6 @@ export type Database = {
 					name: string;
 					report_endpoint: string | null;
 					serial_number: string | null;
-					tti_name: string | null;
 					type: number | null;
 					upload_interval: number | null;
 					user_id: string | null;
@@ -520,7 +651,6 @@ export type Database = {
 					name?: string;
 					report_endpoint?: string | null;
 					serial_number?: string | null;
-					tti_name?: string | null;
 					type?: number | null;
 					upload_interval?: number | null;
 					user_id?: string | null;
@@ -537,7 +667,6 @@ export type Database = {
 					name?: string;
 					report_endpoint?: string | null;
 					serial_number?: string | null;
-					tti_name?: string | null;
 					type?: number | null;
 					upload_interval?: number | null;
 					user_id?: string | null;
@@ -718,18 +847,21 @@ export type Database = {
 					id: number;
 					name: string;
 					notifier_id: number;
+					notifier_value: number;
 				};
 				Insert: {
 					created_at?: string;
 					id?: number;
 					name: string;
-					notifier_id?: number;
+					notifier_id: number;
+					notifier_value: number;
 				};
 				Update: {
 					created_at?: string;
 					id?: number;
 					name?: string;
 					notifier_id?: number;
+					notifier_value?: number;
 				};
 				Relationships: [];
 			};
@@ -754,34 +886,34 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			cw_relay_data: {
+			cw_pulse_meters: {
 				Row: {
+					count: number;
 					created_at: string;
 					dev_eui: string;
 					id: number;
-					relay_1: boolean;
-					relay_2: boolean | null;
-					relay_3: boolean | null;
+					litersPerPulse: number;
+					periodCount: number;
 				};
 				Insert: {
+					count?: number;
 					created_at?: string;
 					dev_eui: string;
 					id?: number;
-					relay_1?: boolean;
-					relay_2?: boolean | null;
-					relay_3?: boolean | null;
+					litersPerPulse?: number;
+					periodCount?: number;
 				};
 				Update: {
+					count?: number;
 					created_at?: string;
 					dev_eui?: string;
 					id?: number;
-					relay_1?: boolean;
-					relay_2?: boolean | null;
-					relay_3?: boolean | null;
+					litersPerPulse?: number;
+					periodCount?: number;
 				};
 				Relationships: [
 					{
-						foreignKeyName: 'cw_relay_data_dev_eui_fkey';
+						foreignKeyName: 'public_cw_pulse_meters_dev_eui_fkey';
 						columns: ['dev_eui'];
 						isOneToOne: false;
 						referencedRelation: 'cw_devices';
@@ -923,65 +1055,6 @@ export type Database = {
 					temperature_c?: number | null;
 				};
 				Relationships: [];
-			};
-			cw_soil_uplinks: {
-				Row: {
-					battery: number | null;
-					created_at: string;
-					dev_eui: string | null;
-					ec: number | null;
-					id: number;
-					internal_temp: number | null;
-					k: number | null;
-					moisture: number;
-					n: number | null;
-					p: number | null;
-					ph: number | null;
-					read_attempts: number | null;
-					real_duration: number | null;
-					temperature: number;
-				};
-				Insert: {
-					battery?: number | null;
-					created_at?: string;
-					dev_eui?: string | null;
-					ec?: number | null;
-					id?: number;
-					internal_temp?: number | null;
-					k?: number | null;
-					moisture: number;
-					n?: number | null;
-					p?: number | null;
-					ph?: number | null;
-					read_attempts?: number | null;
-					real_duration?: number | null;
-					temperature: number;
-				};
-				Update: {
-					battery?: number | null;
-					created_at?: string;
-					dev_eui?: string | null;
-					ec?: number | null;
-					id?: number;
-					internal_temp?: number | null;
-					k?: number | null;
-					moisture?: number;
-					n?: number | null;
-					p?: number | null;
-					ph?: number | null;
-					read_attempts?: number | null;
-					real_duration?: number | null;
-					temperature?: number;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'cw_soil_uplinks_dev_eui_fkey';
-						columns: ['dev_eui'];
-						isOneToOne: false;
-						referencedRelation: 'cw_devices';
-						referencedColumns: ['dev_eui'];
-					}
-				];
 			};
 			cw_traffic: {
 				Row: {
@@ -1130,33 +1203,42 @@ export type Database = {
 					}
 				];
 			};
-			device_data_sample: {
+			devices: {
 				Row: {
-					co2_level: number | null;
-					created_at: string;
+					active: boolean;
+					created_at: string | null;
 					dev_eui: string;
-					humidity: number | null;
+					device_name: string | null;
 					id: number;
-					pressure: number | null;
-					temperature_c: number | null;
+					lat: number | null;
+					linked_device_eui: string | null;
+					lng: number | null;
+					profile_id: string | null;
+					type: string | null;
 				};
 				Insert: {
-					co2_level?: number | null;
-					created_at: string;
+					active?: boolean;
+					created_at?: string | null;
 					dev_eui: string;
-					humidity?: number | null;
+					device_name?: string | null;
 					id?: number;
-					pressure?: number | null;
-					temperature_c?: number | null;
+					lat?: number | null;
+					linked_device_eui?: string | null;
+					lng?: number | null;
+					profile_id?: string | null;
+					type?: string | null;
 				};
 				Update: {
-					co2_level?: number | null;
-					created_at?: string;
+					active?: boolean;
+					created_at?: string | null;
 					dev_eui?: string;
-					humidity?: number | null;
+					device_name?: string | null;
 					id?: number;
-					pressure?: number | null;
-					temperature_c?: number | null;
+					lat?: number | null;
+					linked_device_eui?: string | null;
+					lng?: number | null;
+					profile_id?: string | null;
+					type?: string | null;
 				};
 				Relationships: [];
 			};
@@ -1231,110 +1313,6 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			netvox_ra02a: {
-				Row: {
-					battery: number;
-					created_at: string;
-					dev_eui: string;
-					fireAlarm: number;
-					gateway_count: number | null;
-					highTempAlarm: number;
-					id: number;
-					profile_id: string | null;
-					rssi: number | null;
-					snr: number | null;
-					temperatureC: number;
-				};
-				Insert: {
-					battery: number;
-					created_at?: string;
-					dev_eui: string;
-					fireAlarm: number;
-					gateway_count?: number | null;
-					highTempAlarm: number;
-					id?: number;
-					profile_id?: string | null;
-					rssi?: number | null;
-					snr?: number | null;
-					temperatureC: number;
-				};
-				Update: {
-					battery?: number;
-					created_at?: string;
-					dev_eui?: string;
-					fireAlarm?: number;
-					gateway_count?: number | null;
-					highTempAlarm?: number;
-					id?: number;
-					profile_id?: string | null;
-					rssi?: number | null;
-					snr?: number | null;
-					temperatureC?: number;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'netvox_ra02a_profile_id_fkey';
-						columns: ['profile_id'];
-						isOneToOne: false;
-						referencedRelation: 'profiles';
-						referencedColumns: ['id'];
-					}
-				];
-			};
-			payments: {
-				Row: {
-					amount: number;
-					created_at: string | null;
-					currency: string;
-					id: string;
-					status: string;
-					stripe_invoice_id: string | null;
-					stripe_payment_intent_id: string;
-					subscription_id: string | null;
-					updated_at: string | null;
-					user_id: string;
-				};
-				Insert: {
-					amount: number;
-					created_at?: string | null;
-					currency?: string;
-					id: string;
-					status: string;
-					stripe_invoice_id?: string | null;
-					stripe_payment_intent_id: string;
-					subscription_id?: string | null;
-					updated_at?: string | null;
-					user_id: string;
-				};
-				Update: {
-					amount?: number;
-					created_at?: string | null;
-					currency?: string;
-					id?: string;
-					status?: string;
-					stripe_invoice_id?: string | null;
-					stripe_payment_intent_id?: string;
-					subscription_id?: string | null;
-					updated_at?: string | null;
-					user_id?: string;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'payments_subscription_id_fkey';
-						columns: ['subscription_id'];
-						isOneToOne: false;
-						referencedRelation: 'subscriptions';
-						referencedColumns: ['id'];
-					},
-					{
-						foreignKeyName: 'payments_user_id_fkey';
-						columns: ['user_id'];
-						isOneToOne: false;
-						referencedRelation: 'profiles';
-						referencedColumns: ['id'];
-					}
-				];
-			};
 			permissions: {
 				Row: {
 					allowed_by_profile_id: string | null;
@@ -1390,6 +1368,7 @@ export type Database = {
 					full_name: string | null;
 					id: string;
 					last_login: string | null;
+					line_id: string | null;
 					updated_at: string | null;
 					username: string | null;
 					website: string | null;
@@ -1403,6 +1382,7 @@ export type Database = {
 					full_name?: string | null;
 					id: string;
 					last_login?: string | null;
+					line_id?: string | null;
 					updated_at?: string | null;
 					username?: string | null;
 					website?: string | null;
@@ -1416,6 +1396,7 @@ export type Database = {
 					full_name?: string | null;
 					id?: string;
 					last_login?: string | null;
+					line_id?: string | null;
 					updated_at?: string | null;
 					username?: string | null;
 					website?: string | null;
@@ -1425,7 +1406,7 @@ export type Database = {
 			report_alert_points: {
 				Row: {
 					created_at: string;
-					data_point_key: string | null;
+					data_point_key: string;
 					hex_color: string | null;
 					id: number;
 					max: number | null;
@@ -1438,7 +1419,7 @@ export type Database = {
 				};
 				Insert: {
 					created_at?: string;
-					data_point_key?: string | null;
+					data_point_key: string;
 					hex_color?: string | null;
 					id?: number;
 					max?: number | null;
@@ -1451,7 +1432,7 @@ export type Database = {
 				};
 				Update: {
 					created_at?: string;
-					data_point_key?: string | null;
+					data_point_key?: string;
 					hex_color?: string | null;
 					id?: number;
 					max?: number | null;
@@ -1525,7 +1506,7 @@ export type Database = {
 					end_of_week: boolean;
 					id: number;
 					is_active: boolean;
-					report_id: string;
+					report_id: string | null;
 					report_user_schedule_id: number;
 					user_id: string;
 				};
@@ -1536,7 +1517,7 @@ export type Database = {
 					end_of_week?: boolean;
 					id?: number;
 					is_active?: boolean;
-					report_id: string;
+					report_id?: string | null;
 					report_user_schedule_id?: number;
 					user_id?: string;
 				};
@@ -1547,7 +1528,7 @@ export type Database = {
 					end_of_week?: boolean;
 					id?: number;
 					is_active?: boolean;
-					report_id?: string;
+					report_id?: string | null;
 					report_user_schedule_id?: number;
 					user_id?: string;
 				};
@@ -1662,6 +1643,92 @@ export type Database = {
 					}
 				];
 			};
+			seeed_sensecap_s2104: {
+				Row: {
+					battery_level: number | null;
+					created_at: string;
+					dev_eui: string;
+					id: number;
+					moisture: number | null;
+					temperature: number | null;
+				};
+				Insert: {
+					battery_level?: number | null;
+					created_at?: string;
+					dev_eui: string;
+					id?: number;
+					moisture?: number | null;
+					temperature?: number | null;
+				};
+				Update: {
+					battery_level?: number | null;
+					created_at?: string;
+					dev_eui?: string;
+					id?: number;
+					moisture?: number | null;
+					temperature?: number | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'seeed_sensecap_s210x_temp_moist_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: false;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
+					}
+				];
+			};
+			seeed_t1000: {
+				Row: {
+					battery_level: number | null;
+					created_at: string;
+					dev_eui: string;
+					id: number;
+					lat: number;
+					long: number;
+					profile_id: string | null;
+					sos: number | null;
+					temperatureC: number | null;
+				};
+				Insert: {
+					battery_level?: number | null;
+					created_at?: string;
+					dev_eui: string;
+					id?: number;
+					lat: number;
+					long: number;
+					profile_id?: string | null;
+					sos?: number | null;
+					temperatureC?: number | null;
+				};
+				Update: {
+					battery_level?: number | null;
+					created_at?: string;
+					dev_eui?: string;
+					id?: number;
+					lat?: number;
+					long?: number;
+					profile_id?: string | null;
+					sos?: number | null;
+					temperatureC?: number | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'SEEED_T1000_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: false;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
+					},
+					{
+						foreignKeyName: 'seeed_t1000_profile_id_fkey';
+						columns: ['profile_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			stripe_customers: {
 				Row: {
 					attrs: Json | null;
@@ -1749,91 +1816,57 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			subscription_items: {
+			temp_humid_co2_alert_settings: {
 				Row: {
-					created_at: string | null;
-					id: string;
-					quantity: number | null;
-					stripe_price_id: string;
-					stripe_subscription_item_id: string;
-					subscription_id: string;
-					updated_at: string | null;
+					action: number;
+					cleared: boolean;
+					created_at: string;
+					dev_eui: string;
+					id: number;
+					OneSignalID: string | null;
+					operator: string;
+					profile_id: string;
+					receiver: string;
+					subject: string;
+					value: number;
 				};
 				Insert: {
-					created_at?: string | null;
-					id: string;
-					quantity?: number | null;
-					stripe_price_id: string;
-					stripe_subscription_item_id: string;
-					subscription_id: string;
-					updated_at?: string | null;
+					action: number;
+					cleared: boolean;
+					created_at?: string;
+					dev_eui: string;
+					id?: number;
+					OneSignalID?: string | null;
+					operator: string;
+					profile_id: string;
+					receiver: string;
+					subject: string;
+					value: number;
 				};
 				Update: {
-					created_at?: string | null;
-					id?: string;
-					quantity?: number | null;
-					stripe_price_id?: string;
-					stripe_subscription_item_id?: string;
-					subscription_id?: string;
-					updated_at?: string | null;
+					action?: number;
+					cleared?: boolean;
+					created_at?: string;
+					dev_eui?: string;
+					id?: number;
+					OneSignalID?: string | null;
+					operator?: string;
+					profile_id?: string;
+					receiver?: string;
+					subject?: string;
+					value?: number;
 				};
 				Relationships: [
 					{
-						foreignKeyName: 'subscription_items_subscription_id_fkey';
-						columns: ['subscription_id'];
+						foreignKeyName: 'temp_humid_co2_alert_settings_dev_eui_fkey';
+						columns: ['dev_eui'];
 						isOneToOne: false;
-						referencedRelation: 'subscriptions';
-						referencedColumns: ['id'];
-					}
-				];
-			};
-			subscriptions: {
-				Row: {
-					cancel_at_period_end: boolean | null;
-					canceled_at: string | null;
-					created_at: string | null;
-					current_period_end: string | null;
-					current_period_start: string | null;
-					customer_id: string;
-					id: string;
-					status: string;
-					stripe_price_id: string;
-					stripe_subscription_id: string;
-					updated_at: string | null;
-					user_id: string;
-				};
-				Insert: {
-					cancel_at_period_end?: boolean | null;
-					canceled_at?: string | null;
-					created_at?: string | null;
-					current_period_end?: string | null;
-					current_period_start?: string | null;
-					customer_id: string;
-					id: string;
-					status: string;
-					stripe_price_id: string;
-					stripe_subscription_id: string;
-					updated_at?: string | null;
-					user_id: string;
-				};
-				Update: {
-					cancel_at_period_end?: boolean | null;
-					canceled_at?: string | null;
-					created_at?: string | null;
-					current_period_end?: string | null;
-					current_period_start?: string | null;
-					customer_id?: string;
-					id?: string;
-					status?: string;
-					stripe_price_id?: string;
-					stripe_subscription_id?: string;
-					updated_at?: string | null;
-					user_id?: string;
-				};
-				Relationships: [
+						referencedRelation: 'devices';
+						referencedColumns: ['dev_eui'];
+					},
 					{
-						foreignKeyName: 'subscriptions_user_id_fkey';
-						columns: ['user_id'];
+						foreignKeyName: 'temp_humid_co2_alert_settings_profile_id_fkey';
+						columns: ['profile_id'];
 						isOneToOne: false;
 						referencedRelation: 'profiles';
 						referencedColumns: ['id'];
@@ -1889,19 +1922,6 @@ export type Database = {
 				Args: { bucket: string; object: string };
 				Returns: Record<string, unknown>;
 			};
-			get_filtered_device_report_data: {
-				Args: {
-					dev_id: string;
-					start_time: string;
-					end_time: string;
-					interval_minutes: number;
-					target_column: string;
-					compare_operator: string;
-					compare_value_min: number;
-					compare_value_max?: number;
-				};
-				Returns: Json[];
-			};
 			get_filtered_device_report_data_multi: {
 				Args: {
 					p_dev_id: string;
@@ -1949,34 +1969,6 @@ export type Database = {
 			get_location_for_user: {
 				Args: { user_id: string };
 				Returns: number[];
-			};
-			get_multi_condition_device_report_data: {
-				Args: {
-					p_dev_id: string;
-					p_report_id: string;
-					p_start_time: string;
-					p_end_time: string;
-					p_interval_minutes: number;
-				};
-				Returns: Json[];
-			};
-			get_report_data_for_device: {
-				Args:
-					| { input_dev_eui: string; input_start: string; input_end: string }
-					| {
-							input_dev_eui: string;
-							input_start: string;
-							input_end: string;
-							input_timezone?: string;
-					  }
-					| {
-							input_dev_eui: string;
-							input_start: string;
-							input_end: string;
-							input_timezone?: string;
-							input_interval_minutes?: number;
-					  };
-				Returns: Json;
 			};
 			get_road_events: {
 				Args: { time_grouping: string };
