@@ -25,6 +25,7 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
+	import RelayControl from '$lib/components/RelayControl.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -385,6 +386,9 @@
 							{#if moistureChartVisible}<StatsCard key="moisture" {stats} />{/if}
 							{#if co2ChartVisible}<StatsCard key="co2" {stats} />{/if}
 							{#if phChartVisible}<StatsCard key="ph" {stats} />{/if}
+							{#if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
+								<RelayControl {device} />
+							{/if}
 						</div>
 					</div>
 				{/if}
