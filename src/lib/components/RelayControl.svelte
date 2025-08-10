@@ -4,19 +4,66 @@
 	import Spinner from '$lib/components/Spinner.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import type { DeviceWithType } from '$lib/models/Device';
+	import { onMount } from 'svelte';
 
 	export let device: DeviceWithType;
 	const devEui = device.dev_eui;
-	// Use regular object + assignments (Svelte will track top-level mutations when reassigned)
-	let busy: Record<string, boolean> = {};
+	// Track relay busy state per relay (not per payload) and optimistic on/off state
+	type RelayKey = 'relay1' | 'relay2';
+	let busy: Record<RelayKey, boolean> = { relay1: false, relay2: false };
+	let relayState: Record<RelayKey, boolean> = { relay1: false, relay2: false }; // false = OFF
+	let initialLoaded = false;
+	let loadingInitial = false;
 
-	function setBusy(key: string, val: boolean) {
-		busy = { ...busy, [key]: val };
+	function setBusy(relay: RelayKey, val: boolean) {
+		busy = { ...busy, [relay]: val };
 	}
 
-	async function send(payloadName: keyof typeof DRAGINO_LT22222L_PAYLOADS) {
-		if (busy[payloadName]) return;
-		setBusy(payloadName, true);
+	function coerceBool(v: any): boolean | undefined {
+		if (v === undefined || v === null) return undefined;
+		if (typeof v === 'boolean') return v;
+		if (typeof v === 'number') return v !== 0;
+		if (typeof v === 'string') {
+			const s = v.toLowerCase();
+			if (['on', 'off'].includes(s)) return s === 'on';
+			if (['1', '0'].includes(s)) return s === '1';
+		}
+		return undefined;
+	}
+
+	async function loadInitialState() {
+		loadingInitial = true;
+		try {
+			const res = await fetch(`/api/devices/${devEui}/status`);
+			if (res.ok) {
+				const latest = await res.json();
+				// Try several possible field names
+				const r1 = coerceBool(latest.relay_1 ?? latest.relay1 ?? latest.r1 ?? latest.relayOne);
+				const r2 = coerceBool(latest.relay_2 ?? latest.relay2 ?? latest.r2 ?? latest.relayTwo);
+				relayState = {
+					relay1: r1 ?? relayState.relay1,
+					relay2: r2 ?? relayState.relay2
+				};
+				initialLoaded = true;
+			} else {
+				// Non-fatal if status not available
+				initialLoaded = true;
+			}
+		} catch (e) {
+			initialLoaded = true; // proceed with defaults
+		} finally {
+			loadingInitial = false;
+		}
+	}
+
+	onMount(() => {
+		void loadInitialState();
+	});
+
+	async function sendCommand(relay: RelayKey, turnOn: boolean) {
+		if (busy[relay]) return;
+		setBusy(relay, true);
+		const payloadName = (relay + (turnOn ? 'On' : 'Off')) as keyof typeof DRAGINO_LT22222L_PAYLOADS;
 		try {
 			const res = await fetch(`/api/devices/${devEui}/downlink`, {
 				method: 'POST',
@@ -27,13 +74,29 @@
 				const txt = await res.text();
 				showError('Downlink failed: ' + txt);
 			} else {
-				success('Command sent');
+				relayState = { ...relayState, [relay]: turnOn };
+				success(`Relay ${relay === 'relay1' ? '1' : '2'} ${turnOn ? 'ON' : 'OFF'}`);
 			}
 		} catch (e) {
 			showError('Downlink failed');
 		} finally {
-			setBusy(payloadName, false);
+			setBusy(relay, false);
 		}
+	}
+
+	function toggleRelay(relay: RelayKey) {
+		sendCommand(relay, !relayState[relay]);
+	}
+
+	function bothBusy() {
+		return busy.relay1 || busy.relay2 || loadingInitial;
+	}
+
+	async function setBoth(turnOn: boolean) {
+		if (bothBusy()) return;
+		// Run in parallel
+		await Promise.all([sendCommand('relay1', turnOn), sendCommand('relay2', turnOn)]);
+		// Success toasts handled individually; optionally consolidate here.
 	}
 </script>
 
@@ -41,39 +104,87 @@
 	class="flex w-full flex-col gap-3 rounded-md border border-neutral-300 bg-white p-4 dark:border-neutral-600 dark:bg-zinc-800"
 >
 	<h3 class="flex items-center gap-2 text-sm font-semibold">
-		<MaterialIcon name="Power" size={18} /> Relay Control
+		<MaterialIcon name="power_settings_new" size={18} /> Relay Control
 	</h3>
 	<div class="grid grid-cols-2 gap-3">
+		<!-- Both control buttons -->
+		<div class="col-span-2 flex gap-2">
+			<button
+				class="relay-btn flex-1"
+				disabled={bothBusy() || (relayState.relay1 && relayState.relay2)}
+				on:click={() => setBoth(true)}
+				aria-label="Turn BOTH relays ON"
+			>
+				<span class="flex items-center gap-1">
+					<MaterialIcon name="flash_on" />
+					<span>Both ON</span>
+				</span>
+			</button>
+			<button
+				class="relay-btn flex-1"
+				disabled={bothBusy() || (!relayState.relay1 && !relayState.relay2)}
+				on:click={() => setBoth(false)}
+				aria-label="Turn BOTH relays OFF"
+			>
+				<span class="flex items-center gap-1">
+					<MaterialIcon name="flash_off" />
+					<span>Both OFF</span>
+				</span>
+			</button>
+		</div>
+		<!-- Existing individual relay buttons -->
 		<button
 			class="relay-btn"
-			class:loading={busy.relay1On || busy.relay1Off}
-			on:click={() => send(busy.relay1On ? 'relay1Off' : 'relay1On')}
-			aria-label="Toggle Relay 1"
+			class:on={relayState.relay1}
+			disabled={busy.relay1 || loadingInitial}
+			on:click={() => toggleRelay('relay1')}
+			aria-label={relayState.relay1 ? 'Turn Relay 1 OFF' : 'Turn Relay 1 ON'}
 		>
 			<span class="flex items-center gap-1">
-				<MaterialIcon name="toggle_on" />
-				<span>Relay 1</span>
+				{#if loadingInitial}
+					<Spinner small />
+				{:else}
+					<MaterialIcon name={relayState.relay1 ? 'toggle_on' : 'toggle_off'} />
+				{/if}
+				<span>Relay 1 {relayState.relay1 ? 'ON' : 'OFF'}</span>
 			</span>
+			{#if busy.relay1 && !loadingInitial}
+				<Spinner small />
+			{/if}
 		</button>
 		<button
 			class="relay-btn"
-			class:loading={busy.relay2On || busy.relay2Off}
-			on:click={() => send(busy.relay2On ? 'relay2Off' : 'relay2On')}
-			aria-label="Toggle Relay 2"
+			class:on={relayState.relay2}
+			disabled={busy.relay2 || loadingInitial}
+			on:click={() => toggleRelay('relay2')}
+			aria-label={relayState.relay2 ? 'Turn Relay 2 OFF' : 'Turn Relay 2 ON'}
 		>
 			<span class="flex items-center gap-1">
-				<MaterialIcon name="toggle_on" />
-				<span>Relay 2</span>
+				{#if loadingInitial}
+					<Spinner small />
+				{:else}
+					<MaterialIcon name={relayState.relay2 ? 'toggle_on' : 'toggle_off'} />
+				{/if}
+				<span>Relay 2 {relayState.relay2 ? 'ON' : 'OFF'}</span>
 			</span>
+			{#if busy.relay2 && !loadingInitial}
+				<Spinner small />
+			{/if}
 		</button>
 	</div>
-	<p class="text-[10px] text-neutral-500">Sends confirmed LoRaWAN downlink via TTI.</p>
+	<p class="text-[10px] text-neutral-500">Sends confirmed LoRaWAN downlink (ON/OFF).</p>
 </div>
 
 <style lang="postcss">
 	@reference "tailwindcss";
 	.relay-btn {
-		@apply relative flex w-full items-center justify-between gap-2 rounded-md bg-neutral-100 px-3 py-2 text-sm font-medium transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-700 dark:hover:bg-zinc-600;
+		@apply relative flex w-full items-center justify-between gap-2 rounded-md bg-neutral-100 px-3 py-2 text-xs font-medium transition-colors hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-700 dark:hover:bg-zinc-600;
+	}
+	.relay-btn.on {
+		@apply bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500;
+	}
+	.relay-btn.on :global(svg) {
+		@apply text-white;
 	}
 	.relay-btn.loading {
 		@apply cursor-wait opacity-70;
