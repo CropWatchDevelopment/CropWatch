@@ -7,6 +7,7 @@
 	import TextInput from '$lib/components/UI/form/TextInput.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import ExportButton from '$lib/components/devices/ExportButton.svelte';
+	import { success as toastSuccess, error as toastError } from '$lib/stores/toast.svelte';
 	import type { ReportAlertPoint } from '$lib/models/Report.js';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { untrack } from 'svelte';
@@ -79,6 +80,7 @@
 							point.operator === 'range'
 								? 'range'
 								: point.operator || ('=' as '=' | '>' | '<' | 'range'),
+						data_point_key: point.data_point_key || '',
 						min: point.min || undefined,
 						max: point.max || undefined,
 						value: point.value || undefined,
@@ -271,8 +273,24 @@
 		isSubmitting = true;
 		return async ({ result }: { result: ActionResult }) => {
 			isSubmitting = false;
-			if (result.type === 'success') {
-				goto(`/app/dashboard/location/${locationId}/devices/${devEui}/settings/reports`);
+			switch (result.type) {
+				case 'success': {
+					toastSuccess(isEditing ? 'Report updated' : 'Report created');
+					goto(`/app/dashboard/location/${locationId}/devices/${devEui}/settings/reports`);
+					break;
+				}
+				case 'failure': {
+					const msg = ((result as any).data?.message ??
+						(result as any).data?.error ??
+						'Failed to save report') as string;
+					toastError(msg);
+					break;
+				}
+				default: {
+					// Covers 'error' and any unexpected type
+					const msg = ((result as any)?.error?.message ?? 'Failed to save report') as string;
+					toastError(msg);
+				}
 			}
 		};
 	}
@@ -373,6 +391,7 @@
 					{#each alertPoints as point, i}
 						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
 							<div class="mb-3 flex items-start justify-between">
+								<pre>{JSON.stringify(point, null, 2)}</pre>
 								<div class="flex items-center space-x-2">
 									<input
 										type="color"
@@ -431,6 +450,7 @@
 										bind:value={point.operator}
 										onchange={() => {
 											point.operator === null;
+											point.value = undefined;
 										}}
 										class="w-full"
 									>
