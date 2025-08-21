@@ -371,10 +371,12 @@
 						<Spinner />
 						<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
 					</div>
-				{:else if historicalData.length === 0}
+				{:else if historicalData.length === 0 && device.cw_device_type?.data_table_v2 !== 'cw_relay_data'}
 					<div class="pt-4 text-center text-gray-500 italic">
 						{$_('No historical data available for the selected date range.')}
 					</div>
+				{:else if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
+					<RelayControl {device} />
 				{:else}
 					<div class="mb-8">
 						<h2>{$_('Stats Summary')}</h2>
@@ -386,9 +388,6 @@
 							{#if moistureChartVisible}<StatsCard key="moisture" {stats} />{/if}
 							{#if co2ChartVisible}<StatsCard key="co2" {stats} />{/if}
 							{#if phChartVisible}<StatsCard key="ph" {stats} />{/if}
-							{#if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
-								<RelayControl {device} />
-							{/if}
 						</div>
 					</div>
 				{/if}

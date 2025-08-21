@@ -82,6 +82,10 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			schedules = await reportService.getSchedulesByReportId(reportId);
 		}
 
+		alertPoints.map((point) => {
+			point.operator = point.operator === null ? 'null' : point.operator;
+		});
+
 		return {
 			devEui,
 			locationId: location_id,
@@ -184,11 +188,11 @@ export const actions: Actions = {
 				await reportService.createAlertPoint({
 					report_id: report.report_id,
 					name: point.name,
-					operator: point.operator,
+					operator: point.operator == 'null' ? null : point.operator,
 					min: point.min,
 					max: point.max,
 					value: point.value,
-					hex_color: point.hex_color,
+					hex_color: point.operator == 'null' ? '#FFFFFF' : point.hex_color,
 					data_point_key: point.data_point_key
 				});
 			}

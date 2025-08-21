@@ -1,9 +1,18 @@
 <script lang="ts">
-	import { scaleLinear } from 'd3-scale';
-	import { axisBottom } from 'd3-axis';
-	import { select } from 'd3-selection';
+	import { scaleLinear, axisBottom, select } from 'd3';
 
-	let { points, children } = $props();
+	// Local type for points expected by this component
+	type NumberLinePoint = {
+		id?: string;
+		name: string;
+		operator: '=' | '>' | '<' | 'range';
+		value?: number;
+		min?: number;
+		max?: number;
+		color: string;
+	};
+
+	let { points, children }: { points: NumberLinePoint[]; children: any } = $props();
 	let unit: 'C' | 'F' | 'K' = $state('C');
 	let centerC = $state(0);
 	const domainWidth = 100;
@@ -32,20 +41,18 @@
 		svg.selectAll('*').remove();
 
 		// Axis with styling
-		const axisG = svg
-			.append('g')
-			.attr('transform', `translate(0, ${height - margin.bottom})`)
-			.call(
-				axisBottom(xScale)
-					.ticks(10)
-					.tickFormat((c) => cToDisplay(c as number).toFixed(0))
-			);
+		const axis = axisBottom(xScale)
+			.ticks(10)
+			.tickFormat((d: any, _i: number) => cToDisplay(Number(d)).toFixed(0));
+
+		const axisG = svg.append('g').attr('transform', `translate(0, ${height - margin.bottom})`);
+		(axisG as any).call(axis as any);
 
 		axisG.selectAll('.domain').attr('stroke', '#000').attr('fill', 'none');
 		axisG.selectAll('.tick line').attr('stroke', '#000');
 
 		// Render points/ranges
-		points.forEach((pt) => {
+		(points as NumberLinePoint[]).forEach((pt: NumberLinePoint) => {
 			if (pt.operator === '=') {
 				const value = Number(pt.value);
 				if (isNaN(value)) return;
@@ -114,8 +121,24 @@
 		});
 	}
 
+	// Redraw reactively when relevant inputs change (unit, domain, or any point fields)
 	$effect(() => {
-		if (svgEl && (points.length || domain)) draw();
+		// Create a lightweight signature so changes to nested fields trigger redraw
+		const signature = JSON.stringify({
+			unit,
+			domain,
+			points: points?.map((p) => ({
+				id: p.id,
+				name: p.name,
+				operator: p.operator,
+				value: p.value,
+				min: p.min,
+				max: p.max,
+				color: p.color
+			}))
+		});
+
+		if (svgEl && signature) draw();
 	});
 </script>
 

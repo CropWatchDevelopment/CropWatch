@@ -79,10 +79,6 @@
 							point.operator === 'range'
 								? 'range'
 								: point.operator || ('=' as '=' | '>' | '<' | 'range'),
-						value:
-							point.operator === '=' || point.operator === '>' || point.operator === '<'
-								? point.min || point.max || 0
-								: undefined,
 						min: point.min || undefined,
 						max: point.max || undefined,
 						value: point.value || undefined,
@@ -111,16 +107,19 @@
 				schedules.splice(
 					0,
 					schedules.length,
-					...data.schedules.map((schedule: any) => ({
-						id: schedule.id?.toString() || crypto.randomUUID(),
-						frequency: schedule.end_of_week
+					...data.schedules.map((schedule: any) => {
+						let frequency: 'daily' | 'weekly' | 'monthly' = schedule.end_of_week
 							? 'weekly'
 							: schedule.end_of_month
 								? 'monthly'
-								: 'daily',
-						time: schedule.time || '09:00',
-						days: schedule.days || []
-					}))
+								: 'daily';
+						return {
+							id: schedule.id?.toString() || crypto.randomUUID(),
+							frequency,
+							time: schedule.time || '09:00',
+							days: schedule.days || []
+						};
+					})
 				);
 			});
 		}
@@ -259,9 +258,11 @@
 			})
 			.map((point) => ({
 				...point,
-				value: point.value ? Number(point.value) : undefined,
-				min: point.min ? Number(point.min) : undefined,
-				max: point.max ? Number(point.max) : undefined
+				value: point.value != null ? Number(point.value) : undefined,
+				min: point.min != null ? Number(point.min) : undefined,
+				max: point.max != null ? Number(point.max) : undefined,
+				// Normalize color property for NumberLine component
+				color: point.hex_color
 			}))
 	);
 
@@ -373,7 +374,11 @@
 						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
 							<div class="mb-3 flex items-start justify-between">
 								<div class="flex items-center space-x-2">
-									<input type="color" class="h-6 w-5 rounded-xl" bind:value={point.hex_color} />
+									<input
+										type="color"
+										style="width: 60px; height: 48px; border-radius: 55px;"
+										bind:value={point.hex_color}
+									/>
 									<!-- <div  style="background-color: {point.color}"></div> -->
 									<span class="font-medium">Alert Point {i + 1}</span>
 									<Select
@@ -421,7 +426,15 @@
 									>
 										Condition
 									</label>
-									<Select id="alert-point-condition-{i}" bind:value={point.operator} class="w-full">
+									<Select
+										id="alert-point-condition-{i}"
+										bind:value={point.operator}
+										onchange={() => {
+											point.operator === null;
+										}}
+										class="w-full"
+									>
+										<option value="null" selected>Display Only</option>
 										<option value="=">Equals (=)</option>
 										<option value=">">Greater than (&gt;)</option>
 										<option value="<">Less than (&lt;)</option>
@@ -603,7 +616,6 @@
 										bind:value={schedule.frequency}
 										class="w-full"
 									>
-										<option value="daily">Daily</option>
 										<option value="weekly">Weekly</option>
 										<option value="monthly">Monthly</option>
 									</Select>

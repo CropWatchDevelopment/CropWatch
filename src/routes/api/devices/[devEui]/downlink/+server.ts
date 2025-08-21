@@ -7,16 +7,12 @@ import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DRAGINO_LT22222L_PAYLOADS } from '$lib/lorawan/dragino';
 
 // SvelteKit v5: use $env/static/private on the server
-import {
-	PRIVATE_TTI_DRAGINO_RELAY_KEY,
-	TTI_IS_BASE_URL,
-	TTI_AS_BASE_URL
-} from '$env/static/private';
+import { PRIVATE_TTI_DRAGINO_RELAY_KEY } from '$env/static/private';
 
 // --- Config ---
 // IS (metadata) on EU1, AS (downlink) on AU1 unless you override via env.
-const TTI_IS_BASE = TTI_IS_BASE_URL || 'https://cropwatch.eu1.cloud.thethings.industries';
-const TTI_AS_BASE = TTI_AS_BASE_URL || 'https://cropwatch.au1.cloud.thethings.industries';
+const TTI_IS_BASE = 'https://cropwatch.eu1.cloud.thethings.industries';
+const TTI_AS_BASE = 'https://cropwatch.au1.cloud.thethings.industries';
 const TTI_KEY = PRIVATE_TTI_DRAGINO_RELAY_KEY;
 
 // Minimal fields to fetch when listing/searching devices

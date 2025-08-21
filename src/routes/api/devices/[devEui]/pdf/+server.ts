@@ -286,12 +286,12 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 					break;
 				}
 			} catch {
-				//console.log(`Could not load font from: ${fontPath}`);
+				console.error(`Could not load font from: ${fontPath}`);
 			}
 		}
 
 		if (!fontLoaded) {
-			//console.log('Using default font - Japanese characters may not display correctly');
+			console.error('Using default font - Japanese characters may not display correctly');
 		}
 
 		// Professional header with Japanese styling
@@ -341,7 +341,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		doc.x = 400;
 
 		doc
-			.text(`${$_('date_range')}: ${startDateParam} – ${endDateParam}`)
+			.text(`${$_('date_range')}: ${startDateParam} - ${endDateParam}`)
 			.text(`${$_('sampling_size')}: ${deviceData.length}`);
 
 		doc.x = marginLeft;
