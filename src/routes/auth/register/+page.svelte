@@ -294,8 +294,8 @@
 							name="firstName"
 							type="text"
 							bind:value={firstName}
-							on:blur={validateFirstName}
-							on:input={validateFirstName}
+							onblur={validateFirstName}
+							oninput={validateFirstName}
 							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.firstName
 								? 'border-red-500 focus:border-red-500 focus:ring-red-500'
 								: ''}"
@@ -320,8 +320,8 @@
 							name="lastName"
 							type="text"
 							bind:value={lastName}
-							on:blur={validateLastName}
-							on:input={validateLastName}
+							onblur={validateLastName}
+							oninput={validateLastName}
 							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.lastName
 								? 'border-red-500 focus:border-red-500 focus:ring-red-500'
 								: ''}"
@@ -346,8 +346,8 @@
 						type="email"
 						autocomplete="email"
 						bind:value={email}
-						on:blur={validateEmailField}
-						on:input={validateEmailField}
+						onblur={validateEmailField}
+						oninput={validateEmailField}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.email
 							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
 							: ''}"
@@ -374,8 +374,8 @@
 						type="password"
 						autocomplete="new-password"
 						bind:value={password}
-						on:blur={validatePasswordField}
-						on:input={validatePasswordField}
+						onblur={validatePasswordField}
+						oninput={validatePasswordField}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.password
 							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
 							: ''}"
@@ -404,8 +404,8 @@
 						type="password"
 						autocomplete="new-password"
 						bind:value={confirmPassword}
-						on:blur={validateConfirmPasswordField}
-						on:input={validateConfirmPasswordField}
+						onblur={validateConfirmPasswordField}
+						oninput={validateConfirmPasswordField}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.confirmPassword
 							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
 							: ''}"
@@ -431,8 +431,8 @@
 						name="company"
 						type="text"
 						bind:value={company}
-						on:blur={validateCompanyField}
-						on:input={validateCompanyField}
+						onblur={validateCompanyField}
+						oninput={validateCompanyField}
 						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.company
 							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
 							: ''}"
@@ -457,7 +457,7 @@
 								name="terms"
 								type="checkbox"
 								bind:checked={agreedToTerms}
-								on:change={validateTermsAgreement}
+								onchange={validateTermsAgreement}
 								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
 								disabled={isSubmitting}
 								required
@@ -466,7 +466,9 @@
 						<div class="ml-3 text-sm">
 							<label for="terms" class="text-text-light dark:text-text-dark font-medium">
 								{$_('I agree to the')}
-								<a href="/terms" class="text-primary-light dark:text-primary-dark hover:underline"
+								<a
+									href="/legal/EULA"
+									class="text-primary-light dark:text-primary-dark hover:underline"
 									>{$_('Terms of Service')}</a
 								> <span class="text-red-500">*</span>
 							</label>
@@ -480,7 +482,7 @@
 								name="privacy"
 								type="checkbox"
 								bind:checked={agreedToPrivacy}
-								on:change={validateTermsAgreement}
+								onchange={validateTermsAgreement}
 								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
 								disabled={isSubmitting}
 								required
@@ -489,7 +491,9 @@
 						<div class="ml-3 text-sm">
 							<label for="privacy" class="text-text-light dark:text-text-dark font-medium">
 								{$_('I agree to the')}
-								<a href="/privacy" class="text-primary-light dark:text-primary-dark hover:underline"
+								<a
+									href="/legal/privacy-policy"
+									class="text-primary-light dark:text-primary-dark hover:underline"
 									>{$_('Privacy Policy')}</a
 								> <span class="text-red-500">*</span>
 							</label>
@@ -503,7 +507,7 @@
 								name="cookies"
 								type="checkbox"
 								bind:checked={agreedToCookies}
-								on:change={validateTermsAgreement}
+								onchange={validateTermsAgreement}
 								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
 								disabled={isSubmitting}
 								required
@@ -512,7 +516,9 @@
 						<div class="ml-3 text-sm">
 							<label for="cookies" class="text-text-light dark:text-text-dark font-medium">
 								{$_('I agree to the')}
-								<a href="/cookies" class="text-primary-light dark:text-primary-dark hover:underline"
+								<a
+									href="/legal/cookie-policy"
+									class="text-primary-light dark:text-primary-dark hover:underline"
 									>{$_('Cookie Policy')}</a
 								> <span class="text-red-500">*</span>
 							</label>

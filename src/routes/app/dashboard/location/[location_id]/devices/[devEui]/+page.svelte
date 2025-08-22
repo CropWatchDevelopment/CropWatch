@@ -36,6 +36,11 @@
 	let dataType = $state(data.dataType);
 	let latestData: DeviceDataRecord | null = $state(null);
 	let historicalData: DeviceDataRecord[] = $state([]);
+	let userId = $state(data.user.id); // User ID for permissions
+	let devicePermissionLevelState = $state(data.device.cw_device_owners);
+	let devicePermissionLevel = $derived(
+		devicePermissionLevelState.find((owner) => owner.user_id === userId)?.permission_level || null
+	);
 
 	// Define the type for a calendar event
 	interface CalendarEvent {
@@ -274,6 +279,8 @@
 	<title>Device Details - {device?.name || device?.dev_eui}</title>
 </svelte:head>
 
+{devicePermissionLevel}
+
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
 		{#if numericKeys.length}
@@ -284,10 +291,13 @@
 				dataKeys={numericKeys}
 			/>
 		{/if}
-		<Button variant="secondary" href="{basePath}/settings">
-			<MaterialIcon name="Settings" />
-			{$_('settings')}
-		</Button>
+		<!-- <pre>{JSON.stringify(device, null, 2)}</pre> -->
+		{#if device.user_id == userId || devicePermissionLevel === 2 || devicePermissionLevel === 1}
+			<Button variant="secondary" href="{basePath}/settings">
+				<MaterialIcon name="Settings" />
+				{$_('settings')}
+			</Button>
+		{/if}
 	</div>
 	<!-- Data range selector on large screen -->
 	<div class="hidden border-l border-neutral-400 pl-4 lg:block">

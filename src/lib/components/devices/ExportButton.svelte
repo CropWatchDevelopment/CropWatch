@@ -25,7 +25,7 @@
 		buttonLabel,
 		disabled = false,
 		showDatePicker = true,
-		types = ['csv', 'pdf'],
+		types = ['csv'], // 'pdf'],
 		startDateInputString = undefined,
 		endDateInputString = undefined,
 		alertPoints = [],

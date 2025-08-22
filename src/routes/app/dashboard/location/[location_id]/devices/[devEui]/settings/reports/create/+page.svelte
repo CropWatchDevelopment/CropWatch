@@ -391,7 +391,6 @@
 					{#each alertPoints as point, i}
 						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
 							<div class="mb-3 flex items-start justify-between">
-								<pre>{JSON.stringify(point, null, 2)}</pre>
 								<div class="flex items-center space-x-2">
 									<input
 										type="color"

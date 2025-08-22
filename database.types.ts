@@ -1,10 +1,10 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-	// Allows to automatically instanciate createClient with right options
+	// Allows to automatically instantiate createClient with right options
 	// instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
 	__InternalSupabase: {
-		PostgrestVersion: '12.2.3 (519615d)';
+		PostgrestVersion: '13.0.4';
 	};
 	public: {
 		Tables: {
@@ -386,54 +386,6 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			cw_air_thvd: {
-				Row: {
-					created_at: string;
-					dev_eui: string;
-					dewPointC: number | null;
-					humidity: number;
-					id: number;
-					profile_id: string | null;
-					temperatureC: number;
-					vpd: number | null;
-				};
-				Insert: {
-					created_at?: string;
-					dev_eui: string;
-					dewPointC?: number | null;
-					humidity: number;
-					id?: number;
-					profile_id?: string | null;
-					temperatureC: number;
-					vpd?: number | null;
-				};
-				Update: {
-					created_at?: string;
-					dev_eui?: string;
-					dewPointC?: number | null;
-					humidity?: number;
-					id?: number;
-					profile_id?: string | null;
-					temperatureC?: number;
-					vpd?: number | null;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'cw_air_thvd_dev_eui_fkey';
-						columns: ['dev_eui'];
-						isOneToOne: false;
-						referencedRelation: 'cw_devices';
-						referencedColumns: ['dev_eui'];
-					},
-					{
-						foreignKeyName: 'public_cw_air_thvd_profile_id_fkey';
-						columns: ['profile_id'];
-						isOneToOne: false;
-						referencedRelation: 'profiles';
-						referencedColumns: ['id'];
-					}
-				];
-			};
 			cw_data_metadata: {
 				Row: {
 					adder: number;
@@ -757,6 +709,7 @@ export type Database = {
 			};
 			cw_location_owners: {
 				Row: {
+					admin_user_id: string;
 					description: string | null;
 					id: number;
 					is_active: boolean | null;
@@ -766,6 +719,7 @@ export type Database = {
 					user_id: string;
 				};
 				Insert: {
+					admin_user_id: string;
 					description?: string | null;
 					id?: number;
 					is_active?: boolean | null;
@@ -775,6 +729,7 @@ export type Database = {
 					user_id: string;
 				};
 				Update: {
+					admin_user_id?: string;
 					description?: string | null;
 					id?: number;
 					is_active?: boolean | null;
@@ -921,6 +876,41 @@ export type Database = {
 					}
 				];
 			};
+			cw_relay_data: {
+				Row: {
+					created_at: string;
+					dev_eui: string;
+					id: number;
+					last_update: string;
+					relay_1: boolean | null;
+					relay_2: boolean | null;
+				};
+				Insert: {
+					created_at?: string;
+					dev_eui: string;
+					id?: number;
+					last_update: string;
+					relay_1?: boolean | null;
+					relay_2?: boolean | null;
+				};
+				Update: {
+					created_at?: string;
+					dev_eui?: string;
+					id?: number;
+					last_update?: string;
+					relay_1?: boolean | null;
+					relay_2?: boolean | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_relay_data_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: true;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
+					}
+				];
+			};
 			cw_rule_criteria: {
 				Row: {
 					created_at: string;
@@ -977,6 +967,7 @@ export type Database = {
 					notifier_type: number;
 					profile_id: string;
 					ruleGroupId: string;
+					send_using: string | null;
 					trigger_count: number;
 				};
 				Insert: {
@@ -990,6 +981,7 @@ export type Database = {
 					notifier_type: number;
 					profile_id?: string;
 					ruleGroupId: string;
+					send_using?: string | null;
 					trigger_count?: number;
 				};
 				Update: {
@@ -1003,6 +995,7 @@ export type Database = {
 					notifier_type?: number;
 					profile_id?: string;
 					ruleGroupId?: string;
+					send_using?: string | null;
 					trigger_count?: number;
 				};
 				Relationships: [
@@ -1053,36 +1046,6 @@ export type Database = {
 					moisture?: number | null;
 					ph?: number | null;
 					temperature_c?: number | null;
-				};
-				Relationships: [];
-			};
-			cw_traffic: {
-				Row: {
-					created_at: string;
-					dev_eui: string;
-					id: number;
-					object_type: string;
-					period_in: number;
-					period_out: number;
-					period_total: number;
-				};
-				Insert: {
-					created_at?: string;
-					dev_eui: string;
-					id?: number;
-					object_type: string;
-					period_in?: number;
-					period_out?: number;
-					period_total?: number;
-				};
-				Update: {
-					created_at?: string;
-					dev_eui?: string;
-					id?: number;
-					object_type?: string;
-					period_in?: number;
-					period_out?: number;
-					period_total?: number;
 				};
 				Relationships: [];
 			};
@@ -1414,7 +1377,7 @@ export type Database = {
 					name: string;
 					operator: string | null;
 					report_id: string;
-					user_id: string | null;
+					user_id: string;
 					value: number | null;
 				};
 				Insert: {
@@ -1427,7 +1390,7 @@ export type Database = {
 					name: string;
 					operator?: string | null;
 					report_id: string;
-					user_id?: string | null;
+					user_id?: string;
 					value?: number | null;
 				};
 				Update: {
@@ -1440,7 +1403,7 @@ export type Database = {
 					name?: string;
 					operator?: string | null;
 					report_id?: string;
-					user_id?: string | null;
+					user_id?: string;
 					value?: number | null;
 				};
 				Relationships: [
@@ -1643,92 +1606,6 @@ export type Database = {
 					}
 				];
 			};
-			seeed_sensecap_s2104: {
-				Row: {
-					battery_level: number | null;
-					created_at: string;
-					dev_eui: string;
-					id: number;
-					moisture: number | null;
-					temperature: number | null;
-				};
-				Insert: {
-					battery_level?: number | null;
-					created_at?: string;
-					dev_eui: string;
-					id?: number;
-					moisture?: number | null;
-					temperature?: number | null;
-				};
-				Update: {
-					battery_level?: number | null;
-					created_at?: string;
-					dev_eui?: string;
-					id?: number;
-					moisture?: number | null;
-					temperature?: number | null;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'seeed_sensecap_s210x_temp_moist_dev_eui_fkey';
-						columns: ['dev_eui'];
-						isOneToOne: false;
-						referencedRelation: 'cw_devices';
-						referencedColumns: ['dev_eui'];
-					}
-				];
-			};
-			seeed_t1000: {
-				Row: {
-					battery_level: number | null;
-					created_at: string;
-					dev_eui: string;
-					id: number;
-					lat: number;
-					long: number;
-					profile_id: string | null;
-					sos: number | null;
-					temperatureC: number | null;
-				};
-				Insert: {
-					battery_level?: number | null;
-					created_at?: string;
-					dev_eui: string;
-					id?: number;
-					lat: number;
-					long: number;
-					profile_id?: string | null;
-					sos?: number | null;
-					temperatureC?: number | null;
-				};
-				Update: {
-					battery_level?: number | null;
-					created_at?: string;
-					dev_eui?: string;
-					id?: number;
-					lat?: number;
-					long?: number;
-					profile_id?: string | null;
-					sos?: number | null;
-					temperatureC?: number | null;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'SEEED_T1000_dev_eui_fkey';
-						columns: ['dev_eui'];
-						isOneToOne: false;
-						referencedRelation: 'cw_devices';
-						referencedColumns: ['dev_eui'];
-					},
-					{
-						foreignKeyName: 'seeed_t1000_profile_id_fkey';
-						columns: ['profile_id'];
-						isOneToOne: false;
-						referencedRelation: 'profiles';
-						referencedColumns: ['id'];
-					}
-				];
-			};
 			stripe_customers: {
 				Row: {
 					attrs: Json | null;
@@ -1816,63 +1693,6 @@ export type Database = {
 				};
 				Relationships: [];
 			};
-			temp_humid_co2_alert_settings: {
-				Row: {
-					action: number;
-					cleared: boolean;
-					created_at: string;
-					dev_eui: string;
-					id: number;
-					OneSignalID: string | null;
-					operator: string;
-					profile_id: string;
-					receiver: string;
-					subject: string;
-					value: number;
-				};
-				Insert: {
-					action: number;
-					cleared: boolean;
-					created_at?: string;
-					dev_eui: string;
-					id?: number;
-					OneSignalID?: string | null;
-					operator: string;
-					profile_id: string;
-					receiver: string;
-					subject: string;
-					value: number;
-				};
-				Update: {
-					action?: number;
-					cleared?: boolean;
-					created_at?: string;
-					dev_eui?: string;
-					id?: number;
-					OneSignalID?: string | null;
-					operator?: string;
-					profile_id?: string;
-					receiver?: string;
-					subject?: string;
-					value?: number;
-				};
-				Relationships: [
-					{
-						foreignKeyName: 'temp_humid_co2_alert_settings_dev_eui_fkey';
-						columns: ['dev_eui'];
-						isOneToOne: false;
-						referencedRelation: 'devices';
-						referencedColumns: ['dev_eui'];
-					},
-					{
-						foreignKeyName: 'temp_humid_co2_alert_settings_profile_id_fkey';
-						columns: ['profile_id'];
-						isOneToOne: false;
-						referencedRelation: 'profiles';
-						referencedColumns: ['id'];
-					}
-				];
-			};
 			user_discord_connections: {
 				Row: {
 					access_token: string;
@@ -1924,46 +1744,46 @@ export type Database = {
 			};
 			get_filtered_device_report_data_multi: {
 				Args: {
+					p_columns: string[];
 					p_dev_id: string;
-					p_start_time: string;
 					p_end_time: string;
 					p_interval_minutes: number;
-					p_columns: string[];
-					p_ops: string[];
-					p_mins: number[];
 					p_maxs: number[];
+					p_mins: number[];
+					p_ops: string[];
+					p_start_time: string;
 				};
 				Returns: Json[];
 			};
 			get_hloc_data: {
 				Args:
 					| {
-							p_dev_eui: string;
-							p_bucket_interval: string;
-							p_time_range: string;
-							p_metric: string;
+							device_eui: string;
+							end_time: string;
+							start_time: string;
+							table_name: string;
+							time_interval: string;
 					  }
 					| {
-							p_dev_eui: string;
 							p_bucket_interval: string;
-							p_time_range: string;
+							p_dev_eui: string;
 							p_metric: string;
 							p_table: string;
+							p_time_range: string;
 					  }
 					| {
-							start_time: string;
-							end_time: string;
-							time_interval: string;
-							table_name: string;
-							device_eui: string;
+							p_bucket_interval: string;
+							p_dev_eui: string;
+							p_metric: string;
+							p_time_range: string;
 					  };
 				Returns: {
 					bucket: string;
-					dev_eui: string;
-					open_val: number;
 					close_val: number;
-					low_val: number;
+					dev_eui: string;
 					high_val: number;
+					low_val: number;
+					open_val: number;
 				}[];
 			};
 			get_location_for_user: {
@@ -1973,8 +1793,8 @@ export type Database = {
 			get_road_events: {
 				Args: { time_grouping: string };
 				Returns: {
-					group_period: string;
 					event_count: number;
+					group_period: string;
 				}[];
 			};
 			get_road_events_summary1: {
@@ -1986,8 +1806,8 @@ export type Database = {
 					time_span: string;
 				};
 				Returns: {
-					period_start: string;
 					count: number;
+					period_start: string;
 				}[];
 			};
 		};
