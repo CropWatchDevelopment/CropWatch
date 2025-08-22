@@ -283,7 +283,7 @@
 
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
-		{#if numericKeys.length}
+		{#if (numericKeys.length && device.user_id == userId) || devicePermissionLevel <= 2}
 			<ExportButton
 				{devEui}
 				startDateInputString={startDateInput.toDateString()}
@@ -292,7 +292,7 @@
 			/>
 		{/if}
 		<!-- <pre>{JSON.stringify(device, null, 2)}</pre> -->
-		{#if device.user_id == userId || devicePermissionLevel === 2 || devicePermissionLevel === 1}
+		{#if device.user_id == userId || devicePermissionLevel === 1}
 			<Button variant="secondary" href="{basePath}/settings">
 				<MaterialIcon name="Settings" />
 				{$_('settings')}
