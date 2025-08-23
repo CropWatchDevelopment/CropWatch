@@ -4,6 +4,7 @@
 	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 	import Header from '$lib/components/Header.svelte';
 	import GlobalSidebar from '$lib/components/GlobalSidebar.svelte';
+	import GlobalLoading from '$lib/components/GlobalLoading.svelte';
 	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
 	import { i18n } from '$lib/i18n/index.svelte';
 	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
@@ -74,12 +75,18 @@
 		i18n.initialize();
 	});
 
-	// Handle navigation loading states
+	// Handle navigation loading states with a small delay to avoid flash on fast transitions
+	let navTimer: ReturnType<typeof setTimeout> | null = null;
 	beforeNavigate(() => {
-		startLoading();
+		if (navTimer) clearTimeout(navTimer);
+		navTimer = setTimeout(() => startLoading(), 150); // show after 150ms if still navigating
 	});
 
 	afterNavigate(() => {
+		if (navTimer) {
+			clearTimeout(navTimer);
+			navTimer = null;
+		}
 		stopLoading();
 	});
 </script>
@@ -103,6 +110,7 @@
 			{@render children()}
 			<ToastContainer position="top-right" />
 		</main>
+		<GlobalLoading />
 	</div>
 {/if}
 
