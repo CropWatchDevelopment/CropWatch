@@ -252,10 +252,26 @@ export class LocationRepository extends BaseRepository<Location, number> {
 		userId: string,
 		permissionLevel: number
 	): Promise<void> {
+		// fetch the owner_id for this location
+		const { data: loc, error: locError } = await this.supabase
+			.from('cw_locations')
+			.select('owner_id')
+			.eq('location_id', locationId)
+			.single();
+
+		if (locError) {
+			this.errorHandler.handleDatabaseError(
+				locError,
+				`Error getting owner for location ${locationId}`
+			);
+			return;
+		}
+
 		const { error } = await this.supabase.from('cw_location_owners').insert({
 			location_id: locationId,
 			user_id: userId,
 			permission_level: permissionLevel,
+			admin_user_id: loc.owner_id, // ensure this matches the location owner
 			is_active: true
 		});
 

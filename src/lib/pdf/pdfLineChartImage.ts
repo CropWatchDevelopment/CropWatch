@@ -1,5 +1,7 @@
 import type { ReportAlertPoint } from '$lib/models/Report';
-import { createCanvas } from 'canvas';
+import { createCanvas, registerFont } from 'canvas';
+import path from 'path';
+import fs from 'fs';
 import {
 	CategoryScale,
 	Chart,
@@ -20,9 +22,30 @@ interface ChartConfig {
 	options?: ChartOptions;
 }
 
+// Attempt to register a bundled font (important for server environments like Vercel where system fonts are minimal)
+(() => {
+	const candidatePaths = [
+		path.join(process.cwd(), 'static/fonts/NotoSansJP-Regular.ttf'),
+		path.join(process.cwd(), 'src/lib/fonts/NotoSansJP-Regular.ttf'),
+		path.join(process.cwd(), 'server/fonts/NotoSansJP-Regular.ttf')
+	];
+	for (const p of candidatePaths) {
+		try {
+			if (fs.existsSync(p)) {
+				registerFont(p, { family: 'NotoSansJP' });
+				Chart.defaults.font.family = 'NotoSansJP';
+				break;
+			}
+		} catch {
+			/* ignore */
+		}
+	}
+})();
+
 Chart.register([CategoryScale, LineController, LineElement, LinearScale, PointElement]);
 Chart.defaults.devicePixelRatio = 3;
 Chart.defaults.font.size = 20;
+Chart.defaults.font.family = Chart.defaults.font.family || 'sans-serif';
 
 const DEFAULT_CHART_OPTIONS: ChartOptions = {
 	elements: {

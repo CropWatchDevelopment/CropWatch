@@ -5,9 +5,11 @@
 
 	let { data } = $props();
 
-	let device = $derived(data.device);
+	let device = $derived(data.device ?? undefined);
 	let ownerList: DeviceOwnerWithProfile[] = $derived([]);
 	let currentUserId = $derived(data.ownerId);
+	// Only pass the fields the selector expects
+	let selectorData = $derived({ device, ownerId: data.ownerId });
 
 	$effect(() => {
 		(async () => {
@@ -25,9 +27,9 @@
 		<div>
 			<h1 class="mb-1 text-2xl font-semibold">{$_('Permissions')}</h1>
 			<p class="text-sm text-neutral-100">
-				{$_('manage_permissions_description', { device: device?.name || '' })}
+				{$_('manage_permissions_description')}
 			</p>
 		</div>
 	</header>
-	<UserPermissionsSelector {data} {ownerList} />
+	<UserPermissionsSelector data={selectorData} {ownerList} />
 </section>

@@ -40,6 +40,7 @@ export class DeviceRepository extends BaseRepository<Device, string> {
 				`
         *,
         cw_device_type(*),
+		cw_device_owners(*, user_id),
         ip_log(*)
       `
 			)

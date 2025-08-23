@@ -3,9 +3,7 @@ import type { RequestHandler } from './$types';
 import type { DeviceType } from '$lib/models/Device';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
-import { AirDataRepository } from '$lib/repositories/AirDataRepository';
 import { DeviceService } from '$lib/services/DeviceService';
-import { AirDataService } from '$lib/services/AirDataService';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
@@ -21,11 +19,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 		// Create repositories with per-request Supabase client
 		const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
-		const airDataRepo = new AirDataRepository(locals.supabase, errorHandler);
+		const dataService = new DeviceDataService(locals.supabase, errorHandler);
 
 		// Create services with repositories
 		const deviceService = new DeviceService(deviceRepo);
-		const airDataService = new AirDataService(airDataRepo);
 		const deviceDataService = new DeviceDataService(locals.supabase);
 
 		// Get devices for this location - now includes device type info directly
@@ -57,7 +54,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					// This maintains backward compatibility
 					if (!latestData) {
 						// Get latest air data for this device, if available
-						const latestAirData = await airDataService.getLatestAirDataByDevice(device.dev_eui);
+						const latestAirData = await deviceDataService.getLatestDeviceData(device.dev_eui);
 
 						// Set latestData to whichever data is available
 						latestData = latestAirData || null;

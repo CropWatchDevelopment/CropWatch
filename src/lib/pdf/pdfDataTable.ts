@@ -10,6 +10,7 @@ interface TableConfig {
 	columnMargin: number;
 	fontSize: number;
 	headerHeight: number;
+	takeEvery: number; // This is the numbered item in the array to take and you will skip others unless they are an alert type.
 }
 
 const DEFAULT_CONFIG: TableConfig = {
@@ -20,7 +21,8 @@ const DEFAULT_CONFIG: TableConfig = {
 	cellHeight: 12,
 	columnMargin: 10,
 	fontSize: 7,
-	headerHeight: 15
+	headerHeight: 15,
+	takeEvery: 3
 };
 
 /**
@@ -43,6 +45,22 @@ export function createPDFDataTable({
 	config?: Partial<TableConfig>;
 }): void {
 	const conf = { ...DEFAULT_CONFIG, ...config };
+
+	// Apply takeEvery filtering (keep every Nth row) plus always keep rows containing any alert/warning cell (bgColor != white)
+	// N = conf.takeEvery (defaults to 3). If N <= 1, no sampling (all rows kept).
+	const samplingInterval = Math.max(1, conf.takeEvery || 1);
+	const workingRows =
+		samplingInterval > 1
+			? dataRows.filter((row, idx) => {
+					const onSeries = idx % samplingInterval === 0; // take first (idx 0), then every Nth
+					if (onSeries) return true;
+					// Include any row with an alert/warning (detected by any cell having a non-white bgColor)
+					const hasAlert = [row.header, ...row.cells].some(
+						(c) => c.bgColor && c.bgColor !== '#ffffff'
+					);
+					return hasAlert;
+				})
+			: dataRows;
 
 	const { caption, headerHeight, cellWidth, cellHeight, columnsPerPage, columnMargin } = conf;
 
@@ -76,9 +94,9 @@ export function createPDFDataTable({
 	let dataIndex = 0;
 	let startY = doc.y;
 
-	while (dataIndex < dataRows.length) {
+	while (dataIndex < workingRows.length) {
 		// Draw columns for current page
-		for (let col = 0; col < finalColumnsPerPage && dataIndex < dataRows.length; col++) {
+		for (let col = 0; col < finalColumnsPerPage && dataIndex < workingRows.length; col++) {
 			const firstColumn = col % finalColumnsPerPage === 0;
 
 			if (firstColumn) {
@@ -96,12 +114,12 @@ export function createPDFDataTable({
 
 			const actualRowsPerColumn = Math.floor(availableHeight / cellHeight);
 			const startX = marginLeft + col * (columnWidth + columnMargin);
-			const endIndex = Math.min(dataIndex + actualRowsPerColumn, dataRows.length);
+			const endIndex = Math.min(dataIndex + actualRowsPerColumn, workingRows.length);
 
 			drawColumn({
 				doc,
 				dataHeader,
-				dataRows: dataRows.slice(dataIndex, endIndex),
+				dataRows: workingRows.slice(dataIndex, endIndex),
 				columnWidth,
 				startX,
 				startY,

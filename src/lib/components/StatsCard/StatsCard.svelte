@@ -172,8 +172,10 @@
 	{/if}
 
 	{#if expandable}
-		<div class="mt-2 flex w-full justify-center">
-			<div class="text-xs text-gray-400 dark:text-gray-300">
+		<div class="mt-2 flex w-full justify-center pt-2">
+			<div
+				class="flex w-full justify-center border-t border-gray-200 pt-4 text-xs text-gray-400 dark:text-gray-300"
+			>
 				<MaterialIcon
 					name={expanded ? 'expand_circle_up' : 'expand_circle_down'}
 					size="small"

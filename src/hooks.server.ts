@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 const PUBLIC_ROUTES = [
 	'/offline.html',
 	'/auth', // All routes under /auth/
+	'/legal',
 	'/api/auth', // Only authentication-related API routes
 	'/api/webhook', // Webhook endpoints (authenticated via webhook signatures)
 	'/static', // All static assets
