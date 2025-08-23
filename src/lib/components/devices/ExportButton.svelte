@@ -2,7 +2,7 @@
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import type { ReportAlertPoint } from '$lib/models/Report';
-	import { neutral } from '$lib/stores/toast.svelte';
+	import { error, neutral, warning } from '$lib/stores/toast.svelte';
 	import { Dialog } from 'bits-ui';
 	import { _, locale as appLocale } from 'svelte-i18n';
 
@@ -25,7 +25,7 @@
 		buttonLabel,
 		disabled = false,
 		showDatePicker = true,
-		types = ['csv', 'pdf'],
+		types = ['csv'], // 'pdf'],
 		startDateInputString = undefined,
 		endDateInputString = undefined,
 		alertPoints = [],
@@ -67,6 +67,11 @@
 
 		if (!response.ok) {
 			console.error(`Failed to download ${type} for device ${devEui}:`, response.statusText);
+			if (response.status === 404) {
+				warning('Report Not Found, Please create a reaport first.');
+			} else {
+				error('Error Generating Report, contact support.');
+			}
 			return;
 		}
 
@@ -121,7 +126,7 @@
 								id="start-date"
 								type="date"
 								bind:value={startDate}
-								class="w-full rounded border border-gray-300 px-2 py-1"
+								class="relative w-full rounded border border-gray-300 px-2 py-1 pr-10"
 							/>
 						</div>
 						<div>
@@ -130,7 +135,7 @@
 								id="end-date"
 								type="date"
 								bind:value={endDate}
-								class="w-full rounded border border-gray-300 px-2 py-1"
+								class="relative w-full rounded border border-gray-300 px-2 py-1 pr-10"
 							/>
 						</div>
 					</div>

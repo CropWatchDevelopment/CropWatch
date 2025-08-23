@@ -128,46 +128,47 @@
 
 		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
 			<div class="flex flex-col text-base">
-				<div class="justify-left flex flex-row">
+				<div class="justify-left flex flex-row pl-0">
 					<b class="ml-4 pb-1 text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-300"
 						>{device.name || `Device ${device.dev_eui}`}</b
 					>
 				</div>
-				<div class="flex flex-row justify-center space-x-5 px-10">
+				<div class="flex w-full flex-row justify-between justify-center space-x-5">
 					{#if device.latestData}
 						<div class="flex items-center">
 							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
 								>{nameToEmoji(primaryDataKey)}</span
+							><span class="text-lg text-gray-500 dark:text-gray-400"
+								>{nameToEmoji(secondaryDataKey)}</span
 							>
 							<div class="flex flex-col items-start">
-								<span class="text-lg leading-tight font-bold text-gray-900 dark:text-white">
+								<span
+									class="text-lg leading-tight font-bold whitespace-nowrap text-gray-900 dark:text-white"
+								>
 									{formatNumber({ key: primaryDataKey, value: primaryValue })}
 									<span
 										class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
 										>{primaryNotation}</span
 									>
 								</span>
-								<!-- <span class="text-xs text-gray-500 dark:text-gray-400">{$_(primaryDataKey)}</span> -->
 							</div>
 						</div>
 
 						{#if secondaryDataKey}
-							<span class="flex flex-grow-1"></span>
+							<span class="flex flex-grow-[0.2]"></span>
 							<div class="flex items-center">
 								<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
 									>{nameToEmoji(secondaryDataKey)}</span
 								>
-								<div class="flex flex-col items-start">
-									<span class="text-lg leading-tight font-bold text-gray-900 dark:text-white">
-										{formatNumber({ key: secondaryDataKey, value: secondaryValue })}
-										<span
-											class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
-											>{secondaryNotation}</span
-										>
+								<div class="no-wrap flex flex-col items-start">
+									<span
+										class="flex flex-nowrap items-baseline text-lg leading-tight font-bold text-gray-900 dark:text-white"
+									>
+										<span>{formatNumber({ key: secondaryDataKey, value: secondaryValue })}</span>
+										<span class="text-accent-700 dark:text-accent-400 ml-0.5 text-xs font-normal">
+											{secondaryNotation}
+										</span>
 									</span>
-									<!-- <span class="text-xs text-gray-500 dark:text-gray-400"
-										>{$_(secondaryDataKey)}</span
-									> -->
 								</div>
 							</div>
 						{/if}

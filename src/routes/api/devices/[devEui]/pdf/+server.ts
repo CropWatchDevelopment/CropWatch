@@ -99,7 +99,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			console.error('Error fetching report parameters:', error.message);
 			return json(
 				{ error: `Failed to fetch report parameters - ${error.message}` },
-				{ status: 500 }
+				{ status: 404 }
 			);
 		}
 
@@ -286,12 +286,12 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 					break;
 				}
 			} catch {
-				//console.log(`Could not load font from: ${fontPath}`);
+				console.error(`Could not load font from: ${fontPath}`);
 			}
 		}
 
 		if (!fontLoaded) {
-			//console.log('Using default font - Japanese characters may not display correctly');
+			console.error('Using default font - Japanese characters may not display correctly');
 		}
 
 		// Professional header with Japanese styling
@@ -341,7 +341,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		doc.x = 400;
 
 		doc
-			.text(`${$_('date_range')}: ${startDateParam} – ${endDateParam}`)
+			.text(`${$_('date_range')}: ${startDateParam} - ${endDateParam}`)
 			.text(`${$_('sampling_size')}: ${deviceData.length}`);
 
 		doc.x = marginLeft;
@@ -352,6 +352,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			isReport || !selectedKeys.length
 				? numericKeys
 				: numericKeys.filter((key) => selectedKeys.includes(key));
+
+		// Only show columns in the final data table that participate in at least one alert
+		const alertKeySet = new Set(alertPoints.map((p) => p.data_point_key));
+		const alertKeys = validKeys.filter((k) => alertKeySet.has(k));
+		const tableKeys = alertKeys.length ? alertKeys : validKeys; // fallback if no alerts
 
 		const keyColumns: TableCell[] = validKeys.map((key) => ({
 			label: $_(key),
@@ -405,6 +410,17 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 
 		// Prepare data rows for the table
 		const dataRows = getDataRows();
+		const tableKeyColumns: TableCell[] = tableKeys.map((key) => ({
+			label: $_(key),
+			value: '',
+			width: 30,
+			color: getColorNameByKey(key)
+		}));
+		const dataHeaderTable: TableRow = {
+			header: { label: $_('datetime'), value: '', width: 40 },
+			cells: [...tableKeyColumns, { label: $_('comment'), width: 40 }]
+		};
+		const dataRowsTable = getDataRows(tableKeys);
 
 		// Summary table
 		createPDFDataTable({
@@ -455,8 +471,9 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const chartWidth = contentWidth;
 		const chartHeight = contentWidth * 0.4;
 
-		// Charts
-		for (const key of validKeys) {
+		// Charts (restricted to the same alert-linked columns used for the data table)
+		const chartKeys = tableKeys; // tableKeys already falls back to validKeys if no alerts
+		for (const key of chartKeys) {
 			// Add a new page if the content exceeds the current page height
 			if (doc.y > doc.page.height - marginBottom - chartHeight + 20) {
 				doc.addPage();
@@ -487,10 +504,17 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			});
 		}
 
-		doc.moveDown(2);
+		// After the last chart, force a page break before the full data table for clarity
+		if (chartKeys.length > 0) {
+			doc.addPage();
+		}
+		// Position after page break (or just add spacing if no charts)
+		if (chartKeys.length === 0) {
+			doc.moveDown(2);
+		}
 
-		// Full data table
-		createPDFDataTable({ doc, dataHeader, dataRows });
+		// Full data table (restricted to alert-linked columns)
+		createPDFDataTable({ doc, dataHeader: dataHeaderTable, dataRows: dataRowsTable });
 
 		const footerText = [
 			location.name,

@@ -3,6 +3,7 @@ import type { DeviceWithType } from '$lib/models/Device';
 import type { DeviceDataRecord, DeviceStats } from '$lib/models/DeviceDataRecord';
 import { calculateAverage, formatDateForDisplay, hasValue } from '$lib/utilities/helpers';
 import { getNumericKeys, getTextColorByKey } from '$lib/utilities/stats';
+import { DateTime } from 'luxon';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 
@@ -26,9 +27,11 @@ export function setupDeviceDetail() {
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
-	// Date range selection
-	let startDate = $state(new Date()); // Should be Date object
-	let endDate = $state(new Date()); // Should be Date object
+	// Date range selection - initialize in LOCAL time (today end-of-day and 24h before)
+	const __endInit = new Date();
+	__endInit.setHours(23, 59, 59, 999);
+	let endDate = $state<Date>(__endInit);
+	let startDate = $state<Date>(new Date(__endInit.getTime() - 24 * 60 * 60 * 1000));
 
 	// Libraries and elements
 	let ApexCharts = $state<any>(undefined);
@@ -141,7 +144,7 @@ export function setupDeviceDetail() {
 		// Parameters 'start' and 'end' are Date objects.
 		// The component's state variables 'startDate' and 'endDate' (if you were accessing them via this context, which you are not directly here) are also Date objects.
 		// This function uses the 'start' and 'end' parameters passed to it.
-
+		debugger;
 		if (!start || !end) {
 			// Validation using parameters
 			error = 'Please select both start and end dates'; // Set component's error state
@@ -356,12 +359,10 @@ export function setupDeviceDetail() {
 
 	// Initialize dates function
 	function initializeDateRange() {
-		const today = new Date();
-		const yesterday = new Date(today);
-		yesterday.setDate(today.getDate() - 1);
-
-		startDate = yesterday; // Assign Date object directly
-		endDate = today; // Assign Date object directly
+		const end = new Date();
+		end.setHours(23, 59, 59, 999);
+		endDate = end;
+		startDate = new Date(end.getTime() - 24 * 60 * 60 * 1000);
 	}
 
 	return {

@@ -5,7 +5,7 @@ import { ReportAlertPointRepository } from '$lib/repositories/ReportAlertPointRe
 import { ReportRecipientRepository } from '$lib/repositories/ReportRecipientRepository';
 import { ReportUserScheduleRepository } from '$lib/repositories/ReportUserScheduleRepository';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { ReportAlertPoint, ReportRecipient, ReportUserSchedule } from '$lib/models/Report';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 
@@ -31,25 +31,28 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
 		const errorHandler = new ErrorHandlingService();
 		const deviceRepo = new ReportRepository(locals.supabase, errorHandler);
-		const dataService = new DeviceDataService(locals.supabase, deviceRepo);
+		const dataService = new DeviceDataService(locals.supabase, errorHandler);
 		// If reportId is provided, load existing report data
 		let report = null;
 		let alertPoints: ReportAlertPoint[] = [];
 		let recipients: ReportRecipient[] = [];
 		let schedules: ReportUserSchedule[] = [];
-		let dataKeys = null;
+		let dataKeys: string[] = [];
 		const latestData = await dataService.getLatestDeviceData(devEui); // pull the latest data for the device keys
 		if (!latestData) {
 			throw error(404, 'No data found for this device');
 		}
 
-		dataKeys = Object.keys(latestData)
-			.filter((k) => latestData[k] != null)
-			.reduce((a, k) => ({ ...a, [k]: latestData[k] }), {});
-		delete dataKeys['dev_eui']; // remove dev_eui as it's not a data key
-		delete dataKeys['created_at']; // remove created_at as it's not a data key
-		delete dataKeys['is_simulated']; // remove updated_at as it's not a data key
-		dataKeys = Object.keys(dataKeys); // get only the keys
+		const keysObj = Object.keys(latestData)
+			.filter((k) => (latestData as any)[k] != null)
+			.reduce(
+				(a: Record<string, any>, k: string) => ({ ...a, [k]: (latestData as any)[k] }),
+				{} as Record<string, any>
+			);
+		delete keysObj['dev_eui']; // remove dev_eui as it's not a data key
+		delete keysObj['created_at']; // remove created_at as it's not a data key
+		delete keysObj['is_simulated']; // remove updated_at as it's not a data key
+		dataKeys = Object.keys(keysObj); // get only the keys
 
 		if (reportId) {
 			// Create service dependencies
@@ -81,6 +84,10 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			recipients = await reportService.getRecipientsByReportId(reportId);
 			schedules = await reportService.getSchedulesByReportId(reportId);
 		}
+
+		alertPoints.map((point) => {
+			point.operator = point.operator === null ? 'null' : point.operator;
+		});
 
 		return {
 			devEui,
@@ -184,11 +191,11 @@ export const actions: Actions = {
 				await reportService.createAlertPoint({
 					report_id: report.report_id,
 					name: point.name,
-					operator: point.operator,
+					operator: point.operator == 'null' ? null : point.operator,
 					min: point.min,
 					max: point.max,
 					value: point.value,
-					hex_color: point.hex_color,
+					hex_color: point.operator == 'null' ? '#FFFFFF' : point.hex_color,
 					data_point_key: point.data_point_key
 				});
 			}
@@ -215,10 +222,8 @@ export const actions: Actions = {
 				});
 			}
 
-			throw redirect(
-				303,
-				`/app/dashboard/location/${location_id}/devices/${devEui}/settings/reports`
-			);
+			// Return success so the client can show a toast and navigate
+			return { success: true };
 		} catch (err) {
 			console.error('Error creating/updating report:', err);
 

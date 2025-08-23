@@ -26,6 +26,12 @@
 			update();
 		};
 	};
+	function startLineConnect() {
+		const params = new URLSearchParams({
+			redirect: window.location.origin + '/app/account-settings/general/line/callback'
+		});
+		window.location.href = '/app/account-settings/general/line/connect?' + params.toString();
+	}
 </script>
 
 <svelte:head>
@@ -167,6 +173,50 @@
 						</button>
 					</div>
 				</form>
+
+				<!-- LINE Connect Section -->
+				<div class="mt-10 border-t pt-6">
+					<h3
+						class="mb-2 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white"
+					>
+						<span>LINE</span>
+						{#if profile?.line_id}
+							<span
+								class="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-800 dark:text-green-100"
+								>{$_('Connected')}</span
+							>
+						{:else}
+							<span
+								class="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+								>{$_('Not Connected')}</span
+							>
+						{/if}
+					</h3>
+					<p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+						{$_('Connect your LINE account to receive messages and notifications.')}
+					</p>
+					{#if profile?.line_id}
+						<form method="post" action="?/disconnectLine" class="inline" use:enhance>
+							<button
+								type="submit"
+								class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+							>
+								{$_('Disconnect')}
+							</button>
+						</form>
+						<div class="mt-2 text-xs break-all text-gray-500 dark:text-gray-400">
+							{$_('LINE User ID')}: {profile.line_id}
+						</div>
+					{:else}
+						<button
+							type="button"
+							on:click={startLineConnect}
+							class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+						>
+							{$_('Connect LINE')}
+						</button>
+					{/if}
+				</div>
 			</div>
 		</div>
 

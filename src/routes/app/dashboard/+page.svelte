@@ -9,6 +9,9 @@
 	// Get user data from the server load function
 	let { data } = $props();
 	const user = data.user;
+	let isTabVisible = $state(true);
+	let lastRefresh = $state(new Date());
+
 	// Extended Location type to include cw_devices property
 	interface LocationWithDevices extends Location {
 		cw_devices?: DeviceWithSensorData[];
@@ -68,6 +71,34 @@
 				}
 			});
 		}
+	});
+
+	$effect(() => {
+		function handleVisibilityChange() {
+			isTabVisible = document.visibilityState === 'visible';
+			if (isTabVisible) {
+				if (browser) {
+					console.log('Tab is visible - refreshing data');
+					const savedState = localStorage.getItem('sidebar_collapsed');
+					if (savedState !== null) {
+						sidebarCollapsed = savedState === 'true';
+					}
+					setupRealtimeSubscription();
+				}
+			} else {
+				console.log('Tab is not visible');
+				data.supabase.removeAllChannels();
+				cleanupTimers();
+				cleanupRealtimeSubscription();
+				if (channel) {
+					data.supabase.realtime.removeChannel(channel);
+				}
+			}
+		}
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
 	});
 
 	// Initialize the dashboard UI store for preferences
@@ -171,6 +202,8 @@
 	onDestroy(() => {
 		console.log('the component is being destroyed');
 		data.supabase.removeAllChannels();
+		cleanupTimers();
+		cleanupRealtimeSubscription();
 		if (channel) {
 			data.supabase.realtime.removeChannel(channel);
 		}
@@ -185,59 +218,6 @@
 			localStorage.setItem('dashboard_sort_type', uiStore.dashboardSortType);
 		}
 	});
-
-	// All polling and timer state is now managed by the DeviceTimerManager
-
-	// Clean up timers and subscriptions when component is destroyed
-	onDestroy(() => {
-		//console.log('Cleaning up dashboard resources');
-		cleanupTimers();
-		cleanupRealtimeSubscription();
-	});
-
-	// // Refresh session if needed
-	// async function refreshSessionIfNeeded() {
-	// 	try {
-	// 		const { data: sessionData, error: sessionError } = await data.supabase.auth.getSession();
-
-	// 		if (sessionError) {
-	// 			console.error('❌ Error getting session:', sessionError);
-	// 			return false;
-	// 		}
-
-	// 		if (!sessionData.session) {
-	// 			console.error('❌ No session found');
-	// 			return false;
-	// 		}
-
-	// 		const expiresAt = sessionData.session.expires_at;
-	// 		if (expiresAt) {
-	// 			const expirationDate = new Date(expiresAt * 1000);
-	// 			const now = new Date();
-	// 			const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-
-	// 			// If expired or expiring soon, refresh
-	// 			if (expirationDate < fiveMinutesFromNow) {
-	// 				console.log('🔄 Session expiring soon, refreshing...');
-	// 				const { data: refreshData, error: refreshError } =
-	// 					await data.supabase.auth.refreshSession();
-
-	// 				if (refreshError) {
-	// 					console.error('❌ Failed to refresh session:', refreshError);
-	// 					return false;
-	// 				}
-
-	// 				console.log('✅ Session refreshed successfully');
-	// 				return true;
-	// 			}
-	// 		}
-
-	// 		return true;
-	// 	} catch (error) {
-	// 		console.error('❌ Error refreshing session:', error);
-	// 		return false;
-	// 	}
-	// }
 
 	// Initialize dashboard on mount
 	// This is the main onMount function for the dashboard
@@ -324,39 +304,39 @@
 	}
 
 	// Function to select a location and load its devices
-	async function selectLocation(locationId: number | null) {
-		//console.log('Dashboard selectLocation called with:', locationId);
-		//console.log('Current selectedLocationId:', locationsStore.selectedLocationId);
+	// async function selectLocation(locationId: number | null) {
+	// 	//console.log('Dashboard selectLocation called with:', locationId);
+	// 	//console.log('Current selectedLocationId:', locationsStore.selectedLocationId);
 
-		// If already selected, do nothing
-		if (locationsStore.selectedLocationId === locationId) {
-			//console.log('Location already selected, returning');
-			return;
-		}
+	// 	// If already selected, do nothing
+	// 	if (locationsStore.selectedLocationId === locationId) {
+	// 		//console.log('Location already selected, returning');
+	// 		return;
+	// 	}
 
-		// Clean up any existing polling before changing location
-		timerManager.cleanupPolling();
+	// 	// Clean up any existing polling before changing location
+	// 	timerManager.cleanupPolling();
 
-		// Use the store to select location and load devices
-		//console.log('Calling store.selectLocation with:', locationId);
-		await locationsStore.selectLocation(locationId);
-		//console.log(
-		// 	'After store.selectLocation, selectedLocationId is:',
-		// 	locationsStore.selectedLocationId
-		// );
+	// 	// Use the store to select location and load devices
+	// 	//console.log('Calling store.selectLocation with:', locationId);
+	// 	await locationsStore.selectLocation(locationId);
+	// 	//console.log(
+	// 	// 	'After store.selectLocation, selectedLocationId is:',
+	// 	// 	locationsStore.selectedLocationId
+	// 	// );
 
-		// Setup active timers for each device
-		locationsStore.devices.forEach((device: DeviceWithSensorData) => {
-			if (device.latestData?.created_at) {
-				setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
-			}
-		});
+	// 	// Setup active timers for each device
+	// 	locationsStore.devices.forEach((device: DeviceWithSensorData) => {
+	// 		if (device.latestData?.created_at) {
+	// 			setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+	// 		}
+	// 	});
 
-		// Set up polling only for specific locations, not for "All Locations"
-		if (locationId !== null) {
-			timerManager.setupPolling(locationId, refreshDevicesForLocation);
-		}
-	}
+	// 	// Set up polling only for specific locations, not for "All Locations"
+	// 	if (locationId !== null) {
+	// 		timerManager.setupPolling(locationId, refreshDevicesForLocation);
+	// 	}
+	// }
 
 	// Note: handleKeyDown is now handled in the LocationSidebar component
 </script>

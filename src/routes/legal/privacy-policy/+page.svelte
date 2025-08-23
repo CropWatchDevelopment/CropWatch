@@ -1,36 +1,43 @@
 <!-- filepath: /home/kevin/source/repos/cropwatch/CropWatch/src/routes/legal/privacy-policy/+page.svelte -->
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-	<div class="max-w-4xl mx-auto px-6 py-12">
+	<div class="mx-auto max-w-4xl px-6 py-12">
 		<header class="mb-8">
-			<h1 class="text-4xl font-bold text-gray-900 text-center mb-4">プライバシーポリシー</h1>
-			<div class="w-24 h-1 bg-blue-600 mx-auto rounded"></div>
+			<h1 class="mb-4 text-center text-4xl font-bold text-gray-900 dark:text-white">
+				プライバシーポリシー
+			</h1>
+			<div class="mx-auto h-1 w-24 rounded bg-blue-600"></div>
 		</header>
-		<main class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+		<main class="rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
 			<section class="mb-8">
-				<p class="text-gray-700 dark:text-gray-300 leading-7 text-justify">
+				<p class="text-justify leading-7 text-gray-700 dark:text-gray-300">
 					合同会社クロップウォッチ（以下「当社」といいます。）は、当社のサービスを利用する方（以下「利用者」といいます。）の個人情報の取扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」といいます。）を定め、個人情報保護の仕組みを構築し、全従業員に個人情報保護の重要性を認識させるとともにその取組みを徹底させることにより、個人情報の保護を推進します。
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 1 条 （個人情報）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7 text-justify">
-					「個人情報」とは、個人情報の保護に関する法律（<span class="font-medium text-blue-600 dark:text-blue-400"
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 1 条 （個人情報）
+				</h2>
+				<p class="text-justify leading-7 text-gray-700 dark:text-gray-300">
+					「個人情報」とは、個人情報の保護に関する法律（<span
+						class="font-medium text-blue-600 dark:text-blue-400"
 						>平成十五年法律第五十七号、以下「個人情報保護法」といいます。）にいう「個人情報」を指し、生存する個人に関する情報であって、当該情報に含まれる氏名、生年月日その他の記述等により特定の個人を識別できるもの又は個人識別符号が含まれるものを指します。</span
 					>
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 2 条 （個人情報の利用目的）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7 mb-4">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 2 条 （個人情報の利用目的）
+				</h2>
+				<p class="mb-4 leading-7 text-gray-700 dark:text-gray-300">
 					当社は、以下の目的に必要な範囲で、利用者の個人情報を取得し、取得した情報を利用させていただきます。以下の目的の範囲を超えて個人情報を利用する場合には、事前に適切な方法で利用者からの同意を得るものとします。
 				</p>
-				<ul class="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2">
-					<li>
-						(1) 当社のサービス（以下「本サービス」といいます。）を提供するため
-					</li>
-					<li>
-						(2) 本サービスの内容を改良・改善し、又は新サービスを開発するため
-					</li>
+				<ul class="list-disc space-y-2 pl-6 text-gray-700 dark:text-gray-300">
+					<li>(1) 当社のサービス（以下「本サービス」といいます。）を提供するため</li>
+					<li>(2) 本サービスの内容を改良・改善し、又は新サービスを開発するため</li>
 					<li>
 						(3)
 						本サービスの新機能、更新情報、キャンペーン等及び当社が提供する他のサービスのご案内（電子メール、チラシ、その他のダイレクトメールの送付を含みます。）のため
@@ -59,17 +66,25 @@
 				</ul>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 3 条 （クッキー等の利用）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 3 条 （クッキー等の利用）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社は、本サービスへの利用者のアクセス情報、閲覧情報等を取得するために、クッキー（Cookie）、情報収集モジュール等（以下「クッキー等」といいます。）の技術を使用しています。本サービスで利用しているクッキー等の内容については、当社が別途定めるクッキーポリシーをご確認ください。
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 4 条 （個人情報の管理と保護）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7 mb-4">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 4 条 （個人情報の管理と保護）
+				</h2>
+				<p class="mb-4 leading-7 text-gray-700 dark:text-gray-300">
 					個人情報の管理は、厳重に行うこととし、次に掲げるときを除き、利用者の同意がない限り、第三者に対し個人情報を開示・提供することはいたしません。また、安全性を考慮し、個人情報への不正アクセス、個人情報の紛失、破壊、改ざん及び漏えい等のリスクに対する予防並びに是正に関する対策を講じます。
 				</p>
-				<ul class="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2">
+				<ul class="list-disc space-y-2 pl-6 text-gray-700 dark:text-gray-300">
 					<li>
 						(1)
 						人の生命、身体又は財産の保護のために必要がある場合であって、利用者の同意を得ることが困難であるとき。
@@ -86,27 +101,37 @@
 				</ul>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 5 条 （個人情報の取扱いの委託）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 5 条 （個人情報の取扱いの委託）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社は、利用目的の達成に必要な範囲内において、個人情報の取扱いの全部又は一部を委託する場合がございます。この場合、当社は、委託先としての適格性を十分審査するとともに、契約にあたって守秘義務に関する事項等を定め、委託先に対する必要かつ適切な監督を行います。
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 6 条 （個人情報の開示）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7 mb-4">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 6 条 （個人情報の開示）
+				</h2>
+				<p class="mb-4 leading-7 text-gray-700 dark:text-gray-300">
 					利用者は、当社に対し、当社の保有する個人情報の開示を請求することができます。当社は、利用者から当該請求を受けたときは、利用者に対し、遅滞なくこれを開示します。ただし、開示することにより次のいずれかに該当する場合は、その全部又は一部を開示しないこともあり、開示しない決定をした場合には、その旨を遅滞なく通知します。
 				</p>
-				<ul class="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2">
-					<li>
-						(1) 利用者又は第三者の生命、身体、財産その他の権利利益を害するおそれがある場合
-					</li>
+				<ul class="list-disc space-y-2 pl-6 text-gray-700 dark:text-gray-300">
+					<li>(1) 利用者又は第三者の生命、身体、財産その他の権利利益を害するおそれがある場合</li>
 					<li>(2) 当社の業務の適正な実施に著しい支障を及ぼすおそれがある場合</li>
 					<li>(3) その他法令に違反することとなる場合</li>
 				</ul>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 7 条 （個人情報訂正等）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 7 条 （個人情報訂正等）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					1.
 					利用者は、当社の保有する個人情報が誤った情報である場合には、当社に対し、当該個人情報の訂正、追加又は削除（以下「訂正等」といいます。）を請求することができます。<br
 					/>
@@ -115,8 +140,12 @@
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 8 条 （個人情報の利用停止等）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 8 条 （個人情報の利用停止等）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					1.
 					利用者は、当社に対し、当社の保有する個人情報の利用の停止、消去又は第三者提供の停止（以下「利用停止等」といいます。）を請求することができます。<br
 					/>
@@ -125,45 +154,76 @@
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 9 条 （プライバシーポリシーの変更手続）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 9 条 （プライバシーポリシーの変更手続）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社は本ポリシーの内容を適宜見直し、その改善に努めます。本ポリシーの内容は、法令その他本ポリシーに別段の定めのある事項を除いて、変更することができるものとします。変更後のプライバシーポリシーは、当社所定の方法により、利用者に通知し、又は当社ウェブサイトに掲載したときから効力を生じるものとします。
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 10 条 （法令、規範の遵守）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 10 条 （法令、規範の遵守）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社は、保有する個人情報に関して適用される日本の法令、その他規範を遵守します。
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 11 条 （苦情及び相談への対応）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 11 条 （苦情及び相談への対応）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社は、個人情報の取扱いに関する利用者からの苦情、相談を受け付け、適切かつ迅速に対応いたします。また、利用者からの当該個人情報の開示、訂正、追加、削除、利用又は提供の拒否等のご要望に対しても、迅速かつ適切に対応いたします。
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 12 条 （安全管理措置）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 12 条 （安全管理措置）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社が利用者よりお預かりした個人情報は、個人情報ファイルへのアクセス制限の実施、アクセスログの記録及び外部からの不正アクセス防止のためのセキュリティ対策の実施等、組織的、物理的、人的、技術的施策を講じることで個人情報への不正な侵入、個人情報の紛失、破壊、改ざん、及び漏えい等を防止いたします。万一、利用者の個人情報の漏えい等の事故が発生した場合、当社は、個人情報保護法及び関連するガイドラインに則り、速やかに監督官庁への報告を行うとともに、当該監督官庁の指示に従い、類似事案の発生防止措置及び再発防止措置等の必要な対応を行います。詳細については、別添「個人情報の安全管理措置」をご確認ください。
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 13 条 （当社住所・代表者氏名・個人情報保護管理者）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 13 条 （当社住所・代表者氏名・個人情報保護管理者）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社住所、代表者及び個人情報保護管理者の氏名は以下のとおりです。<br />
 					住所：宮崎県西都市南方806-5<br /> 代表者：池水　彩<br /> 個人情報保護管理者：池水　彩
 				</p>
 			</section>
 			<section class="mb-8">
-				<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b-2 border-gray-200 dark:border-gray-600 pb-2">第 14 条 （お問い合わせ窓口）</h2>
-				<p class="text-gray-700 dark:text-gray-300 leading-7">
+				<h2
+					class="mb-4 border-b-2 border-gray-200 pb-2 text-2xl font-semibold text-gray-900 dark:border-gray-600 dark:text-white"
+				>
+					第 14 条 （お問い合わせ窓口）
+				</h2>
+				<p class="leading-7 text-gray-700 dark:text-gray-300">
 					当社の個人情報の取扱いに関するお問い合せは以下までご連絡ください。<br />
 					合同会社クロップウォッチ<br /> 〒881-0027　宮崎県西都市南方806-5<br /> TEL: 080-4284-3390<br
 					/>
-					Mail: <a href="mailto:sayaka@cropwatch.io" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline">sayaka@cropwatch.io</a>
+					Mail:
+					<a
+						href="mailto:sayaka@cropwatch.io"
+						class="text-blue-600 underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+						>sayaka@cropwatch.io</a
+					>
 				</p>
-				<p class="text-gray-700 dark:text-gray-300 mt-6 text-right font-medium">2024年8月1日　制定・施行</p>
+				<p class="mt-6 text-right font-medium text-gray-700 dark:text-gray-300">
+					2024年8月1日　制定・施行
+				</p>
 			</section>
 		</main>
 	</div>
