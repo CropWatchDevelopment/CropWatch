@@ -19,6 +19,9 @@
 	let error = $state<string | null>(null);
 	let successMessage = $state<string | null>(null);
 
+	// Toggle for password visibility
+	let showPassword = $state(false);
+
 	// Check if already logged in
 	let isLoggedIn = $state(false);
 
@@ -157,18 +160,59 @@
 
 					<div>
 						<label for="password" class="mb-1 block text-sm font-medium">{$_('Password')}</label>
-						<input
-							type="password"
-							id="password"
-							bind:value={password}
-							required
-							placeholder="🔒 {$_('Enter your password')}"
-							disabled={loading}
-							autocomplete="current-password"
-							class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
-                               bg-white px-3 py-2 focus:border-transparent
-                               focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
-						/>
+						<div class="relative">
+							<input
+								id="password"
+								type={showPassword ? 'text' : 'password'}
+								bind:value={password}
+								required
+								placeholder="🔒 {$_('Enter your password')}"
+								disabled={loading}
+								autocomplete="current-password"
+								class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+							/>
+							<button
+								type="button"
+								class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 transition-colors hover:text-gray-700 focus:outline-none dark:text-gray-400 dark:hover:text-gray-200"
+								onclick={() => (showPassword = !showPassword)}
+								aria-label={showPassword ? $_('Hide password') : $_('Show password')}
+								title={showPassword ? $_('Hide password') : $_('Show password')}
+							>
+								{#if showPassword}
+									<!-- Eye off icon -->
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-5 w-5"
+									>
+										<path
+											d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-10-8-10-8a21.77 21.77 0 0 1 5.17-7.19m3.11-1.6A10.94 10.94 0 0 1 12 4c7 0 10 8 10 8a21.83 21.83 0 0 1-2.16 3.19"
+										/>
+										<path d="M1 1l22 22" />
+									</svg>
+								{:else}
+									<!-- Eye icon -->
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke-width="2"
+										stroke="currentColor"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-5 w-5"
+									>
+										<path d="M1 12s3-8 11-8 11 8 11 8-3 8-11 8-11-8-11-8Z" />
+										<circle cx="12" cy="12" r="3" />
+									</svg>
+								{/if}
+							</button>
+						</div>
 					</div>
 
 					<div>
