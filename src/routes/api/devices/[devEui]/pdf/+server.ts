@@ -471,8 +471,9 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const chartWidth = contentWidth;
 		const chartHeight = contentWidth * 0.4;
 
-		// Charts
-		for (const key of validKeys) {
+		// Charts (restricted to the same alert-linked columns used for the data table)
+		const chartKeys = tableKeys; // tableKeys already falls back to validKeys if no alerts
+		for (const key of chartKeys) {
 			// Add a new page if the content exceeds the current page height
 			if (doc.y > doc.page.height - marginBottom - chartHeight + 20) {
 				doc.addPage();
