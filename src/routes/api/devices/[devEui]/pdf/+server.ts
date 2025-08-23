@@ -353,6 +353,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				? numericKeys
 				: numericKeys.filter((key) => selectedKeys.includes(key));
 
+		// Only show columns in the final data table that participate in at least one alert
+		const alertKeySet = new Set(alertPoints.map((p) => p.data_point_key));
+		const alertKeys = validKeys.filter((k) => alertKeySet.has(k));
+		const tableKeys = alertKeys.length ? alertKeys : validKeys; // fallback if no alerts
+
 		const keyColumns: TableCell[] = validKeys.map((key) => ({
 			label: $_(key),
 			value: '',
@@ -405,6 +410,17 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 
 		// Prepare data rows for the table
 		const dataRows = getDataRows();
+		const tableKeyColumns: TableCell[] = tableKeys.map((key) => ({
+			label: $_(key),
+			value: '',
+			width: 30,
+			color: getColorNameByKey(key)
+		}));
+		const dataHeaderTable: TableRow = {
+			header: { label: $_('datetime'), value: '', width: 40 },
+			cells: [...tableKeyColumns, { label: $_('comment'), width: 40 }]
+		};
+		const dataRowsTable = getDataRows(tableKeys);
 
 		// Summary table
 		createPDFDataTable({
@@ -489,8 +505,8 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 
 		doc.moveDown(2);
 
-		// Full data table
-		createPDFDataTable({ doc, dataHeader, dataRows });
+		// Full data table (restricted to alert-linked columns)
+		createPDFDataTable({ doc, dataHeader: dataHeaderTable, dataRows: dataRowsTable });
 
 		const footerText = [
 			location.name,
