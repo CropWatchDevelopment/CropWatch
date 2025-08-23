@@ -504,7 +504,14 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			});
 		}
 
-		doc.moveDown(2);
+		// After the last chart, force a page break before the full data table for clarity
+		if (chartKeys.length > 0) {
+			doc.addPage();
+		}
+		// Position after page break (or just add spacing if no charts)
+		if (chartKeys.length === 0) {
+			doc.moveDown(2);
+		}
 
 		// Full data table (restricted to alert-linked columns)
 		createPDFDataTable({ doc, dataHeader: dataHeaderTable, dataRows: dataRowsTable });
