@@ -26,6 +26,9 @@
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
 	import RelayControl from '$lib/components/RelayControl.svelte';
+	import { browser } from '$app/environment';
+	import { afterNavigate } from '$app/navigation';
+	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -37,9 +40,17 @@
 	let latestData: DeviceDataRecord | null = $state(null);
 	let historicalData: DeviceDataRecord[] = $state([]);
 	let userId = $state(data.user.id); // User ID for permissions
-	let devicePermissionLevelState = $state(data.device.cw_device_owners);
-	let devicePermissionLevel = $derived(
-		devicePermissionLevelState.find((owner) => owner.user_id === userId)?.permission_level || null
+	interface DeviceOwnerPerm {
+		user_id: string;
+		permission_level: number;
+	}
+	let devicePermissionLevelState = $state<DeviceOwnerPerm[]>(
+		// @ts-ignore allow fallback if structure differs
+		(data.device as any)?.cw_device_owners || []
+	);
+	let devicePermissionLevel = $derived<number | null>(
+		devicePermissionLevelState.find((owner: DeviceOwnerPerm) => owner.user_id === userId)
+			?.permission_level ?? null
 	);
 
 	// Define the type for a calendar event
@@ -94,6 +105,131 @@
 		phChartVisible
 	} = $derived(getDeviceDetailDerived(device, dataType, latestData));
 	let channel: RealtimeChannel | undefined = $state(undefined); // Channel for realtime updates
+	// Track last realtime update timestamp for stale detection
+	let lastRealtimeUpdate = $state<number>(Date.now());
+	let staleCheckIntervalId: number | null = $state(null);
+	let wakeDetectorIntervalId: number | null = $state(null);
+	let lastWakeTick = $state<number>(Date.now());
+	const EXPECTED_UPLOAD_MINUTES = $derived(
+		device.upload_interval || device.cw_device_type?.default_upload_interval || 10
+	);
+	const STALE_THRESHOLD_MS = $derived(
+		// Mark stale if no update in 2 * expected interval (cap between 2min and 30min)
+		Math.min(30, Math.max(2, EXPECTED_UPLOAD_MINUTES * 2)) * 60 * 1000
+	);
+
+	// Active status timer for THIS device (independent of dashboard list)
+	let activeTimerStore: ReturnType<typeof createActiveTimer> | null = null;
+	let isDeviceActiveFlag = $state<boolean | null>(null);
+	function setupActiveTimer() {
+		if (!latestData?.created_at) return;
+		const intervalMin = EXPECTED_UPLOAD_MINUTES;
+		activeTimerStore = createActiveTimer(new Date(latestData.created_at), intervalMin);
+		activeTimerStore.subscribe((val) => (isDeviceActiveFlag = val));
+	}
+
+	// Rebuild timer whenever latestData timestamp changes
+	$effect(() => {
+		if (latestData?.created_at) {
+			setupActiveTimer();
+		}
+	});
+
+	async function fetchLatestDirect(reason: string) {
+		try {
+			// console.debug('[DeviceDetail] Fetching latest (reason=%s)', reason);
+			const resp = await fetch(`/api/devices/${devEui}/status`);
+			if (resp.ok) {
+				const latest = await resp.json();
+				if (!latestData || latest.created_at !== latestData.created_at) {
+					latestData = latest;
+					lastRealtimeUpdate = Date.now();
+				}
+			} else {
+				console.warn('[DeviceDetail] Failed to refresh latest data', resp.status);
+			}
+		} catch (e) {
+			console.error('[DeviceDetail] Error fetching latest', e);
+		}
+	}
+
+	function setupRealtime() {
+		if (channel || !device.cw_device_type?.data_table_v2) return;
+		channel = setupRealtimeSubscription(
+			data.supabase,
+			device.cw_device_type?.data_table_v2,
+			devEui,
+			(newData) => {
+				latestData = newData;
+				lastRealtimeUpdate = Date.now();
+			},
+			0
+		);
+	}
+
+	function teardownRealtime() {
+		if (channel) {
+			data.supabase.removeChannel(channel);
+			channel = undefined;
+		}
+	}
+
+	function setupStaleMonitoring() {
+		if (!browser) return;
+		if (staleCheckIntervalId) return;
+		staleCheckIntervalId = window.setInterval(() => {
+			const now = Date.now();
+			if (now - lastRealtimeUpdate > STALE_THRESHOLD_MS) {
+				fetchLatestDirect('stale-check');
+			}
+		}, 60 * 1000); // check every minute
+	}
+
+	function setupWakeDetector() {
+		if (!browser) return;
+		if (wakeDetectorIntervalId) return;
+		wakeDetectorIntervalId = window.setInterval(() => {
+			const now = Date.now();
+			const delta = now - lastWakeTick;
+			lastWakeTick = now;
+			// If the tab/computer was asleep, delta will be large (e.g., > 90s)
+			if (delta > 90 * 1000) {
+				// console.debug('[DeviceDetail] Wake detected (delta=%dms)', delta);
+				// Recreate realtime channel and force refresh
+				teardownRealtime();
+				setupRealtime();
+				fetchLatestDirect('wake');
+			}
+		}, 30 * 1000); // tick every 30s
+	}
+
+	function setupVisibilityHandlers() {
+		if (!browser) return;
+		function handleVisibility() {
+			if (document.visibilityState === 'visible') {
+				setupRealtime();
+				fetchLatestDirect('visibility');
+			} else {
+				// pause realtime to save resources
+				teardownRealtime();
+			}
+		}
+		window.addEventListener('visibilitychange', handleVisibility);
+		window.addEventListener('focus', () => fetchLatestDirect('focus'));
+		window.addEventListener('online', () => {
+			teardownRealtime();
+			setupRealtime();
+			fetchLatestDirect('online');
+		});
+		// Cleanup registration
+		return () => {
+			window.removeEventListener('visibilitychange', handleVisibility);
+			window.removeEventListener('focus', () => fetchLatestDirect('focus'));
+			window.removeEventListener('online', () => fetchLatestDirect('online'));
+		};
+	}
+
+	let removeVisibilityHandlers: (() => void) | null | undefined = null;
 
 	onMount(() => {
 		// Initialize the device detail date range (this might be used internally by deviceDetail)
@@ -102,15 +238,12 @@
 
 	$effect(() => {
 		if (device.cw_device_type?.data_table_v2 && !channel) {
-			channel = setupRealtimeSubscription(
-				data.supabase,
-				device.cw_device_type?.data_table_v2,
-				devEui,
-				(newData) => {
-					latestData = newData;
-				},
-				0 // Retry count starts at 0
-			);
+			setupRealtime();
+			setupStaleMonitoring();
+			setupWakeDetector();
+			if (!removeVisibilityHandlers) {
+				removeVisibilityHandlers = setupVisibilityHandlers() || null;
+			}
 		}
 	});
 
@@ -273,6 +406,15 @@
 
 	// Expose formatDateForDisplay for the template, aliased from helpers
 	const formatDateForDisplay = utilFormatDateForDisplay;
+
+	// Cleanup on destroy
+	import { onDestroy } from 'svelte';
+	onDestroy(() => {
+		teardownRealtime();
+		if (staleCheckIntervalId) clearInterval(staleCheckIntervalId);
+		if (wakeDetectorIntervalId) clearInterval(wakeDetectorIntervalId);
+		if (removeVisibilityHandlers) removeVisibilityHandlers();
+	});
 </script>
 
 <svelte:head>
@@ -281,7 +423,7 @@
 
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
-		{#if (numericKeys.length && device.user_id == userId) || devicePermissionLevel <= 2}
+		{#if (numericKeys.length && device.user_id == userId) || (devicePermissionLevel !== null && devicePermissionLevel <= 2)}
 			<ExportButton
 				{devEui}
 				startDateInputString={startDateInput.toDateString()}

@@ -34,6 +34,7 @@
 		onToggleCollapse: () => void;
 	}
 	import AllDevices from '$lib/components/UI/dashboard/AllDevices.svelte';
+	import DashboardFilter from '$lib/components/dashboard/DashboardFilter.svelte';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	// Enhanced location type with deviceCount property
@@ -379,6 +380,8 @@
 			/> -->
 
 		<div class="devices-panel">
+			<!-- Dashboard search/filter -->
+			<DashboardFilter />
 			<!-- All Locations as Cards with Devices -->
 			{#if locationsStore.loadingLocations}
 				<div class="loading-devices">Loading locations and devices...</div>
