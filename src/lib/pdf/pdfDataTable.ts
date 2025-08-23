@@ -7,10 +7,10 @@ interface TableConfig {
 	rowsPerColumn: number;
 	cellWidth: number;
 	cellHeight: number;
-	margin: number;
 	columnMargin: number;
 	fontSize: number;
 	headerHeight: number;
+	takeEvery: number; // This is the numbered item in the array to take and you will skip others unless they are an alert type.
 }
 
 const DEFAULT_CONFIG: TableConfig = {
@@ -19,10 +19,10 @@ const DEFAULT_CONFIG: TableConfig = {
 	rowsPerColumn: 30,
 	cellWidth: 100,
 	cellHeight: 12,
-	margin: 40,
 	columnMargin: 10,
 	fontSize: 7,
-	headerHeight: 15
+	headerHeight: 15,
+	takeEvery: 3
 };
 
 /**
@@ -46,17 +46,38 @@ export function createPDFDataTable({
 }): void {
 	const conf = { ...DEFAULT_CONFIG, ...config };
 
-	const { caption, margin, headerHeight, cellWidth, cellHeight, columnsPerPage, columnMargin } =
-		conf;
+	// Apply takeEvery filtering (keep every Nth row) plus always keep rows containing any alert/warning cell (bgColor != white)
+	// N = conf.takeEvery (defaults to 3). If N <= 1, no sampling (all rows kept).
+	const samplingInterval = Math.max(1, conf.takeEvery || 1);
+	const workingRows =
+		samplingInterval > 1
+			? dataRows.filter((row, idx) => {
+					const onSeries = idx % samplingInterval === 0; // take first (idx 0), then every Nth
+					if (onSeries) return true;
+					// Include any row with an alert/warning (detected by any cell having a non-white bgColor)
+					const hasAlert = [row.header, ...row.cells].some(
+						(c) => c.bgColor && c.bgColor !== '#ffffff'
+					);
+					return hasAlert;
+				})
+			: dataRows;
+
+	const { caption, headerHeight, cellWidth, cellHeight, columnsPerPage, columnMargin } = conf;
+
+	const {
+		top: marginTop,
+		right: marginRight,
+		bottom: marginBottom,
+		left: marginLeft
+	} = doc.page.margins;
 
 	// Calculate how many rows can actually fit on a page
 	const pageHeight = doc.page.height;
-	const availableHeight = pageHeight - margin * 2 - headerHeight - 50; // 50 for caption space
-	const actualRowsPerColumn = Math.floor(availableHeight / cellHeight);
+	const contentHeight = pageHeight - marginTop - marginBottom;
 
 	// Calculate how many columns can actually fit on a page
 	const pageWidth = doc.page.width;
-	const availableWidth = pageWidth - margin * 2;
+	const availableWidth = pageWidth - marginLeft - marginRight;
 	const columnWidth = [dataHeader.header, ...dataHeader.cells].reduce(
 		(total, col) => total + (col.width ?? cellWidth),
 		0
@@ -66,43 +87,47 @@ export function createPDFDataTable({
 	const finalColumnsPerPage = Math.min(columnsPerPage, actualColumnsPerPage);
 
 	if (caption) {
-		doc.fillColor('black').fontSize(12).text(caption, margin, doc.y);
+		doc.fillColor('black').fontSize(12).text(caption, marginLeft, doc.y);
 		doc.moveDown(0.5);
 	}
 
-	let currentPage = 0;
 	let dataIndex = 0;
 	let startY = doc.y;
 
-	while (dataIndex < dataRows.length) {
-		if (currentPage > 0) {
-			doc.addPage();
-			startY = margin;
-		}
-
-		const totalColumns = Math.min(
-			finalColumnsPerPage,
-			Math.ceil((dataRows.length - dataIndex) / actualRowsPerColumn)
-		);
-
+	while (dataIndex < workingRows.length) {
 		// Draw columns for current page
-		for (let col = 0; col < totalColumns && dataIndex < dataRows.length; col++) {
-			const startX = margin + col * (columnWidth + columnMargin);
-			const endIndex = Math.min(dataIndex + actualRowsPerColumn, dataRows.length);
+		for (let col = 0; col < finalColumnsPerPage && dataIndex < workingRows.length; col++) {
+			const firstColumn = col % finalColumnsPerPage === 0;
+
+			if (firstColumn) {
+				startY = doc.y;
+			}
+
+			let availableHeight = pageHeight - startY - marginBottom - headerHeight;
+
+			// Insert a new page if we are at the bottom of the current page
+			if (firstColumn && availableHeight < 200) {
+				doc.addPage();
+				startY = marginTop;
+				availableHeight = contentHeight - headerHeight;
+			}
+
+			const actualRowsPerColumn = Math.floor(availableHeight / cellHeight);
+			const startX = marginLeft + col * (columnWidth + columnMargin);
+			const endIndex = Math.min(dataIndex + actualRowsPerColumn, workingRows.length);
 
 			drawColumn({
 				doc,
 				dataHeader,
-				dataRows: dataRows.slice(dataIndex, endIndex),
+				dataRows: workingRows.slice(dataIndex, endIndex),
 				columnWidth,
 				startX,
 				startY,
 				config: conf
 			});
+
 			dataIndex = endIndex;
 		}
-
-		currentPage++;
 	}
 }
 
@@ -151,8 +176,8 @@ function drawColumn({
 	currentY += headerHeight;
 
 	// Draw data rows
-	dataRows.forEach(({ header, cells }, index) => {
-		const isEvenRow = index % 2 === 0;
+	dataRows.forEach(({ header, cells }, rowIndex) => {
+		const isEvenRow = rowIndex % 2 === 0;
 
 		// Row background
 		if (!isEvenRow) {
@@ -164,7 +189,7 @@ function drawColumn({
 		// Row border
 		doc.strokeColor(borderColor).rect(startX, currentY, columnWidth, cellHeight).stroke();
 
-		[header, ...cells].forEach(({ label, bgColor }, cellIndex) => {
+		[header, ...cells].forEach(({ label, shortLabel, bgColor }, cellIndex) => {
 			const cellX = getCellX(cellIndex);
 			const { width = cellWidth, fontSize = defaultFontSize } = columns[cellIndex];
 
@@ -176,11 +201,23 @@ function drawColumn({
 			// Cell border
 			doc.strokeColor(borderColor).rect(cellX, currentY, width, cellHeight).stroke();
 
+			let labelText = label;
+
+			// If the row is not the first one and a short label is provided, check if we can use it
+			if (rowIndex > 0 && shortLabel) {
+				const previousLabel = dataRows[rowIndex - 1]?.header.label;
+
+				// If the previous date is the same as the current date, use the short label
+				if (previousLabel.split(' ')[0] === label.split(' ')[0]) {
+					labelText = shortLabel;
+				}
+			}
+
 			// Value text
 			doc
 				.fillColor('#000')
 				.fontSize(fontSize - 1)
-				.text(label, cellX + 1, currentY + 2, { width: width - 5, align: 'right' });
+				.text(labelText, cellX + 1, currentY + 2, { width: width - 5, align: 'right' });
 		});
 
 		currentY += cellHeight;

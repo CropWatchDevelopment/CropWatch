@@ -7,7 +7,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 	}
 	const { data: profile } = await supabase
 		.from('profiles')
-		.select(`username, full_name, website, avatar_url`)
+		.select(`username, full_name, website, avatar_url, line_id`)
 		.eq('id', session.user.id)
 		.single();
 	return { session, profile };
@@ -42,6 +42,15 @@ export const actions: Actions = {
 			website,
 			avatarUrl
 		};
+	},
+	disconnectLine: async ({ locals: { supabase, safeGetSession } }) => {
+		const { session } = await safeGetSession();
+		if (!session) redirect(303, '/');
+		await supabase
+			.from('profiles')
+			.update({ line_id: null, updated_at: new Date() })
+			.eq('id', session.user.id);
+		return { lineDisconnected: true };
 	},
 	signout: async ({ locals: { supabase, safeGetSession } }) => {
 		const { session } = await safeGetSession();

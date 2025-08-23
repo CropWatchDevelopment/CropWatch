@@ -184,21 +184,50 @@ export class DeviceDataService implements IDeviceDataService {
 				.eq('dev_eui', devEui)
 				.gte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', startDate.toISOString()) // SHIT FIX #1, traffic camera specific
 				.lte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', endDate.toISOString()) // SHIT FIX #2, traffic camera specific
-				.order(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', { ascending: false }) // SHIT FIX #3, traffic camera specific
-				.csv();
+				.order(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', { ascending: false }); // SHIT FIX #3, traffic camera specific
 
-			// SHIT FIX #4, traffic camera specific
-			if (tableName == 'cw_traffic2') {
-				return (data || []).map((record: any) => ({
-					...record,
-					created_at: record.traffic_hour,
-					dev_eui: record.dev_eui,
-					note: 'Traffic data formatted'
-				})) as DeviceDataRecord[];
+			if (error) {
+				this.errorHandler.logError(error);
+				throw new Error(`Error fetching CSV data: ${error.message}`);
 			}
-			// END OF SHIT FIX
 
-			return (data || []) as DeviceDataRecord[];
+			const rows = ((data || []) as Record<string, any>[]).map((r) => ({ ...r }));
+			const timestampKey = tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at';
+
+			const normalizeToISO = (val: string) => {
+				let s = val.trim().replace(' ', 'T');
+				s = s.replace(/([+-]\d{2})$/, '$1:00');
+				s = s.replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+				return s;
+			};
+
+			for (const row of rows) {
+				const raw = row[timestampKey];
+				if (!raw) continue;
+				const isoLike = typeof raw === 'string' ? normalizeToISO(raw) : String(raw);
+				let dt = DateTime.fromISO(isoLike, { setZone: true });
+				if (!dt.isValid) dt = DateTime.fromSQL(String(raw), { setZone: true });
+				if (dt.isValid) {
+					// Format for Microsoft Excel compatibility: "yyyy-MM-dd HH:mm:ss" (no T, no timezone)
+					const excelLocal = dt.setZone('Asia/Tokyo').toFormat('yyyy-LL-dd HH:mm:ss');
+					// Standardize on created_at in the CSV
+					row.created_at = excelLocal;
+				}
+			}
+
+			// Build header order: dev_eui, created_at, then the rest in natural order
+			const headerSet = new Set<string>();
+			for (const row of rows) {
+				Object.keys(row).forEach((k) => headerSet.add(k));
+			}
+			const headers = [
+				'dev_eui',
+				'created_at',
+				...Array.from(headerSet).filter((k) => k !== 'dev_eui' && k !== 'created_at')
+			];
+
+			const csv = this.toCSV(rows, headers);
+			return csv as unknown as DeviceDataRecord[];
 		} catch (error) {
 			// Handle errors with a generic response
 			this.errorHandler.logError(error as Error);
@@ -426,5 +455,32 @@ export class DeviceDataService implements IDeviceDataService {
 			return false; // Error checking access
 		}
 		return true; // Default to true for now
+	}
+
+	private toCSV(records: Record<string, any>[], headers?: string[]): string {
+		if (!records || records.length === 0) {
+			return headers && headers.length ? headers.join(',') + '\n' : '';
+		}
+		const cols =
+			headers && headers.length
+				? headers
+				: Array.from(new Set(records.flatMap((r) => Object.keys(r))));
+
+		const escapeField = (val: any): string => {
+			if (val === null || val === undefined) return '';
+			if (typeof val === 'boolean') return val ? 't' : 'f';
+			const s = String(val);
+			const needsQuote = /[",\r\n]/.test(s);
+			const escaped = s.replace(/"/g, '""');
+			return needsQuote ? `"${escaped}"` : escaped;
+		};
+
+		const lines: string[] = [];
+		lines.push(cols.join(','));
+		for (const rec of records) {
+			const row = cols.map((c) => escapeField(rec[c]));
+			lines.push(row.join(','));
+		}
+		return lines.join('\n');
 	}
 }

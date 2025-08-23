@@ -12,10 +12,7 @@ export class DeviceService implements IDeviceService {
 	/**
 	 * Constructor with DeviceRepository dependency
 	 */
-	constructor(
-		private deviceRepository: DeviceRepository,
-		private deviceDataService?: DeviceDataService // Optional, if you need to access device data
-	) {}
+	constructor(private deviceRepository: DeviceRepository) {}
 
 	/**
 	 * Get a device by its EUI
@@ -38,20 +35,6 @@ export class DeviceService implements IDeviceService {
 	 */
 	async getAllDevices(): Promise<Device[]> {
 		return this.deviceRepository.findAll();
-	}
-
-	async getAllDevicesWithTypes(): Promise<Device[]> {
-		if (!this.deviceDataService) {
-			throw new Error('DeviceDataRepository is not provided');
-		}
-
-		let allDevices = this.getAllDevices();
-		// Fetch latest device data and merge with devices
-		for (const device of await allDevices) {
-			const latestData = await this.deviceDataService.getLatestDeviceData(device.dev_eui);
-			device['latest_data'] = latestData;
-		}
-		return allDevices;
 	}
 
 	/**

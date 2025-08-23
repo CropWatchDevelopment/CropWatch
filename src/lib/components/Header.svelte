@@ -11,6 +11,7 @@
 	import MaterialIcon from './UI/icons/MaterialIcon.svelte';
 	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
 	import LanguageSelector from './UI/form/LanguageSelector.svelte';
+	import SiteWideRefreshButton from './SiteWideRefreshButton.svelte';
 
 	let { userName } = $props();
 

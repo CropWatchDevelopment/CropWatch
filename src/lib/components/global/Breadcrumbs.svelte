@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { _ } from 'svelte-i18n';
+	import SiteWideRefreshButton from '../SiteWideRefreshButton.svelte';
 
 	type BreadcrumbProps = {
 		path: string;
@@ -44,6 +45,8 @@
 		}
 	];
 </script>
+
+<SiteWideRefreshButton />
 
 {#snippet breadcrumb({ path, label, showArrow = true }: BreadcrumbProps)}
 	{#if showArrow}

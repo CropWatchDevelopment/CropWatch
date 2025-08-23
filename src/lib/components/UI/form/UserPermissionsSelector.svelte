@@ -14,10 +14,11 @@
 	type Props = {
 		data: { device?: DeviceWithType; ownerId: string };
 		ownerList: any[];
-		canDelete: boolean;
+		canDelete?: boolean;
 	};
 
 	let { data, ownerList, canDelete = false }: Props = $props();
+
 	let device = $derived(data.device);
 	let currentUserId = $derived(data.ownerId);
 	let showingRemoveConfirmation = $state(false);
@@ -87,7 +88,7 @@
 			</div>
 		{:else}
 			{#each ownerList as owner (owner.id)}
-				{#if !owner.profile.email.includes('@cropwatch.io')}
+				{#if !owner.profile?.email?.includes('@cropwatch.io')}
 					<div
 						class="item-start flex flex-col justify-between gap-3 border-gray-300 p-3 sm:flex-row sm:items-center dark:border-neutral-400"
 					>

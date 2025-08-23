@@ -25,6 +25,7 @@
 	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
+	import RelayControl from '$lib/components/RelayControl.svelte';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -35,6 +36,11 @@
 	let dataType = $state(data.dataType);
 	let latestData: DeviceDataRecord | null = $state(null);
 	let historicalData: DeviceDataRecord[] = $state([]);
+	let userId = $state(data.user.id); // User ID for permissions
+	let devicePermissionLevelState = $state(data.device.cw_device_owners);
+	let devicePermissionLevel = $derived(
+		devicePermissionLevelState.find((owner) => owner.user_id === userId)?.permission_level || null
+	);
 
 	// Define the type for a calendar event
 	interface CalendarEvent {
@@ -69,9 +75,11 @@
 	let mainChartElements: HTMLElement[] = $state([]); // Holds chart elements for rendering
 	let blushChartElements: HTMLElement[] = $state([]); // Holds brush elements for rendering
 
-	// Local string states for date inputs, bound to the input fields
-	let startDateInputString = $state('');
-	let endDateInputString = $state('');
+	// Date range selection - initialize in LOCAL time (end: today 23:59:59.999, start: end - 24h)
+	const __endInit = new Date();
+	__endInit.setHours(23, 59, 59, 999);
+	let endDateInput = $state<Date>(__endInit);
+	let startDateInput = $state<Date>(new Date(__endInit.getTime() - 24 * 60 * 60 * 1000));
 
 	let loadingHistoricalData = $state(false); // Local loading state for historical data fetch
 	let renderingVisualization = $state(false); // Local rendering state for visualization
@@ -88,17 +96,8 @@
 	let channel: RealtimeChannel | undefined = $state(undefined); // Channel for realtime updates
 
 	onMount(() => {
+		// Initialize the device detail date range (this might be used internally by deviceDetail)
 		initializeDateRange(); // This sets deviceDetail.startDate and deviceDetail.endDate (Date objects)
-
-		// Sync input strings with initial Date objects from deviceDetail
-		startDateInputString = formatDateForInput(deviceDetail.startDate);
-		endDateInputString = formatDateForInput(deviceDetail.endDate);
-	});
-
-	$effect(() => {
-		(async () => {
-			latestData = await data.latestData;
-		})();
 	});
 
 	$effect(() => {
@@ -127,6 +126,31 @@
 			calendarEvents = updateEvents(); // Initialize calendar events based on historical data
 			loadingHistoricalData = false;
 		})();
+	});
+
+	$effect(() => {
+		// Initialize latestData from the streamed promise once
+		if (latestData === null && data.latestData) {
+			(async () => {
+				try {
+					const _latest = await data.latestData;
+					if (_latest) {
+						latestData = _latest as DeviceDataRecord;
+					} else if (historicalData.length) {
+						// Fallback: use most recent historical record if available
+						latestData = historicalData[historicalData.length - 1];
+					}
+				} catch (e) {
+					console.error('Failed to resolve latestData promise:', e);
+				}
+			})();
+		}
+	});
+
+	$effect(() => {
+		if (latestData === null && historicalData.length) {
+			latestData = historicalData[historicalData.length - 1];
+		}
 	});
 
 	const renderChart = async () => {
@@ -163,18 +187,6 @@
 	$effect(() => {
 		void $locale;
 		calendarEvents = updateEvents(historicalData);
-	});
-
-	// Effect to keep input strings in sync if deviceDetail.startDate/endDate change (e.g. by initializeDateRange)
-	$effect(() => {
-		if (deviceDetail.startDate) {
-			startDateInputString = formatDateForInput(deviceDetail.startDate);
-		}
-	});
-	$effect(() => {
-		if (deviceDetail.endDate) {
-			endDateInputString = formatDateForInput(deviceDetail.endDate);
-		}
 	});
 
 	const updateEvents = (data: any[] = historicalData): CalendarEvent[] => {
@@ -233,59 +245,30 @@
 	};
 
 	// Function to handle fetching data for a specific date range
-	async function handleDateRangeSubmit(units?: number) {
-		if (!startDateInputString || !endDateInputString) {
+	async function handleDateRangeSubmit() {
+		if (!startDateInput || !endDateInput) {
 			deviceDetail.error = 'Please select both start and end dates.';
 			return;
 		}
 
-		// Parse local string dates from input into Date objects
-		// new Date('YYYY-MM-DD') can have timezone issues. Parsing components is safer.
-		const [sYear, sMonth, sDay] = startDateInputString.split('-').map(Number);
-		const finalStartDate = new Date(sYear, sMonth - 1, sDay); // Month is 0-indexed
-
-		const [eYear, eMonth, eDay] = endDateInputString.split('-').map(Number);
-		// Set end date to the end of the selected day to be inclusive for the query
-		const finalEndDate = new Date(eYear, eMonth - 1, eDay, 23, 59, 59, 999); // Month is 0-indexed
-
-		if (finalStartDate > finalEndDate) {
-			deviceDetail.error = 'Start date must be before end date.';
-			return;
-		}
-
 		loadingHistoricalData = true;
-		deviceDetail.error = null; // Clear previous errors before fetching
 
-		// If units is provided, slide the date range forward or backward
-		if (units !== undefined) {
-			//get range between start and end dates
-			let endDateTime = DateTime.fromJSDate(finalEndDate);
-			let startDateTime = DateTime.fromJSDate(finalStartDate);
-			const diffInDays = Math.round(Math.abs(startDateTime.diff(endDateTime, ['days']).days));
-			if (units < 0) {
-				// Slide back
-				startDateTime = startDateTime.minus({ days: diffInDays });
-				endDateTime = endDateTime.minus({ days: diffInDays });
-			} else if (units > 0) {
-				// Slide forward
-				startDateTime.plus({ days: diffInDays }).toJSDate();
-				endDateTime.plus({ days: diffInDays }).toJSDate();
+		try {
+			const newData = await fetchDataForDateRange(device, startDateInput, endDateInput);
+			if (newData) {
+				historicalData = newData; // Set the historical data
+				processHistoricalData(newData); // Process the new data to update stats and chartData
+				numericKeys = getNumericKeys(newData); // Update numeric keys for the new data
+				calendarEvents = updateEvents(newData); // Use newData directly
+			} else {
+				calendarEvents = updateEvents(historicalData);
 			}
-			// update input strings to reflect the new range
-			startDateInputString = formatDateForInput(startDateTime.toJSDate());
-			endDateInputString = formatDateForInput(endDateTime.toJSDate());
+		} catch (error) {
+			console.error('Error fetching date range data:', error);
+			deviceDetail.error = 'Failed to fetch data for the selected date range.';
+		} finally {
+			loadingHistoricalData = false;
 		}
-
-		const newData = await fetchDataForDateRange(device, finalStartDate, finalEndDate);
-		//console.log('Requested range:', finalStartDate, finalEndDate, 'Received:', newData);
-		if (newData) {
-			historicalData = newData; // This will trigger $effect for renderVisualization
-			calendarEvents = updateEvents(newData); // Use newData directly
-		} else {
-			calendarEvents = updateEvents(historicalData);
-		}
-
-		loadingHistoricalData = false;
 	}
 
 	// Expose formatDateForDisplay for the template, aliased from helpers
@@ -298,174 +281,163 @@
 
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
-		{#if numericKeys.length}
-			<ExportButton {devEui} {startDateInputString} {endDateInputString} dataKeys={numericKeys} />
+		{#if (numericKeys.length && device.user_id == userId) || devicePermissionLevel <= 2}
+			<ExportButton
+				{devEui}
+				startDateInputString={startDateInput.toDateString()}
+				endDateInputString={endDateInput.toDateString()}
+				dataKeys={numericKeys}
+			/>
 		{/if}
-		<Button variant="secondary" href="{basePath}/settings">
-			<MaterialIcon name="Settings" />
-			{$_('settings')}
-		</Button>
+		<!-- <pre>{JSON.stringify(device, null, 2)}</pre> -->
+		{#if device.user_id == userId || devicePermissionLevel === 1}
+			<Button variant="secondary" href="{basePath}/settings">
+				<MaterialIcon name="Settings" />
+				{$_('settings')}
+			</Button>
+		{/if}
 	</div>
 	<!-- Data range selector on large screen -->
 	<div class="hidden border-l border-neutral-400 pl-4 lg:block">
 		<DateRangeSelector
-			{startDateInputString}
-			{endDateInputString}
-			{handleDateRangeSubmit}
+			bind:startDateInput
+			bind:endDateInput
 			{loadingHistoricalData}
+			onDateChange={handleDateRangeSubmit}
 		/>
 	</div>
 </Header>
 
-<div class="wrapper flex flex-col gap-4 p-4 lg:flex-row">
-	<!-- Left pane -->
-	<div
-		class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
-	>
-		<!-- Latest data section -->
-		<section class="flex-auto lg:w-auto lg:flex-none">
-			<h2>{$_('Latest Sensor Readings')}</h2>
-			{#if latestData}
-				<div>
-					<div class="grid grid-cols-2 gap-2">
-						{#each Object.keys(latestData) as key}
-							{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
-								<DataCard
-									{latestData}
-									name={key}
-									{key}
-									type={key}
-									metadata={key === 'created_at' || key === 'dev_eui'}
-								/>
-							{/if}
-						{/each}
+<!-- Updated layout: outer wrapper always column; inner two-column row contains latest + stats; charts moved below for full-width -->
+<div class="wrapper flex flex-col gap-4 p-4">
+	<div class="flex flex-col gap-4 lg:flex-row">
+		<!-- Left pane -->
+		<div
+			class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+		>
+			<!-- Latest data section -->
+			<section class="flex-auto lg:w-auto lg:flex-none">
+				<h2>{$_('Latest Sensor Readings')}</h2>
+				{#if latestData}
+					<div>
+						<div class="grid grid-cols-2 gap-2">
+							{#each Object.keys(latestData) as key}
+								{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
+									<DataCard
+										{latestData}
+										name={key}
+										{key}
+										type={key}
+										metadata={key === 'created_at' || key === 'dev_eui'}
+									/>
+								{/if}
+							{/each}
+						</div>
+
+						<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+							{$_('Last updated:')}
+							{formatDateForDisplay(latestData.created_at)}
+						</p>
 					</div>
+				{:else}
+					<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
+				{/if}
+			</section>
 
-					<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
-						{$_('Last updated:')}
-						{formatDateForDisplay(latestData.created_at)}
-					</p>
-				</div>
-			{:else}
-				<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
-			{/if}
-		</section>
-
-		<!-- Video feed and map on large screen -->
-		<CameraStream {device} class="hidden flex-none lg:block" />
-		<DeviceMap {device} class="hidden flex-none lg:block" />
-	</div>
-
-	<!-- Right pane -->
-	<div
-		class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0"
-		inert={loadingHistoricalData}
-		aria-busy={loadingHistoricalData}
-	>
-		<!-- Loading overlay -->
-		{#if loadingHistoricalData}
-			<div
-				class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-gray-50 backdrop-blur-xs dark:bg-zinc-900/75"
-			>
-				<Spinner />
-				{$_('Loading historical data...')}
-			</div>
-		{/if}
-		<!-- Data range selector on small/medium screen -->
-		<div class="mb-4 border-b border-neutral-400 pb-4 lg:hidden">
-			<DateRangeSelector
-				{startDateInputString}
-				{endDateInputString}
-				{handleDateRangeSubmit}
-				{loadingHistoricalData}
-			/>
+			<!-- Video feed and map on large screen -->
+			<CameraStream {device} class="hidden flex-none lg:block" />
+			<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
 		</div>
-		<section class="mb-12">
-			{#if loading}
-				<!-- Loading State -->
+
+		<!-- Right pane (now only summary + calendar) -->
+		<div
+			class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0"
+			inert={loadingHistoricalData}
+			aria-busy={loadingHistoricalData}
+		>
+			{#if loadingHistoricalData}
 				<div
-					class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
+					class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-gray-50 backdrop-blur-xs dark:bg-zinc-900/75"
 				>
 					<Spinner />
-					<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
+					{$_('Loading historical data...')}
 				</div>
-			{:else if historicalData.length === 0}
-				<!-- Empty State -->
-				<div class="pt-4 text-center text-gray-500 italic">
-					{$_('No historical data available for the selected date range.')}
-				</div>
-			{:else}
-				<!-- Statistical Summary -->
-				<div class="mb-8">
-					<h2>{$_('Stats Summary')}</h2>
-					<div class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3">
-						{#if temperatureChartVisible}
-							<StatsCard key="temperature_c" {stats} />
-						{/if}
-						{#if humidityChartVisible}
-							<StatsCard key="humidity" {stats} />
-						{/if}
-						{#if moistureChartVisible}
-							<StatsCard key="moisture" {stats} />
-						{/if}
-						{#if co2ChartVisible}
-							<StatsCard key="co2" {stats} />
-						{/if}
-						{#if phChartVisible}
-							<StatsCard key="ph" {stats} />
-						{/if}
+			{/if}
+			<div class="mb-4 border-b border-neutral-400 pb-4 lg:hidden">
+				<DateRangeSelector
+					bind:startDateInput
+					bind:endDateInput
+					{loadingHistoricalData}
+					onDateChange={handleDateRangeSubmit}
+				/>
+			</div>
+			<section class="mb-12">
+				{#if loading}
+					<div
+						class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
+					>
+						<Spinner />
+						<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
 					</div>
-				</div>
-
-				<!-- Charts -->
-				<!-- Chart Visualizations -->
-				<section class="mb-12" inert={renderingVisualization} aria-busy={renderingVisualization}>
-					<h2>{$_('Data Chart')}</h2>
-
-					<!-- Generic Main Line + Brush Chart (always rendered if historicalData exists) -->
-					<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
-						{#if renderingVisualization}
-							<div class="absolute inset-0 z-10 flex items-center justify-center">
-								Rendering chart...
-							</div>
-						{/if}
-						<div class="w-full">
-							<div class="chart-placeholder grid grid-cols-1 gap-4 md:grid-cols-2">
-								{#each numericKeys as key, index (key)}
-									<section class="chart-visual">
-										<h3 class="text-center font-semibold">{$_(key)}</h3>
-										<div class="chart main-chart" bind:this={mainChartElements[index]}></div>
-										<div class="chart brush-chart" bind:this={blushChartElements[index]}></div>
-									</section>
-								{/each}
-							</div>
+				{:else if historicalData.length === 0 && device.cw_device_type?.data_table_v2 !== 'cw_relay_data'}
+					<div class="pt-4 text-center text-gray-500 italic">
+						{$_('No historical data available for the selected date range.')}
+					</div>
+				{:else if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
+					<RelayControl {device} />
+				{:else}
+					<div class="mb-8">
+						<h2>{$_('Stats Summary')}</h2>
+						<div
+							class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3"
+						>
+							{#if temperatureChartVisible}<StatsCard key="temperature_c" {stats} />{/if}
+							{#if humidityChartVisible}<StatsCard key="humidity" {stats} />{/if}
+							{#if moistureChartVisible}<StatsCard key="moisture" {stats} />{/if}
+							{#if co2ChartVisible}<StatsCard key="co2" {stats} />{/if}
+							{#if phChartVisible}<StatsCard key="ph" {stats} />{/if}
 						</div>
 					</div>
-				</section>
-			{/if}
-		</section>
-
-		<!-- Video feed and map on small/medium screen -->
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:hidden">
-			<CameraStream {device} />
-			<DeviceMap {device} />
-		</div>
-
-		<div class="mt-4">
-			<section>
-				<h2>{$_('Weather & Data')}</h2>
-				<WeatherCalendar
-					events={calendarEvents}
-					onDateChange={(date: Date) => {
-						startDateInputString = formatDateForInput(date);
-						endDateInputString = formatDateForInput(deviceDetail.endDate);
-						handleDateRangeSubmit();
-					}}
-				/>
+				{/if}
 			</section>
+
+			<!-- Video feed and map on small/medium screen -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:hidden">
+				<CameraStream {device} />
+				<!-- <DeviceMap {device} /> -->
+			</div>
 		</div>
 	</div>
 </div>
+
+<!-- Full-width Charts Section (desktop + mobile) -->
+{#if !loading && !loadingHistoricalData && historicalData.length > 0}
+	<section class="mb-12 px-4" inert={renderingVisualization} aria-busy={renderingVisualization}>
+		<h2>{$_('Data Chart')}</h2>
+		<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
+			{#if renderingVisualization}
+				<div class="absolute inset-0 z-10 flex items-center justify-center">Rendering chart...</div>
+			{/if}
+			<div class="w-full">
+				<div class="chart-placeholder grid grid-cols-1 gap-4 md:grid-cols-2">
+					{#each numericKeys as key, index (key)}
+						<section class="chart-visual">
+							<h3 class="text-center font-semibold">{$_(key)}</h3>
+							<div class="chart main-chart" bind:this={mainChartElements[index]}></div>
+							<div class="chart brush-chart" bind:this={blushChartElements[index]}></div>
+						</section>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</section>
+{/if}
+
+<!-- Full-width Calendar Section -->
+<section class="mb-12 px-4">
+	<h2>{$_('Weather & Data')}</h2>
+	<WeatherCalendar events={calendarEvents} />
+</section>
 
 <style lang="postcss">
 	@reference "tailwindcss";
