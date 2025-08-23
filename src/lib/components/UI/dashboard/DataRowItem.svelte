@@ -138,8 +138,6 @@
 						<div class="flex items-center">
 							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
 								>{nameToEmoji(primaryDataKey)}</span
-							><span class="text-lg text-gray-500 dark:text-gray-400"
-								>{nameToEmoji(secondaryDataKey)}</span
 							>
 							<div class="flex flex-col items-start">
 								<span
