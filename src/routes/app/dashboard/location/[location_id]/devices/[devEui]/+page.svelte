@@ -279,8 +279,6 @@
 	<title>Device Details - {device?.name || device?.dev_eui}</title>
 </svelte:head>
 
-{devicePermissionLevel}
-
 <Header {device} {basePath}>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
 		{#if (numericKeys.length && device.user_id == userId) || devicePermissionLevel <= 2}
