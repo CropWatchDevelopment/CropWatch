@@ -55,6 +55,7 @@ export const strings = {
 	bicycle_count: '自転車台数',
 	truck_count: 'トラック台数',
 	bus_count: 'バス台数',
+	motorcycle_count: 'バイク台数',
 	'Data Date Range': 'データ日付範囲',
 	data_date_range: 'データ日付範囲',
 	Close: '閉じる',

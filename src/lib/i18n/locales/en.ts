@@ -54,6 +54,7 @@ export const strings = {
 	bicycle_count: 'Bicycles',
 	truck_count: 'Trucks',
 	bus_count: 'Buses',
+	motorcycle_count: 'Motorcycles',
 	'Data Date Range': 'Data Date Range',
 	data_date_range: 'Data Date Range',
 	// CSVDownloadButton translations

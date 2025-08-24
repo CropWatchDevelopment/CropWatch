@@ -55,7 +55,8 @@ const colors: Record<string, string> = {
 	car_count: 'red',
 	bicycle_count: 'green',
 	truck_count: 'silver',
-	bus_count: 'blue'
+	bus_count: 'blue',
+	motorcycle_count: 'orange'
 };
 
 /**
@@ -105,7 +106,10 @@ const customNumberFormatOptions: Record<string, Intl.NumberFormatOptions> = {
 	lux: { maximumFractionDigits: 0 },
 	people_count: { maximumFractionDigits: 0 },
 	car_count: { maximumFractionDigits: 0 },
-	bicycle_count: { maximumFractionDigits: 0 }
+	bicycle_count: { maximumFractionDigits: 0 },
+	truck_count: { maximumFractionDigits: 0 },
+	bus_count: { maximumFractionDigits: 0 },
+	motorcycle_count: { maximumFractionDigits: 0 }
 };
 
 /**
