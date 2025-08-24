@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { goto } from '$app/navigation';
 	import { mdiAlert, mdiCheck, mdiClose, mdiClockOutline } from '@mdi/js';
 	import type { Location } from '$lib/models/Location';

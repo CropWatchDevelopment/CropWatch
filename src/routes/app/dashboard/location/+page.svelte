@@ -11,7 +11,9 @@
 		mdiSortDescending,
 		mdiMagnify
 	} from '@mdi/js';
-	import { Button, Card, Icon } from 'svelte-ux';
+	import Button from '$lib/components/ui/base/Button.svelte';
+	import Card from '$lib/components/ui/base/Card.svelte';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import type { LocationWithDevices } from './+page.server';
 
 	// Svelte 5 props declaration with proper typing

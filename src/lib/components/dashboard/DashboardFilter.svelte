@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { mdiMagnify, mdiClose } from '@mdi/js';
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 	import { onMount, onDestroy } from 'svelte';

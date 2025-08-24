@@ -15,7 +15,7 @@
 			if (error) {
 				throw error;
 			}
-			debugger;
+
 			return data;
 			// You can replace this with actual Discord OAuth logic when implemented
 		} catch (err) {

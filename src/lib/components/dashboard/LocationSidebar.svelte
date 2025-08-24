@@ -14,7 +14,7 @@
 		mdiMagnify
 	} from '@mdi/js';
 	import { _ } from 'svelte-i18n';
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { fade } from 'svelte/transition';
 
 	// Use the same interfaces as in the dashboard page
