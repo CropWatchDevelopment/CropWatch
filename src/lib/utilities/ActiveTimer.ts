@@ -30,15 +30,7 @@ export function createActiveTimer(lastUpdated: Date | null | undefined, interval
 		const timeDiffMs = now.getTime() - new Date(date).getTime();
 		const intervalMs = interval * 60 * 1000;
 
-		// Add a maximum threshold for device activity (35 minutes) regardless of interval
-		const MAX_ACTIVE_TIME_MS = 36 * 60 * 1000; // 35 minutes in milliseconds
-
-		// If time difference exceeds our maximum threshold, device is inactive
-		if (timeDiffMs > MAX_ACTIVE_TIME_MS) {
-			return false;
-		}
-
-		// Device is active if time difference is less than the configured interval
+		// Device is active if time difference is less than the configured interval (no hard cap)
 		return timeDiffMs < intervalMs;
 	}
 
