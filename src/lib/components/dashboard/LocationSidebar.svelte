@@ -14,7 +14,7 @@
 		mdiMagnify
 	} from '@mdi/js';
 	import { _ } from 'svelte-i18n';
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { fade } from 'svelte/transition';
 
 	// Use the same interfaces as in the dashboard page
@@ -209,16 +209,14 @@
 				title={collapsed ? $_('Expand sidebar to search') : $_('Collapse sidebar')}
 			>
 				<Icon
-					class="h-7  w-7 translate-x-[-4px] {collapsed ? 'rotate-180' : ''}"
+					className="h-7 w-7 translate-x-[-4px] {collapsed ? 'rotate-180' : ''}"
 					path={mdiChevronLeft}
 				/>
 			</button>
-
 			{#if !collapsed}
 				<div class="ml-2 flex-1">
 					<h2>{$_('Locations')}</h2>
 				</div>
-
 				<div class="h-[24px]">
 					<DashboardFilterBits
 						bind:search={localSearch}
@@ -241,16 +239,17 @@
 			</button>
 		{:else}
 			<div class="relative">
-				<div class="absolute inset-y-0 flex items-center pl-2">
-					<svg viewBox="0 0 24 24" width="16" height="16" class=" text-gray-500">
+				<div
+					class="pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 transform text-gray-500"
+				>
+					<svg viewBox="0 0 24 24" width="16" height="16">
 						<path fill="currentColor" d={mdiMagnify} />
 					</svg>
 				</div>
 				<input
 					type="text"
 					bind:value={localSearch}
-					class="w-full rounded-md border border-zinc-300 bg-white py-[5px] pr-14 pl-7 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 focus:outline-none
-				dark:border-zinc-600 dark:bg-zinc-600 dark:text-white dark:placeholder-zinc-400 dark:focus:border-zinc-400 dark:focus:ring-zinc-500"
+					class="w-full rounded-md border border-zinc-300 bg-white py-2 pr-9 pl-8 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-zinc-400 dark:focus:border-blue-400 dark:focus:ring-blue-500"
 					placeholder={$_('Search')}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') {
@@ -260,11 +259,11 @@
 				/>
 				{#if localSearch}
 					<button
-						class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+						class="absolute top-1/2 right-2 flex h-5 w-5 -translate-y-1/2 transform items-center justify-center rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 						onclick={clearSearch}
 						aria-label="Clear search"
 					>
-						<svg viewBox="0 0 24 24" width="16" height="16">
+						<svg viewBox="0 0 24 24" width="14" height="14">
 							<path fill="currentColor" d={mdiClose} />
 						</svg>
 					</button>
@@ -272,7 +271,6 @@
 			</div>
 		{/if}
 	</div>
-
 	<button
 		onclick={() => onSelectLocation(null)}
 		in:fade={{ duration: 150 }}
@@ -281,24 +279,17 @@
 		aria-selected={selectedLocation === null}
 		tabindex="0"
 		title={$_('All Locations')}
-		class={`
-		my-3 flex h-10 w-full items-center gap-3 rounded text-left transition-all duration-200
-		${selectedLocation === null ? 'text-foreground bg-emerald-500/30' : 'hover:bg-card-hover text-white'}
-	`}
+		class={`my-3 flex h-10 w-full items-center gap-3 rounded text-left transition-all duration-200 ${selectedLocation === null ? 'text-foreground bg-emerald-500/30' : 'hover:bg-card-hover text-white'}`}
 	>
 		<div class="ml-1.5 flex items-center justify-center">
-			<Icon path={mdiEarth} size="1.25em" class="text-gray-600 dark:text-gray-400" />
+			<Icon path={mdiEarth} size="1.25em" />
 		</div>
-
 		<span
-			class={`overflow-hidden font-medium text-ellipsis whitespace-nowrap transition-all duration-200
-			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'w-auto opacity-100'}
-		`}
+			class={`overflow-hidden font-medium text-ellipsis whitespace-nowrap transition-all duration-200 ${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'w-auto opacity-100'}`}
 		>
 			{$_('All Locations')}
 		</span>
 	</button>
-
 	{#if locations.length === 0 && !collapsed}
 		<p class="text-foreground p-4">{$_('No locations found.')}</p>
 	{:else}
@@ -322,41 +313,30 @@
 						aria-selected={selectedLocation === location.location_id}
 						tabindex="0"
 						title={location.name}
-						class={`
-	my-2 flex h-full  w-full items-center gap-3 rounded  py-2 text-left transition-all duration-200
-	${
-		selectedLocation === location.location_id
-			? 'text-foreground bg-emerald-500/30 font-medium shadow-sm'
-			: 'text-foreground hover:bg-card-hover'
-	}
-`}
+						class={`my-2 flex h-full w-full items-center gap-3 rounded py-2 text-left transition-all duration-200 ${selectedLocation === location.location_id ? 'text-foreground bg-emerald-500/30 font-medium shadow-sm' : 'text-foreground hover:bg-card-hover'}`}
 					>
 						<div class="ml-1.5 flex items-center justify-center">
 							{#if !location.cw_devices || location.cw_devices.length === 0}
-								<Icon path={mdiClose} size="1.25em" class="text-red-500" />
+								<Icon path={mdiClose} size="1.25em" />
 							{:else}
 								{@const status = getLocationStatus(location)}
 								{#if status.statusClass === 'status-success'}
-									<Icon path={mdiCheck} size="1.25em" class="text-green-500" />
+									<Icon path={mdiCheck} size="1.25em" />
 								{:else if status.statusClass === 'status-warning'}
-									<Icon path={mdiAlert} size="1.25em" class="text-orange-300" />
+									<Icon path={mdiAlert} size="1.25em" />
 								{:else if status.statusClass === 'status-danger'}
-									<Icon path={mdiClose} size="1.25em" class="text-red-500" />
+									<Icon path={mdiClose} size="1.25em" />
 								{:else}
-									<Icon path={mdiClockOutline} size="1.25em" class="text-blue-400" />
+									<Icon path={mdiClockOutline} size="1.25em" />
 								{/if}
 							{/if}
 						</div>
-
 						<div
-							class={`overflow-hidden transition-all duration-200
-			${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'pointer-events-auto w-auto opacity-100 select-auto'}
-						`}
+							class={`overflow-hidden transition-all duration-200 ${collapsed ? 'pointer-events-none w-0 opacity-0 select-none' : 'pointer-events-auto w-auto opacity-100 select-auto'}`}
 						>
 							<p class="overflow-hidden font-medium text-ellipsis whitespace-nowrap">
 								{location.name}
 							</p>
-
 							{#if location.description}
 								<p
 									class="text-foreground-dark mt-1 overflow-hidden text-sm text-ellipsis whitespace-nowrap"
@@ -364,7 +344,6 @@
 									{location.description}
 								</p>
 							{/if}
-
 							<p class="text-foreground-dark mt-1 text-xs whitespace-nowrap">
 								{location.deviceCount}
 								{$_('Devices')}

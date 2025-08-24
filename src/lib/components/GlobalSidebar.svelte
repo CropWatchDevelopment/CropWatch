@@ -6,7 +6,7 @@
 	import { _ } from 'svelte-i18n';
 	import { onMount } from 'svelte';
 	import LanguageSelector from './UI/form/LanguageSelector.svelte';
-	import { globalLoading, startLoading } from '$lib/stores/loadingStore';
+	import { startLoading } from '$lib/stores/loadingStore';
 	import ThemeToggle from './theme/ThemeToggle.svelte';
 	import { goto } from '$app/navigation';
 
@@ -137,7 +137,7 @@
 
 <!-- Sidebar -->
 <aside
-	class="fixed top-0 left-0 z-50 flex flex-col border-r transition-all duration-300 ease-in-out
+	class="fixed top-0 left-0 z-50 flex flex-col overflow-x-hidden border-r transition-all duration-300 ease-in-out
 		{getDarkMode() ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-slate-200'}
 		shadow-lg backdrop-blur-sm"
 	style="top: 73px; 
@@ -158,8 +158,8 @@
 			</h2>
 			<button
 				onclick={() => {
+					// Toggle sidebar only (no navigation) – don't trigger global loading overlay
 					sidebarStore.toggle();
-					startLoading();
 				}}
 				class="rounded-lg p-2 transition-all duration-200 hover:scale-105 {getDarkMode()
 					? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
@@ -176,18 +176,20 @@
 		<ul class="space-y-1">
 			{#if !sidebarStore.isOpen}
 				<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}">
-					<a
+					<button
+						type="button"
 						onclick={() => {
+							// Opening sidebar (no route change) – don't show global loader
 							sidebarStore.toggle();
-							startLoading();
 						}}
-						class="flex items-center justify-center rounded-lg p-2 transition-all duration-200 hover:scale-105
+						class="flex w-full items-center justify-center rounded-lg p-2 transition-all duration-200 hover:scale-105
 							{getDarkMode()
 							? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
 							: 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
+						aria-label="Open sidebar"
 					>
 						<MaterialIcon name="menu" size="medium" />
-					</a>
+					</button>
 				</li>
 			{/if}
 			{#each navigationItems as item, index}
@@ -195,8 +197,11 @@
 					<a
 						href={item.href}
 						onclick={() => {
+							// Only trigger loading if we're navigating to a different route
+							if ($page.url.pathname !== item.href) {
+								startLoading();
+							}
 							sidebarStore.close();
-							startLoading();
 						}}
 						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
 							{isActiveRoute(item.matcher)
@@ -245,10 +250,12 @@
 					<a
 						href="/app/account-settings/general"
 						onclick={() => {
+							if ($page.url.pathname !== '/app/account-settings/general') {
+								startLoading();
+							}
 							sidebarStore.close();
-							startLoading();
 						}}
-						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
+						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200
 							{isActiveRoute('/app/account-settings/general')
 							? getDarkMode()
 								? 'bg-emerald-600/30 text-emerald-400'

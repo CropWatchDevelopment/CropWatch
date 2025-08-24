@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { success, error as errorToast } from '$lib/stores/toast.svelte';
 	import { AlertDialog } from 'bits-ui';
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import {
 		mdiFileDocument,
 		mdiMagnify,

@@ -4,11 +4,7 @@
 
 @import 'tailwindcss';
 
-@import '@layerstack/tailwind/core.css';
-@import '@layerstack/tailwind/utils.css';
-@import '@layerstack/tailwind/themes/all.css';
-
-@source '../../node_modules/svelte-ux/dist';
+/* Removed @layerstack/tailwind and svelte-ux source imports; using local styles only */
 @plugin '@tailwindcss/typography';
 
 /* Define color variables for light mode */

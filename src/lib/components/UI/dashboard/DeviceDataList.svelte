@@ -4,9 +4,9 @@
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { nameToNotation } from '$lib/utilities/NameToNotation';
 	import { formatNumber } from '$lib/utilities/stats';
-	import { DurationUnits } from '@layerstack/utils';
 	import { _ } from 'svelte-i18n';
-	import { Duration } from 'svelte-ux';
+	import Duration from '$lib/components/ui/base/Duration.svelte';
+	import { DurationUnits } from '$lib/utilities/duration';
 
 	// Extend the Device type to include latestData
 	interface DeviceWithLatestData extends Device {

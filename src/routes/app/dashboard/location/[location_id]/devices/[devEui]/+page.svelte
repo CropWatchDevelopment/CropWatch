@@ -530,14 +530,12 @@
 				{:else}
 					<div class="mb-8">
 						<h2>{$_('Stats Summary')}</h2>
-						<div
-							class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3"
-						>
-							{#if temperatureChartVisible}<StatsCard key="temperature_c" {stats} />{/if}
-							{#if humidityChartVisible}<StatsCard key="humidity" {stats} />{/if}
-							{#if moistureChartVisible}<StatsCard key="moisture" {stats} />{/if}
-							{#if co2ChartVisible}<StatsCard key="co2" {stats} />{/if}
-							{#if phChartVisible}<StatsCard key="ph" {stats} />{/if}
+						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+							{#each numericKeys as key (key)}
+								{#if stats[key]}
+									<StatsCard {stats} {key} />
+								{/if}
+							{/each}
 						</div>
 					</div>
 				{/if}

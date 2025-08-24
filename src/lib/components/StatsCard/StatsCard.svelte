@@ -4,7 +4,7 @@
 	import { formatNumber, getTextColorByKey } from '$lib/utilities/stats';
 	import { mdiArrowDownBold, mdiArrowUpBold, mdiMinus } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import MaterialIcon from '../UI/icons/MaterialIcon.svelte';
 
 	type Props = {

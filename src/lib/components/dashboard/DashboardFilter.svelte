@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { mdiMagnify, mdiClose } from '@mdi/js';
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 	import { onMount, onDestroy } from 'svelte';
@@ -54,7 +54,7 @@
 	<label for="dashboard-search-input" class="sr-only">Search locations or devices</label>
 	<div class="relative" title="Search (Press / to focus, Esc to clear)">
 		<Icon
-			class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400"
+			className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400"
 			path={mdiMagnify}
 			size="20"
 		/>
@@ -69,7 +69,11 @@
 		/>
 		{#if value}
 			<button type="button" class="clear-btn" aria-label="Clear search" onclick={clear}>
-				<Icon path={mdiClose} size="16" />
+				<Icon
+					path={mdiClose}
+					size="16"
+					className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+				/>
 			</button>
 		{/if}
 	</div>

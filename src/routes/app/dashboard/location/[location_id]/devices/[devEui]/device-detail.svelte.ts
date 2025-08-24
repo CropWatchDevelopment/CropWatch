@@ -144,7 +144,7 @@ export function setupDeviceDetail() {
 		// Parameters 'start' and 'end' are Date objects.
 		// The component's state variables 'startDate' and 'endDate' (if you were accessing them via this context, which you are not directly here) are also Date objects.
 		// This function uses the 'start' and 'end' parameters passed to it.
-		debugger;
+
 		if (!start || !end) {
 			// Validation using parameters
 			error = 'Please select both start and end dates'; // Set component's error state
