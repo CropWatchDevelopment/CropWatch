@@ -114,8 +114,8 @@
 		device.upload_interval || device.cw_device_type?.default_upload_interval || 10
 	);
 	const STALE_THRESHOLD_MS = $derived(
-		// Mark stale if no update in 2 * expected interval (cap between 2min and 30min)
-		Math.min(30, Math.max(2, EXPECTED_UPLOAD_MINUTES * 2)) * 60 * 1000
+		// Previously capped at 30 min and multiplied by 2. Now strictly use configured interval (in minutes) with no hard cap.
+		EXPECTED_UPLOAD_MINUTES * 60 * 1000
 	);
 
 	// Active status timer for THIS device (independent of dashboard list)
