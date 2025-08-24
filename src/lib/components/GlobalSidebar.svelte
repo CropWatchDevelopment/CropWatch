@@ -137,7 +137,7 @@
 
 <!-- Sidebar -->
 <aside
-	class="fixed top-0 left-0 z-50 flex flex-col border-r transition-all duration-300 ease-in-out
+	class="fixed top-0 left-0 z-50 flex flex-col overflow-x-hidden border-r transition-all duration-300 ease-in-out
 		{getDarkMode() ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-slate-200'}
 		shadow-lg backdrop-blur-sm"
 	style="top: 73px; 
@@ -255,7 +255,7 @@
 							}
 							sidebarStore.close();
 						}}
-						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
+						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200
 							{isActiveRoute('/app/account-settings/general')
 							? getDarkMode()
 								? 'bg-emerald-600/30 text-emerald-400'
