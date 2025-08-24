@@ -13,6 +13,7 @@
 	import { onMount } from 'svelte';
 	import '../app.css';
 	import { info, warning } from '$lib/stores/toast.svelte';
+	import { ONE_SIGNAL_PUBLIC_CONFIG } from '$lib/onesignalPublic';
 
 	// No preloading needed - dashboard will load its data when navigated to
 
@@ -73,6 +74,29 @@
 
 	onMount(() => {
 		i18n.initialize();
+	});
+
+	// OneSignal Web Push (2025 docs style) - only loads if appId present
+	onMount(() => {
+		if (typeof window === 'undefined') return;
+		if (!ONE_SIGNAL_PUBLIC_CONFIG.appId) return;
+		// Inject script once
+		if (!document.querySelector('script[data-onesignal-sdk]')) {
+			const s = document.createElement('script');
+			s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+			s.defer = true;
+			s.setAttribute('data-onesignal-sdk', 'true');
+			document.head.appendChild(s);
+		}
+		// Queue init
+		(window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
+		(window as any).OneSignalDeferred.push(async function (OneSignal: any) {
+			await OneSignal.init({
+				appId: ONE_SIGNAL_PUBLIC_CONFIG.appId,
+				safari_web_id: ONE_SIGNAL_PUBLIC_CONFIG.safari_web_id,
+				notifyButton: { enable: true }
+			});
+		});
 	});
 
 	// Handle navigation loading states with a small delay to avoid flash on fast transitions
