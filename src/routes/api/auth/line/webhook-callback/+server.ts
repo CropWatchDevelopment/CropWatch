@@ -40,6 +40,17 @@ export const POST: RequestHandler = async (event) => {
 	});
 };
 
+// Provide a simple GET response so visiting the URL in a browser doesn't 404 (was causing confusion)
+export const GET: RequestHandler = async () => {
+	return new Response(
+		JSON.stringify({
+			ok: true,
+			message: 'LINE webhook endpoint is alive. Send POST requests with JSON body.'
+		}),
+		{ status: 200, headers: { 'content-type': 'application/json' } }
+	);
+};
+
 // (Optional future helper) Example signature verification placeholder
 // function verifyLineSignature(signature: string | null, secret: string, body: string | ArrayBuffer) {
 //   if (!signature) return false;
