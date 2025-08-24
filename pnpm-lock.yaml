@@ -14,9 +14,6 @@ importers:
       '@layerstack/tailwind':
         specifier: 2.0.0-next.2
         version: 2.0.0-next.2
-      '@layerstack/utils':
-        specifier: ^1.0.0
-        version: 1.0.1
       '@mdi/js':
         specifier: ^7.4.47
         version: 7.4.47
@@ -83,9 +80,6 @@ importers:
       svelte-i18n:
         specifier: ^4.0.1
         version: 4.0.1(svelte@5.34.7)
-      svelte-ux:
-        specifier: ^1.0.4
-        version: 1.0.6(@babel/core@7.28.0)(postcss-load-config@4.0.2(postcss@8.5.6))(postcss@8.5.6)(svelte@5.34.7)
       swagger-ui:
         specifier: ^5.21.0
         version: 5.25.2
@@ -10426,7 +10420,7 @@ snapshots:
 
   sucrase@3.35.0:
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.8
+      '@jridgewell/gen-mapping': 0.3.12
       commander: 4.1.1
       glob: 10.4.5
       lines-and-columns: 1.2.4
@@ -10561,7 +10555,7 @@ snapshots:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@jridgewell/sourcemap-codec': 1.5.0
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.29
       '@types/estree': 1.0.8
       acorn: 8.15.0
       aria-query: 5.3.2
