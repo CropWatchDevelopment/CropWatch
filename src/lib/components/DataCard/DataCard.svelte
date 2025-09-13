@@ -49,7 +49,7 @@
 {#if hasValue(latestData, key)}
 	{@const value = latestData[key]}
 	<div
-		class="flex flex-col justify-center gap-1 rounded-r-lg bg-gray-50 p-4 text-center shadow-sm transition-all duration-200 ease-in-out dark:bg-zinc-800 {isMetadata
+		class="sensor-card-surface flex flex-col justify-center gap-1 rounded-r-lg p-4 text-center shadow-sm transition-all duration-200 ease-in-out {isMetadata
 			? 'border-l'
 			: 'border-l-4'} {className}"
 		style:border-color={borderColor}

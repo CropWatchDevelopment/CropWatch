@@ -330,10 +330,10 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		doc
 			.moveDown(0.5)
 			.text(`${$_('installed_at')}: ${location.name || $_('Unknown')}`, metaTextOptions)
-			.text(
-				`${$_('Device Type')}: ${device.cw_device_type?.name || $_('Unknown')}`,
-				metaTextOptions
-			)
+			// .text(
+			// 	`${$_('Device Type')}: ${device.cw_device_type?.name || $_('Unknown')}`,
+			// 	metaTextOptions
+			// )
 			.text(`${$_('Device Name')}: ${device.name || $_('Unknown')}`, metaTextOptions)
 			.text(`${$_('EUI')}: ${devEui}`, metaTextOptions);
 
@@ -423,6 +423,103 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const dataRowsTable = getDataRows(tableKeys);
 
 		// Summary table
+		// Build classification + stats rows to replace the min/max/avg/stddev section per request
+		// Assumptions:
+		// 1. A "classification" is determined per data row across all alert points; if none match -> Normal.
+		// 2. Severity precedence (highest wins if multiple match): Alert > Warning > Notice > Normal.
+		// 3. We infer severity by alert point name (case-insensitive substring match). This is a best-effort heuristic.
+		// 4. Aggregate min/max/avg/stddev computed for the first valid key (primary metric) to present single values.
+		const severityOrder = ['alert', 'warning', 'notice'];
+		interface ClassificationCounts {
+			Normal: number;
+			Notice: number;
+			Warning: number;
+			Alert: number;
+		}
+		const classificationCounts: ClassificationCounts = {
+			Normal: 0,
+			Notice: 0,
+			Warning: 0,
+			Alert: 0
+		};
+
+		const inferSeverity = (
+			points: ReportAlertPoint[]
+		): 'Alert' | 'Warning' | 'Notice' | 'Normal' => {
+			let found: 'Alert' | 'Warning' | 'Notice' | 'Normal' = 'Normal';
+			for (const sev of severityOrder) {
+				if (points.some((p) => (p.name || '').toLowerCase().includes(sev))) {
+					found = (sev.charAt(0).toUpperCase() + sev.slice(1)) as 'Alert' | 'Warning' | 'Notice';
+					break;
+				}
+			}
+			return found;
+		};
+
+		// Pre-index alert points by data key for quick matching
+		const alertPointsByKey = alertPoints.reduce<Record<string, ReportAlertPoint[]>>((acc, p) => {
+			const key = p.data_point_key as string;
+			if (!acc[key]) acc[key] = [];
+			acc[key].push(p);
+			return acc;
+		}, {});
+
+		// Iterate rows to classify
+		for (const row of dataRows) {
+			let rowSeverity: 'Alert' | 'Warning' | 'Notice' | 'Normal' = 'Normal';
+			for (let i = 0; i < validKeys.length; i++) {
+				const key = validKeys[i];
+				const value = row.cells[i].value as number;
+				const points = alertPointsByKey[key] || [];
+				const matched = points.filter((p) => checkMatch(value, p));
+				if (matched.length) {
+					const severity = inferSeverity(matched);
+					// Upgrade severity if higher precedence
+					const precedence = { Normal: 0, Notice: 1, Warning: 2, Alert: 3 };
+					if (precedence[severity] > precedence[rowSeverity]) rowSeverity = severity;
+				}
+			}
+			classificationCounts[rowSeverity]++;
+		}
+
+		const totalDatapoints = dataRows.length;
+		const normalPercentage = totalDatapoints
+			? (classificationCounts.Normal / totalDatapoints) * 100
+			: 0;
+		const noticePercentage = totalDatapoints
+			? (classificationCounts.Notice / totalDatapoints) * 100
+			: 0;
+		const warningPercentage = totalDatapoints
+			? (classificationCounts.Warning / totalDatapoints) * 100
+			: 0;
+		const alertPercentage = totalDatapoints
+			? (classificationCounts.Alert / totalDatapoints) * 100
+			: 0;
+
+		// Choose a primary key for single-value statistics (first numeric key)
+		const primaryKey = validKeys[0];
+		const primaryValues = dataRows
+			.map((r) => r.cells[0].value as number)
+			.filter((v) => typeof v === 'number');
+		const min = getValue(primaryValues, 'min');
+		const max = getValue(primaryValues, 'max');
+		const avg = getValue(primaryValues, 'avg');
+		const stdDiv = getValue(primaryValues, 'stddev');
+		const dateRange = `${startDateParam} - ${endDateParam}`;
+
+		const statsRows = [
+			`サンプリング数: ${totalDatapoints}`,
+			`測定期間: ${dateRange}`,
+			`Normal: ${classificationCounts.Normal} (${normalPercentage.toFixed(2)}%)`,
+			`Notice: ${classificationCounts.Notice} (${noticePercentage.toFixed(2)}%)`,
+			`Warning: ${classificationCounts.Warning} (${warningPercentage.toFixed(2)}%)`,
+			`Alert: ${classificationCounts.Alert} (${alertPercentage.toFixed(2)}%)`,
+			`最大値: ${max}`,
+			`最小値: ${min}`,
+			`平均値: ${avg.toFixed(2)}`,
+			`標準偏差: ${stdDiv.toFixed(2)}`
+		];
+
 		createPDFDataTable({
 			doc,
 			config: {
@@ -456,14 +553,10 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 						})
 					};
 				}),
-				...['min', 'max', 'avg', 'stddev'].map((indicator) => ({
-					header: { label: $_(indicator), value: '' },
-					cells: validKeys.map((key, index) => {
-						const valueList = dataRows.map((row) => row.cells[index].value as number);
-						const value = getValue(valueList, indicator);
-
-						return { label: formatNumber({ key, value }), value };
-					})
+				// Inject the requested stats rows (one per line) replacing the min/max/avg/stddev rows
+				...statsRows.map((line) => ({
+					header: { label: line, value: '' },
+					cells: validKeys.map(() => ({ label: '', value: '' }))
 				}))
 			]
 		});

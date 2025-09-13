@@ -156,7 +156,7 @@
 
 	<div class="sm:order-4">
 		<Button
-			class="h-[45px] w-[25px]"
+			class="mr-2 h-[45px] w-[25px]"
 			variant="tertiary"
 			iconic
 			disabled={endDateInput >= new Date(new Date().setHours(23, 59, 59, 999))}

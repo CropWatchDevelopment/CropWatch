@@ -16,6 +16,9 @@
 	} from '@mdi/js';
 	import { Button, DropdownMenu, Tooltip } from 'bits-ui';
 	import { onMount } from 'svelte';
+	import { themeStore } from '$lib/stores/theme';
+	let currentTheme: 'light' | 'dark';
+	themeStore.subscribe((s) => (currentTheme = s.effective));
 	import { _ } from 'svelte-i18n';
 	import type { HTMLAttributes } from 'svelte/elements';
 
@@ -57,9 +60,7 @@
 		// Apply light mode tint to dropdown menus only when not in dark mode
 		setTimeout(() => {
 			// Check if dark mode is active
-			const isDarkMode =
-				document.documentElement.classList.contains('dark') ||
-				window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const isDarkMode = currentTheme === 'dark';
 
 			if (!isDarkMode) {
 				const dropdownContents = document.querySelectorAll('.dropdown-menu-content');
@@ -110,7 +111,7 @@
 
 <div>
 	<DropdownMenu.Root bind:open={mainMenuOpen}>
-		<DropdownMenu.Trigger asChild>
+		<DropdownMenu.Trigger>
 			<Button.Root
 				class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md px-2"
 			>
@@ -177,7 +178,7 @@
 						<Tooltip.Trigger>
 							<div class="mx-2 flex flex-col items-center">
 								<DropdownMenu.Sub>
-									<DropdownMenu.SubTrigger asChild>
+									<DropdownMenu.SubTrigger>
 										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition-all duration-200 hover:bg-blue-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-blue-400"
 										>
@@ -278,7 +279,7 @@
 						<Tooltip.Trigger>
 							<div class="mx-2 flex flex-col items-center">
 								<DropdownMenu.Sub>
-									<DropdownMenu.SubTrigger asChild>
+									<DropdownMenu.SubTrigger>
 										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white transition-all duration-200 hover:bg-purple-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-purple-400"
 										>

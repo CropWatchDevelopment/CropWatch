@@ -1,97 +1,50 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import BaseButton from '$lib/components/ui/base/Button.svelte';
 	import type { Snippet } from 'svelte';
-
-	type Props = {
-		type?: 'button' | 'submit' | 'reset';
-		variant?: 'primary' | 'secondary' | 'tertiary' | 'danger' | 'ghost';
-		size?: 'sm' | 'md' | 'lg';
-		class?: string;
-		href?: string | undefined;
-		iconic?: boolean;
-		disabled?: boolean;
-		loading?: boolean;
-		children?: Snippet;
-		onclick?: (event: MouseEvent) => void;
-	};
-
+	type LegacyVariant = 'primary' | 'secondary' | 'tertiary' | 'danger' | 'ghost';
 	let {
 		type = 'button',
-		variant = 'ghost',
+		variant = 'primary' as LegacyVariant,
 		size = 'md',
 		class: className = '',
 		href = undefined,
-		iconic = false,
 		disabled = false,
 		loading = false,
-		children = undefined,
-		onclick = undefined,
-		...rest
-	}: Props & Record<string, any> = $props();
-
-	const colors = {
-		primary: 'green',
-		secondary: 'gray',
-		tertiary: 'transparent',
-		danger: 'red',
-		ghost: 'transparent'
+		children,
+		onclick
+	} = $props<{
+		type?: 'button' | 'submit' | 'reset';
+		variant?: LegacyVariant;
+		size?: 'sm' | 'md' | 'lg';
+		class?: string;
+		href?: string;
+		disabled?: boolean;
+		loading?: boolean;
+		children?: Snippet;
+		onclick?: (e: MouseEvent) => void;
+	}>();
+	// Map legacy variant names to unified variants
+	const variantMap: Record<string, string> = {
+		primary: 'primary',
+		secondary: 'secondary',
+		tertiary: 'secondary',
+		danger: 'danger',
+		ghost: 'ghost'
 	};
-
-	const color = $derived(colors[variant]);
-
-	// Theme colors for different variants: we need to keep this list, otherwise dynamic class names
-	// won’t work with Tailwind:
-	// - bg-blue-700 hover:bg-blue-700/90 active:bg-blue-700/95
-	// - bg-green-700 hover:bg-green-700/90 active:bg-green-700/95
-	// - bg-gray-700 hover:bg-gray-700/90 active:bg-gray-700/95
-	// - bg-red-700 hover:bg-red-700/90 active:bg-red-700/95
 </script>
 
-<button
+<BaseButton
 	{type}
-	disabled={disabled == true || loading == true}
-	class="focus-visible:ring-ring bg-{color}-700 text-white hover:bg-{color}-700/90 active:bg-{color}-700/95 inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-0 text-sm font-semibold text-nowrap shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:cursor-default disabled:opacity-50 {variant} {className}"
-	class:iconic
-	onclick={(event) => {
-		if (disabled) return;
-
-		if (href) {
-			if (href.startsWith('/')) {
-				goto(href);
-			} else {
-				window.location.href = href;
-			}
-		} else {
-			onclick?.(event);
-		}
-	}}
-	{...rest}
+	variant={variantMap[variant] as any}
+	{size}
+	{className}
+	{href}
+	{disabled}
+	on:click={(e: CustomEvent<MouseEvent>) => onclick?.(e.detail)}
 >
-	{#if loading}
-		<span class="loader"></span>
-	{/if}
 	{@render children?.()}
-</button>
+</BaseButton>
 
 <style lang="postcss">
-	@reference "tailwindcss";
-
-	button {
-		/* Same as text input */
-		&.tertiary {
-			@apply rounded border !border-gray-300 !bg-white !text-gray-900 text-inherit shadow-none;
-
-			:global(.dark) & {
-				@apply !border-zinc-700 !bg-zinc-800 !text-white;
-			}
-		}
-
-		&.ghost {
-			@apply text-inherit shadow-none;
-		}
-
-		&.iconic {
-			@apply aspect-square !p-0;
-		}
-	}
+	/* Wrapper keeps backward compat class hooks if used */
 </style>

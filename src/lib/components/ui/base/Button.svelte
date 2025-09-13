@@ -1,49 +1,61 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { createEventDispatcher } from 'svelte';
+	const dispatch = createEventDispatcher<{ click: MouseEvent }>();
 	import type { Snippet } from 'svelte';
+	type Variant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger';
+	type Size = 'sm' | 'md' | 'lg';
 	let {
-		variant = 'fill',
-		color = 'primary',
+		variant = 'primary' as Variant,
+		size = 'md' as Size,
 		href = undefined,
 		icon = undefined,
 		type = 'button',
 		className = '',
+		disabled = false,
 		children
 	} = $props<{
-		variant?: 'fill' | 'outline' | 'ghost' | string;
-		color?: 'primary' | 'secondary' | string;
+		variant?: Variant;
+		size?: Size;
 		href?: string;
 		icon?: string;
 		type?: 'button' | 'submit';
 		className?: string;
+		disabled?: boolean;
 		children?: Snippet;
 	}>();
-	const base = $derived(
-		'inline-flex items-center gap-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
-	);
-	const colorClasses: Record<string, string> = {
-		primary:
-			'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600',
-		secondary:
-			'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white'
+
+	const sizeClasses: Record<Size, string> = {
+		sm: 'text-xs px-2 py-1',
+		md: 'text-sm px-4 py-2',
+		lg: 'text-base px-6 py-3'
 	};
-	const variantClasses: Record<string, string> = {
-		fill: '',
-		outline: 'bg-transparent border border-current',
-		ghost: 'bg-transparent hover:bg-gray-200 dark:hover:bg-gray-700'
+	const variantMap: Record<Variant, string> = {
+		primary: 'btn-base btn-primary text-white',
+		secondary: 'btn-base btn-secondary',
+		ghost:
+			'btn-base btn-ghost text-inherit hover:bg-foreground-light/60 dark:hover:bg-foreground-light/20',
+		outline: 'btn-base btn-outline',
+		danger: 'btn-base bg-red-600 hover:bg-red-700 text-white'
 	};
 	const classes = $derived(
-		`${base} ${colorClasses[color] || ''} ${variantClasses[variant] || ''} ${className}`
+		`${variantMap[variant as Variant]} ${sizeClasses[size as Size]} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`
 	);
 	function handleClick(e: MouseEvent) {
+		if (disabled) {
+			e.preventDefault();
+			return;
+		}
 		if (href) {
 			e.preventDefault();
-			goto(href);
+			if (href.startsWith('/')) goto(href);
+			else window.location.href = href;
 		}
+		dispatch('click', e);
 	}
 </script>
 
-<button {type} class={classes} onclick={handleClick}>
+<button {type} class={classes} onclick={handleClick} {disabled}>
 	{#if icon}
 		<svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true"
 			><path fill="currentColor" d={icon} /></svg

@@ -51,7 +51,7 @@
 </script>
 
 <div
-	class="flex w-full flex-col items-center rounded-lg bg-gray-50 p-4 text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+	class="panel flex w-full flex-col items-center rounded-lg p-4 text-zinc-900 shadow-sm dark:text-white"
 	class:cursor-pointer={expandable}
 	role="button"
 	tabindex="0"
