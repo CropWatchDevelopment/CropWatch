@@ -26,13 +26,29 @@
 		location,
 		isActive: externalIsActive,
 		detailHref,
-		children
+		children,
+		onDragStart,
+		onDragEnd,
+		onDragOver,
+		onDrop,
+		isDragging = false,
+		isDropTarget = false,
+		dragIndex,
+		dragEnabled = false
 	} = $props<{
 		device: DeviceWithLatestData;
 		location?: Location;
 		isActive?: boolean;
 		detailHref?: string;
 		children?: any; // snippet passed by parent
+		onDragStart?: (event: DragEvent, index: number) => void;
+		onDragEnd?: (event: DragEvent) => void;
+		onDragOver?: (event: DragEvent, index: number) => void;
+		onDrop?: (event: DragEvent, index: number) => void;
+		isDragging?: boolean;
+		isDropTarget?: boolean;
+		dragIndex?: number;
+		dragEnabled?: boolean;
 	}>();
 
 	let isActive = $derived(
@@ -67,13 +83,61 @@
 </script>
 
 {#snippet triggerSnippet()}
-	<div class="relative flex flex-1">
+	<div
+		class="relative flex flex-1"
+		class:opacity-50={isDragging}
+		class:ring-2={isDropTarget}
+		class:ring-blue-400={isDropTarget}
+		class:bg-blue-50={isDropTarget &&
+			typeof window !== 'undefined' &&
+			!window.matchMedia('(prefers-color-scheme: dark)').matches}
+		style={isDropTarget &&
+		typeof window !== 'undefined' &&
+		window.matchMedia('(prefers-color-scheme: dark)').matches
+			? 'background-color: rgba(30, 58, 138, 0.2);'
+			: ''}
+		role="listitem"
+		ondragover={(e) => {
+			if (dragEnabled && onDragOver && dragIndex !== undefined) {
+				e.preventDefault();
+				onDragOver(e, dragIndex);
+			}
+		}}
+		ondrop={(e) => {
+			if (dragEnabled && onDrop && dragIndex !== undefined) {
+				e.preventDefault();
+				onDrop(e, dragIndex);
+			}
+		}}
+	>
 		<div
-			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70"
+			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70 transition-all duration-200"
 			class:bg-blue-300={!statusConfirmed || isActive === null}
 			class:bg-blue-400={statusConfirmed && !device.latestData?.created_at}
 			class:bg-green-500={statusConfirmed && isActive}
 			class:bg-red-500={statusConfirmed && !isActive && device.latestData?.created_at}
+			class:cursor-grab={dragEnabled}
+			class:cursor-grabbing={isDragging}
+			class:hover:opacity-100={dragEnabled}
+			class:scale-110={dragEnabled && !isDragging}
+			class:hover:scale-125={dragEnabled}
+			role="button"
+			tabindex={dragEnabled ? 0 : -1}
+			aria-label={dragEnabled ? 'Drag to reorder' : ''}
+			draggable={dragEnabled}
+			ondragstart={(e) => {
+				if (dragEnabled && onDragStart && dragIndex !== undefined && e.dataTransfer) {
+					e.dataTransfer.effectAllowed = 'move';
+					e.dataTransfer.setData('text/plain', device.dev_eui);
+					onDragStart(e, dragIndex);
+				}
+			}}
+			ondragend={(e) => {
+				if (dragEnabled && onDragEnd) {
+					onDragEnd(e);
+				}
+			}}
+			title={dragEnabled ? 'Drag to reorder' : ''}
 		></div>
 		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
 			<div class="flex flex-col text-base">
