@@ -48,6 +48,13 @@
 	/* Shadow */
 	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+	/* Standard UI colors */
+	--color-border: rgb(229 231 235);
+	--color-border-subtle: rgb(229 231 235 / 0.3);
+	--color-surface: rgb(249 250 251);
+	--color-surface-raised: rgb(255 255 255);
+	--color-text-muted: rgb(107 114 128);
 }
 
 /* Dark mode color variables (activated by .dark class on <html>) */
@@ -78,6 +85,13 @@
 	/* Shadow */
 	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
 	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+
+	/* Standard UI colors */
+	--color-border: rgb(75 85 99);
+	--color-border-subtle: rgb(75 85 99 / 0.3);
+	--color-surface: rgb(55 65 81);
+	--color-surface-raised: rgb(55 65 81);
+	--color-text-muted: rgb(156 163 175);
 }
 
 html,
@@ -200,6 +214,80 @@ button.primary:hover { background-color: var(--color-primary-hover); }
 }
 .bg-foreground-dark {
 	background-color: var(--color-foreground-dark);
+}
+
+/* Standard surface patterns for consistent theming */
+.dropdown-surface {
+	border-radius: 0.375rem;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-surface);
+	box-shadow: var(--shadow-md);
+}
+
+.card-surface {
+	border-radius: 0.75rem;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-surface);
+	box-shadow: var(--shadow-md);
+}
+
+.panel-surface {
+	border-radius: 0.5rem;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-surface-raised);
+	box-shadow: var(--shadow-sm);
+}
+
+.menu-item {
+	display: flex;
+	cursor: pointer;
+	align-items: center;
+	border-radius: 0.375rem;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	color: var(--color-text);
+	transition: all 150ms;
+}
+.menu-item:hover {
+	background-color: var(--color-surface);
+	box-shadow: var(--shadow-sm);
+}
+
+.menu-item.active {
+	background-color: var(--color-surface);
+	font-weight: 500;
+}
+
+.divider {
+	height: 1px;
+	background-color: var(--color-border);
+}
+
+.divider-vertical {
+	width: 1px;
+	background-color: var(--color-border);
+}
+
+/* Standardized utility classes using design tokens */
+.border-standard {
+	border-color: var(--color-border);
+}
+
+.border-subtle {
+	border-color: var(--color-border-subtle);
+}
+
+.surface {
+	background-color: var(--color-surface);
+}
+
+.surface-raised {
+	background-color: var(--color-surface-raised);
+}
+
+.text-muted {
+	color: var(--color-text-muted);
 }
 
 /* Explicit fallback utility classes for card backgrounds */
@@ -336,6 +424,62 @@ input[type="week"]:focus {
 	border-color: var(--color-primary);
 }
 
+/* Industrial control UI patterns */
+.control-panel {
+	border-radius: 0.75rem;
+	border: 2px solid var(--color-border);
+	background: linear-gradient(135deg, var(--color-surface), var(--color-surface-raised));
+	box-shadow: var(--shadow-md);
+	padding: 1.5rem;
+	position: relative;
+	overflow: hidden;
+}
+
+.control-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	border-radius: 0.5rem;
+	padding: 0.75rem 1rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	border: 2px solid;
+	transition: all 200ms;
+	position: relative;
+	overflow: hidden;
+}
+
+.control-button.power-on {
+	border-color: #10b981;
+	background-color: #059669;
+	color: white;
+}
+
+.control-button.power-off {
+	border-color: #ef4444;
+	background-color: #dc2626;
+	color: white;
+}
+
+.control-button:disabled {
+	border-color: #94a3b8;
+	background-color: #94a3b8;
+	color: #64748b;
+	cursor: not-allowed;
+}
+
+.status-badge {
+	border-radius: 0.25rem;
+	padding: 0.25rem 0.5rem;
+	font-size: 0.75rem;
+	font-weight: 700;
+	font-family: 'Courier New', monospace;
+	color: var(--color-text);
+	background-color: var(--color-surface);
+	border: 1px solid var(--color-border);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Explicit Light Mode Overrides                                              */
 /* When the user has forced light mode while the OS preference is dark,       */
@@ -382,4 +526,42 @@ input[type="week"]:focus {
 	.sensor-card-surface:hover { background-color: color-mix(in oklab, var(--color-background) 94%, black); }
 	.dark .sensor-card-surface:hover { background-color: color-mix(in oklab, var(--color-background) 88%, white); }
 	:root.force-light .sensor-card-surface:hover { background-color: color-mix(in oklab, var(--color-background) 94%, black) !important; }
+}
+
+/* Standard spacing patterns - ensures consistency across components */
+.container-padding {
+	padding: 1rem; /* p-4 */
+}
+
+.container-padding-lg {
+	padding: 1.5rem; /* p-6 */
+}
+
+.section-gap {
+	gap: 1rem; /* gap-4 */
+}
+
+.item-gap {
+	gap: 0.5rem; /* gap-2 */
+}
+
+.content-spacing {
+	margin-bottom: 1rem; /* mb-4 */
+}
+
+.tight-spacing {
+	gap: 0.25rem; /* gap-1 */
+}
+
+/* Typography scale for consistency */
+.text-content {
+	font-size: 0.875rem; /* text-sm */
+	line-height: 1.25rem;
+}
+
+.text-label {
+	font-size: 0.75rem; /* text-xs */
+	line-height: 1rem;
+	font-weight: 500;
+	color: var(--color-text-muted);
 }

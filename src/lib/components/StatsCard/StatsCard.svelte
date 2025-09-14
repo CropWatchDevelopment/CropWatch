@@ -138,7 +138,7 @@
 
 	<!-- Expanded Details -->
 	{#if expanded}
-		<div class="mt-4 w-full border-t border-gray-200 pt-3 text-lg dark:border-gray-700">
+		<div class="border-standard mt-4 w-full border-t pt-3 text-lg">
 			<div class="grid grid-cols-2 gap-y-2">
 				<div>
 					<span class="text-gray-400 dark:text-gray-400">{$_('Count')}:</span>
@@ -173,9 +173,7 @@
 
 	{#if expandable}
 		<div class="mt-2 flex w-full justify-center pt-2">
-			<div
-				class="flex w-full justify-center border-t border-gray-200 pt-4 text-xs text-gray-400 dark:text-gray-300"
-			>
+			<div class="border-standard text-muted flex w-full justify-center border-t pt-4 text-xs">
 				<MaterialIcon
 					name={expanded ? 'expand_circle_up' : 'expand_circle_down'}
 					size="small"

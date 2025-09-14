@@ -4,10 +4,10 @@
 	import type { Location } from '$lib/models/Location';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { formatNumber } from '$lib/utilities/stats';
-	import { mdiArrowRight } from '@mdi/js';
+	import { mdiArrowDown, mdiArrowRight, mdiArrowUp } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import Collapse from '$lib/components/ui/base/Collapse.svelte';
-	import Button from './components/Button.svelte';
+	import Button from '$lib/components/UI/buttons/Button.svelte';
 
 	interface DeviceWithLatestData extends Device {
 		latestData: Record<string, any>;
@@ -122,6 +122,20 @@
 				</div>
 			</div>
 		</div>
+		<div class="flex items-center pr-2">
+			<svg
+				viewBox="0 0 24 24"
+				class="dark:text-gray-350 h-5 w-5 text-gray-400"
+				fill="currentColor"
+				aria-hidden="true"
+			>
+				{#if defaultCollapse}
+					<path d={mdiArrowUp} />
+				{:else}
+					<path d={mdiArrowDown} />
+				{/if}
+			</svg>
+		</div>
 	</div>
 {/snippet}
 
@@ -132,11 +146,19 @@
 		{/if}
 		{#if detailHref || location}
 			<Button
-				text={$_('View Details')}
-				iconPath={mdiArrowRight}
-				onClick={() =>
+				variant="secondary"
+				size="sm"
+				class="w-full justify-center"
+				onclick={() =>
 					goto(`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`)}
-			/>
+			>
+				<span class="flex items-center gap-2">
+					{$_('View Details')}
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
+						<path d={mdiArrowRight} />
+					</svg>
+				</span>
+			</Button>
 		{/if}
 	</div>
 {/snippet}
