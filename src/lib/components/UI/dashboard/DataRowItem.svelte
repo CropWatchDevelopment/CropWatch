@@ -85,7 +85,7 @@
 				<div class="flex w-full flex-row justify-between justify-center space-x-5">
 					{#if device.latestData}
 						<div class="flex items-center">
-							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
+							<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"
 								>{nameToEmoji(primaryDataKey)}</span
 							>
 							<div class="flex flex-col items-start">
@@ -103,7 +103,7 @@
 						{#if secondaryDataKey}
 							<span class="flex flex-grow-[0.2]"></span>
 							<div class="flex items-center">
-								<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400"
+								<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"
 									>{nameToEmoji(secondaryDataKey)}</span
 								>
 								<div class="no-wrap flex flex-col items-start">
@@ -125,7 +125,7 @@
 		<div class="flex items-center pr-2">
 			<svg
 				viewBox="0 0 24 24"
-				class="dark:text-gray-350 h-5 w-5 text-gray-400"
+				class="h-5 w-5 text-gray-600 dark:text-gray-400"
 				fill="currentColor"
 				aria-hidden="true"
 			>
@@ -166,7 +166,7 @@
 <Collapse
 	classes={{
 		root: 'mb-1 bg-gray-200 dark:bg-gray-800/30 w-full ',
-		icon: 'text-gray-400 dark:text-gray-500 data-[open=true]:rotate-90'
+		icon: 'text-gray-600 dark:text-gray-500 data-[open=true]:rotate-90'
 	}}
 	open={defaultCollapse}
 	on:change={(e) => collapseStateChange(e)}

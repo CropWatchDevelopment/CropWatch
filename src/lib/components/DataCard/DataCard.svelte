@@ -56,7 +56,7 @@
 	>
 		<!-- Label -->
 		<h3
-			class={`m-0 leading-5 ${isMetadata ? 'text-xs text-gray-400 dark:text-gray-500' : 'text-md text-gray-500 dark:text-gray-400'}`}
+			class={`m-0 leading-5 ${isMetadata ? 'text-xs text-gray-600 dark:text-gray-400' : 'text-md text-gray-700 dark:text-gray-300'}`}
 		>
 			{$_(name)}
 		</h3>

@@ -60,7 +60,7 @@
 >
 	<!-- Title with Current reading and Trend -->
 	<div class="mb-2 flex w-full items-center justify-between">
-		<h4 class="text-xl font-medium text-gray-500 dark:text-gray-200">
+		<h4 class="text-xl font-medium text-gray-700 dark:text-gray-200">
 			{title}
 		</h4>
 
@@ -80,7 +80,9 @@
 	</div>
 
 	<!-- Labels -->
-	<div class="mb-0.5 flex w-full justify-between px-1 text-sm font-normal text-gray-400">
+	<div
+		class="mb-0.5 flex w-full justify-between px-1 text-sm font-normal text-gray-600 dark:text-gray-400"
+	>
 		<span>{$_('Min')}</span>
 		<span>{$_('Avg')}</span>
 		<span>{$_('Max')}</span>
