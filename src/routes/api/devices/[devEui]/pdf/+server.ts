@@ -65,7 +65,8 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			end: endDateParam,
 			dataKeys: dataKeysParam = '',
 			alertPoints: alertPointsParam,
-			locale: localeParam = 'ja'
+			locale: localeParam = 'ja',
+			timezone: timezoneParam = 'Asia/Tokyo'
 		} = Object.fromEntries(url.searchParams);
 
 		const selectedKeys = dataKeysParam
@@ -156,13 +157,13 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			);
 		}
 
-		// Convert dates to Japan timezone and include full day
-		const tokyoStartDate = DateTime.fromJSDate(startDate).setZone('Asia/Tokyo').startOf('day');
-		const tokyoEndDate = DateTime.fromJSDate(endDate).setZone('Asia/Tokyo').endOf('day');
+		// Convert dates to user timezone and include full day
+		const userStartDate = DateTime.fromJSDate(startDate).setZone(timezoneParam).startOf('day');
+		const userEndDate = DateTime.fromJSDate(endDate).setZone(timezoneParam).endOf('day');
 
 		// Convert back to UTC for database queries
-		startDate = tokyoStartDate.toUTC().toJSDate();
-		endDate = tokyoEndDate.toUTC().toJSDate();
+		startDate = userStartDate.toUTC().toJSDate();
+		endDate = userEndDate.toUTC().toJSDate();
 
 		// Get device data using JWT-authenticated client (same method as browser version)
 		const deviceDataService = new DeviceDataService(supabase);
@@ -198,14 +199,19 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 						devEui,
 						startDate,
 						endDate,
-						timezone: 'Asia/Tokyo',
+						timezone: timezoneParam,
 						columns: requestedAlertPoints.map((point) => point.data_point_key as string),
 						ops: requestedAlertPoints.map((point) => point.operator as string),
 						mins: requestedAlertPoints.map((point) => (point.min ?? point.value) as number),
 						maxs: requestedAlertPoints.map((point) => point.max ?? null),
 						intervalMinutes: 30 // Default interval in minutes
 					})
-				: await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
+				: await deviceDataService.getDeviceDataByDateRange(
+						devEui,
+						startDate,
+						endDate,
+						timezoneParam
+					);
 
 			if (deviceDataResponse && deviceDataResponse.length > 0) {
 				deviceData = deviceDataResponse;
