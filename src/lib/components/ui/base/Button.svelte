@@ -12,6 +12,7 @@
 		icon = undefined,
 		type = 'button',
 		className = '',
+		loading = false,
 		disabled = false,
 		children
 	} = $props<{
@@ -21,6 +22,7 @@
 		icon?: string;
 		type?: 'button' | 'submit';
 		className?: string;
+		loading?: boolean;
 		disabled?: boolean;
 		children?: Snippet;
 	}>();
@@ -55,11 +57,29 @@
 	}
 </script>
 
-<button {type} class={classes} onclick={handleClick} {disabled}>
+<button
+	{type}
+	class={`inline-flex items-center justify-center gap-2 px-4 py-2 ${classes}`}
+	onclick={handleClick}
+	{disabled}
+>
 	{#if icon}
-		<svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true"
-			><path fill="currentColor" d={icon} /></svg
-		>
+		<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0" aria-hidden="true">
+			<path fill="currentColor" d={icon} />
+		</svg>
 	{/if}
+
+	{#if loading}
+		<svg
+			class="h-5 w-5 shrink-0 animate-spin text-white"
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+		>
+			<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+			<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+		</svg>
+	{/if}
+
 	{@render children?.()}
 </button>

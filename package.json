@@ -50,11 +50,11 @@
 		"globals": "^16.0.0",
 		"husky": "^8.0.0",
 		"jsdom": "^26.0.0",
-		"supabase": "^2.33.9",
 		"lint-staged": "^16.1.2",
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
+		"supabase": "^2.33.9",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
@@ -65,6 +65,7 @@
 		"vitest": "^3.0.0"
 	},
 	"dependencies": {
+		"@internationalized/date": "^3.9.0",
 		"@mdi/js": "^7.4.47",
 		"@stencil/store": "^2.1.3",
 		"@stripe/stripe-js": "^7.4.0",
