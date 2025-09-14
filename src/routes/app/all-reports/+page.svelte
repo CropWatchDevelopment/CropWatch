@@ -14,7 +14,7 @@
 	} from '@mdi/js';
 
 	let { data } = $props();
-	let reports = $state(data.reports as any[]);
+	let reports = $state(data.allReports as any[]);
 	let searchTerm = $state('');
 
 	// Filter reports based on search term

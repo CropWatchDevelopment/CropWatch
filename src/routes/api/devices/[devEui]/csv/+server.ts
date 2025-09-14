@@ -87,8 +87,8 @@ export const GET: RequestHandler = async ({
 						let raw = (row as any)[field];
 						let value: string = '';
 						if (field === 'created_at' && raw) {
-							// Format for Excel: YYYY-MM-DD HH:mm:ss
-							const dt = DateTime.fromJSDate(new Date(raw));
+							// Format for Excel: YYYY-MM-DD HH:mm:ss in requested timezone
+							const dt = DateTime.fromJSDate(new Date(raw)).setZone(userTimezone);
 							value = dt.toFormat('yyyy-LL-dd HH:mm:ss');
 						} else if (raw != null) {
 							value = String(raw);
