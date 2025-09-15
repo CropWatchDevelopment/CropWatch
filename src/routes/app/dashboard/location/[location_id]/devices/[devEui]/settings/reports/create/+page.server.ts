@@ -131,7 +131,11 @@ export const actions: Actions = {
 			}
 
 			const formData = await request.formData();
-			const name = formData.get('name') as string;
+			// const name = formData.get('name') as string;
+
+			const name = formData.get('name'); // 'abc'
+			const nameData = { name }; //  { name: 'abc' }
+
 			const reportId = formData.get('reportId') as string; // For editing existing reports
 			const alertPointsJson = formData.get('alertPoints') as string;
 			const recipientsJson = formData.get('recipients') as string;
@@ -172,7 +176,11 @@ export const actions: Actions = {
 
 			if (reportId) {
 				// Edit existing report
-				report = await reportService.updateReport(reportId, { name });
+
+				report = await reportService.updateReport(reportId, {
+					name: nameData.name,
+					dev_eui: devEui
+				});
 
 				// Delete existing related data and recreate
 				await reportService.deleteAlertPointsByReportId(reportId);

@@ -26,6 +26,8 @@
 	// Form state
 	let reportName = $state('');
 	let isSubmitting = $state(false);
+	let showErrors = $state(false);
+	let formEl: HTMLFormElement;
 
 	// Alert points state - using $state for deep reactivity
 	let alertPoints = $state<
@@ -69,6 +71,7 @@
 		}
 
 		if (isEditing && data.alertPoints) {
+			debugger;
 			untrack(() => {
 				alertPoints.splice(
 					0,
@@ -81,9 +84,9 @@
 								? 'range'
 								: point.operator || ('=' as '=' | '>' | '<' | 'range'),
 						data_point_key: point.data_point_key || '',
-						min: point.min || undefined,
-						max: point.max || undefined,
-						value: point.value || undefined,
+						min: point.min ?? undefined,
+						max: point.max ?? undefined,
+						value: point.value ?? undefined,
 						hex_color: point.hex_color || '#3B82F6'
 					}))
 				);
@@ -474,7 +477,9 @@
 										<TextInput
 											id="alert-point-value-{i}"
 											type="number"
+											step="0.01"
 											bind:value={point.value}
+											required
 											placeholder="Enter value"
 											class="w-full"
 										/>
@@ -490,7 +495,9 @@
 										<TextInput
 											id="alert-point-min-{i}"
 											type="number"
+											step="0.01"
 											bind:value={point.min}
+											required
 											placeholder="Min value"
 											class="w-full"
 										/>
@@ -505,7 +512,9 @@
 										<TextInput
 											id="alert-point-max-{i}"
 											type="number"
+											step="0.01"
 											bind:value={point.max}
+											required
 											placeholder="Max value"
 											class="w-full"
 										/>

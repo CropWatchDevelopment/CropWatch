@@ -97,23 +97,7 @@
 							{report.name}
 						</h2>
 						<div class="report-actions">
-							<button
-								class="action-btn view-btn"
-								onclick={() => (window.location.href = `/app/all-reports/${report.id}`)}
-								aria-label="View report"
-								title="View report"
-							>
-								<Icon path={mdiEye} size="16" />
-							</button>
-							<button
-								class="action-btn edit-btn"
-								onclick={() => (window.location.href = `/app/all-reports/${report.id}/edit`)}
-								aria-label="Edit report"
-								title="Edit report"
-							>
-								<Icon path={mdiPencil} size="16" />
-							</button>
-							<ExportButton types={['pdf']} buttonLabel="" devEui={report.id} />
+							<ExportButton types={['pdf']} buttonLabel="" devEui={report.dev_eui} />
 							<!-- <AlertDialog.Root>
 								<AlertDialog.Trigger
 									class="action-btn delete-btn"

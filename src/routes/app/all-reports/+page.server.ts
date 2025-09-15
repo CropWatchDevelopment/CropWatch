@@ -39,7 +39,6 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		reportUserScheduleRepository
 	);
 	const service = new ReportTemplateService(repo);
-	const reports = await service.getUserReports(user.id);
 
 	const allReports = await reportService.getAllReports(user.id);
 
