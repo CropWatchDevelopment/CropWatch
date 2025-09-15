@@ -177,7 +177,8 @@ export const actions: Actions = {
 			if (reportId) {
 				// Edit existing report
 
-				report = await reportService.updateReport(reportId, {
+				report = await reportService.upsertReport({
+					report_id: reportId,
 					name: nameData.name,
 					dev_eui: devEui
 				});

@@ -103,7 +103,7 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
 	async update<U>(id: K, entity: U): Promise<T | null> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.upsert(entity)
+			.update(entity)
 			.eq(this.primaryKey, id)
 			.select()
 			.limit(1)
@@ -153,7 +153,7 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
 	async upsert<I>(entity: I): Promise<T> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.upsert(entity)
+			.upsert(entity, { onConflict: this.primaryKey })
 			.select()
 			.single();
 

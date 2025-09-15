@@ -74,12 +74,16 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			.map((key) => key.trim())
 			.filter(Boolean);
 
-		const { data: reportParams } = await supabase
+		const { data: reportParams, error: reportError } = await supabase
 			.from('reports')
 			.select('report_id, report_alert_points(*)')
 			.eq('dev_eui', devEui)
 			.limit(1)
 			.single();
+
+		if (reportError) {
+			return json({ error: `Failed to fetch report - ${reportError.message}` }, { status: 500 });
+		}
 
 		let requestedAlertPoints: ReportAlertPoint[] = [];
 		for (const point of reportParams?.report_alert_points || []) {
