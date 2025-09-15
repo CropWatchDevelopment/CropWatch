@@ -19,27 +19,12 @@ export function drawRightAlertPanel(opts: {
 	validKeys: string[];
 	dataRows: TableRow[];
 }): number {
-	const {
-		doc,
-		x,
-		y,
-		width,
-		locale,
-		startLabel,
-		endLabel,
-		timezone,
-		samplingLabel,
-		sampleCount,
-		alertPoints,
-		validKeys,
-		dataRows
-	} = opts;
+	const { doc, x, y, width, locale, alertPoints, validKeys, dataRows } = opts;
 
 	const savedX = doc.x;
 	const savedY = doc.y;
 
 	const pf0 = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
-	const nf0 = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
 
 	doc.fontSize(8);
 
