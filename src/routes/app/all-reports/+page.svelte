@@ -10,8 +10,10 @@
 		mdiDelete,
 		mdiPencil,
 		mdiEye,
-		mdiPlus
+		mdiPlus,
+		mdiDownload
 	} from '@mdi/js';
+	import ExportButton from '$lib/components/devices/ExportButton.svelte';
 
 	let { data } = $props();
 	let reports = $state(data.allReports as any[]);
@@ -111,7 +113,8 @@
 							>
 								<Icon path={mdiPencil} size="16" />
 							</button>
-							<AlertDialog.Root>
+							<ExportButton types={['pdf']} buttonLabel="" devEui={report.id} />
+							<!-- <AlertDialog.Root>
 								<AlertDialog.Trigger
 									class="action-btn delete-btn"
 									aria-label="Delete report"
@@ -141,7 +144,7 @@
 										</div>
 									</AlertDialog.Content>
 								</AlertDialog.Portal>
-							</AlertDialog.Root>
+							</AlertDialog.Root> -->
 						</div>
 					</div>
 					<div class="report-content">

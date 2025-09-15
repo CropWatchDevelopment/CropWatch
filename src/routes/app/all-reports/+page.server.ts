@@ -42,7 +42,6 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const reports = await service.getUserReports(user.id);
 
 	const allReports = await reportService.getAllReports(user.id);
-	debugger;
 
 	return { allReports };
 };
