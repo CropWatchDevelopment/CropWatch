@@ -21,6 +21,8 @@ import PDFDocument from 'pdfkit';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import type { RequestHandler } from './$types';
+import { drawSummaryPanel } from './drawSummaryPanel';
+import { drawRightAlertPanel } from './drawRightAlertPanel';
 
 const tzOffsetPattern = /([zZ]|[+\-]\d{2}:\d{2}|[+\-]\d{4}|[+\-]\d{2})$/;
 /**
@@ -271,19 +273,19 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const metaTextOptions = { width: 320 };
 
 		// Metadata block
-		doc
-			.fontSize(8)
-			.text(
-				`${$_('generated_at')}: ${DateTime.now().setZone(timezoneParam).toFormat('yyyy-MM-dd HH:mm:ss')}`,
-				metaTextOptions
-			)
-			.text(
-				`${$_('generated_by')}: ${userProfile?.full_name || user.email || $_('Unknown')}`,
-				metaTextOptions
-			);
-		if (userProfile?.employer) {
-			doc.text(`${$_('Company')}: ${userProfile?.employer || $_('Unknown')}`, metaTextOptions);
-		}
+		// doc
+		// 	.fontSize(8)
+		// 	.text(
+		// 		`${$_('generated_at')}: ${DateTime.now().setZone(timezoneParam).toFormat('yyyy-MM-dd HH:mm:ss')}`,
+		// 		metaTextOptions
+		// 	)
+		// 	.text(
+		// 		`${$_('generated_by')}: ${userProfile?.full_name || user.email || $_('Unknown')}`,
+		// 		metaTextOptions
+		// 	);
+		// if (userProfile?.employer) {
+		// 	doc.text(`${$_('Company')}: ${userProfile?.employer || $_('Unknown')}`, metaTextOptions);
+		// }
 		doc
 			.moveDown(0.5)
 			.text(`${$_('installed_at')}: ${location.name || $_('Unknown')}`, metaTextOptions)
@@ -295,11 +297,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			.text(`${$_('EUI')}: ${devEui}`, metaTextOptions);
 
 		// Right side quick facts
-		doc.moveUp(2);
-		doc.x = 400;
-		doc
-			.text(`${$_('date_range')}: ${startLabel} - ${endLabel} (${timezoneParam})`)
-			.text(`${$_('sampling_size')}: ${deviceData.length}`);
+		// doc.moveUp(2);
+		// doc.x = 400;
+		// doc
+		// 	.text(`${$_('date_range')}: ${startLabel} - ${endLabel} (${timezoneParam})`)
+		// 	.text(`${$_('sampling_size')}: ${deviceData.length}`);
 
 		doc.x = marginLeft;
 		doc.moveDown();
@@ -382,43 +384,48 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		};
 		const dataRowsTable = getDataRows(tableKeys);
 
-		// Summary table (old behavior)
-		createPDFDataTable({
-			doc,
-			config: { caption: $_('summary'), timezone: timezoneParam },
-			dataHeader: {
-				header: { label: $_('status'), width: 60 },
-				cells: [...keyColumns, { label: $_('comment'), width: 60 }]
-			},
-			dataRows: [
-				...alertPoints.map((alertPoint) => {
-					const { data_point_key, name, hex_color } = alertPoint;
-					return {
-						header: { label: name, value: '' },
-						cells: validKeys.map((key, index) => {
-							if (key !== data_point_key) return { label: '-', value: '' };
-							const valueList = dataRows.map((row) => row.cells[index].value as number);
-							const count = valueList.filter((v) => checkMatch(v, alertPoint)).length;
-							return {
-								label:
-									`${new Intl.NumberFormat(localeParam, { maximumFractionDigits: 2 }).format(count)} ` +
-									`(${new Intl.NumberFormat(localeParam, { style: 'percent' }).format(count / valueList.length)})`,
-								value: count,
-								bgColor: hex_color || '#ffffff'
-							};
-						})
-					};
-				}),
-				...['min', 'max', 'avg', 'stddev'].map((indicator) => ({
-					header: { label: $_(indicator), value: '' },
-					cells: validKeys.map((key, index) => {
-						const valueList = dataRows.map((row) => row.cells[index].value as number);
-						const value = getValue(valueList, indicator);
-						return { label: formatNumber({ key, value }), value };
-					})
-				}))
-			]
+		// LEFT summary
+		const primaryKey = tableKeys[0] ?? validKeys[0] ?? 'temperature_c';
+		const { firstRowY, bottomY: summaryBottomY } = drawSummaryPanel(doc, {
+			dataRows,
+			validKeys,
+			primaryKey,
+			caption: $_('summary'),
+			samplingLabel: $_('sampling_size'),
+			dateRangeLabel: $_('date_range'),
+			maxLabel: $_('max'),
+			minLabel: $_('min'),
+			avgLabel: $_('avg'),
+			stddevLabel: $_('stddev'),
+			displayStartLabel: startLabel,
+			displayEndLabel: endLabel,
+			locale: localeParam,
+			tableWidthPercent: 0.5,
+			lineColor: '#000'
 		});
+
+		// RIGHT alerts — align exactly with “サンプリング数”
+		const panelX = 400;
+		const panelW = 180;
+		const rightBottomY = drawRightAlertPanel({
+			doc,
+			x: panelX,
+			y: firstRowY, // ← precise alignment with the first row
+			width: panelW,
+			locale: localeParam,
+			startLabel: startLabel,
+			endLabel: endLabel,
+			timezone: timezoneParam,
+			samplingLabel: $_('sampling_size'),
+			sampleCount: deviceData.length,
+			alertPoints,
+			validKeys,
+			dataRows
+		});
+
+		// Normalize flow so charts start below both blocks
+		doc.x = doc.page.margins.left;
+		doc.y = Math.max(summaryBottomY, rightBottomY) + 12;
 
 		// Charts (keep old layout behavior)
 		const chartWidth = contentWidth;
