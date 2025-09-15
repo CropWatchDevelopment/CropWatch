@@ -22,24 +22,36 @@ import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import type { RequestHandler } from './$types';
 
+const tzOffsetPattern = /([zZ]|[+\-]\d{2}:\d{2}|[+\-]\d{4}|[+\-]\d{2})$/;
+/**
+ * Parse a device timestamp into a Luxon DateTime in the target zone.
+ * - If input has an offset (or 'Z'), respect it then convert to tz.
+ * - If no offset, treat it as zoned in tz (not UTC) for local semantics.
+ */
+function parseDeviceInstant(input: string | Date, tz: string): DateTime {
+	if (input instanceof Date) {
+		return DateTime.fromJSDate(input, { zone: 'utc' }).setZone(tz);
+	}
+	let dt: DateTime;
+	if (tzOffsetPattern.test(input)) {
+		dt = DateTime.fromISO(input, { setZone: true });
+		if (!dt.isValid) dt = DateTime.fromSQL(input, { setZone: true });
+		return dt.setZone(tz);
+	}
+	dt = DateTime.fromISO(input, { zone: tz });
+	if (!dt.isValid) dt = DateTime.fromSQL(input, { zone: tz });
+	return dt;
+}
+
+/**
+ * JWT-authenticated PDF generation endpoint for device data reports
+ * Designed for server-to-server calls (Node-RED, automation tools, etc.)
+ *
+ * GET /api/devices/{devEui}/pdf?start=2025-05-01&end=2025-06-06&timezone=Asia/Tokyo&locale=ja
+ * Headers: Authorization: Bearer {jwt-token}
+ */
 export const GET: RequestHandler = async ({ params, url, locals: { supabase } }) => {
 	const { devEui } = params;
-
-	const tzOffsetPattern = /([zZ]|[+\-]\d{2}:\d{2}|[+\-]\d{4}|[+\-]\d{2})$/;
-	function parseDeviceInstant(input: string | Date, tz: string): DateTime {
-		if (input instanceof Date) {
-			return DateTime.fromJSDate(input, { zone: 'utc' }).setZone(tz);
-		}
-		let dt: DateTime;
-		if (tzOffsetPattern.test(input)) {
-			dt = DateTime.fromISO(input, { setZone: true });
-			if (!dt.isValid) dt = DateTime.fromSQL(input, { setZone: true });
-			return dt.setZone(tz);
-		}
-		dt = DateTime.fromISO(input, { zone: tz });
-		if (!dt.isValid) dt = DateTime.fromSQL(input, { zone: tz });
-		return dt;
-	}
 
 	try {
 		if (!supabase) {
@@ -49,7 +61,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		if (userError || !userData) {
 			return json(
 				{ error: `Unauthorized access - ${userError?.message}` },
-				{ status: userError?.status }
+				{ status: userError?.status ?? 401 }
 			);
 		}
 		const { user } = userData;
@@ -65,29 +77,69 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			start: startDateParam,
 			end: endDateParam,
 			dataKeys: dataKeysParam = '',
+			alertPoints: _alertPointsParam, // (kept for parity; not used — we source from DB)
 			locale: localeParam = 'ja',
 			timezone: timezoneParam = 'Asia/Tokyo'
 		} = Object.fromEntries(url.searchParams);
 
+		await i18n.initialize({ initialLocale: localeParam });
+		const $_ = get(_);
+
+		if (!startDateParam || !endDateParam) {
+			return json(
+				{
+					error: 'Missing required parameters: Both start and end dates are required',
+					example: '?start=2025-05-01&end=2025-06-06'
+				},
+				{ status: 400 }
+			);
+		}
+
+		// Parse and normalize requested window in the user’s timezone, then convert to UTC for DB
+		let startDate = new Date(startDateParam);
+		let endDate = new Date(endDateParam);
+		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+			return json(
+				{
+					error: 'Invalid date format: Dates must be YYYY-MM-DD (or ISO8601).',
+					example: '?start=2025-05-01&end=2025-06-06'
+				},
+				{ status: 400 }
+			);
+		}
+		const userStart = DateTime.fromJSDate(startDate).setZone(timezoneParam).startOf('day');
+		const userEnd = DateTime.fromJSDate(endDate).setZone(timezoneParam).endOf('day');
+		const startLabel = userStart.toFormat('yyyy-MM-dd HH:mm');
+		const endLabel = userEnd.toFormat('yyyy-MM-dd HH:mm');
+		startDate = userStart.toUTC().toJSDate();
+		endDate = userEnd.toUTC().toJSDate();
+
 		const selectedKeys = dataKeysParam
 			.split(',')
-			.map((key) => key.trim())
+			.map((k) => k.trim())
 			.filter(Boolean);
 
-		const { data: reportParams, error: reportError } = await supabase
+		// Pull alert points from DB (same behavior as older code)
+		const { data: reportParams, error: reportFetchErr } = await supabase
 			.from('reports')
 			.select('report_id, report_alert_points(*)')
 			.eq('dev_eui', devEui)
-			.limit(1)
+			.limit(1) // NOTE: maintained to match existing behavior
 			.single();
 
-		if (reportError) {
-			return json({ error: `Failed to fetch report - ${reportError.message}` }, { status: 500 });
+		if (reportFetchErr) {
+			return json(
+				{ error: `Failed to fetch report parameters - ${reportFetchErr.message}` },
+				{ status: 404 }
+			);
 		}
 
 		let requestedAlertPoints: ReportAlertPoint[] = [];
 		for (const point of reportParams?.report_alert_points || []) {
-			if (!point.data_point_key) continue;
+			if (!point.data_point_key) {
+				console.warn(`Alert point with ID ${point.id} has no data_point_key, skipping`);
+				continue;
+			}
 			requestedAlertPoints.push({
 				created_at: point.created_at,
 				data_point_key: point.data_point_key,
@@ -102,30 +154,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				value: point.value ?? 0
 			});
 		}
+
+		// Determine "report" mode to use getDeviceDataForReport
 		const isReport = !requestedAlertPoints.length;
 
-		await i18n.initialize({ initialLocale: localeParam });
-		const $_ = get(_);
-
-		if (!startDateParam || !endDateParam) {
-			return json({ error: 'Missing start/end' }, { status: 400 });
-		}
-
-		let startDate = new Date(startDateParam);
-		let endDate = new Date(endDateParam);
-
-		const userStartDate = DateTime.fromJSDate(startDate).setZone(timezoneParam).startOf('day');
-		const userEndDate = DateTime.fromJSDate(endDate).setZone(timezoneParam).endOf('day');
-		const displayStartLabel = userStartDate.toFormat('yyyy-MM-dd HH:mm');
-		const displayEndLabel = userEndDate.toFormat('yyyy-MM-dd HH:mm');
-
-		startDate = userStartDate.toUTC().toJSDate();
-		endDate = userEndDate.toUTC().toJSDate();
-
-		const deviceDataService = new DeviceDataService(supabase);
-		let deviceData: DeviceDataRecord[] = [];
-		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
-
+		// Repos/Services
 		const errorHandler = new ErrorHandlingService();
 		const deviceRepo = new DeviceRepository(supabase, errorHandler);
 		const deviceService = new DeviceService(deviceRepo);
@@ -135,7 +168,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const locationRepo = new LocationRepository(supabase, errorHandler);
 		const locationService = new LocationService(locationRepo, deviceRepo);
 		const location = await locationService.getLocationById(device.location_id!);
+		if (!location) throw httpError(404, 'Location not found');
 
+		const deviceDataService = new DeviceDataService(supabase);
+
+		// Fetch data using the timezone-aware path
 		const deviceDataResponse = isReport
 			? await deviceDataService.getDeviceDataForReport({
 					devEui,
@@ -150,22 +187,64 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				})
 			: await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate, timezoneParam);
 
+		let deviceData: DeviceDataRecord[] = [];
+		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
+
 		if (deviceDataResponse?.length) {
 			deviceData = deviceDataResponse;
 			if (!alertPoints.length) {
 				alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
 			}
 		} else {
-			return json({ error: 'No data' }, { status: 404 });
+			return json(
+				{
+					error: `No data found for device ${devEui} in the specified range`,
+					device: devEui,
+					dateRange: { start: startDateParam, end: endDateParam }
+				},
+				{ status: 404 }
+			);
 		}
 
+		// Sort by created_at using timezone-correct parser
 		deviceData.sort((a, b) => {
 			const aMs = parseDeviceInstant(a.created_at as string, timezoneParam).toMillis();
 			const bMs = parseDeviceInstant(b.created_at as string, timezoneParam).toMillis();
 			return aMs - bMs;
 		});
 
-		const doc = new PDFDocument({ size: 'A4', margin: 40, bufferPages: true });
+		// Build PDF — keep the **old layout** with header, signature boxes, charts, full table, footer
+		const doc = new PDFDocument({
+			size: 'A4',
+			margin: 40,
+			info: {
+				Title: `Device ${devEui} Report`,
+				Author: `CropWatch API`,
+				Subject: `Data report for device ${devEui} from ${startDateParam} to ${endDateParam}`,
+				Creator: 'CropWatch API'
+			},
+			bufferPages: true
+		});
+
+		// Load JP font if available
+		const possibleFontPaths = [
+			path.join(process.cwd(), 'static/fonts/NotoSansJP-Regular.ttf'),
+			path.join(process.cwd(), 'src/lib/fonts/NotoSansJP-Regular.ttf'),
+			path.join(process.cwd(), 'server/fonts/NotoSansJP-Regular.ttf'),
+			'static/fonts/NotoSansJP-Regular.ttf'
+		];
+		for (const fp of possibleFontPaths) {
+			try {
+				if (fs.existsSync(fp)) {
+					doc.registerFont('NotoSansJP', fp);
+					doc.font('NotoSansJP');
+					break;
+				}
+			} catch {
+				// ignore
+			}
+		}
+
 		const {
 			top: marginTop,
 			right: marginRight,
@@ -174,30 +253,65 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		} = doc.page.margins;
 		const contentWidth = doc.page.width - marginLeft - marginRight;
 
-		// font
-		const possibleFontPaths = [
-			path.join(process.cwd(), 'static/fonts/NotoSansJP-Regular.ttf'),
-			path.join(process.cwd(), 'src/lib/fonts/NotoSansJP-Regular.ttf')
-		];
-		for (const fp of possibleFontPaths) {
-			if (fs.existsSync(fp)) {
-				doc.registerFont('NotoSansJP', fp);
-				doc.font('NotoSansJP');
-				break;
-			}
-		}
-
+		// Title
 		doc.fontSize(16).text(`CropWatch ${$_('device_report')}`);
+
+		// Signature boxes (old layout)
+		doc.fontSize(7).strokeColor('#ccc');
+		doc.rect(400, marginTop, 50, 60).stroke();
+		doc.rect(450, marginTop, 50, 60).stroke();
+		doc.rect(500, marginTop, 50, 60).stroke();
+		doc.text($_('created'), 405, 45);
+		doc.text($_('verified'), 455, 45);
+		doc.text($_('approved'), 505, 45);
+
+		doc.x = marginLeft;
+		doc.y = 70;
+
+		const metaTextOptions = { width: 320 };
+
+		// Metadata block
 		doc
 			.fontSize(8)
-			.text(`${$_('date_range')}: ${displayStartLabel} - ${displayEndLabel} (${timezoneParam})`);
+			.text(
+				`${$_('generated_at')}: ${DateTime.now().setZone(timezoneParam).toFormat('yyyy-MM-dd HH:mm:ss')}`,
+				metaTextOptions
+			)
+			.text(
+				`${$_('generated_by')}: ${userProfile?.full_name || user.email || $_('Unknown')}`,
+				metaTextOptions
+			);
+		if (userProfile?.employer) {
+			doc.text(`${$_('Company')}: ${userProfile?.employer || $_('Unknown')}`, metaTextOptions);
+		}
+		doc
+			.moveDown(0.5)
+			.text(`${$_('installed_at')}: ${location.name || $_('Unknown')}`, metaTextOptions)
+			.text(
+				`${$_('Device Type')}: ${device.cw_device_type?.name || $_('Unknown')}`,
+				metaTextOptions
+			)
+			.text(`${$_('Device Name')}: ${device.name || $_('Unknown')}`, metaTextOptions)
+			.text(`${$_('EUI')}: ${devEui}`, metaTextOptions);
 
+		// Right side quick facts
+		doc.moveUp(2);
+		doc.x = 400;
+		doc
+			.text(`${$_('date_range')}: ${startLabel} - ${endLabel} (${timezoneParam})`)
+			.text(`${$_('sampling_size')}: ${deviceData.length}`);
+
+		doc.x = marginLeft;
+		doc.moveDown();
+
+		// Keys & columns
 		const numericKeys = getNumericKeys(deviceData);
 		const validKeys =
 			isReport || !selectedKeys.length
 				? numericKeys
 				: numericKeys.filter((k) => selectedKeys.includes(k));
 
+		// Restrict table/graph columns to alert-linked columns if available
 		const alertKeySet = new Set(alertPoints.map((p) => p.data_point_key));
 		const alertKeys = validKeys.filter((k) => alertKeySet.has(k));
 		const tableKeys = alertKeys.length ? alertKeys : validKeys;
@@ -214,7 +328,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			cells: [...keyColumns, { label: $_('comment'), width: 40 }]
 		};
 
-		// ✅ Build rows with ISO+offset + JST label
+		// Build rows using timezone-aware labels and carry ISO+offset in value
 		const getDataRows = (keys: string[] = validKeys): TableRow[] =>
 			deviceData.map((data, index) => {
 				const date = parseDeviceInstant(data.created_at as string, timezoneParam);
@@ -223,20 +337,22 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 						? parseDeviceInstant(deviceData[index - 1].created_at as string, timezoneParam)
 						: null;
 
-				const isoWithZone = date.toISO();
-				const labelJst = date.toFormat('M/d H:mm');
-				const shortJst = date.toFormat('H:mm');
+				const isoWithZone = date.toISO(); // carries offset
+				const labelLocal = date.toFormat('M/d H:mm');
+				const shortLocal = date.toFormat('H:mm');
 
 				return {
 					header: {
-						value: isoWithZone, // <— carry offset
-						label: labelJst,
-						shortLabel: previousDate?.toFormat('M/d') === date.toFormat('M/d') ? shortJst : labelJst
+						value: isoWithZone,
+						label: labelLocal,
+						shortLabel:
+							previousDate?.toFormat('M/d') === date.toFormat('M/d') ? shortLocal : labelLocal
 					},
 					cells: keys.map((key) => {
 						const rawValue = (data as Record<string, unknown>)[key];
 						const value =
 							typeof rawValue === 'number' && !isNaN(rawValue as number) ? (rawValue as number) : 0;
+
 						return {
 							value,
 							label:
@@ -252,6 +368,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				} as TableRow;
 			});
 
+		// Prepare rows/tables
 		const dataRows = getDataRows();
 		const tableKeyColumns: TableCell[] = tableKeys.map((key) => ({
 			label: $_(key),
@@ -265,7 +382,71 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		};
 		const dataRowsTable = getDataRows(tableKeys);
 
-		// ✅ Pass timezone to createPDFDataTable
+		// Summary table (old behavior)
+		createPDFDataTable({
+			doc,
+			config: { caption: $_('summary'), timezone: timezoneParam },
+			dataHeader: {
+				header: { label: $_('status'), width: 60 },
+				cells: [...keyColumns, { label: $_('comment'), width: 60 }]
+			},
+			dataRows: [
+				...alertPoints.map((alertPoint) => {
+					const { data_point_key, name, hex_color } = alertPoint;
+					return {
+						header: { label: name, value: '' },
+						cells: validKeys.map((key, index) => {
+							if (key !== data_point_key) return { label: '-', value: '' };
+							const valueList = dataRows.map((row) => row.cells[index].value as number);
+							const count = valueList.filter((v) => checkMatch(v, alertPoint)).length;
+							return {
+								label:
+									`${new Intl.NumberFormat(localeParam, { maximumFractionDigits: 2 }).format(count)} ` +
+									`(${new Intl.NumberFormat(localeParam, { style: 'percent' }).format(count / valueList.length)})`,
+								value: count,
+								bgColor: hex_color || '#ffffff'
+							};
+						})
+					};
+				}),
+				...['min', 'max', 'avg', 'stddev'].map((indicator) => ({
+					header: { label: $_(indicator), value: '' },
+					cells: validKeys.map((key, index) => {
+						const valueList = dataRows.map((row) => row.cells[index].value as number);
+						const value = getValue(valueList, indicator);
+						return { label: formatNumber({ key, value }), value };
+					})
+				}))
+			]
+		});
+
+		// Charts (keep old layout behavior)
+		const chartWidth = contentWidth;
+		const chartHeight = contentWidth * 0.4;
+		const chartKeys = tableKeys;
+		for (const key of chartKeys) {
+			if (doc.y > doc.page.height - marginBottom - chartHeight + 20) {
+				doc.addPage();
+			} else {
+				doc.moveDown(2);
+			}
+			createPDFLineChartImage({
+				doc,
+				dataHeader: {
+					header: { label: $_('datetime'), value: '', width: 60 },
+					cells: [{ label: $_(key), value: '', width: 40, color: getColorNameByKey(key) }]
+				},
+				dataRows: getDataRows([key]),
+				alertPoints,
+				config: { title: $_(key), width: chartWidth, height: chartHeight, timezone: timezoneParam }
+			});
+		}
+
+		// Page break before full table
+		if (chartKeys.length > 0) doc.addPage();
+		else doc.moveDown(2);
+
+		// Full data table (restricted to alert-linked columns if any)
 		createPDFDataTable({
 			doc,
 			dataHeader: dataHeaderTable,
@@ -273,17 +454,20 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			config: { timezone: timezoneParam }
 		});
 
+		// Footer
 		const footerText = [
 			location.name,
 			device.name,
 			devEui,
-			`${displayStartLabel} - ${displayEndLabel} (${timezoneParam})`
+			`${startLabel} - ${endLabel} (${timezoneParam})`
 		].join(' | ');
 		addFooterPageNumber(doc, footerText);
 
+		// Finalize
 		doc.end();
 
 		const chunks: Buffer[] = [];
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		doc.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
 
 		return new Promise<Response>((resolve, reject) => {
@@ -294,15 +478,40 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 						status: 200,
 						headers: {
 							'Content-Type': 'application/pdf',
-							'Content-Disposition': `attachment; filename*=UTF-8''device-${devEui}-report.pdf`,
-							'Content-Length': pdfBuffer.length.toString()
+							'Content-Disposition': `attachment; filename*=UTF-8''device-${devEui}-report-${startDateParam}-to-${endDateParam}.pdf`,
+							'Content-Length': pdfBuffer.length.toString(),
+							'Access-Control-Allow-Origin': '*',
+							'Access-Control-Allow-Methods': 'GET',
+							'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 						}
 					})
 				);
 			});
-			doc.on('error', (err: any) => reject(json({ error: err.message }, { status: 500 })));
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			doc.on('error', (err: any) => {
+				reject(
+					json(
+						{
+							error: 'Failed to generate PDF',
+							details: err.message,
+							device: devEui,
+							user: user?.email || 'Unknown user'
+						},
+						{ status: 500 }
+					)
+				);
+			});
 		});
 	} catch (err) {
-		return json({ error: (err as Error).message }, { status: 500 });
+		console.error(`Error generating PDF for device ${params.devEui}:`, err);
+		return json(
+			{
+				error: 'Failed to generate PDF report',
+				details: err instanceof Error ? err.message : 'Unknown error',
+				device: params.devEui,
+				user: 'Unknown user'
+			},
+			{ status: 500 }
+		);
 	}
 };
