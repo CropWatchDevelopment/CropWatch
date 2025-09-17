@@ -345,6 +345,9 @@ export const strings = {
 
 	// PDF report content
 	device_report: 'Device Report',
+	device_report_weekly: 'Weekly',
+	device_report_monthly: 'Monthly',
+	report_date_range: 'Report Date Range',
 	generated_at: 'Created At',
 	generated_by: 'Created By',
 	installed_at: 'Installed at',

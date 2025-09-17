@@ -256,7 +256,9 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const contentWidth = doc.page.width - marginLeft - marginRight;
 
 		// Title
-		doc.fontSize(16).text(`CropWatch ${$_('device_report')}`);
+		const isWeekly = Math.abs(userEnd.diff(userStart, 'days').days - 7) < 0.1;
+		const titleText = isWeekly ? $_('device_report_weekly') : $_('device_report_monthly');
+		doc.fontSize(16).text(`${titleText} ${$_('device_report')}`);
 
 		// Signature boxes (old layout)
 		doc.fontSize(7).strokeColor('#ccc');
