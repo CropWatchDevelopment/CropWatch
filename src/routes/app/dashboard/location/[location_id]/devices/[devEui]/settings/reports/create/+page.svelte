@@ -399,6 +399,7 @@
 										type="color"
 										style="width: 60px; height: 48px; border-radius: 55px;"
 										bind:value={point.hex_color}
+										disabled={point.operator === null}
 									/>
 									<!-- <div  style="background-color: {point.color}"></div> -->
 									<span class="font-medium">Alert Point {i + 1}</span>
@@ -456,7 +457,14 @@
 										}}
 										class="w-full"
 									>
-										<option value="null" selected>Display Only</option>
+										<option
+											value="null"
+											selected
+											onclick={() => {
+												point.value = 999;
+												point.hex_color = '#FFFFFF';
+											}}>Display Only</option
+										>
 										<option value="=">Equals (=)</option>
 										<option value=">">Greater than (&gt;)</option>
 										<option value="<">Less than (&lt;)</option>
