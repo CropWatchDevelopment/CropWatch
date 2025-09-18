@@ -11,6 +11,9 @@ const config = {
 		serviceWorker: {
 			register: false // Let PWA plugin handle registration
 		}
+	},
+	vitePlugin: {
+		inspector: true
 	}
 };
 
