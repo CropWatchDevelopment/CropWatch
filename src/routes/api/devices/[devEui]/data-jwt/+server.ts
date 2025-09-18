@@ -84,6 +84,7 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 		// Get query parameters for date range
 		const startDateParam = url.searchParams.get('start');
 		const endDateParam = url.searchParams.get('end');
+		const timezoneParam = url.searchParams.get('timezone') || 'UTC';
 
 		if (!startDateParam || !endDateParam) {
 			throw error(
@@ -103,9 +104,18 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 			);
 		}
 
-		// include the full day in the results
-		startDate = DateTime.fromJSDate(startDate).startOf('day').toJSDate();
-		endDate = DateTime.fromJSDate(endDate).endOf('day').toJSDate();
+		// Include the full day in the results, but do this in the user's timezone
+		const userTimezone = timezoneParam;
+
+		// Create DateTime objects from the date strings in the user's timezone
+		const startDt = DateTime.fromISO(startDateParam + 'T00:00:00', { zone: userTimezone }).startOf(
+			'day'
+		);
+		const endDt = DateTime.fromISO(endDateParam + 'T23:59:59', { zone: userTimezone }).endOf('day');
+
+		// Convert back to JavaScript Date objects
+		startDate = startDt.toJSDate();
+		endDate = endDt.toJSDate();
 
 		//console.log(
 		// 	`[JWT API] Fetching data for device ${devEui} from ${startDate.toISOString()} to ${endDate.toISOString()}`
@@ -119,8 +129,13 @@ export const GET: RequestHandler = async ({ params, url, request, locals: { supa
 			//console.log('Using JWT-authenticated Supabase client for data queries...');
 
 			// First attempt: Use DeviceDataService with JWT-authenticated client
-			const deviceDataService = new DeviceDataService(jwtSupabase, undefined, jwt);
-			historicalData = await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
+			const deviceDataService = new DeviceDataService(jwtSupabase);
+			historicalData = await deviceDataService.getDeviceDataByDateRange(
+				devEui,
+				startDate,
+				endDate,
+				timezoneParam
+			);
 
 			if (historicalData && historicalData.length > 0) {
 				//console.log(

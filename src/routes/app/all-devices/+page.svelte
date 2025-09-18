@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Button from '$lib/components/UI/dashboard/components/Button.svelte';
 	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { mdiDevices, mdiMapMarker, mdiIdentifier, mdiAlert, mdiMagnify } from '@mdi/js';
 

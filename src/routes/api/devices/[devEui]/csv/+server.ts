@@ -18,6 +18,7 @@ export const GET: RequestHandler = async ({
 		// Get query parameters for date range
 		const startDateParam = url.searchParams.get('start');
 		const endDateParam = url.searchParams.get('end');
+		const timezoneParam = url.searchParams.get('timezone') || 'UTC';
 
 		if (!startDateParam || !endDateParam) {
 			throw error(400, 'Start and end dates are required');
@@ -31,9 +32,19 @@ export const GET: RequestHandler = async ({
 			throw error(400, 'Invalid date format');
 		}
 
-		// include the full day in the results
-		startDate = DateTime.fromJSDate(startDate).startOf('day').toJSDate();
-		endDate = DateTime.fromJSDate(endDate).endOf('day').toJSDate();
+		// Include the full day in the results, but do this in the user's timezone
+		// Parse dates as local dates in the user's timezone, then set to start/end of day
+		const userTimezone = timezoneParam;
+
+		// Create DateTime objects from the date strings in the user's timezone
+		const startDt = DateTime.fromISO(startDateParam + 'T00:00:00', { zone: userTimezone }).startOf(
+			'day'
+		);
+		const endDt = DateTime.fromISO(endDateParam + 'T23:59:59', { zone: userTimezone }).endOf('day');
+
+		// Convert back to JavaScript Date objects
+		startDate = startDt.toJSDate();
+		endDate = endDt.toJSDate();
 
 		// Get services from the container
 		const deviceDataService = new DeviceDataService(supabase);
@@ -44,7 +55,12 @@ export const GET: RequestHandler = async ({
 		// Try to get data dynamically based on device type
 
 		try {
-			csvData = await deviceDataService.getDeviceDataByDateRangeAsCSV(devEui, startDate, endDate);
+			csvData = await deviceDataService.getDeviceDataByDateRangeAsCSV(
+				devEui,
+				startDate,
+				endDate,
+				timezoneParam
+			);
 			if (!csvData || csvData.length === 0) {
 				throw new Error('No data found for the specified date range');
 			}
@@ -71,8 +87,8 @@ export const GET: RequestHandler = async ({
 						let raw = (row as any)[field];
 						let value: string = '';
 						if (field === 'created_at' && raw) {
-							// Format for Excel: YYYY-MM-DD HH:mm:ss
-							const dt = DateTime.fromJSDate(new Date(raw));
+							// Format for Excel: YYYY-MM-DD HH:mm:ss in requested timezone
+							const dt = DateTime.fromJSDate(new Date(raw)).setZone(userTimezone);
 							value = dt.toFormat('yyyy-LL-dd HH:mm:ss');
 						} else if (raw != null) {
 							value = String(raw);

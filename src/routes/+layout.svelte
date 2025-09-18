@@ -14,6 +14,7 @@
 	import '../app.css';
 	import { info, warning } from '$lib/stores/toast.svelte';
 	import { ONE_SIGNAL_PUBLIC_CONFIG } from '$lib/onesignalPublic';
+	import { themeStore, initThemeOnce } from '$lib/stores/theme';
 
 	// No preloading needed - dashboard will load its data when navigated to
 
@@ -113,11 +114,20 @@
 		}
 		stopLoading();
 	});
+
+	import { get } from 'svelte/store';
+	let theme = $state(get(themeStore));
+	let unsub: () => void;
+	onMount(() => {
+		initThemeOnce();
+		unsub = themeStore.subscribe((v) => (theme = v));
+		return () => unsub && unsub();
+	});
 </script>
 
 <!-- Wait until svelte-i18n is initialized -->
 {#if i18n.initialized}
-	<div class="page-transition-container">
+	<div class="page-transition-container" data-theme={theme.effective}>
 		{#if !page.url.pathname.startsWith('/auth')}
 			<Header userName={user?.email ?? 'Unknown User'} />
 		{/if}

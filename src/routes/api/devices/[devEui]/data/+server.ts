@@ -1,6 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
+import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 import { DateTime } from 'luxon';
 
 export const GET: RequestHandler = async ({
@@ -18,6 +19,7 @@ export const GET: RequestHandler = async ({
 		// Get query parameters for date range
 		const startDateParam = url.searchParams.get('start');
 		const endDateParam = url.searchParams.get('end');
+		const timezoneParam = url.searchParams.get('timezone') || 'UTC';
 
 		if (!startDateParam || !endDateParam) {
 			throw error(400, 'Start and end dates are required');
@@ -31,9 +33,18 @@ export const GET: RequestHandler = async ({
 			throw error(400, 'Invalid date format');
 		}
 
-		// include the full day in the results
-		startDate = DateTime.fromJSDate(startDate).startOf('day').toJSDate();
-		endDate = DateTime.fromJSDate(endDate).endOf('day').toJSDate();
+		// Include the full day in the results, but do this in the user's timezone
+		const userTimezone = timezoneParam;
+
+		// Create DateTime objects from the date strings in the user's timezone
+		const startDt = DateTime.fromISO(startDateParam + 'T00:00:00', { zone: userTimezone }).startOf(
+			'day'
+		);
+		const endDt = DateTime.fromISO(endDateParam + 'T23:59:59', { zone: userTimezone }).endOf('day');
+
+		// Convert back to JavaScript Date objects
+		startDate = startDt.toJSDate();
+		endDate = endDt.toJSDate();
 
 		// Get services from the container
 		const deviceDataService = new DeviceDataService(supabase);
@@ -53,9 +64,14 @@ export const GET: RequestHandler = async ({
 			// Will fall back to specific services below
 		}
 
-		let historicalData = [];
+		let historicalData: DeviceDataRecord[] = [];
 		try {
-			historicalData = await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
+			historicalData = await deviceDataService.getDeviceDataByDateRange(
+				devEui,
+				startDate,
+				endDate,
+				timezoneParam
+			);
 			if (!historicalData || historicalData.length === 0) {
 				throw new Error('No historical data found for the specified date range');
 			}

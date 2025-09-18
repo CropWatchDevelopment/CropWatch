@@ -19,6 +19,28 @@ export class ReportRepository extends BaseRepository<Report, string> {
 	 * Find reports by device EUI
 	 * @param devEui Device EUI to search for
 	 */
+	async findAll(): Promise<Report[]> {
+		try {
+			const { data, error } = await this.supabase
+				.from(this.tableName)
+				.select('*')
+				.order('created_at', { ascending: false });
+
+			if (error) {
+				throw error;
+			}
+
+			return data || [];
+		} catch (error) {
+			this.errorHandler.handleDatabaseError(error as any, `Error finding reports`);
+			throw error;
+		}
+	}
+
+	/**
+	 * Find reports by device EUI
+	 * @param devEui Device EUI to search for
+	 */
 	async findByDeviceEui(devEui: string): Promise<Report[]> {
 		try {
 			const { data, error } = await this.supabase

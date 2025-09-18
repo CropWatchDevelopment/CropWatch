@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
-	import { getDarkMode } from '$lib/components/theme/theme.svelte';
+	// Use central theme store instead of legacy getDarkMode
+	import { themeStore } from '$lib/stores/theme';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import { _ } from 'svelte-i18n';
 	import { onMount } from 'svelte';
@@ -88,6 +89,8 @@
 	// Local reactive variables that sync with store
 	let isOpen = $state(false);
 	let isSmallIconMode = $state(false);
+	let dark = $state(false);
+	const _unsubTheme = themeStore.subscribe((v) => (dark = v.effective === 'dark'));
 
 	// Initialize responsive behavior
 	onMount(() => {
@@ -138,7 +141,7 @@
 <!-- Sidebar -->
 <aside
 	class="fixed top-0 left-0 z-50 flex flex-col overflow-x-hidden border-r transition-all duration-300 ease-in-out
-		{getDarkMode() ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-slate-200'}
+		{dark ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-slate-200'}
 		shadow-lg backdrop-blur-sm"
 	style="top: 73px; 
 		height: calc(100vh - 73px);
@@ -149,11 +152,11 @@
 	<!-- Sidebar Header -->
 	{#if sidebarStore.isOpen}
 		<div
-			class="flex items-center justify-between border-b p-4 {getDarkMode()
+			class="flex items-center justify-between border-b p-4 {dark
 				? 'border-slate-700/30'
 				: 'border-gray-200/30'}"
 		>
-			<h2 class="text-lg font-semibold {getDarkMode() ? 'text-white' : 'text-gray-900'}">
+			<h2 class="text-lg font-semibold {dark ? 'text-white' : 'text-gray-900'}">
 				{$_('Navigation')}
 			</h2>
 			<button
@@ -161,7 +164,7 @@
 					// Toggle sidebar only (no navigation) – don't trigger global loading overlay
 					sidebarStore.toggle();
 				}}
-				class="rounded-lg p-2 transition-all duration-200 hover:scale-105 {getDarkMode()
+				class="rounded-lg p-2 transition-all duration-200 hover:scale-105 {dark
 					? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
 					: 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
 				aria-label="Toggle small icon mode"
@@ -175,7 +178,7 @@
 	<nav class="z-10 flex flex-1 flex-col overflow-y-auto pr-2" style="z-index: 10000;">
 		<ul class="space-y-1">
 			{#if !sidebarStore.isOpen}
-				<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}">
+				<li class="mx-3 border-t {dark ? 'border-slate-500/30' : 'border-gray-200/30'}">
 					<button
 						type="button"
 						onclick={() => {
@@ -183,7 +186,7 @@
 							sidebarStore.toggle();
 						}}
 						class="flex w-full items-center justify-center rounded-lg p-2 transition-all duration-200 hover:scale-105
-							{getDarkMode()
+							{dark
 							? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
 							: 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
 						aria-label="Open sidebar"
@@ -205,10 +208,10 @@
 						}}
 						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
 							{isActiveRoute(item.matcher)
-							? getDarkMode()
+							? dark
 								? 'bg-emerald-600/30 text-emerald-400'
 								: 'bg-emerald-100 text-emerald-700'
-							: getDarkMode()
+							: dark
 								? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
 								: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 						aria-current={isActiveRoute(item.matcher) ? 'page' : undefined}
@@ -223,9 +226,7 @@
 					</a>
 				</li>
 				{#if index < navigationItems.length - 1}
-					<li
-						class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}"
-					></li>
+					<li class="mx-3 border-t {dark ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
 				{/if}
 			{/each}
 		</ul>
@@ -234,8 +235,8 @@
 			<button
 				onclick={handleLogout}
 				class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
-				{getDarkMode() ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
-				{getDarkMode()
+				{dark ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
+				{dark
 					? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
 					: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 			>
@@ -244,7 +245,7 @@
 			</button>
 		{/if}
 		<ul class="space-y-1">
-			<li class="mx-3 border-t {getDarkMode() ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
+			<li class="mx-3 border-t {dark ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
 			<li>
 				<div class="flex flex-row">
 					<a
@@ -257,10 +258,10 @@
 						}}
 						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200
 							{isActiveRoute('/app/account-settings/general')
-							? getDarkMode()
+							? dark
 								? 'bg-emerald-600/30 text-emerald-400'
 								: 'bg-emerald-100 text-emerald-700'
-							: getDarkMode()
+							: dark
 								? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
 								: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
 						aria-current={isActiveRoute('/app/account-settings/general') ? 'page' : undefined}

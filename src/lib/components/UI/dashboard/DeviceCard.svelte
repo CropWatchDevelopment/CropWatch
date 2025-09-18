@@ -16,10 +16,30 @@
 		};
 	}
 
-	let { device, isActive, locationId } = $props<{
+	let {
+		device,
+		isActive,
+		locationId,
+		dragEnabled,
+		dragIndex,
+		isDragging,
+		isDropTarget,
+		onDragStart,
+		onDragEnd,
+		onDragOver,
+		onDrop
+	} = $props<{
 		device: DeviceWithLatestData;
 		isActive: boolean | null;
 		locationId: number;
+		dragEnabled?: boolean;
+		dragIndex?: number;
+		isDragging?: boolean;
+		isDropTarget?: boolean;
+		onDragStart?: (event: DragEvent, index: number) => void;
+		onDragEnd?: (event: DragEvent) => void;
+		onDragOver?: (event: DragEvent, index: number) => void;
+		onDrop?: (event: DragEvent, index: number) => void;
 	}>();
 </script>
 
@@ -27,6 +47,14 @@
 	{device}
 	{isActive}
 	detailHref={`/dashboard/location/${locationId}/device/${device.dev_eui}`}
+	{dragEnabled}
+	{dragIndex}
+	{isDragging}
+	{isDropTarget}
+	{onDragStart}
+	{onDragEnd}
+	{onDragOver}
+	{onDrop}
 >
 	{#snippet children()}
 		{#if !device.upload_interval === null && device.upload_interval <= 0}
