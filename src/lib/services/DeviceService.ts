@@ -33,7 +33,9 @@ export class DeviceService implements IDeviceService {
 	 * Get all devices
 	 */
 	async getAllDevices(): Promise<Device[]> {
-		return this.deviceRepository.findAll();
+		const devices = this.deviceRepository.findAll();
+
+		return devices;
 	}
 
 	/**
