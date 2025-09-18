@@ -15,7 +15,15 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const errorHandler = new ErrorHandlingService();
 	const deviceRepository = new DeviceRepository(supabase, errorHandler);
 	const deviceService = new DeviceService(deviceRepository);
-	const allDevicesPromise = deviceService.getAllDevices();
+	const allDevicesNoPerm = await deviceService.getAllDevices(user.id);
 
+	if (!allDevicesNoPerm) {
+		throw fail(500, { message: 'Could not fetch devices' });
+	}
+
+	// Double check the user only gets their own devices
+	const allDevicesPromise = allDevicesNoPerm.filter((d) => d.user_id && d.user_id === user.id);
+
+	// If you still want `allDevices` in the page, return both:
 	return { allDevicesPromise };
 };
