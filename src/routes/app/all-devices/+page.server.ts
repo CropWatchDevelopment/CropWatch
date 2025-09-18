@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const errorHandler = new ErrorHandlingService();
 	const deviceRepository = new DeviceRepository(supabase, errorHandler);
 	const deviceService = new DeviceService(deviceRepository);
-	const allDevicesNoPerm = await deviceService.getAllDevices();
+	const allDevicesNoPerm = await deviceService.getAllDevices(user.id);
 
 	if (!allDevicesNoPerm) {
 		throw fail(500, { message: 'Could not fetch devices' });
