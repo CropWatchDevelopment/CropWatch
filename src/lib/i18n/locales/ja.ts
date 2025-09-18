@@ -393,6 +393,9 @@ export const strings = {
 
 	// PDF report content
 	device_report: 'デバイスレポート',
+	device_report_weekly: '週間',
+	device_report_monthly: '月間',
+	report_date_range: 'レポート日付範囲',
 	generated_at: '作成日時',
 	generated_by: '作成者',
 	installed_at: '設置場所',

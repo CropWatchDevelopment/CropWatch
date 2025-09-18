@@ -33,7 +33,7 @@
 <div class="flex flex-col gap-4 p-4 lg:flex-row">
 	<!-- Left pane -->
 	<div
-		class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+		class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-2 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
 	>
 		<!-- Map -->
 		<div class="w-full overflow-hidden rounded-lg shadow-md">

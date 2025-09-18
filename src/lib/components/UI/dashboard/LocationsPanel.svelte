@@ -66,7 +66,7 @@
 	<h2 class="mb-4 text-lg font-semibold">{$_('Locations')}</h2>
 
 	<div class="relative mb-4">
-		<div class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-500 dark:text-gray-400">
+		<div class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-600 dark:text-gray-400">
 			<Icon path={mdiMagnify} size="1.25em" />
 		</div>
 		<input
@@ -83,7 +83,7 @@
 		/>
 		{#if search}
 			<button
-				class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+				class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 				onclick={clearSearch}
 				aria-label="Clear search"
 			>

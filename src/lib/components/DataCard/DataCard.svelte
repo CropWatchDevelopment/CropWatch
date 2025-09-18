@@ -49,14 +49,14 @@
 {#if hasValue(latestData, key)}
 	{@const value = latestData[key]}
 	<div
-		class="flex flex-col justify-center gap-1 rounded-r-lg bg-gray-50 p-4 text-center shadow-sm transition-all duration-200 ease-in-out dark:bg-zinc-800 {isMetadata
+		class="sensor-card-surface flex flex-col justify-center gap-1 rounded-r-lg p-4 text-center shadow-sm transition-all duration-200 ease-in-out {isMetadata
 			? 'border-l'
 			: 'border-l-4'} {className}"
 		style:border-color={borderColor}
 	>
 		<!-- Label -->
 		<h3
-			class={`m-0 leading-5 ${isMetadata ? 'text-xs text-gray-400 dark:text-gray-500' : 'text-md text-gray-500 dark:text-gray-400'}`}
+			class={`m-0 leading-5 ${isMetadata ? 'text-xs text-gray-600 dark:text-gray-400' : 'text-md text-gray-700 dark:text-gray-300'}`}
 		>
 			{$_(name)}
 		</h3>

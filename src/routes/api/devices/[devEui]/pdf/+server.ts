@@ -13,7 +13,7 @@ import { DeviceDataService } from '$lib/services/DeviceDataService';
 import { DeviceService } from '$lib/services/DeviceService';
 import { LocationService } from '$lib/services/LocationService';
 import { formatNumber, getColorNameByKey, getNumericKeys } from '$lib/utilities/stats';
-import { error, json } from '@sveltejs/kit';
+import { error as httpError, json } from '@sveltejs/kit';
 import fs from 'fs';
 import { DateTime } from 'luxon';
 import path from 'path';
@@ -21,38 +21,53 @@ import PDFDocument from 'pdfkit';
 import { _ } from 'svelte-i18n';
 import { get } from 'svelte/store';
 import type { RequestHandler } from './$types';
+import { drawSummaryPanel } from './drawSummaryPanel';
+import { drawRightAlertPanel } from './drawRightAlertPanel';
+
+const tzOffsetPattern = /([zZ]|[+\-]\d{2}:\d{2}|[+\-]\d{4}|[+\-]\d{2})$/;
+/**
+ * Parse a device timestamp into a Luxon DateTime in the target zone.
+ * - If input has an offset (or 'Z'), respect it then convert to tz.
+ * - If no offset, treat it as zoned in tz (not UTC) for local semantics.
+ */
+function parseDeviceInstant(input: string | Date, tz: string): DateTime {
+	if (input instanceof Date) {
+		return DateTime.fromJSDate(input, { zone: 'utc' }).setZone(tz);
+	}
+	let dt: DateTime;
+	if (tzOffsetPattern.test(input)) {
+		dt = DateTime.fromISO(input, { setZone: true });
+		if (!dt.isValid) dt = DateTime.fromSQL(input, { setZone: true });
+		return dt.setZone(tz);
+	}
+	dt = DateTime.fromISO(input, { zone: tz });
+	if (!dt.isValid) dt = DateTime.fromSQL(input, { zone: tz });
+	return dt;
+}
 
 /**
  * JWT-authenticated PDF generation endpoint for device data reports
  * Designed for server-to-server calls (Node-RED, automation tools, etc.)
  *
- * Usage:
- * GET /api/devices/{devEui}/pdf?start=2025-05-01&end=2025-06-06
+ * GET /api/devices/{devEui}/pdf?start=2025-05-01&end=2025-06-06&timezone=Asia/Tokyo&locale=ja
  * Headers: Authorization: Bearer {jwt-token}
- *
- * Returns: PDF file as binary response
  */
 export const GET: RequestHandler = async ({ params, url, locals: { supabase } }) => {
 	const { devEui } = params;
 
 	try {
-		// const supabase = await validateAuth(request);
-		if (!supabase || supabase === null) {
+		if (!supabase) {
 			return json({ error: 'Unauthorized access' }, { status: 401 });
 		}
 		const { data: userData, error: userError } = await supabase.auth.getUser();
 		if (userError || !userData) {
-			console.error('Failed to get user from JWT:', userError?.message);
 			return json(
 				{ error: `Unauthorized access - ${userError?.message}` },
-				{ status: userError?.status }
+				{ status: userError?.status ?? 401 }
 			);
 		}
 		const { user } = userData;
-
-		if (!user) {
-			throw error(404, 'Device not found');
-		}
+		if (!user) throw httpError(404, 'Device not found');
 
 		const { data: userProfile } = await supabase
 			.from('profiles')
@@ -64,71 +79,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			start: startDateParam,
 			end: endDateParam,
 			dataKeys: dataKeysParam = '',
-			alertPoints: alertPointsParam,
-			locale: localeParam = 'ja'
+			alertPoints: _alertPointsParam, // (kept for parity; not used — we source from DB)
+			locale: localeParam = 'ja',
+			timezone: timezoneParam = 'Asia/Tokyo'
 		} = Object.fromEntries(url.searchParams);
 
-		const selectedKeys = dataKeysParam
-			.split(',')
-			.map((key) => key.trim())
-			.filter(Boolean);
-
-		// const requestedAlertPoints = (() => {
-		// 	try {
-		// 		const points = alertPointsParam ? JSON.parse(alertPointsParam) : [];
-
-		// 		if (!Array.isArray(points)) {
-		// 			throw new Error('alertPoints must be an array');
-		// 		}
-
-		// 		return points;
-		// 	} catch {
-		// 		return [];
-		// 	}
-		// })() as ReportAlertPoint[];
-		// Pull alert points from the database if not provided
-		const { data: reportParams, error } = await supabase
-			.from('reports')
-			.select('report_id, report_alert_points(*)')
-			.eq('dev_eui', devEui)
-			.limit(1) // This intruduces a bug where it will ignore multiple reports....
-			.single();
-		console.log('alertPointsParamData', reportParams);
-
-		if (error) {
-			console.error('Error fetching report parameters:', error.message);
-			return json(
-				{ error: `Failed to fetch report parameters - ${error.message}` },
-				{ status: 404 }
-			);
-		}
-
-		let requestedAlertPoints: ReportAlertPoint[] = [];
-		for (const point of reportParams?.report_alert_points || []) {
-			if (!point.data_point_key) {
-				console.warn(`Alert point with ID ${point.id} has no data_point_key, skipping this point`);
-				continue;
-			}
-			const pooint = {
-				created_at: point.created_at,
-				data_point_key: point.data_point_key,
-				hex_color: point.hex_color || '#ffffff',
-				id: point.id,
-				max: point.max ?? null,
-				min: point.min ?? null,
-				name: point.name || point.data_point_key,
-				operator: point.operator || 'eq',
-				report_id: point.report_id,
-				user_id: point.user_id,
-				value: point.value ?? 0
-			};
-			requestedAlertPoints.push(pooint as ReportAlertPoint);
-		}
-
-		// Determine if this is a report or a specific data request
-		const isReport = !requestedAlertPoints.length;
-
-		// Initialize i18n for localized strings
 		await i18n.initialize({ initialLocale: localeParam });
 		const $_ = get(_);
 
@@ -142,109 +97,125 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			);
 		}
 
+		// Parse and normalize requested window in the user’s timezone, then convert to UTC for DB
 		let startDate = new Date(startDateParam);
 		let endDate = new Date(endDateParam);
-
-		// Validate dates
 		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
 			return json(
 				{
-					error: 'Invalid date format: Dates must be in ISO format (YYYY-MM-DD)',
+					error: 'Invalid date format: Dates must be YYYY-MM-DD (or ISO8601).',
 					example: '?start=2025-05-01&end=2025-06-06'
 				},
 				{ status: 400 }
 			);
 		}
+		const userStart = DateTime.fromJSDate(startDate).setZone(timezoneParam).startOf('day');
+		const userEnd = DateTime.fromJSDate(endDate).setZone(timezoneParam).endOf('day');
+		const startLabel = userStart.toFormat('yyyy-MM-dd HH:mm');
+		const endLabel = userEnd.toFormat('yyyy-MM-dd HH:mm');
+		startDate = userStart.toUTC().toJSDate();
+		endDate = userEnd.toUTC().toJSDate();
 
-		// Convert dates to Japan timezone and include full day
-		const tokyoStartDate = DateTime.fromJSDate(startDate).setZone('Asia/Tokyo').startOf('day');
-		const tokyoEndDate = DateTime.fromJSDate(endDate).setZone('Asia/Tokyo').endOf('day');
+		const selectedKeys = dataKeysParam
+			.split(',')
+			.map((k) => k.trim())
+			.filter(Boolean);
 
-		// Convert back to UTC for database queries
-		startDate = tokyoStartDate.toUTC().toJSDate();
-		endDate = tokyoEndDate.toUTC().toJSDate();
+		// Pull alert points from DB (same behavior as older code)
+		const { data: reportParams, error: reportFetchErr } = await supabase
+			.from('reports')
+			.select('report_id, report_alert_points(*)')
+			.eq('dev_eui', devEui)
+			.limit(1) // NOTE: maintained to match existing behavior
+			.single();
 
-		// Get device data using JWT-authenticated client (same method as browser version)
-		const deviceDataService = new DeviceDataService(supabase);
-		let deviceData: DeviceDataRecord[] = [];
-		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
+		if (reportFetchErr) {
+			return json(
+				{ error: `Failed to fetch report parameters - ${reportFetchErr.message}` },
+				{ status: 404 }
+			);
+		}
 
+		let requestedAlertPoints: ReportAlertPoint[] = [];
+		for (const point of reportParams?.report_alert_points || []) {
+			if (!point.data_point_key) {
+				console.warn(`Alert point with ID ${point.id} has no data_point_key, skipping`);
+				continue;
+			}
+			requestedAlertPoints.push({
+				created_at: point.created_at,
+				data_point_key: point.data_point_key,
+				hex_color: point.hex_color || '#ffffff',
+				id: point.id,
+				max: point.max ?? null,
+				min: point.min ?? null,
+				name: point.name || point.data_point_key,
+				operator: point.operator || 'eq',
+				report_id: point.report_id,
+				user_id: point.user_id,
+				value: point.value ?? 0
+			});
+		}
+
+		// Determine "report" mode to use getDeviceDataForReport
+		const isReport = !requestedAlertPoints.length;
+
+		// Repos/Services
 		const errorHandler = new ErrorHandlingService();
 		const deviceRepo = new DeviceRepository(supabase, errorHandler);
 		const deviceService = new DeviceService(deviceRepo);
 		const device = await deviceService.getDeviceWithTypeByEui(devEui);
-
-		if (!device) {
-			throw error(404, 'Device not found');
-		}
-
-		const locationId = device.location_id;
-
-		if (!locationId) {
-			throw error(400, 'Invalid location ID');
-		}
+		if (!device) throw httpError(404, 'Device not found');
 
 		const locationRepo = new LocationRepository(supabase, errorHandler);
 		const locationService = new LocationService(locationRepo, deviceRepo);
-		const location = await locationService.getLocationById(locationId);
+		const location = await locationService.getLocationById(device.location_id!);
+		if (!location) throw httpError(404, 'Location not found');
 
-		if (!location) {
-			throw error(404, 'Location not found');
-		}
+		const deviceDataService = new DeviceDataService(supabase);
 
-		try {
-			const deviceDataResponse = isReport
-				? await deviceDataService.getDeviceDataForReport({
-						devEui,
-						startDate,
-						endDate,
-						timezone: 'Asia/Tokyo',
-						columns: requestedAlertPoints.map((point) => point.data_point_key as string),
-						ops: requestedAlertPoints.map((point) => point.operator as string),
-						mins: requestedAlertPoints.map((point) => (point.min ?? point.value) as number),
-						maxs: requestedAlertPoints.map((point) => point.max ?? null),
-						intervalMinutes: 30 // Default interval in minutes
-					})
-				: await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
+		// Fetch data using the timezone-aware path
+		const deviceDataResponse = isReport
+			? await deviceDataService.getDeviceDataForReport({
+					devEui,
+					startDate,
+					endDate,
+					timezone: timezoneParam,
+					columns: requestedAlertPoints.map((p) => p.data_point_key as string),
+					ops: requestedAlertPoints.map((p) => p.operator as string),
+					mins: requestedAlertPoints.map((p) => (p.min ?? p.value) as number),
+					maxs: requestedAlertPoints.map((p) => p.max ?? null),
+					intervalMinutes: 30
+				})
+			: await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate, timezoneParam);
 
-			if (deviceDataResponse && deviceDataResponse.length > 0) {
-				deviceData = deviceDataResponse;
+		let deviceData: DeviceDataRecord[] = [];
+		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
 
-				// Get alert points for the device if no specific keys are selected
-				if (!alertPoints.length) {
-					alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
-				}
-			} else {
-				throw new Error(
-					`No device data found for ${devEui} in the specified date range: ${startDate.toISOString()} to ${endDate.toISOString()}`
-				);
+		if (deviceDataResponse?.length) {
+			deviceData = deviceDataResponse;
+			if (!alertPoints.length) {
+				alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
 			}
-		} catch {
-			//console.log('getDeviceDataForReport failed, continuing with empty data:', reportError instanceof Error ? reportError.message : 'Unknown error');
-			deviceData = [];
-		}
-
-		if (!deviceData || deviceData.length === 0) {
+		} else {
 			return json(
 				{
-					error: `No data found for device ${devEui} in the specified date range`,
+					error: `No data found for device ${devEui} in the specified range`,
 					device: devEui,
-					dateRange: { start: startDateParam, end: endDateParam },
-					user: user?.email || 'Unknown user',
-					suggestion: 'Try a different date range or check if the device has been sending data'
+					dateRange: { start: startDateParam, end: endDateParam }
 				},
 				{ status: 404 }
 			);
 		}
 
-		// Step 3: Sort the array by `created_at`
+		// Sort by created_at using timezone-correct parser
 		deviceData.sort((a, b) => {
-			const dateA = new Date(a.created_at).getTime();
-			const dateB = new Date(b.created_at).getTime();
-			return dateA - dateB; // Ascending
+			const aMs = parseDeviceInstant(a.created_at as string, timezoneParam).toMillis();
+			const bMs = parseDeviceInstant(b.created_at as string, timezoneParam).toMillis();
+			return aMs - bMs;
 		});
 
-		// Generate professional PDF using PDFKit (same as browser version)
+		// Build PDF — keep the **old layout** with header, signature boxes, charts, full table, footer
 		const doc = new PDFDocument({
 			size: 'A4',
 			margin: 40,
@@ -257,47 +228,39 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			bufferPages: true
 		});
 
-		const {
-			top: marginTop,
-			right: marginRight,
-			bottom: marginBottom,
-			left: marginLeft
-		} = doc.page.margins;
-
-		const contentWidth = doc.page.width - marginLeft - marginRight;
-
-		// Define possible font paths for NotoSansJP (Japanese font support)
+		// Load JP font if available
 		const possibleFontPaths = [
 			path.join(process.cwd(), 'static/fonts/NotoSansJP-Regular.ttf'),
 			path.join(process.cwd(), 'src/lib/fonts/NotoSansJP-Regular.ttf'),
 			path.join(process.cwd(), 'server/fonts/NotoSansJP-Regular.ttf'),
 			'static/fonts/NotoSansJP-Regular.ttf'
 		];
-
-		// Try to load Japanese font
-		let fontLoaded = false;
-		for (const fontPath of possibleFontPaths) {
+		for (const fp of possibleFontPaths) {
 			try {
-				if (fs.existsSync(fontPath)) {
-					//console.log(`Loading Japanese font from: ${fontPath}`);
-					doc.registerFont('NotoSansJP', fontPath);
+				if (fs.existsSync(fp)) {
+					doc.registerFont('NotoSansJP', fp);
 					doc.font('NotoSansJP');
-					fontLoaded = true;
 					break;
 				}
 			} catch {
-				console.error(`Could not load font from: ${fontPath}`);
+				// ignore
 			}
 		}
 
-		if (!fontLoaded) {
-			console.error('Using default font - Japanese characters may not display correctly');
-		}
+		const {
+			top: marginTop,
+			right: marginRight,
+			bottom: marginBottom,
+			left: marginLeft
+		} = doc.page.margins;
+		const contentWidth = doc.page.width - marginLeft - marginRight;
 
-		// Professional header with Japanese styling
-		doc.fontSize(16).text(`CropWatch ${$_('device_report')}`);
+		// Title
+		const isWeekly = Math.abs(userEnd.diff(userStart, 'days').days - 7) < 0.1;
+		const titleText = isWeekly ? $_('device_report_weekly') : $_('device_report_monthly');
+		doc.fontSize(16).text(`${titleText} ${$_('device_report')}`);
 
-		// Signature section
+		// Signature boxes (old layout)
 		doc.fontSize(7).strokeColor('#ccc');
 		doc.rect(400, marginTop, 50, 60).stroke();
 		doc.rect(450, marginTop, 50, 60).stroke();
@@ -311,22 +274,20 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 
 		const metaTextOptions = { width: 320 };
 
-		// Report metadata
-		doc
-			.fontSize(8)
-			.text(
-				`${$_('generated_at')}: ${DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm:ss')}`,
-				metaTextOptions
-			)
-			.text(
-				`${$_('generated_by')}: ${userProfile?.full_name || user.email || $_('Unknown')}`,
-				metaTextOptions
-			);
-
-		if (userProfile?.employer) {
-			doc.text(`${$_('Company')}: ${userProfile?.employer || $_('Unknown')}`, metaTextOptions);
-		}
-
+		// Metadata block
+		// doc
+		// 	.fontSize(8)
+		// 	.text(
+		// 		`${$_('generated_at')}: ${DateTime.now().setZone(timezoneParam).toFormat('yyyy-MM-dd HH:mm:ss')}`,
+		// 		metaTextOptions
+		// 	)
+		// 	.text(
+		// 		`${$_('generated_by')}: ${userProfile?.full_name || user.email || $_('Unknown')}`,
+		// 		metaTextOptions
+		// 	);
+		// if (userProfile?.employer) {
+		// 	doc.text(`${$_('Company')}: ${userProfile?.employer || $_('Unknown')}`, metaTextOptions);
+		// }
 		doc
 			.moveDown(0.5)
 			.text(`${$_('installed_at')}: ${location.name || $_('Unknown')}`, metaTextOptions)
@@ -337,26 +298,27 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			.text(`${$_('Device Name')}: ${device.name || $_('Unknown')}`, metaTextOptions)
 			.text(`${$_('EUI')}: ${devEui}`, metaTextOptions);
 
-		doc.moveUp(2);
-		doc.x = 400;
-
-		doc
-			.text(`${$_('date_range')}: ${startDateParam} - ${endDateParam}`)
-			.text(`${$_('sampling_size')}: ${deviceData.length}`);
+		// Right side quick facts
+		// doc.moveUp(2);
+		// doc.x = 400;
+		// doc
+		// 	.text(`${$_('date_range')}: ${startLabel} - ${endLabel} (${timezoneParam})`)
+		// 	.text(`${$_('sampling_size')}: ${deviceData.length}`);
 
 		doc.x = marginLeft;
 		doc.moveDown();
 
+		// Keys & columns
 		const numericKeys = getNumericKeys(deviceData);
 		const validKeys =
 			isReport || !selectedKeys.length
 				? numericKeys
-				: numericKeys.filter((key) => selectedKeys.includes(key));
+				: numericKeys.filter((k) => selectedKeys.includes(k));
 
-		// Only show columns in the final data table that participate in at least one alert
+		// Restrict table/graph columns to alert-linked columns if available
 		const alertKeySet = new Set(alertPoints.map((p) => p.data_point_key));
 		const alertKeys = validKeys.filter((k) => alertKeySet.has(k));
-		const tableKeys = alertKeys.length ? alertKeys : validKeys; // fallback if no alerts
+		const tableKeys = alertKeys.length ? alertKeys : validKeys;
 
 		const keyColumns: TableCell[] = validKeys.map((key) => ({
 			label: $_(key),
@@ -370,33 +332,35 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			cells: [...keyColumns, { label: $_('comment'), width: 40 }]
 		};
 
+		// Build rows using timezone-aware labels and carry ISO+offset in value
 		const getDataRows = (keys: string[] = validKeys): TableRow[] =>
 			deviceData.map((data, index) => {
-				const date = DateTime.fromISO(data.created_at).setZone('Asia/Tokyo');
-				const previousData = index > 0 ? deviceData[index - 1] : null;
-				const previousDate = previousData
-					? DateTime.fromISO(previousData.created_at).setZone('Asia/Tokyo')
-					: null;
-				const fullDateTime = date.toFormat('M/d H:mm');
+				const date = parseDeviceInstant(data.created_at as string, timezoneParam);
+				const previousDate =
+					index > 0
+						? parseDeviceInstant(deviceData[index - 1].created_at as string, timezoneParam)
+						: null;
+
+				const isoWithZone = date.toISO(); // carries offset
+				const labelLocal = date.toFormat('M/d H:mm');
+				const shortLocal = date.toFormat('H:mm');
 
 				return {
 					header: {
-						value: new Date(data.created_at),
-						label: fullDateTime,
+						value: isoWithZone,
+						label: labelLocal,
 						shortLabel:
-							// If the date is the same as the previous entry, show only time
-							previousDate?.toFormat('M/d') === date.toFormat('M/d')
-								? date.toFormat('H:mm')
-								: fullDateTime
+							previousDate?.toFormat('M/d') === date.toFormat('M/d') ? shortLocal : labelLocal
 					},
 					cells: keys.map((key) => {
-						const rawValue = data[key];
-						const value = typeof rawValue === 'number' && !isNaN(rawValue) ? rawValue : 0;
+						const rawValue = (data as Record<string, unknown>)[key];
+						const value =
+							typeof rawValue === 'number' && !isNaN(rawValue as number) ? (rawValue as number) : 0;
 
 						return {
 							value,
 							label:
-								typeof rawValue === 'number' && !isNaN(rawValue)
+								typeof rawValue === 'number' && !isNaN(rawValue as number)
 									? formatNumber({ key, value, adjustFractionDigits: true })
 									: '',
 							bgColor:
@@ -408,7 +372,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				} as TableRow;
 			});
 
-		// Prepare data rows for the table
+		// Prepare rows/tables
 		const dataRows = getDataRows();
 		const tableKeyColumns: TableCell[] = tableKeys.map((key) => ({
 			label: $_(key),
@@ -422,113 +386,95 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		};
 		const dataRowsTable = getDataRows(tableKeys);
 
-		// Summary table
-		createPDFDataTable({
-			doc,
-			config: {
-				caption: $_('summary')
-			},
-			dataHeader: {
-				header: { label: $_('status'), width: 60 },
-				cells: [...keyColumns, { label: $_('comment'), width: 60 }]
-			},
-			dataRows: [
-				...alertPoints.map((alertPoint) => {
-					const { data_point_key, name, hex_color } = alertPoint;
-
-					return {
-						header: { label: name, value: '' },
-						cells: validKeys.map((key, index) => {
-							if (key !== data_point_key) {
-								return { label: '-', value: '' };
-							}
-
-							const valueList = dataRows.map((row) => row.cells[index].value as number);
-							const count = valueList.filter((value) => checkMatch(value, alertPoint)).length;
-
-							return {
-								label:
-									`${new Intl.NumberFormat(localeParam, { maximumFractionDigits: 2 }).format(count)} ` +
-									`(${new Intl.NumberFormat(localeParam, { style: 'percent' }).format(count / valueList.length)})`,
-								value: count,
-								bgColor: hex_color || '#ffffff'
-							};
-						})
-					};
-				}),
-				...['min', 'max', 'avg', 'stddev'].map((indicator) => ({
-					header: { label: $_(indicator), value: '' },
-					cells: validKeys.map((key, index) => {
-						const valueList = dataRows.map((row) => row.cells[index].value as number);
-						const value = getValue(valueList, indicator);
-
-						return { label: formatNumber({ key, value }), value };
-					})
-				}))
-			]
+		// LEFT summary
+		const primaryKey = tableKeys[0] ?? validKeys[0] ?? 'temperature_c';
+		const { firstRowY, bottomY: summaryBottomY } = drawSummaryPanel(doc, {
+			dataRows,
+			validKeys,
+			primaryKey,
+			caption: $_('summary'),
+			samplingLabel: $_('sampling_size'),
+			dateRangeLabel: $_('date_range'),
+			maxLabel: $_('max'),
+			minLabel: $_('min'),
+			avgLabel: $_('avg'),
+			stddevLabel: $_('stddev'),
+			displayStartLabel: startLabel,
+			displayEndLabel: endLabel,
+			locale: localeParam,
+			tableWidthPercent: 0.5,
+			lineColor: '#000'
 		});
 
+		// RIGHT alerts — align exactly with “サンプリング数”
+		const panelX = 400;
+		const panelW = 180;
+		const rightBottomY = drawRightAlertPanel({
+			doc,
+			x: panelX,
+			y: firstRowY, // ← precise alignment with the first row
+			width: panelW,
+			locale: localeParam,
+			startLabel: startLabel,
+			endLabel: endLabel,
+			timezone: timezoneParam,
+			samplingLabel: $_('sampling_size'),
+			sampleCount: deviceData.length,
+			alertPoints,
+			validKeys,
+			dataRows
+		});
+
+		// Normalize flow so charts start below both blocks
+		doc.x = doc.page.margins.left;
+		doc.y = Math.max(summaryBottomY, rightBottomY) + 12;
+
+		// Charts (keep old layout behavior)
 		const chartWidth = contentWidth;
 		const chartHeight = contentWidth * 0.4;
-
-		// Charts (restricted to the same alert-linked columns used for the data table)
-		const chartKeys = tableKeys; // tableKeys already falls back to validKeys if no alerts
+		const chartKeys = tableKeys;
 		for (const key of chartKeys) {
-			// Add a new page if the content exceeds the current page height
 			if (doc.y > doc.page.height - marginBottom - chartHeight + 20) {
 				doc.addPage();
 			} else {
 				doc.moveDown(2);
 			}
-
 			createPDFLineChartImage({
 				doc,
 				dataHeader: {
 					header: { label: $_('datetime'), value: '', width: 60 },
-					cells: [
-						{
-							label: $_(key),
-							value: '',
-							width: 40,
-							color: getColorNameByKey(key)
-						}
-					]
+					cells: [{ label: $_(key), value: '', width: 40, color: getColorNameByKey(key) }]
 				},
 				dataRows: getDataRows([key]),
 				alertPoints,
-				config: {
-					title: $_(key),
-					width: chartWidth,
-					height: chartHeight
-				}
+				config: { title: $_(key), width: chartWidth, height: chartHeight, timezone: timezoneParam }
 			});
 		}
 
-		// After the last chart, force a page break before the full data table for clarity
-		if (chartKeys.length > 0) {
-			doc.addPage();
-		}
-		// Position after page break (or just add spacing if no charts)
-		if (chartKeys.length === 0) {
-			doc.moveDown(2);
-		}
+		// Page break before full table
+		if (chartKeys.length > 0) doc.addPage();
+		else doc.moveDown(2);
 
-		// Full data table (restricted to alert-linked columns)
-		createPDFDataTable({ doc, dataHeader: dataHeaderTable, dataRows: dataRowsTable });
+		// Full data table (restricted to alert-linked columns if any)
+		createPDFDataTable({
+			doc,
+			dataHeader: dataHeaderTable,
+			dataRows: dataRowsTable,
+			config: { timezone: timezoneParam }
+		});
 
+		// Footer
 		const footerText = [
 			location.name,
 			device.name,
 			devEui,
-			`${startDateParam} - ${endDateParam}`
+			`${startLabel} - ${endLabel} (${timezoneParam})`
 		].join(' | ');
-
 		addFooterPageNumber(doc, footerText);
 
-		// 5) finalize
+		// Finalize
 		doc.end();
 
-		// Get the PDF as a buffer (async operation)
 		const chunks: Buffer[] = [];
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		doc.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
@@ -536,8 +482,6 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		return new Promise<Response>((resolve, reject) => {
 			doc.on('end', () => {
 				const pdfBuffer = Buffer.concat(chunks);
-
-				// Return the PDF with proper headers
 				resolve(
 					new Response(pdfBuffer, {
 						status: 200,
@@ -552,7 +496,6 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 					})
 				);
 			});
-
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			doc.on('error', (err: any) => {
 				reject(
@@ -569,12 +512,12 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			});
 		});
 	} catch (err) {
-		console.error(`Error generating PDF for device ${devEui}:`, err);
+		console.error(`Error generating PDF for device ${params.devEui}:`, err);
 		return json(
 			{
 				error: 'Failed to generate PDF report',
 				details: err instanceof Error ? err.message : 'Unknown error',
-				device: devEui,
+				device: params.devEui,
 				user: 'Unknown user'
 			},
 			{ status: 500 }

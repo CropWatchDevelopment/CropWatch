@@ -5,6 +5,7 @@
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 	import { DeviceTimerManager } from '$lib/utilities/deviceTimerManager';
 	import { setupDeviceActiveTimer } from '$lib/utilities/deviceTimerSetup';
+	import { applyStoredDeviceOrder } from '$lib/utilities/deviceOrderStorage';
 
 	// Get user data from the server load function
 	let { data } = $props();
@@ -73,6 +74,17 @@
 			});
 		}
 	});
+
+	// Device reordering handler
+	function handleDeviceReorder(locationId: number, newDevices: DeviceWithSensorData[]) {
+		// Update the location's devices in the store
+		const location = locationsStore.locations.find((loc) => loc.location_id === locationId);
+		if (location) {
+			location.cw_devices = newDevices;
+			// Note: Since we're modifying the objects within the array, reactivity should work
+			// If needed, we could call a store method to update the locations
+		}
+	}
 
 	$effect(() => {
 		function handleVisibilityChange() {
@@ -394,13 +406,23 @@
 						(loc) => loc.location_id === locationsStore.selectedLocationId
 					)}
 					{#if selectedLoc}
-						<AllDevices locations={[selectedLoc]} {deviceActiveStatus} />
+						<AllDevices
+							locations={[selectedLoc]}
+							{deviceActiveStatus}
+							enableDragAndDrop={true}
+							onDeviceReorder={handleDeviceReorder}
+						/>
 					{:else}
 						<div class="error">Selected location not found.</div>
 					{/if}
 				{:else}
 					<!-- Show all locations ("All Locations" is selected) -->
-					<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
+					<AllDevices
+						locations={locationsStore.locations}
+						{deviceActiveStatus}
+						enableDragAndDrop={true}
+						onDeviceReorder={handleDeviceReorder}
+					/>
 				{/if}
 			{:else}
 				<p>No locations found.</p>

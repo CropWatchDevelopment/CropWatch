@@ -224,10 +224,11 @@
 	@reference "tailwindcss";
 
 	.relay-control-panel {
-		@apply w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900;
-		@apply border-2 border-slate-200 dark:border-slate-700;
+		@apply w-full;
 		@apply rounded-xl shadow-xl;
 		@apply p-6;
+		background: linear-gradient(135deg, var(--color-surface), var(--color-surface-raised));
+		border: 2px solid var(--color-border);
 		position: relative;
 		overflow: hidden;
 	}
@@ -244,13 +245,15 @@
 
 	/* Header */
 	.panel-header {
-		@apply mb-6 flex items-center gap-4 border-b border-slate-300 pb-4 dark:border-slate-600;
+		@apply mb-6 flex items-center gap-4 border-b pb-4;
+		border-color: var(--color-border);
 	}
 
 	.header-indicator {
 		@apply flex h-12 w-12 items-center justify-center;
-		@apply bg-slate-900 text-slate-100 dark:bg-slate-100 dark:text-slate-900;
 		@apply rounded-lg shadow-lg;
+		background-color: var(--color-text);
+		color: var(--color-surface-raised);
 	}
 
 	.header-content {
@@ -258,8 +261,9 @@
 	}
 
 	.header-title {
-		@apply text-lg font-bold text-slate-900 dark:text-slate-100;
+		@apply text-lg font-bold;
 		@apply tracking-wider;
+		color: var(--color-text);
 		font-family: 'Courier New', monospace;
 	}
 
@@ -313,31 +317,34 @@
 		overflow: hidden;
 	}
 
-	.system-btn::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-		transition: left 0.5s;
-	}
-
-	.system-btn:hover::before {
-		left: 100%;
-	}
-
 	.power-on {
-		@apply border-green-500 bg-green-600 text-white dark:bg-green-700;
-		@apply hover:bg-green-700 hover:shadow-lg hover:shadow-green-500/25 dark:hover:bg-green-600;
-		@apply disabled:border-slate-400 disabled:bg-slate-400 disabled:text-slate-600;
+		border-color: #10b981;
+		background-color: #059669;
+		color: white;
+	}
+	.power-on:hover {
+		background-color: #047857;
+		box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.25);
+	}
+	.power-on:disabled {
+		border-color: #94a3b8;
+		background-color: #94a3b8;
+		color: #64748b;
 	}
 
 	.power-off {
-		@apply border-red-500 bg-red-600 text-white dark:bg-red-700;
-		@apply hover:bg-red-700 hover:shadow-lg hover:shadow-red-500/25 dark:hover:bg-red-600;
-		@apply disabled:border-slate-400 disabled:bg-slate-400 disabled:text-slate-600;
+		border-color: #ef4444;
+		background-color: #dc2626;
+		color: white;
+	}
+	.power-off:hover {
+		background-color: #b91c1c;
+		box-shadow: 0 10px 15px -3px rgb(239 68 68 / 0.25);
+	}
+	.power-off:disabled {
+		border-color: #94a3b8;
+		background-color: #94a3b8;
+		color: #64748b;
 	}
 
 	.btn-indicator {

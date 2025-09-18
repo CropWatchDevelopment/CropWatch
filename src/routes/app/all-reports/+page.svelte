@@ -10,11 +10,13 @@
 		mdiDelete,
 		mdiPencil,
 		mdiEye,
-		mdiPlus
+		mdiPlus,
+		mdiDownload
 	} from '@mdi/js';
+	import ExportButton from '$lib/components/devices/ExportButton.svelte';
 
 	let { data } = $props();
-	let reports = $state(data.reports as any[]);
+	let reports = $state(data.allReports as any[]);
 	let searchTerm = $state('');
 
 	// Filter reports based on search term
@@ -95,23 +97,8 @@
 							{report.name}
 						</h2>
 						<div class="report-actions">
-							<button
-								class="action-btn view-btn"
-								onclick={() => (window.location.href = `/app/all-reports/${report.id}`)}
-								aria-label="View report"
-								title="View report"
-							>
-								<Icon path={mdiEye} size="16" />
-							</button>
-							<button
-								class="action-btn edit-btn"
-								onclick={() => (window.location.href = `/app/all-reports/${report.id}/edit`)}
-								aria-label="Edit report"
-								title="Edit report"
-							>
-								<Icon path={mdiPencil} size="16" />
-							</button>
-							<AlertDialog.Root>
+							<ExportButton types={['pdf']} buttonLabel="" devEui={report.dev_eui} />
+							<!-- <AlertDialog.Root>
 								<AlertDialog.Trigger
 									class="action-btn delete-btn"
 									aria-label="Delete report"
@@ -141,7 +128,7 @@
 										</div>
 									</AlertDialog.Content>
 								</AlertDialog.Portal>
-							</AlertDialog.Root>
+							</AlertDialog.Root> -->
 						</div>
 					</div>
 					<div class="report-content">

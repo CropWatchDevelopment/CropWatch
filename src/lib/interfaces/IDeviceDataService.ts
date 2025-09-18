@@ -1,3 +1,4 @@
+import type { ReportAlertPoint } from '../models/Report';
 import type { DeviceType } from '../models/Device';
 import type { DeviceDataRecord } from '../models/DeviceDataRecord';
 
@@ -8,21 +9,35 @@ export interface IDeviceDataService {
 	/**
 	 * Get the latest data for a device based on its type
 	 * @param devEui The device EUI
-	 * @param deviceType The device type information containing data_table_v2
 	 */
-	getLatestDeviceData(devEui: string, deviceType: DeviceType): Promise<DeviceDataRecord | null>;
+	getLatestDeviceData(devEui: string): Promise<DeviceDataRecord | null>;
 
 	/**
 	 * Get device data within a date range based on device type
 	 * @param devEui The device EUI
-	 * @param deviceType The device type information containing data_table_v2
-	 * @param startDate The start date
-	 * @param endDate The end date
+	 * @param startDate The start date in user's timezone
+	 * @param endDate The end date in user's timezone
+	 * @param timezone The user's timezone (e.g., 'Asia/Tokyo', 'America/New_York')
 	 */
 	getDeviceDataByDateRange(
 		devEui: string,
 		startDate: Date,
-		endDate: Date
+		endDate: Date,
+		timezone?: string
+	): Promise<DeviceDataRecord[]>;
+
+	/**
+	 * Get device data within a date range based on device type as CSV
+	 * @param devEui The device EUI
+	 * @param startDate The start date in user's timezone
+	 * @param endDate The end date in user's timezone
+	 * @param timezone The user's timezone (e.g., 'Asia/Tokyo', 'America/New_York')
+	 */
+	getDeviceDataByDateRangeAsCSV(
+		devEui: string,
+		startDate: Date,
+		endDate: Date,
+		timezone?: string
 	): Promise<DeviceDataRecord[]>;
 
 	/**
@@ -63,5 +78,5 @@ export interface IDeviceDataService {
 	 * Get alert points for a device from its reports
 	 * @param devEui The device EUI
 	 */
-	getAlertPointsForDevice(devEui: string): Promise<DeviceDataRecord[]>;
+	getAlertPointsForDevice(devEui: string): Promise<ReportAlertPoint[]>;
 }

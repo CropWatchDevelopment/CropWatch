@@ -1,12 +1,13 @@
-<script>
+<script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import CropWatchLogo from '$lib/images/favicon.svg';
 	import { onMount } from 'svelte';
 	import { _, locale } from 'svelte-i18n';
 	import Breadcrumbs from './global/Breadcrumbs.svelte';
-	import { getDarkMode } from './theme/theme.svelte';
-	import ThemeToggle from './theme/ThemeToggle.svelte';
+	// The legacy getDarkMode wrapper is removed; subscribe directly to themeStore
+	import ThemeModeSelector from './theme/ThemeModeSelector.svelte';
+	import { themeStore } from '$lib/stores/theme';
 	import Button from './UI/buttons/Button.svelte';
 	import MaterialIcon from './UI/icons/MaterialIcon.svelte';
 	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
@@ -17,6 +18,9 @@
 
 	let mobileMenuOpen = $state(false);
 	let announcementVisible = $state(true);
+	let dark = $state(false);
+	// Subscribe to theme store for live dark mode updates
+	const _unsubTheme = themeStore.subscribe((v) => (dark = v.effective === 'dark'));
 
 	function toggleMobileMenu() {
 		mobileMenuOpen = !mobileMenuOpen;
@@ -31,9 +35,12 @@
 		sidebarStore.toggle();
 	}
 
-	// Close mobile menu when clicking outside
+	// Close mobile menu when clicking outside (runtime type guard to stay JS-compatible if TS preproc fails)
+	// @ts-ignore - runtime guarded; Svelte preprocessor not inferring JSDoc here
 	function handleClickOutside(event) {
-		if (!event.target.closest('.mobile-menu') && !event.target.closest('.mobile-menu-btn')) {
+		const target = event?.target;
+		if (!(target instanceof HTMLElement)) return;
+		if (!target.closest('.mobile-menu') && !target.closest('.mobile-menu-btn')) {
 			mobileMenuOpen = false;
 		}
 	}
@@ -59,25 +66,29 @@
 
 	onMount(() => {
 		document.addEventListener('click', handleClickOutside);
+		// Ensure initial dark flag is correct (in case subscription fired before mount)
+		dark =
+			typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : dark;
 
 		return () => {
 			document.removeEventListener('click', handleClickOutside);
+			_unsubTheme && _unsubTheme();
 		};
 	});
 </script>
 
 <!-- Main Header -->
 <header
-	class="fixed top-0 right-0 left-0 z-50 overflow-hidden border-b transition-colors duration-300 {getDarkMode()
+	class="fixed top-0 right-0 left-0 z-50 overflow-hidden border-b transition-colors duration-300 {dark
 		? 'border-emerald-900 bg-emerald-800'
 		: 'border-emerald-500 bg-slate-800'}"
 >
 	<!-- Animated background pattern -->
 	<div class="absolute inset-0">
 		<div
-			class="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_{getDarkMode()
+			class="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,_{dark
 				? '#22c55e'
-				: '#10b981'}_2px,_transparent_2px),radial-gradient(circle_at_75%_75%,_{getDarkMode()
+				: '#10b981'}_2px,_transparent_2px),radial-gradient(circle_at_75%_75%,_{dark
 				? '#10b981'
 				: '#059669'}_1px,_transparent_1px)] animate-[drift_20s_linear_infinite] bg-[length:60px_60px]"
 		></div>
@@ -118,7 +129,7 @@
 		<div class="hidden items-center gap-3 md:flex">
 			<!-- @todo Move the language and theme selectors to the user settings page -->
 			<LanguageSelector />
-			<ThemeToggle />
+			<ThemeModeSelector />
 			{#if page.data.session?.user}
 				<Button variant="secondary" onclick={handleLogout}>{$_('Logout')}</Button>
 			{:else}
@@ -149,20 +160,16 @@
 	<!-- Mobile Menu -->
 	{#if mobileMenuOpen}
 		<div
-			class="mobile-menu absolute top-full right-0 left-0 z-50 border-b transition-all duration-300 lg:hidden {getDarkMode()
+			class="mobile-menu absolute top-full right-0 left-0 z-50 border-b transition-all duration-300 lg:hidden {dark
 				? 'border-slate-700 bg-slate-800'
 				: 'border-gray-200 bg-white'}"
 		>
 			<div class="px-4 py-4">
 				<!-- Mobile Navigation Links -->
-				<div
-					class="space-y-3 border-b pb-4 {getDarkMode()
-						? 'border-slate-700/30'
-						: 'border-gray-200/30'}"
-				>
+				<div class="space-y-3 border-b pb-4 {dark ? 'border-slate-700/30' : 'border-gray-200/30'}">
 					<a
 						href="/app/dashboard"
-						class="block rounded-lg px-4 py-2 font-medium transition-colors {getDarkMode()
+						class="block rounded-lg px-4 py-2 font-medium transition-colors {dark
 							? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 							: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 						onclick={() => (mobileMenuOpen = false)}
@@ -171,7 +178,7 @@
 					</a>
 					<a
 						href="/app/dashboard/location"
-						class="block rounded-lg px-4 py-2 font-medium transition-colors {getDarkMode()
+						class="block rounded-lg px-4 py-2 font-medium transition-colors {dark
 							? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 							: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 						onclick={() => (mobileMenuOpen = false)}
@@ -180,7 +187,7 @@
 					</a>
 					<a
 						href="/app/devices"
-						class="block rounded-lg px-4 py-2 font-medium transition-colors {getDarkMode()
+						class="block rounded-lg px-4 py-2 font-medium transition-colors {dark
 							? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 							: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 						onclick={() => (mobileMenuOpen = false)}
@@ -189,7 +196,7 @@
 					</a>
 					<a
 						href="/app/reports"
-						class="block rounded-lg px-4 py-2 font-medium transition-colors {getDarkMode()
+						class="block rounded-lg px-4 py-2 font-medium transition-colors {dark
 							? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 							: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 						onclick={() => (mobileMenuOpen = false)}
@@ -198,7 +205,7 @@
 					</a>
 					<a
 						href="/app/settings"
-						class="block rounded-lg px-4 py-2 font-medium transition-colors {getDarkMode()
+						class="block rounded-lg px-4 py-2 font-medium transition-colors {dark
 							? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
 							: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
 						onclick={() => (mobileMenuOpen = false)}
@@ -209,17 +216,17 @@
 
 				<!-- Mobile Actions -->
 				<div class="space-y-3 pt-4">
-					<!-- Theme Toggle -->
+					<!-- Theme Mode Selector -->
 					<div class="flex items-center justify-between">
-						<span class="text-sm font-medium {getDarkMode() ? 'text-slate-400' : 'text-gray-600'}">
+						<span class="text-sm font-medium {dark ? 'text-slate-400' : 'text-gray-600'}">
 							Theme
 						</span>
-						<ThemeToggle />
+						<ThemeModeSelector />
 					</div>
 
 					<!-- Language Toggle -->
 					<div class="flex items-center justify-between">
-						<span class="text-sm font-medium {getDarkMode() ? 'text-slate-400' : 'text-gray-600'}">
+						<span class="text-sm font-medium {dark ? 'text-slate-400' : 'text-gray-600'}">
 							Language
 						</span>
 						<button
@@ -227,7 +234,7 @@
 								event.preventDefault();
 								$locale = $locale === 'ja' ? 'en' : 'ja';
 							}}
-							class="flex items-center gap-1 rounded-lg px-3 py-1 text-sm transition-colors {getDarkMode()
+							class="flex items-center gap-1 rounded-lg px-3 py-1 text-sm transition-colors {dark
 								? 'text-slate-400 hover:bg-slate-700/50 hover:text-green-400'
 								: 'text-gray-600 hover:bg-gray-100 hover:text-green-600'}"
 						>
@@ -240,7 +247,7 @@
 					<a
 						href={`https://kb.cropwatch.io/doku.php?id=${page.route.id}`}
 						target="_blank"
-						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors {getDarkMode()
+						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors {dark
 							? 'text-slate-400 hover:bg-slate-700/50 hover:text-green-400'
 							: 'text-gray-600 hover:bg-gray-100 hover:text-green-600'}"
 					>
@@ -261,7 +268,7 @@
 					</a>
 
 					<!-- Login/Logout Button -->
-					<div class="border-t pt-4 {getDarkMode() ? 'border-slate-700/30' : 'border-gray-200/30'}">
+					<div class="border-t pt-4 {dark ? 'border-slate-700/30' : 'border-gray-200/30'}">
 						{#if page.data.session?.user}
 							<Button
 								variant="secondary"
@@ -292,7 +299,7 @@
 
 <!-- Secondary Navigation/Breadcrumb Bar -->
 <div
-	class="fixed right-0 left-0 z-40 border-b transition-colors {getDarkMode()
+	class="fixed right-0 left-0 z-40 border-b transition-colors {dark
 		? 'border-slate-700 bg-slate-800'
 		: 'border-gray-200 bg-slate-200 shadow-sm'} titlebar-safe-area"
 	style="top: 72px;"
@@ -300,9 +307,7 @@
 	<div class="mx-auto px-4 py-3">
 		<div class="flex flex-wrap items-center gap-4">
 			<!-- Breadcrumb or secondary nav -->
-			<div
-				class="flex items-center gap-2 text-sm {getDarkMode() ? 'text-slate-400' : 'text-gray-600'}"
-			>
+			<div class="flex items-center gap-2 text-sm {dark ? 'text-slate-400' : 'text-gray-600'}">
 				<Breadcrumbs />
 			</div>
 			<div class="flex-1"></div>
@@ -311,7 +316,7 @@
 				<a
 					href={`https://kb.cropwatch.io/doku.php?id=${page.route.id}`}
 					target="_blank"
-					class="flex items-center gap-1 transition-colors hover:text-green-400 {getDarkMode()
+					class="flex items-center gap-1 transition-colors hover:text-green-400 {dark
 						? 'text-slate-400'
 						: 'text-gray-600'}"
 				>
@@ -367,18 +372,7 @@
 		}
 	}
 
-	/* Alternative brighter shine effect */
-	.cropwatch-shine-bright::before {
-		background: linear-gradient(
-			90deg,
-			transparent,
-			rgba(255, 255, 255, 0.8),
-			rgba(255, 255, 255, 0.4),
-			rgba(255, 255, 255, 0.8),
-			transparent
-		);
-		animation: shine 2.5s ease-in-out 0.5s;
-	}
+	/* Removed unused .cropwatch-shine-bright variant */
 	@keyframes drift {
 		0% {
 			transform: translateX(0) translateY(0);

@@ -64,13 +64,15 @@ export class DeviceDataService implements IDeviceDataService {
 	 * Get device data within a date range based on device type
 	 * @param devEui The device EUI
 	 * @param deviceType The device type information containing data_table_v2
-	 * @param startDate The start date
-	 * @param endDate The end date
+	 * @param startDate The start date in user's timezone
+	 * @param endDate The end date in user's timezone
+	 * @param timezone The user's timezone (e.g., 'Asia/Tokyo', 'America/New_York')
 	 */
 	public async getDeviceDataByDateRange(
 		devEui: string,
 		startDate: Date,
-		endDate: Date
+		endDate: Date,
+		timezone: string = 'UTC'
 	): Promise<DeviceDataRecord[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
@@ -88,6 +90,10 @@ export class DeviceDataService implements IDeviceDataService {
 		const cw_device = await this.getDeviceAndType(devEui);
 		const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
 
+		// Convert user timezone dates to UTC for database queries
+		const utcStartDate = this.convertUserTimezoneToUTC(startDate, timezone);
+		const utcEndDate = this.convertUserTimezoneToUTC(endDate, timezone);
+
 		try {
 			// get the number of uploads between the selected start and end dates
 			const monthsInRange = Math.floor(
@@ -102,23 +108,28 @@ export class DeviceDataService implements IDeviceDataService {
 				.from(tableName)
 				.select('*')
 				.eq('dev_eui', devEui)
-				.gte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', startDate.toISOString()) // SHIT FIX #1, traffic camera specific
-				.lte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', endDate.toISOString()) // SHIT FIX #2, traffic camera specific
+				.gte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcStartDate.toISOString()) // SHIT FIX #1, traffic camera specific
+				.lte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcEndDate.toISOString()) // SHIT FIX #2, traffic camera specific
 				.order(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', { ascending: false }); // SHIT FIX #3, traffic camera specific
 			// .limit(maxDataToReturn);
 
 			// SHIT FIX #4, traffic camera specific
 			if (tableName == 'cw_traffic2') {
-				return (data || []).map((record: any) => ({
+				const trafficData = (data || []).map((record: any) => ({
 					...record,
 					created_at: record.traffic_hour,
 					dev_eui: record.dev_eui,
 					note: 'Traffic data formatted'
 				})) as DeviceDataRecord[];
+
+				// Convert timestamps back to user timezone
+				return this.convertRecordTimestampsToUserTimezone(trafficData, timezone, tableName);
 			}
 			// END OF SHIT FIX
 
-			return (data || []) as DeviceDataRecord[];
+			const records = (data || []) as DeviceDataRecord[];
+			// Convert timestamps back to user timezone
+			return this.convertRecordTimestampsToUserTimezone(records, timezone, tableName);
 		} catch (error) {
 			// Handle errors with a generic response
 			this.errorHandler.logError(error as Error);
@@ -144,13 +155,15 @@ export class DeviceDataService implements IDeviceDataService {
 	 * Get device data within a date range based on device type as a CSV
 	 * @param devEui The device EUI
 	 * @param deviceType The device type information containing data_table_v2
-	 * @param startDate The start date
-	 * @param endDate The end date
+	 * @param startDate The start date in user's timezone
+	 * @param endDate The end date in user's timezone
+	 * @param timezone The user's timezone (e.g., 'Asia/Tokyo', 'America/New_York')
 	 */
 	public async getDeviceDataByDateRangeAsCSV(
 		devEui: string,
 		startDate: Date,
-		endDate: Date
+		endDate: Date,
+		timezone: string = 'UTC'
 	): Promise<DeviceDataRecord[]> {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
@@ -168,6 +181,10 @@ export class DeviceDataService implements IDeviceDataService {
 		const cw_device = await this.getDeviceAndType(devEui);
 		const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
 
+		// Convert user timezone dates to UTC for database queries
+		const utcStartDate = this.convertUserTimezoneToUTC(startDate, timezone);
+		const utcEndDate = this.convertUserTimezoneToUTC(endDate, timezone);
+
 		try {
 			// get the number of uploads between the selected start and end dates
 			const monthsInRange = Math.floor(
@@ -182,8 +199,8 @@ export class DeviceDataService implements IDeviceDataService {
 				.from(tableName)
 				.select('*')
 				.eq('dev_eui', devEui)
-				.gte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', startDate.toISOString()) // SHIT FIX #1, traffic camera specific
-				.lte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', endDate.toISOString()) // SHIT FIX #2, traffic camera specific
+				.gte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcStartDate.toISOString()) // SHIT FIX #1, traffic camera specific
+				.lte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcEndDate.toISOString()) // SHIT FIX #2, traffic camera specific
 				.order(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', { ascending: false }); // SHIT FIX #3, traffic camera specific
 
 			if (error) {
@@ -209,9 +226,17 @@ export class DeviceDataService implements IDeviceDataService {
 				if (!dt.isValid) dt = DateTime.fromSQL(String(raw), { setZone: true });
 				if (dt.isValid) {
 					// Format for Microsoft Excel compatibility: "yyyy-MM-dd HH:mm:ss" (no T, no timezone)
-					const excelLocal = dt.setZone('Asia/Tokyo').toFormat('yyyy-LL-dd HH:mm:ss');
-					// Standardize on created_at in the CSV
-					row.created_at = excelLocal;
+					const excelLocal = dt.setZone(timezone).toFormat('yyyy-LL-dd HH:mm:ss');
+
+					// For traffic data, update both created_at and traffic_hour to maintain consistency
+					if (tableName === 'cw_traffic2') {
+						row.created_at = excelLocal;
+						// For CSV consistency, also format traffic_hour in the same Excel-friendly format
+						row.traffic_hour = excelLocal;
+					} else {
+						// For other data types, standardize on created_at
+						row.created_at = excelLocal;
+					}
 				}
 			}
 
@@ -317,7 +342,7 @@ export class DeviceDataService implements IDeviceDataService {
 
 		try {
 			// If no filtering parameters provided, get alert points from the device's reports
-			let p_columns = columns.length === 0 ? columns : ['temperature_c', 'humidity'];
+			let p_columns = !columns || columns.length === 0 ? ['temperature_c', 'humidity'] : columns;
 			let p_ops = ops || ['>', 'BETWEEN'];
 			let p_mins = mins || [25.0, 55.0];
 			let p_maxs = maxs || [null, 65.0];
@@ -342,7 +367,9 @@ export class DeviceDataService implements IDeviceDataService {
 
 						alertPoints.forEach((point: any) => {
 							if (point.data_point_key) {
-								p_columns.push(point.data_point_key);
+								if (p_columns && !p_columns.includes(point.data_point_key)) {
+									p_columns.push(point.data_point_key);
+								}
 								p_ops.push(point.operator || '>');
 								p_mins.push(point.min || point.value || 0);
 								p_maxs.push(point.max || null);
@@ -455,6 +482,116 @@ export class DeviceDataService implements IDeviceDataService {
 			return false; // Error checking access
 		}
 		return true; // Default to true for now
+	}
+
+	/**
+	 * Convert user timezone dates to UTC for database queries
+	 * @param date Date in user's timezone
+	 * @param timezone User's timezone string
+	 * @returns Date converted to UTC
+	 */
+	private convertUserTimezoneToUTC(date: Date, timezone: string): Date {
+		if (timezone === 'UTC') {
+			return date; // No conversion needed
+		}
+
+		// Create DateTime from the date's components in the specified timezone
+		const year = date.getFullYear();
+		const month = date.getMonth() + 1; // getMonth() returns 0-11, DateTime expects 1-12
+		const day = date.getDate();
+		const hour = date.getHours();
+		const minute = date.getMinutes();
+		const second = date.getSeconds();
+
+		// Create DateTime in the user's timezone, then convert to UTC
+		const dt = DateTime.fromObject(
+			{
+				year,
+				month,
+				day,
+				hour,
+				minute,
+				second
+			},
+			{ zone: timezone }
+		);
+
+		return dt.toUTC().toJSDate();
+	}
+
+	/**
+	 * Convert UTC timestamp back to user's timezone
+	 * @param utcTimestamp UTC timestamp string
+	 * @param timezone User's timezone string
+	 * @returns Formatted timestamp in user's timezone
+	 */
+	private convertUTCToUserTimezone(utcTimestamp: string, timezone: string): string {
+		if (timezone === 'UTC') {
+			return utcTimestamp; // No conversion needed
+		}
+
+		// Parse UTC timestamp and convert to user timezone
+		let dt = DateTime.fromISO(utcTimestamp, { zone: 'UTC' });
+
+		if (!dt.isValid) {
+			// Try parsing as SQL format if ISO fails
+			dt = DateTime.fromSQL(utcTimestamp, { zone: 'UTC' });
+			if (!dt.isValid) {
+				console.warn(`Failed to parse timestamp: ${utcTimestamp}`);
+				return utcTimestamp; // Return original if parsing fails
+			}
+		}
+
+		// Convert to user timezone and return as ISO string
+		const converted = dt.setZone(timezone);
+		const result = converted.toISO();
+
+		if (!result) {
+			console.warn(`Failed to convert timestamp to timezone ${timezone}: ${utcTimestamp}`);
+			return utcTimestamp;
+		}
+
+		return result;
+	}
+
+	/**
+	 * Convert all timestamps in device data records from UTC to user timezone
+	 * @param records Array of device data records
+	 * @param timezone User's timezone string
+	 * @param tableName Table name to determine timestamp field
+	 * @returns Records with timestamps converted to user timezone
+	 */
+	private convertRecordTimestampsToUserTimezone(
+		records: DeviceDataRecord[],
+		timezone: string,
+		tableName: string
+	): DeviceDataRecord[] {
+		if (timezone === 'UTC') {
+			return records; // No conversion needed
+		}
+
+		return records.map((record) => {
+			const convertedRecord = { ...record };
+
+			// Convert main timestamp field
+			const timestampField = tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at';
+			if (convertedRecord[timestampField]) {
+				convertedRecord[timestampField] = this.convertUTCToUserTimezone(
+					convertedRecord[timestampField] as string,
+					timezone
+				);
+			}
+
+			// Ensure created_at is always present and converted
+			if (convertedRecord.created_at) {
+				convertedRecord.created_at = this.convertUTCToUserTimezone(
+					convertedRecord.created_at,
+					timezone
+				);
+			}
+
+			return convertedRecord;
+		});
 	}
 
 	private toCSV(records: Record<string, any>[], headers?: string[]): string {

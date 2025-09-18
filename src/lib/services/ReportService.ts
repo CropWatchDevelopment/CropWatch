@@ -33,6 +33,13 @@ export class ReportService implements IReportService {
 	) {}
 
 	/**
+	 * Get all reports
+	 */
+	async getAllReports(devEui: string): Promise<Report[]> {
+		return this.reportRepository.findAll();
+	}
+
+	/**
 	 * Get reports by device EUI
 	 */
 	async getReportsByDeviceEui(devEui: string): Promise<Report[]> {

@@ -422,6 +422,15 @@
 </svelte:head>
 
 <Header {device} {basePath}>
+	<!-- Data range selector on large screen -->
+	<div class="hidden border-r border-neutral-400 pl-4 lg:block">
+		<DateRangeSelector
+			bind:startDateInput
+			bind:endDateInput
+			{loadingHistoricalData}
+			onDateChange={handleDateRangeSubmit}
+		/>
+	</div>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
 		{#if (numericKeys.length && device.user_id == userId) || (devicePermissionLevel !== null && devicePermissionLevel <= 2)}
 			<ExportButton
@@ -439,15 +448,6 @@
 			</Button>
 		{/if}
 	</div>
-	<!-- Data range selector on large screen -->
-	<div class="hidden border-l border-neutral-400 pl-4 lg:block">
-		<DateRangeSelector
-			bind:startDateInput
-			bind:endDateInput
-			{loadingHistoricalData}
-			onDateChange={handleDateRangeSubmit}
-		/>
-	</div>
 </Header>
 
 <!-- Updated layout: outer wrapper always column; inner two-column row contains latest + stats; charts moved below for full-width -->
@@ -455,7 +455,7 @@
 	<div class="flex flex-col gap-4 lg:flex-row">
 		<!-- Left pane -->
 		<div
-			class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+			class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
 		>
 			<!-- Latest data section -->
 			<section class="flex-auto lg:w-auto lg:flex-none">
@@ -515,9 +515,7 @@
 			</div>
 			<section class="mb-12">
 				{#if loading}
-					<div
-						class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
-					>
+					<div class="panel flex flex-col items-center justify-center gap-2 rounded-lg p-8 shadow">
 						<Spinner />
 						<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
 					</div>
@@ -554,7 +552,7 @@
 {#if !loading && !loadingHistoricalData && historicalData.length > 0}
 	<section class="mb-12 px-4" inert={renderingVisualization} aria-busy={renderingVisualization}>
 		<h2>{$_('Data Chart')}</h2>
-		<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
+		<div class="panel relative mb-10 rounded-lg p-4 shadow">
 			{#if renderingVisualization}
 				<div class="absolute inset-0 z-10 flex items-center justify-center">Rendering chart...</div>
 			{/if}

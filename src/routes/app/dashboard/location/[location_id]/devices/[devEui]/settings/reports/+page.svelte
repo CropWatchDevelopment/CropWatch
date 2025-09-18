@@ -91,22 +91,29 @@
 		</div>
 
 		<div class="mt-4 md:mt-0">
-			<Button
-				href="/app/dashboard/location/{$page.params
-					.location_id}/devices/{devEui}/settings/reports/create"
-			>
-				<svg
-					class="mr-2 h-4 w-4"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg"
+			{#if reportCount >= 0}
+				<p class="mb-2 text-sm text-red-600 dark:text-red-400">
+					You have reached the maximum number of reports allowed.
+				</p>
+			{:else}
+				<Button
+					href="/app/dashboard/location/{$page.params
+						.location_id}/devices/{devEui}/settings/reports/create"
+					disabled={reportCount >= 0}
 				>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"
-					></path>
-				</svg>
-				{$_('add_report')}
-			</Button>
+					<svg
+						class="mr-2 h-4 w-4"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"
+						></path>
+					</svg>
+					{$_('add_report')}
+				</Button>
+			{/if}
 		</div>
 	</header>
 
