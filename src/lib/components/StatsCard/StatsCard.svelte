@@ -11,9 +11,10 @@
 		key: string;
 		stats?: DeviceStats;
 		expandable?: boolean;
+		class: string;
 	};
 
-	let { key, stats = {}, expandable = true }: Props = $props();
+	let { key, stats = {}, expandable = true, class: className }: Props = $props();
 	let { min, max, avg, median, stdDev, count, lastReading, trend } = $derived(stats[key]);
 	let title = $derived($_(key));
 	let notation = $derived(nameToNotation(key));
@@ -51,7 +52,7 @@
 </script>
 
 <div
-	class="panel flex w-full flex-col items-center rounded-lg p-4 text-zinc-900 shadow-sm dark:text-white"
+	class="panel flex w-full flex-col items-center rounded-lg p-4 text-zinc-900 shadow-sm dark:text-white ${className}"
 	class:cursor-pointer={expandable}
 	role="button"
 	tabindex="0"
