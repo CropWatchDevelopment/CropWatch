@@ -1,6 +1,7 @@
 <!-- Battery.svelte (Svelte 5) - Modern Design -->
 <script lang="ts">
 	import MaterialIcon from './UI/icons/MaterialIcon.svelte';
+	import { Tooltip } from 'bits-ui';
 
 	// Props
 	let {
@@ -32,15 +33,32 @@
 	};
 </script>
 
-<div class="my-auto flex items-center space-x-1" aria-label={ariaLabel}>
-	<MaterialIcon
-		name={batteryIconName()}
-		{size}
-		class={getBatteryColor() === 'green'
-			? 'text-green-500'
-			: getBatteryColor() === 'yellow'
-				? 'text-yellow-500'
-				: 'text-red-500'}
-	/>
-	{value}%
+<div class="my-auto flex items-center" aria-label={ariaLabel}>
+	<Tooltip.Provider>
+		<Tooltip.Root delayDuration={1000}>
+			<Tooltip.Trigger class="flex items-center">
+				<MaterialIcon
+					name={batteryIconName()}
+					{size}
+					class={getBatteryColor() === 'green'
+						? 'text-green-500'
+						: getBatteryColor() === 'yellow'
+							? 'text-yellow-500'
+							: 'text-red-500'}
+				/>
+				{value}%
+			</Tooltip.Trigger>
+			<Tooltip.Content side="bottom">
+				<div
+					class="rounded-md bg-gray-800 px-2 py-1 text-sm text-white shadow-lg"
+					style="max-width: 200px;"
+				>
+					<h4 class="font-semibold">Battery Level</h4>
+					<p class="mt-1">
+						The current battery level of the device is at <strong>{value}%</strong>.
+					</p>
+				</div>
+			</Tooltip.Content>
+		</Tooltip.Root>
+	</Tooltip.Provider>
 </div>
