@@ -16,6 +16,9 @@
 	} from '@mdi/js';
 	import { Button, DropdownMenu, Tooltip } from 'bits-ui';
 	import { onMount } from 'svelte';
+	import { themeStore } from '$lib/stores/theme';
+	let currentTheme: 'light' | 'dark';
+	themeStore.subscribe((s) => (currentTheme = s.effective));
 	import { _ } from 'svelte-i18n';
 	import type { HTMLAttributes } from 'svelte/elements';
 
@@ -57,9 +60,7 @@
 		// Apply light mode tint to dropdown menus only when not in dark mode
 		setTimeout(() => {
 			// Check if dark mode is active
-			const isDarkMode =
-				document.documentElement.classList.contains('dark') ||
-				window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const isDarkMode = currentTheme === 'dark';
 
 			if (!isDarkMode) {
 				const dropdownContents = document.querySelectorAll('.dropdown-menu-content');
@@ -110,7 +111,7 @@
 
 <div>
 	<DropdownMenu.Root bind:open={mainMenuOpen}>
-		<DropdownMenu.Trigger asChild>
+		<DropdownMenu.Trigger>
 			<Button.Root
 				class="bg-background-alt hover:bg-background-alt/90 flex items-center justify-center rounded-md px-2"
 			>
@@ -123,7 +124,7 @@
 		<DropdownMenu.Content
 			side="bottom"
 			align="start"
-			class="dropdown-animation z-50 mt-2 w-auto min-w-[220px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-xl ring-1 ring-black/10 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
+			class="dropdown-surface dropdown-animation z-50 mt-2 w-auto min-w-[220px] p-2"
 		>
 			<!-- Search input  -> moved to Locations panel -->
 
@@ -169,7 +170,7 @@
 					</Tooltip.Root>
 				</Tooltip.Provider>
 
-				<span class="mx-4 h-8 w-px bg-gray-300 dark:bg-gray-500"></span>
+				<span class="divider-vertical mx-4 h-8"></span>
 
 				<!-- Dashboard Layout -->
 				<Tooltip.Provider>
@@ -177,7 +178,7 @@
 						<Tooltip.Trigger>
 							<div class="mx-2 flex flex-col items-center">
 								<DropdownMenu.Sub>
-									<DropdownMenu.SubTrigger asChild>
+									<DropdownMenu.SubTrigger>
 										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition-all duration-200 hover:bg-blue-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-blue-400"
 										>
@@ -189,12 +190,11 @@
 									<DropdownMenu.SubContent
 										side="bottom"
 										align="start"
-										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
+										class="dropdown-surface dropdown-animation z-50 mt-2 min-w-[180px] p-2"
 									>
 										<DropdownMenu.Item
-											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-blue-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-blue-600/40 {dashboardViewType ===
-											'grid'
-												? 'bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-white'
+											class="menu-item justify-between {dashboardViewType === 'grid'
+												? 'active bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-white'
 												: ''}"
 											onSelect={(e) => setDashboardViewType('grid', e)}
 										>
@@ -270,7 +270,7 @@
 					</Tooltip.Root>
 				</Tooltip.Provider>
 
-				<span class="mx-4 h-8 w-px bg-gray-300 dark:bg-gray-500"></span>
+				<span class="divider-vertical mx-4 h-8"></span>
 
 				<!-- Sort By -->
 				<Tooltip.Provider>
@@ -278,7 +278,7 @@
 						<Tooltip.Trigger>
 							<div class="mx-2 flex flex-col items-center">
 								<DropdownMenu.Sub>
-									<DropdownMenu.SubTrigger asChild>
+									<DropdownMenu.SubTrigger>
 										<div
 											class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500 text-white transition-all duration-200 hover:bg-purple-600 focus:shadow-[0_0_0_2px_rgba(255,255,255,0.2)] focus:outline-none dark:hover:bg-purple-400"
 										>
@@ -290,7 +290,7 @@
 									<DropdownMenu.SubContent
 										side="bottom"
 										align="start"
-										class="dropdown-animation z-50 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-gray-50 p-2 shadow-md ring-1 ring-black/5 dark:border-gray-600 dark:bg-gray-700 dark:shadow-[0_8px_20px_rgba(0,0,0,0.6)] dark:ring-white/10"
+										class="dropdown-surface dropdown-animation z-50 mt-2 min-w-[180px] p-2"
 									>
 										<DropdownMenu.Item
 											class="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm text-gray-700 transition-all duration-150 hover:bg-purple-100/50 hover:shadow-sm dark:text-gray-200 dark:hover:bg-purple-600/40 {dashboardSortType ===

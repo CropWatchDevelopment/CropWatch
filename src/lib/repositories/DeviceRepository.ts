@@ -129,6 +129,41 @@ export class DeviceRepository extends BaseRepository<Device, string> {
 	 * @param devEui The device EUI
 	 * @param userId The user ID
 	 */
+	async findAllDevicesByOwner(userId: string): Promise<Device[] | null> {
+		// 1) Owned devices (cw_devices rows)
+		const { data: owned, error: ownedErr } = await this.supabase
+			.from('cw_devices')
+			.select('*')
+			.eq('user_id', userId);
+
+		if (ownedErr) return null;
+
+		// 2) Shared devices the user has perms for.
+		//    Prefer a JOIN via the relationship so you get cw_devices rows directly.
+		//    Assumes a FK cw_device_owners(dev_eui) -> cw_devices(dev_eui).
+		const { data: shared, error: sharedErr } = await this.supabase
+			.from('cw_device_owners')
+			.select('cw_devices(*)') // returns rows shaped like { cw_devices: Device }
+			.eq('user_id', userId)
+			.lte('permission_level', 3); // pl <= 3 as per your policy
+
+		if (sharedErr) return null;
+
+		// Flatten shared to Device[]
+		const sharedDevices: Device[] = (shared ?? []).map((r: any) => r.cw_devices).filter(Boolean);
+
+		// Merge & dedupe by dev_eui
+		const byDevEui = new Map<string, Device>();
+		for (const d of [...(owned ?? []), ...sharedDevices]) byDevEui.set(d.dev_eui, d);
+
+		return Array.from(byDevEui.values());
+	}
+
+	/**
+	 * Find a device owner entry
+	 * @param devEui The device EUI
+	 * @param userId The user ID
+	 */
 	async findDeviceOwner(devEui: string, userId: string): Promise<{ id: number | string } | null> {
 		const { data: ownerData, error: ownerError } = await this.supabase
 			.from('cw_devices')

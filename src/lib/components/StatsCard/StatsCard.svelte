@@ -4,16 +4,17 @@
 	import { formatNumber, getTextColorByKey } from '$lib/utilities/stats';
 	import { mdiArrowDownBold, mdiArrowUpBold, mdiMinus } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import MaterialIcon from '../UI/icons/MaterialIcon.svelte';
 
 	type Props = {
 		key: string;
 		stats?: DeviceStats;
 		expandable?: boolean;
+		class: string;
 	};
 
-	let { key, stats = {}, expandable = true }: Props = $props();
+	let { key, stats = {}, expandable = true, class: className }: Props = $props();
 	let { min, max, avg, median, stdDev, count, lastReading, trend } = $derived(stats[key]);
 	let title = $derived($_(key));
 	let notation = $derived(nameToNotation(key));
@@ -51,7 +52,7 @@
 </script>
 
 <div
-	class="flex w-full flex-col items-center rounded-lg bg-gray-50 p-4 text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-white"
+	class="panel flex w-full flex-col items-center rounded-lg p-4 text-zinc-900 shadow-sm dark:text-white ${className}"
 	class:cursor-pointer={expandable}
 	role="button"
 	tabindex="0"
@@ -60,7 +61,7 @@
 >
 	<!-- Title with Current reading and Trend -->
 	<div class="mb-2 flex w-full items-center justify-between">
-		<h4 class="text-xl font-medium text-gray-500 dark:text-gray-200">
+		<h4 class="text-xl font-medium text-gray-700 dark:text-gray-200">
 			{title}
 		</h4>
 
@@ -80,7 +81,9 @@
 	</div>
 
 	<!-- Labels -->
-	<div class="mb-0.5 flex w-full justify-between px-1 text-sm font-normal text-gray-400">
+	<div
+		class="mb-0.5 flex w-full justify-between px-1 text-sm font-normal text-gray-600 dark:text-gray-400"
+	>
 		<span>{$_('Min')}</span>
 		<span>{$_('Avg')}</span>
 		<span>{$_('Max')}</span>
@@ -138,7 +141,7 @@
 
 	<!-- Expanded Details -->
 	{#if expanded}
-		<div class="mt-4 w-full border-t border-gray-200 pt-3 text-lg dark:border-gray-700">
+		<div class="border-standard mt-4 w-full border-t pt-3 text-lg">
 			<div class="grid grid-cols-2 gap-y-2">
 				<div>
 					<span class="text-gray-400 dark:text-gray-400">{$_('Count')}:</span>
@@ -173,9 +176,7 @@
 
 	{#if expandable}
 		<div class="mt-2 flex w-full justify-center pt-2">
-			<div
-				class="flex w-full justify-center border-t border-gray-200 pt-4 text-xs text-gray-400 dark:text-gray-300"
-			>
+			<div class="border-standard text-muted flex w-full justify-center border-t pt-4 text-xs">
 				<MaterialIcon
 					name={expanded ? 'expand_circle_up' : 'expand_circle_down'}
 					size="small"

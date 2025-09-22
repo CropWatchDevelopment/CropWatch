@@ -7,6 +7,8 @@
 	import DeviceCard from './DeviceCard.svelte';
 	import { isDeviceActive } from '$lib/utilities/dashboardHelpers';
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
+	import { createDragState, createDragHandlers, type DragState } from '$lib/utilities/dragAndDrop';
+	import { saveDeviceOrder, applyStoredDeviceOrder } from '$lib/utilities/deviceOrderStorage';
 
 	// Extended Location type to include cw_devices property
 	interface LocationWithDevices extends Location {
@@ -20,46 +22,67 @@
 		cw_rules?: any[];
 	}
 
-	let { locations, deviceActiveStatus } = $props<{
+	let {
+		locations,
+		deviceActiveStatus,
+		onDeviceReorder,
+		enableDragAndDrop = false
+	} = $props<{
 		locations: LocationWithDevices[];
 		deviceActiveStatus: Record<string, boolean | null>;
+		onDeviceReorder?: (locationId: number, newDevices: DeviceWithSensorData[]) => void;
+		enableDragAndDrop?: boolean;
 	}>();
 
 	// Get the UI store to access the view type and search
 	const uiStore = getDashboardUIStore();
 
-	// Debug effect to log search changes
-	// $effect(() => {
-	// 	//console.log('AllDevices: uiStore.search changed to:', uiStore.search);
-	// });
+	// Create drag states for each location
+	let dragStates: Map<number, DragState> = $state(new Map());
 
-	// // Track filtered locations count for debugging
-	// $effect(() => {
-	// 	//console.log('AllDevices: filteredLocations count:', filteredLocations.length);
-	// 	//console.log('AllDevices: total locations count:', locations.length);
-	// });
+	function getDragState(locationId: number): DragState {
+		if (!dragStates.has(locationId)) {
+			dragStates.set(locationId, createDragState());
+		}
+		return dragStates.get(locationId)!;
+	}
 
-	// Reactive filtered locations based on search
+	function updateDragState(locationId: number, newState: Partial<DragState>) {
+		const currentState = getDragState(locationId);
+		const updatedState = { ...currentState, ...newState };
+		dragStates.set(locationId, updatedState);
+		// Force reactivity by reassigning the Map
+		dragStates = new Map(dragStates);
+	}
+
+	// Reactive filtered locations based on search with applied device order
 	const filteredLocations = $derived(
-		locations.filter((location: LocationWithDevices) => {
-			// If search is empty, show all locations
-			if (!uiStore.search?.trim()) return true;
+		locations
+			.filter((location: LocationWithDevices) => {
+				// If search is empty, show all locations
+				if (!uiStore.search?.trim()) return true;
 
-			// Check if location name matches search
-			if (location.name.toLowerCase().includes(uiStore.search.toLowerCase())) return true;
+				// Check if location name matches search
+				if (location.name.toLowerCase().includes(uiStore.search.toLowerCase())) return true;
 
-			// Check if any device in the location matches search
-			if (location.cw_devices && location.cw_devices.length > 0) {
-				return location.cw_devices.some(
-					(device: DeviceWithSensorData) =>
-						device.name?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
-						device.dev_eui?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
-						device.cw_device_type?.name?.toLowerCase().includes(uiStore.search.toLowerCase())
-				);
-			}
+				// Check if any device in the location matches search
+				if (location.cw_devices && location.cw_devices.length > 0) {
+					return location.cw_devices.some(
+						(device: DeviceWithSensorData) =>
+							device.name?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
+							device.dev_eui?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
+							device.cw_device_type?.name?.toLowerCase().includes(uiStore.search.toLowerCase())
+					);
+				}
 
-			return false;
-		})
+				return false;
+			})
+			.map((location: LocationWithDevices) => ({
+				...location,
+				cw_devices: location.cw_devices
+					? applyStoredDeviceOrder(location.cw_devices, location.location_id)
+					: []
+			}))
 	);
 
 	// Function to get container class based on view type
@@ -103,7 +126,22 @@
 				loading={hasNullStatus}
 			>
 				{#snippet content()}
-					{#each location.cw_devices ?? [] as device (device.dev_eui)}
+					{@const locationDevices = location.cw_devices ?? []}
+					{@const dragHandlers = createDragHandlers(
+						locationDevices,
+						(newDevices) => {
+							// Save the new order to localStorage
+							const deviceOrder = newDevices.map((device) => device.dev_eui);
+							saveDeviceOrder(location.location_id, deviceOrder);
+
+							if (onDeviceReorder) {
+								onDeviceReorder(location.location_id, newDevices);
+							}
+						},
+						getDragState(location.location_id),
+						(newState) => updateDragState(location.location_id, newState)
+					)}
+					{#each locationDevices as device, index (device.dev_eui)}
 						{@const isActive = isDeviceActive(device, deviceActiveStatus)}
 						{@const formattedDevice = {
 							...device,
@@ -118,7 +156,19 @@
 								secondary_data_v2: device.cw_device_type?.secondary_data_v2 || undefined
 							}
 						}}
-						<DeviceCard device={formattedDevice} {isActive} locationId={location.location_id} />
+						<DeviceCard
+							device={formattedDevice}
+							{isActive}
+							locationId={location.location_id}
+							dragEnabled={enableDragAndDrop}
+							dragIndex={index}
+							isDragging={getDragState(location.location_id).draggedIndex === index}
+							isDropTarget={getDragState(location.location_id).dropTargetIndex === index}
+							onDragStart={dragHandlers.handleDragStart}
+							onDragEnd={dragHandlers.handleDragEnd}
+							onDragOver={dragHandlers.handleDragOver}
+							onDrop={dragHandlers.handleDrop}
+						/>
 					{/each}
 				{/snippet}
 			</DashboardCard>

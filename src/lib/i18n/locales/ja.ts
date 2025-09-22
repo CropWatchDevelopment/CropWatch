@@ -55,6 +55,7 @@ export const strings = {
 	bicycle_count: '自転車台数',
 	truck_count: 'トラック台数',
 	bus_count: 'バス台数',
+	motorcycle_count: 'バイク台数',
 	'Data Date Range': 'データ日付範囲',
 	data_date_range: 'データ日付範囲',
 	Close: '閉じる',
@@ -392,6 +393,9 @@ export const strings = {
 
 	// PDF report content
 	device_report: 'デバイスレポート',
+	device_report_weekly: '週間',
+	device_report_monthly: '月間',
+	report_date_range: 'レポート日付範囲',
 	generated_at: '作成日時',
 	generated_by: '作成者',
 	installed_at: '設置場所',

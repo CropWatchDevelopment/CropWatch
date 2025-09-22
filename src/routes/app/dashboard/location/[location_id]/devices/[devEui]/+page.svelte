@@ -26,6 +26,9 @@
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
 	import RelayControl from '$lib/components/RelayControl.svelte';
+	import { browser } from '$app/environment';
+	import { afterNavigate } from '$app/navigation';
+	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -37,9 +40,17 @@
 	let latestData: DeviceDataRecord | null = $state(null);
 	let historicalData: DeviceDataRecord[] = $state([]);
 	let userId = $state(data.user.id); // User ID for permissions
-	let devicePermissionLevelState = $state(data.device.cw_device_owners);
-	let devicePermissionLevel = $derived(
-		devicePermissionLevelState.find((owner) => owner.user_id === userId)?.permission_level || null
+	interface DeviceOwnerPerm {
+		user_id: string;
+		permission_level: number;
+	}
+	let devicePermissionLevelState = $state<DeviceOwnerPerm[]>(
+		// @ts-ignore allow fallback if structure differs
+		(data.device as any)?.cw_device_owners || []
+	);
+	let devicePermissionLevel = $derived<number | null>(
+		devicePermissionLevelState.find((owner: DeviceOwnerPerm) => owner.user_id === userId)
+			?.permission_level ?? null
 	);
 
 	// Define the type for a calendar event
@@ -85,15 +96,140 @@
 	let renderingVisualization = $state(false); // Local rendering state for visualization
 
 	// Derived properties
-	const {
-		deviceTypeName,
-		temperatureChartVisible,
-		humidityChartVisible,
-		moistureChartVisible,
-		co2ChartVisible,
-		phChartVisible
-	} = $derived(getDeviceDetailDerived(device, dataType, latestData));
+	// const {
+	// 	deviceTypeName,
+	// 	temperatureChartVisible,
+	// 	humidityChartVisible,
+	// 	moistureChartVisible,
+	// 	co2ChartVisible,
+	// 	phChartVisible
+	// } = $derived(getDeviceDetailDerived(device, dataType, latestData));
 	let channel: RealtimeChannel | undefined = $state(undefined); // Channel for realtime updates
+	// Track last realtime update timestamp for stale detection
+	let lastRealtimeUpdate = $state<number>(Date.now());
+	let staleCheckIntervalId: number | null = $state(null);
+	let wakeDetectorIntervalId: number | null = $state(null);
+	let lastWakeTick = $state<number>(Date.now());
+	const EXPECTED_UPLOAD_MINUTES = $derived(
+		device.upload_interval || device.cw_device_type?.default_upload_interval || 10
+	);
+	const STALE_THRESHOLD_MS = $derived(
+		// Previously capped at 30 min and multiplied by 2. Now strictly use configured interval (in minutes) with no hard cap.
+		EXPECTED_UPLOAD_MINUTES * 60 * 1000
+	);
+
+	// Active status timer for THIS device (independent of dashboard list)
+	let activeTimerStore: ReturnType<typeof createActiveTimer> | null = null;
+	let isDeviceActiveFlag = $state<boolean | null>(null);
+	function setupActiveTimer() {
+		if (!latestData?.created_at) return;
+		const intervalMin = EXPECTED_UPLOAD_MINUTES;
+		activeTimerStore = createActiveTimer(new Date(latestData.created_at), intervalMin);
+		activeTimerStore.subscribe((val) => (isDeviceActiveFlag = val));
+	}
+
+	// Rebuild timer whenever latestData timestamp changes
+	$effect(() => {
+		if (latestData?.created_at) {
+			setupActiveTimer();
+		}
+	});
+
+	async function fetchLatestDirect(reason: string) {
+		try {
+			// console.debug('[DeviceDetail] Fetching latest (reason=%s)', reason);
+			const resp = await fetch(`/api/devices/${devEui}/status`);
+			if (resp.ok) {
+				const latest = await resp.json();
+				if (!latestData || latest.created_at !== latestData.created_at) {
+					latestData = latest;
+					lastRealtimeUpdate = Date.now();
+				}
+			} else {
+				console.warn('[DeviceDetail] Failed to refresh latest data', resp.status);
+			}
+		} catch (e) {
+			console.error('[DeviceDetail] Error fetching latest', e);
+		}
+	}
+
+	function setupRealtime() {
+		if (channel || !device.cw_device_type?.data_table_v2) return;
+		channel = setupRealtimeSubscription(
+			data.supabase,
+			device.cw_device_type?.data_table_v2,
+			devEui,
+			(newData) => {
+				latestData = newData;
+				lastRealtimeUpdate = Date.now();
+			},
+			0
+		);
+	}
+
+	function teardownRealtime() {
+		if (channel) {
+			data.supabase.removeChannel(channel);
+			channel = undefined;
+		}
+	}
+
+	function setupStaleMonitoring() {
+		if (!browser) return;
+		if (staleCheckIntervalId) return;
+		staleCheckIntervalId = window.setInterval(() => {
+			const now = Date.now();
+			if (now - lastRealtimeUpdate > STALE_THRESHOLD_MS) {
+				fetchLatestDirect('stale-check');
+			}
+		}, 60 * 1000); // check every minute
+	}
+
+	function setupWakeDetector() {
+		if (!browser) return;
+		if (wakeDetectorIntervalId) return;
+		wakeDetectorIntervalId = window.setInterval(() => {
+			const now = Date.now();
+			const delta = now - lastWakeTick;
+			lastWakeTick = now;
+			// If the tab/computer was asleep, delta will be large (e.g., > 90s)
+			if (delta > 90 * 1000) {
+				// console.debug('[DeviceDetail] Wake detected (delta=%dms)', delta);
+				// Recreate realtime channel and force refresh
+				teardownRealtime();
+				setupRealtime();
+				fetchLatestDirect('wake');
+			}
+		}, 30 * 1000); // tick every 30s
+	}
+
+	function setupVisibilityHandlers() {
+		if (!browser) return;
+		function handleVisibility() {
+			if (document.visibilityState === 'visible') {
+				setupRealtime();
+				fetchLatestDirect('visibility');
+			} else {
+				// pause realtime to save resources
+				teardownRealtime();
+			}
+		}
+		window.addEventListener('visibilitychange', handleVisibility);
+		window.addEventListener('focus', () => fetchLatestDirect('focus'));
+		window.addEventListener('online', () => {
+			teardownRealtime();
+			setupRealtime();
+			fetchLatestDirect('online');
+		});
+		// Cleanup registration
+		return () => {
+			window.removeEventListener('visibilitychange', handleVisibility);
+			window.removeEventListener('focus', () => fetchLatestDirect('focus'));
+			window.removeEventListener('online', () => fetchLatestDirect('online'));
+		};
+	}
+
+	let removeVisibilityHandlers: (() => void) | null | undefined = null;
 
 	onMount(() => {
 		// Initialize the device detail date range (this might be used internally by deviceDetail)
@@ -102,15 +238,12 @@
 
 	$effect(() => {
 		if (device.cw_device_type?.data_table_v2 && !channel) {
-			channel = setupRealtimeSubscription(
-				data.supabase,
-				device.cw_device_type?.data_table_v2,
-				devEui,
-				(newData) => {
-					latestData = newData;
-				},
-				0 // Retry count starts at 0
-			);
+			setupRealtime();
+			setupStaleMonitoring();
+			setupWakeDetector();
+			if (!removeVisibilityHandlers) {
+				removeVisibilityHandlers = setupVisibilityHandlers() || null;
+			}
 		}
 	});
 
@@ -273,6 +406,16 @@
 
 	// Expose formatDateForDisplay for the template, aliased from helpers
 	const formatDateForDisplay = utilFormatDateForDisplay;
+
+	// Cleanup on destroy
+	import { onDestroy } from 'svelte';
+	import BatteryLevel from '$lib/components/BatteryLevel.svelte';
+	onDestroy(() => {
+		teardownRealtime();
+		if (staleCheckIntervalId) clearInterval(staleCheckIntervalId);
+		if (wakeDetectorIntervalId) clearInterval(wakeDetectorIntervalId);
+		if (removeVisibilityHandlers) removeVisibilityHandlers();
+	});
 </script>
 
 <svelte:head>
@@ -280,8 +423,21 @@
 </svelte:head>
 
 <Header {device} {basePath}>
+	{#if device.battery_level !== null}
+		<BatteryLevel value={device.battery_level} size={28} showLabel />
+	{/if}
+
+	<!-- Data range selector on large screen -->
+	<div class="hidden border-r border-neutral-400 pl-4 lg:block">
+		<DateRangeSelector
+			bind:startDateInput
+			bind:endDateInput
+			{loadingHistoricalData}
+			onDateChange={handleDateRangeSubmit}
+		/>
+	</div>
 	<div class="flex w-full justify-end gap-2 md:w-auto">
-		{#if (numericKeys.length && device.user_id == userId) || devicePermissionLevel <= 2}
+		{#if (numericKeys.length && device.user_id == userId) || (devicePermissionLevel !== null && devicePermissionLevel <= 2)}
 			<ExportButton
 				{devEui}
 				startDateInputString={startDateInput.toDateString()}
@@ -297,15 +453,6 @@
 			</Button>
 		{/if}
 	</div>
-	<!-- Data range selector on large screen -->
-	<div class="hidden border-l border-neutral-400 pl-4 lg:block">
-		<DateRangeSelector
-			bind:startDateInput
-			bind:endDateInput
-			{loadingHistoricalData}
-			onDateChange={handleDateRangeSubmit}
-		/>
-	</div>
 </Header>
 
 <!-- Updated layout: outer wrapper always column; inner two-column row contains latest + stats; charts moved below for full-width -->
@@ -313,7 +460,7 @@
 	<div class="flex flex-col gap-4 lg:flex-row">
 		<!-- Left pane -->
 		<div
-			class="grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+			class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
 		>
 			<!-- Latest data section -->
 			<section class="flex-auto lg:w-auto lg:flex-none">
@@ -373,9 +520,7 @@
 			</div>
 			<section class="mb-12">
 				{#if loading}
-					<div
-						class="flex flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 p-8 shadow dark:bg-zinc-800"
-					>
+					<div class="panel flex flex-col items-center justify-center gap-2 rounded-lg p-8 shadow">
 						<Spinner />
 						<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
 					</div>
@@ -386,16 +531,35 @@
 				{:else if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
 					<RelayControl {device} />
 				{:else}
+					<!-- <div class="mb-8">
+						<h2>{$_('Stats Summary')}</h2>
+						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+							{#each numericKeys as key (key)}
+								{#if stats[key]}
+									<StatsCard {stats} {key} />
+								{/if}
+							{/each}
+						</div>
+					</div> -->
+
 					<div class="mb-8">
 						<h2>{$_('Stats Summary')}</h2>
+
+						<!-- Auto-fit makes items expand when a row isn't full -->
 						<div
-							class="flex flex-col gap-4 sm:grid-cols-1 md:grid-cols-2 md:flex-row lg:grid-cols-3"
+							class="
+      /* ~max
+      4
+      cols
+      on normal desktops */ grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] items-stretch gap-4 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]
+      xl:grid-cols-[repeat(auto-fit,minmax(340px,1fr))]
+    "
 						>
-							{#if temperatureChartVisible}<StatsCard key="temperature_c" {stats} />{/if}
-							{#if humidityChartVisible}<StatsCard key="humidity" {stats} />{/if}
-							{#if moistureChartVisible}<StatsCard key="moisture" {stats} />{/if}
-							{#if co2ChartVisible}<StatsCard key="co2" {stats} />{/if}
-							{#if phChartVisible}<StatsCard key="ph" {stats} />{/if}
+							{#each numericKeys as key (key)}
+								{#if stats[key]}
+									<StatsCard {stats} {key} class="h-full w-full" />
+								{/if}
+							{/each}
 						</div>
 					</div>
 				{/if}
@@ -414,7 +578,7 @@
 {#if !loading && !loadingHistoricalData && historicalData.length > 0}
 	<section class="mb-12 px-4" inert={renderingVisualization} aria-busy={renderingVisualization}>
 		<h2>{$_('Data Chart')}</h2>
-		<div class="relative mb-10 rounded-lg bg-gray-50 p-4 shadow dark:bg-zinc-800">
+		<div class="panel relative mb-10 rounded-lg p-4 shadow">
 			{#if renderingVisualization}
 				<div class="absolute inset-0 z-10 flex items-center justify-center">Rendering chart...</div>
 			{/if}

@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { DateTime } from 'luxon';
 import type { TableRow } from '.';
 
 interface TableConfig {
@@ -10,7 +11,8 @@ interface TableConfig {
 	columnMargin: number;
 	fontSize: number;
 	headerHeight: number;
-	takeEvery: number; // This is the numbered item in the array to take and you will skip others unless they are an alert type.
+	takeEvery: number; // keep every Nth row (always keep rows with alert bgColor)
+	timezone?: string; // e.g., 'Asia/Tokyo'
 }
 
 const DEFAULT_CONFIG: TableConfig = {
@@ -22,16 +24,35 @@ const DEFAULT_CONFIG: TableConfig = {
 	columnMargin: 10,
 	fontSize: 7,
 	headerHeight: 15,
-	takeEvery: 3
+	takeEvery: 3,
+	timezone: 'utc'
 };
 
 /**
- * Creates a lean PDF data table that displays data from top to bottom, left to right
- * @param params
- * @param params.doc - PDFKit document instance
- * @param params.dataHeader - Header row containing column labels
- * @param params.dataRows - Array of data rows, each row is an array of values
- * @param params.config - Optional configuration overrides
+ * Parse the header.value (epoch ms | ISO | SQL) into a DateTime in the desired zone.
+ */
+function parseHeaderInstant(val: unknown, zone?: string): DateTime | null {
+	const z = zone || 'utc';
+	try {
+		if (typeof val === 'number') {
+			// epoch millis → absolute instant → render in zone
+			return DateTime.fromMillis(val, { zone: 'utc' }).setZone(z);
+		}
+		if (typeof val === 'string') {
+			// prefer ISO with setZone to respect embedded offsets (+09:00), then coerce to z
+			const iso = DateTime.fromISO(val, { setZone: true });
+			if (iso.isValid) return iso.setZone(z);
+			const sql = DateTime.fromSQL(val, { setZone: true });
+			if (sql.isValid) return sql.setZone(z);
+		}
+	} catch {
+		// fall through
+	}
+	return null;
+}
+
+/**
+ * Creates a lean PDF data table that displays data from top to bottom, left to right.
  */
 export function createPDFDataTable({
 	doc,
@@ -44,10 +65,9 @@ export function createPDFDataTable({
 	dataRows: TableRow[];
 	config?: Partial<TableConfig>;
 }): void {
-	const conf = { ...DEFAULT_CONFIG, ...config };
+	const conf: TableConfig = { ...DEFAULT_CONFIG, ...config };
 
 	// Apply takeEvery filtering (keep every Nth row) plus always keep rows containing any alert/warning cell (bgColor != white)
-	// N = conf.takeEvery (defaults to 3). If N <= 1, no sampling (all rows kept).
 	const samplingInterval = Math.max(1, conf.takeEvery || 1);
 	const workingRows =
 		samplingInterval > 1
@@ -56,7 +76,7 @@ export function createPDFDataTable({
 					if (onSeries) return true;
 					// Include any row with an alert/warning (detected by any cell having a non-white bgColor)
 					const hasAlert = [row.header, ...row.cells].some(
-						(c) => c.bgColor && c.bgColor !== '#ffffff'
+						(c) => (c as any).bgColor && (c as any).bgColor !== '#ffffff'
 					);
 					return hasAlert;
 				})
@@ -71,11 +91,10 @@ export function createPDFDataTable({
 		left: marginLeft
 	} = doc.page.margins;
 
-	// Calculate how many rows can actually fit on a page
+	// Page geometry
 	const pageHeight = doc.page.height;
 	const contentHeight = pageHeight - marginTop - marginBottom;
 
-	// Calculate how many columns can actually fit on a page
 	const pageWidth = doc.page.width;
 	const availableWidth = pageWidth - marginLeft - marginRight;
 	const columnWidth = [dataHeader.header, ...dataHeader.cells].reduce(
@@ -105,7 +124,7 @@ export function createPDFDataTable({
 
 			let availableHeight = pageHeight - startY - marginBottom - headerHeight;
 
-			// Insert a new page if we are at the bottom of the current page
+			// New page if at the bottom
 			if (firstColumn && availableHeight < 200) {
 				doc.addPage();
 				startY = marginTop;
@@ -151,11 +170,10 @@ function drawColumn({
 	let currentY = startY;
 
 	const borderColor = '#ccc';
-	const { fontSize: defaultFontSize, cellWidth, headerHeight, cellHeight } = config;
+	const { fontSize: defaultFontSize, cellWidth, headerHeight, cellHeight, timezone } = config;
 
-	// Draw header
+	// Header background
 	doc.fillColor('#e8e8e8').rect(startX, currentY, columnWidth, config.headerHeight).fill();
-
 	doc.strokeColor(borderColor).rect(startX, currentY, columnWidth, config.headerHeight).stroke();
 
 	const columns = [dataHeader.header, ...dataHeader.cells];
@@ -163,7 +181,7 @@ function drawColumn({
 	const getCellX = (index: number): number =>
 		startX + columns.slice(0, index).reduce((total, col) => total + (col.width ?? cellWidth), 0);
 
-	// Add value headers if we have data
+	// Column labels
 	if (dataRows.length > 0) {
 		columns.forEach(({ label, width = columnWidth, fontSize = defaultFontSize }, index) => {
 			doc
@@ -175,25 +193,54 @@ function drawColumn({
 
 	currentY += headerHeight;
 
-	// Draw data rows
+	// Data rows
 	dataRows.forEach(({ header, cells }, rowIndex) => {
 		const isEvenRow = rowIndex % 2 === 0;
 
-		// Row background
-		if (!isEvenRow) {
-			doc.fillColor('#f9f9f9').rect(startX, currentY, columnWidth, cellHeight).fill();
-		} else {
-			doc.fillColor('#ffffff').rect(startX, currentY, columnWidth, cellHeight).fill();
-		}
+		// Row background striping
+		doc
+			.fillColor(isEvenRow ? '#ffffff' : '#f9f9f9')
+			.rect(startX, currentY, columnWidth, cellHeight)
+			.fill();
 
 		// Row border
 		doc.strokeColor(borderColor).rect(startX, currentY, columnWidth, cellHeight).stroke();
 
-		[header, ...cells].forEach(({ label, shortLabel, bgColor }, cellIndex) => {
+		// ——— Compute first-column timestamp label in the requested timezone ———
+		const thisDt = parseHeaderInstant((header as any).value ?? (header as any).label, timezone);
+		const prevDt =
+			rowIndex > 0
+				? parseHeaderInstant(
+						(dataRows[rowIndex - 1].header as any).value ??
+							(dataRows[rowIndex - 1].header as any).label,
+						timezone
+					)
+				: null;
+
+		// Fallback: if parsing fails, use provided labels as-is
+		const thisDay = thisDt
+			? thisDt.toFormat('M/d')
+			: ((header as any).label?.split(' ')?.[0] ?? '');
+		const thisFull = thisDt ? thisDt.toFormat('M/d H:mm') : ((header as any).label ?? '');
+		const thisTime = thisDt
+			? thisDt.toFormat('H:mm')
+			: ((header as any).shortLabel ?? (header as any).label ?? '');
+
+		let computedHeaderLabel = thisFull;
+		if (rowIndex > 0) {
+			const prevDay = prevDt
+				? prevDt.toFormat('M/d')
+				: ((dataRows[rowIndex - 1].header as any).label?.split(' ')?.[0] ?? '');
+			if (prevDay === thisDay) computedHeaderLabel = thisTime; // same local day → short time
+		}
+		// ————————————————————————————————————————————————————————————————
+
+		// Render cells
+		[header, ...cells].forEach(({ label, bgColor }, cellIndex) => {
 			const cellX = getCellX(cellIndex);
 			const { width = cellWidth, fontSize = defaultFontSize } = columns[cellIndex];
 
-			// Apply background color if not white
+			// Alert background if provided
 			if (bgColor && bgColor !== '#ffffff') {
 				doc.fillColor(bgColor).rect(cellX, currentY, width, cellHeight).fill();
 			}
@@ -201,23 +248,13 @@ function drawColumn({
 			// Cell border
 			doc.strokeColor(borderColor).rect(cellX, currentY, width, cellHeight).stroke();
 
-			let labelText = label;
+			// Use computed time label for the first column; other columns use provided labels
+			const cellLabel = cellIndex === 0 ? computedHeaderLabel : (label ?? '');
 
-			// If the row is not the first one and a short label is provided, check if we can use it
-			if (rowIndex > 0 && shortLabel) {
-				const previousLabel = dataRows[rowIndex - 1]?.header.label;
-
-				// If the previous date is the same as the current date, use the short label
-				if (previousLabel.split(' ')[0] === label.split(' ')[0]) {
-					labelText = shortLabel;
-				}
-			}
-
-			// Value text
 			doc
 				.fillColor('#000')
 				.fontSize(fontSize - 1)
-				.text(labelText, cellX + 1, currentY + 2, { width: width - 5, align: 'right' });
+				.text(cellLabel, cellX + 1, currentY + 2, { width: width - 5, align: 'right' });
 		});
 
 		currentY += cellHeight;

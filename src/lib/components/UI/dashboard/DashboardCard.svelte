@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Icon } from 'svelte-ux';
+	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { goto } from '$app/navigation';
 	import { mdiAlert, mdiCheck, mdiClose, mdiClockOutline } from '@mdi/js';
 	import type { Location } from '$lib/models/Location';
@@ -24,14 +24,8 @@
 	}>();
 </script>
 
-<div
-	class="flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-gray-200 bg-gray-400/40 text-gray-900
-	shadow-lg dark:border-gray-700 dark:bg-[#1f2532] dark:bg-gray-800/80 dark:text-white dark:shadow-gray-900/20"
->
-	<div
-		class="relative flex min-h-[60px] flex-row bg-teal-800
-		text-yellow-300 dark:bg-[#2c3546] dark:text-yellow-300"
-	>
+<div class="card-surface flex h-full w-full flex-col overflow-hidden text-gray-900 dark:text-white">
+	<div class="relative flex min-h-[60px] flex-row bg-teal-800 text-yellow-300 dark:bg-[#2c3546]">
 		<!-- <div class="pt-12"> -->
 		<!-- Icon-only status indicator with color based on state -->
 		<!-- <div class="absolute top-3 left-3 flex h-10 w-10 items-center justify-center bg-white/20 rounded-full shadow-lg dark:bg-gray-800">

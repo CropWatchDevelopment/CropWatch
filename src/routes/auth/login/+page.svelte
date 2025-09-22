@@ -89,10 +89,9 @@
 			}
 
 			// Immediately redirect to dashboard - no delay, no success message
-			// window.location.href = '/app/dashboard';
 			successMessage = $_('Login successful! Redirecting to dashboard...');
 			success(successMessage);
-			goto('/app/dashboard');
+			goto('/');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Login failed. Please try again.';
 			loading = false;
@@ -217,8 +216,9 @@
 
 					<div>
 						<button
+							id="login-button"
 							type="submit"
-							class="bg-primary hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+							class="bg-primary hover:bg-primary-hover w-full rounded-md border px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-20"
 							disabled={submitting}
 						>
 							{submitting ? $_('Logging in...') : `🔑 ${$_('Login')}`}

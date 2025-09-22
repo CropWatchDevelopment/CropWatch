@@ -15,8 +15,8 @@ export const load: PageServerLoad = async ({ url, params, locals: { supabase } }
 
 		const startParam = url.searchParams.get('start');
 		const endParam = url.searchParams.get('end');
-		let startDate = url.searchParams.get('start');
-		let endDate = url.searchParams.get('end');
+		const timezoneParam = url.searchParams.get('timezone') || 'UTC';
+		let startDate: Date, endDate: Date;
 		if (!startParam || !endParam) {
 			startDate = DateTime.now().minus({ days: 1 }).startOf('day').toJSDate();
 			endDate = DateTime.now().endOf('day').toJSDate();
@@ -27,7 +27,12 @@ export const load: PageServerLoad = async ({ url, params, locals: { supabase } }
 
 		// Don’t `await` the promise, stream the data instead
 		const latestData = deviceDataService.getLatestDeviceData(devEui);
-		const historicalData = deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate);
+		const historicalData = deviceDataService.getDeviceDataByDateRange(
+			devEui,
+			startDate,
+			endDate,
+			timezoneParam
+		);
 
 		return {
 			latestData, // streamed

@@ -579,8 +579,10 @@ export type Database = {
 				Row: {
 					ai_provider: string | null;
 					battery_changed_at: string | null;
+					battery_level: number | null;
 					dev_eui: string;
 					installed_at: string | null;
+					last_data_updated_at: string | null;
 					lat: number | null;
 					location_id: number | null;
 					long: number | null;
@@ -595,8 +597,10 @@ export type Database = {
 				Insert: {
 					ai_provider?: string | null;
 					battery_changed_at?: string | null;
+					battery_level?: number | null;
 					dev_eui: string;
 					installed_at?: string | null;
+					last_data_updated_at?: string | null;
 					lat?: number | null;
 					location_id?: number | null;
 					long?: number | null;
@@ -611,8 +615,10 @@ export type Database = {
 				Update: {
 					ai_provider?: string | null;
 					battery_changed_at?: string | null;
+					battery_level?: number | null;
 					dev_eui?: string;
 					installed_at?: string | null;
+					last_data_updated_at?: string | null;
 					lat?: number | null;
 					location_id?: number | null;
 					long?: number | null;
@@ -1057,6 +1063,7 @@ export type Database = {
 					created_at: string;
 					dev_eui: string;
 					id: number;
+					line_number: number | null;
 					people_count: number;
 					traffic_hour: string | null;
 					truck_count: number;
@@ -1068,6 +1075,7 @@ export type Database = {
 					created_at?: string;
 					dev_eui: string;
 					id?: number;
+					line_number?: number | null;
 					people_count?: number;
 					traffic_hour?: string | null;
 					truck_count?: number;
@@ -1079,6 +1087,7 @@ export type Database = {
 					created_at?: string;
 					dev_eui?: string;
 					id?: number;
+					line_number?: number | null;
 					people_count?: number;
 					traffic_hour?: string | null;
 					truck_count?: number;

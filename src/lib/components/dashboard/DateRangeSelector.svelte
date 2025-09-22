@@ -1,9 +1,11 @@
 <script lang="ts">
 	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import TextInput from '$lib/components/UI/form/TextInput.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
+	import { DateRangePicker } from 'bits-ui';
+	import { CalendarDate, CalendarDateTime } from '@internationalized/date';
 	import { DateTime } from 'luxon';
 	import { _ } from 'svelte-i18n';
+	import type { DateRange } from 'bits-ui';
 
 	type Props = {
 		startDateInput: Date;
@@ -21,21 +23,22 @@
 		onDateChange
 	}: Props = $props();
 
-	// Helpers to format/parse dates for <input type="date"> in LOCAL time
-	function toInputDateString(d: Date): string {
-		const y = d.getFullYear();
-		const m = String(d.getMonth() + 1).padStart(2, '0');
-		const day = String(d.getDate()).padStart(2, '0');
-		return `${y}-${m}-${day}`;
-	}
-	function parseInputDateLocal(value: string): Date | null {
-		if (!value) return null;
-		const [y, m, d] = value.split('-').map(Number);
-		if (!y || !m || !d) return null;
-		return new Date(y, m - 1, d); // local midnight
+	// Helper functions to convert between Date and @internationalized/date
+	function dateToCalendarDate(date: Date): CalendarDate {
+		return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
 	}
 
-	// Ensure end defaults to end-of-today and start to 24h before end (only once at initial mount)
+	function calendarDateToDate(calendarDate: CalendarDate, setToEndOfDay = false): Date {
+		const date = new Date(calendarDate.year, calendarDate.month - 1, calendarDate.day);
+		if (setToEndOfDay) {
+			date.setHours(23, 59, 59, 999);
+		} else {
+			date.setHours(0, 0, 0, 0);
+		}
+		return date;
+	}
+
+	// Initialize dates - ensure end defaults to end-of-today and start to 24h before end
 	let __initialized = $state(false);
 	$effect(() => {
 		if (!__initialized) {
@@ -47,9 +50,28 @@
 		}
 	});
 
-	let startDateInputString = $derived(toInputDateString(startDateInput));
-	let endDateInputString = $derived(toInputDateString(endDateInput));
-	const todayString = $derived(toInputDateString(new Date()));
+	// Convert Date objects to DateRange for Bits UI
+	let dateRangeValue = $state<DateRange | undefined>(undefined);
+
+	// Sync the DateRange value with Date props
+	$effect(() => {
+		if (startDateInput && endDateInput) {
+			dateRangeValue = {
+				start: dateToCalendarDate(startDateInput),
+				end: dateToCalendarDate(endDateInput)
+			};
+		}
+	});
+
+	// Handle date range changes from Bits UI
+	function handleValueChange(newValue: DateRange | undefined) {
+		if (newValue?.start && newValue?.end) {
+			startDateInput = calendarDateToDate(newValue.start, false);
+			endDateInput = calendarDateToDate(newValue.end, true);
+			error = undefined;
+			onDateChange();
+		}
+	}
 
 	const handleDateChange = () => {
 		if (startDateInput && endDateInput) {
@@ -64,13 +86,11 @@
 </script>
 
 <div class="flex flex-nowrap items-end justify-between gap-2">
-	<!-- Date range selector -->
-	<!-- <div class="flex flex-wrap items-end gap-2"> -->
+	<!-- Previous date range button -->
 	<div class="sm:order-1">
 		<Button
 			variant="tertiary"
 			class="h-[45px] w-[25px]"
-			iconic
 			onclick={() => {
 				let dayDiff = DateTime.fromJSDate(endDateInput).diff(
 					DateTime.fromJSDate(startDateInput),
@@ -84,81 +104,124 @@
 			<MaterialIcon name="fast_rewind" />
 		</Button>
 	</div>
-	<!-- Date inputs -->
+
+	<!-- Bits UI DateRangePicker -->
 	<div class="flex w-full flex-col sm:order-2">
-		<label for="startDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
-			{$_('Start Date:')}
-		</label>
-		<TextInput
-			id="startDate"
-			type="date"
-			bind:value={startDateInputString}
-			onchange={() => {
-				const parsed = parseInputDateLocal(startDateInputString);
+		<DateRangePicker.Root
+			bind:value={dateRangeValue}
+			onValueChange={handleValueChange}
+			weekdayFormat="short"
+			fixedWeeks={true}
+			pagedNavigation={true}
+			maxValue={dateToCalendarDate(new Date())}
+			class="flex w-full flex-col gap-1.5"
+		>
+			<!-- <DateRangePicker.Label class="text-xs text-gray-600 dark:text-gray-400">
+				{$_('Date Range:')}
+			</DateRangePicker.Label> -->
 
-				if (!parsed) {
-					error = 'Invalid start date format.';
-					return;
-				}
+			<div
+				class="relative flex w-full rounded border border-gray-300 bg-white px-2 py-1 text-lg text-gray-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+			>
+				{#each ['start', 'end'] as const as type (type)}
+					<DateRangePicker.Input {type}>
+						{#snippet children({ segments })}
+							{#each segments as { part, value }, i (part + i)}
+								<div class="inline-block select-none">
+									{#if part === 'literal'}
+										<DateRangePicker.Segment {part} class="p-1 text-gray-500 dark:text-gray-400">
+											{value}
+										</DateRangePicker.Segment>
+									{:else}
+										<DateRangePicker.Segment
+											{part}
+											class="rounded px-1 py-1 hover:bg-gray-100 focus:bg-gray-100 focus:text-gray-900 focus-visible:ring-0! focus-visible:ring-offset-0! aria-[valuetext=Empty]:text-gray-400 dark:hover:bg-zinc-700 dark:focus:bg-zinc-700 dark:focus:text-white dark:aria-[valuetext=Empty]:text-gray-500"
+										>
+											{value}
+										</DateRangePicker.Segment>
+									{/if}
+								</div>
+							{/each}
+						{/snippet}
+					</DateRangePicker.Input>
+					{#if type === 'start'}
+						<div aria-hidden="true" class="px-1 text-gray-500 dark:text-gray-400">–</div>
+					{/if}
+				{/each}
 
-				// Normalize start to start-of-day
-				parsed.setHours(0, 0, 0, 0);
-				startDateInput = parsed;
+				<DateRangePicker.Trigger
+					class="ml-auto inline-flex size-8 items-center justify-center rounded text-gray-600 transition-all hover:bg-gray-100 active:bg-gray-200 dark:text-gray-400 dark:hover:bg-zinc-700 dark:active:bg-zinc-600"
+				>
+					<MaterialIcon name="calendar_month" />
+				</DateRangePicker.Trigger>
+			</div>
 
-				// If start date is after end date, align end to end-of-day of start
-				if (startDateInput > endDateInput) {
-					const end = new Date(startDateInput);
-					end.setHours(23, 59, 59, 999);
-					endDateInput = end;
-				}
+			<DateRangePicker.Content sideOffset={6} class="z-50">
+				<DateRangePicker.Calendar
+					class="mt-2 rounded-lg border border-gray-300 bg-white p-4 shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
+				>
+					{#snippet children({ months, weekdays })}
+						<DateRangePicker.Header class="mb-4 flex items-center justify-between">
+							<DateRangePicker.PrevButton
+								class="inline-flex size-8 items-center justify-center rounded transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+							>
+								<MaterialIcon name="chevron_left" />
+							</DateRangePicker.PrevButton>
+							<DateRangePicker.Heading class="text-sm font-medium text-gray-900 dark:text-white" />
+							<DateRangePicker.NextButton
+								class="inline-flex size-8 items-center justify-center rounded transition-all hover:bg-gray-100 dark:hover:bg-zinc-700"
+							>
+								<MaterialIcon name="chevron_right" />
+							</DateRangePicker.NextButton>
+						</DateRangePicker.Header>
 
-				handleDateChange();
-			}}
-			max={endDateInputString}
-			class="relative flex w-full rounded border border-gray-300 bg-white px-2 py-2 pr-10 text-sm text-xl text-gray-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
-		/>
+						<div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+							{#each months as month (month.value)}
+								<DateRangePicker.Grid class="w-full border-collapse space-y-1 select-none">
+									<DateRangePicker.GridHead>
+										<DateRangePicker.GridRow class="mb-1 flex w-full justify-between">
+											{#each weekdays as day (day)}
+												<DateRangePicker.HeadCell
+													class="w-8 rounded text-center text-xs font-normal! text-gray-600 dark:text-gray-400"
+												>
+													<div>{day.slice(0, 2)}</div>
+												</DateRangePicker.HeadCell>
+											{/each}
+										</DateRangePicker.GridRow>
+									</DateRangePicker.GridHead>
+									<DateRangePicker.GridBody>
+										{#each month.weeks as weekDates (weekDates)}
+											<DateRangePicker.GridRow class="flex w-full">
+												{#each weekDates as date (date)}
+													<DateRangePicker.Cell
+														{date}
+														month={month.value}
+														class="relative m-0 size-8 overflow-visible p-0! text-center text-sm focus-within:relative focus-within:z-20"
+													>
+														<DateRangePicker.Day
+															class="size-8 rounded border border-transparent text-xs font-normal text-gray-900 transition-all hover:border-gray-900 focus-visible:ring-1 focus-visible:ring-gray-900 focus-visible:ring-offset-1 data-disabled:pointer-events-none data-disabled:text-gray-400 data-highlighted:rounded-none data-highlighted:bg-gray-100 data-outside-month:pointer-events-none data-selected:bg-gray-100 data-selected:font-medium data-selected:text-gray-900 data-selection-end:rounded data-selection-end:bg-gray-900 data-selection-end:font-medium data-selection-end:text-white data-selection-start:rounded data-selection-start:bg-gray-900 data-selection-start:font-medium data-selection-start:text-white data-selection-start:focus-visible:ring-2 data-selection-start:focus-visible:ring-offset-2! data-unavailable:text-gray-400 data-unavailable:line-through dark:text-white dark:hover:border-white dark:focus-visible:ring-white! dark:data-disabled:text-gray-500 dark:data-highlighted:bg-zinc-700 dark:data-selected:bg-zinc-700 dark:data-selected:text-white dark:data-selection-end:bg-white dark:data-selection-end:text-gray-900 dark:data-selection-start:bg-white dark:data-selection-start:text-gray-900 dark:data-unavailable:text-gray-500 data-selected:[&:not([data-selection-start])]:[&:not([data-selection-end])]:rounded-none data-selected:[&:not([data-selection-start])]:[&:not([data-selection-end])]:focus-visible:ring-0!"
+														>
+															{date.day}
+														</DateRangePicker.Day>
+													</DateRangePicker.Cell>
+												{/each}
+											</DateRangePicker.GridRow>
+										{/each}
+									</DateRangePicker.GridBody>
+								</DateRangePicker.Grid>
+							{/each}
+						</div>
+					{/snippet}
+				</DateRangePicker.Calendar>
+			</DateRangePicker.Content>
+		</DateRangePicker.Root>
 	</div>
-	<div class="flex w-full flex-col sm:order-3">
-		<label for="endDate" class="mb-1 text-xs text-gray-600 dark:text-gray-400">
-			{$_('End Date:')}
-		</label>
-		<TextInput
-			id="endDate"
-			type="date"
-			bind:value={endDateInputString}
-			onchange={() => {
-				const parsed = parseInputDateLocal(endDateInputString);
-				if (!parsed) {
-					return;
-				}
-				// Normalize end to end-of-day
-				parsed.setHours(23, 59, 59, 999);
 
-				// Cap to today end-of-day
-				const todayEnd = new Date();
-				todayEnd.setHours(23, 59, 59, 999);
-				endDateInput = parsed > todayEnd ? todayEnd : parsed;
-
-				// If end before start, align start to start-of-day of end
-				if (endDateInput < startDateInput) {
-					const start = new Date(endDateInput);
-					start.setHours(0, 0, 0, 0);
-					startDateInput = start;
-				}
-
-				handleDateChange();
-			}}
-			min={startDateInputString}
-			max={todayString}
-			class="relative flex w-full rounded border border-gray-300 bg-white px-2 py-2 pr-10 text-sm text-xl text-gray-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
-		/>
-	</div>
-
+	<!-- Next date range button -->
 	<div class="sm:order-4">
 		<Button
-			class="h-[45px] w-[25px]"
+			class="mr-2 h-[45px] w-[25px]"
 			variant="tertiary"
-			iconic
 			disabled={endDateInput >= new Date(new Date().setHours(23, 59, 59, 999))}
 			onclick={() => {
 				let dayDiff = DateTime.fromJSDate(endDateInput).diff(
@@ -173,8 +236,8 @@
 			<MaterialIcon name="fast_forward" />
 		</Button>
 	</div>
+
 	{#if error}
-		<p class="mt-2 text-sm text-red-600">{error}</p>
+		<p class="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
 	{/if}
-	<!-- </div> -->
 </div>

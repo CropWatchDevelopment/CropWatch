@@ -54,6 +54,7 @@ export const strings = {
 	bicycle_count: 'Bicycles',
 	truck_count: 'Trucks',
 	bus_count: 'Buses',
+	motorcycle_count: 'Motorcycles',
 	'Data Date Range': 'Data Date Range',
 	data_date_range: 'Data Date Range',
 	// CSVDownloadButton translations
@@ -344,6 +345,9 @@ export const strings = {
 
 	// PDF report content
 	device_report: 'Device Report',
+	device_report_weekly: 'Weekly',
+	device_report_monthly: 'Monthly',
+	report_date_range: 'Report Date Range',
 	generated_at: 'Created At',
 	generated_by: 'Created By',
 	installed_at: 'Installed at',

@@ -4,9 +4,9 @@
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { nameToNotation } from '$lib/utilities/NameToNotation';
 	import { formatNumber } from '$lib/utilities/stats';
-	import { DurationUnits } from '@layerstack/utils';
 	import { _ } from 'svelte-i18n';
-	import { Duration } from 'svelte-ux';
+	import Duration from '$lib/components/ui/base/Duration.svelte';
+	import { DurationUnits } from '$lib/utilities/duration';
 
 	// Extend the Device type to include latestData
 	interface DeviceWithLatestData extends Device {
@@ -66,7 +66,7 @@
 				<div class="py-1 pr-1">
 					<div class="flex items-center">
 						<div class="flex min-w-[120px] items-center">
-							<span class="mr-1.5 text-lg text-gray-500 dark:text-gray-400">
+							<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400">
 								{nameToEmoji(dataPointKey)}
 							</span>
 							<span class="text-sm text-gray-600 dark:text-gray-400">
@@ -76,9 +76,9 @@
 						<span class="flex-grow"></span>
 
 						{#if dataPointKey === 'created_at'}
-							<p class="flex flex-row align-bottom text-xs text-gray-500 dark:text-gray-400">
+							<p class="flex flex-row align-bottom text-xs text-gray-600 dark:text-gray-400">
 								<Duration
-									start={device.latestData.created_at}
+									start={device.last_data_updated_at ?? device.latestData.created_at}
 									totalUnits={2}
 									minUnits={DurationUnits.Second}
 								/>

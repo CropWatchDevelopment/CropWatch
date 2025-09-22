@@ -12,6 +12,7 @@
 	import type { ActionResult } from '@sveltejs/kit';
 	import { untrack } from 'svelte';
 	import { _ } from 'svelte-i18n';
+	import CopyButton from '$lib/components/CopyButton.svelte';
 
 	let { data, form } = $props();
 
@@ -26,13 +27,15 @@
 	// Form state
 	let reportName = $state('');
 	let isSubmitting = $state(false);
+	let showErrors = $state(false);
+	let formEl: HTMLFormElement;
 
 	// Alert points state - using $state for deep reactivity
 	let alertPoints = $state<
 		Array<{
 			id: string;
 			name: string;
-			operator: '=' | '>' | '<' | 'range';
+			operator: '=' | '>' | '<' | 'range' | 'null'; // Allow both
 			value?: number;
 			min?: number;
 			max?: number;
@@ -77,13 +80,16 @@
 						id: point.id?.toString() || crypto.randomUUID(),
 						name: point.name || '',
 						operator:
-							point.operator === 'range'
-								? 'range'
-								: point.operator || ('=' as '=' | '>' | '<' | 'range'),
+							// Normalize null values to 'null' string
+							point.operator === null || point.operator === 'null'
+								? 'null'
+								: point.operator === 'range'
+									? 'range'
+									: point.operator || ('=' as '=' | '>' | '<' | 'range'),
 						data_point_key: point.data_point_key || '',
-						min: point.min || undefined,
-						max: point.max || undefined,
-						value: point.value || undefined,
+						min: point.min ?? undefined,
+						max: point.max ?? undefined,
+						value: point.value ?? undefined,
 						hex_color: point.hex_color || '#3B82F6'
 					}))
 				);
@@ -194,7 +200,13 @@
 		const ranges: Array<{ start: number; end: number; name: string }> = [];
 
 		alertPoints.forEach((point) => {
-			// Ensure values are numbers
+			debugger;
+			// Exclude Display Only points from validation - check for both 'null' string and null value
+			if (point.operator === 'null' || point.operator === null || !point.operator) {
+				console.log(`Skipping validation for Display Only point: ${point.name}`);
+				return;
+			}
+
 			const value = Number(point.value);
 			const min = Number(point.min);
 			const max = Number(point.max);
@@ -230,7 +242,7 @@
 				}
 			}
 
-			ranges.push({ start, end, name: point.name });
+			// ranges.push({ start, end, name: point.name });
 		});
 	}
 
@@ -248,7 +260,19 @@
 	const numberLinePoints = $derived(
 		alertPoints
 			.filter((point) => {
-				// Filter out points with invalid values
+				// Exclude Display Only points
+				if (point.operator === 'null' || point.operator === null || !point.operator) {
+					return false;
+				}
+				// Only allow valid operators for NumberLine
+				return (
+					point.operator === '=' ||
+					point.operator === '>' ||
+					point.operator === '<' ||
+					point.operator === 'range'
+				);
+			})
+			.filter((point) => {
 				if (point.operator === '=') {
 					return !isNaN(Number(point.value));
 				} else if (point.operator === 'range') {
@@ -259,11 +283,14 @@
 				return false;
 			})
 			.map((point) => ({
-				...point,
+				id: point.id,
+				name: point.name,
+				operator: point.operator as '=' | '>' | '<' | 'range',
 				value: point.value != null ? Number(point.value) : undefined,
 				min: point.min != null ? Number(point.min) : undefined,
 				max: point.max != null ? Number(point.max) : undefined,
-				// Normalize color property for NumberLine component
+				data_point_key: point.data_point_key,
+				hex_color: point.hex_color,
 				color: point.hex_color
 			}))
 	);
@@ -392,23 +419,41 @@
 						<div class="rounded-md border border-gray-200 p-4 dark:border-gray-600">
 							<div class="mb-3 flex items-start justify-between">
 								<div class="flex items-center space-x-2">
-									<input
-										type="color"
-										style="width: 60px; height: 48px; border-radius: 55px;"
-										bind:value={point.hex_color}
-									/>
-									<!-- <div  style="background-color: {point.color}"></div> -->
-									<span class="font-medium">Alert Point {i + 1}</span>
-									<Select
-										id="alert-point-data-key-{i}"
-										bind:value={point.data_point_key}
-										class="w-full"
-									>
-										<option value="" disabled>Select Data Key</option>
-										{#each dataKeys as key}
-											<option value={key}>{$_(key)}</option>
-										{/each}
-									</Select>
+									<div class="flex flex-col">
+										<div class="flex flex-row items-center">
+											<div class="mr-4 flex flex-col">
+												<input
+													type="color"
+													style="width: 60px; height: 48px; border-radius: 55px;"
+													bind:value={point.hex_color}
+													disabled={point.operator === null}
+												/>
+												<div class="flex flex-row">
+													<input
+														type="text"
+														style="width: 60px; height: 48px; border-radius: 55px;"
+														bind:value={point.hex_color}
+														disabled={point.operator === null}
+													/>
+													<CopyButton value={point.hex_color} />
+												</div>
+											</div>
+											<!-- <div  style="background-color: {point.color}"></div> -->
+											<span class="p-2 font-medium" style="min-width: 200px"
+												>Alert Point {i + 1}</span
+											>
+											<Select
+												id="alert-point-data-key-{i}"
+												bind:value={point.data_point_key}
+												class="w-full"
+											>
+												<option value="" disabled>Select Data Key</option>
+												{#each dataKeys as key}
+													<option value={key}>{$_(key)}</option>
+												{/each}
+											</Select>
+										</div>
+									</div>
 								</div>
 								<Button
 									type="button"
@@ -448,12 +493,15 @@
 										id="alert-point-condition-{i}"
 										bind:value={point.operator}
 										onchange={() => {
-											point.operator === null;
-											point.value = undefined;
+											if (point.operator === 'null') {
+												point.value = undefined;
+												point.min = undefined;
+												point.max = undefined;
+											}
 										}}
 										class="w-full"
 									>
-										<option value="null" selected>Display Only</option>
+										<option value="null">Display Only</option>
 										<option value="=">Equals (=)</option>
 										<option value=">">Greater than (&gt;)</option>
 										<option value="<">Less than (&lt;)</option>
@@ -474,7 +522,9 @@
 										<TextInput
 											id="alert-point-value-{i}"
 											type="number"
+											step="0.01"
 											bind:value={point.value}
+											required
 											placeholder="Enter value"
 											class="w-full"
 										/>
@@ -490,7 +540,9 @@
 										<TextInput
 											id="alert-point-min-{i}"
 											type="number"
+											step="0.01"
 											bind:value={point.min}
+											required
 											placeholder="Min value"
 											class="w-full"
 										/>
@@ -505,7 +557,9 @@
 										<TextInput
 											id="alert-point-max-{i}"
 											type="number"
+											step="0.01"
 											bind:value={point.max}
+											required
 											placeholder="Max value"
 											class="w-full"
 										/>

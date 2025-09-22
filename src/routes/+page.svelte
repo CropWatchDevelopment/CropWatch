@@ -2,15 +2,35 @@
 	import { onMount } from 'svelte';
 	import Chart from 'chart.js/auto';
 	import { getDarkMode } from '$lib/components/theme/theme.svelte';
+	import { DateTime } from 'luxon';
+	import {
+		getErrorClasses,
+		getErrorIcon,
+		getErrorIconColor,
+		getErrorSeverity
+	} from './overviewError.svelte.js';
+
+	let { data } = $props();
 
 	// Reactive variables
-	let connectedDevices = $state(247);
-	let dataReceived = $state('1.2TB');
-	let successRate = $state(99.7);
-	let activeAlerts = $state(3);
+	let connectedDevices = $state(data.activeDeviceCount || 0);
+	let inactiveDevices = $state(data.inactiveDeviceCount || 0);
+	let idleDevices = $state(data.idleDeviceCount || 0);
+	let totalAlerts = $state(data.totalAlerts || 0);
+
+	// each device sends 8 bytes every 10 minutes on average
+	// so data received in MB per hour = (8 * connectedDevices) / (10
+	let dataReceived = $state(
+		((((8 * connectedDevices) / (10 / 60)) * DateTime.now().hour) / 1024).toFixed(2) + ' MB'
+	);
+	let successRate = $state(
+		((data.activeDeviceCount / data.totalDeviceCount) * 100).toFixed(1) || 0
+	);
+	let activeAlerts = $state(data.activeAlerts || 0);
 	let alertQuota = $state(67);
 	let throughputChart = $state();
 	let deviceChart = $state();
+	let error = $state(data.error || null);
 
 	// Gateway data
 	let gatewaysOnline = $state(5);
@@ -24,28 +44,40 @@
 		{ id: 'GW-006', status: 'UP', online: true }
 	]);
 
-	// Battery levels
-	let batteryLevels = $state([
-		{ name: 'Sensor Group A', level: 85, color: 'bg-green-500' },
-		{ name: 'Sensor Group B', level: 45, color: 'bg-yellow-500' },
-		{ name: 'Sensor Group C', level: 92, color: 'bg-green-500' },
-		{ name: 'Sensor Group D', level: 12, color: 'bg-red-500' }
-	]);
+	let batteryLevels = $state(
+		(data.lowBatteryDevices || []).map((dev) => ({
+			name: dev.name,
+			level: dev.battery_level,
+			color:
+				dev.battery_level > 75
+					? 'bg-green-500'
+					: dev.battery_level > 40
+						? 'bg-yellow-500'
+						: 'bg-red-500'
+		}))
+	);
 
-	// Alerts data
-	let recentAlerts = $state([
-		{ message: 'High CPU usage on Device #45', time: '2 minutes ago', severity: 'yellow' },
-		{ message: 'Temperature sensor offline', time: '15 minutes ago', severity: 'orange' },
-		{ message: 'Network latency increase', time: '1 hour ago', severity: 'blue' }
-	]);
+	let recentAlerts = $state(data.recentAlerts || []);
 
 	// Scheduled reports
-	let scheduledReports = $state([
-		{ name: 'Daily Analytics', time: 'Today at 11:30 PM', color: 'blue' },
-		{ name: 'Weekly Summary', time: 'Tomorrow at 6:00 AM', color: 'purple' },
-		{ name: 'Device Health Report', time: 'Jul 25 at 9:00 AM', color: 'green' },
-		{ name: 'Monthly Statistics', time: 'Jul 31 at 11:59 PM', color: 'indigo' }
-	]);
+	// let scheduledReports = $state([
+	// 	{ name: 'Daily Analytics', time: 'Today at 11:30 PM', color: 'blue' },
+	// 	{ name: 'Weekly Summary', time: 'Tomorrow at 6:00 AM', color: 'purple' },
+	// 	{ name: 'Device Health Report', time: 'Jul 25 at 9:00 AM', color: 'green' },
+	// 	{ name: 'Monthly Statistics', time: 'Jul 31 at 11:59 PM', color: 'indigo' }
+	// ]);
+
+	let scheduledReports = $state(
+		(data.reports || []).map((report) => ({
+			name: report.name,
+			time: report.next_run ? report.next_run.toLocaleString(DateTime.DATETIME_MED) : 'Unknown',
+			color: ['blue', 'purple', 'green', 'indigo'][Math.floor(Math.random() * 4)]
+		}))
+	);
+
+	function dismissError() {
+		error = null;
+	}
 
 	function initializeCharts() {
 		const isDark = getDarkMode();
@@ -101,7 +133,7 @@
 					labels: ['Online', 'Idle', 'Error', 'Offline'],
 					datasets: [
 						{
-							data: [214, 25, 5, 3],
+							data: [connectedDevices, idleDevices, 5, inactiveDevices],
 							backgroundColor: [
 								'rgb(34, 197, 94)',
 								'rgb(59, 130, 246)',
@@ -172,22 +204,22 @@
 		const currentTheme = getDarkMode();
 
 		// Destroy existing charts first
-		if (throughputChart) throughputChart.destroy();
-		if (deviceChart) deviceChart.destroy();
+		// if (throughputChart) throughputChart.destroy();
+		// if (deviceChart) deviceChart.destroy();
 
 		// Re-initialize with new theme
 		initializeCharts();
 
 		// Simulate real-time updates
-		const interval = setInterval(() => {
-			const variation = Math.floor(Math.random() * 5) - 2;
-			connectedDevices = Math.max(0, connectedDevices + variation);
-		}, 5000);
+		// const interval = setInterval(() => {
+		// 	const variation = Math.floor(Math.random() * 5) - 2;
+		// 	connectedDevices = Math.max(0, connectedDevices + variation);
+		// }, 5000);
 
 		return () => {
-			clearInterval(interval);
-			if (throughputChart) throughputChart.destroy();
-			if (deviceChart) deviceChart.destroy();
+			// clearInterval(interval);
+			// if (throughputChart) throughputChart.destroy();
+			// if (deviceChart) deviceChart.destroy();
 		};
 	});
 </script>
@@ -200,6 +232,149 @@
 		rel="stylesheet"
 	/>
 </svelte:head>
+
+{#if error}
+	{@const severity = getErrorSeverity(error)}
+	<div class="animate-in slide-in-from-top-2 mb-6 duration-300">
+		<div class="rounded-xl border p-6 {getErrorClasses(severity)} shadow-lg">
+			<div class="flex items-start justify-between">
+				<div class="flex items-start space-x-4">
+					<!-- Error Icon -->
+					<div class="flex-shrink-0">
+						<svg
+							class="h-6 w-6 {getErrorIconColor(severity)}"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							{@html getErrorIcon(severity)}
+						</svg>
+					</div>
+
+					<!-- Error Content -->
+					<div class="min-w-0 flex-1">
+						<div class="mb-2 flex items-center space-x-2">
+							<h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+								{severity === 'high'
+									? 'Critical Error'
+									: severity === 'medium'
+										? 'Warning'
+										: 'Information'}
+							</h3>
+							{#if error.code}
+								<span
+									class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+								>
+									{error.code}
+								</span>
+							{/if}
+						</div>
+
+						<!-- Error Details (collapsible) -->
+						{#if error.details || error.hint || error.status}
+							<details class="mt-3">
+								<summary
+									class="cursor-pointer text-sm font-medium text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+								>
+									Show technical details
+								</summary>
+								<div class="mt-3 rounded-lg border bg-gray-100 p-3 dark:bg-gray-700">
+									<dl class="space-y-2">
+										{#if error.status}
+											<div>
+												<dt class="text-xs font-medium text-gray-500 dark:text-gray-400">
+													Status:
+												</dt>
+												<dd class="font-mono text-sm text-gray-900 dark:text-white">
+													{error.status}
+												</dd>
+											</div>
+										{/if}
+										{#if error.details}
+											<div>
+												<dt class="text-xs font-medium text-gray-500 dark:text-gray-400">
+													Details:
+												</dt>
+												<dd class="text-sm text-gray-900 dark:text-white">{error.details}</dd>
+											</div>
+										{/if}
+										{#if error.hint}
+											<div>
+												<dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Hint:</dt>
+												<dd class="text-sm text-gray-900 dark:text-white">{error.hint}</dd>
+											</div>
+										{/if}
+										{#if error.code}
+											<div>
+												<dt class="text-xs font-medium text-gray-500 dark:text-gray-400">
+													Error Code:
+												</dt>
+												<dd class="font-mono text-sm text-gray-900 dark:text-white">
+													{error.code}
+												</dd>
+											</div>
+										{/if}
+									</dl>
+								</div>
+							</details>
+						{/if}
+
+						<!-- Action Buttons -->
+						<div class="mt-4 flex space-x-3">
+							{#if severity === 'high'}
+								<button
+									class="inline-flex items-center rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm leading-4 font-medium text-red-700 shadow-sm transition-colors hover:bg-red-100 dark:border-red-600 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+									onclick={() => location.reload()}
+								>
+									<svg
+										class="mr-2 -ml-0.5 h-4 w-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+										/>
+									</svg>
+									Retry
+								</button>
+							{/if}
+							<button
+								class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-4 font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+								onclick={dismissError}
+							>
+								Dismiss
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Close Button -->
+				<button
+					class="ml-4 flex-shrink-0 rounded-md p-1 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
+					onclick={dismissError}
+				>
+					<svg
+						class="h-5 w-5 text-gray-400 dark:text-gray-500"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <div class="bg-background text-text min-h-screen transition-colors">
 	<div class="w-full px-4 py-4 sm:px-6 lg:px-8">
@@ -217,6 +392,7 @@
 					<span class="text-sm text-gray-600 dark:text-gray-300">System Online</span>
 				</div>
 				<button
+					onclick={() => (location.href = '/app/dashboard')}
 					class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
 				>
 					Dashboard →
@@ -324,7 +500,7 @@
 					<div>
 						<p class="text-sm text-gray-500 dark:text-gray-400">Active Alerts</p>
 						<p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{activeAlerts}</p>
-						<p class="text-xs text-yellow-500 dark:text-yellow-300">2 medium, 1 low</p>
+						<p class="text-xs text-yellow-500 dark:text-yellow-300">{totalAlerts} total</p>
 					</div>
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-500/20"
@@ -352,7 +528,7 @@
 			>
 				<div class="flex items-center justify-between">
 					<div class="flex-1">
-						<p class="text-sm text-gray-500 dark:text-gray-400">Alert Messages</p>
+						<p class="text-sm text-gray-500 dark:text-gray-400">Notifications</p>
 						<p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
 							{alertQuota}<span class="text-lg text-gray-400 dark:text-gray-500">/100</span>
 						</p>
@@ -428,9 +604,9 @@
 								alert.severity
 							)} rounded-lg border-l-4"
 						>
-							<div class="h-2 w-2 {getSeverityDotColor(alert.severity)} rounded-full"></div>
+							<!-- <div class="h-2 w-2 {getSeverityDotColor(alert.severity)} rounded-full"></div> -->
 							<div class="flex-1">
-								<p class="text-sm font-medium text-gray-900 dark:text-white">{alert.message}</p>
+								<p class="text-sm font-medium text-gray-900 dark:text-white">{alert.device_name}</p>
 								<p class="text-xs text-gray-500 dark:text-gray-400">{alert.time}</p>
 							</div>
 						</div>
@@ -453,7 +629,6 @@
 							<div class="h-2 w-2 {getReportDotColor(report.color)} rounded-full"></div>
 							<div class="flex-1">
 								<p class="text-sm font-medium text-gray-900 dark:text-white">{report.name}</p>
-								<p class="text-xs text-gray-500 dark:text-gray-400">{report.time}</p>
 							</div>
 						</div>
 					{/each}

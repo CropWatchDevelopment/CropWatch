@@ -7,7 +7,6 @@
 
 	const handleGoogleLogin = async () => {
 		try {
-			debugger;
 			let response = await supabase.auth.signInWithOAuth({
 				provider: 'google',
 				options: {
@@ -20,7 +19,6 @@
 			}
 			if (response.status === 200) {
 				// If the response is a redirect, handle it
-				debugger;
 				const redirectUrl = await response.json();
 				if (redirectUrl) {
 					window.location.href = redirectUrl; // Redirect to Google's OAuth page

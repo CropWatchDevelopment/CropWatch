@@ -49,6 +49,9 @@
 	});
 
 	const startDownload = async (type: ReportType) => {
+		if (downloading) return; // prevent duplicate clicks
+		downloading = true;
+		downloadError = '';
 		neutral($_('exporting_data', { values: { type: type.toUpperCase() } }));
 
 		const params = new URLSearchParams({
@@ -58,42 +61,65 @@
 			dataKeys: dataKeys.join(','),
 			locale: $appLocale ?? 'ja'
 		});
-		const response = await fetch(`/api/devices/${devEui}/${type}?${params}`, {
-			method: 'GET',
-			headers: {
-				'Content-Type': type === 'csv' ? 'text/csv' : 'application/pdf'
-			}
-		});
-
-		if (!response.ok) {
-			console.error(`Failed to download ${type} for device ${devEui}:`, response.statusText);
-			if (response.status === 404) {
-				warning('Report Not Found, Please create a reaport first.');
-			} else {
-				error('Error Generating Report, contact support.');
-			}
+		let response: Response | null = null;
+		try {
+			response = await fetch(`/api/devices/${devEui}/${type}?${params}`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': type === 'csv' ? 'text/csv' : 'application/pdf'
+				}
+			});
+		} catch (e) {
+			console.error('Network error downloading report', e);
+			error('Network error while generating report.');
+			downloadError = 'network';
+			downloading = false;
 			return;
 		}
 
-		const blob = await response.blob();
-		const urlObj = window.URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = urlObj;
-		a.download = `${startDate.toString()} - ${endDate.toString()} ${devEui}.${type}`;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		window.URL.revokeObjectURL(urlObj);
+		if (!response || !response.ok) {
+			if (response) {
+				console.error(`Failed to download ${type} for device ${devEui}:`, response.statusText);
+				if (response.status === 404) {
+					warning('Report Not Found, Please create a reaport first.');
+				} else {
+					error('Error Generating Report, contact support.');
+				}
+			}
+			downloading = false;
+			return;
+		}
+
+		try {
+			const blob = await response.blob();
+			const urlObj = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = urlObj;
+			a.download = `${startDate.toString()} - ${endDate.toString()} ${devEui}.${type}`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(urlObj);
+		} catch (e) {
+			console.error('Error processing download', e);
+			error('Failed to process downloaded report.');
+		} finally {
+			downloading = false;
+		}
 	};
+
+	// Loading / error UI state
+	let downloading = $state(false);
+	let downloadError: string | null = $state(null);
 </script>
 
 {#if showDatePicker}
 	<div class="hidden md:flex md:items-center md:justify-end">
 		<Dialog.Root bind:open={modalOpen}>
-			<Dialog.Trigger asChild>
+			<Dialog.Trigger>
 				<Button
 					variant="secondary"
-					{disabled}
+					disabled={disabled || downloading}
 					onclick={(event) => {
 						if (!showDatePicker) {
 							event.preventDefault;
@@ -102,8 +128,13 @@
 						}
 					}}
 				>
-					<MaterialIcon name="download" />
-					{buttonLabel ?? $_('export')}
+					{#if downloading}
+						<span class="spinner" aria-hidden="true"></span>
+						<span> {$_('exporting')}...</span>
+					{:else}
+						<MaterialIcon name="download" />
+						{buttonLabel ?? $_('export')}
+					{/if}
 				</Button>
 			</Dialog.Trigger>
 
@@ -162,12 +193,36 @@
 {:else}
 	<Button
 		variant="secondary"
-		{disabled}
+		disabled={disabled || downloading}
 		onclick={() => {
 			startDownload(types[0]);
 		}}
 	>
-		<MaterialIcon name="download" />
-		{buttonLabel ?? $_('export')}
+		{#if downloading}
+			<span class="spinner" aria-hidden="true"></span>
+			<span>{$_('exporting')}...</span>
+		{:else}
+			<MaterialIcon name="download" />
+			{buttonLabel ?? $_('export')}
+		{/if}
 	</Button>
 {/if}
+
+<style>
+	.spinner {
+		width: 1rem;
+		height: 1rem;
+		border: 2px solid currentColor;
+		border-top-color: transparent;
+		border-radius: 9999px;
+		animation: spin 0.6s linear infinite;
+		display: inline-block;
+		margin-right: 0.35rem;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+</style>

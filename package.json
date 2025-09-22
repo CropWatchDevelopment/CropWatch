@@ -50,11 +50,11 @@
 		"globals": "^16.0.0",
 		"husky": "^8.0.0",
 		"jsdom": "^26.0.0",
-		"supabase": "^2.33.9",
 		"lint-staged": "^16.1.2",
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"prettier-plugin-tailwindcss": "^0.6.11",
+		"supabase": "^2.33.9",
 		"svelte": "^5.0.0",
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
@@ -65,9 +65,7 @@
 		"vitest": "^3.0.0"
 	},
 	"dependencies": {
-		"@cropwatchdevelopment/cwui": "^0.0.20",
-		"@layerstack/tailwind": "2.0.0-next.2",
-		"@layerstack/utils": "^1.0.1",
+		"@internationalized/date": "^3.9.0",
 		"@mdi/js": "^7.4.47",
 		"@stencil/store": "^2.2.0",
 		"@stripe/stripe-js": "^7.5.0",
@@ -90,8 +88,7 @@
 		"pdfkit": "^0.17.1",
 		"stripe": "^18.3.0",
 		"svelte-i18n": "^4.0.1",
-		"svelte-ux": "^1.0.6",
-		"swagger-ui": "^5.27.0",
+		"swagger-ui": "^5.21.0",
 		"utf-8-validate": "^6.0.5"
 	},
 	"pnpm": {

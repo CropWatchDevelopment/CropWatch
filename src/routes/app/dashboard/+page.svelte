@@ -5,6 +5,7 @@
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 	import { DeviceTimerManager } from '$lib/utilities/deviceTimerManager';
 	import { setupDeviceActiveTimer } from '$lib/utilities/deviceTimerSetup';
+	import { applyStoredDeviceOrder } from '$lib/utilities/deviceOrderStorage';
 
 	// Get user data from the server load function
 	let { data } = $props();
@@ -17,10 +18,7 @@
 		cw_devices?: DeviceWithSensorData[];
 	}
 	import type { DeviceWithType } from '$lib/models/Device';
-	import type { AirData } from '$lib/models/AirData';
-	import type { SoilData } from '$lib/models/SoilData';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import LocationSidebar from '$lib/components/dashboard/LocationSidebar.svelte';
 	// Define the interface for LocationSidebar props to match the component's exported props
 	interface LocationSidebarProps {
 		locations: LocationWithCount[];
@@ -34,17 +32,12 @@
 		onToggleCollapse: () => void;
 	}
 	import AllDevices from '$lib/components/UI/dashboard/AllDevices.svelte';
+	import DashboardFilter from '$lib/components/dashboard/DashboardFilter.svelte';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	// Enhanced location type with deviceCount property
 	interface LocationWithCount extends LocationWithDevices {
 		deviceCount: number;
-	}
-
-	// Enhanced device type with latest sensor data
-	interface DeviceWithSensorData extends DeviceWithType {
-		latestData: AirData | SoilData | null;
-		cw_rules?: any[];
 	}
 
 	// Create a timer manager instance
@@ -63,7 +56,7 @@
 		if (locationsStore.locations.length > 0) {
 			locationsStore.locations.forEach((location) => {
 				if (location.cw_devices && location.cw_devices.length > 0) {
-					location.cw_devices.forEach((device: DeviceWithSensorData) => {
+					location.cw_devices.forEach((device) => {
 						if (device.dev_eui && !(device.dev_eui in deviceActiveStatus)) {
 							deviceActiveStatus[device.dev_eui] = null;
 						}
@@ -72,6 +65,17 @@
 			});
 		}
 	});
+
+	// Device reordering handler
+	function handleDeviceReorder(locationId: number, newDevices: any) {
+		// Update the location's devices in the store
+		const location = locationsStore.locations.find((loc) => loc.location_id === locationId);
+		if (location) {
+			location.cw_devices = newDevices;
+			// Note: Since we're modifying the objects within the array, reactivity should work
+			// If needed, we could call a store method to update the locations
+		}
+	}
 
 	$effect(() => {
 		function handleVisibilityChange() {
@@ -120,43 +124,14 @@
 			.on(
 				'postgres_changes',
 				{
-					event: '*',
+					event: 'UPDATE',
 					schema: 'public',
-					table: 'cw_air_data'
+					table: 'cw_devices'
 				},
 				(payload) => {
 					// Handle real-time updates for messages
-					if (payload.eventType === 'INSERT') {
-						handleRealtimeUpdate(payload);
-					}
-				}
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: 'INSERT',
-					schema: 'public',
-					table: 'cw_soil_data'
-				},
-				(payload) => {
-					// Handle real-time updates for users
-					if (payload.eventType === 'INSERT') {
-						// You can handle user updates here if needed
-						handleRealtimeUpdate(payload);
-					}
-				}
-			)
-			.on(
-				'postgres_changes',
-				{
-					event: '*',
-					schema: 'public',
-					table: 'cw_traffic2'
-				},
-				(payload) => {
-					// Handle real-time updates for users
-					if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-						// You can handle user updates here if needed
+					if (payload.eventType === 'UPDATE') {
+						console.log('🔔 Real-time update received:', payload);
 						handleRealtimeUpdate(payload);
 					}
 				}
@@ -167,15 +142,19 @@
 	// Handle real-time update
 	function handleRealtimeUpdate(payload: any) {
 		// Only process if we have valid data
+		if (!payload) return;
 		if (payload.new && payload.new.dev_eui) {
 			try {
-				locationsStore.updateSingleDevice(payload.new.dev_eui, payload.new as AirData | SoilData);
-
 				// Update device active timer for the updated device
 				const device = locationsStore.devices.find((d) => d.dev_eui === payload.new.dev_eui);
-				if (device && device.latestData?.created_at) {
-					setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+				if (!device) {
+					console.warn('Device not found for real-time update:', payload.new.dev_eui);
+					return;
 				}
+				// Update the device's last_data_updated_at success
+				console.log('Updating device from real-time:', payload.new.dev_eui);
+				device.last_data_updated_at = payload.new.last_data_updated_at;
+				setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
 			} catch (error) {
 				console.error('Error updating device from real-time:', error);
 			}
@@ -201,12 +180,15 @@
 	});
 	onDestroy(() => {
 		console.log('the component is being destroyed');
-		data.supabase.removeAllChannels();
-		cleanupTimers();
-		cleanupRealtimeSubscription();
-		if (channel) {
-			data.supabase.realtime.removeChannel(channel);
+		if (data.supabase.realtime.connectionState === 'CONNECTED') {
+			console.log('Disconnecting from Supabase real-time...');
+			data.supabase.removeAllChannels();
+			cleanupRealtimeSubscription();
+			if (channel) {
+				data.supabase.realtime.removeChannel(channel);
+			}
 		}
+		cleanupTimers();
 	});
 
 	// Persist UI store values to localStorage when they change
@@ -302,43 +284,6 @@
 			return false;
 		}
 	}
-
-	// Function to select a location and load its devices
-	// async function selectLocation(locationId: number | null) {
-	// 	//console.log('Dashboard selectLocation called with:', locationId);
-	// 	//console.log('Current selectedLocationId:', locationsStore.selectedLocationId);
-
-	// 	// If already selected, do nothing
-	// 	if (locationsStore.selectedLocationId === locationId) {
-	// 		//console.log('Location already selected, returning');
-	// 		return;
-	// 	}
-
-	// 	// Clean up any existing polling before changing location
-	// 	timerManager.cleanupPolling();
-
-	// 	// Use the store to select location and load devices
-	// 	//console.log('Calling store.selectLocation with:', locationId);
-	// 	await locationsStore.selectLocation(locationId);
-	// 	//console.log(
-	// 	// 	'After store.selectLocation, selectedLocationId is:',
-	// 	// 	locationsStore.selectedLocationId
-	// 	// );
-
-	// 	// Setup active timers for each device
-	// 	locationsStore.devices.forEach((device: DeviceWithSensorData) => {
-	// 		if (device.latestData?.created_at) {
-	// 			setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
-	// 		}
-	// 	});
-
-	// 	// Set up polling only for specific locations, not for "All Locations"
-	// 	if (locationId !== null) {
-	// 		timerManager.setupPolling(locationId, refreshDevicesForLocation);
-	// 	}
-	// }
-
-	// Note: handleKeyDown is now handled in the LocationSidebar component
 </script>
 
 <svelte:head>
@@ -354,31 +299,9 @@
 	{:else if locationsStore.locationError}
 		<div class="error">{locationsStore.locationError}</div>
 	{:else}
-		<!-- <div class="dashboard-grid" class:sidebar-collapsed={sidebarCollapsed}> -->
-		<!-- <LocationSidebar
-				locations={locationsStore.locations}
-				selectedLocation={locationsStore.selectedLocationId}
-				search={uiStore.search}
-				hideEmptyLocations={uiStore.hideEmptyLocations}
-				dashboardViewType={uiStore.dashboardViewType}
-				dashboardSortType={uiStore.dashboardSortType}
-				{deviceActiveStatus}
-				onSelectLocation={selectLocation}
-				collapsed={sidebarCollapsed}
-				onToggleCollapse={toggleSidebar}
-				onsearch={(value) => {
-					//console.log('Dashboard: onsearch called with:', value);
-					uiStore.search = value;
-					//console.log('Dashboard: uiStore.search set to:', uiStore.search);
-				}}
-				onhideEmptyLocationsChange={(value) => (uiStore.hideEmptyLocations = value)}
-				ondashboardViewTypeChange={(value) =>
-					(uiStore.dashboardViewType = value as 'grid' | 'mozaic' | 'list')}
-				ondashboardSortTypeChange={(value) =>
-					(uiStore.dashboardSortType = value as 'alpha' | 'custom')}
-			/> -->
-
 		<div class="devices-panel">
+			<!-- Dashboard search/filter -->
+			<DashboardFilter />
 			<!-- All Locations as Cards with Devices -->
 			{#if locationsStore.loadingLocations}
 				<div class="loading-devices">Loading locations and devices...</div>
@@ -390,14 +313,14 @@
 					{@const selectedLoc = locationsStore.locations.find(
 						(loc) => loc.location_id === locationsStore.selectedLocationId
 					)}
-					{#if selectedLoc}
-						<AllDevices locations={[selectedLoc]} {deviceActiveStatus} />
-					{:else}
-						<div class="error">Selected location not found.</div>
-					{/if}
 				{:else}
 					<!-- Show all locations ("All Locations" is selected) -->
-					<AllDevices locations={locationsStore.locations} {deviceActiveStatus} />
+					<AllDevices
+						locations={locationsStore.locations}
+						{deviceActiveStatus}
+						enableDragAndDrop={true}
+						onDeviceReorder={handleDeviceReorder}
+					/>
 				{/if}
 			{:else}
 				<p>No locations found.</p>
