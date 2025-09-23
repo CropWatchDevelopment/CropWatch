@@ -5,6 +5,7 @@
 	import type { ActionResult } from '@sveltejs/kit';
 	import { _ } from 'svelte-i18n';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 
 	// Get page data (form action results)
 	let { data } = $props();
@@ -468,6 +469,7 @@
 								{$_('I agree to the')}
 								<a
 									href="/legal/EULA"
+									target="_blank"
 									class="text-primary-light dark:text-primary-dark hover:underline"
 									>{$_('Terms of Service')}</a
 								> <span class="text-red-500">*</span>
@@ -493,6 +495,7 @@
 								{$_('I agree to the')}
 								<a
 									href="/legal/privacy-policy"
+									target="_blank"
 									class="text-primary-light dark:text-primary-dark hover:underline"
 									>{$_('Privacy Policy')}</a
 								> <span class="text-red-500">*</span>
@@ -518,6 +521,7 @@
 								{$_('I agree to the')}
 								<a
 									href="/legal/cookie-policy"
+									target="_blank"
 									class="text-primary-light dark:text-primary-dark hover:underline"
 									>{$_('Cookie Policy')}</a
 								> <span class="text-red-500">*</span>
@@ -545,6 +549,9 @@
 					disabled={isSubmitting || !isFormValid}
 				>
 					{isSubmitting ? $_('Registering...') : $_('Register')}
+					{#if isSubmitting}
+						<Spinner />
+					{/if}
 				</Button>
 
 				{#if !isFormValid && !isSubmitting}
@@ -552,23 +559,6 @@
 						Please complete all required fields and accept all agreements to register
 					</p>
 				{/if}
-
-				<!-- <button
-					type="submit"
-					class="
-					group
-					bg-primary-light
-					dark:bg-primary-dark
-					hover:bg-primary-light/90
-					dark:hover:bg-primary-dark/90
-					focus:ring-primary-light
-					dark:focus:ring-primary-dark
-					relative flex w-full
-					justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
-					disabled={isSubmitting}
-				>
-					{isSubmitting ? $_('Registering...') : $_('Register')}
-				</button> -->
 			</div>
 		</form>
 	</div>

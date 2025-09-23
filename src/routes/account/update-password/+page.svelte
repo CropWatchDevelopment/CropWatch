@@ -1,7 +1,7 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
-import { success } from '$lib/stores/toast.svelte.js';
-import { formValidation } from '$lib/actions/formValidation';
+	import { enhance } from '$app/forms';
+	import { success } from '$lib/stores/toast.svelte.js';
+	import { formValidation } from '$lib/actions/formValidation';
 
 	let { data } = $props();
 	let form = $derived(data.form);
@@ -27,7 +27,7 @@ import { formValidation } from '$lib/actions/formValidation';
 		return () => {
 			loading = true;
 
-			// Client-side validation
+			// クライアント側バリデーション
 			if (!validatePasswords()) {
 				loading = false;
 				return;
@@ -38,11 +38,11 @@ import { formValidation } from '$lib/actions/formValidation';
 				await update();
 
 				if (result.type === 'success') {
-					// Clear the form fields on success
+					// 成功時にフォームをクリア
 					currentPassword = '';
 					newPassword = '';
 					confirmPassword = '';
-                    success('Password updated successfully.');
+					success('パスワードが正常に更新されました。');
 				}
 			};
 		};
@@ -50,31 +50,26 @@ import { formValidation } from '$lib/actions/formValidation';
 </script>
 
 <svelte:head>
-	<title>Update Password | CropWatch</title>
+	<title>パスワードを更新 | CropWatch</title>
 </svelte:head>
 
 <div class="container mx-auto max-w-4xl px-4 py-8">
 	<div
 		class="bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark rounded-lg p-6 shadow-md"
 	>
-		<h1 class="mb-6 text-2xl font-bold">Update Password</h1>
+		<h1 class="mb-6 text-2xl font-bold">パスワードを更新</h1>
 
 		{#if form?.success}
 			<div
 				class="mb-6 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
 			>
-				<p>Your password has been successfully updated.</p>
+				<p>パスワードが正常に更新されました。</p>
 			</div>
 		{/if}
 
-                <form
-                        method="POST"
-                        use:enhance={handleSubmit()}
-                        use:formValidation
-                        class="form-container"
-                >
+		<form method="POST" use:enhance={handleSubmit()} use:formValidation class="form-container">
 			<div>
-				<label for="newPassword" class="mb-1 block text-sm font-medium">New Password</label>
+				<label for="newPassword" class="mb-1 block text-sm font-medium">新しいパスワード</label>
 				<input
 					type="password"
 					id="newPassword"
@@ -83,7 +78,7 @@ import { formValidation } from '$lib/actions/formValidation';
 					autocomplete="new-password"
 					required
 					minlength="8"
-					placeholder="Enter your new password"
+					placeholder="新しいパスワードを入力してください"
 					disabled={loading}
 					oninput={() => validatePasswords()}
 					class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
@@ -92,14 +87,14 @@ import { formValidation } from '$lib/actions/formValidation';
 				/>
 				{#if !isStrongPassword && newPassword.length > 0}
 					<p class="mt-1 text-sm text-red-600 dark:text-red-400">
-						Password must be at least 8 characters long
+						パスワードは8文字以上である必要があります
 					</p>
 				{/if}
 			</div>
 
 			<div>
 				<label for="confirmPassword" class="mb-1 block text-sm font-medium"
-					>Confirm New Password</label
+					>新しいパスワード（確認用）</label
 				>
 				<input
 					type="password"
@@ -108,7 +103,7 @@ import { formValidation } from '$lib/actions/formValidation';
 					bind:value={confirmPassword}
 					autocomplete="new-password"
 					required
-					placeholder="Confirm your new password"
+					placeholder="新しいパスワードを再入力してください"
 					disabled={loading}
 					oninput={() => validatePasswords()}
 					class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
@@ -116,7 +111,7 @@ import { formValidation } from '$lib/actions/formValidation';
                  focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
 				/>
 				{#if !passwordsMatch && confirmPassword.length > 0}
-					<p class="mt-1 text-sm text-red-600 dark:text-red-400">Passwords don't match</p>
+					<p class="mt-1 text-sm text-red-600 dark:text-red-400">パスワードが一致しません</p>
 				{/if}
 			</div>
 
@@ -131,13 +126,10 @@ import { formValidation } from '$lib/actions/formValidation';
 			<div>
 				<button
 					type="submit"
-					class="bg-primary hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
-					disabled={loading ||
-						!passwordsMatch ||
-						!isStrongPassword ||
-						!newPassword}
+					style="background: green;"
+					disabled={loading || !passwordsMatch || !isStrongPassword || !newPassword}
 				>
-					{loading ? 'Updating Password...' : 'Update Password'}
+					{loading ? 'パスワードを更新中...' : 'パスワードを更新'}
 				</button>
 			</div>
 		</form>
