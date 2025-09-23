@@ -21,7 +21,10 @@
 		};
 	}
 
-	let { device, isActive = false } = $props<{ device: DeviceWithLatestData; isActive?: boolean }>();
+	let { device, isActive = undefined } = $props<{
+		device: DeviceWithLatestData;
+		isActive?: boolean | null | undefined;
+	}>();
 
 	// Log the active status for debugging
 	$effect(() => {
@@ -76,14 +79,20 @@
 						<span class="flex-grow"></span>
 
 						{#if dataPointKey === 'created_at'}
-							<p class="flex flex-row align-bottom text-xs text-gray-600 dark:text-gray-400">
-								<Duration
-									start={device.last_data_updated_at ?? device.latestData.created_at}
-									totalUnits={2}
-									minUnits={DurationUnits.Second}
-								/>
-								&nbsp;{$_('ago')}
-							</p>
+							{#if device.last_data_updated_at}
+								<p class="flex flex-row align-bottom text-xs text-gray-600 dark:text-gray-400">
+									<Duration
+										start={device.last_data_updated_at}
+										totalUnits={2}
+										minUnits={DurationUnits.Second}
+									/>
+									&nbsp;{$_('ago')}
+								</p>
+							{:else}
+								<p class="text-xs text-gray-500 italic dark:text-gray-400">
+									{$_('Not applicable')}
+								</p>
+							{/if}
 						{:else}
 							<div class="text-right">
 								<span class="text-lg font-bold text-gray-900 dark:text-white">

@@ -30,7 +30,7 @@
 		onDrop
 	} = $props<{
 		device: DeviceWithLatestData;
-		isActive: boolean | null;
+		isActive: boolean | null | undefined;
 		locationId: number;
 		dragEnabled?: boolean;
 		dragIndex?: number;

@@ -47,45 +47,50 @@ export class DeviceTimerManager {
 		uploadInterval: number,
 		onStatusChange?: (deviceId: string, isActive: boolean | null) => void
 	): void {
-		if (!device.latestData?.created_at) return;
 		const deviceId = device.dev_eui as string;
+		const lastUpdated = device.last_data_updated_at ?? null;
+
+		if (!lastUpdated) {
+			this.cleanupDeviceTimer(deviceId);
+			this.deviceActiveStatus[deviceId] = null;
+			if (onStatusChange) {
+				onStatusChange(deviceId, null);
+			}
+			return;
+		}
 
 		// Clear any existing timer for this device
 		this.cleanupDeviceTimer(deviceId);
 
 		// Use provided uploadInterval or fallback to device settings
-		const effectiveInterval =
+		const effectiveInterval = Number(
 			uploadInterval ||
-			device.upload_interval ||
-			device.cw_device_type?.default_upload_interval ||
-			10;
+				device.upload_interval ||
+				device.cw_device_type?.default_upload_interval ||
+				0
+		);
 
-		// Create a closure to capture the current timestamp
-		const currentTimestamp = device.latestData.created_at;
+		if (!effectiveInterval || effectiveInterval <= 0) {
+			this.deviceActiveStatus[deviceId] = null;
+			if (onStatusChange) {
+				onStatusChange(deviceId, null);
+			}
+			return;
+		}
 
-		const activeTimer = createActiveTimer(new Date(currentTimestamp), Number(effectiveInterval));
+		const currentTimestamp = lastUpdated;
+
+		const activeTimer = createActiveTimer(new Date(currentTimestamp), effectiveInterval);
 
 		// Update device active status when timer changes
 		const unsubscribe = activeTimer.subscribe((isActive) => {
-			// Only update if this is still the current device data
-			// This prevents old timers from incorrectly marking devices as inactive
-			if (device.latestData?.created_at === currentTimestamp) {
-				//console.log(`Device ${device.name} (${deviceId}) status updated:`, {
-				// 	isActive,
-				// 	lastUpdate: currentTimestamp,
-				// 	uploadInterval
-				// });
+			const latestTimestamp = device.last_data_updated_at ?? null;
+			if (latestTimestamp === currentTimestamp) {
 				this.deviceActiveStatus[deviceId] = isActive;
 
-				// Call the callback if provided
 				if (onStatusChange) {
 					onStatusChange(deviceId, isActive);
 				}
-			} else {
-				//console.log(`Ignoring outdated timer update for ${device.name} (${deviceId})`, {
-				// 	timerTimestamp: currentTimestamp,
-				// 	currentTimestamp: device.latestData?.created_at
-				// });
 			}
 		});
 
@@ -94,7 +99,6 @@ export class DeviceTimerManager {
 		this.unsubscribers.push(unsubscribe);
 		this.deviceTimers[deviceId] = timerIndex;
 	}
-
 	/**
 	 * Clean up a device timer
 	 * @param deviceId The ID of the device to clean up the timer for
@@ -198,9 +202,8 @@ export class DeviceTimerManager {
 	 * @param deviceId The device ID to get the active status for
 	 * @returns The active status of the device, or false if not found
 	 */
-	getDeviceActiveStatus(deviceId: string): boolean {
-		// Convert null to false, but keep true/false values as is
-		return this.deviceActiveStatus[deviceId] ?? false;
+	getDeviceActiveStatus(deviceId: string): boolean | null | undefined {
+		return this.deviceActiveStatus[deviceId];
 	}
 
 	/**

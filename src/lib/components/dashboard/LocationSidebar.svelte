@@ -40,7 +40,7 @@
 		dashboardViewType: string;
 		dashboardSortType: string;
 		collapsed: boolean;
-		deviceActiveStatus?: Record<string, boolean | null>;
+		deviceActiveStatus?: Record<string, boolean | null | undefined>;
 		onSelectLocation: (locationId: number | null) => void;
 		onToggleCollapse: () => void;
 		onsearch: (search: string) => void;
@@ -73,7 +73,7 @@
 		dashboardViewType?: 'grid' | 'list' | string;
 		dashboardSortType?: 'name' | 'status' | string;
 		collapsed?: boolean;
-		deviceActiveStatus?: Record<string, boolean | null>;
+		deviceActiveStatus?: Record<string, boolean | null | undefined>;
 		onSelectLocation?: (locationId: number | null) => void;
 		onToggleCollapse?: () => void;
 		onsearch?: (value: string) => void;
@@ -156,32 +156,29 @@
 		}
 
 		// Check if any devices have null status (loading state)
-		const hasNullStatus = location.cw_devices.some(
-			(device) => device.dev_eui && deviceActiveStatus[device.dev_eui] === null
+		const hasLoadingStatus = location.cw_devices.some(
+			(device) => device.dev_eui && deviceActiveStatus[device.dev_eui] === undefined
 		);
 
-		// If any device has null status, show loading
-		if (hasNullStatus) {
+		if (hasLoadingStatus) {
 			return { statusClass: 'status-loading', icon: mdiClockOutline };
 		}
 
-		// Convert deviceActiveStatus to a Record<string, boolean> for the utility function
-		// This matches how AllDevices.svelte handles it for the dashboard cards
-		const activeStatusMap: Record<string, boolean> = {};
-		for (const [key, value] of Object.entries(deviceActiveStatus)) {
-			activeStatusMap[key] = value === true; // Only true values are considered active
-		}
-
-		// Filter active devices using the same logic as the dashboard
 		const activeDevices = location.cw_devices.filter(
-			(device) => device.dev_eui && activeStatusMap[device.dev_eui] === true
+			(device) => device.dev_eui && deviceActiveStatus[device.dev_eui] === true
 		);
 
-		// Calculate status flags using the same logic as the dashboard
+		const inactiveDevices = location.cw_devices.filter(
+			(device) => device.dev_eui && deviceActiveStatus[device.dev_eui] === false
+		);
+
 		const allActive =
 			location.cw_devices.length > 0 && activeDevices.length === location.cw_devices.length;
 
-		const allInactive = location.cw_devices.length > 0 && activeDevices.length === 0;
+		const allInactive =
+			location.cw_devices.length > 0 &&
+			activeDevices.length === 0 &&
+			inactiveDevices.length === location.cw_devices.length;
 
 		// Return status based on the same conditions as the dashboard
 		if (allActive) {
