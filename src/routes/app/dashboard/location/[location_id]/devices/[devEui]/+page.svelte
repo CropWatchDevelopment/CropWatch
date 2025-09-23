@@ -96,14 +96,14 @@
 	let renderingVisualization = $state(false); // Local rendering state for visualization
 
 	// Derived properties
-	const {
-		deviceTypeName,
-		temperatureChartVisible,
-		humidityChartVisible,
-		moistureChartVisible,
-		co2ChartVisible,
-		phChartVisible
-	} = $derived(getDeviceDetailDerived(device, dataType, latestData));
+	// const {
+	// 	deviceTypeName,
+	// 	temperatureChartVisible,
+	// 	humidityChartVisible,
+	// 	moistureChartVisible,
+	// 	co2ChartVisible,
+	// 	phChartVisible
+	// } = $derived(getDeviceDetailDerived(device, dataType, latestData));
 	let channel: RealtimeChannel | undefined = $state(undefined); // Channel for realtime updates
 	// Track last realtime update timestamp for stale detection
 	let lastRealtimeUpdate = $state<number>(Date.now());
@@ -409,6 +409,7 @@
 
 	// Cleanup on destroy
 	import { onDestroy } from 'svelte';
+	import BatteryLevel from '$lib/components/BatteryLevel.svelte';
 	onDestroy(() => {
 		teardownRealtime();
 		if (staleCheckIntervalId) clearInterval(staleCheckIntervalId);
@@ -422,6 +423,10 @@
 </svelte:head>
 
 <Header {device} {basePath}>
+	{#if device.battery_level !== null}
+		<BatteryLevel value={device.battery_level} size={28} showLabel />
+	{/if}
+
 	<!-- Data range selector on large screen -->
 	<div class="hidden border-r border-neutral-400 pl-4 lg:block">
 		<DateRangeSelector
@@ -526,12 +531,33 @@
 				{:else if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
 					<RelayControl {device} />
 				{:else}
-					<div class="mb-8">
+					<!-- <div class="mb-8">
 						<h2>{$_('Stats Summary')}</h2>
 						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 							{#each numericKeys as key (key)}
 								{#if stats[key]}
 									<StatsCard {stats} {key} />
+								{/if}
+							{/each}
+						</div>
+					</div> -->
+
+					<div class="mb-8">
+						<h2>{$_('Stats Summary')}</h2>
+
+						<!-- Auto-fit makes items expand when a row isn't full -->
+						<div
+							class="
+      /* ~max
+      4
+      cols
+      on normal desktops */ grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] items-stretch gap-4 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]
+      xl:grid-cols-[repeat(auto-fit,minmax(340px,1fr))]
+    "
+						>
+							{#each numericKeys as key (key)}
+								{#if stats[key]}
+									<StatsCard {stats} {key} class="h-full w-full" />
 								{/if}
 							{/each}
 						</div>
