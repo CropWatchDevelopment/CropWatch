@@ -8,6 +8,7 @@
 	import { _ } from 'svelte-i18n';
 	import Collapse from '$lib/components/ui/base/Collapse.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import type { SupabaseClient } from '@supabase/supabase-js';
 
 	interface DeviceWithLatestData extends Device {
 		latestData: Record<string, any>;
@@ -22,6 +23,7 @@
 	}
 
 	let {
+		latestData,
 		device,
 		location,
 		isActive: externalIsActive,
@@ -36,6 +38,7 @@
 		dragIndex,
 		dragEnabled = false
 	} = $props<{
+		latestData: any;
 		device: DeviceWithLatestData;
 		location?: Location;
 		isActive?: boolean;
@@ -63,10 +66,12 @@
 		if (externalIsActive !== undefined && externalIsActive !== null) statusConfirmed = true;
 	});
 
+	console.log(latestData);
+
 	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2);
 	let secondaryDataKey = $derived(device.cw_device_type.secondary_data_v2);
-	let primaryValue = $derived(device.latestData?.[primaryDataKey]);
-	let secondaryValue = $derived(device.latestData?.[secondaryDataKey]);
+	let primaryValue = $derived(latestData?.[primaryDataKey]);
+	let secondaryValue = $derived(latestData?.[secondaryDataKey]);
 	let primaryNotation = $derived(device.cw_device_type.primary_data_notation || '°C');
 	let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
 
@@ -149,9 +154,9 @@
 				<div class="flex w-full flex-row justify-between justify-center space-x-5">
 					{#if device.latestData}
 						<div class="flex items-center">
-							<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"
-								>{nameToEmoji(primaryDataKey)}</span
-							>
+							<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400">
+								{nameToEmoji(primaryDataKey)}
+							</span>
 							<div class="flex flex-col items-start">
 								<span
 									class="text-lg leading-tight font-bold whitespace-nowrap text-gray-900 dark:text-white"

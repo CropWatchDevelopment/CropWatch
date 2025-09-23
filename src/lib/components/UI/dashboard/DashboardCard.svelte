@@ -4,6 +4,7 @@
 	import { mdiAlert, mdiCheck, mdiClose, mdiClockOutline } from '@mdi/js';
 	import type { Location } from '$lib/models/Location';
 	import type { Snippet } from 'svelte';
+	import type { SupabaseClient } from '@supabase/supabase-js';
 
 	let {
 		location,

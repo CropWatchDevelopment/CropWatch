@@ -1,105 +1,76 @@
 <script lang="ts">
-	import type { Location } from '$lib/models/Location';
-	import type { DeviceWithType } from '$lib/models/Device';
-	import type { AirData } from '$lib/models/AirData';
-	import type { SoilData } from '$lib/models/SoilData';
 	import DashboardCard from './DashboardCard.svelte';
 	import DeviceCard from './DeviceCard.svelte';
-	import { isDeviceActive } from '$lib/utilities/dashboardHelpers';
-	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
-	import { createDragState, createDragHandlers, type DragState } from '$lib/utilities/dragAndDrop';
-	import { saveDeviceOrder, applyStoredDeviceOrder } from '$lib/utilities/deviceOrderStorage';
 
-	// Extended Location type to include cw_devices property
-	interface LocationWithDevices extends Location {
-		cw_devices?: DeviceWithSensorData[];
-		deviceCount?: number;
-	}
+	let { data, locations, supabase } = $props();
+	let latestData = $state<any>(null);
 
-	// Enhanced device type with latest sensor data
-	interface DeviceWithSensorData extends DeviceWithType {
-		latestData: AirData | SoilData | null;
-		cw_rules?: any[];
-	}
-
-	let {
-		locations,
-		deviceActiveStatus,
-		onDeviceReorder,
-		enableDragAndDrop = false
-	} = $props<{
-		locations: LocationWithDevices[];
-		deviceActiveStatus: Record<string, boolean | null>;
-		onDeviceReorder?: (locationId: number, newDevices: DeviceWithSensorData[]) => void;
-		enableDragAndDrop?: boolean;
-	}>();
-
-	// Get the UI store to access the view type and search
-	const uiStore = getDashboardUIStore();
-
-	// Create drag states for each location
-	let dragStates: Map<number, DragState> = $state(new Map());
-
-	function getDragState(locationId: number): DragState {
-		if (!dragStates.has(locationId)) {
-			dragStates.set(locationId, createDragState());
+	const loadLatestData = async (device: any) => {
+		console.log(device);
+		const dataTable = device.cw_device_type.data_table_v2;
+		const { data, error } = await supabase
+			.from(dataTable)
+			.select('*')
+			.eq('dev_eui', device.dev_eui)
+			.order('created_at', { ascending: false })
+			.limit(1)
+			.maybeSingle();
+		if (error) {
+			console.error('Error loading latest data:', error);
+			return null;
 		}
-		return dragStates.get(locationId)!;
-	}
-
-	function updateDragState(locationId: number, newState: Partial<DragState>) {
-		const currentState = getDragState(locationId);
-		const updatedState = { ...currentState, ...newState };
-		dragStates.set(locationId, updatedState);
-		// Force reactivity by reassigning the Map
-		dragStates = new Map(dragStates);
-	}
-
-	// Reactive filtered locations based on search with applied device order
-	const filteredLocations = $derived(
-		locations
-			.filter((location: LocationWithDevices) => {
-				// If search is empty, show all locations
-				if (!uiStore.search?.trim()) return true;
-
-				// Check if location name matches search
-				if (location.name.toLowerCase().includes(uiStore.search.toLowerCase())) return true;
-
-				// Check if any device in the location matches search
-				if (location.cw_devices && location.cw_devices.length > 0) {
-					return location.cw_devices.some(
-						(device: DeviceWithSensorData) =>
-							device.name?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
-							device.dev_eui?.toLowerCase().includes(uiStore.search.toLowerCase()) ||
-							device.cw_device_type?.name?.toLowerCase().includes(uiStore.search.toLowerCase())
-					);
-				}
-
-				return false;
-			})
-			.map((location: LocationWithDevices) => ({
-				...location,
-				cw_devices: location.cw_devices
-					? applyStoredDeviceOrder(location.cw_devices, location.location_id)
-					: []
-			}))
-	);
-
-	// Function to get container class based on view type
-	function getContainerClass(viewType: string): string {
-		switch (viewType) {
-			case 'grid':
-				return 'w-full grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5';
-			case 'mozaic':
-				return 'columns-[20rem] gap-4 space-y-4';
-			case 'list':
-				return 'flex flex-col gap-4';
-			default:
-				return 'w-full grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5';
-		}
-	}
+		latestData = data || null;
+		return data || null;
+	};
 </script>
 
+<div class="device-cards-grid">
+	{#if locations.length === 0}
+		<div class="no-results">
+			<p>No locations match your search criteria.</p>
+		</div>
+	{:else}
+		{#each locations as location}
+			<DashboardCard
+				{location}
+				href={`/app/dashboard/location/${location.location_id}`}
+				activeDevices={[]}
+				allActive={true}
+				allInactive={false}
+				loading={false}
+			>
+				{#snippet content()}
+					{@const locationDevices = location.cw_devices ?? []}
+					{#each locationDevices as device}
+						{@const formattedDevice = {
+							...device,
+							latestData: loadLatestData(device) || {},
+							cw_device_type: {
+								name: device.cw_device_type?.name || 'Unknown',
+								default_upload_interval: device.cw_device_type?.default_upload_interval || 15,
+								primary_data_notation: device.cw_device_type?.primary_data_notation || '',
+								secondary_data_notation:
+									device.cw_device_type?.secondary_data_notation || undefined,
+								primary_data_v2: device.cw_device_type?.primary_data_v2 || undefined,
+								secondary_data_v2: device.cw_device_type?.secondary_data_v2 || undefined,
+								data_table_v2: device.cw_device_type?.data_table_v2 || 'device_data'
+							}
+						}}
+
+						<DeviceCard
+							{latestData}
+							device={formattedDevice}
+							isActive={true}
+							locationId={location.location_id}
+						/>
+					{/each}
+				{/snippet}
+			</DashboardCard>
+		{/each}
+	{/if}
+</div>
+
+<!-- 
 <div class="device-cards-grid {getContainerClass(uiStore.dashboardViewType)}">
 	{#if filteredLocations.length === 0}
 		<div class="no-results">
@@ -174,7 +145,7 @@
 			</DashboardCard>
 		{/each}
 	{/if}
-</div>
+</div> -->
 
 <style>
 	.no-results {

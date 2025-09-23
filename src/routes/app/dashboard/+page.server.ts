@@ -7,12 +7,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const sessionService = new SessionService(locals.supabase);
 	const sessionResult = await sessionService.getSafeSession();
 
-	const { data: devices, error } = await locals.supabase.from('cw_devices').select(`
+	const locationsPromise = await locals.supabase.from('cw_locations').select(`
       *,
-      cw_device_owners(user_id),
-      cw_locations(*),
-      cw_device_type(*)
-      `);
+	  cw_devices(*, cw_device_type(*))
+    `);
 
 	// If no session exists, redirect to login
 	if (!sessionResult || !sessionResult.user) {
@@ -23,8 +21,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Return user data to the page
 	return {
+		locationsPromise,
 		user: {
-			devices,
 			id: user.id,
 			email: user.email,
 			name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'

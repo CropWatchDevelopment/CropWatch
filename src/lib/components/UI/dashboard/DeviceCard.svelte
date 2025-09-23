@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { Device } from '$lib/models/Device';
+	import type { SupabaseClient } from '@supabase/supabase-js';
 	import DataRowItem from './DataRowItem.svelte';
 	import DeviceDataList from './DeviceDataList.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 
 	// Match the DeviceWithLatestData interface from DataRowItem
 	interface DeviceWithLatestData extends Device {
@@ -17,6 +19,7 @@
 	}
 
 	let {
+		latestData,
 		device,
 		isActive,
 		locationId,
@@ -29,6 +32,7 @@
 		onDragOver,
 		onDrop
 	} = $props<{
+		latestData: any;
 		device: DeviceWithLatestData;
 		isActive: boolean | null;
 		locationId: number;
@@ -45,6 +49,7 @@
 
 <DataRowItem
 	{device}
+	{latestData}
 	{isActive}
 	detailHref={`/dashboard/location/${locationId}/device/${device.dev_eui}`}
 	{dragEnabled}
@@ -63,7 +68,7 @@
 		<DeviceDataList
 			device={{
 				...device,
-				latestData: device.latestData || {},
+				latestData: latestData || {},
 				cw_device_type: {
 					name: device.cw_device_type?.name || 'Unknown',
 					default_upload_interval: device.cw_device_type?.default_upload_interval || 10,
