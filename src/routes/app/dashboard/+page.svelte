@@ -5,10 +5,20 @@
 	import { getDashboardUIStore } from '$lib/stores/DashboardUIStore.svelte';
 	import { DeviceTimerManager } from '$lib/utilities/deviceTimerManager';
 	import { setupDeviceActiveTimer } from '$lib/utilities/deviceTimerSetup';
-	import { applyStoredDeviceOrder } from '$lib/utilities/deviceOrderStorage';
+	import type { Location } from '$lib/models/Location';
+
+	interface DashboardPageData {
+		user: {
+			id: string;
+			email: string;
+			name: string;
+		};
+		locations: LocationWithDevices[];
+		devices: DeviceWithType[];
+	}
 
 	// Get user data from the server load function
-	let { data } = $props();
+	let { data }: { data: DashboardPageData } = $props();
 	const user = data.user;
 	let isTabVisible = $state(true);
 	let lastRefresh = $state(new Date());
@@ -46,25 +56,39 @@
 	let channel: RealtimeChannel | undefined = $state();
 
 	// Initialize stores and managers
-	// Use writable store for device active status - initialize as null (unknown) for all devices
-	const deviceActiveStatus = $state<Record<string, boolean | null>>({});
+	// Use writable store for device active status
+	const deviceActiveStatus = $state<Record<string, boolean | null | undefined>>({});
 	// Initialize the locations store
 	const locationsStore = getLocationsStore();
 
-	// Pre-initialize all devices as null (unknown status) to prevent flash of green
-	$effect(() => {
-		if (locationsStore.locations.length > 0) {
-			locationsStore.locations.forEach((location) => {
-				if (location.cw_devices && location.cw_devices.length > 0) {
-					location.cw_devices.forEach((device) => {
-						if (device.dev_eui && !(device.dev_eui in deviceActiveStatus)) {
-							deviceActiveStatus[device.dev_eui] = null;
-						}
-					});
+	let hasInitialized = $state(false);
+
+	function initializeLocationsFromServer() {
+		if (hasInitialized) {
+			return;
+		}
+
+		locationsStore.initialize(data.locations || []);
+		hasInitialized = true;
+	}
+
+	function setupTimersForCurrentLocations() {
+		locationsStore.locations.forEach((location) => {
+			if (!location.cw_devices || location.cw_devices.length === 0) {
+				return;
+			}
+
+			location.cw_devices.forEach((device: DeviceWithSensorData) => {
+				if (device.last_data_updated_at) {
+					setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+				} else if (device.dev_eui) {
+					deviceActiveStatus[device.dev_eui] = null;
 				}
 			});
-		}
-	});
+		});
+	}
+
+	initializeLocationsFromServer();
 
 	// Device reordering handler
 	function handleDeviceReorder(locationId: number, newDevices: any) {
@@ -141,23 +165,41 @@
 
 	// Handle real-time update
 	function handleRealtimeUpdate(payload: any) {
-		// Only process if we have valid data
-		if (!payload) return;
-		if (payload.new && payload.new.dev_eui) {
-			try {
-				// Update device active timer for the updated device
-				const device = locationsStore.devices.find((d) => d.dev_eui === payload.new.dev_eui);
-				if (!device) {
-					console.warn('Device not found for real-time update:', payload.new.dev_eui);
-					return;
+		if (!payload?.new?.dev_eui) return;
+
+		try {
+			const devEui = payload.new.dev_eui;
+			const lastUpdated = payload.new.last_data_updated_at ?? null;
+
+			// Attempt to locate the device in the currently selected devices first
+			let device = locationsStore.devices.find((d) => d.dev_eui === devEui);
+
+			if (!device) {
+				for (const location of locationsStore.locations) {
+					const match = location.cw_devices?.find((d) => d.dev_eui === devEui);
+					if (match) {
+						device = match as DeviceWithSensorData;
+						break;
+					}
 				}
-				// Update the device's last_data_updated_at success
-				console.log('Updating device from real-time:', payload.new.dev_eui);
-				device.last_data_updated_at = payload.new.last_data_updated_at;
-				setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
-			} catch (error) {
-				console.error('Error updating device from real-time:', error);
 			}
+
+			if (!device) {
+				console.warn('Device not found for real-time update:', devEui);
+				return;
+			}
+
+			console.log('Updating device from real-time:', devEui);
+			device.last_data_updated_at = lastUpdated;
+
+			if (lastUpdated) {
+				setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+			} else if (devEui) {
+				deviceActiveStatus[devEui] = null;
+				timerManager.cleanupDeviceTimer(devEui);
+			}
+		} catch (error) {
+			console.error('Error updating device from real-time:', error);
 		}
 	}
 
@@ -205,22 +247,9 @@
 	// This is the main onMount function for the dashboard
 	onMount(async () => {
 		try {
-			// Setup real-time subscription
+			initializeLocationsFromServer();
 			setupRealtimeSubscription();
-
-			// Fetch locations using the store - this also selects the first location
-			await locationsStore.fetchLocations(user.id);
-
-			// Setup active timers for all devices in all locations
-			locationsStore.locations.forEach((location) => {
-				if (location.cw_devices && location.cw_devices.length > 0) {
-					location.cw_devices.forEach((device: DeviceWithSensorData) => {
-						if (device.latestData?.created_at) {
-							setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
-						}
-					});
-				}
-			});
+			setupTimersForCurrentLocations();
 
 			// Set up polling for the selected location
 			if (locationsStore.selectedLocationId) {
@@ -261,8 +290,10 @@
 			// Setup active timers for each device
 			if (locationsStore.devices && Array.isArray(locationsStore.devices)) {
 				locationsStore.devices.forEach((device: DeviceWithSensorData) => {
-					if (device.latestData?.created_at) {
+					if (device.last_data_updated_at) {
 						setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+					} else if (device.dev_eui) {
+						deviceActiveStatus[device.dev_eui] = null;
 					}
 				});
 
@@ -273,7 +304,7 @@
 					locationId,
 					deviceCount: locationsStore.devices.length,
 					activeCount: locationsStore.devices.filter(
-						(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string]
+						(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui as string] === true
 					).length
 				});
 			}

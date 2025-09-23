@@ -38,7 +38,7 @@
 	} = $props<{
 		device: DeviceWithLatestData;
 		location?: Location;
-		isActive?: boolean;
+		isActive?: boolean | null | undefined;
 		detailHref?: string;
 		children?: any; // snippet passed by parent
 		onDragStart?: (event: DragEvent, index: number) => void;
@@ -51,17 +51,17 @@
 		dragEnabled?: boolean;
 	}>();
 
-	let isActive = $derived(
-		externalIsActive !== undefined
-			? externalIsActive === null
-				? null
-				: Boolean(externalIsActive)
-			: null
-	);
-	let statusConfirmed = $state(false);
-	$effect(() => {
-		if (externalIsActive !== undefined && externalIsActive !== null) statusConfirmed = true;
+	type DeviceStatus = 'loading' | 'active' | 'inactive' | 'not-applicable';
+
+	const deviceStatus = $derived<DeviceStatus>(() => {
+		if (externalIsActive === undefined) return 'loading';
+		if (externalIsActive === null) return 'not-applicable';
+		return externalIsActive ? 'active' : 'inactive';
 	});
+
+	let isActive = $derived(
+		deviceStatus === 'active' ? true : deviceStatus === 'inactive' ? false : null
+	);
 
 	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2);
 	let secondaryDataKey = $derived(device.cw_device_type.secondary_data_v2);
@@ -112,10 +112,10 @@
 	>
 		<div
 			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70 transition-all duration-200"
-			class:bg-blue-300={!statusConfirmed || isActive === null}
-			class:bg-blue-400={statusConfirmed && !device.latestData?.created_at}
-			class:bg-green-500={statusConfirmed && isActive}
-			class:bg-red-500={statusConfirmed && !isActive && device.latestData?.created_at}
+			class:bg-yellow-400={deviceStatus === 'loading'}
+			class:bg-green-500={deviceStatus === 'active'}
+			class:bg-red-500={deviceStatus === 'inactive'}
+			class:bg-gray-400={deviceStatus === 'not-applicable'}
 			class:cursor-grab={dragEnabled}
 			class:cursor-grabbing={isDragging}
 			class:hover:opacity-100={dragEnabled}

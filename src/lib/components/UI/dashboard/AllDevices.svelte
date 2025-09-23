@@ -29,7 +29,7 @@
 		enableDragAndDrop = false
 	} = $props<{
 		locations: LocationWithDevices[];
-		deviceActiveStatus: Record<string, boolean | null>;
+		deviceActiveStatus: Record<string, boolean | null | undefined>;
 		onDeviceReorder?: (locationId: number, newDevices: DeviceWithSensorData[]) => void;
 		enableDragAndDrop?: boolean;
 	}>();
@@ -107,8 +107,8 @@
 		</div>
 	{:else}
 		{#each filteredLocations as location (location.location_id)}
-			{@const hasNullStatus = (location.cw_devices ?? []).some(
-				(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui] === null
+			{@const hasLoadingStatus = (location.cw_devices ?? []).some(
+				(d: DeviceWithSensorData) => deviceActiveStatus[d.dev_eui] === undefined
 			)}
 			{@const activeDevices = (location.cw_devices ?? []).filter((d: DeviceWithSensorData) =>
 				isDeviceActive(d, deviceActiveStatus)
@@ -123,7 +123,7 @@
 				{activeDevices}
 				{allActive}
 				{allInactive}
-				loading={hasNullStatus}
+				loading={hasLoadingStatus}
 			>
 				{#snippet content()}
 					{@const locationDevices = location.cw_devices ?? []}

@@ -1,6 +1,6 @@
 /**
  * Dashboard utility functions
- * 
+ *
  * These functions are used across the dashboard components to handle
  * common operations like checking device status, formatting data, etc.
  */
@@ -14,34 +14,34 @@
  * @returns boolean indicating if the device is active
  */
 export function isDeviceActive(
-  device: DeviceWithSensorData,
-  deviceActiveStatus: Record<string, boolean>
-): boolean {
-  if (!device) return false;
+	device: DeviceWithSensorData,
+	deviceActiveStatus: Record<string, boolean | null | undefined>
+): boolean | null | undefined {
+	if (!device) return undefined;
 
-  // Get the device ID
-  const devEui = device.dev_eui as string;
+	const devEui = device.dev_eui as string;
 
-  // Special handling for devices with negative upload intervals (always active)
-  const uploadInterval =
-    device.upload_interval || device.deviceType?.default_upload_interval || 10;
-  if (uploadInterval <= 0) {
-    return true;
-  }
+	if (devEui && Object.prototype.hasOwnProperty.call(deviceActiveStatus, devEui)) {
+		return deviceActiveStatus[devEui];
+	}
 
-  // Special handling for soil sensors
-  if (isSoilSensor(device)) {
-    if (device.deviceType?.isActive !== undefined) {
-      return Boolean(device.deviceType.isActive);
-    }
+	const lastUpdated = device.last_data_updated_at ?? null;
+	if (!lastUpdated) {
+		return null;
+	}
 
-    // If the soil sensor has moisture data, consider it active
-    if (device.latestData && 'moisture' in device.latestData) {
-      return true;
-    }
-  }
+	const uploadInterval =
+		device.upload_interval ||
+		device.cw_device_type?.default_upload_interval ||
+		device.deviceType?.default_upload_interval ||
+		0;
 
-  return getDeviceActiveStatus(devEui, deviceActiveStatus);
+	if (!uploadInterval || uploadInterval <= 0) {
+		return null;
+	}
+
+	const diffMs = Date.now() - new Date(lastUpdated).getTime();
+	return diffMs < uploadInterval * 60 * 1000;
 }
 
 /**
@@ -51,10 +51,10 @@ export function isDeviceActive(
  * @returns boolean indicating if the device is active
  */
 export function getDeviceActiveStatus(
-  deviceId: string,
-  deviceActiveStatus: Record<string, boolean>
+	deviceId: string,
+	deviceActiveStatus: Record<string, boolean | null | undefined>
 ): boolean {
-  return Boolean(deviceActiveStatus[deviceId]);
+	return deviceActiveStatus[deviceId] === true;
 }
 
 /**
@@ -63,24 +63,24 @@ export function getDeviceActiveStatus(
  * @returns boolean indicating if the device is a soil sensor
  */
 export function isSoilSensor(device: DeviceWithSensorData): boolean {
-  // Check device name for soil-related terms
-  const deviceName = device.name?.toLowerCase() || '';
-  const deviceTypeName = device.deviceType?.name?.toLowerCase() || '';
+	// Check device name for soil-related terms
+	const deviceName = device.name?.toLowerCase() || '';
+	const deviceTypeName = device.deviceType?.name?.toLowerCase() || '';
 
-  // Check device type (type 17 is soil sensor in your system)
-  if (device.type === 17) {
-    return true;
-  }
+	// Check device type (type 17 is soil sensor in your system)
+	if (device.type === 17) {
+		return true;
+	}
 
-  // Check if the device name or type contains soil-related terms
-  return (
-    deviceName.includes('soil') ||
-    deviceName.includes('moisture') ||
-    deviceTypeName.includes('soil') ||
-    deviceTypeName.includes('moisture') ||
-    // Check if the device has soil-specific data points
-    (device.latestData && 'moisture' in device.latestData)
-  );
+	// Check if the device name or type contains soil-related terms
+	return (
+		deviceName.includes('soil') ||
+		deviceName.includes('moisture') ||
+		deviceTypeName.includes('soil') ||
+		deviceTypeName.includes('moisture') ||
+		// Check if the device has soil-specific data points
+		(device.latestData && 'moisture' in device.latestData)
+	);
 }
 
 /**
@@ -90,28 +90,28 @@ export function isSoilSensor(device: DeviceWithSensorData): boolean {
  * @returns Object with active devices array and status flags
  */
 export function getLocationActiveStatus(
-  location: LocationWithCount,
-  deviceActiveStatus: Record<string, boolean>
+	location: LocationWithCount,
+	deviceActiveStatus: Record<string, boolean | null | undefined>
 ) {
-  if (!location || !location.cw_devices || location.cw_devices.length === 0) {
-    return { activeDevices: [], allActive: false, allInactive: false };
-  }
+	if (!location || !location.cw_devices || location.cw_devices.length === 0) {
+		return { activeDevices: [], allActive: false, allInactive: false };
+	}
 
-  const locationDevices = location.cw_devices;
-  // Use isDeviceActive instead of getDeviceActiveStatus for consistency
-  const activeDevices = locationDevices.filter((device) => 
-    isDeviceActive(device, deviceActiveStatus)
-  );
-  
-  const allActive =
-    locationDevices.length > 0 && 
-    locationDevices.every((device) => isDeviceActive(device, deviceActiveStatus));
-  
-  const allInactive =
-    locationDevices.length > 0 && 
-    locationDevices.every((device) => !isDeviceActive(device, deviceActiveStatus));
+	const locationDevices = location.cw_devices;
+	// Use isDeviceActive instead of getDeviceActiveStatus for consistency
+	const activeDevices = locationDevices.filter((device) =>
+		isDeviceActive(device, deviceActiveStatus)
+	);
 
-  return { activeDevices, allActive, allInactive };
+	const allActive =
+		locationDevices.length > 0 &&
+		locationDevices.every((device) => isDeviceActive(device, deviceActiveStatus) === true);
+
+	const allInactive =
+		locationDevices.length > 0 &&
+		locationDevices.every((device) => isDeviceActive(device, deviceActiveStatus) === false);
+
+	return { activeDevices, allActive, allInactive };
 }
 
 /**
@@ -120,16 +120,16 @@ export function getLocationActiveStatus(
  * @returns CSS class string
  */
 export function getContainerClass(viewType: string): string {
-  switch (viewType) {
-    case 'grid':
-      return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
-    case 'mozaic':
-      return 'columns-[20rem] gap-4 space-y-4';
-    case 'list':
-      return 'flex flex-col gap-4';
-    default:
-      return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
-  }
+	switch (viewType) {
+		case 'grid':
+			return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
+		case 'mozaic':
+			return 'columns-[20rem] gap-4 space-y-4';
+		case 'list':
+			return 'flex flex-col gap-4';
+		default:
+			return 'grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5';
+	}
 }
 
 /**
@@ -139,12 +139,12 @@ export function getContainerClass(viewType: string): string {
  * @param handleLocationClick - Function to handle location selection
  */
 export function handleKeyDown(
-  e: KeyboardEvent, 
-  location: Location, 
-  handleLocationClick: (location: Location) => void
+	e: KeyboardEvent,
+	location: Location,
+	handleLocationClick: (location: Location) => void
 ): void {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault();
-    handleLocationClick(location);
-  }
+	if (e.key === 'Enter' || e.key === ' ') {
+		e.preventDefault();
+		handleLocationClick(location);
+	}
 }

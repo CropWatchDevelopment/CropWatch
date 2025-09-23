@@ -25,6 +25,33 @@ const selectedLocation = $derived(
 	locations.find((loc) => loc.location_id === selectedLocationId) || null
 );
 
+// Initialize locations from preloaded data
+function initialize(
+	initialLocations: (Location & { deviceCount?: number; cw_devices?: DeviceWithSensorData[] })[]
+) {
+	loadingLocations = false;
+	locationError = null;
+
+	locations = (initialLocations || []).map((location) => ({
+		...location,
+		deviceCount: location.deviceCount ?? location.cw_devices?.length ?? 0,
+		cw_devices: location.cw_devices ? [...location.cw_devices] : []
+	}));
+
+	// Preserve existing selection if present; otherwise default to "All Locations"
+	if (selectedLocationId === null) {
+		devices = locations.flatMap((location) => location.cw_devices || []);
+	} else {
+		const selected = locations.find((loc) => loc.location_id === selectedLocationId);
+		devices = selected?.cw_devices ? [...selected.cw_devices] : [];
+	}
+
+	loadingDevices = false;
+	deviceError = null;
+
+	return locations;
+}
+
 // Function to fetch all locations for a user
 async function fetchLocations(userId: string) {
 	try {
@@ -120,7 +147,14 @@ async function loadDevicesForLocation(locationId: number) {
 		loadingDevices = true;
 		devices = [];
 
-		// Fetch devices for the selected location
+		const existing = locations.find((location) => location.location_id === locationId);
+		if (existing && existing.cw_devices) {
+			devices = [...existing.cw_devices];
+			loadingDevices = false;
+			return devices;
+		}
+
+		// Fetch devices for the selected location if not already loaded
 		const response = await fetch(`/api/locations/${locationId}/devices`);
 		if (!response.ok) throw new Error('Failed to fetch devices');
 
@@ -244,6 +278,7 @@ export function getLocationsStore() {
 		},
 
 		// Methods
+		initialize,
 		fetchLocations,
 		selectLocation,
 		loadDevicesForLocation,

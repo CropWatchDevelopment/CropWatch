@@ -14,7 +14,7 @@
 	// Props
 	export let locations: LocationWithCount[] = [];
 	export let selectedLocation: number | null = null;
-	export let deviceActiveStatus: Record<string, boolean> = {};
+	export let deviceActiveStatus: Record<string, boolean | null | undefined> = {};
 	export let search: string = '';
 
 	// Function to handle location selection

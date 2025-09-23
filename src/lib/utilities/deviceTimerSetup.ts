@@ -18,14 +18,27 @@ export interface DeviceWithSensorData extends DeviceWithType {
 export function setupDeviceActiveTimer(
 	device: DeviceWithSensorData,
 	timerManager: DeviceTimerManager,
-	deviceActiveStatus: Record<string, boolean | null>
+	deviceActiveStatus: Record<string, boolean | null | undefined>
 ) {
-	if (!device.latestData?.created_at) return;
 	const deviceId = device.dev_eui as string;
+
+	const lastUpdated = device.last_data_updated_at ?? null;
+
+	if (!lastUpdated) {
+		deviceActiveStatus[deviceId] = null;
+		timerManager.cleanupDeviceTimer(deviceId);
+		return;
+	}
 
 	// Get the upload interval from the device
 	const uploadInterval =
-		device.upload_interval || device.cw_device_type?.default_upload_interval || 10;
+		device.upload_interval || device.cw_device_type?.default_upload_interval || 0;
+
+	if (!uploadInterval || uploadInterval <= 0) {
+		deviceActiveStatus[deviceId] = null;
+		timerManager.cleanupDeviceTimer(deviceId);
+		return;
+	}
 
 	// Use the timer manager to set up a timer for this device
 	timerManager.setupDeviceActiveTimer(
@@ -33,7 +46,7 @@ export function setupDeviceActiveTimer(
 		uploadInterval,
 		(deviceId: string, isActive: boolean | null) => {
 			// Update the device active status in our component state
-			deviceActiveStatus[deviceId] = isActive === null ? false : isActive;
+			deviceActiveStatus[deviceId] = isActive;
 		}
 	);
 }

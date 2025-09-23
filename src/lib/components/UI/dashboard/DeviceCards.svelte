@@ -22,7 +22,7 @@
 	} = $props<{
 		devices?: DeviceWithSensorData[];
 		viewType?: string;
-		deviceActiveStatus?: Record<string, boolean>;
+		deviceActiveStatus?: Record<string, boolean | null | undefined>;
 		selectedDevice?: string | null;
 		onDevicesReorder?: ((newDevices: DeviceWithSensorData[]) => void) | undefined;
 		enableDragAndDrop?: boolean;
