@@ -104,6 +104,7 @@ export class AuthService implements IAuthService {
 				email: userData.email,
 				password: userData.password,
 				options: {
+					emailRedirectTo: `${this.getRedirectUrl()}/auth/confirm`,
 					data: {
 						first_name: userData.firstName,
 						last_name: userData.lastName,
