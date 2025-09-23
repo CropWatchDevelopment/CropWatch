@@ -9,6 +9,7 @@
 		getErrorIconColor,
 		getErrorSeverity
 	} from './overviewError.svelte.js';
+	import { max } from 'lodash';
 
 	let { data } = $props();
 
@@ -17,6 +18,7 @@
 	let inactiveDevices = $state(data.inactiveDeviceCount || 0);
 	let idleDevices = $state(data.idleDeviceCount || 0);
 	let totalAlerts = $state(data.totalAlerts || 0);
+	let activeAlerts = $state(data.alertsTriggered || 0);
 
 	// each device sends 8 bytes every 10 minutes on average
 	// so data received in MB per hour = (8 * connectedDevices) / (10
@@ -26,8 +28,8 @@
 	let successRate = $state(
 		((data.activeDeviceCount / data.totalDeviceCount) * 100).toFixed(1) || 0
 	);
-	let activeAlerts = $state(data.activeAlerts || 0);
-	let alertQuota = $state(67);
+	let alertQuota = $state((data.totalTriggerCount / 500) * 100 || 0); // out of 500
+	let maxAlertsAllowed = 500;
 	let throughputChart = $state();
 	let deviceChart = $state();
 	let error = $state(data.error || null);
@@ -530,16 +532,16 @@
 					<div class="flex-1">
 						<p class="text-sm text-gray-500 dark:text-gray-400">Notifications</p>
 						<p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
-							{alertQuota}<span class="text-lg text-gray-400 dark:text-gray-500">/100</span>
+							{alertQuota}<span class="text-lg text-gray-400 dark:text-gray-500">/???</span>
 						</p>
 						<div class="mt-2 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
 							<div
 								class="h-2 rounded-full bg-purple-500 dark:bg-purple-400"
-								style="width: {alertQuota}%"
+								style="width: {(alertQuota / maxAlertsAllowed) * 100}%"
 							></div>
 						</div>
 						<p class="mt-1 text-xs text-purple-500 dark:text-purple-300">
-							{100 - alertQuota} remaining today
+							??? remaining this month
 						</p>
 					</div>
 					<div

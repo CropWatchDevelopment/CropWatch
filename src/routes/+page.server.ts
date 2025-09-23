@@ -59,10 +59,16 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
 						.minutes <= dev.upload_interval
 				)
 		).length || 0;
-	const activeAlerts =
+	const alertsTriggered =
 		devices?.filter((dev) => dev.cw_rules && dev.cw_rules.is_triggered).length || 0;
+	const alertsNotTriggered =
+		devices?.filter((dev) => dev.cw_rules && !dev.cw_rules.is_triggered).length || 0;
 	const totalAlerts =
 		devices?.reduce((acc, dev) => acc + (dev.cw_rules ? dev.cw_rules.length : 0), 0) || 0;
+	const totalTriggerCount = devices
+		?.flatMap((d) => d.cw_rules ?? [])
+		.reduce((sum, r) => sum + (r.trigger_count ?? 0), 0);
+
 	// recently triggered alerts
 	const recentAlerts =
 		devices
@@ -102,9 +108,10 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
 		idleDeviceCount,
 		inactiveDeviceCount,
 		totalAlerts,
-		activeAlerts,
+		alertsTriggered,
 		recentAlerts,
 		lowBatteryDevices,
+		totalTriggerCount,
 		reports,
 		error
 	};
