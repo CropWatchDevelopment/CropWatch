@@ -8,20 +8,7 @@
 	import Duration from '$lib/components/ui/base/Duration.svelte';
 	import { DurationUnits } from '$lib/utilities/duration';
 
-	// Extend the Device type to include latestData
-	interface DeviceWithLatestData extends Device {
-		latestData: Record<string, any>;
-		cw_device_type: {
-			name: string;
-			default_upload_interval?: number;
-			primary_data_v2?: string;
-			secondary_data_v2?: string;
-			primary_data_notation?: string;
-			secondary_data_notation?: string;
-		};
-	}
-
-	let { device, isActive = false } = $props<{ device: DeviceWithLatestData; isActive?: boolean }>();
+	let { device } = $props<{ device: Device & { latestData: Record<string, any> } }>();
 
 	// 1. Convert the latestData to an object
 	let convertedData = $derived(convertObject(device.latestData));
@@ -73,7 +60,7 @@
 						{#if dataPointKey === 'created_at'}
 							<p class="flex flex-row align-bottom text-xs text-gray-600 dark:text-gray-400">
 								<Duration
-									start={device.last_data_updated_at ?? device.latestData.created_at}
+									start={device.last_data_updated_at}
 									totalUnits={2}
 									minUnits={DurationUnits.Second}
 								/>

@@ -4,7 +4,6 @@
 	import { mdiAlert, mdiCheck, mdiClose, mdiClockOutline } from '@mdi/js';
 	import type { Location } from '$lib/models/Location';
 	import type { Snippet } from 'svelte';
-	import type { SupabaseClient } from '@supabase/supabase-js';
 
 	let {
 		location,
@@ -25,7 +24,7 @@
 	}>();
 </script>
 
-<div class="card-surface flex h-full w-full flex-col overflow-hidden text-gray-900 dark:text-white">
+<div class="card-surface flex h-full flex-col overflow-hidden text-gray-900 dark:text-white">
 	<div class="relative flex min-h-[60px] flex-row bg-teal-800 text-yellow-300 dark:bg-[#2c3546]">
 		<h2
 			class="flex w-full flex-row justify-between px-2 pt-3 text-lg font-semibold text-yellow-600 dark:text-yellow-400"

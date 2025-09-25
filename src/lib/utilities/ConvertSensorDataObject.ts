@@ -65,7 +65,6 @@ export function convertObject(input: Object | undefined, keepHidden: boolean = f
 		}
 	});
 
-	console.log('Converted data:', input, output);
 	if ('primaryData' in input && input.primaryData in output && 'primary_data_notation' in input) {
 		output[input.primaryData] = `${output[input.primaryData]} ${input.primary_data_notation}`;
 	}

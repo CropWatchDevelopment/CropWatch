@@ -8,72 +8,26 @@
 	import { _ } from 'svelte-i18n';
 	import Collapse from '$lib/components/ui/base/Collapse.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import type { SupabaseClient } from '@supabase/supabase-js';
+	import type { Database } from '../../../../../database.types';
 
-	interface DeviceWithLatestData extends Device {
-		latestData: Record<string, any>;
-		cw_device_type: {
-			name: string;
-			default_upload_interval?: number;
-			primary_data_v2?: string | null;
-			secondary_data_v2?: string | null;
-			primary_data_notation?: string;
-			secondary_data_notation?: string;
+	type deviceType = Database['public']['Tables']['cw_devices']['Row'];
+
+	let { device, location, isActive, detailHref, children } = $props<{
+		device: Device & {
+			cw_device_type: deviceType;
+			primaryValue?: number;
+			secondaryValue?: number;
+			primaryDataKey?: string;
+			secondaryDataKey?: string;
+			primaryNotation?: string;
+			secondaryNotation?: string;
+			latestData: Record<string, any>;
 		};
-	}
-
-	let {
-		latestData,
-		device,
-		location,
-		isActive: externalIsActive,
-		detailHref,
-		children,
-		onDragStart,
-		onDragEnd,
-		onDragOver,
-		onDrop,
-		isDragging = false,
-		isDropTarget = false,
-		dragIndex,
-		dragEnabled = false
-	} = $props<{
-		latestData: any;
-		device: DeviceWithLatestData;
 		location?: Location;
 		isActive?: boolean;
 		detailHref?: string;
 		children?: any; // snippet passed by parent
-		onDragStart?: (event: DragEvent, index: number) => void;
-		onDragEnd?: (event: DragEvent) => void;
-		onDragOver?: (event: DragEvent, index: number) => void;
-		onDrop?: (event: DragEvent, index: number) => void;
-		isDragging?: boolean;
-		isDropTarget?: boolean;
-		dragIndex?: number;
-		dragEnabled?: boolean;
 	}>();
-
-	let isActive = $derived(
-		externalIsActive !== undefined
-			? externalIsActive === null
-				? null
-				: Boolean(externalIsActive)
-			: null
-	);
-	let statusConfirmed = $state(false);
-	$effect(() => {
-		if (externalIsActive !== undefined && externalIsActive !== null) statusConfirmed = true;
-	});
-
-	console.log(latestData);
-
-	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2);
-	let secondaryDataKey = $derived(device.cw_device_type.secondary_data_v2);
-	let primaryValue = $derived(latestData?.[primaryDataKey]);
-	let secondaryValue = $derived(latestData?.[secondaryDataKey]);
-	let primaryNotation = $derived(device.cw_device_type.primary_data_notation || '°C');
-	let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
 
 	let localStorageOpenState =
 		typeof localStorage !== 'undefined'
@@ -88,61 +42,13 @@
 </script>
 
 {#snippet triggerSnippet()}
-	<div
-		class="relative flex flex-1"
-		class:opacity-50={isDragging}
-		class:ring-2={isDropTarget}
-		class:ring-blue-400={isDropTarget}
-		class:bg-blue-50={isDropTarget &&
-			typeof window !== 'undefined' &&
-			!window.matchMedia('(prefers-color-scheme: dark)').matches}
-		style={isDropTarget &&
-		typeof window !== 'undefined' &&
-		window.matchMedia('(prefers-color-scheme: dark)').matches
-			? 'background-color: rgba(30, 58, 138, 0.2);'
-			: ''}
-		role="listitem"
-		ondragover={(e) => {
-			if (dragEnabled && onDragOver && dragIndex !== undefined) {
-				e.preventDefault();
-				onDragOver(e, dragIndex);
-			}
-		}}
-		ondrop={(e) => {
-			if (dragEnabled && onDrop && dragIndex !== undefined) {
-				e.preventDefault();
-				onDrop(e, dragIndex);
-			}
-		}}
-	>
+	<div class="relative flex flex-1" role="listitem">
 		<div
 			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70 transition-all duration-200"
-			class:bg-blue-300={!statusConfirmed || isActive === null}
-			class:bg-blue-400={statusConfirmed && !device.latestData?.created_at}
-			class:bg-green-500={statusConfirmed && isActive}
-			class:bg-red-500={statusConfirmed && !isActive && device.latestData?.created_at}
-			class:cursor-grab={dragEnabled}
-			class:cursor-grabbing={isDragging}
-			class:hover:opacity-100={dragEnabled}
-			class:scale-110={dragEnabled && !isDragging}
-			class:hover:scale-125={dragEnabled}
+			class:bg-blue-300={isActive === null}
+			class:bg-green-500={isActive === true}
+			class:bg-red-500={isActive === false}
 			role="button"
-			tabindex={dragEnabled ? 0 : -1}
-			aria-label={dragEnabled ? 'Drag to reorder' : ''}
-			draggable={dragEnabled}
-			ondragstart={(e) => {
-				if (dragEnabled && onDragStart && dragIndex !== undefined && e.dataTransfer) {
-					e.dataTransfer.effectAllowed = 'move';
-					e.dataTransfer.setData('text/plain', device.dev_eui);
-					onDragStart(e, dragIndex);
-				}
-			}}
-			ondragend={(e) => {
-				if (dragEnabled && onDragEnd) {
-					onDragEnd(e);
-				}
-			}}
-			title={dragEnabled ? 'Drag to reorder' : ''}
 		></div>
 		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
 			<div class="flex flex-col text-base">
@@ -152,36 +58,41 @@
 					>
 				</div>
 				<div class="flex w-full flex-row justify-between justify-center space-x-5">
-					{#if device.latestData}
+					{#if device.secondaryNotation}
 						<div class="flex items-center">
 							<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400">
-								{nameToEmoji(primaryDataKey)}
+								{nameToEmoji(device.primaryDataKey)}
 							</span>
 							<div class="flex flex-col items-start">
 								<span
 									class="text-lg leading-tight font-bold whitespace-nowrap text-gray-900 dark:text-white"
 								>
-									{formatNumber({ key: primaryDataKey, value: primaryValue })}
+									{formatNumber({ key: device.primaryDataKey, value: device.primaryValue })}
 									<span
 										class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
-										>{primaryNotation}</span
+										>{device.primaryNotation}</span
 									>
 								</span>
 							</div>
 						</div>
-						{#if secondaryDataKey}
+						{#if device.secondaryValue}
 							<span class="flex flex-grow-[0.2]"></span>
 							<div class="flex items-center">
 								<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"
-									>{nameToEmoji(secondaryDataKey)}</span
+									>{nameToEmoji(device.secondaryDataKey)}</span
 								>
 								<div class="no-wrap flex flex-col items-start">
 									<span
 										class="flex flex-nowrap items-baseline text-lg leading-tight font-bold text-gray-900 dark:text-white"
 									>
-										<span>{formatNumber({ key: secondaryDataKey, value: secondaryValue })}</span>
+										<span
+											>{formatNumber({
+												key: device.secondaryDataKey,
+												value: device.secondaryValue
+											})}</span
+										>
 										<span class="text-accent-700 dark:text-accent-400 ml-0.5 text-xs font-normal"
-											>{secondaryNotation}</span
+											>{device.secondaryNotation}</span
 										>
 									</span>
 								</div>

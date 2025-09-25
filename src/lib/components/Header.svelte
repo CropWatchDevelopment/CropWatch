@@ -298,7 +298,7 @@
 </header>
 
 <!-- Secondary Navigation/Breadcrumb Bar -->
-<div
+<!-- <div
 	class="fixed right-0 left-0 z-40 border-b transition-colors {dark
 		? 'border-slate-700 bg-slate-800'
 		: 'border-gray-200 bg-slate-200 shadow-sm'} titlebar-safe-area"
@@ -306,12 +306,10 @@
 >
 	<div class="mx-auto px-4 py-3">
 		<div class="flex flex-wrap items-center gap-4">
-			<!-- Breadcrumb or secondary nav -->
 			<div class="flex items-center gap-2 text-sm {dark ? 'text-slate-400' : 'text-gray-600'}">
 				<Breadcrumbs />
 			</div>
 			<div class="flex-1"></div>
-			<!-- Quick actions -->
 			<div class="hidden items-center gap-4 text-sm md:flex">
 				<a
 					href={`https://kb.cropwatch.io/doku.php?id=${page.route.id}`}
@@ -338,7 +336,7 @@
 			</div>
 		</div>
 	</div>
-</div>
+</div> -->
 
 <style>
 	.titlebar-safe-area {
