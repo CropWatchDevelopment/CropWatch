@@ -42,7 +42,9 @@
 </script>
 
 {#snippet triggerSnippet()}
-	<div class="relative flex flex-1" role="listitem">
+	<!-- <pre>{JSON.stringify(device.latestData[device.cw_device_type?.primary_data_v2], null, 2)}</pre> -->
+	<!-- <pre>{JSON.stringify(device, null, 2)}</pre> -->
+	<div class="relative flex flex-1 shadow-md" role="listitem">
 		<div
 			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70 transition-all duration-200"
 			class:bg-blue-300={isActive === null}
@@ -51,35 +53,38 @@
 			role="button"
 		></div>
 		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
-			<div class="flex flex-col text-base">
+			<div class="flex w-full flex-row text-base">
 				<div class="justify-left flex flex-row pl-0">
 					<b class="ml-4 pb-1 text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-300"
 						>{device.name || `Device ${device.dev_eui}`}</b
 					>
 				</div>
-				<div class="flex w-full flex-row justify-between justify-center space-x-5">
-					{#if device.secondaryNotation}
+				<div class="flex w-full flex-col flex-row justify-between justify-center space-x-5">
+					{#if device.cw_device_type?.primary_data_notation}
 						<div class="flex items-center">
 							<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400">
-								{nameToEmoji(device.primaryDataKey)}
+								{nameToEmoji(device.cw_device_type?.primary_data_v2)}
 							</span>
 							<div class="flex flex-col items-start">
 								<span
 									class="text-lg leading-tight font-bold whitespace-nowrap text-gray-900 dark:text-white"
 								>
-									{formatNumber({ key: device.primaryDataKey, value: device.primaryValue })}
+									{formatNumber({
+										key: device.cw_device_type?.primary_data_v2,
+										value: device.latestData[device.cw_device_type?.primary_data_v2]
+									})}
 									<span
 										class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
-										>{device.primaryNotation}</span
+										>{device.cw_device_type?.primary_data_notation}</span
 									>
 								</span>
 							</div>
 						</div>
-						{#if device.secondaryValue}
+						{#if device.cw_device_type?.secondary_data_notation}
 							<span class="flex flex-grow-[0.2]"></span>
 							<div class="flex items-center">
 								<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"
-									>{nameToEmoji(device.secondaryDataKey)}</span
+									>{nameToEmoji(device.cw_device_type?.secondary_data_v2)}</span
 								>
 								<div class="no-wrap flex flex-col items-start">
 									<span
@@ -87,12 +92,12 @@
 									>
 										<span
 											>{formatNumber({
-												key: device.secondaryDataKey,
-												value: device.secondaryValue
+												key: device.cw_device_type?.secondary_data_v2,
+												value: device.latestData[device.cw_device_type?.secondary_data_v2]
 											})}</span
 										>
 										<span class="text-accent-700 dark:text-accent-400 ml-0.5 text-xs font-normal"
-											>{device.secondaryNotation}</span
+											>{device.cw_device_type?.secondary_data_notation}</span
 										>
 									</span>
 								</div>

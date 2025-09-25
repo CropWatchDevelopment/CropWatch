@@ -59,12 +59,16 @@
 
 						{#if dataPointKey === 'created_at'}
 							<p class="flex flex-row align-bottom text-xs text-gray-600 dark:text-gray-400">
-								<Duration
-									start={device.last_data_updated_at}
-									totalUnits={2}
-									minUnits={DurationUnits.Second}
-								/>
-								&nbsp;{$_('ago')}
+								{#if device.last_data_updated_at !== null}
+									<Duration
+										start={device.last_data_updated_at}
+										totalUnits={2}
+										minUnits={DurationUnits.Second}
+									/>
+									&nbsp;{$_('ago')}
+								{:else}
+									No standard send time
+								{/if}
 							</p>
 						{:else}
 							<div class="text-right">

@@ -46,11 +46,9 @@
 					{#each location.cw_devices as device}
 						<DeviceCard
 							{device}
-							isActive={device.latestData !== null &&
-								DateTime.fromISO(device.latestData.created_at).diffNow('minutes').minutes <=
-									((device.upload_interval && device.upload_interval > 0
-										? device.upload_interval
-										: device.cw_device_type?.default_upload_interval) || 15)}
+							isActive={Math.abs(
+								DateTime.fromJSDate(device.last_data_updated_at).diffNow('minutes').minutes
+							) <= device.upload_interval}
 							locationId={location.location_id}
 						/>
 					{/each}
