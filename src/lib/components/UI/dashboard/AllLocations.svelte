@@ -8,23 +8,6 @@
 		locations: any[] | null;
 		supabase: SupabaseClient;
 	}>();
-
-	// const loadLatestData = async (device: any) => {
-	// 	const dataTable = device.cw_device_type.data_table_v2;
-	// 	const { data, error } = await supabase
-	// 		.from(dataTable)
-	// 		.select('*')
-	// 		.eq('dev_eui', device.dev_eui)
-	// 		.order('created_at', { ascending: false })
-	// 		.limit(1)
-	// 		.maybeSingle();
-	// 	if (error) {
-	// 		console.error('Error loading latest data:', error);
-	// 		return null;
-	// 	}
-	// 	device.latestData = data || null;
-	// 	return data || null;
-	// };
 </script>
 
 <div class="device-cards-grid">
@@ -44,10 +27,33 @@
 			>
 				{#snippet content()}
 					{#each location.cw_devices as device}
+						<p>{device.last_data_updated_at}</p>
+						<p>
+							{Math.abs(
+								DateTime.fromJSDate(device.last_data_updated_at).diffNow('minutes').minutes
+							)}
+						</p>
+						<p>
+							{Math.abs(DateTime.fromISO(device.last_data_updated_at).diffNow('minutes').minutes)}
+						</p>
+						<p>
+							{Math.abs(
+								DateTime.fromJSDate(
+									device.last_data_updated_at instanceof Date
+										? device.last_data_updated_at
+										: new Date(device.last_data_updated_at)
+								).diffNow('minutes').minutes
+							)}
+						</p>
+
 						<DeviceCard
 							{device}
 							isActive={Math.abs(
-								DateTime.fromJSDate(device.last_data_updated_at).diffNow('minutes').minutes
+								DateTime.fromJSDate(
+									device.last_data_updated_at instanceof Date
+										? device.last_data_updated_at
+										: new Date(device.last_data_updated_at)
+								).diffNow('minutes').minutes
 							) <= device.upload_interval}
 							locationId={location.location_id}
 						/>

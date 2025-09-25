@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 					.single();
 
 				(device as any).latestData = latestData || null;
+				device.last_data_updated_at = latestData ? latestData.created_at : null;
 			}
 		}
 	}

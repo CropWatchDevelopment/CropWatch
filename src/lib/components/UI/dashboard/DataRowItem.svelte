@@ -42,8 +42,6 @@
 </script>
 
 {#snippet triggerSnippet()}
-	<!-- <pre>{JSON.stringify(device.latestData[device.cw_device_type?.primary_data_v2], null, 2)}</pre> -->
-	<!-- <pre>{JSON.stringify(device, null, 2)}</pre> -->
 	<div class="relative flex flex-1 shadow-md" role="listitem">
 		<div
 			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70 transition-all duration-200"
