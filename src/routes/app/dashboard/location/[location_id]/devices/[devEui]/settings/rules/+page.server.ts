@@ -17,37 +17,58 @@ import { RuleService } from '$lib/services/RuleService';
  * Load the device notification rules and notifier types.
  * User session, `devEui` and `locationId` are already validated in the layout server load.
  */
+// +page.server.ts
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { devEui } = params;
 
 	try {
-		// Create SessionService with per-request Supabase client
 		const sessionService = new SessionService(locals.supabase);
 		const sessionResult = await sessionService.getSafeSession();
-
-		// Create error handler and repositories
 		const errorHandler = new ErrorHandlingService();
 
-		// Create repositories with per-request Supabase client
 		const ruleRepo = new RuleRepository(locals.supabase, errorHandler);
 		const notifierTypeRepo = new NotifierTypeRepository(locals.supabase, errorHandler);
-
-		// Create services with repositories
 		const ruleService = new RuleService(ruleRepo);
 
-		// Get rules for the device
-		// Don’t `await` the promise, stream the data instead
-		const rules = ruleService.getRulesByDevice(devEui);
+		// ✅ Ensure these are real Promises (not builders)
+		const rules: Promise<Rule[]> = (async () => {
+			return await ruleService.getRulesByDevice(devEui); // make sure this awaits internally or here
+		})();
 
-		// Get notifier types
-		// Don’t `await` the promise, stream the data instead
-		const notifierTypes = notifierTypeRepo.findAll();
+		const notifierTypes: Promise<NotifierType[]> = (async () => {
+			return await notifierTypeRepo.findAll(); // same: must resolve to array, not builder
+		})();
+
+		const { data: deviceTypeResult, error: deviceTypeError } = await locals.supabase
+			.from('cw_devices')
+			.select('*, cw_device_type(*)')
+			.eq('dev_eui', devEui)
+			.single();
+
+		if (deviceTypeError) {
+			console.error('Error fetching device type:', deviceTypeError);
+			// You can decide whether to throw or continue; here we continue with empty columns
+		}
+
+		// ✅ Resolve RPC to plain data (array), not a builder
+		const deviceColumns: Promise<Array<{ column_name: string }>> = (async () => {
+			const table = deviceTypeResult?.cw_device_type?.data_table_v2;
+			if (!table) return [];
+			const { data, error } = await locals.supabase.rpc('get_table_columns', { p_table: table });
+			if (error) {
+				console.error('Error fetching table columns:', error);
+				return [];
+			}
+			return data ?? [];
+		})();
 
 		return {
 			session: sessionResult.session,
 			user: sessionResult.user,
-			rules, // streamed
-			notifierTypes // streamed
+			// streamed promises are fine as long as they are TRUE Promises
+			rules,
+			notifierTypes,
+			deviceColumns
 		};
 	} catch (err) {
 		console.error('Error loading rules data:', err);

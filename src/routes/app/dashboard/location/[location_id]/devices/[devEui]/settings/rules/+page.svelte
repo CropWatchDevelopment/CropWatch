@@ -18,6 +18,7 @@
 
 	let rules: Rule[] = $derived([]);
 	let notifierTypes: NotifierType[] = $derived([]);
+	let ruleSubjects = $derived([]);
 
 	$effect(() => {
 		(async () => {
@@ -28,6 +29,16 @@
 	$effect(() => {
 		(async () => {
 			notifierTypes = await data.notifierTypes;
+		})();
+	});
+
+	$effect(() => {
+		(async () => {
+			const cols = await data.deviceColumns; // now an array of { column_name }
+			ruleSubjects = Array.isArray(cols) ? cols.map((c) => c.column_name) : [];
+			ruleSubjects = ruleSubjects.filter(
+				(col) => !['id', 'created_at', 'updated_at', 'is_simulated', 'dev_eui'].includes(col)
+			);
 		})();
 	});
 
@@ -134,6 +145,18 @@
 				}
 			];
 		}
+	}
+
+	async function getAllDevices() {
+		const { data: devices, error } = await data.supabase
+			.from('cw_devices')
+			.select('dev_eui, name')
+			.eq('location_id', device.location_id);
+		if (error) {
+			console.error('Error fetching devices:', error);
+			return [];
+		}
+		return devices;
 	}
 
 	function cancelEdit() {
@@ -480,16 +503,37 @@
 							{$_('Recipients')}*
 						</label>
 						<div class="flex">
-							<TextInput
-								id="edit_recipients"
-								placeholder={$_('Enter email address')}
-								bind:value={editRuleActionRecipient}
-								class="w-full rounded-r-none"
-							/>
+							{#if editRuleNotifierType == 1 || editRuleNotifierType == 2 || editRuleNotifierType == 3}
+								<TextInput
+									id="edit_recipients"
+									placeholder={$_('select_recipient_device')}
+									bind:value={editRuleNotifierType}
+									class="w-full rounded-r-none"
+								/>
+							{:else}
+								<Select
+									id="edit_recipients"
+									bind:value={editRuleActionRecipient}
+									name="edit_recipients"
+									required
+									class="w-full"
+								>
+									{#await getAllDevices()}
+										Loading devices...
+									{:then devices}
+										{#each devices as device}
+											<option value={device.dev_eui}>
+												{device.name} - {device.dev_eui}
+											</option>
+										{/each}
+									{/await}
+								</Select>
+							{/if}
 							<Button
 								variant="secondary"
-								class="rounded-l-none"
+								class="w-auto rounded-l-none whitespace-nowrap"
 								onclick={() => {
+									debugger;
 									if (editRuleActionRecipient.trim() !== '') {
 										editRuleActionRecipients = [
 											...editRuleActionRecipients,
@@ -582,7 +626,7 @@
 											required
 											class="w-full"
 										>
-											{#each deviceDataFields as field}
+											{#each ruleSubjects as field}
 												<option value={field}>{$_(field)}</option>
 											{/each}
 										</Select>
