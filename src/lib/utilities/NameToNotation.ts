@@ -46,7 +46,7 @@ export const nameToNotation = (name: string) => {
 			return '%';
 		case 'soil_ec':
 		case 'ec':
-			return 'µS/cm';
+			return 'mS/cm';
 		case 'soil_ph':
 			return 'pH';
 		case 'soil_nitrogen':
