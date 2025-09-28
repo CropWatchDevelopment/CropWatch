@@ -150,12 +150,16 @@
 	async function getAllDevices() {
 		const { data: devices, error } = await data.supabase
 			.from('cw_devices')
-			.select('dev_eui, name')
-			.eq('location_id', device.location_id);
+			.select('dev_eui, tti_name')
+			.eq('type', 20)
+			.eq('location_id', locationId);
+
+		debugger;
 		if (error) {
 			console.error('Error fetching devices:', error);
 			return [];
 		}
+
 		return devices;
 	}
 
@@ -393,7 +397,6 @@
 							}
 						};
 					}}
-					use:formValidation
 				>
 					<input type="hidden" name="ruleId" value={deletingRuleId} />
 
@@ -455,7 +458,6 @@
 						}
 					};
 				}}
-				use:formValidation
 			>
 				<input type="hidden" name="ruleId" value={editingRuleId} />
 				<input type="hidden" name="dev_eui" value={device?.dev_eui} />
@@ -506,45 +508,55 @@
 							{#if editRuleNotifierType == 1 || editRuleNotifierType == 2 || editRuleNotifierType == 3}
 								<TextInput
 									id="edit_recipients"
-									placeholder={$_('select_recipient_device')}
-									bind:value={editRuleNotifierType}
+									bind:value={editRuleActionRecipient}
 									class="w-full rounded-r-none"
 								/>
+								<Button
+									variant="secondary"
+									class="w-auto rounded-l-none whitespace-nowrap"
+									onclick={() => {
+										debugger;
+										if (editRuleActionRecipient.trim() !== '') {
+											editRuleActionRecipients = [
+												...editRuleActionRecipients,
+												editRuleActionRecipient.trim()
+											];
+											editRuleActionRecipient = '';
+										}
+									}}
+								>
+									{$_('Add')}
+								</Button>
 							{:else}
 								<Select
 									id="edit_recipients"
 									bind:value={editRuleActionRecipient}
+									onchange={() => {
+										if (
+											editRuleActionRecipient &&
+											!editRuleActionRecipients.includes(editRuleActionRecipient)
+										) {
+											editRuleActionRecipients = [
+												...editRuleActionRecipients,
+												editRuleActionRecipient
+											];
+											editRuleActionRecipient = '';
+										}
+									}}
 									name="edit_recipients"
-									required
 									class="w-full"
 								>
 									{#await getAllDevices()}
 										Loading devices...
 									{:then devices}
 										{#each devices as device}
-											<option value={device.dev_eui}>
-												{device.name} - {device.dev_eui}
+											<option value={device.tti_name}>
+												{device.tti_name} - {device.dev_eui}
 											</option>
 										{/each}
 									{/await}
 								</Select>
 							{/if}
-							<Button
-								variant="secondary"
-								class="w-auto rounded-l-none whitespace-nowrap"
-								onclick={() => {
-									debugger;
-									if (editRuleActionRecipient.trim() !== '') {
-										editRuleActionRecipients = [
-											...editRuleActionRecipients,
-											editRuleActionRecipient.trim()
-										];
-										editRuleActionRecipient = '';
-									}
-								}}
-							>
-								{$_('Add')}
-							</Button>
 						</div>
 
 						{#if editRuleActionRecipients.length > 0}
@@ -717,12 +729,19 @@
 
 				<div class="mt-6 flex justify-end space-x-3">
 					<Button variant="secondary" onclick={cancelEdit}>{$_('Cancel')}</Button>
-
+					{isUpdating ||
+						editRuleName === '' ||
+						(editRuleActionRecipients.length === 0 && editRuleNotifierType != 4) ||
+						editRuleCriteriaItems.length === 0}
+					{editRuleName === ''}
+					{editRuleActionRecipients.length}
+					{editRuleCriteriaItems.length}
+					{isUpdating}
 					<Button
 						type="submit"
 						disabled={isUpdating ||
 							editRuleName === '' ||
-							editRuleActionRecipients.length === 0 ||
+							(editRuleActionRecipients.length === 0 && editRuleNotifierType != 4) ||
 							editRuleCriteriaItems.length === 0}
 					>
 						{#if creatingNewRule}
