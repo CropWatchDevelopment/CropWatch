@@ -12,7 +12,8 @@
 		activeDevices = [],
 		allActive = false,
 		allInactive = false,
-		loading = false
+		loading = false,
+		class: className = ''
 	} = $props<{
 		location: Location;
 		href: string;
@@ -21,10 +22,13 @@
 		allActive?: boolean;
 		allInactive?: boolean;
 		loading?: boolean;
+		class?: string;
 	}>();
 </script>
 
-<div class="card-surface flex h-full flex-col overflow-hidden text-gray-900 dark:text-white">
+<div
+	class="card-surface flex h-full flex-col overflow-hidden text-gray-900 dark:text-white {className}"
+>
 	<div class="relative flex min-h-[60px] flex-row bg-teal-800 text-yellow-300 dark:bg-[#2c3546]">
 		<h2
 			class="flex w-full flex-row justify-between px-2 pt-3 text-lg font-semibold text-yellow-600 dark:text-yellow-400"

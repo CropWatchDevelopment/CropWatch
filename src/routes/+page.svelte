@@ -1,5 +1,4 @@
 <script>
-	import { onMount } from 'svelte';
 	import Chart from 'chart.js/auto';
 	import { getDarkMode } from '$lib/components/theme/theme.svelte';
 	import { DateTime } from 'luxon';
@@ -9,7 +8,6 @@
 		getErrorIconColor,
 		getErrorSeverity
 	} from './overviewError.svelte.js';
-	import { max } from 'lodash';
 
 	let { data } = $props();
 
@@ -442,7 +440,7 @@
 					<div>
 						<p class="text-sm text-gray-500 dark:text-gray-400">Data Received Today</p>
 						<p class="text-3xl font-bold text-blue-600 dark:text-blue-400">{dataReceived}</p>
-						<p class="text-xs text-blue-500 dark:text-blue-300">+5.2% vs yesterday</p>
+						<!-- <p class="text-xs text-blue-500 dark:text-blue-300">+5.2% vs yesterday</p> -->
 					</div>
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/20"

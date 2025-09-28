@@ -14,6 +14,12 @@
 	// Navigation items for the sidebar
 	const navigationItems = [
 		{
+			href: '/',
+			icon: 'overview',
+			label: 'Overview',
+			matcher: '/'
+		},
+		{
 			href: '/app/dashboard',
 			icon: 'dashboard',
 			label: 'Dashboard',
@@ -49,12 +55,6 @@
 			label: 'Gateways',
 			matcher: '/app/all-gateways'
 		}
-		// {
-		// 	href: '/app/account-settings/general',
-		// 	icon: 'settings',
-		// 	label: 'Settings',
-		// 	matcher: '/app/account-settings/general'
-		// }
 	];
 
 	// Check if current route matches navigation item

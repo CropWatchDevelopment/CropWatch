@@ -10,7 +10,7 @@
 	}>();
 </script>
 
-<div class="device-cards-grid">
+<div class="device-cards-grid p-3">
 	{#if locations.length === 0}
 		<div class="no-results">
 			<p>No locations match your search criteria.</p>
@@ -24,28 +24,10 @@
 				allActive={true}
 				allInactive={false}
 				loading={false}
+				class=""
 			>
 				{#snippet content()}
 					{#each location.cw_devices as device}
-						<p>{device.last_data_updated_at}</p>
-						<p>
-							{Math.abs(
-								DateTime.fromJSDate(device.last_data_updated_at).diffNow('minutes').minutes
-							)}
-						</p>
-						<p>
-							{Math.abs(DateTime.fromISO(device.last_data_updated_at).diffNow('minutes').minutes)}
-						</p>
-						<p>
-							{Math.abs(
-								DateTime.fromJSDate(
-									device.last_data_updated_at instanceof Date
-										? device.last_data_updated_at
-										: new Date(device.last_data_updated_at)
-								).diffNow('minutes').minutes
-							)}
-						</p>
-
 						<DeviceCard
 							{device}
 							isActive={Math.abs(
@@ -82,9 +64,16 @@
 	}
 
 	.device-cards-grid {
-		/* Base styles that apply to all view modes */
 		width: 100%;
-		min-width: 250px;
-		margin: 0; /* Remove auto margin to align left */
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(4, 1fr); /* always 4 across on large screens */
+	}
+
+	/* Make it responsive on smaller screens */
+	@media (max-width: 1024px) {
+		.device-cards-grid {
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		}
 	}
 </style>

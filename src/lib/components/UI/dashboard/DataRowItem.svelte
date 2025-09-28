@@ -42,7 +42,7 @@
 </script>
 
 {#snippet triggerSnippet()}
-	<div class="relative flex flex-1 shadow-md" role="listitem">
+	<div class="relative flex flex-1 shadow-lg" role="listitem">
 		<div
 			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70 transition-all duration-200"
 			class:bg-blue-300={isActive === null}
@@ -51,12 +51,13 @@
 			role="button"
 		></div>
 		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
+			<div class="justify-left flex flex-row pl-0">
+				<b
+					class="ml-4 w-full pb-1 text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-300"
+					>{device.name || `Device ${device.dev_eui}`}</b
+				>
+			</div>
 			<div class="flex w-full flex-row text-base">
-				<div class="justify-left flex flex-row pl-0">
-					<b class="ml-4 pb-1 text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-300"
-						>{device.name || `Device ${device.dev_eui}`}</b
-					>
-				</div>
 				<div class="flex w-full flex-col flex-row justify-between justify-center space-x-5">
 					{#if device.cw_device_type?.primary_data_notation}
 						<div class="flex items-center">
@@ -78,7 +79,8 @@
 								</span>
 							</div>
 						</div>
-						{#if device.cw_device_type?.secondary_data_notation}
+
+						{#if device.cw_device_type?.secondary_data_v2}
 							<span class="flex flex-grow-[0.2]"></span>
 							<div class="flex items-center">
 								<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"

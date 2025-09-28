@@ -92,6 +92,8 @@ export const strings = {
 	Counts: 'カウント',
 	counts: 'カウント',
 	ago: '前',
+	overview: '概要',
+	Overview: '概要',
 	Dashboard: 'ダッシュボード',
 	dashboard: 'ダッシュボード',
 	Login: 'ログイン',
