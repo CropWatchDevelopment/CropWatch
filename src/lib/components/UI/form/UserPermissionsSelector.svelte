@@ -8,6 +8,7 @@
 	import type { DeviceWithType } from '$lib/models/Device';
 	import type { LocationUser } from '$lib/models/LocationUser';
 	import { error as errorToast, success as successToast } from '$lib/stores/toast.svelte';
+	import { orderBy } from 'lodash';
 	import MaterialIcon from '../icons/MaterialIcon.svelte';
 	import { _ } from 'svelte-i18n';
 
@@ -58,7 +59,6 @@
 
 		try {
 			const formData = new FormData();
-
 			formData.append('userId', removingUserId as string);
 
 			const response = await fetch('?/removeUser', { method: 'POST', body: formData });
@@ -87,7 +87,7 @@
 				{$_('no_additional_users')}
 			</div>
 		{:else}
-			{#each ownerList as owner (owner.id)}
+			{#each orderBy(ownerList, ['profile.id'], ['asc']) as owner (owner.id)}
 				{#if !owner.profile?.email?.includes('@cropwatch.io')}
 					<div
 						class="item-start flex flex-col justify-between gap-3 border-gray-300 p-3 sm:flex-row sm:items-center dark:border-neutral-400"
@@ -130,9 +130,9 @@
 											updatingUserId = owner.user_id;
 											updatingUser = true;
 
-											return async ({ result, update }) => {
+											return async ({ result }) => {
 												if (result.type === 'success' && result.data?.success) {
-													await update({ invalidateAll: true });
+													await invalidateAll();
 													successToast(
 														(result.data as any).message || 'Permission updated successfully'
 													);
@@ -143,6 +143,7 @@
 												}
 
 												updatingUser = false;
+												updatingUserId = undefined;
 											};
 										}}
 										use:formValidation
@@ -184,7 +185,7 @@
 								<Button
 									type="submit"
 									variant="secondary"
-									iconic
+									class="red-500"
 									{disabled}
 									onclick={(event) => {
 										event.preventDefault();

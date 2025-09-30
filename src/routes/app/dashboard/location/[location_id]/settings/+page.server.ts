@@ -33,6 +33,8 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 	// Get location details using the service with authenticated client
 	const location = await locationService.getLocationById(locationId);
 	const devices = await deviceRepo.findByLocation(locationId);
+	const allLocationUsers = await locationService.getLocationUsers(locationId);
+	console.log('All location users:', allLocationUsers);
 
 	if (!location) {
 		throw error(404, 'Location not found');

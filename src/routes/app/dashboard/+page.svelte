@@ -8,6 +8,8 @@
 	import { error, success } from '$lib/stores/toast.svelte.js';
 	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { mdiClose, mdiMagnify } from '@mdi/js';
+	import { invalidateAll } from '$app/navigation';
+	import { throttle } from './dashboardThrottle.js';
 
 	type cw_device = Database['public']['Tables']['cw_devices']['Row'];
 	type cw_locations = Database['public']['Tables']['cw_locations']['Row'] & {
@@ -20,6 +22,78 @@
 	let supabase: SupabaseClient = data.supabase;
 	let realtime: RealtimeChannel | null = null;
 	let searchTerm: string = $state('');
+	const MIN_INTERVAL_MS = 60_000; // throttle window
+	const STALE_AFTER_MS = 30_000; // only refresh if older than this
+
+	let lastFetchAt = 0; // update this after each successful refresh
+	let inFlight = false; // avoid overlap
+
+	async function refreshLocations() {
+		// skip if data is fresh enough
+		const now = Date.now();
+		if (now - lastFetchAt < STALE_AFTER_MS) return;
+		if (inFlight) return;
+
+		inFlight = true;
+		try {
+			await invalidateAll(); // re-run +page.(server)load / +page.load
+			lastFetchAt = Date.now();
+		} finally {
+			inFlight = false;
+		}
+	}
+
+	function teardownRealtime() {
+		if (realtime) {
+			supabase.removeChannel(realtime);
+			realtime = null;
+			console.log('Realtime channel removed due to tab change.');
+		}
+	}
+
+	function handleBlur() {
+		// user moved to another window
+		teardownRealtime();
+	}
+
+	const throttledRefresh = throttle(
+		() => {
+			if (document.visibilityState === 'visible') {
+				void refreshLocations();
+			}
+		},
+		MIN_INTERVAL_MS,
+		{ trailing: true }
+	);
+	const applyQueuedUpdates = throttle(
+		() => {
+			// flush any queued records into your locations structure, then:
+			locations = [...locations];
+		},
+		500,
+		{ trailing: true }
+	);
+	function onRealtimeRecord(rec: any) {
+		// push to a queue you manage, then:
+		applyQueuedUpdates();
+	}
+
+	function handleVisibility() {
+		if (document.visibilityState === 'visible') throttledRefresh();
+		if (document.visibilityState === 'hidden') {
+			console.log('Tab is hidden, tearing down realtime connection.');
+			teardownRealtime();
+		}
+	}
+
+	function handleFocus() {
+		throttledRefresh();
+	}
+
+	// For back/forward cache restores (Safari/iOS especially)
+	function handlePageShow(e: PageTransitionEvent) {
+		if (e.persisted) throttledRefresh();
+	}
 
 	const dataUpdate = (payload: any) => {
 		console.log('Data change received!', payload);
@@ -75,8 +149,8 @@
 					success('Connected to realtime updates!');
 				}
 				if (status === 'CHANNEL_ERROR') {
-					console.log(`There was an error subscribing to channel: ${err.message}`);
-					error(`There was an error subscribing to updates: ${err.message}`);
+					console.log(`There was an error subscribing to channel`, err);
+					error(`There was an error subscribing to updates`);
 				}
 				if (status === 'TIMED_OUT') {
 					console.log('Realtime server did not respond in time.');
@@ -87,12 +161,23 @@
 					error('Realtime channel was unexpectedly closed.');
 				}
 			});
+
+		lastFetchAt = Date.now();
+
+		document.addEventListener('visibilitychange', handleVisibility);
+		window.addEventListener('focus', handleFocus);
+		window.addEventListener('blur', handleBlur);
+		window.addEventListener('pageshow', handlePageShow as any);
 	});
 
 	onDestroy(() => {
 		if (realtime) {
 			supabase.removeChannel(realtime);
 		}
+		document.removeEventListener('visibilitychange', handleVisibility);
+		window.removeEventListener('focus', handleFocus);
+		window.removeEventListener('blur', handleBlur);
+		window.removeEventListener('pageshow', handlePageShow as any);
 	});
 
 	$effect(() => {
