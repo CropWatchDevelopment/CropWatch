@@ -26,7 +26,7 @@
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
 	import RelayControl from '$lib/components/RelayControl.svelte';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import { afterNavigate } from '$app/navigation';
 	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
 
@@ -95,15 +95,6 @@
 	let loadingHistoricalData = $state(false); // Local loading state for historical data fetch
 	let renderingVisualization = $state(false); // Local rendering state for visualization
 
-	// Derived properties
-	// const {
-	// 	deviceTypeName,
-	// 	temperatureChartVisible,
-	// 	humidityChartVisible,
-	// 	moistureChartVisible,
-	// 	co2ChartVisible,
-	// 	phChartVisible
-	// } = $derived(getDeviceDetailDerived(device, dataType, latestData));
 	let channel: RealtimeChannel | undefined = $state(undefined); // Channel for realtime updates
 	// Track last realtime update timestamp for stale detection
 	let lastRealtimeUpdate = $state<number>(Date.now());
@@ -410,6 +401,7 @@
 	// Cleanup on destroy
 	import { onDestroy } from 'svelte';
 	import BatteryLevel from '$lib/components/BatteryLevel.svelte';
+	import DataTable from '$lib/components/DataTable.svelte';
 	onDestroy(() => {
 		teardownRealtime();
 		if (staleCheckIntervalId) clearInterval(staleCheckIntervalId);
@@ -599,8 +591,12 @@
 
 <!-- Full-width Calendar Section -->
 <section class="mb-12 px-4">
-	<h2>{$_('Weather & Data')}</h2>
-	<WeatherCalendar events={calendarEvents} />
+	{#if device.cw_device_type?.data_table_v2 === 'cw_air_data'}
+		<DataTable {historicalData} />
+	{:else}
+		<h2>{$_('Weather & Data')}</h2>
+		<WeatherCalendar events={calendarEvents} />
+	{/if}
 </section>
 
 <style lang="postcss">

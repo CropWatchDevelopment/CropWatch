@@ -5,7 +5,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import type { Database } from '../../../../database.types.js';
 	import { convertObject } from '$lib/utilities/ConvertSensorDataObject.js';
-	import { error, success } from '$lib/stores/toast.svelte.js';
+	import { error, success, warning } from '$lib/stores/toast.svelte.js';
 	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { mdiClose, mdiMagnify } from '@mdi/js';
 	import { invalidateAll } from '$app/navigation';
@@ -158,7 +158,7 @@
 				}
 				if (status === 'CLOSED') {
 					console.log('Realtime channel was unexpectedly closed.');
-					error('Realtime channel was unexpectedly closed.');
+					warning('Realtime channel was unexpectedly closed.');
 				}
 			});
 

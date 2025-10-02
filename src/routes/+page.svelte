@@ -439,7 +439,7 @@
 				<div class="flex items-center justify-between">
 					<div>
 						<p class="text-sm text-gray-500 dark:text-gray-400">Data Received Today</p>
-						<p class="text-3xl font-bold text-blue-600 dark:text-blue-400">{dataReceived}</p>
+						<p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{dataReceived}</p>
 						<!-- <p class="text-xs text-blue-500 dark:text-blue-300">+5.2% vs yesterday</p> -->
 					</div>
 					<div
@@ -470,7 +470,9 @@
 					<div>
 						<p class="text-sm text-gray-500 dark:text-gray-400">Success Rate</p>
 						<p class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{successRate}%</p>
-						<p class="text-xs text-red-500 dark:text-red-300">{100 - successRate}% errors</p>
+						<p class="text-xs text-red-500 dark:text-red-300">
+							{(100 - successRate ?? 0).toFixed(1)}% errors
+						</p>
 					</div>
 					<div
 						class="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-500/20"
@@ -530,7 +532,9 @@
 					<div class="flex-1">
 						<p class="text-sm text-gray-500 dark:text-gray-400">Notifications</p>
 						<p class="text-3xl font-bold text-purple-600 dark:text-purple-400">
-							{alertQuota}<span class="text-lg text-gray-400 dark:text-gray-500">/???</span>
+							{alertQuota.toFixed(0)}<span class="text-lg text-gray-400 dark:text-gray-500"
+								>/???</span
+							>
 						</p>
 						<div class="mt-2 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
 							<div

@@ -27,6 +27,7 @@
 				class=""
 			>
 				{#snippet content()}
+					<!-- Sort devices by name -->
 					{#each location.cw_devices as device}
 						<DeviceCard
 							{device}

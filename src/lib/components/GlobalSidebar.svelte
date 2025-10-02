@@ -145,7 +145,7 @@
 		shadow-lg backdrop-blur-sm"
 	style="top: 73px; 
 		height: calc(100vh - 73px);
-		width: {isOpen ? '256px' : '64px'};"
+		width: {isOpen ? '256px' : '50px'};"
 	class:mobile-hidden={!isOpen}
 	aria-label="Sidebar navigation"
 >
@@ -175,7 +175,7 @@
 	{/if}
 
 	<!-- Navigation Items -->
-	<nav class="z-10 flex flex-1 flex-col overflow-y-auto pr-2" style="z-index: 10000;">
+	<nav class="z-10 flex flex-1 flex-col overflow-y-auto" style="z-index: 10000;">
 		<ul class="space-y-1">
 			{#if !sidebarStore.isOpen}
 				<li class="mx-3 border-t {dark ? 'border-slate-500/30' : 'border-gray-200/30'}">
