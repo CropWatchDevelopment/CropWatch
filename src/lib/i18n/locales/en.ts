@@ -210,6 +210,10 @@ export const strings = {
 	'Loading historical data...': 'Loading historical data...',
 	'No historical data available for the selected date range.':
 		'No historical data available for the selected date range.',
+	'Sensor Data - Today': 'Sensor Data - Today',
+	reading: 'reading',
+	readings: 'readings',
+	'No data available for today': 'No data available for today',
 	'Device Settings': 'Device Settings',
 	General: 'General',
 	'Manage the device information.': 'Manage the device information.',

@@ -1,4 +1,5 @@
 <script>
+	import { _ } from 'svelte-i18n';
 	let { historicalData } = $props();
 
 	let dataArray = $derived(historicalData); // Assume data is an array of objects
@@ -62,9 +63,10 @@
 			<div
 				class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 dark:from-blue-700 dark:to-indigo-800"
 			>
-				<h1 class="text-2xl font-bold text-white">Sensor Data - Today</h1>
+				<h1 class="text-2xl font-bold text-white">{$_('Sensor Data - Today')}</h1>
 				<p class="mt-1 text-sm text-blue-100 dark:text-blue-200/80">
-					{filteredData.length} reading{filteredData.length !== 1 ? 's' : ''} recorded
+					{filteredData.length}
+					{filteredData.length === 1 ? $_('reading') : $_('readings')} recorded
 				</p>
 			</div>
 
@@ -72,7 +74,7 @@
 			<div class="overflow-x-auto">
 				{#if filteredData.length === 0}
 					<div class="p-12 text-center text-gray-500 dark:text-gray-400">
-						<p class="text-lg">No data available for today</p>
+						<p class="text-lg">{$_('No data available for today')}</p>
 					</div>
 				{:else}
 					<table class="w-full text-sm">
