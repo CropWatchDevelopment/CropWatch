@@ -29,17 +29,7 @@
 				{#snippet content()}
 					<!-- Sort devices by name -->
 					{#each location.cw_devices as device}
-						<DeviceCard
-							{device}
-							isActive={Math.abs(
-								DateTime.fromJSDate(
-									device.last_data_updated_at instanceof Date
-										? device.last_data_updated_at
-										: new Date(device.last_data_updated_at)
-								).diffNow('minutes').minutes
-							) <= device.upload_interval}
-							locationId={location.location_id}
-						/>
+						<DeviceCard {device} locationId={location.location_id} />
 					{/each}
 				{/snippet}
 			</DashboardCard>

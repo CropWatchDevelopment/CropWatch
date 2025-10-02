@@ -17,11 +17,20 @@
 		};
 	}
 
-	let { device, isActive, locationId } = $props<{
+	let { device, locationId } = $props<{
 		device: DeviceWithLatestData;
-		isActive: boolean | null;
 		locationId: number;
 	}>();
+
+	let isActive = $derived(
+		Math.abs(
+			DateTime.fromJSDate(
+				device.last_data_updated_at instanceof Date
+					? device.last_data_updated_at
+					: new Date(device.last_data_updated_at)
+			).diffNow('minutes').minutes
+		) <= device.upload_interval
+	);
 </script>
 
 <DataRowItem

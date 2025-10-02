@@ -17,8 +17,8 @@
 	};
 
 	let { data } = $props();
-	let locations = $derived(data.locations);
-	let locationsAfterFilter = $derived(data.locations);
+	let locations = $state(data.locations);
+	let locationsAfterFilter = $state(data.locations);
 	let supabase: SupabaseClient = data.supabase;
 	let realtime: RealtimeChannel | null = null;
 	let searchTerm: string = $state('');
@@ -124,14 +124,15 @@
 
 			const convertedSensorData = convertObject(latestData);
 			console.log('Converted Sensor Data:', convertedSensorData);
-			locations[locationIndex].cw_devices[deviceIndex].latestData = latestData;
-			locations[locationIndex].cw_devices[deviceIndex].primaryValue = primaryValue;
-			locations[locationIndex].cw_devices[deviceIndex].secondaryValue = secondaryValue;
-			locations[locationIndex].cw_devices[deviceIndex].primaryNotation = primaryNotation;
-			locations[locationIndex].cw_devices[deviceIndex].secondaryNotation = secondaryNotation;
-			locations[locationIndex].cw_devices[deviceIndex].last_data_updated_at = new Date(
-				payload.created_at
-			);
+			locations[locationIndex].cw_devices[deviceIndex] = {
+				...locations[locationIndex].cw_devices[deviceIndex],
+				latestData,
+				primaryValue,
+				secondaryValue,
+				primaryNotation,
+				secondaryNotation,
+				last_data_updated_at: new Date(payload.created_at)
+			};
 
 			locations = [...locations];
 		}
