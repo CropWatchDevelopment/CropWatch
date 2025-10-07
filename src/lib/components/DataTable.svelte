@@ -54,8 +54,8 @@
 	let visibleColumns = $derived(getVisibleColumns(filteredData));
 </script>
 
-<div class="min-h-screen bg-gray-100 text-gray-900 dark:bg-neutral-950 dark:text-gray-100">
-	<div class="mx-auto max-w-7xl p-4">
+<div class="min-h-screen w-full text-gray-900">
+	<div class="mx-auto w-full p-4">
 		<div
 			class="overflow-hidden rounded-lg border border-gray-200/70 bg-white shadow-lg dark:border-white/10 dark:bg-neutral-900"
 		>

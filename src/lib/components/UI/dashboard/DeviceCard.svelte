@@ -33,6 +33,7 @@
 	);
 </script>
 
+{device.last_data_updated_at}
 <DataRowItem
 	{device}
 	{isActive}
