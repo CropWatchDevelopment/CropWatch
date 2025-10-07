@@ -10,6 +10,7 @@ interface TableConfig {
 	cellHeight: number;
 	columnMargin: number;
 	fontSize: number;
+	headerFontSize: number;
 	headerHeight: number;
 	takeEvery: number; // keep every Nth row (always keep rows with alert bgColor)
 	timezone?: string; // e.g., 'Asia/Tokyo'
@@ -18,15 +19,18 @@ interface TableConfig {
 const DEFAULT_CONFIG: TableConfig = {
 	caption: '',
 	columnsPerPage: 4,
-	rowsPerColumn: 30,
-	cellWidth: 100,
-	cellHeight: 12,
-	columnMargin: 10,
-	fontSize: 7,
-	headerHeight: 15,
+	rowsPerColumn: 25,
+	cellWidth: 45,
+	cellHeight: 20,
+	columnMargin: 3,
+	fontSize: 12,
+	headerFontSize: 10,
+	headerHeight: 20,
 	takeEvery: 3,
 	timezone: 'utc'
 };
+
+const MIN_COLUMN_SCALE = 0.9;
 
 /**
  * Parse the header.value (epoch ms | ISO | SQL) into a DateTime in the desired zone.
@@ -93,17 +97,68 @@ export function createPDFDataTable({
 
 	// Page geometry
 	const pageHeight = doc.page.height;
-	const contentHeight = pageHeight - marginTop - marginBottom;
 
 	const pageWidth = doc.page.width;
 	const availableWidth = pageWidth - marginLeft - marginRight;
-	const columnWidth = [dataHeader.header, ...dataHeader.cells].reduce(
-		(total, col) => total + (col.width ?? cellWidth),
-		0
-	);
-	const totalColumnWidth = columnWidth + columnMargin;
-	const actualColumnsPerPage = Math.floor(availableWidth / totalColumnWidth);
-	const finalColumnsPerPage = Math.min(columnsPerPage, actualColumnsPerPage);
+	const columns = [dataHeader.header, ...dataHeader.cells];
+	const columnCount = columns.length;
+	const uniformWidth = Math.max(1, cellWidth);
+	const previousFontSize = (doc as unknown as { _fontSize?: number })._fontSize ?? conf.fontSize;
+	const bodyFontSize = Math.max(6, (dataHeader.header.fontSize ?? conf.fontSize) - 1);
+	const measurementFontSize = Math.max(6, bodyFontSize);
+	doc.fontSize(measurementFontSize);
+	const headerLabelWidth = doc.widthOfString(String(dataHeader.header.label ?? ''));
+	let widestTimeLabel = headerLabelWidth;
+	for (const row of workingRows) {
+		const dt = parseHeaderInstant(
+			(row.header as any).value ?? (row.header as any).label,
+			conf.timezone
+		);
+		const labelCandidate = dt ? dt.toFormat('M/d H:mm') : String((row.header as any).label ?? '');
+		widestTimeLabel = Math.max(widestTimeLabel, doc.widthOfString(labelCandidate));
+	}
+	const firstColumnBaseWidth = Math.max(uniformWidth, widestTimeLabel + 8);
+	doc.fontSize(previousFontSize);
+	const baseColumnWidth = firstColumnBaseWidth + (columnCount - 1) * uniformWidth;
+
+	const computeColumnLayout = (rowsRemaining: number, rowsPerColumn: number) => {
+		const maxNeededColumns = Math.max(1, Math.ceil(rowsRemaining / rowsPerColumn));
+		const maxCandidate = Math.max(1, Math.min(columnsPerPage, maxNeededColumns));
+		let chosenCount = 1;
+		let chosenScale = 1;
+		let effectiveWidth = baseColumnWidth;
+
+		for (let candidate = maxCandidate; candidate >= 1; candidate--) {
+			const totalWidthNeeded = baseColumnWidth * candidate + columnMargin * (candidate - 1);
+			if (totalWidthNeeded <= availableWidth) {
+				chosenCount = candidate;
+				chosenScale = 1;
+				effectiveWidth = baseColumnWidth;
+				break;
+			}
+
+			const usableWidth = availableWidth - columnMargin * (candidate - 1);
+			if (usableWidth <= 0) continue;
+			const scale = usableWidth / (baseColumnWidth * candidate);
+			if (candidate === 1 || scale >= MIN_COLUMN_SCALE) {
+				chosenCount = candidate;
+				chosenScale = Math.min(1, scale);
+				effectiveWidth = baseColumnWidth * chosenScale;
+				break;
+			}
+		}
+
+		const totalWidthUsed =
+			chosenCount * effectiveWidth + columnMargin * Math.max(0, chosenCount - 1);
+		const offsetX = marginLeft + Math.max(0, (availableWidth - totalWidthUsed) / 2);
+
+		return {
+			columnsThisPage: chosenCount,
+			columnScale: chosenScale,
+			effectiveColumnWidth: effectiveWidth,
+			offsetX
+		};
+	};
 
 	if (caption) {
 		doc.fillColor('black').fontSize(12).text(caption, marginLeft, doc.y);
@@ -111,41 +166,59 @@ export function createPDFDataTable({
 	}
 
 	let dataIndex = 0;
-	let startY = doc.y;
 
 	while (dataIndex < workingRows.length) {
-		// Draw columns for current page
-		for (let col = 0; col < finalColumnsPerPage && dataIndex < workingRows.length; col++) {
-			const firstColumn = col % finalColumnsPerPage === 0;
+		const pageTop = doc.y;
+		let availableHeightForPage = pageHeight - marginBottom - pageTop - headerHeight;
 
-			if (firstColumn) {
-				startY = doc.y;
-			}
+		if (availableHeightForPage < cellHeight) {
+			doc.addPage();
+			doc.y = marginTop;
+			continue;
+		}
 
-			let availableHeight = pageHeight - startY - marginBottom - headerHeight;
+		const actualRowsPerColumn = Math.max(1, Math.floor(availableHeightForPage / cellHeight));
+		const rowsRemaining = workingRows.length - dataIndex;
+		const { columnsThisPage, columnScale, effectiveColumnWidth, offsetX } = computeColumnLayout(
+			rowsRemaining,
+			actualRowsPerColumn
+		);
+		let tallestColumnHeight = headerHeight;
+		const maxColumnsForData = Math.max(
+			1,
+			Math.min(columnsThisPage, Math.ceil(rowsRemaining / actualRowsPerColumn))
+		);
 
-			// New page if at the bottom
-			if (firstColumn && availableHeight < 200) {
-				doc.addPage();
-				startY = marginTop;
-				availableHeight = contentHeight - headerHeight;
-			}
-
-			const actualRowsPerColumn = Math.floor(availableHeight / cellHeight);
-			const startX = marginLeft + col * (columnWidth + columnMargin);
+		for (let col = 0; col < maxColumnsForData && dataIndex < workingRows.length; col++) {
+			const startX = offsetX + col * (effectiveColumnWidth + columnMargin);
 			const endIndex = Math.min(dataIndex + actualRowsPerColumn, workingRows.length);
+			const columnRows = workingRows.slice(dataIndex, endIndex);
+
+			if (columnRows.length === 0) {
+				break;
+			}
 
 			drawColumn({
 				doc,
 				dataHeader,
-				dataRows: workingRows.slice(dataIndex, endIndex),
-				columnWidth,
+				dataRows: columnRows,
+				columnScale,
 				startX,
-				startY,
-				config: conf
+				startY: pageTop,
+				config: conf,
+				firstColumnBaseWidth
 			});
 
+			const columnHeight = headerHeight + columnRows.length * cellHeight;
+			tallestColumnHeight = Math.max(tallestColumnHeight, columnHeight);
 			dataIndex = endIndex;
+		}
+
+		doc.y = pageTop + tallestColumnHeight + columnMargin;
+
+		if (dataIndex < workingRows.length) {
+			doc.addPage();
+			doc.y = marginTop;
 		}
 	}
 }
@@ -154,40 +227,65 @@ function drawColumn({
 	doc,
 	dataHeader,
 	dataRows,
-	columnWidth,
+	columnScale,
 	startX,
 	startY,
-	config
+	config,
+	firstColumnBaseWidth
 }: {
 	doc: InstanceType<typeof PDFDocument>;
 	dataHeader: TableRow;
 	dataRows: TableRow[];
-	columnWidth: number;
+	columnScale: number;
 	startX: number;
 	startY: number;
 	config: TableConfig;
+	firstColumnBaseWidth: number;
 }): void {
 	let currentY = startY;
 
 	const borderColor = '#ccc';
-	const { fontSize: defaultFontSize, cellWidth, headerHeight, cellHeight, timezone } = config;
+	const {
+		fontSize: defaultFontSize,
+		headerFontSize,
+		headerHeight,
+		cellHeight,
+		timezone,
+		cellWidth: configCellWidth
+	} = config;
+	const uniformWidth = Math.max(1, configCellWidth);
+	const scaledColumns = [dataHeader.header, ...dataHeader.cells].map((col, index) => ({
+		...col,
+		effectiveWidth:
+			columnScale * (index === 0 ? Math.max(uniformWidth, firstColumnBaseWidth) : uniformWidth)
+	}));
+	const scaledColumnWidth = scaledColumns.reduce((total, col) => total + col.effectiveWidth, 0);
 
 	// Header background
-	doc.fillColor('#e8e8e8').rect(startX, currentY, columnWidth, config.headerHeight).fill();
-	doc.strokeColor(borderColor).rect(startX, currentY, columnWidth, config.headerHeight).stroke();
-
-	const columns = [dataHeader.header, ...dataHeader.cells];
+	doc.fillColor('#e8e8e8').rect(startX, currentY, scaledColumnWidth, config.headerHeight).fill();
+	doc
+		.strokeColor(borderColor)
+		.rect(startX, currentY, scaledColumnWidth, config.headerHeight)
+		.stroke();
 
 	const getCellX = (index: number): number =>
-		startX + columns.slice(0, index).reduce((total, col) => total + (col.width ?? cellWidth), 0);
+		startX + scaledColumns.slice(0, index).reduce((total, col) => total + col.effectiveWidth, 0);
 
 	// Column labels
 	if (dataRows.length > 0) {
-		columns.forEach(({ label, width = columnWidth, fontSize = defaultFontSize }, index) => {
+		scaledColumns.forEach(({ label, effectiveWidth, fontSize }, index) => {
+			const headerLabelFontSize = fontSize ?? headerFontSize ?? defaultFontSize;
+			doc.save();
+			doc.rect(getCellX(index), currentY, effectiveWidth, headerHeight).clip();
 			doc
 				.fillColor('#000')
-				.fontSize(fontSize)
-				.text(label, getCellX(index), currentY + 2, { width, align: 'center' });
+				.fontSize(headerLabelFontSize)
+				.text(label, getCellX(index) + 2, currentY + 2, {
+					width: Math.max(1, effectiveWidth - 4),
+					align: 'center',
+					lineBreak: false
+				});
+			doc.restore();
 		});
 	}
 
@@ -200,11 +298,11 @@ function drawColumn({
 		// Row background striping
 		doc
 			.fillColor(isEvenRow ? '#ffffff' : '#f9f9f9')
-			.rect(startX, currentY, columnWidth, cellHeight)
+			.rect(startX, currentY, scaledColumnWidth, cellHeight)
 			.fill();
 
 		// Row border
-		doc.strokeColor(borderColor).rect(startX, currentY, columnWidth, cellHeight).stroke();
+		doc.strokeColor(borderColor).rect(startX, currentY, scaledColumnWidth, cellHeight).stroke();
 
 		// ——— Compute first-column timestamp label in the requested timezone ———
 		const thisDt = parseHeaderInstant((header as any).value ?? (header as any).label, timezone);
@@ -238,23 +336,34 @@ function drawColumn({
 		// Render cells
 		[header, ...cells].forEach(({ label, bgColor }, cellIndex) => {
 			const cellX = getCellX(cellIndex);
-			const { width = cellWidth, fontSize = defaultFontSize } = columns[cellIndex];
+			const { effectiveWidth, fontSize = defaultFontSize } = scaledColumns[cellIndex];
 
 			// Alert background if provided
 			if (bgColor && bgColor !== '#ffffff') {
-				doc.fillColor(bgColor).rect(cellX, currentY, width, cellHeight).fill();
+				doc.fillColor(bgColor).rect(cellX, currentY, effectiveWidth, cellHeight).fill();
 			}
 
 			// Cell border
-			doc.strokeColor(borderColor).rect(cellX, currentY, width, cellHeight).stroke();
+			doc.strokeColor(borderColor).rect(cellX, currentY, effectiveWidth, cellHeight).stroke();
 
 			// Use computed time label for the first column; other columns use provided labels
 			const cellLabel = cellIndex === 0 ? computedHeaderLabel : (label ?? '');
 
+			doc.save();
+			doc.rect(cellX, currentY, effectiveWidth, cellHeight).clip();
+			const isFirstColumn = cellIndex === 0;
+			const isLastColumn = cellIndex === scaledColumns.length - 1;
+			const horizontalPadding = isFirstColumn ? 4 : isLastColumn ? 4 : 2;
+			const textAlign = isFirstColumn ? 'left' : isLastColumn ? 'right' : 'right';
 			doc
 				.fillColor('#000')
-				.fontSize(fontSize - 1)
-				.text(cellLabel, cellX + 1, currentY + 2, { width: width - 5, align: 'right' });
+				.fontSize(Math.max(6, fontSize - 1))
+				.text(cellLabel, cellX + horizontalPadding, currentY + 2, {
+					width: Math.max(1, effectiveWidth - horizontalPadding * 2),
+					align: textAlign,
+					lineBreak: false
+				});
+			doc.restore();
 		});
 
 		currentY += cellHeight;
