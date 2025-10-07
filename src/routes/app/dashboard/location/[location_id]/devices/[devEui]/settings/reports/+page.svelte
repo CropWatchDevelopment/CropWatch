@@ -93,7 +93,7 @@
 		<div class="mt-4 md:mt-0">
 			{#if reportCount >= 0}
 				<p class="mb-2 text-sm text-red-600 dark:text-red-400">
-					You have reached the maximum number of reports allowed.
+					<!-- You have reached the maximum number of reports allowed. -->
 				</p>
 			{:else}
 				<Button

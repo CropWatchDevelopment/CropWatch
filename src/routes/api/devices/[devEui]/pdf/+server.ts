@@ -261,7 +261,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		doc.fontSize(16).text(`${titleText} ${$_('device_report')}`);
 
 		// Signature boxes (old layout)
-		doc.fontSize(7).strokeColor('#ccc');
+		doc.fontSize(10).strokeColor('#ccc');
 		doc.rect(400, marginTop, 50, 60).stroke();
 		doc.rect(450, marginTop, 50, 60).stroke();
 		doc.rect(500, marginTop, 50, 60).stroke();

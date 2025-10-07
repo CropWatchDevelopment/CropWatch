@@ -13,7 +13,7 @@ export const nameToNotation = (name: string) => {
 		case 'dewPointC':
 			return '°C';
 		case 'soil_EC':
-			return 'dS/m';
+			return 'mS/m';
 		case 'soil_N':
 			return 'mg/kg';
 		case 'soil_P':
@@ -46,7 +46,7 @@ export const nameToNotation = (name: string) => {
 			return '%';
 		case 'soil_ec':
 		case 'ec':
-			return 'µS/cm';
+			return 'mS/cm';
 		case 'soil_ph':
 			return 'pH';
 		case 'soil_nitrogen':
