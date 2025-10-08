@@ -257,17 +257,18 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 
 		// Title
 		const isWeekly = Math.abs(userEnd.diff(userStart, 'days').days - 7) < 0.1;
-		const titleText = isWeekly ? $_('device_report_weekly') : $_('device_report_monthly');
-		doc.fontSize(16).text(`${titleText} ${$_('device_report')}`);
+		// const titleText = isWeekly ? $_('device_report_weekly') : $_('device_report_monthly');
+		// doc.fontSize(16).text(`${titleText} ${$_('device_report')}`);
+		doc.fontSize(16).text(`${$_('device_report')}`);
 
 		// Signature boxes (old layout)
 		doc.fontSize(10).strokeColor('#ccc');
 		doc.rect(400, marginTop, 50, 60).stroke();
 		doc.rect(450, marginTop, 50, 60).stroke();
 		doc.rect(500, marginTop, 50, 60).stroke();
-		doc.text($_('created'), 405, 45);
+		doc.text($_('approved'), 405, 45);
 		doc.text($_('verified'), 455, 45);
-		doc.text($_('approved'), 505, 45);
+		doc.text($_('created'), 505, 45);
 
 		doc.x = marginLeft;
 		doc.y = 70;
