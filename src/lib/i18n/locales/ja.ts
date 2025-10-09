@@ -1,4 +1,5 @@
 export const strings = {
+	'Sensor Data - Today': 'センサーデータ - 本日',
 	soil_moisture: '土壌水分量',
 	moisture: '土壌水分量',
 	Moisture: '土壌水分量',

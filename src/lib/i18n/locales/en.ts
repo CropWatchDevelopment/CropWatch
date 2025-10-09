@@ -1,4 +1,5 @@
 export const strings = {
+	'Sensor Data - Today': 'Sensor Data - Today',
 	soil_moisture: 'Volumetric Water Content',
 	moisture: 'Volumetric Water Content',
 	Moisture: 'Volumetric Water Content',

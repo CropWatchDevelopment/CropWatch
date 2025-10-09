@@ -93,9 +93,9 @@ export const getTextColorByKey = (key: string, isMetadata: boolean = false): str
 };
 
 /**
- * Default options for number formatting. This sets the maximum number of fraction digits to 1.
+ * Default options for number formatting. This sets the maximum number of fraction digits to 2.
  */
-const defaultNumberFormatOptions: Intl.NumberFormatOptions = { maximumFractionDigits: 1 };
+const defaultNumberFormatOptions: Intl.NumberFormatOptions = { maximumFractionDigits: 2 };
 
 /**
  * Custom format options for various statistics keys.
