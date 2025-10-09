@@ -410,6 +410,7 @@
 	// Cleanup on destroy
 	import { onDestroy } from 'svelte';
 	import BatteryLevel from '$lib/components/BatteryLevel.svelte';
+	import DataTable from '$lib/components/DataTable.svelte';
 	onDestroy(() => {
 		teardownRealtime();
 		if (staleCheckIntervalId) clearInterval(staleCheckIntervalId);
@@ -599,8 +600,12 @@
 
 <!-- Full-width Calendar Section -->
 <section class="mb-12 px-4">
-	<h2>{$_('Weather & Data')}</h2>
-	<WeatherCalendar events={calendarEvents} />
+	{#if device.cw_device_type?.data_table_v2 === 'cw_air_data'}
+		<DataTable {historicalData} />
+	{:else}
+		<h2>{$_('Weather & Data')}</h2>
+		<WeatherCalendar events={calendarEvents} />
+	{/if}
 </section>
 
 <style lang="postcss">
