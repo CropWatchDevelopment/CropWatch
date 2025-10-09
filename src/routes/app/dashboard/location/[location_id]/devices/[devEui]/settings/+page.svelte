@@ -51,7 +51,7 @@
 	<title>{$_('Device Settings')} - CropWatch</title>
 </svelte:head>
 
-<section class="flex flex-col gap-4">
+<section class="flex h-full flex-col gap-4">
 	<header class="flex flex-row items-center justify-between gap-4">
 		<div>
 			<h2 class="mb-1 text-2xl font-semibold">{$_('General')}</h2>
@@ -159,48 +159,48 @@
 			{/if}
 		</div>
 	</form>
-</section>
 
-{#if isOwner}
-	<span class="flex flex-1"></span>
-	<section class="border-danger/50 mt-6 flex flex-col gap-2 rounded-lg border p-4">
-		<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
-		<div>
-			<Button
-				variant="danger"
-				onclick={() => {
-					showDeleteDialog = true;
-				}}
-			>
-				{$_('Delete Device & Associated Data')}
-			</Button>
-		</div>
-		<Dialog bind:open={showDeleteDialog} size="sm">
-			{#snippet title()}
-				{$_('Delete Device & Associated Data')}
-			{/snippet}
-			{#snippet body()}
-				{$_('delete_device_warning')}
-			{/snippet}
-			{#snippet footer()}
-				<Button
-					variant="secondary"
-					onclick={() => {
-						showDeleteDialog = false;
-					}}
-				>
-					{$_('Cancel')}
-				</Button>
+	{#if isOwner}
+		<span class="flex flex-1"></span>
+		<section class="border-danger/50 mt-6 flex flex-col gap-2 rounded-lg border p-4">
+			<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
+			<div>
 				<Button
 					variant="danger"
 					onclick={() => {
-						showDeleteDialog = false;
-						deleteDevice();
+						showDeleteDialog = true;
 					}}
 				>
-					{$_('Delete')}
+					{$_('Delete Device & Associated Data')}
 				</Button>
-			{/snippet}
-		</Dialog>
-	</section>
-{/if}
+			</div>
+			<Dialog bind:open={showDeleteDialog} size="sm">
+				{#snippet title()}
+					{$_('Delete Device & Associated Data')}
+				{/snippet}
+				{#snippet body()}
+					{$_('delete_device_warning')}
+				{/snippet}
+				{#snippet footer()}
+					<Button
+						variant="secondary"
+						onclick={() => {
+							showDeleteDialog = false;
+						}}
+					>
+						{$_('Cancel')}
+					</Button>
+					<Button
+						variant="danger"
+						onclick={() => {
+							showDeleteDialog = false;
+							deleteDevice();
+						}}
+					>
+						{$_('Delete')}
+					</Button>
+				{/snippet}
+			</Dialog>
+		</section>
+	{/if}
+</section>
