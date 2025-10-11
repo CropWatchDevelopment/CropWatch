@@ -51,8 +51,13 @@
 
 	// Create a timer manager instance
 	const timerManager = new DeviceTimerManager();
+	const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
+
+	let locationRefreshIntervals = $state<Record<number, number>>({});
+	let locationRefreshInFlight = $state<Record<number, boolean>>({});
 
 	let channel: RealtimeChannel | undefined = $state();
+	let broadcastChannel: RealtimeChannel | undefined = $state();
 
 	// Initialize stores and managers
 	// Use writable store for device active status - initialize as null (unknown) for all devices
@@ -86,6 +91,68 @@
 		}
 	}
 
+	function getLocationsWithInactiveDevices(): number[] {
+		const inactiveLocationIds: number[] = [];
+		const currentLocations = locationsStore.locations;
+		const currentStatuses = deviceActiveStatus;
+		if (!currentLocations || currentLocations.length === 0) return inactiveLocationIds;
+		currentLocations.forEach((location) => {
+			if (!location?.location_id) return;
+			const hasInactiveDevice = (location.cw_devices ?? []).some((device: DeviceWithSensorData) => {
+				const devEui = device?.dev_eui ?? null;
+				if (!devEui) return false;
+				return currentStatuses[devEui] === false;
+			});
+			if (hasInactiveDevice) inactiveLocationIds.push(location.location_id);
+		});
+		return inactiveLocationIds;
+	}
+
+	async function refreshLocationById(locationId: number, reason: string) {
+		if (!browser || !locationId) return;
+		if (locationRefreshInFlight[locationId]) return;
+		locationRefreshInFlight[locationId] = true;
+		try {
+			const refreshed = await refreshDevicesForLocation(locationId);
+			if (!refreshed) {
+				console.warn(`Refresh for location ${locationId} (${reason}) returned false.`);
+			}
+		} catch (error) {
+			console.error(`Failed to refresh location ${locationId} (${reason})`, error);
+		} finally {
+			locationRefreshInFlight[locationId] = false;
+		}
+	}
+
+	function ensureLocationRefreshInterval(locationId: number, reason: string) {
+		if (!browser || !locationId) return;
+		if (!locationRefreshIntervals[locationId]) {
+			void refreshLocationById(locationId, reason);
+			locationRefreshIntervals[locationId] = window.setInterval(() => {
+				void refreshLocationById(locationId, 'interval');
+			}, TEN_MINUTES_IN_MS);
+		}
+	}
+
+	function clearLocationRefreshInterval(locationId: number) {
+		const intervalId = locationRefreshIntervals[locationId];
+		if (intervalId) {
+			clearInterval(intervalId);
+			delete locationRefreshIntervals[locationId];
+		}
+	}
+
+	function clearAllLocationRefreshIntervals() {
+		Object.keys(locationRefreshIntervals).forEach((id) => {
+			clearLocationRefreshInterval(Number(id));
+		});
+	}
+
+	function refreshInactiveLocations(reason: string) {
+		const inactiveLocationIds = getLocationsWithInactiveDevices();
+		inactiveLocationIds.forEach((locationId) => ensureLocationRefreshInterval(locationId, reason));
+	}
+
 	$effect(() => {
 		function handleVisibilityChange() {
 			isTabVisible = document.visibilityState === 'visible';
@@ -96,16 +163,16 @@
 					if (savedState !== null) {
 						sidebarCollapsed = savedState === 'true';
 					}
+					setupBroadcastSubscription();
 					setupRealtimeSubscription();
+					refreshInactiveLocations('tab-visible');
 				}
 			} else {
 				console.log('Tab is not visible');
-				data.supabase.removeAllChannels();
 				cleanupTimers();
 				cleanupRealtimeSubscription();
-				if (channel) {
-					data.supabase.realtime.removeChannel(channel);
-				}
+				cleanupBroadcastSubscription();
+				clearAllLocationRefreshIntervals();
 			}
 		}
 		document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -114,18 +181,31 @@
 		};
 	});
 
+	$effect(() => {
+		if (!browser || !isTabVisible) return;
+		const inactiveLocationIds = new Set(getLocationsWithInactiveDevices());
+		inactiveLocationIds.forEach((locationId) =>
+			ensureLocationRefreshInterval(locationId, 'inactive-device')
+		);
+		Object.keys(locationRefreshIntervals).forEach((id) => {
+			const locationId = Number(id);
+			if (!inactiveLocationIds.has(locationId)) {
+				clearLocationRefreshInterval(locationId);
+			}
+		});
+	});
+
 	// Initialize the dashboard UI store for preferences
 	const uiStore = getDashboardUIStore();
 
 	// Sidebar collapsed state
 	let sidebarCollapsed = $state(false);
 
-	// Real-time channel for database updates
-	let realtimeChannel: any = null;
-
 	// Setup real-time subscriptions with retry logic
 	function setupRealtimeSubscription(retryCount = 0) {
 		if (!browser) return;
+		setupBroadcastSubscription();
+		if (channel) return;
 
 		console.log('🔄 Setting up real-time subscription...');
 		channel = data.supabase
@@ -174,31 +254,116 @@
 					}
 				}
 			)
-			.subscribe();
+			.subscribe((status, err) => {
+				console.debug('[Dashboard] DB channel status', { status, err });
+				if (status === 'CHANNEL_ERROR') {
+					console.error('DB channel error', err);
+				}
+			});
+
+		setupBroadcastSubscription();
 	}
 
 	// Handle real-time update
 	function handleRealtimeUpdate(payload: any) {
 		// Only process if we have valid data
 		if (payload.new && payload.new.dev_eui) {
-			try {
-				locationsStore.updateSingleDevice(payload.new.dev_eui, payload.new as AirData | SoilData);
-
-				// Update device active timer for the updated device
-				const device = locationsStore.devices.find((d) => d.dev_eui === payload.new.dev_eui);
-				if (device && device.latestData?.created_at) {
-					setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
-				}
-			} catch (error) {
-				console.error('Error updating device from real-time:', error);
-			}
+			console.debug('[Dashboard] Postgres change received', {
+				eventType: payload.eventType,
+				table: payload.table,
+				dev_eui: payload.new.dev_eui,
+				created_at: payload.new.created_at
+			});
+			applyDeviceDataUpdate(payload.new as AirData | SoilData);
+		} else {
+			console.debug('[Dashboard] Postgres change ignored', payload);
 		}
 	}
 
+	function applyDeviceDataUpdate(record: AirData | SoilData) {
+		console.debug('[Dashboard] Applying device update', {
+			recordDevEui: record?.dev_eui,
+			timestamp: record?.created_at,
+			source: record?.data_source ?? 'unknown'
+		});
+		if (!record?.dev_eui) return;
+		try {
+			const beforeDevice = locationsStore.devices.find((d) => d.dev_eui === record.dev_eui);
+			console.debug('[Dashboard] Device snapshot before update', {
+				found: Boolean(beforeDevice),
+				latestCreatedAt: beforeDevice?.latestData?.created_at
+			});
+			locationsStore.updateSingleDevice(record.dev_eui, record);
+
+			const device = locationsStore.devices.find((d) => d.dev_eui === record.dev_eui);
+			if (device && device.latestData?.created_at) {
+				setupDeviceActiveTimer(device, timerManager, deviceActiveStatus);
+			}
+
+			console.debug('[Dashboard] Device snapshot after update', {
+				found: Boolean(device),
+				latestCreatedAt: device?.latestData?.created_at
+			});
+
+			lastRefresh = new Date();
+		} catch (error) {
+			console.error('Error applying device data update:', error);
+		}
+	}
+
+	function setupBroadcastSubscription() {
+		if (!browser) return;
+		if (broadcastChannel) return;
+
+		console.log('📡 Setting up broadcast subscription...');
+		broadcastChannel = data.supabase
+			.channel('cw_air_data', { config: { private: true } })
+			.on('broadcast', { event: 'INSERT' }, (payload) => {
+				const record = payload?.payload?.record;
+				console.debug('[Dashboard] Broadcast INSERT received', {
+					payload,
+					dev_eui: record?.dev_eui
+				});
+				if (record?.dev_eui) {
+					applyDeviceDataUpdate(record as AirData | SoilData);
+				}
+			})
+			.on('broadcast', { event: 'UPDATE' }, (payload) => {
+				const record = payload?.payload?.record;
+				console.debug('[Dashboard] Broadcast UPDATE received', {
+					payload,
+					dev_eui: record?.dev_eui
+				});
+				if (record?.dev_eui) {
+					applyDeviceDataUpdate(record as AirData | SoilData);
+				}
+			})
+			.subscribe((status, err) => {
+				console.debug('[Dashboard] Broadcast channel status', { status, err });
+				if (status === 'CHANNEL_ERROR') {
+					console.error('Broadcast channel error', err);
+				}
+				if (status === 'TIMED_OUT') {
+					console.warn('Broadcast channel timed out');
+				}
+				if (status === 'CLOSED') {
+					console.warn('Broadcast channel closed');
+					broadcastChannel = undefined;
+				}
+			});
+	}
+
 	function cleanupRealtimeSubscription() {
-		if (realtimeChannel) {
-			data.supabase.removeAllChannels();
-			realtimeChannel = null;
+		if (channel) {
+			data.supabase.removeChannel(channel);
+			channel = undefined;
+		}
+	}
+
+	function cleanupBroadcastSubscription() {
+		if (broadcastChannel) {
+			data.supabase.removeChannel(broadcastChannel);
+			broadcastChannel = undefined;
 		}
 	}
 
@@ -214,12 +379,9 @@
 	});
 	onDestroy(() => {
 		console.log('the component is being destroyed');
-		data.supabase.removeAllChannels();
 		cleanupTimers();
 		cleanupRealtimeSubscription();
-		if (channel) {
-			data.supabase.realtime.removeChannel(channel);
-		}
+		cleanupBroadcastSubscription();
 	});
 
 	// Persist UI store values to localStorage when they change
@@ -271,6 +433,7 @@
 		timerManager.cleanupPolling();
 		// Clean up all active timers using the timer manager
 		timerManager.cleanupTimers();
+		clearAllLocationRefreshIntervals();
 	}
 
 	// Function to refresh devices for a location without changing the selected location
