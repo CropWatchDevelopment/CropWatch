@@ -18,6 +18,7 @@
 		endDateInputString?: string;
 		alertPoints?: ReportAlertPoint[];
 		dataKeys?: string[];
+		timezone?: string;
 	};
 
 	let {
@@ -29,7 +30,8 @@
 		startDateInputString = undefined,
 		endDateInputString = undefined,
 		alertPoints = [],
-		dataKeys = []
+		dataKeys = [],
+		timezone = 'Asia/Tokyo'
 	}: Props = $props();
 
 	// Modal open state and date range setup
@@ -59,7 +61,8 @@
 			end: endDate,
 			alertPoints: JSON.stringify(alertPoints),
 			dataKeys: dataKeys.join(','),
-			locale: $appLocale ?? 'ja'
+			locale: $appLocale ?? 'ja',
+			timezone
 		});
 		let response: Response | null = null;
 		try {

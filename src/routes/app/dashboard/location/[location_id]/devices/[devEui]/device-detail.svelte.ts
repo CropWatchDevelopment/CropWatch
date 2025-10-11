@@ -161,12 +161,22 @@ export function setupDeviceDetail() {
 		error = null; // Clear previous errors
 
 		try {
-			// Format Date objects to ISO strings for robust API querying
-			const startQueryParam = start.toISOString(); // Use parameter
-			const endQueryParam = end.toISOString(); // Use parameter
+			// Normalize the dates to calendar-day strings in the user's timezone for the API
+			const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+			const startQueryParam = DateTime.fromJSDate(start).setZone(timezone).toISODate();
+			const endQueryParam = DateTime.fromJSDate(end).setZone(timezone).toISODate();
+			if (!startQueryParam || !endQueryParam) {
+				throw new Error('Unable to format selected dates for the request.');
+			}
+
+			const searchParams = new URLSearchParams({
+				start: startQueryParam,
+				end: endQueryParam,
+				timezone
+			});
 
 			const response = await fetch(
-				`/api/devices/${device.dev_eui}/data?start=${startQueryParam}&end=${endQueryParam}`
+				`/api/devices/${device.dev_eui}/data?${searchParams.toString()}`
 			);
 
 			if (!response.ok) {
