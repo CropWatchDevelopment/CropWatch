@@ -10,11 +10,12 @@ export function formatDuration(
 	start: string | Date,
 	{
 		totalUnits = 2,
-		minUnits = DurationUnits.Second
-	}: { totalUnits?: number; minUnits?: DurationUnits } = {}
+		minUnits = DurationUnits.Second,
+		now = Date.now()
+	}: { totalUnits?: number; minUnits?: DurationUnits; now?: number } = {}
 ) {
 	const startTime = new Date(start).getTime();
-	const diffMs = Date.now() - startTime;
+	const diffMs = now - startTime;
 	const units: { unit: DurationUnits; label: string; ms: number }[] = [
 		{ unit: DurationUnits.Day, label: 'd', ms: 86400000 },
 		{ unit: DurationUnits.Hour, label: 'h', ms: 3600000 },
