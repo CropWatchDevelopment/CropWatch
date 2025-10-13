@@ -1,6 +1,5 @@
 // $lib/utilities/deviceTimerManager.ts
 import { createActiveTimer } from './ActiveTimer';
-import { getLatestDataTimestamp } from './deviceUtils';
 import type { DeviceWithType } from '$lib/models/Device';
 import type { AirData } from '$lib/models/AirData';
 import type { SoilData } from '$lib/models/SoilData';
@@ -48,8 +47,7 @@ export class DeviceTimerManager {
 		uploadInterval: number,
 		onStatusChange?: (deviceId: string, isActive: boolean | null) => void
 	): void {
-		const latestTimestamp = getLatestDataTimestamp(device.latestData);
-		if (!latestTimestamp) return;
+		if (!device.latestData?.created_at) return;
 		const deviceId = device.dev_eui as string;
 
 		// Clear any existing timer for this device
@@ -63,7 +61,7 @@ export class DeviceTimerManager {
 			10;
 
 		// Create a closure to capture the current timestamp
-		const currentTimestamp = latestTimestamp;
+		const currentTimestamp = device.latestData.created_at;
 
 		const activeTimer = createActiveTimer(new Date(currentTimestamp), Number(effectiveInterval));
 
@@ -71,8 +69,7 @@ export class DeviceTimerManager {
 		const unsubscribe = activeTimer.subscribe((isActive) => {
 			// Only update if this is still the current device data
 			// This prevents old timers from incorrectly marking devices as inactive
-			const newestTimestamp = getLatestDataTimestamp(device.latestData);
-			if (newestTimestamp === currentTimestamp) {
+			if (device.latestData?.created_at === currentTimestamp) {
 				//console.log(`Device ${device.name} (${deviceId}) status updated:`, {
 				// 	isActive,
 				// 	lastUpdate: currentTimestamp,
@@ -87,7 +84,7 @@ export class DeviceTimerManager {
 			} else {
 				//console.log(`Ignoring outdated timer update for ${device.name} (${deviceId})`, {
 				// 	timerTimestamp: currentTimestamp,
-				//  currentTimestamp: newestTimestamp
+				// 	currentTimestamp: device.latestData?.created_at
 				// });
 			}
 		});

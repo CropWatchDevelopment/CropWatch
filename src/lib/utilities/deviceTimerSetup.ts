@@ -1,5 +1,4 @@
 import { DeviceTimerManager } from './deviceTimerManager';
-import { getLatestDataTimestamp } from './deviceUtils';
 import type { DeviceWithType } from '$lib/models/Device';
 import type { AirData } from '$lib/models/AirData';
 import type { SoilData } from '$lib/models/SoilData';
@@ -21,8 +20,7 @@ export function setupDeviceActiveTimer(
 	timerManager: DeviceTimerManager,
 	deviceActiveStatus: Record<string, boolean | null>
 ) {
-	const latestTimestamp = getLatestDataTimestamp(device.latestData);
-	if (!latestTimestamp) return;
+	if (!device.latestData?.created_at) return;
 	const deviceId = device.dev_eui as string;
 
 	// Get the upload interval from the device

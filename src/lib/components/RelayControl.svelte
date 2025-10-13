@@ -6,7 +6,6 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 	import type { Device } from '$lib/models/Device';
-	import { get } from 'svelte/store';
 
 	let {
 		supabase,
@@ -16,6 +15,15 @@
 		$props();
 
 	const devEui = $derived(device.dev_eui);
+	const t = $derived(_);
+
+	function translate(key: string, params?: Record<string, unknown>) {
+		const fn = t as unknown;
+		if (typeof fn === 'function') {
+			return (fn as (k: string, o?: Record<string, unknown>) => string)(key, params);
+		}
+		return params ? key.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`)) : key;
+	}
 	type RelayKey = 'relay1' | 'relay2';
 	const relays: Array<{ key: RelayKey; labelKey: string }> = [
 		{ key: 'relay1', labelKey: 'Relay 1' },
@@ -38,8 +46,6 @@
 		config: { private: true }
 	});
 	broadcastChannel.on('broadcast', { event: '*' }, (payload) => {
-		console.log(payload);
-		debugger;
 		startCooldown();
 		payload.payload.record.relay_1;
 		payload.payload.record.relay_2;
@@ -54,6 +60,10 @@
 	});
 	broadcastChannel.subscribe((status, err) => {
 		console.debug('[Dashboard] Broadcast channel status', { status, err });
+		if (status === 'SUBSCRIBED') {
+			// Successfully subscribed
+			console.log('Broadcast channel subscribed');
+		}
 		if (status === 'CHANNEL_ERROR') {
 			console.error('Broadcast channel error', err);
 		}
@@ -154,18 +164,16 @@
 	}
 
 	function relayStatusText(relay: RelayKey) {
-		const t = get(_);
 		if (loadingInitial) {
-			return t('Checking status…');
+			return translate('Checking status…');
 		}
-		return relayState[relay] ? t('Currently ON') : t('Currently OFF');
+		return relayState[relay] ? translate('Currently ON') : translate('Currently OFF');
 	}
 
 	async function sendCommand(relay: RelayKey, turnOn: boolean) {
 		if (busy[relay]) return;
 		setBusy(relay, true);
 		const payloadName = (relay + (turnOn ? 'On' : 'Off')) as keyof typeof DRAGINO_LT22222L_PAYLOADS;
-		const t = get(_);
 		try {
 			const res = await fetch(`/api/devices/${devEui}/downlink`, {
 				method: 'POST',
@@ -174,18 +182,18 @@
 			});
 			if (!res.ok) {
 				const txt = await res.text();
-				showError(t('Downlink failed: {reason}', { reason: txt }));
+				showError(translate('Downlink failed: {reason}', { reason: txt }));
 			} else {
 				relayState = { ...relayState, [relay]: turnOn };
 				success(
-					t('Relay {number} {state}', {
+					translate('Relay {number} {state}', {
 						number: relay === 'relay1' ? '1' : '2',
-						state: t(turnOn ? 'ON' : 'OFF')
+						state: translate(turnOn ? 'ON' : 'OFF')
 					})
 				);
 			}
 		} catch (e) {
-			showError(t('Downlink failed'));
+			showError(translate('Downlink failed'));
 		} finally {
 			setBusy(relay, false);
 		}
