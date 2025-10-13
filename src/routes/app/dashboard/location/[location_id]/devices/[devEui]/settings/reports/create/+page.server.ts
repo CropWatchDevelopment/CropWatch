@@ -89,11 +89,18 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			point.operator = point.operator === null ? 'null' : point.operator;
 		});
 
+		let { data: previouslyUsedAlertColors, error: dpe } = await locals.supabase
+			.from('report_alert_points')
+			.select('name, hex_color')
+			.eq('user_id', session.user.id)
+			.order('created_at', { ascending: false });
+
 		return {
 			devEui,
 			locationId: location_id,
 			report,
 			alertPoints,
+			previouslyUsedAlertColors: previouslyUsedAlertColors || [],
 			recipients,
 			schedules,
 			dataKeys,

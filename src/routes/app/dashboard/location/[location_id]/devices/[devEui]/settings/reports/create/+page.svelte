@@ -23,6 +23,7 @@
 	const isEditing = $derived(data.isEditing);
 	const recipientsData = $derived(data.recipients);
 	const dataKeys = $derived(data.dataKeys);
+	const alertPointsColorHistory = $derived(data.previouslyUsedAlertColors);
 
 	// Form state
 	let reportName = $state('');
@@ -68,6 +69,18 @@
 		if (isEditing && report) {
 			untrack(() => {
 				reportName = report.name || '';
+			});
+		}
+
+		if (previouslyUsedAlertColors) {
+			untrack(() => {
+				previouslyUsedAlertColors.splice(
+					0,
+					previouslyUsedAlertColors.length,
+					...data.previouslyUsedAlertColors.data
+						.map((item: any) => item.hex_color)
+						.filter((color: string) => color)
+				);
 			});
 		}
 
@@ -428,6 +441,29 @@
 													bind:value={point.hex_color}
 													disabled={point.operator === null}
 												/>
+												<select
+													bind:value={point.hex_color}
+													disabled={point.operator === null}
+													class="ml-2 rounded border border-gray-300"
+												>
+													<option value="" disabled>Select Color</option>
+													{#each alertPointsColorHistory as color}
+														<option
+															value={color.hex_color}
+															style="background-color: {color.hex_color}; color: {color.hex_color};"
+														>
+															{color.name} - {color.hex_color}
+														</option>
+													{/each}
+													{#each colors as color}
+														<option
+															value={color}
+															style="background-color: {color}; color: {color};"
+														>
+															{color}
+														</option>
+													{/each}
+												</select>
 												<div class="flex flex-row">
 													<input
 														type="text"
