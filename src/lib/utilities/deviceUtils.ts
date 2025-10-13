@@ -3,26 +3,6 @@
  */
 
 /**
- * Returns the most recent timestamp from device latest data, preferring newer between last_update and created_at.
- */
-export function getLatestDataTimestamp(latestData: unknown): string | null {
-	if (!latestData || typeof latestData !== 'object') return null;
-
-	const data = latestData as Record<string, unknown>;
-	const candidates = [data.last_update, data.created_at]
-		.filter((value): value is string => typeof value === 'string' && value.length > 0)
-		.map((value) => ({ value, time: Date.parse(value) }))
-		.filter(({ time }) => !Number.isNaN(time));
-
-	if (candidates.length === 0) {
-		return null;
-	}
-
-	return candidates.reduce((latest, current) => (current.time > latest.time ? current : latest))
-		.value;
-}
-
-/**
  * Determines if a device is a soil sensor based on its type, name, or data
  * @param device - The device to check
  * @returns boolean indicating if the device is a soil sensor
