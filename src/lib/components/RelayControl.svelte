@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { DRAGINO_LT22222L_PAYLOADS } from '$lib/lorawan/dragino';
 	import { success, error as showError } from '$lib/stores/toast.svelte';
+	import { _ } from 'svelte-i18n';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 	import type { Device } from '$lib/models/Device';
+	import { get } from 'svelte/store';
 
 	let {
 		supabase,
@@ -15,9 +17,9 @@
 
 	const devEui = $derived(device.dev_eui);
 	type RelayKey = 'relay1' | 'relay2';
-	const relays: Array<{ key: RelayKey; label: string }> = [
-		{ key: 'relay1', label: 'Relay 1' },
-		{ key: 'relay2', label: 'Relay 2' }
+	const relays: Array<{ key: RelayKey; labelKey: string }> = [
+		{ key: 'relay1', labelKey: 'Relay 1' },
+		{ key: 'relay2', labelKey: 'Relay 2' }
 	];
 
 	const POLL_INTERVAL_MS = 10_000;
@@ -152,16 +154,18 @@
 	}
 
 	function relayStatusText(relay: RelayKey) {
+		const t = get(_);
 		if (loadingInitial) {
-			return 'Checking status…';
+			return t('Checking status…');
 		}
-		return relayState[relay] ? 'Currently ON' : 'Currently OFF';
+		return relayState[relay] ? t('Currently ON') : t('Currently OFF');
 	}
 
 	async function sendCommand(relay: RelayKey, turnOn: boolean) {
 		if (busy[relay]) return;
 		setBusy(relay, true);
 		const payloadName = (relay + (turnOn ? 'On' : 'Off')) as keyof typeof DRAGINO_LT22222L_PAYLOADS;
+		const t = get(_);
 		try {
 			const res = await fetch(`/api/devices/${devEui}/downlink`, {
 				method: 'POST',
@@ -170,13 +174,18 @@
 			});
 			if (!res.ok) {
 				const txt = await res.text();
-				showError('Downlink failed: ' + txt);
+				showError(t('Downlink failed: {reason}', { reason: txt }));
 			} else {
 				relayState = { ...relayState, [relay]: turnOn };
-				success(`Relay ${relay === 'relay1' ? '1' : '2'} ${turnOn ? 'ON' : 'OFF'}`);
+				success(
+					t('Relay {number} {state}', {
+						number: relay === 'relay1' ? '1' : '2',
+						state: t(turnOn ? 'ON' : 'OFF')
+					})
+				);
 			}
 		} catch (e) {
-			showError('Downlink failed');
+			showError(t('Downlink failed'));
 		} finally {
 			setBusy(relay, false);
 		}
@@ -190,29 +199,29 @@
 </script>
 
 <div class="relay-control" aria-live="polite">
-	<h2 class="heading">Relay control</h2>
+	<h2 class="heading">{$_('Relay control')}</h2>
 	<p class="subheading">
-		Two big buttons for each relay. Tap once and wait for the light to change.
+		{$_('Two big buttons for each relay. Tap once and wait for the light to change.')}
 	</p>
 
 	{#if cooldownRemaining > 0}
 		<div class="cooldown-banner" role="status" aria-live="polite">
-			Next action available in {cooldownRemaining}s
+			{$_('Next action available in {seconds}s', { seconds: cooldownRemaining })}
 		</div>
 	{/if}
 
 	{#if loadingInitial}
 		<div class="loading-state">
 			<Spinner />
-			<span>Checking relay status…</span>
+			<span>{$_('Checking relay status…')}</span>
 		</div>
 	{/if}
 
 	<div class="relay-list">
 		{#each relays as relay}
-			<section class="relay-card" aria-label={relay.label}>
+			<section class="relay-card" aria-label={$_(relay.labelKey)}>
 				<header class="relay-card-header">
-					<h3>{relay.label}</h3>
+					<h3>{$_(relay.labelKey)}</h3>
 					<span class="relay-status">{relayStatusText(relay.key)}</span>
 				</header>
 				<div class="button-row">
@@ -223,7 +232,7 @@
 						onclick={() => handleRelayPress(relay.key, true)}
 						aria-pressed={relayState[relay.key]}
 					>
-						<span>ON</span>
+						<span>{$_('ON')}</span>
 					</button>
 					<button
 						type="button"
@@ -232,12 +241,12 @@
 						onclick={() => handleRelayPress(relay.key, false)}
 						aria-pressed={!relayState[relay.key]}
 					>
-						<span>OFF</span>
+						<span>{$_('OFF')}</span>
 					</button>
 				</div>
 				<p class="relay-feedback" role="status">
 					{#if busy[relay.key]}
-						Sending command…
+						{$_('Sending command…')}
 					{:else}
 						{relayStatusText(relay.key)}
 					{/if}

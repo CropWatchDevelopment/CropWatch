@@ -77,6 +77,21 @@
 
 						{#if dataPointKey === 'created_at'}
 							<p class="flex flex-row align-bottom text-xs text-gray-600 dark:text-gray-400">
+								{#if device.deviceType.data_table_v2 === 'cw_relay_data'}
+									<Duration
+										start={device.latestData.last_update}
+										totalUnits={2}
+										minUnits={DurationUnits.Second}
+									/>
+									&nbsp;{$_('ago')}
+								{:else}
+									<Duration
+										start={device.latestData.created_at}
+										totalUnits={2}
+										minUnits={DurationUnits.Second}
+									/>
+									&nbsp;{$_('ago')}
+								{/if}
 								<Duration
 									start={device.latestData.created_at}
 									totalUnits={2}

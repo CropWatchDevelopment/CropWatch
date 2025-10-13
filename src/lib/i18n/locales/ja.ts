@@ -262,6 +262,22 @@ export const strings = {
 	'Settings updated successfully!': '設定が正常に更新されました！',
 	'Failed to update settings': '設定の更新に失敗しました',
 	'Failed to delete device': 'デバイスの削除に失敗しました',
+	'Relay control': 'リレー制御',
+	'Two big buttons for each relay. Tap once and wait for the light to change.':
+		'各リレーに大きなボタンが2つあります。1回タップしてランプが変わるまでお待ちください。',
+	'Relay 1': 'リレー1',
+	'Relay 2': 'リレー2',
+	'Next action available in {seconds}s': '次の操作は{seconds}秒後に利用できます',
+	'Checking relay status…': 'リレー状態を確認中…',
+	'Checking status…': '状態を確認中…',
+	'Currently ON': '現在オンです',
+	'Currently OFF': '現在オフです',
+	ON: 'オン',
+	OFF: 'オフ',
+	'Sending command…': 'コマンド送信中…',
+	'Relay {number} {state}': 'リレー{number}{state}',
+	'Downlink failed: {reason}': 'ダウンリンクに失敗しました: {reason}',
+	'Downlink failed': 'ダウンリンクに失敗しました',
 
 	// CSVDownloadButton translations
 	select_date_range: '日付範囲を選択',

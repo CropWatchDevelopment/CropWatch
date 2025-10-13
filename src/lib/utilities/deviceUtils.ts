@@ -3,29 +3,49 @@
  */
 
 /**
+ * Returns the most recent timestamp from device latest data, preferring newer between last_update and created_at.
+ */
+export function getLatestDataTimestamp(latestData: unknown): string | null {
+	if (!latestData || typeof latestData !== 'object') return null;
+
+	const data = latestData as Record<string, unknown>;
+	const candidates = [data.last_update, data.created_at]
+		.filter((value): value is string => typeof value === 'string' && value.length > 0)
+		.map((value) => ({ value, time: Date.parse(value) }))
+		.filter(({ time }) => !Number.isNaN(time));
+
+	if (candidates.length === 0) {
+		return null;
+	}
+
+	return candidates.reduce((latest, current) => (current.time > latest.time ? current : latest))
+		.value;
+}
+
+/**
  * Determines if a device is a soil sensor based on its type, name, or data
  * @param device - The device to check
  * @returns boolean indicating if the device is a soil sensor
  */
 export function isSoilSensor(device: any): boolean {
-  // Check device name for soil-related terms
-  const deviceName = device.name?.toLowerCase() || '';
-  const deviceTypeName = device.deviceType?.name?.toLowerCase() || '';
+	// Check device name for soil-related terms
+	const deviceName = device.name?.toLowerCase() || '';
+	const deviceTypeName = device.deviceType?.name?.toLowerCase() || '';
 
-  // Check device type (type 17 is soil sensor in your system)
-  if (device.type === 17) {
-    return true;
-  }
+	// Check device type (type 17 is soil sensor in your system)
+	if (device.type === 17) {
+		return true;
+	}
 
-  // Check if the device name or type contains soil-related terms
-  return (
-    deviceName.includes('soil') ||
-    deviceName.includes('moisture') ||
-    deviceTypeName.includes('soil') ||
-    deviceTypeName.includes('moisture') ||
-    // Check if the device has soil-specific data points
-    (device.latestData && 'moisture' in device.latestData)
-  );
+	// Check if the device name or type contains soil-related terms
+	return (
+		deviceName.includes('soil') ||
+		deviceName.includes('moisture') ||
+		deviceTypeName.includes('soil') ||
+		deviceTypeName.includes('moisture') ||
+		// Check if the device has soil-specific data points
+		(device.latestData && 'moisture' in device.latestData)
+	);
 }
 
 /**
@@ -34,35 +54,19 @@ export function isSoilSensor(device: any): boolean {
  * @param deviceActiveStatus - Record of device active statuses by device ID
  * @returns boolean indicating if the device is active
  */
-export function isDeviceActive(
-  device: any,
-  deviceActiveStatus: Record<string, boolean>
-): boolean {
-  if (!device) return false;
+export function isDeviceActive(device: any, deviceActiveStatus: Record<string, boolean>): boolean {
+	if (!device) return false;
 
-  // Get the device ID
-  const devEui = device.dev_eui as string;
+	// Get the device ID
+	const devEui = device.dev_eui as string;
 
-  // Special handling for devices with negative upload intervals (always active)
-  const uploadInterval =
-    device.upload_interval || device.deviceType?.default_upload_interval || 10;
-  if (uploadInterval <= 0) {
-    return true;
-  }
+	// Special handling for devices with negative upload intervals (always active)
+	const uploadInterval = device.upload_interval || device.deviceType?.default_upload_interval || 10;
+	if (uploadInterval <= 0) {
+		return true;
+	}
 
-  // Special handling for soil sensors
-  if (isSoilSensor(device)) {
-    if (device.deviceType?.isActive !== undefined) {
-      return Boolean(device.deviceType.isActive);
-    }
-
-    // If the soil sensor has moisture data, consider it active
-    if (device.latestData && 'moisture' in device.latestData) {
-      return true;
-    }
-  }
-
-  return Boolean(deviceActiveStatus[devEui]);
+	return Boolean(deviceActiveStatus[devEui]);
 }
 
 /**
@@ -72,26 +76,26 @@ export function isDeviceActive(
  * @returns Object with active devices array and status flags
  */
 export function getLocationActiveStatus(
-  location: any,
-  deviceActiveStatus: Record<string, boolean>
+	location: any,
+	deviceActiveStatus: Record<string, boolean>
 ) {
-  if (!location || !location.cw_devices || location.cw_devices.length === 0) {
-    return { activeDevices: [], allActive: false, allInactive: false };
-  }
+	if (!location || !location.cw_devices || location.cw_devices.length === 0) {
+		return { activeDevices: [], allActive: false, allInactive: false };
+	}
 
-  const locationDevices = location.cw_devices;
-  // Use isDeviceActive instead of getDeviceActiveStatus for consistency
-  const activeDevices = locationDevices.filter((device: any) => 
-    isDeviceActive(device, deviceActiveStatus)
-  );
-  
-  const allActive =
-    locationDevices.length > 0 && 
-    locationDevices.every((device: any) => isDeviceActive(device, deviceActiveStatus));
-  
-  const allInactive =
-    locationDevices.length > 0 && 
-    locationDevices.every((device: any) => !isDeviceActive(device, deviceActiveStatus));
+	const locationDevices = location.cw_devices;
+	// Use isDeviceActive instead of getDeviceActiveStatus for consistency
+	const activeDevices = locationDevices.filter((device: any) =>
+		isDeviceActive(device, deviceActiveStatus)
+	);
 
-  return { activeDevices, allActive, allInactive };
+	const allActive =
+		locationDevices.length > 0 &&
+		locationDevices.every((device: any) => isDeviceActive(device, deviceActiveStatus));
+
+	const allInactive =
+		locationDevices.length > 0 &&
+		locationDevices.every((device: any) => !isDeviceActive(device, deviceActiveStatus));
+
+	return { activeDevices, allActive, allInactive };
 }
