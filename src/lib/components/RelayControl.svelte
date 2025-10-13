@@ -214,7 +214,7 @@
 
 	{#if cooldownRemaining > 0}
 		<div class="cooldown-banner" role="status" aria-live="polite">
-			{$_('Next action available in {seconds}s', { seconds: cooldownRemaining })}
+			{translate('Next action available in {seconds}s', { seconds: cooldownRemaining })}
 		</div>
 	{/if}
 
