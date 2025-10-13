@@ -29,6 +29,35 @@ export function isSoilSensor(device: any): boolean {
 }
 
 /**
+ * Returns the most relevant timestamp for a device based on its latest data
+ * Prefers latestData.last_update, then device.last_update, then created_at fallbacks
+ */
+export function getDeviceLatestTimestamp(device: {
+	latestData?: Record<string, any> | null;
+	created_at?: string | Date | null;
+	last_update?: string | Date | null;
+}): string | null {
+	if (!device) return null;
+	const latest = device.latestData ?? null;
+	const candidates: Array<string | Date | null | undefined> = [
+		latest?.last_update,
+		device.last_update,
+		latest?.created_at,
+		device.created_at
+	];
+
+	for (const candidate of candidates) {
+		if (!candidate) continue;
+		if (candidate instanceof Date) {
+			return candidate.toISOString();
+		}
+		return candidate;
+	}
+
+	return null;
+}
+
+/**
  * Checks if a device is currently active based on its last update time and upload interval
  * @param device - The device to check
  * @param deviceActiveStatus - Record of device active statuses by device ID

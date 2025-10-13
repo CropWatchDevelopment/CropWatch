@@ -4,6 +4,7 @@
 	import type { Location } from '$lib/models/Location';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { formatNumber } from '$lib/utilities/stats';
+	import { getDeviceLatestTimestamp } from '$lib/utilities/deviceUtils';
 	import { mdiArrowDown, mdiArrowRight, mdiArrowUp } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import Collapse from '$lib/components/ui/base/Collapse.svelte';
@@ -69,7 +70,7 @@
 	let secondaryValue = $derived(device.latestData?.[secondaryDataKey]);
 	let primaryNotation = $derived(device.cw_device_type.primary_data_notation || '°C');
 	let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
-	let latestTimestamp = $derived(device.latestData?.last_update ?? device.latestData?.created_at);
+	let latestTimestamp = $derived(() => getDeviceLatestTimestamp(device));
 
 	let localStorageOpenState =
 		typeof localStorage !== 'undefined'
