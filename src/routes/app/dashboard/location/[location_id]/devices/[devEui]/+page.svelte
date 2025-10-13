@@ -2,7 +2,6 @@
 	import { page } from '$app/state';
 	import CameraStream from '$lib/components/dashboard/CameraStream.svelte';
 	import DateRangeSelector from '$lib/components/dashboard/DateRangeSelector.svelte';
-	import DeviceMap from '$lib/components/dashboard/DeviceMap.svelte';
 	import DataCard from '$lib/components/DataCard/DataCard.svelte';
 	import ExportButton from '$lib/components/devices/ExportButton.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
@@ -18,16 +17,14 @@
 	} from '$lib/utilities/helpers';
 	import { formatNumber, getNumericKeys } from '$lib/utilities/stats';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
-	import { DateTime } from 'luxon';
 	import { onMount, untrack } from 'svelte';
 	import { _, locale } from 'svelte-i18n';
 	import type { PageProps } from './$types';
-	import { getDeviceDetailDerived, setupDeviceDetail } from './device-detail.svelte';
+	import { setupDeviceDetail } from './device-detail.svelte';
 	import Header from './Header.svelte';
 	import { setupRealtimeSubscription } from './realtime.svelte';
 	import RelayControl from '$lib/components/RelayControl.svelte';
 	import { browser } from '$app/environment';
-	import { afterNavigate } from '$app/navigation';
 	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
 
 	// Get device data from server load function
@@ -36,7 +33,6 @@
 	let { location_id, devEui } = page.params;
 	let basePath = `/app/dashboard/location/${location_id}/devices/${devEui}`;
 	let device = $state(data.device as DeviceWithType);
-	let dataType = $state(data.dataType);
 	let latestData: DeviceDataRecord | null = $state(null);
 	let historicalData: DeviceDataRecord[] = $state([]);
 	let userId = $state(data.user.id); // User ID for permissions
@@ -460,42 +456,44 @@
 <div class="wrapper flex flex-col gap-4 p-4">
 	<div class="flex flex-col gap-4 lg:flex-row">
 		<!-- Left pane -->
-		<div
-			class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
-		>
-			<!-- Latest data section -->
-			<section class="flex-auto lg:w-auto lg:flex-none">
-				<h2>{$_('Latest Sensor Readings')}</h2>
-				{#if latestData}
-					<div>
-						<div class="grid grid-cols-2 gap-2">
-							{#each Object.keys(latestData) as key}
-								{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
-									<DataCard
-										{latestData}
-										name={key}
-										{key}
-										type={key}
-										metadata={key === 'created_at' || key === 'dev_eui'}
-									/>
-								{/if}
-							{/each}
+		{#if device.cw_device_type?.data_table_v2 !== 'cw_relay_data'}
+			<div
+				class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+			>
+				<!-- Latest data section -->
+				<section class="flex-auto lg:w-auto lg:flex-none">
+					<h2>{$_('Latest Sensor Readings')}</h2>
+					{#if latestData}
+						<div>
+							<div class="grid grid-cols-2 gap-2">
+								{#each Object.keys(latestData) as key}
+									{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
+										<DataCard
+											{latestData}
+											name={key}
+											{key}
+											type={key}
+											metadata={key === 'created_at' || key === 'dev_eui'}
+										/>
+									{/if}
+								{/each}
+							</div>
+
+							<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+								{$_('Last updated:')}
+								{formatDateForDisplay(latestData.created_at)}
+							</p>
 						</div>
+					{:else}
+						<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
+					{/if}
+				</section>
 
-						<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
-							{$_('Last updated:')}
-							{formatDateForDisplay(latestData.created_at)}
-						</p>
-					</div>
-				{:else}
-					<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
-				{/if}
-			</section>
-
-			<!-- Video feed and map on large screen -->
-			<CameraStream {device} class="hidden flex-none lg:block" />
-			<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
-		</div>
+				<!-- Video feed and map on large screen -->
+				<CameraStream {device} class="hidden flex-none lg:block" />
+				<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
+			</div>
+		{/if}
 
 		<!-- Right pane (now only summary + calendar) -->
 		<div
@@ -530,29 +528,14 @@
 						{$_('No historical data available for the selected date range.')}
 					</div>
 				{:else if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
-					<RelayControl {device} />
+					<RelayControl {device} {latestData} supabase={data.supabase} />
 				{:else}
-					<!-- <div class="mb-8">
-						<h2>{$_('Stats Summary')}</h2>
-						<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-							{#each numericKeys as key (key)}
-								{#if stats[key]}
-									<StatsCard {stats} {key} />
-								{/if}
-							{/each}
-						</div>
-					</div> -->
-
 					<div class="mb-8">
 						<h2>{$_('Stats Summary')}</h2>
 
 						<!-- Auto-fit makes items expand when a row isn't full -->
 						<div
-							class="
-      /* ~max
-      4
-      cols
-      on normal desktops */ grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] items-stretch gap-4 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]
+							class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] items-stretch gap-4 md:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]
       xl:grid-cols-[repeat(auto-fit,minmax(340px,1fr))]
     "
 						>
@@ -602,9 +585,11 @@
 <section class="mb-12 px-4">
 	{#if device.cw_device_type?.data_table_v2 === 'cw_air_data'}
 		<DataTable {historicalData} />
-	{:else}
+	{:else if device.cw_device_type?.data_table_v2 === 'traffic_v2'}
 		<h2>{$_('Weather & Data')}</h2>
 		<WeatherCalendar events={calendarEvents} />
+	{:else}
+		<!-- nop -->
 	{/if}
 </section>
 
@@ -658,24 +643,6 @@
 			}
 		}
 	}
-
-	/* ApexCharts style overrides */
-	/* .apexcharts-canvas {
-		background-color: transparent !important;
-		width: 100% !important;
-		max-width: 100% !important;
-	}
-
-	.apexcharts-tooltip {
-		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
-		border: none !important;
-	}
-
-	.apexcharts-yaxis-label,
-	.apexcharts-xaxis-label {
-		font-size: 12px !important;
-	} */
-
 	.wrapper {
 		:global {
 			h2 {

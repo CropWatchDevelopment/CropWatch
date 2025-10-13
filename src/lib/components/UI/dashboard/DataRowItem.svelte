@@ -4,6 +4,7 @@
 	import type { Location } from '$lib/models/Location';
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { formatNumber } from '$lib/utilities/stats';
+	import { getDeviceLatestTimestamp } from '$lib/utilities/deviceUtils';
 	import { mdiArrowDown, mdiArrowRight, mdiArrowUp } from '@mdi/js';
 	import { _ } from 'svelte-i18n';
 	import Collapse from '$lib/components/ui/base/Collapse.svelte';
@@ -69,6 +70,7 @@
 	let secondaryValue = $derived(device.latestData?.[secondaryDataKey]);
 	let primaryNotation = $derived(device.cw_device_type.primary_data_notation || '°C');
 	let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
+	let latestTimestamp = $derived(() => getDeviceLatestTimestamp(device));
 
 	let localStorageOpenState =
 		typeof localStorage !== 'undefined'
@@ -113,9 +115,9 @@
 		<div
 			class="absolute top-0 bottom-0 left-0 my-1 w-1.5 rounded-full opacity-70 transition-all duration-200"
 			class:bg-blue-300={!statusConfirmed || isActive === null}
-			class:bg-blue-400={statusConfirmed && !device.latestData?.created_at}
+			class:bg-blue-400={statusConfirmed && !latestTimestamp}
 			class:bg-green-500={statusConfirmed && isActive}
-			class:bg-red-500={statusConfirmed && !isActive && device.latestData?.created_at}
+			class:bg-red-500={statusConfirmed && !isActive && latestTimestamp}
 			class:cursor-grab={dragEnabled}
 			class:cursor-grabbing={isDragging}
 			class:hover:opacity-100={dragEnabled}
