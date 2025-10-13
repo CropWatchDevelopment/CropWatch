@@ -2,10 +2,16 @@
 	import { DRAGINO_LT22222L_PAYLOADS } from '$lib/lorawan/dragino';
 	import { success, error as showError } from '$lib/stores/toast.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import type { DeviceWithType } from '$lib/models/Device';
 	import { onMount, onDestroy } from 'svelte';
+	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+	import type { Device } from '$lib/models/Device';
 
-	let { device, latestData } = $props();
+	let {
+		supabase,
+		device,
+		latestData
+	}: { supabase: SupabaseClient | undefined; device: Device | undefined; latestData: any } =
+		$props();
 
 	const devEui = $derived(device.dev_eui);
 	type RelayKey = 'relay1' | 'relay2';
@@ -24,6 +30,39 @@
 
 	let statusInterval: ReturnType<typeof setInterval> | undefined;
 	let cooldownTimer: ReturnType<typeof setInterval> | undefined;
+	let broadcastChannel: RealtimeChannel | undefined = $state();
+
+	broadcastChannel = supabase.channel('cw_relay_data', {
+		config: { private: true }
+	});
+	broadcastChannel.on('broadcast', { event: '*' }, (payload) => {
+		console.log(payload);
+		debugger;
+		startCooldown();
+		payload.payload.record.relay_1;
+		payload.payload.record.relay_2;
+		if (payload.payload.record.dev_eui !== devEui) return;
+		const r1 = coerceBool(payload.payload.record.relay_1 ?? payload.payload.record.relay1);
+		const r2 = coerceBool(payload.payload.record.relay_2 ?? payload.payload.record.relay2);
+		relayState = {
+			relay1: r1 ?? relayState.relay1,
+			relay2: r2 ?? relayState.relay2
+		};
+		latestData = payload.payload.record;
+	});
+	broadcastChannel.subscribe((status, err) => {
+		console.debug('[Dashboard] Broadcast channel status', { status, err });
+		if (status === 'CHANNEL_ERROR') {
+			console.error('Broadcast channel error', err);
+		}
+		if (status === 'TIMED_OUT') {
+			console.warn('Broadcast channel timed out');
+		}
+		if (status === 'CLOSED') {
+			console.warn('Broadcast channel closed');
+			broadcastChannel = undefined;
+		}
+	});
 
 	function setBusy(relay: RelayKey, val: boolean) {
 		busy = { ...busy, [relay]: val };
@@ -207,8 +246,6 @@
 		{/each}
 	</div>
 </div>
-
-<pre>{JSON.stringify(latestData, null, 2)}</pre>
 
 <style lang="postcss">
 	@reference "tailwindcss";

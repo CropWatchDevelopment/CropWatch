@@ -456,42 +456,44 @@
 <div class="wrapper flex flex-col gap-4 p-4">
 	<div class="flex flex-col gap-4 lg:flex-row">
 		<!-- Left pane -->
-		<div
-			class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
-		>
-			<!-- Latest data section -->
-			<section class="flex-auto lg:w-auto lg:flex-none">
-				<h2>{$_('Latest Sensor Readings')}</h2>
-				{#if latestData}
-					<div>
-						<div class="grid grid-cols-2 gap-2">
-							{#each Object.keys(latestData) as key}
-								{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
-									<DataCard
-										{latestData}
-										name={key}
-										{key}
-										type={key}
-										metadata={key === 'created_at' || key === 'dev_eui'}
-									/>
-								{/if}
-							{/each}
+		{#if device.cw_device_type?.data_table_v2 !== 'cw_relay_data'}
+			<div
+				class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
+			>
+				<!-- Latest data section -->
+				<section class="flex-auto lg:w-auto lg:flex-none">
+					<h2>{$_('Latest Sensor Readings')}</h2>
+					{#if latestData}
+						<div>
+							<div class="grid grid-cols-2 gap-2">
+								{#each Object.keys(latestData) as key}
+									{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
+										<DataCard
+											{latestData}
+											name={key}
+											{key}
+											type={key}
+											metadata={key === 'created_at' || key === 'dev_eui'}
+										/>
+									{/if}
+								{/each}
+							</div>
+
+							<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
+								{$_('Last updated:')}
+								{formatDateForDisplay(latestData.created_at)}
+							</p>
 						</div>
+					{:else}
+						<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
+					{/if}
+				</section>
 
-						<p class="mt-2 text-right text-sm text-gray-500 italic opacity-70 dark:text-gray-400">
-							{$_('Last updated:')}
-							{formatDateForDisplay(latestData.created_at)}
-						</p>
-					</div>
-				{:else}
-					<p class="pt-4 text-center text-gray-500 italic">{$_('No recent data available')}</p>
-				{/if}
-			</section>
-
-			<!-- Video feed and map on large screen -->
-			<CameraStream {device} class="hidden flex-none lg:block" />
-			<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
-		</div>
+				<!-- Video feed and map on large screen -->
+				<CameraStream {device} class="hidden flex-none lg:block" />
+				<!-- <DeviceMap {device} class="hidden flex-none lg:block" /> -->
+			</div>
+		{/if}
 
 		<!-- Right pane (now only summary + calendar) -->
 		<div
@@ -526,7 +528,7 @@
 						{$_('No historical data available for the selected date range.')}
 					</div>
 				{:else if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
-					<RelayControl {device} {latestData} />
+					<RelayControl {device} {latestData} supabase={data.supabase} />
 				{:else}
 					<div class="mb-8">
 						<h2>{$_('Stats Summary')}</h2>
