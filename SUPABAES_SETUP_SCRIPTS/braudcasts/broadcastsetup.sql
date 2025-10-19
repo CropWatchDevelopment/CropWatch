@@ -57,3 +57,23 @@ create trigger cw_relay_data_broadcast_trigger
 after insert or update or delete on public.cw_relay_data
 for each row
 execute function public.cw_relay_data_changes();
+
+-- Allow authenticated users to receive broadcast messages on cw_relay_data
+create policy "authenticated can receive cw_relay_data"
+  on realtime.messages
+  for select
+  to authenticated
+  using (
+    realtime.topic() = 'cw_relay_data' AND
+    realtime.messages.extension = 'broadcast'
+  );
+
+-- Allow authenticated users to send broadcast messages on cw_relay_data
+create policy "authenticated can send cw_relay_data"
+  on realtime.messages
+  for insert
+  to authenticated
+  with check (
+    realtime.topic() = 'cw_relay_data' AND
+    realtime.messages.extension = 'broadcast'
+  );
