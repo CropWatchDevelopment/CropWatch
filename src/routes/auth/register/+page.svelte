@@ -90,7 +90,7 @@
 		return labels;
 	}
 
-	let passwordsMatch = $derived(() => confirmPassword.length > 0 && confirmPassword === password);
+	let passwordsMatch = $derived(confirmPassword.length > 0 && confirmPassword === password);
 
 	// Function to validate the form
 	function validateForm(): boolean {
@@ -316,41 +316,43 @@
 	value: string;
 	includeMatch: boolean;
 })}
-	{@const status = computePasswordRequirementStatus(value)}
-	{@const unmetRequirementLabels = getUnmetRequirementLabels(status)}
+	{@const status = includeMatch ? null : computePasswordRequirementStatus(value)}
+	{@const unmetRequirementLabels = status ? getUnmetRequirementLabels(status) : []}
 	<ul class="mt-2 space-y-1 text-xs" role="status" aria-live="polite">
-		{#each passwordRequirementEntries as { key, label }}
-			{@const satisfied = status[key]}
-			<li
-				class={`flex items-center gap-2 ${
-					satisfied ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-				}`}
-			>
-				<span
-					class={`${
+		{#if !includeMatch}
+			{#each passwordRequirementEntries as { key, label }}
+				{@const satisfied = status ? status[key] : false}
+				<li
+					class={`flex items-center gap-2 ${
 						satisfied ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-					} flex h-3.5 w-3.5 items-center justify-center`}
-					aria-hidden="true"
+					}`}
 				>
-					{#if satisfied}
-						<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-							<path
-								fill-rule="evenodd"
-								d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3.25-3.25a1 1 0 1 1 1.414-1.414L8.75 11.836l6.543-6.543a1 1 0 0 1 1.414 0"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					{:else}
-						<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-							<path
-								d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m0-2.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0-3.5a1 1 0 0 0 1-1V7a1 1 0 1 0-2 0v4a1 1 0 0 0 1 1"
-							/>
-						</svg>
-					{/if}
-				</span>
-				<span>{$_(label)}</span>
-			</li>
-		{/each}
+					<span
+						class={`${
+							satisfied ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+						} flex h-3.5 w-3.5 items-center justify-center`}
+						aria-hidden="true"
+					>
+						{#if satisfied}
+							<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+								<path
+									fill-rule="evenodd"
+									d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3.25-3.25a1 1 0 1 1 1.414-1.414L8.75 11.836l6.543-6.543a1 1 0 0 1 1.414 0"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						{:else}
+							<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+								<path
+									d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m0-2.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0-3.5a1 1 0 0 0 1-1V7a1 1 0 1 0-2 0v4a1 1 0 0 0 1 1"
+								/>
+							</svg>
+						{/if}
+					</span>
+					<span>{$_(label)}</span>
+				</li>
+			{/each}
+		{/if}
 
 		{#if includeMatch}
 			<li
@@ -382,14 +384,21 @@
 						</svg>
 					{/if}
 				</span>
-				<span>{$_('Passwords must match')}</span>
+				<span>
+					{#if passwordsMatch}
+						{$_('Passwords match')}
+					{:else}
+						{$_('Passwords must match')}
+					{/if}
+				</span>
 			</li>
 		{/if}
 	</ul>
 
 	{@const unmetWithMatch = (() => {
 		const messages = [];
-		const labels = Array.isArray(unmetRequirementLabels) ? unmetRequirementLabels : [];
+		const labels =
+			!includeMatch && Array.isArray(unmetRequirementLabels) ? unmetRequirementLabels : [];
 
 		for (const label of labels) {
 			messages.push($_(label));
