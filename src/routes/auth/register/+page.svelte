@@ -703,7 +703,7 @@
 
 					{#if !agreedToTerms || !agreedToPrivacy || !agreedToCookies}
 						<p class="mt-1 text-xs text-orange-600 dark:text-orange-400">
-							<strong>All three agreements must be accepted to register</strong>
+							<strong>{$_('All three agreements must be accepted to register')}</strong>
 						</p>
 					{/if}
 				</div>
