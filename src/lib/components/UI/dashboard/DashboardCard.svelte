@@ -26,21 +26,6 @@
 
 <div class="card-surface flex h-full w-full flex-col overflow-hidden text-gray-900 dark:text-white">
 	<div class="relative flex min-h-[60px] flex-row bg-teal-800 text-yellow-300 dark:bg-[#2c3546]">
-		<!-- <div class="pt-12"> -->
-		<!-- Icon-only status indicator with color based on state -->
-		<!-- <div class="absolute top-3 left-3 flex h-10 w-10 items-center justify-center bg-white/20 rounded-full shadow-lg dark:bg-gray-800">
-				{#if loading}
-					<Icon class="text-xl text-blue-400" path={mdiClockOutline} />
-				{:else if allActive}
-					<Icon class="text-xl text-green-500" path={mdiCheck} />
-				{:else if activeDevices.length > 0 && !allInactive}
-					<Icon class="rounded-lg text-xl text-orange-300" path={mdiAlert} />
-				{:else}
-					<Icon class="text-xl text-red-500" path={mdiClose} />
-				{/if}
-			</div> -->
-		<!-- </div> -->
-
 		<h2
 			class="flex w-full flex-row justify-between px-2 pt-3 text-lg font-semibold text-yellow-600 dark:text-yellow-400"
 		>
