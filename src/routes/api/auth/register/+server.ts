@@ -3,6 +3,23 @@ import type { RequestHandler } from './$types';
 import { AuthService } from '$lib/services/AuthService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 
+const passwordRequirementPatterns = {
+	lowercase: /[a-z]/,
+	uppercase: /[A-Z]/,
+	number: /\d/,
+	symbol: /[^A-Za-z0-9]/
+};
+
+function meetsPasswordRequirements(password: string): boolean {
+	return (
+		password.length >= 8 &&
+		passwordRequirementPatterns.lowercase.test(password) &&
+		passwordRequirementPatterns.uppercase.test(password) &&
+		passwordRequirementPatterns.number.test(password) &&
+		passwordRequirementPatterns.symbol.test(password)
+	);
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		// Parse the request body
@@ -37,12 +54,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			);
 		}
 
-		// Validate password length
-		if (userData.password.length < 8) {
+		// Validate password requirements
+		if (!meetsPasswordRequirements(userData.password)) {
 			return json(
 				{
 					success: false,
-					error: 'Password must be at least 8 characters'
+					error:
+						'Password must be at least 8 characters and include a lowercase letter, uppercase letter, number, and symbol'
 				},
 				{ status: 400 }
 			);

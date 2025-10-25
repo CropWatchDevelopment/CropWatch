@@ -3,6 +3,23 @@ import type { Actions } from './$types';
 import { AuthService } from '$lib/services/AuthService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 
+const passwordRequirementPatterns = {
+	lowercase: /[a-z]/,
+	uppercase: /[A-Z]/,
+	number: /\d/,
+	symbol: /[^A-Za-z0-9]/
+};
+
+function meetsPasswordRequirements(password: string): boolean {
+	return (
+		password.length >= 8 &&
+		passwordRequirementPatterns.lowercase.test(password) &&
+		passwordRequirementPatterns.uppercase.test(password) &&
+		passwordRequirementPatterns.number.test(password) &&
+		passwordRequirementPatterns.symbol.test(password)
+	);
+}
+
 export const actions: Actions = {
 	register: async ({ request, locals }) => {
 		const data = await request.formData();
@@ -40,11 +57,14 @@ export const actions: Actions = {
 
 		if (!password) {
 			errors.password = 'Password is required';
-		} else if (password.length < 8) {
-			errors.password = 'Password must be at least 8 characters';
+		} else if (!meetsPasswordRequirements(password)) {
+			errors.password =
+				'Password must be at least 8 characters and include a lowercase letter, uppercase letter, number, and symbol';
 		}
 
-		if (password !== confirmPassword) {
+		if (!confirmPassword) {
+			errors.confirmPassword = 'Please confirm your password';
+		} else if (password !== confirmPassword) {
 			errors.confirmPassword = 'Passwords do not match';
 		}
 

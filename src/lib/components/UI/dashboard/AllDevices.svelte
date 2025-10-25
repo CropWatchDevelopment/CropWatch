@@ -109,6 +109,31 @@
 				return 'w-full grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5';
 		}
 	}
+
+	function sortDevicesByName(devices: DeviceWithSensorData[] = []): DeviceWithSensorData[] {
+		const numericPattern = /^[0-9]+$/;
+
+		return [...devices].sort((a, b) => {
+			const nameA = (a.name ?? '').trim().toLowerCase();
+			const nameB = (b.name ?? '').trim().toLowerCase();
+
+			const isNumericA = numericPattern.test(nameA);
+			const isNumericB = numericPattern.test(nameB);
+
+			if (isNumericA && isNumericB) {
+				return Number(nameA) - Number(nameB);
+			}
+
+			if (isNumericA) return -1;
+			if (isNumericB) return 1;
+
+			if (nameA === nameB) {
+				return (a.dev_eui ?? '').localeCompare(b.dev_eui ?? '');
+			}
+
+			return nameA.localeCompare(nameB);
+		});
+	}
 </script>
 
 <div class="device-cards-grid {getContainerClass(uiStore.dashboardViewType)}">
@@ -137,7 +162,7 @@
 				loading={hasNullStatus}
 			>
 				{#snippet content()}
-					{@const locationDevices = location.cw_devices ?? []}
+					{@const locationDevices = sortDevicesByName(location.cw_devices ?? [])}
 					{@const dragHandlers = createDragHandlers(
 						locationDevices,
 						(newDevices) => {

@@ -39,6 +39,59 @@
 		return regex.test(email);
 	}
 
+	type PasswordRequirementKey = 'length' | 'lowercase' | 'uppercase' | 'number' | 'symbol';
+
+	const passwordRequirementPatterns: Record<Exclude<PasswordRequirementKey, 'length'>, RegExp> = {
+		lowercase: /[a-z]/,
+		uppercase: /[A-Z]/,
+		number: /\d/,
+		symbol: /[^A-Za-z0-9]/
+	};
+
+	const passwordRequirementEntries: Array<{ key: PasswordRequirementKey; label: string }> = [
+		{ key: 'length', label: 'At least 8 characters' },
+		{ key: 'lowercase', label: 'Contains a lowercase letter (a-z)' },
+		{ key: 'uppercase', label: 'Contains an uppercase letter (A-Z)' },
+		{ key: 'number', label: 'Contains a number (0-9)' },
+		{ key: 'symbol', label: 'Contains a symbol (!@#$, etc.)' }
+	];
+
+	function meetsPasswordRequirements(value: string): boolean {
+		return (
+			value.length >= 8 &&
+			passwordRequirementPatterns.lowercase.test(value) &&
+			passwordRequirementPatterns.uppercase.test(value) &&
+			passwordRequirementPatterns.number.test(value) &&
+			passwordRequirementPatterns.symbol.test(value)
+		);
+	}
+
+	function computePasswordRequirementStatus(
+		value: string
+	): Record<PasswordRequirementKey, boolean> {
+		return {
+			length: value.length >= 8,
+			lowercase: passwordRequirementPatterns.lowercase.test(value),
+			uppercase: passwordRequirementPatterns.uppercase.test(value),
+			number: passwordRequirementPatterns.number.test(value),
+			symbol: passwordRequirementPatterns.symbol.test(value)
+		};
+	}
+
+	function getUnmetRequirementLabels(status: Record<PasswordRequirementKey, boolean>): string[] {
+		const labels: string[] = [];
+
+		for (const entry of passwordRequirementEntries) {
+			if (!status[entry.key]) {
+				labels.push(entry.label);
+			}
+		}
+
+		return labels;
+	}
+
+	let passwordsMatch = $derived(confirmPassword.length > 0 && confirmPassword === password);
+
 	// Function to validate the form
 	function validateForm(): boolean {
 		let isValid = true;
@@ -77,13 +130,17 @@
 		if (!password) {
 			errors.password = 'Password is required';
 			isValid = false;
-		} else if (password.length < 8) {
-			errors.password = 'Password must be at least 8 characters';
+		} else if (!meetsPasswordRequirements(password)) {
+			errors.password =
+				'Password must be at least 8 characters and include a lowercase letter, uppercase letter, number, and symbol';
 			isValid = false;
 		}
 
 		// Validate password confirmation
-		if (password !== confirmPassword) {
+		if (!confirmPassword) {
+			errors.confirmPassword = 'Please confirm your password';
+			isValid = false;
+		} else if (password !== confirmPassword) {
 			errors.confirmPassword = 'Passwords do not match';
 			isValid = false;
 		}
@@ -111,7 +168,7 @@
 			email.trim() !== '' &&
 			isValidEmail(email) &&
 			password !== '' &&
-			password.length >= 8 &&
+			meetsPasswordRequirements(password) &&
 			confirmPassword !== '' &&
 			password === confirmPassword &&
 			company.trim() !== '' &&
@@ -151,8 +208,9 @@
 	function validatePasswordField() {
 		if (!password) {
 			errors.password = 'Password is required';
-		} else if (password.length < 8) {
-			errors.password = 'Password must be at least 8 characters';
+		} else if (!meetsPasswordRequirements(password)) {
+			errors.password =
+				'Password must be at least 8 characters and include a lowercase letter, uppercase letter, number, and symbol';
 		} else {
 			errors.password = '';
 		}
@@ -250,6 +308,115 @@
 		}
 	}
 </script>
+
+{#snippet passwordRequirementList({
+	value,
+	includeMatch
+}: {
+	value: string;
+	includeMatch: boolean;
+})}
+	{@const status = includeMatch ? null : computePasswordRequirementStatus(value)}
+	{@const unmetRequirementLabels = status ? getUnmetRequirementLabels(status) : []}
+	<ul class="mt-2 space-y-1 text-xs" role="status" aria-live="polite">
+		{#if !includeMatch}
+			{#each passwordRequirementEntries as { key, label }}
+				{@const satisfied = status ? status[key] : false}
+				<li
+					class={`flex items-center gap-2 ${
+						satisfied ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+					}`}
+				>
+					<span
+						class={`${
+							satisfied ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+						} flex h-3.5 w-3.5 items-center justify-center`}
+						aria-hidden="true"
+					>
+						{#if satisfied}
+							<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+								<path
+									fill-rule="evenodd"
+									d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3.25-3.25a1 1 0 1 1 1.414-1.414L8.75 11.836l6.543-6.543a1 1 0 0 1 1.414 0"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						{:else}
+							<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+								<path
+									d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m0-2.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0-3.5a1 1 0 0 0 1-1V7a1 1 0 1 0-2 0v4a1 1 0 0 0 1 1"
+								/>
+							</svg>
+						{/if}
+					</span>
+					<span>{$_(label)}</span>
+				</li>
+			{/each}
+		{/if}
+
+		{#if includeMatch}
+			<li
+				class={`flex items-center gap-2 ${
+					passwordsMatch ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+				}`}
+			>
+				<span
+					class={`${
+						passwordsMatch
+							? 'text-green-600 dark:text-green-400'
+							: 'text-gray-400 dark:text-gray-500'
+					} flex h-3.5 w-3.5 items-center justify-center`}
+					aria-hidden="true"
+				>
+					{#if passwordsMatch}
+						<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+							<path
+								fill-rule="evenodd"
+								d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3.25-3.25a1 1 0 1 1 1.414-1.414L8.75 11.836l6.543-6.543a1 1 0 0 1 1.414 0"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					{:else}
+						<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+							<path
+								d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m0-2.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0-3.5a1 1 0 0 0 1-1V7a1 1 0 1 0-2 0v4a1 1 0 0 0 1 1"
+							/>
+						</svg>
+					{/if}
+				</span>
+				<span>
+					{#if passwordsMatch}
+						{$_('Passwords match')}
+					{:else}
+						{$_('Passwords must match')}
+					{/if}
+				</span>
+			</li>
+		{/if}
+	</ul>
+
+	{@const unmetWithMatch = (() => {
+		const messages = [];
+		const labels =
+			!includeMatch && Array.isArray(unmetRequirementLabels) ? unmetRequirementLabels : [];
+
+		for (const label of labels) {
+			messages.push($_(label));
+		}
+
+		if (includeMatch && !passwordsMatch) {
+			messages.push($_('Passwords must match'));
+		}
+
+		return messages;
+	})()}
+
+	{#if unmetWithMatch.length > 0}
+		<p class="mt-1 text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
+			{$_('Still needed')}: {unmetWithMatch.join(', ')}
+		</p>
+	{/if}
+{/snippet}
 
 <svelte:head>
 	<title>{$_('Register')} | IoT Dashboard</title>
@@ -388,7 +555,7 @@
 					{#if errors.password}
 						<p class="mt-1 text-xs text-red-500">{$_(errors.password)}</p>
 					{/if}
-					<p class="mt-1 text-xs text-gray-500">Minimum 8 characters required</p>
+					{@render passwordRequirementList({ value: password, includeMatch: false })}
 				</div>
 
 				<!-- Confirm Password -->
@@ -417,6 +584,7 @@
 					{#if errors.confirmPassword}
 						<p class="mt-1 text-xs text-red-500">{$_(errors.confirmPassword)}</p>
 					{/if}
+					{@render passwordRequirementList({ value: confirmPassword, includeMatch: true })}
 				</div>
 
 				<!-- Company -->
@@ -535,7 +703,7 @@
 
 					{#if !agreedToTerms || !agreedToPrivacy || !agreedToCookies}
 						<p class="mt-1 text-xs text-orange-600 dark:text-orange-400">
-							<strong>All three agreements must be accepted to register</strong>
+							<strong>{$_('All three agreements must be accepted to register')}</strong>
 						</p>
 					{/if}
 				</div>

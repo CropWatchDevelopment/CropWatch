@@ -1,8 +1,11 @@
+/// <reference types="svelte" />
+/// <reference types="vite/client" />
+
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 
-import type { Database } from "$lib/types/database.types";
-import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
+import type { Database } from '$lib/types/database.types';
+import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 declare global {
 	namespace App {
@@ -33,4 +36,4 @@ declare global {
 
 export {};
 
-export { };
+export {};

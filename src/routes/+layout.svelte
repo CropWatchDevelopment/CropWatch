@@ -115,13 +115,9 @@
 		stopLoading();
 	});
 
-	import { get } from 'svelte/store';
-	let theme = $state(get(themeStore));
-	let unsub: () => void;
+	const theme = $derived(themeStore);
 	onMount(() => {
 		initThemeOnce();
-		unsub = themeStore.subscribe((v) => (theme = v));
-		return () => unsub && unsub();
 	});
 </script>
 
@@ -141,7 +137,7 @@
 				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'};"
 			data-auth-page={page.url.pathname.startsWith('/auth') ? 'true' : undefined}
 		>
-			{@render children()}
+			{@render children?.()}
 			<ToastContainer position="top-right" />
 		</main>
 		<GlobalLoading />
