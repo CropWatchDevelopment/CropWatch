@@ -55,17 +55,6 @@
 		dragStates = new Map(dragStates);
 	}
 
-	// Debug effect to log search changes
-	// $effect(() => {
-	// 	//console.log('AllDevices: uiStore.search changed to:', uiStore.search);
-	// });
-
-	// // Track filtered locations count for debugging
-	// $effect(() => {
-	// 	//console.log('AllDevices: filteredLocations count:', filteredLocations.length);
-	// 	//console.log('AllDevices: total locations count:', locations.length);
-	// });
-
 	// Reactive filtered locations based on search with applied device order
 	const filteredLocations = $derived(
 		locations

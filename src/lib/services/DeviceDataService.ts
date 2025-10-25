@@ -28,36 +28,37 @@ export class DeviceDataService implements IDeviceDataService {
 			throw new Error('User does not have access to this device');
 		}
 		const cw_device = await this.getDeviceAndType(devEui);
-		const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
+		return cw_device as unknown as DeviceDataRecord;
+		// const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
 
-		try {
-			const { data, error } = await this.supabase
-				.from(tableName)
-				.select()
-				.eq('dev_eui', devEui)
-				.order('created_at', { ascending: false })
-				.limit(1)
-				.maybeSingle();
+		// try {
+		// 	const { data, error } = await this.supabase
+		// 		.from(tableName)
+		// 		.select()
+		// 		.eq('dev_eui', devEui)
+		// 		.order('created_at', { ascending: false })
+		// 		.limit(1)
+		// 		.maybeSingle();
 
-			if (error) {
-				this.errorHandler.logError(error);
-				throw new Error(`Error fetching columns: ${error.message}`);
-			}
+		// 	if (error) {
+		// 		this.errorHandler.logError(error);
+		// 		throw new Error(`Error fetching columns: ${error.message}`);
+		// 	}
 
-			return data as DeviceDataRecord;
-		} catch (error) {
-			this.errorHandler.logError(error as Error);
-			if (error instanceof Error && error.message.includes('AbortError')) {
-				return {
-					error: 'Data retrieval timed out',
-					partial: true,
-					dev_eui: devEui,
-					created_at: new Date().toISOString(),
-					note: 'This is a placeholder due to query timeout'
-				};
-			}
-			throw error;
-		}
+		// 	return data as DeviceDataRecord;
+		// } catch (error) {
+		// 	this.errorHandler.logError(error as Error);
+		// 	if (error instanceof Error && error.message.includes('AbortError')) {
+		// 		return {
+		// 			error: 'Data retrieval timed out',
+		// 			partial: true,
+		// 			dev_eui: devEui,
+		// 			created_at: new Date().toISOString(),
+		// 			note: 'This is a placeholder due to query timeout'
+		// 		};
+		// 	}
+		// 	throw error;
+		// }
 	}
 
 	/**

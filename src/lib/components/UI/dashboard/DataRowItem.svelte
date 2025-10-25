@@ -66,8 +66,6 @@
 
 	let primaryDataKey = $derived(device.cw_device_type.primary_data_v2);
 	let secondaryDataKey = $derived(device.cw_device_type.secondary_data_v2);
-	let primaryValue = $derived(device.latestData?.[primaryDataKey]);
-	let secondaryValue = $derived(device.latestData?.[secondaryDataKey]);
 	let primaryNotation = $derived(device.cw_device_type.primary_data_notation || '°C');
 	let secondaryNotation = $derived(device.cw_device_type.secondary_data_notation || '%');
 	let latestTimestamp = $derived(() => getDeviceLatestTimestamp(device));
@@ -158,7 +156,7 @@
 								<span
 									class="text-lg leading-tight font-bold whitespace-nowrap text-gray-900 dark:text-white"
 								>
-									{formatNumber({ key: primaryDataKey, value: primaryValue })}
+									{formatNumber({ key: primaryDataKey, value: device.primary_data })}
 									<span
 										class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
 										>{primaryNotation}</span
@@ -176,7 +174,9 @@
 									<span
 										class="flex flex-nowrap items-baseline text-lg leading-tight font-bold text-gray-900 dark:text-white"
 									>
-										<span>{formatNumber({ key: secondaryDataKey, value: secondaryValue })}</span>
+										<span
+											>{formatNumber({ key: secondaryDataKey, value: device.secondary_data })}</span
+										>
 										<span class="text-accent-700 dark:text-accent-400 ml-0.5 text-xs font-normal"
 											>{secondaryNotation}</span
 										>
