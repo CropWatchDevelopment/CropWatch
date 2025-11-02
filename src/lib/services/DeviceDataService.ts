@@ -31,6 +31,10 @@ export class DeviceDataService implements IDeviceDataService {
 		const tableName = cw_device.cw_device_type.data_table_v2; // Pull out the table name
 
 		try {
+			if (tableName === 'cw_traffic2') {
+				return await this.getLatestTrafficAggregate(devEui);
+			}
+
 			const { data, error } = await this.supabase
 				.from(tableName)
 				.select()
@@ -108,26 +112,27 @@ export class DeviceDataService implements IDeviceDataService {
 				.from(tableName)
 				.select('*')
 				.eq('dev_eui', devEui)
-				.gte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcStartDate.toISOString()) // SHIT FIX #1, traffic camera specific
-				.lte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcEndDate.toISOString()) // SHIT FIX #2, traffic camera specific
-				.order(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', { ascending: false }); // SHIT FIX #3, traffic camera specific
-			// .limit(maxDataToReturn);
+				.gte(
+					tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at',
+					utcStartDate.toISOString()
+				)
+				.lte(tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcEndDate.toISOString())
+				.order(tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at', {
+					ascending: false
+				});
 
-			// SHIT FIX #4, traffic camera specific
-			if (tableName == 'cw_traffic2') {
-				const trafficData = (data || []).map((record: any) => ({
-					...record,
-					created_at: record.traffic_hour,
-					dev_eui: record.dev_eui,
-					note: 'Traffic data formatted'
-				})) as DeviceDataRecord[];
-
-				// Convert timestamps back to user timezone
-				return this.convertRecordTimestampsToUserTimezone(trafficData, timezone, tableName);
+			if (error) {
+				this.errorHandler.logError(error);
+				throw new Error(`Error fetching device data: ${error.message}`);
 			}
-			// END OF SHIT FIX
 
-			const records = (data || []) as DeviceDataRecord[];
+			let records: DeviceDataRecord[];
+			if (tableName === 'cw_traffic2') {
+				records = this.aggregateTrafficCounts(data ?? []);
+			} else {
+				records = (data || []) as DeviceDataRecord[];
+			}
+
 			// Convert timestamps back to user timezone
 			return this.convertRecordTimestampsToUserTimezone(records, timezone, tableName);
 		} catch (error) {
@@ -199,16 +204,26 @@ export class DeviceDataService implements IDeviceDataService {
 				.from(tableName)
 				.select('*')
 				.eq('dev_eui', devEui)
-				.gte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcStartDate.toISOString()) // SHIT FIX #1, traffic camera specific
-				.lte(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcEndDate.toISOString()) // SHIT FIX #2, traffic camera specific
-				.order(tableName == 'cw_traffic2' ? 'traffic_hour' : 'created_at', { ascending: false }); // SHIT FIX #3, traffic camera specific
+				.gte(
+					tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at',
+					utcStartDate.toISOString()
+				)
+				.lte(tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at', utcEndDate.toISOString())
+				.order(tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at', {
+					ascending: false
+				});
 
 			if (error) {
 				this.errorHandler.logError(error);
 				throw new Error(`Error fetching CSV data: ${error.message}`);
 			}
 
-			const rows = ((data || []) as Record<string, any>[]).map((r) => ({ ...r }));
+			const rawRecords =
+				tableName === 'cw_traffic2'
+					? this.aggregateTrafficCounts(data ?? [])
+					: ((data || []) as Record<string, any>[]);
+
+			const rows = rawRecords.map((r) => ({ ...r }));
 			const timestampKey = tableName === 'cw_traffic2' ? 'traffic_hour' : 'created_at';
 
 			const normalizeToISO = (val: string) => {
@@ -482,6 +497,127 @@ export class DeviceDataService implements IDeviceDataService {
 			return false; // Error checking access
 		}
 		return true; // Default to true for now
+	}
+
+	private aggregateTrafficCounts(records: Record<string, any>[]): DeviceDataRecord[] {
+		if (!records || records.length === 0) {
+			return [];
+		}
+
+		const grouped = new Map<string, DeviceDataRecord>();
+
+		const toNumber = (value: unknown): number => {
+			if (typeof value === 'number') return value;
+			if (typeof value === 'string') {
+				const trimmed = value.trim();
+				if (trimmed.length === 0) return 0;
+				const parsed = Number(trimmed);
+				return Number.isNaN(parsed) ? 0 : parsed;
+			}
+			return 0;
+		};
+
+		for (const record of records) {
+			if (!record) continue;
+
+			const devEui = record.dev_eui;
+			const trafficHour = record.traffic_hour;
+			if (!devEui || !trafficHour) continue;
+
+			const key = `${devEui}__${trafficHour}`;
+			let aggregated = grouped.get(key);
+
+			if (!aggregated) {
+				aggregated = {
+					dev_eui: devEui,
+					traffic_hour: trafficHour,
+					created_at: trafficHour
+				} as DeviceDataRecord;
+				grouped.set(key, aggregated);
+			}
+
+			for (const [field, value] of Object.entries(record)) {
+				if (!field.endsWith('_count')) continue;
+				if (field === 'line_number') continue;
+
+				const existing = (aggregated as Record<string, any>)[field] ?? 0;
+				(aggregated as Record<string, any>)[field] = existing + toNumber(value);
+			}
+		}
+
+		const results = Array.from(grouped.values());
+		results.sort((a, b) => {
+			const aDate = new Date((a.traffic_hour as string) ?? (a.created_at as string) ?? 0);
+			const bDate = new Date((b.traffic_hour as string) ?? (b.created_at as string) ?? 0);
+			return bDate.getTime() - aDate.getTime();
+		});
+
+		const ensureFields = [
+			'people_count',
+			'bicycle_count',
+			'motorcycle_count',
+			'car_count',
+			'truck_count',
+			'bus_count'
+		];
+
+		return results.map((record) => {
+			const copy = { ...record } as Record<string, any>;
+			for (const field of ensureFields) {
+				if (copy[field] === undefined || copy[field] === null) {
+					copy[field] = 0;
+				}
+			}
+			delete copy.line_number;
+			delete copy.id;
+			return copy as DeviceDataRecord;
+		});
+	}
+
+	private async getLatestTrafficAggregate(devEui: string): Promise<DeviceDataRecord | null> {
+		const { data: latestRows, error } = await this.supabase
+			.from('cw_traffic2')
+			.select('*')
+			.eq('dev_eui', devEui)
+			.order('traffic_hour', { ascending: false })
+			.limit(10);
+
+		if (error) {
+			this.errorHandler.logError(error);
+			throw new Error(`Error fetching latest traffic data: ${error.message}`);
+		}
+
+		if (!latestRows || latestRows.length === 0) {
+			return null;
+		}
+
+		const latestHour = latestRows[0]?.traffic_hour;
+		if (!latestHour) {
+			return null;
+		}
+
+		const rowsForHour = latestRows.filter((row) => row?.traffic_hour === latestHour);
+
+		// If the limited query includes all lines for the hour, aggregate directly.
+		if (rowsForHour.length === latestRows.length) {
+			const [aggregated] = this.aggregateTrafficCounts(rowsForHour);
+			return aggregated ?? null;
+		}
+
+		// Otherwise fetch all rows for the hour to guarantee completeness.
+		const { data: completeHourRows, error: hourError } = await this.supabase
+			.from('cw_traffic2')
+			.select('*')
+			.eq('dev_eui', devEui)
+			.eq('traffic_hour', latestHour);
+
+		if (hourError) {
+			this.errorHandler.logError(hourError);
+			throw new Error(`Error fetching traffic data for hour ${latestHour}: ${hourError.message}`);
+		}
+
+		const [aggregated] = this.aggregateTrafficCounts(completeHourRows ?? []);
+		return aggregated ?? null;
 	}
 
 	/**

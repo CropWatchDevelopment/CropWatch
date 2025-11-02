@@ -265,15 +265,36 @@
 	}
 
 	// Handle real-time update
-	function handleRealtimeUpdate(payload: any) {
+	async function handleRealtimeUpdate(payload: any) {
 		// Only process if we have valid data
 		if (payload.new && payload.new.dev_eui) {
+			const tableName = payload.table;
 			console.debug('[Dashboard] Postgres change received', {
 				eventType: payload.eventType,
-				table: payload.table,
+				table: tableName,
 				dev_eui: payload.new.dev_eui,
 				created_at: payload.new.created_at
 			});
+			if (tableName === 'cw_traffic2') {
+				try {
+					const response = await fetch(`/api/devices/${payload.new.dev_eui}/status`);
+					if (!response.ok) {
+						console.warn(
+							`[Dashboard] Failed to refresh aggregated traffic data for ${payload.new.dev_eui}`,
+							response.status
+						);
+						return;
+					}
+					const aggregated = await response.json();
+					applyDeviceDataUpdate(aggregated as AirData | SoilData);
+				} catch (err) {
+					console.error(
+						`[Dashboard] Error refreshing aggregated traffic data for ${payload.new.dev_eui}`,
+						err
+					);
+				}
+				return;
+			}
 			applyDeviceDataUpdate(payload.new as AirData | SoilData);
 		} else {
 			console.debug('[Dashboard] Postgres change ignored', payload);

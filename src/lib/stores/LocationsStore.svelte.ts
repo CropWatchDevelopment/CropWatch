@@ -175,7 +175,7 @@ function updateSingleDevice(devEui: string, updatedData: AirData | SoilData) {
 	// Filter out null values and unwanted properties
 	const newData = Object.fromEntries(
 		Object.entries(updatedData).filter(
-			([k, v]) => v != null && k !== 'is_simulated' && k !== 'dev_eui'
+			([k, v]) => v != null && k !== 'is_simulated' && k !== 'dev_eui' && k !== 'line_number'
 		)
 	) as AirData | SoilData;
 
