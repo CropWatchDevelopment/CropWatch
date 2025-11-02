@@ -3,32 +3,71 @@
 	import '@event-calendar/core/index.css'; // include default styles
 	import { fetchHistoricalWeather } from '$lib/utilities/monthWeatherHistory';
 	import { DateTime } from 'luxon';
+	import { onMount } from 'svelte';
 
 	interface WeatherCalendarProps {
 		events?: any[];
 		onDateChange?: (start: Date, end: Date) => void;
+		latitude?: number | null;
+		longitude?: number | null;
 	}
 
-	const { events = [], onDateChange = () => {} } = $props();
+	const {
+		events = [],
+		onDateChange = () => {},
+		latitude = null,
+		longitude = null
+	}: WeatherCalendarProps = $props();
 
 	// 1. Declare weather state and current date with proper types
 	let weather: any[] = $state([]);
-	let currentDate = $state(new Date()); // Track the currently displayed month
+	let currentDate = $state(DateTime.now().startOf('month').toJSDate()); // Track the currently displayed month
 	let loading = $state(false);
 	let calendarRef: any = $state(null); // Reference to the calendar component
+	let lastWeatherMonthKey = $state<string | null>(null);
+	let pendingWeatherMonthKey = $state<string | null>(null);
+
+	const logPrefix = '[WeatherCalendar]';
+	const debug = (...args: unknown[]) => console.log(logPrefix, ...args);
+
+	const toMonthKey = (date: Date) => DateTime.fromJSDate(date).toFormat('yyyy-MM');
 
 	// Function to load weather data for a given date
 	async function loadWeatherForMonth(date: Date) {
+		const monthKey = toMonthKey(date);
+		if (monthKey === pendingWeatherMonthKey) {
+			debug('Skipping weather fetch; already fetching', monthKey);
+			return;
+		}
+		if (monthKey === lastWeatherMonthKey && weather.length) {
+			debug('Skipping weather fetch; data already loaded for', monthKey);
+			return;
+		}
+		debug('Fetching weather for month', monthKey, 'date range seed', date.toISOString());
+		pendingWeatherMonthKey = monthKey;
 		loading = true;
 		try {
-			const startDate = DateTime.fromJSDate(date).startOf('month').toJSDate();
-			let endDate = DateTime.fromJSDate(date).endOf('month').toJSDate();
-			if (endDate > new Date()) {
-				endDate = new Date(); // Adjust to yesterday if future date
+			const currentMonth = DateTime.fromJSDate(date);
+			const startDate = currentMonth.startOf('month').toJSDate();
+			let endDate = currentMonth.endOf('month');
+			const today = DateTime.now();
+			if (endDate.toMillis() > today.toMillis()) {
+				endDate = today.endOf('day');
 			}
 
-			const data = await fetchHistoricalWeather(startDate, endDate);
+			const resolvedLatitude =
+				typeof latitude === 'number' && Number.isFinite(latitude) ? latitude : undefined;
+			const resolvedLongitude =
+				typeof longitude === 'number' && Number.isFinite(longitude) ? longitude : undefined;
 
+			const data = await fetchHistoricalWeather(
+				startDate,
+				endDate.toJSDate(),
+				resolvedLatitude,
+				resolvedLongitude
+			);
+
+			debug('Weather API response length', data.length, 'for', monthKey);
 			const mappedEvents = data.map((entry) => ({
 				id: entry.date,
 				start: entry.date, // EventCalendar accepts ISO8601 strings
@@ -48,19 +87,26 @@
 				}
 			}));
 			weather = mappedEvents;
+			lastWeatherMonthKey = monthKey;
 			//console.log('Mapped weather events:', weather);
 		} catch (err) {
-			console.error('Weather fetch failed:', err);
+			console.error(logPrefix, 'Weather fetch failed for', monthKey, err);
 			weather = [];
+			lastWeatherMonthKey = null;
 		} finally {
 			loading = false;
+			if (pendingWeatherMonthKey === monthKey) {
+				pendingWeatherMonthKey = null;
+			}
+			debug('Fetch complete for', monthKey);
 		}
 	}
 
-	// Load initial data using $effect
-	$effect(() => {
+	// Load initial data on mount
+	onMount(() => {
+		debug('Mounting calendar with initial date', currentDate?.toISOString());
 		if (currentDate) {
-			loadWeatherForMonth(currentDate);
+			void loadWeatherForMonth(currentDate);
 		}
 	});
 
@@ -100,11 +146,37 @@
 		}
 	}
 
+	// Handle datesSet separately to avoid reactive loop
+	function handleDatesSet(info: any) {
+		// Guard against duplicate triggers caused by internal rerenders
+		const viewStart = info?.view?.currentStart;
+		const viewEnd = info?.view?.currentEnd;
+		if (!viewStart) return;
+
+		const nextKey = toMonthKey(viewStart);
+
+		if (nextKey === lastWeatherMonthKey && weather.length) {
+			debug('datesSet ignored; data already loaded for', nextKey);
+			return;
+		}
+
+		debug('datesSet triggered', { currentStart: viewStart, currentEnd: viewEnd });
+		loadWeatherForMonth(viewStart);
+		if (typeof onDateChange === 'function') {
+			onDateChange(viewStart, viewEnd);
+		}
+	}
+
 	// 3. Derive calendar options reactively - this will update when weather changes
 	const options = $derived({
 		view: 'dayGridMonth',
-		date: currentDate, // Use tracked current date
-		events: [...weather, ...events].filter((event) => event && event.start), // Filter out invalid events
+		events: [...weather, ...events].filter((event) => {
+			if (!event || !event.start) return false;
+			const eventDate = new Date(event.start);
+			const now = new Date();
+			const monthStart = DateTime.now().startOf('month').toJSDate();
+			return eventDate >= monthStart && eventDate <= now;
+		}),
 		eventContent: eventContentRenderer,
 		dayMaxEvents: true, // Allow +more link when too many events
 		height: '700px',
@@ -116,14 +188,13 @@
 		},
 		initialView: 'dayGridMonth',
 		// Handle date changes (month navigation)
-		datesSet: (info) => {
-			if (info && info.view && info.view.currentStart) {
-				loadWeatherForMonth(info.view.currentStart);
-				if (typeof onDateChange === 'function') {
-					onDateChange(info.view.currentStart, info.view.currentEnd);
-				}
-			}
-		},
+		validRange: (() => {
+			const today = DateTime.now();
+			const start = today.startOf('month').toISODate();
+			const end = today.toISODate();
+			return { start, end };
+		})(),
+		datesSet: handleDatesSet,
 		buttonText: {
 			today: 'Today',
 			dayGridMonth: 'Month'
