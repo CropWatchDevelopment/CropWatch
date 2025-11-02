@@ -28,7 +28,6 @@
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
 		"@eslint/js": "^9.37.0",
-		"@event-calendar/core": "^4.7.0",
 		"@playwright/test": "^1.56.0",
 		"@sveltejs/adapter-vercel": "^5.10.3",
 		"@sveltejs/kit": "^2.46.5",
@@ -39,7 +38,6 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.2.8",
 		"@types/d3": "^7.4.3",
-		"@types/event-calendar__core": "^4.7.0",
 		"@types/luxon": "^3.7.1",
 		"@types/pdfkit": "^0.17.3",
 		"@types/swagger-ui": "^5.21.1",
