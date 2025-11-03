@@ -373,7 +373,7 @@
 			}
 
 			const formatTrafficTitle = (counts: Record<string, number>, total: number) => {
-				const lines: string[] = [`<strong>Total:</strong> ${total.toLocaleString()}`];
+				const lines: string[] = [`Everything Total: ${total.toLocaleString()}`];
 				const orderedKeys = Object.keys(counts).sort();
 				for (const key of orderedKeys) {
 					const value = counts[key] ?? 0;

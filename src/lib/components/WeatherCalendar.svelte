@@ -176,10 +176,10 @@
 	};
 	const getDayCellClasses = (cell: CalendarCellDay) =>
 		[
-			'flex min-h-[140px] flex-col gap-3 rounded-lg border bg-neutral-50 p-2 text-xs shadow-sm transition dark:bg-neutral-800',
+			'flex min-h-[140px] flex-col gap-3 rounded-lg border bg-white p-3 text-xs text-neutral-800 shadow-sm transition dark:bg-neutral-800 dark:text-neutral-100',
 			cell.isToday
-				? 'border-accent-500 ring-1 ring-accent-500/60 dark:border-accent-300'
-				: 'border-neutral-200 dark:border-neutral-700'
+				? 'border-accent-500 ring-1 ring-accent-500/60 dark:border-orange-600'
+				: 'border-neutral-300 dark:border-neutral-700'
 		].join(' ');
 </script>
 
@@ -193,7 +193,7 @@
 	</header>
 
 	<div
-		class="grid grid-cols-7 gap-2 text-center text-xs font-semibold tracking-wide text-neutral-500 uppercase dark:text-neutral-400"
+		class="grid grid-cols-7 gap-2 text-center text-xs font-semibold tracking-wide text-neutral-600 uppercase dark:text-neutral-400"
 	>
 		{#each weekdays as label (label)}
 			<div class="py-1" aria-hidden="true">{label}</div>
@@ -216,29 +216,35 @@
 				{@const day = cell as CalendarCellDay}
 				<article class={getDayCellClasses(day)} aria-label={getAriaLabel(day)}>
 					<div class="flex items-center justify-between text-neutral-500 dark:text-neutral-300">
-						<span class="text-xs font-medium">{weekdays[day.date.weekday % 7]}</span>
-						<span class="text-sm font-semibold text-neutral-700 dark:text-neutral-100"
+						<span class="text-xs font-medium text-blue-500 dark:text-red-500"
+							>{weekdays[day.date.weekday % 7]}</span
+						>
+						<span class="text-sm font-semibold text-slate-900 dark:text-neutral-100"
 							>{day.date.day}</span
 						>
 					</div>
 
 					{#if day.weather}
 						<div
-							class="flex flex-1 flex-col gap-2 rounded-md bg-white p-2 text-neutral-600 shadow-sm dark:bg-neutral-900 dark:text-neutral-200"
+							class="flex flex-1 flex-col gap-2 rounded-md border border-neutral-200 bg-slate-50 p-2 text-neutral-700 shadow-sm dark:border-transparent dark:bg-blue-300 dark:text-neutral-200"
 						>
 							<div
-								class="flex items-center justify-between text-sm font-semibold text-neutral-700 dark:text-neutral-100"
+								class="flex items-center justify-between text-sm font-semibold text-neutral-800 dark:text-slate-900"
 							>
 								<span>{formatTemp(day.weather.maxtemp_c)}°C</span>
-								<span class="text-xs font-normal text-neutral-500 dark:text-neutral-400">
+								<span class="text-xs font-normal text-neutral-600 dark:text-slate-900">
 									Low {formatTemp(day.weather.mintemp_c)}°C
 								</span>
 							</div>
 							<div class="flex items-center gap-2">
-								<span class="text-2xl leading-none">{day.weather.condition.icon}</span>
+								<span class="text-2xl leading-none text-neutral-700 dark:text-slate-900"
+									>{day.weather.condition.icon}</span
+								>
 								<div class="flex flex-col text-xs">
-									<span>{day.weather.condition.text}</span>
-									<span class="text-neutral-500 dark:text-neutral-400">
+									<span class="font-medium text-neutral-800 dark:text-slate-900">
+										{day.weather.condition.text}
+									</span>
+									<span class="text-neutral-600 dark:text-slate-900">
 										{formatPrecip(day.weather.totalprecip_mm)} mm
 									</span>
 								</div>
@@ -252,7 +258,7 @@
 						<div class="flex flex-col gap-1">
 							{#each day.events as event, idx (event.id ?? idx)}
 								<div
-									class="rounded-md bg-white p-1 text-[11px] font-medium text-neutral-700 shadow-sm dark:bg-neutral-900 dark:text-neutral-200"
+									class="rounded-md border border-neutral-200 bg-slate-50 p-1 text-[11px] font-medium text-neutral-800 shadow-sm dark:border-transparent dark:bg-blue-900 dark:text-neutral-200"
 								>
 									<span class="whitespace-pre-line">{getEventTitle(event)}</span>
 								</div>
