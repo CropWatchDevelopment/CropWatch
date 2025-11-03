@@ -1,19 +1,27 @@
 {
-    "inputs": [
-      {
-        "type": "promptString",
-        "id": "supabase-access-token",
-        "description": "Supabase personal access token",
-        "password": true
-      }
-    ],
-    "servers": {
-      "supabase": {
-        "command": "npx",
-        "args": ["-y", "@supabase/mcp-server-supabase@latest"],
-        "env": {
-          "SUPABASE_ACCESS_TOKEN": "${input:supabase-access-token}"
-        }
-      }
-    }
+	"servers": {
+		"supabase": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@supabase/mcp-server-supabase@latest"
+			],
+			"env": {
+				"SUPABASE_ACCESS_TOKEN": "${input:supabase-access-token}"
+			},
+			"type": "stdio"
+		},
+		"SVELTEKIT-mcp-server-70cd8977": {
+			"url": "https://mcp.svelte.dev/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": [
+		{
+			"type": "promptString",
+			"id": "supabase-access-token",
+			"description": "Supabase personal access token",
+			"password": true
+		}
+	]
 }

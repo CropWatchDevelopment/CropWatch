@@ -26,6 +26,7 @@
 	import RelayControl from '$lib/components/RelayControl.svelte';
 	import { browser } from '$app/environment';
 	import { createActiveTimer } from '$lib/utilities/ActiveTimer';
+	import { DateTime } from 'luxon';
 
 	// Get device data from server load function
 	let { data }: PageProps = $props();
@@ -319,6 +320,81 @@
 	});
 
 	const updateEvents = (data: any[] = historicalData): CalendarEvent[] => {
+		if (!data || data.length === 0) {
+			return [];
+		}
+
+		const tableName = device.cw_device_type?.data_table_v2;
+
+		if (['cw_traffic2', 'traffic_v2'].includes(tableName ?? '')) {
+			const monthStart = DateTime.now().startOf('month');
+			const todayEnd = DateTime.now().endOf('day');
+			const grouped = new Map<
+				string,
+				{ date: Date; counts: Record<string, number>; total: number }
+			>();
+
+			const toNumber = (value: unknown): number => {
+				if (typeof value === 'number') {
+					return Number.isFinite(value) ? value : 0;
+				}
+				if (typeof value === 'string') {
+					const parsed = Number(value);
+					return Number.isFinite(parsed) ? parsed : 0;
+				}
+				return 0;
+			};
+
+			for (const event of data) {
+				const timestamp = (event?.traffic_hour as string | undefined) ?? event?.created_at;
+				if (!timestamp) continue;
+
+				const eventDate = DateTime.fromISO(timestamp);
+				if (!eventDate.isValid) continue;
+				if (eventDate < monthStart || eventDate > todayEnd) continue;
+
+				const key = eventDate.toISODate();
+				let entry = grouped.get(key);
+				if (!entry) {
+					entry = {
+						date: eventDate.startOf('day').toJSDate(),
+						counts: {},
+						total: 0
+					};
+					grouped.set(key, entry);
+				}
+
+				for (const [field, value] of Object.entries(event)) {
+					if (!field.endsWith('_count')) continue;
+					const numeric = toNumber(value);
+					entry.counts[field] = (entry.counts[field] ?? 0) + numeric;
+					entry.total += numeric;
+				}
+			}
+
+			const formatTrafficTitle = (counts: Record<string, number>, total: number) => {
+				const lines: string[] = [`<strong>Total:</strong> ${total.toLocaleString()}`];
+				const orderedKeys = Object.keys(counts).sort();
+				for (const key of orderedKeys) {
+					const value = counts[key] ?? 0;
+					if (!value) continue;
+					lines.push(`${$_(key)}: ${formatNumber({ key, value })}`);
+				}
+				return lines.join('<br>');
+			};
+
+			return Array.from(grouped.values())
+				.sort((a, b) => a.date.getTime() - b.date.getTime())
+				.map(({ date, counts, total }) => ({
+					id: date,
+					start: date,
+					end: date,
+					allDay: true,
+					title: { html: formatTrafficTitle(counts, total) },
+					display: 'auto'
+				}));
+		}
+
 		// Group data by date
 		const dailyStats: { [date: string]: Record<string, any> } = {};
 
@@ -466,7 +542,7 @@
 					{#if latestData}
 						<div>
 							<div class="grid grid-cols-2 gap-2">
-								{#each Object.keys(latestData) as key}
+								{#each Object.keys(latestData) as key (key)}
 									{#if !['id', 'dev_eui', 'created_at', 'is_simulated', 'battery_level', 'vape_detected', 'smoke_detected', 'traffic_hour'].includes(key) && latestData[key] !== null}
 										<DataCard
 											{latestData}
@@ -585,9 +661,13 @@
 <section class="mb-12 px-4">
 	{#if device.cw_device_type?.data_table_v2 === 'cw_air_data'}
 		<DataTable {historicalData} />
-	{:else if device.cw_device_type?.data_table_v2 === 'traffic_v2'}
+	{:else if ['traffic_v2', 'cw_traffic2'].includes(device.cw_device_type?.data_table_v2 ?? '')}
 		<h2>{$_('Weather & Data')}</h2>
-		<WeatherCalendar events={calendarEvents} />
+		<WeatherCalendar
+			events={calendarEvents}
+			latitude={device.lat ?? undefined}
+			longitude={device.long ?? undefined}
+		/>
 	{:else}
 		<!-- nop -->
 	{/if}

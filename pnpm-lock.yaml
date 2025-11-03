@@ -90,9 +90,6 @@ importers:
       '@eslint/js':
         specifier: ^9.37.0
         version: 9.37.0
-      '@event-calendar/core':
-        specifier: ^4.7.0
-        version: 4.7.0
       '@playwright/test':
         specifier: ^1.56.0
         version: 1.56.0
@@ -123,9 +120,6 @@ importers:
       '@types/d3':
         specifier: ^7.4.3
         version: 7.4.3
-      '@types/event-calendar__core':
-        specifier: ^4.7.0
-        version: 4.7.0
       '@types/luxon':
         specifier: ^3.7.1
         version: 3.7.1
@@ -1078,9 +1072,6 @@ packages:
     resolution: {integrity: sha512-sB5uyeq+dwCWyPi31B2gQlVlo+j5brPlWx4yZBrEaRo/nhdDE8Xke1gsGgtiBdaBTxuTkceLVuVt/pclrasb0A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@event-calendar/core@4.7.0':
-    resolution: {integrity: sha512-gAMihb0L55LQK+mWJoOAAAtEdPhcBcIzthfH3u6WOcqDeQb/Z/iQcnSDEmBprJ6G9Z6YRVeGPOweLW3+eNciwA==}
-
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
 
@@ -1839,9 +1830,6 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
-
-  '@types/event-calendar__core@4.7.0':
-    resolution: {integrity: sha512-SPtSChJyamYDR92iMiARvS/3mK9tg6Imb9dO8sbTpqLzU7mRc6Sj8uSbnT0rzEz3NASjF3ChDelclJNplfXmTQ==}
 
   '@types/geojson@7946.0.16':
     resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
@@ -5929,10 +5917,6 @@ snapshots:
       '@eslint/core': 0.16.0
       levn: 0.4.1
 
-  '@event-calendar/core@4.7.0':
-    dependencies:
-      svelte: 5.39.11
-
   '@floating-ui/core@1.7.3':
     dependencies:
       '@floating-ui/utils': 0.2.10
@@ -6957,10 +6941,6 @@ snapshots:
   '@types/estree@0.0.39': {}
 
   '@types/estree@1.0.8': {}
-
-  '@types/event-calendar__core@4.7.0':
-    dependencies:
-      svelte: 5.39.11
 
   '@types/geojson@7946.0.16': {}
 

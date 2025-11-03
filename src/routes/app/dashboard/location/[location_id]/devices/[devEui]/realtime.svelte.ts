@@ -16,6 +16,23 @@ export function setupRealtimeSubscription(
 ) {
 	if (!browser) return;
 
+	const refreshAggregatedTraffic = async () => {
+		try {
+			const response = await fetch(`/api/devices/${devEui}/status`);
+			if (!response.ok) {
+				console.warn(
+					`[DeviceRealtime] Failed to refresh aggregated traffic data for ${devEui}`,
+					response.status
+				);
+				return;
+			}
+			const aggregated = await response.json();
+			onDataUpdate(aggregated);
+		} catch (error) {
+			console.error('[DeviceRealtime] Error refreshing aggregated traffic data', error);
+		}
+	};
+
 	console.log('🔄 Setting up real-time subscription...');
 	channel = supabase
 		.channel(`${devEui}-changes`)
@@ -31,7 +48,11 @@ export function setupRealtimeSubscription(
 				// Handle real-time updates for users
 				if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
 					console.log('📡 Real-time data received:', payload.new);
-					onDataUpdate(payload.new);
+					if (deviceDataTable === 'cw_traffic2') {
+						void refreshAggregatedTraffic();
+					} else {
+						onDataUpdate(payload.new);
+					}
 				}
 			}
 		)

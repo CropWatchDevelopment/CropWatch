@@ -339,9 +339,23 @@ export const strings = {
 
 	// Location settings page
 	'Location Settings': 'ロケーション設定',
+	'Create Location': 'ロケーションを作成',
+	'Add a new location to your account.': 'アカウントに新しいロケーションを追加します。',
+	'Location Name': 'ロケーション名',
+	'Location Description': 'ロケーションの説明',
+	'Describe the location (optional)': 'ロケーションの概要（任意）',
+	'Pick a point on the map or adjust the values manually.':
+		'地図をクリックして地点を選ぶか、値を手動で調整してください。',
+	'Use Current Location': '現在地を使用',
+	'Locating...': '位置情報を取得中...',
+	'We use your browser location to prefill coordinates.':
+		'ブラウザの位置情報を利用して座標を自動入力します。',
+	'Browser location is unavailable; enter coordinates manually.':
+		'ブラウザの位置情報が利用できません。座標を手動で入力してください。',
+	'Location Preview': 'ロケーションプレビュー',
+	'Click the map to fine-tune the coordinates.': '地図をクリックして座標を微調整してください。',
 	'Location Details': 'ロケーション詳細',
 	'Edit Details': '詳細を編集',
-	'Location Name': 'ロケーション名',
 	Description: '説明',
 	Coordinates: '座標',
 	'Not set': '未設定',

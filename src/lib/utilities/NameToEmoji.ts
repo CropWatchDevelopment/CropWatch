@@ -68,6 +68,12 @@ export const nameToEmoji = (name: string) => {
 			return '🚗';
 		case 'bicycle_count':
 			return '🚲';
+		case 'motorcycle_count':
+			return '🏍️';
+		case 'truck_count':
+			return '🚚';
+		case 'bus_count':
+			return '🚌';
 		case 'relay_1':
 		case 'relay_2':
 			return '🔌';

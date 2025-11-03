@@ -298,6 +298,21 @@ export const strings = {
 	permission_update_success: 'Permission updated successfully',
 	permission_update_error: 'Failed to update permission',
 	'Location Settings': 'Location Settings',
+	'Create Location': 'Create Location',
+	'Add a new location to your account.': 'Add a new location to your account.',
+	'Location Name': 'Location Name',
+	'Location Description': 'Location Description',
+	'Describe the location (optional)': 'Describe the location (optional)',
+	'Pick a point on the map or adjust the values manually.':
+		'Pick a point on the map or adjust the values manually.',
+	'Use Current Location': 'Use Current Location',
+	'Locating...': 'Locating...',
+	'We use your browser location to prefill coordinates.':
+		'We use your browser location to prefill coordinates.',
+	'Browser location is unavailable; enter coordinates manually.':
+		'Browser location is unavailable; enter coordinates manually.',
+	'Location Preview': 'Location Preview',
+	'Click the map to fine-tune the coordinates.': 'Click the map to fine-tune the coordinates.',
 	'Location Details': 'Location Details',
 	'Add Device': 'Add Device',
 	'Location ID': 'Location ID',
