@@ -39,7 +39,7 @@ export interface ILocationService {
 	 * Delete a location
 	 * @param locationId The location ID
 	 */
-	deleteLocation(locationId: number): Promise<boolean>;
+	deleteLocation(locationId: number, userId: string): Promise<boolean>;
 
 	/**
 	 * Get the count of devices for a specific location

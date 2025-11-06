@@ -5,14 +5,14 @@
 		data?: string;
 		size?: string | number;
 		class?: string;
-		title?: string;
+		ariaLabel?: string;
 	}
 	let {
 		path = undefined,
 		data = undefined,
 		size = '1em',
 		class: className = '',
-		title
+		ariaLabel
 	}: Props = $props();
 	let d = $derived(path || data || '');
 	let width = $derived(typeof size === 'number' ? `${size}px` : size);
@@ -20,9 +20,9 @@
 </script>
 
 <svg
-	{title}
 	role="img"
-	aria-hidden={title ? undefined : true}
+	aria-label={ariaLabel}
+	aria-hidden={ariaLabel ? undefined : true}
 	viewBox="0 0 24 24"
 	{width}
 	{height}
@@ -32,5 +32,4 @@
 	{#if d}
 		<path {d} />
 	{/if}
-	<slot />
 </svg>

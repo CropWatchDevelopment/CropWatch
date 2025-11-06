@@ -1,6 +1,16 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import { DateTime } from 'luxon';
+import type { Database } from '../../../database.types';
+
+type DeviceRow = Pick<
+	Database['public']['Tables']['cw_devices']['Row'],
+	'dev_eui' | 'name' | 'type'
+>;
+type DeviceTypeRow = Pick<
+	Database['public']['Tables']['cw_device_type']['Row'],
+	'id' | 'name' | 'data_table_v2'
+>;
 
 /**
  * NON-TRAFFIC DEVICE INTEGRATION TESTS
@@ -63,26 +73,30 @@ describe('Non-Traffic Device Integration Tests', () => {
 	// Helper function to get devices for testing
 	async function getDevicesByTable(tableName: string, limit = 1) {
 		// First get devices, then get their types separately to avoid relationship issues
-		const { data: devices, error: devicesError } = await supabase
+		const { data: rawDevices, error: devicesError } = await supabase
 			.from('cw_devices')
 			.select('dev_eui, name, type')
 			.limit(limit * 5); // Get more devices to filter
 
-		if (devicesError || !devices) {
+		if (devicesError || !rawDevices) {
 			console.warn(`Error getting devices:`, devicesError?.message);
 			return [];
 		}
 
+		const devices = rawDevices as DeviceRow[];
+
 		// Get device types
-		const { data: deviceTypes, error: typesError } = await supabase
+		const { data: rawDeviceTypes, error: typesError } = await supabase
 			.from('cw_device_type')
 			.select('id, name, data_table_v2')
 			.eq('data_table_v2', tableName);
 
-		if (typesError || !deviceTypes || deviceTypes.length === 0) {
+		if (typesError || !rawDeviceTypes || rawDeviceTypes.length === 0) {
 			console.warn(`No device types found for table ${tableName}:`, typesError?.message);
 			return [];
 		}
+
+		const deviceTypes = rawDeviceTypes as DeviceTypeRow[];
 
 		// Filter devices by type and format response
 		const typeIds = deviceTypes.map((t) => t.id);

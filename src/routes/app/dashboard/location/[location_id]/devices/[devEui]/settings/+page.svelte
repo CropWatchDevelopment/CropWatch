@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { formValidation } from '$lib/actions/formValidation';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
@@ -27,29 +26,6 @@
 	);
 
 	let showDeleteDialog = $state(false);
-	let devEui = page.params.devEui;
-
-	async function deleteDevice() {
-		const res = await fetch(`/api/devices/${devEui}`, {
-			method: 'DELETE',
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		});
-		if (res.ok) {
-			goto('/app/dashboard');
-		} else {
-			alert('Failed to delete device');
-		}
-	}
-
-	function showSuccessToast() {
-		success('Success! Operation completed successfully.');
-	}
-
-	function showErrorToast() {
-		error('Error! Something went wrong.');
-	}
 </script>
 
 <svelte:head>
@@ -57,7 +33,7 @@
 </svelte:head>
 
 <div class="flex min-h-screen flex-col gap-6">
-	<section class="flex flex-col gap-4">
+	<section class="surface-card flex flex-col gap-4">
 		<header class="flex flex-row items-center justify-between gap-4">
 			<div>
 				<h2 class="mb-1 text-2xl font-semibold">{$_('General')}</h2>
@@ -168,7 +144,7 @@
 	</section>
 
 	{#if isOwner}
-		<section class="border-danger/50 mt-auto flex flex-col gap-2 rounded-lg border p-4">
+		<section class="surface-card border border-[var(--color-border-subtle)] p-4">
 			<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
 			<div>
 				<Button
@@ -188,23 +164,37 @@
 					{$_('delete_device_warning')}
 				{/snippet}
 				{#snippet footer()}
-					<Button
-						variant="secondary"
-						onclick={() => {
-							showDeleteDialog = false;
-						}}
-					>
-						{$_('Cancel')}
-					</Button>
-					<Button
-						variant="danger"
-						onclick={() => {
-							showDeleteDialog = false;
-							deleteDevice();
-						}}
-					>
-						{$_('Delete')}
-					</Button>
+					<div class="flex gap-2">
+						<Button
+							variant="secondary"
+							onclick={() => {
+								showDeleteDialog = false;
+							}}
+						>
+							{$_('Cancel')}
+						</Button>
+						<form
+							method="POST"
+							action="?/deleteDevice"
+							use:enhance={({ result }) => {
+								if (result.type === 'success' && result.data.success) {
+									showDeleteDialog = false;
+									success($_('Device removed successfully.'));
+									window.location.assign('/app/dashboard');
+								} else {
+									error(
+										result.type === 'failure' && result.data?.error
+											? result.data.error
+											: $_('Failed to delete device.')
+									);
+								}
+							}}
+						>
+							<Button variant="danger" type="submit">
+								{$_('Delete')}
+							</Button>
+						</form>
+					</div>
 				{/snippet}
 			</Dialog>
 		</section>

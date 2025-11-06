@@ -184,7 +184,6 @@
 								<Button
 									type="submit"
 									variant="secondary"
-									iconic
 									{disabled}
 									onclick={(event) => {
 										event.preventDefault();

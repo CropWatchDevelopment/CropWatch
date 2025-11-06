@@ -1,6 +1,7 @@
 <!-- CopyEmoji.svelte -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { writable } from 'svelte/store';
 
 	type Events = {
 		copied: string;
@@ -37,7 +38,7 @@
 		class?: string;
 	}>();
 
-	let showingSuccess = false;
+	const showingSuccess = writable(false);
 	let lastTimer: number | null = null;
 
 	async function copyText(text: string) {
@@ -65,9 +66,9 @@
 			await copyText(value);
 			dispatch('copied', value);
 			// Visual success feedback
-			showingSuccess = true;
+			showingSuccess.set(true);
 			if (lastTimer) window.clearTimeout(lastTimer);
-			lastTimer = window.setTimeout(() => (showingSuccess = false), successMs);
+			lastTimer = window.setTimeout(() => showingSuccess.set(false), successMs);
 		} catch (err) {
 			dispatch('error', err as Error);
 		}
@@ -79,12 +80,12 @@
 	class="cw-copy-emoji {className}"
 	onclick={handleClick}
 	{title}
-	aria-label={showingSuccess ? 'Copied' : title}
+	aria-label={$showingSuccess ? 'Copied' : title}
 	aria-live="polite"
 	{disabled}
 >
 	<span class="emoji" aria-hidden="true" style={`font-size:${size}`}
-		>{showingSuccess ? copiedEmoji : emoji}</span
+		>{$showingSuccess ? copiedEmoji : emoji}</span
 	>
 </button>
 

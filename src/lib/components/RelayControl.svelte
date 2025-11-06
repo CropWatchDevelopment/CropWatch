@@ -3,7 +3,7 @@
 	import { success, error as showError } from '$lib/stores/toast.svelte';
 	import { _ } from 'svelte-i18n';
 	import Spinner from '$lib/components/Spinner.svelte';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 	import type { Device } from '$lib/models/Device';
 
@@ -14,7 +14,7 @@
 	}: { supabase: SupabaseClient | undefined; device: Device | undefined; latestData: any } =
 		$props();
 
-	const devEui = $derived(device.dev_eui);
+	const devEui = $derived(device?.dev_eui ?? '');
 	const t = $derived(_);
 
 	function translate(key: string, params?: Record<string, unknown>) {
@@ -40,41 +40,7 @@
 
 	let statusInterval: ReturnType<typeof setInterval> | undefined;
 	let cooldownTimer: ReturnType<typeof setInterval> | undefined;
-	let broadcastChannel: RealtimeChannel | undefined = $state();
-
-	broadcastChannel = supabase.channel('cw_relay_data', {
-		config: { private: true }
-	});
-	broadcastChannel.on('broadcast', { event: '*' }, (payload) => {
-		startCooldown();
-		payload.payload.record.relay_1;
-		payload.payload.record.relay_2;
-		if (payload.payload.record.dev_eui !== devEui) return;
-		const r1 = coerceBool(payload.payload.record.relay_1 ?? payload.payload.record.relay1);
-		const r2 = coerceBool(payload.payload.record.relay_2 ?? payload.payload.record.relay2);
-		relayState = {
-			relay1: r1 ?? relayState.relay1,
-			relay2: r2 ?? relayState.relay2
-		};
-		latestData = payload.payload.record;
-	});
-	broadcastChannel.subscribe((status, err) => {
-		console.debug('[Dashboard] Broadcast channel status', { status, err });
-		if (status === 'SUBSCRIBED') {
-			// Successfully subscribed
-			console.log('Broadcast channel subscribed');
-		}
-		if (status === 'CHANNEL_ERROR') {
-			console.error('Broadcast channel error', err);
-		}
-		if (status === 'TIMED_OUT') {
-			console.warn('Broadcast channel timed out');
-		}
-		if (status === 'CLOSED') {
-			console.warn('Broadcast channel closed');
-			broadcastChannel = undefined;
-		}
-	});
+	let broadcastChannel: RealtimeChannel | undefined;
 
 	function setBusy(relay: RelayKey, val: boolean) {
 		busy = { ...busy, [relay]: val };
@@ -116,6 +82,10 @@
 		if (showLoader) {
 			loadingInitial = true;
 		}
+		if (!devEui) {
+			loadingInitial = false;
+			return;
+		}
 		try {
 			const res = await fetch(`/api/devices/${devEui}/status`);
 			if (res.ok) {
@@ -138,6 +108,41 @@
 
 	onMount(() => {
 		void loadInitialState(true);
+
+		if (supabase) {
+			const channel = supabase.channel('cw_relay_data', {
+				config: { private: true }
+			});
+
+			channel.on('broadcast', { event: '*' }, (payload) => {
+				const record = payload?.payload?.record as Record<string, unknown> | undefined;
+				if (!record || record.dev_eui !== devEui) return;
+				startCooldown();
+				const r1 = coerceBool(record.relay_1 ?? record.relay1);
+				const r2 = coerceBool(record.relay_2 ?? record.relay2);
+				relayState = {
+					relay1: r1 ?? relayState.relay1,
+					relay2: r2 ?? relayState.relay2
+				};
+				latestData = record;
+			});
+
+			channel.subscribe((status, err) => {
+				console.debug('[Dashboard] Broadcast channel status', { status, err });
+				if (status === 'CHANNEL_ERROR') {
+					console.error('Broadcast channel error', err);
+				}
+				if (status === 'TIMED_OUT') {
+					console.warn('Broadcast channel timed out');
+				}
+				if (status === 'CLOSED') {
+					console.warn('Broadcast channel closed');
+				}
+			});
+
+			broadcastChannel = channel;
+		}
+
 		statusInterval = setInterval(() => {
 			void loadInitialState();
 		}, POLL_INTERVAL_MS);
@@ -148,15 +153,9 @@
 				statusInterval = undefined;
 			}
 			clearCooldownTimer();
+			void broadcastChannel?.unsubscribe();
+			broadcastChannel = undefined;
 		};
-	});
-
-	onDestroy(() => {
-		if (statusInterval) {
-			clearInterval(statusInterval);
-			statusInterval = undefined;
-		}
-		clearCooldownTimer();
 	});
 
 	function buttonDisabled(relay: RelayKey, turnOn: boolean) {
@@ -171,7 +170,7 @@
 	}
 
 	async function sendCommand(relay: RelayKey, turnOn: boolean) {
-		if (busy[relay]) return;
+		if (busy[relay] || !devEui) return;
 		setBusy(relay, true);
 		const payloadName = (relay + (turnOn ? 'On' : 'Off')) as keyof typeof DRAGINO_LT22222L_PAYLOADS;
 		try {

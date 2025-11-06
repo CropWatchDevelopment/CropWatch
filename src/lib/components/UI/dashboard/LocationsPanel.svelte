@@ -3,13 +3,25 @@
   A component that displays a list of locations with selection capability
 -->
 <script lang="ts">
-	import type { LocationWithCount } from '$lib/types';
+	import { createEventDispatcher } from 'svelte';
 	import { handleKeyDown } from '$lib/utilities/dashboardLayout';
 	import { getLocationActiveStatus } from '$lib/utilities/deviceUtils';
 	import { mdiClose, mdiMagnify } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { _ } from 'svelte-i18n';
 	import Icon from '$lib/components/ui/base/Icon.svelte';
+
+	type LocationWithCount = {
+		location_id: number;
+		name: string;
+		deviceCount: number;
+		cw_devices?: unknown[];
+	};
+
+	const dispatch = createEventDispatcher<{
+		locationSelect: { locationId: number };
+		searchClear: void;
+	}>();
 
 	// Props
 	export let locations: LocationWithCount[] = [];
@@ -19,7 +31,6 @@
 
 	// Function to handle location selection
 	function selectLocation(locationId: number) {
-		// Emit a custom event to notify parent component
 		dispatch('locationSelect', { locationId });
 	}
 
@@ -36,17 +47,6 @@
 		dispatch('searchClear');
 	}
 
-	// Function to create a dispatch method for custom events
-	function createEventDispatcher() {
-		return {
-			dispatch: (event: string, detail: any) => {
-				const customEvent = new CustomEvent(event, { detail });
-				document.dispatchEvent(customEvent);
-			}
-		};
-	}
-	const { dispatch } = createEventDispatcher();
-
 	// Filter locations based on search term
 	$: filteredLocations = locations.filter(
 		(location) => !search || location.name.toLowerCase().includes(search.toLowerCase())
@@ -62,18 +62,17 @@
 	});
 </script>
 
-<div class="locations-panel">
+<div class="surface-card locations-panel">
 	<h2 class="mb-4 text-lg font-semibold">{$_('Locations')}</h2>
 
 	<div class="relative mb-4">
-		<div class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-600 dark:text-gray-400">
+		<div class="absolute inset-y-0 left-0 flex items-center pl-2 text-[var(--color-text-muted)]">
 			<Icon path={mdiMagnify} size="1.25em" />
 		</div>
 		<input
 			type="text"
 			bind:value={search}
-			class="w-full rounded-md border border-zinc-300 bg-white py-2 pr-8 pl-8 text-sm text-black placeholder-zinc-500 transition-all duration-150 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 focus:outline-none
-      dark:border-zinc-600 dark:bg-zinc-600 dark:text-white dark:placeholder-zinc-400 dark:focus:border-zinc-400 dark:focus:ring-zinc-500"
+			class="w-full rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-card)] py-2 pr-8 pl-8 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] shadow-sm transition focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:outline-none"
 			placeholder={$_('Search')}
 			onkeydown={(e) => {
 				if (e.key === 'Enter') {
@@ -83,7 +82,7 @@
 		/>
 		{#if search}
 			<button
-				class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+				class="absolute inset-y-0 right-0 flex items-center pr-2 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)]"
 				onclick={clearSearch}
 				aria-label="Clear search"
 			>
@@ -136,6 +135,9 @@
 
 <style>
 	.locations-panel {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
 		height: 100%;
 		overflow-y: auto;
 	}
@@ -149,86 +151,56 @@
 	.location-item {
 		display: flex;
 		flex-direction: column;
-		padding: 0.75rem;
-		border-radius: 0.375rem;
-		background-color: white;
-		border: 1px solid #e5e7eb;
+		padding: 0.85rem;
+		border-radius: 0.65rem;
+		background-color: var(--color-surface);
+		border: 1px solid var(--color-border-subtle);
 		text-align: left;
-		transition: all 0.2s;
+		transition:
+			transform 0.2s ease,
+			background-color 0.2s ease,
+			border-color 0.2s ease;
 	}
 
 	.location-item:hover {
-		background-color: #f9fafb;
+		background-color: var(--color-surface-emphasis);
+		transform: translateY(-1px);
 	}
 
 	.location-item.selected {
-		border-color: #3b82f6;
-		background-color: #eff6ff;
-	}
-
-	:global(.dark) .location-item {
-		background-color: #27272a;
-		border-color: #3f3f46;
-	}
-
-	:global(.dark) .location-item:hover {
-		background-color: #3f3f46;
-	}
-
-	:global(.dark) .location-item.selected {
-		border-color: #3b82f6;
-		background-color: #1e3a8a;
+		border-color: var(--color-primary);
+		background-color: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface) 88%);
+		color: var(--color-primary);
 	}
 
 	.location-name {
-		font-weight: 500;
-		margin-bottom: 0.25rem;
+		font-weight: 600;
+		margin-bottom: 0.35rem;
 	}
 
 	.location-stats {
 		display: flex;
 		justify-content: space-between;
-		font-size: 0.875rem;
-		color: #6b7280;
-	}
-
-	:global(.dark) .location-stats {
-		color: #d1d5db;
+		font-size: 0.85rem;
+		color: var(--color-text-muted);
 	}
 
 	.status {
 		font-size: 0.75rem;
-		padding: 0.125rem 0.375rem;
-		border-radius: 9999px;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.025em;
 	}
 
 	.status.active {
-		background-color: #d1fae5;
-		color: #065f46;
+		color: var(--color-primary);
 	}
 
 	.status.inactive {
-		background-color: #fee2e2;
-		color: #b91c1c;
+		color: #ef4444;
 	}
 
 	.status.mixed {
-		background-color: #fef3c7;
-		color: #92400e;
-	}
-
-	:global(.dark) .status.active {
-		background-color: #065f46;
-		color: #d1fae5;
-	}
-
-	:global(.dark) .status.inactive {
-		background-color: #b91c1c;
-		color: #fee2e2;
-	}
-
-	:global(.dark) .status.mixed {
-		background-color: #92400e;
-		color: #fef3c7;
+		color: #f97316;
 	}
 </style>

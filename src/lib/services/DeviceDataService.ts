@@ -24,7 +24,7 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-		if (!this.checkUserHasAccess(devEui)) {
+		if (!(await this.checkUserHasAccess(devEui))) {
 			throw new Error('User does not have access to this device');
 		}
 		const cw_device = await this.getDeviceAndType(devEui);
@@ -81,7 +81,7 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-		if (!this.checkUserHasAccess(devEui)) {
+		if (!(await this.checkUserHasAccess(devEui))) {
 			throw new Error('User does not have access to this device');
 		}
 		if (!startDate || !endDate) {
@@ -173,7 +173,7 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-		if (!this.checkUserHasAccess(devEui)) {
+		if (!(await this.checkUserHasAccess(devEui))) {
 			throw new Error('User does not have access to this device');
 		}
 		if (!startDate || !endDate) {
@@ -300,7 +300,7 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-		if (!this.checkUserHasAccess(devEui)) {
+		if (!(await this.checkUserHasAccess(devEui))) {
 			throw new Error('User does not have access to this device');
 		}
 		const { data: cw_device, error: deviceError } = await this.supabase
@@ -345,7 +345,7 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-		if (!this.checkUserHasAccess(devEui)) {
+		if (!(await this.checkUserHasAccess(devEui))) {
 			throw new Error('User does not have access to this device');
 		}
 		if (!startDate || !endDate) {
@@ -453,7 +453,7 @@ export class DeviceDataService implements IDeviceDataService {
 		if (!devEui) {
 			throw new Error('Device EUI not specified');
 		}
-		if (!this.checkUserHasAccess(devEui)) {
+		if (!(await this.checkUserHasAccess(devEui))) {
 			throw new Error('User does not have access to this device');
 		}
 
@@ -475,8 +475,6 @@ export class DeviceDataService implements IDeviceDataService {
 	}
 
 	private async checkUserHasAccess(dev_eui: string): Promise<boolean> {
-		// Placeholder for user access check logic
-		// This should be implemented based on your authentication and authorization system
 		const session = await this.supabase.auth.getSession();
 		if (!session || !session.data.session) {
 			return false; // No session means no access
@@ -486,17 +484,34 @@ export class DeviceDataService implements IDeviceDataService {
 			return false; // No user or email means no access
 		}
 
+		// Device owner shortcut
+		const { data: deviceOwner, error: deviceOwnerError } = await this.supabase
+			.from('cw_devices')
+			.select('user_id')
+			.eq('dev_eui', dev_eui)
+			.maybeSingle();
+
+		if (deviceOwnerError && deviceOwnerError.code !== 'PGRST116') {
+			this.errorHandler.logError(deviceOwnerError);
+			return false;
+		}
+		if (deviceOwner?.user_id === user.id) {
+			return true;
+		}
+
 		const { data, error } = await this.supabase
 			.from('cw_device_owners')
-			.select('*')
+			.select('id')
 			.eq('dev_eui', dev_eui)
 			.eq('user_id', user.id)
-			.single();
-		if (error) {
+			.maybeSingle();
+
+		if (error && error.code !== 'PGRST116') {
 			this.errorHandler.logError(error);
-			return false; // Error checking access
+			return false;
 		}
-		return true; // Default to true for now
+
+		return Boolean(data);
 	}
 
 	private aggregateTrafficCounts(records: Record<string, any>[]): DeviceDataRecord[] {

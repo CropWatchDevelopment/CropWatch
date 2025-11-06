@@ -170,10 +170,17 @@ export class DeviceRepository extends BaseRepository<Device, string> {
 			.select('user_id')
 			.eq('dev_eui', devEui)
 			.eq('user_id', userId)
-			.single();
+			.maybeSingle();
 
-		if (ownerData) {
-			return ownerData.user_id;
+		if (ownerError && ownerError.code !== 'PGRST116') {
+			this.errorHandler.handleDatabaseError(
+				ownerError,
+				`Error validating direct ownership for device ${devEui}`
+			);
+		}
+
+		if (ownerData?.user_id === userId) {
+			return { id: userId };
 		}
 
 		const { data, error } = await this.supabase
@@ -181,13 +188,13 @@ export class DeviceRepository extends BaseRepository<Device, string> {
 			.select('id')
 			.eq('dev_eui', devEui)
 			.eq('user_id', userId)
-			.single();
+			.maybeSingle();
 
-		if (error) {
+		if (error && error.code !== 'PGRST116') {
 			return null;
 		}
 
-		return data;
+		return data ? { id: data.id } : null;
 	}
 
 	/**
