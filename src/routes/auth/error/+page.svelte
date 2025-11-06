@@ -14,7 +14,7 @@
 	class="bg-background-light/30 dark:bg-background-dark/30 relative z-10 flex min-h-screen items-center justify-center p-5 transition-colors duration-300"
 >
 	<div
-		class="bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark w-full max-w-md rounded-lg border-2 border-white/40 p-8 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
+		class="auth-panel bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark w-full max-w-md rounded-lg border-2 border-white/40 p-8 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
 	>
 		<div class="flex flex-col items-center">
 			<div class="mb-4 text-red-500">
@@ -43,15 +43,12 @@
 			</p>
 
 			<div class="flex w-full flex-col gap-4 sm:flex-row">
-				<button
-					class="bg-primary hover:bg-primary-hover flex-1 rounded px-4 py-2 font-medium text-white transition-colors duration-200"
-					on:click={() => goto('/auth/login')}
-				>
+				<button class="auth-primary-button w-full sm:flex-1" on:click={() => goto('/auth/login')}>
 					{$_('Go to Login')}
 				</button>
 
 				<button
-					class="flex-1 rounded border border-gray-300 px-4 py-2 font-medium transition-colors duration-200 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800"
+					class="auth-secondary-button w-full sm:flex-1"
 					on:click={() => (window.location.href = 'https://cropwatch.io/contact-us')}
 				>
 					{$_('Contact Support')}

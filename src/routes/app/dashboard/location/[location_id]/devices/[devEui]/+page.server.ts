@@ -17,7 +17,8 @@ export const load: PageServerLoad = async ({ url, params, parent, locals: { supa
 
 		const startParam = url.searchParams.get('start');
 		const endParam = url.searchParams.get('end');
-		const timezoneParam = url.searchParams.get('timezone') || 'UTC';
+		const inferredTimezone = dataTable === 'cw_traffic2' ? 'Asia/Tokyo' : 'UTC';
+		const timezoneParam = url.searchParams.get('timezone') || inferredTimezone;
 		let startDate: Date;
 		let endDate: Date;
 		const nowInZone = DateTime.now().setZone(timezoneParam);

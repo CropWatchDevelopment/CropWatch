@@ -219,9 +219,7 @@
 						<span class="text-xs font-medium text-blue-500 dark:text-red-500"
 							>{weekdays[day.date.weekday % 7]}</span
 						>
-						<span class="text-sm font-semibold text-slate-900 dark:text-neutral-100"
-							>{day.date.day}</span
-						>
+						<span class="text-sm font-semibold text-red-900">{day.date.day}</span>
 					</div>
 
 					{#if day.weather}

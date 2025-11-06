@@ -272,6 +272,8 @@
 			cancel();
 			return;
 		}
+
+		isSubmitting = true;
 		const data = new FormData(event.currentTarget);
 
 		try {
@@ -429,7 +431,7 @@
 	class="bg-background-light/30 dark:bg-background-dark/30 relative z-10 flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8"
 >
 	<div
-		class="bg-card-light/95 dark:bg-card-dark/95 w-full max-w-md space-y-8 rounded-xl border-2 border-white/40 p-8 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
+		class="auth-panel bg-card-light/95 dark:bg-card-dark/95 w-full max-w-md space-y-8 rounded-xl border-2 border-white/40 p-8 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
 	>
 		<div>
 			<h2 class="text-text-light dark:text-text-dark mt-6 text-center text-3xl font-extrabold">
@@ -713,7 +715,7 @@
 				<Button
 					type="submit"
 					variant="primary"
-					class="bg-primary-light dark:bg-primary-dark hover:bg-primary-light/90 dark:hover:bg-primary-dark/90 focus:ring-primary-light dark:focus:ring-primary-dark relative flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					class="auth-primary-button relative w-full"
 					disabled={isSubmitting || !isFormValid}
 				>
 					{isSubmitting ? $_('Registering...') : $_('Register')}

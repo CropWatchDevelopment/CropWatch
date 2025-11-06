@@ -39,7 +39,7 @@
 	class="bg-background-light/30 dark:bg-background-dark/30 relative z-10 flex h-screen items-center justify-center p-5 transition-colors duration-300"
 >
 	<div
-		class="bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark w-full max-w-md rounded-lg border-2 border-white/40 p-6 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
+		class="auth-panel bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark w-full max-w-md rounded-lg border-2 border-white/40 p-6 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
 	>
 		<h1 class="mb-6 text-center text-2xl font-bold">{$_('Reset Password')}</h1>
 
@@ -92,11 +92,7 @@
 				{/if}
 
 				<div>
-					<button
-						type="submit"
-						class="bg-primary hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
-						disabled={loading}
-					>
+					<button type="submit" class="auth-primary-button w-full" disabled={loading}>
 						{loading ? $_('Sending...') : $_('Send reset link')}
 					</button>
 				</div>

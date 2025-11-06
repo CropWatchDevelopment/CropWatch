@@ -116,7 +116,7 @@
 	<!-- Content container with higher z-index -->
 	<div class="relative z-10 w-full max-w-md">
 		<div
-			class="bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark rounded-lg border border-white/20 p-6 shadow-xl backdrop-blur-lg dark:border-gray-700/50"
+			class="auth-panel bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark rounded-lg border border-white/20 p-6 shadow-xl backdrop-blur-lg dark:border-gray-700/50"
 		>
 			<h1 class="mb-6 text-center text-2xl font-bold">{$_('Login')}</h1>
 
@@ -133,10 +133,7 @@
 					class="mb-4 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
 				>
 					<p>{successMessage}</p>
-					<button
-						class="bg-primary hover:bg-primary-hover mt-4 w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200"
-						onclick={() => goto('/app/dashboard')}
-					>
+					<button class="auth-primary-button mt-4 w-full" onclick={() => goto('/app/dashboard')}>
 						{$_('Go to Dashboard')}
 					</button>
 				</div>
@@ -219,10 +216,10 @@
 						<button
 							id="login-button"
 							type="submit"
-							class="bg-primary hover:bg-primary-hover w-full rounded-md border px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-20"
+							class="auth-primary-button w-full"
 							disabled={submitting}
 						>
-							{submitting ? $_('Logging in...') : `🔑 ${$_('Login')}`}
+							{submitting ? $_('Logging in...') : $_('Login')}
 						</button>
 					</div>
 				</form>
@@ -235,30 +232,30 @@
 					class="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
 				>
 					<button
-						type="submit"
-						class="hover:bg-slate-600-hover w-full rounded bg-slate-500 px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+						type="button"
+						class="auth-secondary-button w-full"
 						disabled={loading}
 						onclick={() => goto('/api/')}
 					>
-						🌐 {$_('Go to API')}
+						{$_('Go to API')}
 					</button>
 
 					<button
-						type="submit"
-						class="bg-info hover:bg-primary-hover w-full rounded px-4 py-2 font-medium text-white transition-colors duration-200 disabled:opacity-50"
+						type="button"
+						class="auth-secondary-button w-full"
 						disabled={loading}
 						onclick={() => goto('/auth/register')}
 					>
-						🚀 {$_('Create an account')}
+						{$_('Create an account')}
 					</button>
 
 					<button
-						type="submit"
-						class="bg-warning hover:bg-primary-hover w-full rounded border px-4 py-2 font-medium text-black shadow-sm transition-colors duration-200 disabled:opacity-50"
+						type="button"
+						class="auth-secondary-button w-full"
 						disabled={loading}
 						onclick={() => goto('/auth/forgot-password')}
 					>
-						❓ {$_('Forgot Password')}
+						{$_('Forgot Password')}
 					</button>
 				</div>
 			{/if}

@@ -6,6 +6,7 @@ import { LocationService } from '$lib/services/LocationService';
 import { DeviceService } from '$lib/services/DeviceService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
+import { DeviceOwnersRepository } from '$lib/repositories/DeviceOwnersRepository';
 
 /**
  * Load the device owner’s ID and all locations for the current user.
@@ -51,16 +52,30 @@ export const actions: Actions = {
 				return { success: false, error: 'Authentication required' };
 			}
 
+			if (!sessionResult.user.id) {
+				return { success: false, error: 'User ID not found in session' };
+			}
+
 			if (!devEui) {
 				return { success: false, error: 'Device EUI is required' };
 			}
 			const deviceRepository = new DeviceRepository(locals.supabase, new ErrorHandlingService());
 			const deviceService = new DeviceService(deviceRepository);
 			const device = await deviceService.getDeviceByEui(devEui);
+			const deviceOwnersRepository = new DeviceOwnersRepository(
+				locals.supabase,
+				new ErrorHandlingService()
+			);
+			const owners = await deviceOwnersRepository.findByDeviceEui(devEui);
+
 			if (!device) {
 				return { success: false, error: 'Device not found' };
 			}
-			if (device.user_id !== sessionResult.user.id) {
+
+			let isOwner = owners.find(
+				(owner) => owner.user_id === sessionResult?.user?.id && owner.permission_level === 1
+			);
+			if (device.user_id !== sessionResult.user.id && !isOwner) {
 				return { success: false, error: 'Unauthorized to update this device' };
 			}
 

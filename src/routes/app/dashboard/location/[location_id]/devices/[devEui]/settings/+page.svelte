@@ -14,7 +14,12 @@
 	let { data } = $props();
 	const device = $derived(data.device);
 	const ownerId = $derived(data.ownerId);
-	const isOwner = $derived(device?.user_id === ownerId);
+	const isOwner = $derived<boolean>(
+		device?.user_id === ownerId ||
+			device?.cw_device_owners?.some(
+				(owner) => owner.user_id === ownerId && owner.permission_level === 1
+			)
+	);
 
 	// @todo Use a proper sensor datasheet link when wiki pages are created
 	const deviceLinkId = $derived(
