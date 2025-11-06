@@ -56,156 +56,157 @@
 	<title>{$_('Device Settings')} - CropWatch</title>
 </svelte:head>
 
-<section class="flex flex-col gap-4">
-	<header class="flex flex-row items-center justify-between gap-4">
-		<div>
-			<h2 class="mb-1 text-2xl font-semibold">{$_('General')}</h2>
-			<p class="text-sm text-neutral-100">{$_('Manage the device information.')}</p>
-		</div>
-	</header>
-	<form
-		class="form-container !grid grid-cols-1 gap-4 md:grid-cols-2"
-		id="deviceSettingsForm"
-		method="POST"
-		action="?/updateGeneralSettings"
-		use:enhance={({ formElement, formData, action, cancel, submitter }) => {
-			return async ({ result, update }) => {
-				if (result.data.success) {
-					success('Settings updated successfully!');
-					update();
-				} else {
-					error('Failed to update settings');
-				}
-			};
-		}}
-		use:formValidation
-	>
-		<div class="flex flex-1 flex-col gap-1">
-			<span class="text-sm font-medium text-neutral-50">
-				{$_('Device Type')}
-			</span>
-			{#if device?.cw_device_type?.name}
-				<a
-					href="https://kb.cropwatch.io/doku.php?id={deviceLinkId}"
-					target="_blank"
-					class="text-gray-500/80 dark:text-gray-300/80"
-				>
-					{device.cw_device_type.name}
-				</a>
-			{:else}
-				{$_('Unknown')}
-			{/if}
-		</div>
-		<div class="flex flex-1 flex-col gap-1">
-			<span class="text-sm font-medium text-neutral-50">
-				{$_('EUI')}
-			</span>
-			{device?.dev_eui || $_('Unknown')}
-		</div>
-		<div class="flex flex-1 flex-col gap-1">
-			<span class="text-sm font-medium text-neutral-50">
-				{$_('Installed Date')}
-			</span>
-			{device?.installed_at ? formatDateOnly(device.installed_at) : $_('Unknown')}
-		</div>
-		<div class="flex flex-1 flex-col gap-1">
-			<span class="text-sm font-medium text-neutral-50">
-				{$_('Coordinates')}
-			</span>
-			{#if device?.lat && device?.long}
-				<!-- @todo Make the coordinates editable -->
-				{device.lat}, {device.long}
-			{:else}
-				{$_('Unknown')}
-			{/if}
-		</div>
-		<div class="flex flex-1 flex-col gap-1">
-			<label for="deviceName" class="text-sm font-medium text-neutral-50">
-				{$_('Device Name')}
-			</label>
-			{#if isOwner}
-				<TextInput
-					id="deviceName"
-					name="name"
-					placeholder="Enter device name"
-					value={device?.name}
-				/>
-			{:else}
-				{device?.name}
-			{/if}
-		</div>
-		<div class="flex flex-1 flex-col gap-1">
-			<label for="deviceName" class="text-sm font-medium text-neutral-50">
-				{$_('Device Location')}
-			</label>
-			{#await data.locations}
-				{$_('Loading...')}
-			{:then locations}
-				{#if isOwner}
-					<Select id="deviceLocation" name="location_id">
-						{#each locations as loc}
-							<option value={loc.location_id} selected={loc.location_id === device?.location_id}>
-								{loc.name} ({loc.location_id})
-							</option>
-						{/each}
-					</Select>
+<div class="flex min-h-screen flex-col gap-6">
+	<section class="flex flex-col gap-4">
+		<header class="flex flex-row items-center justify-between gap-4">
+			<div>
+				<h2 class="mb-1 text-2xl font-semibold">{$_('General')}</h2>
+				<p class="text-sm text-neutral-100">{$_('Manage the device information.')}</p>
+			</div>
+		</header>
+		<form
+			class="form-container !grid grid-cols-1 gap-4 md:grid-cols-2"
+			id="deviceSettingsForm"
+			method="POST"
+			action="?/updateGeneralSettings"
+			use:enhance={({ formElement, formData, action, cancel, submitter }) => {
+				return async ({ result, update }) => {
+					if (result.data.success) {
+						success('Settings updated successfully!');
+						update();
+					} else {
+						error('Failed to update settings');
+					}
+				};
+			}}
+			use:formValidation
+		>
+			<div class="flex flex-1 flex-col gap-1">
+				<span class="text-sm font-medium text-neutral-50">
+					{$_('Device Type')}
+				</span>
+				{#if device?.cw_device_type?.name}
+					<a
+						href="https://kb.cropwatch.io/doku.php?id={deviceLinkId}"
+						target="_blank"
+						class="text-gray-500/80 dark:text-gray-300/80"
+					>
+						{device.cw_device_type.name}
+					</a>
 				{:else}
-					{locations.find((loc) => loc.location_id === device?.location_id)?.name ||
-						'Unknown Location'}
-					{#if device?.location_id}
-						({device.location_id})
-					{/if}
+					{$_('Unknown')}
 				{/if}
-			{/await}
-		</div>
-		<div class="col-span-1 flex flex-1 flex-col items-end gap-1 md:col-span-2">
-			{#if isOwner}
-				<Button variant="primary" type="submit">{$_('Update')}</Button>
-			{/if}
-		</div>
-	</form>
-</section>
+			</div>
+			<div class="flex flex-1 flex-col gap-1">
+				<span class="text-sm font-medium text-neutral-50">
+					{$_('EUI')}
+				</span>
+				{device?.dev_eui || $_('Unknown')}
+			</div>
+			<div class="flex flex-1 flex-col gap-1">
+				<span class="text-sm font-medium text-neutral-50">
+					{$_('Installed Date')}
+				</span>
+				{device?.installed_at ? formatDateOnly(device.installed_at) : $_('Unknown')}
+			</div>
+			<div class="flex flex-1 flex-col gap-1">
+				<span class="text-sm font-medium text-neutral-50">
+					{$_('Coordinates')}
+				</span>
+				{#if device?.lat && device?.long}
+					<!-- @todo Make the coordinates editable -->
+					{device.lat}, {device.long}
+				{:else}
+					{$_('Unknown')}
+				{/if}
+			</div>
+			<div class="flex flex-1 flex-col gap-1">
+				<label for="deviceName" class="text-sm font-medium text-neutral-50">
+					{$_('Device Name')}
+				</label>
+				{#if isOwner}
+					<TextInput
+						id="deviceName"
+						name="name"
+						placeholder="Enter device name"
+						value={device?.name}
+					/>
+				{:else}
+					{device?.name}
+				{/if}
+			</div>
+			<div class="flex flex-1 flex-col gap-1">
+				<label for="deviceName" class="text-sm font-medium text-neutral-50">
+					{$_('Device Location')}
+				</label>
+				{#await data.locations}
+					{$_('Loading...')}
+				{:then locations}
+					{#if isOwner}
+						<Select id="deviceLocation" name="location_id">
+							{#each locations as loc (loc.location_id)}
+								<option value={loc.location_id} selected={loc.location_id === device?.location_id}>
+									{loc.name} ({loc.location_id})
+								</option>
+							{/each}
+						</Select>
+					{:else}
+						{locations.find((loc) => loc.location_id === device?.location_id)?.name ||
+							'Unknown Location'}
+						{#if device?.location_id}
+							({device.location_id})
+						{/if}
+					{/if}
+				{/await}
+			</div>
+			<div class="col-span-1 flex flex-1 flex-col items-end gap-1 md:col-span-2">
+				{#if isOwner}
+					<Button variant="primary" type="submit">{$_('Update')}</Button>
+				{/if}
+			</div>
+		</form>
+	</section>
 
-{#if isOwner}
-	<span class="flex flex-1"></span>
-	<section class="border-danger/50 mt-6 flex flex-col gap-2 rounded-lg border p-4">
-		<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
-		<div>
-			<Button
-				variant="danger"
-				onclick={() => {
-					showDeleteDialog = true;
-				}}
-			>
-				{$_('Delete Device & Associated Data')}
-			</Button>
-		</div>
-		<Dialog bind:open={showDeleteDialog} size="sm">
-			{#snippet title()}
-				{$_('Delete Device & Associated Data')}
-			{/snippet}
-			{#snippet body()}
-				{$_('delete_device_warning')}
-			{/snippet}
-			{#snippet footer()}
-				<Button
-					variant="secondary"
-					onclick={() => {
-						showDeleteDialog = false;
-					}}
-				>
-					{$_('Cancel')}
-				</Button>
+	{#if isOwner}
+		<section class="border-danger/50 mt-auto flex flex-col gap-2 rounded-lg border p-4">
+			<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
+			<div>
 				<Button
 					variant="danger"
 					onclick={() => {
-						showDeleteDialog = false;
-						deleteDevice();
+						showDeleteDialog = true;
 					}}
 				>
-					{$_('Delete')}
+					{$_('Delete Device & Associated Data')}
 				</Button>
-			{/snippet}
-		</Dialog>
-	</section>
-{/if}
+			</div>
+			<Dialog bind:open={showDeleteDialog} size="sm">
+				{#snippet title()}
+					{$_('Delete Device & Associated Data')}
+				{/snippet}
+				{#snippet body()}
+					{$_('delete_device_warning')}
+				{/snippet}
+				{#snippet footer()}
+					<Button
+						variant="secondary"
+						onclick={() => {
+							showDeleteDialog = false;
+						}}
+					>
+						{$_('Cancel')}
+					</Button>
+					<Button
+						variant="danger"
+						onclick={() => {
+							showDeleteDialog = false;
+							deleteDevice();
+						}}
+					>
+						{$_('Delete')}
+					</Button>
+				{/snippet}
+			</Dialog>
+		</section>
+	{/if}
+</div>
