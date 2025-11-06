@@ -144,14 +144,14 @@
 		<div class="my-1 mr-2 ml-2 flex-1 border-r-2">
 			<div class="flex flex-col text-base">
 				<div class="justify-left flex flex-row pl-0">
-					<b class="ml-4 pb-1 text-sm font-semibold tracking-wide text-gray-700 dark:text-gray-300"
+					<b class="ml-4 pb-1 text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-200"
 						>{device.name || `Device ${device.dev_eui}`}</b
 					>
 				</div>
 				<div class="flex w-full flex-row justify-between justify-center space-x-5">
 					{#if device.latestData}
 						<div class="flex items-center">
-							<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"
+							<span class="mr-1.5 text-lg text-gray-700 dark:text-gray-300"
 								>{nameToEmoji(primaryDataKey)}</span
 							>
 							<div class="flex flex-col items-start">
@@ -160,7 +160,7 @@
 								>
 									{formatNumber({ key: primaryDataKey, value: primaryValue })}
 									<span
-										class="text-accent-700 dark:text-accent-400 ml-0.5 align-top text-xs font-normal"
+										class="ml-0.5 align-top text-xs font-semibold text-gray-700 dark:text-gray-300"
 										>{primaryNotation}</span
 									>
 								</span>
@@ -169,7 +169,7 @@
 						{#if secondaryDataKey}
 							<span class="flex flex-grow-[0.2]"></span>
 							<div class="flex items-center">
-								<span class="mr-1.5 text-lg text-gray-600 dark:text-gray-400"
+								<span class="mr-1.5 text-lg text-gray-700 dark:text-gray-300"
 									>{nameToEmoji(secondaryDataKey)}</span
 								>
 								<div class="no-wrap flex flex-col items-start">
@@ -177,7 +177,7 @@
 										class="flex flex-nowrap items-baseline text-lg leading-tight font-bold text-gray-900 dark:text-white"
 									>
 										<span>{formatNumber({ key: secondaryDataKey, value: secondaryValue })}</span>
-										<span class="text-accent-700 dark:text-accent-400 ml-0.5 text-xs font-normal"
+										<span class="ml-0.5 text-xs font-semibold text-gray-700 dark:text-gray-300"
 											>{secondaryNotation}</span
 										>
 									</span>
@@ -191,7 +191,7 @@
 		<div class="flex items-center pr-2">
 			<svg
 				viewBox="0 0 24 24"
-				class="h-5 w-5 text-gray-600 dark:text-gray-400"
+				class="h-5 w-5 text-gray-700 dark:text-gray-400"
 				fill="currentColor"
 				aria-hidden="true"
 			>
@@ -231,8 +231,8 @@
 
 <Collapse
 	classes={{
-		root: 'mb-1 bg-gray-200 dark:bg-gray-800/30 w-full ',
-		icon: 'text-gray-600 dark:text-gray-500 data-[open=true]:rotate-90'
+		root: 'mb-1.5 bg-gray-100 dark:bg-gray-800/50 w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow',
+		icon: 'text-gray-700 dark:text-gray-400 data-[open=true]:rotate-90'
 	}}
 	open={defaultCollapse}
 	on:change={(e) => collapseStateChange(e)}
