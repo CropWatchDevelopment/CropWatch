@@ -6,7 +6,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { handleKeyDown } from '$lib/utilities/dashboardLayout';
 	import { getLocationActiveStatus } from '$lib/utilities/deviceUtils';
-	import { mdiClose, mdiMagnify } from '@mdi/js';
+	import { mdiClose, mdiMagnify } from '$lib/icons/mdi';
 	import { onMount } from 'svelte';
 	import { _ } from 'svelte-i18n';
 	import Icon from '$lib/components/ui/base/Icon.svelte';

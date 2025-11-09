@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/base/Icon.svelte';
-	import { mdiDevices, mdiMapMarker, mdiIdentifier, mdiAlert, mdiMagnify } from '@mdi/js';
+	import { mdiDevices, mdiMapMarker, mdiIdentifier, mdiAlert, mdiMagnify } from '$lib/icons/mdi';
 
 	let { data } = $props();
 

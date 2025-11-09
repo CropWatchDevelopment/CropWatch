@@ -10,7 +10,7 @@
 		mdiSortAscending,
 		mdiSortDescending,
 		mdiMagnify
-	} from '@mdi/js';
+	} from '$lib/icons/mdi';
 	import Button from '$lib/components/ui/base/Button.svelte';
 	import Card from '$lib/components/ui/base/Card.svelte';
 	import Icon from '$lib/components/ui/base/Icon.svelte';

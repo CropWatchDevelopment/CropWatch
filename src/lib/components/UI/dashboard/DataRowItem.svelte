@@ -5,7 +5,7 @@
 	import { nameToEmoji } from '$lib/utilities/NameToEmoji';
 	import { formatNumber } from '$lib/utilities/stats';
 	import { getDeviceLatestTimestamp } from '$lib/utilities/deviceUtils';
-	import { mdiArrowDown, mdiArrowRight, mdiArrowUp } from '@mdi/js';
+	import { mdiArrowDown, mdiArrowRight, mdiArrowUp } from '$lib/icons/mdi';
 	import { _ } from 'svelte-i18n';
 	import Collapse from '$lib/components/ui/base/Collapse.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';

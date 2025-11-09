@@ -12,7 +12,7 @@
 		mdiClose,
 		mdiEarth,
 		mdiMagnify
-	} from '@mdi/js';
+	} from '$lib/icons/mdi';
 	import { _ } from 'svelte-i18n';
 	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { fade } from 'svelte/transition';

@@ -5,7 +5,7 @@
 	import { Dialog, DateRangePicker } from 'bits-ui';
 	import type { DateRange } from 'bits-ui';
 	import { CalendarDate } from '@internationalized/date';
-	import { mdiAlert, mdiDownload, mdiFileDocument, mdiMagnify } from '@mdi/js';
+	import { mdiAlert, mdiDownload, mdiFileDocument, mdiMagnify } from '$lib/icons/mdi';
 	import ExportButton from '$lib/components/devices/ExportButton.svelte';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
@@ -577,7 +577,7 @@
 								</div>
 							</td>
 							<td data-title={$_('Device')}>
-								{report.dev_eui ?? $_('N/A')}
+								{report.cw_device?.name ?? $_('N/A')} <small>({report.dev_eui ?? $_('N/A')})</small>
 							</td>
 							<td data-title={$_('Created')}>
 								{formatDate(report.created_at)}

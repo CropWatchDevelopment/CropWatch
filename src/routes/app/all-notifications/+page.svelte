@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { mdiMagnify } from '@mdi/js';
+	import { mdiMagnify } from '$lib/icons/mdi';
 	import { onMount } from 'svelte';
 
 	let searchTerm = $state('');

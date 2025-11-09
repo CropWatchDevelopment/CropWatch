@@ -19,6 +19,7 @@ import type {
 	ReportUserScheduleInsert,
 	ReportUserScheduleUpdate
 } from '../models/Report';
+import type { DeviceRepository } from '$lib/repositories/DeviceRepository';
 
 /**
  * Implementation of ReportService
@@ -29,7 +30,8 @@ export class ReportService implements IReportService {
 		private reportRepository: ReportRepository,
 		private alertPointRepository: ReportAlertPointRepository,
 		private recipientRepository: ReportRecipientRepository,
-		private scheduleRepository: ReportUserScheduleRepository
+		private scheduleRepository: ReportUserScheduleRepository,
+		private deviceRepository: DeviceRepository
 	) {}
 
 	/**
@@ -37,6 +39,17 @@ export class ReportService implements IReportService {
 	 */
 	async getAllReports(devEui: string): Promise<Report[]> {
 		return this.reportRepository.findAll();
+	}
+
+	/**
+	 * Get all reports with devices
+	 */
+	async getAllReportsWithDevices(devEui: string): Promise<Report[]> {
+		let allReports = await this.reportRepository.findAll();
+		for (let report of allReports) {
+			report['cw_device'] = await this.deviceRepository.findById(report.dev_eui);
+		}
+		return allReports;
 	}
 
 	/**
