@@ -31,7 +31,9 @@
 		class="flex items-center justify-between border-b border-[var(--color-border)] bg-gradient-to-r from-[var(--color-surface)] to-transparent px-4 py-3"
 	>
 		<div class="flex items-center gap-3">
-			<span class="bg-accent flex h-10 w-10 items-center justify-center rounded-full">
+			<span
+				class="bg-accent flex h-10 w-10 items-center justify-center rounded-full bg-red-400 dark:bg-slate-500"
+			>
 				{#if loading}
 					<Icon class="text-blue-500" path={mdiClockOutline} />
 				{:else if allActive}

@@ -79,7 +79,7 @@
 
 <!-- Main Header -->
 <header class="fixed inset-x-0 top-0 z-50 border-b border-emerald-900 bg-emerald-800 text-white">
-	<nav class="mx-auto flex w-full max-w-7xl items-center gap-4 px-6 py-3">
+	<nav class="flex w-full flex-row items-center gap-4 px-6 py-3">
 		<!-- Logo -->
 		<a
 			href="/app/dashboard"
@@ -94,22 +94,8 @@
 			</div>
 		</a>
 
-		<!-- Desktop Navigation -->
-		<ul class="hidden items-center gap-8 lg:flex">
-			<!-- <li>
-				<a
-					href="#about"
-					class="relative rounded-lg px-4 py-2 font-medium backdrop-blur-sm transition-all duration-300 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-green-500 after:to-emerald-500 after:transition-all after:duration-300 hover:-translate-y-0.5 hover:after:w-4/5 {getDarkMode()
-						? 'text-white/80 hover:bg-green-500/10 hover:text-green-400'
-						: 'text-gray-700 hover:bg-green-500/10 hover:text-green-600'}"
-				>
-					About
-				</a>
-			</li> -->
-		</ul>
-
-		<!-- CTA Button -->
 		<span class="flex-1"></span>
+
 		<div class="hidden items-center gap-3 text-white md:flex">
 			<!-- @todo Move the language and theme selectors to the user settings page -->
 			<LanguageSelector />
