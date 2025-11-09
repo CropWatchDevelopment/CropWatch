@@ -683,6 +683,7 @@ input[type="week"]:focus {
 	/* Status/accent colors */
 	:root.force-light .bg-yellow-500 { background-color: #eab308 !important; }
 	:root.force-light .bg-green-500 { background-color: #22c55e !important; }
+	:root.force-light .bg-red-400.dark\:bg-slate-500 { background-color: #f87171 !important; }
 	
 	/* White/transparent backgrounds */
 	:root.force-light .bg-white\/20 { background-color: rgba(255, 255, 255, 0.2) !important; }

@@ -32,7 +32,7 @@
 	>
 		<div class="flex items-center gap-3">
 			<span
-				class="bg-accent flex h-10 w-10 items-center justify-center rounded-full bg-red-400 dark:bg-slate-500"
+				class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-500"
 			>
 				{#if loading}
 					<Icon class="text-blue-500" path={mdiClockOutline} />

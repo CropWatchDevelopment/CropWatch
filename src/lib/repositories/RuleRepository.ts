@@ -83,7 +83,7 @@ export class RuleRepository extends BaseRepository<Rule, number> {
 	async findByProfile(profileId: string): Promise<Rule[]> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.select('*')
+			.select('*, cw_rule_triggered(*)')
 			.eq('profile_id', profileId)
 			.order('name');
 

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import type { Rule } from '$lib/models/Rule';
+	import type { Device } from '$lib/models/Device';
+	import type { Database } from '../../../../database.types';
 	import {
 		mdiAlert,
 		mdiMagnify,
@@ -10,7 +12,13 @@
 	} from '$lib/icons/mdi';
 
 	let { data } = $props();
-	const notifications = (data.notifications ?? []) as Rule[];
+	type RuleTriggered = Database['public']['Tables']['cw_rule_triggered']['Row'];
+	type NotificationRow = Rule & {
+		cw_rule_triggered?: RuleTriggered[];
+		cw_device?: Device | null;
+	};
+
+	const notifications = (data.notifications ?? []) as NotificationRow[];
 	let searchTerm = $state('');
 	let sortColumn = $state<
 		| 'name'
@@ -22,6 +30,8 @@
 		| 'is_triggered'
 	>('name');
 	let sortDirection = $state<'asc' | 'desc'>('asc');
+	let showHistoryModal = $state(false);
+	let selectedNotification = $state<NotificationRow | null>(null);
 
 	const filteredNotifications = $derived(filterNotifications(notifications));
 	const tableNotifications = $derived(sortNotifications(filteredNotifications));
@@ -30,6 +40,13 @@
 		active: notifications.filter((item) => item.is_triggered).length,
 		totalTriggers: notifications.reduce((sum, item) => sum + (item.trigger_count ?? 0), 0)
 	});
+	const historyEntries = $derived(
+		selectedNotification?.cw_rule_triggered
+			? [...selectedNotification.cw_rule_triggered].sort(
+					(a, b) => parseTimestamp(b.created_at) - parseTimestamp(a.created_at)
+				)
+			: []
+	);
 
 	const columns = [
 		{ key: 'name', label: 'Notification', width: 'w-72', align: 'left', sortable: true },
@@ -50,10 +67,11 @@
 			align: 'left',
 			sortable: true
 		},
-		{ key: 'is_triggered', label: 'Status', width: 'w-32', align: 'center', sortable: true }
+		{ key: 'is_triggered', label: 'Status', width: 'w-32', align: 'center', sortable: true },
+		{ key: 'history', label: 'History', width: 'w-32', align: 'center', sortable: false }
 	] as const;
 
-	function filterNotifications(list: Rule[]) {
+	function filterNotifications(list: NotificationRow[]): NotificationRow[] {
 		if (!searchTerm.trim()) return list;
 		const term = searchTerm.toLowerCase();
 		return list.filter((notification) => {
@@ -71,7 +89,7 @@
 		});
 	}
 
-	function sortNotifications(list: Rule[]) {
+	function sortNotifications(list: NotificationRow[]): NotificationRow[] {
 		return [...list].sort((a, b) => {
 			const valueA = getSortValue(a, sortColumn);
 			const valueB = getSortValue(b, sortColumn);
@@ -88,7 +106,7 @@
 		});
 	}
 
-	function getSortValue(notification: Rule, key: (typeof columns)[number]['key']) {
+	function getSortValue(notification: NotificationRow, key: (typeof columns)[number]['key']) {
 		switch (key) {
 			case 'trigger_count':
 				return notification.trigger_count ?? 0;
@@ -96,6 +114,8 @@
 				return notification.last_triggered ? new Date(notification.last_triggered).getTime() : 0;
 			case 'is_triggered':
 				return notification.is_triggered ? 1 : 0;
+			case 'history':
+				return notification.cw_rule_triggered?.length ?? 0;
 			default:
 				return (notification[key] ?? '').toString().toLowerCase();
 		}
@@ -126,13 +146,35 @@
 		return recipients.length ? recipients.join(', ') : 'No recipients';
 	}
 
-	function formatChannel(notification: Rule) {
+	function formatChannel(notification: NotificationRow) {
 		if (notification.send_using) return notification.send_using;
 		if (notification.notifier_type != null) return `Notifier ${notification.notifier_type}`;
 		return 'Not specified';
 	}
 
-	const formatDeviceLabel = (notification: Rule) => notification.dev_eui || 'All devices';
+	const formatDeviceLabel = (notification: NotificationRow) =>
+		notification.dev_eui || 'All devices';
+
+	function parseTimestamp(value: string) {
+		const timestamp = new Date(value).getTime();
+		return Number.isNaN(timestamp) ? 0 : timestamp;
+	}
+
+	function formatHistoryTimestamp(timestamp: string) {
+		const date = new Date(timestamp);
+		return Number.isNaN(date.getTime()) ? 'Unknown time' : date.toLocaleString();
+	}
+
+	function openHistory(notification: NotificationRow) {
+		if (!notification.cw_rule_triggered?.length) return;
+		selectedNotification = notification;
+		showHistoryModal = true;
+	}
+
+	function closeHistory() {
+		showHistoryModal = false;
+		selectedNotification = null;
+	}
 </script>
 
 <div class="space-y-6 p-6">
@@ -253,6 +295,16 @@
 									{notification.is_triggered ? 'Active' : 'Idle'}
 								</span>
 							</div>
+							<div class="table-cell w-32 justify-center">
+								<button
+									type="button"
+									class="history-button"
+									disabled={!notification.cw_rule_triggered?.length}
+									onclick={() => openHistory(notification)}
+								>
+									History
+								</button>
+							</div>
 						</div>
 					{/each}
 				</div>
@@ -270,6 +322,47 @@
 		{/if}
 	</div>
 </div>
+
+{#if showHistoryModal && selectedNotification}
+	<div class="history-modal__backdrop" onclick={closeHistory}>
+		<div
+			class="history-modal__panel"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="history-modal-title"
+			onclick={(event) => event.stopPropagation()}
+		>
+			<header class="history-modal__header">
+				<h2 id="history-modal-title">Trigger history</h2>
+				<button
+					type="button"
+					class="history-modal__close"
+					onclick={closeHistory}
+					aria-label="Close history"
+				>
+					×
+				</button>
+			</header>
+			<div class="history-modal__body">
+				<p class="history-modal__description">
+					{selectedNotification.name || 'Untitled notification'}
+				</p>
+				{#if historyEntries.length}
+					<ul class="history-modal__list">
+						{#each historyEntries as entry (entry.id)}
+							<li class="history-modal__item">
+								<span class="history-modal__time">{formatHistoryTimestamp(entry.created_at)}</span>
+								<span class="history-modal__device">{entry.dev_eui}</span>
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="history-modal__empty">No trigger history recorded yet.</p>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.search-container {
@@ -434,6 +527,115 @@
 		border-color: rgba(148, 163, 184, 0.3);
 	}
 
+	.history-button {
+		padding: 0.35rem 0.9rem;
+		border-radius: 9999px;
+		border: 1px solid rgba(59, 130, 246, 0.4);
+		background: rgba(59, 130, 246, 0.12);
+		color: rgb(37 99 235);
+		font-weight: 600;
+		font-size: 0.8rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		transition:
+			background 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.history-button:hover:enabled {
+		background: rgba(59, 130, 246, 0.2);
+		color: rgb(29 78 216);
+	}
+
+	.history-button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.history-modal__backdrop {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(15, 23, 42, 0.45);
+		backdrop-filter: blur(2px);
+		padding: 1.5rem;
+		z-index: 50;
+	}
+
+	.history-modal__panel {
+		width: min(520px, 100%);
+		background: white;
+		border-radius: 1rem;
+		box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
+		overflow: hidden;
+	}
+
+	.history-modal__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1rem 1.25rem;
+		background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+		color: white;
+	}
+
+	.history-modal__close {
+		background: transparent;
+		border: none;
+		color: inherit;
+		font-size: 1.75rem;
+		line-height: 1;
+		cursor: pointer;
+	}
+
+	.history-modal__body {
+		padding: 1.25rem;
+		max-height: 60vh;
+		overflow-y: auto;
+	}
+
+	.history-modal__description {
+		font-weight: 600;
+		margin-bottom: 1rem;
+		color: rgb(15 23 42);
+	}
+
+	.history-modal__list {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.history-modal__item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.75rem 1rem;
+		border: 1px solid rgb(226 232 240);
+		border-radius: 0.75rem;
+		background: rgb(248 250 252);
+	}
+
+	.history-modal__time {
+		font-weight: 600;
+		color: rgb(30 64 175);
+	}
+
+	.history-modal__device {
+		font-size: 0.85rem;
+		color: rgb(71 85 105);
+	}
+
+	.history-modal__empty {
+		text-align: center;
+		color: rgb(107 114 128);
+		padding: 1rem 0;
+	}
+
 	.empty-state {
 		border: 1px dashed rgb(209 213 219);
 		border-radius: 1rem;
@@ -503,5 +705,46 @@
 		background: rgba(30, 41, 59, 0.5);
 		border-color: rgb(55 65 81);
 		color: rgb(209 213 219);
+	}
+
+	:global(.dark) .history-button {
+		border-color: rgba(191, 219, 254, 0.4);
+		background: rgba(191, 219, 254, 0.12);
+		color: rgb(191 219 254);
+	}
+
+	:global(.dark) .history-button:hover:enabled {
+		background: rgba(191, 219, 254, 0.2);
+		color: rgb(224 231 255);
+	}
+
+	:global(.dark) .history-modal__panel {
+		background: rgb(17 24 39);
+		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+	}
+
+	:global(.dark) .history-modal__body {
+		color: rgb(226 232 240);
+	}
+
+	:global(.dark) .history-modal__description {
+		color: rgb(226 232 240);
+	}
+
+	:global(.dark) .history-modal__item {
+		background: rgb(30 41 59);
+		border-color: rgb(51 65 85);
+	}
+
+	:global(.dark) .history-modal__time {
+		color: rgb(191 219 254);
+	}
+
+	:global(.dark) .history-modal__device {
+		color: rgb(148 163 184);
+	}
+
+	:global(.dark) .history-modal__empty {
+		color: rgb(148 163 184);
 	}
 </style>
