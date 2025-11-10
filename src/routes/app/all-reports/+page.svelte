@@ -577,7 +577,13 @@
 								</div>
 							</td>
 							<td data-title={$_('Device')}>
-								{report.cw_device?.name ?? $_('N/A')} <small>({report.dev_eui ?? $_('N/A')})</small>
+								<a
+									href={`/app/dashboard/location/${report.cw_device?.location_id}/devices/${report.dev_eui}/settings/reports`}
+									class="device-link"
+								>
+									{report.cw_device?.name ?? $_('N/A')}
+									<small>({report.dev_eui ?? $_('N/A')})</small>
+								</a>
 							</td>
 							<td data-title={$_('Created')}>
 								{formatDate(report.created_at)}

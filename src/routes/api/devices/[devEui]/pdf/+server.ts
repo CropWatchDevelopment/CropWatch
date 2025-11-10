@@ -3,7 +3,7 @@ import { i18n } from '$lib/i18n/index.svelte';
 import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 import type { ReportAlertPoint } from '$lib/models/Report';
 import type { TableCell, TableRow } from '$lib/pdf';
-import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
+import { createPDFDataTable, sampleDataRowsForTable } from '$lib/pdf/pdfDataTable';
 import { addFooterPageNumber } from '$lib/pdf/pdfFooterPageNumber';
 import { createPDFLineChartImage } from '$lib/pdf/pdfLineChartImage';
 import { checkMatch, getValue } from '$lib/pdf/utils';
@@ -386,6 +386,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			cells: [...tableKeyColumns, { label: $_('comment'), width: 40 }]
 		};
 		const dataRowsTable = getDataRows(tableKeys);
+		const tableConfig = { timezone: timezoneParam };
 
 		// LEFT summary
 		const primaryKey = tableKeys[0] ?? validKeys[0] ?? 'temperature_c';
@@ -440,13 +441,14 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			} else {
 				doc.moveDown(2);
 			}
+			const sampledChartRows = sampleDataRowsForTable(getDataRows([key]), tableConfig.takeEvery);
 			createPDFLineChartImage({
 				doc,
 				dataHeader: {
 					header: { label: $_('datetime'), value: '', width: 60 },
 					cells: [{ label: $_(key), value: '', width: 40, color: getColorNameByKey(key) }]
 				},
-				dataRows: getDataRows([key]),
+				dataRows: sampledChartRows,
 				alertPoints,
 				config: { title: $_(key), width: chartWidth, height: chartHeight, timezone: timezoneParam }
 			});
@@ -461,7 +463,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			doc,
 			dataHeader: dataHeaderTable,
 			dataRows: dataRowsTable,
-			config: { timezone: timezoneParam }
+			config: tableConfig
 		});
 
 		// Footer

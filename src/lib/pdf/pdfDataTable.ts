@@ -32,6 +32,18 @@ const DEFAULT_CONFIG: TableConfig = {
 
 const MIN_COLUMN_SCALE = 0.9;
 
+const isAlertRow = (row: TableRow) =>
+	[row.header, ...row.cells].some((cell) => cell.bgColor && cell.bgColor !== '#ffffff');
+
+export function sampleDataRowsForTable(
+	dataRows: TableRow[],
+	takeEvery: number = DEFAULT_CONFIG.takeEvery
+): TableRow[] {
+	const samplingInterval = Math.max(1, takeEvery || 1);
+	if (samplingInterval <= 1) return dataRows;
+	return dataRows.filter((row, idx) => idx % samplingInterval === 0 || isAlertRow(row));
+}
+
 /**
  * Parse the header.value (epoch ms | ISO | SQL) into a DateTime in the desired zone.
  */
@@ -71,20 +83,7 @@ export function createPDFDataTable({
 }): void {
 	const conf: TableConfig = { ...DEFAULT_CONFIG, ...config };
 
-	// Apply takeEvery filtering (keep every Nth row) plus always keep rows containing any alert/warning cell (bgColor != white)
-	const samplingInterval = Math.max(1, conf.takeEvery || 1);
-	const workingRows =
-		samplingInterval > 1
-			? dataRows.filter((row, idx) => {
-					const onSeries = idx % samplingInterval === 0; // take first (idx 0), then every Nth
-					if (onSeries) return true;
-					// Include any row with an alert/warning (detected by any cell having a non-white bgColor)
-					const hasAlert = [row.header, ...row.cells].some(
-						(c) => (c as any).bgColor && (c as any).bgColor !== '#ffffff'
-					);
-					return hasAlert;
-				})
-			: dataRows;
+	const workingRows = sampleDataRowsForTable(dataRows, conf.takeEvery);
 
 	const { caption, headerHeight, cellWidth, cellHeight, columnsPerPage, columnMargin } = conf;
 
