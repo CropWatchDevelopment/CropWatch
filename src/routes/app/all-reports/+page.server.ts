@@ -9,6 +9,7 @@ import { ReportAlertPointRepository } from '$lib/repositories/ReportAlertPointRe
 import { ReportRecipientRepository } from '$lib/repositories/ReportRecipientRepository';
 import { ReportUserScheduleRepository } from '$lib/repositories/ReportUserScheduleRepository';
 import { ReportRepository } from '$lib/repositories/ReportRepository';
+import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const sessionService = new SessionService(supabase);
@@ -32,15 +33,18 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		supabase,
 		new ErrorHandlingService()
 	);
+	const deviceRepository = new DeviceRepository(supabase, new ErrorHandlingService());
+
 	const reportService = new ReportService(
 		reportRepository,
 		reportAlertPointRepository,
 		recipientRepository,
-		reportUserScheduleRepository
+		reportUserScheduleRepository,
+		deviceRepository
 	);
 	const service = new ReportTemplateService(repo);
 
-	const allReports = await reportService.getAllReports(user.id);
+	const allReports = await reportService.getAllReportsWithDevices(user.id);
 
 	return { allReports };
 };

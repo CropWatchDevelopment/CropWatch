@@ -56,7 +56,7 @@
 	<!-- Device data block -->
 	<div class="ml-1 flex-1">
 		<div class="flex">
-			<h3 class="mb-2 basis-1/3 text-lg font-semibold text-yellow-600 dark:text-yellow-400">
+			<h3 class="mb-2 basis-1/3 text-lg font-bold text-gray-900 dark:text-gray-100">
 				{$_('Details')}
 			</h3>
 		</div>

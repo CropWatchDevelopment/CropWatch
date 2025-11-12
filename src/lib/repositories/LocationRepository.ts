@@ -57,10 +57,10 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	 * Create a new location
 	 * @param location The location to create
 	 */
-	async create(location: LocationInsert): Promise<Location> {
+	override async create<I>(entity: I): Promise<Location> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.insert(location)
+			.insert(entity)
 			.select()
 			.single();
 
@@ -76,10 +76,10 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	 * @param id The location ID
 	 * @param location The location with updated values
 	 */
-	async update(id: number, location: LocationUpdate): Promise<Location | null> {
+	override async update<U>(id: number, entity: U): Promise<Location | null> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.update(location)
+			.update(entity)
 			.eq(this.primaryKey, id)
 			.select()
 			.single();
@@ -127,7 +127,12 @@ export class LocationRepository extends BaseRepository<Location, number> {
 			);
 		}
 
-		return (data as LocationUser[]) || [];
+		const normalized = (data ?? []).map((row: any) => ({
+			...row,
+			profile: Array.isArray(row.profile) ? row.profile[0] : row.profile
+		}));
+
+		return normalized as LocationUser[];
 	}
 
 	/**
@@ -209,18 +214,25 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	 * Get a location owner entry by ID
 	 * @param id The location owner entry ID
 	 */
-	async getLocationOwnerById(id: number): Promise<{ LocationUser: any } | null> {
+	async getLocationOwnerById(id: number): Promise<LocationUser | null> {
 		const { data, error } = await this.supabase
 			.from('cw_location_owners')
 			.select('*')
 			.eq('id', id)
-			.single();
+			.maybeSingle();
 
-		if (error) {
+		if (error && error.code !== 'PGRST116') {
+			this.errorHandler.handleDatabaseError(
+				error,
+				`Error finding location owner by record id ${id}`
+			);
+		}
+
+		if (!data) {
 			return null;
 		}
 
-		return data;
+		return data as LocationUser;
 	}
 
 	/**
@@ -315,7 +327,7 @@ export class LocationRepository extends BaseRepository<Location, number> {
 		if (error) {
 			this.errorHandler.handleDatabaseError(
 				error,
-				`Error removing user from location (ID: ${userRecordId})`
+				`Error removing user from location (record id: ${userRecordId})`
 			);
 		}
 	}
@@ -324,18 +336,18 @@ export class LocationRepository extends BaseRepository<Location, number> {
 	 * Remove a user from a location
 	 * @param locationOwnerId The location owner entry ID
 	 */
-	async removeUserFromLocationByUserId(userId: string, location_id: number): Promise<void> {
+	async removeUserFromLocationByUserId(userId: string, locationId: number): Promise<void> {
 		const { error } = await this.supabase
 			.from('cw_location_owners')
 			.delete()
 			.eq('user_id', userId)
-			.eq('location_id', location_id)
+			.eq('location_id', locationId)
 			.single();
 
 		if (error) {
 			this.errorHandler.handleDatabaseError(
 				error,
-				`Error removing user from location (ID: ${userRecordId})`
+				`Error removing user ${userId} from location ${locationId}`
 			);
 		}
 	}

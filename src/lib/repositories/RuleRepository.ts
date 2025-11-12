@@ -49,7 +49,7 @@ export class RuleRepository extends BaseRepository<Rule, number> {
 	 * Find rules and rule Criteria by device EUI
 	 * @param devEui The device EUI
 	 */
-	async getRulesAndCriteriaByDevice(devEui: string): Promise<RuleWithCriteria | null> {
+	async getRulesAndCriteriaByDevice(devEui: string): Promise<RuleWithCriteria[]> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
 			.select(
@@ -65,7 +65,15 @@ export class RuleRepository extends BaseRepository<Rule, number> {
 			this.errorHandler.handleDatabaseError(error, `Error finding rules by device EUI: ${devEui}`);
 		}
 
-		return (data as Rule[]) || [];
+		const rules = (data ?? []).map((row: any) => {
+			const { cw_rule_criteria, ...rule } = row ?? {};
+			return {
+				...rule,
+				criteria: cw_rule_criteria ?? []
+			};
+		});
+
+		return rules as RuleWithCriteria[];
 	}
 
 	/**
@@ -75,7 +83,7 @@ export class RuleRepository extends BaseRepository<Rule, number> {
 	async findByProfile(profileId: string): Promise<Rule[]> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.select('*')
+			.select('*, cw_rule_triggered(*)')
 			.eq('profile_id', profileId)
 			.order('name');
 
@@ -176,10 +184,10 @@ export class RuleRepository extends BaseRepository<Rule, number> {
 	 * Create a new rule
 	 * @param rule The rule to create
 	 */
-	async create(rule: RuleInsert): Promise<Rule> {
+	override async create<I>(entity: I): Promise<Rule> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.insert(rule)
+			.insert(entity)
 			.select('*')
 			.single();
 
@@ -213,10 +221,10 @@ export class RuleRepository extends BaseRepository<Rule, number> {
 	 * @param id The rule ID
 	 * @param rule The rule data to update
 	 */
-	async update(id: number, rule: RuleUpdate): Promise<Rule | null> {
+	override async update<U>(id: number, entity: U): Promise<Rule | null> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.update(rule)
+			.update(entity)
 			.eq(this.primaryKey, id)
 			.select('*')
 			.single();

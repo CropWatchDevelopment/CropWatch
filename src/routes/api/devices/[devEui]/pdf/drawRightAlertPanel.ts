@@ -1,8 +1,9 @@
 // src/lib/pdf/drawRightAlertPanel.ts
-import type PDFDocument from 'pdfkit';
 import type { TableRow } from '$lib/pdf';
 import type { ReportAlertPoint } from '$lib/models/Report';
 import { checkMatch } from '$lib/pdf/utils';
+
+type PDFDocument = InstanceType<typeof import('pdfkit')>;
 
 export function drawRightAlertPanel(opts: {
 	doc: PDFDocument;

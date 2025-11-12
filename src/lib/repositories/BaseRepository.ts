@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
 import type { IRepository } from '../interfaces/IRepository';
 import { ErrorHandlingService } from '../errors/ErrorHandlingService';
 
@@ -56,11 +56,13 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
 
 			return data as T;
 		} catch (err) {
-			this.errorHandler.handleDatabaseError(
-				err as Error,
-				`Error finding ${this.entityName} with ID: ${String(id)}`
-			);
-			return null;
+			const message = `Error finding ${this.entityName} with ID: ${String(id)}`;
+			if (isPostgrestError(err)) {
+				this.errorHandler.handleDatabaseError(err, message);
+			} else {
+				this.errorHandler.logError(err as Error);
+				throw new Error(message);
+			}
 		}
 	}
 
@@ -163,4 +165,8 @@ export abstract class BaseRepository<T, K> implements IRepository<T, K> {
 
 		return data as T;
 	}
+}
+
+function isPostgrestError(err: unknown): err is PostgrestError {
+	return Boolean(err && typeof err === 'object' && 'code' in err && 'message' in err);
 }

@@ -205,10 +205,10 @@ export class DeviceOwnersRepository extends BaseRepository<DeviceOwner, number> 
 	 * Create a new device owner entry
 	 * @param deviceOwner The device owner data to insert
 	 */
-	async create(deviceOwner: DeviceOwnerInsert): Promise<DeviceOwner | null> {
+	override async create<I>(entity: I): Promise<DeviceOwner> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.insert(deviceOwner)
+			.insert(entity)
 			.select()
 			.single();
 
@@ -224,10 +224,10 @@ export class DeviceOwnersRepository extends BaseRepository<DeviceOwner, number> 
 	 * @param id The device owner ID
 	 * @param updates The updates to apply
 	 */
-	async update(id: number, updates: DeviceOwnerUpdate): Promise<DeviceOwner | null> {
+	override async update<U>(id: number, entity: U): Promise<DeviceOwner | null> {
 		const { data, error } = await this.supabase
 			.from(this.tableName)
-			.update(updates)
+			.update(entity)
 			.eq(this.primaryKey, id)
 			.select()
 			.single();
@@ -243,12 +243,14 @@ export class DeviceOwnersRepository extends BaseRepository<DeviceOwner, number> 
 	 * Delete a device owner entry
 	 * @param id The device owner ID
 	 */
-	async delete(id: number): Promise<void> {
+	override async delete(id: number): Promise<boolean> {
 		const { error } = await this.supabase.from(this.tableName).delete().eq(this.primaryKey, id);
 
 		if (error) {
 			this.errorHandler.handleDatabaseError(error, `Error deleting device owner with ID: ${id}`);
 		}
+
+		return true;
 	}
 
 	/**

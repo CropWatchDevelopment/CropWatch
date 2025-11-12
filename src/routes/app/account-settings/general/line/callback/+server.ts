@@ -85,7 +85,7 @@ export const GET: RequestHandler = async ({
 
 	const { error: upErr } = await supabase
 		.from('profiles')
-		.update({ line_id: lineUserId, updated_at: new Date() })
+		.update({ line_id: lineUserId, updated_at: new Date().toISOString() })
 		.eq('id', session.user.id);
 	if (upErr)
 		return redirect(

@@ -16,11 +16,11 @@
 	--color-primary-hover: #3a8c3f;
 	--color-background: #eaeaea;
 	--color-foreground: #938aee;
-	--color-foreground-light: #f0f0f0;
+	--color-foreground-light: #f5f5f5;
 	--color-foreground-dark: #2a2a2a;
 	--color-card: #ffffff;
-	--color-text: #333333;
-	--color-text-secondary: rgba(51, 51, 51, 0.7);
+	--color-text: #1f2937;
+	--color-text-secondary: rgba(31, 41, 55, 0.7);
 
 	/* Specialized colors */
 	--color-air-bg: #e6f7ff;
@@ -50,11 +50,15 @@
 	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
 	/* Standard UI colors */
-	--color-border: rgb(229 231 235);
-	--color-border-subtle: rgb(229 231 235 / 0.3);
+	--color-border: rgb(219 224 231);
+	--color-border-subtle: rgb(229 231 235);
 	--color-surface: rgb(249 250 251);
 	--color-surface-raised: rgb(255 255 255);
-	--color-text-muted: rgb(107 114 128);
+	--color-text-muted: rgb(75 85 99);
+	--color-surface-muted: rgba(255, 255, 255, 0.85);
+	--color-surface-emphasis: color-mix(in srgb, var(--color-foreground) 6%, #ffffff 94%);
+	--color-header: color-mix(in srgb, var(--color-background) 80%, rgba(255, 255, 255, 0.8) 20%);
+	--color-sidebar: color-mix(in srgb, var(--color-background) 75%, rgba(255, 255, 255, 0.9) 25%);
 }
 
 /* Dark mode color variables (activated by .dark class on <html>) */
@@ -92,6 +96,10 @@
 	--color-surface: rgb(55 65 81);
 	--color-surface-raised: rgb(55 65 81);
 	--color-text-muted: rgb(156 163 175);
+	--color-surface-muted: rgba(31, 41, 55, 0.78);
+	--color-surface-emphasis: color-mix(in srgb, var(--color-foreground-light) 60%, rgba(15, 23, 42, 0.6) 40%);
+	--color-header: color-mix(in srgb, var(--color-background) 88%, rgba(15, 23, 42, 0.9) 12%);
+	--color-sidebar: color-mix(in srgb, var(--color-background) 82%, rgba(30, 41, 59, 0.92) 18%);
 }
 
 html,
@@ -107,6 +115,15 @@ body {
 
 .grow {
 	flex-grow: 1;
+}
+
+body {
+	background: radial-gradient(circle at top, color-mix(in srgb, var(--color-background) 92%, #ffffff 8%) 0%, var(--color-background) 45%, var(--color-background) 100%);
+	color: var(--color-text);
+}
+
+.dark body {
+	background: radial-gradient(circle at top, color-mix(in srgb, var(--color-background) 85%, #0f172a 15%) 0%, var(--color-background) 45%, var(--color-background) 100%);
 }
 
 /* Global card styles */
@@ -160,20 +177,70 @@ button.primary:hover { background-color: var(--color-primary-hover); }
 
 
 .btn-base {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	border-radius: var(--btn-radius);
 	font-weight: var(--btn-font-weight);
 	padding: var(--btn-padding-y) var(--btn-padding-x);
 	box-shadow: var(--btn-shadow);
-	transition: background-color .2s, color .2s, border-color .2s;
+	transition:
+		background-color 180ms ease,
+		color 180ms ease,
+		border-color 180ms ease,
+		box-shadow 180ms ease,
+		transform 120ms ease;
 	outline: none;
-	line-height: 1.25rem;
+	line-height: 1.3;
+	border: 1px solid transparent;
 }
-.btn-primary { background: var(--btn-primary-bg); color: var(--btn-primary-text); }
-.btn-primary:hover { background: var(--btn-primary-bg-hover); }
-.btn-secondary { background: var(--btn-secondary-bg); color: var(--btn-secondary-text); }
-.btn-secondary:hover { background: var(--btn-secondary-bg-hover); }
-.btn-ghost { background: transparent; }
-.btn-outline { background: transparent; border:1px solid var(--btn-secondary-bg-hover); }
+.btn-base:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+}
+.btn-base:active {
+	transform: translateY(1px);
+}
+.btn-base:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+.btn-primary {
+	background: var(--btn-primary-bg);
+	color: var(--btn-primary-text);
+}
+.btn-primary:hover {
+	background: var(--btn-primary-bg-hover);
+}
+.btn-secondary {
+	background: var(--btn-secondary-bg);
+	color: var(--btn-secondary-text);
+}
+.btn-secondary:hover {
+	background: var(--btn-secondary-bg-hover);
+}
+.btn-ghost {
+	background: transparent;
+	color: inherit;
+}
+.btn-ghost:hover {
+	background-color: rgba(0 0 0 / 0.05);
+}
+.dark .btn-ghost:hover {
+	background-color: rgba(255 255 255 / 0.08);
+}
+.btn-outline {
+	background: transparent;
+	border: 1px solid var(--btn-secondary-bg-hover);
+	color: var(--btn-secondary-text);
+}
+.btn-outline:hover {
+	background-color: rgba(0 0 0 / 0.05);
+}
+.dark .btn-outline:hover {
+	background-color: rgba(255 255 255 / 0.08);
+}
 
 
 /* Sensor data specific styles */
@@ -190,6 +257,65 @@ button.primary:hover { background-color: var(--color-primary-hover); }
 /* Utility classes */
 .text-secondary {
 	color: var(--color-text-secondary);
+}
+
+.surface-card {
+	background-color: color-mix(in srgb, var(--color-card) 96%, #ffffff 4%);
+	color: var(--color-text);
+	border-radius: 0.9rem;
+	border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent 30%);
+	box-shadow:
+		0 26px 38px -32px rgba(15 23 42 / 0.55),
+		0 12px 28px -36px rgba(15 23 42 / 0.45),
+		0 1px 3px rgba(15 23 42 / 0.12);
+	transition:
+		background-color 180ms ease,
+		border-color 180ms ease,
+		box-shadow 200ms ease;
+}
+
+.surface-section {
+	background-color: color-mix(in srgb, var(--color-surface) 96%, #ffffff 4%);
+	border-radius: 0.9rem;
+	border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent 30%);
+}
+
+.surface-muted {
+	background-color: color-mix(in srgb, var(--color-surface-emphasis) 95%, #ffffff 5%);
+	border-radius: 0.9rem;
+}
+
+.header-surface {
+	background-color: var(--color-header);
+	backdrop-filter: blur(14px);
+	border-bottom: 1px solid var(--color-border-subtle);
+	box-shadow: 0 8px 24px -20px rgba(15, 23, 42, 0.4);
+}
+
+.sidebar-surface {
+	background-color: var(--color-sidebar);
+	backdrop-filter: blur(18px);
+	border-right: 1px solid var(--color-border-subtle);
+	box-shadow: 12px 0 28px -28px rgba(15, 23, 42, 0.45);
+}
+
+.dark .surface-card {
+	background-color: color-mix(in srgb, var(--color-foreground-dark) 92%, rgba(15, 23, 42, 0.85) 8%);
+	border-color: color-mix(in srgb, var(--color-border) 65%, transparent 35%);
+}
+
+.dark .surface-section {
+	background-color: color-mix(in srgb, var(--color-foreground-dark) 88%, rgba(15, 23, 42, 0.8) 12%);
+	border-color: color-mix(in srgb, var(--color-border) 65%, transparent 35%);
+}
+
+.dark .surface-muted {
+	background-color: color-mix(in srgb, var(--color-foreground-dark) 75%, rgba(30, 41, 59, 0.9) 25%);
+}
+
+.dark .header-surface,
+.dark .sidebar-surface {
+	border-color: var(--color-border-subtle);
 }
 
 .error-message {
@@ -316,40 +442,23 @@ a {
 .form-container {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.25rem;
 	background-color: var(--color-card);
-	padding: 1.5rem;
-	border-radius: 0.5rem;
+	padding: 1.75rem;
+	border-radius: 0.75rem;
+	border: 1px solid var(--color-border-subtle);
+	box-shadow: var(--shadow-md);
+	transition: box-shadow 180ms ease;
+}
+.form-container:hover {
 	box-shadow:
-		0 4px 6px -1px rgb(0 0 0 / 0.1),
-		0 2px 4px -2px rgb(0 0 0 / 0.1);
+		0 14px 30px -20px rgb(15 23 42 / 0.35),
+		0 8px 18px -12px rgb(15 23 42 / 0.2);
 }
 .form-container label {
 	font-size: 0.875rem;
 	font-weight: 500;
-}
-.form-container input,
-.form-container textarea,
-.form-container select {
-	border-radius: 0.25rem;
-	border-width: 1px;
-	border-color: rgb(209 213 219);
-	padding: 0.5rem;
-}
-.dark .form-container input,
-.dark .form-container textarea,
-.dark .form-container select {
-	border-color: rgb(55 65 81);
-}
-.form-container button[type='submit'],
-.form-container input[type='submit'] {
-	color: white;
-	padding: 0.5rem 1rem;
-	border-radius: 0.25rem;
-}
-.form-container button[type='submit']:disabled,
-.form-container input[type='submit']:disabled {
-	opacity: 0.5;
+	color: var(--color-text);
 }
 
 
@@ -574,6 +683,7 @@ input[type="week"]:focus {
 	/* Status/accent colors */
 	:root.force-light .bg-yellow-500 { background-color: #eab308 !important; }
 	:root.force-light .bg-green-500 { background-color: #22c55e !important; }
+	:root.force-light .bg-red-400.dark\:bg-slate-500 { background-color: #f87171 !important; }
 	
 	/* White/transparent backgrounds */
 	:root.force-light .bg-white\/20 { background-color: rgba(255, 255, 255, 0.2) !important; }

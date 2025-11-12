@@ -132,9 +132,9 @@
 		{/if}
 		<main
 			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-all duration-300"
-			style="margin-left: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'}; 
-				   padding-top: {showSidebar ? '119px' : '0'};
-				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '256px' : '64px') : '0'};"
+			style="margin-left: {showSidebar ? (sidebarStore.isOpen ? '64px' : '64px') : '0'}; 
+				   padding-top: {showSidebar ? '64px' : '0'};
+				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '64px' : '64px') : '0'};"
 			data-auth-page={page.url.pathname.startsWith('/auth') ? 'true' : undefined}
 		>
 			{@render children?.()}

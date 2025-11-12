@@ -2,6 +2,8 @@ import { error, redirect, type Handle } from '@sveltejs/kit';
 import { createServerClient } from '@supabase/ssr';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import { createClient } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
+import type { Database } from '../database.types';
 
 const PUBLIC_ROUTES = [
 	'/offline.html',
@@ -54,19 +56,23 @@ const handleCORS: Handle = async ({ event, resolve }) => {
 // Handle for Supabase authentication and session management
 const handleSupabase: Handle = async ({ event, resolve }) => {
 	// Create a Supabase client specific for server-side rendering (SSR)
-	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		cookies: {
-			getAll: () => event.cookies.getAll(),
-			setAll: (cookiesToSet) => {
-				// Store cookies to be set later instead of setting them immediately
-				event.locals.supabaseCookies = cookiesToSet;
+	event.locals.supabase = createServerClient<Database>(
+		PUBLIC_SUPABASE_URL,
+		PUBLIC_SUPABASE_ANON_KEY,
+		{
+			cookies: {
+				getAll: () => event.cookies.getAll(),
+				setAll: (cookiesToSet) => {
+					// Store cookies to be set later instead of setting them immediately
+					event.locals.supabaseCookies = cookiesToSet;
+				}
 			}
 		}
-	});
+	) as any;
 
 	// Handle JWT token authentication for API routes
-	let tokenSession = null;
-	let tokenUser = null;
+	let tokenSession: Session | null = null;
+	let tokenUser: User | null = null;
 
 	// Get headers from the request for better debugging
 	const headers = new Headers(event.request.headers);
@@ -84,17 +90,32 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 		event.url.pathname.startsWith('/api') || event.url.pathname.includes('/reports/pdf');
 
 	if (jwt && isApiOrAppRoute) {
-		const jwt = authorizationHeader?.replace(/^Bearer\s+/i, '').trim();
-		if (!jwt) {
+		const bearer = authorizationHeader?.replace(/^Bearer\s+/i, '').trim();
+		if (!bearer) {
 			throw error(401, 'Unauthorized access: No JWT token provided');
 		}
-		const jwtSupabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+		const jwtSupabase = createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 			global: {
-				headers: { Authorization: `Bearer ${jwt}` }
+				headers: { Authorization: `Bearer ${bearer}` }
 			},
 			auth: { persistSession: false }
 		});
-		event.locals.supabase = jwtSupabase;
+
+		const [{ data: sessionData, error: sessionError }, { data: userData, error: userError }] =
+			await Promise.all([jwtSupabase.auth.getSession(), jwtSupabase.auth.getUser()]);
+
+		if (sessionError) {
+			console.error('JWT session lookup error:', sessionError.message);
+		}
+
+		if (userError || !userData?.user) {
+			throw error(401, 'Unauthorized access: Invalid JWT token');
+		}
+
+		tokenSession = sessionData.session ?? null;
+		tokenUser = userData.user;
+
+		event.locals.supabase = jwtSupabase as any;
 		return await resolve(event, {
 			filterSerializedResponseHeaders(name) {
 				return name === 'content-range' || name === 'x-supabase-api-version';
@@ -184,6 +205,8 @@ const handleSupabase: Handle = async ({ event, resolve }) => {
 				// Token is valid, set the user from the validated token
 				//console.log('Valid API token for user:', data.user.email);
 				event.locals.user = data.user;
+				tokenUser = data.user;
+				tokenSession = null;
 
 				// Continue processing the request
 				const response = await resolve(event, {

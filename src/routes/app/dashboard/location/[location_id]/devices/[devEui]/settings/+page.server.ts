@@ -96,5 +96,55 @@ export const actions: Actions = {
 			console.error('Error updating device settings:', err);
 			return { success: false, error: 'Internal Server Error' };
 		}
+	},
+	deleteDevice: async ({ params, locals }) => {
+		const { devEui } = params;
+
+		if (!devEui) {
+			return { success: false, error: 'Device EUI is required' };
+		}
+
+		const sessionService = new SessionService(locals.supabase);
+		const { session, user } = await sessionService.getSafeSession();
+
+		if (!session || !user) {
+			return { success: false, error: 'Authentication required' };
+		}
+
+		const errorHandler = new ErrorHandlingService();
+		const deviceRepository = new DeviceRepository(locals.supabase, errorHandler);
+		const deviceService = new DeviceService(deviceRepository);
+		const deviceOwnersRepository = new DeviceOwnersRepository(locals.supabase, errorHandler);
+
+		const device = await deviceService.getDeviceByEui(devEui);
+
+		if (!device) {
+			return { success: false, error: 'Device not found' };
+		}
+
+		const owners = await deviceOwnersRepository.findByDeviceEui(devEui);
+		const isOwner =
+			device.user_id === user.id ||
+			owners.some((owner) => owner.user_id === user.id && owner.permission_level === 1);
+
+		if (!isOwner) {
+			return { success: false, error: 'Unauthorized to delete this device' };
+		}
+
+		try {
+			const deleted = await deviceService.deleteDevice(devEui);
+
+			if (!deleted) {
+				return { success: false, error: 'Failed to delete device' };
+			}
+
+			return { success: true };
+		} catch (err) {
+			console.error('Error deleting device:', err);
+			return {
+				success: false,
+				error: err instanceof Error ? err.message : 'Internal Server Error'
+			};
+		}
 	}
 };

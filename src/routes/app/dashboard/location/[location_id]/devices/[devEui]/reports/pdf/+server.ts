@@ -1,3 +1,4 @@
+import type { TableRow } from '$lib/pdf';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
 import { SessionService } from '$lib/services/SessionService';
@@ -112,8 +113,6 @@ export const GET: RequestHandler = async ({
 			align: 'left'
 		});
 
-		// Generate sample data for the table
-		const dataa: { date: string; values: [] }[] = []; //////////////////////////////////////////////////////////////////
 		const tokyoNow = DateTime.now().setZone('Asia/Tokyo');
 		const startDate = tokyoNow.minus({ months: 1 }).startOf('month').toUTC().toJSDate();
 		const endDate = tokyoNow.minus({ months: 1 }).endOf('month').toUTC().toJSDate();
@@ -129,34 +128,65 @@ export const GET: RequestHandler = async ({
 			throw error(404, 'No data found for the specified device');
 		}
 
-		// Transform DeviceDataRecord[] to TableData[] format
-		const data = deviceData.map((record) => ({
-			date: record.created_at,
-			values: Object.entries(record)
-				.filter(
-					([key, value]) =>
-						key !== 'dev_eui' && key !== 'created_at' && typeof value === 'number' && value !== null
+		// Determine numeric keys across dataset
+		const numericKeys = Array.from(
+			new Set(
+				deviceData.flatMap((record) =>
+					Object.entries(record as Record<string, unknown>)
+						.filter(
+							([key, value]) =>
+								key !== 'dev_eui' && key !== 'created_at' && typeof value === 'number'
+						)
+						.map(([key]) => key)
 				)
-				.map(([_, value]) => value as number)
-		}));
+			)
+		).sort();
 
-		if (!data || data.length === 0) {
-			throw error(404, 'No data found for the specified device');
+		if (numericKeys.length === 0) {
+			throw error(404, 'No numeric data found for the specified device');
 		}
 
-		// Get alert points for the device
-		const alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
-
-		// Create the alert data structure
-		const alertData = {
-			alert_points: alertPoints,
-			created_at: new Date().toISOString(),
-			dev_eui: devEui,
-			id: 1,
-			name: 'Device Report',
-			report_id: '1'
+		const dataHeaderTable: TableRow = {
+			header: { label: '日時', width: 70 },
+			cells: numericKeys.map((key) => ({
+				label: key,
+				width: 60
+			}))
 		};
-		createPDFDataTable(doc, data, alertData);
+
+		const dataRowsTable: TableRow[] = deviceData.map((record) => {
+			const recordData = record as Record<string, unknown>;
+			const createdAt = record.created_at ?? recordData.created_at;
+			const timestampLabel =
+				typeof createdAt === 'string'
+					? DateTime.fromISO(createdAt, { zone: 'utc' })
+							.setZone('Asia/Tokyo')
+							.toFormat('yyyy-MM-dd HH:mm')
+					: DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy-MM-dd HH:mm');
+
+			return {
+				header: {
+					label: timestampLabel,
+					value: createdAt,
+					width: 70
+				},
+				cells: numericKeys.map((key) => {
+					const value = recordData[key];
+					return {
+						label: key,
+						value: typeof value === 'number' ? value : undefined,
+						width: 60
+					};
+				})
+			};
+		});
+
+		createPDFDataTable({
+			doc,
+			dataHeader: dataHeaderTable,
+			dataRows: dataRowsTable,
+			config: { timezone: 'Asia/Tokyo' }
+		});
 
 		// Add generation timestamp
 		doc

@@ -48,8 +48,8 @@ export class RuleService implements IRuleService {
 	 * Get rules with Criteria by device EUI
 	 * @param devEui The device EUI
 	 */
-	getRulesAndCriteriaByDevice(devEui: string): Promise<RuleWithCriteria | null> {
-		return this.ruleRepository.findRuleWithCriteria(devEui);
+	getRulesAndCriteriaByDevice(devEui: string): Promise<RuleWithCriteria[]> {
+		return this.ruleRepository.getRulesAndCriteriaByDevice(devEui);
 	}
 
 	/**

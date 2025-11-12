@@ -41,15 +41,22 @@ export const themeStore: Writable<ThemeState> = writable(initial);
 function applyDOMTheme(theme: 'light' | 'dark', mode: ThemeMode, system: 'light' | 'dark') {
 	if (typeof document === 'undefined') return;
 	const root = document.documentElement;
+	const body = document.body;
 
-	// Apply/remove Tailwind dark class
-	if (theme === 'dark') root.classList.add('dark');
-	else root.classList.remove('dark');
+	// Apply/remove Tailwind dark class consistently on both html and body
+	const targets = [root, body].filter((el): el is HTMLElement => Boolean(el));
+	targets.forEach((el) => {
+		if (theme === 'dark') el.classList.add('dark');
+		else el.classList.remove('dark');
+	});
 
 	// Data attributes for downstream CSS hooks / debugging
 	root.dataset.theme = theme;
 	root.dataset.mode = mode; // user selected value (light|dark|system)
 	root.dataset.system = system; // current system preference
+	if (body) {
+		body.dataset.theme = theme;
+	}
 	const explicit = mode !== 'system';
 	if (explicit) root.dataset.explicit = 'true';
 	else delete root.dataset.explicit;
@@ -110,6 +117,9 @@ export function initThemeOnce() {
 	const mq = window.matchMedia('(prefers-color-scheme: dark)');
 	mq.addEventListener('change', (e) => {
 		themeStore.update((s) => {
+			if (s.mode !== 'system') {
+				return s;
+			}
 			const system = e.matches ? 'dark' : 'light';
 			const effective = deriveEffective(s.mode, system);
 			applyDOMTheme(effective, s.mode, system);

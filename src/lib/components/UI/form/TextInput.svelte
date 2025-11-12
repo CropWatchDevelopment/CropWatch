@@ -25,6 +25,6 @@
 	bind:value
 	{placeholder}
 	{disabled}
-	class="min-h-9 rounded border border-gray-300 bg-white px-2 py-0 text-gray-900 text-inherit dark:border-zinc-700 dark:bg-zinc-800 dark:text-white {className}"
+	class="min-h-10 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm text-[var(--color-text)] shadow-sm transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-[var(--color-border)] dark:bg-[var(--color-foreground-dark)] dark:text-[var(--color-text)] {className}"
 	{...rest}
 />

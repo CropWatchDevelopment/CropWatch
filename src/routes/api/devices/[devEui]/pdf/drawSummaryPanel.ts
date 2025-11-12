@@ -1,6 +1,7 @@
 // src/lib/pdf/drawSummaryPanel.ts
-import type PDFDocument from 'pdfkit';
 import type { TableRow } from '$lib/pdf';
+
+type PDFDocument = InstanceType<typeof import('pdfkit')>;
 
 export type ClassificationBand = { label: string; min: number; max: number };
 

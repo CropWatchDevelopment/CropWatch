@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { GET } from './+server';
 import { jest } from '@jest/globals';
 import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
@@ -19,13 +20,11 @@ describe('GET /api/devices/[devEui]/pdf', () => {
 			},
 			from: jest.fn().mockReturnValue({
 				select: jest.fn().mockReturnValue({
-					eq: jest
-						.fn()
-						.mockReturnValue({
-							single: jest
-								.fn()
-								.mockResolvedValue({ data: { full_name: 'Test User', employer: 'Test Company' } })
-						})
+					eq: jest.fn().mockReturnValue({
+						single: jest
+							.fn()
+							.mockResolvedValue({ data: { full_name: 'Test User', employer: 'Test Company' } })
+					})
 				})
 			})
 		};
