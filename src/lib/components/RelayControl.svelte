@@ -31,7 +31,7 @@
 	];
 
 	const POLL_INTERVAL_MS = 10_000;
-	const COOLDOWN_SECONDS = 15;
+	const COOLDOWN_SECONDS = 120;
 
 	let busy: Record<RelayKey, boolean> = $state({ relay1: false, relay2: false });
 	let relayState: Record<RelayKey, boolean> = $state({ relay1: false, relay2: false });

@@ -72,11 +72,12 @@
 			});
 		}
 
-		if (previouslyUsedAlertColors) {
+		if (alertPointsColorHistory) {
+			debugger;
 			untrack(() => {
-				previouslyUsedAlertColors.splice(
+				alertPointsColorHistory.splice(
 					0,
-					previouslyUsedAlertColors.length,
+					alertPointsColorHistory.length,
 					...data.previouslyUsedAlertColors.data
 						.map((item: any) => item.hex_color)
 						.filter((color: string) => color)

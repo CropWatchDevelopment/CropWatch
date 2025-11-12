@@ -32,7 +32,7 @@ const DEFAULT_CONFIG: TableConfig = {
 
 const MIN_COLUMN_SCALE = 0.9;
 
-const isAlertRow = (row: TableRow) =>
+export const rowHasAlert = (row: TableRow) =>
 	[row.header, ...row.cells].some((cell) => cell.bgColor && cell.bgColor !== '#ffffff');
 
 export function sampleDataRowsForTable(
@@ -41,7 +41,56 @@ export function sampleDataRowsForTable(
 ): TableRow[] {
 	const samplingInterval = Math.max(1, takeEvery || 1);
 	if (samplingInterval <= 1) return dataRows;
-	return dataRows.filter((row, idx) => idx % samplingInterval === 0 || isAlertRow(row));
+	return dataRows.filter((row, idx) => idx % samplingInterval === 0 || rowHasAlert(row));
+}
+
+function getRowTimestamp(row: TableRow): number | null {
+	const value = row?.header?.value;
+	if (value instanceof Date) return value.getTime();
+	if (typeof value === 'number') return value;
+	if (typeof value === 'string' && value.length) {
+		const parsed = Date.parse(value);
+		if (!Number.isNaN(parsed)) {
+			return parsed;
+		}
+	}
+	if (row?.header?.label) {
+		const parsed = Date.parse(row.header.label);
+		if (!Number.isNaN(parsed)) {
+			return parsed;
+		}
+	}
+	return null;
+}
+
+export function sampleDataRowsByInterval(
+	dataRows: TableRow[],
+	intervalMinutes: number
+): TableRow[] {
+	const intervalMs = intervalMinutes > 0 ? intervalMinutes * 60 * 1000 : 0;
+	if (!intervalMs) return dataRows;
+	const sampled: TableRow[] = [];
+	let lastKeptTimestamp: number | null = null;
+
+	for (const row of dataRows) {
+		const timestamp = getRowTimestamp(row);
+		const hasAlert = rowHasAlert(row);
+		const shouldInclude =
+			hasAlert ||
+			!sampled.length ||
+			timestamp === null ||
+			lastKeptTimestamp === null ||
+			timestamp - lastKeptTimestamp >= intervalMs;
+
+		if (shouldInclude) {
+			sampled.push(row);
+			if (timestamp !== null) {
+				lastKeptTimestamp = timestamp;
+			}
+		}
+	}
+
+	return sampled;
 }
 
 /**
