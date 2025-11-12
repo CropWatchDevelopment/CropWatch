@@ -1,0 +1,4 @@
+# Ignore all auto-generated type files
+exclude_patterns = [
+    "**/database.types.ts"
+]
