@@ -10,19 +10,35 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 export const actions: Actions = {
 	update: async ({ request, locals: { supabase, safeGetSession } }) => {
 		const formData = await request.formData();
-		const fullName = formData.get('fullName') as string;
-		const username = formData.get('username') as string;
-		const website = formData.get('website') as string;
-		const avatarUrl = formData.get('avatarUrl') as string;
+		const fullName = formData.get('fullName');
+		const username = formData.get('username');
+		const website = formData.get('website');
+		const avatarUrl = formData.get('avatarUrl');
 		const { session } = await safeGetSession();
-		const { error } = await supabase.from('profiles').upsert({
-			id: session?.user.id,
+
+		if (!session?.user) {
+			return fail(401, { error: 'Authentication required' });
+		}
+
+		if (
+			typeof fullName !== 'string' ||
+			typeof username !== 'string' ||
+			typeof website !== 'string' ||
+			typeof avatarUrl !== 'string'
+		) {
+			return fail(400, { error: 'Invalid form submission' });
+		}
+
+		const payload = {
+			id: session.user.id,
 			full_name: fullName,
 			username,
 			website,
 			avatar_url: avatarUrl,
-			updated_at: new Date()
-		});
+			updated_at: new Date().toISOString()
+		};
+
+		const { error } = await supabase.from('profiles').upsert([payload]);
 		if (error) {
 			return fail(500, {
 				fullName,

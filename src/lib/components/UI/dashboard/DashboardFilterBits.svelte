@@ -13,7 +13,7 @@
 		mdiTune,
 		mdiViewDashboard,
 		mdiViewList
-	} from '@mdi/js';
+	} from '$lib/icons/mdi';
 	import { Button, DropdownMenu, Tooltip } from 'bits-ui';
 	import { onMount } from 'svelte';
 	import { themeStore } from '$lib/stores/theme';

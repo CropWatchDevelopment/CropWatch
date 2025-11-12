@@ -4,16 +4,27 @@
 	import { Tooltip } from 'bits-ui';
 
 	// Props
+	type IconSize = 'small' | 'medium' | 'large' | 'xlarge';
+
 	let {
 		value = 50, // 0..100
-		size = 'medium',
+		size = 'medium' as IconSize,
 		showLabel = false, // show % text next to icon
 		charging = false, // optional charging bolt overlay
 		lowThreshold = 15, // % -> red
 		midThreshold = 40, // % -> amber
 		highThreshold = 70, // % -> yellow; above is green
 		ariaLabel = 'Battery level'
-	} = $props();
+	} = $props<{
+		value?: number;
+		size?: IconSize;
+		showLabel?: boolean;
+		charging?: boolean;
+		lowThreshold?: number;
+		midThreshold?: number;
+		highThreshold?: number;
+		ariaLabel?: string;
+	}>();
 
 	function getBatteryColor(): string {
 		if (value <= lowThreshold) return 'red';

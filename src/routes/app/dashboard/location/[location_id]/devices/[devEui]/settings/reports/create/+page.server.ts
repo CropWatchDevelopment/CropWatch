@@ -140,13 +140,19 @@ export const actions: Actions = {
 			const formData = await request.formData();
 			// const name = formData.get('name') as string;
 
-			const name = formData.get('name'); // 'abc'
-			const nameData = { name }; //  { name: 'abc' }
+			const nameEntry = formData.get('name');
+			if (typeof nameEntry !== 'string' || !nameEntry.trim()) {
+				return fail(400, { success: false, error: 'Report name is required' });
+			}
+			const name = nameEntry.trim();
+			const nameData = { name };
 
-			const reportId = formData.get('reportId') as string; // For editing existing reports
-			const alertPointsJson = formData.get('alertPoints') as string;
-			const recipientsJson = formData.get('recipients') as string;
-			const schedulesJson = formData.get('schedules') as string;
+			const reportIdEntry = formData.get('reportId');
+			const reportId =
+				typeof reportIdEntry === 'string' && reportIdEntry.length > 0 ? reportIdEntry : undefined;
+			const alertPointsJson = formData.get('alertPoints');
+			const recipientsJson = formData.get('recipients');
+			const schedulesJson = formData.get('schedules');
 
 			if (!name) {
 				return fail(400, { success: false, error: 'Report name is required' });
@@ -157,9 +163,18 @@ export const actions: Actions = {
 			let schedules = [];
 
 			try {
-				alertPoints = alertPointsJson ? JSON.parse(alertPointsJson) : [];
-				recipients = recipientsJson ? JSON.parse(recipientsJson) : [];
-				schedules = schedulesJson ? JSON.parse(schedulesJson) : [];
+				alertPoints =
+					typeof alertPointsJson === 'string' && alertPointsJson.length > 0
+						? JSON.parse(alertPointsJson)
+						: [];
+				recipients =
+					typeof recipientsJson === 'string' && recipientsJson.length > 0
+						? JSON.parse(recipientsJson)
+						: [];
+				schedules =
+					typeof schedulesJson === 'string' && schedulesJson.length > 0
+						? JSON.parse(schedulesJson)
+						: [];
 			} catch (parseError) {
 				return fail(400, { success: false, error: 'Invalid data format' });
 			}
@@ -197,7 +212,7 @@ export const actions: Actions = {
 			} else {
 				// Create new report
 				report = await reportService.createReport({
-					name,
+					name: nameData.name,
 					dev_eui: devEui
 				});
 			}

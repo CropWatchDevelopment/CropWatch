@@ -10,144 +10,154 @@
 	import { success as toastSuccess, error as toastError } from '$lib/stores/toast.svelte';
 	import type { ReportAlertPoint } from '$lib/models/Report.js';
 	import type { ActionResult } from '@sveltejs/kit';
-	import { untrack } from 'svelte';
 	import { _ } from 'svelte-i18n';
 	import CopyButton from '$lib/components/CopyButton.svelte';
 
 	let { data, form } = $props();
 
-	// Extract data properties
+	type AlertPointState = {
+		id: string;
+		name: string;
+		operator: '=' | '>' | '<' | 'range' | 'null';
+		value?: number;
+		min?: number;
+		max?: number;
+		data_point_key?: string;
+		hex_color: string;
+	};
+
+	type RecipientState = {
+		id: string;
+		email: string;
+		name: string;
+	};
+
+	type ScheduleState = {
+		id: string;
+		frequency: 'daily' | 'weekly' | 'monthly';
+		time: string;
+		days?: number[];
+	};
+
+	const getColorHistory = (source: unknown): string[] => {
+		const base = Array.isArray(source) ? source : (source as { data?: unknown })?.data;
+		if (!Array.isArray(base)) return [];
+		return base
+			.map((item) => (item as { hex_color?: string })?.hex_color)
+			.filter((color): color is string => typeof color === 'string' && color.length);
+	};
+
+	const normalizeAlertPoints = (source: unknown): AlertPointState[] => {
+		if (!Array.isArray(source)) return [];
+		return source.map((point: any) => ({
+			id: point.id?.toString() || crypto.randomUUID(),
+			name: point.name || '',
+			operator:
+				point.operator === null || point.operator === 'null'
+					? 'null'
+					: point.operator === 'range'
+						? 'range'
+						: point.operator || ('=' as '=' | '>' | '<' | 'range'),
+			data_point_key: point.data_point_key || '',
+			min: point.min ?? undefined,
+			max: point.max ?? undefined,
+			value: point.value ?? undefined,
+			hex_color: point.hex_color || '#3B82F6'
+		}));
+	};
+
+	const normalizeRecipients = (source: unknown): RecipientState[] => {
+		if (!Array.isArray(source)) return [];
+		return source.map((recipient: any) => ({
+			id: recipient.id?.toString() || crypto.randomUUID(),
+			email: recipient.email || '',
+			name: recipient.name || ''
+		}));
+	};
+
+	const normalizeSchedules = (source: unknown): ScheduleState[] => {
+		if (!Array.isArray(source)) return [];
+		return source.map((schedule: any) => ({
+			id: schedule.id?.toString() || crypto.randomUUID(),
+			frequency: schedule.end_of_week ? 'weekly' : schedule.end_of_month ? 'monthly' : 'daily',
+			time: schedule.time || '09:00',
+			days: schedule.days || []
+		}));
+	};
+
 	const devEui = $derived(data.devEui);
 	const locationId = $derived(data.locationId);
 	const report = $derived(data.report);
 	const isEditing = $derived(data.isEditing);
 	const recipientsData = $derived(data.recipients);
 	const dataKeys = $derived(data.dataKeys);
-	const alertPointsColorHistory = $derived(data.previouslyUsedAlertColors);
 
-	// Form state
-	let reportName = $state('');
+	const initialColorHistory = getColorHistory(data.previouslyUsedAlertColors);
+	let alertPointsColorHistory = $state<string[]>(initialColorHistory);
+
+	const initialReportName = isEditing && report ? report.name || '' : '';
+	let reportName = $state(initialReportName);
 	let isSubmitting = $state(false);
 	let showErrors = $state(false);
 	let formEl: HTMLFormElement;
 
-	// Alert points state - using $state for deep reactivity
-	let alertPoints = $state<
-		Array<{
-			id: string;
-			name: string;
-			operator: '=' | '>' | '<' | 'range' | 'null'; // Allow both
-			value?: number;
-			min?: number;
-			max?: number;
-			data_point_key?: string;
-			hex_color: string;
-		}>
-	>([]);
+	const initialAlertPoints = isEditing ? normalizeAlertPoints(data.alertPoints) : [];
+	const initialRecipients = isEditing ? normalizeRecipients(recipientsData) : [];
+	const initialSchedules = isEditing ? normalizeSchedules(data.schedules) : [];
 
-	// Recipients state
-	let recipients = $state<
-		Array<{
-			id: string;
-			email: string;
-			name: string;
-		}>
-	>([]);
+	let alertPoints = $state<AlertPointState[]>(initialAlertPoints);
+	let recipients = $state<RecipientState[]>(initialRecipients);
+	let schedules = $state<ScheduleState[]>(initialSchedules);
 
-	// Schedules state
-	let schedules = $state<
-		Array<{
-			id: string;
-			frequency: 'daily' | 'weekly' | 'monthly';
-			time: string;
-			days?: number[];
-		}>
-	>([]);
+	const validationErrors = $derived(() => {
+		const errors: string[] = [];
+		const ranges: Array<{ start: number; end: number; name: string }> = [];
 
-	// Initialize form data from loaded report if editing
-	$effect(() => {
-		if (isEditing && report) {
-			untrack(() => {
-				reportName = report.name || '';
-			});
-		}
+		alertPoints.forEach((point) => {
+			if (point.operator === 'null' || point.operator === null || !point.operator) {
+				return;
+			}
 
-		if (previouslyUsedAlertColors) {
-			untrack(() => {
-				previouslyUsedAlertColors.splice(
-					0,
-					previouslyUsedAlertColors.length,
-					...data.previouslyUsedAlertColors.data
-						.map((item: any) => item.hex_color)
-						.filter((color: string) => color)
-				);
-			});
-		}
+			const value = Number(point.value);
+			const min = Number(point.min);
+			const max = Number(point.max);
 
-		if (isEditing && data.alertPoints) {
-			untrack(() => {
-				alertPoints.splice(
-					0,
-					alertPoints.length,
-					...data.alertPoints.map((point: any) => ({
-						id: point.id?.toString() || crypto.randomUUID(),
-						name: point.name || '',
-						operator:
-							// Normalize null values to 'null' string
-							point.operator === null || point.operator === 'null'
-								? 'null'
-								: point.operator === 'range'
-									? 'range'
-									: point.operator || ('=' as '=' | '>' | '<' | 'range'),
-						data_point_key: point.data_point_key || '',
-						min: point.min ?? undefined,
-						max: point.max ?? undefined,
-						value: point.value ?? undefined,
-						hex_color: point.hex_color || '#3B82F6'
-					}))
-				);
-			});
-		}
+			let start: number;
+			let end: number;
 
-		if (isEditing && recipientsData) {
-			untrack(() => {
-				recipients.splice(
-					0,
-					recipients.length,
-					...data.recipients.map((recipient: any) => ({
-						id: recipient.id?.toString() || crypto.randomUUID(),
-						email: recipient.email || '',
-						name: recipient.name || ''
-					}))
-				);
-			});
-		}
+			if (point.operator === '=') {
+				if (isNaN(value)) return;
+				start = end = value;
+			} else if (point.operator === 'range') {
+				if (isNaN(min) || isNaN(max)) return;
+				start = min;
+				end = max;
+			} else if (point.operator === '>') {
+				if (isNaN(value)) return;
+				start = value;
+				end = Infinity;
+			} else if (point.operator === '<') {
+				if (isNaN(value)) return;
+				start = -Infinity;
+				end = value;
+			} else {
+				return;
+			}
 
-		if (isEditing && data.schedules) {
-			untrack(() => {
-				schedules.splice(
-					0,
-					schedules.length,
-					...data.schedules.map((schedule: any) => {
-						let frequency: 'daily' | 'weekly' | 'monthly' = schedule.end_of_week
-							? 'weekly'
-							: schedule.end_of_month
-								? 'monthly'
-								: 'daily';
-						return {
-							id: schedule.id?.toString() || crypto.randomUUID(),
-							frequency,
-							time: schedule.time || '09:00',
-							days: schedule.days || []
-						};
-					})
-				);
-			});
-		}
+			for (const existingRange of ranges) {
+				if (
+					(start <= existingRange.end && end >= existingRange.start) ||
+					(existingRange.start <= end && existingRange.end >= start)
+				) {
+					errors.push(`"${point.name}" overlaps with "${existingRange.name}"`);
+				}
+			}
+
+			ranges.push({ start, end, name: point.name });
+		});
+
+		return errors;
 	});
-
-	// Validation errors
-	let validationErrors = $state<string[]>([]);
 
 	// Color palette for alert points
 	const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
@@ -205,69 +215,7 @@
 		}
 	}
 
-	// Validation logic
-	function validateRanges() {
-		validationErrors.splice(0, validationErrors.length);
-
-		// Check for overlapping ranges
-		const ranges: Array<{ start: number; end: number; name: string }> = [];
-
-		alertPoints.forEach((point) => {
-			debugger;
-			// Exclude Display Only points from validation - check for both 'null' string and null value
-			if (point.operator === 'null' || point.operator === null || !point.operator) {
-				console.log(`Skipping validation for Display Only point: ${point.name}`);
-				return;
-			}
-
-			const value = Number(point.value);
-			const min = Number(point.min);
-			const max = Number(point.max);
-
-			let start: number, end: number;
-
-			if (point.operator === '=') {
-				if (isNaN(value)) return;
-				start = end = value;
-			} else if (point.operator === 'range') {
-				if (isNaN(min) || isNaN(max)) return;
-				start = min;
-				end = max;
-			} else if (point.operator === '>') {
-				if (isNaN(value)) return;
-				start = value;
-				end = Infinity;
-			} else if (point.operator === '<') {
-				if (isNaN(value)) return;
-				start = -Infinity;
-				end = value;
-			} else {
-				return; // Skip invalid points
-			}
-
-			// Check for overlaps with existing ranges
-			for (const existingRange of ranges) {
-				if (
-					(start <= existingRange.end && end >= existingRange.start) ||
-					(existingRange.start <= end && existingRange.end >= start)
-				) {
-					validationErrors.push(`"${point.name}" overlaps with "${existingRange.name}"`);
-				}
-			}
-
-			// ranges.push({ start, end, name: point.name });
-		});
-	}
-
-	// Watch for changes to alert points
-	$effect(() => {
-		// Only track alertPoints changes, not validationErrors changes
-		const points = alertPoints;
-		// Use untrack to prevent reactive loops when updating validationErrors
-		untrack(() => {
-			validateRanges();
-		});
-	});
+	// Validation errors computed from alert points
 
 	// Derived number line points for visualization
 	const numberLinePoints = $derived(

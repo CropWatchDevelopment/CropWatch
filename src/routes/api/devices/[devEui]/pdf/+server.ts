@@ -3,7 +3,11 @@ import { i18n } from '$lib/i18n/index.svelte';
 import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 import type { ReportAlertPoint } from '$lib/models/Report';
 import type { TableCell, TableRow } from '$lib/pdf';
-import { createPDFDataTable } from '$lib/pdf/pdfDataTable';
+import {
+	createPDFDataTable,
+	sampleDataRowsForTable,
+	sampleDataRowsByInterval
+} from '$lib/pdf/pdfDataTable';
 import { addFooterPageNumber } from '$lib/pdf/pdfFooterPageNumber';
 import { createPDFLineChartImage } from '$lib/pdf/pdfLineChartImage';
 import { checkMatch, getValue } from '$lib/pdf/utils';
@@ -256,7 +260,10 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const contentWidth = doc.page.width - marginLeft - marginRight;
 
 		// Title
-		const isWeekly = Math.abs(userEnd.diff(userStart, 'days').days - 7) < 0.1;
+		const totalRangeDays = Math.abs(userEnd.diff(userStart, 'days').days);
+		const isWeekly = Math.abs(totalRangeDays - 7) < 0.1;
+		const chartIntervalMinutes = totalRangeDays > 7 ? 60 : totalRangeDays > 3 ? 30 : 0;
+		const tableDisplayIntervalMinutes = 30;
 		// const titleText = isWeekly ? $_('device_report_weekly') : $_('device_report_monthly');
 		// doc.fontSize(16).text(`${titleText} ${$_('device_report')}`);
 		doc.fontSize(16).text(`${$_('device_report')}`);
@@ -386,6 +393,8 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			cells: [...tableKeyColumns, { label: $_('comment'), width: 40 }]
 		};
 		const dataRowsTable = getDataRows(tableKeys);
+		const sampledTableRows = sampleDataRowsByInterval(dataRowsTable, tableDisplayIntervalMinutes);
+		const tableConfig = { timezone: timezoneParam, takeEvery: 1 };
 
 		// LEFT summary
 		const primaryKey = tableKeys[0] ?? validKeys[0] ?? 'temperature_c';
@@ -440,13 +449,15 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			} else {
 				doc.moveDown(2);
 			}
+			const chartRows = getDataRows([key]);
+			const sampledChartRows = sampleDataRowsByInterval(chartRows, chartIntervalMinutes);
 			createPDFLineChartImage({
 				doc,
 				dataHeader: {
 					header: { label: $_('datetime'), value: '', width: 60 },
 					cells: [{ label: $_(key), value: '', width: 40, color: getColorNameByKey(key) }]
 				},
-				dataRows: getDataRows([key]),
+				dataRows: sampledChartRows,
 				alertPoints,
 				config: { title: $_(key), width: chartWidth, height: chartHeight, timezone: timezoneParam }
 			});
@@ -460,8 +471,8 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		createPDFDataTable({
 			doc,
 			dataHeader: dataHeaderTable,
-			dataRows: dataRowsTable,
-			config: { timezone: timezoneParam }
+			dataRows: sampledTableRows,
+			config: tableConfig
 		});
 
 		// Footer

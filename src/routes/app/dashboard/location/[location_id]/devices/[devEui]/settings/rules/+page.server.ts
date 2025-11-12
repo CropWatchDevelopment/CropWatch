@@ -267,8 +267,11 @@ export const actions: Actions = {
 				} else {
 					// Create new criteria for this rule
 					const newCriteriaInsert: RuleCriteriaInsert = {
-						...criteriaData,
-						ruleGroupId: updatedRule.ruleGroupId
+						ruleGroupId: updatedRule.ruleGroupId,
+						subject: item.subject,
+						operator: item.operator,
+						trigger_value: item.trigger_value,
+						reset_value: item.reset_value
 					};
 					const createdCriteria = await ruleService.createRuleCriteria(newCriteriaInsert);
 					if (!createdCriteria) {

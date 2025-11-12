@@ -66,13 +66,13 @@ export class LocationService implements ILocationService {
 	 * Delete a location
 	 * @param locationId The location ID
 	 */
-	async deleteLocation(locationId: number, user_id: string): Promise<boolean> {
+	async deleteLocation(locationId: number, userId: string): Promise<boolean> {
 		const location = await this.locationRepository.findById(locationId);
 		if (!location) {
 			throw new Error(`Location with ID ${locationId} not found`);
 		}
-		if (location.owner_id !== user_id) {
-			throw new Error(`User ${user_id} does not have permission to delete this location`);
+		if (location.owner_id !== userId) {
+			throw new Error(`User ${userId} does not have permission to delete this location`);
 		}
 		return this.locationRepository.delete(locationId);
 	}
@@ -214,10 +214,14 @@ export class LocationService implements ILocationService {
 
 						if (existingPermission) {
 							// Update existing permission
-							await this.deviceRepository.updateDevicePermission(
-								existingPermission.id,
-								permissionLevel
-							);
+							if (typeof existingPermission.id === 'number') {
+								await this.deviceRepository.updateDevicePermission(
+									existingPermission.id,
+									permissionLevel
+								);
+							} else {
+								// Direct owners already have full access; nothing to update
+							}
 						} else {
 							// Create new permission
 							await this.deviceRepository.addUserToDevice(device.dev_eui, userId, permissionLevel);

@@ -44,6 +44,12 @@
 			label: $_('Settings')
 		}
 	];
+
+	const resolvePath = (template: string): string =>
+		template.replace(/\[(?<param>\w+?)\]/g, (_match, param: string) => {
+			const params = page.params as Record<string, string | undefined>;
+			return params[param] ?? '';
+		});
 </script>
 
 <SiteWideRefreshButton />
@@ -54,10 +60,7 @@
 			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 		</svg>
 	{/if}
-	<a
-		href={path?.replaceAll(/\[(?<param>\w+?)\]/g, (_, param) => page.params[param])}
-		class="transition-colors hover:text-green-400">{label}</a
-	>
+	<a href={resolvePath(path)} class="transition-colors hover:text-green-400">{label}</a>
 {/snippet}
 
 <nav class="ml-16 flex flex-wrap items-center gap-1">

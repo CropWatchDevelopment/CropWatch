@@ -1,25 +1,35 @@
-<script>
+<script lang="ts">
 	import { _ } from 'svelte-i18n';
-	let { historicalData } = $props();
+	type DataRecord = Record<string, unknown> & { created_at?: string };
 
-	let dataArray = $derived(historicalData); // Assume data is an array of objects
+	let { historicalData } = $props<{ historicalData: DataRecord[] }>();
+
+	let dataArray = $derived(historicalData);
 
 	// Filter data for current day
-	function getCurrentDayData(dataArray) {
+	function getCurrentDayData(dataArray: DataRecord[]): DataRecord[] {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 
 		return dataArray.filter((item) => {
-			const itemDate = new Date(item.created_at);
+			const createdAt = item.created_at;
+			if (typeof createdAt !== 'string') {
+				return false;
+			}
+			const itemDate = new Date(createdAt);
+			if (Number.isNaN(itemDate.getTime())) {
+				return false;
+			}
 			itemDate.setHours(0, 0, 0, 0);
 			return itemDate.getTime() === today.getTime();
 		});
 	}
 
 	// Get visible columns
-	function getVisibleColumns(dataArray) {
+	function getVisibleColumns(dataArray: DataRecord[]): string[] {
 		const excludedColumns = ['is_simulated', 'dev_eui', 'smoke_detected', 'id', 'vape_detected'];
-		const allKeys = dataArray.length > 0 ? Object.keys(dataArray[0]) : [];
+		const allKeys =
+			dataArray.length > 0 ? Object.keys(dataArray[0] as Record<string, unknown>) : [];
 
 		return allKeys.filter((key) => {
 			if (excludedColumns.includes(key)) return false;
@@ -29,7 +39,7 @@
 	}
 
 	// Format column names
-	function formatColumnName(key) {
+	function formatColumnName(key: string): string {
 		return key
 			.split('_')
 			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -37,50 +47,50 @@
 	}
 
 	// Format cell value
-	function formatCellValue(key, value) {
+	function formatCellValue(key: string, value: unknown): string {
 		if (key === 'created_at') {
-			return new Date(value).toLocaleString();
+			if (typeof value === 'string') {
+				const date = new Date(value);
+				return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+			}
+			return '—';
 		}
 		if (typeof value === 'boolean') {
 			return value ? 'Yes' : 'No';
 		}
 		if (typeof value === 'number') {
-			return value.toFixed(2);
+			return Number.isFinite(value) ? value.toFixed(2) : '—';
 		}
-		return value;
+		return value == null ? '—' : String(value);
 	}
 
 	let filteredData = $derived(getCurrentDayData(dataArray));
 	let visibleColumns = $derived(getVisibleColumns(filteredData));
 </script>
 
-<div class="min-h-screen w-full text-gray-900">
-	<div class="mx-auto w-full p-4">
-		<div
-			class="overflow-hidden rounded-lg border border-gray-200/70 bg-white shadow-lg dark:border-white/10 dark:bg-neutral-900"
-		>
+<div class="w-full text-[var(--color-text)]">
+	<div class="mx-auto w-full max-w-6xl p-4">
+		<div class="surface-card overflow-hidden">
 			<!-- Header -->
-			<div
-				class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 dark:from-blue-700 dark:to-indigo-800"
-			>
-				<h1 class="text-2xl font-bold text-white">{$_('Sensor Data - Today')}</h1>
+			<div class="border-b border-[var(--color-border-subtle)] px-6 py-4">
+				<h1 class="text-xl leading-tight font-semibold">{$_('Sensor Data - Today')}</h1>
 			</div>
 
 			<!-- Table wrapper -->
 			<div class="overflow-x-auto">
 				{#if filteredData.length === 0}
-					<div class="p-12 text-center text-gray-500 dark:text-gray-400">
-						<p class="text-lg">{$_('No data available for today')}</p>
+					<div class="p-12 text-center text-[var(--color-text-muted)]">
+						<p class="text-base">{$_('No data available for today')}</p>
 					</div>
 				{:else}
 					<table class="w-full text-sm">
 						<thead
-							class="border-b border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-neutral-800"
+							class="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-emphasis)]"
 						>
 							<tr>
 								{#each visibleColumns as column}
 									<th
-										class="text-md px-6 py-3 text-left font-semibold tracking-wide text-gray-700 uppercase dark:text-gray-200"
+										class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-[var(--color-text-muted)] uppercase"
 									>
 										{$_(column)}
 									</th>
@@ -88,15 +98,11 @@
 							</tr>
 						</thead>
 
-						<tbody class="divide-y divide-gray-200 dark:divide-white/10">
+						<tbody class="divide-y divide-[var(--color-border-subtle)]">
 							{#each filteredData as row, rowIndex}
-								<tr
-									class="transition-colors duration-150 even:bg-transparent hover:bg-gray-50 dark:even:bg-white/5 dark:hover:bg-white/10"
-								>
+								<tr class="transition-colors duration-150 hover:bg-[var(--color-surface-emphasis)]">
 									{#each visibleColumns as column}
-										<td
-											class="px-6 py-3 text-lg whitespace-nowrap text-gray-900 dark:text-gray-100"
-										>
+										<td class="px-6 py-3 text-sm whitespace-nowrap text-[var(--color-text)]">
 											{formatCellValue(column, row[column])}
 										</td>
 									{/each}

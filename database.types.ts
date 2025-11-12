@@ -386,6 +386,63 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			cw_air_data_duplicate: {
+				Row: {
+					battery_level: number | null;
+					co: number | null;
+					co2: number | null;
+					created_at: string;
+					dev_eui: string;
+					humidity: number | null;
+					is_simulated: boolean;
+					lux: number | null;
+					pressure: number | null;
+					rainfall: number | null;
+					smoke_detected: boolean | null;
+					temperature_c: number | null;
+					uv_index: number | null;
+					vape_detected: boolean | null;
+					wind_direction: number | null;
+					wind_speed: number | null;
+				};
+				Insert: {
+					battery_level?: number | null;
+					co?: number | null;
+					co2?: number | null;
+					created_at?: string;
+					dev_eui: string;
+					humidity?: number | null;
+					is_simulated?: boolean;
+					lux?: number | null;
+					pressure?: number | null;
+					rainfall?: number | null;
+					smoke_detected?: boolean | null;
+					temperature_c?: number | null;
+					uv_index?: number | null;
+					vape_detected?: boolean | null;
+					wind_direction?: number | null;
+					wind_speed?: number | null;
+				};
+				Update: {
+					battery_level?: number | null;
+					co?: number | null;
+					co2?: number | null;
+					created_at?: string;
+					dev_eui?: string;
+					humidity?: number | null;
+					is_simulated?: boolean;
+					lux?: number | null;
+					pressure?: number | null;
+					rainfall?: number | null;
+					smoke_detected?: boolean | null;
+					temperature_c?: number | null;
+					uv_index?: number | null;
+					vape_detected?: boolean | null;
+					wind_direction?: number | null;
+					wind_speed?: number | null;
+				};
+				Relationships: [];
+			};
 			cw_data_metadata: {
 				Row: {
 					adder: number;
@@ -421,6 +478,51 @@ export type Database = {
 					public_name?: string | null;
 				};
 				Relationships: [];
+			};
+			cw_device_gateway: {
+				Row: {
+					created_at: string;
+					dev_eui: string;
+					gateway_id: string;
+					id: number;
+					last_update: string;
+					rssi: number | null;
+					snr: number | null;
+				};
+				Insert: {
+					created_at?: string;
+					dev_eui: string;
+					gateway_id: string;
+					id?: number;
+					last_update?: string;
+					rssi?: number | null;
+					snr?: number | null;
+				};
+				Update: {
+					created_at?: string;
+					dev_eui?: string;
+					gateway_id?: string;
+					id?: number;
+					last_update?: string;
+					rssi?: number | null;
+					snr?: number | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_device_gateway_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: false;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
+					},
+					{
+						foreignKeyName: 'cw_device_gateway_gateway_id_fkey';
+						columns: ['gateway_id'];
+						isOneToOne: false;
+						referencedRelation: 'cw_gateways';
+						referencedColumns: ['gateway_id'];
+					}
+				];
 			};
 			cw_device_owners: {
 				Row: {
@@ -577,51 +679,60 @@ export type Database = {
 			};
 			cw_devices: {
 				Row: {
-					ai_provider: string | null;
 					battery_changed_at: string | null;
 					battery_level: number | null;
 					dev_eui: string;
 					installed_at: string | null;
+					last_data_updated_at: string | null;
 					lat: number | null;
 					location_id: number | null;
 					long: number | null;
 					name: string;
+					primary_data: number | null;
 					report_endpoint: string | null;
+					secondary_data: number | null;
 					serial_number: string | null;
+					tti_name: string | null;
 					type: number | null;
 					upload_interval: number | null;
 					user_id: string | null;
 					warranty_start_date: string | null;
 				};
 				Insert: {
-					ai_provider?: string | null;
 					battery_changed_at?: string | null;
 					battery_level?: number | null;
 					dev_eui: string;
 					installed_at?: string | null;
+					last_data_updated_at?: string | null;
 					lat?: number | null;
 					location_id?: number | null;
 					long?: number | null;
 					name?: string;
+					primary_data?: number | null;
 					report_endpoint?: string | null;
+					secondary_data?: number | null;
 					serial_number?: string | null;
+					tti_name?: string | null;
 					type?: number | null;
 					upload_interval?: number | null;
 					user_id?: string | null;
 					warranty_start_date?: string | null;
 				};
 				Update: {
-					ai_provider?: string | null;
 					battery_changed_at?: string | null;
 					battery_level?: number | null;
 					dev_eui?: string;
 					installed_at?: string | null;
+					last_data_updated_at?: string | null;
 					lat?: number | null;
 					location_id?: number | null;
 					long?: number | null;
 					name?: string;
+					primary_data?: number | null;
 					report_endpoint?: string | null;
+					secondary_data?: number | null;
 					serial_number?: string | null;
+					tti_name?: string | null;
 					type?: number | null;
 					upload_interval?: number | null;
 					user_id?: string | null;
@@ -958,6 +1069,42 @@ export type Database = {
 					}
 				];
 			};
+			cw_rule_triggered: {
+				Row: {
+					created_at: string;
+					dev_eui: string;
+					id: number;
+					rule_group_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					dev_eui: string;
+					id?: number;
+					rule_group_id: string;
+				};
+				Update: {
+					created_at?: string;
+					dev_eui?: string;
+					id?: number;
+					rule_group_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_rule_triggered_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: false;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
+					},
+					{
+						foreignKeyName: 'cw_rule_triggered_rule_group_id_fkey';
+						columns: ['rule_group_id'];
+						isOneToOne: false;
+						referencedRelation: 'cw_rules';
+						referencedColumns: ['ruleGroupId'];
+					}
+				];
+			};
 			cw_rules: {
 				Row: {
 					action_recipient: string;
@@ -1026,6 +1173,33 @@ export type Database = {
 				];
 			};
 			cw_soil_data: {
+				Row: {
+					created_at: string;
+					dev_eui: string;
+					ec: number | null;
+					moisture: number | null;
+					ph: number | null;
+					temperature_c: number | null;
+				};
+				Insert: {
+					created_at?: string;
+					dev_eui: string;
+					ec?: number | null;
+					moisture?: number | null;
+					ph?: number | null;
+					temperature_c?: number | null;
+				};
+				Update: {
+					created_at?: string;
+					dev_eui?: string;
+					ec?: number | null;
+					moisture?: number | null;
+					ph?: number | null;
+					temperature_c?: number | null;
+				};
+				Relationships: [];
+			};
+			cw_soil_data_duplicate: {
 				Row: {
 					created_at: string;
 					dev_eui: string;
@@ -1331,6 +1505,7 @@ export type Database = {
 				Row: {
 					accepted_agreements: boolean;
 					avatar_url: string | null;
+					created_at: string;
 					discord: string | null;
 					email: string | null;
 					employer: string | null;
@@ -1345,6 +1520,7 @@ export type Database = {
 				Insert: {
 					accepted_agreements?: boolean;
 					avatar_url?: string | null;
+					created_at?: string;
 					discord?: string | null;
 					email?: string | null;
 					employer?: string | null;
@@ -1359,6 +1535,7 @@ export type Database = {
 				Update: {
 					accepted_agreements?: boolean;
 					avatar_url?: string | null;
+					created_at?: string;
 					discord?: string | null;
 					email?: string | null;
 					employer?: string | null;
@@ -1761,41 +1938,57 @@ export type Database = {
 				};
 				Returns: Json[];
 			};
-			get_hloc_data: {
-				Args:
-					| {
+			get_hloc_data:
+				| {
+						Args: {
 							device_eui: string;
 							end_time: string;
 							start_time: string;
 							table_name: string;
 							time_interval: string;
-					  }
-					| {
+						};
+						Returns: {
+							close: number;
+							high: number;
+							interval_time: string;
+							low: number;
+							open: number;
+						}[];
+				  }
+				| {
+						Args: {
 							p_bucket_interval: string;
 							p_dev_eui: string;
 							p_metric: string;
 							p_table: string;
 							p_time_range: string;
-					  }
-					| {
+						};
+						Returns: {
+							bucket: string;
+							close_val: number;
+							dev_eui: string;
+							high_val: number;
+							low_val: number;
+							open_val: number;
+						}[];
+				  }
+				| {
+						Args: {
 							p_bucket_interval: string;
 							p_dev_eui: string;
 							p_metric: string;
 							p_time_range: string;
-					  };
-				Returns: {
-					bucket: string;
-					close_val: number;
-					dev_eui: string;
-					high_val: number;
-					low_val: number;
-					open_val: number;
-				}[];
-			};
-			get_location_for_user: {
-				Args: { user_id: string };
-				Returns: number[];
-			};
+						};
+						Returns: {
+							bucket: string;
+							close_val: number;
+							dev_eui: string;
+							high_val: number;
+							low_val: number;
+							open_val: number;
+						}[];
+				  };
+			get_location_for_user: { Args: { user_id: string }; Returns: number[] };
 			get_road_events: {
 				Args: { time_grouping: string };
 				Returns: {
@@ -1816,6 +2009,29 @@ export type Database = {
 					period_start: string;
 				}[];
 			};
+			get_table_columns: {
+				Args: { p_table: unknown };
+				Returns: {
+					column_name: string;
+				}[];
+			};
+			is_device_admin_for:
+				| {
+						Args: { p_dev_eui: string };
+						Returns: {
+							error: true;
+						} & 'Could not choose the best candidate function between: public.is_device_admin_for(p_dev_eui => text), public.is_device_admin_for(p_dev_eui => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved';
+				  }
+				| {
+						Args: { p_dev_eui: string };
+						Returns: {
+							error: true;
+						} & 'Could not choose the best candidate function between: public.is_device_admin_for(p_dev_eui => text), public.is_device_admin_for(p_dev_eui => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved';
+				  };
+			is_device_member_for: { Args: { p_dev_eui: string }; Returns: boolean };
+			is_device_owner_for: { Args: { dev: string }; Returns: boolean };
+			is_location_member_for: { Args: { loc_id: number }; Returns: boolean };
+			is_location_owner_for: { Args: { loc_id: number }; Returns: boolean };
 		};
 		Enums: {
 			[_ in never]: never;

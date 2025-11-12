@@ -7,7 +7,7 @@ import { PUBLIC_DOMAIN } from '$env/static/public';
 
 // This is your test secret API key.
 const stripe = new Stripe(PRIVATE_STRIPE_SECRET_KEY, {
-	apiVersion: '2025-06-30.basil', // Use the latest API version or a specific one
+	apiVersion: '2025-08-27.basil', // Use the latest API version or a specific one
 	typescript: true
 });
 

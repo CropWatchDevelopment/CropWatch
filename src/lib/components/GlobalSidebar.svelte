@@ -140,33 +140,21 @@
 
 <!-- Sidebar -->
 <aside
-	class="fixed top-0 left-0 z-50 flex flex-col overflow-x-hidden border-r transition-all duration-300 ease-in-out
-		{dark ? 'border-slate-700/30 bg-slate-800/95' : 'border-gray-200/30 bg-slate-200'}
-		shadow-lg backdrop-blur-sm"
-	style="top: 73px; 
-		height: calc(100vh - 73px);
-		width: {isOpen ? '256px' : '64px'};"
+	class="sidebar-surface fixed top-[73px] left-0 z-50 flex flex-col overflow-x-hidden transition-all duration-300 ease-in-out"
+	style="height: calc(100vh - 73px); width: {isOpen ? '256px' : '64px'};"
 	class:mobile-hidden={!isOpen}
 	aria-label="Sidebar navigation"
 >
 	<!-- Sidebar Header -->
 	{#if sidebarStore.isOpen}
-		<div
-			class="flex items-center justify-between border-b p-4 {dark
-				? 'border-slate-700/30'
-				: 'border-gray-200/30'}"
-		>
-			<h2 class="text-lg font-semibold {dark ? 'text-white' : 'text-gray-900'}">
-				{$_('Navigation')}
-			</h2>
+		<div class="flex items-center justify-between border-b border-[var(--color-border-subtle)] p-4">
+			<h2 class="text-lg font-semibold text-[var(--color-text)]">{$_('Navigation')}</h2>
 			<button
 				onclick={() => {
 					// Toggle sidebar only (no navigation) – don't trigger global loading overlay
 					sidebarStore.toggle();
 				}}
-				class="rounded-lg p-2 transition-all duration-200 hover:scale-105 {dark
-					? 'text-slate-400 hover:bg-slate-700/50 hover:text-white'
-					: 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}"
+				class="rounded-lg p-2 text-[var(--color-text-muted)] transition-all duration-200 hover:scale-105 hover:bg-[var(--color-surface-emphasis)] hover:text-[var(--color-text)]"
 				aria-label="Toggle small icon mode"
 			>
 				<MaterialIcon name="keyboard_double_arrow_left" size="small" />
@@ -178,7 +166,7 @@
 	<nav class="z-10 flex flex-1 flex-col overflow-y-auto pr-2" style="z-index: 10000;">
 		<ul class="space-y-1">
 			{#if !sidebarStore.isOpen}
-				<li class="mx-3 border-t {dark ? 'border-slate-500/30' : 'border-gray-200/30'}">
+				<li class="mx-3 border-t border-[var(--color-border-subtle)]">
 					<button
 						type="button"
 						onclick={() => {
@@ -200,33 +188,27 @@
 					<a
 						href={item.href}
 						onclick={() => {
-							// Only trigger loading if we're navigating to a different route
 							if ($page.url.pathname !== item.href) {
 								startLoading();
 							}
 							sidebarStore.close();
 						}}
-						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200 hover:scale-105
-							{isActiveRoute(item.matcher)
-							? dark
-								? 'bg-emerald-600/30 text-emerald-400'
-								: 'bg-emerald-100 text-emerald-700'
-							: dark
-								? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-								: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition-all duration-200 hover:scale-[1.01] hover:bg-[var(--color-surface-emphasis)] hover:text-[var(--color-text)] {isActiveRoute(
+							item.matcher
+						)
+							? 'bg-[var(--color-primary)]/12 text-[var(--color-primary)] shadow-[0_0_0_1px_var(--color-primary)]/15'
+							: ''}"
 						aria-current={isActiveRoute(item.matcher) ? 'page' : undefined}
 						title={sidebarStore.isSmallIconMode && !sidebarStore.isOpen ? $_(item.label) : ''}
 					>
-						<MaterialIcon name={item.icon} size="medium" />
-						<input type="hidden" value={sidebarStore.isOpen} />
-
+						<MaterialIcon name={item.icon} size="medium" class="rounded-md bg-white/5 p-1" />
 						{#if sidebarStore.isOpen}
-							<span class="font-medium">{$_(item.label)}</span>
+							<span class="leading-tight font-medium">{$_(item.label)}</span>
 						{/if}
 					</a>
 				</li>
 				{#if index < navigationItems.length - 1}
-					<li class="mx-3 border-t {dark ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
+					<li class="mx-3 border-t border-[var(--color-border-subtle)]"></li>
 				{/if}
 			{/each}
 		</ul>
@@ -234,18 +216,14 @@
 		{#if sidebarStore.isOpen}
 			<button
 				onclick={handleLogout}
-				class="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200
-				{dark ? 'bg-emerald-600/30 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}
-				{dark
-					? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-					: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+				class="mt-4 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-primary)] shadow-[0_0_0_1px_var(--color-primary)]/20 transition-colors duration-200 hover:bg-[var(--color-primary)]/15"
 			>
-				<MaterialIcon name="logout" size="medium" />
+				<MaterialIcon name="logout" size="medium" class="rounded-md bg-white/5 p-1" />
 				{$_('Logout')}
 			</button>
 		{/if}
 		<ul class="space-y-1">
-			<li class="mx-3 border-t {dark ? 'border-slate-500/30' : 'border-gray-200/30'}"></li>
+			<li class="mx-3 border-t border-[var(--color-border-subtle)]"></li>
 			<li>
 				<div class="flex flex-row">
 					<a
@@ -256,19 +234,15 @@
 							}
 							sidebarStore.close();
 						}}
-						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 no-underline transition-all duration-200
-							{isActiveRoute('/app/account-settings/general')
-							? dark
-								? 'bg-emerald-600/30 text-emerald-400'
-								: 'bg-emerald-100 text-emerald-700'
-							: dark
-								? 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-								: 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}"
+						class="decoration-none flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition-all duration-200 hover:scale-[1.01] hover:bg-[var(--color-surface-emphasis)] hover:text-[var(--color-text)] {isActiveRoute(
+							'/app/account-settings/general'
+						)
+							? 'bg-[var(--color-primary)]/12 text-[var(--color-primary)] shadow-[0_0_0_1px_var(--color-primary)]/15'
+							: ''}"
 						aria-current={isActiveRoute('/app/account-settings/general') ? 'page' : undefined}
 						title={sidebarStore.isSmallIconMode && !sidebarStore.isOpen ? $_('settings') : ''}
 					>
-						<MaterialIcon name="settings" size="medium" />
-						<input type="hidden" value={sidebarStore.isOpen} />
+						<MaterialIcon name="settings" size="medium" class="rounded-md bg-white/5 p-1" />
 					</a>
 					<span class="flex flex-1 border-l md:hidden"></span>
 					<ThemeToggle class="flex w-full md:hidden" outlineColor="black" />

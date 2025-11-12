@@ -19,11 +19,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 		// Create repositories with per-request Supabase client
 		const deviceRepo = new DeviceRepository(locals.supabase, errorHandler);
-		const dataService = new DeviceDataService(locals.supabase, errorHandler);
-
 		// Create services with repositories
 		const deviceService = new DeviceService(deviceRepo);
-		const deviceDataService = new DeviceDataService(locals.supabase);
+		const deviceDataService = new DeviceDataService(locals.supabase, errorHandler);
 
 		// Get devices for this location - now includes device type info directly
 		const devices = await deviceService.getDevicesByLocation(locationId);
@@ -40,25 +38,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 					let latestData = null;
 
 					// Dynamically get latest data based on device type's data_table_v2 value
-					if (deviceType && deviceType.data_table_v2) {
-						try {
-							latestData = await deviceDataService.getLatestDeviceData(device.dev_eui, deviceType);
-						} catch (dataError) {
-							console.error(`Error fetching dynamic data for device ${device.dev_eui}:`, dataError);
-							// Fall back to specific services if dynamic approach fails
-							latestData = null;
-						}
-					}
-
-					// Fallback to specific services if dynamic approach fails or returns no data
-					// This maintains backward compatibility
-					if (!latestData) {
-						// Get latest air data for this device, if available
-						const latestAirData = await deviceDataService.getLatestDeviceData(device.dev_eui);
-
-						// Set latestData to whichever data is available
-						latestData = latestAirData || null;
-					}
+					latestData = await deviceDataService.getLatestDeviceData(device.dev_eui);
 
 					return {
 						...device,

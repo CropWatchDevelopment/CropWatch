@@ -2,7 +2,7 @@
 	import type { DeviceStats } from '$lib/models/DeviceDataRecord';
 	import { nameToNotation } from '$lib/utilities/NameToNotation';
 	import { formatNumber, getTextColorByKey } from '$lib/utilities/stats';
-	import { mdiArrowDownBold, mdiArrowUpBold, mdiMinus } from '@mdi/js';
+	import { mdiArrowDownBold, mdiArrowUpBold, mdiMinus } from '$lib/icons/mdi';
 	import { _ } from 'svelte-i18n';
 	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import MaterialIcon from '../UI/icons/MaterialIcon.svelte';
