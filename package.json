@@ -86,7 +86,7 @@
 		"pdfkit": "^0.17.2",
 		"stripe": "^18.5.0",
 		"svelte-i18n": "^4.0.1",
-		"swagger-ui": "^5.29.4",
+		"swagger-ui": "^5.30.2",
 		"utf-8-validate": "^6.0.5"
 	},
 	"pnpm": {
