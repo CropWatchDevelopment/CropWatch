@@ -49,26 +49,62 @@
 	);
 
 	const columns = [
-		{ key: 'name', label: 'Notification', width: 'w-72', align: 'left', sortable: true },
-		{ key: 'dev_eui', label: 'Device', width: 'w-48', align: 'left', sortable: true },
-		{ key: 'send_using', label: 'Channel', width: 'w-40', align: 'left', sortable: true },
+		{
+			key: 'name',
+			label: 'Notification',
+			width: 'min-w-[14rem] md:w-72',
+			align: 'left',
+			sortable: true
+		},
+		{
+			key: 'dev_eui',
+			label: 'Device',
+			width: 'min-w-[12rem] md:w-48',
+			align: 'left',
+			sortable: true
+		},
+		{
+			key: 'send_using',
+			label: 'Channel',
+			width: 'min-w-[10rem] md:w-40',
+			align: 'left',
+			sortable: true
+		},
 		{
 			key: 'action_recipient',
 			label: 'Recipients',
-			width: 'flex-1',
+			width: 'flex-1 min-w-[16rem]',
 			align: 'left',
 			sortable: true
 		},
-		{ key: 'trigger_count', label: 'Total Calls', width: 'w-32', align: 'right', sortable: true },
+		{
+			key: 'trigger_count',
+			label: 'Total Calls',
+			width: 'min-w-[6rem] md:w-32',
+			align: 'right',
+			sortable: true
+		},
 		{
 			key: 'last_triggered',
 			label: 'Last Triggered',
-			width: 'w-48',
+			width: 'min-w-[12rem] md:w-48',
 			align: 'left',
 			sortable: true
 		},
-		{ key: 'is_triggered', label: 'Status', width: 'w-32', align: 'center', sortable: true },
-		{ key: 'history', label: 'History', width: 'w-32', align: 'center', sortable: false }
+		{
+			key: 'is_triggered',
+			label: 'Status',
+			width: 'min-w-[7rem] md:w-32',
+			align: 'center',
+			sortable: true
+		},
+		{
+			key: 'history',
+			label: 'History',
+			width: 'min-w-[6rem] md:w-32',
+			align: 'center',
+			sortable: false
+		}
 	] as const;
 
 	function filterNotifications(list: NotificationRow[]): NotificationRow[] {
@@ -177,7 +213,7 @@
 	}
 </script>
 
-<div class="space-y-6 p-6">
+<div class="space-y-6 px-4 py-6 sm:px-6">
 	<!-- Header -->
 	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<div>
@@ -186,8 +222,8 @@
 				Review every alert in a single professional table and monitor performance at a glance.
 			</p>
 		</div>
-		<div class="search-container">
-			<div class="relative">
+		<div class="search-container w-full sm:w-auto sm:min-w-[18rem] lg:min-w-[22rem]">
+			<div class="relative w-full">
 				<Icon
 					class="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400"
 					path={mdiMagnify}
@@ -204,16 +240,16 @@
 	</div>
 
 	<!-- Summary statistics -->
-	<div class="stats-grid" aria-label="Notification statistics">
-		<div class="stat-card">
+	<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Notification statistics">
+		<div class="stat-card h-full">
 			<p class="stat-label">Total notifications</p>
 			<p class="stat-value">{summaryStats.total}</p>
 		</div>
-		<div class="stat-card">
+		<div class="stat-card h-full">
 			<p class="stat-label">Active right now</p>
 			<p class="stat-value">{summaryStats.active}</p>
 		</div>
-		<div class="stat-card">
+		<div class="stat-card h-full">
 			<p class="stat-label">Total calls</p>
 			<p class="stat-value">{summaryStats.totalTriggers}</p>
 		</div>
@@ -222,92 +258,170 @@
 	<!-- Notification table -->
 	<div class="table-wrapper" aria-live="polite">
 		{#if tableNotifications.length}
-			<div class="table-shell">
-				<div class="table-head">
-					<div class="table-row--head table-row">
-						{#each columns as column (column.key)}
-							<div
-								class={`table-cell ${column.width} ${
-									column.align === 'center'
-										? 'justify-center'
-										: column.align === 'right'
-											? 'justify-end'
-											: 'justify-start'
-								}`}
-							>
-								{#if column.sortable}
-									<button type="button" onclick={() => handleSort(column.key)} class="sort-button">
-										<span>{column.label}</span>
-										<Icon
-											path={sortColumn === column.key
-												? sortDirection === 'asc'
-													? mdiSortAscending
-													: mdiSortDescending
-												: mdiSort}
-											class={`sort-icon ${sortColumn === column.key ? 'opacity-100' : 'opacity-60'}`}
-											size="18"
-										/>
+			<div class="hidden md:block">
+				<div class="table-shell overflow-x-auto">
+					<div class="table-head">
+						<div class="table-row--head table-row">
+							{#each columns as column (column.key)}
+								<div
+									class={`table-cell ${column.width} ${
+										column.align === 'center'
+											? 'justify-center'
+											: column.align === 'right'
+												? 'justify-end'
+												: 'justify-start'
+									}`}
+								>
+									{#if column.sortable}
+										<button
+											type="button"
+											onclick={() => handleSort(column.key)}
+											class="sort-button"
+										>
+											<span>{column.label}</span>
+											<Icon
+												path={sortColumn === column.key
+													? sortDirection === 'asc'
+														? mdiSortAscending
+														: mdiSortDescending
+													: mdiSort}
+												class={`sort-icon ${sortColumn === column.key ? 'opacity-100' : 'opacity-60'}`}
+												size="18"
+											/>
+										</button>
+									{:else}
+										<span class="font-semibold">{column.label}</span>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					</div>
+
+					<div class="table-body">
+						{#each tableNotifications as notification (notification.id)}
+							<div class="table-row">
+								<div class="table-cell min-w-[14rem] md:w-72">
+									<p class="cell-title">{notification.name || 'Untitled notification'}</p>
+								</div>
+								<div class="table-cell min-w-[12rem] md:w-48">
+									<p class="cell-primary">
+										{#if notification.cw_device}
+											<a
+												href={`/app/dashboard/location/${notification.cw_device?.location_id ?? ''}/devices/${notification.dev_eui ?? ''}`}
+												class="underline hover:text-blue-600"
+											>
+												{formatDeviceLabel(notification)}
+											</a>
+										{:else}
+											{formatDeviceLabel(notification)}
+										{/if}
+									</p>
+								</div>
+								<div class="table-cell min-w-[10rem] md:w-40">
+									<p class="cell-primary">{formatChannel(notification)}</p>
+								</div>
+								<div class="table-cell min-w-[16rem] flex-1">
+									<p class="cell-primary">{formatRecipients(notification.action_recipient)}</p>
+								</div>
+								<div class="table-cell min-w-[6rem] justify-end md:w-32">
+									<p class="cell-stat">{notification.trigger_count ?? 0}</p>
+								</div>
+								<div class="table-cell min-w-[12rem] md:w-48">
+									<p class="cell-primary">{formatLastTriggered(notification.last_triggered)}</p>
+								</div>
+								<div class="table-cell min-w-[7rem] justify-center md:w-32">
+									<span
+										class={`status-pill ${notification.is_triggered ? 'status-pill--active' : 'status-pill--idle'}`}
+									>
+										{notification.is_triggered ? 'Active' : 'Idle'}
+									</span>
+								</div>
+								<div class="table-cell min-w-[6rem] justify-center md:w-32">
+									<button
+										type="button"
+										class="history-button"
+										disabled={!notification.cw_rule_triggered?.length}
+										onclick={() => openHistory(notification)}
+									>
+										History
 									</button>
-								{:else}
-									<span class="font-semibold">{column.label}</span>
-								{/if}
+								</div>
 							</div>
 						{/each}
 					</div>
 				</div>
-
-				<div class="table-body">
-					{#each tableNotifications as notification (notification.id)}
-						<div class="table-row">
-							<div class="table-cell w-72">
-								<p class="cell-title">{notification.name || 'Untitled notification'}</p>
-							</div>
-							<div class="table-cell w-48">
-								<p class="cell-primary">
-									{#if notification.cw_device}
-										<a
-											href={`/app/dashboard/location/${notification.cw_device?.location_id ?? ''}/devices/${notification.dev_eui ?? ''}`}
-											class="underline hover:text-blue-600"
-										>
-											{formatDeviceLabel(notification)}
-										</a>
-									{:else}
-										{formatDeviceLabel(notification)}
-									{/if}
+			</div>
+			<div class="space-y-4 md:hidden">
+				{#each tableNotifications as notification (notification.id)}
+					<article
+						class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
+					>
+						<div class="flex flex-wrap items-start justify-between gap-3">
+							<div class="min-w-0 flex-1">
+								<p class="text-base font-semibold text-slate-900 dark:text-slate-50">
+									{notification.name || 'Untitled notification'}
 								</p>
+								{#if notification.cw_device}
+									<a
+										href={`/app/dashboard/location/${notification.cw_device?.location_id ?? ''}/devices/${notification.dev_eui ?? ''}`}
+										class="mt-1 block text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+									>
+										{formatDeviceLabel(notification)}
+									</a>
+								{:else}
+									<p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+										{formatDeviceLabel(notification)}
+									</p>
+								{/if}
 							</div>
-							<div class="table-cell w-40">
-								<p class="cell-primary">{formatChannel(notification)}</p>
+							<span
+								class={`status-pill ${notification.is_triggered ? 'status-pill--active' : 'status-pill--idle'}`}
+							>
+								{notification.is_triggered ? 'Active' : 'Idle'}
+							</span>
+						</div>
+						<div class="mt-4 grid gap-3 text-sm text-slate-600 dark:text-slate-300">
+							<div class="flex items-center justify-between gap-4">
+								<span class="font-medium text-slate-500 dark:text-slate-400">Channel</span>
+								<span class="text-right break-words">{formatChannel(notification)}</span>
 							</div>
-							<div class="table-cell flex-1">
-								<p class="cell-primary">{formatRecipients(notification.action_recipient)}</p>
-							</div>
-							<div class="table-cell w-32 justify-end">
-								<p class="cell-stat">{notification.trigger_count ?? 0}</p>
-							</div>
-							<div class="table-cell w-48">
-								<p class="cell-primary">{formatLastTriggered(notification.last_triggered)}</p>
-							</div>
-							<div class="table-cell w-32 justify-center">
-								<span
-									class={`status-pill ${notification.is_triggered ? 'status-pill--active' : 'status-pill--idle'}`}
+							<div class="flex items-start justify-between gap-4">
+								<span class="font-medium text-slate-500 dark:text-slate-400">Recipients</span>
+								<span class="text-right break-words"
+									>{formatRecipients(notification.action_recipient)}</span
 								>
-									{notification.is_triggered ? 'Active' : 'Idle'}
-								</span>
 							</div>
-							<div class="table-cell w-32 justify-center">
-								<button
-									type="button"
-									class="history-button"
-									disabled={!notification.cw_rule_triggered?.length}
-									onclick={() => openHistory(notification)}
+							<div class="flex items-center justify-between gap-4">
+								<span class="font-medium text-slate-500 dark:text-slate-400">Total calls</span>
+								<span class="font-semibold text-slate-900 dark:text-slate-50"
+									>{notification.trigger_count ?? 0}</span
 								>
-									History
-								</button>
+							</div>
+							<div class="flex items-center justify-between gap-4">
+								<span class="font-medium text-slate-500 dark:text-slate-400">Last triggered</span>
+								<span class="text-right">{formatLastTriggered(notification.last_triggered)}</span>
 							</div>
 						</div>
-					{/each}
-				</div>
+						<div class="mt-4 flex flex-wrap items-center gap-3">
+							<button
+								type="button"
+								class="history-button"
+								disabled={!notification.cw_rule_triggered?.length}
+								onclick={() => openHistory(notification)}
+							>
+								History
+							</button>
+							{#if notification.cw_device}
+								<a
+									href={`/app/dashboard/location/${notification.cw_device?.location_id ?? ''}/devices/${notification.dev_eui ?? ''}`}
+									class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+								>
+									View device
+								</a>
+							{/if}
+						</div>
+					</article>
+				{/each}
 			</div>
 		{:else}
 			<div class="empty-state">
@@ -369,6 +483,12 @@
 		min-width: 280px;
 	}
 
+	@media (max-width: 640px) {
+		.search-container {
+			min-width: 100%;
+		}
+	}
+
 	.search-input {
 		width: 100%;
 		padding: 0.5rem 0.75rem 0.5rem 2.5rem;
@@ -388,12 +508,6 @@
 
 	.search-input::placeholder {
 		color: rgb(156 163 175);
-	}
-
-	.stats-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-		gap: 1rem;
 	}
 
 	.stat-card {
@@ -420,7 +534,7 @@
 	}
 
 	.table-shell {
-		overflow: hidden;
+		overflow-y: hidden;
 		border: 1px solid rgb(229 231 235);
 		border-radius: 1rem;
 		background: white;
@@ -452,6 +566,7 @@
 		gap: 0.5rem;
 		padding: 0.85rem 1rem;
 		font-size: 0.9rem;
+		flex-shrink: 0;
 	}
 
 	.table-body .table-row:nth-child(odd) {
