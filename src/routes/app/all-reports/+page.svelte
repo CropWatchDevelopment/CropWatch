@@ -5,6 +5,7 @@
 	import { Dialog, DateRangePicker } from 'bits-ui';
 	import type { DateRange } from 'bits-ui';
 	import { CalendarDate } from '@internationalized/date';
+	import type { DateValue } from '@internationalized/date';
 	import { mdiAlert, mdiDownload, mdiFileDocument, mdiMagnify } from '$lib/icons/mdi';
 	import ExportButton from '$lib/components/devices/ExportButton.svelte';
 	import { onMount } from 'svelte';
@@ -38,7 +39,8 @@
 
 	let bulkDownloading = $state(false);
 	let bulkProgress = $state<BulkProgress | null>(null);
-	let selectAllCheckbox: HTMLInputElement | null = null;
+	let selectAllCheckbox = $state<HTMLInputElement | null>(null);
+	let mobileSelectAllCheckbox = $state<HTMLInputElement | null>(null);
 
 	function filterReports(currentReports: any[]) {
 		if (!searchTerm.trim()) return currentReports;
@@ -77,8 +79,12 @@
 	});
 
 	$effect(() => {
-		if (!selectAllCheckbox) return;
-		selectAllCheckbox.indeterminate = someVisibleSelected;
+		const checkboxes = [selectAllCheckbox, mobileSelectAllCheckbox].filter(
+			(checkbox): checkbox is HTMLInputElement => Boolean(checkbox)
+		);
+		for (const checkbox of checkboxes) {
+			checkbox.indeterminate = someVisibleSelected;
+		}
 	});
 
 	function setSelectedReports(ids: number[]) {
@@ -309,7 +315,11 @@
 		return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
 	}
 
-	function calendarDateToDate(calendarDate: CalendarDate): Date {
+	function calendarDateToDate(value: DateValue): Date {
+		if ('toDate' in value && typeof value.toDate === 'function') {
+			return value.toDate('UTC');
+		}
+		const calendarDate = value as CalendarDate;
 		return new Date(calendarDate.year, calendarDate.month - 1, calendarDate.day);
 	}
 
@@ -343,18 +353,22 @@
 	}
 </script>
 
-<div class="space-y-6 p-6">
-	<div class="flex flex-wrap items-center justify-between gap-4">
-		<div>
+<div class="space-y-6 px-4 py-6 sm:px-6">
+	<div class="reports-header">
+		<div class="reports-header__info">
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">{$_('all_reports_heading')}</h1>
 			<p class="mt-1 text-gray-600 dark:text-gray-400">
 				{$_('all_reports_subheading')}
 			</p>
 		</div>
-		<div class="actions-group">
+		<div class="reports-header__actions">
 			<div class="search-container">
 				<div class="search-wrapper">
-					<Icon class="search-icon" path={mdiMagnify} size="18" />
+					<Icon
+						class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-400/80"
+						path={mdiMagnify}
+						size="18"
+					/>
 					<input
 						type="text"
 						bind:value={searchTerm}
@@ -366,19 +380,34 @@
 			</div>
 			<button
 				type="button"
-				class="bulk-download-btn"
+				class="bulk-download-btn w-full md:w-auto"
 				disabled={!selectedReportIds.length || bulkDownloading}
-				on:click={openBulkDownloadModal}
+				onclick={openBulkDownloadModal}
 			>
 				{#if bulkDownloading}
 					<span class="bulk-spinner" aria-hidden="true"></span>
 					<span>{$_('downloading')}</span>
 				{:else}
-					<Icon class="download-icon" path={mdiDownload} size="18" />
+					<Icon class="shrink-0" path={mdiDownload} size="18" />
 					<span>{$_('download_selected')}</span>
 				{/if}
 			</button>
 		</div>
+	</div>
+
+	<div
+		class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 shadow-sm md:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+	>
+		<span>{$_('selection')}</span>
+		<label class="selection-checkbox">
+			<input
+				type="checkbox"
+				bind:this={mobileSelectAllCheckbox}
+				checked={allVisibleSelected}
+				aria-label={$_('select_all_reports_aria')}
+				onchange={handleSelectAllChange}
+			/>
+		</label>
 	</div>
 
 	<Dialog.Root bind:open={bulkModalOpen}>
@@ -503,14 +532,14 @@
 				</div>
 
 				<div class="modal-actions">
-					<button type="button" class="modal-button secondary" on:click={cancelBulkDownload}>
+					<button type="button" class="modal-button secondary" onclick={cancelBulkDownload}>
 						{$_('cancel')}
 					</button>
 					<button
 						type="button"
 						class="modal-button primary"
 						disabled={!modalStartDate || !modalEndDate || bulkDownloading}
-						on:click={confirmBulkDownload}
+						onclick={confirmBulkDownload}
 					>
 						{$_('download')}
 					</button>
@@ -531,70 +560,135 @@
 	{/if}
 
 	{#if filteredReports.length > 0}
-		<div class="table-wrapper">
-			<table class="reports-table">
-				<thead>
-					<tr>
-						<th scope="col" class="selection-header">
-							<span>{$_('selection')}</span>
-							<label class="selection-toggle">
-								<input
-									type="checkbox"
-									bind:this={selectAllCheckbox}
-									checked={allVisibleSelected}
-									aria-label={$_('select_all_reports_aria')}
-									on:change={handleSelectAllChange}
-								/>
-							</label>
-						</th>
-						<th scope="col">{$_('Report')}</th>
-						<th scope="col">{$_('Device')}</th>
-						<th scope="col">{$_('Created')}</th>
-						<th scope="col" class="table-actions-header">{$_('export')}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each filteredReports as report (report.id)}
+		<div class="hidden md:block">
+			<div class="table-wrapper">
+				<table class="reports-table">
+					<thead>
 						<tr>
-							<td data-title={$_('selection')} class="selection-cell">
-								<label class="selection-checkbox">
+							<th scope="col" class="selection-header w-36">
+								<span>{$_('selection')}</span>
+								<label class="selection-toggle">
 									<input
 										type="checkbox"
-										checked={selectedReportIds.includes(report.id)}
-										aria-label={$_('select_report_aria', {
-											values: { name: getReportLabel(report) }
-										})}
-										on:change={(event) => handleRowSelectionChange(event, report.id)}
+										bind:this={selectAllCheckbox}
+										checked={allVisibleSelected}
+										aria-label={$_('select_all_reports_aria')}
+										onchange={handleSelectAllChange}
 									/>
 								</label>
-							</td>
-							<td data-title={$_('Report')}>
-								<div class="name-cell">
-									<Icon class="name-icon" path={mdiFileDocument} size="20" />
-									<span class="name-text" title={report.name || $_('untitled_report')}>
-										{report.name || $_('untitled_report')}
-									</span>
-								</div>
-							</td>
-							<td data-title={$_('Device')}>
-								<a
-									href={`/app/dashboard/location/${report.cw_device?.location_id}/devices/${report.dev_eui}/settings/reports`}
-									class="device-link"
-								>
-									{report.cw_device?.name ?? $_('N/A')}
-									<small>({report.dev_eui ?? $_('N/A')})</small>
-								</a>
-							</td>
-							<td data-title={$_('Created')}>
-								{formatDate(report.created_at)}
-							</td>
-							<td class="table-actions flex" data-title={$_('export')}>
-								<ExportButton types={['pdf']} buttonLabel="" devEui={report.dev_eui} />
-							</td>
+							</th>
+							<th scope="col" class="w-80">{$_('Report')}</th>
+							<th scope="col" class="w-72">{$_('Device')}</th>
+							<th scope="col" class="w-48">{$_('Created')}</th>
+							<th scope="col" class="table-actions-header w-40">{$_('export')}</th>
 						</tr>
-					{/each}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{#each filteredReports as report (report.id)}
+							<tr>
+								<td class="selection-cell">
+									<label class="selection-checkbox">
+										<input
+											type="checkbox"
+											checked={selectedReportIds.includes(report.id)}
+											aria-label={$_('select_report_aria', {
+												values: { name: getReportLabel(report) }
+											})}
+											onchange={(event) => handleRowSelectionChange(event, report.id)}
+										/>
+									</label>
+								</td>
+								<td>
+									<div class="name-cell">
+										<Icon
+											class="shrink-0 text-sky-600 dark:text-sky-300"
+											path={mdiFileDocument}
+											size="20"
+										/>
+										<span class="name-text" title={report.name || $_('untitled_report')}>
+											{report.name || $_('untitled_report')}
+										</span>
+									</div>
+								</td>
+								<td>
+									<a
+										href={`/app/dashboard/location/${report.cw_device?.location_id}/devices/${report.dev_eui}/settings/reports`}
+										class="device-link"
+									>
+										{report.cw_device?.name ?? $_('N/A')}
+										<small>({report.dev_eui ?? $_('N/A')})</small>
+									</a>
+								</td>
+								<td>
+									{formatDate(report.created_at)}
+								</td>
+								<td class="table-actions flex">
+									<ExportButton types={['pdf']} buttonLabel="" devEui={report.dev_eui} />
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="space-y-4 md:hidden">
+			{#each filteredReports as report (report.id)}
+				<article
+					class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
+				>
+					<div class="flex items-start justify-between gap-3">
+						<div class="flex flex-1 items-start gap-3">
+							<label class="selection-checkbox mt-1">
+								<input
+									type="checkbox"
+									checked={selectedReportIds.includes(report.id)}
+									aria-label={$_('select_report_aria', {
+										values: { name: getReportLabel(report) }
+									})}
+									onchange={(event) => handleRowSelectionChange(event, report.id)}
+								/>
+							</label>
+							<div class="min-w-0">
+								<div class="flex items-center gap-2">
+									<Icon class="text-blue-600 dark:text-blue-300" path={mdiFileDocument} size="20" />
+									<p class="text-base font-semibold text-slate-900 dark:text-slate-50">
+										{report.name || $_('untitled_report')}
+									</p>
+								</div>
+								<p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+									{report.cw_device?.name ?? $_('N/A')}
+								</p>
+							</div>
+						</div>
+						<div class="flex items-center">
+							<ExportButton
+								types={['pdf']}
+								buttonLabel=""
+								devEui={report.dev_eui}
+								showDatePicker={false}
+							/>
+						</div>
+					</div>
+					<div class="mt-4 grid gap-3 text-sm text-slate-600 dark:text-slate-300">
+						<div class="flex items-start justify-between gap-4">
+							<span class="font-medium text-slate-500 dark:text-slate-400">{$_('Device')}</span>
+							<a
+								href={`/app/dashboard/location/${report.cw_device?.location_id}/devices/${report.dev_eui}/settings/reports`}
+								class="text-right text-blue-600 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+							>
+								{report.cw_device?.name ?? $_('N/A')}
+								<small class="block text-xs text-slate-500 dark:text-slate-400"
+									>{report.dev_eui ?? $_('N/A')}</small
+								>
+							</a>
+						</div>
+						<div class="flex items-center justify-between gap-4">
+							<span class="font-medium text-slate-500 dark:text-slate-400">{$_('Created')}</span>
+							<span>{formatDate(report.created_at)}</span>
+						</div>
+					</div>
+				</article>
+			{/each}
 		</div>
 	{:else}
 		<div class="no-reports">
@@ -607,27 +701,58 @@
 </div>
 
 <style>
+	.reports-header {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	@media (min-width: 768px) {
+		.reports-header {
+			flex-direction: row;
+			align-items: flex-end;
+			justify-content: space-between;
+			gap: 2rem;
+		}
+	}
+
+	.reports-header__info {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.reports-header__actions {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		width: 100%;
+	}
+
+	@media (min-width: 768px) {
+		.reports-header__actions {
+			flex-direction: row;
+			align-items: center;
+			justify-content: flex-end;
+			max-width: 32rem;
+			margin-left: auto;
+		}
+	}
+
 	.search-container {
 		min-width: 260px;
+		width: 100%;
+	}
+
+	@media (min-width: 768px) {
+		.search-container {
+			min-width: 18rem;
+		}
 	}
 
 	.search-wrapper {
 		position: relative;
 		display: flex;
 		align-items: center;
-	}
-
-	.search-icon {
-		position: absolute;
-		left: 0.75rem;
-		top: 50%;
-		transform: translateY(-50%);
-		color: rgb(148 163 184);
-		pointer-events: none;
-	}
-
-	:global(.dark) .search-icon {
-		color: rgb(156 163 175);
 	}
 
 	.search-input {
@@ -667,16 +792,8 @@
 		color: rgb(107 114 128);
 	}
 
-	.actions-group {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		justify-content: flex-end;
-		flex-wrap: wrap;
-	}
-
 	.bulk-download-btn {
-		display: flex;
+		display: none;
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0 1.1rem;
@@ -692,6 +809,12 @@
 			transform 0.15s ease,
 			box-shadow 0.15s ease,
 			background-color 0.15s ease;
+	}
+
+	@media (min-width: 768px) {
+		.bulk-download-btn {
+			display: inline-flex;
+		}
 	}
 
 	.bulk-download-btn:hover {
@@ -742,10 +865,6 @@
 
 	:global(.dark) .bulk-progress {
 		color: rgb(147 197 253);
-	}
-
-	.download-icon {
-		color: inherit;
 	}
 
 	.selection-header {
@@ -960,15 +1079,6 @@
 		max-width: 320px;
 	}
 
-	.name-icon {
-		color: rgb(37 99 235);
-		flex-shrink: 0;
-	}
-
-	:global(.dark) .name-icon {
-		color: rgb(191 219 254);
-	}
-
 	.name-text {
 		font-weight: 600;
 		white-space: nowrap;
@@ -987,14 +1097,6 @@
 
 	.table-actions-header {
 		text-align: center;
-	}
-
-	.muted {
-		color: rgb(107 114 128);
-	}
-
-	:global(.dark) .muted {
-		color: rgb(156 163 175);
 	}
 
 	.no-reports {
@@ -1016,16 +1118,6 @@
 	@media (max-width: 768px) {
 		.search-container {
 			min-width: 100%;
-		}
-
-		.actions-group {
-			width: 100%;
-			justify-content: flex-start;
-		}
-
-		.bulk-download-btn {
-			width: 100%;
-			justify-content: center;
 		}
 	}
 </style>

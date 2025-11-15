@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/base/Icon.svelte';
-	import { mdiDevices, mdiMapMarker, mdiIdentifier, mdiAlert, mdiMagnify } from '$lib/icons/mdi';
+	import { mdiDevices, mdiAlert, mdiMagnify } from '$lib/icons/mdi';
 
 	let { data } = $props();
 
@@ -21,28 +21,30 @@
 	}
 </script>
 
-<div class="space-y-6 p-6">
-	<!-- Header -->
-	<div class="flex items-center justify-between">
-		<div>
+<div class="space-y-6 px-4 py-6 sm:px-6">
+	<div class="devices-header">
+		<div class="devices-header__info">
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">All Devices</h1>
 			<p class="mt-1 text-gray-600 dark:text-gray-400">
 				Manage and view all your monitoring locations
 			</p>
 		</div>
-		<div class="search-container">
-			<div class="relative">
-				<Icon
-					class="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-400"
-					path={mdiMagnify}
-					size="20"
-				/>
-				<input
-					type="text"
-					bind:value={searchTerm}
-					placeholder="Search devices..."
-					class="search-input"
-				/>
+		<div class="devices-header__actions">
+			<div class="search-container">
+				<div class="search-wrapper">
+					<Icon
+						class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-400/80"
+						path={mdiMagnify}
+						size="18"
+					/>
+					<input
+						type="text"
+						bind:value={searchTerm}
+						placeholder="Search devices..."
+						class="search-input"
+						aria-label="Search devices"
+					/>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -53,67 +55,116 @@
 		</div>
 	{:then devices}
 		{@const filteredDevices = filterDevices(devices)}
-		<div class="devices-grid">
-			{#if filteredDevices.length > 0}
-				{#each filteredDevices as device, index (device.device_id || device.dev_eui || device.name || index)}
-					<div class="device-card">
-						<div class="device-header">
-							<div class="device-icon">
-								<Icon class="text-xl text-blue-400" path={mdiDevices} />
-							</div>
-							<h2 class="device-title" title={device.name || device.dev_eui || 'Unnamed Device'}>
-								{device.name || device.dev_eui || 'Unnamed Device'}
-							</h2>
-							<button
-								class="device-action-btn"
-								onclick={() => {
-									/* Add navigation logic here */
-								}}
-								aria-label="View device details"
-							>
-								<svg viewBox="0 0 24 24" class="pointer-events-none h-5 w-5">
-									<path
-										fill="currentColor"
-										d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"
-									/>
-								</svg>
-							</button>
-						</div>
-						<div class="device-content">
-							<div class="device-info">
-								{#if device.device_id || device.dev_eui}
-									<div class="device-info-item">
-										<Icon class="text-sm text-gray-500 dark:text-gray-400" path={mdiIdentifier} />
-										<span class="device-info-text"
-											>ID: {device.device_id || device.dev_eui || 'N/A'}</span
-										>
-									</div>
-								{/if}
-								{#if device.location_id}
-									<div class="device-info-item">
-										<Icon class="text-sm text-gray-500 dark:text-gray-400" path={mdiMapMarker} />
-										<span class="device-info-text">Location ID: {device.location_id}</span>
-									</div>
-								{/if}
-								{#if device.cw_device_type?.name}
-									<div class="device-info-item">
-										<Icon class="text-sm text-gray-500 dark:text-gray-400" path={mdiDevices} />
-										<span class="device-info-text">Type: {device.cw_device_type.name}</span>
-									</div>
-								{/if}
-							</div>
-						</div>
-					</div>
-				{/each}
-			{:else}
-				<div class="no-devices">
-					<Icon class="text-4xl text-gray-400" path={mdiAlert} />
-					<p class="text-gray-500 dark:text-gray-300">
-						{searchTerm ? 'No devices match your search.' : 'No devices found.'}
-					</p>
+		{#if filteredDevices.length > 0}
+			<div class="hidden md:block">
+				<div class="table-wrapper">
+					<table class="devices-table">
+						<thead>
+							<tr>
+								<th scope="col" class="w-[32%]">Device</th>
+								<th scope="col" class="w-[18%]">Device ID</th>
+								<th scope="col" class="w-[26%]">Location</th>
+								<th scope="col" class="w-[16%]">Type</th>
+								<th scope="col" class="w-[8%] text-center">Details</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each filteredDevices as device, index (device.device_id || device.dev_eui || device.name || index)}
+								<tr>
+									<td>
+										<div class="device-name-cell">
+											<Icon
+												class="shrink-0 text-sky-600 dark:text-sky-300"
+												path={mdiDevices}
+												size="20"
+											/>
+											<div class="device-name-text">
+												<p class="font-semibold text-slate-900 dark:text-slate-50">
+													{device.name || device.dev_eui || 'Unnamed Device'}
+												</p>
+												<p class="text-xs text-slate-500 dark:text-slate-400">
+													{device.dev_eui ?? 'N/A'}
+												</p>
+											</div>
+										</div>
+									</td>
+									<td class="text-sm text-slate-700 dark:text-slate-200">
+										{device.device_id || device.dev_eui || 'N/A'}
+									</td>
+									<td class="text-sm text-slate-700 dark:text-slate-200">
+										{device.location_id ?? 'N/A'}
+									</td>
+									<td class="text-sm text-slate-700 dark:text-slate-200">
+										{device.cw_device_type?.name ?? 'N/A'}
+									</td>
+									<td class="table-actions">
+										{#if device.location_id && device.dev_eui}
+											<a
+												href={`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`}
+												class="details-link"
+											>
+												View
+											</a>
+										{:else}
+											<span class="details-link disabled">View</span>
+										{/if}
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
 				</div>
-			{/if}
-		</div>
+			</div>
+			<div class="space-y-4 md:hidden">
+				{#each filteredDevices as device, index (device.device_id || device.dev_eui || device.name || index)}
+					<article class="device-card">
+						<div class="device-card-header">
+							<div>
+								<p class="text-base font-semibold text-slate-900 dark:text-slate-50">
+									{device.name || device.dev_eui || 'Unnamed Device'}
+								</p>
+								<p class="text-sm text-slate-500 dark:text-slate-400">
+									ID: {device.device_id || device.dev_eui || 'N/A'}
+								</p>
+							</div>
+							{#if device.location_id && device.dev_eui}
+								<a
+									href={`/app/dashboard/location/${device.location_id}/devices/${device.dev_eui}`}
+									class="details-link"
+								>
+									View
+								</a>
+							{:else}
+								<span class="details-link disabled">View</span>
+							{/if}
+						</div>
+						<div class="device-card-body">
+							<div class="device-card-row">
+								<span class="device-card-label">Location</span>
+								<span>{device.location_id ?? 'N/A'}</span>
+							</div>
+							<div class="device-card-row">
+								<span class="device-card-label">Type</span>
+								<span>{device.cw_device_type?.name ?? 'N/A'}</span>
+							</div>
+							{#if device.dev_eui}
+								<div class="device-card-row">
+									<span class="device-card-label">DevEUI</span>
+									<span>{device.dev_eui}</span>
+								</div>
+							{/if}
+						</div>
+					</article>
+				{/each}
+			</div>
+		{:else}
+			<div class="no-devices">
+				<Icon class="text-4xl text-gray-400" path={mdiAlert} />
+				<p class="text-gray-500 dark:text-gray-300">
+					{searchTerm ? 'No devices match your search.' : 'No devices found.'}
+				</p>
+			</div>
+		{/if}
 	{:catch error}
 		<div class="error">
 			<p class="text-red-500 dark:text-red-400">Error loading devices: {error.message}</p>
@@ -122,18 +173,69 @@
 </div>
 
 <style>
+	.devices-header {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	@media (min-width: 768px) {
+		.devices-header {
+			flex-direction: row;
+			align-items: flex-end;
+			justify-content: space-between;
+			gap: 2rem;
+		}
+	}
+
+	.devices-header__info {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.devices-header__actions {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		width: 100%;
+	}
+
+	@media (min-width: 768px) {
+		.devices-header__actions {
+			flex-direction: row;
+			align-items: center;
+			justify-content: flex-end;
+			max-width: 24rem;
+			margin-left: auto;
+		}
+	}
+
 	.search-container {
-		min-width: 300px;
+		min-width: 260px;
+		width: 100%;
+	}
+
+	@media (min-width: 768px) {
+		.search-container {
+			min-width: 18rem;
+		}
+	}
+
+	.search-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
 	}
 
 	.search-input {
 		width: 100%;
 		padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+		height: 2.75rem;
 		border: 1px solid rgb(209 213 219);
 		border-radius: 0.5rem;
 		background-color: white;
 		color: rgb(17 24 39);
-		font-size: 0.875rem;
+		font-size: 0.9rem;
 		transition: all 0.2s ease;
 	}
 
@@ -169,158 +271,162 @@
 		align-items: center;
 		padding: 2rem;
 		font-size: 1rem;
-		color: var(--color-text-secondary);
+		color: rgb(100 116 139);
 	}
 
 	.error {
-		color: var(--color-danger);
+		color: rgb(239 68 68);
 	}
 
-	.devices-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-		gap: 1.5rem;
+	.table-wrapper {
+		overflow: hidden;
+		border-radius: 0.75rem;
+		border: 1px solid rgb(229 231 235);
+		background-color: white;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	}
+
+	:global(.dark) .table-wrapper {
+		border-color: rgb(55 65 81);
+		background-color: rgb(17 24 39);
+	}
+
+	.devices-table {
 		width: 100%;
+		border-collapse: separate;
+		border-spacing: 0;
+	}
+
+	.devices-table th,
+	.devices-table td {
+		padding: 0.85rem 1rem;
+		text-align: left;
+		border-bottom: 1px solid rgb(229 231 235);
+		font-size: 0.95rem;
+		color: rgb(31 41 55);
+	}
+
+	:global(.dark) .devices-table th,
+	:global(.dark) .devices-table td {
+		border-color: rgba(75, 85, 99, 0.7);
+		color: rgb(229 231 235);
+	}
+
+	.devices-table th {
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		font-size: 0.75rem;
+		color: rgb(71 85 105);
+	}
+
+	:global(.dark) .devices-table th {
+		color: rgb(191 219 254);
+	}
+
+	.devices-table tbody tr:nth-child(even) {
+		background-color: rgba(59, 130, 246, 0.04);
+	}
+
+	:global(.dark) .devices-table tbody tr:nth-child(even) {
+		background-color: rgba(59, 130, 246, 0.12);
+	}
+
+	.devices-table tbody tr:hover {
+		background-color: rgba(59, 130, 246, 0.12);
+	}
+
+	:global(.dark) .devices-table tbody tr:hover {
+		background-color: rgba(59, 130, 246, 0.2);
+	}
+
+	.device-name-cell {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+	}
+
+	.device-name-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+	}
+
+	.table-actions {
+		text-align: center;
+		white-space: nowrap;
+	}
+
+	.details-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.35rem 0.9rem;
+		border-radius: 9999px;
+		background-color: rgb(37 99 235);
+		color: white;
+		font-size: 0.8rem;
+		font-weight: 600;
+		transition: background-color 0.2s ease;
+	}
+
+	.details-link:hover {
+		background-color: rgb(29 78 216);
+	}
+
+	.details-link.disabled {
+		background-color: rgb(203 213 225);
+		color: rgb(100 116 139);
+		cursor: not-allowed;
 	}
 
 	.device-card {
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		border-radius: 0.75rem;
-		border: 1px solid rgb(209 213 219);
-		background-color: rgb(229 231 235);
-		background-color: rgba(156 163 175 / 0.4);
-		color: rgb(17 24 39);
-		box-shadow:
-			0 10px 15px -3px rgba(0, 0, 0, 0.1),
-			0 4px 6px -2px rgba(0, 0, 0, 0.05);
-		transition: all 0.2s ease;
-		height: 100%;
-	}
-
-	.device-card:hover {
-		transform: translateY(-2px);
-		box-shadow:
-			0 20px 25px -5px rgba(0, 0, 0, 0.1),
-			0 10px 10px -5px rgba(0, 0, 0, 0.04);
+		border: 1px solid rgb(229 231 235);
+		border-radius: 1rem;
+		padding: 1rem;
+		background-color: white;
+		box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 	}
 
 	:global(.dark) .device-card {
 		border-color: rgb(55 65 81);
-		background-color: #1f2532;
-		background-color: rgba(31 41 55 / 0.8);
-		color: white;
-		box-shadow:
-			0 10px 15px -3px rgba(0, 0, 0, 0.2),
-			0 4px 6px -2px rgba(0, 0, 0, 0.1);
+		background-color: rgb(15 23 42);
+		color: rgb(226 232 240);
 	}
 
-	.device-header {
+	.device-card-header {
 		display: flex;
-		align-items: center;
-		min-height: 60px;
-		max-height: 60px;
-		height: 60px;
-		background-color: rgb(15 118 110);
-		color: rgb(253 224 71);
-		padding: 0.75rem 0.5rem;
-		position: relative;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
 	}
 
-	:global(.dark) .device-header {
-		background-color: #2c3546;
-		color: rgb(253 224 71);
-	}
-
-	.device-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.5rem;
-		height: 2.5rem;
-		border-radius: 50%;
-		background-color: rgba(255, 255, 255, 0.2);
-		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-		flex-shrink: 0;
-	}
-
-	:global(.dark) .device-icon {
-		background-color: rgba(55 65 81, 1);
-	}
-
-	.device-title {
-		flex: 1;
-		margin-left: 1.25rem;
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: rgb(217 119 6);
-		padding-top: 0.25rem;
-
-		/* Text truncation */
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		min-width: 0; /* Allow flex item to shrink below content size */
-	}
-
-	:global(.dark) .device-title {
-		color: rgb(251 191 36);
-	}
-
-	.device-action-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.25rem;
-		height: 2.25rem;
-		margin-left: 0.5rem;
-		border-radius: 50%;
-		border: 1px solid rgb(191 219 254);
-		background-color: rgb(239 246 255);
-		color: rgb(29 78 216);
-		transition: all 0.2s;
-		flex-shrink: 0;
-	}
-
-	.device-action-btn:hover {
-		background-color: rgb(219 234 254);
-	}
-
-	:global(.dark) .device-action-btn {
-		border-color: rgb(75 85 99);
-		background-color: rgb(55 65 81);
-		color: rgb(147 197 253);
-	}
-
-	:global(.dark) .device-action-btn:hover {
-		background-color: rgb(75 85 99);
-	}
-
-	.device-content {
-		padding: 0.5rem;
-		flex: 1;
-	}
-
-	.device-info {
+	.device-card-body {
+		margin-top: 1rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.device-info-item {
-		display: flex;
-		align-items: center;
 		gap: 0.5rem;
+		font-size: 0.9rem;
+		color: rgb(71 85 105);
 	}
 
-	.device-info-text {
-		font-size: 0.875rem;
-		color: rgb(75 85 99);
+	:global(.dark) .device-card-body {
+		color: rgb(203 213 225);
 	}
 
-	:global(.dark) .device-info-text {
-		color: rgb(156 163 175);
+	.device-card-row {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.device-card-label {
+		font-weight: 600;
+		color: rgb(100 116 139);
+	}
+
+	:global(.dark) .device-card-label {
+		color: rgb(148 163 184);
 	}
 
 	.no-devices {
@@ -329,9 +435,8 @@
 		align-items: center;
 		justify-content: center;
 		padding: 3rem;
-		grid-column: 1 / -1;
-		background-color: var(--color-card, rgb(255 255 255));
 		border-radius: 0.75rem;
+		background-color: var(--color-card, rgb(255 255 255));
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 		gap: 1rem;
 	}
@@ -341,12 +446,8 @@
 	}
 
 	@media (max-width: 768px) {
-		.devices-grid {
-			grid-template-columns: 1fr;
-		}
-
 		.search-container {
-			min-width: 200px;
+			min-width: 100%;
 		}
 	}
 </style>
