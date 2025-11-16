@@ -16,9 +16,30 @@
 
 	let { userName } = $props();
 
+	type TriggeredAlert = {
+		id: number;
+		name: string;
+		ruleGroupId: string;
+		dev_eui: string | null;
+		last_triggered: string | null;
+		trigger_count: number;
+		device: {
+			dev_eui: string;
+			location_id: number | null;
+			name: string | null;
+		} | null;
+	};
+
+	const ALERTS_REFRESH_INTERVAL = 60 * 1000;
+
 	let mobileMenuOpen = $state(false);
 	let announcementVisible = $state(true);
 	let dark = $state(false);
+	let alerts = $state<TriggeredAlert[]>([]);
+	let alertsOpen = $state(false);
+	let alertsLoading = $state(false);
+	let alertsError = $state<string | null>(null);
+	let alertsInterval: ReturnType<typeof setInterval> | null = null;
 	// Subscribe to theme store for live dark mode updates
 	const _unsubTheme = themeStore.subscribe((v) => (dark = v.effective === 'dark'));
 
@@ -35,6 +56,41 @@
 		sidebarStore.toggle();
 	}
 
+	async function fetchTriggeredAlerts() {
+		try {
+			alertsLoading = true;
+			alertsError = null;
+
+			const response = await fetch('/api/alerts');
+			if (!response.ok) {
+				throw new Error('Unable to load alerts');
+			}
+
+			const payload = await response.json();
+			alerts = payload.alerts ?? [];
+		} catch (error) {
+			console.error('Failed to load alerts', error);
+			alertsError = error instanceof Error ? error.message : 'Failed to load alerts';
+		} finally {
+			alertsLoading = false;
+		}
+	}
+
+	function toggleAlertsDropdown() {
+		const nextOpen = !alertsOpen;
+		alertsOpen = nextOpen;
+		if (nextOpen && alerts.length === 0 && !alertsLoading) {
+			void fetchTriggeredAlerts();
+		}
+	}
+
+	function formatTriggerTime(value: string | null) {
+		if (!value) return 'Unknown time';
+		const parsed = new Date(value);
+		if (Number.isNaN(parsed.getTime())) return 'Unknown time';
+		return parsed.toLocaleString();
+	}
+
 	// Close mobile menu when clicking outside (runtime type guard to stay JS-compatible if TS preproc fails)
 	// @ts-ignore - runtime guarded; Svelte preprocessor not inferring JSDoc here
 	function handleClickOutside(event) {
@@ -42,6 +98,9 @@
 		if (!(target instanceof HTMLElement)) return;
 		if (!target.closest('.mobile-menu') && !target.closest('.mobile-menu-btn')) {
 			mobileMenuOpen = false;
+		}
+		if (!target.closest('.alert-dropdown')) {
+			alertsOpen = false;
 		}
 	}
 
@@ -69,10 +128,18 @@
 		// Ensure initial dark flag is correct (in case subscription fired before mount)
 		dark =
 			typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : dark;
+		void fetchTriggeredAlerts();
+		alertsInterval = window.setInterval(() => {
+			void fetchTriggeredAlerts();
+		}, ALERTS_REFRESH_INTERVAL);
 
 		return () => {
 			document.removeEventListener('click', handleClickOutside);
 			_unsubTheme && _unsubTheme();
+			if (alertsInterval) {
+				clearInterval(alertsInterval);
+				alertsInterval = null;
+			}
 		};
 	});
 </script>
@@ -96,15 +163,106 @@
 
 		<span class="flex-1"></span>
 
-		<div class="hidden items-center gap-3 text-white md:flex">
-			<!-- @todo Move the language and theme selectors to the user settings page -->
-			<LanguageSelector />
-			<ThemeModeSelector />
-			{#if page.data.session?.user}
-				<Button variant="secondary" onclick={handleLogout}>{$_('Logout')}</Button>
-			{:else}
-				<Button variant="primary" href="/auth/login">{$_('Login')}</Button>
-			{/if}
+		<div class="flex items-center gap-3 text-white">
+			<SiteWideRefreshButton />
+			<div class="alert-dropdown relative">
+				<button
+					type="button"
+					class={`alert-button relative rounded-full p-2 transition-colors focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-800 focus-visible:outline-none ${
+						alerts.length
+							? 'bg-red-600/20 text-red-100 hover:bg-red-600/30'
+							: 'bg-white/5 text-white/70 hover:bg-white/15'
+					}`}
+					aria-haspopup="true"
+					aria-expanded={alertsOpen}
+					onclick={toggleAlertsDropdown}
+				>
+					<MaterialIcon
+						name={alerts.length ? 'notifications_active' : 'notifications_none'}
+						size="large"
+						aria-label={alerts.length ? 'Active alerts' : 'No active alerts'}
+					/>
+					{#if alerts.length > 0}
+						<span
+							class="absolute -top-1.5 -right-1.5 min-w-[1.6rem] rounded-full bg-red-600 px-1.5 text-center text-xs leading-5 font-semibold text-white shadow-lg"
+						>
+							{alerts.length}
+						</span>
+					{/if}
+				</button>
+
+				{#if alertsOpen}
+					<div
+						class="alerts-panel absolute right-0 z-50 mt-3 w-80 max-w-[90vw] rounded-xl border border-white/10 bg-emerald-950/95 p-4 text-white shadow-2xl backdrop-blur"
+					>
+						<div class="mb-4 flex items-center justify-between gap-2">
+							<div>
+								<p class="text-xs font-semibold tracking-wide text-white/60 uppercase">
+									Active Alerts
+								</p>
+								<p class="text-lg font-semibold">{alerts.length}</p>
+							</div>
+							<button
+								type="button"
+								class="rounded-md px-3 py-1 text-xs font-semibold tracking-wide text-white/80 uppercase transition hover:bg-white/10 hover:text-white disabled:opacity-60"
+								onclick={() => void fetchTriggeredAlerts()}
+								disabled={alertsLoading}
+							>
+								{alertsLoading ? 'Refreshing…' : 'Refresh'}
+							</button>
+						</div>
+
+						{#if alertsLoading && alerts.length === 0}
+							<p class="text-sm text-white/80">Loading alerts…</p>
+						{:else if alertsError}
+							<p class="text-sm text-red-200">{alertsError}</p>
+						{:else if alerts.length === 0}
+							<p class="text-sm text-white/70">All clear. Triggered alerts will appear here.</p>
+						{:else}
+							<ul class="space-y-3">
+								{#each alerts as alert (alert.id)}
+									{@const deviceLocationId = alert.device?.location_id}
+									{@const deviceEui = alert.device?.dev_eui}
+									<li class="rounded-lg bg-white/5 p-3 text-sm">
+										<p class="leading-tight font-semibold">{alert.name}</p>
+										<p class="text-xs text-white/70">
+											{alert.device?.name ?? alert.dev_eui ?? 'Unknown device'}
+										</p>
+										<p class="mt-1 text-xs text-white/60">
+											Triggered {formatTriggerTime(alert.last_triggered)}
+										</p>
+										{#if deviceLocationId && deviceEui}
+											<a
+												class="mt-2 inline-flex w-full items-center justify-center rounded-md bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-white uppercase transition hover:bg-white/20"
+												href={`/app/dashboard/location/${deviceLocationId}/devices/${deviceEui}`}
+											>
+												View
+											</a>
+										{:else}
+											<p
+												class="mt-2 rounded-md bg-white/5 px-3 py-1 text-center text-xs text-white/60"
+											>
+												Device details unavailable
+											</p>
+										{/if}
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</div>
+				{/if}
+			</div>
+
+			<div class="hidden items-center gap-3 text-white md:flex">
+				<!-- @todo Move the language and theme selectors to the user settings page -->
+				<LanguageSelector />
+				<ThemeModeSelector />
+				{#if page.data.session?.user}
+					<Button variant="secondary" onclick={handleLogout}>{$_('Logout')}</Button>
+				{:else}
+					<Button variant="primary" href="/auth/login">{$_('Login')}</Button>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Mobile menu button -->
