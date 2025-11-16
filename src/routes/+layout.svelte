@@ -162,7 +162,7 @@
 	@media (max-width: 1023px) {
 		main {
 			margin-left: 0 !important;
-			padding-top: 119px !important;
+			padding-top: 75px !important;
 		}
 
 		/* Auth pages should have no padding even on mobile */

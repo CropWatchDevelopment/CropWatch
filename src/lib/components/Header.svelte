@@ -197,18 +197,14 @@
 			<div class="alert-dropdown relative">
 				<button
 					type="button"
-					class={`alert-button relative rounded-full p-2 transition-colors focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-800 focus-visible:outline-none ${
-						alerts.length
-							? 'bg-red-600/20 text-red-100 hover:bg-red-600/30'
-							: 'bg-white/5 text-white/70 hover:bg-white/15'
-					}`}
+					class={`alert-button relative rounded-full p-2 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-800 focus-visible:outline-none`}
 					aria-haspopup="true"
 					aria-expanded={alertsOpen}
 					onclick={toggleAlertsDropdown}
 				>
 					<MaterialIcon
 						name={alerts.length ? 'notifications_active' : 'notifications_none'}
-						size="large"
+						size="medium"
 						aria-label={alerts.length ? 'Active alerts' : 'No active alerts'}
 					/>
 					{#if alerts.length > 0}
