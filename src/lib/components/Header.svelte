@@ -40,6 +40,7 @@
 	let alertsLoading = $state(false);
 	let alertsError = $state<string | null>(null);
 	let alertsInterval: ReturnType<typeof setInterval> | null = null;
+	let resolvingAlerts = $state<Record<number, boolean>>({});
 	// Subscribe to theme store for live dark mode updates
 	const _unsubTheme = themeStore.subscribe((v) => (dark = v.effective === 'dark'));
 
@@ -89,6 +90,34 @@
 		const parsed = new Date(value);
 		if (Number.isNaN(parsed.getTime())) return 'Unknown time';
 		return parsed.toLocaleString();
+	}
+
+	async function resolveAlert(alertId: number) {
+		if (resolvingAlerts[alertId]) return;
+
+		resolvingAlerts[alertId] = true;
+		resolvingAlerts = { ...resolvingAlerts };
+
+		try {
+			const response = await fetch(`/api/alerts/${alertId}/resolve`, {
+				method: 'POST'
+			});
+
+			if (!response.ok) {
+				throw new Error('Unable to clear alert');
+			}
+
+			alerts = alerts.filter((alert) => alert.id !== alertId);
+			if (!alerts.length) {
+				void fetchTriggeredAlerts();
+			}
+		} catch (error) {
+			console.error('Failed to clear alert', error);
+			alertsError = error instanceof Error ? error.message : 'Failed to clear alert';
+		} finally {
+			delete resolvingAlerts[alertId];
+			resolvingAlerts = { ...resolvingAlerts };
+		}
 	}
 
 	// Close mobile menu when clicking outside (runtime type guard to stay JS-compatible if TS preproc fails)
@@ -223,6 +252,7 @@
 								{#each alerts as alert (alert.id)}
 									{@const deviceLocationId = alert.device?.location_id}
 									{@const deviceEui = alert.device?.dev_eui}
+									{@const isResolving = Boolean(resolvingAlerts[alert.id])}
 									<li class="rounded-lg bg-white/5 p-3 text-sm">
 										<p class="leading-tight font-semibold">{alert.name}</p>
 										<p class="text-xs text-white/70">
@@ -231,20 +261,30 @@
 										<p class="mt-1 text-xs text-white/60">
 											Triggered {formatTriggerTime(alert.last_triggered)}
 										</p>
-										{#if deviceLocationId && deviceEui}
-											<a
-												class="mt-2 inline-flex w-full items-center justify-center rounded-md bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-white uppercase transition hover:bg-white/20"
-												href={`/app/dashboard/location/${deviceLocationId}/devices/${deviceEui}`}
+										<div class="mt-2 flex flex-col gap-2">
+											{#if deviceLocationId && deviceEui}
+												<a
+													class="inline-flex w-full items-center justify-center rounded-md bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-white uppercase transition hover:bg-white/20"
+													href={`/app/dashboard/location/${deviceLocationId}/devices/${deviceEui}`}
+												>
+													View
+												</a>
+											{:else}
+												<p
+													class="rounded-md bg-white/5 px-3 py-1 text-center text-xs text-white/60"
+												>
+													Device details unavailable
+												</p>
+											{/if}
+											<button
+												type="button"
+												class="inline-flex w-full items-center justify-center rounded-md bg-red-600/80 px-3 py-1.5 text-xs font-semibold tracking-wide text-white uppercase transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+												onclick={() => resolveAlert(alert.id)}
+												disabled={isResolving}
 											>
-												View
-											</a>
-										{:else}
-											<p
-												class="mt-2 rounded-md bg-white/5 px-3 py-1 text-center text-xs text-white/60"
-											>
-												Device details unavailable
-											</p>
-										{/if}
+												{isResolving ? 'Clearing…' : 'Clear Alert'}
+											</button>
+										</div>
 									</li>
 								{/each}
 							</ul>
