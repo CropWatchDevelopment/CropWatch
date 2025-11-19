@@ -194,7 +194,19 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
 
 		if (deviceDataResponse?.length) {
+			console.log('PDF report raw timestamp sample', {
+				devEui,
+				timezone: timezoneParam,
+				firstRaw: deviceDataResponse[0]?.created_at,
+				lastRaw: deviceDataResponse[deviceDataResponse.length - 1]?.created_at
+			});
 			deviceData = normalizeDeviceDataTimestamps(deviceDataResponse, timezoneParam);
+			console.log('PDF report normalized timestamp sample', {
+				devEui,
+				timezone: timezoneParam,
+				firstNormalized: deviceData[0]?.created_at,
+				lastNormalized: deviceData[deviceData.length - 1]?.created_at
+			});
 			if (!alertPoints.length) {
 				alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
 			}
