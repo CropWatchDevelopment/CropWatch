@@ -11,6 +11,7 @@ import {
 import { addFooterPageNumber } from '$lib/pdf/pdfFooterPageNumber';
 import { createPDFLineChartImage } from '$lib/pdf/pdfLineChartImage';
 import { checkMatch, getValue } from '$lib/pdf/utils';
+import { parseDeviceInstant } from '$lib/pdf/parseDeviceInstant';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
@@ -27,27 +28,6 @@ import { get } from 'svelte/store';
 import type { RequestHandler } from './$types';
 import { drawSummaryPanel } from './drawSummaryPanel';
 import { drawRightAlertPanel } from './drawRightAlertPanel';
-
-const tzOffsetPattern = /([zZ]|[+\-]\d{2}:\d{2}|[+\-]\d{4}|[+\-]\d{2})$/;
-/**
- * Parse a device timestamp into a Luxon DateTime in the target zone.
- * - If input has an offset (or 'Z'), respect it then convert to tz.
- * - If no offset, treat it as zoned in tz (not UTC) for local semantics.
- */
-function parseDeviceInstant(input: string | Date, tz: string): DateTime {
-	if (input instanceof Date) {
-		return DateTime.fromJSDate(input, { zone: 'utc' }).setZone(tz);
-	}
-	let dt: DateTime;
-	if (tzOffsetPattern.test(input)) {
-		dt = DateTime.fromISO(input, { setZone: true });
-		if (!dt.isValid) dt = DateTime.fromSQL(input, { setZone: true });
-		return dt.setZone(tz);
-	}
-	dt = DateTime.fromISO(input, { zone: tz });
-	if (!dt.isValid) dt = DateTime.fromSQL(input, { zone: tz });
-	return dt;
-}
 
 /**
  * JWT-authenticated PDF generation endpoint for device data reports

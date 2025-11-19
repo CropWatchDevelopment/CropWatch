@@ -226,6 +226,41 @@ describe('PDF Report Temperature Device Timezone Tests', () => {
 				});
 			}
 		});
+
+		it('should convert report data timestamps to the requested timezone', async () => {
+			const rpcRows: DeviceDataRecord[] = [
+				{
+					dev_eui: tempDeviceEui,
+					created_at: '2025-11-08T15:00:00Z',
+					temperature_c: 24.2
+				},
+				{
+					dev_eui: tempDeviceEui,
+					created_at: '2025-11-08T14:30:00Z',
+					temperature_c: 22.9
+				}
+			];
+
+			(mockSupabase.rpc as any).mockResolvedValueOnce({
+				data: rpcRows,
+				error: null
+			});
+
+			const startDate = new Date('2025-11-08T00:00:00.000Z');
+			const endDate = new Date('2025-11-09T00:00:00.000Z');
+			const result = await deviceDataService.getDeviceDataForReport({
+				devEui: tempDeviceEui,
+				startDate,
+				endDate,
+				timezone,
+				intervalMinutes: 30
+			});
+
+			expect(result).toHaveLength(2);
+			expect(result[0].created_at).toContain('+09:00');
+			expect(DateTime.fromISO(result[0].created_at).toISO()).toBe('2025-11-09T00:00:00.000+09:00');
+			expect(DateTime.fromISO(result[1].created_at).toISO()).toBe('2025-11-08T23:30:00.000+09:00');
+		});
 	});
 
 	describe('PDF Report Data Sorting and Formatting', () => {
