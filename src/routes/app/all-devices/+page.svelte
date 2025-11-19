@@ -1,11 +1,19 @@
 <script lang="ts">
 	import Icon from '$lib/components/ui/base/Icon.svelte';
 	import { mdiDevices, mdiAlert, mdiMagnify } from '$lib/icons/mdi';
+	import ConnectedGatewaysModal from '$lib/components/devices/ConnectedGatewaysModal.svelte';
+	import type { DeviceGatewayWithDevice } from '$lib/models/DeviceGateway';
 
 	let { data } = $props();
 
 	let allDevicesPromise = $derived(data.allDevicesPromise);
+	const deviceGatewayMap = $derived<Record<string, DeviceGatewayWithDevice[]>>(
+		data.deviceGatewayMap ?? {}
+	);
 	let searchTerm = $state('');
+	let gatewayModalOpen = $state(false);
+	let selectedGateways = $state<DeviceGatewayWithDevice[]>([]);
+	let selectedDeviceLabel = $state('');
 
 	// Filter devices based on search term
 	function filterDevices(devices: any[]) {
@@ -18,6 +26,13 @@
 
 			return name.includes(search) || id.includes(search);
 		});
+	}
+
+	function openGatewayModal(device: any) {
+		if (!device?.dev_eui) return;
+		selectedGateways = deviceGatewayMap[device.dev_eui] ?? [];
+		selectedDeviceLabel = device.name || device.dev_eui || 'Device';
+		gatewayModalOpen = true;
 	}
 </script>
 
@@ -65,6 +80,7 @@
 								<th scope="col" class="w-[18%]">Device ID</th>
 								<th scope="col" class="w-[26%]">Location</th>
 								<th scope="col" class="w-[16%]">Type</th>
+								<th scope="col" class="w-[14%] text-center">Gateways</th>
 								<th scope="col" class="w-[8%] text-center">Details</th>
 							</tr>
 						</thead>
@@ -96,6 +112,16 @@
 									</td>
 									<td class="text-sm text-slate-700 dark:text-slate-200">
 										{device.cw_device_type?.name ?? 'N/A'}
+									</td>
+									<td class="text-center">
+										<button
+											type="button"
+											class="gateways-button"
+											disabled={!device.dev_eui}
+											onclick={() => openGatewayModal(device)}
+										>
+											Connected Gateways
+										</button>
 									</td>
 									<td class="table-actions">
 										{#if device.location_id && device.dev_eui}
@@ -154,6 +180,14 @@
 								</div>
 							{/if}
 						</div>
+						<button
+							type="button"
+							class="gateways-button gateways-button--mobile"
+							disabled={!device.dev_eui}
+							onclick={() => openGatewayModal(device)}
+						>
+							Connected Gateways
+						</button>
 					</article>
 				{/each}
 			</div>
@@ -171,6 +205,12 @@
 		</div>
 	{/await}
 </div>
+
+<ConnectedGatewaysModal
+	bind:open={gatewayModalOpen}
+	deviceLabel={selectedDeviceLabel}
+	gateways={selectedGateways}
+/>
 
 <style>
 	.devices-header {
@@ -378,6 +418,36 @@
 		background-color: rgb(203 213 225);
 		color: rgb(100 116 139);
 		cursor: not-allowed;
+	}
+
+	.gateways-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.35rem 0.9rem;
+		border-radius: 9999px;
+		border: 1px solid rgb(59 130 246);
+		color: rgb(59 130 246);
+		font-size: 0.8rem;
+		font-weight: 600;
+		background-color: transparent;
+		transition:
+			background 0.2s ease,
+			color 0.2s ease;
+	}
+
+	.gateways-button:hover:not(:disabled) {
+		background-color: rgba(59, 130, 246, 0.1);
+	}
+
+	.gateways-button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.gateways-button--mobile {
+		width: 100%;
+		margin-top: 0.75rem;
 	}
 
 	.device-card {

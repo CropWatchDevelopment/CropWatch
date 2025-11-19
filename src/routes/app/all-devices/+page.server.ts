@@ -3,6 +3,8 @@ import { SessionService } from '$lib/services/SessionService';
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { DeviceService } from '$lib/services/DeviceService';
+import { DeviceGatewayRepository } from '$lib/repositories/DeviceGatewayRepository';
+import { DeviceGatewayService } from '$lib/services/DeviceGatewayService';
 import type { PageServerLoad } from '../../$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
@@ -23,7 +25,16 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 
 	// Double check the user only gets their own devices
 	const allDevicesPromise = allDevicesNoPerm.filter((d) => d.user_id && d.user_id === user.id);
+	const devEuis = allDevicesPromise
+		.map((device) => device.dev_eui)
+		.filter((devEui): devEui is string => Boolean(devEui));
+
+	const deviceGatewayMap = devEuis.length
+		? await new DeviceGatewayService(
+				new DeviceGatewayRepository(supabase, errorHandler)
+			).getGatewaysForDevices(devEuis)
+		: {};
 
 	// If you still want `allDevices` in the page, return both:
-	return { allDevicesPromise };
+	return { allDevicesPromise, deviceGatewayMap };
 };
