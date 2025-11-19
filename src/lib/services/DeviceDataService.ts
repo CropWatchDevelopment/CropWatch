@@ -690,11 +690,16 @@ export class DeviceDataService implements IDeviceDataService {
 			const asIso = DateTime.fromJSDate(utcTimestamp, { zone: 'utc' }).setZone(timezone).toISO();
 			return asIso ?? utcTimestamp.toISOString();
 		}
+
+		const normalized =
+			typeof utcTimestamp === 'string' ? utcTimestamp.trim() : String(utcTimestamp);
+		if (!normalized) {
+			return normalized;
+		}
 		if (timezone === 'UTC') {
-			return typeof utcTimestamp === 'string' ? utcTimestamp : String(utcTimestamp);
+			return normalized;
 		}
 
-		const normalized = utcTimestamp.trim();
 		const hasOffset = this.timezoneOffsetPattern.test(normalized);
 		let dt = DateTime.invalid('unparsed');
 
@@ -702,22 +707,18 @@ export class DeviceDataService implements IDeviceDataService {
 			dt = DateTime.fromISO(normalized, { setZone: true });
 			if (!dt.isValid) dt = DateTime.fromSQL(normalized, { setZone: true });
 			if (!dt.isValid) dt = DateTime.fromRFC2822(normalized, { setZone: true });
-			if (!dt.isValid) {
-				console.warn(`Failed to parse timestamp with offset: ${utcTimestamp}`);
-				return normalized;
-			}
-			const converted = dt.setZone(timezone).toISO();
-			return converted ?? normalized;
+		} else {
+			dt = DateTime.fromISO(normalized, { zone: 'utc' });
+			if (!dt.isValid) dt = DateTime.fromSQL(normalized, { zone: 'utc' });
+			if (!dt.isValid) dt = DateTime.fromRFC2822(normalized, { zone: 'utc' });
 		}
 
-		dt = DateTime.fromISO(normalized, { zone: timezone });
-		if (!dt.isValid) dt = DateTime.fromSQL(normalized, { zone: timezone });
-		if (!dt.isValid) dt = DateTime.fromRFC2822(normalized, { zone: timezone });
 		if (!dt.isValid) {
-			console.warn(`Failed to interpret timestamp without offset for ${timezone}: ${utcTimestamp}`);
+			console.warn(`Failed to parse timestamp: ${utcTimestamp}`);
 			return normalized;
 		}
-		return dt.toISO() ?? normalized;
+
+		return dt.setZone(timezone).toISO() ?? normalized;
 	}
 
 	/**
