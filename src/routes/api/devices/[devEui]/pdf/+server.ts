@@ -1,3 +1,5 @@
+export const config = { runtime: 'nodejs20.x' };
+
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { i18n } from '$lib/i18n/index.svelte';
 import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
@@ -509,14 +511,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		].join(' | ');
 		addFooterPageNumber(doc, footerText);
 
-		// Finalize
-		doc.end();
-
 		const chunks: Buffer[] = [];
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		doc.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
 
-		return new Promise<Response>((resolve, reject) => {
+		const pdfResponsePromise = new Promise<Response>((resolve, reject) => {
 			doc.on('end', () => {
 				const pdfBuffer = Buffer.concat(chunks);
 				resolve(
@@ -548,6 +547,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				);
 			});
 		});
+
+		// Finalize once listeners are registered
+		doc.end();
+
+		return pdfResponsePromise;
 	} catch (err) {
 		console.error(`Error generating PDF for device ${params.devEui}:`, err);
 		return json(
