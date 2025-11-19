@@ -207,6 +207,21 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				firstNormalized: deviceData[0]?.created_at,
 				lastNormalized: deviceData[deviceData.length - 1]?.created_at
 			});
+			const windowStart = userStart.toMillis();
+			const windowEnd = userEnd.toMillis();
+			const beforeFilterCount = deviceData.length;
+			deviceData = deviceData.filter((record) => {
+				const dt = parseDeviceInstant(record.created_at as string, timezoneParam);
+				const ms = dt.toMillis();
+				return ms >= windowStart && ms <= windowEnd;
+			});
+			console.log('PDF report filtered dataset', {
+				devEui,
+				beforeFilterCount,
+				afterFilterCount: deviceData.length,
+				firstAfterFilter: deviceData[0]?.created_at,
+				lastAfterFilter: deviceData[deviceData.length - 1]?.created_at
+			});
 			if (!alertPoints.length) {
 				alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
 			}
