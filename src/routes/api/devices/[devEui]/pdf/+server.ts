@@ -1,4 +1,4 @@
-export const runtime = 'node';
+export const config = { runtime: 'nodejs20.x' };
 
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { i18n } from '$lib/i18n/index.svelte';
