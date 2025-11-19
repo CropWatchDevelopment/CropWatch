@@ -408,7 +408,8 @@ export class DeviceDataService implements IDeviceDataService {
 					p_columns: p_columns,
 					p_ops: p_ops,
 					p_mins: p_mins,
-					p_maxs: p_maxs
+					p_maxs: p_maxs,
+					p_timezone: timezone
 				}
 			);
 

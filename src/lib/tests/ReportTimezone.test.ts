@@ -81,7 +81,8 @@ describe('Report Data Timezone Tests', () => {
 					p_dev_id: '110110145241600107',
 					p_start_time: startDate,
 					p_end_time: endDate,
-					p_interval_minutes: 30
+					p_interval_minutes: 30,
+					p_timezone: timezone
 				})
 			);
 
@@ -185,7 +186,8 @@ describe('Report Data Timezone Tests', () => {
 					p_columns: ['temperature_c', 'humidity'],
 					p_ops: ['>', 'BETWEEN'],
 					p_mins: [30.0, 40.0],
-					p_maxs: [null, 80.0]
+					p_maxs: [null, 80.0],
+					p_timezone: 'Asia/Tokyo'
 				})
 			);
 		});

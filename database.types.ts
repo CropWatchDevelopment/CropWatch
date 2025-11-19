@@ -1935,6 +1935,7 @@ export type Database = {
 					p_mins: number[];
 					p_ops: string[];
 					p_start_time: string;
+					p_timezone?: string;
 				};
 				Returns: Json[];
 			};
