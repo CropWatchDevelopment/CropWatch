@@ -118,8 +118,22 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const endLabel = userEnd.toFormat('yyyy-MM-dd HH:mm');
 		const startDateUtc = userStart.toUTC().toJSDate();
 		const endDateUtc = userEnd.toUTC().toJSDate();
-		const startDateLocal = userStart.toJSDate();
-		const endDateLocal = userEnd.toJSDate();
+		const startDateLocal = new Date(
+			userStart.year,
+			userStart.month - 1,
+			userStart.day,
+			userStart.hour,
+			userStart.minute,
+			userStart.second
+		);
+		const endDateLocal = new Date(
+			userEnd.year,
+			userEnd.month - 1,
+			userEnd.day,
+			userEnd.hour,
+			userEnd.minute,
+			userEnd.second
+		);
 
 		const selectedKeys = dataKeysParam
 			.split(',')
