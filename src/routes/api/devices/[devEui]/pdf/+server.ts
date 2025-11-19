@@ -198,7 +198,8 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				devEui,
 				timezone: timezoneParam,
 				firstRaw: deviceDataResponse[0]?.created_at,
-				lastRaw: deviceDataResponse[deviceDataResponse.length - 1]?.created_at
+				lastRaw: deviceDataResponse[deviceDataResponse.length - 1]?.created_at,
+				rawKeys: Object.keys(deviceDataResponse[0] ?? {})
 			});
 			deviceData = normalizeDeviceDataTimestamps(deviceDataResponse, timezoneParam);
 			console.log('PDF report normalized timestamp sample', {
