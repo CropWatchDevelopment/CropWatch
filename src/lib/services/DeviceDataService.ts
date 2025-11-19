@@ -121,6 +121,14 @@ export class DeviceDataService implements IDeviceDataService {
 					ascending: false
 				});
 
+			console.log('Historical RPC params', {
+				devEui,
+				start: utcStartDate.toISOString(),
+				end: utcEndDate.toISOString(),
+				tableName,
+				timezone
+			});
+
 			if (error) {
 				this.errorHandler.logError(error);
 				throw new Error(`Error fetching device data: ${error.message}`);
