@@ -399,7 +399,7 @@ export class DeviceDataService implements IDeviceDataService {
 			// }
 
 			const { data, error: deviceError } = await this.supabase.rpc(
-				'get_filtered_device_report_data_multi',
+				'get_filtered_device_report_data_multi_v2',
 				{
 					p_dev_id: devEui,
 					p_start_time: startDate,

@@ -1925,7 +1925,7 @@ export type Database = {
 				Args: { bucket: string; object: string };
 				Returns: Record<string, unknown>;
 			};
-			get_filtered_device_report_data_multi: {
+			get_filtered_device_report_data_multi_v2: {
 				Args: {
 					p_columns: string[];
 					p_dev_id: string;
