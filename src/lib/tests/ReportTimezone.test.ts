@@ -76,7 +76,7 @@ describe('Report Data Timezone Tests', () => {
 
 			// Assert
 			expect(mockSupabase.rpc).toHaveBeenCalledWith(
-				'get_filtered_device_report_data_multi',
+				'get_filtered_device_report_data_multi_v2',
 				expect.objectContaining({
 					p_dev_id: '110110145241600107',
 					p_start_time: startDate,
@@ -181,7 +181,7 @@ describe('Report Data Timezone Tests', () => {
 
 			// Assert
 			expect(mockSupabase.rpc).toHaveBeenCalledWith(
-				'get_filtered_device_report_data_multi',
+				'get_filtered_device_report_data_multi_v2',
 				expect.objectContaining({
 					p_columns: ['temperature_c', 'humidity'],
 					p_ops: ['>', 'BETWEEN'],

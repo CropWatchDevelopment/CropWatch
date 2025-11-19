@@ -1,13 +1,16 @@
--- 1) Create the function
-CREATE OR REPLACE FUNCTION get_filtered_device_report_data_multi(
+DROP FUNCTION IF EXISTS public.get_filtered_device_report_data_multi_v2(
+  TEXT, TIMESTAMPTZ, TIMESTAMPTZ, INTEGER, TEXT[], TEXT[], DOUBLE PRECISION[], DOUBLE PRECISION[], TEXT
+);
+
+CREATE OR REPLACE FUNCTION get_filtered_device_report_data_multi_v2(
     p_dev_id             TEXT,
     p_start_time         TIMESTAMPTZ,
     p_end_time           TIMESTAMPTZ,
     p_interval_minutes   INTEGER,
-    p_columns            TEXT[],             -- e.g. ['temperature_c','humidity']
-    p_ops                TEXT[],             -- e.g. ['>','BETWEEN']
-    p_mins               DOUBLE PRECISION[], -- e.g. [-22, 55]
-    p_maxs               DOUBLE PRECISION[]  -- e.g. [NULL, 65]
+    p_columns            TEXT[],
+    p_ops                TEXT[],
+    p_mins               DOUBLE PRECISION[],
+    p_maxs               DOUBLE PRECISION[],
     p_timezone           TEXT DEFAULT 'UTC'
 )
 RETURNS SETOF JSONB
@@ -28,10 +31,8 @@ DECLARE
       'dev_eui','smoke_detected','vape_detected','battery_level','is_simulated'
     ];
 BEGIN
-  -- Ensure timestamptz fields respect the caller's timezone when converted to text/JSON
   PERFORM set_config('TimeZone', COALESCE(NULLIF(p_timezone, ''), 'UTC'), true);
 
-  -- 1) lookup table name
   SELECT cdt.data_table_v2
     INTO v_target_table
     FROM cw_devices dev
@@ -41,7 +42,6 @@ BEGIN
     RAISE EXCEPTION 'No data table for dev_eui=%', p_dev_id;
   END IF;
 
-  -- 2) gather actual columns
   SELECT array_agg(column_name)
     INTO candidate_cols
     FROM information_schema.columns
@@ -52,7 +52,6 @@ BEGIN
     RAISE EXCEPTION 'No columns in %', v_target_table;
   END IF;
 
-  -- 3) filter to only columns with data in the window
   FOREACH col IN ARRAY candidate_cols LOOP
     EXECUTE format(
       'SELECT EXISTS(SELECT 1 FROM %I WHERE dev_eui = %L AND created_at BETWEEN %L AND %L AND %I IS NOT NULL)',
@@ -67,7 +66,6 @@ BEGIN
   END IF;
   column_list := array_to_string(final_cols, ', ');
 
-  -- 4) build exception clauses from the four parallel arrays
   IF NOT (
        array_length(p_columns,1) = array_length(p_ops,1)
     AND array_length(p_columns,1) = array_length(p_mins,1)
@@ -87,7 +85,6 @@ BEGIN
   END LOOP;
   exceptions_where := array_to_string(cond_clauses, ' OR ');
 
-  -- 5) assemble & run the dynamic SQL
   sql := format($query$
     WITH filtered AS (
       SELECT %s
@@ -121,14 +118,14 @@ BEGIN
       ) x
      ORDER BY created_at
   $query$,
-    column_list,        -- for filtered
+    column_list,
     v_target_table,
     p_dev_id, p_start_time, p_end_time,
-    p_start_time,       -- for bucket calc
+    p_start_time,
     p_interval_minutes,
-    column_list,        -- for dedup
-    column_list,        -- for exceptions
-    exceptions_where    -- combined WHERE clause
+    column_list,
+    column_list,
+    exceptions_where
   );
 
   RETURN QUERY EXECUTE sql;

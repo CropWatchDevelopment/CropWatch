@@ -1,5 +1,5 @@
 -- 1) Create the function
-CREATE OR REPLACE FUNCTION get_filtered_device_report_data_multi(
+CREATE OR REPLACE FUNCTION get_filtered_device_report_data_multi_v2(
     p_dev_id             TEXT,
     p_start_time         TIMESTAMPTZ,
     p_end_time           TIMESTAMPTZ,
@@ -106,7 +106,7 @@ BEGIN
     dedup AS (
       SELECT DISTINCT ON (bucket) %s
         FROM sampled
-       ORDER BY bucket, created_at
+       ORDER BY bucket, created_at DESC
     ),
     exceptions AS (
       SELECT %s
