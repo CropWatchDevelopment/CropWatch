@@ -427,7 +427,11 @@ export class DeviceDataService implements IDeviceDataService {
 					}
 				];
 			}
-			return data as DeviceDataRecord[];
+
+			const records = data as DeviceDataRecord[];
+			const hasTrafficHourField = records.some((record) => 'traffic_hour' in record);
+			const tableNameForConversion = hasTrafficHourField ? 'cw_traffic2' : 'report_data';
+			return this.convertRecordTimestampsToUserTimezone(records, timezone, tableNameForConversion);
 		} catch (error) {
 			this.errorHandler.logError(error as Error);
 			if (error instanceof Error && error.message.includes('AbortError')) {
