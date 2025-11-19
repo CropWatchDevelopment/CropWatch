@@ -413,6 +413,18 @@ export class DeviceDataService implements IDeviceDataService {
 				}
 			);
 
+			console.log('Report RPC params', {
+				devEui,
+				start: startDate.toISOString(),
+				end: endDate.toISOString(),
+				intervalMinutes,
+				columns: p_columns,
+				ops: p_ops,
+				mins: p_mins,
+				maxs: p_maxs,
+				timezone
+			});
+
 			if (deviceError) {
 				this.errorHandler.logError(deviceError);
 				throw new Error(`Error fetching report data: ${deviceError.message}`);
