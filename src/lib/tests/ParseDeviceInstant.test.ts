@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { parseDeviceInstant } from '$lib/pdf/parseDeviceInstant';
 
 describe('parseDeviceInstant', () => {
-	it('treats offset-less ISO timestamps as local values in the requested zone', () => {
+	it('treats offset-less ISO timestamps as UTC then converts to the requested zone', () => {
 		const dt = parseDeviceInstant('2025-11-08T15:00:00', 'Asia/Tokyo');
-		expect(dt.toISO()).toBe('2025-11-08T15:00:00.000+09:00');
+		expect(dt.toISO()).toBe('2025-11-09T00:00:00.000+09:00');
 	});
 
 	it('respects explicit offsets on the source timestamp', () => {
