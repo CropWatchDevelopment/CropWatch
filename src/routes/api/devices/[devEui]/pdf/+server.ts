@@ -116,8 +116,10 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const userEnd = DateTime.fromJSDate(endDate).setZone(timezoneParam).endOf('day');
 		const startLabel = userStart.toFormat('yyyy-MM-dd HH:mm');
 		const endLabel = userEnd.toFormat('yyyy-MM-dd HH:mm');
-		startDate = userStart.toUTC().toJSDate();
-		endDate = userEnd.toUTC().toJSDate();
+		const startDateUtc = userStart.toUTC().toJSDate();
+		const endDateUtc = userEnd.toUTC().toJSDate();
+		const startDateLocal = userStart.toJSDate();
+		const endDateLocal = userEnd.toJSDate();
 
 		const selectedKeys = dataKeysParam
 			.split(',')
@@ -181,8 +183,8 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const deviceDataResponse = isReport
 			? await deviceDataService.getDeviceDataForReport({
 					devEui,
-					startDate,
-					endDate,
+					startDate: startDateUtc,
+					endDate: endDateUtc,
 					timezone: timezoneParam,
 					columns: requestedAlertPoints.map((p) => p.data_point_key as string),
 					ops: requestedAlertPoints.map((p) => p.operator as string),
@@ -190,7 +192,12 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 					maxs: requestedAlertPoints.map((p) => p.max ?? null),
 					intervalMinutes: 30
 				})
-			: await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate, timezoneParam);
+			: await deviceDataService.getDeviceDataByDateRange(
+					devEui,
+					startDateLocal,
+					endDateLocal,
+					timezoneParam
+				);
 
 		let deviceData: DeviceDataRecord[] = [];
 		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
