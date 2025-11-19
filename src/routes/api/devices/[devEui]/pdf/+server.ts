@@ -29,6 +29,23 @@ import type { RequestHandler } from './$types';
 import { drawSummaryPanel } from './drawSummaryPanel';
 import { drawRightAlertPanel } from './drawRightAlertPanel';
 
+function normalizeDeviceDataTimestamps(records: DeviceDataRecord[], timezone: string) {
+	if (!records || !records.length) return records ?? [];
+	return records.map((record) => {
+		const next = { ...record } as Record<string, unknown>;
+		const stampKeys: Array<keyof DeviceDataRecord> = ['created_at', 'traffic_hour'];
+		for (const key of stampKeys) {
+			const raw = next[key];
+			if (!raw) continue;
+			const parsed = parseDeviceInstant(raw as string | Date, timezone);
+			if (parsed.isValid) {
+				next[key] = parsed.toISO();
+			}
+		}
+		return next as DeviceDataRecord;
+	});
+}
+
 /**
  * JWT-authenticated PDF generation endpoint for device data reports
  * Designed for server-to-server calls (Node-RED, automation tools, etc.)
@@ -177,7 +194,7 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
 
 		if (deviceDataResponse?.length) {
-			deviceData = deviceDataResponse;
+			deviceData = normalizeDeviceDataTimestamps(deviceDataResponse, timezoneParam);
 			if (!alertPoints.length) {
 				alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
 			}
