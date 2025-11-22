@@ -354,16 +354,18 @@
 </script>
 
 <div class="space-y-6 px-4 py-6 sm:px-6">
-	<div class="reports-header">
-		<div class="reports-header__info">
+	<div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+		<div class="min-w-0 flex-auto">
 			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">{$_('all_reports_heading')}</h1>
 			<p class="mt-1 text-gray-600 dark:text-gray-400">
 				{$_('all_reports_subheading')}
 			</p>
 		</div>
-		<div class="reports-header__actions">
-			<div class="search-container">
-				<div class="search-wrapper">
+		<div
+			class="flex w-full flex-col gap-3 md:ml-auto md:max-w-md md:flex-row md:items-center md:justify-end"
+		>
+			<div class="min-w-[260px] max-sm:min-w-full">
+				<div class="relative w-full">
 					<Icon
 						class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 dark:text-slate-400/80"
 						path={mdiMagnify}
@@ -373,19 +375,22 @@
 						type="text"
 						bind:value={searchTerm}
 						placeholder={$_('search_reports_placeholder')}
-						class="search-input"
+						class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 pl-10 text-sm text-gray-900 transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:focus:border-blue-300"
 						aria-label={$_('search_reports_placeholder')}
 					/>
 				</div>
 			</div>
 			<button
 				type="button"
-				class="bulk-download-btn w-full md:w-auto"
+				class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border-none bg-gradient-to-br from-blue-500 to-blue-600 px-5 font-semibold text-white shadow-lg shadow-blue-500/25 transition-transform hover:-translate-y-px hover:shadow-blue-500/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none disabled:hover:transform-none md:w-auto"
 				disabled={!selectedReportIds.length || bulkDownloading}
 				onclick={openBulkDownloadModal}
 			>
 				{#if bulkDownloading}
-					<span class="bulk-spinner" aria-hidden="true"></span>
+					<span
+						class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+						aria-hidden="true"
+					></span>
 					<span>{$_('downloading')}</span>
 				{:else}
 					<Icon class="shrink-0" path={mdiDownload} size="18" />
@@ -399,27 +404,32 @@
 		class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-600 shadow-sm md:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
 	>
 		<span>{$_('selection')}</span>
-		<label class="selection-checkbox">
+		<label class="flex items-center justify-center">
 			<input
 				type="checkbox"
 				bind:this={mobileSelectAllCheckbox}
 				checked={allVisibleSelected}
 				aria-label={$_('select_all_reports_aria')}
 				onchange={handleSelectAllChange}
+				class="h-4 w-4 accent-blue-500 dark:accent-blue-300"
 			/>
 		</label>
 	</div>
 
 	<Dialog.Root bind:open={bulkModalOpen}>
 		<Dialog.Portal>
-			<Dialog.Overlay class="fixed inset-0 bg-black/50" />
-			<Dialog.Content class="bulk-modal">
-				<Dialog.Title class="bulk-modal-title">{$_('select_date_range')}</Dialog.Title>
-				<Dialog.Description class="bulk-modal-description">
+			<Dialog.Overlay class="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+			<Dialog.Content
+				class="fixed top-1/2 left-1/2 w-[min(90vw,24rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-2xl dark:bg-slate-800 dark:text-slate-200"
+			>
+				<Dialog.Title class="mb-1 text-lg font-semibold text-slate-900 dark:text-white"
+					>{$_('select_date_range')}</Dialog.Title
+				>
+				<Dialog.Description class="mb-4 text-sm text-slate-600 dark:text-slate-400">
 					{$_('bulk_download_description')}
 				</Dialog.Description>
 
-				<div class="modal-date-picker">
+				<div class="mb-6">
 					<DateRangePicker.Root
 						bind:value={modalDateRange}
 						onValueChange={handleModalDateChange}
@@ -531,13 +541,17 @@
 					</DateRangePicker.Root>
 				</div>
 
-				<div class="modal-actions">
-					<button type="button" class="modal-button secondary" onclick={cancelBulkDownload}>
+				<div class="flex justify-end gap-3">
+					<button
+						type="button"
+						class="rounded-lg border border-gray-300 bg-transparent px-4 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-slate-700/50"
+						onclick={cancelBulkDownload}
+					>
 						{$_('cancel')}
 					</button>
 					<button
 						type="button"
-						class="modal-button primary"
+						class="rounded-lg border border-blue-600 bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:-translate-y-px hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:transform-none dark:border-blue-600 dark:bg-blue-600 dark:hover:bg-blue-500"
 						disabled={!modalStartDate || !modalEndDate || bulkDownloading}
 						onclick={confirmBulkDownload}
 					>
@@ -549,7 +563,7 @@
 	</Dialog.Root>
 
 	{#if bulkDownloading && bulkProgress}
-		<p class="bulk-progress" role="status">
+		<p class="text-sm text-blue-500 dark:text-blue-300" role="status">
 			{$_('bulk_progress_message', {
 				values: {
 					current: bulkProgress.current,
@@ -561,33 +575,40 @@
 
 	{#if filteredReports.length > 0}
 		<div class="hidden md:block">
-			<div class="table-wrapper">
-				<table class="reports-table">
-					<thead>
+			<div
+				class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800"
+			>
+				<table class="w-full text-left text-sm">
+					<thead
+						class="bg-slate-50 text-xs text-slate-500 uppercase dark:bg-slate-900/50 dark:text-slate-400"
+					>
 						<tr>
-							<th scope="col" class="selection-header w-36">
-								<span>{$_('selection')}</span>
-								<label class="selection-toggle">
-									<input
-										type="checkbox"
-										bind:this={selectAllCheckbox}
-										checked={allVisibleSelected}
-										aria-label={$_('select_all_reports_aria')}
-										onchange={handleSelectAllChange}
-									/>
-								</label>
+							<th scope="col" class="w-36 px-4 py-3 font-medium">
+								<div class="flex items-center gap-2">
+									<span>{$_('selection')}</span>
+									<label class="flex items-center justify-center">
+										<input
+											type="checkbox"
+											bind:this={selectAllCheckbox}
+											checked={allVisibleSelected}
+											aria-label={$_('select_all_reports_aria')}
+											onchange={handleSelectAllChange}
+											class="h-4 w-4 accent-blue-500 dark:accent-blue-300"
+										/>
+									</label>
+								</div>
 							</th>
-							<th scope="col" class="w-80">{$_('Report')}</th>
-							<th scope="col" class="w-72">{$_('Device')}</th>
-							<th scope="col" class="w-48">{$_('Created')}</th>
-							<th scope="col" class="table-actions-header w-40">{$_('export')}</th>
+							<th scope="col" class="w-80 px-4 py-3 font-medium">{$_('Report')}</th>
+							<th scope="col" class="w-72 px-4 py-3 font-medium">{$_('Device')}</th>
+							<th scope="col" class="w-48 px-4 py-3 font-medium">{$_('Created')}</th>
+							<th scope="col" class="w-40 px-4 py-3 font-medium">{$_('export')}</th>
 						</tr>
 					</thead>
-					<tbody>
+					<tbody class="divide-y divide-slate-200 dark:divide-slate-700">
 						{#each filteredReports as report (report.id)}
-							<tr>
-								<td class="selection-cell">
-									<label class="selection-checkbox">
+							<tr class="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30">
+								<td class="px-4 py-3">
+									<label class="flex w-fit items-center justify-center">
 										<input
 											type="checkbox"
 											checked={selectedReportIds.includes(report.id)}
@@ -595,34 +616,40 @@
 												values: { name: getReportLabel(report) }
 											})}
 											onchange={(event) => handleRowSelectionChange(event, report.id)}
+											class="h-4 w-4 accent-blue-500 dark:accent-blue-300"
 										/>
 									</label>
 								</td>
-								<td>
-									<div class="name-cell">
+								<td class="px-4 py-3">
+									<div class="flex items-center gap-2">
 										<Icon
 											class="shrink-0 text-sky-600 dark:text-sky-300"
 											path={mdiFileDocument}
 											size="20"
 										/>
-										<span class="name-text" title={report.name || $_('untitled_report')}>
+										<span
+											class="truncate font-medium text-slate-900 dark:text-slate-200"
+											title={report.name || $_('untitled_report')}
+										>
 											{report.name || $_('untitled_report')}
 										</span>
 									</div>
 								</td>
-								<td>
+								<td class="px-4 py-3">
 									<a
 										href={`/app/dashboard/location/${report.cw_device?.location_id}/devices/${report.dev_eui}/settings/reports`}
-										class="device-link"
+										class="text-blue-600 hover:text-blue-500 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
 									>
 										{report.cw_device?.name ?? $_('N/A')}
-										<small>({report.dev_eui ?? $_('N/A')})</small>
+										<small class="ml-1 text-slate-500 dark:text-slate-400"
+											>({report.dev_eui ?? $_('N/A')})</small
+										>
 									</a>
 								</td>
-								<td>
+								<td class="px-4 py-3 text-slate-600 dark:text-slate-300">
 									{formatDate(report.created_at)}
 								</td>
-								<td class="table-actions flex">
+								<td class="px-4 py-3">
 									<ExportButton types={['pdf']} buttonLabel="" devEui={report.dev_eui} />
 								</td>
 							</tr>
@@ -638,7 +665,7 @@
 				>
 					<div class="flex items-start justify-between gap-3">
 						<div class="flex flex-1 items-start gap-3">
-							<label class="selection-checkbox mt-1">
+							<label class="mt-1 flex items-center justify-center">
 								<input
 									type="checkbox"
 									checked={selectedReportIds.includes(report.id)}
@@ -646,6 +673,7 @@
 										values: { name: getReportLabel(report) }
 									})}
 									onchange={(event) => handleRowSelectionChange(event, report.id)}
+									class="h-5 w-5 accent-blue-500 dark:accent-blue-300"
 								/>
 							</label>
 							<div class="min-w-0">
@@ -691,433 +719,13 @@
 			{/each}
 		</div>
 	{:else}
-		<div class="no-reports">
-			<Icon class="text-4xl text-gray-400" path={mdiAlert} />
-			<p class="text-gray-500 dark:text-gray-300">
+		<div
+			class="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 py-12 text-center dark:border-slate-700 dark:bg-slate-800/50"
+		>
+			<Icon class="mb-3 text-4xl text-slate-400" path={mdiAlert} />
+			<p class="text-lg font-medium text-slate-600 dark:text-slate-300">
 				{searchTerm ? $_('no_reports_match_search') : $_('no_reports_found')}
 			</p>
 		</div>
 	{/if}
 </div>
-
-<style>
-	.reports-header {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
-	@media (min-width: 768px) {
-		.reports-header {
-			flex-direction: row;
-			align-items: flex-end;
-			justify-content: space-between;
-			gap: 2rem;
-		}
-	}
-
-	.reports-header__info {
-		flex: 1 1 auto;
-		min-width: 0;
-	}
-
-	.reports-header__actions {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		width: 100%;
-	}
-
-	@media (min-width: 768px) {
-		.reports-header__actions {
-			flex-direction: row;
-			align-items: center;
-			justify-content: flex-end;
-			max-width: 32rem;
-			margin-left: auto;
-		}
-	}
-
-	.search-container {
-		min-width: 260px;
-		width: 100%;
-	}
-
-	@media (min-width: 768px) {
-		.search-container {
-			min-width: 18rem;
-		}
-	}
-
-	.search-wrapper {
-		position: relative;
-		display: flex;
-		align-items: center;
-	}
-
-	.search-input {
-		width: 100%;
-		padding: 0.5rem 0.75rem 0.5rem 2.5rem;
-		height: 2.75rem;
-		border: 1px solid rgb(209 213 219);
-		border-radius: 0.5rem;
-		background-color: white;
-		color: rgb(17 24 39);
-		font-size: 0.875rem;
-		transition: all 0.2s ease;
-	}
-
-	.search-input:focus {
-		outline: none;
-		border-color: rgb(59 130 246);
-		box-shadow: 0 0 0 3px rgba(59 130 246, 0.1);
-	}
-
-	.search-input::placeholder {
-		color: rgb(156 163 175);
-	}
-
-	:global(.dark) .search-input {
-		background-color: rgb(31 41 55);
-		border-color: rgb(55 65 81);
-		color: white;
-	}
-
-	:global(.dark) .search-input:focus {
-		border-color: rgb(147 197 253);
-		box-shadow: 0 0 0 3px rgba(147 197 253, 0.1);
-	}
-
-	:global(.dark) .search-input::placeholder {
-		color: rgb(107 114 128);
-	}
-
-	.bulk-download-btn {
-		display: none;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0 1.1rem;
-		height: 2.75rem;
-		border-radius: 0.5rem;
-		border: 1px solid rgb(59 130 246);
-		background-color: rgb(37 99 235);
-		color: white;
-		font-size: 0.875rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition:
-			transform 0.15s ease,
-			box-shadow 0.15s ease,
-			background-color 0.15s ease;
-	}
-
-	@media (min-width: 768px) {
-		.bulk-download-btn {
-			display: inline-flex;
-		}
-	}
-
-	.bulk-download-btn:hover {
-		transform: translateY(-1px);
-		box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
-	}
-
-	.bulk-download-btn:focus-visible {
-		outline: 2px solid rgb(147 197 253);
-		outline-offset: 2px;
-	}
-
-	.bulk-download-btn[disabled] {
-		opacity: 0.6;
-		cursor: not-allowed;
-		transform: none;
-		box-shadow: none;
-	}
-
-	:global(.dark) .bulk-download-btn {
-		background-color: rgb(29 78 216);
-		border-color: rgb(37 99 235);
-	}
-
-	:global(.dark) .bulk-download-btn:hover {
-		background-color: rgb(37 99 235);
-	}
-
-	.bulk-spinner {
-		width: 1rem;
-		height: 1rem;
-		border: 2px solid currentColor;
-		border-top-color: transparent;
-		border-radius: 9999px;
-		animation: bulk-spin 0.8s linear infinite;
-	}
-
-	@keyframes bulk-spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
-	.bulk-progress {
-		font-size: 0.875rem;
-		color: rgb(59 130 246);
-	}
-
-	:global(.dark) .bulk-progress {
-		color: rgb(147 197 253);
-	}
-
-	.selection-header {
-		display: flex;
-		align-items: center;
-		gap: 0.45rem;
-		min-width: 120px;
-	}
-
-	.selection-toggle {
-		display: flex;
-		align-items: center;
-	}
-
-	.selection-cell {
-		text-align: center;
-	}
-
-	.selection-checkbox {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.selection-checkbox input,
-	.selection-toggle input {
-		width: 1rem;
-		height: 1rem;
-		accent-color: rgb(59 130 246);
-	}
-
-	:global(.dark) .selection-checkbox input,
-	:global(.dark) .selection-toggle input {
-		accent-color: rgb(147 197 253);
-	}
-
-	:global(.bulk-modal) {
-		position: fixed;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: min(90vw, 24rem);
-		border-radius: 0.75rem;
-		background-color: rgb(255 255 255);
-		padding: 1.5rem;
-		box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
-		color: rgb(17 24 39);
-	}
-
-	:global(.dark .bulk-modal) {
-		background-color: rgb(31 41 55);
-		color: rgb(229 231 235);
-	}
-
-	:global(.bulk-modal-title) {
-		font-size: 1.125rem;
-		font-weight: 600;
-		margin-bottom: 0.25rem;
-	}
-
-	:global(.bulk-modal-description) {
-		font-size: 0.9rem;
-		color: rgb(75 85 99);
-		margin-bottom: 1rem;
-	}
-
-	:global(.dark .bulk-modal-description) {
-		color: rgb(148 163 184);
-	}
-
-	.modal-date-picker {
-		margin-bottom: 1.5rem;
-	}
-
-	.modal-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.75rem;
-	}
-
-	.modal-button {
-		border-radius: 0.5rem;
-		padding: 0.45rem 1rem;
-		font-size: 0.9rem;
-		font-weight: 600;
-		cursor: pointer;
-		border: 1px solid transparent;
-		transition:
-			background-color 0.15s ease,
-			color 0.15s ease,
-			transform 0.15s ease;
-	}
-
-	.modal-button.secondary {
-		background-color: transparent;
-		border-color: rgb(209 213 219);
-		color: rgb(75 85 99);
-	}
-
-	.modal-button.secondary:hover {
-		background-color: rgb(229 231 235);
-	}
-
-	.modal-button.primary {
-		background-color: rgb(37 99 235);
-		color: white;
-		border-color: rgb(37 99 235);
-	}
-
-	.modal-button.primary:hover {
-		background-color: rgb(29 78 216);
-		transform: translateY(-1px);
-	}
-
-	.modal-button[disabled] {
-		opacity: 0.6;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-	:global(.dark) .modal-button.secondary {
-		border-color: rgb(75 85 99);
-		color: rgb(209 213 219);
-	}
-
-	:global(.dark) .modal-button.secondary:hover {
-		background-color: rgba(148, 163, 184, 0.1);
-	}
-
-	:global(.dark) .modal-button.primary {
-		background-color: rgb(29 78 216);
-		border-color: rgb(37 99 235);
-	}
-
-	:global(.dark) .modal-button.primary:hover {
-		background-color: rgb(37 99 235);
-	}
-
-	.table-wrapper {
-		overflow-x: auto;
-		border-radius: 0.75rem;
-		border: 1px solid rgb(229 231 235);
-		background-color: rgb(249 250 251);
-	}
-
-	:global(.dark) .table-wrapper {
-		border-color: rgb(55 65 81);
-		background-color: rgba(31, 41, 55, 0.6);
-	}
-
-	.reports-table {
-		width: 100%;
-		min-width: 640px;
-		border-collapse: collapse;
-	}
-
-	.reports-table thead {
-		background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(56, 189, 248, 0.15));
-	}
-
-	:global(.dark) .reports-table thead {
-		background: linear-gradient(90deg, rgba(37, 99, 235, 0.25), rgba(14, 165, 233, 0.25));
-	}
-
-	.reports-table th,
-	.reports-table td {
-		padding: 0.85rem 1rem;
-		text-align: left;
-		border-bottom: 1px solid rgb(229 231 235);
-		color: rgb(31 41 55);
-		font-size: 0.95rem;
-	}
-
-	:global(.dark) .reports-table th,
-	:global(.dark) .reports-table td {
-		border-color: rgba(75, 85, 99, 0.7);
-		color: rgb(229 231 235);
-	}
-
-	.reports-table th {
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		font-size: 0.75rem;
-		color: rgb(31 41 55);
-	}
-
-	:global(.dark) .reports-table th {
-		color: rgb(191 219 254);
-	}
-
-	.reports-table tbody tr:nth-child(even) {
-		background-color: rgba(59, 130, 246, 0.05);
-	}
-
-	:global(.dark) .reports-table tbody tr:nth-child(even) {
-		background-color: rgba(59, 130, 246, 0.12);
-	}
-
-	.reports-table tbody tr:hover {
-		background-color: rgba(59, 130, 246, 0.12);
-	}
-
-	:global(.dark) .reports-table tbody tr:hover {
-		background-color: rgba(59, 130, 246, 0.2);
-	}
-
-	.name-cell {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		max-width: 320px;
-	}
-
-	.name-text {
-		font-weight: 600;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	:global(.dark) .name-text {
-		color: rgb(191 219 254);
-	}
-
-	.table-actions {
-		text-align: center;
-		white-space: nowrap;
-	}
-
-	.table-actions-header {
-		text-align: center;
-	}
-
-	.no-reports {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 3rem;
-		border-radius: 0.75rem;
-		background-color: var(--color-card, rgb(255 255 255));
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-		gap: 1rem;
-	}
-
-	:global(.dark) .no-reports {
-		background-color: rgb(31 41 55);
-	}
-
-	@media (max-width: 768px) {
-		.search-container {
-			min-width: 100%;
-		}
-	}
-</style>

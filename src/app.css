@@ -780,3 +780,10 @@ input[type="week"]:focus {
 	font-weight: 500;
 	color: var(--color-text-muted);
 }
+
+/* Global form element styles */
+select,
+option {
+	background-color: var(--color-surface);
+	color: var(--color-text);
+}

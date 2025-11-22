@@ -12,6 +12,7 @@
 		href = undefined,
 		disabled = false,
 		loading = false,
+		form = undefined,
 		children,
 		onclick
 	} = $props<{
@@ -22,6 +23,7 @@
 		href?: string;
 		disabled?: boolean;
 		loading?: boolean;
+		form?: string;
 		children?: Snippet;
 		onclick?: (e: MouseEvent) => void;
 	}>();
@@ -38,6 +40,7 @@
 	{href}
 	{disabled}
 	{loading}
+	{form}
 	on:click={(e: CustomEvent<MouseEvent>) => onclick?.(e.detail)}
 >
 	{@render children?.()}

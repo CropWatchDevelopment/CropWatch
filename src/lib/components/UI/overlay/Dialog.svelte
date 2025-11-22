@@ -44,8 +44,8 @@
 
 <dialog
 	bind:this={dialog}
-	class="m-auto rounded-lg text-gray-900 shadow-lg backdrop:bg-gray-500/50 dark:text-white"
-	style:background-color="var(--color-background)"
+	class="text-text m-auto rounded-lg shadow-lg backdrop:bg-black/50"
+	style:background-color="var(--color-card)"
 	style:max-width={size === 'sm' ? '600px' : size === 'md' ? '800px' : 'auto'}
 	oncancel={(event) => {
 		event.preventDefault();
@@ -60,7 +60,7 @@
 				{@render header()}
 			</div>
 		{:else if title}
-			<h3 class="m-6 text-xl font-medium text-gray-900 dark:text-white/70">
+			<h3 class="text-text m-6 text-xl font-medium">
 				{@render title()}
 			</h3>
 		{/if}

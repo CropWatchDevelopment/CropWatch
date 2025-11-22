@@ -11,6 +11,7 @@
 		href = undefined,
 		icon = undefined,
 		type = 'button',
+		form = undefined,
 		className = '',
 		loading = false,
 		disabled = false,
@@ -21,6 +22,7 @@
 		href?: string;
 		icon?: string;
 		type?: 'button' | 'submit';
+		form?: string;
 		className?: string;
 		loading?: boolean;
 		disabled?: boolean;
@@ -59,6 +61,7 @@
 
 <button
 	{type}
+	{form}
 	class={`inline-flex items-center justify-center gap-2 px-4 py-2 ${classes}`}
 	onclick={handleClick}
 	{disabled}

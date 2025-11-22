@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import LocationInfoCard from '$lib/components/dashboard/LocationInfoCard.svelte';
 	import { locale, _ } from 'svelte-i18n';
 	import Header from './Header.svelte';
 
@@ -43,17 +44,15 @@
 					lat={location.lat || 0}
 					lon={location.long || 0}
 					zoom={location.map_zoom || 13}
-					markers={data.markers || []}
+					markers={[]}
 					onclick={handleMapClick}
 					showClickMarker={true}
 				/>
 			</div>
 			<!-- Display clicked coordinates if available -->
 			{#if clickedCoords}
-				<div
-					class="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20"
-				>
-					<p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+				<div class="border-border-subtle bg-surface-muted mt-2 rounded-lg border p-3">
+					<p class="text-text text-sm font-medium">
 						Clicked Coordinates:
 						<span class="font-mono"
 							>{clickedCoords.lat.toFixed(6)}, {clickedCoords.lon.toFixed(6)}</span
@@ -63,35 +62,13 @@
 			{/if}
 		</div>
 		<!-- Details -->
-		<section>
-			<h2>{$_('Location Details')}</h2>
-			<div
-				class="grid grid-rows-1 gap-2 rounded-lg bg-gray-50 p-4 text-sm shadow-sm dark:bg-zinc-800"
-			>
-				<div>
-					<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Location ID')}:</span>
-					{location.location_id}
-				</div>
-				<div>
-					<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Created')}:</span>
-					{new Date(location.created_at).toLocaleDateString($locale ?? undefined, {
-						year: 'numeric',
-						month: 'long',
-						day: 'numeric'
-					})}
-				</div>
-				<div>
-					<span class="text-gray-500/80 dark:text-gray-300/80">{$_('Coordinates')}:</span>
-					{location.lat?.toFixed(6)}, {location.long?.toFixed(6)}
-				</div>
-			</div>
-		</section>
+		<LocationInfoCard {location} />
 	</div>
 	<!-- Right pane -->
-	<div class="relative flex-1 border-t-1 border-neutral-400 pt-4 lg:border-t-0 lg:pt-0">
+	<div class="border-border relative flex-1 border-t pt-4 lg:border-t-0 lg:pt-0">
 		<!-- Devices List -->
 		<section>
-			<h2>{$_('Devices')}</h2>
+			<h2 class="text-text-secondary mb-2 text-xl font-semibold">{$_('Devices')}</h2>
 			{#await data.devices}
 				Loading devices...
 			{:then devices}
@@ -99,18 +76,18 @@
 					<div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
 						{#each devices as device}
 							<div
-								class="flex flex-row items-center gap-2 rounded-lg bg-gray-50 p-4 shadow-sm dark:bg-gray-800/50"
+								class="bg-card border-border-subtle flex flex-row items-center gap-2 rounded-lg border p-4 shadow-sm"
 							>
 								<div class="flex-1 overflow-hidden">
 									<h3 class="mb-1 truncate text-lg font-medium">
 										<a
 											href={`/app/dashboard/location/${locationId}/devices/${device.dev_eui}`}
-											class="text-blue-500 !no-underline hover:text-blue-600 hover:!underline dark:text-blue-400 dark:hover:text-blue-500"
+											class="text-primary hover:text-primary-hover !no-underline hover:!underline"
 										>
 											{device.name}
 										</a>
 									</h3>
-									<p class="text-xs text-gray-500">
+									<p class="text-text-muted text-xs">
 										<strong>EUI:</strong>
 										{device.dev_eui}
 									</p>
@@ -128,7 +105,7 @@
 						{/each}
 					</div>
 				{:else}
-					<p class="text-muted text-center">{$_('No devices found for this location.')}</p>
+					<p class="text-text-muted text-center">{$_('No devices found for this location.')}</p>
 				{/if}
 			{/await}
 		</section>
@@ -137,12 +114,4 @@
 
 <style lang="postcss">
 	@reference "tailwindcss";
-
-	h2 {
-		@apply mb-2 text-xl font-semibold text-gray-600;
-
-		:global(.dark) & {
-			@apply text-gray-300;
-		}
-	}
 </style>

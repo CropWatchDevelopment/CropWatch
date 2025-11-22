@@ -5,42 +5,57 @@ export default {
 	theme: {
 		extend: {
 			colors: {
-				// You can customize your color palette here
+				// Unified color palette using CSS variables from app.css
 				primary: {
-					light: '#4CAF50',
-					dark: '#3a8c3f'
+					DEFAULT: 'var(--color-primary)',
+					hover: 'var(--color-primary-hover)',
+					foreground: '#ffffff'
 				},
+				background: 'var(--color-background)',
 				foreground: {
-					light: 'var(--color-foreground-light)',
 					DEFAULT: 'var(--color-foreground)',
+					light: 'var(--color-foreground-light)',
 					dark: 'var(--color-foreground-dark)'
 				},
-				background: {
-					light: '#f5f5f5',
-					dark: '#1a1a1a'
-				},
-				card: {
-					light: 'var(--color-card, #ffffff)',
-					dark: 'var(--color-card, #2d2d2d)'
-				},
+				card: 'var(--color-card)',
 				text: {
-					light: '#333333',
-					dark: '#e0e0e0'
+					DEFAULT: 'var(--color-text)',
+					secondary: 'var(--color-text-secondary)',
+					muted: 'var(--color-text-muted)'
+				},
+				border: {
+					DEFAULT: 'var(--color-border)',
+					subtle: 'var(--color-border-subtle)'
+				},
+				surface: {
+					DEFAULT: 'var(--color-surface)',
+					raised: 'var(--color-surface-raised)',
+					muted: 'var(--color-surface-muted)',
+					emphasis: 'var(--color-surface-emphasis)'
 				},
 				air: {
-					light: '#e6f7ff',
-					dark: '#0d3b66'
+					bg: 'var(--color-air-bg)',
+					border: 'var(--color-air-border)'
 				},
 				soil: {
-					light: '#f6ffed',
-					dark: '#1e4620'
+					bg: 'var(--color-soil-bg)',
+					border: 'var(--color-soil-border)'
 				},
+				error: {
+					DEFAULT: 'var(--color-error)',
+					bg: 'var(--color-error-bg)'
+				},
+				success: {
+					DEFAULT: 'var(--color-success)',
+					bg: 'var(--color-success-bg)'
+				},
+				// Legacy/Specific colors
 				hotpink: {
 					50: '#fdf2f8',
 					100: '#fce7f3',
 					200: '#fbcfe8',
 					300: '#f9a8d4',
-					400: '#f472b6', // This will create --color-hotpink-400
+					400: '#f472b6',
 					500: '#ec4899',
 					600: '#db2777',
 					700: '#be185d',

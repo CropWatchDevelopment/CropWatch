@@ -5,6 +5,8 @@
 	import type { Location } from '$lib/models/Location';
 	import { PermissionLevel } from '$lib/models/LocationUser.js';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
+	import TextInput from '$lib/components/UI/form/TextInput.svelte';
+	import Select from '$lib/components/UI/form/Select.svelte';
 	import Header from '../../Header.svelte';
 	import { _ } from 'svelte-i18n';
 
@@ -68,47 +70,47 @@
 >
 	<!-- Device information -->
 	<div class="flex flex-col gap-2">
-		<label for="deviceName" class="text-sm font-medium">{$_('Device Name')}</label>
-		<input
+		<label for="deviceName" class="text-text text-sm font-medium">{$_('Device Name')}</label>
+		<TextInput
 			name="deviceName"
 			id="deviceName"
 			type="text"
 			required
-			class="rounded-input border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring h-12 border-2 px-3 text-sm"
+			class="h-12"
 			placeholder={$_('Device Name')}
 		/>
 	</div>
 	<div class="flex flex-col gap-2">
-		<label for="devEui" class="text-sm font-medium">{$_('Dev EUI')}</label>
-		<input
+		<label for="devEui" class="text-text text-sm font-medium">{$_('Dev EUI')}</label>
+		<TextInput
 			name="devEui"
 			id="devEui"
 			type="text"
 			required
-			class="rounded-input border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring h-12 border-2 px-3 text-sm"
+			class="h-12"
 			placeholder={$_('Dev EUI')}
 		/>
 	</div>
 	<div class="grid grid-cols-2 gap-4">
 		<div class="flex flex-col gap-2">
-			<label for="latitude" class="text-sm font-medium">{$_('Latitude')}</label>
-			<input
+			<label for="latitude" class="text-text text-sm font-medium">{$_('Latitude')}</label>
+			<TextInput
 				name="latitude"
 				id="latitude"
 				type="number"
 				step="any"
-				class="rounded-input border-input bg-background focus-visible:ring-ring h-12 border-2 px-3 text-sm"
+				class="h-12"
 				placeholder={$_('Latitude')}
 			/>
 		</div>
 		<div class="flex flex-col gap-2">
-			<label for="longitude" class="text-sm font-medium">{$_('Longitude')}</label>
-			<input
+			<label for="longitude" class="text-text text-sm font-medium">{$_('Longitude')}</label>
+			<TextInput
 				name="longitude"
 				id="longitude"
 				type="number"
 				step="any"
-				class="rounded-input border-input bg-background focus-visible:ring-ring h-12 border-2 px-3 text-sm"
+				class="h-12"
 				placeholder={$_('Longitude')}
 			/>
 		</div>
@@ -116,50 +118,29 @@
 
 	<!-- Device Type selection -->
 	<div class="flex flex-col gap-2">
-		<label for="deviceType" class="text-sm font-medium">{$_('Device Type')}</label>
-		<div class="relative">
-			<select
-				id="deviceType"
-				name="deviceType"
-				bind:value={selectedDeviceType}
-				class="rounded-input border-input bg-background h-12 w-full cursor-pointer appearance-none border-2 px-3"
-			>
-				<option value={undefined}>{$_('Select a device type...')}</option>
-				{#each deviceTypes as deviceType}
-					<option value={deviceType.id}>{deviceType.name}</option>
-				{/each}
-			</select>
-			<div
-				class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
-			>
-				<svg
-					class="h-4 w-4"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
-					></path>
-				</svg>
-			</div>
-		</div>
+		<label for="deviceType" class="text-text text-sm font-medium">{$_('Device Type')}</label>
+		<Select id="deviceType" name="deviceType" bind:value={selectedDeviceType} class="h-12 w-full">
+			<option value={undefined}>{$_('Select a device type...')}</option>
+			{#each deviceTypes as deviceType}
+				<option value={deviceType.id}>{deviceType.name}</option>
+			{/each}
+		</Select>
 	</div>
 	<!-- User permissions -->
 	<div class="mt-4">
-		<h2 class="text-lg font-semibold">{$_('User Permissions')}</h2>
+		<h2 class="text-text text-lg font-semibold">{$_('User Permissions')}</h2>
 		<div class="my-2 flex gap-2">
 			{#each permissionTypes as [label, level]}
 				<Button
 					type="button"
-					class="bg-primary rounded px-6 py-2 text-white"
+					class="bg-primary text-primary-foreground hover:bg-primary-hover rounded px-6 py-2"
 					onclick={() => setAll(level)}
 				>
 					{$_(`Set All ${label}`)}
 				</Button>
 			{/each}
 		</div>
-		<table class="w-full border-collapse text-sm">
+		<table class="text-text w-full border-collapse text-sm">
 			<thead>
 				<tr>
 					<th class="p-2 text-left">{$_('User')}</th>
@@ -170,7 +151,7 @@
 			</thead>
 			<tbody>
 				{#each users as user, i}
-					<tr class="border-t">
+					<tr class="border-border border-t">
 						<td class="p-2">{user.profile.email}</td>
 						{#each permissionTypes as [, level]}
 							<td class="p-2 text-center">
@@ -180,6 +161,7 @@
 									value={level}
 									checked={userPermissions[i]?.level === level}
 									onchange={() => updatePermission(i, level)}
+									class="text-primary focus:ring-primary"
 								/>
 							</td>
 						{/each}
@@ -195,7 +177,7 @@
 			type="submit"
 			form="create-device-form"
 			disabled={isSubmitting}
-			class="bg-primary rounded px-6 py-2 text-white"
+			class="bg-primary text-primary-foreground hover:bg-primary-hover rounded px-6 py-2"
 		>
 			{isSubmitting ? $_('Creating...') : $_('Create Device')}
 		</Button>

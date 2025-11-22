@@ -18,6 +18,7 @@
 	import { formatNumber, getNumericKeys } from '$lib/utilities/stats';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
 	import { onMount, untrack } from 'svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 	import { _, locale } from 'svelte-i18n';
 	import type { PageProps } from './$types';
 	import { setupDeviceDetail } from './device-detail.svelte';
@@ -62,6 +63,88 @@
 
 	let numericKeys: string[] = $state([]); // Holds numeric keys from historical data
 	let calendarEvents = $state<CalendarEvent[]>([]);
+
+	const HEATMAP_DAY_LIMIT = 7;
+	const HEATMAP_HOUR_LABELS = Array.from(
+		{ length: 24 },
+		(_, hour) => `${hour.toString().padStart(2, '0')}:00`
+	);
+
+	type HeatmapDataset = {
+		data: { x: string; y: string; value: number }[];
+		yLabels: string[];
+		maxValue: number;
+	};
+
+	const formatHeatmapValue = (value: number | undefined) => {
+		const normalized = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+		if (!normalized) return 'No readings';
+		return `${normalized} reading${normalized === 1 ? '' : 's'}`;
+	};
+
+	const heatmapDataset = $derived.by<HeatmapDataset>(() => {
+		if (!historicalData.length) {
+			return { data: [], yLabels: [], maxValue: 0 };
+		}
+
+		const grouped = new SvelteMap<string, number[]>();
+
+		for (const row of historicalData) {
+			const timestamp =
+				(typeof row?.traffic_hour === 'string' && row.traffic_hour) ||
+				(typeof row?.created_at === 'string' && row.created_at);
+			if (!timestamp) continue;
+
+			const dateTime = DateTime.fromISO(timestamp);
+			if (!dateTime.isValid) continue;
+
+			const isoDate = dateTime.toISODate();
+			if (!isoDate) continue;
+
+			let bucket = grouped.get(isoDate);
+			if (!bucket) {
+				bucket = Array.from({ length: 24 }, () => 0);
+				grouped.set(isoDate, bucket);
+			}
+
+			bucket[dateTime.hour] += 1;
+		}
+
+		if (!grouped.size) {
+			return { data: [], yLabels: [], maxValue: 0 };
+		}
+
+		const sortedDates = Array.from(grouped.keys()).sort();
+		const limitedDates = sortedDates.slice(-HEATMAP_DAY_LIMIT).reverse();
+
+		const rows = limitedDates.map((isoDate) => {
+			const bucket = grouped.get(isoDate) ?? Array.from({ length: 24 }, () => 0);
+			const dateLabel = DateTime.fromISO(isoDate);
+			const label = dateLabel.isValid ? dateLabel.toFormat('ccc, LLL d') : isoDate;
+			return { label, bucket };
+		});
+
+		const data: HeatmapDataset['data'] = [];
+		let maxValue = 0;
+
+		for (const row of rows) {
+			HEATMAP_HOUR_LABELS.forEach((hourLabel, hourIndex) => {
+				const value = row.bucket[hourIndex] ?? 0;
+				maxValue = Math.max(maxValue, value);
+				data.push({
+					x: hourLabel,
+					y: row.label,
+					value
+				});
+			});
+		}
+
+		return {
+			data,
+			yLabels: rows.map((row) => row.label),
+			maxValue
+		};
+	});
 
 	// Setup device detail functionality
 	const deviceDetail = $state(setupDeviceDetail());
@@ -484,6 +567,7 @@
 	import BatteryLevel from '$lib/components/BatteryLevel.svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import SignalStrength from '$lib/components/SignalStrength.svelte';
+	import Heatmap from '$lib/components/charts/Heatmap.svelte';
 	onDestroy(() => {
 		teardownRealtime();
 		if (staleCheckIntervalId) clearInterval(staleCheckIntervalId);

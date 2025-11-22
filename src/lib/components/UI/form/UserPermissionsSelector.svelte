@@ -78,24 +78,24 @@
 </script>
 
 <section class="form-container bg-card !gap-0 rounded-lg">
-	<div class="border-b border-gray-300 pb-4 dark:border-neutral-400">
+	<div class="border-border border-b pb-4">
 		<h3 class="text-lg font-semibold">{$_('current_users')}</h3>
 	</div>
-	<div class="divide-y">
+	<div class="divide-border divide-y">
 		{#if !ownerList || ownerList?.length === 0}
-			<div class="text-muted-foreground p-4 text-center">
+			<div class="text-text-muted p-4 text-center">
 				{$_('no_additional_users')}
 			</div>
 		{:else}
 			{#each ownerList as owner (owner.id)}
 				{#if !owner.profile?.email?.includes('@cropwatch.io')}
 					<div
-						class="item-start flex flex-col justify-between gap-3 border-gray-300 p-3 sm:flex-row sm:items-center dark:border-neutral-400"
+						class="item-start border-border flex flex-col justify-between gap-3 p-3 sm:flex-row sm:items-center"
 					>
 						<div class="flex items-center gap-3">
 							<div
-								class="bg-secondary/70 dark:bg-secondary/20 flex h-10 w-10 items-center justify-center rounded-full text-xl
-							text-white uppercase"
+								class="bg-surface-muted text-text flex h-10 w-10 items-center justify-center rounded-full
+							text-xl uppercase"
 							>
 								<span class="font-medium">
 									{owner.profile?.full_name?.charAt(0) || owner.profile?.email?.charAt(0) || 'U'}
