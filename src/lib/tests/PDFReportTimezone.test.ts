@@ -88,6 +88,68 @@ describe('PDF Report Temperature Device Timezone Tests', () => {
 		deviceDataService = new DeviceDataService(mockSupabase);
 	});
 
+	describe('DeviceDataService date window conversion safeguards', () => {
+		it('passes correct UTC window to getDeviceDataByDateRange', async () => {
+			const orderMock = vi.fn().mockResolvedValue({ data: mockTempData, error: null });
+			const lteMock = vi.fn().mockReturnValue({ order: orderMock });
+			const gteMock = vi.fn().mockReturnValue({ lte: lteMock });
+			const eqMock = vi.fn().mockReturnValue({ gte: gteMock });
+			const selectMock = vi.fn().mockReturnValue({ eq: eqMock });
+			const fromMock = vi.fn().mockReturnValue({ select: selectMock });
+			const rpcMock = vi.fn();
+			const authMock = {
+				getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: 'user-1' } } } })
+			};
+
+			const service = new DeviceDataService({
+				from: fromMock,
+				rpc: rpcMock,
+				auth: authMock
+			} as any);
+			vi.spyOn(service as any, 'checkUserHasAccess').mockResolvedValue(true);
+			vi.spyOn(service as any, 'getDeviceAndType').mockResolvedValue(mockTempDevice);
+
+			const startLocal = new Date(2025, 10, 2, 0, 0, 0);
+			const endLocal = new Date(2025, 10, 3, 23, 59, 59);
+
+			await service.getDeviceDataByDateRange(tempDeviceEui, startLocal, endLocal, timezone);
+
+			expect(gteMock).toHaveBeenCalledWith('created_at', '2025-11-01T15:00:00.000Z');
+			expect(lteMock).toHaveBeenCalledWith('created_at', '2025-11-03T14:59:59.000Z');
+		});
+
+		it('sends UTC window to getDeviceDataForReport RPC', async () => {
+			const rpcMock = vi.fn().mockResolvedValue({ data: mockTempData, error: null });
+			const service = new DeviceDataService({ rpc: rpcMock } as any);
+			vi.spyOn(service as any, 'checkUserHasAccess').mockResolvedValue(true);
+			vi.spyOn(service as any, 'getDeviceAndType').mockResolvedValue(mockTempDevice);
+
+			const startLocal = new Date(2025, 10, 2, 0, 0, 0);
+			const endLocal = new Date(2025, 10, 3, 23, 59, 59);
+
+			await service.getDeviceDataForReport({
+				devEui: tempDeviceEui,
+				startDate: startLocal,
+				endDate: endLocal,
+				timezone,
+				intervalMinutes: 30,
+				columns: ['temperature_c'],
+				ops: ['>'],
+				mins: [0],
+				maxs: [null]
+			});
+
+			expect(rpcMock).toHaveBeenCalledWith(
+				'get_filtered_device_report_data_multi_v2',
+				expect.objectContaining({
+					p_start_time: new Date('2025-11-01T15:00:00.000Z'),
+					p_end_time: new Date('2025-11-03T14:59:59.000Z'),
+					p_timezone: timezone
+				})
+			);
+		});
+	});
+
 	describe('PDF Report Date Range Processing', () => {
 		it('should properly convert PDF report date parameters to UTC for temperature device', () => {
 			// Arrange - Same logic as PDF server

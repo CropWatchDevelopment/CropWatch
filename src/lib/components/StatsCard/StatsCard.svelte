@@ -60,7 +60,7 @@
 	onkeydown={(e) => e.key === 'Enter' && toggleExpand()}
 >
 	<!-- Title with Current reading and Trend -->
-	<div class="mb-2 flex w-full items-center justify-between">
+	<!-- <div class="mb-2 flex w-full items-center justify-between">
 		<h4 class="text-xl font-medium text-gray-700 dark:text-gray-200">
 			{title}
 		</h4>
@@ -78,7 +78,7 @@
 				</span>
 			</div>
 		{/if}
-	</div>
+	</div> -->
 
 	<!-- Labels -->
 	<div

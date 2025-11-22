@@ -30,6 +30,7 @@ import { get } from 'svelte/store';
 import type { RequestHandler } from './$types';
 import { drawSummaryPanel } from './drawSummaryPanel';
 import { drawRightAlertPanel } from './drawRightAlertPanel';
+import { resolveReportDateRanges } from './reportDateRanges';
 
 function normalizeDeviceDataTimestamps(records: DeviceDataRecord[], timezone: string) {
 	if (!records || !records.length) return records ?? [];
@@ -112,28 +113,18 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				{ status: 400 }
 			);
 		}
-		const userStart = DateTime.fromJSDate(startDate).setZone(timezoneParam).startOf('day');
-		const userEnd = DateTime.fromJSDate(endDate).setZone(timezoneParam).endOf('day');
-		const startLabel = userStart.toFormat('yyyy-MM-dd HH:mm');
-		const endLabel = userEnd.toFormat('yyyy-MM-dd HH:mm');
-		const startDateUtc = userStart.toUTC().toJSDate();
-		const endDateUtc = userEnd.toUTC().toJSDate();
-		const startDateLocal = new Date(
-			userStart.year,
-			userStart.month - 1,
-			userStart.day,
-			userStart.hour,
-			userStart.minute,
-			userStart.second
-		);
-		const endDateLocal = new Date(
-			userEnd.year,
-			userEnd.month - 1,
-			userEnd.day,
-			userEnd.hour,
-			userEnd.minute,
-			userEnd.second
-		);
+		// Convert once and keep the UTC/local variants separate so future refactors cannot
+		// double-convert the dates (which previously caused timezone drift bugs).
+		const {
+			userStart,
+			userEnd,
+			startLabel,
+			endLabel,
+			startDateUtc,
+			endDateUtc,
+			startDateLocal,
+			endDateLocal
+		} = resolveReportDateRanges(startDate, endDate, timezoneParam);
 
 		const selectedKeys = dataKeysParam
 			.split(',')
@@ -266,6 +257,22 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			const bMs = parseDeviceInstant(b.created_at as string, timezoneParam).toMillis();
 			return aMs - bMs;
 		});
+
+		if (deviceData.length) {
+			const latestInstant = parseDeviceInstant(
+				deviceData[deviceData.length - 1].created_at as string,
+				timezoneParam
+			);
+			const lagHours = (userEnd.toMillis() - latestInstant.toMillis()) / 3_600_000;
+			if (lagHours > 1.5) {
+				console.error('[Report Warning] Device data ends early', {
+					devEui,
+					lagHours: Number(lagHours.toFixed(2)),
+					requestedEnd: userEnd.toISO(),
+					latestEntry: latestInstant.toISO()
+				});
+			}
+		}
 
 		// Build PDF — keep the **old layout** with header, signature boxes, charts, full table, footer
 		const doc = new PDFDocument({

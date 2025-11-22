@@ -15,7 +15,7 @@
 </script>
 
 <header
-	class="sticky top-0 z-9 flex flex-col items-start justify-between gap-4 border-b border-gray-300 p-3 pt-1 md:flex-row md:items-end dark:border-neutral-400"
+	class="sticky top-0 z-9 flex flex-col items-start justify-between gap-4 border-b border-gray-300 p-3 pt-3 md:flex-row md:items-end dark:border-neutral-400"
 	style:background-color="var(--color-background)"
 >
 	<h1 class="flex w-full flex-1 flex-row items-center gap-4 md:flex-row md:items-end">
