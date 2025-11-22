@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { formValidation } from '$lib/actions/formValidation';
 	import LeafletMap from '$lib/components/maps/leaflet/LeafletMap.svelte';
 	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import { _ } from 'svelte-i18n';
+	import { error as errorToast, success as successToast } from '$lib/stores/toast.svelte';
 	import { onMount } from 'svelte';
+	import { _ } from 'svelte-i18n';
 
 	const DEFAULT_COORDINATES = { lat: 35.6804, lon: 139.769 }; // Tokyo Station
 	const geolocationAvailable =
@@ -61,7 +64,31 @@
 		</p>
 	</header>
 
-	<form method="post" action="?/createLocation" class="flex flex-col gap-6" use:formValidation>
+	<form
+		method="post"
+		action="?/createLocation"
+		class="flex flex-col gap-6"
+		use:formValidation
+		use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'success' && result.data?.success) {
+					successToast($_('Location created successfully'));
+					if (result.data.data?.id) {
+						await goto(`/app/dashboard/location/${result.data.data.id}`);
+					}
+				} else {
+					let errorMessage = $_('Failed to create location');
+					if (result.type === 'success' || result.type === 'failure') {
+						if (result.data?.error) errorMessage = result.data.error;
+					} else if (result.type === 'error') {
+						if (result.error?.message) errorMessage = result.error.message;
+					}
+					errorToast(errorMessage);
+					await update({ reset: false });
+				}
+			};
+		}}
+	>
 		<div class="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
 			<div
 				class="space-y-6 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
@@ -114,7 +141,7 @@
 								type="number"
 								step="any"
 								id="latitude"
-								name="latitude"
+								name="lat"
 								bind:value={latitude}
 								required
 								class="focus:border-accent-500 focus:ring-accent-500/20 h-11 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm transition focus:ring-2 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"
@@ -131,7 +158,7 @@
 								type="number"
 								step="any"
 								id="longitude"
-								name="longitude"
+								name="long"
 								bind:value={longitude}
 								required
 								class="focus:border-accent-500 focus:ring-accent-500/20 h-11 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-900 shadow-sm transition focus:ring-2 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50"

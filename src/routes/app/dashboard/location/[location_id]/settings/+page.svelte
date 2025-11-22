@@ -104,30 +104,6 @@
 		addingUser = false;
 	};
 
-	const removeLocation = async () => {
-		try {
-			const response = await fetch('', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ locationId: location.location_id })
-			});
-
-			if (response.ok) {
-				const result = await response.json();
-				if (result.success) {
-					successToast('Location removed successfully');
-					await goto('/app/dashboard/location', { replaceState: true });
-				} else {
-					errorToast(result.error || 'Failed to remove location');
-				}
-			} else {
-				errorToast('An error occurred while removing the location');
-			}
-		} catch {
-			errorToast('An error occurred while removing the location');
-		}
-	};
-
 	$effect(() => {
 		// Update the form data when the data is loaded
 		if (location && locationUsers) {
@@ -365,22 +341,7 @@
 
 			<section class="border-danger/50 flex flex-col gap-2 rounded-lg border p-4">
 				<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
-				<form
-					method="POST"
-					action="?/deleteLocation"
-					use:enhance={() => {
-						return ({ result }: { result: ActionResult }) => {
-							if (result.type === 'success' && result.data?.success) {
-								successToast($_('Location removed successfully'));
-								window.location.href = '/app/dashboard/location/';
-							} else {
-								// @ts-ignore
-								errorToast(result.data?.error || $_('Failed to remove location'));
-							}
-						};
-					}}
-					use:formValidation
-				>
+				<form use:formValidation>
 					<Button
 						variant="danger"
 						onclick={(event) => {
@@ -412,14 +373,26 @@
 		>
 			{$_('Cancel')}
 		</Button>
-		<Button
-			variant="danger"
-			onclick={() => {
-				showingRemoveConfirmation = false;
-				removeLocation();
+		<form
+			method="POST"
+			action="?/deleteLocation"
+			use:enhance={() => {
+				return async ({ result }) => {
+					showingRemoveConfirmation = false;
+					if (result.type === 'redirect') {
+						successToast('Location removed successfully');
+						await goto(result.location, { replaceState: true });
+					} else if (result.type === 'failure') {
+						errorToast(result.data?.error || 'Failed to remove location');
+					} else if (result.type === 'error') {
+						errorToast('An error occurred');
+					}
+				};
 			}}
 		>
-			{$_('Remove')}
-		</Button>
+			<Button variant="danger" type="submit">
+				{$_('Remove')}
+			</Button>
+		</form>
 	{/snippet}
 </Dialog>

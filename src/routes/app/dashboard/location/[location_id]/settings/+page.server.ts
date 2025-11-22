@@ -241,13 +241,51 @@ export const actions: Actions = {
 
 		try {
 			await locationService.deleteLocation(locationId, user.id);
-			return { success: true };
 		} catch (err) {
 			console.error('Error deleting location:', err);
+
+			// If an error occurred, check if the location is actually gone.
+			// If it is gone (e.g. double submit), we should redirect to dashboard anyway.
+			const location = await locationService.getLocationById(locationId);
+			if (!location) {
+				throw redirect(303, '/app/dashboard');
+			}
+
 			return {
 				success: false,
 				error: err instanceof Error ? err.message : 'An unexpected error occurred'
 			};
 		}
+
+		throw redirect(303, '/app/dashboard');
 	}
+
+	// deleteLocation: async ({ params, locals: { supabase, safeGetSession } }) => {
+	// 	const locationId = parseInt(params.location_id, 10);
+
+	// 	if (isNaN(locationId)) {
+	// 		return { success: false, error: 'Invalid location ID' };
+	// 	}
+
+	// 	const { session, user } = await safeGetSession();
+	// 	if (!session || !user) {
+	// 		return { success: false, error: 'Authentication required' };
+	// 	}
+
+	// 	const errorHandler = new ErrorHandlingService();
+	// 	const locationRepo = new LocationRepository(supabase, errorHandler);
+	// 	const deviceRepo = new DeviceRepository(supabase, errorHandler);
+	// 	const locationService = new LocationService(locationRepo, deviceRepo);
+
+	// 	try {
+	// 		await locationService.deleteLocation(locationId, user.id);
+	// 		return { success: true };
+	// 	} catch (err) {
+	// 		console.error('Error deleting location:', err);
+	// 		return {
+	// 			success: false,
+	// 			error: err instanceof Error ? err.message : 'An unexpected error occurred'
+	// 		};
+	// 	}
+	// }
 };
