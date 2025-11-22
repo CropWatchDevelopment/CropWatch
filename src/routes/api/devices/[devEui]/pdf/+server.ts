@@ -1,3 +1,5 @@
+export const config = { runtime: 'nodejs20.x' };
+
 import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
 import { i18n } from '$lib/i18n/index.svelte';
 import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
@@ -11,6 +13,7 @@ import {
 import { addFooterPageNumber } from '$lib/pdf/pdfFooterPageNumber';
 import { createPDFLineChartImage } from '$lib/pdf/pdfLineChartImage';
 import { checkMatch, getValue } from '$lib/pdf/utils';
+import { parseDeviceInstant } from '$lib/pdf/parseDeviceInstant';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
 import { DeviceDataService } from '$lib/services/DeviceDataService';
@@ -27,26 +30,23 @@ import { get } from 'svelte/store';
 import type { RequestHandler } from './$types';
 import { drawSummaryPanel } from './drawSummaryPanel';
 import { drawRightAlertPanel } from './drawRightAlertPanel';
+import { resolveReportDateRanges } from './reportDateRanges';
 
-const tzOffsetPattern = /([zZ]|[+\-]\d{2}:\d{2}|[+\-]\d{4}|[+\-]\d{2})$/;
-/**
- * Parse a device timestamp into a Luxon DateTime in the target zone.
- * - If input has an offset (or 'Z'), respect it then convert to tz.
- * - If no offset, treat it as zoned in tz (not UTC) for local semantics.
- */
-function parseDeviceInstant(input: string | Date, tz: string): DateTime {
-	if (input instanceof Date) {
-		return DateTime.fromJSDate(input, { zone: 'utc' }).setZone(tz);
-	}
-	let dt: DateTime;
-	if (tzOffsetPattern.test(input)) {
-		dt = DateTime.fromISO(input, { setZone: true });
-		if (!dt.isValid) dt = DateTime.fromSQL(input, { setZone: true });
-		return dt.setZone(tz);
-	}
-	dt = DateTime.fromISO(input, { zone: tz });
-	if (!dt.isValid) dt = DateTime.fromSQL(input, { zone: tz });
-	return dt;
+function normalizeDeviceDataTimestamps(records: DeviceDataRecord[], timezone: string) {
+	if (!records || !records.length) return records ?? [];
+	return records.map((record) => {
+		const next = { ...record } as Record<string, unknown>;
+		const stampKeys: Array<keyof DeviceDataRecord> = ['created_at', 'traffic_hour'];
+		for (const key of stampKeys) {
+			const raw = next[key];
+			if (!raw) continue;
+			const parsed = parseDeviceInstant(raw as string | Date, timezone);
+			if (parsed.isValid) {
+				next[key] = parsed.toISO();
+			}
+		}
+		return next as DeviceDataRecord;
+	});
 }
 
 /**
@@ -113,12 +113,18 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				{ status: 400 }
 			);
 		}
-		const userStart = DateTime.fromJSDate(startDate).setZone(timezoneParam).startOf('day');
-		const userEnd = DateTime.fromJSDate(endDate).setZone(timezoneParam).endOf('day');
-		const startLabel = userStart.toFormat('yyyy-MM-dd HH:mm');
-		const endLabel = userEnd.toFormat('yyyy-MM-dd HH:mm');
-		startDate = userStart.toUTC().toJSDate();
-		endDate = userEnd.toUTC().toJSDate();
+		// Convert once and keep the UTC/local variants separate so future refactors cannot
+		// double-convert the dates (which previously caused timezone drift bugs).
+		const {
+			userStart,
+			userEnd,
+			startLabel,
+			endLabel,
+			startDateUtc,
+			endDateUtc,
+			startDateLocal,
+			endDateLocal
+		} = resolveReportDateRanges(startDate, endDate, timezoneParam);
 
 		const selectedKeys = dataKeysParam
 			.split(',')
@@ -182,8 +188,8 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		const deviceDataResponse = isReport
 			? await deviceDataService.getDeviceDataForReport({
 					devEui,
-					startDate,
-					endDate,
+					startDate: startDateUtc,
+					endDate: endDateUtc,
 					timezone: timezoneParam,
 					columns: requestedAlertPoints.map((p) => p.data_point_key as string),
 					ops: requestedAlertPoints.map((p) => p.operator as string),
@@ -191,13 +197,46 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 					maxs: requestedAlertPoints.map((p) => p.max ?? null),
 					intervalMinutes: 30
 				})
-			: await deviceDataService.getDeviceDataByDateRange(devEui, startDate, endDate, timezoneParam);
+			: await deviceDataService.getDeviceDataByDateRange(
+					devEui,
+					startDateLocal,
+					endDateLocal,
+					timezoneParam
+				);
 
 		let deviceData: DeviceDataRecord[] = [];
 		let alertPoints: ReportAlertPoint[] = requestedAlertPoints;
 
 		if (deviceDataResponse?.length) {
-			deviceData = deviceDataResponse;
+			console.log('PDF report raw timestamp sample', {
+				devEui,
+				timezone: timezoneParam,
+				firstRaw: deviceDataResponse[0]?.created_at,
+				lastRaw: deviceDataResponse[deviceDataResponse.length - 1]?.created_at,
+				rawKeys: Object.keys(deviceDataResponse[0] ?? {})
+			});
+			deviceData = normalizeDeviceDataTimestamps(deviceDataResponse, timezoneParam);
+			console.log('PDF report normalized timestamp sample', {
+				devEui,
+				timezone: timezoneParam,
+				firstNormalized: deviceData[0]?.created_at,
+				lastNormalized: deviceData[deviceData.length - 1]?.created_at
+			});
+			const windowStart = userStart.toMillis();
+			const windowEnd = userEnd.toMillis();
+			const beforeFilterCount = deviceData.length;
+			deviceData = deviceData.filter((record) => {
+				const dt = parseDeviceInstant(record.created_at as string, timezoneParam);
+				const ms = dt.toMillis();
+				return ms >= windowStart && ms <= windowEnd;
+			});
+			console.log('PDF report filtered dataset', {
+				devEui,
+				beforeFilterCount,
+				afterFilterCount: deviceData.length,
+				firstAfterFilter: deviceData[0]?.created_at,
+				lastAfterFilter: deviceData[deviceData.length - 1]?.created_at
+			});
 			if (!alertPoints.length) {
 				alertPoints = await deviceDataService.getAlertPointsForDevice(devEui);
 			}
@@ -218,6 +257,22 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 			const bMs = parseDeviceInstant(b.created_at as string, timezoneParam).toMillis();
 			return aMs - bMs;
 		});
+
+		if (deviceData.length) {
+			const latestInstant = parseDeviceInstant(
+				deviceData[deviceData.length - 1].created_at as string,
+				timezoneParam
+			);
+			const lagHours = (userEnd.toMillis() - latestInstant.toMillis()) / 3_600_000;
+			if (lagHours > 1.5) {
+				console.error('[Report Warning] Device data ends early', {
+					devEui,
+					lagHours: Number(lagHours.toFixed(2)),
+					requestedEnd: userEnd.toISO(),
+					latestEntry: latestInstant.toISO()
+				});
+			}
+		}
 
 		// Build PDF — keep the **old layout** with header, signature boxes, charts, full table, footer
 		const doc = new PDFDocument({
@@ -484,14 +539,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 		].join(' | ');
 		addFooterPageNumber(doc, footerText);
 
-		// Finalize
-		doc.end();
-
 		const chunks: Buffer[] = [];
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		doc.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
 
-		return new Promise<Response>((resolve, reject) => {
+		const pdfResponsePromise = new Promise<Response>((resolve, reject) => {
 			doc.on('end', () => {
 				const pdfBuffer = Buffer.concat(chunks);
 				resolve(
@@ -523,6 +575,11 @@ export const GET: RequestHandler = async ({ params, url, locals: { supabase } })
 				);
 			});
 		});
+
+		// Finalize once listeners are registered
+		doc.end();
+
+		return pdfResponsePromise;
 	} catch (err) {
 		console.error(`Error generating PDF for device ${params.devEui}:`, err);
 		return json(

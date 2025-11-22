@@ -1925,7 +1925,7 @@ export type Database = {
 				Args: { bucket: string; object: string };
 				Returns: Record<string, unknown>;
 			};
-			get_filtered_device_report_data_multi: {
+			get_filtered_device_report_data_multi_v2: {
 				Args: {
 					p_columns: string[];
 					p_dev_id: string;
@@ -1935,6 +1935,7 @@ export type Database = {
 					p_mins: number[];
 					p_ops: string[];
 					p_start_time: string;
+					p_timezone?: string;
 				};
 				Returns: Json[];
 			};

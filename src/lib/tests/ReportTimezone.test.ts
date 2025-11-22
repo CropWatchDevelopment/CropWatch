@@ -76,12 +76,13 @@ describe('Report Data Timezone Tests', () => {
 
 			// Assert
 			expect(mockSupabase.rpc).toHaveBeenCalledWith(
-				'get_filtered_device_report_data_multi',
+				'get_filtered_device_report_data_multi_v2',
 				expect.objectContaining({
 					p_dev_id: '110110145241600107',
 					p_start_time: startDate,
 					p_end_time: endDate,
-					p_interval_minutes: 30
+					p_interval_minutes: 30,
+					p_timezone: timezone
 				})
 			);
 
@@ -180,12 +181,13 @@ describe('Report Data Timezone Tests', () => {
 
 			// Assert
 			expect(mockSupabase.rpc).toHaveBeenCalledWith(
-				'get_filtered_device_report_data_multi',
+				'get_filtered_device_report_data_multi_v2',
 				expect.objectContaining({
 					p_columns: ['temperature_c', 'humidity'],
 					p_ops: ['>', 'BETWEEN'],
 					p_mins: [30.0, 40.0],
-					p_maxs: [null, 80.0]
+					p_maxs: [null, 80.0],
+					p_timezone: 'Asia/Tokyo'
 				})
 			);
 		});

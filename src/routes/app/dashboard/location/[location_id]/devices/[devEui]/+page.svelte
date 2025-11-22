@@ -483,6 +483,7 @@
 	import { onDestroy } from 'svelte';
 	import BatteryLevel from '$lib/components/BatteryLevel.svelte';
 	import DataTable from '$lib/components/DataTable.svelte';
+	import SignalStrength from '$lib/components/SignalStrength.svelte';
 	onDestroy(() => {
 		teardownRealtime();
 		if (staleCheckIntervalId) clearInterval(staleCheckIntervalId);
@@ -498,6 +499,10 @@
 <Header {device} {basePath}>
 	{#if device.battery_level !== null}
 		<BatteryLevel value={device.battery_level} size={28} showLabel />
+	{/if}
+
+	{#if device.rssi !== null}
+		<SignalStrength strength={null} />
 	{/if}
 
 	<!-- Data range selector on large screen -->
@@ -529,7 +534,7 @@
 </Header>
 
 <!-- Updated layout: outer wrapper always column; inner two-column row contains latest + stats; charts moved below for full-width -->
-<div class="wrapper flex flex-col gap-4 p-4">
+<div class="wrapper flex flex-col gap-4 px-4 pt-4">
 	<div class="flex flex-col gap-4 lg:flex-row">
 		<!-- Left pane -->
 		{#if device.cw_device_type?.data_table_v2 !== 'cw_relay_data'}

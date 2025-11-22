@@ -69,7 +69,7 @@
 </script>
 
 <div class="w-full text-[var(--color-text)]">
-	<div class="mx-auto w-full max-w-6xl p-4">
+	<div class="w-full p-4">
 		<div class="surface-card overflow-hidden">
 			<!-- Header -->
 			<div class="border-b border-[var(--color-border-subtle)] px-6 py-4">
@@ -83,26 +83,33 @@
 						<p class="text-base">{$_('No data available for today')}</p>
 					</div>
 				{:else}
-					<table class="w-full text-sm">
+					<table class="w-full text-lg">
 						<thead
 							class="border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-emphasis)]"
 						>
 							<tr>
 								{#each visibleColumns as column}
 									<th
-										class="px-6 py-3 text-left text-xs font-semibold tracking-wide text-[var(--color-text-muted)] uppercase"
+										class="px-6 py-3 text-center text-4xl font-semibold tracking-wide text-[var(--color-text-muted)] uppercase"
 									>
+										{#if column === 'temperature_c'}
+											🌡️
+										{:else if column === 'humidity'}
+											💧
+										{/if}
 										{$_(column)}
 									</th>
 								{/each}
 							</tr>
 						</thead>
 
-						<tbody class="divide-y divide-[var(--color-border-subtle)]">
+						<tbody class="divide-y divide-[var(--color-border-subtle)] text-2xl">
 							{#each filteredData as row, rowIndex}
-								<tr class="transition-colors duration-150 hover:bg-[var(--color-surface-emphasis)]">
+								<tr
+									class="transition-colors duration-150 odd:bg-[var(--color-surface-emphasis)] hover:bg-orange-50/30"
+								>
 									{#each visibleColumns as column}
-										<td class="px-6 py-3 text-sm whitespace-nowrap text-[var(--color-text)]">
+										<td class="px-2 py-3 text-center whitespace-nowrap text-[var(--color-text)]">
 											{formatCellValue(column, row[column])}
 										</td>
 									{/each}

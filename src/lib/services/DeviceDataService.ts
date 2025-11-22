@@ -121,6 +121,14 @@ export class DeviceDataService implements IDeviceDataService {
 					ascending: false
 				});
 
+			console.log('Historical RPC params', {
+				devEui,
+				start: utcStartDate.toISOString(),
+				end: utcEndDate.toISOString(),
+				tableName,
+				timezone
+			});
+
 			if (error) {
 				this.errorHandler.logError(error);
 				throw new Error(`Error fetching device data: ${error.message}`);
@@ -399,7 +407,7 @@ export class DeviceDataService implements IDeviceDataService {
 			// }
 
 			const { data, error: deviceError } = await this.supabase.rpc(
-				'get_filtered_device_report_data_multi',
+				'get_filtered_device_report_data_multi_v2',
 				{
 					p_dev_id: devEui,
 					p_start_time: startDate,
@@ -408,9 +416,22 @@ export class DeviceDataService implements IDeviceDataService {
 					p_columns: p_columns,
 					p_ops: p_ops,
 					p_mins: p_mins,
-					p_maxs: p_maxs
+					p_maxs: p_maxs,
+					p_timezone: timezone
 				}
 			);
+
+			console.log('Report RPC params', {
+				devEui,
+				start: startDate.toISOString(),
+				end: endDate.toISOString(),
+				intervalMinutes,
+				columns: p_columns,
+				ops: p_ops,
+				mins: p_mins,
+				maxs: p_maxs,
+				timezone
+			});
 
 			if (deviceError) {
 				this.errorHandler.logError(deviceError);
@@ -427,7 +448,11 @@ export class DeviceDataService implements IDeviceDataService {
 					}
 				];
 			}
-			return data as DeviceDataRecord[];
+
+			const records = data as DeviceDataRecord[];
+			const hasTrafficHourField = records.some((record) => 'traffic_hour' in record);
+			const tableNameForConversion = hasTrafficHourField ? 'cw_traffic2' : 'report_data';
+			return this.convertRecordTimestampsToUserTimezone(records, timezone, tableNameForConversion);
 		} catch (error) {
 			this.errorHandler.logError(error as Error);
 			if (error instanceof Error && error.message.includes('AbortError')) {
@@ -676,33 +701,45 @@ export class DeviceDataService implements IDeviceDataService {
 	 * @param timezone User's timezone string
 	 * @returns Formatted timestamp in user's timezone
 	 */
-	private convertUTCToUserTimezone(utcTimestamp: string, timezone: string): string {
-		if (timezone === 'UTC') {
-			return utcTimestamp; // No conversion needed
+	private readonly timezoneOffsetPattern = /([zZ]|[+\-]\d{2}:?\d{2})$/;
+
+	private convertUTCToUserTimezone(utcTimestamp: string | Date, timezone: string): string {
+		if (!utcTimestamp) {
+			return '';
+		}
+		if (utcTimestamp instanceof Date) {
+			const asIso = DateTime.fromJSDate(utcTimestamp, { zone: 'utc' }).setZone(timezone).toISO();
+			return asIso ?? utcTimestamp.toISOString();
 		}
 
-		// Parse UTC timestamp and convert to user timezone
-		let dt = DateTime.fromISO(utcTimestamp, { zone: 'UTC' });
+		const normalized =
+			typeof utcTimestamp === 'string' ? utcTimestamp.trim() : String(utcTimestamp);
+		if (!normalized) {
+			return normalized;
+		}
+		if (timezone === 'UTC') {
+			return normalized;
+		}
+
+		const hasOffset = this.timezoneOffsetPattern.test(normalized);
+		let dt = DateTime.invalid('unparsed');
+
+		if (hasOffset) {
+			dt = DateTime.fromISO(normalized, { setZone: true });
+			if (!dt.isValid) dt = DateTime.fromSQL(normalized, { setZone: true });
+			if (!dt.isValid) dt = DateTime.fromRFC2822(normalized, { setZone: true });
+		} else {
+			dt = DateTime.fromISO(normalized, { zone: 'utc' });
+			if (!dt.isValid) dt = DateTime.fromSQL(normalized, { zone: 'utc' });
+			if (!dt.isValid) dt = DateTime.fromRFC2822(normalized, { zone: 'utc' });
+		}
 
 		if (!dt.isValid) {
-			// Try parsing as SQL format if ISO fails
-			dt = DateTime.fromSQL(utcTimestamp, { zone: 'UTC' });
-			if (!dt.isValid) {
-				console.warn(`Failed to parse timestamp: ${utcTimestamp}`);
-				return utcTimestamp; // Return original if parsing fails
-			}
+			console.warn(`Failed to parse timestamp: ${utcTimestamp}`);
+			return normalized;
 		}
 
-		// Convert to user timezone and return as ISO string
-		const converted = dt.setZone(timezone);
-		const result = converted.toISO();
-
-		if (!result) {
-			console.warn(`Failed to convert timestamp to timezone ${timezone}: ${utcTimestamp}`);
-			return utcTimestamp;
-		}
-
-		return result;
+		return dt.setZone(timezone).toISO() ?? normalized;
 	}
 
 	/**

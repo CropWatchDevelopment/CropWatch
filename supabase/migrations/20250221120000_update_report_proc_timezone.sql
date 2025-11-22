@@ -8,6 +8,7 @@ CREATE OR REPLACE FUNCTION get_filtered_device_report_data_multi(
     p_ops                TEXT[],             -- e.g. ['>','BETWEEN']
     p_mins               DOUBLE PRECISION[], -- e.g. [-22, 55]
     p_maxs               DOUBLE PRECISION[]  -- e.g. [NULL, 65]
+    p_timezone           TEXT DEFAULT 'UTC'
 )
 RETURNS SETOF JSONB
 LANGUAGE plpgsql
@@ -27,6 +28,9 @@ DECLARE
       'dev_eui','smoke_detected','vape_detected','battery_level','is_simulated'
     ];
 BEGIN
+  -- Ensure timestamptz fields respect the caller's timezone when converted to text/JSON
+  PERFORM set_config('TimeZone', COALESCE(NULLIF(p_timezone, ''), 'UTC'), true);
+
   -- 1) lookup table name
   SELECT cdt.data_table_v2
     INTO v_target_table
@@ -102,7 +106,7 @@ BEGIN
     dedup AS (
       SELECT DISTINCT ON (bucket) %s
         FROM sampled
-       ORDER BY bucket, created_at
+       ORDER BY bucket, created_at DESC
     ),
     exceptions AS (
       SELECT %s
