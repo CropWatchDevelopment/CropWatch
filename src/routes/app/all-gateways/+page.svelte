@@ -298,7 +298,7 @@
 									}
 								}}
 							>
-								<div class="flex min-w-[16rem] flex-1 items-center gap-2 px-4 py-3.5 text-sm">
+								<div class="flex min-w-[16rem] flex-1 items-center gap-2 px-4 py-3.5 text-xl">
 									<div class="flex items-center gap-3">
 										<Icon
 											data={mdiMonitorDashboard}

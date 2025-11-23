@@ -5,6 +5,7 @@
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import Select from '$lib/components/UI/form/Select.svelte';
 	import TextInput from '$lib/components/UI/form/TextInput.svelte';
+	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import Dialog from '$lib/components/UI/overlay/Dialog.svelte';
 	import { error, success } from '$lib/stores/toast.svelte.js';
 	import { formatDateOnly } from '$lib/utilities/helpers.js';
@@ -141,6 +142,42 @@
 				{/if}
 			</div>
 		</form>
+	</section>
+	<section class="form-container !grid grid-cols-1 gap-4 md:grid-cols-2">
+		<h1 class="col-span-1 flex items-center gap-2 text-2xl font-semibold md:col-span-2">
+			{#if device?.is_calibrated}
+				<MaterialIcon name="verified" size="large" />
+			{:else}
+				<MaterialIcon name="verified_off" size="large" />
+			{/if}
+			Device Calibration Certificate
+		</h1>
+		{#if device?.calibration_certificate_url}
+			<section id="sht40-general-calibration-certificate" class="col-span-1 md:col-span-2">
+				<h2>{$_('SHT40 General Calibration Certificate')}</h2>
+				<a
+					href={device.calibration_certificate_url}
+					target="_blank"
+					class="text-primary hover:text-primary-hover !no-underline hover:!underline"
+				>
+					<MaterialIcon name="download" size="large" />
+					{$_('Download Calibration Certificate')}
+				</a>
+			</section>
+			<section id="sht43-calibration-certificate" class="col-span-1 md:col-span-2">
+				<h2>{$_('SHT43 Calibration Certificate')}</h2>
+				<a
+					href={device.calibration_certificate_url}
+					target="_blank"
+					class="text-primary hover:text-primary-hover !no-underline hover:!underline"
+				>
+					<MaterialIcon name="download" size="large" />
+					{$_('Download Calibration Certificate')}
+				</a>
+			</section>
+		{:else}
+			<p class="text-text-muted">{$_('No calibration certificate available.')}</p>
+		{/if}
 	</section>
 
 	{#if isOwner}
