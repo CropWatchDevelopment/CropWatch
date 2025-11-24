@@ -10,15 +10,23 @@
 	import { error, success } from '$lib/stores/toast.svelte.js';
 	import { formatDateOnly } from '$lib/utilities/helpers.js';
 	import { _ } from 'svelte-i18n';
+	import type { DeviceWithType } from '$lib/models/Device';
+
+	interface ExtendedDevice extends DeviceWithType {
+		sensor_serial?: string;
+		calibration_certificate_url?: string;
+		cw_device_owners?: { user_id: string; permission_level: number }[];
+	}
 
 	let { data } = $props();
-	const device = $derived(data.device);
+	const device = $derived(data.device as ExtendedDevice);
 	const ownerId = $derived(data.ownerId);
 	const isOwner = $derived<boolean>(
-		device?.user_id === ownerId ||
+		(device?.user_id === ownerId ||
 			device?.cw_device_owners?.some(
 				(owner) => owner.user_id === ownerId && owner.permission_level === 1
-			)
+			)) ??
+			false
 	);
 
 	// @todo Use a proper sensor datasheet link when wiki pages are created
@@ -27,6 +35,10 @@
 	);
 
 	let showDeleteDialog = $state(false);
+
+	let requestingCert = $state(false);
+	let sht40CertUrl = $state<string | null>(null);
+	let sht43CertUrl = $state<string | null>(null);
 </script>
 
 <svelte:head>
@@ -48,7 +60,7 @@
 			action="?/updateGeneralSettings"
 			use:enhance={({ formElement, formData, action, cancel, submitter }) => {
 				return async ({ result, update }) => {
-					if (result.data.success) {
+					if (result.type === 'success' && result.data?.success) {
 						success('Settings updated successfully!');
 						update();
 					} else {
@@ -143,42 +155,104 @@
 			</div>
 		</form>
 	</section>
-	<section class="form-container !grid grid-cols-1 gap-4 md:grid-cols-2">
+	<section class="form-container !grid grid-rows-1 gap-4 md:grid-cols-2">
 		<h1 class="col-span-1 flex items-center gap-2 text-2xl font-semibold md:col-span-2">
-			{#if device?.is_calibrated}
+			{#if device?.sensor_serial}
 				<MaterialIcon name="verified" size="large" />
 			{:else}
 				<MaterialIcon name="verified_off" size="large" />
 			{/if}
 			Device Calibration Certificate
 		</h1>
-		{#if device?.calibration_certificate_url}
-			<section id="sht40-general-calibration-certificate" class="col-span-1 md:col-span-2">
-				<h2>{$_('SHT40 General Calibration Certificate')}</h2>
-				<a
-					href={device.calibration_certificate_url}
-					target="_blank"
-					class="text-primary hover:text-primary-hover !no-underline hover:!underline"
-				>
-					<MaterialIcon name="download" size="large" />
-					{$_('Download Calibration Certificate')}
-				</a>
-			</section>
-			<section id="sht43-calibration-certificate" class="col-span-1 md:col-span-2">
-				<h2>{$_('SHT43 Calibration Certificate')}</h2>
-				<a
-					href={device.calibration_certificate_url}
-					target="_blank"
-					class="text-primary hover:text-primary-hover !no-underline hover:!underline"
-				>
-					<MaterialIcon name="download" size="large" />
-					{$_('Download Calibration Certificate')}
-				</a>
-			</section>
+		{#if device?.sensor_serial}
+			<div class="flex flex-row items-center gap-2">
+				<section id="sht40-general-calibration-certificate" class="col-span-1 md:col-span-2">
+					<h2>{$_('SHT40 General Calibration Certificate')}</h2>
+					<form
+						method="POST"
+						action="?/getCertificatePDFLink"
+						use:enhance={() => {
+							requestingCert = true;
+							return async ({ result }) => {
+								requestingCert = false;
+								if (result.type === 'success' && result.data?.success) {
+									success('Certificate link generated successfully!');
+									sht40CertUrl = result.data.certificateUrl as string;
+									const link = document.createElement('a');
+									link.href = sht40CertUrl;
+									link.download = `SHT40_General_Calibration_Certificate_${device.sensor_serial}.pdf`;
+									document.body.appendChild(link);
+									link.click();
+									document.body.removeChild(link);
+								} else {
+									error('Failed to generate certificate link');
+								}
+							};
+						}}
+					>
+						<input
+							type="hidden"
+							name="certificate_url"
+							value={device.calibration_certificate_url}
+						/>
+						<Button type="submit" disabled={requestingCert}>Get Certificate Download Link</Button>
+					</form>
+				</section>
+				<span class="flex flex-1"></span>
+				<section id="sht43-calibration-certificate" class="col-span-1 md:col-span-2">
+					<h2>{$_('SHT43 Calibration Certificate')}</h2>
+					<form
+						method="POST"
+						action="?/getCertificatePDFLink"
+						use:enhance={() => {
+							requestingCert = true;
+							return async ({ result }) => {
+								requestingCert = false;
+								if (result.type === 'success' && result.data?.success) {
+									success('Certificate link generated successfully!');
+									sht43CertUrl = result.data.certificateUrl as string;
+									const link = document.createElement('a');
+									link.href = sht43CertUrl;
+									link.download = `SHT43_Calibration_Certificate_${device.sensor_serial}.pdf`;
+									document.body.appendChild(link);
+									link.click();
+									document.body.removeChild(link);
+								} else {
+									error('Failed to generate certificate link');
+								}
+							};
+						}}
+					>
+						<input
+							type="hidden"
+							name="certificate_url"
+							value={device.calibration_certificate_url}
+						/>
+						<Button type="submit" disabled={requestingCert}>Get Certificate Download Link</Button>
+						{#if sht43CertUrl}
+							<p class="mt-2">
+								<a href={sht43CertUrl} target="_blank" class="text-blue-600 underline">
+									Download SHT43 Calibration Certificate
+								</a>
+							</p>
+						{/if}
+					</form>
+				</section>
+			</div>
 		{:else}
 			<p class="text-text-muted">{$_('No calibration certificate available.')}</p>
 		{/if}
 	</section>
+
+	<span class="flex flex-1"></span>
+
+	<!-- {#if isOwner}
+		<section class="surface-card border border-[var(--color-border-subtle)] p-4">
+			<h2 class="text-danger text-lg font-semibold">{$_('Dangerous Zone')}</h2>
+		</section>
+	{:else}
+		<p class="text-text-muted">{$_('No calibration certificate available.')}</p>
+	{/if} -->
 
 	{#if isOwner}
 		<section class="surface-card border border-[var(--color-border-subtle)] p-4">
@@ -213,18 +287,20 @@
 						<form
 							method="POST"
 							action="?/deleteDevice"
-							use:enhance={({ result }) => {
-								if (result.type === 'success' && result.data.success) {
-									showDeleteDialog = false;
-									success($_('Device removed successfully.'));
-									window.location.assign('/app/dashboard');
-								} else {
-									error(
-										result.type === 'failure' && result.data?.error
-											? result.data.error
-											: $_('Failed to delete device.')
-									);
-								}
+							use:enhance={() => {
+								return async ({ result }) => {
+									if (result.type === 'success' && result.data?.success) {
+										showDeleteDialog = false;
+										success($_('Device removed successfully.'));
+										window.location.assign('/app/dashboard');
+									} else {
+										error(
+											result.type === 'failure' && result.data?.error
+												? (result.data.error as string)
+												: $_('Failed to delete device.')
+										);
+									}
+								};
 							}}
 						>
 							<Button variant="danger" type="submit">

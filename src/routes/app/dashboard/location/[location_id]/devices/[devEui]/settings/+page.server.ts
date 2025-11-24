@@ -7,6 +7,7 @@ import { DeviceService } from '$lib/services/DeviceService';
 import { DeviceRepository } from '$lib/repositories/DeviceRepository';
 import { LocationRepository } from '$lib/repositories/LocationRepository';
 import { DeviceOwnersRepository } from '$lib/repositories/DeviceOwnersRepository';
+import { PRIVATE_LIBELLUS_API_KEY } from '$env/static/private';
 
 /**
  * Load the device owner’s ID and all locations for the current user.
@@ -97,6 +98,45 @@ export const actions: Actions = {
 			return { success: false, error: 'Internal Server Error' };
 		}
 	},
+	getCertificatePDFLink: async ({ params, locals }) => {
+		const { devEui } = params;
+
+		if (!devEui) {
+			return { success: false, error: 'Device EUI is required' };
+		}
+
+		const sessionService = new SessionService(locals.supabase);
+		const { session, user } = await sessionService.getSafeSession();
+
+		if (!session || !user) {
+			return { success: false, error: 'Authentication required' };
+		}
+
+		const certUrl = await fetch(
+			'https://libellus.sensirion.com/api/SHT43/sensors/318137229/certificate?format=application/pdf',
+			{
+				method: 'GET',
+				headers: {
+					Authorization: `Token ${PRIVATE_LIBELLUS_API_KEY}`
+				}
+			}
+		);
+
+		if (!certUrl.ok) {
+			console.error('Failed to fetch certificate URL:', certUrl.statusText);
+			return { success: false, error: 'Failed to fetch certificate URL' };
+		}
+
+		// Returns a PDF file
+		const certBlob = await certUrl.blob();
+		const arrayBuffer = await certBlob.arrayBuffer();
+		const buffer = Buffer.from(arrayBuffer);
+		const base64 = buffer.toString('base64');
+		const dataUrl = `data:application/pdf;base64,${base64}`;
+
+		return { success: true, certificateUrl: dataUrl };
+	},
+
 	deleteDevice: async ({ params, locals }) => {
 		const { devEui } = params;
 
