@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Tooltip } from 'bits-ui';
 	import MaterialIcon from './UI/icons/MaterialIcon.svelte';
 
 	let { strength, gatewayCount }: { strength: number; gatewayCount?: number } = $props();
@@ -20,4 +21,25 @@
 			{#if gatewayCount && strength > 0 && gatewayCount > 1}({gatewayCount}){/if}
 		</span>
 	{/if}
+</div>
+
+<div class="my-auto flex items-center" aria-label={'Signal strength'}>
+	<Tooltip.Provider>
+		<Tooltip.Root delayDuration={1000}>
+			<Tooltip.Trigger class="flex items-center">
+				Signal Strength: {signalPercentage}%
+			</Tooltip.Trigger>
+			<Tooltip.Content side="bottom">
+				<div
+					class="rounded-md bg-gray-800 px-2 py-1 text-sm text-white shadow-lg"
+					style="max-width: 200px;"
+				>
+					<h4 class="font-semibold">Signal Strength</h4>
+					<p class="mt-1">
+						The current signal strength of the device is at <strong>{signalPercentage}%</strong>.
+					</p>
+				</div>
+			</Tooltip.Content>
+		</Tooltip.Root>
+	</Tooltip.Provider>
 </div>
