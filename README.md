@@ -72,8 +72,7 @@ Link : https://app.CropWatch.io
 - [X] [Sensor Settings]()
 - [ ] [Sensor Compare]()
 - [ ] [Settings Page with notations]()
-- [-] [Push Notifications]()
-- [-] [Real-Time Updates]()
+- [X] [Real-Time Updates]()
 
 # List of Tools & Packages Used:
 - PWA Framework: Svelte, SvelteKit
