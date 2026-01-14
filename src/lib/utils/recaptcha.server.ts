@@ -127,6 +127,9 @@ export async function verifyRecaptchaToken(
 				flow: context.flow,
 				requestId: context.requestId,
 				expectedAction,
+				projectId: mask(PRIVATE_RECAPTCHA_PROJECT_ID),
+				apiKey: mask(PRIVATE_RECAPTCHA_API_KEY),
+				siteKey: mask(PRIVATE_RECAPTCHA_SITE_KEY),
 				status: response.status,
 				statusText: response.statusText,
 				errorText: errorText?.slice(0, 2000) // keep logs bounded
