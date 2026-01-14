@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { session } = await locals.safeGetSession();
@@ -37,13 +38,29 @@ export const actions: Actions = {
 		// Construct the redirect URL for after the user clicks the reset link
 		const redirectTo = `${url.origin}/auth/callback?next=/account`;
 
-		const { error } = await supabase.auth.resetPasswordForEmail(email, {
-			redirectTo
-		});
+		try {
+			const { error } = await supabase.auth.resetPasswordForEmail(email, {
+				redirectTo
+			});
 
-		if (error) {
-			console.error('Password reset error:', error);
-			return fail(400, { message: error.message });
+			if (error) {
+				console.error('Password reset error:', error);
+				return fail(400, { message: error.message });
+			}
+		} catch (error) {
+			console.error('Supabase resetPasswordForEmail failed', {
+				route: url.pathname,
+				supabaseUrlHost: (() => {
+					try {
+						return new URL(PUBLIC_SUPABASE_URL).host;
+					} catch {
+						return '<invalid>';
+					}
+				})(),
+				requestId: request.headers.get('x-vercel-id') ?? undefined,
+				error: error instanceof Error ? error.message : String(error)
+			});
+			return fail(503, { message: 'Auth service temporarily unavailable. Please try again.' });
 		}
 
 		return {

@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { session } = await locals.safeGetSession();
@@ -104,17 +105,38 @@ export const actions: Actions = {
 		const redirectTo = `${url.origin}/auth/callback`;
 
 		// Create the user with Supabase
-		const { data, error } = await supabase.auth.signUp({
-			email,
-			password,
-			options: {
-				emailRedirectTo: redirectTo,
-				data: {
-					full_name: fullName,
-					employer: employer || null
+		let data: Awaited<ReturnType<typeof supabase.auth.signUp>>['data'] | null = null;
+		let error: Awaited<ReturnType<typeof supabase.auth.signUp>>['error'] | null = null;
+
+		try {
+			const result = await supabase.auth.signUp({
+				email,
+				password,
+				options: {
+					emailRedirectTo: redirectTo,
+					data: {
+						full_name: fullName,
+						employer: employer || null
+					}
 				}
-			}
-		});
+			});
+			data = result.data;
+			error = result.error;
+		} catch (e) {
+			console.error('Supabase signUp failed', {
+				route: url.pathname,
+				supabaseUrlHost: (() => {
+					try {
+						return new URL(PUBLIC_SUPABASE_URL).host;
+					} catch {
+						return '<invalid>';
+					}
+				})(),
+				requestId: request.headers.get('x-vercel-id') ?? undefined,
+				error: e instanceof Error ? e.message : String(e)
+			});
+			return fail(503, { message: 'Auth service temporarily unavailable. Please try again.' });
+		}
 
 		if (error) {
 			console.error('Registration error:', error);

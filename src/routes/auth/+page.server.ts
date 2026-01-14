@@ -2,6 +2,7 @@
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { session } = await locals.safeGetSession();
@@ -33,9 +34,25 @@ export const actions: Actions = {
 			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
 		}
 
-		const { error } = await supabase.auth.signUp({ email, password });
-		if (error) {
-			return fail(400, { message: error.message });
+		try {
+			const { error } = await supabase.auth.signUp({ email, password });
+			if (error) {
+				return fail(400, { message: error.message });
+			}
+		} catch (error) {
+			console.error('Supabase signUp failed', {
+				route: url.pathname,
+				supabaseUrlHost: (() => {
+					try {
+						return new URL(PUBLIC_SUPABASE_URL).host;
+					} catch {
+						return '<invalid>';
+					}
+				})(),
+				requestId: request.headers.get('x-vercel-id') ?? undefined,
+				error: error instanceof Error ? error.message : String(error)
+			});
+			return fail(503, { message: 'Auth service temporarily unavailable. Please try again.' });
 		}
 
 		throw redirect(303, '/');
@@ -62,9 +79,25 @@ export const actions: Actions = {
 			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
 		}
 
-		const { error } = await supabase.auth.signInWithPassword({ email, password });
-		if (error) {
-			return fail(400, { message: 'Invalid login.' });
+		try {
+			const { error } = await supabase.auth.signInWithPassword({ email, password });
+			if (error) {
+				return fail(400, { message: 'Invalid login.' });
+			}
+		} catch (error) {
+			console.error('Supabase signInWithPassword failed', {
+				route: url.pathname,
+				supabaseUrlHost: (() => {
+					try {
+						return new URL(PUBLIC_SUPABASE_URL).host;
+					} catch {
+						return '<invalid>';
+					}
+				})(),
+				requestId: request.headers.get('x-vercel-id') ?? undefined,
+				error: error instanceof Error ? error.message : String(error)
+			});
+			return fail(503, { message: 'Auth service temporarily unavailable. Please try again.' });
 		}
 
 		throw redirect(303, '/');
