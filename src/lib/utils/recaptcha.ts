@@ -14,6 +14,11 @@ declare global {
 let scriptLoaded = false;
 let scriptLoading: Promise<boolean> | null = null;
 
+function getPublicSiteKey(): string | null {
+	const key = (PUBLIC_RECAPTCHA_SITE_KEY ?? '').trim();
+	return key.length > 0 ? key : null;
+}
+
 type LoadRecaptchaOptions = {
 	/**
 	 * Optional hook to keep UI state in sync.
@@ -28,6 +33,15 @@ type LoadRecaptchaOptions = {
 
 export async function loadRecaptchaScript(options: LoadRecaptchaOptions = {}): Promise<boolean> {
 	const { setLoadingCaptcha } = options;
+	const siteKey = getPublicSiteKey();
+
+	if (!siteKey) {
+		console.error(
+			'reCAPTCHA is not configured: PUBLIC_RECAPTCHA_SITE_KEY is missing/empty. '
+		);
+		setLoadingCaptcha?.(false);
+		return false;
+	}
 
 	// If already loaded, still ensure the UI loading state is cleared.
 	if (scriptLoaded) {
@@ -55,7 +69,8 @@ export async function loadRecaptchaScript(options: LoadRecaptchaOptions = {}): P
 				}
 
 				const script = document.createElement('script');
-				script.src = `https://www.google.com/recaptcha/enterprise.js?render=${PUBLIC_RECAPTCHA_SITE_KEY}`;
+				script.id = 'cw-recaptcha-enterprise';
+				script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`;
 				script.async = true;
 				script.defer = true;
 
@@ -89,6 +104,11 @@ export async function loadRecaptchaScript(options: LoadRecaptchaOptions = {}): P
  * @returns Promise resolving to the reCAPTCHA token
  */
 export async function executeRecaptcha(action: string): Promise<string> {
+	const siteKey = getPublicSiteKey();
+	if (!siteKey) {
+		throw new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
+	}
+
 	const loaded = await loadRecaptchaScript();
 	if (!loaded) {
 		throw new Error('reCAPTCHA script failed to load');
@@ -97,7 +117,7 @@ export async function executeRecaptcha(action: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		window.grecaptcha.enterprise.ready(() => {
 			window.grecaptcha.enterprise
-				.execute(PUBLIC_RECAPTCHA_SITE_KEY, { action })
+				.execute(siteKey, { action })
 				.then(resolve)
 				.catch(reject);
 		});
@@ -108,17 +128,20 @@ export async function executeRecaptcha(action: string): Promise<string> {
  * Unload Google reCaptcha from the page
  * @param {String} recaptchaSiteKey
  */
-const unload = (recaptchaSiteKey) => {
+const unload = (recaptchaSiteKey: string) => {
 	const nodeBadge = document.querySelector('.grecaptcha-badge');
 	if (nodeBadge) {
 		document.body.removeChild(nodeBadge.parentNode);
 	}
 
-	const scriptSelector = 'script[src=\'https://www.google.com/recaptcha/api.js?render=' +
-		recaptchaSiteKey + '\']';
-	const script = document.querySelector(scriptSelector);
-	if (script) {
-		script.remove();
+	// Prefer removing by our known id
+	const byId = document.getElementById('cw-recaptcha-enterprise');
+	if (byId) byId.remove();
+
+	// Fallback: remove any enterprise scripts (including ones without our id)
+	const scripts = document.querySelectorAll('script[src*="recaptcha/enterprise.js"]');
+	for (const s of scripts) {
+		s.remove();
 	}
 };
 
@@ -126,5 +149,9 @@ export function unloadRecaptchaScript() {
 	if (typeof window === 'undefined') {
 		return;
 	}
-	unload(PUBLIC_RECAPTCHA_SITE_KEY);
+	const siteKey = getPublicSiteKey();
+	if (!siteKey) {
+		return;
+	}
+	unload(siteKey);
 }
