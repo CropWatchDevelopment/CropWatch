@@ -20,7 +20,12 @@ export const actions: Actions = {
 			return fail(400, { message: 'reCAPTCHA verification required.' });
 		}
 
-		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'FORGOT_PASSWORD');
+		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'FORGOT_PASSWORD', 0.5, {
+			route: url.pathname,
+			flow: 'forgot-password',
+			requestId: request.headers.get('x-vercel-id') ?? undefined,
+			userAgent: request.headers.get('user-agent') ?? undefined
+		});
 		if (!recaptchaResult.success) {
 			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
 		}

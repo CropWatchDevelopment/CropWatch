@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	signup: async ({ request, locals: { supabase } }) => {
+	signup: async ({ request, locals: { supabase }, url }) => {
 		const formData = await request.formData();
 		const email = formData.get('email') as string;
 		const password = formData.get('password') as string;
@@ -23,7 +23,12 @@ export const actions: Actions = {
 			return fail(400, { message: 'reCAPTCHA verification required.' });
 		}
 
-		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'SIGNUP');
+		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'SIGNUP', 0.5, {
+			route: url.pathname,
+			flow: 'signup',
+			requestId: request.headers.get('x-vercel-id') ?? undefined,
+			userAgent: request.headers.get('user-agent') ?? undefined
+		});
 		if (!recaptchaResult.success) {
 			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
 		}
@@ -36,7 +41,7 @@ export const actions: Actions = {
 		throw redirect(303, '/');
 	},
 
-	login: async ({ request, locals: { supabase } }) => {
+	login: async ({ request, locals: { supabase }, url }) => {
 		const formData = await request.formData();
 		const email = formData.get('email') as string;
 		const password = formData.get('password') as string;
@@ -47,7 +52,12 @@ export const actions: Actions = {
 			return fail(400, { message: 'reCAPTCHA verification required.' });
 		}
 
-		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'LOGIN');
+		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'LOGIN', 0.5, {
+			route: url.pathname,
+			flow: 'login',
+			requestId: request.headers.get('x-vercel-id') ?? undefined,
+			userAgent: request.headers.get('user-agent') ?? undefined
+		});
 		if (!recaptchaResult.success) {
 			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
 		}

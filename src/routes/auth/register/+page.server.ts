@@ -63,7 +63,12 @@ export const actions: Actions = {
 			return fail(400, { message: 'reCAPTCHA verification required.' });
 		}
 
-		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'REGISTER');
+		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'REGISTER', 0.5, {
+			route: url.pathname,
+			flow: 'register',
+			requestId: request.headers.get('x-vercel-id') ?? undefined,
+			userAgent: request.headers.get('user-agent') ?? undefined
+		});
 		if (!recaptchaResult.success) {
 			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
 		}
