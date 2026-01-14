@@ -1,23 +1,13 @@
 {
-	"inputs": [
-		{
-			"type": "promptString",
-			"id": "supabase-access-token",
-			"description": "Supabase personal access token",
-			"password": true
-		}
-	],
 	"servers": {
-		"supabase": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@supabase/mcp-server-supabase@latest"
-			],
-			"env": {
-				"SUPABASE_ACCESS_TOKEN": "${input:supabase-access-token}"
-			},
-			"type": "stdio"
+		"svelte": {
+			"url": "https://mcp.svelte.dev/mcp",
+			"type": "http"
+		},
+		"stripe": {
+			"type": "http",
+			"url": "https://mcp.stripe.com"
 		}
-	}
+	},
+	"inputs": []
 }

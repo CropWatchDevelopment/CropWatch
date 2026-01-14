@@ -13,8 +13,6 @@ node_modules
 .DS_Store
 Thumbs.db
 
-# AI
-DOCS/*
 # Env
 .env
 .env.*
@@ -25,5 +23,9 @@ DOCS/*
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Paraglide
-src/lib/paraglide
+#supabase
+supabase/.temp
+supabase/.supabase/
+supabase/.supabase_config.json
+supabase/functions/**/node_modules/
+supabase/config.toml

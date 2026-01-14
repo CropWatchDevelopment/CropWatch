@@ -1,42 +1,68 @@
-import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
+import { loadInitialAppState } from '$lib/data/SourceOfTruth.svelte';
+import { redirect } from '@sveltejs/kit';
 
-export const load: LayoutServerLoad = async (event) => {
-	const { cookies, url, depends, locals } = event;
+export const load: LayoutServerLoad = async ({ locals, cookies }) => {
+	const { session, user } = await locals.safeGetSession();
+	
+	// If no valid session, the hooks.server.ts should have already redirected.
+	// But as a safety net, redirect here too if somehow we got here without a session.
+	if (!session) {
+		// Return minimal data for auth pages (hooks allows /auth routes through)
+		return {
+			user: null,
+			profile: null,
+			session: null,
+			cookies: cookies.getAll(),
+			facilities: [],
+			locations: [],
+			devices: [],
+			alerts: [],
+			isLoggedIn: false,
+			nextCursor: null
+		};
+	}
 
-	// Register dependency on Supabase auth - this ensures the layout rerenders when auth state changes
-	depends('supabase:auth');
-
-	// Skip auth check for auth routes
-	const isAuthRoute = url.pathname.startsWith('/auth');
-
-	// Get all cookies to pass to the client
-	const cookieList = cookies.getAll();
-
-	// Get session and user from locals (already validated in hooks.server.ts)
-	const session = locals.session;
-	const user = locals.user;
-
-	// // Added additional logging for debugging redirection logic
-	// if (!session?.user && !isAuthRoute) {
-	// 	console.warn('No session found, redirecting to login:', url.pathname);
-	// 	throw redirect(302, '/auth/login');
-	// }
-
-	// Return everything needed by the client except the Supabase client (which is not serializable)
-	return {
-		session,
-		cookies: cookieList,
-		user: user
-			? {
-					id: user.id,
-					email: user.email,
-					name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-				}
-			: {
-					id: null,
-					email: 'Guest',
-					name: 'Guest'
-				}
+	const tokens = {
+		access_token: session.access_token,
+		refresh_token: session.refresh_token
 	};
+	console.log(tokens);
+
+	let profile: { id?: string; full_name?: string | null; avatar_url?: string | null; email?: string | null } | null = null;
+
+	try {
+		const { data: profileData, error: profileError } = await locals.supabase
+			.from('profiles')
+			.select('id, full_name, avatar_url, email')
+			.eq('id', session.user.id)
+			.maybeSingle();
+
+		if (!profileError && profileData) {
+			profile = profileData;
+		}
+	} catch (error) {
+		console.error('Failed to load profile in layout', error);
+	}
+
+	try {
+		const { nextCursor, ...appState } = await loadInitialAppState(tokens);
+		appState.isLoggedIn = true;
+		appState.profile = profile;
+		appState.userEmail = session.user.email ?? profile?.email ?? null;
+		return {
+			...appState,
+			session,
+			user,
+			profile,
+			cookies: cookies.getAll(),
+			nextCursor
+		};
+	} catch (error) {
+		console.error('Failed to load initial app state', error);
+		
+		// If we have a session but data loading fails, it might be a token issue
+		// Redirect to auth to re-authenticate
+		throw redirect(303, '/auth');
+	}
 };

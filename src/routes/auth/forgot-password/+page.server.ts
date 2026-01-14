@@ -1,69 +1,49 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { AuthService } from '$lib/services/AuthService';
-import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
+import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 
-// Check if user is already logged in, redirect them to dashboard if they are
 export const load: PageServerLoad = async ({ locals }) => {
-	const errorHandler = new ErrorHandlingService();
-	const authService = new AuthService(locals.supabase, errorHandler);
-	const user = await authService.getSession();
-	if (user) {
-		throw redirect(303, '/dashboard');
-	}
+	const { session } = await locals.safeGetSession();
+	// If user is already logged in, they don't need password reset
+	// but we still allow access to the page
 	return {};
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals }) => {
-		try {
-			// Parse form data
-			const formData = await request.formData();
-			const email = formData.get('email')?.toString().trim() || '';
+	resetPassword: async ({ request, locals: { supabase }, url }) => {
+		const formData = await request.formData();
+		const email = formData.get('email') as string;
+		const recaptchaToken = formData.get('recaptchaToken') as string;
 
-			// Validate email
-			if (!email) {
-				return fail(400, { error: 'Email is required', email: '' });
-			}
-
-			// Validate email format
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-			if (!emailRegex.test(email)) {
-				return fail(400, { error: 'Invalid email format', email });
-			}
-
-			// Get services
-			const errorHandler = new ErrorHandlingService();
-			const authService = new AuthService(locals.supabase, errorHandler);
-
-			// Request password reset
-			const result = await authService.resetPassword(email);
-
-			if (!result.success) {
-				console.error('Password reset error:', result.error);
-
-				// Don't expose specific errors to prevent email enumeration
-				// Always show success to avoid revealing which emails are registered
-				return {
-					success: result.success,
-					error: result.error,
-					email
-				};
-			}
-
-			// Return success without exposing if email exists in system
-			return {
-				success: true,
-				email
-			};
-		} catch (error) {
-			console.error('Password reset request error:', error);
-
-			// Generic error message
-			return fail(500, {
-				error: 'An error occurred. Please try again later.',
-				email: ''
-			});
+		// Verify reCAPTCHA
+		if (!recaptchaToken) {
+			return fail(400, { message: 'reCAPTCHA verification required.' });
 		}
+
+		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'FORGOT_PASSWORD');
+		if (!recaptchaResult.success) {
+			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
+		}
+
+		if (!email) {
+			return fail(400, { message: 'Email is required.' });
+		}
+
+		// Construct the redirect URL for after the user clicks the reset link
+		const redirectTo = `${url.origin}/auth/callback?next=/account`;
+
+		const { error } = await supabase.auth.resetPasswordForEmail(email, {
+			redirectTo
+		});
+
+		if (error) {
+			console.error('Password reset error:', error);
+			return fail(400, { message: error.message });
+		}
+
+		return {
+			success: true,
+			message: 'Check your email for a password reset link. If you don\'t see it, check your spam folder.'
+		};
 	}
 };

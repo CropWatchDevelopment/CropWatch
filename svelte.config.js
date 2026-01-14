@@ -1,19 +1,16 @@
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
+/** @type {import('@sveltejs/kit').Config} */
 const config = {
+	// Consult https://svelte.dev/docs/kit/integrations
+	// for more information about preprocessors
 	preprocess: vitePreprocess(),
-	kit: {
-		adapter: adapter({
-			regions: ['hnd1', 'kix1'], // Optional: Specify Vercel regions
-			maxDuration: 300 // Set the maximum duration (in seconds)
-		}),
-		serviceWorker: {
-			register: false // Let PWA plugin handle registration
-		}
-	},
+	kit: { adapter: adapter() },
 	vitePlugin: {
-		inspector: true
+		inspector: {
+			toggleKeyCombo: 'alt-x'
+		}
 	}
 };
 

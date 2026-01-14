@@ -1,153 +1,138 @@
 import { fail, redirect } from '@sveltejs/kit';
-import type { Actions } from './$types';
-import { AuthService } from '$lib/services/AuthService';
-import { ErrorHandlingService } from '$lib/errors/ErrorHandlingService';
+import type { Actions, PageServerLoad } from './$types';
+import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 
-const passwordRequirementPatterns = {
-	lowercase: /[a-z]/,
-	uppercase: /[A-Z]/,
-	number: /\d/,
-	symbol: /[^A-Za-z0-9]/
+export const load: PageServerLoad = async ({ locals }) => {
+	const { session } = await locals.safeGetSession();
+	if (session) {
+		throw redirect(303, '/');
+	}
+	return {};
 };
 
-function meetsPasswordRequirements(password: string): boolean {
-	return (
-		password.length >= 8 &&
-		passwordRequirementPatterns.lowercase.test(password) &&
-		passwordRequirementPatterns.uppercase.test(password) &&
-		passwordRequirementPatterns.number.test(password) &&
-		passwordRequirementPatterns.symbol.test(password)
-	);
+// Password validation helper
+function validatePassword(password: string): { valid: boolean; message?: string } {
+	// Check minimum length
+	if (password.length < 8) {
+		return { valid: false, message: 'Password must be at least 8 characters long.' };
+	}
+
+	// Check for lowercase letter
+	if (!/[a-z]/.test(password)) {
+		return { valid: false, message: 'Password must contain at least one lowercase letter.' };
+	}
+
+	// Check for uppercase letter
+	if (!/[A-Z]/.test(password)) {
+		return { valid: false, message: 'Password must contain at least one uppercase letter.' };
+	}
+
+	// Check for number
+	if (!/[0-9]/.test(password)) {
+		return { valid: false, message: 'Password must contain at least one number.' };
+	}
+
+	// Check for symbol
+	if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)) {
+		return { valid: false, message: 'Password must contain at least one symbol.' };
+	}
+
+	// Check for valid ASCII characters only (no unicode outside ASCII printable range)
+	if (!/^[\x20-\x7E]*$/.test(password)) {
+		return { valid: false, message: 'Password must only contain standard ASCII characters.' };
+	}
+
+	return { valid: true };
 }
 
 export const actions: Actions = {
-	register: async ({ request, locals }) => {
-		const data = await request.formData();
+	register: async ({ request, locals: { supabase }, url }) => {
+		const formData = await request.formData();
+		const email = formData.get('email') as string;
+		const password = formData.get('password') as string;
+		const confirmPassword = formData.get('confirm_password') as string;
+		const fullName = formData.get('full_name') as string;
+		const employer = formData.get('employer') as string;
+		const acceptEula = formData.get('accept_eula') === 'on';
+		const acceptPrivacy = formData.get('accept_privacy') === 'on';
+		const acceptTerms = formData.get('accept_terms') === 'on';
+		const recaptchaToken = formData.get('recaptchaToken') as string;
 
-		// Get form values
-		const firstName = data.get('firstName')?.toString() || '';
-		const lastName = data.get('lastName')?.toString() || '';
-		const email = data.get('email')?.toString() || '';
-		const password = data.get('password')?.toString() || '';
-		const confirmPassword = data.get('confirmPassword')?.toString() || '';
-		const company = data.get('company')?.toString() || '';
-		const agreedToTerms = data.get('terms') === 'on';
-		const agreedToPrivacy = data.get('privacy') === 'on';
-		const agreedToCookies = data.get('cookies') === 'on';
-
-		// Server-side validation
-		const errors: Record<string, string> = {};
-
-		if (!firstName.trim()) {
-			errors.firstName = 'First name is required';
+		// Verify reCAPTCHA
+		if (!recaptchaToken) {
+			return fail(400, { message: 'reCAPTCHA verification required.' });
 		}
 
-		if (!lastName.trim()) {
-			errors.lastName = 'Last name is required';
+		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'REGISTER');
+		if (!recaptchaResult.success) {
+			return fail(400, { message: 'reCAPTCHA verification failed. Please try again.' });
 		}
 
-		if (!email.trim()) {
-			errors.email = 'Email is required';
-		} else {
-			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-			if (!emailRegex.test(email)) {
-				errors.email = 'Please enter a valid email address';
+		// Validate required fields
+		if (!email || !password || !fullName) {
+			return fail(400, { message: 'Email, password, and full name are required.' });
+		}
+
+		// Validate email format
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(email)) {
+			return fail(400, { message: 'Please enter a valid email address.' });
+		}
+
+		// Validate password
+		const passwordValidation = validatePassword(password);
+		if (!passwordValidation.valid) {
+			return fail(400, { message: passwordValidation.message });
+		}
+
+		// Check passwords match
+		if (password !== confirmPassword) {
+			return fail(400, { message: 'Passwords do not match.' });
+		}
+
+		// Check legal agreements
+		if (!acceptEula || !acceptPrivacy || !acceptTerms) {
+			return fail(400, { message: 'You must accept all legal agreements to register.' });
+		}
+
+		// Construct the redirect URL for email confirmation
+		const redirectTo = `${url.origin}/auth/callback`;
+
+		// Create the user with Supabase
+		const { data, error } = await supabase.auth.signUp({
+			email,
+			password,
+			options: {
+				emailRedirectTo: redirectTo,
+				data: {
+					full_name: fullName,
+					employer: employer || null
+				}
 			}
+		});
+
+		if (error) {
+			console.error('Registration error:', error);
+			return fail(400, { message: error.message });
 		}
 
-		if (!password) {
-			errors.password = 'Password is required';
-		} else if (!meetsPasswordRequirements(password)) {
-			errors.password =
-				'Password must be at least 8 characters and include a lowercase letter, uppercase letter, number, and symbol';
+		// Check if email confirmation is required
+		if (data.user && !data.session) {
+			// User was created but needs to confirm email
+			return {
+				success: true,
+				message: 'Registration successful! Please check your email to confirm your account.'
+			};
 		}
 
-		if (!confirmPassword) {
-			errors.confirmPassword = 'Please confirm your password';
-		} else if (password !== confirmPassword) {
-			errors.confirmPassword = 'Passwords do not match';
+		// If we got a session, the user is immediately logged in (email confirmation disabled)
+		if (data.session) {
+			throw redirect(303, '/');
 		}
 
-		if (!company.trim()) {
-			errors.company = 'Company name is required';
-		}
-
-		if (!agreedToTerms || !agreedToPrivacy || !agreedToCookies) {
-			errors.terms = 'You must agree to all terms and policies';
-		}
-
-		// If there are validation errors, return them
-		if (Object.keys(errors).length > 0) {
-			return fail(400, {
-				errors,
-				firstName,
-				lastName,
-				email,
-				company,
-				agreedToTerms,
-				agreedToPrivacy,
-				agreedToCookies
-			});
-		}
-
-		try {
-			// Get error handler
-			const errorHandler = new ErrorHandlingService();
-
-			// Create AuthService with the request's Supabase client
-			const authService = new AuthService(locals.supabase, errorHandler);
-
-			// Register the user
-			const result = await authService.register({
-				email,
-				password,
-				firstName,
-				lastName,
-				company
-			});
-
-			if (!result.success) {
-				// Registration failed
-				return fail(400, {
-					message: result.error || 'Registration failed',
-					errors: {},
-					firstName,
-					lastName,
-					email,
-					company,
-					agreedToTerms,
-					agreedToPrivacy,
-					agreedToCookies
-				});
-			}
-
-			// Check if email verification is needed
-			if (!result.emailConfirmationRequired) {
-				// Redirect to check-email page with email parameter
-				throw redirect(303, `/auth/check-email?email=${encodeURIComponent(email)}`);
-			} else {
-				// No email confirmation needed, redirect to login
-				throw redirect(303, '/auth/login?registered=true');
-			}
-		} catch (err) {
-			console.error('Registration error:', err);
-
-			// If this is a redirect, let it pass through
-			if (err instanceof Response && err.status === 303) {
-				throw err;
-			}
-
-			return fail(500, {
-				message: 'An unexpected error occurred during registration',
-				errors: {},
-				firstName,
-				lastName,
-				email,
-				company,
-				agreedToTerms,
-				agreedToPrivacy,
-				agreedToCookies
-			});
-		}
+		return {
+			success: true,
+			message: 'Registration successful! Please check your email to confirm your account.'
+		};
 	}
 };

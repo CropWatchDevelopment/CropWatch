@@ -1,185 +1,272 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import CWButton from '$lib/components/CWButton.svelte';
+	import logo from '$lib/images/cropwatch_static.svg';
+	import FORGOT_SHIELD_ICON from '$lib/images/icons/forgot_shield.svg';
+	import BACK_ICON from '$lib/images/icons/back.svg';
 	import { goto } from '$app/navigation';
-	import { success, error, warning, info, neutral } from '$lib/stores/toast.svelte';
-	import { _ } from 'svelte-i18n';
+	import { onMount } from 'svelte';
+	import { loadRecaptchaScript, executeRecaptcha } from '$lib/utils/recaptcha';
+	import { getToastContext } from '$lib/components/toast';
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 
-	let { data } = $props();
-	let form = $derived(data.form);
+	let { form } = $props<{
+		form: { message?: string; success?: boolean } | null;
+	}>();
 
-	let email = $state('');
-	let loading = $state(false);
+	let submitting: boolean = $state<boolean>(false);
 
-	function handleSubmit() {
-		return () => {
-			loading = true;
+	const toast = getToastContext();
 
-			return async ({ result, update }) => {
-				loading = false;
-				await update();
-				if (result.status === 200) {
-					success($_('Password reset link sent to your email.'));
-					goto('/auth/check-email');
-				} else {
-					error($_(result.error));
-				}
-			};
-		};
-	}
+	onMount(() => {
+		// Preload reCAPTCHA script
+		loadRecaptchaScript();
+	});
 </script>
 
 <svelte:head>
-	<title>{$_('Forgot Password')} | CropWatch</title>
+	<title>Forgot Password - CropWatch Temp</title>
 </svelte:head>
 
-<!-- Geometric Background Layer -->
-<div class="geometric-background"></div>
-
-<div
-	class="bg-background-light/30 dark:bg-background-dark/30 relative z-10 flex h-screen items-center justify-center p-5 transition-colors duration-300"
+<main
+	class="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-900 text-slate-100"
 >
+	<!-- Animated background gradient orbs -->
+	<div class="pointer-events-none absolute inset-0 overflow-hidden">
+		<!-- Large animated orbs -->
+		<div
+			class="animate-float-slow absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-sky-500/25 blur-3xl"
+		></div>
+		<div
+			class="animate-float-slower absolute -bottom-48 -right-32 h-[600px] w-[600px] rounded-full bg-indigo-500/25 blur-3xl"
+		></div>
+		<div
+			class="animate-float absolute -bottom-20 left-1/4 h-[400px] w-[400px] rounded-full bg-emerald-500/20 blur-3xl"
+		></div>
+		<div
+			class="animate-float-slow absolute -top-20 right-1/4 h-[350px] w-[350px] rounded-full bg-violet-500/20 blur-3xl"
+		></div>
+
+		<!-- Center glow behind the card -->
+		<div
+			class="absolute left-1/2 top-1/2 h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-700/50 blur-3xl"
+		></div>
+	</div>
+
+	<!-- Floating particles -->
+	<div class="pointer-events-none absolute inset-0 overflow-hidden">
+		<div class="animate-rise absolute bottom-0 left-[10%] h-1 w-1 rounded-full bg-sky-400/60"></div>
+		<div
+			class="animate-rise-slow absolute bottom-0 left-[20%] h-1.5 w-1.5 rounded-full bg-indigo-400/50"
+		></div>
+		<div
+			class="animate-rise-slower absolute bottom-0 left-[35%] h-1 w-1 rounded-full bg-emerald-400/60"
+		></div>
+		<div class="animate-rise absolute bottom-0 left-[50%] h-2 w-2 rounded-full bg-sky-400/40"></div>
+		<div
+			class="animate-rise-slow absolute bottom-0 left-[65%] h-1 w-1 rounded-full bg-violet-400/60"
+		></div>
+		<div
+			class="animate-rise-slower absolute bottom-0 left-[80%] h-1.5 w-1.5 rounded-full bg-sky-400/50"
+		></div>
+		<div
+			class="animate-rise absolute bottom-0 left-[90%] h-1 w-1 rounded-full bg-indigo-400/60"
+		></div>
+	</div>
+
+	<!-- Grid pattern overlay -->
 	<div
-		class="auth-panel bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark w-full max-w-md rounded-lg border-2 border-white/40 p-6 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
+		class="pointer-events-none absolute inset-0 opacity-[0.04]"
+		style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 48px 48px;"
+	></div>
+
+	<!-- Diagonal lines accent -->
+	<div
+		class="pointer-events-none absolute inset-0 opacity-[0.02]"
+		style="background-image: repeating-linear-gradient(45deg, transparent, transparent 100px, rgba(255,255,255,0.05) 100px, rgba(255,255,255,0.05) 101px);"
+	></div>
+
+	<!-- Radial vignette for depth -->
+	<div
+		class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(15,23,42,0.3)_60%,rgba(15,23,42,0.6)_100%)]"
+	></div>
+
+	<!-- Forgot Password card -->
+	<div
+		class="relative z-10 w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900/80 p-3 shadow-2xl shadow-black/40 backdrop-blur-sm"
 	>
-		<h1 class="mb-6 text-center text-2xl font-bold">{$_('Reset Password')}</h1>
-
-		{#if form?.success}
-			<div
-				class="mb-4 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
-			>
-				<p>
-					{$_('If an account exists with the email')} <strong>{form.email}</strong>, {$_(
-						"you'll receive a password reset link shortly."
-					)}
-				</p>
-
-				<a
-					href="/auth/login"
-					class="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-				>
-					← {$_('Back to login')}
-				</a>
+		<!-- Logo -->
+		<div class="mb-6 flex justify-center">
+			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/50 p-3 shadow-lg">
+				<img src={logo} alt="CropWatch" class="h-10 w-10" />
 			</div>
-		{:else}
-			<p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
-				{$_("Enter your email address and we'll send you a link to reset your password.")}
+		</div>
+
+		<h1 class="text-center text-lg font-semibold text-slate-50">Reset Your Password</h1>
+		<p class="mt-1 text-center text-sm text-slate-400">Enter your email and we'll send you a reset link</p>
+
+		{#if form?.message}
+			<p
+				class={`mt-4 rounded-lg border px-3 py-2 text-sm ${
+					form.success
+						? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+						: 'border-amber-500/40 bg-amber-500/10 text-amber-100'
+				}`}
+			>
+				{form.message}
 			</p>
+		{/if}
 
-			<form method="POST" use:enhance={handleSubmit()} class="space-y-4">
-				<div>
-					<label for="email" class="mb-1 block text-sm font-medium">{$_('Email address')}</label>
+		{#if !form?.success}
+			<form
+				method="POST"
+				action="?/resetPassword"
+				class="mt-6 space-y-4"
+				use:enhance={async ({ formData, cancel }) => {
+					submitting = true;
+					
+					try {
+						const token = await executeRecaptcha('FORGOT_PASSWORD');
+						formData.set('recaptchaToken', token);
+					} catch (error) {
+						console.error('reCAPTCHA error:', error);
+						toast.error('reCAPTCHA verification failed. Please try again.');
+						submitting = false;
+						cancel();
+						return;
+					}
+
+					return async ({ result, update }) => {
+						submitting = false;
+						if (result.type === 'failure') {
+							const message = (result.data as { message?: string })?.message || 'Failed to send reset link';
+							toast.error(message);
+						} else if (result.type === 'success') {
+							await update();
+						} else if (result.type === 'error') {
+							toast.error('An error occurred. Please try again.');
+						}
+					};
+				}}
+			>
+				<label class="block text-sm text-slate-300">
+					<span class="mb-1 block text-xs uppercase tracking-wide text-slate-400">Email</span>
 					<input
-						type="email"
-						id="email"
 						name="email"
-						bind:value={email}
-						autocomplete="email"
+						type="email"
 						required
-						placeholder="✉️ {$_('Enter your email')}"
-						disabled={loading}
-						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
-                   bg-white px-3 py-2 focus:border-transparent
-                   focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+						class="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+						placeholder="you@example.com"
+						autocomplete="email"
 					/>
-				</div>
+				</label>
 
-				{#if form?.error}
-					<div
-						class="mb-4 rounded-md bg-red-100 p-3 text-center text-red-700 dark:bg-red-900/30 dark:text-red-400"
-					>
-						{$_(form.error)}
-					</div>
-				{/if}
-
-				<div>
-					<button type="submit" class="auth-primary-button w-full" disabled={loading}>
-						{loading ? $_('Sending...') : $_('Send reset link')}
-					</button>
-				</div>
-
-				<div class="mt-4 text-center">
-					<a
-						href="/auth/login"
-						class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-					>
-						{$_('Back to login')}
-					</a>
-				</div>
+				<CWButton type="submit" variant="primary" loading={submitting} size="md" fullWidth={true}>
+					<img src={FORGOT_SHIELD_ICON} alt="Reset password icon" class="h-5 w-5" />
+					Send Reset Link
+				</CWButton>
 			</form>
 		{/if}
+
+		<div class="mt-4">
+			<CWButton type="button" variant="secondary" size="md" fullWidth={true} onclick={() => goto('/auth')}>
+				<img src={BACK_ICON} alt="Back icon" class="h-5 w-5" />
+				Back to Sign In
+			</CWButton>
+		</div>
+
+		<!-- Footer -->
+		<p class="mt-6 text-center text-xs text-slate-400">
+			Protected by reCAPTCHA and CropWatch Security
+		</p>
 	</div>
-</div>
+
+	<!-- Bottom ambient light reflection -->
+	<div
+		class="pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent"
+	></div>
+</main>
 
 <style>
-	.geometric-background {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: 100vh;
-		z-index: 1;
-
-		/* Rich corporate gradient - more vibrant blues */
-		background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 25%, #2563eb 75%, #1d4ed8 100%);
-
-		/* Ensure it's visible */
-		opacity: 1;
-
-		/* Professional corporate overlay patterns */
-		background-image: 
-			/* Corporate highlight orbs */
-			radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
-			radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.25) 0%, transparent 45%),
-			radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.2) 0%, transparent 40%),
-			/* Subtle business texture */
-				radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
-			radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 30%);
-
-		background-size:
-			1000px 1000px,
-			800px 800px,
-			600px 600px,
-			400px 400px,
-			500px 500px;
-
-		background-position:
-			0 0,
-			100px 100px,
-			300px 200px,
-			500px 300px,
-			200px 400px;
-
-		/* Subtle floating animation */
-		animation: floatBackground 20s ease-in-out infinite;
-	}
-
-	@keyframes floatBackground {
+	@keyframes float {
 		0%,
 		100% {
-			transform: translateX(0) translateY(0);
+			transform: translate(0, 0) scale(1);
 		}
 		25% {
-			transform: translateX(-20px) translateY(-10px);
+			transform: translate(10px, -15px) scale(1.02);
 		}
 		50% {
-			transform: translateX(10px) translateY(-20px);
+			transform: translate(-5px, 10px) scale(0.98);
 		}
 		75% {
-			transform: translateX(-10px) translateY(10px);
+			transform: translate(-15px, -5px) scale(1.01);
 		}
 	}
 
-	/* Dark mode - rich professional dark gradient */
-	:global(.dark) .geometric-background {
-		background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e40af 75%, #1e3a8a 100%);
+	@keyframes float-slow {
+		0%,
+		100% {
+			transform: translate(0, 0) scale(1);
+		}
+		33% {
+			transform: translate(-20px, 15px) scale(1.03);
+		}
+		66% {
+			transform: translate(15px, -10px) scale(0.97);
+		}
+	}
 
-		background-image: 
-			/* Dark mode corporate highlights */
-			radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.4) 0%, transparent 50%),
-			radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.35) 0%, transparent 45%),
-			radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.3) 0%, transparent 40%),
-			/* Professional dark texture */
-				radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.04) 0%, transparent 35%),
-			radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 30%);
+	@keyframes float-slower {
+		0%,
+		100% {
+			transform: translate(0, 0) scale(1);
+		}
+		50% {
+			transform: translate(25px, -20px) scale(1.05);
+		}
+	}
+
+	@keyframes rise {
+		0% {
+			transform: translateY(0) scale(1);
+			opacity: 0;
+		}
+		10% {
+			opacity: 1;
+		}
+		90% {
+			opacity: 1;
+		}
+		100% {
+			transform: translateY(-100vh) scale(0.5);
+			opacity: 0;
+		}
+	}
+
+	:global(.animate-float) {
+		animation: float 8s ease-in-out infinite;
+	}
+
+	:global(.animate-float-slow) {
+		animation: float-slow 12s ease-in-out infinite;
+	}
+
+	:global(.animate-float-slower) {
+		animation: float-slower 16s ease-in-out infinite;
+	}
+
+	:global(.animate-rise) {
+		animation: rise 15s ease-in-out infinite;
+	}
+
+	:global(.animate-rise-slow) {
+		animation: rise 20s ease-in-out infinite;
+		animation-delay: 2s;
+	}
+
+	:global(.animate-rise-slower) {
+		animation: rise 25s ease-in-out infinite;
+		animation-delay: 5s;
 	}
 </style>

@@ -1,809 +1,574 @@
 <script lang="ts">
-	import { applyAction, deserialize, enhance } from '$app/forms';
-	import { success, error as toastError } from '$lib/stores/toast.svelte';
-	import { goto, invalidateAll } from '$app/navigation';
-	import type { ActionResult } from '@sveltejs/kit';
-	import { _ } from 'svelte-i18n';
-	import Button from '$lib/components/UI/buttons/Button.svelte';
-	import Spinner from '$lib/components/Spinner.svelte';
+	import CWButton from '$lib/components/CWButton.svelte';
+	import logo from '$lib/images/cropwatch_static.svg';
+	import ADD_PERSON_ICON from '$lib/images/icons/person_add.svg';
+	import BACK_ICON from '$lib/images/icons/back.svg';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { loadRecaptchaScript, executeRecaptcha } from '$lib/utils/recaptcha';
+	import { getToastContext } from '$lib/components/toast';
+	import { enhance } from '$app/forms';
 
-	// Get page data (form action results)
-	let { data } = $props();
+	let { form } = $props<{
+		form: { message?: string; success?: boolean } | null;
+	}>();
 
-	// Form data
-	let firstName = $state('');
-	let lastName = $state('');
-	let email = $state('');
-	let password = $state('');
-	let confirmPassword = $state('');
-	let company = $state('');
-	let agreedToTerms = $state(false);
-	let agreedToPrivacy = $state(false);
-	let agreedToCookies = $state(false);
-	let isSubmitting = $state(false);
+	let registering: boolean = $state(false);
+
+	// Form fields
+	let email: string = $state('');
+	let password: string = $state('');
+	let confirmPassword: string = $state('');
+	let fullName: string = $state('');
+	let employer: string = $state('');
+
+	// Password visibility
+	let showPassword: boolean = $state(false);
+
+	// Legal checkboxes
+	let acceptedEula: boolean = $state(false);
+	let acceptedPrivacy: boolean = $state(false);
+	let acceptedTerms: boolean = $state(false);
+
+	// Track if links were opened
+	let eulaOpened: boolean = $state(false);
+	let privacyOpened: boolean = $state(false);
+	let termsOpened: boolean = $state(false);
+
+	// Password validation
+	const hasMinLength = $derived(password.length >= 8);
+	const hasLowercase = $derived(/[a-z]/.test(password));
+	const hasUppercase = $derived(/[A-Z]/.test(password));
+	const hasNumber = $derived(/[0-9]/.test(password));
+	const hasSymbol = $derived(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password));
+	// Only allow ASCII printable characters (no unicode letters outside ASCII)
+	const hasValidChars = $derived(/^[\x20-\x7E]*$/.test(password));
+	const isPasswordValid = $derived(
+		hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSymbol && hasValidChars
+	);
+	const passwordsMatch = $derived(password === confirmPassword && password.length > 0);
 
 	// Form validation
-	let errors = $state({
-		firstName: '',
-		lastName: '',
-		email: '',
-		password: '',
-		confirmPassword: '',
-		company: '',
-		terms: ''
+	const isFormValid = $derived(
+		email.length > 0 &&
+		isPasswordValid &&
+		passwordsMatch &&
+		fullName.length > 0 &&
+		acceptedEula &&
+		acceptedPrivacy &&
+		acceptedTerms &&
+		eulaOpened &&
+		privacyOpened &&
+		termsOpened
+	);
+
+	const toast = getToastContext();
+
+	onMount(() => {
+		// Preload reCAPTCHA script
+		loadRecaptchaScript();
 	});
 
-	// Function to validate email format
-	function isValidEmail(email: string): boolean {
-		const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return regex.test(email);
+	// Handle link clicks
+	function openEula() {
+		eulaOpened = true;
+		window.open('https://cropwatch.io/legal/terms-of-service', '_blank');
 	}
 
-	type PasswordRequirementKey = 'length' | 'lowercase' | 'uppercase' | 'number' | 'symbol';
-
-	const passwordRequirementPatterns: Record<Exclude<PasswordRequirementKey, 'length'>, RegExp> = {
-		lowercase: /[a-z]/,
-		uppercase: /[A-Z]/,
-		number: /\d/,
-		symbol: /[^A-Za-z0-9]/
-	};
-
-	const passwordRequirementEntries: Array<{ key: PasswordRequirementKey; label: string }> = [
-		{ key: 'length', label: 'At least 8 characters' },
-		{ key: 'lowercase', label: 'Contains a lowercase letter (a-z)' },
-		{ key: 'uppercase', label: 'Contains an uppercase letter (A-Z)' },
-		{ key: 'number', label: 'Contains a number (0-9)' },
-		{ key: 'symbol', label: 'Contains a symbol (!@#$, etc.)' }
-	];
-
-	function meetsPasswordRequirements(value: string): boolean {
-		return (
-			value.length >= 8 &&
-			passwordRequirementPatterns.lowercase.test(value) &&
-			passwordRequirementPatterns.uppercase.test(value) &&
-			passwordRequirementPatterns.number.test(value) &&
-			passwordRequirementPatterns.symbol.test(value)
-		);
+	function openPrivacy() {
+		privacyOpened = true;
+		window.open('https://cropwatch.io/legal/privacy-policy', '_blank');
 	}
 
-	function computePasswordRequirementStatus(
-		value: string
-	): Record<PasswordRequirementKey, boolean> {
-		return {
-			length: value.length >= 8,
-			lowercase: passwordRequirementPatterns.lowercase.test(value),
-			uppercase: passwordRequirementPatterns.uppercase.test(value),
-			number: passwordRequirementPatterns.number.test(value),
-			symbol: passwordRequirementPatterns.symbol.test(value)
-		};
-	}
-
-	function getUnmetRequirementLabels(status: Record<PasswordRequirementKey, boolean>): string[] {
-		const labels: string[] = [];
-
-		for (const entry of passwordRequirementEntries) {
-			if (!status[entry.key]) {
-				labels.push(entry.label);
-			}
-		}
-
-		return labels;
-	}
-
-	let passwordsMatch = $derived(confirmPassword.length > 0 && confirmPassword === password);
-
-	// Function to validate the form
-	function validateForm(): boolean {
-		let isValid = true;
-		errors = {
-			firstName: '',
-			lastName: '',
-			email: '',
-			password: '',
-			confirmPassword: '',
-			company: '',
-			terms: ''
-		};
-
-		// Validate first name
-		if (!firstName.trim()) {
-			errors.firstName = 'First name is required';
-			isValid = false;
-		}
-
-		// Validate last name
-		if (!lastName.trim()) {
-			errors.lastName = 'Last name is required';
-			isValid = false;
-		}
-
-		// Validate email
-		if (!email.trim()) {
-			errors.email = 'Email is required';
-			isValid = false;
-		} else if (!isValidEmail(email)) {
-			errors.email = 'Please enter a valid email address';
-			isValid = false;
-		}
-
-		// Validate password
-		if (!password) {
-			errors.password = 'Password is required';
-			isValid = false;
-		} else if (!meetsPasswordRequirements(password)) {
-			errors.password =
-				'Password must be at least 8 characters and include a lowercase letter, uppercase letter, number, and symbol';
-			isValid = false;
-		}
-
-		// Validate password confirmation
-		if (!confirmPassword) {
-			errors.confirmPassword = 'Please confirm your password';
-			isValid = false;
-		} else if (password !== confirmPassword) {
-			errors.confirmPassword = 'Passwords do not match';
-			isValid = false;
-		}
-
-		// Validate company
-		if (!company.trim()) {
-			errors.company = 'Company name is required';
-			isValid = false;
-		}
-
-		// Validate terms agreement - ALL THREE MUST BE CHECKED
-		if (!agreedToTerms || !agreedToPrivacy || !agreedToCookies) {
-			errors.terms = 'You must agree to all terms and policies';
-			isValid = false;
-		}
-
-		return isValid;
-	}
-
-	// Computed property to check if form is valid for submission
-	let isFormValid = $derived(() => {
-		return (
-			firstName.trim() !== '' &&
-			lastName.trim() !== '' &&
-			email.trim() !== '' &&
-			isValidEmail(email) &&
-			password !== '' &&
-			meetsPasswordRequirements(password) &&
-			confirmPassword !== '' &&
-			password === confirmPassword &&
-			company.trim() !== '' &&
-			agreedToTerms &&
-			agreedToPrivacy &&
-			agreedToCookies
-		);
-	});
-
-	// Real-time field validation functions
-	function validateFirstName() {
-		if (!firstName.trim()) {
-			errors.firstName = 'First name is required';
-		} else {
-			errors.firstName = '';
-		}
-	}
-
-	function validateLastName() {
-		if (!lastName.trim()) {
-			errors.lastName = 'Last name is required';
-		} else {
-			errors.lastName = '';
-		}
-	}
-
-	function validateEmailField() {
-		if (!email.trim()) {
-			errors.email = 'Email is required';
-		} else if (!isValidEmail(email)) {
-			errors.email = 'Please enter a valid email address';
-		} else {
-			errors.email = '';
-		}
-	}
-
-	function validatePasswordField() {
-		if (!password) {
-			errors.password = 'Password is required';
-		} else if (!meetsPasswordRequirements(password)) {
-			errors.password =
-				'Password must be at least 8 characters and include a lowercase letter, uppercase letter, number, and symbol';
-		} else {
-			errors.password = '';
-		}
-		// Also validate confirm password when password changes
-		validateConfirmPasswordField();
-	}
-
-	function validateConfirmPasswordField() {
-		if (!confirmPassword) {
-			errors.confirmPassword = 'Please confirm your password';
-		} else if (password !== confirmPassword) {
-			errors.confirmPassword = 'Passwords do not match';
-		} else {
-			errors.confirmPassword = '';
-		}
-	}
-
-	function validateCompanyField() {
-		if (!company.trim()) {
-			errors.company = 'Company name is required';
-		} else {
-			errors.company = '';
-		}
-	}
-
-	function validateTermsAgreement() {
-		if (!agreedToTerms || !agreedToPrivacy || !agreedToCookies) {
-			errors.terms = 'You must agree to all terms and policies';
-		} else {
-			errors.terms = '';
-		}
-	}
-
-	// Process server-side form errors
-	$effect(() => {
-		if (data?.errors) {
-			errors = { ...errors, ...data.errors };
-		}
-
-		if (data?.message) {
-			toastError($_(data.message));
-		}
-
-		// Populate form with returned values on error
-		if (data?.firstName) firstName = data.firstName;
-		if (data?.lastName) lastName = data.lastName;
-		if (data?.email) email = data.email;
-		if (data?.company) company = data.company;
-		if (data?.agreedToTerms) agreedToTerms = data.agreedToTerms;
-		if (data?.agreedToPrivacy) agreedToPrivacy = data.agreedToPrivacy;
-		if (data?.agreedToCookies) agreedToCookies = data.agreedToCookies;
-	});
-
-	async function handleSubmit(
-		event: SubmitEvent & { currentTarget: EventTarget & HTMLFormElement },
-		cancel: () => void
-	) {
-		if (!validateForm()) {
-			cancel();
-			return;
-		}
-
-		isSubmitting = true;
-		const data = new FormData(event.currentTarget);
-
-		try {
-			// Manual form submission to the API endpoint
-			const response = await fetch('/api/auth/register', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					firstName,
-					lastName,
-					email,
-					password,
-					company
-				})
-			});
-
-			const result = await response.json();
-			if (!response.ok || !result.success) {
-				// Show error toast
-				toastError(result.error ? $_(result.error) : $_('Registration failed. Please try again.'));
-				isSubmitting = false;
-				return;
-			}
-
-			// Registration successful - check if email confirmation required
-			await invalidateAll();
-			goto(`/auth/check-email?email=${encodeURIComponent(email)}`);
-		} catch (err) {
-			console.error('Registration error:', err);
-			toastError($_('An unexpected error occurred. Please try again.'));
-			isSubmitting = false;
-		}
+	function openTerms() {
+		termsOpened = true;
+		window.open('https://cropwatch.io/legal/terms-of-service', '_blank');
 	}
 </script>
 
-{#snippet passwordRequirementList({
-	value,
-	includeMatch
-}: {
-	value: string;
-	includeMatch: boolean;
-})}
-	{@const status = includeMatch ? null : computePasswordRequirementStatus(value)}
-	{@const unmetRequirementLabels = status ? getUnmetRequirementLabels(status) : []}
-	<ul class="mt-2 space-y-1 text-xs" role="status" aria-live="polite">
-		{#if !includeMatch}
-			{#each passwordRequirementEntries as { key, label }}
-				{@const satisfied = status ? status[key] : false}
-				<li
-					class={`flex items-center gap-2 ${
-						satisfied ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-					}`}
-				>
-					<span
-						class={`${
-							satisfied ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-						} flex h-3.5 w-3.5 items-center justify-center`}
-						aria-hidden="true"
-					>
-						{#if satisfied}
-							<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-								<path
-									fill-rule="evenodd"
-									d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3.25-3.25a1 1 0 1 1 1.414-1.414L8.75 11.836l6.543-6.543a1 1 0 0 1 1.414 0"
-									clip-rule="evenodd"
-								/>
-							</svg>
-						{:else}
-							<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-								<path
-									d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m0-2.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0-3.5a1 1 0 0 0 1-1V7a1 1 0 1 0-2 0v4a1 1 0 0 0 1 1"
-								/>
-							</svg>
-						{/if}
-					</span>
-					<span>{$_(label)}</span>
-				</li>
-			{/each}
-		{/if}
-
-		{#if includeMatch}
-			<li
-				class={`flex items-center gap-2 ${
-					passwordsMatch ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-				}`}
-			>
-				<span
-					class={`${
-						passwordsMatch
-							? 'text-green-600 dark:text-green-400'
-							: 'text-gray-400 dark:text-gray-500'
-					} flex h-3.5 w-3.5 items-center justify-center`}
-					aria-hidden="true"
-				>
-					{#if passwordsMatch}
-						<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-							<path
-								fill-rule="evenodd"
-								d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3.25-3.25a1 1 0 1 1 1.414-1.414L8.75 11.836l6.543-6.543a1 1 0 0 1 1.414 0"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					{:else}
-						<svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-							<path
-								d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m0-2.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0-3.5a1 1 0 0 0 1-1V7a1 1 0 1 0-2 0v4a1 1 0 0 0 1 1"
-							/>
-						</svg>
-					{/if}
-				</span>
-				<span>
-					{#if passwordsMatch}
-						{$_('Passwords match')}
-					{:else}
-						{$_('Passwords must match')}
-					{/if}
-				</span>
-			</li>
-		{/if}
-	</ul>
-
-	{@const unmetWithMatch = (() => {
-		const messages = [];
-		const labels =
-			!includeMatch && Array.isArray(unmetRequirementLabels) ? unmetRequirementLabels : [];
-
-		for (const label of labels) {
-			messages.push($_(label));
-		}
-
-		if (includeMatch && !passwordsMatch) {
-			messages.push($_('Passwords must match'));
-		}
-
-		return messages;
-	})()}
-
-	{#if unmetWithMatch.length > 0}
-		<p class="mt-1 text-xs text-gray-500 dark:text-gray-400" aria-live="polite">
-			{$_('Still needed')}: {unmetWithMatch.join(', ')}
-		</p>
-	{/if}
-{/snippet}
-
 <svelte:head>
-	<title>{$_('Register')} | IoT Dashboard</title>
+	<title>Register - CropWatch Temp</title>
 </svelte:head>
 
-<!-- Professional Background Layer -->
-<div class="register-background"></div>
-
-<div
-	class="bg-background-light/30 dark:bg-background-dark/30 relative z-10 flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8"
+<main
+	class="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-900 text-slate-100"
 >
+	<!-- Animated background gradient orbs -->
+	<div class="pointer-events-none absolute inset-0 overflow-hidden">
+		<!-- Large animated orbs -->
+		<div
+			class="animate-float-slow absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-sky-500/25 blur-3xl"
+		></div>
+		<div
+			class="animate-float-slower absolute -bottom-48 -right-32 h-[600px] w-[600px] rounded-full bg-indigo-500/25 blur-3xl"
+		></div>
+		<div
+			class="animate-float absolute -bottom-20 left-1/4 h-[400px] w-[400px] rounded-full bg-emerald-500/20 blur-3xl"
+		></div>
+		<div
+			class="animate-float-slow absolute -top-20 right-1/4 h-[350px] w-[350px] rounded-full bg-violet-500/20 blur-3xl"
+		></div>
+
+		<!-- Center glow behind the card -->
+		<div
+			class="absolute left-1/2 top-1/2 h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-700/50 blur-3xl"
+		></div>
+	</div>
+
+	<!-- Floating particles -->
+	<div class="pointer-events-none absolute inset-0 overflow-hidden">
+		<div class="animate-rise absolute bottom-0 left-[10%] h-1 w-1 rounded-full bg-sky-400/60"></div>
+		<div
+			class="animate-rise-slow absolute bottom-0 left-[20%] h-1.5 w-1.5 rounded-full bg-indigo-400/50"
+		></div>
+		<div
+			class="animate-rise-slower absolute bottom-0 left-[35%] h-1 w-1 rounded-full bg-emerald-400/60"
+		></div>
+		<div class="animate-rise absolute bottom-0 left-[50%] h-2 w-2 rounded-full bg-sky-400/40"></div>
+		<div
+			class="animate-rise-slow absolute bottom-0 left-[65%] h-1 w-1 rounded-full bg-violet-400/60"
+		></div>
+		<div
+			class="animate-rise-slower absolute bottom-0 left-[80%] h-1.5 w-1.5 rounded-full bg-sky-400/50"
+		></div>
+		<div
+			class="animate-rise absolute bottom-0 left-[90%] h-1 w-1 rounded-full bg-indigo-400/60"
+		></div>
+	</div>
+
+	<!-- Grid pattern overlay -->
 	<div
-		class="auth-panel bg-card-light/95 dark:bg-card-dark/95 w-full max-w-md space-y-8 rounded-xl border-2 border-white/40 p-8 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
+		class="pointer-events-none absolute inset-0 opacity-[0.04]"
+		style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 48px 48px;"
+	></div>
+
+	<!-- Diagonal lines accent -->
+	<div
+		class="pointer-events-none absolute inset-0 opacity-[0.02]"
+		style="background-image: repeating-linear-gradient(45deg, transparent, transparent 100px, rgba(255,255,255,0.05) 100px, rgba(255,255,255,0.05) 101px);"
+	></div>
+
+	<!-- Radial vignette for depth -->
+	<div
+		class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(15,23,42,0.3)_60%,rgba(15,23,42,0.6)_100%)]"
+	></div>
+
+	<!-- Register card -->
+	<div
+		class="relative z-10 w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl shadow-black/40 backdrop-blur-sm"
 	>
-		<div>
-			<h2 class="text-text-light dark:text-text-dark mt-6 text-center text-3xl font-extrabold">
-				{$_('Create your account')}
-			</h2>
-			<p class="text-text-light/70 dark:text-text-dark/70 mt-2 text-center text-sm">
-				{$_('Or')}
-				<a
-					href="/auth/login"
-					class="text-primary-light dark:text-primary-dark font-medium hover:underline"
-				>
-					{$_('sign in to your existing account')}
-				</a>
-			</p>
+		<!-- Logo -->
+		<div class="mb-6 flex justify-center">
+			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/50 p-3 shadow-lg">
+				<img src={logo} alt="CropWatch" class="h-10 w-10" />
+			</div>
 		</div>
 
-		<form class="mt-8 space-y-6" action="?/register" method="POST" use:enhance={handleSubmit}>
-			<div class="space-y-4">
-				<!-- First and Last Name -->
-				<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<div>
-						<label
-							for="firstName"
-							class="text-text-light dark:text-text-dark block text-sm font-medium"
-						>
-							{$_('First Name')} <span class="text-red-500">*</span>
-						</label>
-						<input
-							id="firstName"
-							name="firstName"
-							type="text"
-							bind:value={firstName}
-							onblur={validateFirstName}
-							oninput={validateFirstName}
-							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.firstName
-								? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-								: ''}"
-							placeholder={$_('John')}
-							disabled={isSubmitting}
-							required
-						/>
-						{#if errors.firstName}
-							<p class="mt-1 text-xs text-red-500">{$_(errors.firstName)}</p>
-						{/if}
-					</div>
+		<h1 class="text-center text-lg font-semibold text-slate-50">Create Your Account</h1>
+		<p class="mt-1 text-center text-sm text-slate-400">Joining is quick and easy, Register, Add devices, and start monitoring!</p>
 
-					<div>
-						<label
-							for="lastName"
-							class="text-text-light dark:text-text-dark block text-sm font-medium"
-						>
-							{$_('Last Name')} <span class="text-red-500">*</span>
-						</label>
-						<input
-							id="lastName"
-							name="lastName"
-							type="text"
-							bind:value={lastName}
-							onblur={validateLastName}
-							oninput={validateLastName}
-							class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.lastName
-								? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-								: ''}"
-							placeholder={$_('Doe')}
-							disabled={isSubmitting}
-							required
-						/>
-						{#if errors.lastName}
-							<p class="mt-1 text-xs text-red-500">{$_(errors.lastName)}</p>
-						{/if}
-					</div>
-				</div>
+		{#if form?.message}
+			<p
+				class={`mt-4 rounded-lg border px-3 py-2 text-sm ${
+					form.success
+						? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+						: 'border-amber-500/40 bg-amber-500/10 text-amber-100'
+				}`}
+			>
+				{form.message}
+			</p>
+		{/if}
+
+		{#if !form?.success}
+			<form
+				method="POST"
+				action="?/register"
+				class="mt-6 space-y-4"
+				use:enhance={async ({ formData, cancel }) => {
+					registering = true;
+					
+					try {
+						const token = await executeRecaptcha('REGISTER');
+						formData.set('recaptchaToken', token);
+					} catch (error) {
+						console.error('reCAPTCHA error:', error);
+						toast.error('reCAPTCHA verification failed. Please try again.');
+						registering = false;
+						cancel();
+						return;
+					}
+
+					return async ({ result, update }) => {
+						registering = false;
+						if (result.type === 'redirect') {
+							goto(result.location);
+						} else if (result.type === 'failure') {
+							const message = (result.data as { message?: string })?.message || 'Registration failed';
+							toast.error(message);
+						} else if (result.type === 'success') {
+							await update();
+						} else if (result.type === 'error') {
+							toast.error('An error occurred. Please try again.');
+						}
+					};
+				}}
+			>
+				<!-- Full Name -->
+				<label class="block text-sm text-slate-300">
+					<span class="mb-1 block text-xs uppercase tracking-wide text-slate-400">Full Name <span class="text-red-400">*</span></span>
+					<input
+						name="full_name"
+						type="text"
+						required
+						bind:value={fullName}
+						class="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+						placeholder="John Doe"
+						autocomplete="name"
+					/>
+				</label>
+
+				<!-- Employer -->
+				<label class="block text-sm text-slate-300">
+					<span class="mb-1 block text-xs uppercase tracking-wide text-slate-400">Employer / Organization</span>
+					<input
+						name="employer"
+						type="text"
+						bind:value={employer}
+						class="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+						placeholder="CropWatch Inc."
+						autocomplete="organization"
+					/>
+				</label>
 
 				<!-- Email -->
-				<div>
-					<label for="email" class="text-text-light dark:text-text-dark block text-sm font-medium">
-						{$_('Email address')} <span class="text-red-500">*</span>
-					</label>
+				<label class="block text-sm text-slate-300">
+					<span class="mb-1 block text-xs uppercase tracking-wide text-slate-400">Email <span class="text-red-400">*</span></span>
 					<input
-						id="email"
 						name="email"
 						type="email"
-						autocomplete="email"
-						bind:value={email}
-						onblur={validateEmailField}
-						oninput={validateEmailField}
-						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.email
-							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-							: ''}"
-						placeholder={$_('you@example.com')}
-						disabled={isSubmitting}
 						required
+						bind:value={email}
+						class="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+						placeholder="you@example.com"
+						autocomplete="email"
 					/>
-					{#if errors.email}
-						<p class="mt-1 text-xs text-red-500">{$_(errors.email)}</p>
-					{/if}
-				</div>
+				</label>
 
 				<!-- Password -->
-				<div>
-					<label
-						for="password"
-						class="text-text-light dark:text-text-dark block text-sm font-medium"
-					>
-						{$_('Password')} <span class="text-red-500">*</span>
-					</label>
-					<input
-						id="password"
-						name="password"
-						type="password"
-						autocomplete="new-password"
-						bind:value={password}
-						onblur={validatePasswordField}
-						oninput={validatePasswordField}
-						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.password
-							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-							: ''}"
-						placeholder={$_('••••••••')}
-						disabled={isSubmitting}
-						required
-						minlength="8"
-					/>
-					{#if errors.password}
-						<p class="mt-1 text-xs text-red-500">{$_(errors.password)}</p>
+				<div class="block text-sm text-slate-300">
+					<span class="mb-1 block text-xs uppercase tracking-wide text-slate-400">Password <span class="text-red-400">*</span></span>
+					<div class="relative">
+						<input
+							name="password"
+							type={showPassword ? 'text' : 'password'}
+							required
+							bind:value={password}
+							class="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 pr-12 text-slate-100 placeholder:text-slate-400 transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+							placeholder="••••••••"
+							autocomplete="new-password"
+						/>
+						<button
+							type="button"
+							onclick={() => (showPassword = !showPassword)}
+							class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+						>
+							{#if showPassword}
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+								</svg>
+							{:else}
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+									<path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+								</svg>
+							{/if}
+						</button>
+					</div>
+					
+					<!-- Password Requirements -->
+					{#if password.length > 0}
+						<div class="mt-2 space-y-1">
+							<div class="flex items-center gap-2 text-xs {hasMinLength ? 'text-emerald-400' : 'text-slate-400'}">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									{#if hasMinLength}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+									{:else}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+									{/if}
+								</svg>
+								At least 8 characters
+							</div>
+							<div class="flex items-center gap-2 text-xs {hasLowercase ? 'text-emerald-400' : 'text-slate-400'}">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									{#if hasLowercase}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+									{:else}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+									{/if}
+								</svg>
+								One lowercase letter (a-z)
+							</div>
+							<div class="flex items-center gap-2 text-xs {hasUppercase ? 'text-emerald-400' : 'text-slate-400'}">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									{#if hasUppercase}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+									{:else}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+									{/if}
+								</svg>
+								One uppercase letter (A-Z)
+							</div>
+							<div class="flex items-center gap-2 text-xs {hasNumber ? 'text-emerald-400' : 'text-slate-400'}">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									{#if hasNumber}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+									{:else}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+									{/if}
+								</svg>
+								One number (0-9)
+							</div>
+							<div class="flex items-center gap-2 text-xs {hasSymbol ? 'text-emerald-400' : 'text-slate-400'}">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									{#if hasSymbol}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+									{:else}
+										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+									{/if}
+								</svg>
+								One symbol (!@#$%^&* etc.)
+							</div>
+							{#if !hasValidChars}
+								<div class="flex items-center gap-2 text-xs text-red-400">
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+									</svg>
+									Only standard ASCII characters allowed
+								</div>
+							{/if}
+						</div>
 					{/if}
-					{@render passwordRequirementList({ value: password, includeMatch: false })}
 				</div>
 
 				<!-- Confirm Password -->
-				<div>
-					<label
-						for="confirmPassword"
-						class="text-text-light dark:text-text-dark block text-sm font-medium"
-					>
-						{$_('Confirm Password')} <span class="text-red-500">*</span>
-					</label>
+				<label class="block text-sm text-slate-300">
+					<span class="mb-1 block text-xs uppercase tracking-wide text-slate-400">Confirm Password <span class="text-red-400">*</span></span>
 					<input
-						id="confirmPassword"
-						name="confirmPassword"
-						type="password"
-						autocomplete="new-password"
+						name="confirm_password"
+						type={showPassword ? 'text' : 'password'}
+						required
 						bind:value={confirmPassword}
-						onblur={validateConfirmPasswordField}
-						oninput={validateConfirmPasswordField}
-						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.confirmPassword
-							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-							: ''}"
-						placeholder={$_('••••••••')}
-						disabled={isSubmitting}
-						required
+						class="w-full rounded-xl border bg-slate-800/50 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 transition focus:outline-none focus:ring-2
+							{confirmPassword.length > 0 && !passwordsMatch
+							? 'border-red-500 focus:border-red-500 focus:ring-red-500/40'
+							: confirmPassword.length > 0 && passwordsMatch
+								? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500/40'
+								: 'border-slate-700 focus:border-sky-500 focus:ring-sky-500/40'}"
+						placeholder="••••••••"
+						autocomplete="new-password"
 					/>
-					{#if errors.confirmPassword}
-						<p class="mt-1 text-xs text-red-500">{$_(errors.confirmPassword)}</p>
-					{/if}
-					{@render passwordRequirementList({ value: confirmPassword, includeMatch: true })}
-				</div>
-
-				<!-- Company -->
-				<div>
-					<label
-						for="company"
-						class="text-text-light dark:text-text-dark block text-sm font-medium"
-					>
-						{$_('Company')} <span class="text-red-500">*</span>
-					</label>
-					<input
-						id="company"
-						name="company"
-						type="text"
-						bind:value={company}
-						onblur={validateCompanyField}
-						oninput={validateCompanyField}
-						class="text-text-light dark:text-text-dark focus:ring-primary-light dark:focus:ring-primary-dark focus:border-primary-light dark:focus:border-primary-dark relative mt-1 block w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 placeholder-gray-500 focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 {errors.company
-							? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-							: ''}"
-						placeholder={$_('Acme Inc.')}
-						disabled={isSubmitting}
-						required
-					/>
-					{#if errors.company}
-						<p class="mt-1 text-xs text-red-500">{$_(errors.company)}</p>
-					{/if}
-				</div>
-
-				<!-- Terms and Policies -->
-				<div class="space-y-2">
-					<p class="text-text-light dark:text-text-dark text-sm font-semibold">
-						{$_('Required Agreements')} <span class="text-red-500">*</span>
-					</p>
-					<div class="flex items-start">
-						<div class="flex h-5 items-center">
-							<input
-								id="terms"
-								name="terms"
-								type="checkbox"
-								bind:checked={agreedToTerms}
-								onchange={validateTermsAgreement}
-								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
-								disabled={isSubmitting}
-								required
-							/>
-						</div>
-						<div class="ml-3 text-sm">
-							<label for="terms" class="text-text-light dark:text-text-dark font-medium">
-								{$_('I agree to the')}
-								<a
-									href="/legal/EULA"
-									target="_blank"
-									class="text-primary-light dark:text-primary-dark hover:underline"
-									>{$_('Terms of Service')}</a
-								> <span class="text-red-500">*</span>
-							</label>
-						</div>
-					</div>
-
-					<div class="flex items-start">
-						<div class="flex h-5 items-center">
-							<input
-								id="privacy"
-								name="privacy"
-								type="checkbox"
-								bind:checked={agreedToPrivacy}
-								onchange={validateTermsAgreement}
-								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
-								disabled={isSubmitting}
-								required
-							/>
-						</div>
-						<div class="ml-3 text-sm">
-							<label for="privacy" class="text-text-light dark:text-text-dark font-medium">
-								{$_('I agree to the')}
-								<a
-									href="/legal/privacy-policy"
-									target="_blank"
-									class="text-primary-light dark:text-primary-dark hover:underline"
-									>{$_('Privacy Policy')}</a
-								> <span class="text-red-500">*</span>
-							</label>
-						</div>
-					</div>
-
-					<div class="flex items-start">
-						<div class="flex h-5 items-center">
-							<input
-								id="cookies"
-								name="cookies"
-								type="checkbox"
-								bind:checked={agreedToCookies}
-								onchange={validateTermsAgreement}
-								class="focus:ring-primary-light dark:focus:ring-primary-dark text-primary-light dark:text-primary-dark h-4 w-4 rounded border-gray-300 dark:border-gray-700"
-								disabled={isSubmitting}
-								required
-							/>
-						</div>
-						<div class="ml-3 text-sm">
-							<label for="cookies" class="text-text-light dark:text-text-dark font-medium">
-								{$_('I agree to the')}
-								<a
-									href="/legal/cookie-policy"
-									target="_blank"
-									class="text-primary-light dark:text-primary-dark hover:underline"
-									>{$_('Cookie Policy')}</a
-								> <span class="text-red-500">*</span>
-							</label>
-						</div>
-					</div>
-
-					{#if errors.terms}
-						<p class="mt-1 text-xs text-red-500">{$_(errors.terms)}</p>
-					{/if}
-
-					{#if !agreedToTerms || !agreedToPrivacy || !agreedToCookies}
-						<p class="mt-1 text-xs text-orange-600 dark:text-orange-400">
-							<strong>{$_('All three agreements must be accepted to register')}</strong>
+					{#if confirmPassword.length > 0 && !passwordsMatch}
+						<p class="mt-1.5 text-xs text-red-400">Passwords do not match</p>
+					{:else if confirmPassword.length > 0 && passwordsMatch}
+						<p class="mt-1.5 flex items-center gap-1 text-xs text-emerald-400">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+							</svg>
+							Passwords match
 						</p>
 					{/if}
+				</label>
+
+				<!-- Legal Agreements -->
+				<div class="space-y-3 rounded-xl border border-slate-700 bg-slate-800/30 p-4">
+					<p class="text-xs font-medium uppercase tracking-wide text-slate-400">Legal Agreements</p>
+					
+					<!-- EULA -->
+					<label class="flex items-start gap-3 text-sm text-slate-300">
+						<input
+							type="checkbox"
+							name="accept_eula"
+							bind:checked={acceptedEula}
+							disabled={!eulaOpened}
+							class="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-700 text-sky-500 focus:ring-sky-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+						/>
+						<span class="flex-1">
+							I have read and agree to the 
+							<button
+								type="button"
+								onclick={openEula}
+								class="text-sky-400 underline hover:text-sky-300"
+							>
+								End User License Agreement (EULA)
+							</button>
+							{#if !eulaOpened}
+								<span class="ml-1 text-xs text-amber-400">(click to open first)</span>
+							{/if}
+						</span>
+					</label>
+
+					<!-- Privacy Policy -->
+					<label class="flex items-start gap-3 text-sm text-slate-300">
+						<input
+							type="checkbox"
+							name="accept_privacy"
+							bind:checked={acceptedPrivacy}
+							disabled={!privacyOpened}
+							class="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-700 text-sky-500 focus:ring-sky-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+						/>
+						<span class="flex-1">
+							I have read and agree to the 
+							<button
+								type="button"
+								onclick={openPrivacy}
+								class="text-sky-400 underline hover:text-sky-300"
+							>
+								Privacy Policy
+							</button>
+							{#if !privacyOpened}
+								<span class="ml-1 text-xs text-amber-400">(click to open first)</span>
+							{/if}
+						</span>
+					</label>
+
+					<!-- Terms of Service -->
+					<label class="flex items-start gap-3 text-sm text-slate-300">
+						<input
+							type="checkbox"
+							name="accept_terms"
+							bind:checked={acceptedTerms}
+							disabled={!termsOpened}
+							class="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-700 text-sky-500 focus:ring-sky-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+						/>
+						<span class="flex-1">
+							I have read and agree to the 
+							<button
+								type="button"
+								onclick={openTerms}
+								class="text-sky-400 underline hover:text-sky-300"
+							>
+								Terms of Service
+							</button>
+							{#if !termsOpened}
+								<span class="ml-1 text-xs text-amber-400">(click to open first)</span>
+							{/if}
+						</span>
+					</label>
 				</div>
-			</div>
 
-			<div>
-				<Button
-					type="submit"
-					variant="primary"
-					class="auth-primary-button relative w-full"
-					disabled={isSubmitting || !isFormValid}
+				<CWButton 
+					type="submit" 
+					variant="primary" 
+					loading={registering} 
+					size="md" 
+					fullWidth={true}
+					disabled={!isFormValid}
 				>
-					{isSubmitting ? $_('Registering...') : $_('Register')}
-					{#if isSubmitting}
-						<Spinner />
-					{/if}
-				</Button>
+					<img src={ADD_PERSON_ICON} alt="Register icon" class="h-5 w-5" />
+					Create Account
+				</CWButton>
+			</form>
+		{/if}
 
-				{#if !isFormValid && !isSubmitting}
-					<p class="mt-2 text-center text-xs text-orange-600 dark:text-orange-400">
-						Please complete all required fields and accept all agreements to register
-					</p>
-				{/if}
-			</div>
-		</form>
+		<div class="mt-4">
+			<CWButton type="button" variant="secondary" size="md" fullWidth={true} onclick={() => goto('/auth')}>
+				<img src={BACK_ICON} alt="Back icon" class="h-5 w-5" />
+				Back to Sign In
+			</CWButton>
+		</div>
+
+		<!-- Footer -->
+		<p class="mt-6 text-center text-xs text-slate-400">
+			Protected by reCAPTCHA and CropWatch Security
+		</p>
 	</div>
-</div>
+
+	<!-- Bottom ambient light reflection -->
+	<div
+		class="pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent"
+	></div>
+</main>
 
 <style>
-	.register-background {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: 100vh;
-		z-index: 1;
-
-		/* Rich corporate gradient - matching forgot password */
-		background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 25%, #2563eb 75%, #1d4ed8 100%);
-
-		/* Ensure it's visible */
-		opacity: 1;
-
-		/* Professional corporate overlay patterns */
-		background-image: 
-			/* Corporate highlight orbs */
-			radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
-			radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.25) 0%, transparent 45%),
-			radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.2) 0%, transparent 40%),
-			/* Subtle business texture */
-				radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
-			radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 30%);
-
-		background-size:
-			1000px 1000px,
-			800px 800px,
-			600px 600px,
-			400px 400px,
-			500px 500px;
-
-		background-position:
-			0 0,
-			100px 100px,
-			300px 200px,
-			500px 300px,
-			200px 400px;
-
-		/* Subtle floating animation */
-		animation: floatBackground 20s ease-in-out infinite;
-	}
-
-	@keyframes floatBackground {
+	@keyframes float {
 		0%,
 		100% {
-			transform: translateX(0) translateY(0);
+			transform: translate(0, 0) scale(1);
 		}
 		25% {
-			transform: translateX(-20px) translateY(-10px);
+			transform: translate(10px, -15px) scale(1.02);
 		}
 		50% {
-			transform: translateX(10px) translateY(-20px);
+			transform: translate(-5px, 10px) scale(0.98);
 		}
 		75% {
-			transform: translateX(-10px) translateY(10px);
+			transform: translate(-15px, -5px) scale(1.01);
 		}
 	}
 
-	/* Dark mode - rich professional dark gradient */
-	:global(.dark) .register-background {
-		background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e40af 75%, #1e3a8a 100%);
+	@keyframes float-slow {
+		0%,
+		100% {
+			transform: translate(0, 0) scale(1);
+		}
+		33% {
+			transform: translate(-20px, 15px) scale(1.03);
+		}
+		66% {
+			transform: translate(15px, -10px) scale(0.97);
+		}
+	}
 
-		background-image: 
-			/* Dark mode corporate highlights */
-			radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.4) 0%, transparent 50%),
-			radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.35) 0%, transparent 45%),
-			radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.3) 0%, transparent 40%),
-			/* Professional dark texture */
-				radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.04) 0%, transparent 35%),
-			radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 30%);
+	@keyframes float-slower {
+		0%,
+		100% {
+			transform: translate(0, 0) scale(1);
+		}
+		50% {
+			transform: translate(25px, -20px) scale(1.05);
+		}
+	}
+
+	@keyframes rise {
+		0% {
+			transform: translateY(0) scale(1);
+			opacity: 0;
+		}
+		10% {
+			opacity: 1;
+		}
+		90% {
+			opacity: 1;
+		}
+		100% {
+			transform: translateY(-100vh) scale(0.5);
+			opacity: 0;
+		}
+	}
+
+	:global(.animate-float) {
+		animation: float 8s ease-in-out infinite;
+	}
+
+	:global(.animate-float-slow) {
+		animation: float-slow 12s ease-in-out infinite;
+	}
+
+	:global(.animate-float-slower) {
+		animation: float-slower 16s ease-in-out infinite;
+	}
+
+	:global(.animate-rise) {
+		animation: rise 15s ease-in-out infinite;
+	}
+
+	:global(.animate-rise-slow) {
+		animation: rise 20s ease-in-out infinite;
+		animation-delay: 2s;
+	}
+
+	:global(.animate-rise-slower) {
+		animation: rise 25s ease-in-out infinite;
+		animation-delay: 5s;
 	}
 </style>

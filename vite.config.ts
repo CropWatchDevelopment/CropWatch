@@ -1,127 +1,29 @@
+import devtoolsJson from 'vite-plugin-devtools-json';
 import tailwindcss from '@tailwindcss/vite';
-import { svelteTesting } from '@testing-library/svelte/vite';
-import { SvelteKitPWA } from '@vite-pwa/sveltekit';
+import { defineConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-import commonjs from 'vite-plugin-commonjs';
 
 export default defineConfig({
 	plugins: [
-		commonjs({
-			filter: (id) => id.includes('node_modules/canvas')
-		}),
 		tailwindcss(),
 		sveltekit(),
-		SvelteKitPWA({
-			registerType: 'autoUpdate',
-			injectRegister: 'script-defer',
-			strategies: 'generateSW',
-			devOptions: {
-				enabled: true,
-				type: 'module'
-			},
-			workbox: {
-				navigateFallback: '/offline.html',
-				navigateFallbackDenylist: [/^\/api\//, /^\/auth\/api\//, /^\/_app\//],
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
-				runtimeCaching: [
-					{
-						urlPattern: ({ request }) => request.destination === 'document',
-						handler: 'NetworkFirst',
-						options: {
-							cacheName: 'pages-cache',
-							networkTimeoutSeconds: 3
-						}
-					}
-				]
-			},
-			manifest: {
-				name: 'CropWatch UI',
-				short_name: 'CW UI',
-				description: 'CropWatch User Interface',
-				start_url: '/',
-				id: '/',
-				display: 'standalone',
-				display_override: ['window-controls-overlay', 'standalone'],
-				background_color: '#ffffff',
-				theme_color: '#50C878',
-				orientation: 'portrait-primary',
-				handle_links: 'preferred',
-				iarc_rating_id: 'e1234567890',
-				dir: 'ltr',
-				prefer_related_applications: false,
-				scope_extensions: [
-					{
-						origin: 'https://api.cropwatch.io'
-					}
-				],
-				edge_side_panel: {
-					preferred_width: 300
-				},
-				protocol_handlers: [
-					{
-						protocol: 'web+cropwatch',
-						url: '/handle-protocol?url=%s'
-					}
-				],
-				file_handlers: [
-					{
-						action: '/open-file',
-						accept: {
-							'application/json': ['.json']
-						}
-					}
-				],
-				icons: [
-					{
-						src: '/icons/icon-192x192.png',
-						sizes: '192x192',
-						type: 'image/png'
-					},
-					{
-						src: '/icons/icon-512x512.png',
-						sizes: '512x512',
-						type: 'image/png'
-					}
-				],
-				screenshots: [
-					{
-						src: '/screenshots/screenshot-1280x720.png',
-						sizes: '1280x720',
-						type: 'image/png',
-						label: 'Login screen'
-					},
-					{
-						src: '/screenshots/screenshot-dashboard-1280x720.png',
-						sizes: '1280x720',
-						type: 'image/png',
-						label: 'Dashboard'
-					}
-				],
-				categories: [
-					'Smart Agriculture',
-					'Cold Chain Management',
-					'IoT Applications',
-					'Data Analytics'
-				],
-				launch_handler: {
-					client_mode: 'navigate-existing' // or 'focus-existing', 'auto'
-				}
-			}
-		})
+		devtoolsJson()
 	],
 	test: {
-		workspace: [
+		expect: { requireAssertions: true },
+		projects: [
 			{
 				extends: './vite.config.ts',
-				plugins: [svelteTesting()],
 				test: {
 					name: 'client',
-					environment: 'jsdom',
-					clearMocks: true,
+					browser: {
+						enabled: true,
+						provider: playwright(),
+						instances: [{ browser: 'chromium', headless: true }]
+					},
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**'],
-					setupFiles: ['./vitest-setup-client.ts']
+					exclude: ['src/lib/server/**']
 				}
 			},
 			{

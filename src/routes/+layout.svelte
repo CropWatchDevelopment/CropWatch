@@ -1,173 +1,163 @@
 <script lang="ts">
-	import { invalidate, beforeNavigate, afterNavigate } from '$app/navigation';
-	import { page } from '$app/state';
-	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
-	import Header from '$lib/components/Header.svelte';
-	import GlobalSidebar from '$lib/components/GlobalSidebar.svelte';
-	import GlobalLoading from '$lib/components/GlobalLoading.svelte';
-	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
-	import { i18n } from '$lib/i18n/index.svelte';
-	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
-	import { globalLoading, startLoading, stopLoading } from '$lib/stores/loadingStore';
-	import { createBrowserClient } from '@supabase/ssr';
+	import Header from '$lib/core/Header.svelte';
+	import Sidebar from '$lib/core/Sidebar.svelte';
+	import CWOfflineOverlay from '$lib/components/CWOfflineOverlay.svelte';
+	import type { Device } from '$lib/Interfaces/device.interface';
+	import type { Facility } from '$lib/Interfaces/facility.interface';
+	import type { Location } from '$lib/Interfaces/location.interface';
+	import './layout.css';
+	import type { AppState } from '$lib/Interfaces/appState.interface';
+	import { createAppState, provideAppState, useAppState } from '$lib/data/AppState.svelte';
+	import { setContext, type Snippet } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { CWToastContainer, createToastContext } from '$lib/components/toast';
+	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import '../app.css';
-	import { info, warning } from '$lib/stores/toast.svelte';
-	import { ONE_SIGNAL_PUBLIC_CONFIG } from '$lib/onesignalPublic';
-	import { themeStore, initThemeOnce } from '$lib/stores/theme';
+	import type { SupabaseClient, Session, AuthChangeEvent } from '@supabase/supabase-js';
 
-	// No preloading needed - dashboard will load its data when navigated to
+	interface Props {
+		data: {
+			supabase: SupabaseClient;
+			session: Session | null;
+			user: Session['user'] | null;
+			profile: {
+				id?: string;
+				full_name?: string | null;
+				avatar_url?: string | null;
+				email?: string | null;
+			} | null;
+			facilities: Facility[];
+			locations: Location[];
+			devices: Device[];
+			alerts: any[];
+			isLoggedIn: boolean;
+		};
+		children: Snippet;
+	}
 
-	let { children, data } = $props();
+	let { data, children }: Props = $props();
 
-	// Create a browser client for client-side auth
-	const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		auth: {
-			persistSession: true,
-			detectSessionInUrl: true
-		}
+	// Create toast context so all child components can use it
+	createToastContext();
+
+	let appState = createAppState({
+		facilities: data.facilities,
+		locations: data.locations,
+		devices: data.devices,
+		alerts: data.alerts,
+		isLoggedIn: data.isLoggedIn ?? false,
+		profile: data.profile ?? null,
+		userEmail: data.user?.email ?? null
 	});
 
-	// Use derived values instead of state to avoid infinite loops
-	let session = $derived(data.session);
-	let user = $derived(data.user);
-
-	// Check if we should show the sidebar (not on auth pages)
-	let showSidebar = $derived(!page.url.pathname.startsWith('/auth'));
-
-	// Dynamic margin based on sidebar state
-	let mainMargin = $derived(() => {
-		if (!showSidebar) return '';
-		if (sidebarStore.isOpen) return 'lg:ml-64';
-		if (sidebarStore.isSmallIconMode) return 'lg:ml-16';
-		return 'lg:ml-16'; // default collapsed state on desktop
-	});
-
-	// Log user updates without creating an infinite loop
 	$effect(() => {
-		if (user) {
-			//console.log('User data updated:', user.email || 'Guest');
-		}
+		appState.facilities = data.facilities;
+		appState.locations = data.locations;
+		appState.devices = data.devices;
+		appState.alerts = data.alerts;
+		appState.isLoggedIn = data.isLoggedIn ?? false;
+		appState.profile = data.profile ?? null;
+		appState.userEmail = data.user?.email ?? null;
 	});
 
-	// Improved auth listener to handle session initialization more robustly
+	// Listen for auth state changes and invalidate to refresh data
 	onMount(() => {
-		//console.log('Setting up auth listener');
-		const { data: authData } = supabase.auth.onAuthStateChange((event, _session) => {
-			console.log('Auth state change event:', event);
-			switch (event) {
-				case 'TOKEN_REFRESHED':
-					info('Your session was refreshed successfully.');
-					break;
-
-				case 'SIGNED_OUT':
-					warning('Your session has ended. Please login again.');
-					break;
-				default:
-					break;
+		const { data: { subscription } } = data.supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+			if (session?.expires_at !== data.session?.expires_at) {
+				invalidate('supabase:auth');
 			}
-			// Invalidate to refresh server data when session changes
-			invalidate('supabase:auth');
 		});
 
-		return () => authData.subscription.unsubscribe();
+		return () => subscription.unsubscribe();
 	});
 
-	onMount(() => {
-		i18n.initialize();
+	provideAppState(appState);
+
+	let selectedFacilityId = $state<string | 'all'>('all');
+	let selectedLocationId = $state<string | 'all'>('all');
+
+	const filterSubscribers = new SvelteSet<
+		(payload: { facility: string | 'all'; location: string | 'all' }) => void
+	>();
+
+	function notifyFilters() {
+		const payload = { facility: selectedFacilityId, location: selectedLocationId };
+		filterSubscribers.forEach((run) => run(payload));
+	}
+
+	$effect(() => {
+		notifyFilters();
 	});
 
-	// OneSignal Web Push (2025 docs style) - only loads if appId present
-	onMount(() => {
-		if (typeof window === 'undefined') return;
-		if (!ONE_SIGNAL_PUBLIC_CONFIG.appId) return;
-		// Inject script once
-		if (!document.querySelector('script[data-onesignal-sdk]')) {
-			const s = document.createElement('script');
-			s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
-			s.defer = true;
-			s.setAttribute('data-onesignal-sdk', 'true');
-			document.head.appendChild(s);
+	// Share selection with child pages and keep them reactive
+	setContext('filters', {
+		getFacility: () => selectedFacilityId,
+		getLocation: () => selectedLocationId,
+		subscribe(run: (payload: { facility: string | 'all'; location: string | 'all' }) => void) {
+			filterSubscribers.add(run);
+			run({ facility: selectedFacilityId, location: selectedLocationId });
+			return () => filterSubscribers.delete(run);
 		}
-		// Queue init
-		(window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
-		(window as any).OneSignalDeferred.push(async function (OneSignal: any) {
-			await OneSignal.init({
-				appId: ONE_SIGNAL_PUBLIC_CONFIG.appId,
-				safari_web_id: ONE_SIGNAL_PUBLIC_CONFIG.safari_web_id,
-				notifyButton: { enable: true }
-			});
-		});
 	});
 
-	// Handle navigation loading states with a small delay to avoid flash on fast transitions
-	let navTimer: ReturnType<typeof setTimeout> | null = null;
-	beforeNavigate(() => {
-		if (navTimer) clearTimeout(navTimer);
-		navTimer = setTimeout(() => startLoading(), 150); // show after 150ms if still navigating
-	});
+	const locationsForFacility = $derived(
+		selectedFacilityId === 'all'
+			? appState.locations
+			: appState.locations.filter((l: Location) => l.facilityId === selectedFacilityId)
+	);
 
-	afterNavigate(() => {
-		if (navTimer) {
-			clearTimeout(navTimer);
-			navTimer = null;
-		}
-		stopLoading();
-	});
-
-	const theme = $derived(themeStore);
-	onMount(() => {
-		initThemeOnce();
-	});
+	const total = $derived(appState.devices.length);
+	const alerts = $derived(appState.alerts.length);
+	const offline = $derived(appState.devices.filter((d: Device) => d.status === 'offline').length);
 </script>
 
-<!-- Wait until svelte-i18n is initialized -->
-{#if i18n.initialized}
-	<div class="page-transition-container" data-theme={theme.effective}>
-		{#if !page.url.pathname.startsWith('/auth')}
-			<Header userName={user?.email ?? 'Unknown User'} />
+<div class="app flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
+	<CWOfflineOverlay />
+	<CWToastContainer position="top-right" />
+	<div class="flex min-h-0 flex-1 flex-row overflow-hidden">
+		{#if appState.isLoggedIn}
+			<Sidebar
+				facilities={appState.facilities}
+				devices={appState.devices}
+				{locationsForFacility}
+				bind:selectedFacilityId
+				bind:selectedLocationId
+				{total}
+				{alerts}
+				{offline}
+			/>
 		{/if}
-		{#if showSidebar}
-			<GlobalSidebar />
-		{/if}
-		<main
-			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-all duration-300"
-			style="margin-left: {showSidebar ? (sidebarStore.isOpen ? '64px' : '64px') : '0'}; 
-				   padding-top: {showSidebar ? '64px' : '0'};
-				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '64px' : '64px') : '0'};"
-			data-auth-page={page.url.pathname.startsWith('/auth') ? 'true' : undefined}
-		>
-			{@render children?.()}
-			<ToastContainer position="top-right" />
+		<main class="flex min-h-0 flex-1 flex-col overflow-auto">
+			{#if appState.isLoggedIn}
+				<Header
+					isLoggedIn={appState.isLoggedIn}
+					profile={appState.profile}
+					userEmail={appState.userEmail}
+					supabase={data.supabase}
+				/>
+			{/if}
+			<svelte:boundary>
+				{@render children()}
+				{#snippet failed(error, reset)}
+					<div class="flex min-h-[50vh] flex-col items-center justify-center p-8 text-center">
+						<div class="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-rose-900/30">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+							</svg>
+						</div>
+						<h2 class="text-xl font-semibold text-rose-300">Something went wrong</h2>
+						<p class="mt-2 max-w-md text-slate-400">{(error as Error)?.message || 'An unexpected error occurred while loading this page.'}</p>
+						<div class="mt-6 flex gap-3">
+							<button onclick={reset} class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-sm font-medium transition-colors">
+								Try again
+							</button>
+							<a href="/" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-sm font-medium transition-colors">
+								Go to Dashboard
+							</a>
+						</div>
+					</div>
+				{/snippet}
+			</svelte:boundary>
 		</main>
-		<GlobalLoading />
 	</div>
-{/if}
-
-<style>
-	.page-transition-container {
-		animation: fadeIn 0.3s ease-in-out;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	/* Mobile: no sidebar margin */
-	@media (max-width: 1023px) {
-		main {
-			margin-left: 0 !important;
-			padding-top: 119px !important;
-		}
-
-		/* Auth pages should have no padding even on mobile */
-		main[data-auth-page] {
-			padding-top: 0 !important;
-		}
-	}
-</style>
+</div>

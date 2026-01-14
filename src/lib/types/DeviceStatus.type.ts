@@ -1,0 +1,1 @@
+export type DeviceStatus = 'online' | 'offline' | 'loading' | 'alert';
