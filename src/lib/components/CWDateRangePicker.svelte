@@ -12,11 +12,12 @@
 	let {
 		value = $bindable<DateRangeValue>({ start: null, end: null }),
 		minDate = null,
-		maxDate = null,
+		maxDate = new Date(),
 		placeholder = 'Select date range',
 		rangeType = 'day',
 		disabled = false,
-		class: className = ''
+		class: className = '',
+		onchange = undefined
 	}: {
 		value?: DateRangeValue;
 		minDate?: Date | null;
@@ -25,6 +26,7 @@
 		rangeType?: DateRangeType;
 		disabled?: boolean;
 		class?: string;
+		onchange?: (value: DateRangeValue) => void | Promise<void>;
 	} = $props();
 
 	let isOpen = $state(false);
@@ -253,24 +255,29 @@
 		currentMonth.setMonth(currentMonth.getMonth() + 1);
 	};
 
+	const setValue = (next: DateRangeValue) => {
+		value = next;
+		onchange?.(next);
+	};
+
 	const selectDate = (date: Date) => {
 		if (isDisabled(date)) return;
 
 		if (rangeType === 'week') {
-			value = getWeekRange(date);
+			setValue(getWeekRange(date));
 			selecting = 'start';
 			isOpen = false;
 			return;
 		}
 
 		if (selecting === 'start') {
-			value = { start: normalizeStart(date), end: null };
+			setValue({ start: normalizeStart(date), end: null });
 			selecting = 'end';
 		} else {
 			if (value.start && date < value.start) {
-				value = { start: normalizeStart(date), end: normalizeEnd(value.start) };
+				setValue({ start: normalizeStart(date), end: normalizeEnd(value.start) });
 			} else {
-				value = { ...value, end: normalizeEnd(date) };
+				setValue({ ...value, end: normalizeEnd(date) });
 			}
 			selecting = 'start';
 			isOpen = false;
@@ -280,20 +287,20 @@
 	const selectMonth = (monthIndex: number) => {
 		const year = currentMonth.getFullYear();
 		if (isMonthDisabled(year, monthIndex)) return;
-		value = getMonthRange(year, monthIndex);
+		setValue(getMonthRange(year, monthIndex));
 		selecting = 'start';
 		isOpen = false;
 	};
 
 	const selectYear = (year: number) => {
 		if (isYearDisabled(year)) return;
-		value = getYearRange(year);
+		setValue(getYearRange(year));
 		selecting = 'start';
 		isOpen = false;
 	};
 
 	const clearSelection = () => {
-		value = { start: null, end: null };
+		setValue({ start: null, end: null });
 		selecting = 'start';
 	};
 
@@ -301,28 +308,28 @@
 		const now = Date.now();
 		const end = normalizeEnd(new SvelteDate(now));
 		const start = normalizeStart(new SvelteDate(now - days * 24 * 60 * 60 * 1000));
-		value = { start, end };
+		setValue({ start, end });
 		isOpen = false;
 	};
 
 	const setPresetWeek = (offsetWeeks: number) => {
 		const base = new SvelteDate();
 		base.setDate(base.getDate() + offsetWeeks * 7);
-		value = getWeekRange(base);
+		setValue(getWeekRange(base));
 		isOpen = false;
 	};
 
 	const setPresetMonth = (offsetMonths: number) => {
 		const base = new SvelteDate();
 		base.setMonth(base.getMonth() + offsetMonths);
-		value = getMonthRange(base.getFullYear(), base.getMonth());
+		setValue(getMonthRange(base.getFullYear(), base.getMonth()));
 		isOpen = false;
 	};
 
 	const setPresetYear = (offsetYears: number) => {
 		const base = new SvelteDate();
 		base.setFullYear(base.getFullYear() + offsetYears);
-		value = getYearRange(base.getFullYear());
+		setValue(getYearRange(base.getFullYear()));
 		isOpen = false;
 	};
 

@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { fetchDeviceHistory } from '$lib/data/SourceOfTruth.svelte';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const { session } = await locals.safeGetSession?.();
 	const tokens = session
 		? { access_token: session.access_token, refresh_token: session.refresh_token }
@@ -24,18 +24,33 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		session: tokens
 	});
 
-	const end = new Date();
-	const start = new Date(end);
-	start.setUTCDate(end.getUTCDate() - 30);
+	const trafficStartParam = url.searchParams.get('trafficStart');
+	const trafficEndParam = url.searchParams.get('trafficEnd');
+	const trafficStart = trafficStartParam ? new Date(trafficStartParam) : null;
+	const trafficEnd = trafficEndParam ? new Date(trafficEndParam) : null;
+	const hasTrafficRange =
+		trafficStart &&
+		trafficEnd &&
+		Number.isFinite(trafficStart.getTime()) &&
+		Number.isFinite(trafficEnd.getTime());
 
-	const { data: trafficRows, error: trafficError } = await locals.supabase
+	const end = hasTrafficRange ? trafficEnd : new Date();
+	const start = hasTrafficRange ? trafficStart : new Date(end);
+	if (!hasTrafficRange) {
+		start.setUTCDate(end.getUTCDate() - 30);
+	}
+
+	const trafficQuery = locals.supabase
 		.from('cw_traffic2')
 		.select(
 			'dev_eui, created_at, traffic_hour, line_number, people_count, bicycle_count, car_count, truck_count, bus_count'
 		)
 		.eq('dev_eui', params.dev_eui)
 		.gte('created_at', start.toISOString())
+		.lte('created_at', end.toISOString())
 		.order('created_at', { ascending: true });
+
+	const { data: trafficRows, error: trafficError } = await trafficQuery;
 
 	if (trafficError) {
 		console.error('Error fetching traffic data:', trafficError);

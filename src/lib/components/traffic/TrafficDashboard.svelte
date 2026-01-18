@@ -11,7 +11,10 @@
 		TrafficRow,
 		TrafficTotals
 	} from './traffic.types';
-	import CWDateRangePicker from '../CWDateRangePicker.svelte';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import CWDateRangePicker, { type DateRangeValue } from '../CWDateRangePicker.svelte';
+	import CWSelect from '../CWSelect.svelte';
 
 	let {
 		rows = [],
@@ -43,10 +46,15 @@
 		start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
 		end: new Date()
 	});
+	let lastRequestedRange = $state<string | null>(null);
 
 	const aggregated = $derived.by(() => aggregateRows(rows));
 	const availableLines = $derived.by(() => (aggregated.lines.length ? aggregated.lines : ['L1']));
 	const monthOptions = $derived.by(() => buildMonthOptions(currentMonth));
+	const lineOptions = $derived.by(() => [
+		{ value: 'ALL', label: 'All lines' },
+		...availableLines.map((line) => ({ value: line, label: line }))
+	]);
 
 	const monthLabel = $derived.by(() => {
 		const [year, monthIndex] = month.split('-').map(Number);
@@ -113,6 +121,24 @@
 			start: new Date(now.getFullYear(), now.getMonth(), 1),
 			end: now
 		};
+	}
+
+	async function handleMonthChange(range: DateRangeValue) {
+		const base = range.start ?? range.end;
+		if (!base) return;
+		const { start, end } = getMonthBoundsUTC(base);
+		const rangeKey = `${start.toISOString()}-${end.toISOString()}`;
+		if (rangeKey === lastRequestedRange) return;
+		lastRequestedRange = rangeKey;
+		dateRange = { start, end };
+		const params = new URLSearchParams(page.url.searchParams);
+		params.set('trafficStart', start.toISOString());
+		params.set('trafficEnd', end.toISOString());
+		await goto(`${page.url.pathname}?${params.toString()}`, {
+			replaceState: true,
+			keepfocus: true,
+			noScroll: true
+		});
 	}
 
 	$effect(() => {
@@ -268,6 +294,14 @@
 		return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 	}
 
+	function getMonthBoundsUTC(date: Date) {
+		const year = date.getUTCFullYear();
+		const monthIndex = date.getUTCMonth();
+		const start = new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0));
+		const end = new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59));
+		return { start, end };
+	}
+
 	function pad2(value: number) {
 		return String(value).padStart(2, '0');
 	}
@@ -282,22 +316,23 @@
 			<div class="font-extrabold tracking-[0.2px]">Traffic counts · {deviceName}</div>
 			<div class="text-[#f2f6ff]/70 text-xs">{subtitle}</div>
 		</div>
-		<div class="flex gap-2.5 items-center flex-row">
+		<div class="flex gap-2.5 items-center flex-row w-[50%] max-w-full">
+			<span class="flex flex-auto"></span>
 			<CWDateRangePicker
 				rangeType="month"
 				disabled={false}
 				bind:value={dateRange}
 				placeholder="Select month"
+				onchange={handleMonthChange}
 			/>
-			<label class="px-2.5 py-1.5 border border-white/[0.14] rounded-full bg-[rgba(22,36,74,0.8)] text-[#f2f6ff] text-xs flex items-center gap-2 select-none shadow-[0_6px_16px_rgba(0,0,0,0.22)]">
-				<span>Line</span>
-				<select bind:value={selectedLineOverride} class="appearance-none bg-transparent border-none text-[#f2f6ff] outline-none cursor-pointer">
-					<option value="ALL">All lines</option>
-					{#each availableLines as line (line)}
-						<option value={line}>{line}</option>
-					{/each}
-				</select>
-			</label>
+			<div class="w-32">
+				<CWSelect
+					options={lineOptions}
+					bind:value={selectedLineOverride}
+					size="sm"
+					placeholder="Line"
+				/>
+			</div>
 			<button class="px-3 py-2 rounded-[10px] border border-white/[0.14] bg-[rgba(22,36,74,0.85)] text-[#f2f6ff] text-xs cursor-pointer select-none shadow-[0_6px_16px_rgba(0,0,0,0.22)] hover:border-[rgba(125,184,255,0.9)]" type="button" onclick={jumpToToday}>Today</button>
 		</div>
 	</div>
