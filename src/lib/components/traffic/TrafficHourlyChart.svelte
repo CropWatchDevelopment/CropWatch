@@ -169,7 +169,7 @@
 
 	.traffic-chart-title {
 		font-weight: 900;
-		font-size: 12px;
+		font-size: 15px;
 		color: rgba(242, 246, 255, 0.9);
 	}
 
@@ -185,8 +185,8 @@
 		background: rgba(22, 36, 74, 0.72);
 		color: rgba(242, 246, 255, 0.92);
 		border-radius: 999px;
-		padding: 4px 8px;
-		font-size: 11px;
+		padding: 6px 10px;
+		font-size: 14px;
 		font-weight: 900;
 		cursor: pointer;
 		user-select: none;
@@ -217,7 +217,7 @@
 
 	.axis text {
 		fill: rgba(242, 246, 255, 0.78);
-		font-size: 10px;
+		font-size: 13px;
 	}
 
 	.axis line {

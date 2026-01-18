@@ -18,10 +18,19 @@
 
 	let {
 		rows = [],
+		dailyTotals = [],
 		deviceName = 'Single camera',
 		subtitle = 'Monthly calendar (daily totals) · Click a day for hourly breakdown'
 	}: {
 		rows?: TrafficRow[];
+		dailyTotals?: {
+			traffic_day: string;
+			total_people: number | null;
+			total_bicycles: number | null;
+			total_cars: number | null;
+			total_trucks: number | null;
+			total_buses: number | null;
+		}[];
 		deviceName?: string;
 		subtitle?: string;
 	} = $props();
@@ -35,8 +44,25 @@
 	];
 
 	const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+	const DISPLAY_TIME_ZONE = 'Asia/Tokyo';
+	const dateFormatterTZ = new Intl.DateTimeFormat('en-CA', {
+		timeZone: DISPLAY_TIME_ZONE,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	});
+	const dateTimeFormatterTZ = new Intl.DateTimeFormat('en-CA', {
+		timeZone: DISPLAY_TIME_ZONE,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false
+	});
 	const now = new SvelteDate();
-	const currentMonth = toMonthKeyUTC(now);
+	const currentMonth = toMonthKeyTZ(now);
 
 	let month = $state(currentMonth);
 	let selectedDateOverride = $state<string | null>(null);
@@ -49,6 +75,9 @@
 	let lastRequestedRange = $state<string | null>(null);
 
 	const aggregated = $derived.by(() => aggregateRows(rows));
+	const dailyTotalsMap = $derived.by(() =>
+		dailyTotals.length ? buildDailyTotalsMap(dailyTotals) : aggregated.dailyTotals
+	);
 	const availableLines = $derived.by(() => (aggregated.lines.length ? aggregated.lines : ['L1']));
 	const monthOptions = $derived.by(() => buildMonthOptions(currentMonth));
 	const lineOptions = $derived.by(() => [
@@ -61,16 +90,20 @@
 		if (!Number.isFinite(year) || !Number.isFinite(monthIndex)) return month;
 		const labelDate = new SvelteDate(Date.UTC(year, monthIndex - 1, 1));
 		if (Number.isNaN(labelDate.getTime())) return month;
-		return labelDate.toLocaleString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+		return labelDate.toLocaleString('en', {
+			month: 'long',
+			year: 'numeric',
+			timeZone: DISPLAY_TIME_ZONE
+		});
 	});
 
-	const monthCells = $derived.by(() => buildMonthCells(month, aggregated.dailyTotals));
+	const monthCells = $derived.by(() => buildMonthCells(month, dailyTotalsMap));
 	const monthDateKeys = $derived.by(() =>
 		monthCells.filter((cell) => cell.inMonth && cell.dateKey).map((cell) => cell.dateKey as string)
 	);
 
 	const selectedDate = $derived.by(() => {
-		const todayKey = toDateKeyUTC(new SvelteDate());
+		const todayKey = toDateKeyTZ(new SvelteDate());
 		const monthDates = monthDateKeys;
 		if (monthDates.length === 0) return null;
 		if (
@@ -114,7 +147,7 @@
 
 	function jumpToToday() {
 		month = currentMonth;
-		selectedDateOverride = toDateKeyUTC(new SvelteDate());
+		selectedDateOverride = toDateKeyTZ(new SvelteDate());
 		selectedLineOverride = 'ALL';
 		const now = new Date();
 		dateRange = {
@@ -144,7 +177,7 @@
 	$effect(() => {
 		if (dateRange.start) {
 			const date = new Date(dateRange.start);
-			month = toMonthKeyUTC(date);
+			month = toMonthKeyTZ(date);
 		}
 	});
 
@@ -172,7 +205,7 @@
 			const date = new SvelteDate(timestamp);
 			if (Number.isNaN(date.getTime())) continue;
 
-			const dateKey = toDateKeyUTC(date);
+			const dateKey = toDateKeyTZ(date);
 			const lineId = row.line_number != null ? `L${row.line_number}` : 'L1';
 
 			lines.add(lineId);
@@ -187,7 +220,7 @@
 
 			const dayLines = hourlyByDayLine.get(dateKey) ?? new SvelteMap<string, TrafficHourBin[]>();
 			const bins = dayLines.get(lineId) ?? ensureBins();
-			const hour = date.getUTCHours();
+			const hour = getHourTZ(date);
 			const bin = bins[hour];
 			bin.totals.people += row.people_count ?? 0;
 			bin.totals.bicycles += row.bicycle_count ?? 0;
@@ -203,6 +236,30 @@
 			hourlyByDayLine,
 			lines: Array.from(lines).sort((a, b) => a.localeCompare(b))
 		};
+	}
+
+	function buildDailyTotalsMap(
+		items: {
+			traffic_day: string;
+			total_people: number | null;
+			total_bicycles: number | null;
+			total_cars: number | null;
+			total_trucks: number | null;
+			total_buses: number | null;
+		}[]
+	) {
+		const map = new SvelteMap<string, TrafficTotals>();
+		for (const item of items) {
+			const dateKey = item.traffic_day;
+			map.set(dateKey, {
+				people: item.total_people ?? 0,
+				bicycles: item.total_bicycles ?? 0,
+				cars: item.total_cars ?? 0,
+				trucks: item.total_trucks ?? 0,
+				buses: item.total_buses ?? 0
+			});
+		}
+		return map;
 	}
 
 	function getHourlyBins(
@@ -237,14 +294,14 @@
 		start.setUTCMonth(start.getUTCMonth() - 8);
 		for (let i = 0; i < 18; i += 1) {
 			const date = new SvelteDate(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
-			list.push(toMonthKeyUTC(date));
+			list.push(toMonthKeyTZ(date));
 		}
 		return list;
 	}
 
 	function buildMonthCells(monthKey: string, dailyTotals: Map<string, TrafficTotals>) {
 		const [year, monthIndex] = monthKey.split('-').map(Number);
-		const monthStart = new SvelteDate(Date.UTC(year, monthIndex - 1, 1));
+		const monthStart = zonedDateToUtc(year, monthIndex - 1, 1, 0, 0, 0);
 		const firstDow = monthStart.getUTCDay();
 		const totalDays = daysInMonthUTC(year, monthIndex - 1);
 
@@ -275,19 +332,21 @@
 				dayNum,
 				dateKey,
 				entries,
-				weather: null
+				weather: buildWeather(dateKey)
 			});
 		}
 
 		return cells;
 	}
 
-	function toMonthKeyUTC(date: Date) {
-		return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}`;
+	function toMonthKeyTZ(date: Date) {
+		const parts = getDatePartsTZ(date);
+		return `${parts.year}-${parts.month}`;
 	}
 
-	function toDateKeyUTC(date: Date) {
-		return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
+	function toDateKeyTZ(date: Date) {
+		const parts = getDatePartsTZ(date);
+		return `${parts.year}-${parts.month}-${parts.day}`;
 	}
 
 	function daysInMonthUTC(year: number, monthIndex: number) {
@@ -295,11 +354,84 @@
 	}
 
 	function getMonthBoundsUTC(date: Date) {
-		const year = date.getUTCFullYear();
-		const monthIndex = date.getUTCMonth();
-		const start = new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0));
-		const end = new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59));
+		const { year, monthIndex } = getMonthPartsTZ(date);
+		const start = zonedDateToUtc(year, monthIndex, 1, 0, 0, 0);
+		const lastDay = daysInMonthUTC(year, monthIndex);
+		const end = zonedDateToUtc(year, monthIndex, lastDay, 23, 59, 59);
 		return { start, end };
+	}
+
+	function getDatePartsTZ(date: Date) {
+		const parts = dateFormatterTZ.formatToParts(date);
+		const year = parts.find((p) => p.type === 'year')?.value ?? '1970';
+		const month = parts.find((p) => p.type === 'month')?.value ?? '01';
+		const day = parts.find((p) => p.type === 'day')?.value ?? '01';
+		return { year, month, day };
+	}
+
+	function getMonthPartsTZ(date: Date) {
+		const parts = dateFormatterTZ.formatToParts(date);
+		const year = Number(parts.find((p) => p.type === 'year')?.value ?? '1970');
+		const monthIndex = Number(parts.find((p) => p.type === 'month')?.value ?? '01') - 1;
+		return { year, monthIndex };
+	}
+
+	function getHourTZ(date: Date) {
+		const parts = dateTimeFormatterTZ.formatToParts(date);
+		return Number(parts.find((p) => p.type === 'hour')?.value ?? '0');
+	}
+
+	function zonedDateToUtc(
+		year: number,
+		monthIndex: number,
+		day: number,
+		hour: number,
+		minute: number,
+		second: number
+	) {
+		const utcGuess = Date.UTC(year, monthIndex, day, hour, minute, second);
+		const parts = dateTimeFormatterTZ.formatToParts(new Date(utcGuess));
+		const adjusted = Date.UTC(
+			Number(parts.find((p) => p.type === 'year')?.value ?? year),
+			Number(parts.find((p) => p.type === 'month')?.value ?? monthIndex + 1) - 1,
+			Number(parts.find((p) => p.type === 'day')?.value ?? day),
+			Number(parts.find((p) => p.type === 'hour')?.value ?? hour),
+			Number(parts.find((p) => p.type === 'minute')?.value ?? minute),
+			Number(parts.find((p) => p.type === 'second')?.value ?? second)
+		);
+		const offset = adjusted - utcGuess;
+		return new Date(utcGuess - offset);
+	}
+
+	function hashDateKey(dateKey: string) {
+		let hash = 0;
+		for (let i = 0; i < dateKey.length; i += 1) {
+			hash = (hash * 31 + dateKey.charCodeAt(i)) >>> 0;
+		}
+		return hash;
+	}
+
+	function buildWeather(dateKey: string) {
+		const presets = [
+			{ icon: '☀️', summary: 'Sunny', minBase: 18, maxBase: 30 },
+			{ icon: '⛅', summary: 'Partly cloudy', minBase: 14, maxBase: 26 },
+			{ icon: '☁️', summary: 'Cloudy', minBase: 12, maxBase: 22 },
+			{ icon: '🌧️', summary: 'Rain', minBase: 8, maxBase: 18 },
+			{ icon: '🌦️', summary: 'Showers', minBase: 10, maxBase: 20 },
+			{ icon: '🌩️', summary: 'Storm', minBase: 9, maxBase: 19 },
+			{ icon: '❄️', summary: 'Snow', minBase: -2, maxBase: 4 }
+		];
+		const hash = hashDateKey(dateKey);
+		const preset = presets[hash % presets.length];
+		const jitter = (hash % 7) - 3;
+		const min = preset.minBase + jitter;
+		const max = Math.max(min + 2, preset.maxBase + (hash % 5) - 2);
+		return {
+			icon: preset.icon,
+			summary: preset.summary,
+			tMinC: min,
+			tMaxC: max
+		};
 	}
 
 	function pad2(value: number) {
@@ -314,7 +446,7 @@
 	<div class="p-3.5 border-b border-white/[0.14] bg-[rgba(14,26,51,0.78)] shadow-[0_8px_24px_rgba(0,0,0,0.28)] flex gap-3 items-center justify-between flex-wrap overflow-visible">
 		<div class="flex flex-col gap-0.5">
 			<div class="font-extrabold tracking-[0.2px]">Traffic counts · {deviceName}</div>
-			<div class="text-[#f2f6ff]/70 text-xs">{subtitle}</div>
+			<div class="text-[#f2f6ff]/70 text-base">{subtitle}</div>
 		</div>
 		<div class="flex gap-2.5 items-center flex-row w-[50%] max-w-full">
 			<span class="flex flex-auto"></span>
@@ -333,7 +465,7 @@
 					placeholder="Line"
 				/>
 			</div>
-			<button class="px-3 py-2 rounded-[10px] border border-white/[0.14] bg-[rgba(22,36,74,0.85)] text-[#f2f6ff] text-xs cursor-pointer select-none shadow-[0_6px_16px_rgba(0,0,0,0.22)] hover:border-[rgba(125,184,255,0.9)]" type="button" onclick={jumpToToday}>Today</button>
+			<button class="px-3 py-2 rounded-[10px] border border-white/[0.14] bg-[rgba(22,36,74,0.85)] text-[#f2f6ff] text-base cursor-pointer select-none shadow-[0_6px_16px_rgba(0,0,0,0.22)] hover:border-[rgba(125,184,255,0.9)]" type="button" onclick={jumpToToday}>Today</button>
 		</div>
 	</div>
 
@@ -341,13 +473,13 @@
 		<main class="p-3.5 min-w-0 min-h-0 flex flex-col gap-2.5">
 			<div class="flex items-start justify-between gap-3 flex-wrap">
 				<div>
-					<h2 class="font-extrabold text-sm tracking-[0.2px] m-0">{monthLabel} · Daily totals</h2>
-					<div class="text-[#f2f6ff]/70 text-xs mt-1">Daily totals shown per day cell. UTC hours.</div>
+					<h2 class="font-extrabold text-lg tracking-[0.2px] m-0">{monthLabel} · Daily totals</h2>
+					<div class="text-[#f2f6ff]/70 text-base mt-1">Daily totals shown per day cell. UTC hours.</div>
 				</div>
 				<div class="flex flex-wrap gap-2 gap-x-2.5 items-center px-3 py-2.5 rounded-[14px] bg-[rgba(22,36,74,0.78)] border border-white/[0.14] shadow-[0_10px_28px_rgba(0,0,0,0.35)] max-w-full">
 					{#each CLASSES as klass (klass.key)}
-						<div class="flex gap-2 items-center text-[#f2f6ff]/80 text-xs whitespace-nowrap">
-							<span class="min-w-[34px] px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-[#f2f6ff] font-extrabold text-xs text-center">{klass.short}</span>
+						<div class="flex gap-2 items-center text-[#f2f6ff]/80 text-base whitespace-nowrap">
+							<span class="min-w-[34px] px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-[#f2f6ff] font-extrabold text-base text-center">{klass.short}</span>
 							<span>{klass.label}</span>
 						</div>
 					{/each}
@@ -374,6 +506,6 @@
 	</div>
 
 	{#if rows.length === 0}
-		<div class="text-[#f2f6ff]/70 text-xs px-3.5 py-3.5 text-center">No traffic data found for the past month.</div>
+		<div class="text-[#f2f6ff]/70 text-base px-3.5 py-3.5 text-center">No traffic data found for the past month.</div>
 	{/if}
 </section>

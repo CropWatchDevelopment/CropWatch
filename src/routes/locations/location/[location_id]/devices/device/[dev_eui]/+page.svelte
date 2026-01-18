@@ -19,6 +19,7 @@
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import CWDialog from '$lib/components/CWDialog.svelte';
 	import TrafficDashboard from '$lib/components/traffic/TrafficDashboard.svelte';
+	import type { TrafficRow } from '$lib/components/traffic/traffic.types';
 
 	const getAppState = getContext<AppState>('appState');
 	let appState = $derived(getAppState());
@@ -35,6 +36,23 @@
 	let lineDateRange: DateRangeValue = $state({
 		start: new Date(Date.now() - 24 * 60 * 60 * 1000),
 		end: new Date()
+	});
+	const TRAFFIC_TIME_ZONE = 'Asia/Tokyo';
+	const trafficDateFormatterTZ = new Intl.DateTimeFormat('en-CA', {
+		timeZone: TRAFFIC_TIME_ZONE,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	});
+	const trafficDateTimeFormatterTZ = new Intl.DateTimeFormat('en-CA', {
+		timeZone: TRAFFIC_TIME_ZONE,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false
 	});
 
 	if (data.initialHistory?.length) {
@@ -380,6 +398,7 @@
 	);
 
 	const trafficRows = $derived(data.trafficRows ?? []);
+	const trafficDailyTotals = $derived(data.trafficDailyTotals ?? []);
 	const trafficDeviceType = $derived.by(() => {
 		const raw = data.deviceType;
 		return Array.isArray(raw) ? raw[0] ?? null : raw ?? null;
@@ -394,6 +413,171 @@
 		const label = trafficDeviceLabel.toLowerCase();
 		return label.includes('cropwatch') && label.includes('nvidia') && label.includes('jetson');
 	});
+
+	const trafficRange = $derived.by(() => {
+		const startParam = page.url.searchParams.get('trafficStart');
+		const endParam = page.url.searchParams.get('trafficEnd');
+		const start = startParam ? new Date(startParam) : null;
+		const end = endParam ? new Date(endParam) : null;
+		if (start && end && Number.isFinite(start.getTime()) && Number.isFinite(end.getTime())) {
+			return { start, end };
+		}
+		return getTokyoMonthBounds(new Date());
+	});
+
+	function getMonthPartsTZ(date: Date) {
+		const parts = trafficDateFormatterTZ.formatToParts(date);
+		const year = Number(parts.find((p) => p.type === 'year')?.value ?? '1970');
+		const monthIndex = Number(parts.find((p) => p.type === 'month')?.value ?? '01') - 1;
+		return { year, monthIndex };
+	}
+
+	function zonedDateToUtc(
+		year: number,
+		monthIndex: number,
+		day: number,
+		hour: number,
+		minute: number,
+		second: number
+	) {
+		const utcGuess = Date.UTC(year, monthIndex, day, hour, minute, second);
+		const parts = trafficDateTimeFormatterTZ.formatToParts(new Date(utcGuess));
+		const adjusted = Date.UTC(
+			Number(parts.find((p) => p.type === 'year')?.value ?? year),
+			Number(parts.find((p) => p.type === 'month')?.value ?? monthIndex + 1) - 1,
+			Number(parts.find((p) => p.type === 'day')?.value ?? day),
+			Number(parts.find((p) => p.type === 'hour')?.value ?? hour),
+			Number(parts.find((p) => p.type === 'minute')?.value ?? minute),
+			Number(parts.find((p) => p.type === 'second')?.value ?? second)
+		);
+		const offset = adjusted - utcGuess;
+		return new Date(utcGuess - offset);
+	}
+
+	function getTokyoMonthBounds(date: Date) {
+		const { year, monthIndex } = getMonthPartsTZ(date);
+		const start = zonedDateToUtc(year, monthIndex, 1, 0, 0, 0);
+		const endDay = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+		const end = zonedDateToUtc(year, monthIndex, endDay, 23, 59, 59);
+		return { start, end };
+	}
+
+	function formatDateTZ(date: Date) {
+		const parts = trafficDateFormatterTZ.formatToParts(date);
+		const year = parts.find((p) => p.type === 'year')?.value ?? '1970';
+		const month = parts.find((p) => p.type === 'month')?.value ?? '01';
+		const day = parts.find((p) => p.type === 'day')?.value ?? '01';
+		return `${year}-${month}-${day}`;
+	}
+
+	function formatDateTimeTZ(date: Date) {
+		const parts = trafficDateTimeFormatterTZ.formatToParts(date);
+		const year = parts.find((p) => p.type === 'year')?.value ?? '1970';
+		const month = parts.find((p) => p.type === 'month')?.value ?? '01';
+		const day = parts.find((p) => p.type === 'day')?.value ?? '01';
+		const hour = parts.find((p) => p.type === 'hour')?.value ?? '00';
+		const minute = parts.find((p) => p.type === 'minute')?.value ?? '00';
+		const second = parts.find((p) => p.type === 'second')?.value ?? '00';
+		return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+	}
+
+	function getLocalHourStartUtc(date: Date) {
+		const parts = trafficDateTimeFormatterTZ.formatToParts(date);
+		const year = Number(parts.find((p) => p.type === 'year')?.value ?? '1970');
+		const monthIndex = Number(parts.find((p) => p.type === 'month')?.value ?? '01') - 1;
+		const day = Number(parts.find((p) => p.type === 'day')?.value ?? '01');
+		const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? '00');
+		return zonedDateToUtc(year, monthIndex, day, hour, 0, 0);
+	}
+
+	function csvEscape(value: string) {
+		if (value.includes('"') || value.includes(',') || value.includes('\n')) {
+			return `"${value.replace(/\"/g, '""')}"`;
+		}
+		return value;
+	}
+
+	function buildTrafficCsv(rows: TrafficRow[], rangeStart: Date, rangeEnd: Date) {
+		const startTime = rangeStart.getTime();
+		const endTime = rangeEnd.getTime();
+		const buckets = new Map<
+			string,
+			{
+				start: Date;
+				people: number;
+				bicycles: number;
+				cars: number;
+				trucks: number;
+				buses: number;
+			}
+		>();
+		for (let cursor = startTime; cursor <= endTime; cursor += 60 * 60 * 1000) {
+			const start = new Date(cursor);
+			buckets.set(start.toISOString(), {
+				start,
+				people: 0,
+				bicycles: 0,
+				cars: 0,
+				trucks: 0,
+				buses: 0
+			});
+		}
+		const headers = [
+			'traffic_hour_local',
+			'traffic_hour_utc',
+			'created_at_local',
+			'created_at_utc',
+			'line_number',
+			'people_count',
+			'bicycle_count',
+			'car_count',
+			'truck_count',
+			'bus_count'
+		];
+		const lines = [headers.join(',')];
+
+		for (const row of rows) {
+			const trafficTimestamp = row.traffic_hour ?? row.created_at;
+			const trafficDate = new Date(trafficTimestamp);
+			if (!Number.isFinite(trafficDate.getTime())) continue;
+			const bucketStart = getLocalHourStartUtc(trafficDate);
+			if (bucketStart.getTime() < startTime || bucketStart.getTime() > endTime) continue;
+			const bucket = buckets.get(bucketStart.toISOString());
+			if (!bucket) continue;
+			bucket.people += row.people_count ?? 0;
+			bucket.bicycles += row.bicycle_count ?? 0;
+			bucket.cars += row.car_count ?? 0;
+			bucket.trucks += row.truck_count ?? 0;
+			bucket.buses += row.bus_count ?? 0;
+		}
+
+		for (const bucket of buckets.values()) {
+			const values = [
+				formatDateTimeTZ(bucket.start),
+				bucket.start.toISOString(),
+				formatDateTimeTZ(bucket.start),
+				bucket.start.toISOString(),
+				'ALL',
+				String(bucket.people),
+				String(bucket.bicycles),
+				String(bucket.cars),
+				String(bucket.trucks),
+				String(bucket.buses)
+			];
+			lines.push(values.map(csvEscape).join(','));
+		}
+
+		return lines.join('\n');
+	}
+
+	function downloadCsv(contents: string, filename: string) {
+		const blob = new Blob([contents], { type: 'text/csv;charset=utf-8;' });
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(blob);
+		link.download = filename;
+		link.click();
+		URL.revokeObjectURL(link.href);
+	}
 </script>
 
 <svelte:head>
@@ -458,6 +642,7 @@
 	{#if isTrafficDevice}
 		<TrafficDashboard
 			rows={trafficRows}
+			dailyTotals={trafficDailyTotals}
 			deviceName={device?.name ?? 'Traffic camera'}
 			subtitle="Monthly calendar (daily totals) · Click a day for hourly breakdown"
 		/>
@@ -728,7 +913,7 @@
 		class="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-2 text-sm text-slate-200"
 	>
 		<span class="text-xs uppercase tracking-wide text-slate-400">Range</span>
-		<CWDateRangePicker maxDate={new Date()} bind:value={lineDateRange} />
+		<CWDateRangePicker rangeType="month" maxDate={new Date()} bind:value={lineDateRange} />
 	</label>
 	<div class="mt-4 text-sm text-slate-300">
 		<input type="radio" name="format" value="csv" checked class="mr-2" /> CSV Format<br />
@@ -736,9 +921,15 @@
 	</div>
 	<div class="mt-6 flex justify-end gap-4">
 		<CWButton variant="secondary" onclick={() => (showDownloadModal = false)}>Cancel</CWButton>
-		<CWButton
+	<CWButton
 			onclick={() => {
-				// Trigger download (implementation not shown)
+				if (isTrafficDevice) {
+					const normalizedRange = getTokyoMonthBounds(trafficRange.start ?? new Date());
+					const csv = buildTrafficCsv(trafficRows, normalizedRange.start, normalizedRange.end);
+					const safeName = (device?.name ?? page.params.dev_eui).replace(/\s+/g, '_');
+					const filename = `traffic_${safeName}_${formatDateTZ(normalizedRange.start)}_to_${formatDateTZ(normalizedRange.end)}.csv`;
+					downloadCsv(csv, filename);
+				}
 				showDownloadModal = false;
 			}}
 		>

@@ -56,6 +56,20 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		console.error('Error fetching traffic data:', trafficError);
 	}
 
+	const { data: trafficDailyTotals, error: trafficTotalsError } = await locals.supabase.rpc(
+		'cw_traffic_daily_totals',
+		{
+			dev_eui: params.dev_eui,
+			start_ts: start.toISOString(),
+			end_ts: end.toISOString(),
+			tz: 'Asia/Tokyo'
+		}
+	);
+
+	if (trafficTotalsError) {
+		console.error('Error fetching traffic daily totals:', trafficTotalsError);
+	}
+
 	// if (deviceError || !device) {
 	// 	console.error('Error fetching device:', deviceError);
 	// 	throw new Error('Device not found');
@@ -68,6 +82,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			secondary: p.secondary
 		})) : [],
 		deviceType: deviceInfo?.device_type ?? null,
-		trafficRows: trafficRows ?? []
+		trafficRows: trafficRows ?? [],
+		trafficDailyTotals: trafficDailyTotals ?? []
 	};
 };

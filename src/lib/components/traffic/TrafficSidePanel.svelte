@@ -123,7 +123,7 @@
 
 	.traffic-card h3 {
 		margin: 0 0 8px;
-		font-size: 13px;
+		font-size: 16px;
 		font-weight: 900;
 	}
 
@@ -142,7 +142,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 10px;
-		font-size: 12px;
+		font-size: 15px;
 	}
 
 	.traffic-stat .k {
@@ -167,7 +167,7 @@
 		width: 100%;
 		border-collapse: separate;
 		border-spacing: 0;
-		font-size: 11px;
+		font-size: 14px;
 		overflow: hidden;
 		border-radius: 12px;
 		border: none;
@@ -180,7 +180,7 @@
 		background: rgba(11, 18, 32, 0.92);
 		color: rgba(242, 246, 255, 0.86);
 		text-align: right;
-		padding: 8px 8px;
+		padding: 10px 8px;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 		font-weight: 900;
 	}
@@ -190,7 +190,7 @@
 	}
 
 	tbody td {
-		padding: 6px 8px;
+		padding: 8px 8px;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 		text-align: right;
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
@@ -210,7 +210,7 @@
 
 	.traffic-muted {
 		color: rgba(242, 246, 255, 0.72);
-		font-size: 12px;
+		font-size: 15px;
 	}
 
 	.traffic-gap {

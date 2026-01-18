@@ -12,7 +12,7 @@
 	let {
 		value = $bindable<DateRangeValue>({ start: null, end: null }),
 		minDate = null,
-		maxDate = new Date(),
+		maxDate = null,
 		placeholder = 'Select date range',
 		rangeType = 'day',
 		disabled = false,
@@ -393,14 +393,14 @@
 
 <div
 	bind:this={pickerRef}
-	class={`relative z-[9999] inline-block w-full max-w-sm ${className}`}
+	class={`relative z-[3] inline-block w-full max-w-sm ${className}`}
 >
 	<!-- Trigger Button -->
 	<button
 		type="button"
 		onclick={toggleOpen}
 		disabled={disabled}
-		class={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+		class={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-lg transition-colors ${
 			disabled
 				? 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-400'
 				: 'border-slate-700 bg-slate-900 text-slate-100 hover:border-slate-600 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500'
@@ -474,21 +474,21 @@
 					<button
 						type="button"
 						onclick={() => setPresetDays(7)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						Last 7 days
 					</button>
 					<button
 						type="button"
 						onclick={() => setPresetDays(30)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						Last 30 days
 					</button>
 					<button
 						type="button"
 						onclick={() => setPresetDays(90)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						Last 90 days
 					</button>
@@ -496,14 +496,14 @@
 					<button
 						type="button"
 						onclick={() => setPresetWeek(0)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						This week
 					</button>
 					<button
 						type="button"
 						onclick={() => setPresetWeek(-1)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						Last week
 					</button>
@@ -511,14 +511,14 @@
 					<button
 						type="button"
 						onclick={() => setPresetMonth(0)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						This month
 					</button>
 					<button
 						type="button"
 						onclick={() => setPresetMonth(-1)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						Last month
 					</button>
@@ -526,14 +526,14 @@
 					<button
 						type="button"
 						onclick={() => setPresetYear(0)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						This year
 					</button>
 					<button
 						type="button"
 						onclick={() => setPresetYear(-1)}
-						class="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
+						class="rounded-md bg-slate-800 px-2 py-1 text-base text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700"
 					>
 						Last year
 					</button>
@@ -552,7 +552,7 @@
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 					</svg>
 				</button>
-				<span class="text-sm font-medium text-slate-200">
+				<span class="text-lg font-medium text-slate-200">
 					{#if rangeType === 'year'}
 						{yearRangeLabel}
 					{:else if rangeType === 'month'}
@@ -577,7 +577,7 @@
 				<!-- Day Names -->
 				<div class="mb-2 grid grid-cols-7 gap-1">
 					{#each DAYS as day (day)}
-						<div class="text-center text-xs font-medium uppercase text-slate-400">
+						<div class="text-center text-base font-medium uppercase text-slate-400">
 							{day.slice(0, 2)}
 						</div>
 					{/each}
@@ -599,7 +599,7 @@
 									hoverDate = null;
 								}}
 								disabled={isDisabled(day)}
-								class={`flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors ${
+								class={`flex h-10 w-10 items-center justify-center rounded-md text-lg transition-colors ${
 									isRangeStart(day) || isRangeEnd(day)
 										? 'bg-sky-500 font-medium text-slate-950'
 										: isInRange(day)
@@ -623,7 +623,7 @@
 							type="button"
 							onclick={() => selectMonth(monthItem.index)}
 							disabled={isMonthDisabled(currentMonth.getFullYear(), monthItem.index)}
-							class={`rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
+							class={`rounded-lg border px-3 py-2 text-base font-semibold uppercase tracking-wide transition-colors ${
 								isMonthSelected(monthItem.index)
 									? 'border-sky-500 bg-sky-500/20 text-sky-200'
 									: isMonthDisabled(currentMonth.getFullYear(), monthItem.index)
@@ -642,7 +642,7 @@
 							type="button"
 							onclick={() => selectYear(year)}
 							disabled={isYearDisabled(year)}
-							class={`rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
+							class={`rounded-lg border px-3 py-2 text-base font-semibold uppercase tracking-wide transition-colors ${
 								isYearSelected(year)
 									? 'border-sky-500 bg-sky-500/20 text-sky-200'
 									: isYearDisabled(year)
@@ -657,7 +657,7 @@
 			{/if}
 
 			<!-- Selection Status -->
-			<div class="mt-3 flex items-center justify-between border-t border-slate-800 pt-3 text-xs">
+			<div class="mt-3 flex items-center justify-between border-t border-slate-800 pt-3 text-base">
 				<div class="flex items-center gap-2">
 					<span class="text-slate-400">
 						{#if rangeType === 'day'}

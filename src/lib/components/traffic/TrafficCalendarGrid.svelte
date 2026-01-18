@@ -56,7 +56,7 @@
 					<div class="traffic-chips">
 						{#each cell.entries ?? [] as entry (entry.key)}
 							<span class={`traffic-chip-mini ${entry.dim ? 'dim' : ''}`}>
-								{entry.short}:{entry.value}
+								{entry.short}{entry.value}
 							</span>
 						{/each}
 					</div>
@@ -94,7 +94,7 @@
 	.traffic-dow div {
 		color: rgba(242, 246, 255, 0.86);
 		font-weight: 900;
-		font-size: 11px;
+		font-size: 14px;
 		letter-spacing: 0.2px;
 	}
 
@@ -109,8 +109,8 @@
 		border-radius: 16px;
 		border: 1px solid var(--traffic-line);
 		background: rgba(22, 36, 74, 0.82);
-		padding: 10px;
-		min-height: clamp(92px, 11vw, 126px);
+		padding: 12px;
+		min-height: clamp(110px, 12vw, 150px);
 		cursor: pointer;
 		transition: transform 0.06s ease, border-color 0.06s ease, background 0.06s ease;
 		outline: none;
@@ -147,7 +147,7 @@
 
 	.traffic-date-num {
 		font-weight: 950;
-		font-size: 12px;
+		font-size: 16px;
 	}
 
 	.traffic-wx {
@@ -159,13 +159,13 @@
 	}
 
 	.traffic-wx .icon {
-		font-size: 14px;
+		font-size: 16px;
 		filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
 	}
 
 	.traffic-wx .temps {
 		color: rgba(242, 246, 255, 0.78);
-		font-size: 11px;
+		font-size: 14px;
 		font-weight: 800;
 	}
 
@@ -181,7 +181,7 @@
 		border: 1px solid rgba(255, 255, 255, 0.16);
 		background: rgba(11, 18, 32, 0.75);
 		padding: 2px 7px;
-		font-size: 11px;
+		font-size: 14px;
 		font-weight: 900;
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
 			'Courier New', monospace;
@@ -215,12 +215,12 @@
 		}
 
 		.traffic-chip-mini {
-			font-size: 10px;
-			padding: 2px 6px;
+			font-size: 12px;
+			padding: 3px 7px;
 		}
 
 		.traffic-wx .temps {
-			font-size: 10px;
+			font-size: 12px;
 		}
 	}
 </style>
