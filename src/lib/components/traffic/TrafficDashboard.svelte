@@ -39,6 +39,10 @@
 	let selectedDateOverride = $state<string | null>(null);
 	let selectedLineOverride = $state('ALL');
 	let hiddenSeries = $state<TrafficClassKey[]>([]);
+	let dateRange = $state<{ start: Date | null; end: Date | null }>({
+		start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+		end: new Date()
+	});
 
 	const aggregated = $derived.by(() => aggregateRows(rows));
 	const availableLines = $derived.by(() => (aggregated.lines.length ? aggregated.lines : ['L1']));
@@ -104,7 +108,19 @@
 		month = currentMonth;
 		selectedDateOverride = toDateKeyUTC(new SvelteDate());
 		selectedLineOverride = 'ALL';
+		const now = new Date();
+		dateRange = {
+			start: new Date(now.getFullYear(), now.getMonth(), 1),
+			end: now
+		};
 	}
+
+	$effect(() => {
+		if (dateRange.start) {
+			const date = new Date(dateRange.start);
+			month = toMonthKeyUTC(date);
+		}
+	});
 
 	function emptyTotals(): TrafficTotals {
 		return {
@@ -259,40 +275,44 @@
 
 
 
-<section class="traffic-dashboard">
-	<div class="traffic-header">
-		<div class="traffic-left">
-			<div class="traffic-title">Traffic counts · {deviceName}</div>
-			<div class="traffic-subtitle">{subtitle}</div>
+<section class="rounded-3xl border border-white/[0.14] bg-gradient-to-b from-[#070b14] to-[#0b1220] text-[#f2f6ff] shadow-[0_18px_40px_rgba(0,0,0,0.45)] overflow-visible" style="background: radial-gradient(1200px 700px at 20% 0%, #111f44 0%, transparent 55%), radial-gradient(900px 600px at 90% 15%, #0f2a4a 0%, transparent 60%), linear-gradient(180deg, #070b14, #0b1220);">
+	<!-- NEVER EVER PUT A BACKDROP BLUR IN EHRE!!!-->
+	<div class="p-3.5 border-b border-white/[0.14] bg-[rgba(14,26,51,0.78)] shadow-[0_8px_24px_rgba(0,0,0,0.28)] flex gap-3 items-center justify-between flex-wrap overflow-visible">
+		<div class="flex flex-col gap-0.5">
+			<div class="font-extrabold tracking-[0.2px]">Traffic counts · {deviceName}</div>
+			<div class="text-[#f2f6ff]/70 text-xs">{subtitle}</div>
 		</div>
-			<label class="traffic-chip">
+		<div class="flex gap-2.5 items-center flex-row">
+			<CWDateRangePicker
+				rangeType="month"
+				disabled={false}
+				bind:value={dateRange}
+				placeholder="Select month"
+			/>
+			<label class="px-2.5 py-1.5 border border-white/[0.14] rounded-full bg-[rgba(22,36,74,0.8)] text-[#f2f6ff] text-xs flex items-center gap-2 select-none shadow-[0_6px_16px_rgba(0,0,0,0.22)]">
 				<span>Line</span>
-				<select bind:value={selectedLineOverride}>
+				<select bind:value={selectedLineOverride} class="appearance-none bg-transparent border-none text-[#f2f6ff] outline-none cursor-pointer">
 					<option value="ALL">All lines</option>
 					{#each availableLines as line (line)}
 						<option value={line}>{line}</option>
 					{/each}
 				</select>
 			</label>
-			<button class="traffic-btn" type="button" onclick={jumpToToday}>Today</button>
-		<CWDateRangePicker
-				rangeType="month"
-				disabled={false}
-				placeholder="Date range picker disabled in demo"
-			/>
+			<button class="px-3 py-2 rounded-[10px] border border-white/[0.14] bg-[rgba(22,36,74,0.85)] text-[#f2f6ff] text-xs cursor-pointer select-none shadow-[0_6px_16px_rgba(0,0,0,0.22)] hover:border-[rgba(125,184,255,0.9)]" type="button" onclick={jumpToToday}>Today</button>
 		</div>
+	</div>
 
-	<div class="traffic-wrap">
-		<main class="traffic-main">
-			<div class="traffic-main-top">
+	<div class="grid grid-cols-[1.8fr_1fr] min-h-0 max-[980px]:grid-cols-1">
+		<main class="p-3.5 min-w-0 min-h-0 flex flex-col gap-2.5">
+			<div class="flex items-start justify-between gap-3 flex-wrap">
 				<div>
-					<h2 class="traffic-h2">{monthLabel} · Daily totals</h2>
-					<div class="traffic-hint">Daily totals shown per day cell. UTC hours.</div>
+					<h2 class="font-extrabold text-sm tracking-[0.2px] m-0">{monthLabel} · Daily totals</h2>
+					<div class="text-[#f2f6ff]/70 text-xs mt-1">Daily totals shown per day cell. UTC hours.</div>
 				</div>
-				<div class="traffic-legend">
+				<div class="flex flex-wrap gap-2 gap-x-2.5 items-center px-3 py-2.5 rounded-[14px] bg-[rgba(22,36,74,0.78)] border border-white/[0.14] shadow-[0_10px_28px_rgba(0,0,0,0.35)] max-w-full">
 					{#each CLASSES as klass (klass.key)}
-						<div class="traffic-legend-item">
-							<span class="traffic-pill">{klass.short}</span>
+						<div class="flex gap-2 items-center text-[#f2f6ff]/80 text-xs whitespace-nowrap">
+							<span class="min-w-[34px] px-1.5 py-0.5 rounded-full bg-white/10 border border-white/10 text-[#f2f6ff] font-extrabold text-xs text-center">{klass.short}</span>
 							<span>{klass.label}</span>
 						</div>
 					{/each}
@@ -319,198 +339,6 @@
 	</div>
 
 	{#if rows.length === 0}
-		<div class="traffic-muted traffic-empty">No traffic data found for the past month.</div>
+		<div class="text-[#f2f6ff]/70 text-xs px-3.5 py-3.5 text-center">No traffic data found for the past month.</div>
 	{/if}
 </section>
-
-<style>
-	:global(.traffic-dashboard) {
-		--traffic-bg0: #070b14;
-		--traffic-bg1: #0b1220;
-		--traffic-panel: #0e1a33;
-		--traffic-panel2: #101c38;
-		--traffic-card: #16244a;
-		--traffic-card2: #0f1a34;
-		--traffic-muted: #b6c2d6;
-		--traffic-text: #f2f6ff;
-		--traffic-line: rgba(255, 255, 255, 0.14);
-		--traffic-line2: rgba(255, 255, 255, 0.1);
-		--traffic-accent: #7db8ff;
-		--traffic-accent2: #52e3b1;
-		--traffic-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-	}
-
-	.traffic-dashboard {
-		border-radius: 24px;
-		border: 1px solid var(--traffic-line);
-		background:
-			radial-gradient(1200px 700px at 20% 0%, #111f44 0%, transparent 55%),
-			radial-gradient(900px 600px at 90% 15%, #0f2a4a 0%, transparent 60%),
-			linear-gradient(180deg, var(--traffic-bg0), var(--traffic-bg1));
-		color: var(--traffic-text);
-		box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-		overflow: visible;
-	}
-
-	.traffic-header {
-		padding: 14px 16px;
-		border-bottom: 1px solid var(--traffic-line);
-		background: rgba(14, 26, 51, 0.78);
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-		display: flex;
-		gap: 12px;
-		align-items: center;
-		justify-content: space-between;
-		flex-wrap: wrap;
-		overflow: visible;
-	}
-
-	.traffic-left {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.traffic-title {
-		font-weight: 800;
-		letter-spacing: 0.2px;
-	}
-
-	.traffic-subtitle {
-		color: rgba(242, 246, 255, 0.72);
-		font-size: 12px;
-	}
-
-	.traffic-controls {
-		display: flex;
-		gap: 10px;
-		align-items: center;
-		flex-wrap: wrap;
-	}
-
-	.traffic-chip {
-		padding: 6px 10px;
-		border: 1px solid var(--traffic-line);
-		border-radius: 999px;
-		background: rgba(22, 36, 74, 0.8);
-		color: var(--traffic-text);
-		font-size: 12px;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		user-select: none;
-		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-	}
-
-	.traffic-chip select {
-		appearance: none;
-		background: transparent;
-		border: none;
-		color: var(--traffic-text);
-		font: inherit;
-		outline: none;
-		cursor: pointer;
-	}
-
-	.traffic-btn {
-		padding: 8px 12px;
-		border-radius: 10px;
-		border: 1px solid var(--traffic-line);
-		background: rgba(22, 36, 74, 0.85);
-		color: var(--traffic-text);
-		font-size: 12px;
-		cursor: pointer;
-		user-select: none;
-		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-	}
-
-	.traffic-btn:hover {
-		border-color: rgba(125, 184, 255, 0.9);
-	}
-
-	.traffic-wrap {
-		display: grid;
-		grid-template-columns: 1.8fr 1fr;
-		min-height: 0;
-	}
-
-	.traffic-main {
-		padding: 14px;
-		min-width: 0;
-		min-height: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.traffic-main-top {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 12px;
-		flex-wrap: wrap;
-	}
-
-	.traffic-h2 {
-		font-weight: 800;
-		font-size: 14px;
-		letter-spacing: 0.2px;
-		margin: 0;
-	}
-
-	.traffic-hint {
-		color: rgba(242, 246, 255, 0.72);
-		font-size: 12px;
-		margin-top: 4px;
-	}
-
-	.traffic-legend {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px 10px;
-		align-items: center;
-		padding: 10px 12px;
-		border-radius: 14px;
-		background: rgba(22, 36, 74, 0.78);
-		border: 1px solid var(--traffic-line);
-		box-shadow: var(--traffic-shadow);
-		max-width: 100%;
-	}
-
-	.traffic-legend-item {
-		display: flex;
-		gap: 8px;
-		align-items: center;
-		color: rgba(242, 246, 255, 0.82);
-		font-size: 12px;
-		white-space: nowrap;
-	}
-
-	.traffic-pill {
-		min-width: 34px;
-		padding: 2px 7px;
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid var(--traffic-line2);
-		color: var(--traffic-text);
-		font-weight: 800;
-		font-size: 12px;
-		text-align: center;
-	}
-
-	.traffic-empty {
-		padding: 14px 16px;
-		text-align: center;
-	}
-
-	.traffic-muted {
-		color: rgba(242, 246, 255, 0.72);
-		font-size: 12px;
-	}
-
-	@media (max-width: 980px) {
-		.traffic-wrap {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>
