@@ -27,6 +27,7 @@
 	import PLANT_ICON from '$lib/images/icons/plant.svg';
 	import WATER_ICON from '$lib/images/icons/water.svg';
 	import POWER_ICON from '$lib/images/icons/power.svg';
+	import TRAFFIC_ICON from '$lib/images/icons/bar_chart.svg';
 
 	const getAppState = useAppState();
 	let appState = $derived(getAppState());
@@ -210,13 +211,18 @@
 	});
 
 	type DataRow = Record<string, unknown>;
-	type AirRow = Device & { facilityName: string; locationName: string };
+	type DeviceRow = Device & { facilityName: string; locationName: string };
+	type DashboardTabKey = DataTabKey | 'traffic';
+
+	const AIR_DATA_TABLE = 'cw_air_data';
+	const TRAFFIC_DATA_TABLE = 'cw_traffic2';
 
 	const dataTabs: TabItem[] = [
 		{ id: 'air', label: 'Air', icon: CLOUD_ICON },
 		{ id: 'soil', label: 'Soil', icon: PLANT_ICON },
 		{ id: 'water', label: 'Water', icon: WATER_ICON },
-		{ id: 'power', label: 'Power', icon: POWER_ICON }
+		{ id: 'power', label: 'Power', icon: POWER_ICON },
+		{ id: 'traffic', label: 'Traffic', icon: TRAFFIC_ICON }
 	];
 
 	const statusOptions = STATUS_TYPES?.map((s) => ({
@@ -232,7 +238,7 @@
 		return acc;
 	}, {});
 
-	const tabColumnsByKey: Record<DataTabKey, ColumnConfig[]> = {
+	const tabColumnsByKey: Record<DashboardTabKey, ColumnConfig[]> = {
 		air: [
 			{ key: 'name', label: 'Device', type: 'stacked', secondaryKey: 'id', sortable: true },
 			{ key: 'temperatureC', label: 'Temp', type: 'number', suffix: ' °C', sortable: true },
@@ -284,7 +290,30 @@
 			{ key: 'temperature_c', label: 'Temp', type: 'number', suffix: ' °C', sortable: true },
 			{ key: 'moisture', label: 'Moisture', type: 'number', sortable: true },
 			{ key: 'ec', label: 'EC', type: 'number', suffix: ' uS/cm', sortable: true },
-			{ key: 'ph', label: 'pH', type: 'number', sortable: true }
+			{ key: 'ph', label: 'pH', type: 'number', sortable: true },
+			{
+				key: 'Actions',
+				label: 'Actions',
+				type: 'buttons',
+				cellClass: 'items-center justify-center',
+				buttons: [
+					{
+						label: 'View',
+						onClick: (item: DataRow) => {
+							const record = item as Record<string, unknown>;
+							const devEui = String(record.dev_eui ?? '');
+							const device = devEui
+								? appState.devices.find((d: Device) => d.id === devEui)
+								: null;
+							if (!device) return;
+							tableLoading = true;
+							goto(
+								`/locations/location/${device.locationId}/devices/device/${device.id}?prev=${$page.url.pathname}`
+							);
+						}
+					}
+				]
+			}
 		],
 		water: [
 			{ key: 'dev_eui', label: 'Device ID', sortable: true },
@@ -300,25 +329,98 @@
 			{ key: 'voltage', label: 'Voltage', type: 'number', suffix: ' V', sortable: true },
 			{ key: 'current', label: 'Current', type: 'number', suffix: ' A', sortable: true },
 			{ key: 'watts', label: 'Watts', type: 'number', suffix: ' W', sortable: true }
+		],
+		traffic: [
+			{ key: 'name', label: 'Device', type: 'stacked', secondaryKey: 'id', sortable: true },
+			{
+				key: 'status',
+				label: 'Status',
+				type: 'badge',
+				sortable: true,
+				sortOrder: ['alert', 'offline', 'online', 'loading'],
+				filter: {
+					type: 'checkbox',
+					options: statusOptions
+				},
+				badges: statusBadges
+			},
+			{ key: 'lastSeen', label: 'Last seen', type: 'datetime', sortable: true },
+			{
+				key: 'facilityName',
+				label: 'Facility / Location',
+				type: 'stacked',
+				secondaryKey: 'locationName',
+				sortable: true,
+				href: (item: Device) =>
+					`/locations/location/${item.locationId}?prev=${$page.url.pathname}`
+			},
+			{
+				key: 'Actions',
+				label: 'Actions',
+				type: 'buttons',
+				cellClass: 'items-center justify-center',
+				buttons: [
+					{
+						label: 'View',
+						onClick: (item: Device) => {
+							tableLoading = true;
+							goto(
+								`/locations/location/${item.locationId}/devices/device/${item.id}?prev=${$page.url.pathname}`
+							);
+						}
+					}
+				]
+			}
 		]
 	};
 
-	let activeTab = $state<DataTabKey>('air');
+	let activeTab = $state<DashboardTabKey>('air');
 	let tableRowsByTab = $state<Partial<Record<DataTabKey, DataRow[]>>>({});
 
 	const tableColumns = $derived(tabColumnsByKey[activeTab] ?? []);
-	const airRows = $derived<AirRow[]>(
-		filteredDevices?.map((d: Device) => {
-			const facility = getFacility(d.facilityId);
-			const location = getLocation(d.locationId);
-			return {
-				...d,
-				facilityName: facility?.name ?? 'Unknown group',
-				locationName: location?.name ?? 'Unknown location'
-			};
-		})
+
+	const isTrafficDevice = (device: Device) => {
+		if (device.dataTable === TRAFFIC_DATA_TABLE) return true;
+		const label = [
+			device.deviceTypeManufacturer ?? '',
+			device.deviceTypeName ?? '',
+			device.deviceTypeModel ?? ''
+		]
+			.join(' ')
+			.trim()
+			.toLowerCase();
+		return label.includes('cropwatch') && label.includes('nvidia') && label.includes('jetson');
+	};
+
+	const buildDeviceRow = (device: Device): DeviceRow => {
+		const facility = getFacility(device.facilityId);
+		const location = getLocation(device.locationId);
+		return {
+			...device,
+			facilityName: facility?.name ?? 'Unknown group',
+			locationName: location?.name ?? 'Unknown location'
+		};
+	};
+
+	const airRows = $derived<DeviceRow[]>(
+		(filteredDevices ?? [])
+			.filter((d: Device) => d.dataTable === AIR_DATA_TABLE)
+			.map((d: Device) => buildDeviceRow(d))
 	);
-	const tableRows = $derived(activeTab === 'air' ? airRows : tableRowsByTab[activeTab] ?? []);
+
+	const trafficRows = $derived<DeviceRow[]>(
+		(filteredDevices ?? [])
+			.filter((d: Device) => isTrafficDevice(d))
+			.map((d: Device) => buildDeviceRow(d))
+	);
+
+	const tableRows = $derived(
+		activeTab === 'air'
+			? airRows
+			: activeTab === 'traffic'
+				? trafficRows
+				: tableRowsByTab[activeTab as DataTabKey] ?? []
+	);
 
 	type MobileRowItem = {
 		name: string;
@@ -344,7 +446,7 @@
 		return String(record.id ?? record.dev_eui ?? index);
 	};
 
-	const buildAirRowItem = (device: AirRow): MobileRowItem => {
+	const buildAirRowItem = (device: DeviceRow): MobileRowItem => {
 		const facility = getFacility(device.facilityId);
 		const location = getLocation(device.locationId);
 		const details: DeviceMetric[] = [];
@@ -368,6 +470,29 @@
 			secondary: isValueValid(device.humidity)
 				? formatMetric('Humidity', device.humidity, '%RH')
 				: null,
+			details,
+			lastSeen: device.lastSeen ? new Date(device.lastSeen) : null,
+			detailHref: `/locations/location/${device.locationId}/devices/device/${device.id}?prev=${$page.url.pathname}`
+		};
+	};
+
+	const buildTrafficRowItem = (device: DeviceRow): MobileRowItem => {
+		const facility = getFacility(device.facilityId);
+		const location = getLocation(device.locationId);
+		const details: DeviceMetric[] = [];
+
+		if (facility?.name) {
+			details.push(formatMetric('Facility', facility.name));
+		}
+		if (location?.name) {
+			details.push(formatMetric('Location', location.name));
+		}
+
+		return {
+			name: device.name ?? device.id,
+			status: device.status,
+			primary: null,
+			secondary: null,
 			details,
 			lastSeen: device.lastSeen ? new Date(device.lastSeen) : null,
 			detailHref: `/locations/location/${device.locationId}/devices/device/${device.id}?prev=${$page.url.pathname}`
@@ -408,11 +533,15 @@
 	};
 
 	const buildMobileRowItem = (row: DataRow): MobileRowItem =>
-		activeTab === 'air' ? buildAirRowItem(row as AirRow) : buildNonAirRowItem(row);
+		activeTab === 'air'
+			? buildAirRowItem(row as DeviceRow)
+			: activeTab === 'traffic'
+				? buildTrafficRowItem(row as DeviceRow)
+				: buildNonAirRowItem(row);
 
 	const tableMatchesSearch = (row: DataRow, q: string) => {
-		if (activeTab === 'air') {
-			const device = row as AirRow;
+		if (activeTab === 'air' || activeTab === 'traffic') {
+			const device = row as DeviceRow;
 			if (!q?.trim()) return true;
 			const facility = getFacility(device.facilityId);
 			const location = getLocation(device.locationId);
@@ -441,13 +570,17 @@
 
 	let loadToken = 0;
 
-	const loadTabRows = async (tab: DataTabKey) => {
-		if (tab === 'air') return;
-		if (tableRowsByTab[tab] != null) return;
+	const loadTabRows = async (tab: DashboardTabKey) => {
+		if (tab === 'air' || tab === 'traffic') return;
+		if (tableRowsByTab[tab as DataTabKey] != null) return;
 		const token = ++loadToken;
 		tableLoading = true;
 		try {
-			const rows = await fetchDataTableRows({ tab, limit: 200, session: getSessionTokens() });
+			const rows = await fetchDataTableRows({
+				tab: tab as DataTabKey,
+				limit: 200,
+				session: getSessionTokens()
+			});
 			if (token !== loadToken) return;
 			tableRowsByTab = { ...tableRowsByTab, [tab]: rows as DataRow[] };
 		} catch (err) {
@@ -461,7 +594,7 @@
 
 	const handleTabChange = (tab: TabItem) => {
 		if (typeof tab.id !== 'string') return;
-		void loadTabRows(tab.id as DataTabKey);
+		void loadTabRows(tab.id as DashboardTabKey);
 	};
 
 	let stopRealtime: (() => void) | null = null;

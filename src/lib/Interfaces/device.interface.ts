@@ -6,6 +6,10 @@ export interface Device {
     name: string;
     locationId: string;
     facilityId: string;
+    dataTable?: string | null;
+    deviceTypeName?: string | null;
+    deviceTypeManufacturer?: string | null;
+    deviceTypeModel?: string | null;
     temperatureC: number;
     humidity: number;
     co2?: number | null;

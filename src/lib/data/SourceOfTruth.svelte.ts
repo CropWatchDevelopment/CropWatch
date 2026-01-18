@@ -161,6 +161,10 @@ function mapDevice(row: DeviceJoined): Device {
 	const deviceType = row.device_type;
 	const primaryKind = deviceType?.primary_data_v2 ?? deviceType?.primary_data ?? 'temperature_c';
 	const secondaryKind = deviceType?.secondary_data_v2 ?? deviceType?.secondary_data ?? 'humidity';
+	const dataTable = deviceType?.data_table_v2 ?? deviceType?.data_table ?? null;
+	const deviceTypeName = deviceType?.name ?? null;
+	const deviceTypeManufacturer = deviceType?.manufacturer ?? null;
+	const deviceTypeModel = deviceType?.model ?? null;
 
 	const temperatureC = isTempKind(primaryKind)
 		? normalizeTemperature(primaryKind, row.primary_data ?? null)
@@ -191,6 +195,10 @@ function mapDevice(row: DeviceJoined): Device {
 		name: row.name,
 		locationId: loc ? String(loc.location_id) : 'unknown',
 		facilityId: groupKey,
+		dataTable,
+		deviceTypeName,
+		deviceTypeManufacturer,
+		deviceTypeModel,
 		temperatureC: temperatureC ?? 0,
 		humidity: humidity ?? 0,
 		co2: co2 ?? null,
@@ -472,7 +480,7 @@ export async function fetchDevicePage({
 				'installed_at',
 				'type',
 				'location:cw_locations(location_id,name,lat,long,owner_id,group)',
-				'device_type:cw_device_type(primary_data_v2,secondary_data_v2,primary_data_notation,secondary_data_notation,default_upload_interval)',
+				'device_type:cw_device_type(primary_data_v2,secondary_data_v2,primary_data_notation,secondary_data_notation,default_upload_interval,data_table_v2,data_table,name,manufacturer,model)',
 				'alerts:cw_rules(*)'
 			].join(',')
 		)
