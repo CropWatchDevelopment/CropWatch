@@ -400,7 +400,7 @@
 	<title>Device Details - CropWatch Temp</title>
 </svelte:head>
 
-<div class="flex flex-col gap-8 p-6 text-slate-100">
+<div class="flex flex-col gap-8 p-6 text-slate-100 overflow-x-clip">
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex flex-row w-full items-center gap-3">
 			<CWBackButton fallback="/locations" />

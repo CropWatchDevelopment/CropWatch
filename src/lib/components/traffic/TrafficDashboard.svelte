@@ -11,6 +11,7 @@
 		TrafficRow,
 		TrafficTotals
 	} from './traffic.types';
+	import CWDateRangePicker from '../CWDateRangePicker.svelte';
 
 	let {
 		rows = [],
@@ -40,9 +41,7 @@
 	let hiddenSeries = $state<TrafficClassKey[]>([]);
 
 	const aggregated = $derived.by(() => aggregateRows(rows));
-	const availableLines = $derived.by(() =>
-		aggregated.lines.length ? aggregated.lines : ['L1']
-	);
+	const availableLines = $derived.by(() => (aggregated.lines.length ? aggregated.lines : ['L1']));
 	const monthOptions = $derived.by(() => buildMonthOptions(currentMonth));
 
 	const monthLabel = $derived.by(() => {
@@ -195,9 +194,7 @@
 		const start = new SvelteDate(Date.UTC(year, monthIndex - 1, 1));
 		start.setUTCMonth(start.getUTCMonth() - 8);
 		for (let i = 0; i < 18; i += 1) {
-			const date = new SvelteDate(
-				Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1)
-			);
+			const date = new SvelteDate(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
 			list.push(toMonthKeyUTC(date));
 		}
 		return list;
@@ -248,9 +245,7 @@
 	}
 
 	function toDateKeyUTC(date: Date) {
-		return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(
-			date.getUTCDate()
-		)}`;
+		return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
 	}
 
 	function daysInMonthUTC(year: number, monthIndex: number) {
@@ -262,21 +257,14 @@
 	}
 </script>
 
+
+
 <section class="traffic-dashboard">
-	<header class="traffic-header">
+	<div class="traffic-header">
 		<div class="traffic-left">
 			<div class="traffic-title">Traffic counts · {deviceName}</div>
 			<div class="traffic-subtitle">{subtitle}</div>
 		</div>
-		<div class="traffic-controls">
-			<label class="traffic-chip">
-				<span>Month</span>
-				<select bind:value={month}>
-					{#each monthOptions as option (option)}
-						<option value={option}>{option}</option>
-					{/each}
-				</select>
-			</label>
 			<label class="traffic-chip">
 				<span>Line</span>
 				<select bind:value={selectedLineOverride}>
@@ -287,8 +275,12 @@
 				</select>
 			</label>
 			<button class="traffic-btn" type="button" onclick={jumpToToday}>Today</button>
+		<CWDateRangePicker
+				rangeType="month"
+				disabled={false}
+				placeholder="Date range picker disabled in demo"
+			/>
 		</div>
-	</header>
 
 	<div class="traffic-wrap">
 		<main class="traffic-main">
@@ -320,16 +312,14 @@
 			totals={selectedTotals}
 			bins={selectedBins}
 			classes={CLASSES}
-			hiddenSeries={hiddenSeries}
-			selectedLineLabel={selectedLineLabel}
+			{hiddenSeries}
+			{selectedLineLabel}
 			on:toggle={handleToggleSeries}
 		/>
 	</div>
 
 	{#if rows.length === 0}
-		<div class="traffic-muted traffic-empty">
-			No traffic data found for the past month.
-		</div>
+		<div class="traffic-muted traffic-empty">No traffic data found for the past month.</div>
 	{/if}
 </section>
 
@@ -353,25 +343,26 @@
 	.traffic-dashboard {
 		border-radius: 24px;
 		border: 1px solid var(--traffic-line);
-		background: radial-gradient(1200px 700px at 20% 0%, #111f44 0%, transparent 55%),
+		background:
+			radial-gradient(1200px 700px at 20% 0%, #111f44 0%, transparent 55%),
 			radial-gradient(900px 600px at 90% 15%, #0f2a4a 0%, transparent 60%),
 			linear-gradient(180deg, var(--traffic-bg0), var(--traffic-bg1));
 		color: var(--traffic-text);
 		box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	.traffic-header {
 		padding: 14px 16px;
 		border-bottom: 1px solid var(--traffic-line);
 		background: rgba(14, 26, 51, 0.78);
-		backdrop-filter: blur(10px);
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 		display: flex;
 		gap: 12px;
 		align-items: center;
 		justify-content: space-between;
 		flex-wrap: wrap;
+		overflow: visible;
 	}
 
 	.traffic-left {
