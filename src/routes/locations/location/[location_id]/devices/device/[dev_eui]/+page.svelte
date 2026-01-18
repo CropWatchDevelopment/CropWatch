@@ -18,6 +18,7 @@
 	import CWLineChart from '$lib/components/CWLineChart.svelte';
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import CWDialog from '$lib/components/CWDialog.svelte';
+	import TrafficDashboard from '$lib/components/traffic/TrafficDashboard.svelte';
 
 	const getAppState = getContext<AppState>('appState');
 	let appState = $derived(getAppState());
@@ -261,7 +262,12 @@
 			minute: '2-digit',
 			timeZoneName: 'short'
 		});
-		return `${fmt.format(new Date(oldest))} → ${fmt.format(new Date(newest))}`;
+		const oldestDate = new Date(oldest);
+		const newestDate = new Date(newest);
+		if (Number.isNaN(oldestDate.getTime()) || Number.isNaN(newestDate.getTime())) {
+			return 'History range';
+		}
+		return `${fmt.format(oldestDate)} → ${fmt.format(newestDate)}`;
 	});
 
 	const heatmapPalette = {
@@ -313,7 +319,9 @@
 	}));
 
 	function formatHour(timestamp: string) {
-		return formatter.format(new Date(timestamp));
+		const date = new Date(timestamp);
+		if (Number.isNaN(date.getTime())) return '—';
+		return formatter.format(date);
 	}
 
 	const historyTableColumns = [
@@ -370,6 +378,22 @@
 			alert: String(entry.alert)
 		}))
 	);
+
+	const trafficRows = $derived(data.trafficRows ?? []);
+	const trafficDeviceType = $derived.by(() => {
+		const raw = data.deviceType;
+		return Array.isArray(raw) ? raw[0] ?? null : raw ?? null;
+	});
+	const trafficDeviceLabel = $derived.by(() => {
+		const name = trafficDeviceType?.name ?? '';
+		const manufacturer = trafficDeviceType?.manufacturer ?? '';
+		const model = trafficDeviceType?.model ?? '';
+		return `${manufacturer} ${name} ${model}`.trim();
+	});
+	const isTrafficDevice = $derived.by(() => {
+		const label = trafficDeviceLabel.toLowerCase();
+		return label.includes('cropwatch') && label.includes('nvidia') && label.includes('jetson');
+	});
 </script>
 
 <svelte:head>
@@ -431,6 +455,15 @@
 		</div>
 	</header>
 
+	{#if isTrafficDevice}
+		<TrafficDashboard
+			rows={trafficRows}
+			deviceName={device?.name ?? 'Traffic camera'}
+			subtitle="Monthly calendar (daily totals) · Click a day for hourly breakdown"
+		/>
+	{/if}
+
+	{#if !isTrafficDevice}
 	<section class="grid gap-4 lg:grid-cols-2">
 		{#each metricCards as card (card.key)}
 			<div
@@ -537,13 +570,17 @@
 			</div>
 		{/each}
 	</section>
+	{/if}
 
+	{#if !isTrafficDevice}
 	{#if historyLoading}
 		<p class="mt-4 text-sm text-slate-400">Loading historical data…</p>
 	{:else if historyError}
 		<p class="mt-4 text-sm text-amber-300">{historyError}</p>
 	{/if}
+	{/if}
 
+	{#if !isTrafficDevice}
 	<svelte:boundary>
 		<DeviceHeatmap
 			title="Thermal footprint"
@@ -586,7 +623,9 @@
 			</div>
 		{/snippet}
 	</svelte:boundary>
+	{/if}
 
+	{#if !isTrafficDevice}
 	<section
 		class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-lg shadow-slate-950/40"
 	>
@@ -622,7 +661,9 @@
 			/>
 		{/if}
 	</section>
+	{/if}
 
+	{#if !isTrafficDevice}
 	<section
 		class="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-lg shadow-slate-950/40"
 	>
@@ -678,6 +719,7 @@
 			</svelte:boundary>
 		</div>
 	</section>
+	{/if}
 	{/if}
 </div>
 
