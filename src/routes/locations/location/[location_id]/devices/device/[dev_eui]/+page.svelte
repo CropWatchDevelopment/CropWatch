@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { resolve } from '$app/paths';
 	import DeviceHeatmap from '$lib/components/DeviceHeatmap.svelte';
 	import { fetchDeviceHistory } from '$lib/data/SourceOfTruth.svelte';
 	import type { Device } from '$lib/Interfaces/device.interface';
-	import type { DeviceDataHistory } from '$lib/Interfaces/deviceDataHistory.interface';
 	import { getContext, onMount } from 'svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 	import type { AppState } from '$lib/Interfaces/appState.interface';
 	import type { PageData } from './$types';
 	import CWButton from '$lib/components/CWButton.svelte';
@@ -25,11 +24,78 @@
 	let appState = $derived(getAppState());
 	let { data }: { data: PageData } = $props();
 
+	type HistoryMeta = {
+		table?: string | null;
+		primaryKey?: string | null;
+		secondaryKey?: string | null;
+	};
+
+	type SensorMode = 'air' | 'soil';
+
+	type HistoryPoint = {
+		timestamp?: string | null;
+		primary?: number | null;
+		secondary?: number | null;
+		co2?: number | null;
+		ec?: number | null;
+		raw?: Record<string, unknown>;
+	};
+
+	type TelemetryEntry = {
+		timestamp: string;
+		temperature: number;
+		humidity?: number;
+		moisture?: number;
+		co2?: number | null;
+		ec?: number | null;
+		alert: boolean;
+	};
+
+	const getSensorMode = (table?: string | null): SensorMode =>
+		table === 'cw_soil_data' ? 'soil' : 'air';
+
+	const toNumber = (value: unknown, fallback = 0) => {
+		const numeric = typeof value === 'number' ? value : Number(value);
+		return Number.isFinite(numeric) ? numeric : fallback;
+	};
+
+	const toOptionalNumber = (value: unknown) => {
+		const numeric = typeof value === 'number' ? value : Number(value);
+		return Number.isFinite(numeric) ? numeric : null;
+	};
+
+	const mapHistoryEntry = (point: HistoryPoint, mode: SensorMode): TelemetryEntry => {
+		const timestamp = point.timestamp || new Date().toISOString();
+		if (mode === 'soil') {
+			const ecValue = point.ec ?? point.raw?.['ec'];
+			return {
+				timestamp,
+				temperature: toNumber(point.primary),
+				moisture: toNumber(point.secondary),
+				ec: toNumber(ecValue),
+				alert: false
+			};
+		}
+		return {
+			timestamp,
+			temperature: toNumber(point.primary),
+			humidity: toNumber(point.secondary),
+			co2: toOptionalNumber(point.co2),
+			alert: false
+		};
+	};
+
+	const mapHistory = (points: HistoryPoint[], mode: SensorMode) =>
+		points.map((point) => mapHistoryEntry(point, mode));
+
 	let device: Device | undefined = $derived(
-		appState.devices.find((d: Device) => d.id === page.params.dev_eui) 
+		appState.devices.find((d: Device) => d.id === page.params.dev_eui)
 	);
 
-	let history: DeviceDataHistory[] = $state([]);
+	let history: TelemetryEntry[] = $state([]);
+	let historyMeta = $state<HistoryMeta | null>(data.historyMeta ?? null);
+	const sensorMode = $derived.by(() => getSensorMode(historyMeta?.table));
+	const isSoilDevice = $derived.by(() => sensorMode === 'soil');
 	let historyLoading = $state(true);
 	let historyError: string | null = $state(null);
 
@@ -56,13 +122,8 @@
 	});
 
 	if (data.initialHistory?.length) {
-		history = data.initialHistory.map((p) => ({
-			timestamp: p.timestamp || new Date().toISOString(),
-			temperature: p.primary ?? 0,
-			humidity: p.secondary ?? 0,
-			co2: p.co2 ?? null,
-			alert: false
-		}));
+		const initialMode = getSensorMode(data.historyMeta?.table);
+		history = mapHistory(data.initialHistory, initialMode);
 		historyLoading = false;
 	}
 
@@ -71,21 +132,17 @@
 		historyLoading = true;
 		historyError = null;
 		try {
-			const { points } = await fetchDeviceHistory({
+			const { points, meta } = await fetchDeviceHistory({
 				devEui: page.params.dev_eui,
 				limit: 2000,
 				hoursBack: 24
 			});
+			historyMeta = meta ?? null;
+			const mode = getSensorMode(meta?.table);
 
 			if (points.length) {
-				history = points.map((p) => ({
-					timestamp: p.timestamp || new Date().toISOString(),
-					temperature: p.primary ?? 0,
-					humidity: p.secondary ?? 0,
-					co2: p.co2 ?? null,
-					alert: false
-				}));
-			} else if (device) {
+				history = mapHistory(points, mode);
+			} else if (device && mode === 'air') {
 				history = [
 					{
 						timestamp: device.lastSeen,
@@ -104,15 +161,31 @@
 		}
 	});
 
-	const latestReading = $derived.by(() => {
+	const airLatestReading = $derived.by(() => {
 		const latest = history[0];
 		return {
 			temperature: latest?.temperature ?? device?.temperatureC ?? 0,
 			humidity: latest?.humidity ?? device?.humidity ?? 0,
+			co2: latest?.co2 ?? device?.co2 ?? null,
 			timestamp: latest?.timestamp ?? new Date().toISOString(),
 			alert: latest?.alert ?? false
 		};
 	});
+
+	const soilLatestReading = $derived.by(() => {
+		const latest = history[0];
+		return {
+			temperature: latest?.temperature ?? 0,
+			moisture: latest?.moisture ?? 0,
+			ec: latest?.ec ?? 0,
+			timestamp: latest?.timestamp ?? new Date().toISOString(),
+			alert: latest?.alert ?? false
+		};
+	});
+
+	const latestTimestamp = $derived.by(() =>
+		isSoilDevice ? soilLatestReading.timestamp : airLatestReading.timestamp
+	);
 
 	const chronologicalHistory = $derived([...history].reverse());
 	const sortedHistory = $derived(
@@ -120,8 +193,10 @@
 	);
 
 	const temperatureValues = $derived(history.map((entry) => entry.temperature));
-	const humidityValues = $derived(history.map((entry) => entry.humidity));
+	const humidityValues = $derived(history.map((entry) => entry.humidity ?? 0));
 	const co2Values = $derived(history.map((entry) => entry.co2 ?? 0));
+	const moistureValues = $derived(history.map((entry) => entry.moisture ?? 0));
+	const ecValues = $derived(history.map((entry) => entry.ec ?? 0));
 	let showDownloadModal: boolean = $state<boolean>(false);
 
 	function summarize(values: number[]) {
@@ -143,27 +218,93 @@
 		return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 	}
 
+	type MetricPalette = {
+		accent: string;
+		bar: string;
+		knob: string;
+		badge: string;
+	};
+
+	type MetricCard = {
+		key: string;
+		label: string;
+		unit: string;
+		current: number;
+		delta: number;
+		min: number;
+		max: number;
+		avg: number;
+		median: number;
+		stdDeviation: number;
+		range: number;
+		count: number;
+		palette: MetricPalette;
+	};
+
+	type MetricCardScaled = MetricCard & {
+		scaleMin: number;
+		scaleMax: number;
+		positions: {
+			min: number;
+			avg: number;
+			max: number;
+			current: number;
+		};
+	};
+
 	const temperatureStats = $derived(summarize(temperatureValues));
 	const humidityStats = $derived(summarize(humidityValues));
 	const co2Stats = $derived(summarize(co2Values));
+	const moistureStats = $derived(summarize(moistureValues));
+	const ecStats = $derived(summarize(ecValues));
 	const temperatureMedian = $derived(median(temperatureValues));
 	const humidityMedian = $derived(median(humidityValues));
 	const co2Median = $derived(median(co2Values));
+	const moistureMedian = $derived(median(moistureValues));
+	const ecMedian = $derived(median(ecValues));
 	const readingCount = $derived(history.length);
-	const temperatureDelta = $derived.by(() =>
-		history[1] ? latestReading.temperature - history[1].temperature : 0
+	const airTemperatureDelta = $derived.by(() =>
+		history[1] ? airLatestReading.temperature - history[1].temperature : 0
 	);
-	const humidityDelta = $derived.by(() =>
-		history[1] ? latestReading.humidity - history[1].humidity : 0
+	const airHumidityDelta = $derived.by(() =>
+		history[1] ? airLatestReading.humidity - (history[1].humidity ?? 0) : 0
+	);
+	const soilTemperatureDelta = $derived.by(() =>
+		history[1] ? soilLatestReading.temperature - history[1].temperature : 0
+	);
+	const soilMoistureDelta = $derived.by(() =>
+		history[1] ? soilLatestReading.moisture - (history[1].moisture ?? 0) : 0
+	);
+	const soilEcDelta = $derived.by(() =>
+		history[1] ? soilLatestReading.ec - (history[1].ec ?? 0) : 0
 	);
 
-	const baseMetricCards = $derived.by(() => [
+	const buildMetricCards = (cards: MetricCard[]): MetricCardScaled[] =>
+		cards.map((card) => {
+			const padding = Math.max(0.5, card.range * 0.15 || 0.5);
+			const scaleMin = card.min - padding;
+			const scaleMax = card.max + padding;
+
+			return {
+				...card,
+				scaleMin,
+				scaleMax,
+				positions: {
+					min: toPercent(card.min, scaleMin, scaleMax),
+					avg: toPercent(card.avg, scaleMin, scaleMax),
+					max: toPercent(card.max, scaleMin, scaleMax),
+					current: toPercent(card.current, scaleMin, scaleMax)
+				}
+			};
+		});
+
+	const airBaseMetricCards = $derived.by(() => [
 		{
 			key: 'temperature',
 			label: 'Temperature',
 			unit: '°C',
-			current: latestReading.temperature,
-			delta: temperatureDelta,
+			current: airLatestReading.temperature,
+			delta: airTemperatureDelta,
 			min: temperatureStats.low,
 			max: temperatureStats.high,
 			avg: temperatureStats.avg,
@@ -182,8 +323,8 @@
 			key: 'humidity',
 			label: 'Humidity',
 			unit: '%',
-			current: latestReading.humidity,
-			delta: humidityDelta,
+			current: airLatestReading.humidity,
+			delta: airHumidityDelta,
 			min: humidityStats.low,
 			max: humidityStats.high,
 			avg: humidityStats.avg,
@@ -202,7 +343,7 @@
 			key: 'co2',
 			label: 'CO₂',
 			unit: 'ppm',
-			current: history[0]?.co2 ?? device?.co2 ?? 0,
+			current: airLatestReading.co2 ?? 0,
 			delta: history[1] ? (history[0]?.co2 ?? 0) - (history[1]?.co2 ?? 0) : 0,
 			min: co2Stats.low,
 			max: co2Stats.high,
@@ -220,25 +361,72 @@
 		}
 	]);
 
-	const metricCards = $derived.by(() =>
-		baseMetricCards.map((card) => {
-			const padding = Math.max(0.5, card.range * 0.15 || 0.5);
-			const scaleMin = card.min - padding;
-			const scaleMax = card.max + padding;
+	const soilBaseMetricCards = $derived.by(() => [
+		{
+			key: 'soil-temperature',
+			label: 'Soil Temperature',
+			unit: '°C',
+			current: soilLatestReading.temperature,
+			delta: soilTemperatureDelta,
+			min: temperatureStats.low,
+			max: temperatureStats.high,
+			avg: temperatureStats.avg,
+			median: temperatureMedian,
+			stdDeviation: temperatureStats.stdDeviation,
+			range: temperatureStats.high - temperatureStats.low,
+			count: readingCount,
+			palette: {
+				accent: 'text-amber-300',
+				bar: 'bg-amber-400/70',
+				knob: 'bg-amber-400',
+				badge: 'text-amber-200'
+			}
+		},
+		{
+			key: 'soil-moisture',
+			label: 'Soil Moisture',
+			unit: '%',
+			current: soilLatestReading.moisture,
+			delta: soilMoistureDelta,
+			min: moistureStats.low,
+			max: moistureStats.high,
+			avg: moistureStats.avg,
+			median: moistureMedian,
+			stdDeviation: moistureStats.stdDeviation,
+			range: moistureStats.high - moistureStats.low,
+			count: readingCount,
+			palette: {
+				accent: 'text-teal-300',
+				bar: 'bg-teal-400/70',
+				knob: 'bg-teal-400',
+				badge: 'text-teal-200'
+			}
+		},
+		{
+			key: 'soil-ec',
+			label: 'Soil EC',
+			unit: 'mS/cm',
+			current: soilLatestReading.ec,
+			delta: soilEcDelta,
+			min: ecStats.low,
+			max: ecStats.high,
+			avg: ecStats.avg,
+			median: ecMedian,
+			stdDeviation: ecStats.stdDeviation,
+			range: ecStats.high - ecStats.low,
+			count: readingCount,
+			palette: {
+				accent: 'text-lime-300',
+				bar: 'bg-lime-400/70',
+				knob: 'bg-lime-400',
+				badge: 'text-lime-200'
+			}
+		}
+	]);
 
-			return {
-				...card,
-				scaleMin,
-				scaleMax,
-				positions: {
-					min: toPercent(card.min, scaleMin, scaleMax),
-					avg: toPercent(card.avg, scaleMin, scaleMax),
-					max: toPercent(card.max, scaleMin, scaleMax),
-					current: toPercent(card.current, scaleMin, scaleMax)
-				}
-			};
-		})
-	);
+	const airMetricCards = $derived.by(() => buildMetricCards(airBaseMetricCards));
+	const soilMetricCards = $derived.by(() => buildMetricCards(soilBaseMetricCards));
+	const metricCards = $derived.by(() => (isSoilDevice ? soilMetricCards : airMetricCards));
 
 	const alertCount = $derived(history.filter((entry) => entry.alert).length);
 
@@ -248,7 +436,7 @@
 	}
 
 	// Format history data for CWLineChart
-	const temperatureChartData = $derived(
+	const airTemperatureChartData = $derived(
 		chronologicalHistory.map((entry) => ({
 			timestamp: entry.timestamp,
 			value: entry.temperature,
@@ -258,15 +446,39 @@
 		}))
 	);
 
-	const humidityChartData = $derived(
+	const airHumidityChartData = $derived(
 		chronologicalHistory.map((entry) => ({
 			timestamp: entry.timestamp,
-			value: entry.humidity
+			value: entry.humidity ?? 0
 		}))
 	);
 
-	// Calculate a reasonable temperature threshold (e.g., average + 1 std deviation, or use a fixed value)
-	const temperatureThreshold = $derived(temperatureStats.avg + temperatureStats.stdDeviation);
+	const soilTemperatureChartData = $derived(
+		chronologicalHistory.map((entry) => ({
+			timestamp: entry.timestamp,
+			value: entry.temperature
+		}))
+	);
+
+	const soilMoistureChartData = $derived(
+		chronologicalHistory.map((entry) => ({
+			timestamp: entry.timestamp,
+			value: entry.moisture ?? 0
+		}))
+	);
+
+	const soilEcChartData = $derived(
+		chronologicalHistory.map((entry) => ({
+			timestamp: entry.timestamp,
+			value: entry.ec ?? 0
+		}))
+	);
+
+	// Thresholds use avg + 1 std deviation for contextual coloring
+	const airTemperatureThreshold = $derived(temperatureStats.avg + temperatureStats.stdDeviation);
+	const soilTemperatureThreshold = $derived(temperatureStats.avg + temperatureStats.stdDeviation);
+	const soilMoistureThreshold = $derived(moistureStats.avg + moistureStats.stdDeviation);
+	const soilEcThreshold = $derived(ecStats.avg + ecStats.stdDeviation);
 
 	const heatmapRange = $derived.by(() => {
 		if (!history.length) return 'No history';
@@ -288,10 +500,16 @@
 		return `${fmt.format(oldestDate)} → ${fmt.format(newestDate)}`;
 	});
 
-	const heatmapPalette = {
+	const airHeatmapPalette = {
 		temperature: ['bg-sky-900', 'bg-sky-800', 'bg-sky-700', 'bg-sky-600', 'bg-rose-500'],
 		humidity: ['bg-slate-800', 'bg-teal-700', 'bg-teal-500', 'bg-teal-400', 'bg-cyan-300'],
 		co2: ['bg-slate-800', 'bg-lime-800', 'bg-lime-600', 'bg-amber-500', 'bg-red-500']
+	};
+
+	const soilHeatmapPalette = {
+		temperature: ['bg-slate-900', 'bg-amber-900', 'bg-amber-700', 'bg-amber-500', 'bg-rose-500'],
+		moisture: ['bg-slate-900', 'bg-emerald-900', 'bg-emerald-700', 'bg-emerald-500', 'bg-emerald-300'],
+		ec: ['bg-slate-900', 'bg-lime-900', 'bg-lime-700', 'bg-lime-500', 'bg-lime-300']
 	};
 
 	const formatter = new Intl.DateTimeFormat('en', {
@@ -300,12 +518,12 @@
 		timeZone: 'UTC'
 	});
 
-	const heatmapSeries = $derived.by(() => ({
+	const airHeatmapSeries = $derived.by(() => ({
 		temperature: {
 			key: 'temperature',
 			label: 'Temp',
 			unit: '°C',
-			palette: heatmapPalette.temperature,
+			palette: airHeatmapPalette.temperature,
 			points: chronologicalHistory.map((entry) => ({
 				label: formatHour(entry.timestamp),
 				value: entry.temperature,
@@ -316,10 +534,10 @@
 			key: 'humidity',
 			label: 'Humidity',
 			unit: '%',
-			palette: heatmapPalette.humidity,
+			palette: airHeatmapPalette.humidity,
 			points: chronologicalHistory.map((entry) => ({
 				label: formatHour(entry.timestamp),
-				value: entry.humidity,
+				value: entry.humidity ?? 0,
 				alert: entry.alert
 			}))
 		},
@@ -327,7 +545,7 @@
 			key: 'co2',
 			label: 'CO₂',
 			unit: 'ppm',
-			palette: heatmapPalette.co2,
+			palette: airHeatmapPalette.co2,
 			points: chronologicalHistory.map((entry) => ({
 				label: formatHour(entry.timestamp),
 				value: entry.co2 ?? 0,
@@ -336,13 +554,53 @@
 		}
 	}));
 
+	const soilHeatmapSeries = $derived.by(() => ({
+		temperature: {
+			key: 'temperature',
+			label: 'Soil Temp',
+			unit: '°C',
+			palette: soilHeatmapPalette.temperature,
+			points: chronologicalHistory.map((entry) => ({
+				label: formatHour(entry.timestamp),
+				value: entry.temperature,
+				alert: entry.alert
+			}))
+		},
+		moisture: {
+			key: 'moisture',
+			label: 'Moisture',
+			unit: '%',
+			palette: soilHeatmapPalette.moisture,
+			points: chronologicalHistory.map((entry) => ({
+				label: formatHour(entry.timestamp),
+				value: entry.moisture ?? 0,
+				alert: entry.alert
+			}))
+		},
+		ec: {
+			key: 'ec',
+			label: 'EC',
+			unit: 'mS/cm',
+			palette: soilHeatmapPalette.ec,
+			points: chronologicalHistory.map((entry) => ({
+				label: formatHour(entry.timestamp),
+				value: entry.ec ?? 0,
+				alert: entry.alert
+			}))
+		}
+	}));
+
+	const activeHeatmapSeries = $derived.by(() =>
+		isSoilDevice ? soilHeatmapSeries : airHeatmapSeries
+	);
+
 	function formatHour(timestamp: string) {
 		const date = new Date(timestamp);
 		if (Number.isNaN(date.getTime())) return '—';
 		return formatter.format(date);
 	}
 
-	const historyTableColumns = [
+	const airHistoryTableColumns = [
 		{
 			key: 'timestamp',
 			label: 'Timestamp (UTC)',
@@ -389,12 +647,59 @@
 		}
 	];
 
-	const historyTableItems = $derived(
+	const soilHistoryTableColumns = [
+		{
+			key: 'timestamp',
+			label: 'Timestamp (UTC)',
+			type: 'datetime' as const,
+			sortable: true
+		},
+		{
+			key: 'temperature',
+			label: 'Soil Temperature',
+			type: 'number' as const,
+			suffix: '°C',
+			sortable: true
+		},
+		{
+			key: 'moisture',
+			label: 'Soil Moisture',
+			type: 'number' as const,
+			suffix: '%',
+			sortable: true
+		},
+		{
+			key: 'ec',
+			label: 'Soil EC',
+			type: 'number' as const,
+			suffix: 'mS/cm',
+			sortable: true
+		}
+	];
+
+	const historyTableColumns = $derived.by(() =>
+		isSoilDevice ? soilHistoryTableColumns : airHistoryTableColumns
+	);
+
+	const airHistoryTableItems = $derived(
 		sortedHistory.map((entry) => ({
 			...entry,
 			co2: entry.co2 != null ? entry.co2 : '—',
 			alert: String(entry.alert)
 		}))
+	);
+
+	const soilHistoryTableItems = $derived(
+		sortedHistory.map((entry) => ({
+			timestamp: entry.timestamp,
+			temperature: entry.temperature,
+			moisture: entry.moisture ?? 0,
+			ec: entry.ec ?? 0
+		}))
+	);
+
+	const historyTableItems = $derived.by(() =>
+		isSoilDevice ? soilHistoryTableItems : airHistoryTableItems
 	);
 
 	const trafficRows = $derived(data.trafficRows ?? []);
@@ -500,7 +805,7 @@
 	function buildTrafficCsv(rows: TrafficRow[], rangeStart: Date, rangeEnd: Date) {
 		const startTime = rangeStart.getTime();
 		const endTime = rangeEnd.getTime();
-		const buckets = new Map<
+		const buckets = new SvelteMap<
 			string,
 			{
 				start: Date;
@@ -634,7 +939,7 @@
 			<div class="text-right text-sm text-slate-400">
 				<p>Location: Freezer Aisle 01</p>
 				<p>Facility: Miyazaki Processing Plant</p>
-				<p>Updated: {formatHour(latestReading.timestamp)} UTC</p>
+				<p>Updated: {formatHour(latestTimestamp)} UTC</p>
 			</div>
 		</div>
 	</header>
@@ -768,9 +1073,9 @@
 	{#if !isTrafficDevice}
 	<svelte:boundary>
 		<DeviceHeatmap
-			title="Thermal footprint"
+			title={isSoilDevice ? 'Soil footprint' : 'Thermal footprint'}
 			subtitle="Past 24 hours"
-			metrics={heatmapSeries}
+			metrics={activeHeatmapSeries}
 			dateRange={heatmapRange}
 		/>
 		{#snippet failed(error, reset)}
@@ -817,7 +1122,9 @@
 		<div class="flex flex-wrap items-center justify-between gap-4 mb-4">
 			<div>
 				<p class="text-xs uppercase tracking-[0.2em] text-slate-400">Line chart</p>
-				<h2 class="text-xl font-semibold text-white">Temperature & Humidity</h2>
+				<h2 class="text-xl font-semibold text-white">
+					{isSoilDevice ? 'Soil telemetry' : 'Temperature & Humidity'}
+				</h2>
 			</div>
 			<label
 				class="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-2 text-sm text-slate-200"
@@ -830,20 +1137,60 @@
 			<div class="flex items-center justify-center h-[350px] text-slate-400">
 				<p>Loading chart data…</p>
 			</div>
-		{:else if temperatureChartData.length === 0}
+		{:else if (isSoilDevice ? soilTemperatureChartData.length === 0 : airTemperatureChartData.length === 0)}
 			<div class="flex items-center justify-center h-[350px] text-slate-400">
 				<p>No data available for chart</p>
 			</div>
 		{:else}
-			<CWLineChart
-				data={temperatureChartData}
-				secondaryData={humidityChartData}
-				primaryLabel="Temperature"
-				secondaryLabel="Humidity"
-				primaryUnit="°C"
-				secondaryUnit="%"
-				height={350}
-			/>
+			{#if isSoilDevice}
+				<div class="grid gap-6 lg:grid-cols-3">
+					<div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+						<p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-3">
+							Soil Temperature
+						</p>
+						<CWLineChart
+							data={soilTemperatureChartData}
+							primaryLabel="Soil Temperature"
+							primaryUnit="°C"
+							threshold={soilTemperatureThreshold}
+							height={260}
+						/>
+					</div>
+					<div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+						<p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-3">
+							Soil Moisture
+						</p>
+						<CWLineChart
+							data={soilMoistureChartData}
+							primaryLabel="Soil Moisture"
+							primaryUnit="%"
+							threshold={soilMoistureThreshold}
+							height={260}
+						/>
+					</div>
+					<div class="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+						<p class="text-xs uppercase tracking-[0.2em] text-slate-400 mb-3">Soil EC</p>
+						<CWLineChart
+							data={soilEcChartData}
+							primaryLabel="Soil EC"
+							primaryUnit="mS/cm"
+							threshold={soilEcThreshold}
+							height={260}
+						/>
+					</div>
+				</div>
+			{:else}
+				<CWLineChart
+					data={airTemperatureChartData}
+					secondaryData={airHumidityChartData}
+					primaryLabel="Temperature"
+					secondaryLabel="Humidity"
+					primaryUnit="°C"
+					secondaryUnit="%"
+					threshold={airTemperatureThreshold}
+					height={350}
+				/>
+			{/if}
 		{/if}
 	</section>
 	{/if}

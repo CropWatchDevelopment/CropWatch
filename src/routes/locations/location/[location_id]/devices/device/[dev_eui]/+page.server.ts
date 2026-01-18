@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		console.error('Error fetching device type:', deviceInfoError);
 	}
 
-	const { points } = await fetchDeviceHistory({
+	const { points, meta } = await fetchDeviceHistory({
 		devEui: params.dev_eui,
 		limit: 2000,
 		hoursBack: 24,
@@ -76,11 +76,20 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	// }
 
 	return {
-		initialHistory: points ? points?.map((p) => ({
-			timestamp: p.timestamp,
-			primary: p.primary,
-			secondary: p.secondary
-		})) : [],
+		initialHistory: points
+			? points.map((p) => {
+					const ecRaw = p.raw?.['ec'];
+					const ecValue = typeof ecRaw === 'number' ? ecRaw : Number(ecRaw);
+					return {
+						timestamp: p.timestamp,
+						primary: p.primary,
+						secondary: p.secondary,
+						co2: p.co2 ?? null,
+						ec: Number.isFinite(ecValue) ? ecValue : null
+					};
+				})
+			: [],
+		historyMeta: meta ?? null,
 		deviceType: deviceInfo?.device_type ?? null,
 		trafficRows: trafficRows ?? [],
 		trafficDailyTotals: trafficDailyTotals ?? []
