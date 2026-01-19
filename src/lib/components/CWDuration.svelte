@@ -10,7 +10,7 @@
 		display = 'auto',
 		format = 'short'
 	}: {
-		date: Date;
+		date: Date | string | number | null | undefined;
 		display?: DisplayUnit;
 		format?: Format;
 	} = $props();
@@ -47,7 +47,19 @@
 		}
 	}
 
-	const dateMs = $derived(date.getTime());
+	const resolvedDate = $derived.by(() => {
+		if (!date) return null;
+		if (date instanceof Date) {
+			return Number.isFinite(date.getTime()) ? date : null;
+		}
+		if (typeof date === 'string' || typeof date === 'number') {
+			const parsed = new Date(date);
+			return Number.isFinite(parsed.getTime()) ? parsed : null;
+		}
+		return null;
+	});
+
+	const dateMs = $derived.by(() => (resolvedDate ? resolvedDate.getTime() : Number.NaN));
 	const isValid = $derived(Number.isFinite(dateMs));
 	const diffMs = $derived(isValid ? Math.abs(nowMs - dateMs) : 0);
 

@@ -209,46 +209,33 @@ function mapDevice(row: DeviceJoined): Device {
 	};
 }
 
-type CachedType = {
-	typeId: number;
-	row: DeviceTypeRow;
-};
-
-type CachedLocation = {
-	locationId: number;
-	row: LocationRow;
-};
-
-async function fetchDeviceType(
-	client: SupabaseClient<Database>,
-	typeId: number,
-	cache: Map<number, DeviceTypeRow>
+async function fetchCachedRow<Row>(
+	cache: Map<number, Row>,
+	key: number,
+	fetcher: () => Promise<Row | null>
 ) {
-	if (cache.has(typeId)) return cache.get(typeId) as DeviceTypeRow;
-	const { data, error } = await client
-		.from('cw_device_type')
-		.select('*')
-		.eq('id', typeId)
-		.maybeSingle();
-	if (error) throw error;
-	if (data) cache.set(typeId, data);
+	if (cache.has(key)) return cache.get(key) as Row;
+	const data = await fetcher();
+	if (data) cache.set(key, data);
 	return data ?? null;
 }
 
-async function fetchLocation(
+async function fetchCachedRowById<Row>(
 	client: SupabaseClient<Database>,
-	locationId: number,
-	cache: Map<number, LocationRow>
+	table: keyof Database['public']['Tables'],
+	idColumn: string,
+	id: number,
+	cache: Map<number, Row>
 ) {
-	if (cache.has(locationId)) return cache.get(locationId) as LocationRow;
-	const { data, error } = await client
-		.from('cw_locations')
-		.select('*')
-		.eq('location_id', locationId)
-		.maybeSingle();
-	if (error) throw error;
-	if (data) cache.set(locationId, data);
-	return data ?? null;
+	return fetchCachedRow(cache, id, async () => {
+		const { data, error } = await client
+			.from(table)
+			.select('*')
+			.eq(idColumn, id)
+			.maybeSingle();
+		if (error) throw error;
+		return data ?? null;
+	});
 }
 
 type BroadcastChangePayload<Row> = {
@@ -260,6 +247,13 @@ type BroadcastChangePayload<Row> = {
 		table?: string;
 		operation?: string;
 	};
+};
+
+type BroadcastContext = {
+	client: SupabaseClient<Database>;
+	appState: AppStateState;
+	typeCache: Map<number, DeviceTypeRow>;
+	locationCache: Map<number, LocationRow>;
 };
 
 async function ensureRealtimeAuthToken(
@@ -281,12 +275,24 @@ async function hydrateAndUpsertDevice(
 ) {
 	let device_type: DeviceTypeRow | null = null;
 	if (row.type != null) {
-		device_type = await fetchDeviceType(client, row.type, typeCache);
+		device_type = await fetchCachedRowById(
+			client,
+			'cw_device_type',
+			'id',
+			row.type,
+			typeCache
+		);
 	}
 
 	let location: LocationRow | null = null;
 	if (row.location_id != null) {
-		location = await fetchLocation(client, row.location_id, locationCache);
+		location = await fetchCachedRowById(
+			client,
+			'cw_locations',
+			'location_id',
+			row.location_id,
+			locationCache
+		);
 	}
 
 	const mapped = mapDevice({
@@ -330,6 +336,12 @@ export async function startDeviceRealtime(appState: AppStateState, session?: Aut
 	const typeCache = new Map<number, DeviceTypeRow>();
 	const locationCache = new Map<number, LocationRow>();
 	const broadcastCapable = await ensureRealtimeAuthToken(supabase, session);
+	const broadcastContext = {
+		client: supabase,
+		appState,
+		typeCache,
+		locationCache
+	};
 	
 	const channel = supabase.channel(
 		'cw_air_data',
@@ -349,30 +361,21 @@ export async function startDeviceRealtime(appState: AppStateState, session?: Aut
 				await handleBroadcastChange(
 					'INSERT',
 					payload as BroadcastChangePayload<DeviceRow>,
-					supabase,
-					appState,
-					typeCache,
-					locationCache
+					broadcastContext
 				);
 			})
 			.on('broadcast', { event: 'UPDATE' }, async (payload) => {
 				await handleBroadcastChange(
 					'UPDATE',
 					payload as BroadcastChangePayload<DeviceRow>,
-					supabase,
-					appState,
-					typeCache,
-					locationCache
+					broadcastContext
 				);
 			})
 			// .on('broadcast', { event: 'DELETE' }, async (payload) => {
 			// 	await handleBroadcastChange(
 			// 		'DELETE',
 			// 		payload as BroadcastChangePayload<DeviceRow>,
-			// 		supabase,
-			// 		appState,
-			// 		typeCache,
-			// 		locationCache
+			// 		broadcastContext
 			// 	);
 			// });
 	}
@@ -409,12 +412,9 @@ export async function startDeviceRealtime(appState: AppStateState, session?: Aut
 async function handleBroadcastChange(
 	op: 'INSERT' | 'UPDATE' | 'DELETE',
 	payload: BroadcastChangePayload<DeviceRow>,
-	client: SupabaseClient<Database>,
-	appState: AppStateState,
-	typeCache: Map<number, DeviceTypeRow>,
-	locationCache: Map<number, LocationRow>
+	context: BroadcastContext
 ) {
-	debugger;
+	const { client, appState, typeCache, locationCache } = context;
 	const record = payload?.payload?.record ?? null;
 	const previous = payload?.payload?.old_record ?? null;
 	const target = (record ?? previous) as DeviceRow | null;
@@ -601,6 +601,60 @@ export type DeviceHistoryPoint = {
 	raw: Record<string, unknown>;
 };
 
+type HistoryRow = Record<string, unknown>;
+
+const toFiniteNumber = (value: unknown) => {
+	const num = Number(value);
+	return Number.isFinite(num) ? num : null;
+};
+
+const getHistoryTimestamp = (row: HistoryRow) =>
+	(typeof row.created_at === 'string' && row.created_at) ||
+	(typeof row.timestamp === 'string' && row.timestamp) ||
+	'';
+
+const getCo2Key = (primaryKey?: string | null, secondaryKey?: string | null) => {
+	if (primaryKey && primaryKey.toLowerCase().includes('co2')) return primaryKey;
+	if (secondaryKey && secondaryKey.toLowerCase().includes('co2')) return secondaryKey;
+	return 'co2';
+};
+
+const findCo2Value = (row: HistoryRow, co2Key: string) => {
+	const co2Value = Number(row[co2Key] ?? null);
+	const fallbackCo2 =
+		co2Value && Number.isFinite(co2Value)
+			? co2Value
+			: (() => {
+					const foundKey = Object.keys(row).find((k) => k.toLowerCase().includes('co2'));
+					if (!foundKey) return null;
+					const val = Number(row[foundKey]);
+					return Number.isFinite(val) ? val : null;
+				})();
+
+	const resolved = co2Value ?? fallbackCo2;
+	return Number.isFinite(resolved) ? resolved : null;
+};
+
+const mapHistoryRow = (
+	row: HistoryRow,
+	primaryKey: string | null | undefined,
+	secondaryKey: string | null | undefined,
+	co2Key: string
+): DeviceHistoryPoint => {
+	const primary = primaryKey ? toFiniteNumber(row[primaryKey] ?? null) : null;
+	const secondary = secondaryKey ? toFiniteNumber(row[secondaryKey] ?? null) : null;
+	const battery = 'battery_level' in row ? toFiniteNumber(row['battery_level']) : null;
+
+	return {
+		timestamp: getHistoryTimestamp(row),
+		primary,
+		secondary,
+		co2: findCo2Value(row, co2Key),
+		battery,
+		raw: row
+	};
+};
+
 /**
  * Fetch historic data for a device based on its device_type.data_table_v2 definition.
  * This is intentionally client-friendly (uses publishable key) and limits rows to avoid heavy pulls.
@@ -634,10 +688,7 @@ export async function fetchDeviceHistory({
 	const table = deviceRow.device_type.data_table_v2;
 	const primaryKey = deviceRow.device_type.primary_data_v2;
 	const secondaryKey = deviceRow.device_type.secondary_data_v2;
-	const co2Key =
-		(primaryKey && primaryKey.toLowerCase().includes('co2') && primaryKey) ||
-		(secondaryKey && secondaryKey.toLowerCase().includes('co2') && secondaryKey) ||
-		'co2';
+	const co2Key = getCo2Key(primaryKey, secondaryKey);
 	const sinceIso = hoursBack ? new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString() : null;
 
 	let query = supabase
@@ -659,33 +710,7 @@ export async function fetchDeviceHistory({
 	if (historyError) throw historyError;
 
 	const points: DeviceHistoryPoint[] =
-		rows?.map((row: Record<string, unknown>) => {
-			const primary = primaryKey ? Number(row[primaryKey] ?? null) : null;
-			const secondary = secondaryKey ? Number(row[secondaryKey] ?? null) : null;
-			const battery = 'battery_level' in row ? Number(row['battery_level']) : null;
-			const co2Value = co2Key ? Number(row[co2Key] ?? null) : null;
-			const fallbackCo2 =
-				co2Value && Number.isFinite(co2Value)
-					? co2Value
-					: (() => {
-						const foundKey = Object.keys(row).find((k) => k.toLowerCase().includes('co2'));
-						if (!foundKey) return null;
-						const val = Number(row[foundKey]);
-						return Number.isFinite(val) ? val : null;
-					})();
-
-			return {
-				timestamp:
-					(typeof row.created_at === 'string' && row.created_at) ||
-					(typeof row.timestamp === 'string' && row.timestamp) ||
-					'',
-				primary: Number.isFinite(primary) ? (primary as number) : null,
-				secondary: Number.isFinite(secondary) ? (secondary as number) : null,
-				co2: Number.isFinite(co2Value ?? fallbackCo2) ? (co2Value ?? fallbackCo2) : null,
-				battery: Number.isFinite(battery) ? (battery as number) : null,
-				raw: row
-			};
-		}) ?? [];
+		rows?.map((row: HistoryRow) => mapHistoryRow(row, primaryKey, secondaryKey, co2Key)) ?? [];
 
 	return {
 		points,

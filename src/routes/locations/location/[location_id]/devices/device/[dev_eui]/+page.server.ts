@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
 	const { data: deviceInfo, error: deviceInfoError } = await locals.supabase
 		.from('cw_devices')
-		.select('dev_eui, type, device_type:cw_device_type(name, manufacturer, model)')
+		.select('dev_eui, name, type, device_type:cw_device_type(name, manufacturer, model)')
 		.eq('dev_eui', params.dev_eui)
 		.maybeSingle();
 
@@ -90,6 +90,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				})
 			: [],
 		historyMeta: meta ?? null,
+		deviceName: deviceInfo?.name ?? null,
 		deviceType: deviceInfo?.device_type ?? null,
 		trafficRows: trafficRows ?? [],
 		trafficDailyTotals: trafficDailyTotals ?? []
