@@ -79,7 +79,7 @@
 		"d3-axis": "^3.0.0",
 		"d3-scale": "^4.0.2",
 		"d3-selection": "^3.0.0",
-		"jspdf": "^3.0.3",
+		"jspdf": "^4.1.0",
 		"leaflet": "2.0.0-alpha",
 		"lodash": "^4.17.21",
 		"luxon": "^3.7.2",
