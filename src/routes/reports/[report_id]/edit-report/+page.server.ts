@@ -1,9 +1,13 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
+import { getSessionWithUser, requireSession } from '$lib/server/session';
 
 type DeviceRow = {
 	dev_eui: string;
-	cw_devices?: { name: string | null; location_id: number | null } | null;
+	cw_devices?:
+		| { name: string | null; location_id: number | null }
+		| { name: string | null; location_id: number | null }[]
+		| null;
 };
 
 type RecipientRow = {
@@ -11,7 +15,7 @@ type RecipientRow = {
 	name: string | null;
 	email: string | null;
 	communication_method: number;
-	communication_methods?: { name: string } | null;
+	communication_methods?: { name: string } | { name: string }[] | null;
 };
 
 type AlertPointRow = {
@@ -34,11 +38,7 @@ type ScheduleRow = {
 };
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { session } = await locals.safeGetSession();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
+	const session = await requireSession(locals);
 
 	const { supabase } = locals;
 	const reportId = params.report_id;
@@ -107,7 +107,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			name: row.name ?? undefined,
 			email: row.email ?? '',
 			communication_method: row.communication_method,
-			method_name: row.communication_methods?.name ?? 'Unknown'
+			method_name: Array.isArray(row.communication_methods)
+				? (row.communication_methods[0]?.name ?? 'Unknown')
+				: (row.communication_methods?.name ?? 'Unknown')
 		})) ?? [];
 
 	const { data: alertRows, error: alertsError } = await supabase
@@ -180,7 +182,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -241,7 +243,7 @@ export const actions: Actions = {
 		};
 	},
 	addRecipient: async ({ request, locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -277,7 +279,7 @@ export const actions: Actions = {
 		return { success: true, message: 'Recipient added.' };
 	},
 	deleteRecipient: async ({ request, locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -306,7 +308,7 @@ export const actions: Actions = {
 		return { success: true, message: 'Recipient removed.' };
 	},
 	addAlert: async ({ request, locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -354,7 +356,7 @@ export const actions: Actions = {
 		return { success: true, message: 'Alert saved.' };
 	},
 	deleteAlert: async ({ request, locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -383,7 +385,7 @@ export const actions: Actions = {
 		return { success: true, message: 'Alert removed.' };
 	},
 	saveSchedule: async ({ request, locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });

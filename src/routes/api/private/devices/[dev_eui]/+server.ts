@@ -1,5 +1,6 @@
-import { json } from '@sveltejs/kit';
+import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getSessionWithUser } from '$lib/server/session';
 
 /**
  * Delete a device by its DevEUI.
@@ -7,7 +8,7 @@ import type { RequestHandler } from './$types';
  */
 export const DELETE: RequestHandler = async ({ params, locals }) => {
 	// Verify authentication
-	const { session, user } = await locals.safeGetSession();
+	const { session, user } = await getSessionWithUser(locals);
 	if (!session || !user) {
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}
@@ -80,7 +81,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		// 		name: device.name
 		// 	}
 		// }, { status: 200 });
-        return redirect(`/locations/location/${device.location_id}/devices`, 303);
+		throw redirect(303, `/locations/location/${device.location_id}/devices`);
 
 	} catch (error) {
 		console.error('Error deleting device:', error);

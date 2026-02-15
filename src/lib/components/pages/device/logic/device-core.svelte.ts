@@ -28,6 +28,11 @@ export type TelemetryEntry = {
 	alert: boolean;
 };
 
+export type DateRangeValueLike = {
+	start: Date | null;
+	end: Date | null;
+};
+
 export const getSensorMode = (table?: string | null): SensorMode =>
 	table === 'cw_soil_data' ? 'soil' : 'air';
 
@@ -65,7 +70,8 @@ export const mapHistoryEntry = (point: HistoryPoint, mode: SensorMode): Telemetr
 export const mapHistory = (points: HistoryPoint[], mode: SensorMode) =>
 	points.map((point) => mapHistoryEntry(point, mode));
 
-export const TRAFFIC_TIME_ZONE = 'Asia/Tokyo';
+export const TOKYO_TIME_ZONE = 'Asia/Tokyo';
+export const TRAFFIC_TIME_ZONE = TOKYO_TIME_ZONE;
 
 export const trafficDateFormatterTZ = new Intl.DateTimeFormat('en-CA', {
 	timeZone: TRAFFIC_TIME_ZONE,
@@ -83,6 +89,15 @@ export const trafficDateTimeFormatterTZ = new Intl.DateTimeFormat('en-CA', {
 	minute: '2-digit',
 	second: '2-digit',
 	hour12: false
+});
+
+const isValidDate = (date: Date | null | undefined): date is Date =>
+	date instanceof Date && Number.isFinite(date.getTime());
+
+const getLocalDateParts = (date: Date) => ({
+	year: date.getFullYear(),
+	monthIndex: date.getMonth(),
+	day: date.getDate()
 });
 
 const getMonthPartsTZ = (date: Date) => {
@@ -114,9 +129,45 @@ const zonedDateToUtc = (
 	return new Date(utcGuess - offset);
 };
 
+export const getTokyoDayBounds = (date: Date) => {
+	const { year, monthIndex, day } = getLocalDateParts(date);
+	const start = zonedDateToUtc(year, monthIndex, day, 0, 0, 1);
+	const end = zonedDateToUtc(year, monthIndex, day, 23, 59, 59);
+	return { start, end };
+};
+
+export const getTokyoBoundsFromDateRange = (
+	range: DateRangeValueLike | null | undefined,
+	fallback?: { start: Date; end: Date }
+) => {
+	const startBounds = isValidDate(range?.start) ? getTokyoDayBounds(range.start) : null;
+	const endBounds = isValidDate(range?.end) ? getTokyoDayBounds(range.end) : null;
+
+	if (startBounds && endBounds) {
+		if (startBounds.start.getTime() <= endBounds.end.getTime()) {
+			return { start: startBounds.start, end: endBounds.end };
+		}
+		return { start: endBounds.start, end: startBounds.end };
+	}
+
+	if (startBounds) return startBounds;
+	if (endBounds) return endBounds;
+
+	if (fallback && isValidDate(fallback.start) && isValidDate(fallback.end)) {
+		const fallbackStartBounds = getTokyoDayBounds(fallback.start);
+		const fallbackEndBounds = getTokyoDayBounds(fallback.end);
+		if (fallbackStartBounds.start.getTime() <= fallbackEndBounds.end.getTime()) {
+			return { start: fallbackStartBounds.start, end: fallbackEndBounds.end };
+		}
+		return { start: fallbackEndBounds.start, end: fallbackStartBounds.end };
+	}
+
+	return getTokyoDayBounds(new Date());
+};
+
 export const getTokyoMonthBounds = (date: Date) => {
 	const { year, monthIndex } = getMonthPartsTZ(date);
-	const start = zonedDateToUtc(year, monthIndex, 1, 0, 0, 0);
+	const start = zonedDateToUtc(year, monthIndex, 1, 0, 0, 1);
 	const endDay = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 	const end = zonedDateToUtc(year, monthIndex, endDay, 23, 59, 59);
 	return { start, end };
@@ -157,9 +208,14 @@ const csvEscape = (value: string) => {
 	return value;
 };
 
+const csvNumber = (value: number | null | undefined) =>
+	typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+
 export const buildTrafficCsv = (rows: TrafficRow[], rangeStart: Date, rangeEnd: Date) => {
-	const startTime = rangeStart.getTime();
-	const endTime = rangeEnd.getTime();
+	const startTime = Math.min(rangeStart.getTime(), rangeEnd.getTime());
+	const endTime = Math.max(rangeStart.getTime(), rangeEnd.getTime());
+	const firstBucketTime = getLocalHourStartUtc(new Date(startTime)).getTime();
+	const lastBucketTime = getLocalHourStartUtc(new Date(endTime)).getTime();
 	const buckets = new SvelteMap<
 		string,
 		{
@@ -171,7 +227,7 @@ export const buildTrafficCsv = (rows: TrafficRow[], rangeStart: Date, rangeEnd: 
 			buses: number;
 		}
 	>();
-	for (let cursor = startTime; cursor <= endTime; cursor += 60 * 60 * 1000) {
+	for (let cursor = firstBucketTime; cursor <= lastBucketTime; cursor += 60 * 60 * 1000) {
 		const start = new Date(cursor);
 		buckets.set(start.toISOString(), {
 			start,
@@ -199,9 +255,10 @@ export const buildTrafficCsv = (rows: TrafficRow[], rangeStart: Date, rangeEnd: 
 	for (const row of rows) {
 		const trafficTimestamp = row.traffic_hour ?? row.created_at;
 		const trafficDate = new Date(trafficTimestamp);
-		if (!Number.isFinite(trafficDate.getTime())) continue;
+		const trafficTime = trafficDate.getTime();
+		if (!Number.isFinite(trafficTime)) continue;
+		if (trafficTime < startTime || trafficTime > endTime) continue;
 		const bucketStart = getLocalHourStartUtc(trafficDate);
-		if (bucketStart.getTime() < startTime || bucketStart.getTime() > endTime) continue;
 		const bucket = buckets.get(bucketStart.toISOString());
 		if (!bucket) continue;
 		bucket.people += row.people_count ?? 0;
@@ -224,6 +281,52 @@ export const buildTrafficCsv = (rows: TrafficRow[], rangeStart: Date, rangeEnd: 
 			String(bucket.trucks),
 			String(bucket.buses)
 		];
+		lines.push(values.map(csvEscape).join(','));
+	}
+
+	return lines.join('\n');
+};
+
+export const buildSensorCsv = (
+	history: TelemetryEntry[],
+	mode: SensorMode,
+	rangeStart: Date,
+	rangeEnd: Date
+) => {
+	const startTime = Math.min(rangeStart.getTime(), rangeEnd.getTime());
+	const endTime = Math.max(rangeStart.getTime(), rangeEnd.getTime());
+
+	const rows = history
+		.map((entry) => ({ entry, timestamp: new Date(entry.timestamp) }))
+		.filter(({ timestamp }) => {
+			const time = timestamp.getTime();
+			return Number.isFinite(time) && time >= startTime && time <= endTime;
+		})
+		.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+	const headers =
+		mode === 'soil'
+			? ['timestamp_local', 'timestamp_utc', 'temperature_c', 'moisture_pct', 'ec_ms_cm']
+			: ['timestamp_local', 'timestamp_utc', 'temperature_c', 'humidity_pct', 'co2_ppm'];
+	const lines = [headers.join(',')];
+
+	for (const { entry, timestamp } of rows) {
+		const values =
+			mode === 'soil'
+				? [
+						formatDateTimeTZ(timestamp),
+						timestamp.toISOString(),
+						csvNumber(entry.temperature),
+						csvNumber(entry.moisture),
+						csvNumber(entry.ec)
+					]
+				: [
+						formatDateTimeTZ(timestamp),
+						timestamp.toISOString(),
+						csvNumber(entry.temperature),
+						csvNumber(entry.humidity),
+						csvNumber(entry.co2)
+					];
 		lines.push(values.map(csvEscape).join(','));
 	}
 

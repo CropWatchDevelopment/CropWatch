@@ -1,9 +1,11 @@
 import type { LayoutServerLoad } from './$types';
 import { loadInitialAppState } from '$lib/data/SourceOfTruth.svelte';
 import { redirect } from '@sveltejs/kit';
+import { sessionToTokens } from '$lib/data/sessionTokens';
+import { getSessionWithUser } from '$lib/server/session';
 
 export const load: LayoutServerLoad = async ({ locals, cookies }) => {
-	const { session, user } = await locals.safeGetSession();
+	const { session, user } = await getSessionWithUser(locals);
 	
 	// If no valid session, the hooks.server.ts should have already redirected.
 	// But as a safety net, redirect here too if somehow we got here without a session.
@@ -23,11 +25,10 @@ export const load: LayoutServerLoad = async ({ locals, cookies }) => {
 		};
 	}
 
-	const tokens = {
-		access_token: session.access_token,
-		refresh_token: session.refresh_token
-	};
-	console.log(tokens);
+	const tokens = sessionToTokens(session);
+	if (!tokens) {
+		throw redirect(303, '/auth');
+	}
 
 	let profile: { id?: string; full_name?: string | null; avatar_url?: string | null; email?: string | null } | null = null;
 

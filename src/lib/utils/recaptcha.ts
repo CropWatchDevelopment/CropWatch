@@ -131,7 +131,7 @@ export async function executeRecaptcha(action: string): Promise<string> {
 const unload = (recaptchaSiteKey: string) => {
 	const nodeBadge = document.querySelector('.grecaptcha-badge');
 	if (nodeBadge) {
-		document.body.removeChild(nodeBadge.parentNode);
+		nodeBadge.parentElement?.remove();
 	}
 
 	// Prefer removing by our known id

@@ -1,12 +1,9 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { getSessionWithUser, requireSession } from '$lib/server/session';
 
 export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
-	const { session } = await safeGetSession();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
+	const session = await requireSession(safeGetSession);
 
 	// Fetch the user's profile
 	const { data: profile, error } = await supabase
@@ -27,7 +24,7 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 
 export const actions: Actions = {
 	updateProfile: async ({ request, locals: { supabase, safeGetSession } }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -63,7 +60,7 @@ export const actions: Actions = {
 	},
 
 	updatePassword: async ({ request, locals: { supabase, safeGetSession } }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -95,7 +92,7 @@ export const actions: Actions = {
 	},
 
 	uploadAvatar: async ({ request, locals: { supabase, safeGetSession } }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -161,7 +158,7 @@ export const actions: Actions = {
 	},
 
 	removeAvatar: async ({ locals: { supabase, safeGetSession } }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });

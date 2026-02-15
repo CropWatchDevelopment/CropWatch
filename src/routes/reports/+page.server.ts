@@ -1,5 +1,5 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { requireSession } from '$lib/server/session';
 
 type ReportRow = {
 	id: number;
@@ -7,15 +7,14 @@ type ReportRow = {
 	name: string;
 	dev_eui: string;
 	created_at: string;
-	device: { dev_eui: string; name: string | null; location_id: number | null } | null;
+	device:
+		| { dev_eui: string; name: string | null; location_id: number | null }
+		| { dev_eui: string; name: string | null; location_id: number | null }[]
+		| null;
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const { session } = await locals.safeGetSession();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
+	const session = await requireSession(locals);
 
 	const { supabase } = locals;
 

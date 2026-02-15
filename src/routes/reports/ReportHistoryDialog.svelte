@@ -120,7 +120,7 @@
 						<thead class="bg-slate-900/60 text-slate-300">
 							<tr>
 								<th class="px-3 py-2 text-left font-medium">File</th>
-								<th class="px-3 py-2 text-left font-medium">Updated</th>
+								<th class="px-3 py-2 text-left font-medium">Generated</th>
 								<th class="px-3 py-2 text-right font-medium">Size</th>
 								<th class="px-3 py-2 text-right font-medium">Download</th>
 							</tr>

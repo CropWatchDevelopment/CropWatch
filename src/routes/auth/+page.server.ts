@@ -3,9 +3,10 @@ import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { getSessionWithUser } from '$lib/server/session';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const { session } = await locals.safeGetSession();
+	const { session } = await getSessionWithUser(locals);
 	if (session) {
 		throw redirect(303, '/');
 	}

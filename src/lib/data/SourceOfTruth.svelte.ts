@@ -6,8 +6,6 @@ import type { Device } from '$lib/Interfaces/device.interface';
 import type { Facility } from '$lib/Interfaces/facility.interface';
 import type { Location } from '$lib/Interfaces/location.interface';
 import type { AppStateState } from '$lib/data/AppState.svelte';
-import { goto } from '$app/navigation';
-import { redirect } from '@sveltejs/kit';
 import type { Alert } from '$lib/Interfaces/alert.interface';
 
 type DeviceRow = Database['public']['Tables']['cw_devices']['Row'];
@@ -35,6 +33,12 @@ const DATA_TABLE_MAP = {
 	water: 'cw_water_data',
 	power: 'cw_power_data'
 } as const;
+type DataTableName = (typeof DATA_TABLE_MAP)[keyof typeof DATA_TABLE_MAP];
+const DATA_TABLE_NAMES = Object.values(DATA_TABLE_MAP) as DataTableName[];
+
+function isDataTableName(value: string): value is DataTableName {
+	return DATA_TABLE_NAMES.includes(value as DataTableName);
+}
 
 // Singleton client instance to avoid multiple GoTrueClient instances
 let supabaseClientInstance: SupabaseClient<Database> | null = null;
@@ -154,7 +158,7 @@ function computeStatus(
 }
 
 function mapAlert(row: CwRuleRow): Alert {
-	return { ...row, devEui: row.dev_eui, createdAt: new Date(row.created_at) };
+	return row;
 }
 
 function mapDevice(row: DeviceJoined): Device {
@@ -187,7 +191,11 @@ function mapDevice(row: DeviceJoined): Device {
 
 	const loc = row.location;
 	const lastSeen = row.last_data_updated_at ?? row.installed_at ?? '';
-	const status = computeStatus(lastSeen, row.upload_interval, deviceType?.default_upload_interval);
+	const status = computeStatus(
+		lastSeen,
+		row.upload_interval ?? null,
+		deviceType?.default_upload_interval ?? null
+	);
 	const groupKey = loc ? getGroupKey(loc.group ?? null) : 'ungrouped';
 
 	return {
@@ -234,7 +242,7 @@ async function fetchCachedRowById<Row>(
 			.eq(idColumn, id)
 			.maybeSingle();
 		if (error) throw error;
-		return data ?? null;
+		return (data as Row | null) ?? null;
 	});
 }
 
@@ -254,6 +262,12 @@ type BroadcastContext = {
 	appState: AppStateState;
 	typeCache: Map<number, DeviceTypeRow>;
 	locationCache: Map<number, LocationRow>;
+};
+
+type DevicePostgresChangePayload = {
+	eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+	new: DeviceRow | null;
+	old: DeviceRow | null;
 };
 
 async function ensureRealtimeAuthToken(
@@ -344,15 +358,15 @@ export async function startDeviceRealtime(appState: AppStateState, session?: Aut
 	};
 	
 	const channel = supabase.channel(
-		'cw_air_data',
+		'cw_devices_realtime',
 		broadcastCapable
 			? {
-				config: {
-					private: true,
-					broadcast: { self: false }
+					config: {
+						private: true,
+						broadcast: { self: false }
+					}
 				}
-			}
-			: undefined
+			: { config: { broadcast: { self: false } } }
 	);
 
 	if (broadcastCapable) {
@@ -371,42 +385,35 @@ export async function startDeviceRealtime(appState: AppStateState, session?: Aut
 					broadcastContext
 				);
 			})
-			// .on('broadcast', { event: 'DELETE' }, async (payload) => {
-			// 	await handleBroadcastChange(
-			// 		'DELETE',
-			// 		payload as BroadcastChangePayload<DeviceRow>,
-			// 		broadcastContext
-			// 	);
-			// });
+			.on('broadcast', { event: 'DELETE' }, async (payload) => {
+				await handleBroadcastChange(
+					'DELETE',
+					payload as BroadcastChangePayload<DeviceRow>,
+					broadcastContext
+				);
+			});
+	} else {
+		channel.on(
+			'postgres_changes',
+			{ event: '*', schema: 'public', table: 'cw_devices' },
+			async (payload) => {
+				await handlePostgresChange(
+					payload as unknown as DevicePostgresChangePayload,
+					broadcastContext
+				);
+			}
+		);
 	}
 
-	// channel
-	// 	.on(
-	// 		'postgres_changes',
-	// 		{ event: 'UPDATE', schema: 'public', table: 'cw_devices' },
-	// 		async (payload) => {
-	// 			await handlePayload('UPDATE', payload, supabase, appState, typeCache, locationCache);
-	// 		}
-	// 	)
-	// 	.on(
-	// 		'postgres_changes',
-	// 		{ event: 'INSERT', schema: 'public', table: 'cw_devices' },
-	// 		async (payload) => {
-	// 			await handlePayload('INSERT', payload, supabase, appState, typeCache, locationCache);
-	// 		}
-	// 	)
-	// 	.on(
-	// 		'postgres_changes',
-	// 		{ event: 'DELETE', schema: 'public', table: 'cw_devices' },
-	// 		async (payload) => {
-	// 			await handlePayload('DELETE', payload, supabase, appState, typeCache, locationCache);
-	// 		}
-	// 	)
-	// 	.subscribe();
+	channel.subscribe((status) => {
+		if (status === 'CHANNEL_ERROR') {
+			console.error('Device realtime channel failed to subscribe');
+		}
+	});
 
-	// return () => {
-	// 	supabase.removeChannel(channel);
-	// };
+	return () => {
+		void supabase.removeChannel(channel);
+	};
 }
 
 async function handleBroadcastChange(
@@ -429,27 +436,24 @@ async function handleBroadcastChange(
 	await hydrateAndUpsertDevice(target, client, appState, typeCache, locationCache);
 }
 
-// async function handlePayload(
-// 	op: 'INSERT' | 'UPDATE' | 'DELETE',
-// 	payload: { new: Record<string, unknown> | null; old?: Record<string, unknown> | null },
-// 	client: SupabaseClient<Database>,
-// 	appState: AppStateState,
-// 	typeCache: Map<number, DeviceTypeRow>,
-// 	locationCache: Map<number, LocationRow>
-// ) {
-// 	if (op === 'DELETE') {
-// 		const previous = (payload.old ?? payload.new) as DeviceRow | null;
-// 		if (previous?.dev_eui) {
-// 			removeDeviceFromState(appState, previous.dev_eui);
-// 		}
-// 		return;
-// 	}
-
-// 	const row = payload.new as DeviceRow | null;
-// 	if (!row?.dev_eui) return;
-
-// 	await hydrateAndUpsertDevice(row, client, appState, typeCache, locationCache);
-// }
+async function handlePostgresChange(
+	payload: DevicePostgresChangePayload,
+	context: BroadcastContext
+) {
+	await handleBroadcastChange(
+		payload.eventType,
+		{
+			event: payload.eventType,
+			payload: {
+				record: payload.new ?? null,
+				old_record: payload.old ?? null,
+				table: 'cw_devices',
+				operation: payload.eventType
+			}
+		},
+		context
+	);
+}
 
 export async function fetchDevicePage({
 	limit = 50,
@@ -499,8 +503,9 @@ export async function fetchDevicePage({
 	if (error) {
 		throw error;
 	}
-	const pageItems = data.slice(0, limit);
-	const nextCursor = data.length > limit ? data[limit].dev_eui : null;
+	const deviceRows = (data ?? []) as unknown as DeviceJoined[];
+	const pageItems = deviceRows.slice(0, limit);
+	const nextCursor = deviceRows.length > limit ? (deviceRows[limit]?.dev_eui ?? null) : null;
 
 	const devices = pageItems.map((row) => mapDevice(row as DeviceJoined));
 
@@ -580,7 +585,7 @@ export async function fetchDataTableRows({
 		.from(table)
 		.select('*')
 		.in('dev_eui', devEuis)
-		.order('created_at', { ascending: false, nulls: 'last' })
+		.order('created_at', { ascending: false, nullsFirst: false })
 		.limit(rowLimit);
 
 	if (error) throw error;
@@ -663,11 +668,15 @@ export async function fetchDeviceHistory({
 	devEui,
 	limit = 500,
 	hoursBack = 24,
+	start,
+	end,
 	session
 }: {
 	devEui: string;
 	limit?: number;
 	hoursBack?: number;
+	start?: Date;
+	end?: Date;
 	session?: AuthSession;
 }) {
 	const supabase = await createSupabaseClient(session);
@@ -681,24 +690,39 @@ export async function fetchDeviceHistory({
 		.maybeSingle();
 
 	if (deviceError) throw deviceError;
-	if (!deviceRow?.device_type?.data_table_v2) {
+	const deviceType = deviceRow?.device_type;
+	const rawTable = deviceType?.data_table_v2;
+	if (!deviceType || !rawTable || !isDataTableName(rawTable)) {
 		return { points: [] as DeviceHistoryPoint[], meta: null as unknown as Record<string, unknown> };
 	}
 
-	const table = deviceRow.device_type.data_table_v2;
-	const primaryKey = deviceRow.device_type.primary_data_v2;
-	const secondaryKey = deviceRow.device_type.secondary_data_v2;
+	const table: DataTableName = rawTable;
+	const primaryKey = deviceType.primary_data_v2;
+	const secondaryKey = deviceType.secondary_data_v2;
 	const co2Key = getCo2Key(primaryKey, secondaryKey);
-	const sinceIso = hoursBack ? new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString() : null;
+	const validStart = start instanceof Date && Number.isFinite(start.getTime()) ? start : null;
+	const validEnd = end instanceof Date && Number.isFinite(end.getTime()) ? end : null;
+	const normalizedStart =
+		validStart && validEnd && validStart.getTime() > validEnd.getTime() ? validEnd : validStart;
+	const normalizedEnd =
+		validStart && validEnd && validStart.getTime() > validEnd.getTime() ? validStart : validEnd;
+	const sinceIso =
+		normalizedStart?.toISOString() ??
+		(hoursBack ? new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString() : null);
+	const untilIso = normalizedEnd?.toISOString() ?? null;
 
 	let query = supabase
 		.from(table)
 		.select('*')
 		.eq('dev_eui', devEui)
-		.order('created_at', { ascending: false, nulls: 'last' });
+		.order('created_at', { ascending: false, nullsFirst: false });
 
 	if (sinceIso) {
 		query = query.gte('created_at', sinceIso);
+	}
+
+	if (untilIso) {
+		query = query.lte('created_at', untilIso);
 	}
 
 	if (limit) {

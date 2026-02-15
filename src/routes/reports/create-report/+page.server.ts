@@ -1,17 +1,17 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
+import { getSessionWithUser, requireSession } from '$lib/server/session';
 
 type DeviceRow = {
 	dev_eui: string;
-	cw_devices?: { name: string | null; location_id: number | null } | null;
+	cw_devices?:
+		| { name: string | null; location_id: number | null }
+		| { name: string | null; location_id: number | null }[]
+		| null;
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const { session } = await locals.safeGetSession();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
+	const session = await requireSession(locals);
 
 	const { supabase } = locals;
 
@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });

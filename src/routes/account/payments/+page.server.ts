@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { getSessionWithUser, requireSession } from '$lib/server/session';
 
 // Note: Install stripe package: pnpm add stripe
 // Also add STRIPE_SECRET_KEY to your .env file
@@ -74,11 +75,7 @@ async function getStripe(): Promise<StripeClient> {
 const DEVICE_SEAT_PRICE_ID = 'price_1SZrUrFvjxXrUyebK37ukkxW';
 
 export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession }, url }) => {
-	const { session } = await safeGetSession();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
+	const session = await requireSession(safeGetSession);
 
 	// Fetch user's devices (devices they own)
 	const { data: deviceOwners, error: deviceError } = await supabase
@@ -178,7 +175,7 @@ export const actions: Actions = {
 	 * Create a Stripe Checkout session for purchasing device seats
 	 */
 	createCheckout: async ({ request, locals: { supabase, safeGetSession }, url }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -254,7 +251,7 @@ export const actions: Actions = {
 	 * Process successful checkout and create device seats
 	 */
 	processCheckoutSuccess: async ({ request, locals: { supabase, safeGetSession } }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -332,7 +329,7 @@ export const actions: Actions = {
 	 * Assign a device to a seat
 	 */
 	assignDevice: async ({ request, locals: { supabase, safeGetSession } }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
@@ -410,7 +407,7 @@ export const actions: Actions = {
 	 * Add more seats to an existing subscription
 	 */
 	addSeats: async ({ request, locals: { supabase, safeGetSession } }) => {
-		const { session } = await safeGetSession();
+		const { session } = await getSessionWithUser(safeGetSession);
 
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });

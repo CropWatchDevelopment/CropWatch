@@ -4,9 +4,8 @@ import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const { session } = await locals.safeGetSession();
-	// If user is already logged in, they don't need password reset
-	// but we still allow access to the page
+	void locals;
+	// Logged in users can still access the reset flow.
 	return {};
 };
 

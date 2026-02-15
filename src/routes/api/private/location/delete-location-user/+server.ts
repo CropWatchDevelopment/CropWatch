@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getSessionWithUser } from '$lib/server/session';
 
 /**
  * Delete a device by its DevEUI.
@@ -7,7 +8,7 @@ import type { RequestHandler } from './$types';
  */
 export const DELETE: RequestHandler = async ({ request, params, locals }) => {
 	// Verify authentication
-	const { session, user } = await locals.safeGetSession();
+	const { session, user } = await getSessionWithUser(locals);
 	if (!session || !user) {
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}

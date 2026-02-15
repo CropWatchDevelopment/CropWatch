@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getSessionWithUser } from '$lib/server/session';
 
 /**
  * Check if a device with the given DevEUI already exists in the database.
@@ -7,7 +8,7 @@ import type { RequestHandler } from './$types';
  */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	// Verify authentication
-	const { session, user } = await locals.safeGetSession();
+	const { session, user } = await getSessionWithUser(locals);
 	if (!session || !user) {
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}

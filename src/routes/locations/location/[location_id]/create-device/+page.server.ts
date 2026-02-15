@@ -1,8 +1,9 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
+import { getSessionWithUser } from '$lib/server/session';
 
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
-	const { session, user } = await locals.safeGetSession();
+	const { session, user } = await getSessionWithUser(locals);
 	if (!session || !user) {
 		throw redirect(303, '/auth');
 	}
@@ -68,7 +69,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 
 export const actions: Actions = {
 	default: async ({ request, params, locals }) => {
-		const { session, user } = await locals.safeGetSession();
+		const { session, user } = await getSessionWithUser(locals);
 		if (!session || !user) {
 			return fail(401, { error: 'Unauthorized' });
 		}

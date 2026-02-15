@@ -1,5 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
+import { getSessionWithUser, requireSession } from '$lib/server/session';
 
 type RuleRow = {
 	id: number;
@@ -12,7 +13,10 @@ type RuleRow = {
 	action_recipient: string;
 	notifier_type: number;
 	send_using: string | null;
-	device: { dev_eui: string; name: string | null; location_id: number | null } | null;
+	device:
+		| { dev_eui: string; name: string | null; location_id: number | null }
+		| { dev_eui: string; name: string | null; location_id: number | null }[]
+		| null;
 	criteria: {
 		id: number;
 		subject: string;
@@ -34,11 +38,7 @@ type NotifierTypeRow = {
 };
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { session } = await locals.safeGetSession();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
+	const session = await requireSession(locals);
 
 	const { supabase } = locals;
 	const { rule_id } = params;
@@ -135,7 +135,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 export const actions: Actions = {
 	update: async ({ request, locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
 		}
@@ -269,7 +269,7 @@ export const actions: Actions = {
 	},
 
 	delete: async ({ locals, params }) => {
-		const { session } = await locals.safeGetSession();
+		const { session } = await getSessionWithUser(locals);
 		if (!session) {
 			return fail(401, { error: 'Unauthorized' });
 		}

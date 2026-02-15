@@ -19,8 +19,7 @@
 	let {
 		rows = [],
 		dailyTotals = [],
-		deviceName = 'Single camera',
-		subtitle = 'Monthly calendar (daily totals) · Click a day for hourly breakdown'
+		deviceName = 'Single camera'
 	}: {
 		rows?: TrafficRow[];
 		dailyTotals?: {
@@ -76,7 +75,11 @@
 
 	const aggregated = $derived.by(() => aggregateRows(rows));
 	const dailyTotalsMap = $derived.by(() =>
-		dailyTotals.length ? buildDailyTotalsMap(dailyTotals) : aggregated.dailyTotals
+		rows.length
+			? aggregated.dailyTotals
+			: dailyTotals.length
+				? buildDailyTotalsMap(dailyTotals)
+				: aggregated.dailyTotals
 	);
 	const availableLines = $derived.by(() => (aggregated.lines.length ? aggregated.lines : ['L1']));
 	const monthOptions = $derived.by(() => buildMonthOptions(currentMonth));
@@ -119,7 +122,7 @@
 
 	const selectedTotals = $derived.by(() => {
 		if (!selectedDate) return null;
-		return aggregated.dailyTotals.get(selectedDate) ?? null;
+		return dailyTotalsMap.get(selectedDate) ?? null;
 	});
 
 	const selectedLine = $derived.by(() =>
@@ -169,7 +172,7 @@
 		params.set('trafficEnd', end.toISOString());
 		await goto(`${page.url.pathname}?${params.toString()}`, {
 			replaceState: true,
-			keepfocus: true,
+			keepFocus: true,
 			noScroll: true
 		});
 	}
@@ -446,7 +449,6 @@
 	<div class="p-3.5 border-b border-white/[0.14] bg-[rgba(14,26,51,0.78)] shadow-[0_8px_24px_rgba(0,0,0,0.28)] flex gap-3 items-center justify-between flex-wrap overflow-visible">
 		<div class="flex flex-col gap-0.5">
 			<div class="font-extrabold tracking-[0.2px]">Traffic counts · {deviceName}</div>
-			<div class="text-[#f2f6ff]/70 text-base">{subtitle}</div>
 		</div>
 		<div class="flex gap-2.5 items-center flex-row w-[50%] max-w-full">
 			<span class="flex flex-auto"></span>
@@ -474,7 +476,6 @@
 			<div class="flex items-start justify-between gap-3 flex-wrap">
 				<div>
 					<h2 class="font-extrabold text-lg tracking-[0.2px] m-0">{monthLabel} · Daily totals</h2>
-					<div class="text-[#f2f6ff]/70 text-base mt-1">Daily totals shown per day cell. UTC hours.</div>
 				</div>
 				<div class="flex flex-wrap gap-2 gap-x-2.5 items-center px-3 py-2.5 rounded-[14px] bg-[rgba(22,36,74,0.78)] border border-white/[0.14] shadow-[0_10px_28px_rgba(0,0,0,0.35)] max-w-full">
 					{#each CLASSES as klass (klass.key)}

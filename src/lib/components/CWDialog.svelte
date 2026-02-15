@@ -52,7 +52,7 @@
 	>
 		<!-- Dialog Panel -->
 		<div
-			class="relative max-h-[90vh] w-full max-w-lg overflow-auto rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-xl shadow-black/40 ring-1 ring-slate-800"
+			class="relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-xl shadow-black/40 ring-1 ring-slate-800"
 			transition:scale={{ duration: 150, start: 0.95 }}
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}

@@ -1,12 +1,16 @@
-import { invalidateAll } from '$app/navigation';
 import type { AppState } from '$lib/Interfaces/appState.interface';
-import type { Device } from '$lib/Interfaces/device.interface';
-import { getContext, setContext } from 'svelte';
-
-const APP_STATE_KEY = 'appState';
+import { createContext } from 'svelte';
 
 export type AppStateState = ReturnType<typeof createAppState>;
 export type AppStateGetter = () => AppStateState;
+export type SelectionId = string | 'all';
+export type FiltersContext = {
+	getFacility: () => SelectionId;
+	getLocation: () => SelectionId;
+};
+
+const [useAppStateContext, provideAppStateContext] = createContext<AppStateGetter>();
+const [useFiltersContext, provideFiltersContext] = createContext<FiltersContext>();
 
 export function createAppState(initial: AppState) {
 	let appState = $state({
@@ -23,15 +27,18 @@ export function createAppState(initial: AppState) {
 }
 
 export function provideAppState(state: AppStateState) {
-	// Expose a getter so children stay reactive without mutating our binding
-	setContext(APP_STATE_KEY, () => state);
+	// Expose a getter so children stay reactive without mutating our binding.
+	provideAppStateContext(() => state);
 }
 
 export function useAppState(): AppStateGetter {
-	const getter = getContext<AppStateGetter>(APP_STATE_KEY);
-	if (!getter) {
-		throw new Error('appState context not found');
-	}
+	return useAppStateContext();
+}
 
-	return getter;
+export function provideFilters(filters: FiltersContext) {
+	provideFiltersContext(filters);
+}
+
+export function useFilters(): FiltersContext {
+	return useFiltersContext();
 }

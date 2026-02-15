@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { PRIVATE_TTI_API_URL, PRIVATE_TTI_API_KEY } from '$env/static/private';
+import { getSessionWithUser } from '$lib/server/session';
 
 /**
  * Verify if a device exists in The Things Industries (TTI) by its DevEUI.
@@ -13,7 +14,7 @@ import { PRIVATE_TTI_API_URL, PRIVATE_TTI_API_KEY } from '$env/static/private';
  */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	// Verify authentication
-	const { session, user } = await locals.safeGetSession();
+	const { session, user } = await getSessionWithUser(locals);
 	if (!session || !user) {
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}

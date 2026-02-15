@@ -1,11 +1,11 @@
 import type { PageServerLoad } from './$types';
 import { fetchDeviceHistory } from '$lib/data/SourceOfTruth.svelte';
+import { requireSession } from '$lib/server/session';
+import { sessionToTokens } from '$lib/data/sessionTokens';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
-	const { session } = await locals.safeGetSession?.();
-	const tokens = session
-		? { access_token: session.access_token, refresh_token: session.refresh_token }
-		: undefined;
+	const session = await requireSession(locals);
+	const tokens = sessionToTokens(session);
 
 	const { data: deviceInfo, error: deviceInfoError } = await locals.supabase
 		.from('cw_devices')

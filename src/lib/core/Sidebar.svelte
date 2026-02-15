@@ -117,7 +117,8 @@
 		};
 		const escHandler = (event: KeyboardEvent) => {
 			if (event.key === 'Escape') {
-				closeDrawer();
+				debugger;
+				toggleDrawer();
 			}
 		};
 

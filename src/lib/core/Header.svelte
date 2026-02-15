@@ -8,7 +8,6 @@
 	import LOCK_ICON from '$lib/images/icons/lock.svg';
 	import LOGOUT_ICON from '$lib/images/icons/logout.svg';
 	import type { AppState } from '$lib/Interfaces/appState.interface';
-	import { getContext } from 'svelte';
 	import { getToastContext } from '$lib/components/toast';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import COMPARE_ARROWS_ICON from '$lib/images/icons/compare_arrows.svg';
@@ -16,10 +15,11 @@
 	import REPORT_ICON from '$lib/images/icons/picture_as_pdf.svg';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import type { SupabaseClient } from '@supabase/supabase-js';
+	import { useAppState } from '$lib/data/AppState.svelte';
 
 	const toast = getToastContext();
 
-	const getAppState = getContext<() => AppState>('appState');
+	const getAppState = useAppState();
 	let appState = $derived(getAppState());
 
 	let { isLoggedIn, profile, userEmail, supabase } = $props<{

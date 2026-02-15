@@ -1,18 +1,11 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { fetchDeviceHistory } from '$lib/data/SourceOfTruth.svelte';
+import { requireSession } from '$lib/server/session';
+import { sessionToTokens } from '$lib/data/sessionTokens';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const { session } = await locals.safeGetSession?.();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
-
-	const tokens = {
-		access_token: session.access_token,
-		refresh_token: session.refresh_token
-	};
+	const session = await requireSession(locals);
+	const tokens = sessionToTokens(session);
 
 	const { points } = await fetchDeviceHistory({
 		devEui: params.dev_eui,

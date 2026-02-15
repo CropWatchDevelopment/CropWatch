@@ -1,5 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getSessionWithUser } from '$lib/server/session';
+import { fetchDeviceHistory } from '$lib/data/SourceOfTruth.svelte';
+import { sessionToTokens } from '$lib/data/sessionTokens';
 
 /**
  * Get historical data for a specific device.
@@ -11,18 +14,12 @@ import type { RequestHandler } from './$types';
  */
 export const GET: RequestHandler = async ({ params, url, locals }) => {
 	// Verify authentication
-	const { session } = await locals.safeGetSession();
-	if (!session) {
+	const { session, user } = await getSessionWithUser(locals);
+	if (!session || !user) {
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}
 
 	const supabase = locals.supabase;
-
-	// Get authenticated user for security
-	const { data: { user }, error: userError } = await supabase.auth.getUser();
-	if (userError || !user) {
-		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
-	}
 
 	const devEui = params.dev_eui;
 
@@ -34,8 +31,10 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
 	// Parse query parameters
 	const startParam = url.searchParams.get('start');
 	const endParam = url.searchParams.get('end');
-	const metric = url.searchParams.get('metric') || 'temperature';
-	const limit = Math.min(parseInt(url.searchParams.get('limit') || '1000', 10), 5000);
+	const rawParam = url.searchParams.get('raw');
+	const rawMode = rawParam === '1' || rawParam === 'true';
+	const metricParam = url.searchParams.get('metric') || 'temperature';
+	const limit = Math.min(parseInt(url.searchParams.get('limit') || '1000', 10), 20000);
 
 	// Default to last 7 days if no dates provided
 	const end = endParam ? new Date(endParam) : new Date();
@@ -47,12 +46,34 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
 	}
 
 	// Validate metric
-	const validMetrics = ['temperature', 'humidity', 'co2'];
-	if (!validMetrics.includes(metric)) {
+	const validMetrics = ['temperature', 'humidity', 'co2'] as const;
+	type Metric = (typeof validMetrics)[number];
+	if (!rawMode && !validMetrics.includes(metricParam as Metric)) {
 		return json({ success: false, error: 'Invalid metric' }, { status: 400 });
 	}
+	const metric = metricParam as Metric;
 
 	try {
+		if (rawMode) {
+			const { points, meta } = await fetchDeviceHistory({
+				devEui,
+				limit,
+				start,
+				end,
+				session: sessionToTokens(session)
+			});
+
+			return json({
+				success: true,
+				devEui,
+				start: start.toISOString(),
+				end: end.toISOString(),
+				points,
+				meta,
+				count: points.length
+			});
+		}
+
 		// First verify user has access to this device
 		const { data: ownership, error: ownershipError } = await supabase
 			.from('cw_device_owners')
@@ -71,7 +92,7 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
 		}
 
 		// Map metric to database column
-		const columnMap: Record<string, string> = {
+		const columnMap: Record<Metric, 'temperature_c' | 'humidity' | 'co2'> = {
 			temperature: 'temperature_c',
 			humidity: 'humidity',
 			co2: 'co2'
@@ -81,7 +102,7 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
 		// Fetch historical data from cw_air_data
 		const { data: history, error: historyError } = await supabase
 			.from('cw_air_data')
-			.select(`created_at, ${column}`)
+			.select('created_at, temperature_c, humidity, co2')
 			.eq('dev_eui', devEui)
 			.gte('created_at', start.toISOString())
 			.lte('created_at', end.toISOString())

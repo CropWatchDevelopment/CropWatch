@@ -6,14 +6,13 @@
 	import type { Facility } from '$lib/Interfaces/facility.interface';
 	import type { Location } from '$lib/Interfaces/location.interface';
 	import './layout.css';
-	import type { AppState } from '$lib/Interfaces/appState.interface';
-	import { createAppState, provideAppState, useAppState } from '$lib/data/AppState.svelte';
-	import { setContext, type Snippet } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+	import { createAppState, provideAppState, provideFilters } from '$lib/data/AppState.svelte';
+	import type { SelectionId } from '$lib/data/AppState.svelte';
+	import { type Snippet } from 'svelte';
 	import { CWToastContainer, createToastContext } from '$lib/components/toast';
 	import { invalidate } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import type { SupabaseClient, Session, AuthChangeEvent } from '@supabase/supabase-js';
+	import type { SupabaseClient, Session } from '@supabase/supabase-js';
 
 	interface Props {
 		data: {
@@ -41,13 +40,13 @@
 	createToastContext();
 
 	let appState = createAppState({
-		facilities: data.facilities,
-		locations: data.locations,
-		devices: data.devices,
-		alerts: data.alerts,
-		isLoggedIn: data.isLoggedIn ?? false,
-		profile: data.profile ?? null,
-		userEmail: data.user?.email ?? null
+		facilities: [],
+		locations: [],
+		devices: [],
+		alerts: [],
+		isLoggedIn: false,
+		profile: null,
+		userEmail: null
 	});
 
 	$effect(() => {
@@ -62,7 +61,7 @@
 
 	// Listen for auth state changes and invalidate to refresh data
 	onMount(() => {
-		const { data: { subscription } } = data.supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+		const { data: { subscription } } = data.supabase.auth.onAuthStateChange((_, session: Session | null) => {
 			if (session?.expires_at !== data.session?.expires_at) {
 				invalidate('supabase:auth');
 			}
@@ -73,31 +72,13 @@
 
 	provideAppState(appState);
 
-	let selectedFacilityId = $state<string | 'all'>('all');
-	let selectedLocationId = $state<string | 'all'>('all');
-
-	const filterSubscribers = new SvelteSet<
-		(payload: { facility: string | 'all'; location: string | 'all' }) => void
-	>();
-
-	function notifyFilters() {
-		const payload = { facility: selectedFacilityId, location: selectedLocationId };
-		filterSubscribers.forEach((run) => run(payload));
-	}
-
-	$effect(() => {
-		notifyFilters();
-	});
+	let selectedFacilityId = $state<SelectionId>('all');
+	let selectedLocationId = $state<SelectionId>('all');
 
 	// Share selection with child pages and keep them reactive
-	setContext('filters', {
+	provideFilters({
 		getFacility: () => selectedFacilityId,
-		getLocation: () => selectedLocationId,
-		subscribe(run: (payload: { facility: string | 'all'; location: string | 'all' }) => void) {
-			filterSubscribers.add(run);
-			run({ facility: selectedFacilityId, location: selectedLocationId });
-			return () => filterSubscribers.delete(run);
-		}
+		getLocation: () => selectedLocationId
 	});
 
 	const locationsForFacility = $derived(

@@ -1,5 +1,5 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { requireSession } from '$lib/server/session';
 
 type GatewayRecord = {
 	id: number;
@@ -34,11 +34,7 @@ type GatewayWithDevices = GatewayRecord & {
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const { session } = await locals.safeGetSession();
-
-	if (!session) {
-		throw redirect(303, '/auth');
-	}
+	const session = await requireSession(locals);
 
 	const { supabase } = locals;
 

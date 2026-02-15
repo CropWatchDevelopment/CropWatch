@@ -53,6 +53,9 @@
 	let width = $state(600);
 	let mouseX = $state(0);
 	let mouseY = $state(0);
+	let showPrimary = $state(true);
+	let showSecondary = $state(true);
+	let showThreshold = $state(true);
 	let tooltipData = $state<{
 		primary?: { value: number; timestamp: Date; alert?: DataPoint['alert'] };
 		secondary?: { value: number; timestamp: Date };
@@ -61,16 +64,24 @@
 	// Chart margins
 	const margin = { top: 20, right: secondaryData.length > 0 ? 60 : 20, bottom: 60, left: 60 };
 
+	const thresholdValue = $derived.by(() => {
+		const numeric = Number(threshold);
+		if (!Number.isFinite(numeric)) return 0;
+		return Math.round(numeric * 100) / 100;
+	});
+	const thresholdLabel = $derived(`${thresholdValue.toFixed(2)}${primaryUnit}`);
+
 	// Calculate chart dimensions
 	const chartWidth = $derived(Math.max(0, width - margin.left - margin.right));
 	const chartHeight = $derived(Math.max(0, height - margin.top - margin.bottom));
 
 	// Calculate primary Y-axis range
 	const primaryMinMax = $derived.by(() => {
-		if (data.length === 0) return { min: 0, max: 100 };
 		const values = data.map((d) => d.value);
-		const min = Math.min(...values, threshold);
-		const max = Math.max(...values, threshold);
+		if (showThreshold) values.push(thresholdValue);
+		if (values.length === 0) return { min: 0, max: 100 };
+		const min = Math.min(...values);
+		const max = Math.max(...values);
 		const padding = (max - min) * 0.1 || 1;
 		return { min: min - padding, max: max + padding };
 	});
@@ -169,7 +180,7 @@
 	});
 
 	// Threshold line Y position
-	const thresholdLineY = $derived(scalePrimaryY(threshold));
+	const thresholdLineY = $derived(scalePrimaryY(thresholdValue));
 
 	// X-axis time labels
 	const timeLabels = $derived.by(() => {
@@ -227,28 +238,36 @@
 			tooltipData = null;
 			return;
 		}
+		if (!showPrimary && !showSecondary) {
+			tooltipData = null;
+			return;
+		}
 
 		// Find closest primary data point
 		let closestPrimary: DataPoint | null = null;
 		let closestPrimaryDist = Infinity;
-		for (const d of data) {
-			const x = scaleX(d.timestamp);
-			const dist = Math.abs(x - relativeX);
-			if (dist < closestPrimaryDist) {
-				closestPrimaryDist = dist;
-				closestPrimary = d;
+		if (showPrimary) {
+			for (const d of data) {
+				const x = scaleX(d.timestamp);
+				const dist = Math.abs(x - relativeX);
+				if (dist < closestPrimaryDist) {
+					closestPrimaryDist = dist;
+					closestPrimary = d;
+				}
 			}
 		}
 
 		// Find closest secondary data point
 		let closestSecondary: SecondaryDataPoint | null = null;
 		let closestSecondaryDist = Infinity;
-		for (const d of secondaryData) {
-			const x = scaleX(d.timestamp);
-			const dist = Math.abs(x - relativeX);
-			if (dist < closestSecondaryDist) {
-				closestSecondaryDist = dist;
-				closestSecondary = d;
+		if (showSecondary) {
+			for (const d of secondaryData) {
+				const x = scaleX(d.timestamp);
+				const dist = Math.abs(x - relativeX);
+				if (dist < closestSecondaryDist) {
+					closestSecondaryDist = dist;
+					closestSecondary = d;
+				}
 			}
 		}
 
@@ -338,27 +357,29 @@
 			{/if}
 
 			<!-- Threshold line -->
-			<line
-				x1="0"
-				y1={thresholdLineY}
-				x2={chartWidth}
-				y2={thresholdLineY}
-				stroke="rgb(148 163 184)"
-				stroke-width="2"
-				stroke-dasharray="6,4"
-			/>
-			<text
-				x={chartWidth + 5}
-				y={thresholdLineY}
-				fill="rgb(148 163 184)"
-				font-size="10"
-				dominant-baseline="middle"
-			>
-				{threshold}{primaryUnit}
-			</text>
+			{#if showThreshold}
+				<line
+					x1="0"
+					y1={thresholdLineY}
+					x2={chartWidth}
+					y2={thresholdLineY}
+					stroke="rgb(148 163 184)"
+					stroke-width="2"
+					stroke-dasharray="6,4"
+				/>
+				<text
+					x={chartWidth + 5}
+					y={thresholdLineY}
+					fill="rgb(148 163 184)"
+					font-size="10"
+					dominant-baseline="middle"
+				>
+					{thresholdLabel}
+				</text>
+			{/if}
 
 			<!-- Primary data line with vertical gradient -->
-			{#if primaryPath}
+			{#if showPrimary && primaryPath}
 				<path 
 					d={primaryPath} 
 					fill="none" 
@@ -370,43 +391,47 @@
 			{/if}
 
 			<!-- Secondary data line -->
-			{#if secondaryPath}
+			{#if showSecondary && secondaryPath}
 				<path d={secondaryPath} fill="none" stroke="rgb(168 85 247)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6,3" />
 			{/if}
 
 			<!-- Data points for primary -->
-			{#each data as point, i (i)}
-				<circle
-					cx={scaleX(point.timestamp)}
-					cy={scalePrimaryY(point.value)}
-					r="3"
-					fill={point.value > threshold ? 'rgb(239 68 68)' : 'rgb(59 130 246)'}
-					stroke="rgb(15 23 42)"
-					stroke-width="1"
-				/>
-			{/each}
+			{#if showPrimary}
+				{#each data as point, i (i)}
+					<circle
+						cx={scaleX(point.timestamp)}
+						cy={scalePrimaryY(point.value)}
+						r="3"
+						fill={point.value > thresholdValue ? 'rgb(239 68 68)' : 'rgb(59 130 246)'}
+						stroke="rgb(15 23 42)"
+						stroke-width="1"
+					/>
+				{/each}
+			{/if}
 
 			<!-- Alert markers -->
-			{#each alertPoints as alert (alert.alert.id)}
-				<g transform="translate({alert.x}, {alert.y - 20})">
-					<circle
-						r="10"
-						fill={alert.alert.severity === 'critical' ? 'rgb(239 68 68)' : 'rgb(245 158 11)'}
-						stroke="rgb(15 23 42)"
-						stroke-width="2"
-						class="animate-pulse"
-					/>
-					<text
-						y="4"
-						fill="white"
-						font-size="12"
-						font-weight="bold"
-						text-anchor="middle"
-					>
-						!
-					</text>
-				</g>
-			{/each}
+			{#if showPrimary}
+				{#each alertPoints as alert (alert.alert.id)}
+					<g transform="translate({alert.x}, {alert.y - 20})">
+						<circle
+							r="10"
+							fill={alert.alert.severity === 'critical' ? 'rgb(239 68 68)' : 'rgb(245 158 11)'}
+							stroke="rgb(15 23 42)"
+							stroke-width="2"
+							class="animate-pulse"
+						/>
+						<text
+							y="4"
+							fill="white"
+							font-size="12"
+							font-weight="bold"
+							text-anchor="middle"
+						>
+							!
+						</text>
+					</g>
+				{/each}
+			{/if}
 
 			<!-- Primary Y-axis (left) -->
 			<g>
@@ -434,7 +459,7 @@
 			</g>
 
 			<!-- Secondary Y-axis (right) -->
-			{#if secondaryData.length > 0}
+			{#if secondaryData.length > 0 && showSecondary}
 				<g transform="translate({chartWidth}, 0)">
 					<line x1="0" y1="0" x2="0" y2={chartHeight} stroke="rgb(71 85 105)" stroke-width="1" />
 					{#each secondaryTicks as tick (tick)}
@@ -520,17 +545,38 @@
 	<div class="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-4 text-xs">
 		<div class="flex items-center gap-1.5">
 			<span class="h-0.5 w-4 rounded bg-sky-500"></span>
-			<span class="text-slate-400">{primaryLabel}</span>
+			<button
+				type="button"
+				class={`transition ${showPrimary ? 'text-slate-300' : 'text-slate-500 line-through'}`}
+				onclick={() => (showPrimary = !showPrimary)}
+				aria-pressed={showPrimary}
+			>
+				{primaryLabel}
+			</button>
 		</div>
 		{#if secondaryData.length > 0}
 			<div class="flex items-center gap-1.5">
 				<span class="h-0.5 w-4 rounded bg-purple-500" style="background: repeating-linear-gradient(90deg, rgb(168 85 247), rgb(168 85 247) 4px, transparent 4px, transparent 6px);"></span>
-				<span class="text-slate-400">{secondaryLabel}</span>
+				<button
+					type="button"
+					class={`transition ${showSecondary ? 'text-slate-300' : 'text-slate-500 line-through'}`}
+					onclick={() => (showSecondary = !showSecondary)}
+					aria-pressed={showSecondary}
+				>
+					{secondaryLabel}
+				</button>
 			</div>
 		{/if}
 		<div class="flex items-center gap-1.5">
 			<span class="h-0.5 w-4 border-t-2 border-dashed border-slate-400"></span>
-			<span class="text-slate-400">Threshold ({threshold}{primaryUnit})</span>
+			<button
+				type="button"
+				class={`transition ${showThreshold ? 'text-slate-300' : 'text-slate-500 line-through'}`}
+				onclick={() => (showThreshold = !showThreshold)}
+				aria-pressed={showThreshold}
+			>
+				Threshold ({thresholdLabel})
+			</button>
 		</div>
 	</div>
 </div>
