@@ -1,0 +1,8 @@
+export interface IDevice {
+    dev_eui: string;
+    name: string;
+    location_name: string;
+    created_at: Date;
+    co2: number;
+    temperature_c: number;
+}
