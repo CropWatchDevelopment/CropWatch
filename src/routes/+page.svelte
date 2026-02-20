@@ -1,6 +1,8 @@
 <script lang="ts">
 	import {
+		CwBadge,
 		CwButton,
+		CwChip,
 		CwDataTable,
 		CwDuration,
 		type CwColumnDef,
@@ -14,6 +16,8 @@
 		PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT
 	} from '$env/static/public';
 	import { goto } from '$app/navigation';
+	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
+	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
 
 	type PagableDevices = {
 		data: IDevice[];
@@ -36,6 +40,22 @@
 	let total = $state(0);
 	let servedInitialRows = $state(false);
 	let refreshingByDevEui = $state<Record<string, boolean>>({});
+	const offlineThresholdMs = 11 * 60 * 1000;
+	const alertCo2Threshold = 1200;
+	let headerRows = $derived(servedInitialRows ? rows : serverRows);
+
+	let devicesInView = $derived(headerRows.length);
+	let offlineCount = $derived(
+		headerRows.filter((row) => Date.now() - new Date(row.created_at).getTime() > offlineThresholdMs).length
+	);
+	let alertCount = $derived(
+		headerRows.filter(
+			(row) =>
+				Date.now() - new Date(row.created_at).getTime() > offlineThresholdMs ||
+				Number(row.co2 ?? 0) >= alertCo2Threshold
+		).length
+	);
+	let onlineCount = $derived(Math.max(0, devicesInView - offlineCount));
 
 	const columns: CwColumnDef<IDevice>[] = [
 		{ key: 'name', header: 'Device Name', sortable: true },
@@ -119,7 +139,88 @@
 	function showDetail(device: IDevice) {
 		alert(`Details: ${device.name}`);
 	}
+
+	function refreshDashboard() {
+		window.location.reload();
+	}
 </script>
+
+<header style="margin-bottom: 23px;" class="flex-none">
+	<div class="flex min-h-12 items-center justify-between px-6 py-3 md:py-4">
+		<div class="hidden flex-col gap-1 md:flex">
+			<div class="flex items-center gap-2 text-xs text-slate-400">
+				<span>Group</span>
+				<span class="text-slate-600">/</span>
+				<span class="truncate">All groups</span>
+			</div>
+		</div>
+
+		<div class="hidden items-center gap-3 text-xs md:flex">
+			<CwChip
+				label="Online"
+				tone="success"
+				variant="soft"
+				size="sm"
+				class="!rounded-full !bg-emerald-500/10 !text-emerald-300 !ring-1 !ring-emerald-500/30"
+			/>
+			<CwChip
+				label="Offline"
+				tone="danger"
+				variant="soft"
+				size="sm"
+				class="!rounded-full !bg-rose-500/10 !text-rose-300 !ring-1 !ring-rose-500/30"
+			/>
+			<CwChip
+				label="Alert"
+				tone="warning"
+				variant="soft"
+				size="sm"
+				class="!rounded-full !bg-amber-500/10 !text-amber-300 !ring-1 !ring-amber-500/30"
+			/>
+		</div>
+	</div>
+
+	<div
+		class="flex min-h-[4rem] flex-row items-end justify-between gap-3 border-t border-slate-800 px-6 py-3 mb-3 text-xs md:py-4"
+	>
+		<div class="hidden flex-col gap-2 text-slate-400 md:flex">
+			<div class="flex flex-wrap items-center gap-3">
+				<span class="flex items-center gap-1">
+					<span class="font-mono text-slate-100">{devicesInView}</span>
+					<span>devices in view</span>
+				</span>
+				<span class="flex items-center gap-1 text-amber-200">
+					<span class="font-mono">{alertCount}</span>
+					<span>with active alerts</span>
+				</span>
+			</div>
+			<span class="flex items-center gap-1 text-rose-300">
+				<span class="font-mono">{offlineCount}</span>
+				<span>offline</span>
+			</span>
+		</div>
+
+		<div id="Dashboard__Overview__actions" class="flex w-full items-center justify-end gap-3 md:w-auto">
+			<span class="hidden flex-1 md:flex"></span>
+
+			<CwButton
+				variant="secondary"
+				onclick={refreshDashboard}
+			>
+				<img src={REFRESH_ICON} alt="Refresh Icon" class="h-4 w-4" />
+				Refresh
+			</CwButton>
+
+			<CwBadge value={alertCount} position="bottom_left" size="md" tone="danger">
+				<CwButton
+					variant="secondary"
+				>
+					<img src={NOTIFICATIONS_ICON} alt="Notifications Icon" class="h-5 w-5" />
+				</CwButton>
+			</CwBadge>
+		</div>
+	</div>
+</header>
 
 <CwDataTable
 	{columns}
@@ -132,11 +233,31 @@
 >
 	{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
 		{#if col.key === 'lastSeen'}
+			<!--OPTION 1 ICON ONLY-->
+			<!-- <CwChip
+				label={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}
+				tone={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? 'danger' : 'success'}
+			/> -->
+
+			<!-- OPTION 2 ICON + DURATION -->
+			{new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}
 			<CwDuration
 				from={row.created_at}
-				alarmAfterMinutes={11}
+				alarmAfterMinutes={10.5}
 				alarmCallback={() => void loadSingleDevice(row.dev_eui)}
 			/>
+
+			<!-- OPTION 3 JUST DURATION WITH ALARM -->
+			<!-- {#if new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000}
+				❌
+				<CwDuration
+					from={row.created_at}
+					alarmAfterMinutes={10.5}
+					alarmCallback={() => void loadSingleDevice(row.dev_eui)}
+				/>
+			{:else}
+				✅
+			{/if} -->
 		{:else}
 			{defaultValue}
 		{/if}
