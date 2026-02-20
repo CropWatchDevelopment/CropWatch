@@ -4,5 +4,6 @@ export interface IDevice {
     location_name: string;
     created_at: Date;
     co2: number;
+    humidity: number;
     temperature_c: number;
 }

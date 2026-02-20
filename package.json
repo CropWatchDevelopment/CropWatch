@@ -34,6 +34,7 @@
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.15.0",
 		"globals": "^17.3.0",
+		"jwt-decode": "^4.0.0",
 		"playwright": "^1.58.2",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.5.0",
@@ -50,6 +51,6 @@
 	},
 	"packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd",
 	"dependencies": {
-		"@cropwatchdevelopment/cwui": "^0.1.8"
+		"@cropwatchdevelopment/cwui": "^0.1.11"
 	}
 }
