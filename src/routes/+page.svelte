@@ -27,9 +27,11 @@
 	interface PageData {
 		pagableDevices: PagableDevices;
 		locals: App.Locals;
+		statuses: Promise<{ online: number; offline: number }>;
 	}
 
 	let { data }: { data: PageData } = $props();
+	$inspect(data);
 
 	const initialPageSize = 10;
 	let jwt = $derived(data.locals?.jwtString);
@@ -46,7 +48,8 @@
 
 	let devicesInView = $derived(headerRows.length);
 	let offlineCount = $derived(
-		headerRows.filter((row) => Date.now() - new Date(row.created_at).getTime() > offlineThresholdMs).length
+		headerRows.filter((row) => Date.now() - new Date(row.created_at).getTime() > offlineThresholdMs)
+			.length
 	);
 	let alertCount = $derived(
 		headerRows.filter(
@@ -97,7 +100,8 @@
 				throw new Error(`Failed to load devices (${response.status})`);
 			}
 
-			const result = (await response.json()) as PagableDevices;
+			// const result = (await response.json()) as PagableDevices;
+			const result = data.pagableDevices;
 			rows = result.data ?? [];
 			total = result.total ?? 0;
 			return { rows, total };
@@ -118,8 +122,10 @@
 				}
 			);
 			if (!response.ok) {
-				debugger;
-				goto('/auth/login');
+				if (response.status === 401) {
+					document.location.href = '/auth/login';
+					return;
+				}
 				throw new Error(`Failed to load device ${devEUI} (${response.status})`);
 			}
 
@@ -181,7 +187,7 @@
 	</div>
 
 	<div
-		class="flex min-h-[4rem] flex-row items-end justify-between gap-3 border-t border-slate-800 px-6 py-3 mb-3 text-xs md:py-4"
+		class="mb-3 flex min-h-[4rem] flex-row items-end justify-between gap-3 border-t border-slate-800 px-6 py-3 text-xs md:py-4"
 	>
 		<div class="hidden flex-col gap-2 text-slate-400 md:flex">
 			<div class="flex flex-wrap items-center gap-3">
@@ -194,27 +200,31 @@
 					<span>with active alerts</span>
 				</span>
 			</div>
-			<span class="flex items-center gap-1 text-rose-300">
-				<span class="font-mono">{offlineCount}</span>
-				<span>offline</span>
+			<span class="flex items-center gap-1">
+				{#await data.statuses}
+					Loading device status summary...
+				{:then statuses}
+				
+					<p class="text-emerald-300">Total Online: {statuses.online}</p> | <p class="text-rose-300">Total Offline: {statuses.offline}</p>
+				{:catch error}
+					Error loading statuses: {error.message}
+				{/await}
 			</span>
 		</div>
 
-		<div id="Dashboard__Overview__actions" class="flex w-full items-center justify-end gap-3 md:w-auto">
+		<div
+			id="Dashboard__Overview__actions"
+			class="flex w-full items-center justify-end gap-3 md:w-auto"
+		>
 			<span class="hidden flex-1 md:flex"></span>
 
-			<CwButton
-				variant="secondary"
-				onclick={refreshDashboard}
-			>
+			<CwButton variant="secondary" onclick={refreshDashboard}>
 				<img src={REFRESH_ICON} alt="Refresh Icon" class="h-4 w-4" />
 				Refresh
 			</CwButton>
 
 			<CwBadge value={alertCount} position="bottom_left" size="md" tone="danger">
-				<CwButton
-					variant="secondary"
-				>
+				<CwButton variant="secondary">
 					<img src={NOTIFICATIONS_ICON} alt="Notifications Icon" class="h-5 w-5" />
 				</CwButton>
 			</CwBadge>

@@ -7,6 +7,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onDestroy, onMount } from 'svelte';
+    import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
 	import {
 		loadRecaptchaScript,
 		executeRecaptcha,
@@ -26,6 +27,8 @@
 	let loggingIn: boolean = $state(false);
 	let loadingCaptcha: boolean = $state(true);
 	let recaptchaReady: boolean = $state(false);
+    let username: string = $state('');
+    let password: string = $state('');
 
 	const RECAPTCHA_TIMEOUT_MS = 12_000;
 	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 3;
@@ -104,6 +107,11 @@
 		}
 	}
 
+    function passwordStrengthCheck(password: string) {
+        // Simple password strength check (can be enhanced with a library like zxcvbn)
+        const result = isStrongPassword(password);
+    }
+
 	onMount(() => {
 		void ensureRecaptchaLoaded();
 	});
@@ -170,6 +178,7 @@
 			<label class="field-block">
 				<span class="field-label">EMAIL</span>
 				<CwInput
+                    bind:value={username}
 					class="auth-input"
 					name="email"
 					type="email"
@@ -182,6 +191,8 @@
 			<label class="field-block">
 				<span class="field-label">PASSWORD</span>
 				<CwInput
+                    bind:value={password}
+                    onchange={(event) => passwordStrengthCheck(password)}
 					class="auth-input"
 					name="password"
 					type="password"
@@ -190,13 +201,15 @@
 					autocomplete="current-password"
 				/>
 			</label>
-
+            <span class="flex flex-row">
+                
+            </span>
 			<CwButton
 				class="auth-primary"
 				type="submit"
 				variant="primary"
 				loading={loggingIn || loadingCaptcha}
-				disabled={loggingIn || loadingCaptcha}
+				disabled={loggingIn || loadingCaptcha || (!username || !password)}
 				size="md"
 				fullWidth={true}
 			>

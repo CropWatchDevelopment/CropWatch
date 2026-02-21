@@ -1,14 +1,10 @@
 <script lang="ts">
 	import '@cropwatchdevelopment/cwui/styles';
-	import CropWatchLOGO from '$lib/images/cropwatch_static.svg';
 	import './layout.css';
 	import {
 		createCwToastContext,
 		CwOfflineOverlay,
-		CwSearchInput,
-		CwSideNav,
 		CwToastContainer,
-		type CwSideNavItem,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
 	import { page } from '$app/state';
@@ -18,13 +14,17 @@
 
 	let { children } = $props();
 	createCwToastContext();
+	
 
 	let mode = $state<CwSideNavMode>('open');
-
 	let isAuthRoute: boolean = $derived(page.url.pathname.startsWith('/auth'));
+
+
 </script>
 
+<CwOfflineOverlay />
 <CwToastContainer />
+
 <div style="display:flex; height:100vh">
 	{#if !isAuthRoute}
 		<Sidebar bind:mode />
@@ -43,4 +43,3 @@
 	{/if}
 </div>
 
-<CwOfflineOverlay />
