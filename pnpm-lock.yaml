@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@cropwatchdevelopment/cwui':
-        specifier: ^0.1.16
-        version: 0.1.16(svelte@5.53.0)
+        specifier: ^0.1.17
+        version: 0.1.17(svelte@5.53.0)
     devDependencies:
       '@eslint/compat':
         specifier: ^2.0.2
@@ -108,8 +108,8 @@ importers:
 
 packages:
 
-  '@cropwatchdevelopment/cwui@0.1.16':
-    resolution: {integrity: sha512-9SmhGyPWLtxUYazvac90YdDopXm+Nhshopnc6TGNe1Vao6MDiQE4WzgNX7l4TmMGtbk7WLFH/sWClpEdkhOOyQ==, tarball: https://npm.pkg.github.com/download/@cropwatchdevelopment/cwui/0.1.16/e139e4c82919cab53a11d9f3bc3f1a9766683fbf}
+  '@cropwatchdevelopment/cwui@0.1.17':
+    resolution: {integrity: sha512-qP1Uzm1DEhco0aLELyKOz9KTOpwMg1PEN6RQegJ0BnF6At8h8aKcCYLWlmpvwmN7y9favD8dlkVgIe1aYdcF7w==, tarball: https://npm.pkg.github.com/download/@cropwatchdevelopment/cwui/0.1.17/1728f5e932cc906999e3ad384c3a6583e924a623}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -1939,7 +1939,7 @@ packages:
 
 snapshots:
 
-  '@cropwatchdevelopment/cwui@0.1.16(svelte@5.53.0)':
+  '@cropwatchdevelopment/cwui@0.1.17(svelte@5.53.0)':
     dependencies:
       svelte: 5.53.0
 

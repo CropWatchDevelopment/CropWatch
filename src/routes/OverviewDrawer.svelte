@@ -1,24 +1,39 @@
 <script lang="ts">
+	import { getAppContext } from '$lib/appContext.svelte';
 	import {
 		CwCard,
-		CwChip,
 		CwDonutChart,
 		CwDrawer,
-		type CwDonutSegment
+		type CwDonutSegment,
+		type CwDrawerItem
 	} from '@cropwatchdevelopment/cwui';
 
+	interface AlertRow {
+		id: string;
+		icon: string;
+		name: string;
+		reported: string;
+	}
+
+	const app = getAppContext();
+	$inspect(app);
+
+	let totalDevices = $derived(app.deviceStatuses.online + app.deviceStatuses.offline);
+	let offlineDevices = $derived(app.deviceStatuses.offline);
+	let onlineDevices = $derived(Math.max(0, totalDevices - offlineDevices));
+	let alertCount = $derived(app.triggeredRulesCount || 0);
+
 	let drawerOpen: boolean = $state(false);
-	const barItems: CwDrawerItem[] = [
-		{ id: 'online', label: 'Online 169', tone: 'success' },
-		{ id: 'offline', label: 'Offline 27', tone: 'danger' },
-		{ id: 'alerts', label: 'Alerts 10', tone: 'warning' },
-		{ id: 'loading', label: 'Loading 0', tone: 'secondary' }
-	];
-	const statusSegments: CwDonutSegment[] = [
-		{ label: 'Online', value: 169, color: 'var(--cw-success-500)' },
-		{ label: 'Offline', value: 27, color: 'var(--cw-danger-500)' },
-		{ label: 'Alerts', value: 10, color: 'var(--cw-warning-500)' }
-	];
+	let barItems = $derived<CwDrawerItem[]>([
+		{ id: 'online', label: `Online ${onlineDevices}`, tone: 'success' },
+		{ id: 'offline', label: `Offline ${offlineDevices}`, tone: 'danger' },
+		{ id: 'alerts', label: `Alerts ${alertCount}`, tone: 'warning' }
+	]);
+	let statusSegments = $derived<CwDonutSegment[]>([
+		{ label: 'Online', value: onlineDevices, color: 'var(--cw-success-500)' },
+		{ label: 'Offline', value: offlineDevices, color: 'var(--cw-danger-500)' },
+		{ label: 'Alerts', value: alertCount, color: 'var(--cw-warning-500)' }
+	]);
 
 	const topGroups = [
 		{ name: 'Ungrouped', count: 91 },
@@ -27,18 +42,16 @@
 		{ name: 'SA', count: 11 }
 	];
 	const maxGroupCount = Math.max(...topGroups.map((g) => g.count));
-	const alerts: AlertRow[] = [
-		{ id: 'a1', icon: '🔔', name: 'Test for development!', reported: '9/17/2024, 5:09:49 PM' },
-		{ id: 'a2', icon: '🔔', name: 'test', reported: '9/21/2025, 10:58:16 PM' },
-		{ id: 'a3', icon: '🔔', name: 'test', reported: '9/28/2025, 9:00:49 PM' },
-		{ id: 'a4', icon: '🔔', name: '冷蔵', reported: '10/16/2025, 11:42:40 PM' },
-		{ id: 'a5', icon: '🔔', name: '冷蔵', reported: '10/16/2025, 11:46:16 PM' },
-		{ id: 'a6', icon: '🔔', name: 'TEST RULE', reported: '1/28/2026, 5:32:35 PM' }
-	];
+	const alerts: AlertRow[] = app.triggeredRules.map((rule) => ({
+		id: rule.id,
+		icon: '🔔',
+		name: rule.name,
+		reported: new Date(rule.last_triggered as Date).toLocaleString()
+	}));
 </script>
 
 <CwDrawer bind:open={drawerOpen} label="Alerts" items={barItems} height="18rem">
-	<div class="flex flex-row w-full gap-6 p-4">
+	<div class="flex w-full flex-row gap-6 p-4">
 		<!-- Status Mix card -->
 		<CwCard class="w-full">
 			<div class="status-card">
@@ -79,7 +92,7 @@
 					<span class="groups-card__title">Top groups</span>
 					<span class="groups-card__subtitle">In view</span>
 				</div>
-				{#each topGroups as group}
+				{#each topGroups as group (group.name)}
 					<div class="groups-card__row">
 						<span class="groups-card__name">{group.name}</span>
 						<span class="groups-card__count">{group.count}</span>
@@ -101,7 +114,7 @@
 					<span class="alerts-card__title">Active Alert List</span>
 					<span class="alerts-card__subtitle">Reported Time</span>
 				</div>
-				<div class="alerts-card__list">
+				<div class="alerts-card__list" style="overflow-y: scroll;">
 					{#each alerts as alert (alert.id)}
 						<div class="alerts-card__row">
 							<span class="alerts-card__icon">🔔</span>

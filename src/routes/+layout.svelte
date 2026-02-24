@@ -11,15 +11,27 @@
 	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Header from './Header.svelte';
 	import Sidebar from './Sidebar.svelte';
+	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
+	import type { LayoutProps } from './$types';
 
-	let { children } = $props();
+	let { data, children }: LayoutProps = $props();
 	createCwToastContext();
-	
 
 	let mode = $state<CwSideNavMode>('open');
 	let isAuthRoute: boolean = $derived(page.url.pathname.startsWith('/auth'));
 
-
+	const app = $state(
+		createAppContext({
+			session: (() => data.session)(),
+			devices: (() => data.devices)(),
+			deviceStatuses: (() => data.deviceStatuses)(),
+			triggeredRules: (() => data.triggeredRules)(),
+			triggeredRulesCount: (() => data.triggeredRulesCount.triggered_count)(),
+			accessToken: (() => data.authToken)(),
+		})
+	);
+	setAppContext(app);
+	$inspect(app);
 </script>
 
 <CwOfflineOverlay />
@@ -42,4 +54,3 @@
 		</main>
 	{/if}
 </div>
-

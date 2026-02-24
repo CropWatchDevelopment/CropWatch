@@ -15,9 +15,9 @@
 		PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT,
 		PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT
 	} from '$env/static/public';
-	import { goto } from '$app/navigation';
 	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
 	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
+	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
 
 	type PagableDevices = {
 		data: IDevice[];
@@ -31,19 +31,19 @@
 	}
 
 	let { data }: { data: PageData } = $props();
-	$inspect(data);
+
+	const app = getAppContext();
+	$inspect(app);
 
 	const initialPageSize = 10;
-	let jwt = $derived(data.locals?.jwtString);
-	let serverRows = $derived(data.pagableDevices?.data ?? []);
-	let serverTotal = $derived(data.pagableDevices?.total ?? serverRows.length);
+	let serverRows = $derived(app.devices ?? []);
+	let serverTotal = $derived(app.deviceStatuses.offline + app.deviceStatuses.online);
 	let loading = $state(false);
 	let rows = $state<IDevice[]>([]);
 	let total = $state(0);
 	let servedInitialRows = $state(false);
 	let refreshingByDevEui = $state<Record<string, boolean>>({});
 	const offlineThresholdMs = 11 * 60 * 1000;
-	const alertCo2Threshold = 1200;
 	let headerRows = $derived(servedInitialRows ? rows : serverRows);
 
 	let devicesInView = $derived(headerRows.length);
@@ -51,14 +51,6 @@
 		headerRows.filter((row) => Date.now() - new Date(row.created_at).getTime() > offlineThresholdMs)
 			.length
 	);
-	let alertCount = $derived(
-		headerRows.filter(
-			(row) =>
-				Date.now() - new Date(row.created_at).getTime() > offlineThresholdMs ||
-				Number(row.co2 ?? 0) >= alertCo2Threshold
-		).length
-	);
-	let onlineCount = $derived(Math.max(0, devicesInView - offlineCount));
 
 	const columns: CwColumnDef<IDevice>[] = [
 		{ key: 'name', header: 'Device Name', sortable: true },
@@ -78,7 +70,6 @@
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
 		loading = true;
-
 		try {
 			const isInitialQuery =
 				query.page === 1 && query.pageSize === initialPageSize && !query.search && !query.sort;
@@ -90,19 +81,20 @@
 				return { rows, total };
 			}
 
+			
+			// const singleDeviceFetchEndpoint = PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT.replace('{dev_eui}', query.search ?? '');
+			debugger;
 			const response = await fetch(
 				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}?skip=${(query.page - 1) * query.pageSize}&take=${query.pageSize}`,
 				{
-					headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined
+					headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined
 				}
 			);
-			if (!response.ok) {
-				throw new Error(`Failed to load devices (${response.status})`);
-			}
 
 			// const result = (await response.json()) as PagableDevices;
-			const result = data.pagableDevices;
-			rows = result.data ?? [];
+			const result = (await response.json()) as PagableDevices;
+
+			rows = app.devices ?? [];
 			total = result.total ?? 0;
 			return { rows, total };
 		} finally {
@@ -113,17 +105,18 @@
 	async function loadSingleDevice(devEUI: string) {
 		if (refreshingByDevEui[devEUI]) return;
 		refreshingByDevEui[devEUI] = true;
-
 		try {
 			const response = await fetch(
 				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT.replace('{dev_eui}', devEUI)}`,
 				{
-					headers: jwt ? { Authorization: `Bearer ${jwt}` } : undefined
+					headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined
 				}
 			);
 			if (!response.ok) {
+				debugger;
 				if (response.status === 401) {
 					document.location.href = '/auth/login';
+					
 					return;
 				}
 				throw new Error(`Failed to load device ${devEUI} (${response.status})`);
@@ -196,19 +189,14 @@
 					<span>devices in view</span>
 				</span>
 				<span class="flex items-center gap-1 text-amber-200">
-					<span class="font-mono">{alertCount}</span>
+					<span class="font-mono">{app.triggeredRules.triggered_count}</span>
 					<span>with active alerts</span>
 				</span>
 			</div>
 			<span class="flex items-center gap-1">
-				{#await data.statuses}
-					Loading device status summary...
-				{:then statuses}
-				
-					<p class="text-emerald-300">Total Online: {statuses.online}</p> | <p class="text-rose-300">Total Offline: {statuses.offline}</p>
-				{:catch error}
-					Error loading statuses: {error.message}
-				{/await}
+				<p class="text-emerald-300">Total Online: {app.deviceStatuses.online}</p>
+				|
+				<p class="text-rose-300">Total Offline: {app.deviceStatuses.offline}</p>
 			</span>
 		</div>
 
@@ -223,7 +211,7 @@
 				Refresh
 			</CwButton>
 
-			<CwBadge value={alertCount} position="bottom_left" size="md" tone="danger">
+			<CwBadge value={app.triggeredRulesCount} position="bottom_left" size="md" tone="danger">
 				<CwButton variant="secondary">
 					<img src={NOTIFICATIONS_ICON} alt="Notifications Icon" class="h-5 w-5" />
 				</CwButton>
