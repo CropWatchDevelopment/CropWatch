@@ -18,6 +18,7 @@
 	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
 	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
 	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
+	import { dev } from '$app/environment';
 
 	type PagableDevices = {
 		data: IDevice[];
@@ -71,32 +72,11 @@
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
 		loading = true;
 		try {
-			const isInitialQuery =
-				query.page === 1 && query.pageSize === initialPageSize && !query.search && !query.sort;
-
-			if (!servedInitialRows && isInitialQuery) {
-				rows = serverRows;
-				total = serverTotal;
-				servedInitialRows = true;
-				return { rows, total };
-			}
-
-			
-			// const singleDeviceFetchEndpoint = PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT.replace('{dev_eui}', query.search ?? '');
-			debugger;
-			const response = await fetch(
-				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}?skip=${(query.page - 1) * query.pageSize}&take=${query.pageSize}`,
-				{
-					headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined
-				}
-			);
-
-			// const result = (await response.json()) as PagableDevices;
-			const result = (await response.json()) as PagableDevices;
-
-			rows = app.devices ?? [];
-			total = result.total ?? 0;
-			return { rows, total };
+			const CwTableResult = {
+				rows: app.devices ?? [],
+				total: app.deviceStatuses.offline + app.deviceStatuses.online
+			};
+			return CwTableResult;
 		} finally {
 			loading = false;
 		}
@@ -104,8 +84,12 @@
 
 	async function loadSingleDevice(devEUI: string) {
 		if (refreshingByDevEui[devEUI]) return;
+		const rowIndex = app.devices.findIndex((d) => d.dev_eui === devEUI);
+		if (rowIndex === -1) return;
 		refreshingByDevEui[devEUI] = true;
 		try {
+			const row = app.devices[rowIndex];
+			row['cwloading'] = true;
 			const response = await fetch(
 				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT.replace('{dev_eui}', devEUI)}`,
 				{
@@ -116,20 +100,20 @@
 				debugger;
 				if (response.status === 401) {
 					document.location.href = '/auth/login';
-					
+
 					return;
 				}
 				throw new Error(`Failed to load device ${devEUI} (${response.status})`);
 			}
 
 			const device = (await response.json()) as IDevice;
-			const row = rows.find((d) => d.dev_eui === devEUI);
-			if (!row) return;
 
+			
 			row.temperature_c = device.temperature_c;
 			row.co2 = device.co2;
 			row.humidity = device.humidity;
 			row.created_at = device.created_at;
+			row['cwloading'] = true;
 		} finally {
 			refreshingByDevEui[devEUI] = false;
 		}
@@ -153,30 +137,6 @@
 				<span class="truncate">All groups</span>
 			</div>
 		</div>
-
-		<div class="hidden items-center gap-3 text-xs md:flex">
-			<CwChip
-				label="Online"
-				tone="success"
-				variant="soft"
-				size="sm"
-				class="!rounded-full !bg-emerald-500/10 !text-emerald-300 !ring-1 !ring-emerald-500/30"
-			/>
-			<CwChip
-				label="Offline"
-				tone="danger"
-				variant="soft"
-				size="sm"
-				class="!rounded-full !bg-rose-500/10 !text-rose-300 !ring-1 !ring-rose-500/30"
-			/>
-			<CwChip
-				label="Alert"
-				tone="warning"
-				variant="soft"
-				size="sm"
-				class="!rounded-full !bg-amber-500/10 !text-amber-300 !ring-1 !ring-amber-500/30"
-			/>
-		</div>
 	</div>
 
 	<div
@@ -189,12 +149,12 @@
 					<span>devices in view</span>
 				</span>
 				<span class="flex items-center gap-1 text-amber-200">
-					<span class="font-mono">{app.triggeredRules.triggered_count}</span>
+					<span class="font-mono">{app.triggeredRules?.triggered_count ?? 0}</span>
 					<span>with active alerts</span>
 				</span>
 			</div>
 			<span class="flex items-center gap-1">
-				<p class="text-emerald-300">Total Online: {app.deviceStatuses.online}</p>
+				<p class="text-emerald-300">Total Online: {app.deviceStatuses?.online ?? 0}</p>
 				|
 				<p class="text-rose-300">Total Offline: {app.deviceStatuses.offline}</p>
 			</span>
@@ -231,31 +191,12 @@
 >
 	{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
 		{#if col.key === 'lastSeen'}
-			<!--OPTION 1 ICON ONLY-->
-			<!-- <CwChip
-				label={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}
-				tone={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? 'danger' : 'success'}
-			/> -->
-
-			<!-- OPTION 2 ICON + DURATION -->
 			{new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}
 			<CwDuration
 				from={row.created_at}
-				alarmAfterMinutes={10.5}
-				alarmCallback={() => void loadSingleDevice(row.dev_eui)}
+				// alarmAfterMinutes={10.5}
+				// alarmCallback={() => void loadSingleDevice(row.dev_eui)}
 			/>
-
-			<!-- OPTION 3 JUST DURATION WITH ALARM -->
-			<!-- {#if new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000}
-				❌
-				<CwDuration
-					from={row.created_at}
-					alarmAfterMinutes={10.5}
-					alarmCallback={() => void loadSingleDevice(row.dev_eui)}
-				/>
-			{:else}
-				✅
-			{/if} -->
 		{:else}
 			{defaultValue}
 		{/if}

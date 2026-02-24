@@ -8,7 +8,7 @@ import type { TriggeredRulesCountResponse } from './api/api.service';
 
 const DEVICE_STALE_MINUTES = 10;
 const deviceAlarms = createCwAlarmScheduler();
-const scheduledDeviceIds = new Set<string>();
+
 
 export interface AppContext {
 	session: IJWT | null;
