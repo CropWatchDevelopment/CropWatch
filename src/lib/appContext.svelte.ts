@@ -9,6 +9,7 @@ import type { TriggeredRulesCountResponse } from './api/api.service';
 const DEVICE_STALE_MINUTES = 10;
 const deviceAlarms = createCwAlarmScheduler();
 
+const app = createAppContext();
 
 export interface AppContext {
 	session: IJWT | null;
@@ -60,14 +61,5 @@ export function getAppContext(): AppContext {
 }
 
 export function updateAppContext(updates: Partial<AppContext>) {
-	const context = getAppContext();
-	Object.assign(context, updates);
-}
-
-export function onDeviceDataReceived(device: IDevice) {
-	const ctx = getAppContext();
-
-	updateAppContext({
-		staleDeviceIds: ctx.staleDeviceIds.filter((id) => id !== device.dev_eui)
-	});
+	Object.assign(app, updates);
 }

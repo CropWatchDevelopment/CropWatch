@@ -37,7 +37,9 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 		created_at: new Date(device.created_at),
 		co2: Number(device.co2 ?? 0),
 		humidity: Number(device.humidity ?? 0),
-		temperature_c: Number(device.temperature_c ?? 0)
+		temperature_c: Number(device.temperature_c ?? 0),
+		location_id: Number(device.location_id ?? 0),
+		cwloading: false
 	}));
 
 	return {

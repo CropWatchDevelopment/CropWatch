@@ -90,6 +90,7 @@ export const actions: Actions = {
 			maxAge
 		});
 
-		throw redirect(303, '/');
+		const redirectPath = readNonEmptyString(new URL(request.url).searchParams.get('redirect')) || '/';
+		throw redirect(303, redirectPath);
 	}
 };

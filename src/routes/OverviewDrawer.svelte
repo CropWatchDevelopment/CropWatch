@@ -16,10 +16,9 @@
 	}
 
 	const app = getAppContext();
-	$inspect(app);
 
-	let totalDevices = $derived(app.deviceStatuses.online + app.deviceStatuses.offline);
-	let offlineDevices = $derived(app.deviceStatuses.offline);
+	let totalDevices = $derived((app.deviceStatuses?.online ?? 0) + (app.deviceStatuses?.offline ?? 0));
+	let offlineDevices = $derived(app.deviceStatuses?.offline ?? 0);
 	let onlineDevices = $derived(Math.max(0, totalDevices - offlineDevices));
 	let alertCount = $derived(app.triggeredRulesCount || 0);
 
@@ -42,12 +41,12 @@
 		{ name: 'SA', count: 11 }
 	];
 	const maxGroupCount = Math.max(...topGroups.map((g) => g.count));
-	const alerts: AlertRow[] = app.triggeredRules.map((rule) => ({
+	const alerts: AlertRow[] = app?.triggeredRules?.map((rule) => ({
 		id: rule.id,
 		icon: '🔔',
 		name: rule.name,
 		reported: new Date(rule.last_triggered as Date).toLocaleString()
-	}));
+	})) ?? [];
 </script>
 
 <CwDrawer bind:open={drawerOpen} label="Alerts" items={barItems} height="18rem">

@@ -31,7 +31,6 @@
 		})
 	);
 	setAppContext(app);
-	$inspect(app);
 </script>
 
 <CwOfflineOverlay />

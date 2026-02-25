@@ -17,7 +17,7 @@
 	} from '$env/static/public';
 	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
 	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
-	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
+	import { defaultAppContext, getAppContext, updateAppContext } from '$lib/appContext.svelte';
 	import { dev } from '$app/environment';
 
 	type PagableDevices = {
@@ -34,24 +34,16 @@
 	let { data }: { data: PageData } = $props();
 
 	const app = getAppContext();
-	$inspect(app);
 
 	const initialPageSize = 10;
 	let serverRows = $derived(app.devices ?? []);
-	let serverTotal = $derived(app.deviceStatuses.offline + app.deviceStatuses.online);
 	let loading = $state(false);
 	let rows = $state<IDevice[]>([]);
-	let total = $state(0);
 	let servedInitialRows = $state(false);
 	let refreshingByDevEui = $state<Record<string, boolean>>({});
-	const offlineThresholdMs = 11 * 60 * 1000;
 	let headerRows = $derived(servedInitialRows ? rows : serverRows);
 
 	let devicesInView = $derived(headerRows.length);
-	let offlineCount = $derived(
-		headerRows.filter((row) => Date.now() - new Date(row.created_at).getTime() > offlineThresholdMs)
-			.length
-	);
 
 	const columns: CwColumnDef<IDevice>[] = [
 		{ key: 'name', header: 'Device Name', sortable: true },
@@ -84,12 +76,10 @@
 
 	async function loadSingleDevice(devEUI: string) {
 		if (refreshingByDevEui[devEUI]) return;
-		const rowIndex = app.devices.findIndex((d) => d.dev_eui === devEUI);
-		if (rowIndex === -1) return;
+		const rowItem: IDevice | null = app.devices.find((d) => d.dev_eui === devEUI) ?? null;
+		if (!rowItem) return;
 		refreshingByDevEui[devEUI] = true;
 		try {
-			const row = app.devices[rowIndex];
-			row['cwloading'] = true;
 			const response = await fetch(
 				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT.replace('{dev_eui}', devEUI)}`,
 				{
@@ -97,9 +87,8 @@
 				}
 			);
 			if (!response.ok) {
-				debugger;
 				if (response.status === 401) {
-					document.location.href = '/auth/login';
+					document.location.href = `/auth/login?expired=true&redirect=${encodeURIComponent(window.location.pathname)}`;
 
 					return;
 				}
@@ -108,12 +97,14 @@
 
 			const device = (await response.json()) as IDevice;
 
-			
-			row.temperature_c = device.temperature_c;
-			row.co2 = device.co2;
-			row.humidity = device.humidity;
-			row.created_at = device.created_at;
-			row['cwloading'] = true;
+			rowItem.temperature_c = device.temperature_c;
+			rowItem.co2 = device.co2;
+			rowItem.humidity = device.humidity;
+			rowItem.created_at = device.created_at;
+			rowItem.cwloading = false;
+
+			// update the app context here to trigger updates
+			app.devices = [...app.devices];
 		} finally {
 			refreshingByDevEui[devEUI] = false;
 		}
@@ -156,7 +147,7 @@
 			<span class="flex items-center gap-1">
 				<p class="text-emerald-300">Total Online: {app.deviceStatuses?.online ?? 0}</p>
 				|
-				<p class="text-rose-300">Total Offline: {app.deviceStatuses.offline}</p>
+				<p class="text-rose-300">Total Offline: {app.deviceStatuses?.offline ?? 0}</p>
 			</span>
 		</div>
 
@@ -192,11 +183,7 @@
 	{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
 		{#if col.key === 'lastSeen'}
 			{new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}
-			<CwDuration
-				from={row.created_at}
-				// alarmAfterMinutes={10.5}
-				// alarmCallback={() => void loadSingleDevice(row.dev_eui)}
-			/>
+			<CwDuration from={row.created_at} alarmAfterMinutes={10.5} alarmCallback={() => void loadSingleDevice(row.dev_eui)} />
 		{:else}
 			{defaultValue}
 		{/if}

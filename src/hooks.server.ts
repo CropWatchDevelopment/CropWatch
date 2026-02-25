@@ -37,7 +37,7 @@ const checkAuthToken = (token: string, event: any): boolean => {
                 event.locals.jwt = null;
                 event.locals.jwtString = null;
                 if (!authRoute) {
-                    throw redirect(303, `/auth/login?expired=true&lastPath=${encodeURIComponent(event.url.pathname)}`);
+                    throw redirect(303, `/auth/login?expired=true&redirect=${encodeURIComponent(event.url.pathname)}`);
                 }
             }
             // Token is valid and not expired, proceed as normal
@@ -46,7 +46,7 @@ const checkAuthToken = (token: string, event: any): boolean => {
             if (!authRoute) {
                 event.locals.jwt = null;
                 event.locals.jwtString = null;
-                throw redirect(303, '/auth/login');
+                throw redirect(303, `/auth/login?redirect=${encodeURIComponent(event.url.pathname)}`);
             }
         }
     } else {
@@ -54,7 +54,7 @@ const checkAuthToken = (token: string, event: any): boolean => {
             console.log('No JWT token found, redirecting to login');
             event.locals.jwt = null;
             event.locals.jwtString = null;
-            throw redirect(303, '/auth/login');
+            throw redirect(303, `/auth/login?redirect=${encodeURIComponent(event.url.pathname)}`);
         }
     }
     return false;

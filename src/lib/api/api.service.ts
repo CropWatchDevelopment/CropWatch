@@ -8,6 +8,33 @@ import {
 	PUBLIC_TRIGGERED_RULES_ENDPOINT,
 	PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT
 } from '$env/static/public';
+import type {
+	CreateLocationRequest,
+	CreateLocationOwnerRequest,
+	CreateReportRequest,
+	CreateRuleRequest,
+	DeviceDataWithinRangeQuery,
+	DeviceDto,
+	DevicePrimaryDataDto,
+	DeviceStatusSummary,
+	ListOrPaginatedResponse,
+	LocationDto,
+	LoginRequest,
+	LoginResponse,
+	PaginatedResponse,
+	PaginationQuery,
+	ReportDto,
+	RuleDto,
+	SensorTimeSeriesPoint,
+	TimeRangeQuery,
+	TrafficDataPoint,
+	TriggeredRulesCountResponse,
+	UpdateLocationRequest,
+	UpdateLocationOwnerRequest,
+	UpdateReportRequest,
+	UpdateRuleRequest,
+	WaterDataPoint
+} from './api.dtos';
 
 type FetchLike = typeof fetch;
 
@@ -47,183 +74,6 @@ interface ApiRequestOptions extends Omit<RequestInit, 'body' | 'headers'> {
 	responseType?: 'json' | 'text';
 }
 
-export interface LoginRequest {
-	email: string;
-	password: string;
-}
-
-export interface LoginResponse {
-	message: string;
-	data?: Record<string, unknown>;
-	result?: {
-		accessToken?: string;
-		expires_at_datetime?: string;
-		[key: string]: unknown;
-	};
-	[key: string]: unknown;
-}
-
-export interface DeviceDto {
-	dev_eui: string;
-	name: string;
-	[key: string]: unknown;
-}
-
-export interface DevicePrimaryDataDto {
-	dev_eui: string;
-	created_at: string;
-	name?: string;
-	location_name?: string;
-	co2?: number | null;
-	humidity?: number | null;
-	temperature_c?: number | null;
-	[key: string]: unknown;
-}
-
-export interface DeviceStatusSummary {
-	online: number;
-	offline: number;
-	[key: string]: unknown;
-}
-
-export interface PaginatedResponse<T> {
-	data: T[];
-	total: number;
-	[key: string]: unknown;
-}
-
-export type ListOrPaginatedResponse<T> = T[] | PaginatedResponse<T>;
-
-export interface TimeRangeQuery {
-	start?: string | Date;
-	end?: string | Date;
-	timezone?: string;
-}
-
-export interface PaginationQuery {
-	skip?: number;
-	take?: number;
-}
-
-export interface DeviceDataWithinRangeQuery extends PaginationQuery {
-	start?: string | Date;
-	end?: string | Date;
-}
-
-export interface SensorTimeSeriesPoint {
-	created_at: string;
-	dev_eui: string;
-	[key: string]: unknown;
-}
-
-export interface WaterDataPoint extends SensorTimeSeriesPoint {
-	id: number;
-}
-
-export interface TrafficDataPoint extends SensorTimeSeriesPoint {
-	id: number;
-}
-
-export interface RuleCriteriaDto {
-	id: number;
-	operator: string;
-	ruleGroupId: string;
-	subject: string;
-	trigger_value: number;
-	created_at?: string;
-	criteria_id?: string | null;
-	parent_id?: string | null;
-	reset_value?: number | null;
-	[key: string]: unknown;
-}
-
-export interface RuleDto {
-	id: number;
-	name: string;
-	action_recipient: string;
-	notifier_type: number;
-	ruleGroupId: string;
-	profile_id: string;
-	dev_eui?: string | null;
-	send_using?: string | null;
-	is_triggered: boolean;
-	trigger_count: number;
-	created_at: string;
-	last_triggered?: string | null;
-	cw_rule_criteria?: RuleCriteriaDto[];
-	[key: string]: unknown;
-}
-
-export interface CreateRuleRequest extends Partial<RuleDto> {
-	action_recipient: string;
-	name: string;
-	notifier_type: number;
-	ruleGroupId: string;
-}
-
-export type UpdateRuleRequest = Partial<CreateRuleRequest>;
-
-export interface ReportUserScheduleDto {
-	id?: number;
-	dev_eui: string;
-	report_user_schedule_id?: number;
-	is_active?: boolean;
-	end_of_week?: boolean;
-	end_of_month?: boolean;
-	user_id?: string;
-	report_id?: string | null;
-	created_at?: string;
-	[key: string]: unknown;
-}
-
-export interface ReportAlertPointDto {
-	id?: number;
-	data_point_key: string;
-	name: string;
-	report_id: string;
-	user_id?: string;
-	value?: number | null;
-	min?: number | null;
-	max?: number | null;
-	operator?: string | null;
-	hex_color?: string | null;
-	created_at?: string;
-	[key: string]: unknown;
-}
-
-export interface ReportRecipientDto {
-	id?: number;
-	communication_method: number;
-	report_id: string;
-	name?: string | null;
-	email?: string | null;
-	user_id?: string | null;
-	created_at?: string;
-	[key: string]: unknown;
-}
-
-export interface ReportDto {
-	id: number;
-	report_id: string;
-	name: string;
-	dev_eui: string;
-	created_at: string;
-	user_id?: string | null;
-	report_user_schedule?: ReportUserScheduleDto[];
-	report_alert_points?: ReportAlertPointDto[];
-	report_recipients?: ReportRecipientDto[];
-	[key: string]: unknown;
-}
-
-export interface CreateReportRequest extends Partial<ReportDto> {
-	dev_eui: string;
-	name: string;
-}
-
-export type UpdateReportRequest = Partial<CreateReportRequest>;
-
-export type TriggeredRulesCountResponse = number | { count: number;[key: string]: unknown };
-
 const AUTH_ENDPOINT = '/auth';
 const AIR_ENDPOINT = '/air/{dev_eui}';
 const DEVICES_ENDPOINT = '/devices';
@@ -231,6 +81,9 @@ const DEVICE_BY_DEV_EUI_ENDPOINT = '/devices/{dev_eui}';
 const DEVICE_DATA_ENDPOINT = '/devices/{dev_eui}/data';
 const DEVICE_DATA_WITHIN_RANGE_ENDPOINT = '/devices/{dev_eui}/data-within-range';
 const DEVICE_LATEST_DATA_ENDPOINT = '/devices/{dev_eui}/latest-data';
+const LOCATIONS_ENDPOINT = '/locations';
+const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
+const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
 const POWER_ENDPOINT = '/power/{id}';
 const REPORTS_ENDPOINT = '/reports';
 const REPORT_BY_ID_ENDPOINT = '/reports/{id}';
@@ -344,6 +197,11 @@ export class ApiService {
 
 		const payload = await parseResponsePayload(response);
 		if (!response.ok) {
+			if (response.status === 401) {
+				this.clearAuthToken();
+				location.href =
+					'/auth/login?redirect=' + encodeURIComponent(location.pathname + location.search);
+			}
 			throw new ApiServiceError(response.status, response.statusText, payload);
 		}
 
@@ -431,6 +289,114 @@ export class ApiService {
 
 	public getDevices(): Promise<DeviceDto[]> {
 		return this.request<DeviceDto[]>(DEVICES_ENDPOINT, { method: 'GET' });
+	}
+
+	public async getAllLocationDevices(
+		locationId: number
+	): Promise<PaginatedResponse<DevicePrimaryDataDto>> {
+		const endpoint = `${DEVICES_ENDPOINT}/location/${locationId}`;
+		const payload = await this.request<
+			DevicePrimaryDataDto[] | PaginatedResponse<DevicePrimaryDataDto>
+		>(endpoint, {
+			method: 'GET'
+		});
+
+		if (Array.isArray(payload)) {
+			return {
+				data: payload,
+				total: payload.length
+			};
+		}
+
+		return payload;
+	}
+
+	public async getAllLocations(): Promise<PaginatedResponse<LocationDto>> {
+		const payload = await this.request<LocationDto[] | PaginatedResponse<LocationDto>>(
+			LOCATIONS_ENDPOINT,
+			{ method: 'GET' }
+		);
+
+		if (Array.isArray(payload)) {
+			return {
+				data: payload,
+				total: payload.length
+			};
+		}
+
+		return payload;
+	}
+
+	public async getLocations(): Promise<LocationDto[]> {
+		const { data } = await this.getAllLocations();
+		return data ?? [];
+	}
+
+	public getLocation(id: number | string): Promise<LocationDto> {
+		return this.request<LocationDto>(replacePathParams(LOCATION_BY_ID_ENDPOINT, { id }), {
+			method: 'GET'
+		});
+	}
+
+	public createLocationPermission(
+		id: number | string,
+		newUserEmail: string,
+		payload: CreateLocationOwnerRequest,
+		applyToAllDevices?: boolean
+	): Promise<LocationDto> {
+		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id }), {
+			method: 'POST',
+			query: {
+				newUserEmail,
+				applyToAllDevices
+			},
+			body: payload
+		});
+	}
+
+	public updateLocationPermission(
+		id: number | string,
+		payload: UpdateLocationOwnerRequest,
+		applyToAllDevices?: boolean
+	): Promise<LocationDto> {
+		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id }), {
+			method: 'PATCH',
+			query: {
+				applyToAllDevices
+			},
+			body: payload
+		});
+	}
+
+	public createLocation(
+		payload: CreateLocationRequest
+	): Promise<LocationDto | Record<string, unknown>> {
+		return this.request<LocationDto | Record<string, unknown>>(LOCATIONS_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
+	}
+
+	public updateLocation(
+		id: number | string,
+		payload: UpdateLocationRequest
+	): Promise<LocationDto | Record<string, unknown>> {
+		return this.request<LocationDto | Record<string, unknown>>(
+			replacePathParams(LOCATION_BY_ID_ENDPOINT, { id }),
+			{
+				method: 'PATCH',
+				body: payload
+			}
+		);
+	}
+
+	public deleteLocation(id: number | string): Promise<number | Record<string, unknown>> {
+		return this.request<number | Record<string, unknown>>(
+			replacePathParams(LOCATION_BY_ID_ENDPOINT, { id }),
+			{
+				method: 'DELETE'
+			}
+		);
 	}
 
 	public getDeviceStatuses(): Promise<DeviceStatusSummary> {
@@ -602,6 +568,8 @@ export class ApiService {
 		);
 	}
 }
+
+export * from './api.dtos';
 
 export const apiService = new ApiService();
 

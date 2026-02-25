@@ -6,4 +6,6 @@ export interface IDevice {
     co2: number;
     humidity: number;
     temperature_c: number;
+    cwloading?: boolean;
+    location_id: number;
 }
