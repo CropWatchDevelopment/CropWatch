@@ -3,15 +3,19 @@
 		CwButton,
 		CwChip,
 		CwDataTable,
+		CwDialog,
 		type CwColumnDef,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import type { ActionData, PageData } from './$types';
-	import LocationEditPermissions from './LocationEditPermissions.svelte';
-	import LocationPermissions from './LocationPermissions.svelte';
+	import DeletePermissionDialog from './DeletePermissionDialog.svelte';
+    import { page } from '$app/state';
 
 	let { data, form }: { data: PageData; form: ActionData | null } = $props();
 	let permissions = $derived(data.permissions ?? []);
+	let openDeletePermissionDialog = $state(false);
+    let selectedRow = $state<any>(null);
+    let location_id = $state(page.params.location_id);
 
 	const loadData = async (): Promise<CwTableResult> => {
 		data.permissions =
@@ -55,9 +59,14 @@
 			{defaultValue}
 		{/if}
 	{/snippet}
-    {#snippet rowActions(row: any)}
-        <CwButton variant="primary" onclick={() => {}}>Edit</CwButton>
-        <CwButton variant="danger" onclick={() => alert(`Delete ${row.email}`)}>Delete</CwButton>
-    {/snippet}
+	{#snippet rowActions(row: any)}
+		<CwButton variant="primary" onclick={() => {}}>Edit</CwButton>
+		<CwButton variant="danger" onclick={() => { selectedRow = row; openDeletePermissionDialog = true; }}>Delete</CwButton>
+	{/snippet}
 </CwDataTable>
-<pre>{JSON.stringify(data.locationOwners, null, 2)}</pre>
+
+<DeletePermissionDialog
+	bind:openDeletePermissionDialog
+    location_id={location_id}
+	selectedRow={selectedRow}
+/>

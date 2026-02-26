@@ -399,6 +399,19 @@ export class ApiService {
 		);
 	}
 
+	public deleteLocationPermission(
+		location_id: number | string,
+		permissionId?: number | string
+	): Promise<LocationDto> {
+		const endpoint = replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id: location_id });
+		return this.request<LocationDto>(endpoint, {
+			method: 'DELETE',
+			query: {
+				permission_id: permissionId
+			}
+		});
+	}
+
 	public getDeviceStatuses(): Promise<DeviceStatusSummary> {
 		return this.request<DeviceStatusSummary>(PUBLIC_DEVICE_STATUS_ENDPOINT, {
 			method: 'GET'
