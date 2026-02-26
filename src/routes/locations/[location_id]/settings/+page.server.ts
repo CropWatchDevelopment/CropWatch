@@ -95,6 +95,53 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 };
 
 export const actions: Actions = {
+    updateLocationName: async ({ request, locals, fetch, params }) => {
+        const authToken = locals.jwtString ?? null;
+        if (!authToken) {
+            return fail(401, {
+                action: 'updateLocationName',
+                message: 'You must be logged in to update location name.'
+            });
+        }
+
+        const locationId = Number.parseInt(params.location_id ?? '', 10);
+        if (!Number.isFinite(locationId)) {
+            return fail(400, {
+                action: 'updateLocationName',
+                message: 'Invalid location id.'
+            });
+        }
+
+        const formData = await request.formData();
+        const newName = readString(formData.get('locationName'));
+
+        if (!newName) {
+            return fail(400, {
+                action: 'updateLocationName',
+                message: 'Location name cannot be empty.'
+            });
+        }
+
+        const apiService = new ApiService({
+            fetchFn: fetch,
+            authToken
+        });
+
+        try {
+            await apiService.updateLocation(locationId, { name: newName });
+
+            return {
+                action: 'updateLocationName',
+                success: true,
+                message: 'Location name updated.'
+            };
+        } catch (error) {
+            return fail(error instanceof ApiServiceError ? error.status : 502, {
+                action: 'updateLocationName',
+                message: readErrorMessage(error, 'Unable to update location name.')
+            });
+        }
+    },
     addPermission: async ({ request, locals, fetch, params }) => {
         const authToken = locals.jwtString ?? null;
         if (!authToken) {

@@ -3,7 +3,6 @@
 	import {
 		CwButton,
 		CwCard,
-		CwChip,
 		CwDropdown,
 		CwInput,
 		CwSwitch
