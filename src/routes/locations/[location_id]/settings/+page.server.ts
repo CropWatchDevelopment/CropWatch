@@ -87,6 +87,15 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 
     const location = await apiService.getLocation(locationId).catch(() => null);
 
+	if (location?.owner_id !== locals.jwt?.sub) {
+		const owner = location?.cw_location_owners?.find(owner => (owner.user_id === locals.jwt?.sub && owner.permission_level === 1));
+		if (!owner) {
+			throw fail(403, {
+				message: 'You do not have permission to access this location settings page.'
+			});
+		}
+	}
+
     return {
         locationId,
         locationName: String(location?.name ?? `Location ${locationId}`),

@@ -2,8 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { CwHeader, CwProfileMenu, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
+	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
 
 	let { mode } = $props();
+	const app = getAppContext();
 
 	const menuItems = [
 		{ id: 'profile', label: 'Profile' },
@@ -25,9 +27,16 @@
 	{/snippet}
 
 	{#snippet actions()}
-		<CwProfileMenu name="kevin@cropwatch.io" subtitle="Administrator" {menuItems} onselect={(event) => {
+		<CwProfileMenu name={app.session?.email ?? ''} subtitle={app.session?.role ?? ''} {menuItems} onselect={(event) => {
 			if (event.id === 'logout') {
-				goto('/auth/logout');
+				goto('/auth/logout').then(() => {
+					// Optionally, you can also clear the app context or perform any other cleanup here
+					Object.assign(app, defaultAppContext);
+					window.location.reload();
+				}).catch(() => {
+					// Handle any errors that occur during logout
+					alert('An error occurred while logging out. Please try again.');
+				});
 			} else if (event.id === 'profile') {
 				goto('/account/profile');
 			} else if (event.id === 'settings') {

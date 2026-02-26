@@ -51,10 +51,9 @@
 			// Optionally, you can reload the permissions data here to reflect any changes from the server
 			await loadData();
 		} else {
-			
 		}
 		editingPermissionId = null;
-	}
+	};
 </script>
 
 <CwDataTable
@@ -102,6 +101,20 @@
 					savePermissionLevelUpdate(row);
 				}}>Save Changes</CwButton
 			>
+			<CwButton
+				variant="danger"
+				onclick={() => {
+					selectedRow = row;
+					openDeletePermissionDialog = true;
+				}}>Delete</CwButton
+			>
+			<CwButton
+				variant="primary"
+				onclick={() => {
+					selectedRow = null;
+					editingPermissionId = null;
+				}}>Cancel</CwButton
+			>
 		{:else}
 			<CwButton
 				variant="primary"
@@ -110,14 +123,6 @@
 				}}>Edit</CwButton
 			>
 		{/if}
-
-		<CwButton
-			variant="danger"
-			onclick={() => {
-				selectedRow = row;
-				openDeletePermissionDialog = true;
-			}}>Delete</CwButton
-		>
 	{/snippet}
 </CwDataTable>
 

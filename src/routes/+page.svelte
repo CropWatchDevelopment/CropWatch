@@ -66,7 +66,7 @@
 		try {
 			const CwTableResult = {
 				rows: app.devices ?? [],
-				total: app.deviceStatuses.offline + app.deviceStatuses.online
+				total: (app.deviceStatuses?.offline ?? 0) + (app.deviceStatuses?.online ?? 0)
 			};
 			return CwTableResult;
 		} finally {
