@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
+	import { CwButton, CwDialog, CwToastContainer, useCwToast } from '@cropwatchdevelopment/cwui';
 
 	let {
 		location_id,
@@ -11,6 +11,7 @@
 		const formData = new FormData();
 		formData.append('location_id', String(location_id ?? ''));
 		formData.append('permission_id', String(row?.id ?? ''));
+
 
 		fetch('?/removePermission', {
 			method: 'POST',

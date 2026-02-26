@@ -7,25 +7,28 @@ import {
 } from '$lib/api/api.service';
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { permission } from 'process';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type AddPermissionFormValues = {
     newUserEmail: string;
-    userId: string;
+    userId?: string;
+    permission_level: number;
     applyToAllDevices: boolean;
 };
 
 type EditPermissionFormValues = {
     ownerId: string;
     permissionId: string;
-    userId: string;
+    userId?: string;
     applyToAllDevices: boolean;
 };
 
 const EMPTY_ADD_VALUES: AddPermissionFormValues = {
     newUserEmail: '',
     userId: '',
+    permission_level: 4,
     applyToAllDevices: false
 };
 
@@ -114,7 +117,7 @@ export const actions: Actions = {
         const formData = await request.formData();
         const values: AddPermissionFormValues = {
             newUserEmail: readString(formData.get('newUserEmail')),
-            userId: readString(formData.get('userId')),
+            permission_level: Number.parseInt(readString(formData.get('permission_level')), 10) || 4,
             applyToAllDevices: readBoolean(formData.get('applyToAllDevices'))
         };
 
@@ -123,20 +126,6 @@ export const actions: Actions = {
             fieldErrors.newUserEmail = 'User email is required.';
         } else if (!EMAIL_PATTERN.test(values.newUserEmail)) {
             fieldErrors.newUserEmail = 'Enter a valid email address.';
-        }
-
-        if (!values.userId) {
-            fieldErrors.userId = 'User ID is required.';
-        }
-
-        const adminUserId = typeof locals.jwt?.sub === 'string' ? locals.jwt.sub.trim() : '';
-        if (!adminUserId) {
-            return fail(400, {
-                action: 'addPermission',
-                message: 'Missing admin user id in current session.',
-                values,
-                fieldErrors
-            });
         }
 
         if (Object.keys(fieldErrors).length > 0) {
@@ -148,12 +137,6 @@ export const actions: Actions = {
             });
         }
 
-        const createLocationOwnerPayload: CreateLocationOwnerRequest = {
-            admin_user_id: adminUserId,
-            location_id: locationId,
-            user_id: values.userId
-        };
-
         const apiService = new ApiService({
             fetchFn: fetch,
             authToken
@@ -163,7 +146,7 @@ export const actions: Actions = {
             await apiService.createLocationPermission(
                 locationId,
                 values.newUserEmail,
-                createLocationOwnerPayload,
+                values.permission_level ?? 4,
                 values.applyToAllDevices
             );
 

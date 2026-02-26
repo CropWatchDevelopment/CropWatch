@@ -339,27 +339,32 @@ export class ApiService {
 	}
 
 	public createLocationPermission(
-		id: number | string,
+		location_id: number | string,
 		newUserEmail: string,
-		payload: CreateLocationOwnerRequest,
+		permission_level: number,
 		applyToAllDevices?: boolean
 	): Promise<LocationDto> {
-		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id }), {
+		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id: location_id }), {
 			method: 'POST',
 			query: {
 				newUserEmail,
+				permission_level,
 				applyToAllDevices
 			},
-			body: payload
+			body: {
+				location_id,
+				user_email: newUserEmail,
+				applyToAllDevices
+			}
 		});
 	}
 
 	public updateLocationPermission(
-		id: number | string,
+		location_id: number | string,
 		payload: UpdateLocationOwnerRequest,
 		applyToAllDevices?: boolean
 	): Promise<LocationDto> {
-		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id }), {
+		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id: location_id }), {
 			method: 'PATCH',
 			query: {
 				applyToAllDevices
