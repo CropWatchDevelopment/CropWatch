@@ -38,7 +38,7 @@
 
 <div class="settings-page">
 	<CwCard
-		title={`Location Permissions`}
+		title={`Add new user to ${data.locationName} with permissions`}
 		subtitle="Create a permission for a user on this location"
 		elevated
 	>

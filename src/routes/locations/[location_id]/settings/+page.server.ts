@@ -307,6 +307,62 @@ export const actions: Actions = {
             });
         }
     },
+	updateUserPermissionLevel: async ({ request, locals, fetch, params }) => {
+		const authToken = locals.jwtString ?? null;
+		if (!authToken) {
+			return fail(401, {
+				action: 'updateUserPermissionLevel',
+				message: 'You must be logged in to manage location permissions.'
+			});
+		}
+
+		const locationId = Number.parseInt(params.location_id ?? '', 10);
+		if (!Number.isFinite(locationId)) {
+			return fail(400, {
+				action: 'updateUserPermissionLevel',
+				message: 'Invalid location id.'
+			});
+		}
+
+		const formData = await request.formData();
+		const permissionLevel = readString(formData.get('permission_level'));
+		const email = readString(formData.get('email'));
+
+		if (!email) {
+			return fail(400, {
+				action: 'updateUserPermissionLevel',
+				message: 'Email is required.'
+			});
+		}
+
+		if (!permissionLevel) {
+			return fail(400, {
+				action: 'updateUserPermissionLevel',
+				message: 'Permission level is required.'
+			});
+		}
+
+		const apiService = new ApiService({
+			fetchFn: fetch,
+			authToken
+		});
+
+		try {
+			await apiService.updateLocationPermissionLevel(locationId, email, +permissionLevel);
+
+			return {
+				action: 'updateUserPermissionLevel',
+				success: true,
+				message: 'User permission level updated.'
+			};
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
+				action: 'updateUserPermissionLevel',
+				message: readErrorMessage(error, 'Unable to update user permission level.')
+			});
+		}
+
+	},
     removePermission: async ({ request, locals, fetch, params }) => {
         const authToken = locals.jwtString ?? null;
         if (!authToken) {

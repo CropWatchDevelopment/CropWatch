@@ -84,6 +84,7 @@ const DEVICE_LATEST_DATA_ENDPOINT = '/devices/{dev_eui}/latest-data';
 const LOCATIONS_ENDPOINT = '/locations';
 const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
 const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
+const LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT = '/locations/{id}/permission-level';
 const POWER_ENDPOINT = '/power/{id}';
 const REPORTS_ENDPOINT = '/reports';
 const REPORT_BY_ID_ENDPOINT = '/reports/{id}';
@@ -370,6 +371,22 @@ export class ApiService {
 				applyToAllDevices
 			},
 			body: payload
+		});
+	}
+
+	public async updateLocationPermissionLevel(
+		location_id: number | string,
+		email: string,
+		permission_level: number,
+	): Promise<LocationDto> {
+		const endpoint = replacePathParams(LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT, { id: location_id });
+		return this.request<LocationDto>(endpoint, {
+			method: 'PATCH',
+			body: {
+				location_id,
+				email,
+				permission_level,
+			}
 		});
 	}
 
