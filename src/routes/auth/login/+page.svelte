@@ -31,7 +31,7 @@
     let password: string = $state('');
 
 	const RECAPTCHA_TIMEOUT_MS = 12_000;
-	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 3;
+	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 5;
 	const RECAPTCHA_RETRY_DELAY_MS = 900;
 
 	function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -168,6 +168,17 @@
 
 				return async ({ result }) => {
 					try {
+						if (result.type === 'success') {
+							await applyAction(result);
+							toast.add({
+								message: 'Login successful! Redirecting...',
+								tone: 'success'
+							});
+							const redirectTo = typeof result.data === 'string' ? result.data : '/';
+							await goto(redirectTo, { invalidateAll: true });
+							return;
+						}
+
 						await applyAction(result);
 					} finally {
 						loggingIn = false;
@@ -209,7 +220,7 @@
 				type="submit"
 				variant="primary"
 				loading={loggingIn || loadingCaptcha}
-				disabled={loggingIn || loadingCaptcha || (!username || !password)}
+				disabled={loggingIn || loadingCaptcha || !recaptchaReady || (!username || !password)}
 				size="md"
 				fullWidth={true}
 			>

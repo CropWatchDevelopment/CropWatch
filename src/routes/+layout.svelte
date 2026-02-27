@@ -7,6 +7,7 @@
 		CwToastContainer,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Header from './Header.svelte';
@@ -20,16 +21,37 @@
 	let mode = $state<CwSideNavMode>('open');
 	let isAuthRoute: boolean = $derived(page.url.pathname.startsWith('/auth'));
 
-	const app = $state(
-		createAppContext({
-			session: (() => data.session)(),
-			devices: (() => data.devices)(),
-			deviceStatuses: (() => data.deviceStatuses)(),
-			triggeredRules: (() => data.triggeredRules)(),
-			triggeredRulesCount: (() => data.triggeredRulesCount.triggered_count)(),
-			accessToken: (() => data.authToken)(),
-		})
-	);
+	function syncAppContextFromLayoutData() {
+		const rawTriggeredRulesCount = data.triggeredRulesCount;
+		let triggeredRulesCount = 0;
+
+		if (typeof rawTriggeredRulesCount === 'number' && Number.isFinite(rawTriggeredRulesCount)) {
+			triggeredRulesCount = rawTriggeredRulesCount;
+		} else if (rawTriggeredRulesCount && typeof rawTriggeredRulesCount === 'object') {
+			const maybeCount =
+				(rawTriggeredRulesCount as Record<string, unknown>).count ??
+				(rawTriggeredRulesCount as Record<string, unknown>).triggered_count;
+			if (typeof maybeCount === 'number' && Number.isFinite(maybeCount)) {
+				triggeredRulesCount = maybeCount;
+			}
+		}
+
+		app.session = data.session ?? null;
+		app.devices = data.devices ?? [];
+		app.deviceStatuses = data.deviceStatuses ?? { online: 0, offline: 0 };
+		app.triggeredRules = data.triggeredRules ?? [];
+		app.triggeredRulesCount = triggeredRulesCount;
+		app.accessToken = data.authToken ?? undefined;
+	}
+
+	const app = $state(createAppContext());
+
+	syncAppContextFromLayoutData();
+	afterNavigate(() => {
+		syncAppContextFromLayoutData();
+	});
+
+	$inspect(app);
 	setAppContext(app);
 </script>
 

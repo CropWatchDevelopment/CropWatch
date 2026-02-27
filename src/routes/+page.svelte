@@ -19,6 +19,7 @@
 	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
 	import { defaultAppContext, getAppContext, updateAppContext } from '$lib/appContext.svelte';
 	import { dev } from '$app/environment';
+	import { goto } from '$app/navigation';
 
 	type PagableDevices = {
 		data: IDevice[];
@@ -78,6 +79,7 @@
 		if (refreshingByDevEui[devEUI]) return;
 		const rowItem: IDevice | null = app.devices.find((d) => d.dev_eui === devEUI) ?? null;
 		if (!rowItem) return;
+		rowItem.cwloading = true;
 		refreshingByDevEui[devEUI] = true;
 		try {
 			const response = await fetch(
@@ -89,18 +91,19 @@
 			if (!response.ok) {
 				if (response.status === 401) {
 					document.location.href = `/auth/login?expired=true&redirect=${encodeURIComponent(window.location.pathname)}`;
-
 					return;
 				}
 				throw new Error(`Failed to load device ${devEUI} (${response.status})`);
 			}
 
 			const device = (await response.json()) as IDevice;
-
 			rowItem.temperature_c = device.temperature_c;
 			rowItem.co2 = device.co2;
 			rowItem.humidity = device.humidity;
 			rowItem.created_at = device.created_at;
+			
+			// implement a small delay here to simulate loading state and make it more visually clear that the row is being refreshed
+			await new Promise((resolve) => setTimeout(resolve, dev ? 500 : 1000));
 			rowItem.cwloading = false;
 
 			// update the app context here to trigger updates
@@ -108,10 +111,6 @@
 		} finally {
 			refreshingByDevEui[devEUI] = false;
 		}
-	}
-
-	function showDetail(device: IDevice) {
-		alert(`Details: ${device.name}`);
 	}
 
 	function refreshDashboard() {
@@ -183,13 +182,17 @@
 	{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
 		{#if col.key === 'lastSeen'}
 			{new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}
-			<CwDuration from={row.created_at} alarmAfterMinutes={10.5} alarmCallback={() => void loadSingleDevice(row.dev_eui)} />
+			<CwDuration
+				from={row.created_at}
+				alarmAfterMinutes={10.5}
+				alarmCallback={() => void loadSingleDevice(row.dev_eui)}
+			/>
 		{:else}
 			{defaultValue}
 		{/if}
 	{/snippet}
 
 	{#snippet rowActions(row: IDevice)}
-		<CwButton size="sm" variant="info" onclick={() => showDetail(row)}>Details</CwButton>
+		<CwButton size="sm" variant="info" onclick={() => goto(`/locations/${row.location_id}/devices/${row.dev_eui}`)}>Details</CwButton>
 	{/snippet}
 </CwDataTable>

@@ -91,6 +91,6 @@ export const actions: Actions = {
 		});
 
 		const redirectPath = readNonEmptyString(new URL(request.url).searchParams.get('redirect')) || '/';
-		throw redirect(303, redirectPath);
+		return redirectPath;
 	}
 };
