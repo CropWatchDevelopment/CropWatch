@@ -51,7 +51,6 @@
 		syncAppContextFromLayoutData();
 	});
 
-	$inspect(app);
 	setAppContext(app);
 </script>
 
