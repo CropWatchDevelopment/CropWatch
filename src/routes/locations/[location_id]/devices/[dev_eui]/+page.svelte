@@ -20,10 +20,15 @@
 	import { downloadCsv } from './csvExport';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import type { TelemetryRow } from '$lib/interfaces/telemetryRow';
-	import NotesDialog from './notes-dialog.svelte';
+	import NotesCreateDialog from './notes-create-dialog.svelte';
+	import NotesViewDialog from './notes-view-dialog.svelte';
 
 	let { data }: { data: any } = $props();
+	$inspect(data);
 	const app = getAppContext();
+
+	const x = data.deviceData.data.find((d: any) => d.cw_air_annotations.length > 0);
+	$inspect(x);
 
 	type RangeHours = 24 | 48 | 72;
 
@@ -45,7 +50,9 @@
 				temperature_c: temp,
 				humidity: Number(row.humidity) || 0,
 				co2: Number(row.co2) || 0,
-				alertRaised: temp >= ALERT_TEMP_THRESHOLD ? true : undefined
+				alertRaised: temp >= ALERT_TEMP_THRESHOLD ? true : undefined,
+				hasNotes: Array.isArray(row.cw_air_annotations) ? row.cw_air_annotations.length > 0 : undefined,
+				notes: Array.isArray(row.cw_air_annotations) ? row.cw_air_annotations : [],
 			};
 		});
 	}
@@ -55,7 +62,7 @@
 		{ key: 'temperature_c', header: 'Temp (°C)', sortable: true, width: '8rem' },
 		{ key: 'humidity', header: 'Humidity (%)', sortable: true, width: '9rem' },
 		{ key: 'co2', header: 'CO₂ (ppm)', sortable: true, width: '9rem' },
-		{ key: 'alertRaised', header: 'Alert', sortable: true, width: '12rem' }
+		{ key: 'alertRaised', header: 'Alert', sortable: true, width: '12rem' },
 	];
 
 	let selectedRangeHours = $state<RangeHours>(24);
@@ -318,11 +325,9 @@
 				{/snippet}
 
 				{#snippet rowActions(row: TelemetryRow)}
-					<NotesDialog {row} dev_eui={page.params.dev_eui || ''} />
+					<NotesCreateDialog {row} dev_eui={page.params.dev_eui || ''} />
 					{#if row.hasNotes}
-						<CwButton variant="info" onclick={() => alert('View notes for ' + row.id)}>
-							View Notes
-						</CwButton>
+						<NotesViewDialog {row} />
 					{/if}
 				{/snippet}
 			</CwDataTable>

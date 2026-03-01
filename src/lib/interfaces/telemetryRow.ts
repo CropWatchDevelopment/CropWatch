@@ -6,4 +6,5 @@ export interface TelemetryRow {
     co2: number;
     alertRaised?: boolean;
     hasNotes?: boolean;
+    notes: any[];
 }
