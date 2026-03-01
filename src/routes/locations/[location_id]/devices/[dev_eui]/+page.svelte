@@ -19,20 +19,13 @@
 	import { page } from '$app/state';
 	import { downloadCsv } from './csvExport';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import type { TelemetryRow } from '$lib/interfaces/telemetryRow';
+	import NotesDialog from './notes-dialog.svelte';
 
 	let { data }: { data: any } = $props();
 	const app = getAppContext();
 
 	type RangeHours = 24 | 48 | 72;
-
-	interface TelemetryRow {
-		id: string;
-		created_at: string;
-		temperature_c: number;
-		humidity: number;
-		co2: number;
-		alertRaised?: boolean;
-	}
 
 	const RANGE_OPTIONS: RangeHours[] = [24, 48, 72];
 	const ALERT_TEMP_THRESHOLD = 23;
@@ -41,7 +34,7 @@
 		const raw: Record<string, unknown>[] = Array.isArray(payload)
 			? payload
 			: (payload as { data?: unknown })?.data
-				? ((payload as { data: Record<string, unknown>[] }).data)
+				? (payload as { data: Record<string, unknown>[] }).data
 				: [];
 
 		return raw.map((row, i) => {
@@ -79,9 +72,7 @@
 	let deviceData = $derived(extractRows(data.deviceData));
 
 	let cutoff = $derived(new Date(Date.now() - selectedRangeHours * 60 * 60 * 1000));
-	let selectedTelemetry = $derived(
-		deviceData.filter((row) => new Date(row.created_at) >= cutoff)
-	);
+	let selectedTelemetry = $derived(deviceData.filter((row) => new Date(row.created_at) >= cutoff));
 
 	// NOTE: cwui CwLineChart/CwHeatmap internally read `.timestamp`, not `.created_at`.
 	// We must include both until the library aligns types with implementation.
@@ -198,8 +189,19 @@
 		{/snippet}
 		<div class="dashboard-toolbar">
 			<div class="dashboard-toolbar__primary">
-				<CwButton variant="secondary" onclick={() => { goto(`/locations/${encodeURIComponent(locationId)}/devices/${encodeURIComponent(devEui)}/settings`) }}>Settings</CwButton>
-				<CwButton variant="info" onclick={() => downloadCsv(selectedTelemetry, locationName, devEui, selectedRangeHours)}>Download CSV</CwButton>
+				<CwButton
+					variant="secondary"
+					onclick={() => {
+						goto(
+							`/locations/${encodeURIComponent(locationId)}/devices/${encodeURIComponent(devEui)}/settings`
+						);
+					}}>Settings</CwButton
+				>
+				<CwButton
+					variant="info"
+					onclick={() => downloadCsv(selectedTelemetry, locationName, devEui, selectedRangeHours)}
+					>Download CSV</CwButton
+				>
 			</div>
 
 			<div>
@@ -254,7 +256,7 @@
 				secondaryLabel="Humidity"
 				primaryUnit="°C"
 				secondaryUnit="%"
-				height={320}
+				height={500}
 			/>
 		</CwCard>
 
@@ -307,6 +309,8 @@
 					{:else if col.key === 'alertRaised'}
 						{#if row.alertRaised}
 							<CwChip label="Alert" tone="danger" variant="outline" />
+						{:else}
+							<CwChip label="OK" tone="success" variant="outline" />
 						{/if}
 					{:else}
 						{defaultValue}
@@ -314,9 +318,12 @@
 				{/snippet}
 
 				{#snippet rowActions(row: TelemetryRow)}
-					<CwButton variant="info" onclick={() => alert(`Details for ${row.created_at}`)}>
-						Add a Note
-					</CwButton>
+					<NotesDialog {row} dev_eui={page.params.dev_eui || ''} />
+					{#if row.hasNotes}
+						<CwButton variant="info" onclick={() => alert('View notes for ' + row.id)}>
+							View Notes
+						</CwButton>
+					{/if}
 				{/snippet}
 			</CwDataTable>
 		{/key}

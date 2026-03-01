@@ -193,6 +193,6 @@
 	{/snippet}
 
 	{#snippet rowActions(row: IDevice)}
-		<CwButton size="sm" variant="info" onclick={() => goto(`/locations/${row.location_id}/devices/${row.dev_eui}`)}>Details</CwButton>
+		<CwButton size="sm" variant="info" onclick={() => { goto(`/locations/${row.location_id}/devices/${row.dev_eui}`); loading = true; }}>Details</CwButton>
 	{/snippet}
 </CwDataTable>
