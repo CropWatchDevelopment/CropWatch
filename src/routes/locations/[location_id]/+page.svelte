@@ -127,6 +127,9 @@
 </script>
 
 <div class="location-page">
+	<div style="margin-bottom: 1rem;">
+		<CwButton variant="primary" onclick={ () => goto(`/`) }>← Back to Dashboard</CwButton>
+	</div>
 	<CwCard title={`Location: ${locationLabel}`} subtitle="Devices returned for this location" elevated>
 		<CwDataTable
 			columns={columns}

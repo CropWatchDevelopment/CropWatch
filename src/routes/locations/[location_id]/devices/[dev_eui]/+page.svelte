@@ -67,7 +67,7 @@
 
 	let selectedRangeHours = $state<RangeHours>(24);
 	let tableLoading = $state(false);
-	let pageSize = $state(12);
+	let pageSize = $state(48);
 
 	let locationName = $derived(
 		app.devices.find((d) => d.dev_eui === page.params.dev_eui)?.location_name ?? 'Unknown'

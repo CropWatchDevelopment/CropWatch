@@ -10,10 +10,10 @@
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import OverviewDrawer from './OverviewDrawer.svelte';
-	import Header from './Header.svelte';
 	import Sidebar from './Sidebar.svelte';
 	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
 	import type { LayoutProps } from './$types';
+	import Header from './Header.svelte';
 
 	let { data, children }: LayoutProps = $props();
 	createCwToastContext();
@@ -52,24 +52,43 @@
 	});
 
 	setAppContext(app);
+
+	// Suppress the sidebar's CSS width transition during window resize so it
+	// snaps instantly at responsive breakpoints instead of lagging 300ms behind.
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+		let timer: ReturnType<typeof setTimeout>;
+		function onResize() {
+			document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
+			clearTimeout(timer);
+			timer = setTimeout(() => {
+				document.querySelector('.cw-sidenav')?.classList.remove('cw-sidenav--resizing');
+			}, 100);
+		}
+		window.addEventListener('resize', onResize);
+		return () => {
+			window.removeEventListener('resize', onResize);
+			clearTimeout(timer);
+		};
+	});
 </script>
 
 <CwOfflineOverlay />
 <CwToastContainer />
 
-<div style="display:flex; height:100vh">
+<div class="flex h-dvh w-full overflow-hidden">
 	{#if !isAuthRoute}
 		<Sidebar bind:mode />
-		<div style="flex:1; display:flex; flex-direction:column">
-			<Header {mode} />
+		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
+			<Header bind:mode={mode} />
 			<CwToastContainer />
-			<main style="flex:1; padding:0.5rem; overflow-y:auto">
+			<main class="flex-1 overflow-y-auto p-2">
 				{@render children()}
 			</main>
 			<OverviewDrawer />
 		</div>
 	{:else}
-		<main style="flex:1; overflow-y:auto">
+		<main class="flex-1 overflow-y-auto">
 			{@render children()}
 		</main>
 	{/if}

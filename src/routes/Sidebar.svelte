@@ -57,7 +57,7 @@
 	];
 </script>
 
-<CwSideNav bind:mode items={navItems}>
+<CwSideNav bind:mode items={navItems} responsive>
 	{#snippet aboveContent()}
 		<CwListBox
 			heading="Site Filter"

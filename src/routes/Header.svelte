@@ -4,7 +4,7 @@
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
 	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
 
-	let { mode } = $props();
+	let { mode = $bindable<CwSideNavMode>() } = $props();
 	const app = getAppContext();
 
 	const menuItems = [
