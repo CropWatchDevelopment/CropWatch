@@ -11,7 +11,7 @@
 		{ id: 'profile', label: 'Profile' },
 		{ id: 'billing', label: 'Billing' },
 		{ id: 'settings', label: 'Settings' },
-		{ id: 'logout', label: 'Logout' }
+		{ id: 'logout', label: 'Logout', separator: true, danger: true  }
 	];
 </script>
 

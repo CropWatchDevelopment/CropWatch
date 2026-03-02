@@ -14,6 +14,7 @@ const app = createAppContext();
 export interface AppContext {
 	session: IJWT | null;
 	devices: IDevice[];
+	deviceGroups?: string[];
 	deviceStatuses: { online: number; offline: number };
 	totalDeviceCount?: number;
 	rules: IRule[];
@@ -60,7 +61,6 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 		}
 	} catch {
 		// No existing context, will create a new one
-		console.error('No existing app context found, creating a new one.');
 		return {
 			session: null,
 			devices: [],

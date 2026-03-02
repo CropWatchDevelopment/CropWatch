@@ -65,11 +65,74 @@
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
 		loading = true;
 		try {
-			const CwTableResult = {
-				rows: app.devices ?? [],
-				total: (app.deviceStatuses?.offline ?? 0) + (app.deviceStatuses?.online ?? 0)
-			};
-			return CwTableResult;
+			const skip = (query.page - 1) * query.pageSize;
+			const take = query.pageSize;
+
+			const url = new URL(
+				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}`
+			);
+			url.searchParams.set('skip', String(skip));
+			url.searchParams.set('take', String(take));
+
+			const response = await fetch(url.toString(), {
+				headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined,
+				signal: query.signal
+			});
+
+			if (!response.ok) {
+				if (response.status === 401) {
+					document.location.href = `/auth/login?expired=true&redirect=${encodeURIComponent(window.location.pathname)}`;
+					return { rows: [], total: 0 };
+				}
+				throw new Error(`Failed to load devices (${response.status})`);
+			}
+
+			const result: { data: Record<string, unknown>[]; total: number } = await response.json();
+
+			let devices: IDevice[] = result.data.map((device) => ({
+				dev_eui: String(device.dev_eui ?? ''),
+				name: String(device.name ?? device.dev_eui ?? ''),
+				location_name: String(device.location_name ?? ''),
+				created_at: new Date(device.created_at as string),
+				co2: Number(device.co2 ?? 0),
+				humidity: Number(device.humidity ?? 0),
+				temperature_c: Number(device.temperature_c ?? 0),
+				location_id: Number(device.location_id ?? 0),
+				cwloading: false
+			}));
+
+			let total = result.total;
+
+			// Client-side search filtering (API does not support search)
+			if (query.search) {
+				const term = query.search.toLowerCase();
+				devices = devices.filter(
+					(d) =>
+						d.name.toLowerCase().includes(term) ||
+						d.dev_eui.toLowerCase().includes(term) ||
+						d.location_name.toLowerCase().includes(term)
+				);
+				// When searching, total reflects filtered count on current page only
+				total = devices.length;
+			}
+
+			// Client-side sort (API does not support sort)
+			if (query.sort) {
+				const { column, direction } = query.sort;
+				devices.sort((a, b) => {
+					const aVal = (a as unknown as Record<string, unknown>)[column];
+					const bVal = (b as unknown as Record<string, unknown>)[column];
+					const aStr = aVal != null ? String(aVal) : '';
+					const bStr = bVal != null ? String(bVal) : '';
+					const cmp = aStr.localeCompare(bStr, undefined, { numeric: true });
+					return direction === 'asc' ? cmp : -cmp;
+				});
+			}
+
+			// Update app context with current page of devices
+			app.devices = devices;
+
+			return { rows: devices, total };
 		} finally {
 			loading = false;
 		}

@@ -67,7 +67,7 @@
 
 	let selectedRangeHours = $state<RangeHours>(24);
 	let tableLoading = $state(false);
-	let pageSize = $state(48);
+	let pageSize = $state(144);
 
 	let locationName = $derived(
 		app.devices.find((d) => d.dev_eui === page.params.dev_eui)?.location_name ?? 'Unknown'
@@ -322,9 +322,10 @@
 				loadData={loadTelemetryData}
 				loading={tableLoading}
 				rowKey="id"
+				actionsHeader="Alerts / Notes"
 				searchable
 				bind:pageSize
-				pageSizeOptions={[12, 24, 48]}
+				pageSizeOptions={[144, 288, 432]}
 			>
 				{#snippet toolbarActions()}
 					<div class="table-toolbar">

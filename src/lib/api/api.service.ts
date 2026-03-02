@@ -201,6 +201,13 @@ export class ApiService {
 
 		const payload = await parseResponsePayload(response);
 		if (!response.ok) {
+			console.error('API request failed', {
+				url,
+				method: requestInit.method ?? 'GET',
+				status: response.status,
+				statusText: response.statusText,
+				payload
+			});
 			if (response.status === 401) {
 				this.clearAuthToken();
 				location.href =
@@ -440,6 +447,12 @@ export class ApiService {
 
 	public getDeviceStatuses(): Promise<DeviceStatusSummary> {
 		return this.request<DeviceStatusSummary>(PUBLIC_DEVICE_STATUS_ENDPOINT, {
+			method: 'GET'
+		});
+	}
+
+	public getDeviceGroups(): Promise<string[]> {
+		return this.request<string[]>(`${DEVICES_ENDPOINT}/groups`, {
 			method: 'GET'
 		});
 	}
