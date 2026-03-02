@@ -9,6 +9,7 @@ import {
 	PUBLIC_TRIGGERED_RULES_ENDPOINT,
 	PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT
 } from '$env/static/public';
+import { redirect } from '@sveltejs/kit';
 import type {
 	CreateLocationRequest,
 	CreateLocationOwnerRequest,
@@ -205,7 +206,8 @@ export class ApiService {
 				location.href =
 					'/auth/login?redirect=' + encodeURIComponent(location.pathname + location.search);
 			}
-			throw new ApiServiceError(response.status, response.statusText, payload);
+			// throw new ApiServiceError(response.status, response.statusText, payload);
+			throw redirect(303, '/auth/login?redirect=' + encodeURIComponent(location.pathname + location.search));
 		}
 
 		if (responseType === 'text') {

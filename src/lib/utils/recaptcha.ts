@@ -154,4 +154,6 @@ export function unloadRecaptchaScript() {
 		return;
 	}
 	unload(siteKey);
+	scriptLoaded = false;
+	scriptLoading = null;
 }

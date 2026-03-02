@@ -8,6 +8,7 @@
 		CwDuration,
 		CwHeatmap,
 		CwLineChart,
+		CwTooltip,
 		type CwColumnDef,
 		type CwHeatmapDataPoint,
 		type CwLineChartDataPoint,
@@ -26,9 +27,6 @@
 	let { data }: { data: any } = $props();
 	$inspect(data);
 	const app = getAppContext();
-
-	const x = data.deviceData.data.find((d: any) => d.cw_air_annotations.length > 0);
-	$inspect(x);
 
 	type RangeHours = 24 | 48 | 72;
 
@@ -51,8 +49,10 @@
 				humidity: Number(row.humidity) || 0,
 				co2: Number(row.co2) || 0,
 				alertRaised: temp >= ALERT_TEMP_THRESHOLD ? true : undefined,
-				hasNotes: Array.isArray(row.cw_air_annotations) ? row.cw_air_annotations.length > 0 : undefined,
-				notes: Array.isArray(row.cw_air_annotations) ? row.cw_air_annotations : [],
+				hasNotes: Array.isArray(row.cw_air_annotations)
+					? row.cw_air_annotations.length > 0
+					: undefined,
+				notes: Array.isArray(row.cw_air_annotations) ? row.cw_air_annotations : []
 			};
 		});
 	}
@@ -62,7 +62,7 @@
 		{ key: 'temperature_c', header: 'Temp (°C)', sortable: true, width: '8rem' },
 		{ key: 'humidity', header: 'Humidity (%)', sortable: true, width: '9rem' },
 		{ key: 'co2', header: 'CO₂ (ppm)', sortable: true, width: '9rem' },
-		{ key: 'alertRaised', header: 'Alert', sortable: true, width: '12rem' },
+		{ key: 'alertRaised', header: 'Alert', sortable: true, width: '12rem' }
 	];
 
 	let selectedRangeHours = $state<RangeHours>(24);
@@ -77,6 +77,13 @@
 	let latestData = $derived(data.latestData);
 	let lastSeenLabel = $derived(new Date(latestData?.created_at ?? '').toLocaleString());
 	let deviceData = $derived(extractRows(data.deviceData));
+
+	let averageTemp = $derived(
+		deviceData.length > 0
+			? deviceData.reduce((sum, row) => sum + row.temperature_c, 0) / deviceData.length
+			: 0
+	);
+	let deltaTemp = $derived(latestData ? latestData.temperature_c - averageTemp : 0);
 
 	let cutoff = $derived(new Date(Date.now() - selectedRangeHours * 60 * 60 * 1000));
 	let selectedTelemetry = $derived(deviceData.filter((row) => new Date(row.created_at) >= cutoff));
@@ -229,7 +236,28 @@
 
 	<div class="kpi-grid">
 		<CwCard title="Latest Temperature" subtitle="Current reading" elevated>
-			<p class="kpi-value">{latestData?.temperature_c.toFixed(2)}<span>°C</span></p>
+			<p class="kpi-value">
+				{latestData?.temperature_c.toFixed(2)}
+				<span>°C</span>
+				<CwTooltip position="top" value={`Currently ${deltaTemp.toFixed(2)} ${deltaTemp > 0 ? `Above Average` : `Below Average`}`}>
+					{#snippet children()}
+					<sup class="delta-container">
+						{#if deltaTemp !== 0}
+							<span
+								class="delta {deltaTemp > 0 ? 'text-blue-400/70' : 'text-red-400/70'}"
+								title={`Delta from average: ${deltaTemp.toFixed(2)}°C`}
+							>
+								{deltaTemp > 0
+									? `▲ ${Math.abs(deltaTemp).toFixed(2)}`
+									: `▼ ${Math.abs(deltaTemp).toFixed(2)}`}
+							</span>
+						{:else}
+							<span class="delta" title="Average">x̄—</span>
+						{/if}
+					</sup>
+					{/snippet}
+				</CwTooltip>
+			</p>
 			<CwChip label="Nominal" tone="success" variant="soft" />
 		</CwCard>
 
