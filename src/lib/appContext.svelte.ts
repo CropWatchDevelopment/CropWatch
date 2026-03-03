@@ -5,6 +5,7 @@ import type { IDevice } from './interfaces/device.interface';
 import type { IRule } from './interfaces/rule.interface';
 import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
 import type { RuleDto, TriggeredRulesCountResponse } from './api/api.service';
+import type { LocationDto } from './api/api.dtos';
 
 const DEVICE_STALE_MINUTES = 10;
 const deviceAlarms = createCwAlarmScheduler();
@@ -15,6 +16,7 @@ export interface AppContext {
 	session: IJWT | null;
 	devices: IDevice[];
 	deviceGroups?: string[];
+	locations?: LocationDto[];
 	deviceStatuses: { online: number; offline: number };
 	totalDeviceCount?: number;
 	rules: IRule[];

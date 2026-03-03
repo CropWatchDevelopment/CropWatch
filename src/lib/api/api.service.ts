@@ -19,6 +19,7 @@ import type {
 	DeviceDto,
 	DevicePrimaryDataDto,
 	DeviceStatusSummary,
+	LatestPrimaryDataQuery,
 	ListOrPaginatedResponse,
 	LocationDto,
 	LoginRequest,
@@ -458,7 +459,7 @@ export class ApiService {
 	}
 
 	public getLatestPrimaryDeviceData(
-		query: PaginationQuery = {}
+		query: LatestPrimaryDataQuery = {}
 	): Promise<PaginatedResponse<DevicePrimaryDataDto>> {
 		return this.request<PaginatedResponse<DevicePrimaryDataDto>>(
 			PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT,
@@ -466,7 +467,10 @@ export class ApiService {
 				method: 'GET',
 				query: {
 					skip: query.skip,
-					take: query.take
+					take: query.take,
+					group: query.group,
+					location: query.location,
+					name: query.name
 				}
 			}
 		);

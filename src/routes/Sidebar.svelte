@@ -4,6 +4,7 @@
 	import {
 		CwDuration,
 		CwListBox,
+		CwSearchInput,
 		CwSideNav,
 		type CwListBoxItem,
 		type CwSideNavItem
@@ -15,10 +16,9 @@
 
 	const app = getAppContext();
 
-	type Site = 'all' | 'north' | 'south';
-	let selectedSite = $state<Site>('all');
-	let selectedGroup = $state<string>('all');
-	let selectedLocation = $state<string>('all-loc');
+	// ── Read active filters from URL search params ──────────────
+	let selectedGroup = $derived(page.url.searchParams.get('group') ?? '');
+	let selectedLocation = $derived(page.url.searchParams.get('location') ?? '');
 
 	const navItems: CwSideNavItem[] = [
 		{ id: 'dashboard', label: 'Dashboard', href: '/', icon: { DASHBOARD_ICON } },
@@ -31,38 +31,73 @@
 		}
 	];
 
-	// { value: 'all', label: 'All groups', badge: 'ALL', badgeTone: 'secondary', endText: '196' },
-	const groups: CwListBoxItem<string>[] = $derived(
-		app.deviceGroups
-			?.join(', ')
-			.split(', ')
+	// ── Groups list (dynamic from API) ──────────────────────────
+	const groups: CwListBoxItem<string>[] = $derived.by(() => {
+		const allItem: CwListBoxItem<string> = {
+			value: '',
+			label: 'All groups',
+			badge: 'ALL',
+			badgeTone: 'secondary',
+			endText: String(app.devices?.length ?? 0)
+		};
+		const groupItems: CwListBoxItem<string>[] = (app.deviceGroups ?? [])
+			.filter((g) => g && g.trim() !== '')
 			.map((group) => ({
 				value: group,
 				label: group,
 				badge: group.toUpperCase().substring(0, 2),
-				badgeTone: 'info',
-				endText: String(app.devices?.filter((device) => device.group === group).length ?? 0)
-			})) ?? []
-	);
+				badgeTone: 'info' as const,
+				endText: String(app.devices?.filter((d) => d.group === group).length ?? 0)
+			}));
+		return [allItem, ...groupItems];
+	});
 
-	const locations: CwListBoxItem<string>[] = [
-		{ value: 'all-loc', label: 'All locations', endText: '196' },
-		{ value: 'miyazaki', label: 'Miyazaki House', endText: '7' },
-		{ value: 'npo', label: 'NPO法人 東米良創生会', endText: '1' },
-		{ value: 'pine1', label: 'パインテラス 1 階', endText: '26' },
-		{ value: 'pine-b1', label: 'パインテラス地下 1 階', endText: '6' },
-		{ value: 'sa-farm', label: 'SA西都農場', endText: '3' },
-		{ value: 'kawagoe', label: '川越農産', endText: '3' },
-		{ value: 'takama', label: '高間ハウス', endText: '3' },
-		{ value: 'toyotama', label: 'とよたま 2 階', endText: '9' }
-	];
+	// ── Locations list (dynamic from API) ───────────────────────
+	const locations: CwListBoxItem<string>[] = $derived.by(() => {
+		const allItem: CwListBoxItem<string> = {
+			value: '',
+			label: 'All locations',
+			endText: String(app.devices?.length ?? 0)
+		};
+		const locationItems: CwListBoxItem<string>[] = (app.locations ?? []).map((loc) => ({
+			value: String(loc.location_id),
+			label: loc.name,
+			endText: String(app.devices?.filter((d) => d.location_id === loc.location_id).length ?? 0)
+		}));
+		return [allItem, ...locationItems];
+	});
+
+	// ── Navigate with updated search params on filter change ────
+	function applyFilter(key: string, value: string) {
+		const params = new URLSearchParams(page.url.searchParams);
+		if (value) {
+			params.set(key, value);
+		} else {
+			params.delete(key);
+		}
+		const qs = params.toString();
+		goto(qs ? `/?${qs}` : '/', { replaceState: true, keepFocus: true, noScroll: true });
+	}
 </script>
 
 <CwSideNav bind:mode items={navItems} responsive>
 	{#snippet header()}
-		<div class="demo-logo">
-			<span class="demo-logo__text">CropWatch</span>
-		</div>
+		<CwSearchInput
+			placeholder="Search devices..."
+			value={page.url.searchParams.get('search') ?? ''}
+			oninput={(e) => {
+				const value = (e.target as HTMLInputElement).value;
+				const params = new URLSearchParams(page.url.searchParams);
+				if (value) {
+					params.set('search', value);
+				} else {
+					params.delete('search');
+				}
+				const qs = params.toString();
+				goto(qs ? `/?${qs}` : '/', { replaceState: true, keepFocus: true, noScroll: true });
+			}}
+			class="mx-4 my-2"
+		/>
 	{/snippet}
 
 	{#snippet aboveContent()}
@@ -71,15 +106,15 @@
 			<CwListBox
 				heading="Groups"
 				items={groups}
-				bind:value={selectedGroup}
-				onselect={(item) => console.log('Group:', item.value)}
+				value={selectedGroup}
+				onselect={(item) => applyFilter('group', item.value)}
 			/>
 
 			<CwListBox
 				heading="Locations"
 				items={locations}
-				bind:value={selectedLocation}
-				onselect={(item) => console.log('Location:', item.value)}
+				value={selectedLocation}
+				onselect={(item) => applyFilter('location', item.value)}
 			/>
 		{/if}
 	{/snippet}
@@ -91,7 +126,9 @@
 						from={new Date(app.session.exp * 1000)}
 						countDown={true}
 						alarmAfterMinutes={0.5}
-						alarmCallback={() => { goto(`/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`) }}
+						alarmCallback={() => {
+							goto(`/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`);
+						}}
 					/>
 				</p>
 			{/if}

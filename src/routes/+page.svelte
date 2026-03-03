@@ -20,6 +20,7 @@
 	import { defaultAppContext, getAppContext, updateAppContext } from '$lib/appContext.svelte';
 	import { dev } from '$app/environment';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 
 	type PagableDevices = {
 		data: IDevice[];
@@ -46,6 +47,17 @@
 
 	let devicesInView = $derived(headerRows.length);
 
+	// ── Reactive filter state from URL search params ────────────
+	let activeGroup = $derived(page.url.searchParams.get('group') ?? '');
+	let activeLocation = $derived(page.url.searchParams.get('location') ?? '');
+
+	// Look up the human-readable location name for the breadcrumb
+	let activeLocationName = $derived.by(() => {
+		if (!activeLocation) return '';
+		const loc = app.locations?.find((l) => String(l.location_id) === activeLocation);
+		return loc?.name ?? activeLocation;
+	});
+
 	const columns: CwColumnDef<IDevice>[] = [
 		{ key: 'name', header: 'Device Name', sortable: true },
 		{ key: 'dev_eui', header: 'DevEUI', width: '12rem', hideBelow: 'sm' },
@@ -62,81 +74,92 @@
 		}
 	];
 
-	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
-		loading = true;
-		try {
-			const skip = (query.page - 1) * query.pageSize;
-			const take = query.pageSize;
+	// ── loadData factory: returns a new function when filters change ──
+	// CwDataTable's internal $effect reads loadData, so a new reference
+	// triggers an automatic refetch.
+	function createLoadData(group: string, location: string) {
+		return async (query: CwTableQuery): Promise<CwTableResult<IDevice>> => {
+			loading = true;
+			try {
+				const skip = (query.page - 1) * query.pageSize;
+				const take = query.pageSize;
 
-			const url = new URL(
-				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}`
-			);
-			url.searchParams.set('skip', String(skip));
-			url.searchParams.set('take', String(take));
-
-			const response = await fetch(url.toString(), {
-				headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined,
-				signal: query.signal
-			});
-
-			if (!response.ok) {
-				if (response.status === 401) {
-					document.location.href = `/auth/login?expired=true&redirect=${encodeURIComponent(window.location.pathname)}`;
-					return { rows: [], total: 0 };
-				}
-				throw new Error(`Failed to load devices (${response.status})`);
-			}
-
-			const result: { data: Record<string, unknown>[]; total: number } = await response.json();
-
-			let devices: IDevice[] = result.data.map((device) => ({
-				dev_eui: String(device.dev_eui ?? ''),
-				name: String(device.name ?? device.dev_eui ?? ''),
-				location_name: String(device.location_name ?? ''),
-				created_at: new Date(device.created_at as string),
-				co2: Number(device.co2 ?? 0),
-				humidity: Number(device.humidity ?? 0),
-				temperature_c: Number(device.temperature_c ?? 0),
-				location_id: Number(device.location_id ?? 0),
-				cwloading: false
-			}));
-
-			let total = result.total;
-
-			// Client-side search filtering (API does not support search)
-			if (query.search) {
-				const term = query.search.toLowerCase();
-				devices = devices.filter(
-					(d) =>
-						d.name.toLowerCase().includes(term) ||
-						d.dev_eui.toLowerCase().includes(term) ||
-						d.location_name.toLowerCase().includes(term)
+				const url = new URL(
+					`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}`
 				);
-				// When searching, total reflects filtered count on current page only
-				total = devices.length;
-			}
+				url.searchParams.set('skip', String(skip));
+				url.searchParams.set('take', String(take));
 
-			// Client-side sort (API does not support sort)
-			if (query.sort) {
-				const { column, direction } = query.sort;
-				devices.sort((a, b) => {
-					const aVal = (a as unknown as Record<string, unknown>)[column];
-					const bVal = (b as unknown as Record<string, unknown>)[column];
-					const aStr = aVal != null ? String(aVal) : '';
-					const bStr = bVal != null ? String(bVal) : '';
-					const cmp = aStr.localeCompare(bStr, undefined, { numeric: true });
-					return direction === 'asc' ? cmp : -cmp;
+				// Forward sidebar filters to the API as server-side query params
+				if (group) url.searchParams.set('group', group);
+				if (location) url.searchParams.set('location', location);
+				debugger;
+				const response = await fetch(url.toString(), {
+					headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined,
+					signal: query.signal
 				});
+
+				if (!response.ok) {
+					if (response.status === 401) {
+						document.location.href = `/auth/login?expired=true&redirect=${encodeURIComponent(window.location.pathname)}`;
+						return { rows: [], total: 0 };
+					}
+					throw new Error(`Failed to load devices (${response.status})`);
+				}
+
+				const result: { data: Record<string, unknown>[]; total: number } = await response.json();
+
+				let devices: IDevice[] = result.data.map((device) => ({
+					dev_eui: String(device.dev_eui ?? ''),
+					name: String(device.name ?? device.dev_eui ?? ''),
+					location_name: String(device.location_name ?? ''),
+					group: String(device.group ?? ''),
+					created_at: new Date(device.created_at as string),
+					co2: Number(device.co2 ?? 0),
+					humidity: Number(device.humidity ?? 0),
+					temperature_c: Number(device.temperature_c ?? 0),
+					location_id: Number(device.location_id ?? 0),
+					cwloading: false
+				}));
+
+				let total = result.total;
+
+				// Client-side search filtering (API does not support search)
+				if (query.search) {
+					const term = query.search.toLowerCase();
+					devices = devices.filter(
+						(d) =>
+							d.name.toLowerCase().includes(term) ||
+							d.dev_eui.toLowerCase().includes(term) ||
+							d.location_name.toLowerCase().includes(term)
+					);
+					total = devices.length;
+				}
+
+				// Client-side sort (API does not support sort)
+				if (query.sort) {
+					const { column, direction } = query.sort;
+					devices.sort((a, b) => {
+						const aVal = (a as unknown as Record<string, unknown>)[column];
+						const bVal = (b as unknown as Record<string, unknown>)[column];
+						const aStr = aVal != null ? String(aVal) : '';
+						const bStr = bVal != null ? String(bVal) : '';
+						const cmp = aStr.localeCompare(bStr, undefined, { numeric: true });
+						return direction === 'asc' ? cmp : -cmp;
+					});
+				}
+
+				// Update app context with current page of devices
+				app.devices = devices;
+
+				return { rows: devices, total };
+			} finally {
+				loading = false;
 			}
-
-			// Update app context with current page of devices
-			app.devices = devices;
-
-			return { rows: devices, total };
-		} finally {
-			loading = false;
-		}
+		};
 	}
+
+	const loadData = $derived(createLoadData(activeGroup, activeLocation));
 
 	async function loadSingleDevice(devEUI: string) {
 		if (refreshingByDevEui[devEUI]) return;
@@ -187,7 +210,13 @@
 			<div class="flex items-center gap-2 text-xs text-slate-400">
 				<span>Group</span>
 				<span class="text-slate-600">/</span>
-				<span class="truncate">All groups</span>
+				<span class="truncate">{activeGroup || 'All groups'}</span>
+				{#if activeLocationName}
+					<span class="text-slate-600">/</span>
+					<span>Location</span>
+					<span class="text-slate-600">/</span>
+					<span class="truncate">{activeLocationName}</span>
+				{/if}
 			</div>
 		</div>
 	</div>

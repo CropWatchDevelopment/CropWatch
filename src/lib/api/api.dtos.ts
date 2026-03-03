@@ -29,6 +29,7 @@ export interface DevicePrimaryDataDto {
 	name?: string;
 	location_id?: number | null;
 	location_name?: string;
+	group?: string | null;
 	co2?: number | null;
 	humidity?: number | null;
 	temperature_c?: number | null;
@@ -63,6 +64,12 @@ export interface PaginationQuery {
 export interface DeviceDataWithinRangeQuery extends PaginationQuery {
 	start?: string | Date;
 	end?: string | Date;
+}
+
+export interface LatestPrimaryDataQuery extends PaginationQuery {
+	group?: string;
+	location?: string;
+	name?: string;
 }
 
 export interface SensorTimeSeriesPoint {

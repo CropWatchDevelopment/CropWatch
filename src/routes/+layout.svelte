@@ -42,7 +42,8 @@
 		app.triggeredRules = data.triggeredRules ?? [];
 		app.triggeredRulesCount = triggeredRulesCount;
 		app.accessToken = data.authToken ?? undefined;
-		app.deviceGroups = data.groups ?? [];
+		app.deviceGroups = (data.groups ?? []).filter((g): g is string => !!g);
+		app.locations = data.locations ?? [];
 	}
 
 	const app = $state(createAppContext());
