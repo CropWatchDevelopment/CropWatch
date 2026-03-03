@@ -1,3 +1,5 @@
+import { type CwDeviceType } from '../interfaces/CwDeviceTypeDto.interface.ts';
+
 export interface LoginRequest {
 	email: string;
 	password: string;
@@ -18,6 +20,7 @@ export interface DeviceDto {
 	dev_eui: string;
 	name: string;
 	[key: string]: unknown;
+	cw_device_type: CwDeviceType;
 }
 
 export interface DevicePrimaryDataDto {

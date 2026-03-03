@@ -53,7 +53,6 @@
 	});
 
 	setAppContext(app);
-	$inspect(app)
 
 	// Suppress the sidebar's CSS width transition during window resize so it
 	// snaps instantly at responsive breakpoints instead of lagging 300ms behind.

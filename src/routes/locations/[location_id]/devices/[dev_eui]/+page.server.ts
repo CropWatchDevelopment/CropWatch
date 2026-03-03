@@ -26,11 +26,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
     const deviceData = await apiServiceInstance.getDeviceData(params.dev_eui, pagination);
     const latestData = await apiServiceInstance.getDeviceLatestData(params.dev_eui);
+    const dataTable = await apiServiceInstance.getDevice(params.dev_eui);
+
+    const deviceDataTable = dataTable.cw_device_type.data_table_v2;
 
 
     return {
         deviceData: deviceData ?? [],
-        latestData: latestData ?? null
+        latestData: latestData ?? null,
+        dataTable: deviceDataTable,
     };
 };
 
