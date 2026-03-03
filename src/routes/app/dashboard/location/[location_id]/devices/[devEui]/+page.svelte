@@ -9,6 +9,7 @@
 	import Button from '$lib/components/UI/buttons/Button.svelte';
 	import MaterialIcon from '$lib/components/UI/icons/MaterialIcon.svelte';
 	import WeatherCalendar from '$lib/components/WeatherCalendar.svelte';
+	import { hasDataTableView, isRelayTable, isTrafficTable } from '$lib/config/deviceTables';
 	import type { DeviceWithType } from '$lib/models/Device';
 	import type { DeviceDataRecord } from '$lib/models/DeviceDataRecord';
 	import {
@@ -326,7 +327,7 @@
 
 		const tableName = device.cw_device_type?.data_table_v2;
 
-		if (['cw_traffic2', 'traffic_v2'].includes(tableName ?? '')) {
+		if (isTrafficTable(tableName)) {
 			const monthStart = DateTime.now().startOf('month');
 			const todayEnd = DateTime.now().endOf('day');
 			const grouped = new Map<
@@ -532,7 +533,7 @@
 <div class="wrapper flex flex-col gap-4 p-4">
 	<div class="flex flex-col gap-4 lg:flex-row">
 		<!-- Left pane -->
-		{#if device.cw_device_type?.data_table_v2 !== 'cw_relay_data'}
+		{#if !isRelayTable(device.cw_device_type?.data_table_v2)}
 			<div
 				class="stats-column grid grid-cols-1 gap-4 sm:grid-cols-1 lg:flex lg:w-[320px] lg:grid-cols-1 lg:flex-col lg:gap-6"
 			>
@@ -599,11 +600,11 @@
 						<Spinner />
 						<p class="text-gray-700 dark:text-gray-300">{$_('Loading historical data...')}</p>
 					</div>
-				{:else if historicalData.length === 0 && device.cw_device_type?.data_table_v2 !== 'cw_relay_data'}
+				{:else if historicalData.length === 0 && !isRelayTable(device.cw_device_type?.data_table_v2)}
 					<div class="pt-4 text-center text-gray-500 italic">
 						{$_('No historical data available for the selected date range.')}
 					</div>
-				{:else if device.cw_device_type?.data_table_v2 === 'cw_relay_data'}
+				{:else if isRelayTable(device.cw_device_type?.data_table_v2)}
 					<RelayControl {device} {latestData} supabase={data.supabase} />
 				{:else}
 					<div class="mb-8">
@@ -657,19 +658,17 @@
 	</section>
 {/if}
 
-<!-- Full-width Calendar Section -->
+<!-- Full-width Calendar / Data Section -->
 <section class="mb-12 px-4">
-	{#if device.cw_device_type?.data_table_v2 === 'cw_air_data'}
-		<DataTable {historicalData} />
-	{:else if ['traffic_v2', 'cw_traffic2'].includes(device.cw_device_type?.data_table_v2 ?? '')}
+	{#if isTrafficTable(device.cw_device_type?.data_table_v2)}
 		<h2>{$_('Weather & Data')}</h2>
 		<WeatherCalendar
 			events={calendarEvents}
 			latitude={device.lat ?? undefined}
 			longitude={device.long ?? undefined}
 		/>
-	{:else}
-		<!-- nop -->
+	{:else if hasDataTableView(device.cw_device_type?.data_table_v2)}
+		<DataTable {historicalData} />
 	{/if}
 </section>
 
