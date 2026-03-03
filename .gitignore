@@ -27,3 +27,4 @@ vite.config.ts.timestamp-*
 
 # Paraglide
 src/lib/paraglide
+package-lock.json\nstatic/build-info.json
