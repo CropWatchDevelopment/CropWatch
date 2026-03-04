@@ -12,6 +12,8 @@
 	} from '@cropwatchdevelopment/cwui';
 	import DASHBOARD_ICON from '$lib/images/icons/dashboard.svg';
 	import LOCATIONS_ICON from '$lib/images/icons/globe_location_pin.svg';
+	import RULES_ICON from '$lib/images/icons/rules.svg';
+	import REPORTS_ICON from '$lib/images/icons/report.svg';
 	import { goto } from '$app/navigation';
 
 	let { mode = $bindable() } = $props();
@@ -32,6 +34,18 @@
 			label: 'Locations',
 			href: '/locations',
 			icon: { LOCATIONS_ICON }
+		},
+		{
+			id: 'rules',
+			label: 'Rules',
+			href: '/rules',
+			icon: { RULES_ICON }
+		},
+		{
+			id: 'reports',
+			label: 'Reports',
+			href: '/reports',
+			icon: { REPORTS_ICON }
 		}
 	];
 

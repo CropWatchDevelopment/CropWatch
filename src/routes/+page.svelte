@@ -2,7 +2,7 @@
 	import {
 		CwBadge,
 		CwButton,
-		CwChip,
+		CwStatusDot,
 		CwDataTable,
 		CwDuration,
 		type CwColumnDef,
@@ -83,6 +83,7 @@
 			try {
 				const skip = (query.page - 1) * query.pageSize;
 				const take = query.pageSize;
+				const location = page.url.searchParams.get('location') ?? '';
 
 				const url = new URL(`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}`);
 				url.searchParams.set('skip', String(skip));
@@ -91,6 +92,7 @@
 				// Forward sidebar filters to the API as server-side query params
 				if (group) url.searchParams.set('group', group);
 				if (locationGroup) url.searchParams.set('locationGroup', locationGroup);
+				if (location) url.searchParams.set('location', location);
 
 				const response = await fetch(url.toString(), {
 					headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined,
@@ -270,7 +272,7 @@
 	</div>
 </header>
 
-<div style="margin-left: 0.5rem; margin-right: 0.5rem; height: 100%">
+<div class="min-h-0 flex-1" style="margin-left: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
 	<CwDataTable
 		{columns}
 		{loadData}
@@ -283,7 +285,7 @@
 	>
 		{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
 			{#if col.key === 'lastSeen'}
-				<span style="flex: 1 1 auto; white-space: nowrap;">{new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}</span>
+				<CwStatusDot status={(new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000) ? 'offline' : 'online'} />
 				<CwDuration
 					from={row.created_at}
 					alarmAfterMinutes={10.3}

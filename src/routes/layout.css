@@ -1,4 +1,10 @@
+/* ── Import CWUI styles in a layer so Tailwind utilities can override them ── */
+@import '@cropwatchdevelopment/cwui/styles' layer(cwui);
 @import 'tailwindcss';
+
+/* ── Ensure Tailwind scans all source files and CWUI components ── */
+@source "../../src";
+@source "../../node_modules/@cropwatchdevelopment/cwui";
 
 /* ── Viewport reset ──────────────────────────────────────── */
 html,
@@ -15,6 +21,6 @@ body {
  * snaps instantly at responsive breakpoints instead of animating 300ms behind.
  * The `.cw-sidenav--resizing` class is added/removed by the layout script.
  */
-:global(.cw-sidenav--resizing) {
+.cw-sidenav--resizing {
 	transition: none !important;
 }

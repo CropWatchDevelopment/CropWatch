@@ -1,5 +1,4 @@
 <script lang="ts">
-	import '@cropwatchdevelopment/cwui/styles';
 	import './layout.css';
 	import {
 		createCwToastContext,
@@ -85,7 +84,7 @@
 		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 			<Header bind:mode={mode} />
 			<CwToastContainer />
-			<main class="flex-1 overflow-y-auto p-4">
+			<main class="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
 				{@render children()}
 			</main>
 			<OverviewDrawer />

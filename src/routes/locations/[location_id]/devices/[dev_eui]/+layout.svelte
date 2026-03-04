@@ -77,6 +77,7 @@
 	.device-layout {
 		display: flex;
 		flex-direction: column;
+		overflow-y: scroll;
 		gap: 1rem;
 		padding: 1rem;
 		background:
