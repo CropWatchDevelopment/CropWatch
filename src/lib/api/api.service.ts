@@ -351,6 +351,12 @@ export class ApiService {
 		});
 	}
 
+	public getLocationGroups(): Promise<string[]> {
+		return this.request<string[]>(`${LOCATIONS_ENDPOINT}/groups`, {
+			method: 'GET'
+		});
+	}
+
 	public createLocationPermission(
 		location_id: number | string,
 		newUserEmail: string,

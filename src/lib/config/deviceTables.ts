@@ -45,7 +45,6 @@ export const TABLE_REGISTRY: Record<string, () => Promise<{ default: DeviceDispl
 export async function resolveDisplayComponent(
 	table: string | null | undefined
 ): Promise<DeviceDisplayComponent> {
-	debugger;
 	const loader = table ? TABLE_REGISTRY[table] : undefined;
 	if (loader) {
 		const mod = await loader();

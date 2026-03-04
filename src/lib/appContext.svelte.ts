@@ -16,6 +16,7 @@ export interface AppContext {
 	session: IJWT | null;
 	devices: IDevice[];
 	deviceGroups?: string[];
+	locationGroups?: string[];
 	locations?: LocationDto[];
 	deviceStatuses: { online: number; offline: number };
 	totalDeviceCount?: number;
@@ -37,6 +38,7 @@ export const defaultAppContext: AppContext = {
 	triggeredRules: [],
 	triggeredRulesCount: 0,
 	staleDeviceIds: [],
+	locationGroups: [],
 	accessToken: undefined
 };
 
@@ -58,6 +60,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 				triggeredRulesCount: 0,
 				accessToken: undefined,
 				staleDeviceIds: [],
+				locationGroups: [],
 				...initial
 			};
 		}
@@ -73,6 +76,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 			triggeredRulesCount: 0,
 			accessToken: undefined,
 			staleDeviceIds: [],
+			locationGroups: [],
 			...initial
 		};
 	}

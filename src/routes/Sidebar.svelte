@@ -3,6 +3,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import {
 		CwDuration,
+		CwExpandPanel,
 		CwListBox,
 		CwSearchInput,
 		CwSideNav,
@@ -10,6 +11,7 @@
 		type CwSideNavItem
 	} from '@cropwatchdevelopment/cwui';
 	import DASHBOARD_ICON from '$lib/images/icons/dashboard.svg';
+	import LOCATIONS_ICON from '$lib/images/icons/globe_location_pin.svg';
 	import { goto } from '$app/navigation';
 
 	let { mode = $bindable() } = $props();
@@ -19,6 +21,8 @@
 	// ── Read active filters from URL search params ──────────────
 	let selectedGroup = $derived(page.url.searchParams.get('group') ?? '');
 	let selectedLocation = $derived(page.url.searchParams.get('location') ?? '');
+	let selectedLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
+	let dashboardFiltersOpen = $state(false);
 
 	const navItems: CwSideNavItem[] = [
 		{ id: 'dashboard', label: 'Dashboard', href: '/', icon: { DASHBOARD_ICON } },
@@ -27,7 +31,7 @@
 			id: 'locations',
 			label: 'Locations',
 			href: '/locations',
-			icon: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM12 11.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z'
+			icon: { LOCATIONS_ICON }
 		}
 	];
 
@@ -41,13 +45,34 @@
 			endText: String(app.devices?.length ?? 0)
 		};
 		const groupItems: CwListBoxItem<string>[] = (app.deviceGroups ?? [])
-			.filter((g) => g && g.trim() !== '')
+			.filter((g) => g)
+			.map((group) => ({
+				value: group,
+				label: group,
+				badge: group.group.toUpperCase().substring(0, 2),
+				badgeTone: 'info' as const,
+				endText: String(app.devices?.filter((d) => d.group === group).length ?? 0)
+			}));
+		return [allItem, ...groupItems];
+	});
+
+	// ── Location Groups list (dynamic from API) ──────────────────────────
+	const locationGroups: CwListBoxItem<string>[] = $derived.by(() => {
+		const allItem: CwListBoxItem<string> = {
+			value: '',
+			label: 'All location groups',
+			badge: 'ALL',
+			badgeTone: 'secondary',
+			endText: String(app.locations?.length ?? 0)
+		};
+		const groupItems: CwListBoxItem<string>[] = (app.locationGroups ?? [])
+			.filter((g) => g)
 			.map((group) => ({
 				value: group,
 				label: group,
 				badge: group.toUpperCase().substring(0, 2),
 				badgeTone: 'info' as const,
-				endText: String(app.devices?.filter((d) => d.group === group).length ?? 0)
+				endText: String(app.locations?.filter((d) => d.location_group === group).length ?? 0)
 			}));
 		return [allItem, ...groupItems];
 	});
@@ -102,20 +127,31 @@
 
 	{#snippet aboveContent()}
 		{#if page.url.pathname === '/'}
-			<div class="px-4 py-2 text-sm text-slate-400">Filter devices in view</div>
-			<CwListBox
-				heading="Groups"
-				items={groups}
-				value={selectedGroup}
-				onselect={(item) => applyFilter('group', item.value)}
-			/>
+			<!-- <div style="overflow-y: scroll; -webkit-overflow-scrolling: touch;" class="flex max-h-[50vh] flex-col gap-2 px-2 py-1"> -->
+			<CwExpandPanel title="Dashboard Filters" open={dashboardFiltersOpen}>
+				<div class="px-4 py-2 text-sm text-slate-400">Filter devices in view</div>
+				<CwListBox
+					heading="Device Groups"
+					items={groups}
+					value={selectedGroup}
+					onselect={(item) => applyFilter('group', item.value)}
+				/>
 
-			<CwListBox
-				heading="Locations"
-				items={locations}
-				value={selectedLocation}
-				onselect={(item) => applyFilter('location', item.value)}
-			/>
+				<CwListBox
+					heading="Location Groups"
+					items={locationGroups}
+					value={selectedLocationGroup}
+					onselect={(item) => applyFilter('locationGroup', item.value)}
+				/>
+
+				<CwListBox
+					heading="Locations"
+					items={locations}
+					value={selectedLocation}
+					onselect={(item) => applyFilter('location', item.value)}
+				/>
+			</CwExpandPanel>
+			<!-- </div> -->
 		{/if}
 	{/snippet}
 	{#snippet footer()}

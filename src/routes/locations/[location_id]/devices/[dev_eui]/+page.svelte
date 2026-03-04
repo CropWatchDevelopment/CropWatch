@@ -1,15 +1,3 @@
-<!--
-  Device detail dispatcher page.
-
-  This page is intentionally thin — it resolves the correct display component
-  from the central TABLE_REGISTRY based on the device's `dataTable` string
-  (loaded in +layout.server.ts) and renders it with a uniform props contract.
-
-  To add a new device table type:
-  1. Create a display component in $lib/components/displays/
-  2. Register it in $lib/config/deviceTables.ts → TABLE_REGISTRY
-  3. Done — this dispatcher picks it up automatically.
--->
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolveDisplayComponent } from '$lib/config/deviceTables';
@@ -34,7 +22,6 @@
 	let DisplayComponent = $state<DeviceDisplayComponent | null>(null);
 		
 		$effect(() => {
-		debugger;
 		const dataTable: string | null = data.dataTable ?? null;
 		loading = true;
 		resolveDisplayComponent(dataTable).then((comp) => {

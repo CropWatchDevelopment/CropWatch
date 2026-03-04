@@ -42,7 +42,8 @@
 		app.triggeredRules = data.triggeredRules ?? [];
 		app.triggeredRulesCount = triggeredRulesCount;
 		app.accessToken = data.authToken ?? undefined;
-		app.deviceGroups = (data.groups ?? []).filter((g): g is string => !!g);
+		app.deviceGroups = (data.deviceGroups ?? []).filter((g): g is string => !!g);
+		app.locationGroups = (data.locationGroups ?? []).filter((g): g is string => !!g);
 		app.locations = data.locations ?? [];
 	}
 
@@ -84,13 +85,13 @@
 		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 			<Header bind:mode={mode} />
 			<CwToastContainer />
-			<main class="flex-1 overflow-y-auto p-2">
+			<main class="flex-1 overflow-y-auto p-4">
 				{@render children()}
 			</main>
 			<OverviewDrawer />
 		</div>
 	{:else}
-		<main class="flex-1 overflow-y-auto">
+		<main class="flex-1 overflow-y-auto p-4">
 			{@render children()}
 		</main>
 	{/if}

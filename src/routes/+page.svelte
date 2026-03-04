@@ -49,13 +49,13 @@
 
 	// ── Reactive filter state from URL search params ────────────
 	let activeGroup = $derived(page.url.searchParams.get('group') ?? '');
-	let activeLocation = $derived(page.url.searchParams.get('location') ?? '');
+	let activeLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 
 	// Look up the human-readable location name for the breadcrumb
-	let activeLocationName = $derived.by(() => {
-		if (!activeLocation) return '';
-		const loc = app.locations?.find((l) => String(l.location_id) === activeLocation);
-		return loc?.name ?? activeLocation;
+	let activeLocationGroupName = $derived.by(() => {
+		if (!activeLocationGroup) return '';
+		const loc = app.locationGroups?.find((l) => String(l) === activeLocationGroup);
+		return loc ?? activeLocationGroup;
 	});
 
 	const columns: CwColumnDef<IDevice>[] = [
@@ -77,23 +77,21 @@
 	// ── loadData factory: returns a new function when filters change ──
 	// CwDataTable's internal $effect reads loadData, so a new reference
 	// triggers an automatic refetch.
-	function createLoadData(group: string, location: string) {
+	function createLoadData(group: string, locationGroup: string) {
 		return async (query: CwTableQuery): Promise<CwTableResult<IDevice>> => {
 			loading = true;
 			try {
 				const skip = (query.page - 1) * query.pageSize;
 				const take = query.pageSize;
 
-				const url = new URL(
-					`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}`
-				);
+				const url = new URL(`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT}`);
 				url.searchParams.set('skip', String(skip));
 				url.searchParams.set('take', String(take));
 
 				// Forward sidebar filters to the API as server-side query params
 				if (group) url.searchParams.set('group', group);
-				if (location) url.searchParams.set('location', location);
-				debugger;
+				if (locationGroup) url.searchParams.set('locationGroup', locationGroup);
+
 				const response = await fetch(url.toString(), {
 					headers: app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined,
 					signal: query.signal
@@ -159,14 +157,23 @@
 		};
 	}
 
-	const loadData = $derived(createLoadData(activeGroup, activeLocation));
+	const loadData = $derived(createLoadData(activeGroup, activeLocationGroup));
 
-	async function loadSingleDevice(devEUI: string) {
-		if (refreshingByDevEui[devEUI]) return;
-		const rowItem: IDevice | null = app.devices.find((d) => d.dev_eui === devEUI) ?? null;
-		if (!rowItem) return;
-		rowItem.cwloading = true;
+	function applyLatestReadings(target: IDevice, source: IDevice) {
+		target.temperature_c = source.temperature_c;
+		target.co2 = source.co2;
+		target.humidity = source.humidity;
+		target.created_at =
+			source.created_at instanceof Date ? source.created_at : new Date(source.created_at);
+	}
+
+	async function loadSingleDevice(row: IDevice) {
+		const devEUI = row.dev_eui;
+		if (!devEUI || refreshingByDevEui[devEUI]) return;
+
 		refreshingByDevEui[devEUI] = true;
+		row.cwloading = true;
+
 		try {
 			const response = await fetch(
 				`${PUBLIC_API_BASE_URL}${PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT.replace('{dev_eui}', devEUI)}`,
@@ -183,18 +190,18 @@
 			}
 
 			const device = (await response.json()) as IDevice;
-			rowItem.temperature_c = device.temperature_c;
-			rowItem.co2 = device.co2;
-			rowItem.humidity = device.humidity;
-			rowItem.created_at = device.created_at;
-			
-			// implement a small delay here to simulate loading state and make it more visually clear that the row is being refreshed
-			await new Promise((resolve) => setTimeout(resolve, dev ? 500 : 1000));
-			rowItem.cwloading = false;
+			applyLatestReadings(row, device);
 
-			// update the app context here to trigger updates
-			app.devices = [...app.devices];
+			// Keep row refresh visible in the table so polling feels intentional.
+			await new Promise((resolve) => setTimeout(resolve, dev ? 500 : 1000));
 		} finally {
+			row.cwloading = false;
+			const contextRow = app.devices.find((d) => d.dev_eui === devEUI);
+			if (contextRow && contextRow !== row) {
+				applyLatestReadings(contextRow, row);
+				contextRow.cwloading = false;
+			}
+			app.devices = [...app.devices];
 			refreshingByDevEui[devEUI] = false;
 		}
 	}
@@ -207,15 +214,15 @@
 <header style="margin-bottom: 23px;" class="flex-none">
 	<div class="flex min-h-12 items-center justify-between px-6 py-3 md:py-4">
 		<div class="hidden flex-col gap-1 md:flex">
-			<div class="flex items-center gap-2 text-xs text-slate-400">
+			<div class="flex items-center gap-2 text-xs text-slate-400" style="margin-left: 1rem;">
 				<span>Group</span>
 				<span class="text-slate-600">/</span>
 				<span class="truncate">{activeGroup || 'All groups'}</span>
-				{#if activeLocationName}
+				{#if activeLocationGroupName}
 					<span class="text-slate-600">/</span>
 					<span>Location</span>
 					<span class="text-slate-600">/</span>
-					<span class="truncate">{activeLocationName}</span>
+					<span class="truncate">{activeLocationGroupName}</span>
 				{/if}
 			</div>
 		</div>
@@ -223,6 +230,7 @@
 
 	<div
 		class="mb-3 flex min-h-[4rem] flex-row items-end justify-between gap-3 border-t border-slate-800 px-6 py-3 text-xs md:py-4"
+		style="margin-left: 1rem;"
 	>
 		<div class="hidden flex-col gap-2 text-slate-400 md:flex">
 			<div class="flex flex-wrap items-center gap-3">
@@ -231,7 +239,7 @@
 					<span>devices in view</span>
 				</span>
 				<span class="flex items-center gap-1 text-amber-200">
-					<span class="font-mono">{app.triggeredRules?.triggered_count ?? 0}</span>
+					<span class="font-mono">{app.triggeredRules?.length ?? 0}</span>
 					<span>with active alerts</span>
 				</span>
 			</div>
@@ -262,29 +270,39 @@
 	</div>
 </header>
 
-<CwDataTable
-	{columns}
-	{loadData}
-	{loading}
-	rowKey="dev_eui"
-	searchable
-	pageSize={initialPageSize}
-	actionsHeader="Actions"
->
-	{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
-		{#if col.key === 'lastSeen'}
-			{new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}
-			<CwDuration
-				from={row.created_at}
-				alarmAfterMinutes={10.5}
-				alarmCallback={() => void loadSingleDevice(row.dev_eui)}
-			/>
-		{:else}
-			{defaultValue}
-		{/if}
-	{/snippet}
+<div style="margin-left: 0.5rem; margin-right: 0.5rem; height: 100%">
+	<CwDataTable
+		{columns}
+		{loadData}
+		{loading}
+		rowKey="dev_eui"
+		searchable
+		pageSize={initialPageSize}
+		actionsHeader="Actions"
+		fillParent
+	>
+		{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
+			{#if col.key === 'lastSeen'}
+				<span style="flex: 1 1 auto; white-space: nowrap;">{new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000 ? '❌' : '✅'}</span>
+				<CwDuration
+					from={row.created_at}
+					alarmAfterMinutes={10.3}
+					alarmCallback={() => void loadSingleDevice(row)}
+				/>
+			{:else}
+				{defaultValue}
+			{/if}
+		{/snippet}
 
-	{#snippet rowActions(row: IDevice)}
-		<CwButton size="sm" variant="info" onclick={() => { goto(`/locations/${row.location_id}/devices/${row.dev_eui}`); loading = true; }}>Details</CwButton>
-	{/snippet}
-</CwDataTable>
+		{#snippet rowActions(row: IDevice)}
+			<CwButton
+				size="sm"
+				variant="info"
+				onclick={() => {
+					goto(`/locations/${row.location_id}/devices/${row.dev_eui}`);
+					loading = true;
+				}}>Details</CwButton
+			>
+		{/snippet}
+	</CwDataTable>
+</div>

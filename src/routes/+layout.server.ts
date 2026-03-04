@@ -20,7 +20,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 		authToken
 	});
 
-	const [latestPrimaryData, triggeredRules, triggeredRulesCount, deviceStatuses, deviceGroups, locations] = await Promise.all([
+	const [latestPrimaryData, triggeredRules, triggeredRulesCount, deviceStatuses, deviceGroups, locations, locationGroups] = await Promise.all([
 		apiServiceInstance
 			.getLatestPrimaryDeviceData()
 			.then((result) => result.data ?? [])
@@ -29,7 +29,8 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 		apiServiceInstance.getTriggeredRulesCount().catch(() => 0),
 		apiServiceInstance.getDeviceStatuses().catch(() => ({ online: 0, offline: 0 })),
 		apiServiceInstance.getDeviceGroups().then((result) => result ?? []).catch(() => []),
-		apiServiceInstance.getLocations().catch(() => [])
+		apiServiceInstance.getLocations().catch(() => []),
+		apiServiceInstance.getLocationGroups().catch(() => [])
 	]);
 
 	const devices: IDevice[] = latestPrimaryData.map((device) => ({
@@ -57,7 +58,8 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 		triggeredRulesCount,
 		deviceStatuses,
 		authToken,
-		groups,
+		deviceGroups,
 		locations,
+		locationGroups
 	};
 };
