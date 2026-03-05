@@ -81,6 +81,7 @@
 			{ key: 'created_at', header: 'Created At' }
 		]}
 		actionsHeader="Actions"
+
 		{loadData}
 		rowKey="id"
 	>
@@ -92,7 +93,7 @@
 					handleDownload(row.name);
 				}}
 			>
-				View
+				Download
 			</CwButton>
 		{/snippet}
 	</CwDataTable>

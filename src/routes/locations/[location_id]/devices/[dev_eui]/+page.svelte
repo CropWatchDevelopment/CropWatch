@@ -10,6 +10,7 @@
 	let locationId = $derived(page.params.location_id ?? '');
 	let authToken = $derived(data.authToken ?? null);
 	let latestData = $derived(data.latestData ?? null);
+	let locationName = $derived(data.device?.cw_locations?.name ?? 'Unknown');
 	let historicalData = $derived(
 		Array.isArray(data.deviceData)
 			? data.deviceData
@@ -17,7 +18,6 @@
 	);
 	let loading = $state(false);
 	
-	$inspect(data)
 	// Resolve the display component from the registry
 	let DisplayComponent = $state<DeviceDisplayComponent | null>(null);
 		
@@ -44,6 +44,7 @@
 	<DisplayComponent
 		{devEui}
 		{locationId}
+		{locationName}
 		{latestData}
 		{historicalData}
 		{loading}

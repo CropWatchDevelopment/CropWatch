@@ -90,7 +90,7 @@
 			<OverviewDrawer />
 		</div>
 	{:else}
-		<main class="flex-1 overflow-y-auto p-4">
+		<main class="flex-1 overflow-y-auto">
 			{@render children()}
 		</main>
 	{/if}

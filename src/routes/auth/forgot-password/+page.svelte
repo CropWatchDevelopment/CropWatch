@@ -4,7 +4,104 @@
 	import BACK_ICON from '$lib/images/icons/back.svg';
 	import ADD_PERSON_ICON from '$lib/images/icons/person_add.svg';
 	import { goto } from '$app/navigation';
-	import { CwButton, CwCard, CwInput } from '@cropwatchdevelopment/cwui';
+	import { onDestroy, onMount } from 'svelte';
+	import {
+		loadRecaptchaScript,
+		executeRecaptcha,
+		unloadRecaptchaScript
+	} from '$lib/utils/recaptcha';
+	import { applyAction, enhance } from '$app/forms';
+	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+
+	interface Props {
+		form: { message?: string; success?: boolean } | null;
+	}
+
+	const toast = useCwToast();
+
+	let { form }: Props = $props();
+
+	let submitting: boolean = $state(false);
+	let loadingCaptcha: boolean = $state(true);
+	let recaptchaReady: boolean = $state(false);
+	let sent: boolean = $derived(form?.success === true);
+
+	$effect(() => {
+		if (form?.message) {
+			toast.add({ message: form.message, tone: 'danger' });
+		}
+	});
+
+	// ── reCAPTCHA helpers ──────────────────────────────────────
+	const RECAPTCHA_TIMEOUT_MS = 12_000;
+	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 5;
+	const RECAPTCHA_RETRY_DELAY_MS = 900;
+
+	function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+		return new Promise<T>((res, rej) => {
+			const id = window.setTimeout(() => rej(new Error('Operation timed out')), timeoutMs);
+			promise
+				.then(res)
+				.catch(rej)
+				.finally(() => window.clearTimeout(id));
+		});
+	}
+
+	function sleep(ms: number): Promise<void> {
+		return new Promise((res) => window.setTimeout(res, ms));
+	}
+
+	async function ensureRecaptchaLoaded(): Promise<boolean> {
+		for (let attempt = 1; attempt <= RECAPTCHA_MAX_LOAD_ATTEMPTS; attempt++) {
+			try {
+				const loaded = await withTimeout(
+					loadRecaptchaScript({
+						setLoadingCaptcha: (loading: boolean) => {
+							loadingCaptcha = loading;
+						}
+					}),
+					RECAPTCHA_TIMEOUT_MS
+				);
+				if (loaded) {
+					recaptchaReady = true;
+					loadingCaptcha = false;
+					return true;
+				}
+			} catch (error) {
+				console.error(`reCAPTCHA load error (attempt ${attempt}):`, error);
+			}
+			recaptchaReady = false;
+			loadingCaptcha = false;
+			if (attempt < RECAPTCHA_MAX_LOAD_ATTEMPTS) {
+				await sleep(RECAPTCHA_RETRY_DELAY_MS * attempt);
+			}
+		}
+		return false;
+	}
+
+	async function getRecaptchaToken(): Promise<string> {
+		if (!recaptchaReady) {
+			const loaded = await ensureRecaptchaLoaded();
+			if (!loaded) throw new Error('reCAPTCHA not ready');
+		}
+		try {
+			return await withTimeout(executeRecaptcha('FORGOT_PASSWORD'), RECAPTCHA_TIMEOUT_MS);
+		} catch (firstError) {
+			console.error('reCAPTCHA execute failed; retrying load once:', firstError);
+			recaptchaReady = false;
+			const loaded = await ensureRecaptchaLoaded();
+			if (!loaded) throw firstError;
+			return await withTimeout(executeRecaptcha('FORGOT_PASSWORD'), RECAPTCHA_TIMEOUT_MS);
+		}
+	}
+
+	onMount(() => {
+		void ensureRecaptchaLoaded();
+	});
+
+	onDestroy(() => {
+		unloadRecaptchaScript();
+	});
 </script>
 
 <svelte:head>
@@ -17,53 +114,111 @@
 			<img src={logo} alt="CropWatch" class="logo-image" />
 		</div>
 
-		<h1 class="auth-title">Forgot your password?</h1>
-		<p class="auth-subtitle">Enter your account email and we will send you a reset link.</p>
+		{#if sent}
+			<h1 class="auth-title">Check your email</h1>
+			<p class="auth-subtitle">
+				If an account exists with that email, we've sent a password reset link. Please check your
+				inbox (and spam folder).
+			</p>
 
-		<form method="POST" action="?/forgot-password" class="auth-form">
-			<label class="field-block">
-				<span class="field-label">EMAIL</span>
-				<CwInput
-					class="auth-input"
-					name="email"
-					type="email"
-					required
-					placeholder="you@example.com"
-					autocomplete="email"
-				/>
-			</label>
-
-			<CwButton class="auth-primary" type="submit" variant="primary" size="md" fullWidth={true}>
-				<img src={KEY_ICON} alt="Send reset link icon" class="h-4 w-4" />
-				Send Reset Link
+			<CwButton
+				class="auth-primary"
+				type="button"
+				variant="primary"
+				size="md"
+				fullWidth={true}
+				onclick={() => goto('/auth/login')}
+			>
+				<img src={BACK_ICON} alt="Back to login icon" class="h-4 w-4" />
+				Back to Login
 			</CwButton>
+		{:else}
+			<h1 class="auth-title">Forgot your password?</h1>
+			<p class="auth-subtitle">Enter your account email and we will send you a reset link.</p>
 
-			<div class="action-grid">
+			<form
+				method="POST"
+				action="?/forgot-password"
+				class="auth-form"
+				use:enhance={async ({ formData, cancel }) => {
+					if (submitting) {
+						cancel();
+						return;
+					}
+					submitting = true;
+
+					try {
+						const token = await getRecaptchaToken();
+						formData.set('recaptchaToken', token);
+					} catch (err) {
+						console.error('reCAPTCHA token failed:', err);
+						toast.add({ message: 'Security verification failed. Please try again.', tone: 'danger' });
+						submitting = false;
+						cancel();
+						return;
+					}
+
+					return async ({ result }) => {
+						submitting = false;
+						await applyAction(result);
+					};
+				}}
+			>
+				<label class="field-block">
+					<span class="field-label">EMAIL</span>
+					<CwInput
+						class="auth-input"
+						name="email"
+						type="email"
+						required
+						placeholder="you@example.com"
+						autocomplete="email"
+					/>
+				</label>
+
 				<CwButton
-					class="auth-secondary"
-					type="button"
-					variant="secondary"
+					class="auth-primary"
+					type="submit"
+					variant="primary"
 					size="md"
 					fullWidth={true}
-					onclick={() => goto('/auth/login')}
+					disabled={submitting || loadingCaptcha}
 				>
-					<img src={BACK_ICON} alt="Back to login icon" class="h-4 w-4" />
-					Back to Login
+					{#if submitting}
+						Sending…
+					{:else}
+						<img src={KEY_ICON} alt="Send reset link icon" class="h-4 w-4" />
+						Send Reset Link
+					{/if}
 				</CwButton>
 
-				<CwButton
-					class="auth-secondary"
-					type="button"
-					variant="secondary"
-					size="md"
-					fullWidth={true}
-					onclick={() => goto('/auth/create-account')}
-				>
-					<img src={ADD_PERSON_ICON} alt="Create account icon" class="h-4 w-4" />
-					Create Account
-				</CwButton>
-			</div>
-		</form>
+				<div class="action-grid">
+					<CwButton
+						class="auth-secondary"
+						type="button"
+						variant="secondary"
+						size="md"
+						fullWidth={true}
+						onclick={() => goto('/auth/login')}
+					>
+						<img src={BACK_ICON} alt="Back to login icon" class="h-4 w-4" />
+						Back to Login
+					</CwButton>
+
+					<CwButton
+						class="auth-secondary"
+						type="button"
+						variant="secondary"
+						size="md"
+						fullWidth={true}
+						onclick={() => goto('/auth/create-account')}
+					>
+						<img src={ADD_PERSON_ICON} alt="Create account icon" class="h-4 w-4" />
+						Create Account
+					</CwButton>
+				</div>
+			</form>
+		{/if}
 
 		<p class="security-copy">Protected by reCAPTCHA and CropWatch Security</p>
 	</div>

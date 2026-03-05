@@ -1,29 +1,109 @@
 <!--
   AirDisplay.svelte — Display component for cw_air_data.
 
-  Renders KPI cards (temperature, humidity, CO₂), a line chart with
+  Renders a toolbar (back, range selectors, date picker, CSV, settings),
+  KPI cards (temperature, humidity, CO₂), a line chart with
   temperature + humidity overlay, a heatmap, and a sortable data table.
-
-  This component owns all air-specific column definitions, chart config,
-  and formatting. The dispatcher page only passes DeviceDisplayProps.
 -->
 <script lang="ts">
 	import {
 		CwCard,
-		CwChip,
 		CwLineChart,
 		CwHeatmap,
 		CwDataTable,
+		CwButton,
+		CwDateTimeRangePicker,
+		CwDuration,
 		type CwColumnDef,
 		type CwLineChartDataPoint,
 		type CwLineChartSecondaryDataPoint,
 		type CwHeatmapDataPoint,
 		type CwTableQuery,
-		type CwTableResult
+		type CwTableResult,
+		type CwRangeDateValue
 	} from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { goto } from '$app/navigation';
+	import { ApiService } from '$lib/api/api.service';
+	import { downloadCsv } from '../../../routes/locations/[location_id]/devices/[dev_eui]/csvExport';
+	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
+	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 
-	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+	let {
+		devEui,
+		locationId,
+		locationName,
+		latestData,
+		historicalData,
+		loading: initialLoading,
+		authToken
+	}: DeviceDisplayProps = $props();
+
+	// ---- Toolbar state ---------------------------------------------------------
+
+	let selectedRangeHours = $state(24);
+	let dateRange = $state<CwRangeDateValue | undefined>(undefined);
+	let fetchedData = $state<Record<string, unknown>[] | null>(null);
+	let fetching = $state(false);
+
+	let activeData = $derived(fetchedData ?? historicalData);
+	let loading = $derived(initialLoading || fetching);
+
+	function selectRange(hours: number) {
+		selectedRangeHours = hours;
+		dateRange = undefined;
+		fetchDataForRange(hours);
+	}
+
+	function handleDateRangeChange(value: any) {
+		if (value?.start && value?.end) {
+			dateRange = value as CwRangeDateValue;
+			selectedRangeHours = 0;
+			fetchDataForCustomRange(value.start, value.end);
+		}
+	}
+
+	async function fetchDataForRange(hours: number) {
+		if (!authToken) return;
+		fetching = true;
+		try {
+			const api = new ApiService({ fetchFn: fetch, authToken });
+			const end = new Date();
+			const start = new Date(end.getTime() - hours * 60 * 60 * 1000);
+			const result = await api.getDeviceDataWithinRange(devEui, {
+				start: start.toISOString(),
+				end: end.toISOString(),
+				take: 1000
+			});
+			fetchedData = Array.isArray(result) ? result : (result as any)?.data ?? [];
+		} catch (err) {
+			console.error('Failed to fetch device data:', err);
+		} finally {
+			fetching = false;
+		}
+	}
+
+	async function fetchDataForCustomRange(start: Date | string, end: Date | string) {
+		if (!authToken) return;
+		fetching = true;
+		try {
+			const api = new ApiService({ fetchFn: fetch, authToken });
+			const result = await api.getDeviceDataWithinRange(devEui, {
+				start: new Date(start).toISOString(),
+				end: new Date(end).toISOString(),
+				take: 1000
+			});
+			fetchedData = Array.isArray(result) ? result : (result as any)?.data ?? [];
+		} catch (err) {
+			console.error('Failed to fetch device data:', err);
+		} finally {
+			fetching = false;
+		}
+	}
+
+	function handleCsvDownload() {
+		downloadCsv(rows, locationName, devEui, selectedRangeHours || 'custom');
+	}
 
 	// ---- Air-specific row shape ------------------------------------------------
 
@@ -56,7 +136,7 @@
 
 	// ---- Derived state ---------------------------------------------------------
 
-	let rows = $derived(toAirRows(historicalData));
+	let rows = $derived(toAirRows(activeData));
 
 	let latest = $derived({
 		temperature_c: Number(latestData?.temperature_c) || 0,
@@ -64,6 +144,8 @@
 		co2: Number(latestData?.co2) || 0,
 		created_at: String(latestData?.created_at ?? '')
 	});
+
+	let lastSeen = $derived(latestData?.created_at ? String(latestData.created_at) : null);
 
 	let lineSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
 		rows.map((p) => ({
@@ -131,18 +213,93 @@
 	}
 </script>
 
-<div class="air-display">
+<!-- Toolbar card -->
+<div>
+	<CwButton
+		variant="primary"
+		onclick={() => goto(`/locations/${encodeURIComponent(locationId)}`)}
+	>
+		← Back to Location
+	</CwButton>
+</div>
+
+<CwCard title={`Device ${devEui.toUpperCase()}`} subtitle={`Location ${locationName}`} elevated>
+	{#snippet subtitleSlot()}
+		{#if lastSeen}
+			<span>
+				• Last updated:
+				<CwDuration from={lastSeen} alarmAfterMinutes={10.5} class="subtitle-duration" />
+			</span>
+		{/if}
+	{/snippet}
+
+	<div class="device-toolbar">
+		<div class="device-toolbar__range-buttons">
+			<CwButton
+				variant={selectedRangeHours === 24 ? 'primary' : 'secondary'}
+				size="sm"
+				onclick={() => selectRange(24)}
+			>
+				24h
+			</CwButton>
+			<CwButton
+				variant={selectedRangeHours === 48 ? 'primary' : 'secondary'}
+				size="sm"
+				onclick={() => selectRange(48)}
+			>
+				48h
+			</CwButton>
+			<CwButton
+				variant={selectedRangeHours === 72 ? 'primary' : 'secondary'}
+				size="sm"
+				onclick={() => selectRange(72)}
+			>
+				72h
+			</CwButton>
+		</div>
+
+		<div class="device-toolbar__date-picker">
+			<CwDateTimeRangePicker
+				mode="range"
+				granularity="day"
+				placeholder="Select date range…"
+				value={dateRange}
+				onchange={handleDateRangeChange}
+			/>
+		</div>
+
+		<div class="device-toolbar__actions">
+			<CwButton variant="secondary" size="sm" onclick={handleCsvDownload}>
+				<img src={DOWNLOAD_ICON} alt="" class="toolbar-icon" />
+				CSV
+			</CwButton>
+			<CwButton
+				variant="secondary"
+				size="sm"
+				onclick={() =>
+					goto(
+						`/locations/${encodeURIComponent(locationId)}/devices/${encodeURIComponent(devEui)}/settings`
+					)}
+			>
+				<img src={SETTINGS_ICON} alt="" class="toolbar-icon" />
+				Settings
+			</CwButton>
+		</div>
+	</div>
+</CwCard>
+
+<div class="air-display overflow-y-scroll">
 	<!-- KPI cards -->
 	<div class="kpi-grid">
-		<CwCard title="Temperature" subtitle="Latest reading" elevated>
+		<CwCard title="Current Temperature" subtitle="Latest reading" elevated>
 			<p class="kpi-value">{latest.temperature_c.toFixed(1)}<span>°C</span></p>
 		</CwCard>
 
-		<CwCard title="Humidity" subtitle="Latest reading" elevated>
+		<CwCard title="Current Humidity" subtitle="Latest reading" elevated>
 			<p class="kpi-value">{latest.humidity.toFixed(1)}<span>%</span></p>
 		</CwCard>
 
-		<CwCard title="CO₂" subtitle="Latest reading" elevated>
+		<CwCard title="Current CO₂" subtitle="Latest reading" elevated>
 			<p class="kpi-value">{latest.co2}<span>ppm</span></p>
 		</CwCard>
 	</div>
@@ -200,6 +357,39 @@
 </div>
 
 <style>
+	.device-toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.device-toolbar__range-buttons {
+		display: flex;
+		gap: 0.375rem;
+	}
+
+	.device-toolbar__date-picker {
+		display: none;
+	}
+
+	.device-toolbar__actions {
+		display: flex;
+		gap: 0.375rem;
+		margin-left: auto;
+	}
+
+	.toolbar-icon {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	@media (min-width: 1024px) {
+		.device-toolbar__date-picker {
+			display: block;
+		}
+	}
+
 	.air-display {
 		display: flex;
 		flex-direction: column;

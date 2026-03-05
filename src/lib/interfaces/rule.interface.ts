@@ -1,4 +1,4 @@
-export interface IRule {
+export interface RulesDto {
     id: number;
     name: string;
     action_recipient: string;

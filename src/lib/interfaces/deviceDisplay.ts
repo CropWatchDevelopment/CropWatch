@@ -14,6 +14,9 @@ export interface DeviceDisplayProps {
 	/** Location id the device belongs to. */
 	locationId: string;
 
+	/** Human-readable location name (for display & CSV filenames). */
+	locationName: string;
+
 	/** Most recent telemetry record (may be null before the first fetch resolves). */
 	latestData: Record<string, unknown> | null;
 

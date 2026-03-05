@@ -28,7 +28,6 @@
 
 	const navItems: CwSideNavItem[] = [
 		{ id: 'dashboard', label: 'Dashboard', href: '/', icon: { DASHBOARD_ICON } },
-		{ id: 'devices', label: 'Devices', href: '/devices', icon: 'M3 4h10v8H3z' },
 		{
 			id: 'locations',
 			label: 'Locations',
