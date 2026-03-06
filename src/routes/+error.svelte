@@ -6,7 +6,8 @@
 	const errorMessages: Record<number, { title: string; description: string }> = {
 		400: {
 			title: 'Bad Request',
-			description: 'The server could not understand your request. Please check the URL and try again.'
+			description:
+				'The server could not understand your request. Please check the URL and try again.'
 		},
 		401: {
 			title: 'Unauthorized',
@@ -58,7 +59,18 @@
 	<CwCard class="w-full max-w-lg" padded>
 		{#snippet header()}
 			<div class="flex flex-col items-center gap-2 pt-4">
-				<span class="text-6xl font-bold opacity-20">{statusCode}</span>
+				<div class="flex-row text-5xl">
+					{#if statusCode == 500}
+						💣
+					{:else if statusCode == 404}
+						🔍
+					{:else if statusCode == 401}
+						🔒
+					{:else}
+						⚠️
+					{/if}
+					<span class="text-6xl font-bold opacity-20">{statusCode}</span>
+				</div>
 				<h1 class="text-2xl font-semibold">{title}</h1>
 			</div>
 		{/snippet}
@@ -66,12 +78,8 @@
 		<p class="text-center text-sm opacity-70">{description}</p>
 
 		<div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-			<CwButton variant="primary" onclick={() => goto('/')}>
-				Go Home
-			</CwButton>
-			<CwButton variant="ghost" onclick={() => history.back()}>
-				Go Back
-			</CwButton>
+			<CwButton variant="primary" onclick={() => goto('/')}>Go Home</CwButton>
+			<CwButton variant="ghost" onclick={() => history.back()}>Go Back</CwButton>
 		</div>
 	</CwCard>
 </div>

@@ -1,9 +1,20 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import type { LayoutProps } from './$types';
 
-	let { children: routeContent }: { data: any; children: Snippet } = $props();
+	let { children }: LayoutProps = $props();
 </script>
 
-<div class="flex flex-col gap-4">
-	{@render routeContent()}
+<div class="device-route-layout">
+	{@render children()}
 </div>
+
+<style>
+	.device-route-layout {
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+		overflow-y: auto;
+	}
+</style>

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
-	import type { TelemetryRow } from '$lib/interfaces/telemetryRow';
+	import type { AirRow } from '../interfaces/AirRow.interface';
 
-	let { row }: { row: TelemetryRow } = $props();
+	let { row }: { row: AirRow } = $props();
     let open = $state(false);
 
 </script>
@@ -15,7 +15,7 @@
 	title={`View Notes for ${new Date(row.created_at).toISOString()}`}
 >
 	{#snippet children()}
-		{#each row.notes as note}
+		{#each row.cw_air_annotations as note}
             <p>{new Date(note.created_at).toISOString()} - {note.note}</p>
         {/each}
 	{/snippet}

@@ -1,65 +1,408 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { resolveDisplayComponent } from '$lib/config/deviceTables';
-	import { CwSpinner } from '@cropwatchdevelopment/cwui';
-	import type { DeviceDisplayComponent } from '$lib/interfaces/deviceDisplay';
+	import { ApiService } from '$lib/api/api.service';
+	import {
+		CwButton,
+		CwCard,
+		CwDateTimeRangePicker,
+		CwDuration,
+		CwSpinner,
+		type CwDateValue,
+		type CwRangeDateValue
+	} from '@cropwatchdevelopment/cwui';
+	import { downloadCsv, type CsvRow } from './csvExport';
+	import type { PageProps } from './$types';
+	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
+	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 
-	let { data }: { data: any } = $props();
+	type TelemetryRow = Record<string, unknown>;
+	const RANGE_OPTIONS = [24, 48, 72] as const;
+	type RangeHours = (typeof RANGE_OPTIONS)[number];
+	const MAX_RANGE_RECORDS = 1000;
 
-	let devEui = $derived(page.params.dev_eui ?? '');
-	let locationId = $derived(page.params.location_id ?? '');
+	interface RouteState {
+		requestedHistoricalData: TelemetryRow[] | null;
+		activeRangeHours: RangeHours | null;
+		dateRange: CwRangeDateValue | undefined;
+		fetching: boolean;
+		fetchError: string | null;
+	}
+
+	let { data }: PageProps = $props();
+
+	function isTelemetryRow(value: unknown): value is TelemetryRow {
+		return typeof value === 'object' && value !== null && !Array.isArray(value);
+	}
+
+	function normalizeTelemetryRows(value: unknown): TelemetryRow[] {
+		if (Array.isArray(value)) {
+			return value.filter(isTelemetryRow);
+		}
+
+		if (isTelemetryRow(value) && Array.isArray(value.data)) {
+			return value.data.filter(isTelemetryRow);
+		}
+
+		return [];
+	}
+
+	function readLocationName(value: unknown): string {
+		if (!isTelemetryRow(value)) {
+			return 'Unknown';
+		}
+
+		const locationRecord = value.cw_locations;
+		if (
+			isTelemetryRow(locationRecord) &&
+			typeof locationRecord.name === 'string' &&
+			locationRecord.name.trim()
+		) {
+			return locationRecord.name;
+		}
+
+		if (typeof value.location_name === 'string' && value.location_name.trim()) {
+			return value.location_name;
+		}
+
+		return 'Unknown';
+	}
+
+	function readTimestamp(row: TelemetryRow | null): string | null {
+		if (!row) {
+			return null;
+		}
+
+		const value = row.created_at;
+		if (typeof value === 'string' && value.length > 0) {
+			return value;
+		}
+
+		if (value instanceof Date) {
+			return value.toISOString();
+		}
+
+		return null;
+	}
+
+	function toIsoString(value: Date | string): string {
+		return new Date(value).toISOString();
+	}
+
+	function createRouteState(): RouteState {
+		return {
+			requestedHistoricalData: null,
+			activeRangeHours: 24,
+			dateRange: undefined,
+			fetching: false,
+			fetchError: null
+		};
+	}
+
+	let routeStateByKey = $state<Record<string, RouteState>>({});
+
+	function getRouteState(key: string): RouteState {
+		if (!routeStateByKey[key]) {
+			routeStateByKey[key] = createRouteState();
+		}
+
+		return routeStateByKey[key];
+	}
+
+	let devEui = $derived(data.devEui ?? '');
+	let locationId = $derived(data.locationId ?? '');
 	let authToken = $derived(data.authToken ?? null);
-	let latestData = $derived(data.latestData ?? null);
-	let locationName = $derived(data.device?.cw_locations?.name ?? 'Unknown');
-	let historicalData = $derived(
-		Array.isArray(data.deviceData)
-			? data.deviceData
-			: (data.deviceData as any)?.data ?? []
+	let latestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
+	let locationName = $derived(readLocationName(data.device));
+	let serverHistoricalData = $derived(normalizeTelemetryRows(data.deviceData));
+	let DisplayComponent = $derived(resolveDisplayComponent(data.dataTable));
+	let lastSeen = $derived(readTimestamp(latestData));
+	let controlsDisabled = $derived(!authToken || !devEui);
+	let routeKey = $derived(`${locationId}:${devEui}`);
+
+	let requestedHistoricalData = $derived(
+		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
 	);
-	let loading = $state(false);
-	
-	// Resolve the display component from the registry
-	let DisplayComponent = $state<DeviceDisplayComponent | null>(null);
-		
-		$effect(() => {
-		const dataTable: string | null = data.dataTable ?? null;
-		loading = true;
-		resolveDisplayComponent(dataTable).then((comp) => {
-			DisplayComponent = comp;
-			loading = false;
+	let historicalData = $derived(requestedHistoricalData ?? serverHistoricalData);
+	let activeRangeHours = $derived(routeStateByKey[routeKey]?.activeRangeHours ?? 24);
+	let dateRange = $derived(routeStateByKey[routeKey]?.dateRange ?? undefined);
+	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
+	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
+
+	let csvRangeLabel = $derived(activeRangeHours === null ? 'custom' : `${activeRangeHours}h`);
+	let childLoading = $derived(fetching && historicalData.length === 0);
+
+	async function loadHistoricalData(
+		start: Date | string,
+		end: Date | string,
+		rangeHours: RangeHours | null
+	): Promise<void> {
+		if (!authToken || !devEui) {
+			return;
+		}
+
+		const state = getRouteState(routeKey);
+		state.fetching = true;
+		state.fetchError = null;
+
+		try {
+			const api = new ApiService({ fetchFn: fetch, authToken });
+			const result = await api.getDeviceDataWithinRange(devEui, {
+				start: toIsoString(start),
+				end: toIsoString(end),
+				take: MAX_RANGE_RECORDS
+			});
+
+			state.requestedHistoricalData = normalizeTelemetryRows(result);
+			state.activeRangeHours = rangeHours;
+			if (rangeHours !== null) {
+				state.dateRange = undefined;
+			}
+		} catch (error) {
+			console.error('Failed to fetch device data:', error);
+			state.fetchError = 'Unable to load telemetry for the selected range.';
+		} finally {
+			state.fetching = false;
+		}
+	}
+
+	async function selectRange(hours: RangeHours): Promise<void> {
+		const end = new Date();
+		const start = new Date(end.getTime() - hours * 60 * 60 * 1000);
+		await loadHistoricalData(start, end, hours);
+	}
+
+	function isRangeDateValue(value: CwDateValue | undefined): value is CwRangeDateValue {
+		return !!value && 'start' in value && 'end' in value;
+	}
+
+	async function handleDateRangeChange(value: CwDateValue | undefined): Promise<void> {
+		const state = getRouteState(routeKey);
+		state.dateRange = isRangeDateValue(value) ? value : undefined;
+
+		if (!isRangeDateValue(value) || !value.start || !value.end) {
+			return;
+		}
+
+		await loadHistoricalData(value.start, value.end, null);
+	}
+
+	function handleCsvDownload(): void {
+		downloadCsv(historicalData as CsvRow[], {
+			locationName,
+			devEui,
+			rangeLabel: csvRangeLabel
 		});
-	});
+	}
 </script>
 
 <svelte:head>
 	<title>Device Dashboard - {devEui.toUpperCase()} - CropWatch</title>
 </svelte:head>
 
-{#if loading || !DisplayComponent}
-	<div class="dispatcher-loading">
-		<CwSpinner />
-		<p>Loading device display…</p>
+<div class="device-page">
+	<CwCard title={`Device ${devEui.toUpperCase()}`} subtitle={`Location ${locationName}`} elevated>
+		{#snippet subtitleSlot()}
+			{#if lastSeen}
+				<span>
+					• Last updated:
+					<CwDuration from={lastSeen} alarmAfterMinutes={10.5} class="subtitle-duration" />
+				</span>
+			{/if}
+		{/snippet}
+
+		<div class="device-page__toolbar">
+			<div class="device-page__group device-page__group--navigation">
+				<CwButton
+					variant="secondary"
+					size="sm"
+					disabled={!locationId}
+					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
+				>
+					Back to Location
+				</CwButton>
+			</div>
+
+			<div class="device-page__group device-page__group--ranges">
+				{#each RANGE_OPTIONS as hours (hours)}
+					<CwButton
+						variant={activeRangeHours === hours ? 'primary' : 'secondary'}
+						size="sm"
+						disabled={controlsDisabled}
+						onclick={() => selectRange(hours)}
+					>
+						{hours}h
+					</CwButton>
+				{/each}
+			</div>
+
+			<div class="device-page__group device-page__group--picker">
+				<CwDateTimeRangePicker
+					mode="range"
+					granularity="day"
+					placeholder="Select date range..."
+					value={dateRange}
+					onchange={handleDateRangeChange}
+				/>
+			</div>
+
+			<div class="device-page__group device-page__group--actions">
+				<CwButton
+					variant="secondary"
+					size="sm"
+					disabled={historicalData.length === 0}
+					onclick={handleCsvDownload}
+				>
+					<img src={DOWNLOAD_ICON} alt="" class="toolbar-icon" />
+					CSV
+				</CwButton>
+
+				<CwButton
+					variant="secondary"
+					size="sm"
+					disabled={!locationId || !devEui}
+					onclick={() =>
+						goto(
+							resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
+								location_id: locationId,
+								dev_eui: devEui
+							})
+						)}
+				>
+					<img src={SETTINGS_ICON} alt="" class="toolbar-icon" />
+					Settings
+				</CwButton>
+			</div>
+		</div>
+
+		{#if fetching || fetchError}
+			<div class="device-page__status">
+				{#if fetching}
+					<div class="device-page__status-row">
+						<CwSpinner />
+						<span>Loading telemetry…</span>
+					</div>
+				{/if}
+
+				{#if fetchError}
+					<p class="device-page__error">{fetchError}</p>
+				{/if}
+			</div>
+		{/if}
+	</CwCard>
+
+	<div class="device-page__display">
+		<DisplayComponent
+			{devEui}
+			{locationId}
+			{locationName}
+			{latestData}
+			{historicalData}
+			loading={childLoading}
+			{authToken}
+		/>
 	</div>
-{:else}
-	<DisplayComponent
-		{devEui}
-		{locationId}
-		{locationName}
-		{latestData}
-		{historicalData}
-		{loading}
-		{authToken}
-	/>
-{/if}
+</div>
 
 <style>
-	.dispatcher-loading {
+	.device-page {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		justify-content: center;
 		gap: 1rem;
-		padding: 4rem 1rem;
+		min-width: 0;
+		padding: 0 0.25rem 1rem 0;
+	}
+
+	.device-page__toolbar {
+		display: grid;
+		grid-template-columns: repeat(12, minmax(0, 1fr));
+		gap: 0.75rem;
+		align-items: start;
+	}
+
+	.device-page__group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		min-width: 0;
+	}
+
+	.device-page__group--navigation {
+		grid-column: span 3;
+	}
+
+	.device-page__group--ranges {
+		grid-column: span 3;
+	}
+
+	.device-page__group--picker {
+		grid-column: span 3;
+	}
+
+	.device-page__group--actions {
+		grid-column: span 3;
+		justify-content: flex-end;
+	}
+
+	.device-page__status {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin-top: 0.75rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--cw-border, #e5e7eb);
+	}
+
+	.device-page__status-row {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.75rem;
 		color: var(--cw-text-muted);
+	}
+
+	.device-page__error {
+		margin: 0;
+		color: var(--cw-color-danger-700, #b91c1c);
+	}
+
+	.device-page__display {
+		min-width: 0;
+	}
+
+	.toolbar-icon {
+		width: 1rem;
+		height: 1rem;
+	}
+
+	@media (max-width: 1200px) {
+		.device-page__group--navigation,
+		.device-page__group--ranges,
+		.device-page__group--picker,
+		.device-page__group--actions {
+			grid-column: span 6;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.device-page {
+			padding-right: 0;
+			padding-bottom: 0.75rem;
+		}
+
+		.device-page__toolbar {
+			grid-template-columns: 1fr;
+		}
+
+		.device-page__group--navigation,
+		.device-page__group--ranges,
+		.device-page__group--picker,
+		.device-page__group--actions {
+			grid-column: auto;
+		}
+
+		.device-page__group--actions {
+			justify-content: flex-start;
+		}
 	}
 </style>

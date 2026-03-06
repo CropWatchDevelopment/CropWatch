@@ -6,34 +6,36 @@
  * 1. Create a display component in `$lib/components/displays/` that accepts
  *    {@link DeviceDisplayProps} (see `$lib/interfaces/deviceDisplay.ts`).
  * 2. Add an entry to {@link TABLE_REGISTRY} below mapping the table name
- *    (as stored in `cw_device_type.data_table` / returned by the API) to
- *    a lazy `() => import(...)` of your new component.
- * 3. Done — the dispatcher page in `[dev_eui]/+page.svelte` will
- *    automatically pick up the new component at runtime.
+ *    (as stored in `cw_device_type.data_table`) to the component.
+ * 3. Done — the device page dispatcher will automatically pick it up.
+ *
+ * This registry is intentionally synchronous. The route only has a handful of
+ * displays, and avoiding async component resolution keeps the page render path
+ * simpler and easier to debug.
  */
 
+import AirDisplay from '$lib/components/displays/AirDisplay/AirDisplay.svelte';
+import DefaultDisplay from '$lib/components/displays/DefaultDisplay.svelte';
+import PowerDisplay from '$lib/components/displays/PowerDisplay.svelte';
+import RelayDisplay from '$lib/components/displays/RelayDisplay.svelte';
+import SoilDisplay from '$lib/components/displays/SoilDisplay.svelte';
+import TrafficDisplay from '$lib/components/displays/TrafficDisplay.svelte';
+import WaterDisplay from '$lib/components/displays/WaterDisplay.svelte';
 import type { DeviceDisplayComponent } from '$lib/interfaces/deviceDisplay';
 
 // ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
-/**
- * Maps a `data_table` name (as stored on the device / returned by the API) to
- * a **lazy import** of the Svelte display component that renders that table's
- * data.
- *
- * Using dynamic `import()` means only the component for the current device is
- * ever bundled on a given page load.
- */
-export const TABLE_REGISTRY: Record<string, () => Promise<{ default: DeviceDisplayComponent }>> = {
-	cw_air_data:   () => import('$lib/components/displays/AirDisplay.svelte'),
-	cw_soil_data:  () => import('$lib/components/displays/SoilDisplay.svelte'),
-	cw_traffic2:   () => import('$lib/components/displays/TrafficDisplay.svelte'),
-	traffic_v2:    () => import('$lib/components/displays/TrafficDisplay.svelte'),
-	cw_water_data: () => import('$lib/components/displays/WaterDisplay.svelte'),
-	cw_relay_data: () => import('$lib/components/displays/RelayDisplay.svelte'),
-	cw_power_data: () => import('$lib/components/displays/PowerDisplay.svelte'),
+/** Maps a `data_table` name to the component that renders that telemetry. */
+export const TABLE_REGISTRY: Record<string, DeviceDisplayComponent> = {
+	cw_air_data: AirDisplay,
+	cw_soil_data: SoilDisplay,
+	cw_traffic2: TrafficDisplay,
+	traffic_v2: TrafficDisplay,
+	cw_water_data: WaterDisplay,
+	cw_relay_data: RelayDisplay,
+	cw_power_data: PowerDisplay
 };
 
 /**
@@ -42,17 +44,12 @@ export const TABLE_REGISTRY: Record<string, () => Promise<{ default: DeviceDispl
  * Returns the `DefaultDisplay` component when the table is unknown or null,
  * so every device always has *some* renderable view.
  */
-export async function resolveDisplayComponent(
-	table: string | null | undefined
-): Promise<DeviceDisplayComponent> {
-	const loader = table ? TABLE_REGISTRY[table] : undefined;
-	if (loader) {
-		const mod = await loader();
-		return mod.default;
+export function resolveDisplayComponent(table: string | null | undefined): DeviceDisplayComponent {
+	if (!table) {
+		return DefaultDisplay;
 	}
-	// Fallback — generic auto-discovery display
-	const fallback = await import('$lib/components/displays/DefaultDisplay.svelte');
-	return fallback.default;
+
+	return TABLE_REGISTRY[table] ?? DefaultDisplay;
 }
 
 // ---------------------------------------------------------------------------
