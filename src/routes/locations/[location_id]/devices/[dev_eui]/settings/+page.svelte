@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
 	import {
 		CwButton,
 		CwCard,
@@ -8,171 +8,323 @@
 		CwInput,
 		CwSeparator
 	} from '@cropwatchdevelopment/cwui';
+	import type { PageProps } from './$types';
 
-	let deviceName = $state(`Device ${page.params.dev_eui?.toUpperCase() ?? 'UNKNOWN'}`);
-	let deviceGroup = $state('north-greenhouse');
+	const DEVICE_NAME_MAX_LENGTH = 120;
+	const DEVICE_GROUP_MAX_LENGTH = 120;
+	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	const VALID_PERMISSION_LEVELS = new Set([1, 2, 3, 4]);
 
-	const groupOptions = [
-		{ label: 'North Greenhouse', value: 'north-greenhouse' },
-		{ label: 'South Greenhouse', value: 'south-greenhouse' },
-		{ label: 'Trial Zone', value: 'trial-zone' },
-		{ label: 'Unassigned', value: 'unassigned' }
-	];
+	type DeviceOwnerRow = {
+		id: number;
+		key: string;
+		name: string;
+		email: string;
+		userId: string;
+		permissionLevel: string;
+	};
 
-	let permissionRows = $state([
-		{
-			id: 'u-1',
-			name: 'Mina Patel',
-			email: 'mina.patel@cropwatch.io',
-			permission: 'manager',
-			status: 'active'
-		},
-		{
-			id: 'u-2',
-			name: 'Leo Kim',
-			email: 'leo.kim@cropwatch.io',
-			permission: 'operator',
-			status: 'active'
-		},
-		{
-			id: 'u-3',
-			name: 'Ava Reed',
-			email: 'ava.reed@cropwatch.io',
-			permission: 'viewer',
-			status: 'invited'
-		}
+	type FormPayload = {
+		action?: string;
+		success?: boolean;
+		message?: string;
+		ownerKey?: string;
+		fieldErrors?: Record<string, string>;
+		values?: Record<string, string>;
+	} | null;
+
+	let { data, form }: PageProps = $props();
+
+	let deviceSubmitting = $state(false);
+	let ownerSubmittingByKey = $state<Record<string, boolean>>({});
+	let deviceName = $derived(data.deviceName ?? '');
+	let deviceGroup = $derived(data.deviceGroup ?? '');
+	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
+
+	function createOwnerRows(
+		owners: Array<{
+			id: number;
+			key: string;
+			name: string;
+			email: string;
+			userId: string;
+			permissionLevel: number;
+		}>
+	): DeviceOwnerRow[] {
+		return owners.map((owner) => ({
+			id: owner.id,
+			key: owner.key,
+			name: owner.name,
+			email: owner.email,
+			userId: owner.userId,
+			permissionLevel: String(owner.permissionLevel)
+		}));
+	}
+
+	function setOwnerSubmitting(key: string, loading: boolean) {
+		ownerSubmittingByKey = {
+			...ownerSubmittingByKey,
+			[key]: loading
+		};
+	}
+
+	function isOwnerRowValid(row: DeviceOwnerRow): boolean {
+		const permissionLevel = Number.parseInt(row.permissionLevel, 10);
+		return EMAIL_PATTERN.test(row.email) && VALID_PERMISSION_LEVELS.has(permissionLevel);
+	}
+
+	let actionForm = $derived((form ?? null) as FormPayload);
+	let deviceForm = $derived(actionForm?.action === 'updateDevice' ? actionForm : null);
+	let deviceNameValue = $derived(deviceName.trim());
+	let deviceGroupValue = $derived(deviceGroup.trim());
+	let deviceNameError = $derived(
+		deviceNameValue.length === 0
+			? 'Device name is required.'
+			: deviceNameValue.length > DEVICE_NAME_MAX_LENGTH
+				? `Device name must be ${DEVICE_NAME_MAX_LENGTH} characters or fewer.`
+				: (deviceForm?.fieldErrors?.name ?? '')
+	);
+	let deviceGroupError = $derived(
+		deviceGroupValue.length > DEVICE_GROUP_MAX_LENGTH
+			? `Device group must be ${DEVICE_GROUP_MAX_LENGTH} characters or fewer.`
+			: (deviceForm?.fieldErrors?.group ?? '')
+	);
+	let deviceDirty = $derived(
+		deviceNameValue !== (data.deviceName ?? '').trim() ||
+			deviceGroupValue !== (data.deviceGroup ?? '').trim()
+	);
+	let canSubmitDevice = $derived(
+		!deviceSubmitting && deviceDirty && !deviceNameError && !deviceGroupError
+	);
+	let groupOptions = $derived([
+		{ label: 'Unassigned', value: '' },
+		...(data.deviceGroups ?? []).map((group) => ({ label: group, value: group }))
 	]);
 
 	const permissionOptions = [
-		{ label: 'Viewer', value: 'viewer' },
-		{ label: 'Operator', value: 'operator' },
-		{ label: 'Manager', value: 'manager' }
+		{ label: 'Admin', value: '1' },
+		{ label: 'Manager', value: '2' },
+		{ label: 'User', value: '3' },
+		{ label: 'Disabled', value: '4' }
 	];
 
-	const deviceStats = [
-		{ label: 'Installed at', value: 'May 18, 2024' },
-		{ label: 'Warranty', value: 'Valid until May 18, 2027' },
-		{ label: 'Battery last replaced at', value: 'January 9, 2026' }
-	];
-
-	const sensors = [
-		{ id: 'a', label: 'Sensor A serial', serial: 'A-42-19-88', certificateAvailable: true },
-		{ id: 'b', label: 'Sensor B serial', serial: 'B-11-73-05', certificateAvailable: false }
-	];
+	function ownerFormFor(key: string): FormPayload {
+		return actionForm?.action === 'updateDeviceOwnerPermission' && actionForm.ownerKey === key
+			? actionForm
+			: null;
+	}
 </script>
 
 <svelte:head>
-	<title>Device Settings | {page.params.dev_eui?.toUpperCase() ?? 'UNKNOWN'} | CropWatch</title>
+	<title>Device Settings | {data.devEui?.toUpperCase() ?? 'UNKNOWN'} | CropWatch</title>
 </svelte:head>
 
-<div class="settings-page">
-	<CwCard
-		title="Device Settings"
-		subtitle="Update device name and group assignment"
-		elevated
-	>
-		<div class="panel-grid">
-			<CwInput label="Device Name" bind:value={deviceName} />
-			<CwDropdown label="Device Group" options={groupOptions} bind:value={deviceGroup} />
-		</div>
+<div class="device-settings-page">
+	<CwCard title="Device Settings" subtitle="Update the cw_device name and group fields." elevated>
+		<form
+			method="POST"
+			action="?/updateDevice"
+			class="device-form"
+			use:enhance={({ cancel }) => {
+				if (!canSubmitDevice) {
+					cancel();
+					return;
+				}
 
-		<div class="panel-actions">
-			<CwChip label={`DevEUI ${page.params.dev_eui?.toUpperCase() ?? 'UNKNOWN'}`} tone="info" variant="soft" />
-			<CwButton type="button" variant="primary">Update Device</CwButton>
-		</div>
+				deviceSubmitting = true;
+				return async ({ update }) => {
+					try {
+						await update({ reset: false });
+					} finally {
+						deviceSubmitting = false;
+					}
+				};
+			}}
+		>
+			<div class="device-form__header">
+				<CwChip
+					label={`DevEUI ${data.devEui?.toUpperCase() ?? 'UNKNOWN'}`}
+					tone="info"
+					variant="soft"
+				/>
+				{#if data.deviceGroup}
+					<CwChip label={`Current group: ${data.deviceGroup}`} tone="secondary" variant="soft" />
+				{/if}
+			</div>
+
+			{#if deviceForm?.message}
+				<p class:feedback-success={deviceForm.success} class="form-feedback">
+					{deviceForm.message}
+				</p>
+			{/if}
+
+			<div class="panel-grid">
+				<div class="field-stack">
+					<CwInput
+						label="Device Name"
+						name="name"
+						required
+						maxlength={DEVICE_NAME_MAX_LENGTH}
+						bind:value={deviceName}
+						error={deviceNameError || undefined}
+					/>
+					{#if deviceNameError}
+						<p class="field-error">{deviceNameError}</p>
+					{/if}
+				</div>
+
+				<div class="field-stack">
+					<CwDropdown
+						label="Device Group"
+						options={groupOptions}
+						bind:value={deviceGroup}
+						error={deviceGroupError || undefined}
+					/>
+					<input type="hidden" name="group" value={deviceGroupValue} />
+					{#if deviceGroupError}
+						<p class="field-error">{deviceGroupError}</p>
+					{/if}
+				</div>
+			</div>
+
+			<div class="panel-actions">
+				<p class="panel-note">Validation runs in the browser and again on the server.</p>
+				<CwButton
+					type="submit"
+					variant="primary"
+					loading={deviceSubmitting}
+					disabled={!canSubmitDevice}
+				>
+					Update Device
+				</CwButton>
+			</div>
+		</form>
 	</CwCard>
 
 	<CwCard
-		title="User Permissions"
-		subtitle="Update only. Add and delete actions are intentionally omitted."
+		title="Device Owner Permissions"
+		subtitle="Update only. Add and delete actions are intentionally omitted here."
 		elevated
 	>
 		<div class="permissions-tag">
 			<CwChip label="Update Only" tone="warning" variant="soft" />
 		</div>
 
-		<div class="permission-list">
-			{#each permissionRows as member, index (member.id)}
-				<div class="permission-row">
-					<div class="permission-user">
-						<CwInput label="User" value={member.name} disabled />
-						<CwInput label="Email" value={member.email} disabled />
+		{#if permissionRows.length === 0}
+			<p class="empty-state">No device owners were returned for this device.</p>
+		{:else}
+			<div class="permission-list">
+				{#each permissionRows as row, index (row.key)}
+					{@const ownerForm = ownerFormFor(row.key)}
+					<div class="permission-row">
+						<form
+							method="POST"
+							action="?/updateDeviceOwnerPermission"
+							class="permission-row__form"
+							use:enhance={({ formData, cancel }) => {
+								if (!isOwnerRowValid(row)) {
+									cancel();
+									return;
+								}
+
+								const key = String(formData.get('ownerKey') ?? row.key);
+								setOwnerSubmitting(key, true);
+
+								return async ({ update }) => {
+									try {
+										await update({ reset: false });
+									} finally {
+										setOwnerSubmitting(key, false);
+									}
+								};
+							}}
+						>
+							<input type="hidden" name="ownerKey" value={row.key} />
+							<input type="hidden" name="targetUserEmail" value={row.email} />
+							<input type="hidden" name="permissionLevel" value={row.permissionLevel} />
+
+							<div class="permission-user">
+								<CwInput label="User" value={row.name} disabled />
+								<CwInput label="Email" value={row.email || row.userId || 'Unavailable'} disabled />
+							</div>
+
+							<div class="permission-edit">
+								<div class="field-stack">
+									<CwDropdown
+										label="Permission Level"
+										options={permissionOptions}
+										bind:value={row.permissionLevel}
+										error={ownerForm?.fieldErrors?.permissionLevel ||
+											(!isOwnerRowValid(row) ? 'Choose a valid permission level.' : undefined)}
+									/>
+									{#if ownerForm?.fieldErrors?.permissionLevel}
+										<p class="field-error">{ownerForm.fieldErrors.permissionLevel}</p>
+									{/if}
+								</div>
+
+								<div class="permission-meta">
+									{#if row.email}
+										<CwChip label="Email linked" tone="success" variant="soft" />
+									{:else}
+										<CwChip label="Email unavailable" tone="danger" variant="soft" />
+									{/if}
+									{#if row.userId}
+										<p class="permission-user-id">User ID: {row.userId}</p>
+									{/if}
+								</div>
+
+								<CwButton
+									type="submit"
+									variant="primary"
+									loading={ownerSubmittingByKey[row.key] ?? false}
+									disabled={(ownerSubmittingByKey[row.key] ?? false) || !isOwnerRowValid(row)}
+								>
+									Update Permission
+								</CwButton>
+							</div>
+
+							{#if ownerForm?.message}
+								<p
+									class:feedback-success={ownerForm.success}
+									class="form-feedback permission-feedback"
+								>
+									{ownerForm.message}
+								</p>
+							{/if}
+
+							{#if ownerForm?.fieldErrors?.targetUserEmail}
+								<p class="field-error permission-feedback">
+									{ownerForm.fieldErrors.targetUserEmail}
+								</p>
+							{/if}
+						</form>
 					</div>
 
-					<div class="permission-edit">
-						<CwDropdown label="Permission" options={permissionOptions} bind:value={member.permission} />
-						<CwChip
-							label={member.status === 'active' ? 'Active' : 'Invited'}
-							tone={member.status === 'active' ? 'success' : 'secondary'}
-							variant="soft"
-						/>
-						<CwButton type="button" variant="primary">Update Permission</CwButton>
-					</div>
-				</div>
-
-				{#if index < permissionRows.length - 1}
-					<CwSeparator spacing="0" />
-				{/if}
-			{/each}
-		</div>
-	</CwCard>
-
-	<CwCard
-		title="Device Stats"
-		subtitle="Installation details, serials, certificates, and billing seat"
-		elevated
-	>
-		<div class="stats-list">
-			{#each deviceStats as stat, index (stat.label)}
-				<div class="stats-row">
-					<p class="stats-label">{stat.label}</p>
-					<p class="stats-value">{stat.value}</p>
-				</div>
-				{#if index < deviceStats.length - 1}
-					<CwSeparator spacing="0" />
-				{/if}
-			{/each}
-		</div>
-
-		<CwSeparator spacing="0" />
-
-		<div class="stats-list">
-			{#each sensors as sensor (sensor.id)}
-				<div class="stats-row sensor-row">
-					<div>
-						<p class="stats-label">{sensor.label}</p>
-						<p class="stats-value">{sensor.serial}</p>
-					</div>
-					<div class="stats-actions">
-						{#if sensor.certificateAvailable}
-							<CwButton type="button" size="sm" variant="secondary">Download Certificate</CwButton>
-						{:else}
-							<CwChip label="Certificate Unavailable" tone="secondary" variant="outline" />
-						{/if}
-					</div>
-				</div>
-			{/each}
-		</div>
-
-		<CwSeparator spacing="0" />
-
-		<div class="stats-row seat-row">
-			<div>
-				<p class="stats-label">Assigned seat</p>
-				<p class="stats-value">Seat S-0142</p>
+					{#if index < permissionRows.length - 1}
+						<CwSeparator spacing="0" />
+					{/if}
+				{/each}
 			</div>
-			<form action="/account/billing" method="GET">
-				<CwButton type="submit" size="sm" variant="info">Open Billing</CwButton>
-			</form>
-		</div>
+		{/if}
 	</CwCard>
 </div>
 
 <style>
-	.settings-page {
+	.device-settings-page {
 		display: grid;
 		gap: 1rem;
 		padding: 0.75rem;
+	}
+
+	.device-form {
+		display: grid;
+		gap: 0.875rem;
+	}
+
+	.device-form__header {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 
 	.panel-grid {
@@ -185,9 +337,39 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-top: 0.75rem;
 		gap: 0.75rem;
 		flex-wrap: wrap;
+	}
+
+	.panel-note {
+		margin: 0;
+		color: rgba(15, 23, 42, 0.72);
+		font-size: 0.92rem;
+	}
+
+	.field-stack {
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.field-error {
+		margin: 0;
+		color: #b42318;
+		font-size: 0.85rem;
+	}
+
+	.form-feedback {
+		margin: 0;
+		padding: 0.75rem 0.875rem;
+		border-radius: 0.75rem;
+		background: #fee4e2;
+		color: #912018;
+		font-size: 0.92rem;
+	}
+
+	.feedback-success {
+		background: #d1fadf;
+		color: #166534;
 	}
 
 	.permissions-tag {
@@ -200,6 +382,11 @@
 	}
 
 	.permission-row {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.permission-row__form {
 		display: grid;
 		grid-template-columns: 2fr 1.6fr;
 		gap: 0.75rem;
@@ -218,49 +405,52 @@
 		gap: 0.5rem;
 	}
 
-	.stats-list {
+	.permission-meta {
 		display: grid;
-		gap: 0.625rem;
-		padding: 0.25rem 0;
+		gap: 0.35rem;
+		align-self: end;
 	}
 
-	.stats-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
-		flex-wrap: wrap;
-	}
-
-	.stats-label {
+	.permission-user-id {
 		margin: 0;
-		font-size: 0.875rem;
-		color: var(--cw-text-muted);
+		font-size: 0.78rem;
+		color: rgba(15, 23, 42, 0.62);
 	}
 
-	.stats-value {
+	.permission-feedback {
+		grid-column: 1 / -1;
+	}
+
+	.empty-state {
 		margin: 0;
-		font-size: 0.95rem;
-		color: var(--cw-text-primary);
-		font-weight: 600;
+		color: rgba(15, 23, 42, 0.72);
 	}
 
-	.stats-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-	}
+	@media (max-width: 900px) {
+		.panel-grid {
+			grid-template-columns: 1fr;
+		}
 
-	@media (max-width: 1024px) {
-		.panel-grid,
-		.permission-user,
-		.permission-row {
+		.permission-row__form {
 			grid-template-columns: 1fr;
 		}
 
 		.permission-edit {
 			grid-template-columns: 1fr;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.permission-user {
+			grid-template-columns: 1fr;
+		}
+
+		.panel-actions {
 			align-items: stretch;
+		}
+
+		.panel-actions :global(button) {
+			width: 100%;
 		}
 	}
 </style>

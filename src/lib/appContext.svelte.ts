@@ -25,6 +25,7 @@ export interface AppContext {
 	triggeredRulesCount: number;
 	staleDeviceIds: string[];
 	accessToken?: string;
+	drawerOpen?: boolean;
 }
 
 export const appContextKey = Symbol('appContext');
@@ -39,7 +40,8 @@ export const defaultAppContext: AppContext = {
 	triggeredRulesCount: 0,
 	staleDeviceIds: [],
 	locationGroups: [],
-	accessToken: undefined
+	accessToken: undefined,
+	drawerOpen: false,
 };
 
 export function createAppContext(initial: Partial<AppContext> = {}): AppContext {
@@ -61,6 +63,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 				accessToken: undefined,
 				staleDeviceIds: [],
 				locationGroups: [],
+				drawerOpen: false,
 				...initial
 			};
 		}
@@ -77,6 +80,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 			accessToken: undefined,
 			staleDeviceIds: [],
 			locationGroups: [],
+			drawerOpen: false,
 			...initial
 		};
 	}

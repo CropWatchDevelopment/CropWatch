@@ -22,7 +22,7 @@
 	let onlineDevices = $derived(Math.max(0, totalDevices - offlineDevices));
 	let alertCount = $derived(app.triggeredRulesCount || 0);
 
-	let drawerOpen: boolean = $state(false);
+	let drawerOpen: boolean = $state(app.drawerOpen ?? false);
 	let barItems = $derived<CwDrawerItem[]>([
 		{ id: 'online', label: `Online ${onlineDevices}`, tone: 'success' },
 		{ id: 'offline', label: `Offline ${offlineDevices}`, tone: 'danger' },
@@ -49,8 +49,8 @@
 	})) ?? [];
 </script>
 
-<CwDrawer bind:open={drawerOpen} label="Alerts" items={barItems} height="18rem">
-	<div class="flex w-full flex-row gap-6 p-4">
+<CwDrawer bind:open={app.drawerOpen} label="Alerts" items={barItems} height="18rem">
+	<div class="flex w-full flex-row gap-6">
 		<!-- Status Mix card -->
 		<CwCard class="w-full">
 			<div class="status-card">

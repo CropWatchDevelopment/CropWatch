@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { CwHeader, CwProfileMenu, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
+	import { CwHeader, CwProfileMenu, CwThemePicker, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
 	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
 
@@ -27,6 +27,7 @@
 	{/snippet}
 
 	{#snippet actions()}
+		<CwThemePicker onchange={(theme) => console.log(theme)} />
 		<CwProfileMenu name={app.session?.email ?? ''} subtitle={app.session?.role ?? ''} {menuItems} onselect={(event) => {
 			if (event.id === 'logout') {
 				goto('/auth/logout').then(() => {

@@ -213,6 +213,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>CropWatch Dashboard</title>
+</svelte:head>
+
 <header style="margin-bottom: 23px;" class="flex-none">
 	<div class="flex min-h-12 items-center justify-between px-6 py-3 md:py-4">
 		<div class="hidden flex-col gap-1 md:flex">
@@ -264,7 +268,7 @@
 			</CwButton>
 
 			<CwBadge value={app.triggeredRulesCount} position="bottom_left" size="md" tone="danger">
-				<CwButton variant="secondary">
+				<CwButton variant="secondary" onclick={() => {app.drawerOpen = !app.drawerOpen}}>
 					<img src={NOTIFICATIONS_ICON} alt="Notifications Icon" class="h-5 w-5" />
 				</CwButton>
 			</CwBadge>
@@ -272,7 +276,10 @@
 	</div>
 </header>
 
-<div class="min-h-0 flex-1" style="margin-left: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+<div
+	class="min-h-0 flex-1"
+	style="margin-left: 0.5rem; margin-right: 0.5rem; margin-bottom: 0.5rem;"
+>
 	<CwDataTable
 		{columns}
 		{loadData}
@@ -285,7 +292,11 @@
 	>
 		{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
 			{#if col.key === 'lastSeen'}
-				<CwStatusDot status={(new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000) ? 'offline' : 'online'} />
+				<CwStatusDot
+					status={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000
+						? 'offline'
+						: 'online'}
+				/>
 				<CwDuration
 					from={row.created_at}
 					alarmAfterMinutes={10.3}

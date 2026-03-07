@@ -11,6 +11,7 @@
 		CwDataTable,
 		CwHeatmap,
 		CwLineChart,
+		CwChip,
 		type CwColumnDef,
 		type CwHeatmapDataPoint,
 		type CwLineChartDataPoint,
@@ -31,7 +32,8 @@
 		{ key: 'created_at', header: 'Timestamp', sortable: true, width: '13.5rem' },
 		{ key: 'temperature_c', header: 'Temp (°C)', sortable: true, width: '8rem' },
 		{ key: 'humidity', header: 'Humidity (%)', sortable: true, width: '9rem' },
-		{ key: 'co2', header: 'CO2 (ppm)', sortable: true, width: '9rem' }
+		{ key: 'co2', header: 'CO2 (ppm)', sortable: true, width: '9rem' },
+		{ key: 'alerts', header: 'Alerts', width: '6rem' }
 	];
 
 	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();
@@ -44,11 +46,12 @@
 			humidity: Number(row.humidity) || 0,
 			co2: Number(row.co2) || 0,
 			dev_eui: String(row.dev_eui ?? ''),
+			alerts: row.alerts,
 			cw_air_annotations: Array.isArray(row.cw_air_annotations)
 				? row.cw_air_annotations.map((annotation) => ({
 						note: String(annotation.note ?? ''),
 						created_at: String(annotation.created_at ?? '')
-				  }))
+					}))
 				: []
 		}));
 	}
@@ -155,8 +158,6 @@
 	}
 </script>
 
-{JSON.stringify(historicalData, null, 2)}
-
 <div class="air-display">
 	<div class="kpi-grid">
 		<CwCard title="Current Temperature" subtitle="Latest reading" elevated>
@@ -220,6 +221,12 @@
 						{row.humidity.toFixed(2)} %
 					{:else if col.key === 'co2'}
 						{row.co2} ppm
+					{:else if col.key === 'alerts'}
+						{#if row.alerts && row.alerts.length > 0}
+							<CwChip tone="danger" variant="soft" label="{row.alerts.length} alert{row.alerts.length > 1 ? 's' : ''}" dismissible />
+						{:else}
+							<CwChip tone="success" variant="soft" label="No Alert" dismissible />
+						{/if}
 					{:else}
 						{defaultValue}
 					{/if}

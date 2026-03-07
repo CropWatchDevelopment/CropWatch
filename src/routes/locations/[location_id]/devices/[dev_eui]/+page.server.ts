@@ -30,9 +30,10 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 		api.getDeviceLatestData(params.dev_eui)
 	]);
 
+
 	return {
 		deviceData: deviceData ?? [],
-		latestData: latestData ?? null
+		latestData: latestData ?? null,
 	};
 };
 
