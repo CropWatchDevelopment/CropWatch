@@ -1,5 +1,4 @@
-import { PUBLIC_AIR_NOTES_ENDPOINT, PUBLIC_API_BASE_URL } from '$env/static/public';
-import { type PaginationQuery, ApiService } from '$lib/api/api.service';
+import { ApiServiceError, type PaginationQuery, ApiService } from '$lib/api/api.service';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -30,37 +29,41 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 		api.getDeviceLatestData(params.dev_eui)
 	]);
 
-
 	return {
 		deviceData: deviceData ?? [],
-		latestData: latestData ?? null,
+		latestData: latestData ?? null
 	};
 };
 
 export const actions: Actions = {
-	saveDataNote: async ({ request, fetch }) => {
+	saveDataNote: async ({ request, fetch, locals }) => {
+		const authToken = locals.jwtString ?? null;
 		const data = await request.formData();
 		const noteContent = data.get('note')?.toString() ?? '';
 		const telemetryId = data.get('created_at')?.toString() ?? '';
 		const devEui = data.get('dev_eui')?.toString() ?? '';
 
-		const endpoint = `${PUBLIC_API_BASE_URL}${PUBLIC_AIR_NOTES_ENDPOINT}`;
-		const response = await fetch(endpoint, {
-			method: 'POST',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
+		if (!authToken) {
+			return fail(401, {
+				action: 'saveDataNote',
+				message: 'You must be logged in to save a note.'
+			});
+		}
+
+		const api = new ApiService({
+			fetchFn: fetch,
+			authToken
+		});
+
+		try {
+			await api.createAirNote({
 				note: noteContent,
 				created_at: telemetryId,
 				dev_eui: devEui
-			})
-		});
-
-		if (!response.ok) {
-			const responsePayload = await parseResponseBody(response);
-			return fail(response.status, {
+			});
+		} catch (error) {
+			const responsePayload = error instanceof ApiServiceError ? error.payload : error;
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'saveDataNote',
 				message: readApiError(responsePayload, 'Unable to save note.')
 			});
@@ -70,16 +73,6 @@ export const actions: Actions = {
 			success: true,
 			message: 'Note saved successfully.'
 		};
-	}
-};
-
-const parseResponseBody = async (response: Response): Promise<unknown> => {
-	const text = await response.text();
-	if (!text) return null;
-	try {
-		return JSON.parse(text);
-	} catch {
-		return { message: text };
 	}
 };
 

@@ -5,14 +5,14 @@ import {
 	PUBLIC_DEVICE_STATUS_ENDPOINT,
 	PUBLIC_LOGIN_ENDPOINT,
 	PUBLIC_AIR_NOTES_ENDPOINT,
+	PUBLIC_REPORTS_ENDPOINT,
 	PUBLIC_RULES_ENDPOINT,
 	PUBLIC_TRIGGERED_RULES_ENDPOINT,
 	PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT
 } from '$env/static/public';
-import { redirect } from '@sveltejs/kit';
+import type { PdfFile } from '../interfaces/PdfFile.interface';
 import type {
 	CreateLocationRequest,
-	CreateLocationOwnerRequest,
 	CreateReportRequest,
 	CreateRuleRequest,
 	DeviceDataWithinRangeQuery,
@@ -67,6 +67,7 @@ export interface ApiServiceOptions {
 	baseUrl?: string;
 	fetchFn?: FetchLike;
 	authToken?: string | null;
+	timeZoneOffset?: number;
 }
 
 interface ApiRequestOptions extends Omit<RequestInit, 'body' | 'headers'> {
@@ -76,6 +77,13 @@ interface ApiRequestOptions extends Omit<RequestInit, 'body' | 'headers'> {
 	authToken?: string | null;
 	responseType?: 'json' | 'text';
 }
+
+type ApiMethodOptions = Pick<ApiRequestOptions, 'signal'>;
+
+const CREATED_AT_KEY = 'created_at';
+const MINUTES_PER_HOUR = 60;
+const MILLISECONDS_PER_MINUTE = 60_000;
+const TIMEZONE_SUFFIX_PATTERN = /(?:[zZ]|[+-]\d{2}(?::?\d{2})?)$/;
 
 const AUTH_ENDPOINT = '/auth';
 const AIR_ENDPOINT = '/air/{dev_eui}';
@@ -89,14 +97,22 @@ const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
 const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
 const LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT = '/locations/{id}/permission-level';
 const POWER_ENDPOINT = '/power/{id}';
+const PAYMENTS_PRODUCTS_ENDPOINT = '/payments/products';
+const PAYMENTS_SUBSCRIPTIONS_ENDPOINT = '/payments/subscriptions';
+const PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT = '/payments/subscriptions/state';
+const PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT = '/payments/subscriptions/checkout';
+const PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT = '/payments/subscriptions/portal';
 const REPORTS_ENDPOINT = '/reports';
 const REPORT_BY_ID_ENDPOINT = '/reports/{id}';
 const REPORT_BY_REPORT_ID_ENDPOINT = '/reports/{report_id}';
+const REPORT_HISTORY_ENDPOINT = `${PUBLIC_REPORTS_ENDPOINT}/history/{dev_eui}`;
+const REPORT_DOWNLOAD_ENDPOINT = `${PUBLIC_REPORTS_ENDPOINT}/download/{dev_eui}/{name}`;
 const RULE_BY_ID_ENDPOINT = `${PUBLIC_RULES_ENDPOINT}/{id}`;
-const AIR_NOTES_ENDPOINT = `${PUBLIC_AIR_NOTES_ENDPOINT}/notes`;
+const AIR_NOTES_CREATE_ENDPOINT = PUBLIC_AIR_NOTES_ENDPOINT;
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
 const TRAFFIC_ENDPOINT = '/traffic/{dev_eui}';
 const WATER_ENDPOINT = '/water/{dev_eui}';
+const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
 	if (value === undefined) return undefined;
@@ -149,19 +165,124 @@ async function parseResponsePayload(response: Response): Promise<unknown> {
 	return rawPayload;
 }
 
+function buildLoginRedirectPath(): string {
+	if (typeof location === 'undefined') {
+		return '/auth/login';
+	}
+
+	const redirectTarget = `${location.pathname}${location.search}`;
+	if (!redirectTarget) {
+		return '/auth/login';
+	}
+
+	return `/auth/login?redirect=${encodeURIComponent(redirectTarget)}`;
+}
+
+function isCreatedAtKey(key: string): boolean {
+	return key.toLowerCase() === CREATED_AT_KEY;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function padDatePart(value: number, size = 2): string {
+	return String(value).padStart(size, '0');
+}
+
+function normalizeTimestampInput(value: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) return trimmed;
+	if (TIMEZONE_SUFFIX_PATTERN.test(trimmed)) return trimmed;
+
+	if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+		return `${trimmed}T00:00:00.000Z`;
+	}
+
+	const normalized = trimmed.includes('T') ? trimmed : trimmed.replace(' ', 'T');
+	return `${normalized}Z`;
+}
+
+function parseUtcTimestamp(value: string): Date | null {
+	const parsed = new Date(normalizeTimestampInput(value));
+	return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatOffset(offsetMinutes: number): string {
+	const sign = offsetMinutes >= 0 ? '+' : '-';
+	const absoluteMinutes = Math.abs(offsetMinutes);
+	const hours = Math.floor(absoluteMinutes / MINUTES_PER_HOUR);
+	const minutes = absoluteMinutes % MINUTES_PER_HOUR;
+	return `${sign}${padDatePart(hours)}:${padDatePart(minutes)}`;
+}
+
+function formatTimestampForOffset(date: Date, offsetHours: number): string {
+	const offsetMinutes = Math.round(offsetHours * MINUTES_PER_HOUR);
+	const shiftedDate = new Date(date.getTime() + offsetMinutes * MILLISECONDS_PER_MINUTE);
+
+	return [
+		`${shiftedDate.getUTCFullYear()}-${padDatePart(shiftedDate.getUTCMonth() + 1)}-${padDatePart(shiftedDate.getUTCDate())}`,
+		`${padDatePart(shiftedDate.getUTCHours())}:${padDatePart(shiftedDate.getUTCMinutes())}:${padDatePart(shiftedDate.getUTCSeconds())}.${padDatePart(shiftedDate.getUTCMilliseconds(), 3)}${formatOffset(offsetMinutes)}`
+	].join('T');
+}
+
+function toTimeZoneOffsetTimestamp(value: string, offsetHours: number): string {
+	const parsed = parseUtcTimestamp(value);
+	return parsed ? formatTimestampForOffset(parsed, offsetHours) : value;
+}
+
+function toUtcTimestamp(value: string): string {
+	const parsed = parseUtcTimestamp(value);
+	return parsed ? parsed.toISOString() : value;
+}
+
+function mapCreatedAtFields(value: unknown, mapper: (createdAt: string) => string): unknown {
+	if (Array.isArray(value)) {
+		return value.map((entry) => mapCreatedAtFields(entry, mapper));
+	}
+
+	if (!isRecord(value)) {
+		return value;
+	}
+
+	return Object.fromEntries(
+		Object.entries(value).map(([key, entryValue]) => {
+			if (isCreatedAtKey(key)) {
+				if (entryValue instanceof Date) {
+					return [key, mapper(entryValue.toISOString())];
+				}
+				return [key, typeof entryValue === 'string' ? mapper(entryValue) : entryValue];
+			}
+
+			return [key, mapCreatedAtFields(entryValue, mapper)];
+		})
+	);
+}
+
 export class ApiService {
 	private readonly baseUrl: string;
 	private readonly fetchFn: FetchLike;
 	private authToken: string | null;
+	private timeZoneOffset: number;
 
 	public constructor(options: ApiServiceOptions = {}) {
 		this.baseUrl = options.baseUrl ?? PUBLIC_API_BASE_URL;
 		this.fetchFn = options.fetchFn ?? fetch;
 		this.authToken = options.authToken ?? null;
+		const configuredTimeZoneOffset = options.timeZoneOffset;
+		this.timeZoneOffset = Number.isFinite(configuredTimeZoneOffset) ? configuredTimeZoneOffset : 0;
 	}
 
 	public setAuthToken(token: string | null): void {
 		this.authToken = token;
+	}
+
+	public setTimeZoneOffset(offset: number): void {
+		if (!Number.isFinite(offset)) {
+			throw new TypeError('timeZoneOffset must be a finite number');
+		}
+
+		this.timeZoneOffset = offset;
 	}
 
 	public clearAuthToken(): void {
@@ -187,7 +308,9 @@ export class ApiService {
 			if (!resolvedHeaders.has('Content-Type')) {
 				resolvedHeaders.set('Content-Type', 'application/json');
 			}
-			serializedBody = JSON.stringify(body);
+			serializedBody = JSON.stringify(
+				mapCreatedAtFields(body, (createdAt) => toUtcTimestamp(createdAt))
+			);
 		}
 
 		if (resolvedToken) {
@@ -211,18 +334,22 @@ export class ApiService {
 			});
 			if (response.status === 401) {
 				this.clearAuthToken();
-				location.href =
-					'/auth/login?redirect=' + encodeURIComponent(location.pathname + location.search);
+				if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
+					const loginRedirectPath = buildLoginRedirectPath();
+					window.location.href = loginRedirectPath;
+				}
 			}
-			// throw new ApiServiceError(response.status, response.statusText, payload);
-			throw redirect(303, '/auth/login?redirect=' + encodeURIComponent(location.pathname + location.search));
+
+			throw new ApiServiceError(response.status, response.statusText, payload);
 		}
 
 		if (responseType === 'text') {
 			return (typeof payload === 'string' ? payload : JSON.stringify(payload ?? '')) as T;
 		}
 
-		return payload as T;
+		return mapCreatedAtFields(payload, (createdAt) =>
+			toTimeZoneOffsetTimestamp(createdAt, this.timeZoneOffset)
+		) as T;
 	}
 
 	public getApiHome(): Promise<string> {
@@ -363,19 +490,22 @@ export class ApiService {
 		permission_level: number,
 		applyToAllDevices?: boolean
 	): Promise<LocationDto> {
-		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id: location_id }), {
-			method: 'POST',
-			query: {
-				newUserEmail,
-				permission_level,
-				applyToAllDevices
-			},
-			body: {
-				location_id,
-				user_email: newUserEmail,
-				applyToAllDevices
+		return this.request<LocationDto>(
+			replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id: location_id }),
+			{
+				method: 'POST',
+				query: {
+					newUserEmail,
+					permission_level,
+					applyToAllDevices
+				},
+				body: {
+					location_id,
+					user_email: newUserEmail,
+					applyToAllDevices
+				}
 			}
-		});
+		);
 	}
 
 	public updateLocationPermission(
@@ -383,27 +513,32 @@ export class ApiService {
 		payload: UpdateLocationOwnerRequest,
 		applyToAllDevices?: boolean
 	): Promise<LocationDto> {
-		return this.request<LocationDto>(replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id: location_id }), {
-			method: 'PATCH',
-			query: {
-				applyToAllDevices
-			},
-			body: payload
-		});
+		return this.request<LocationDto>(
+			replacePathParams(LOCATION_PERMISSION_ENDPOINT, { id: location_id }),
+			{
+				method: 'PATCH',
+				query: {
+					applyToAllDevices
+				},
+				body: payload
+			}
+		);
 	}
 
 	public async updateLocationPermissionLevel(
 		location_id: number | string,
 		email: string,
-		permission_level: number,
+		permission_level: number
 	): Promise<LocationDto> {
-		const endpoint = replacePathParams(LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT, { id: location_id });
+		const endpoint = replacePathParams(LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT, {
+			id: location_id
+		});
 		return this.request<LocationDto>(endpoint, {
 			method: 'PATCH',
 			body: {
 				location_id,
 				email,
-				permission_level,
+				permission_level
 			}
 		});
 	}
@@ -465,16 +600,19 @@ export class ApiService {
 	}
 
 	public getLatestPrimaryDeviceData(
-		query: LatestPrimaryDataQuery = {}
+		query: LatestPrimaryDataQuery = {},
+		options: ApiMethodOptions = {}
 	): Promise<PaginatedResponse<DevicePrimaryDataDto>> {
 		return this.request<PaginatedResponse<DevicePrimaryDataDto>>(
 			PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT,
 			{
 				method: 'GET',
+				signal: options.signal,
 				query: {
 					skip: query.skip,
 					take: query.take,
 					group: query.group,
+					locationGroup: query.locationGroup,
 					location: query.location,
 					name: query.name
 				}
@@ -543,12 +681,58 @@ export class ApiService {
 		);
 	}
 
-	public getDeviceLatestPrimaryData(devEui: string): Promise<DevicePrimaryDataDto> {
+	public getDeviceLatestPrimaryData(
+		devEui: string,
+		options: ApiMethodOptions = {}
+	): Promise<DevicePrimaryDataDto> {
 		return this.request<DevicePrimaryDataDto>(
 			replacePathParams(PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT, {
 				dev_eui: devEui
 			}),
-			{ method: 'GET' }
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
+	}
+
+	public createAirNote(payload: {
+		note: string;
+		created_at: string;
+		dev_eui: string;
+	}): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(AIR_NOTES_CREATE_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
+	}
+
+	public updateDevice(
+		devEui: string,
+		payload: Record<string, unknown>
+	): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(DEVICE_BY_DEV_EUI_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'PATCH',
+				body: payload
+			}
+		);
+	}
+
+	public updateDevicePermissionLevel(
+		devEui: string,
+		payload: {
+			targetUserEmail: string;
+			permissionLevel: number;
+		}
+	): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(DEVICE_PERMISSION_LEVEL_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'PATCH',
+				body: payload
+			}
 		);
 	}
 
@@ -605,6 +789,24 @@ export class ApiService {
 		return this.request<ReportDto[]>(REPORTS_ENDPOINT, { method: 'GET' });
 	}
 
+	public getReportHistory(devEui: string): Promise<PdfFile[]> {
+		return this.request<PdfFile[]>(
+			replacePathParams(REPORT_HISTORY_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'GET'
+			}
+		);
+	}
+
+	public getReportDownloadUrl(devEui: string, name: string): Promise<Record<string, unknown>> {
+		return this.request<Record<string, unknown>>(
+			replacePathParams(REPORT_DOWNLOAD_ENDPOINT, { dev_eui: devEui, name }),
+			{
+				method: 'GET'
+			}
+		);
+	}
+
 	public getReport(id: string): Promise<ReportDto> {
 		return this.request<ReportDto>(replacePathParams(REPORT_BY_ID_ENDPOINT, { id }), {
 			method: 'GET'
@@ -624,6 +826,41 @@ export class ApiService {
 	public deleteReport(reportId: string): Promise<number> {
 		return this.request<number>(
 			replacePathParams(REPORT_BY_REPORT_ID_ENDPOINT, { report_id: reportId }),
+			{
+				method: 'DELETE'
+			}
+		);
+	}
+
+	public getPaymentsProducts(): Promise<unknown> {
+		return this.request<unknown>(PAYMENTS_PRODUCTS_ENDPOINT, { method: 'GET' });
+	}
+
+	public getPaymentsSubscriptions(): Promise<unknown> {
+		return this.request<unknown>(PAYMENTS_SUBSCRIPTIONS_ENDPOINT, { method: 'GET' });
+	}
+
+	public getPaymentsSubscriptionState(): Promise<unknown> {
+		return this.request<unknown>(PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT, { method: 'GET' });
+	}
+
+	public createPaymentsCheckoutSession(payload: Record<string, unknown>): Promise<unknown> {
+		return this.request<unknown>(PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
+	}
+
+	public createPaymentsPortalSession(payload: Record<string, unknown>): Promise<unknown> {
+		return this.request<unknown>(PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
+	}
+
+	public cancelPaymentsSubscription(subscriptionId: string): Promise<unknown> {
+		return this.request<unknown>(
+			`${PAYMENTS_SUBSCRIPTIONS_ENDPOINT}/${encodeURIComponent(subscriptionId)}`,
 			{
 				method: 'DELETE'
 			}

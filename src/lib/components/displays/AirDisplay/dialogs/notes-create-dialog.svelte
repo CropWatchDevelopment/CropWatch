@@ -2,9 +2,14 @@
 	import { CwButton, CwDialog, CwTextArea } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
 
-	let { row, dev_eui }: { row: AirRow, dev_eui: string } = $props();
+	let { row, dev_eui }: { row: AirRow; dev_eui: string } = $props();
 	let open = $state(false);
 	let noteText = $state('');
+
+	function formatCreatedAt(value: string): string {
+		const parsed = new Date(value);
+		return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+	}
 
 	function handleEditorKeydown(event: KeyboardEvent) {
 		// The table row listens for Space/Enter and cancels them, which breaks typing in the modal.
@@ -14,7 +19,6 @@
 	}
 
 	async function handleSaveNote() {
-		debugger;
 		const formData = new FormData();
 		formData.append('note', noteText);
 		formData.append('created_at', row.created_at);
@@ -28,8 +32,6 @@
 		noteText = '';
 		return result.ok;
 	}
-
-
 </script>
 
 <CwButton variant="info" onclick={() => (open = true)}>Add a Note</CwButton>
@@ -37,10 +39,10 @@
 <CwDialog
 	{open}
 	onclose={() => (open = false)}
-	title={`Add Note for ${new Date(row.created_at).toISOString()}`}
+	title={`Add Note for ${formatCreatedAt(row.created_at)}`}
 >
 	<p style="margin-bottom: 1rem;">
-		Add a note for the telemetry entry at {new Date(row.created_at).toISOString().replace('T', ' ').substring(0, 19)}
+		Add a note for the telemetry entry at {formatCreatedAt(row.created_at)}
 		with temperature {row.temperature_c}°C.
 	</p>
 

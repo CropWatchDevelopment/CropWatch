@@ -68,6 +68,7 @@ export interface DeviceDataWithinRangeQuery extends PaginationQuery {
 
 export interface LatestPrimaryDataQuery extends PaginationQuery {
 	group?: string;
+	locationGroup?: string;
 	location?: string;
 	name?: string;
 }

@@ -1,12 +1,6 @@
-import { PUBLIC_API_BASE_URL } from '$env/static/public';
+import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-
-const PAYMENTS_PRODUCTS_ENDPOINT = '/payments/products';
-const PAYMENTS_SUBSCRIPTIONS_ENDPOINT = '/payments/subscriptions';
-const PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT = '/payments/subscriptions/state';
-const PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT = '/payments/subscriptions/checkout';
-const PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT = '/payments/subscriptions/portal';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -167,7 +161,8 @@ const extractPriceLabel = (source: UnknownRecord): { priceLabel: string; billing
 		asString(source.recurring_interval) ??
 		asString(source.interval);
 
-	const priceLabel = amountMinor === null ? 'Custom pricing' : formatCurrency(amountMinor / 100, currency);
+	const priceLabel =
+		amountMinor === null ? 'Custom pricing' : formatCurrency(amountMinor / 100, currency);
 	const billingLabel = interval ? `Billed ${interval}` : 'One-time';
 	return { priceLabel, billingLabel };
 };
@@ -211,14 +206,16 @@ const normalizeProducts = (payload: unknown): BillingProduct[] => {
 			!(asBoolean(base.is_archived) ?? asBoolean(item.is_archived) ?? false);
 		const pricing = extractPriceLabel(isRecord(item.product) ? { ...base, ...item } : item);
 
-		return [{
-			id,
-			name,
-			description,
-			priceLabel: pricing.priceLabel,
-			billingLabel: pricing.billingLabel,
-			active
-		}];
+		return [
+			{
+				id,
+				name,
+				description,
+				priceLabel: pricing.priceLabel,
+				billingLabel: pricing.billingLabel,
+				active
+			}
+		];
 	});
 };
 
@@ -234,14 +231,14 @@ const normalizeSubscriptions = (payload: unknown): BillingSubscription[] => {
 		'data.subscriptions'
 	]);
 	return items.flatMap((item) => {
-		const id =
-			asString(item.id) ??
-			asString(item.subscription_id) ??
-			asString(item.subscriptionId);
+		const id = asString(item.id) ?? asString(item.subscription_id) ?? asString(item.subscriptionId);
 		if (!id) return [];
 
 		const status =
-			asString(item.status) ?? asString(item.state) ?? asString(item.subscription_status) ?? 'unknown';
+			asString(item.status) ??
+			asString(item.state) ??
+			asString(item.subscription_status) ??
+			'unknown';
 		const productName =
 			asString(getPathValue(item, ['product', 'name'])) ??
 			asString(getPathValue(item, ['product', 'display_name'])) ??
@@ -264,32 +261,28 @@ const normalizeSubscriptions = (payload: unknown): BillingSubscription[] => {
 			toIsoStringOrNull(item.revoked_at);
 		const pricing = extractPriceLabel(item);
 
-		return [{
-			id,
-			status,
-			productName,
-			startedAt,
-			renewsAt,
-			canceledAt,
-			amountLabel: pricing.priceLabel
-		}];
+		return [
+			{
+				id,
+				status,
+				productName,
+				startedAt,
+				renewsAt,
+				canceledAt,
+				amountLabel: pricing.priceLabel
+			}
+		];
 	});
 };
 
 const normalizeState = (payload: unknown): BillingState => {
 	const state = isRecord(payload) ? payload : {};
 	const activeSubscriptionCount =
-		asNumber(state.active_subscription_count) ??
-		asNumber(state.activeSubscriptionCount) ??
-		0;
+		asNumber(state.active_subscription_count) ?? asNumber(state.activeSubscriptionCount) ?? 0;
 	const trialSubscriptionCount =
-		asNumber(state.trial_subscription_count) ??
-		asNumber(state.trialSubscriptionCount) ??
-		0;
+		asNumber(state.trial_subscription_count) ?? asNumber(state.trialSubscriptionCount) ?? 0;
 	const cancelledSubscriptionCount =
-		asNumber(state.cancelled_subscription_count) ??
-		asNumber(state.cancelledSubscriptionCount) ??
-		0;
+		asNumber(state.cancelled_subscription_count) ?? asNumber(state.cancelledSubscriptionCount) ?? 0;
 	const hasActiveSubscription =
 		asBoolean(state.has_active_subscription) ??
 		asBoolean(state.hasActiveSubscription) ??
@@ -310,16 +303,6 @@ const normalizeState = (payload: unknown): BillingState => {
 	};
 };
 
-const parseResponseBody = async (response: Response): Promise<unknown> => {
-	const text = await response.text();
-	if (!text) return null;
-	try {
-		return JSON.parse(text);
-	} catch {
-		return { message: text };
-	}
-};
-
 const readApiError = (payload: unknown, fallback: string): string => {
 	if (isRecord(payload)) {
 		const message = payload.message;
@@ -333,32 +316,21 @@ const readApiError = (payload: unknown, fallback: string): string => {
 	return fallback;
 };
 
-const fetchEndpoint = async (
-	fetchFn: typeof fetch,
-	path: string,
-	init?: RequestInit
+const executeApiRequest = async (
+	request: () => Promise<unknown>,
+	fallback: string
 ): Promise<EndpointResult> => {
 	try {
-		const response = await fetchFn(`${PUBLIC_API_BASE_URL}${path}`, {
-			...init,
-			headers: {
-				Accept: 'application/json',
-				...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-				...(init?.headers ?? {})
-			}
-		});
-		const payload = await parseResponseBody(response);
-		if (!response.ok) {
-			return {
-				data: null,
-				error: readApiError(payload, `Request failed (${response.status})`)
-			};
-		}
-		return { data: payload, error: null };
+		return { data: await request(), error: null };
 	} catch (error) {
 		return {
 			data: null,
-			error: error instanceof Error ? error.message : 'Network request failed'
+			error:
+				error instanceof ApiServiceError
+					? readApiError(error.payload, fallback)
+					: error instanceof Error
+						? error.message
+						: fallback
 		};
 	}
 };
@@ -405,11 +377,18 @@ const requireAuth = (jwt: string | null) => {
 
 export const load: PageServerLoad = async ({ fetch, locals }) => {
 	requireAuth(locals.jwtString);
+	const api = new ApiService({
+		fetchFn: fetch,
+		authToken: locals.jwtString
+	});
 
 	const [productsResult, subscriptionsResult, stateResult] = await Promise.all([
-		fetchEndpoint(fetch, PAYMENTS_PRODUCTS_ENDPOINT),
-		fetchEndpoint(fetch, PAYMENTS_SUBSCRIPTIONS_ENDPOINT),
-		fetchEndpoint(fetch, PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT)
+		executeApiRequest(() => api.getPaymentsProducts(), 'Unable to load billing products.'),
+		executeApiRequest(() => api.getPaymentsSubscriptions(), 'Unable to load subscriptions.'),
+		executeApiRequest(
+			() => api.getPaymentsSubscriptionState(),
+			'Unable to load subscription state.'
+		)
 	]);
 
 	const subscriptions = normalizeSubscriptions(subscriptionsResult.data);
@@ -429,6 +408,10 @@ export const load: PageServerLoad = async ({ fetch, locals }) => {
 export const actions: Actions = {
 	createCheckoutSession: async ({ request, fetch, url, locals }) => {
 		requireAuth(locals.jwtString);
+		const api = new ApiService({
+			fetchFn: fetch,
+			authToken: locals.jwtString
+		});
 
 		const formData = await request.formData();
 		const products = formData
@@ -448,7 +431,8 @@ export const actions: Actions = {
 		const allowDiscountCodes = asBoolean(formData.get('allow_discount_codes')) ?? true;
 		const allowTrial = asBoolean(formData.get('allow_trial')) ?? true;
 		const returnUrl = asString(formData.get('return_url')) ?? `${url.origin}/account/billing`;
-		const successUrl = asString(formData.get('success_url')) ?? `${url.origin}/account/billing?checkout=success`;
+		const successUrl =
+			asString(formData.get('success_url')) ?? `${url.origin}/account/billing?checkout=success`;
 
 		const payload: UnknownRecord = {
 			products,
@@ -460,20 +444,16 @@ export const actions: Actions = {
 		if (customerName) payload.customer_name = customerName;
 		if (customerEmail) payload.customer_email = customerEmail;
 
-		const response = await fetch(`${PUBLIC_API_BASE_URL}${PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT}`, {
-			method: 'POST',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(payload)
-		});
-		const responsePayload = await parseResponseBody(response);
-
-		if (!response.ok) {
-			return fail(response.status, {
+		let responsePayload: unknown;
+		try {
+			responsePayload = await api.createPaymentsCheckoutSession(payload);
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'checkout',
-				message: readApiError(responsePayload, 'Unable to create checkout session.')
+				message: readApiError(
+					error instanceof ApiServiceError ? error.payload : error,
+					'Unable to create checkout session.'
+				)
 			});
 		}
 
@@ -494,25 +474,25 @@ export const actions: Actions = {
 
 	createPortalSession: async ({ request, fetch, url, locals }) => {
 		requireAuth(locals.jwtString);
+		const api = new ApiService({
+			fetchFn: fetch,
+			authToken: locals.jwtString
+		});
 
 		const formData = await request.formData();
 		const returnUrl = asString(formData.get('return_url')) ?? `${url.origin}/account/billing`;
 		const payload = { return_url: returnUrl };
 
-		const response = await fetch(`${PUBLIC_API_BASE_URL}${PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT}`, {
-			method: 'POST',
-			headers: {
-				Accept: 'application/json',
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(payload)
-		});
-		const responsePayload = await parseResponseBody(response);
-
-		if (!response.ok) {
-			return fail(response.status, {
+		let responsePayload: unknown;
+		try {
+			responsePayload = await api.createPaymentsPortalSession(payload);
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'portal',
-				message: readApiError(responsePayload, 'Unable to open billing portal.')
+				message: readApiError(
+					error instanceof ApiServiceError ? error.payload : error,
+					'Unable to open billing portal.'
+				)
 			});
 		}
 
@@ -533,6 +513,10 @@ export const actions: Actions = {
 
 	cancelSubscription: async ({ request, fetch, locals }) => {
 		requireAuth(locals.jwtString);
+		const api = new ApiService({
+			fetchFn: fetch,
+			authToken: locals.jwtString
+		});
 
 		const formData = await request.formData();
 		const subscriptionId = asString(formData.get('subscription_id'));
@@ -544,19 +528,15 @@ export const actions: Actions = {
 			});
 		}
 
-		const response = await fetch(
-			`${PUBLIC_API_BASE_URL}${PAYMENTS_SUBSCRIPTIONS_ENDPOINT}/${encodeURIComponent(subscriptionId)}`,
-			{
-				method: 'DELETE',
-				headers: { Accept: 'application/json' }
-			}
-		);
-		const responsePayload = await parseResponseBody(response);
-
-		if (!response.ok) {
-			return fail(response.status, {
+		try {
+			await api.cancelPaymentsSubscription(subscriptionId);
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'cancel',
-				message: readApiError(responsePayload, 'Unable to cancel subscription.')
+				message: readApiError(
+					error instanceof ApiServiceError ? error.payload : error,
+					'Unable to cancel subscription.'
+				)
 			});
 		}
 

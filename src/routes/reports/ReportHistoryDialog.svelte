@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_API_BASE_URL, PUBLIC_REPORTS_ENDPOINT } from '$env/static/public';
+	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import {
 		CwButton,
@@ -13,25 +13,19 @@
 	import { type PdfFile } from '$lib/interfaces/PdfFile.interface';
 
 	let { open = $bindable(), dev_eui }: { open?: boolean; dev_eui: string } = $props();
-	const endpoint = `${PUBLIC_API_BASE_URL}${PUBLIC_REPORTS_ENDPOINT}/history/${dev_eui}`;
 	const app = $state(getAppContext());
-	let files: PdfFile[] = $state([]);
 
 	async function loadData(
-		query: CwTableQuery
+		_query: CwTableQuery
 	): Promise<CwTableResult<{ id: string; name: string; created_at: string }>> {
+		const api = new ApiService({
+			authToken: app.accessToken ?? null
+		});
 		const rows = !open
 			? []
-			: await fetch(endpoint, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						...(app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined)
-					}
-				})
-					.then((res) => res.json())
+			: await api
+					.getReportHistory(dev_eui)
 					.then((data: PdfFile[]) => {
-						files = data;
 						return data.map((file) => ({
 							id: file.id,
 							name: file.name,
@@ -43,20 +37,16 @@
 	}
 
 	async function handleDownload(name: string) {
-		const downloadUrl = `${PUBLIC_API_BASE_URL}${PUBLIC_REPORTS_ENDPOINT}/download/${dev_eui}/${encodeURIComponent(name)}`;
+		const api = new ApiService({
+			authToken: app.accessToken ?? null
+		});
 		try {
-			const res = await fetch(downloadUrl, {
-				method: 'GET',
-				headers: {
-					Accept: 'application/json',
-					...(app.accessToken ? { Authorization: `Bearer ${app.accessToken}` } : undefined)
-				}
-			});
-			if (!res.ok) {
-				console.error('Download failed:', res.status, res.statusText);
+			const response = await api.getReportDownloadUrl(dev_eui, name);
+			const signedUrl = typeof response.url === 'string' ? response.url : null;
+			if (!signedUrl) {
+				console.error('Download failed: signed URL missing');
 				return;
 			}
-			const { url: signedUrl } = await res.json();
 			// Open the signed URL directly — the browser will handle the PDF download
 			window.open(signedUrl, '_blank');
 		} catch (err) {
@@ -69,10 +59,14 @@
 
 <CwDialog {open} title="Report History" onclose={() => (open = false)} class="w-full">
 	<CwCard title="Problem Reports" class="mb-4 p-4">
-        <CwTooltip tone="info" position="left" value="This report is under development. Please check back later.">
-            <CwButton variant="primary" disabled>Problems Only Report</CwButton>
-        </CwTooltip>
-    </CwCard>
+		<CwTooltip
+			tone="info"
+			position="left"
+			value="This report is under development. Please check back later."
+		>
+			<CwButton variant="primary" disabled>Problems Only Report</CwButton>
+		</CwTooltip>
+	</CwCard>
 
 	<CwDataTable
 		columns={[
@@ -81,7 +75,6 @@
 			{ key: 'created_at', header: 'Created At' }
 		]}
 		actionsHeader="Actions"
-
 		{loadData}
 		rowKey="id"
 	>

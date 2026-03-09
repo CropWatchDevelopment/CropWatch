@@ -1,5 +1,4 @@
-import { PUBLIC_API_BASE_URL } from '$env/static/public';
-import { ApiService } from '$lib/api/api.service';
+import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -55,22 +54,6 @@ const readOptionalNumber = (record: Record<string, unknown> | null, key: string)
 	const value = record[key];
 	return typeof value === 'number' && Number.isFinite(value) ? value : null;
 };
-
-async function parseResponsePayload(response: Response): Promise<unknown> {
-	const rawPayload = await response.text();
-	if (!rawPayload) return null;
-
-	const contentType = response.headers.get('content-type') ?? '';
-	if (contentType.includes('application/json')) {
-		try {
-			return JSON.parse(rawPayload) as unknown;
-		} catch {
-			return rawPayload;
-		}
-	}
-
-	return rawPayload;
-}
 
 function readApiMessage(payload: unknown, fallback: string): string {
 	if (payload && typeof payload === 'object') {
@@ -181,35 +164,6 @@ function normalizeDeviceOwners(
 		);
 }
 
-async function patchApi(
-	fetchFn: typeof fetch,
-	authToken: string,
-	path: string,
-	body: Record<string, unknown>
-): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
-	const response = await fetchFn(`${PUBLIC_API_BASE_URL}${path}`, {
-		method: 'PATCH',
-		headers: {
-			Accept: 'application/json',
-			Authorization: `Bearer ${authToken}`,
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify(body)
-	});
-
-	if (response.ok) {
-		await parseResponsePayload(response);
-		return { ok: true };
-	}
-
-	const payload = await parseResponsePayload(response);
-	return {
-		ok: false,
-		status: response.status,
-		message: readApiMessage(payload, 'The API rejected the update request.')
-	};
-}
-
 export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const authToken = locals.jwtString ?? null;
 	const devEui = String(params.dev_eui ?? '').trim();
@@ -298,15 +252,23 @@ export const actions: Actions = {
 			});
 		}
 
-		const response = await patchApi(fetch, authToken, `/devices/${encodeURIComponent(devEui)}`, {
-			name: values.name,
-			group: values.group || null
+		const api = new ApiService({
+			fetchFn: fetch,
+			authToken
 		});
 
-		if (!response.ok) {
-			return fail(response.status, {
+		try {
+			await api.updateDevice(devEui, {
+				name: values.name,
+				group: values.group || null
+			});
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'updateDevice',
-				message: response.message,
+				message: readApiMessage(
+					error instanceof ApiServiceError ? error.payload : error,
+					'The API rejected the update request.'
+				),
 				values,
 				fieldErrors
 			});
@@ -368,21 +330,24 @@ export const actions: Actions = {
 			});
 		}
 
-		const response = await patchApi(
-			fetch,
-			authToken,
-			`/devices/${encodeURIComponent(devEui)}/permission-level`,
-			{
+		const api = new ApiService({
+			fetchFn: fetch,
+			authToken
+		});
+
+		try {
+			await api.updateDevicePermissionLevel(devEui, {
 				targetUserEmail: values.targetUserEmail,
 				permissionLevel
-			}
-		);
-
-		if (!response.ok) {
-			return fail(response.status, {
+			});
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'updateDeviceOwnerPermission',
 				ownerKey,
-				message: response.message,
+				message: readApiMessage(
+					error instanceof ApiServiceError ? error.payload : error,
+					'The API rejected the permission update request.'
+				),
 				values,
 				fieldErrors
 			});

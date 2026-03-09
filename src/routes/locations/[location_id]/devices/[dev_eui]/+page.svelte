@@ -18,7 +18,8 @@
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 
 	type TelemetryRow = Record<string, unknown>;
-	const RANGE_OPTIONS = [24, 48, 72] as const;
+	const HoursSinceStartOfToday = Math.floor((Date.now() - new Date().setHours(0, 0, 0, 0)) / (60 * 60 * 1000));
+	const RANGE_OPTIONS = [HoursSinceStartOfToday, 24, 48, 72] as const;
 	type RangeHours = (typeof RANGE_OPTIONS)[number];
 	const MAX_RANGE_RECORDS = 1000;
 

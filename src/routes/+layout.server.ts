@@ -1,6 +1,44 @@
-import apiService, { ApiService } from '$lib/api/api.service';
+import { ApiService } from '$lib/api/api.service';
+import type { DevicePrimaryDataDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
 import type { LayoutServerLoad } from './$types';
+
+const LATEST_PRIMARY_DATA_PAGE_SIZE = 250;
+
+async function getAllLatestPrimaryDeviceData(
+	apiServiceInstance: ApiService
+): Promise<DevicePrimaryDataDto[]> {
+	const firstPage = await apiServiceInstance.getLatestPrimaryDeviceData({
+		skip: 0,
+		take: LATEST_PRIMARY_DATA_PAGE_SIZE
+	});
+
+	const firstBatch = firstPage.data ?? [];
+	const total =
+		typeof firstPage.total === 'number' && Number.isFinite(firstPage.total)
+			? Math.max(0, firstPage.total)
+			: firstBatch.length;
+
+	const allDevices = [...firstBatch];
+	let skip = firstBatch.length;
+
+	while (allDevices.length < total) {
+		const nextPage = await apiServiceInstance.getLatestPrimaryDeviceData({
+			skip,
+			take: LATEST_PRIMARY_DATA_PAGE_SIZE
+		});
+		const nextBatch = nextPage.data ?? [];
+
+		if (nextBatch.length === 0) {
+			break;
+		}
+
+		allDevices.push(...nextBatch);
+		skip += nextBatch.length;
+	}
+
+	return allDevices;
+}
 
 export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 	const session = locals.jwt ?? null;
@@ -21,10 +59,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 	});
 
 	const [latestPrimaryData, triggeredRules, triggeredRulesCount, deviceStatuses, deviceGroups, locations, locationGroups] = await Promise.all([
-		apiServiceInstance
-			.getLatestPrimaryDeviceData()
-			.then((result) => result.data ?? [])
-			.catch(() => []),
+		getAllLatestPrimaryDeviceData(apiServiceInstance).catch(() => []),
 		apiServiceInstance.getTriggeredRules().catch(() => []),
 		apiServiceInstance.getTriggeredRulesCount().catch(() => 0),
 		apiServiceInstance.getDeviceStatuses().catch(() => ({ online: 0, offline: 0 })),
@@ -54,6 +89,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 	return {
 		session,
 		devices,
+		totalDeviceCount: devices.length,
 		triggeredRules,
 		triggeredRulesCount,
 		deviceStatuses,

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './layout.css';
+	import { onDestroy } from 'svelte';
 	import {
 		createCwToastContext,
 		CwOfflineOverlay,
@@ -19,6 +20,7 @@
 
 	let mode = $state<CwSideNavMode>('open');
 	let isAuthRoute: boolean = $derived(page.url.pathname.startsWith('/auth'));
+	let resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
 	function syncAppContextFromLayoutData() {
 		const rawTriggeredRulesCount = data.triggeredRulesCount;
@@ -37,6 +39,7 @@
 
 		app.session = data.session ?? null;
 		app.devices = data.devices ?? [];
+		app.totalDeviceCount = data.totalDeviceCount ?? app.devices.length;
 		app.deviceStatuses = data.deviceStatuses ?? { online: 0, offline: 0 };
 		app.triggeredRules = data.triggeredRules ?? [];
 		app.triggeredRulesCount = triggeredRulesCount;
@@ -55,28 +58,26 @@
 
 	setAppContext(app);
 
-	// Suppress the sidebar's CSS width transition during window resize so it
-	// snaps instantly at responsive breakpoints instead of lagging 300ms behind.
-	$effect(() => {
-		if (typeof window === 'undefined') return;
-		let timer: ReturnType<typeof setTimeout>;
-		function onResize() {
-			document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
-			clearTimeout(timer);
-			timer = setTimeout(() => {
-				document.querySelector('.cw-sidenav')?.classList.remove('cw-sidenav--resizing');
-			}, 100);
+	function handleWindowResize() {
+		document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
+		if (resizeTimer) {
+			clearTimeout(resizeTimer);
 		}
-		window.addEventListener('resize', onResize);
-		return () => {
-			window.removeEventListener('resize', onResize);
-			clearTimeout(timer);
-		};
+		resizeTimer = setTimeout(() => {
+			document.querySelector('.cw-sidenav')?.classList.remove('cw-sidenav--resizing');
+		}, 100);
+	}
+
+	onDestroy(() => {
+		if (resizeTimer) {
+			clearTimeout(resizeTimer);
+		}
 	});
 </script>
 
 <CwOfflineOverlay />
 <CwToastContainer />
+<svelte:window onresize={handleWindowResize} />
 
 <div class="flex h-dvh w-full overflow-hidden">
 	{#if !isAuthRoute}

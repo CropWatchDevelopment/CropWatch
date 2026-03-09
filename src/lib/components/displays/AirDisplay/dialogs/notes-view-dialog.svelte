@@ -3,8 +3,12 @@
 	import type { AirRow } from '../interfaces/AirRow.interface';
 
 	let { row }: { row: AirRow } = $props();
-    let open = $state(false);
+	let open = $state(false);
 
+	function formatCreatedAt(value: string): string {
+		const parsed = new Date(value);
+		return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+	}
 </script>
 
 <CwButton variant="secondary" onclick={() => (open = true)}>View Notes</CwButton>
@@ -12,13 +16,11 @@
 <CwDialog
 	{open}
 	onclose={() => (open = false)}
-	title={`View Notes for ${new Date(row.created_at).toISOString()}`}
+	title={`View Notes for ${formatCreatedAt(row.created_at)}`}
 >
-	{#snippet children()}
-		{#each row.cw_air_annotations as note}
-            <p>{new Date(note.created_at).toISOString()} - {note.note}</p>
-        {/each}
-	{/snippet}
+	{#each row.cw_air_annotations as note (`${note.created_at}-${note.note}`)}
+		<p>{formatCreatedAt(note.created_at)} - {note.note}</p>
+	{/each}
 	{#snippet actions()}
 		<CwButton variant="secondary" onclick={() => (open = false)}>Cancel</CwButton>
 	{/snippet}
