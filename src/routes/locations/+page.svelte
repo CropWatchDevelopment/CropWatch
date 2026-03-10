@@ -58,7 +58,7 @@
 				rowKey="location_id"
 				searchable
 				pageSize={10}
-				actionsHeader="View"
+				rowActionsHeader="View"
 			>
 				{#snippet toolbarActions()}
 					<CwButton variant="primary" onclick={handleAddLocation}>Add Location</CwButton>

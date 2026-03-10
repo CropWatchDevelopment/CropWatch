@@ -464,7 +464,7 @@
 					rowKey="id"
 					searchable
 					bind:pageSize
-					actionsHeader="Actions"
+					rowActionsHeader="Actions"
 				>
 					{#snippet cell(row: BillingSubscription, col: CwColumnDef<BillingSubscription>, defaultValue: string)}
 						{#if col.key === 'status'}

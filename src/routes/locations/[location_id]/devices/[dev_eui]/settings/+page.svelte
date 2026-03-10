@@ -9,6 +9,7 @@
 		CwSeparator
 	} from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
+	import './settings-style.css';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
 	const DEVICE_GROUP_MAX_LENGTH = 120;
@@ -40,6 +41,11 @@
 	let deviceName = $derived(data.deviceName ?? '');
 	let deviceGroup = $derived(data.deviceGroup ?? '');
 	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
+
+	if (!data.location_id) {
+		throw new Error('Device location_id is required in page data.');
+	}
+	let location_id = $state(data.location_id);
 
 	function createOwnerRows(
 		owners: Array<{
@@ -174,13 +180,37 @@
 				</div>
 
 				<div class="field-stack">
-					<CwDropdown
+					<CwInput
 						label="Device Group"
-						options={groupOptions}
+						name="group"
+						required={false}
+						maxlength={DEVICE_GROUP_MAX_LENGTH}
 						bind:value={deviceGroup}
 						error={deviceGroupError || undefined}
 					/>
 					<input type="hidden" name="group" value={deviceGroupValue} />
+					{#if deviceGroupError}
+						<p class="field-error">{deviceGroupError}</p>
+					{/if}
+				</div>
+
+				<div class="field-stack">
+					<CwDropdown
+						label="Location"
+						name="location_id"
+						options={
+							[
+								{ label: 'Unassigned', value: '' },
+								...(data.locations ?? []).map((loc) => ({
+									label: loc.name,
+									value: String(loc.location_id)
+								}))
+							]
+						}
+						bind:value={location_id}
+						error={deviceGroupError || undefined}
+					/>
+					<input type="hidden" name="location_id" bind:value={location_id} />
 					{#if deviceGroupError}
 						<p class="field-error">{deviceGroupError}</p>
 					{/if}
@@ -206,16 +236,14 @@
 		subtitle="Update only. Add and delete actions are intentionally omitted here."
 		elevated
 	>
-		<div class="permissions-tag">
-			<CwChip label="Update Only" tone="warning" variant="soft" />
-		</div>
-
 		{#if permissionRows.length === 0}
 			<p class="empty-state">No device owners were returned for this device.</p>
 		{:else}
 			<div class="permission-list">
 				{#each permissionRows as row, index (row.key)}
 					{@const ownerForm = ownerFormFor(row.key)}
+					{#if row.email && row.email !== ''}
+					<pre>{JSON.stringify(row, null, 2)}</pre>
 					<div class="permission-row">
 						<form
 							method="POST"
@@ -244,7 +272,7 @@
 							<input type="hidden" name="permissionLevel" value={row.permissionLevel} />
 
 							<div class="permission-user">
-								<CwInput label="User" value={row.name} disabled />
+								<input type="hidden" value={row.name} disabled />
 								<CwInput label="Email" value={row.email || row.userId || 'Unavailable'} disabled />
 							</div>
 
@@ -259,17 +287,6 @@
 									/>
 									{#if ownerForm?.fieldErrors?.permissionLevel}
 										<p class="field-error">{ownerForm.fieldErrors.permissionLevel}</p>
-									{/if}
-								</div>
-
-								<div class="permission-meta">
-									{#if row.email}
-										<CwChip label="Email linked" tone="success" variant="soft" />
-									{:else}
-										<CwChip label="Email unavailable" tone="danger" variant="soft" />
-									{/if}
-									{#if row.userId}
-										<p class="permission-user-id">User ID: {row.userId}</p>
 									{/if}
 								</div>
 
@@ -299,6 +316,7 @@
 							{/if}
 						</form>
 					</div>
+					{/if}
 
 					{#if index < permissionRows.length - 1}
 						<CwSeparator spacing="0" />
@@ -308,149 +326,4 @@
 		{/if}
 	</CwCard>
 </div>
-
-<style>
-	.device-settings-page {
-		display: grid;
-		gap: 1rem;
-		padding: 0.75rem;
-	}
-
-	.device-form {
-		display: grid;
-		gap: 0.875rem;
-	}
-
-	.device-form__header {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-
-	.panel-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.75rem;
-	}
-
-	.panel-actions {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.75rem;
-		flex-wrap: wrap;
-	}
-
-	.panel-note {
-		margin: 0;
-		color: rgba(15, 23, 42, 0.72);
-		font-size: 0.92rem;
-	}
-
-	.field-stack {
-		display: grid;
-		gap: 0.35rem;
-	}
-
-	.field-error {
-		margin: 0;
-		color: #b42318;
-		font-size: 0.85rem;
-	}
-
-	.form-feedback {
-		margin: 0;
-		padding: 0.75rem 0.875rem;
-		border-radius: 0.75rem;
-		background: #fee4e2;
-		color: #912018;
-		font-size: 0.92rem;
-	}
-
-	.feedback-success {
-		background: #d1fadf;
-		color: #166534;
-	}
-
-	.permissions-tag {
-		margin-bottom: 0.75rem;
-	}
-
-	.permission-list {
-		display: grid;
-		gap: 0.75rem;
-	}
-
-	.permission-row {
-		display: grid;
-		gap: 0.75rem;
-	}
-
-	.permission-row__form {
-		display: grid;
-		grid-template-columns: 2fr 1.6fr;
-		gap: 0.75rem;
-	}
-
-	.permission-user {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.75rem;
-	}
-
-	.permission-edit {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto auto;
-		align-items: end;
-		gap: 0.5rem;
-	}
-
-	.permission-meta {
-		display: grid;
-		gap: 0.35rem;
-		align-self: end;
-	}
-
-	.permission-user-id {
-		margin: 0;
-		font-size: 0.78rem;
-		color: rgba(15, 23, 42, 0.62);
-	}
-
-	.permission-feedback {
-		grid-column: 1 / -1;
-	}
-
-	.empty-state {
-		margin: 0;
-		color: rgba(15, 23, 42, 0.72);
-	}
-
-	@media (max-width: 900px) {
-		.panel-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.permission-row__form {
-			grid-template-columns: 1fr;
-		}
-
-		.permission-edit {
-			grid-template-columns: 1fr;
-		}
-	}
-
-	@media (max-width: 640px) {
-		.permission-user {
-			grid-template-columns: 1fr;
-		}
-
-		.panel-actions {
-			align-items: stretch;
-		}
-
-		.panel-actions :global(button) {
-			width: 100%;
-		}
-	}
-</style>
+<pre>{JSON.stringify(data.locations, null, 2)}</pre>

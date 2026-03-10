@@ -27,7 +27,7 @@
 </script>
 
 <CwCard title="Configured Rules" class="min-h-0 flex-1 p-4">
-	<CwDataTable {columns} {loadData} {loading} actionsHeader="Actions" rowKey="id">
+	<CwDataTable {columns} {loadData} {loading} rowActionsHeader="Actions" rowKey="id">
 		{#snippet rowActions(row: RulesDto)}
 			<CwButton
                 class="mr-2"

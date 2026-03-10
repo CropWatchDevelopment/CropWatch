@@ -10,6 +10,7 @@ const VALID_PERMISSION_LEVELS = new Set([1, 2, 3, 4]);
 type DeviceFormValues = {
 	name: string;
 	group: string;
+	location_id: number;
 };
 
 type DeviceOwnerPermissionValues = {
@@ -111,21 +112,6 @@ function buildLocationOwnerIdentityMap(location: unknown): Map<string, OwnerIden
 	return identities;
 }
 
-function normalizeDeviceGroups(groups: string[], currentGroup: string): string[] {
-	const normalized = new Set<string>();
-
-	for (const group of groups) {
-		const trimmed = group.trim();
-		if (trimmed.length > 0) normalized.add(trimmed);
-	}
-
-	if (currentGroup.trim().length > 0) {
-		normalized.add(currentGroup.trim());
-	}
-
-	return Array.from(normalized).sort((left, right) => left.localeCompare(right));
-}
-
 function normalizeDeviceOwners(
 	device: unknown,
 	locationOwnerIdentities: Map<string, OwnerIdentity>
@@ -184,24 +170,25 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		authToken
 	});
 
-	const [device, deviceGroups, location] = await Promise.all([
+	const [device, deviceGroups, location, locations] = await Promise.all([
 		api.getDevice(devEui).catch(() => null),
 		api.getDeviceGroups().catch(() => []),
 		Number.isFinite(locationId)
-			? api.getLocation(locationId).catch(() => null)
-			: Promise.resolve(null)
+		? api.getLocation(locationId).catch(() => null)
+		: Promise.resolve(null),
+		api.getLocations().catch(() => []),
 	]);
 
 	const deviceRecord = isRecord(device) ? device : null;
 	const locationOwnerIdentities = buildLocationOwnerIdentityMap(location);
 	const deviceName = readOptionalString(deviceRecord, 'name') || devEui.toUpperCase();
-	const deviceGroup = readOptionalString(deviceRecord, 'group');
 
 	return {
 		devEui,
 		deviceName,
-		deviceGroup,
-		deviceGroups: normalizeDeviceGroups(deviceGroups, deviceGroup),
+		location_id: device.location_id,
+		deviceGroup: device.group || '',
+		deviceGroups,
 		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities)
 	};
 };
@@ -228,7 +215,8 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const values: DeviceFormValues = {
 			name: readString(formData.get('name')),
-			group: readString(formData.get('group'))
+			group: readString(formData.get('group')),
+			location_id: Number.parseInt(readString(formData.get('location_id')), 10)
 		};
 
 		const fieldErrors: Partial<Record<keyof DeviceFormValues, string>> = {};
@@ -241,6 +229,10 @@ export const actions: Actions = {
 
 		if (values.group.length > DEVICE_GROUP_MAX_LENGTH) {
 			fieldErrors.group = `Device group must be ${DEVICE_GROUP_MAX_LENGTH} characters or fewer.`;
+		}
+
+		if (!values.location_id) {
+			fieldErrors.location_id = 'Location is required.';
 		}
 
 		if (Object.keys(fieldErrors).length > 0) {
@@ -258,9 +250,11 @@ export const actions: Actions = {
 		});
 
 		try {
+			console.log('Updating device with values:', { devEui, ...values });
 			await api.updateDevice(devEui, {
 				name: values.name,
-				group: values.group || null
+				group: values.group || null,
+				location_id: +values.location_id,
 			});
 		} catch (error) {
 			return fail(error instanceof ApiServiceError ? error.status : 502, {

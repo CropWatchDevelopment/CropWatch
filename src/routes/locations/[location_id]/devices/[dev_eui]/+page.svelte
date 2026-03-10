@@ -17,9 +17,19 @@
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 
+	interface TimeRangeOptions {
+		label: string;
+		value: number | null;
+	}
+
 	type TelemetryRow = Record<string, unknown>;
 	const HoursSinceStartOfToday = Math.floor((Date.now() - new Date().setHours(0, 0, 0, 0)) / (60 * 60 * 1000));
-	const RANGE_OPTIONS = [HoursSinceStartOfToday, 24, 48, 72] as const;
+	export const RANGE_OPTIONS: TimeRangeOptions[] = [
+		{ label: 'Today Only', value: HoursSinceStartOfToday },
+		{ label: 'Last 24 Hours', value: 24 },
+		{ label: 'Last 48 Hours', value: 48 },
+		{ label: 'Last 72 Hours', value: 72 }
+	];
 	type RangeHours = (typeof RANGE_OPTIONS)[number];
 	const MAX_RANGE_RECORDS = 1000;
 
@@ -94,7 +104,7 @@
 	function createRouteState(): RouteState {
 		return {
 			requestedHistoricalData: null,
-			activeRangeHours: 24,
+			activeRangeHours: RANGE_OPTIONS[0].value,
 			dateRange: undefined,
 			fetching: false,
 			fetchError: null
@@ -126,7 +136,7 @@
 		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
 	);
 	let historicalData = $derived(requestedHistoricalData ?? serverHistoricalData);
-	let activeRangeHours = $derived(routeStateByKey[routeKey]?.activeRangeHours ?? 24);
+	let activeRangeHours = $derived(routeStateByKey[routeKey]?.activeRangeHours ?? RANGE_OPTIONS[0].value);
 	let dateRange = $derived(routeStateByKey[routeKey]?.dateRange ?? undefined);
 	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
 	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
@@ -226,16 +236,17 @@
 			</div>
 
 			<div class="device-page__group device-page__group--ranges">
-				{#each RANGE_OPTIONS as hours (hours)}
-					<CwButton
-						variant={activeRangeHours === hours ? 'primary' : 'secondary'}
-						size="sm"
-						disabled={controlsDisabled}
-						onclick={() => selectRange(hours)}
-					>
-						{hours}h
-					</CwButton>
+				{#each RANGE_OPTIONS as ranges (ranges.value)}
+						<CwButton
+							variant={activeRangeHours === ranges.value ? 'primary' : 'secondary'}
+							size="sm"
+							disabled={controlsDisabled}
+							onclick={() => selectRange(ranges.value)}
+						>
+							{ranges.label}
+						</CwButton>
 				{/each}
+					
 			</div>
 
 			<div class="device-page__group device-page__group--picker">

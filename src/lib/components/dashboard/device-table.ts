@@ -8,7 +8,7 @@ export interface DashboardDeviceFilters {
 	location: string;
 }
 
-export const DASHBOARD_DEVICE_BATCH_SIZE = 75;
+export const DASHBOARD_DEVICE_BATCH_SIZE = 25;
 export const DASHBOARD_DEVICE_PAGE_SIZE_OPTIONS = [25, 50, 75, 100];
 export const DASHBOARD_DEVICE_ROW_HEIGHT = 52;
 export const DASHBOARD_DEVICE_OVERSCAN = 16;

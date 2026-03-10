@@ -74,7 +74,7 @@
 			{ key: 'name', header: 'Name' },
 			{ key: 'created_at', header: 'Created At' }
 		]}
-		actionsHeader="Actions"
+		rowActionsHeader="Actions"
 		{loadData}
 		rowKey="id"
 	>

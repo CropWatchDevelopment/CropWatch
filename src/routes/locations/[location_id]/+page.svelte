@@ -138,7 +138,7 @@
 			rowKey="dev_eui"
 			searchable
 			pageSize={10}
-			actionsHeader="View"
+			rowActionsHeader="View"
 		>
 			{#snippet toolbarActions()}
 				<div class="location-page__actions">

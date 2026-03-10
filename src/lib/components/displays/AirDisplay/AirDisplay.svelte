@@ -209,7 +209,7 @@
 				loadData={loadTableData}
 				loading={tableLoading}
 				rowKey="id"
-				actionsHeader="Notes"
+				rowActionsHeader="Notes"
 				searchable
 			>
 				{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}

@@ -44,12 +44,23 @@
 			header: 'Last Seen',
 			sortable: true,
 			hideBelow: 'md',
+			width: '14rem',
 			cell: (row) => new Date(row.created_at).toLocaleString()
 		}
 	];
 
 	let refreshingByDevEui = $state<Record<string, boolean>>({});
 	let tableFilters = $derived(buildDashboardTableFilters(filters));
+	let loading = $state(false);
+	let virtualScroll = $state(false);
+
+	let tableSourceKey = $derived.by(() =>
+		[
+			app.accessToken ? 'auth' : 'anon',
+			app.totalDeviceCount ?? app.devices.length,
+			app.locations?.length ?? 0
+		].join(':')
+	);
 
 	function isRefreshing(devEui: string): boolean {
 		return refreshingByDevEui[devEui] === true;
@@ -115,71 +126,95 @@
 	}
 
 	function openDeviceDetails(row: IDevice) {
+		loading = true;
 		goto(
 			resolve('/locations/[location_id]/devices/[dev_eui]', {
 				location_id: String(row.location_id),
 				dev_eui: row.dev_eui
 			})
-		);
+		)
+			.catch((error) => {
+				console.error('Failed to navigate to device details:', error);
+			})
+			.finally(() => {
+				loading = false;
+			});
 	}
 </script>
 
 <div class="dashboard-device-table-host">
-	<CwDataTable
-		{columns}
-		{loadData}
-		rowKey="dev_eui"
-		filters={tableFilters}
-		fillParent
-		virtualScroll
-		virtualRowHeight={DASHBOARD_DEVICE_ROW_HEIGHT}
-		virtualOverscan={DASHBOARD_DEVICE_OVERSCAN}
-		pageSize={DASHBOARD_DEVICE_BATCH_SIZE}
-		pageSizeOptions={DASHBOARD_DEVICE_PAGE_SIZE_OPTIONS}
-		searchable
-		actionsHeader="Actions"
-	>
-		{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
-			{#if col.key === 'created_at'}
-				<div
-					class="dashboard-device-table__cell"
-					class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
-				>
-					<CwStatusDot
-						status={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000
-							? 'offline'
-							: 'online'}
-					/>
-					<CwDuration
-						from={row.created_at}
-						alarmAfterMinutes={10.3}
-						alarmCallback={() => void loadSingleDevice(row)}
-					/>
-					{#if isRefreshing(row.dev_eui)}
-						<span class="dashboard-device-table__refresh-label">Refreshing...</span>
-					{/if}
-				</div>
-			{:else}
-				<div
-					class="dashboard-device-table__cell"
-					class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
-				>
-					{defaultValue}
-				</div>
-			{/if}
-		{/snippet}
+	{#key tableSourceKey}
+		<CwDataTable
+			{columns}
+			{loadData}
+			{loading}
+			rowKey="dev_eui"
+			filters={tableFilters}
+			fillParent
+			{virtualScroll}
+			virtualRowHeight={DASHBOARD_DEVICE_ROW_HEIGHT}
+			virtualOverscan={DASHBOARD_DEVICE_OVERSCAN}
+			pageSize={DASHBOARD_DEVICE_BATCH_SIZE}
+			pageSizeOptions={DASHBOARD_DEVICE_PAGE_SIZE_OPTIONS}
+			searchable
+			rowActionsHeader="Actions"
+		>
+			{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
+				{#if col.key === 'created_at'}
+					<div
+						class="dashboard-device-table__cell"
+						class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
+					>
+						<CwStatusDot
+							status={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000
+								? 'offline'
+								: 'online'}
+						/>
+						<CwDuration
+							from={row.created_at}
+							alarmAfterMinutes={10.3}
+							alarmCallback={() => void loadSingleDevice(row)}
+						/>
+					</div>
+				{:else}
+					<div
+						class="dashboard-device-table__cell"
+						class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
+					>
+						{defaultValue}
+					</div>
+				{/if}
+			{/snippet}
 
-		{#snippet rowActions(row: IDevice)}
-			<CwButton
-				size="sm"
-				variant="info"
-				disabled={isRefreshing(row.dev_eui)}
-				onclick={() => openDeviceDetails(row)}
-			>
-				{isRefreshing(row.dev_eui) ? 'Refreshing...' : 'Details'}
-			</CwButton>
-		{/snippet}
-	</CwDataTable>
+			{#snippet rowActions(row: IDevice)}
+				<CwButton
+					size="sm"
+					variant="info"
+					disabled={isRefreshing(row.dev_eui)}
+					onclick={() => openDeviceDetails(row)}
+				>
+					Details
+				</CwButton>
+			{/snippet}
+
+			{#snippet actionsHeader()}
+				<CwButton
+					size="sm"
+					variant="secondary"
+					onclick={() => {
+						virtualScroll = !virtualScroll;
+					}}
+				>
+				Virtual Scroll
+					{#if virtualScroll}
+						<CwStatusDot status="online" />
+					{:else}
+						<CwStatusDot status="warning" />
+					{/if}
+				</CwButton>
+			{/snippet}
+		</CwDataTable>
+	{/key}
 </div>
 
 <style>
@@ -201,16 +236,5 @@
 
 	.dashboard-device-table__cell--refreshing {
 		background-color: var(--cw-warning-700);
-		border-radius: 0.375rem;
-		color: var(--cw-gray-950);
-		font-weight: 600;
-		margin: -0.25rem 0;
-		padding: 0.25rem 0.5rem;
-	}
-
-	.dashboard-device-table__refresh-label {
-		font-size: 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
 	}
 </style>

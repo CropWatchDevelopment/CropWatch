@@ -293,7 +293,8 @@ export class ApiService {
 		const { body, headers, query, authToken, responseType = 'json', ...requestInit } = options;
 		const url = buildUrl(this.baseUrl, path, query);
 
-		const resolvedHeaders = new Headers(headers);
+		const resolvedHeaders = 
+		new Headers(headers);
 		const resolvedToken = authToken === undefined ? this.authToken : authToken;
 
 		if (!resolvedHeaders.has('Accept')) {
@@ -340,7 +341,7 @@ export class ApiService {
 				}
 			}
 
-			throw new ApiServiceError(response.status, response.statusText, payload);
+			throw new ApiServiceError(response.status, response.statusText, { url, payload });
 		}
 
 		if (responseType === 'text') {

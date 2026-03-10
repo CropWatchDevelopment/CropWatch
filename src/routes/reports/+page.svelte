@@ -28,7 +28,7 @@
 </script>
 
 <CwCard title="Weekly Reports" class="min-h-0 flex-1 p-4">
-	<CwDataTable {columns} {loadData} {loading} actionsHeader="Actions" rowKey="id">
+	<CwDataTable {columns} {loadData} {loading} rowActionsHeader="Actions" rowKey="id">
 		{#snippet rowActions(row: ReportDto)}
 			<ReportHistoryDialog dev_eui={row.dev_eui} />
 		{/snippet}
