@@ -7,6 +7,9 @@ export const DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES = 10;
 const DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MS =
 	DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES * 60_000;
 
+/** Stop arming the CwDuration alarm once a device is stale beyond this (ms). */
+const DASHBOARD_SENSOR_CARD_ALARM_CUTOFF_MS = 60 * 60_000; // 1 hour
+
 export interface DashboardLocationSensorCard {
 	id: string;
 	locationId: number;
@@ -96,6 +99,7 @@ export function buildDashboardLocationSensorCards(
 					locationId: Number(device.location_id)
 				};
 
+                const staleness = Date.now() - new Date(device.created_at).getTime();
 				return {
 					label,
 					primaryValue: Number(device.temperature_c ?? 0),
@@ -104,7 +108,10 @@ export function buildDashboardLocationSensorCards(
 					secondaryUnit: '%',
 					status: getDeviceStatus(device),
 					lastUpdated: device.created_at,
-					expectedUpdateAfterMinutes: DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES
+					expectedUpdateAfterMinutes:
+						staleness <= DASHBOARD_SENSOR_CARD_ALARM_CUTOFF_MS
+							? DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES
+							: undefined
 				} satisfies CwSensorCardDevice;
 			});
 

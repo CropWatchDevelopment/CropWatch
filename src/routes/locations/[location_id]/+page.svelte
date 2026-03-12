@@ -28,7 +28,7 @@
 	}
 
 	let { data }: { data: PageData } = $props();
-	
+
 	const toast = useCwToast();
 	const offlineThresholdMs = 11 * 60 * 1000;
 	let loading = $state(false);
@@ -36,12 +36,13 @@
 	const selectedLocationId = $derived(page.params.location_id);
 	const selectedLocationName = $derived((page.url.searchParams.get('location_name') ?? '').trim());
 	const locationLabel = $derived(
-		selectedLocationName || (selectedLocationId ? `Location ${selectedLocationId}` : 'Current Location')
+		selectedLocationName ||
+			(selectedLocationId ? `Location ${selectedLocationId}` : 'Current Location')
 	);
 
 	const columns: CwColumnDef<LocationDeviceRow>[] = [
 		{ key: 'name', header: 'Device Name', sortable: true },
-		{ key: 'dev_eui', header: 'DevEUI', sortable: true, width: '14rem', hideBelow: 'sm' },
+		{ key: 'dev_eui', header: 'DevEUI', sortable: true, width: '14rem', hideBelow: 'sm' }
 	];
 
 	const locationDevices = $derived.by(() => {
@@ -117,25 +118,30 @@
 	}
 
 	function handleViewDevice(row: LocationDeviceRow) {
-		const query = new URLSearchParams({
-			location_id: selectedLocationId,
-			location_name: locationLabel,
-			dev_eui: row.dev_eui
-		});
-		window.location.assign(
-			`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}?${query.toString()}`
-		);
+		if (selectedLocationId) {
+			const query = new URLSearchParams({
+				location_id: selectedLocationId || '',
+				location_name: locationLabel || '',
+				dev_eui: row.dev_eui || ''
+			});
+			window.location.assign(
+				`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}?${query.toString()}`
+			);
+		}
 	}
 </script>
 
-
 <div class="location-page overflow-y-scroll">
 	<div style="margin-bottom: 1rem;">
-		<CwButton variant="primary" onclick={ () => goto(`/`) }>← Back to Dashboard</CwButton>
+		<CwButton variant="primary" onclick={() => goto(`/`)}>← Back to Dashboard</CwButton>
 	</div>
-	<CwCard title={`Location: ${locationLabel}`} subtitle="Devices returned for this location" elevated>
+	<CwCard
+		title={`Location: ${locationLabel}`}
+		subtitle="Devices returned for this location"
+		elevated
+	>
 		<CwDataTable
-			columns={columns}
+			{columns}
 			{loadData}
 			{loading}
 			rowKey="dev_eui"
@@ -145,12 +151,22 @@
 		>
 			{#snippet toolbarActions()}
 				<div class="location-page__actions">
-					<CwButton variant="secondary" onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}>Settings</CwButton>
+					{#if selectedLocationId}
+						<CwButton
+							variant="secondary"
+							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
+							>Settings</CwButton
+						>
+					{/if}
 					<CwButton variant="primary" onclick={handleAddDevice}>Add Device</CwButton>
 				</div>
 			{/snippet}
 
-			{#snippet cell(row: LocationDeviceRow, col: CwColumnDef<LocationDeviceRow>, defaultValue: string)}
+			{#snippet cell(
+				row: LocationDeviceRow,
+				col: CwColumnDef<LocationDeviceRow>,
+				defaultValue: string
+			)}
 				{#if col.key === 'dev_eui'}
 					<CwCopy value={row.dev_eui}>
 						<span>{row.dev_eui}</span>

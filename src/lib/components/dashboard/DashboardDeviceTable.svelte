@@ -142,7 +142,6 @@
 				resultDevEuis: result.rows.map((row) => row.dev_eui)
 			});
 		}
-		debugger;
 		return result;
 	}
 

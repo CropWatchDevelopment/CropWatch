@@ -319,9 +319,6 @@
 									</CwButton>
 								</div>
 
-								{#if ownerForm?.message}
-								<!-- Toast shown via $effect -->
-
 								{#if ownerForm?.fieldErrors?.targetUserEmail}
 									<p class="field-error permission-feedback">
 										{ownerForm.fieldErrors.targetUserEmail}

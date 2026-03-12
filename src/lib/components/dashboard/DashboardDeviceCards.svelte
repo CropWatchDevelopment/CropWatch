@@ -65,6 +65,20 @@
 			})
 		);
 	}
+
+	function handleTimerExpired(
+		locationCard: (typeof locationCards)[number],
+		deviceLabel: string
+	) {
+		const routeParams = locationCard.deviceRouteParamsByLabel[deviceLabel];
+		if (!routeParams) return;
+		console.log('timer Expired for device', { deviceLabel, routeParams });
+
+		const devEui = routeParams.devEui;
+		if (!app.staleDeviceIds.includes(devEui)) {
+			app.staleDeviceIds.push(devEui);
+		}
+	}
 </script>
 
 <div class="dashboard-device-cards">
@@ -77,6 +91,7 @@
 					defaultExpanded={false}
 					storageKey={`dashboard-sensor-card:${locationCard.locationId}`}
 					onNavigate={(target) => handleNavigate(locationCard, target)}
+					onTimerExpired={(deviceLabel) => handleTimerExpired(locationCard, deviceLabel)}
 				/>
 			{/each}
 		</div>
