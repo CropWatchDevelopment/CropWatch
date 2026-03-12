@@ -14,6 +14,7 @@
 	import type { DevicePrimaryDataDto } from '$lib/api/api.service';
 	import { goto } from '$app/navigation';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
+	import { getAppContext } from '$lib/appContext.svelte';
 
 	type DeviceStatus = 'Online' | 'Offline';
 	interface PageData {
@@ -27,6 +28,7 @@
 	}
 
 	let { data }: { data: PageData } = $props();
+	
 	const toast = useCwToast();
 	const offlineThresholdMs = 11 * 60 * 1000;
 	let loading = $state(false);
@@ -40,7 +42,6 @@
 	const columns: CwColumnDef<LocationDeviceRow>[] = [
 		{ key: 'name', header: 'Device Name', sortable: true },
 		{ key: 'dev_eui', header: 'DevEUI', sortable: true, width: '14rem', hideBelow: 'sm' },
-		{ key: 'status', header: 'Status', sortable: true, width: '8rem', align: 'center' }
 	];
 
 	const locationDevices = $derived.by(() => {
@@ -127,7 +128,8 @@
 	}
 </script>
 
-<div class="location-page">
+
+<div class="location-page overflow-y-scroll">
 	<div style="margin-bottom: 1rem;">
 		<CwButton variant="primary" onclick={ () => goto(`/`) }>← Back to Dashboard</CwButton>
 	</div>
@@ -139,6 +141,7 @@
 			rowKey="dev_eui"
 			searchable
 			pageSize={10}
+			rowActionsHeader="Actions"
 		>
 			{#snippet toolbarActions()}
 				<div class="location-page__actions">
@@ -148,13 +151,7 @@
 			{/snippet}
 
 			{#snippet cell(row: LocationDeviceRow, col: CwColumnDef<LocationDeviceRow>, defaultValue: string)}
-				{#if col.key === 'status'}
-					<CwChip
-						label={row.status}
-						tone={row.status === 'Online' ? 'success' : 'danger'}
-						variant="soft"
-					/>
-				{:else if col.key === 'dev_eui'}
+				{#if col.key === 'dev_eui'}
 					<CwCopy value={row.dev_eui}>
 						<span>{row.dev_eui}</span>
 					</CwCopy>
@@ -165,7 +162,7 @@
 
 			{#snippet rowActions(row: LocationDeviceRow)}
 				<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
-					<img src={EYE_ICON} alt="View" class="w-full" />
+					<img src={EYE_ICON} alt="View" />
 				</CwButton>
 			{/snippet}
 		</CwDataTable>

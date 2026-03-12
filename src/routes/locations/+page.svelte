@@ -3,17 +3,16 @@
 		CwButton,
 		CwCard,
 		CwDataTable,
-		useCwToast,
 		type CwColumnDef,
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import type { LocationDto } from '$lib/api/api.service';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
+	import { goto } from '$app/navigation';
 
 	let { data }: { data: { allLocations: LocationDto[] } } = $props();
 
-	const toast = useCwToast();
 	let loading = $state(false);
 
 	const columns: CwColumnDef<LocationDto>[] = [
@@ -34,42 +33,36 @@
 		}
 	}
 
-	function handleAddLocation() {
-		toast.add({
-			tone: 'info',
-			message: 'Add Location clicked. Wire this to your create-location flow.'
-		});
-	}
-
 	function handleViewLocation(row: LocationDto) {
 		const query = new URLSearchParams({
 			location_id: String(row.location_id),
 			location_name: row.name
 		});
-		window.location.assign(`/locations/${row.location_id}`);
+		window.location.assign(`/locations/${row.location_id}?${query.toString()}`);
 	}
 </script>
 
-<div class="locations-page">
+<div class="locations-page overflow-y-scroll">
 	<CwCard title="All Locations" subtitle="Aggregated from current device telemetry" elevated>
 		<CwDataTable
-				{columns}
-				{loadData}
-				{loading}
-				rowKey="location_id"
-				searchable
-				pageSize={10}
-			>
-				{#snippet toolbarActions()}
-					<CwButton variant="primary" onclick={handleAddLocation}>Add Location</CwButton>
-				{/snippet}
+			{columns}
+			{loadData}
+			{loading}
+			rowKey="location_id"
+			searchable
+			pageSize={10}
+			rowActionsHeader="Actions"
+		>
+			{#snippet toolbarActions()}
+				<CwButton variant="primary" onclick={() => goto('/locations/create')}>Add Location</CwButton>
+			{/snippet}
 
-					{#snippet rowActions(row: LocationDto)}
-						<CwButton size="sm" variant="info" onclick={() => handleViewLocation(row)}>
-							<img src={EYE_ICON} />
-						</CwButton>
-				{/snippet}
-			</CwDataTable>
+			{#snippet rowActions(row: LocationDto)}
+				<CwButton size="md" variant="info" onclick={() => handleViewLocation(row)}>
+					<img src={EYE_ICON} alt="View" />
+				</CwButton>
+			{/snippet}
+		</CwDataTable>
 	</CwCard>
 </div>
 

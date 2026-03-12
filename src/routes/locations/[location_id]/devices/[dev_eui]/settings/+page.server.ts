@@ -1,4 +1,4 @@
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import { ApiService, ApiServiceError, type DeviceDto, type LocationDto } from '$lib/api/api.service';
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -38,24 +38,6 @@ const readString = (value: FormDataEntryValue | null): string => {
 	return value.trim();
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-	typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const asRecordArray = (value: unknown): Record<string, unknown>[] =>
-	Array.isArray(value) ? value.filter(isRecord) : [];
-
-const readOptionalString = (record: Record<string, unknown> | null, key: string): string => {
-	if (!record) return '';
-	const value = record[key];
-	return typeof value === 'string' ? value.trim() : '';
-};
-
-const readOptionalNumber = (record: Record<string, unknown> | null, key: string): number | null => {
-	if (!record) return null;
-	const value = record[key];
-	return typeof value === 'number' && Number.isFinite(value) ? value : null;
-};
-
 function readApiMessage(payload: unknown, fallback: string): string {
 	if (payload && typeof payload === 'object') {
 		const message = (payload as Record<string, unknown>).message;
@@ -78,31 +60,28 @@ function readApiMessage(payload: unknown, fallback: string): string {
 	return fallback;
 }
 
-function readProfileIdentity(record: Record<string, unknown> | null): OwnerIdentity {
-	const profiles = record && isRecord(record.profiles) ? record.profiles : null;
+function str(value: unknown): string {
+	return typeof value === 'string' ? value.trim() : '';
+}
+
+function readProfileIdentity(record: Record<string, unknown>): OwnerIdentity {
+	const profiles = record.profiles as Record<string, unknown> | undefined;
 	return {
-		email:
-			readOptionalString(record, 'email') ||
-			readOptionalString(record, 'user_email') ||
-			readOptionalString(profiles, 'email'),
-		name:
-			readOptionalString(record, 'name') ||
-			readOptionalString(record, 'full_name') ||
-			readOptionalString(profiles, 'full_name') ||
-			readOptionalString(profiles, 'display_name')
+		email: str(record.email) || str(record.user_email) || str(profiles?.email),
+		name: str(record.name) || str(record.full_name) || str(profiles?.full_name) || str(profiles?.display_name)
 	};
 }
 
-function buildLocationOwnerIdentityMap(location: unknown): Map<string, OwnerIdentity> {
+function buildLocationOwnerIdentityMap(location: LocationDto | null): Map<string, OwnerIdentity> {
 	const identities = new Map<string, OwnerIdentity>();
-	const locationRecord = isRecord(location) ? location : null;
+	const owners = location?.cw_location_owners ?? [];
 
-	for (const owner of asRecordArray(locationRecord?.cw_location_owners)) {
-		const userId = readOptionalString(owner, 'user_id');
+	for (const owner of owners) {
+		const userId = typeof owner.user_id === 'string' ? owner.user_id.trim() : '';
 		if (!userId) continue;
 
 		const existing = identities.get(userId) ?? { email: '', name: '' };
-		const profile = readProfileIdentity(owner);
+		const profile = readProfileIdentity(owner as Record<string, unknown>);
 		identities.set(userId, {
 			email: profile.email || existing.email,
 			name: profile.name || existing.name
@@ -113,26 +92,27 @@ function buildLocationOwnerIdentityMap(location: unknown): Map<string, OwnerIden
 }
 
 function normalizeDeviceOwners(
-	device: unknown,
+	device: DeviceDto | null,
 	locationOwnerIdentities: Map<string, OwnerIdentity>
 ): NormalizedDeviceOwner[] {
-	const deviceRecord = isRecord(device) ? device : null;
-	const owners = asRecordArray(deviceRecord?.cw_device_owners);
+	const owners = device?.cw_device_owners ?? [];
 
 	return owners
 		.map((owner, index) => {
-			const userId = readOptionalString(owner, 'user_id');
+			const userId = str(owner.user_id);
 			const locationOwnerIdentity = locationOwnerIdentities.get(userId);
 			const ownerIdentity = readProfileIdentity(owner);
 			const email =
 				ownerIdentity.email ||
-				readOptionalString(owner, 'targetUserEmail') ||
+				str(owner.targetUserEmail) ||
 				locationOwnerIdentity?.email ||
 				'';
 			const name =
 				ownerIdentity.name || locationOwnerIdentity?.name || userId || `User ${index + 1}`;
-			const id = readOptionalNumber(owner, 'id') ?? index + 1;
-			const permissionLevel = readOptionalNumber(owner, 'permission_level') ?? 4;
+			const rawId = owner.id;
+			const id = typeof rawId === 'number' && Number.isFinite(rawId) ? rawId : index + 1;
+			const rawPerm = owner.permission_level;
+			const permissionLevel = typeof rawPerm === 'number' && Number.isFinite(rawPerm) ? rawPerm : 4;
 
 			return {
 				id,
@@ -179,15 +159,14 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		api.getLocations().catch(() => []),
 	]);
 
-	const deviceRecord = isRecord(device) ? device : null;
 	const locationOwnerIdentities = buildLocationOwnerIdentityMap(location);
-	const deviceName = readOptionalString(deviceRecord, 'name') || devEui.toUpperCase();
+	const deviceName = device?.name || devEui.toUpperCase();
 
 	return {
 		devEui,
 		deviceName,
-		location_id: device.location_id,
-		deviceGroup: device.group || '',
+		location_id: device?.location_id,
+		deviceGroup: device?.group || '',
 		deviceGroups,
 		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities)
 	};

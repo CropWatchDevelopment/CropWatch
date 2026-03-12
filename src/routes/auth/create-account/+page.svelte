@@ -29,6 +29,12 @@
 
 	let { form }: Props = $props();
 
+	$effect(() => {
+		if (form?.message) {
+			toast.add({ tone: 'danger', message: form.message });
+		}
+	});
+
 	let submitting: boolean = $state(false);
 	let loadingCaptcha: boolean = $state(true);
 	let recaptchaReady: boolean = $state(false);
@@ -183,10 +189,6 @@
 		<p class="auth-subtitle">
 			or <a href={resolve('/auth/login')} class="auth-link">sign in with an existing account</a>
 		</p>
-
-		{#if form?.message}
-			<p class="auth-alert">{form.message}</p>
-		{/if}
 
 		<form
 			method="POST"

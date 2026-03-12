@@ -44,11 +44,6 @@ const readString = (value: FormDataEntryValue | null): string => {
     return value.trim();
 };
 
-const readBoolean = (value: FormDataEntryValue | null): boolean => {
-    if (typeof value !== 'string') return false;
-    return value.trim().toLowerCase() === 'true';
-};
-
 const readErrorMessage = (error: unknown, fallback: string): string => {
     if (error instanceof ApiServiceError) {
         const payload = error.payload;
@@ -174,7 +169,7 @@ export const actions: Actions = {
         const values: AddPermissionFormValues = {
             newUserEmail: readString(formData.get('newUserEmail')),
             permission_level: Number.parseInt(readString(formData.get('permission_level')), 10) || 4,
-            applyToAllDevices: readBoolean(formData.get('applyToAllDevices'))
+            applyToAllDevices: formData.get('applyToAllDevices') === 'true'
         };
 
         const fieldErrors: Partial<Record<'newUserEmail' | 'userId', string>> = {};
@@ -245,7 +240,7 @@ export const actions: Actions = {
             ownerId: readString(formData.get('ownerId')),
             permissionId: readString(formData.get('permissionId')),
             userId: readString(formData.get('userId')),
-            applyToAllDevices: readBoolean(formData.get('applyToAllDevices'))
+            applyToAllDevices: formData.get('applyToAllDevices') === 'true'
         };
 
         const fieldErrors: Partial<Record<'ownerId' | 'userId', string>> = {};

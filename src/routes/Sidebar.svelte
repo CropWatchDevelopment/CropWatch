@@ -176,7 +176,8 @@
 						countDown={true}
 						alarmAfterMinutes={0.5}
 						alarmCallback={() => {
-							goto(`/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`);
+							// goto(`/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`);
+							document.location = `/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`;
 						}}
 					/>
 				</p>

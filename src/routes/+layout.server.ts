@@ -6,55 +6,18 @@ import type { LayoutServerLoad } from './$types';
 const LATEST_PRIMARY_DATA_PAGE_SIZE = 250;
 const FALLBACK_DEVICE_BATCH_SIZE = 20;
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
+function getLocationName(device: DeviceDto | null | undefined): string {
+	if (!device) return '';
 
-function readString(value: unknown): string {
-	return typeof value === 'string' ? value.trim() : '';
-}
-
-function readNumber(value: unknown): number | null {
-	if (typeof value === 'number' && Number.isFinite(value)) {
-		return value;
+	if (device.location_name?.trim()) {
+		return device.location_name.trim();
 	}
 
-	if (typeof value === 'string') {
-		const parsed = Number(value);
-		return Number.isFinite(parsed) ? parsed : null;
-	}
-
-	return null;
-}
-
-function readLocationNameFromDevice(device: DeviceDto | null | undefined): string {
-	if (!device) {
-		return '';
-	}
-
-	const directLocationName = readString(device.location_name);
-	if (directLocationName) {
-		return directLocationName;
-	}
-
-	const locationRecord = device.cw_locations;
-	if (isRecord(locationRecord)) {
-		const nestedLocationName = readString(locationRecord.name);
-		if (nestedLocationName) {
-			return nestedLocationName;
-		}
-	}
-
-	if (Array.isArray(locationRecord)) {
-		for (const entry of locationRecord) {
-			if (!isRecord(entry)) {
-				continue;
-			}
-
-			const nestedLocationName = readString(entry.name);
-			if (nestedLocationName) {
-				return nestedLocationName;
-			}
+	const locations = device.cw_locations;
+	if (Array.isArray(locations)) {
+		for (const entry of locations) {
+			const name = typeof entry?.name === 'string' ? entry.name.trim() : '';
+			if (name) return name;
 		}
 	}
 
@@ -65,17 +28,12 @@ function enrichLatestPrimaryData(
 	latest: DevicePrimaryDataDto,
 	device: DeviceDto | null | undefined
 ): DevicePrimaryDataDto {
-	const deviceName = readString(device?.name);
-	const locationId = readNumber(device?.location_id);
-	const locationName = readLocationNameFromDevice(device);
-	const group = readString(device?.group);
-
 	return {
 		...latest,
-		name: readString(latest.name) || deviceName || latest.dev_eui,
-		location_id: readNumber(latest.location_id) ?? locationId ?? undefined,
-		location_name: readString(latest.location_name) || locationName || undefined,
-		group: readString(latest.group) || group || undefined
+		name: latest.name || device?.name || latest.dev_eui,
+		location_id: latest.location_id ?? device?.location_id ?? undefined,
+		location_name: latest.location_name || getLocationName(device) || undefined,
+		group: latest.group || device?.group || undefined
 	};
 }
 
@@ -173,10 +131,10 @@ async function getLatestPrimaryDataPerDeviceFallback(apiServiceInstance: ApiServ
 }> {
 	const devices = await apiServiceInstance.getDevices();
 	const deviceByDevEui = new Map(
-		devices.map((device) => [readString(device.dev_eui), device] as const).filter(([devEui]) => !!devEui)
+		devices.map((device) => [device.dev_eui, device] as const)
 	);
 	const devEuis = devices
-		.map((device: DeviceDto) => (typeof device.dev_eui === 'string' ? device.dev_eui.trim() : ''))
+		.map((device) => device.dev_eui.trim())
 		.filter((devEui) => devEui.length > 0);
 
 	const latestPrimaryData: DevicePrimaryDataDto[] = [];
@@ -312,14 +270,14 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 
 	const devices: IDevice[] = latestPrimaryData.map((device) => ({
 		dev_eui: device.dev_eui,
-		name: String(device.name ?? device.dev_eui),
-		location_name: String(device.location_name ?? ''),
-		group: String(device.group ?? ''),
+		name: device.name ?? device.dev_eui,
+		location_name: device.location_name ?? '',
+		group: device.group ?? '',
 		created_at: new Date(device.created_at),
-		co2: Number(device.co2 ?? 0),
-		humidity: Number(device.humidity ?? 0),
-		temperature_c: Number(device.temperature_c ?? 0),
-		location_id: Number(device.location_id ?? 0),
+		co2: device.co2 ?? 0,
+		humidity: device.humidity ?? 0,
+		temperature_c: device.temperature_c ?? 0,
+		location_id: device.location_id ?? 0,
 		cwloading: false
 	}));
 

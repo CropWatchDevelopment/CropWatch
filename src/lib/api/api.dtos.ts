@@ -19,8 +19,13 @@ export interface LoginResponse {
 export interface DeviceDto {
 	dev_eui: string;
 	name: string;
-	[key: string]: unknown;
 	cw_device_type: CwDeviceType;
+	location_id?: number | null;
+	location_name?: string;
+	group?: string | null;
+	cw_locations?: Array<Record<string, unknown>>;
+	cw_device_owners?: Array<Record<string, unknown>>;
+	[key: string]: unknown;
 }
 
 export interface DevicePrimaryDataDto {
@@ -242,5 +247,13 @@ export interface UpdateLocationOwnerRequest {
 	[key: string]: unknown;
 }
 
-export type CreateLocationRequest = Record<string, unknown>;
+export interface CreateLocationRequest {
+	name: string;
+	description?: string | null;
+	group?: string | null;
+	lat?: number | null;
+	long?: number | null;
+	[key: string]: unknown;
+}
+
 export type UpdateLocationRequest = Record<string, unknown>;

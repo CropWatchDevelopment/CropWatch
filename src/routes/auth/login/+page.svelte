@@ -24,6 +24,12 @@
 
 	let { form }: Props = $props();
 
+	$effect(() => {
+		if (form?.message) {
+			toast.add({ tone: 'danger', message: form.message });
+		}
+	});
+
 	let loggingIn: boolean = $state(false);
 	let loadingCaptcha: boolean = $state(true);
 	let recaptchaReady: boolean = $state(false);
@@ -133,10 +139,6 @@
 
 		<h1 class="auth-title">Welcome to CropWatch!</h1>
 		<p class="auth-subtitle">Sign-in to your account for your latest updates</p>
-
-		{#if form?.message}
-			<p class="auth-alert">{form.message}</p>
-		{/if}
 
 		<form
 			method="POST"

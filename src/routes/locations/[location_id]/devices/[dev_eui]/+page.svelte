@@ -9,6 +9,7 @@
 		CwDateTimeRangePicker,
 		CwDuration,
 		CwSpinner,
+		useCwToast,
 		type CwDateValue,
 		type CwRangeDateValue
 	} from '@cropwatchdevelopment/cwui';
@@ -44,6 +45,8 @@
 	}
 
 	let { data }: PageProps = $props();
+
+	const toast = useCwToast();
 
 	function isTelemetryRow(value: unknown): value is TelemetryRow {
 		return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -143,6 +146,12 @@
 	let dateRange = $derived(routeStateByKey[routeKey]?.dateRange ?? undefined);
 	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
 	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
+
+	$effect(() => {
+		if (fetchError) {
+			toast.add({ tone: 'danger', message: fetchError });
+		}
+	});
 
 	let csvRangeLabel = $derived(activeRangeHours === null ? 'custom' : `${activeRangeHours}h`);
 	let childLoading = $derived(fetching && historicalData.length === 0);
@@ -283,18 +292,12 @@
 			</div>
 		</div>
 
-		{#if fetching || fetchError}
+		{#if fetching}
 			<div class="device-page__status">
-				{#if fetching}
-					<div class="device-page__status-row">
-						<CwSpinner />
-						<span>Loading telemetry…</span>
-					</div>
-				{/if}
-
-				{#if fetchError}
-					<p class="device-page__error">{fetchError}</p>
-				{/if}
+				<div class="device-page__status-row">
+					<CwSpinner />
+					<span>Loading telemetry…</span>
+				</div>
 			</div>
 		{/if}
 	</CwCard>
@@ -360,11 +363,6 @@
 		align-items: center;
 		gap: 0.75rem;
 		color: var(--cw-text-muted);
-	}
-
-	.device-page__error {
-		margin: 0;
-		color: var(--cw-color-danger-700, #b91c1c);
 	}
 
 	.device-page__display {

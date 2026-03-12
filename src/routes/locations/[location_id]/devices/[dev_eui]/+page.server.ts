@@ -76,21 +76,14 @@ export const actions: Actions = {
 	}
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-	typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const asString = (value: unknown): string | undefined =>
-	typeof value === 'string' && value.length > 0 ? value : undefined;
-
-const readApiError = (payload: unknown, fallback: string): string => {
-	if (isRecord(payload)) {
-		const message = payload.message;
+function readApiError(payload: unknown, fallback: string): string {
+	if (payload && typeof payload === 'object') {
+		const message = (payload as Record<string, unknown>).message;
+		if (typeof message === 'string' && message.length > 0) return message;
 		if (Array.isArray(message)) {
-			const fromArray = message.map(asString).filter(Boolean).join(', ');
-			if (fromArray.length > 0) return fromArray;
+			const text = message.filter((m): m is string => typeof m === 'string' && m.length > 0).join(', ');
+			if (text) return text;
 		}
-		const fromField = asString(message);
-		if (fromField) return fromField;
 	}
 	return fallback;
 };

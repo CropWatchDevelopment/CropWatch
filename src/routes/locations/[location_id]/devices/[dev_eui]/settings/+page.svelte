@@ -6,7 +6,8 @@
 		CwChip,
 		CwDropdown,
 		CwInput,
-		CwSeparator
+		CwSeparator,
+		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
 	import './settings-style.css';
@@ -37,6 +38,17 @@
 	} | null;
 
 	let { data, form }: PageProps = $props();
+
+	const toast = useCwToast();
+
+	$effect(() => {
+		if (actionForm?.message) {
+			toast.add({
+				tone: actionForm.success ? 'success' : 'danger',
+				message: actionForm.message
+			});
+		}
+	});
 
 	let deviceSubmitting = $state(false);
 	let ownerSubmittingByKey = $state<Record<string, boolean>>({});
@@ -167,9 +179,7 @@
 			</div>
 
 			{#if deviceForm?.message}
-				<p class:feedback-success={deviceForm.success} class="form-feedback">
-					{deviceForm.message}
-				</p>
+				<!-- Toast shown via $effect -->
 			{/if}
 
 			<div class="panel-grid">
@@ -310,13 +320,7 @@
 								</div>
 
 								{#if ownerForm?.message}
-									<p
-										class:feedback-success={ownerForm.success}
-										class="form-feedback permission-feedback"
-									>
-										{ownerForm.message}
-									</p>
-								{/if}
+								<!-- Toast shown via $effect -->
 
 								{#if ownerForm?.fieldErrors?.targetUserEmail}
 									<p class="field-error permission-feedback">

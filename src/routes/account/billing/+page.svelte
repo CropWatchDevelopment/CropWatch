@@ -59,6 +59,13 @@
 	let { data, form }: PageProps = $props();
 	const toast = useCwToast();
 
+	$effect(() => {
+		if (form && typeof form === 'object' && typeof form.message === 'string' && form.message.length > 0) {
+			const tone: CwTone = form.action === 'cancel' ? 'warning' : 'info';
+			toast.add({ tone, message: form.message });
+		}
+	});
+
 	let selectedProductIds = $state<string[]>([]);
 	let showArchivedProducts = $state(true);
 	let customerName = $state('');
@@ -93,11 +100,8 @@
 		{ key: 'renewsAt', header: 'Renews', sortable: true, width: '12rem', hideBelow: 'md' }
 	];
 
-	const isRecord = (value: unknown): value is Record<string, unknown> =>
-		typeof value === 'object' && value !== null && !Array.isArray(value);
-
 	const toPayload = (result: ActionPayloadResult): BillingFormPayload => {
-		if (isRecord(result.data)) {
+		if (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) {
 			return result.data as BillingFormPayload;
 		}
 		return {};
@@ -495,15 +499,7 @@
 			</CwCard>
 		</div>
 
-		{#if isRecord(form) && typeof form.message === 'string' && form.message.length > 0}
-			<div class="billing-feedback">
-				<CwChip
-					label={form.message}
-					tone={form.action === 'cancel' ? 'warning' : 'info'}
-					variant="soft"
-				/>
-			</div>
-		{/if}
+
 	</div>
 </div>
 
@@ -719,11 +715,6 @@
 		border: 1px dashed rgb(107 144 199 / 35%);
 		border-radius: 0.8rem;
 		color: var(--cw-text-secondary);
-	}
-
-	.billing-feedback {
-		display: flex;
-		justify-content: flex-end;
 	}
 
 	.billing-dialog__text {
