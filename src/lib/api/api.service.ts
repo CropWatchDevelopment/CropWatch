@@ -186,6 +186,74 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isFiniteNumber(value: unknown): value is number {
+	return typeof value === 'number' && Number.isFinite(value);
+}
+
+function extractListPayload<T>(payload: unknown): T[] | null {
+	if (Array.isArray(payload)) {
+		return payload as T[];
+	}
+
+	if (!isRecord(payload)) {
+		return null;
+	}
+
+	const candidates = [
+		payload.data,
+		payload.result,
+		payload.items,
+		isRecord(payload.data) ? payload.data.data : undefined,
+		isRecord(payload.data) ? payload.data.items : undefined,
+		isRecord(payload.result) ? payload.result.data : undefined,
+		isRecord(payload.result) ? payload.result.items : undefined
+	];
+
+	for (const candidate of candidates) {
+		if (Array.isArray(candidate)) {
+			return candidate as T[];
+		}
+	}
+
+	return null;
+}
+
+function resolvePaginatedTotal(payload: unknown, fallback: number): number {
+	if (!isRecord(payload)) {
+		return fallback;
+	}
+
+	const candidates = [
+		payload.total,
+		payload.count,
+		payload.totalItems,
+		isRecord(payload.data) ? payload.data.total : undefined,
+		isRecord(payload.data) ? payload.data.count : undefined,
+		isRecord(payload.result) ? payload.result.total : undefined,
+		isRecord(payload.result) ? payload.result.count : undefined
+	];
+
+	for (const candidate of candidates) {
+		if (isFiniteNumber(candidate)) {
+			return Math.max(0, candidate);
+		}
+	}
+
+	return fallback;
+}
+
+function normalizePaginatedListResponse<T>(payload: unknown): PaginatedResponse<T> {
+	const items = extractListPayload<T>(payload) ?? [];
+	return {
+		data: items,
+		total: resolvePaginatedTotal(payload, items.length)
+	};
+}
+
+function normalizeListResponse<T>(payload: unknown): T[] {
+	return extractListPayload<T>(payload) ?? [];
+}
+
 function padDatePart(value: number, size = 2): string {
 	return String(value).padStart(size, '0');
 }
@@ -429,7 +497,9 @@ export class ApiService {
 	}
 
 	public getDevices(): Promise<DeviceDto[]> {
-		return this.request<DeviceDto[]>(DEVICES_ENDPOINT, { method: 'GET' });
+		return this.request<DeviceDto[] | Record<string, unknown>>(DEVICES_ENDPOINT, {
+			method: 'GET'
+		}).then((payload) => normalizeListResponse<DeviceDto>(payload));
 	}
 
 	public async getAllLocationDevices(
@@ -442,14 +512,7 @@ export class ApiService {
 			method: 'GET'
 		});
 
-		if (Array.isArray(payload)) {
-			return {
-				data: payload,
-				total: payload.length
-			};
-		}
-
-		return payload;
+		return normalizePaginatedListResponse<DevicePrimaryDataDto>(payload);
 	}
 
 	public async getAllLocations(): Promise<PaginatedResponse<LocationDto>> {
@@ -458,14 +521,7 @@ export class ApiService {
 			{ method: 'GET' }
 		);
 
-		if (Array.isArray(payload)) {
-			return {
-				data: payload,
-				total: payload.length
-			};
-		}
-
-		return payload;
+		return normalizePaginatedListResponse<LocationDto>(payload);
 	}
 
 	public async getLocations(): Promise<LocationDto[]> {
@@ -604,7 +660,7 @@ export class ApiService {
 		query: LatestPrimaryDataQuery = {},
 		options: ApiMethodOptions = {}
 	): Promise<PaginatedResponse<DevicePrimaryDataDto>> {
-		return this.request<PaginatedResponse<DevicePrimaryDataDto>>(
+		return this.request<DevicePrimaryDataDto[] | PaginatedResponse<DevicePrimaryDataDto>>(
 			PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT,
 			{
 				method: 'GET',
@@ -618,7 +674,7 @@ export class ApiService {
 					name: query.name
 				}
 			}
-		);
+		).then((payload) => normalizePaginatedListResponse<DevicePrimaryDataDto>(payload));
 	}
 
 	public getDevice(devEui: string): Promise<DeviceDto> {

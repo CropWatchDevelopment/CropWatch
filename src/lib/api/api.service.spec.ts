@@ -69,3 +69,129 @@ describe('ApiService created_at timezone handling', () => {
 		});
 	});
 });
+
+describe('ApiService list response normalization', () => {
+	it('normalizes wrapped location device payloads exposed under result', async () => {
+		const fetchFn = vi.fn(async () =>
+			createJsonResponse({
+				result: [
+					{
+						dev_eui: 'dev-1',
+						name: 'North sensor',
+						created_at: '2026-03-12T08:00:00Z',
+						location_id: 42
+					},
+					{
+						dev_eui: 'dev-2',
+						name: 'South sensor',
+						created_at: '2026-03-12T08:05:00Z',
+						location_id: 42
+					}
+				],
+				count: 2
+			})
+		) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		const result = await api.getAllLocationDevices(42);
+
+		expect(result).toEqual({
+			data: [
+				{
+					dev_eui: 'dev-1',
+					name: 'North sensor',
+					created_at: '2026-03-12T08:00:00.000+00:00',
+					location_id: 42
+				},
+				{
+					dev_eui: 'dev-2',
+					name: 'South sensor',
+					created_at: '2026-03-12T08:05:00.000+00:00',
+					location_id: 42
+				}
+			],
+			total: 2
+		});
+	});
+
+	it('normalizes wrapped latest primary device payloads for the dashboard', async () => {
+		const fetchFn = vi.fn(async () =>
+			createJsonResponse({
+				result: {
+					items: [
+						{
+							dev_eui: 'dev-1',
+							name: 'North sensor',
+							created_at: '2026-03-12T08:00:00Z',
+							location_id: 42,
+							location_name: 'North Room',
+							temperature_c: 24.2,
+							humidity: 55,
+							co2: 810
+						},
+						{
+							dev_eui: 'dev-2',
+							name: 'South sensor',
+							created_at: '2026-03-12T08:05:00Z',
+							location_id: 42,
+							location_name: 'North Room',
+							temperature_c: 24.1,
+							humidity: 54,
+							co2: 805
+						}
+					],
+					total: 2
+				}
+			})
+		) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		const result = await api.getLatestPrimaryDeviceData({ skip: 0, take: 25 });
+
+		expect(result.data).toHaveLength(2);
+		expect(result.total).toBe(2);
+		expect(result.data[0]).toMatchObject({
+			dev_eui: 'dev-1',
+			name: 'North sensor',
+			location_id: 42,
+			location_name: 'North Room'
+		});
+	});
+
+	it('normalizes wrapped device lists for dashboard fallback enumeration', async () => {
+		const fetchFn = vi.fn(async () =>
+			createJsonResponse({
+				result: [
+					{
+						dev_eui: 'dev-1',
+						name: 'North sensor',
+						cw_device_type: { data_table_v2: 'cw_air_data' }
+					},
+					{
+						dev_eui: 'dev-2',
+						name: 'South sensor',
+						cw_device_type: { data_table_v2: 'cw_air_data' }
+					}
+				]
+			})
+		) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		const result = await api.getDevices();
+
+		expect(result).toHaveLength(2);
+		expect(result.map((device) => device.dev_eui)).toEqual(['dev-1', 'dev-2']);
+	});
+});

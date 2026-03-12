@@ -53,7 +53,6 @@
 	let tableFilters = $derived(buildDashboardTableFilters(filters));
 	let loading = $state(false);
 	let virtualScroll = $state(false);
-
 	let tableSourceKey = $derived.by(() =>
 		[
 			app.accessToken ? 'auth' : 'anon',
@@ -61,6 +60,45 @@
 			app.locations?.length ?? 0
 		].join(':')
 	);
+	let debugDeviceDevEuis = $derived((app.devices ?? []).slice(0, 10).map((device) => device.dev_eui));
+
+	if (dev) {
+		$inspect(
+			tableSourceKey,
+			filters.group,
+			filters.locationGroup,
+			filters.location,
+			(app.devices ?? []).length,
+			app.totalDeviceCount ?? (app.devices ?? []).length,
+			app.locations?.length ?? 0,
+			app.deviceStatuses ?? null,
+			debugDeviceDevEuis
+		).with(
+			(
+				type,
+				currentTableSourceKey,
+				group,
+				locationGroup,
+				location,
+				appDeviceCount,
+				totalDeviceCount,
+				locationCount,
+				deviceStatuses,
+				deviceDevEuis
+			) => {
+				console.info('[dashboard-table] source snapshot', {
+					type,
+					tableSourceKey: currentTableSourceKey,
+					filters: { group, locationGroup, location },
+					appDeviceCount,
+					totalDeviceCount,
+					locationCount,
+					deviceStatuses,
+					deviceDevEuis
+				});
+			}
+		);
+	}
 
 	function isRefreshing(devEui: string): boolean {
 		return refreshingByDevEui[devEui] === true;
@@ -93,7 +131,19 @@
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
-		return queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
+		const result = queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
+		if (dev) {
+			console.info('[dashboard-table] loadData', {
+				query,
+				filters,
+				appDeviceCount: app.devices?.length ?? 0,
+				resultRowCount: result.rows.length,
+				resultTotal: result.total,
+				resultDevEuis: result.rows.map((row) => row.dev_eui)
+			});
+		}
+		debugger;
+		return result;
 	}
 
 	async function loadSingleDevice(row: IDevice) {
@@ -193,7 +243,7 @@
 					disabled={isRefreshing(row.dev_eui)}
 					onclick={() => openDeviceDetails(row)}
 				>
-					<img src={EYE_ICON} />
+					<img src={EYE_ICON} alt="View" />
 				</CwButton>
 			{/snippet}
 

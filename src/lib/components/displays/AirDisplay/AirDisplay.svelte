@@ -54,7 +54,11 @@
 
 	let extraRows = $state<Record<string, unknown>[]>([]);
 	let allRawData = $derived([...historicalData, ...extraRows]);
-	let rows = $derived(toAirRows(allRawData));
+	let rows = $derived(
+		toAirRows(allRawData).sort(
+			(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+		)
+	);
 
 	// Reset extra rows when the parent provides new historical data (e.g. range change)
 	let historicalDataVersion = $derived(historicalData.length > 0 ? historicalData[0] : null);
@@ -63,10 +67,30 @@
 		extraRows = [];
 	});
 
-	let latest = $derived({
-		temperature_c: Number(latestData?.temperature_c) || 0,
-		humidity: Number(latestData?.humidity) || 0,
-		co2: Number(latestData?.co2) || 0
+	let latest = $derived.by(() => {
+		// Use the most recent row if we have fetched newer data, otherwise fall back to latestData prop
+		const newestRow = rows.length > 0
+			? rows.reduce((best, row) =>
+				new Date(row.created_at).getTime() > new Date(best.created_at).getTime() ? row : best
+			)
+			: null;
+
+		const propTime = latestData?.created_at ? new Date(String(latestData.created_at)).getTime() : 0;
+		const rowTime = newestRow ? new Date(newestRow.created_at).getTime() : 0;
+
+		if (newestRow && rowTime >= propTime) {
+			return {
+				temperature_c: newestRow.temperature_c,
+				humidity: newestRow.humidity,
+				co2: newestRow.co2
+			};
+		}
+
+		return {
+			temperature_c: Number(latestData?.temperature_c) || 0,
+			humidity: Number(latestData?.humidity) || 0,
+			co2: Number(latestData?.co2) || 0
+		};
 	});
 
 	let lastSeenTimestamp = $derived.by(() => {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { onDestroy } from 'svelte';
+	import { dev } from '$app/environment';
 	import {
 		createCwToastContext,
 		CwOfflineOverlay,
@@ -50,11 +51,52 @@
 	}
 
 	const app = $state(createAppContext());
+	let layoutDebugDeviceDevEuis = $derived(
+		(data.devices ?? [])
+			.slice(0, 10)
+			.map((device) => ('dev_eui' in device ? String(device.dev_eui ?? '') : ''))
+	);
 
 	syncAppContextFromLayoutData();
 	afterNavigate(() => {
 		syncAppContextFromLayoutData();
 	});
+
+	if (dev) {
+		$inspect(
+			page.url.pathname,
+			page.url.search,
+			!!data.authToken,
+			(data.devices ?? []).length,
+			data.totalDeviceCount ?? (data.devices ?? []).length,
+			data.deviceStatuses ?? null,
+			layoutDebugDeviceDevEuis,
+			data.dashboardDebug ?? null
+		).with(
+			(
+				type,
+				pathname,
+				search,
+				hasAuthToken,
+				devicesLength,
+				totalDeviceCount,
+				deviceStatuses,
+				deviceDevEuis,
+				dashboardDebug
+			) => {
+				console.info('[layout] client data snapshot', {
+					type,
+					pathname,
+					search,
+					hasAuthToken,
+					devicesLength,
+					totalDeviceCount,
+					deviceStatuses,
+					deviceDevEuis,
+					dashboardDebug
+				});
+			});
+	}
 
 	setAppContext(app);
 

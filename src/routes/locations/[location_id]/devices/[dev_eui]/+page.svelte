@@ -23,7 +23,9 @@
 	}
 
 	type TelemetryRow = Record<string, unknown>;
-	const HoursSinceStartOfToday = Math.floor((Date.now() - new Date().setHours(0, 0, 0, 0)) / (60 * 60 * 1000));
+	const HoursSinceStartOfToday = Math.floor(
+		(Date.now() - new Date().setHours(0, 0, 0, 0)) / (60 * 60 * 1000)
+	);
 	export const RANGE_OPTIONS: TimeRangeOptions[] = [
 		{ label: 'Today Only', value: HoursSinceStartOfToday },
 		{ label: 'Last 24 Hours', value: 24 },
@@ -124,6 +126,7 @@
 	let devEui = $derived(data.devEui ?? '');
 	let locationId = $derived(data.locationId ?? '');
 	let authToken = $derived(data.authToken ?? null);
+	let permissionLevel = $derived(Number(data.permissionLevel) || 4);
 	let latestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
 	let locationName = $derived(readLocationName(data.device));
 	let serverHistoricalData = $derived(normalizeTelemetryRows(data.deviceData));
@@ -214,24 +217,15 @@
 
 <div class="device-page">
 	<CwCard title={`Device ${devEui.toUpperCase()}`} subtitle={`Location ${locationName}`} elevated>
-		{#snippet subtitleSlot()}
-			{#if lastSeen}
-				<span>
-					• Last updated:
-					<CwDuration from={lastSeen} alarmAfterMinutes={10.5} alarmCallback={() => {}} class="subtitle-duration" />
-				</span>
-			{/if}
-		{/snippet}
-
 		<div class="device-page__toolbar">
-			<div class="flex flex-col">
+			<div class="flex flex-col gap-2">
 				<CwButton
 					variant="secondary"
 					size="sm"
 					disabled={!locationId}
 					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 				>
-					Back to Location
+					← Location
 				</CwButton>
 				<CwButton
 					variant="secondary"
@@ -239,60 +233,53 @@
 					disabled={!locationId}
 					onclick={() => goto(resolve('/'))}
 				>
-					Back to Dashboard
+					← Dashboard
 				</CwButton>
 			</div>
 
 			<div class="device-page__group device-page__group--ranges">
 				{#each RANGE_OPTIONS as ranges (ranges.value)}
-						<CwButton
-							variant={activeRangeHours === ranges.value ? 'primary' : 'secondary'}
-							size="sm"
-							disabled={controlsDisabled}
-							onclick={() => selectRange(ranges.value)}
-						>
-							{ranges.label}
-						</CwButton>
+					<CwButton
+						variant={activeRangeHours === ranges.value ? 'primary' : 'secondary'}
+						size="sm"
+						disabled={controlsDisabled}
+						onclick={() => selectRange(ranges.value)}
+					>
+						{ranges.label}
+					</CwButton>
 				{/each}
-					
-			</div>
-
-			<div class="device-page__group device-page__group--picker">
-				<CwDateTimeRangePicker
-					mode="range"
-					granularity="day"
-					placeholder="Select date range..."
-					value={dateRange}
-					onchange={handleDateRangeChange}
-				/>
 			</div>
 
 			<div class="device-page__group device-page__group--actions">
-				<CwButton
-					variant="secondary"
-					size="sm"
-					disabled={historicalData.length === 0}
-					onclick={handleCsvDownload}
-				>
-					<img src={DOWNLOAD_ICON} alt="" class="toolbar-icon" />
-					CSV
-				</CwButton>
+				{#if permissionLevel <= 2}
+					<CwButton
+						variant="secondary"
+						size="sm"
+						disabled={historicalData.length === 0}
+						onclick={handleCsvDownload}
+					>
+						<img src={DOWNLOAD_ICON} alt="" class="toolbar-icon" />
+						CSV
+					</CwButton>
+				{/if}
 
-				<CwButton
-					variant="secondary"
-					size="sm"
-					disabled={!locationId || !devEui}
-					onclick={() =>
-						goto(
-							resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
-								location_id: locationId,
-								dev_eui: devEui
-							})
-						)}
-				>
-					<img src={SETTINGS_ICON} alt="" class="toolbar-icon" />
-					Settings
-				</CwButton>
+				{#if permissionLevel <= 1}
+					<CwButton
+						variant="secondary"
+						size="sm"
+						disabled={!locationId || !devEui}
+						onclick={() =>
+							goto(
+								resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
+									location_id: locationId,
+									dev_eui: devEui
+								})
+							)}
+					>
+						<img src={SETTINGS_ICON} alt="" class="toolbar-icon" />
+						Settings
+					</CwButton>
+				{/if}
 			</div>
 		</div>
 
@@ -348,21 +335,15 @@
 		min-width: 0;
 	}
 
-	.device-page__group--navigation {
-		grid-column: span 3;
-	}
-
 	.device-page__group--ranges {
-		grid-column: span 3;
-	}
-
-	.device-page__group--picker {
 		grid-column: span 3;
 	}
 
 	.device-page__group--actions {
 		grid-column: span 3;
-		justify-content: flex-end;
+		flex-direction: column;
+		align-items: flex-end;
+		justify-content: flex-start;
 	}
 
 	.device-page__status {
@@ -396,9 +377,7 @@
 	}
 
 	@media (max-width: 1200px) {
-		.device-page__group--navigation,
 		.device-page__group--ranges,
-		.device-page__group--picker,
 		.device-page__group--actions {
 			grid-column: span 6;
 		}
@@ -414,14 +393,14 @@
 			grid-template-columns: 1fr;
 		}
 
-		.device-page__group--navigation,
 		.device-page__group--ranges,
-		.device-page__group--picker,
 		.device-page__group--actions {
 			grid-column: auto;
 		}
 
 		.device-page__group--actions {
+			flex-direction: row;
+			align-items: center;
 			justify-content: flex-start;
 		}
 	}
