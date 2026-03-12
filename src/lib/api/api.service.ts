@@ -612,7 +612,7 @@ export class ApiService {
 				query: {
 					skip: query.skip,
 					take: query.take,
-					group: query.group,
+					'group-by-device-group': query.group,
 					locationGroup: query.locationGroup,
 					location: query.location,
 					name: query.name
@@ -732,7 +732,7 @@ export class ApiService {
 			replacePathParams(DEVICE_PERMISSION_LEVEL_ENDPOINT, { dev_eui: devEui }),
 			{
 				method: 'PATCH',
-				body: payload
+				body: { ...payload, dev_eui: devEui }
 			}
 		);
 	}

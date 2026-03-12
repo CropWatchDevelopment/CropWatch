@@ -13,6 +13,7 @@
 	import { page } from '$app/state';
 	import type { DevicePrimaryDataDto } from '$lib/api/api.service';
 	import { goto } from '$app/navigation';
+	import EYE_ICON from '$lib/images/icons/eye.svg';
 
 	type DeviceStatus = 'Online' | 'Offline';
 	interface PageData {
@@ -138,7 +139,6 @@
 			rowKey="dev_eui"
 			searchable
 			pageSize={10}
-			rowActionsHeader="View"
 		>
 			{#snippet toolbarActions()}
 				<div class="location-page__actions">
@@ -164,7 +164,9 @@
 			{/snippet}
 
 			{#snippet rowActions(row: LocationDeviceRow)}
-				<CwButton size="sm" variant="info" onclick={() => handleViewDevice(row)}>View</CwButton>
+				<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
+					<img src={EYE_ICON} alt="View" class="w-full" />
+				</CwButton>
 			{/snippet}
 		</CwDataTable>
 	</CwCard>

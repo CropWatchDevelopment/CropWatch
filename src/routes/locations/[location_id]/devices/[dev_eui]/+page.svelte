@@ -31,7 +31,7 @@
 		{ label: 'Last 72 Hours', value: 72 }
 	];
 	type RangeHours = (typeof RANGE_OPTIONS)[number];
-	const MAX_RANGE_RECORDS = 1000;
+	const MAX_RANGE_RECORDS = 432;
 
 	interface RouteState {
 		requestedHistoricalData: TelemetryRow[] | null;
@@ -104,7 +104,7 @@
 	function createRouteState(): RouteState {
 		return {
 			requestedHistoricalData: null,
-			activeRangeHours: RANGE_OPTIONS[0].value,
+			activeRangeHours: null,
 			dateRange: undefined,
 			fetching: false,
 			fetchError: null
@@ -136,7 +136,7 @@
 		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
 	);
 	let historicalData = $derived(requestedHistoricalData ?? serverHistoricalData);
-	let activeRangeHours = $derived(routeStateByKey[routeKey]?.activeRangeHours ?? RANGE_OPTIONS[0].value);
+	let activeRangeHours = $derived(routeStateByKey[routeKey]?.activeRangeHours ?? null);
 	let dateRange = $derived(routeStateByKey[routeKey]?.dateRange ?? undefined);
 	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
 	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
@@ -218,13 +218,13 @@
 			{#if lastSeen}
 				<span>
 					• Last updated:
-					<CwDuration from={lastSeen} alarmAfterMinutes={10.5} class="subtitle-duration" />
+					<CwDuration from={lastSeen} alarmAfterMinutes={10.5} alarmCallback={() => {}} class="subtitle-duration" />
 				</span>
 			{/if}
 		{/snippet}
 
 		<div class="device-page__toolbar">
-			<div class="device-page__group device-page__group--navigation">
+			<div class="flex flex-col">
 				<CwButton
 					variant="secondary"
 					size="sm"
@@ -232,6 +232,14 @@
 					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 				>
 					Back to Location
+				</CwButton>
+				<CwButton
+					variant="secondary"
+					size="sm"
+					disabled={!locationId}
+					onclick={() => goto(resolve('/'))}
+				>
+					Back to Dashboard
 				</CwButton>
 			</div>
 

@@ -6,6 +6,18 @@
 @source "../../src";
 @source "../../node_modules/@cropwatchdevelopment/cwui";
 
+/* ── App theme overrides ──────────────────────────────────── */
+:root,
+[data-theme='dark'] {
+	--cw-bg-canvas: #1f283b;
+	--cw-bg-base: var(--cw-bg-canvas);
+}
+
+[data-theme='light'] {
+	--cw-bg-canvas: #eef1f7;
+	--cw-bg-base: var(--cw-bg-canvas);
+}
+
 /* ── Viewport reset ──────────────────────────────────────── */
 html,
 body {

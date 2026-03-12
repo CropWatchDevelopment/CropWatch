@@ -23,6 +23,7 @@
 		DASHBOARD_DEVICE_ROW_HEIGHT,
 		queryDashboardDevices
 	} from './device-table';
+	import EYE_ICON from '$lib/images/icons/eye.svg';
 
 	interface Props {
 		filters: DashboardDeviceFilters;
@@ -34,7 +35,6 @@
 
 	const columns: CwColumnDef<IDevice>[] = [
 		{ key: 'name', header: 'Device Name', sortable: true },
-		{ key: 'dev_eui', header: 'DevEUI', width: '12rem', hideBelow: 'sm' },
 		{ key: 'temperature_c', header: 'Temperature (°C)', width: '12rem', sortable: true },
 		{ key: 'co2', header: 'CO₂ (ppm)', width: '10rem', sortable: true },
 		{ key: 'humidity', header: 'Humidity (%)', width: '10rem', sortable: true },
@@ -193,7 +193,7 @@
 					disabled={isRefreshing(row.dev_eui)}
 					onclick={() => openDeviceDetails(row)}
 				>
-					Details
+					<img src={EYE_ICON} />
 				</CwButton>
 			{/snippet}
 

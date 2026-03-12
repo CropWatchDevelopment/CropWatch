@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CwBadge, CwButton } from '@cropwatchdevelopment/cwui';
 	import DashboardDeviceTable from '$lib/components/dashboard/DashboardDeviceTable.svelte';
+	import DashboardDeviceCards from '$lib/components/dashboard/DashboardDeviceCards.svelte';
 	import {
 		countDashboardDevices,
 		getLocationGroupName,
@@ -11,12 +12,15 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { page } from '$app/state';
 
+	type DashboardView = 'table' | 'sensor-cards';
+
 	const app = getAppContext();
 
 	// ── Reactive filter state from URL search params ────────────
 	let activeGroup = $derived(page.url.searchParams.get('group') ?? '');
 	let activeLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 	let activeLocation = $derived(page.url.searchParams.get('location') ?? '');
+	let dashboardView = $state<DashboardView>('table');
 	let dashboardFilters = $derived.by(
 		(): DashboardDeviceFilters => ({
 			group: activeGroup,
@@ -48,41 +52,23 @@
 	function refreshDashboard() {
 		window.location.reload();
 	}
+
+	function setDashboardView(view: DashboardView) {
+		dashboardView = view;
+	}
 </script>
 
 <svelte:head>
 	<title>CropWatch Dashboard</title>
 </svelte:head>
 
-<div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-	<header style="margin-bottom: 23px;" class="flex-none">
-		<div class="flex min-h-12 items-center justify-between px-6 py-3 md:py-4">
-			<div class="hidden flex-col gap-1 md:flex">
-				<div class="flex items-center gap-2 text-xs text-slate-400" style="margin-left: 1rem;">
-					<span>Group</span>
-					<span class="text-slate-600">/</span>
-					<span class="truncate">{activeGroup || 'All groups'}</span>
-					{#if activeLocationGroupName}
-						<span class="text-slate-600">/</span>
-						<span>Location Group</span>
-						<span class="text-slate-600">/</span>
-						<span class="truncate">{activeLocationGroupName}</span>
-					{/if}
-					{#if activeLocationName}
-						<span class="text-slate-600">/</span>
-						<span>Location</span>
-						<span class="text-slate-600">/</span>
-						<span class="truncate">{activeLocationName}</span>
-					{/if}
-				</div>
-			</div>
-		</div>
+<div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden --cw-bg-base">
+	<header class="flex-none">
 
 		<div
-			class="mb-3 flex min-h-[4rem] flex-row items-end justify-between gap-3 border-t border-slate-800 px-6 py-3 text-xs md:py-4"
-			style="margin-left: 1rem;"
+			class="my-3 flex min-h-[4rem] flex-row justify-between px-6 text-xs"
 		>
-			<div class="hidden flex-col gap-2 text-slate-400 md:flex">
+			<div class="hidden flex-col gap-2 pt-4 text-slate-400 md:flex">
 				<div class="flex flex-wrap items-center gap-3">
 					<span class="flex items-center gap-1">
 						<span class="font-mono text-slate-100">{devicesInView}</span>
@@ -106,6 +92,21 @@
 			>
 				<span class="hidden flex-1 md:flex"></span>
 
+				<div class="flex items-center gap-2">
+					<CwButton
+						variant={dashboardView === 'table' ? 'info' : 'secondary'}
+						onclick={() => setDashboardView('table')}
+					>
+						Table
+					</CwButton>
+					<CwButton
+						variant={dashboardView === 'sensor-cards' ? 'info' : 'secondary'}
+						onclick={() => setDashboardView('sensor-cards')}
+					>
+						Sensor Cards
+					</CwButton>
+				</div>
+
 				<CwButton variant="secondary" onclick={refreshDashboard}>
 					<img src={REFRESH_ICON} alt="Refresh Icon" class="h-4 w-4" />
 					Refresh
@@ -125,5 +126,9 @@
 		</div>
 	</header>
 
-	<DashboardDeviceTable filters={dashboardFilters} />
+	{#if dashboardView === 'sensor-cards'}
+		<DashboardDeviceCards filters={dashboardFilters} />
+	{:else}
+		<DashboardDeviceTable filters={dashboardFilters} />
+	{/if}
 </div>

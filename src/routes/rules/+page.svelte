@@ -9,6 +9,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { goto } from '$app/navigation';
 	import type { RulesDto } from '$lib/interfaces/rule.interface';
+    import EYE_ICON from '$lib/images/icons/eye.svg';
 
 	let { data }: { data: { rules: RulesDto[] } } = $props();
     let loading = $state(true);
@@ -27,7 +28,7 @@
 </script>
 
 <CwCard title="Configured Rules" class="min-h-0 flex-1 p-4">
-	<CwDataTable {columns} {loadData} {loading} rowActionsHeader="Actions" rowKey="id">
+	<CwDataTable {columns} {loadData} {loading} rowKey="id">
 		{#snippet rowActions(row: RulesDto)}
 			<CwButton
                 class="mr-2"
@@ -37,7 +38,7 @@
                     goto(`/rules/${row.id}`);
                 }}
             >
-                Details
+                <img src={EYE_ICON} />
             </CwButton>
             <CwButton
                 size="sm"

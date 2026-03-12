@@ -60,11 +60,11 @@
 		const groupItems: CwListBoxItem<string>[] = (app.deviceGroups ?? [])
 			.filter((g) => g)
 			.map((group) => ({
-				value: group,
-				label: group,
+				value: group.group,
+				label: group.group,
 				badge: group.group.toUpperCase().substring(0, 2),
 				badgeTone: 'info' as const,
-				endText: String(app.devices?.filter((d) => d.group === group).length ?? 0)
+				endText: String(app.devices?.filter((d) => d.group === group.group).length ?? 0)
 			}));
 		return [allItem, ...groupItems];
 	});

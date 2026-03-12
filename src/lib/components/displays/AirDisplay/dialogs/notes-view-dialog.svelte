@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
+	import EYE_ICON from '$lib/images/icons/eye.svg';
 
 	let { row }: { row: AirRow } = $props();
 	let open = $state(false);
@@ -11,7 +12,9 @@
 	}
 </script>
 
-<CwButton variant="secondary" onclick={() => (open = true)}>View Notes</CwButton>
+<CwButton variant="secondary" onclick={() => (open = true)}>
+	<img src={EYE_ICON} />
+</CwButton>
 
 <CwDialog
 	{open}

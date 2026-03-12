@@ -9,6 +9,7 @@
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import type { LocationDto } from '$lib/api/api.service';
+	import EYE_ICON from '$lib/images/icons/eye.svg';
 
 	let { data }: { data: { allLocations: LocationDto[] } } = $props();
 
@@ -58,14 +59,15 @@
 				rowKey="location_id"
 				searchable
 				pageSize={10}
-				rowActionsHeader="View"
 			>
 				{#snippet toolbarActions()}
 					<CwButton variant="primary" onclick={handleAddLocation}>Add Location</CwButton>
 				{/snippet}
 
 					{#snippet rowActions(row: LocationDto)}
-						<CwButton size="sm" variant="info" onclick={() => handleViewLocation(row)}>View</CwButton>
+						<CwButton size="sm" variant="info" onclick={() => handleViewLocation(row)}>
+							<img src={EYE_ICON} />
+						</CwButton>
 				{/snippet}
 			</CwDataTable>
 	</CwCard>

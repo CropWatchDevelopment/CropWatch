@@ -6,27 +6,46 @@
 		CwDialog,
 		CwDropdown,
 		type CwColumnDef,
-		type CwTableResult
+		type CwTableResult,
+		type CwTableQuery
 	} from '@cropwatchdevelopment/cwui';
-	import type { ActionData, PageData } from './$types';
+	import type { LocationOwnerDto } from '$lib/api/api.dtos';
 	import DeletePermissionDialog from './DeletePermissionDialog.svelte';
 	import { page } from '$app/state';
 
-	let { data, form }: { data: PageData; form: ActionData | null } = $props();
+	interface Permission {
+		id: number;
+		email: string;
+		name: string;
+		permission_level: string;
+	}
+
+	interface SettingsPageData {
+		locationId: number | null;
+		locationName: string;
+		locationOwners: LocationOwnerDto[];
+		permissions?: Permission[];
+		[key: string]: unknown;
+	}
+
+	let { data, form }: { data: SettingsPageData; form: Record<string, unknown> | null } = $props();
 	let permissions = $derived(data.permissions ?? []);
 	let openDeletePermissionDialog = $state(false);
-	let selectedRow = $state<any>(null);
+	let selectedRow = $state<Permission | null>(null);
 	let location_id = $state(page.params.location_id);
 	let editingPermissionId = $state<number | null>(null);
 
-	const loadData = async (): Promise<CwTableResult> => {
+	const loadData = async (_query: CwTableQuery): Promise<CwTableResult<Permission>> => {
 		data.permissions =
-			data.locationOwners?.map((owner) => ({
-				id: owner.id,
-				email: owner.profiles?.email,
-				name: owner.profiles?.full_name,
-				permission_level: owner.permission_level
-			})) ?? [];
+			data.locationOwners?.map((owner) => {
+				const profiles = owner.profiles as { email?: string; full_name?: string } | undefined;
+				return {
+					id: owner.id,
+					email: profiles?.email ?? '',
+					name: profiles?.full_name ?? '',
+					permission_level: String(owner.permission_level ?? 4)
+				};
+			}) ?? [];
 
 		return {
 			rows: permissions,
@@ -34,7 +53,7 @@
 		};
 	};
 
-	const savePermissionLevelUpdate = async (row) => {
+	const savePermissionLevelUpdate = async (row: Permission) => {
 		const response = await fetch(`?/updateUserPermissionLevel`, {
 			method: 'POST',
 			headers: {
@@ -49,7 +68,7 @@
 
 		if (response.ok) {
 			// Optionally, you can reload the permissions data here to reflect any changes from the server
-			await loadData();
+			await loadData({} as CwTableQuery);
 		} else {
 		}
 		editingPermissionId = null;
@@ -65,26 +84,25 @@
 		{ key: 'name', header: 'Name' },
 		{ key: 'permission_level', header: 'Permission Level' }
 	]}
-	rows={permissions}
 >
-	{#snippet cell(row: any, col: CwColumnDef<any>, defaultValue: string)}
+	{#snippet cell(row: Permission, col: CwColumnDef<Permission>, defaultValue: string)}
 		{#if col.key === 'permission_level'}
 			{#if editingPermissionId === row.id}
 				<CwDropdown
 					options={[
-						{ label: 'Admin', value: 1 },
-						{ label: 'Manager', value: 2 },
-						{ label: 'Viewer', value: 3 },
-						{ label: 'Disabled', value: 4 }
+						{ label: 'Admin', value: '1' },
+						{ label: 'Manager', value: '2' },
+						{ label: 'Viewer', value: '3' },
+						{ label: 'Disabled', value: '4' }
 					]}
 					bind:value={row.permission_level}
 					placeholder="Choose a permission level…"
 				/>
-			{:else if row.permission_level === 1}
+			{:else if row.permission_level === '1'}
 				Admin
-			{:else if row.permission_level === 2}
+			{:else if row.permission_level === '2'}
 				Manager
-			{:else if row.permission_level === 3}
+			{:else if row.permission_level === '3'}
 				Viewer
 			{:else}
 				Disabled
@@ -93,7 +111,7 @@
 			{defaultValue}
 		{/if}
 	{/snippet}
-	{#snippet rowActions(row: any)}
+	{#snippet rowActions(row: Permission)}
 		{#if editingPermissionId === row.id}
 			<CwButton
 				variant="primary"

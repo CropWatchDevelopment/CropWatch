@@ -1,17 +1,10 @@
-<!--
-  AirDisplay.svelte — Display component for cw_air_data.
-
-  The route page owns fetching, range selection, navigation, and export. This
-  component only transforms the telemetry it receives and renders the UI for it.
--->
 <script lang="ts">
 	import {
-		CwButton,
 		CwCard,
 		CwDataTable,
+		CwDuration,
 		CwHeatmap,
 		CwLineChart,
-		CwChip,
 		type CwColumnDef,
 		type CwHeatmapDataPoint,
 		type CwLineChartDataPoint,
@@ -19,6 +12,7 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { ApiService } from '$lib/api/api.service';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import './AirDisplay.css';
 	import NotesCreateDialog from './dialogs/notes-create-dialog.svelte';
@@ -36,7 +30,9 @@
 		{ key: 'alerts', header: 'Alerts', width: '6rem' }
 	];
 
-	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();
+	const ALARM_AFTER_MINUTES = 10.5;
+
+	let { latestData, historicalData, loading, devEui, authToken }: DeviceDisplayProps = $props();
 
 	function toAirRows(raw: Record<string, unknown>[]): AirRow[] {
 		return raw.map((row, index) => ({
@@ -56,18 +52,56 @@
 		}));
 	}
 
-	function toTimestamp(value: string): number | null {
-		const timestamp = new Date(value).getTime();
-		return Number.isFinite(timestamp) ? timestamp : null;
-	}
+	let extraRows = $state<Record<string, unknown>[]>([]);
+	let allRawData = $derived([...historicalData, ...extraRows]);
+	let rows = $derived(toAirRows(allRawData));
 
-	let rows = $derived(toAirRows(historicalData));
+	// Reset extra rows when the parent provides new historical data (e.g. range change)
+	let historicalDataVersion = $derived(historicalData.length > 0 ? historicalData[0] : null);
+	$effect(() => {
+		historicalDataVersion;
+		extraRows = [];
+	});
 
 	let latest = $derived({
 		temperature_c: Number(latestData?.temperature_c) || 0,
 		humidity: Number(latestData?.humidity) || 0,
 		co2: Number(latestData?.co2) || 0
 	});
+
+	let lastSeenTimestamp = $derived.by(() => {
+		if (rows.length === 0) return null;
+		return rows.reduce((latest, row) => {
+			const t = new Date(row.created_at).getTime();
+			return t > new Date(latest).getTime() ? row.created_at : latest;
+		}, rows[0].created_at);
+	});
+
+	let refreshing = $state(false);
+
+	async function fetchLatestData() {
+		if (!authToken || !devEui || refreshing) return;
+
+		refreshing = true;
+		try {
+			const api = new ApiService({ fetchFn: fetch, authToken });
+			const result = await api.getDeviceLatestData(devEui);
+
+			if (result && typeof result === 'object' && result.created_at) {
+				const existingIds = new Set(rows.map((r) => r.id));
+				const newId = String(
+					result.id ?? result.data_id ?? `${result.created_at}-latest`
+				);
+				if (!existingIds.has(newId)) {
+					extraRows = [...extraRows, result];
+				}
+			}
+		} catch (err) {
+			console.error('Failed to fetch latest air data:', err);
+		} finally {
+			refreshing = false;
+		}
+	}
 
 	let lineSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
 		rows.map((row) => ({
@@ -95,7 +129,7 @@
 
 	let heatmapDays = $derived.by(() => {
 		const timestamps = rows
-			.map((row) => toTimestamp(row.created_at))
+			.map((row) => new Date(row.created_at).getTime())
 			.filter((timestamp): timestamp is number => timestamp !== null);
 
 		if (timestamps.length === 0) {
@@ -159,6 +193,17 @@
 </script>
 
 <div class="air-display">
+	{#if lastSeenTimestamp}
+		<div class="air-display__last-updated">
+			<span>Last updated:</span>
+			<CwDuration
+				from={lastSeenTimestamp}
+				alarmAfterMinutes={ALARM_AFTER_MINUTES}
+				alarmCallback={fetchLatestData}
+			/>
+		</div>
+	{/if}
+
 	<div class="kpi-grid">
 		<CwCard title="Current Temperature" subtitle="Latest reading" elevated>
 			<p class="kpi-value">{latest.temperature_c.toFixed(1)}<span>°C</span></p>
@@ -204,32 +249,27 @@
 		</div>
 
 		<CwCard title="Telemetry Table" subtitle="Searchable, sortable data" elevated>
-			<CwDataTable
-				{columns}
-				loadData={loadTableData}
-				loading={tableLoading}
-				rowKey="id"
-				rowActionsHeader="Notes"
-				searchable
-			>
+			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
 				{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
-					{#if col.key === 'created_at'}
-						{new Date(row.created_at).toLocaleString()}
-					{:else if col.key === 'temperature_c'}
-						{row.temperature_c.toFixed(2)} °C
-					{:else if col.key === 'humidity'}
-						{row.humidity.toFixed(2)} %
-					{:else if col.key === 'co2'}
-						{row.co2} ppm
-					{:else if col.key === 'alerts'}
-						{#if row.alerts && row.alerts.length > 0}
-							<CwChip tone="danger" variant="soft" label="{row.alerts.length} alert{row.alerts.length > 1 ? 's' : ''}" dismissible />
+					<div class="text-2xl">
+						{#if col.key === 'created_at'}
+							{new Date(row.created_at).toLocaleString()}
+						{:else if col.key === 'temperature_c'}
+							{row.temperature_c.toFixed(2)} °C
+						{:else if col.key === 'humidity'}
+							{row.humidity.toFixed(2)} %
+						{:else if col.key === 'co2'}
+							{row.co2} ppm
+						{:else if col.key === 'alerts'}
+							{#if row.alerts && row.alerts.length > 0}
+								❌
+							{:else}
+								✅
+							{/if}
 						{:else}
-							<CwChip tone="success" variant="soft" label="No Alert" dismissible />
+							{defaultValue}
 						{/if}
-					{:else}
-						{defaultValue}
-					{/if}
+					</div>
 				{/snippet}
 				{#snippet rowActions(row: AirRow)}
 					<NotesCreateDialog {row} dev_eui={row.dev_eui} />

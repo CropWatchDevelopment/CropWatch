@@ -7,7 +7,14 @@
 		CwInput,
 		CwSwitch
 	} from '@cropwatchdevelopment/cwui';
-	import { type PageData, type ActionData } from '../$types';
+	import type { LocationOwnerDto } from '$lib/api/api.dtos';
+
+	interface SettingsPageData {
+		locationId: number | null;
+		locationName: string;
+		locationOwners: LocationOwnerDto[];
+		[key: string]: unknown;
+	}
 
 	interface PermissionRow {
 		id: number;
@@ -28,7 +35,7 @@
 		{ permission_level: 4, permission_name: 'Disabled' }
 	];
 
-	let { data, form }: { data: PageData; form: ActionData | null } = $props();
+	let { data, form }: { data: SettingsPageData; form: Record<string, unknown> | null } = $props();
 
 	let submitting = $state(false);
 	let newUserEmail = $state('');

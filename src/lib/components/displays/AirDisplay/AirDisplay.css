@@ -5,6 +5,14 @@
 		min-width: 0;
 	}
 
+	.air-display__last-updated {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.875rem;
+		color: var(--cw-text-muted);
+	}
+
 	.kpi-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

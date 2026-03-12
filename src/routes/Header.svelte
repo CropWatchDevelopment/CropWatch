@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { CwHeader, CwProfileMenu, CwThemePicker, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
 	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
@@ -16,6 +17,7 @@
 </script>
 
 <CwHeader
+	class="app-header"
 	bind:sideNavMode={mode}
 	onToggleNav={() => (mode = mode === 'hidden' ? 'open' : 'hidden')}
 >
@@ -30,7 +32,7 @@
 		<CwThemePicker onchange={(theme) => console.log(theme)} />
 		<CwProfileMenu name={app.session?.email ?? ''} subtitle={app.session?.role ?? ''} {menuItems} onselect={(event) => {
 			if (event.id === 'logout') {
-				goto('/auth/logout').then(() => {
+				goto(resolve('/auth/logout')).then(() => {
 					// Optionally, you can also clear the app context or perform any other cleanup here
 					Object.assign(app, defaultAppContext);
 					window.location.reload();
@@ -39,12 +41,18 @@
 					alert('An error occurred while logging out. Please try again.');
 				});
 			} else if (event.id === 'profile') {
-				goto('/account/profile');
+				goto(resolve('/account/profile'));
 			} else if (event.id === 'settings') {
-				goto('/settings');
+				goto(resolve('/settings'));
 			} else if (event.id === 'billing') {
-				goto('/account/billing');
+				goto(resolve('/account/billing'));
 			}
 		}} />
 	{/snippet}
 </CwHeader>
+
+<style>
+	:global(.cw-header.app-header) {
+		background: var(--cw-sidenav-bg);
+	}
+</style>

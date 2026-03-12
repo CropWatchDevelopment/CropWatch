@@ -1,12 +1,21 @@
 <script lang="ts">
-	import type { ActionData, PageData } from './$types';
+	import { CwButton } from '@cropwatchdevelopment/cwui';
+	import type { PageProps } from './$types';
 	import LocationEditPermissions from './LocationEditPermissions.svelte';
 	import LocationPermissions from './LocationPermissions.svelte';
 	import LocationUpdate from './LocationUpdate.svelte';
+	import { goto } from '$app/navigation';
 
-	let { data, form }: { data: PageData; form: ActionData | null } = $props();
+	let { data, form }: PageProps = $props();
 </script>
 
-<LocationUpdate {data} {form} />
-<LocationPermissions {data} {form} />
-<LocationEditPermissions {data} {form} />
+<svelte:head>
+	<title>Location Settings - {data.locationName}</title>
+</svelte:head>
+
+<div class="settings-page overflow-y-scroll">
+	<CwButton onclick={() => goto(`/locations/${data.locationId}`)} class="back-button">&larr; Back To Location</CwButton>
+	<LocationUpdate {data} {form} />
+	<LocationPermissions {data} {form} />
+	<LocationEditPermissions {data} {form} />
+</div>

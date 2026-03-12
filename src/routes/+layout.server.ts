@@ -20,9 +20,9 @@ async function getAllLatestPrimaryDeviceData(
 			: firstBatch.length;
 
 	const allDevices = [...firstBatch];
-	let skip = firstBatch.length;
+	let skip = LATEST_PRIMARY_DATA_PAGE_SIZE;
 
-	while (allDevices.length < total) {
+	while (skip < total) {
 		const nextPage = await apiServiceInstance.getLatestPrimaryDeviceData({
 			skip,
 			take: LATEST_PRIMARY_DATA_PAGE_SIZE
@@ -34,7 +34,7 @@ async function getAllLatestPrimaryDeviceData(
 		}
 
 		allDevices.push(...nextBatch);
-		skip += nextBatch.length;
+		skip += LATEST_PRIMARY_DATA_PAGE_SIZE;
 	}
 
 	return allDevices;
@@ -59,7 +59,10 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 	});
 
 	const [latestPrimaryData, triggeredRules, triggeredRulesCount, deviceStatuses, deviceGroups, locations, locationGroups] = await Promise.all([
-		getAllLatestPrimaryDeviceData(apiServiceInstance).catch(() => []),
+		getAllLatestPrimaryDeviceData(apiServiceInstance).catch((error) => {
+			console.error('Failed to load latest primary data', error);
+			return [];
+		}),
 		apiServiceInstance.getTriggeredRules().catch(() => []),
 		apiServiceInstance.getTriggeredRulesCount().catch(() => 0),
 		apiServiceInstance.getDeviceStatuses().catch(() => ({ online: 0, offline: 0 })),
