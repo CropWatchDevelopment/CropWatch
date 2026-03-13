@@ -24,11 +24,14 @@ describe('dashboard-device-data helpers', () => {
 			name: 'Unreported Sensor',
 			location_name: 'North Loft',
 			group: 'air',
+			data_table: 'cw_air_data',
 			created_at: new Date(0),
 			has_primary_data: false,
 			co2: 0,
 			humidity: 0,
 			temperature_c: 0,
+			soil_temperature_c: null,
+			soil_humidity: null,
 			location_id: 17,
 			cwloading: false
 		});
@@ -48,6 +51,7 @@ describe('dashboard-device-data helpers', () => {
 
 		expect(mapDashboardDeviceMetadataToDevice(payload)).toMatchObject({
 			dev_eui: 'dev-10',
+			data_table: 'cw_air_data',
 			location_id: 88,
 			location_name: 'Toyotama Floor 2',
 			has_primary_data: false
@@ -77,8 +81,33 @@ describe('dashboard-device-data helpers', () => {
 			co2: 914,
 			humidity: 63.2,
 			temperature_c: 24.8,
+			soil_temperature_c: null,
+			soil_humidity: null,
 			location_id: 42,
 			cwloading: false
+		});
+	});
+
+	it('maps soil primary API payloads into soil-specific dashboard columns', () => {
+		const payload = {
+			dev_eui: 'soil-1',
+			name: 'Soil Bed 1',
+			location_name: 'Zone S',
+			group: 'soil',
+			data_table: 'cw_soil_data',
+			created_at: '2026-03-13T00:00:00.000Z',
+			temperature_c: 18.6,
+			moisture: 34.5,
+			location_id: 77
+		} satisfies DevicePrimaryDataDto;
+
+		expect(mapDashboardPrimaryDataToDevice(payload)).toMatchObject({
+			dev_eui: 'soil-1',
+			data_table: 'cw_soil_data',
+			temperature_c: 18.6,
+			soil_temperature_c: 18.6,
+			soil_humidity: 34.5,
+			location_id: 77
 		});
 	});
 
@@ -89,11 +118,14 @@ describe('dashboard-device-data helpers', () => {
 				name: 'Canopy 1',
 				location_name: 'Zone A',
 				group: 'air',
+				data_table: 'cw_air_data',
 				created_at: new Date('2026-03-13T00:00:00.000Z'),
 				has_primary_data: true,
 				co2: 914,
 				humidity: 63.2,
 				temperature_c: 24.8,
+				soil_temperature_c: null,
+				soil_humidity: null,
 				location_id: 42,
 				cwloading: true
 			},
@@ -102,11 +134,14 @@ describe('dashboard-device-data helpers', () => {
 				name: 'Canopy 2',
 				location_name: 'Zone B',
 				group: 'air',
+				data_table: 'cw_air_data',
 				created_at: new Date('2026-03-13T00:05:00.000Z'),
 				has_primary_data: true,
 				co2: 880,
 				humidity: 59.1,
 				temperature_c: 23.4,
+				soil_temperature_c: null,
+				soil_humidity: null,
 				location_id: 99
 			}
 		];
@@ -146,9 +181,12 @@ describe('dashboard-device-data helpers', () => {
 		expect(appliedTarget).toMatchObject({
 			created_at: new Date('2026-03-13T00:10:00.000Z'),
 			has_primary_data: true,
+			data_table: 'cw_air_data',
 			co2: 920,
 			humidity: 61.7,
-			temperature_c: 25.1
+			temperature_c: 25.1,
+			soil_temperature_c: null,
+			soil_humidity: null
 		});
 
 		const mergedDevices = mergeDashboardDevices(currentDevices, [
@@ -190,11 +228,14 @@ describe('dashboard-device-data helpers', () => {
 				name: 'Hallway Sensor',
 				location_name: 'とよたま２階',
 				group: 'air',
+				data_table: 'cw_air_data',
 				created_at: new Date(0),
 				has_primary_data: false,
 				co2: 0,
 				humidity: 0,
 				temperature_c: 0,
+				soil_temperature_c: null,
+				soil_humidity: null,
 				location_id: 501,
 				cwloading: false
 			}
@@ -225,6 +266,47 @@ describe('dashboard-device-data helpers', () => {
 			humidity: 48.5,
 			temperature_c: 21.3,
 			has_primary_data: true
+		});
+	});
+
+	it('preserves soil classification when a refresh payload omits explicit soil fields', () => {
+		const currentDevices: IDevice[] = [
+			{
+				dev_eui: 'soil-2',
+				name: 'Soil Plot 2',
+				location_name: 'Bed B',
+				group: 'soil',
+				data_table: 'cw_soil_data',
+				created_at: new Date('2026-03-13T00:00:00.000Z'),
+				has_primary_data: true,
+				co2: 0,
+				humidity: 0,
+				temperature_c: 18.1,
+				soil_temperature_c: 18.1,
+				soil_humidity: 31.4,
+				location_id: 612,
+				cwloading: false
+			}
+		];
+
+		const mergedDevices = mergeDashboardDevices(currentDevices, [
+			mapDashboardPrimaryDataToDevice({
+				dev_eui: 'soil-2',
+				name: 'Soil Plot 2',
+				location_name: 'Bed B',
+				group: 'soil',
+				created_at: '2026-03-13T00:30:00.000Z',
+				temperature_c: 19.2,
+				location_id: 612
+			})
+		]);
+
+		expect(mergedDevices[0]).toMatchObject({
+			dev_eui: 'soil-2',
+			data_table: 'cw_soil_data',
+			temperature_c: 19.2,
+			soil_temperature_c: 19.2,
+			soil_humidity: 31.4
 		});
 	});
 });

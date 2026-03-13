@@ -14,10 +14,13 @@ const devices: IDevice[] = [
 		name: 'Alpha Canopy',
 		location_name: 'Room A',
 		group: 'air',
+		data_table: 'cw_air_data',
 		created_at: new Date('2026-03-09T00:00:00Z'),
 		co2: 900,
 		humidity: 51,
 		temperature_c: 24,
+		soil_temperature_c: null,
+		soil_humidity: null,
 		location_id: 1
 	},
 	{
@@ -25,21 +28,27 @@ const devices: IDevice[] = [
 		name: 'Beta Canopy',
 		location_name: 'Room B',
 		group: 'air',
+		data_table: 'cw_air_data',
 		created_at: new Date('2026-03-09T01:00:00Z'),
 		co2: 870,
 		humidity: 54,
 		temperature_c: 23,
+		soil_temperature_c: null,
+		soil_humidity: null,
 		location_id: 2
 	},
 	{
 		dev_eui: 'dev-3',
-		name: 'Gamma Irrigation',
+		name: 'Gamma Soil',
 		location_name: 'Room C',
-		group: 'water',
+		group: 'soil',
+		data_table: 'cw_soil_data',
 		created_at: new Date('2026-03-09T02:00:00Z'),
 		co2: 0,
 		humidity: 0,
 		temperature_c: 18,
+		soil_temperature_c: 18,
+		soil_humidity: 37,
 		location_id: 3
 	}
 ];
@@ -110,5 +119,24 @@ describe('device-table query helpers', () => {
 		expect(result.total).toBe(2);
 		expect(result.rows).toHaveLength(1);
 		expect(result.rows[0]?.dev_eui).toBe('dev-2');
+	});
+
+	it('sorts optional soil columns numerically when non-soil devices have no soil readings', () => {
+		const filters: DashboardDeviceFilters = {
+			group: '',
+			locationGroup: '',
+			location: ''
+		};
+
+		const result = queryDashboardDevices(
+			devices,
+			locations,
+			filters,
+			createQuery({
+				sort: { column: 'soil_humidity', direction: 'desc' }
+			})
+		);
+
+		expect(result.rows.map((device) => device.dev_eui)).toEqual(['dev-3', 'dev-1', 'dev-2']);
 	});
 });

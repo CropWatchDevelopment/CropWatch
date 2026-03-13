@@ -16,6 +16,13 @@ export const DASHBOARD_DEVICE_OVERSCAN = 16;
 type SortDirection = 'asc' | 'desc';
 
 const LOCATION_GROUP_VALUE_KEYS = ['location_group', 'group', 'name', 'value', 'label'] as const;
+const NUMERIC_SORT_COLUMNS = new Set([
+	'co2',
+	'humidity',
+	'temperature_c',
+	'soil_temperature_c',
+	'soil_humidity'
+]);
 
 function toTrimmedString(value: unknown): string {
 	return typeof value === 'string' ? value.trim() : '';
@@ -143,6 +150,10 @@ function getSortValue(device: IDevice, column: string): number | string {
 	}
 
 	const value = (device as unknown as Record<string, unknown>)[column];
+	if (NUMERIC_SORT_COLUMNS.has(column)) {
+		return typeof value === 'number' && Number.isFinite(value) ? value : Number.NEGATIVE_INFINITY;
+	}
+
 	if (typeof value === 'number') {
 		return value;
 	}

@@ -42,6 +42,13 @@
 		{ key: 'temperature_c', header: 'Temperature (°C)', width: '12rem', sortable: true },
 		{ key: 'co2', header: 'CO₂ (ppm)', width: '10rem', sortable: true },
 		{ key: 'humidity', header: 'Humidity (%)', width: '10rem', sortable: true },
+		{
+			key: 'soil_temperature_c',
+			header: 'Soil Temperature (°C)',
+			width: '14rem',
+			sortable: true
+		},
+		{ key: 'soil_humidity', header: 'Soil Humidity (%)', width: '12rem', sortable: true },
 		{ key: 'location_name', header: 'Location', sortable: true },
 		{
 			key: 'created_at',
@@ -68,6 +75,10 @@
 
 	function isRefreshing(devEui: string): boolean {
 		return refreshingByDevEui[devEui] === true;
+	}
+
+	function getMetricDisplayValue(value: number | null | undefined): string {
+		return value == null ? '--' : String(value);
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
@@ -157,7 +168,13 @@
 						class="dashboard-device-table__cell"
 						class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
 					>
-						{defaultValue}
+						{#if col.key === 'soil_temperature_c'}
+							{getMetricDisplayValue(row.soil_temperature_c)}
+						{:else if col.key === 'soil_humidity'}
+							{getMetricDisplayValue(row.soil_humidity)}
+						{:else}
+							{defaultValue}
+						{/if}
 					</div>
 				{/if}
 			{/snippet}
@@ -208,6 +225,7 @@
 		align-items: center;
 		gap: 0.5rem;
 		min-height: 1.5rem;
+		font-size: 1.2rem;
 	}
 
 	.dashboard-device-table__cell--refreshing {

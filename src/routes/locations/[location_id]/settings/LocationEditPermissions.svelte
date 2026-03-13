@@ -1,9 +1,7 @@
 <script lang="ts">
 	import {
 		CwButton,
-		CwChip,
 		CwDataTable,
-		CwDialog,
 		CwDropdown,
 		type CwColumnDef,
 		type CwTableResult,
@@ -13,41 +11,20 @@
 	import DeletePermissionDialog from './DeletePermissionDialog.svelte';
 	import { page } from '$app/state';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import {
+		mapLocationOwnersToPermissionRows,
+		type PermissionRow as Permission
+	} from './location-permission-rows';
 
-	interface Permission {
-		id: number;
-		email: string;
-		name: string;
-		permission_level: string;
-	}
-
-	interface SettingsPageData {
-		locationId: number | null;
-		locationName: string;
-		locationOwners: LocationOwnerDto[];
-		permissions?: Permission[];
-		[key: string]: unknown;
-	}
-
-	let { data, form }: { data: SettingsPageData; form: Record<string, unknown> | null } = $props();
-	let permissions = $derived(data.permissions ?? []);
+	let { data }: { data: { locationOwners: LocationOwnerDto[] } } = $props();
+	let permissions = $derived(mapLocationOwnersToPermissionRows(data.locationOwners));
 	let openDeletePermissionDialog = $state(false);
 	let selectedRow = $state<Permission | null>(null);
 	let location_id = $state(page.params.location_id);
 	let editingPermissionId = $state<number | null>(null);
 
-	const loadData = async (_query: CwTableQuery): Promise<CwTableResult<Permission>> => {
-		data.permissions =
-			data.locationOwners?.map((owner) => {
-				const profiles = owner.profiles as { email?: string; full_name?: string } | undefined;
-				return {
-					id: owner.id,
-					email: profiles?.email ?? '',
-					name: profiles?.full_name ?? '',
-					permission_level: String(owner.permission_level ?? 4)
-				};
-			}) ?? [];
-
+	const loadData = async (query: CwTableQuery): Promise<CwTableResult<Permission>> => {
+		void query;
 		return {
 			rows: permissions,
 			total: permissions.length
@@ -70,7 +47,6 @@
 		if (response.ok) {
 			// Optionally, you can reload the permissions data here to reflect any changes from the server
 			await loadData({} as CwTableQuery);
-		} else {
 		}
 		editingPermissionId = null;
 	};
