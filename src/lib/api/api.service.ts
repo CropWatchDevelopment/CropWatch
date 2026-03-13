@@ -16,6 +16,7 @@ import type {
 	CreateReportRequest,
 	CreateRuleRequest,
 	DeviceDataWithinRangeQuery,
+	DeviceListQuery,
 	DeviceDto,
 	DevicePrimaryDataDto,
 	DeviceStatusSummary,
@@ -113,6 +114,7 @@ const SOIL_ENDPOINT = '/soil/{dev_eui}';
 const TRAFFIC_ENDPOINT = '/traffic/{dev_eui}';
 const WATER_ENDPOINT = '/water/{dev_eui}';
 const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
+const DEVICE_LIST_PAGE_SIZE = 1000;
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
 	if (value === undefined) return undefined;
@@ -250,10 +252,6 @@ function normalizePaginatedListResponse<T>(payload: unknown): PaginatedResponse<
 	};
 }
 
-function normalizeListResponse<T>(payload: unknown): T[] {
-	return extractListPayload<T>(payload) ?? [];
-}
-
 function padDatePart(value: number, size = 2): string {
 	return String(value).padStart(size, '0');
 }
@@ -338,7 +336,10 @@ export class ApiService {
 		this.fetchFn = options.fetchFn ?? fetch;
 		this.authToken = options.authToken ?? null;
 		const configuredTimeZoneOffset = options.timeZoneOffset;
-		this.timeZoneOffset = Number.isFinite(configuredTimeZoneOffset) ? configuredTimeZoneOffset : 0;
+		this.timeZoneOffset =
+			typeof configuredTimeZoneOffset === 'number' && Number.isFinite(configuredTimeZoneOffset)
+				? configuredTimeZoneOffset
+				: 0;
 	}
 
 	public setAuthToken(token: string | null): void {
@@ -496,10 +497,66 @@ export class ApiService {
 		);
 	}
 
-	public getDevices(): Promise<DeviceDto[]> {
-		return this.request<DeviceDto[] | Record<string, unknown>>(DEVICES_ENDPOINT, {
-			method: 'GET'
-		}).then((payload) => normalizeListResponse<DeviceDto>(payload));
+	public async getDevicesPage(
+		query: DeviceListQuery = {}
+	): Promise<PaginatedResponse<DeviceDto>> {
+		const payload = await this.request<
+			DeviceDto[] | PaginatedResponse<DeviceDto> | Record<string, unknown>
+		>(DEVICES_ENDPOINT, {
+			method: 'GET',
+			query: {
+				skip: query.skip,
+				take: query.take,
+				group: query.group,
+				name: query.name,
+				location: query.location
+			}
+		});
+
+		return normalizePaginatedListResponse<DeviceDto>(payload);
+	}
+
+	public async getDevices(query: DeviceListQuery = {}): Promise<DeviceDto[]> {
+		const { data } = await this.getDevicesPage(query);
+		return data ?? [];
+	}
+
+	public async getAllDevices(
+		query: Omit<DeviceListQuery, 'skip' | 'take'> = {}
+	): Promise<DeviceDto[]> {
+		const firstPage = await this.getDevicesPage({
+			...query,
+			skip: 0,
+			take: DEVICE_LIST_PAGE_SIZE
+		});
+		const firstBatch = firstPage.data ?? [];
+		const total =
+			typeof firstPage.total === 'number' && Number.isFinite(firstPage.total)
+				? Math.max(0, firstPage.total)
+				: firstBatch.length;
+
+		if (firstBatch.length >= total) {
+			return firstBatch;
+		}
+
+		const allDevices = [...firstBatch];
+
+		for (let skip = DEVICE_LIST_PAGE_SIZE; skip < total; skip += DEVICE_LIST_PAGE_SIZE) {
+			const nextPage = await this.getDevicesPage({
+				...query,
+				skip,
+				take: DEVICE_LIST_PAGE_SIZE
+			});
+			const nextBatch = nextPage.data ?? [];
+
+			if (nextBatch.length === 0) {
+				break;
+			}
+
+			allDevices.push(...nextBatch);
+		}
+
+		return allDevices;
 	}
 
 	public async getAllLocationDevices(

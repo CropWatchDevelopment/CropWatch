@@ -1,8 +1,10 @@
-import type { CwSensorCardDevice } from '@cropwatchdevelopment/cwui';
+import type { CwSensorCardDetailRow, CwSensorCardDevice } from '@cropwatchdevelopment/cwui';
 import type { LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
 
 export const DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES = 10;
+export const DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE = 10;
+export const DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING = 5;
 
 const DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MS =
 	DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES * 60_000;
@@ -28,10 +30,37 @@ function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): 
 }
 
 function getDeviceStatus(device: IDevice): 'online' | 'offline' {
+	if (device.has_primary_data === false) {
+		return 'offline';
+	}
+
 	return Date.now() - new Date(device.created_at).getTime() >
 		DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MS
 		? 'offline'
 		: 'online';
+}
+
+function buildUnavailableDetailRows(label: string): CwSensorCardDetailRow[] {
+	return [
+		{
+			id: `${label}-temperature`,
+			label: 'Temperature',
+			value: 'No reading',
+			icon: 'thermo'
+		},
+		{
+			id: `${label}-humidity`,
+			label: 'Humidity',
+			value: 'No reading',
+			icon: 'drop'
+		},
+		{
+			id: `${label}-updated`,
+			label: 'Last Update',
+			value: 'No primary data yet',
+			icon: 'timer'
+		}
+	];
 }
 
 function getLocationTitle(
@@ -77,11 +106,16 @@ export function buildDashboardLocationSensorCards(
 
 	return Array.from(devicesByLocationId.entries())
 		.map(([locationId, locationDevices]) => {
-			const sortedLocationDevices = [...locationDevices].sort((left, right) =>
-				getDeviceBaseLabel(left).localeCompare(getDeviceBaseLabel(right), undefined, {
-					numeric: true,
-					sensitivity: 'base'
-				})
+			const sortedLocationDevices = [...locationDevices].sort(
+				(left, right) =>
+					getDeviceBaseLabel(left).localeCompare(getDeviceBaseLabel(right), undefined, {
+						numeric: true,
+						sensitivity: 'base'
+					}) ||
+					left.dev_eui.localeCompare(right.dev_eui, undefined, {
+						numeric: true,
+						sensitivity: 'base'
+					})
 			);
 			const duplicateCounts = new Map<string, number>();
 
@@ -99,7 +133,17 @@ export function buildDashboardLocationSensorCards(
 					locationId: Number(device.location_id)
 				};
 
-                const staleness = Date.now() - new Date(device.created_at).getTime();
+				if (device.has_primary_data === false) {
+					return {
+						label,
+						primaryValue: 0,
+						primaryUnit: '°C',
+						status: 'offline',
+						detailRows: buildUnavailableDetailRows(label)
+					} satisfies CwSensorCardDevice;
+				}
+
+				const staleness = Date.now() - new Date(device.created_at).getTime();
 				return {
 					label,
 					primaryValue: Number(device.temperature_c ?? 0),

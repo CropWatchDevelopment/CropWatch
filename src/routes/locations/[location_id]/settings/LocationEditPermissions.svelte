@@ -12,6 +12,7 @@
 	import type { LocationOwnerDto } from '$lib/api/api.dtos';
 	import DeletePermissionDialog from './DeletePermissionDialog.svelte';
 	import { page } from '$app/state';
+	import EDIT_ICON from '$lib/images/icons/edit.svg';
 
 	interface Permission {
 		id: number;
@@ -78,6 +79,7 @@
 <CwDataTable
 	{loadData}
 	rowKey="id"
+	rowActionsHeader="Actions"
 	columns={[
 		{ key: 'id', header: 'ID' },
 		{ key: 'email', header: 'Email' },
@@ -138,7 +140,9 @@
 				variant="primary"
 				onclick={() => {
 					editingPermissionId = row.id;
-				}}>Edit</CwButton
+				}}>
+					<img src={EDIT_ICON} alt="edit" />
+				</CwButton
 			>
 		{/if}
 	{/snippet}

@@ -16,11 +16,11 @@
 
 import AirDisplay from '$lib/components/displays/AirDisplay/AirDisplay.svelte';
 import DefaultDisplay from '$lib/components/displays/DefaultDisplay.svelte';
-import PowerDisplay from '$lib/components/displays/PowerDisplay.svelte';
-import RelayDisplay from '$lib/components/displays/RelayDisplay.svelte';
-import SoilDisplay from '$lib/components/displays/SoilDisplay.svelte';
-import TrafficDisplay from '$lib/components/displays/TrafficDisplay.svelte';
-import WaterDisplay from '$lib/components/displays/WaterDisplay.svelte';
+import PowerDisplay from '$lib/components/displays/PowerDisplay/PowerDisplay.svelte';
+import RelayDisplay from '$lib/components/displays/RelayDisplay/RelayDisplay.svelte';
+import SoilDisplay from '$lib/components/displays/SoilDisplay/SoilDisplay.svelte';
+import TrafficDisplay from '$lib/components/displays/TrafficDisplay/TrafficDisplay.svelte';
+import WaterDisplay from '$lib/components/displays/WaterDisplay/WaterDisplay.svelte';
 import type { DeviceDisplayComponent } from '$lib/interfaces/deviceDisplay';
 
 // ---------------------------------------------------------------------------

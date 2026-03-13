@@ -143,26 +143,28 @@
 			<!-- <div style="overflow-y: scroll; -webkit-overflow-scrolling: touch;" class="flex max-h-[50vh] flex-col gap-2 px-2 py-1"> -->
 			<CwExpandPanel title="Dashboard Filters" open={dashboardFiltersOpen}>
 				<div class="px-4 py-2 text-sm text-slate-400">Filter devices in view</div>
-				<CwListBox
-					heading="Device Groups"
-					items={groups}
-					value={selectedGroup}
-					onselect={(item) => applyFilter('group', item.value)}
-				/>
+				<div class="overflow-y-scroll">
+					<CwListBox
+						heading="Device Groups"
+						items={groups}
+						value={selectedGroup}
+						onselect={(item) => applyFilter('group', item.value)}
+					/>
 
-				<CwListBox
-					heading="Location Groups"
-					items={locationGroups}
-					value={selectedLocationGroup}
-					onselect={(item) => applyFilter('locationGroup', item.value)}
-				/>
+					<CwListBox
+						heading="Location Groups"
+						items={locationGroups}
+						value={selectedLocationGroup}
+						onselect={(item) => applyFilter('locationGroup', item.value)}
+					/>
 
-				<CwListBox
-					heading="Locations"
-					items={locations}
-					value={selectedLocation}
-					onselect={(item) => applyFilter('location', item.value)}
-				/>
+					<CwListBox
+						heading="Locations"
+						items={locations}
+						value={selectedLocation}
+						onselect={(item) => applyFilter('location', item.value)}
+					/>
+				</div>
 			</CwExpandPanel>
 			<!-- </div> -->
 		{/if}

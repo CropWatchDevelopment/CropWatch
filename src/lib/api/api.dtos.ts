@@ -23,7 +23,7 @@ export interface DeviceDto {
 	location_id?: number | null;
 	location_name?: string;
 	group?: string | null;
-	cw_locations?: Array<Record<string, unknown>>;
+	cw_locations?: Record<string, unknown> | Array<Record<string, unknown>>;
 	cw_device_owners?: Array<Record<string, unknown>>;
 	[key: string]: unknown;
 }
@@ -64,6 +64,12 @@ export interface TimeRangeQuery {
 export interface PaginationQuery {
 	skip?: number;
 	take?: number;
+}
+
+export interface DeviceListQuery extends PaginationQuery {
+	group?: string;
+	name?: string;
+	location?: string;
 }
 
 export interface DeviceDataWithinRangeQuery extends PaginationQuery {

@@ -8,12 +8,16 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { dev } from '$app/environment';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import type { IDevice } from '$lib/interfaces/device.interface';
+	import {
+		applyDashboardLatestReadings,
+		mapDashboardPrimaryDataToDevice,
+		mergeDashboardDevices
+	} from './dashboard-device-data';
 	import {
 		buildDashboardTableFilters,
 		DASHBOARD_DEVICE_BATCH_SIZE,
@@ -45,7 +49,8 @@
 			sortable: true,
 			hideBelow: 'md',
 			width: '14rem',
-			cell: (row) => new Date(row.created_at).toLocaleString()
+			cell: (row) =>
+				row.has_primary_data === false ? 'No data yet' : new Date(row.created_at).toLocaleString()
 		}
 	];
 
@@ -60,89 +65,13 @@
 			app.locations?.length ?? 0
 		].join(':')
 	);
-	let debugDeviceDevEuis = $derived((app.devices ?? []).slice(0, 10).map((device) => device.dev_eui));
-
-	if (dev) {
-		$inspect(
-			tableSourceKey,
-			filters.group,
-			filters.locationGroup,
-			filters.location,
-			(app.devices ?? []).length,
-			app.totalDeviceCount ?? (app.devices ?? []).length,
-			app.locations?.length ?? 0,
-			app.deviceStatuses ?? null,
-			debugDeviceDevEuis
-		).with(
-			(
-				type,
-				currentTableSourceKey,
-				group,
-				locationGroup,
-				location,
-				appDeviceCount,
-				totalDeviceCount,
-				locationCount,
-				deviceStatuses,
-				deviceDevEuis
-			) => {
-				console.info('[dashboard-table] source snapshot', {
-					type,
-					tableSourceKey: currentTableSourceKey,
-					filters: { group, locationGroup, location },
-					appDeviceCount,
-					totalDeviceCount,
-					locationCount,
-					deviceStatuses,
-					deviceDevEuis
-				});
-			}
-		);
-	}
 
 	function isRefreshing(devEui: string): boolean {
 		return refreshingByDevEui[devEui] === true;
 	}
 
-	function applyLatestReadings(target: IDevice, source: IDevice) {
-		target.temperature_c = source.temperature_c;
-		target.co2 = source.co2;
-		target.humidity = source.humidity;
-		target.created_at =
-			source.created_at instanceof Date ? source.created_at : new Date(source.created_at);
-	}
-
-	function toDeviceRow(device: Record<string, unknown>): IDevice {
-		return {
-			dev_eui: String(device.dev_eui ?? ''),
-			name: String(device.name ?? device.dev_eui ?? ''),
-			location_name: String(device.location_name ?? ''),
-			group: String(device.group ?? ''),
-			created_at:
-				device.created_at instanceof Date
-					? device.created_at
-					: new Date(String(device.created_at ?? '')),
-			co2: Number(device.co2 ?? 0),
-			humidity: Number(device.humidity ?? 0),
-			temperature_c: Number(device.temperature_c ?? 0),
-			location_id: Number(device.location_id ?? 0),
-			cwloading: false
-		};
-	}
-
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
-		const result = queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
-		if (dev) {
-			console.info('[dashboard-table] loadData', {
-				query,
-				filters,
-				appDeviceCount: app.devices?.length ?? 0,
-				resultRowCount: result.rows.length,
-				resultTotal: result.total,
-				resultDevEuis: result.rows.map((row) => row.dev_eui)
-			});
-		}
-		return result;
+		return queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
 	}
 
 	async function loadSingleDevice(row: IDevice) {
@@ -151,24 +80,17 @@
 			return;
 		}
 
-		const contextRowIndex = app.devices.findIndex((device) => device.dev_eui === devEui);
-
 		refreshingByDevEui[devEui] = true;
 
 		try {
 			const api = new ApiService({
 				authToken: app.accessToken
 			});
-			const latestDevice = toDeviceRow(
-				(await api.getDeviceLatestPrimaryData(devEui)) as Record<string, unknown>
+			const latestDevice = mapDashboardPrimaryDataToDevice(
+				await api.getDeviceLatestPrimaryData(devEui)
 			);
-			applyLatestReadings(row, latestDevice);
-			if (contextRowIndex !== -1) {
-				applyLatestReadings(app.devices[contextRowIndex], latestDevice);
-			}
-			app.devices = [...app.devices];
-
-			await new Promise((resolveDelay) => setTimeout(resolveDelay, dev ? 500 : 1000));
+			applyDashboardLatestReadings(row, latestDevice);
+			app.devices = mergeDashboardDevices(app.devices, [latestDevice]);
 		} finally {
 			refreshingByDevEui[devEui] = false;
 		}
@@ -215,15 +137,20 @@
 						class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
 					>
 						<CwStatusDot
-							status={new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000
+							status={row.has_primary_data === false ||
+							new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000
 								? 'offline'
 								: 'online'}
 						/>
-						<CwDuration
-							from={row.created_at}
-							alarmAfterMinutes={10.3}
-							alarmCallback={() => void loadSingleDevice(row)}
-						/>
+						{#if row.has_primary_data === false}
+							<span>No data yet</span>
+						{:else}
+							<CwDuration
+								from={row.created_at}
+								alarmAfterMinutes={10.3}
+								alarmCallback={() => void loadSingleDevice(row)}
+							/>
+						{/if}
 					</div>
 				{:else}
 					<div
@@ -254,7 +181,7 @@
 						virtualScroll = !virtualScroll;
 					}}
 				>
-				Virtual Scroll
+					Virtual Scroll
 					{#if virtualScroll}
 						<CwStatusDot status="online" />
 					{:else}

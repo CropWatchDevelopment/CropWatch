@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { CwBadge, CwButton } from '@cropwatchdevelopment/cwui';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import DashboardDeviceTable from '$lib/components/dashboard/DashboardDeviceTable.svelte';
 	import DashboardDeviceCards from '$lib/components/dashboard/DashboardDeviceCards.svelte';
 	import {
@@ -14,6 +16,9 @@
 
 	type DashboardView = 'table' | 'sensor-cards';
 
+	const DASHBOARD_VIEW_STORAGE_KEY = 'cropwatch.dashboard.view';
+	const MOBILE_DASHBOARD_MEDIA_QUERY = '(max-width: 767px)';
+
 	const app = getAppContext();
 
 	// ── Reactive filter state from URL search params ────────────
@@ -21,6 +26,7 @@
 	let activeLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 	let activeLocation = $derived(page.url.searchParams.get('location') ?? '');
 	let dashboardView = $state<DashboardView>('table');
+	let dashboardViewReady = $state(!browser);
 	let dashboardFilters = $derived.by(
 		(): DashboardDeviceFilters => ({
 			group: activeGroup,
@@ -55,19 +61,31 @@
 
 	function setDashboardView(view: DashboardView) {
 		dashboardView = view;
+
+		if (browser) {
+			window.localStorage.setItem(DASHBOARD_VIEW_STORAGE_KEY, view);
+		}
 	}
+
+	onMount(() => {
+		const storedDashboardView = window.localStorage.getItem(DASHBOARD_VIEW_STORAGE_KEY);
+		if (storedDashboardView === 'table' || storedDashboardView === 'sensor-cards') {
+			dashboardView = storedDashboardView;
+		} else if (window.matchMedia(MOBILE_DASHBOARD_MEDIA_QUERY).matches) {
+			dashboardView = 'sensor-cards';
+		}
+
+		dashboardViewReady = true;
+	});
 </script>
 
 <svelte:head>
 	<title>CropWatch Dashboard</title>
 </svelte:head>
 
-<div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden --cw-bg-base">
+<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 	<header class="flex-none">
-
-		<div
-			class="my-3 flex min-h-[4rem] flex-row justify-between px-6 text-xs"
-		>
+		<div class="my-3 flex min-h-[4rem] flex-row justify-between px-6 text-xs">
 			<div class="hidden flex-col gap-2 pt-4 text-slate-400 md:flex">
 				<div class="flex flex-wrap items-center gap-3">
 					<span class="flex items-center gap-1">
@@ -126,9 +144,15 @@
 		</div>
 	</header>
 
-	{#if dashboardView === 'sensor-cards'}
-		<DashboardDeviceCards filters={dashboardFilters} />
+	{#if dashboardViewReady}
+		{#if dashboardView === 'sensor-cards'}
+			<DashboardDeviceCards filters={dashboardFilters} />
+		{:else}
+			<DashboardDeviceTable filters={dashboardFilters} />
+		{/if}
 	{:else}
-		<DashboardDeviceTable filters={dashboardFilters} />
+		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
+			<p class="text-sm text-slate-400">Loading dashboard view...</p>
+		</div>
 	{/if}
 </div>

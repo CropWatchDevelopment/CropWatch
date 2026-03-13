@@ -1,6 +1,11 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import type { DeviceDto, DevicePrimaryDataDto, LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
+import {
+	mapDashboardDeviceMetadataToDevice,
+	mapDashboardPrimaryDataToDevice,
+	mergeDashboardDevices
+} from '$lib/components/dashboard/dashboard-device-data';
 import type { LayoutServerLoad } from './$types';
 
 const LATEST_PRIMARY_DATA_PAGE_SIZE = 250;
@@ -19,6 +24,11 @@ function getLocationName(device: DeviceDto | null | undefined): string {
 			const name = typeof entry?.name === 'string' ? entry.name.trim() : '';
 			if (name) return name;
 		}
+	}
+
+	if (locations && !Array.isArray(locations) && typeof locations === 'object') {
+		const name = typeof locations.name === 'string' ? locations.name.trim() : '';
+		if (name) return name;
 	}
 
 	return '';
@@ -129,7 +139,7 @@ async function getLatestPrimaryDataPerDeviceFallback(apiServiceInstance: ApiServ
 	value: DevicePrimaryDataDto[];
 	skippedDevEuis: string[];
 }> {
-	const devices = await apiServiceInstance.getDevices();
+	const devices = await apiServiceInstance.getAllDevices();
 	const deviceByDevEui = new Map(
 		devices.map((device) => [device.dev_eui, device] as const)
 	);
@@ -232,6 +242,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 
 	const [
 		latestPrimaryDataResult,
+		devicesResult,
 		triggeredRules,
 		triggeredRulesCount,
 		deviceStatusesResult,
@@ -240,6 +251,10 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 		locationGroupsResult
 	] = await Promise.all([
 		loadDashboardLatestPrimaryData(apiServiceInstance),
+		apiServiceInstance
+			.getAllDevices()
+			.then((value) => ({ value: value ?? [], error: null as Record<string, unknown> | null }))
+			.catch((error) => ({ value: [], error: serializeError(error) })),
 		apiServiceInstance.getTriggeredRules().catch(() => []),
 		apiServiceInstance.getTriggeredRulesCount().catch(() => 0),
 		apiServiceInstance
@@ -264,22 +279,15 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 	]);
 
 	const latestPrimaryData = latestPrimaryDataResult.value;
+	const allDevices = devicesResult.value;
 	const deviceStatuses = deviceStatusesResult.value;
 	const locations = locationsResult.value;
 	const locationGroups = locationGroupsResult.value;
 
-	const devices: IDevice[] = latestPrimaryData.map((device) => ({
-		dev_eui: device.dev_eui,
-		name: device.name ?? device.dev_eui,
-		location_name: device.location_name ?? '',
-		group: device.group ?? '',
-		created_at: new Date(device.created_at),
-		co2: device.co2 ?? 0,
-		humidity: device.humidity ?? 0,
-		temperature_c: device.temperature_c ?? 0,
-		location_id: device.location_id ?? 0,
-		cwloading: false
-	}));
+	const devices: IDevice[] = mergeDashboardDevices(
+		allDevices.map((device) => mapDashboardDeviceMetadataToDevice(device)),
+		latestPrimaryData.map((device) => mapDashboardPrimaryDataToDevice(device))
+	);
 
 	// get all unique groups from devices array
 	const groups: string[] = Array.from(new Set(devices.map((d) => d.group).filter((g): g is string => !!g)));
@@ -314,6 +322,10 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 			deviceGroups: {
 				count: resolvedDeviceGroups.length,
 				error: deviceGroupsResult.error
+			},
+			devices: {
+				count: devices.length,
+				error: devicesResult.error
 			},
 			locations: {
 				count: resolvedLocations.length,

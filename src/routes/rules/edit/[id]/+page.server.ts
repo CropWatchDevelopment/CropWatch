@@ -18,16 +18,14 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 
 	const [rule, rawDevices] = await Promise.all([
 		api.getRule(ruleId).catch(() => null),
-		api.getDevices().catch(() => [])
+		api.getAllDevices().catch(() => [])
 	]);
 
 	if (!rule) {
 		error(404, 'Rule not found');
 	}
 
-	const devices = Array.isArray(rawDevices)
-		? rawDevices
-		: ((rawDevices as Record<string, unknown>).data as typeof rawDevices) ?? [];
+	const devices = rawDevices;
 
 	return { rule, devices, authToken };
 };

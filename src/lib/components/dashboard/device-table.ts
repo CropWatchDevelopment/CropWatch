@@ -1,5 +1,5 @@
 import type { CwTableQuery, CwTableResult } from '@cropwatchdevelopment/cwui';
-import type { LocationDto } from '$lib/api/api.dtos';
+import type { LatestPrimaryDataQuery, LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
 
 export interface DashboardDeviceFilters {
@@ -68,6 +68,16 @@ export function buildDashboardTableFilters(
 	};
 }
 
+export function buildDashboardLatestPrimaryDataQuery(
+	filters: DashboardDeviceFilters
+): LatestPrimaryDataQuery {
+	return {
+		group: filters.group || undefined,
+		locationGroup: filters.locationGroup || undefined,
+		location: filters.location || undefined
+	};
+}
+
 export function filterDashboardDevices(
 	devices: IDevice[],
 	locations: LocationDto[],
@@ -93,6 +103,15 @@ export function filterDashboardDevices(
 
 		return true;
 	});
+}
+
+export function listDashboardDevices(
+	devices: IDevice[],
+	locations: LocationDto[],
+	filters: DashboardDeviceFilters,
+	search = ''
+): IDevice[] {
+	return searchDashboardDevices(filterDashboardDevices(devices, locations, filters), search);
 }
 
 export function countDashboardDevices(

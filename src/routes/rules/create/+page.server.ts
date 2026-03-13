@@ -11,8 +11,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
 
-	const raw = await api.getDevices().catch(() => []);
-	const devices = Array.isArray(raw) ? raw : ((raw as Record<string, unknown>).data as typeof raw) ?? [];
+	const devices = await api.getAllDevices().catch(() => []);
 
 	return { devices, authToken, devEui };
 };

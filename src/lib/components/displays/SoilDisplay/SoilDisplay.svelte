@@ -12,12 +12,40 @@
 		CwDataTable,
 		type CwColumnDef,
 		type CwLineChartDataPoint,
+		type CwStatCardData,
 		type CwTableQuery,
-		type CwTableResult
+		type CwTableResult,
+
+		CwStatCard
+
 	} from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+
+	function computeStats(values: number[]): CwStatCardData {
+		if (values.length === 0) return {};
+		const sorted = [...values].sort((a, b) => a - b);
+		const count = sorted.length;
+		const min = sorted[0];
+		const max = sorted[count - 1];
+		const avg = sorted.reduce((s, v) => s + v, 0) / count;
+		const median =
+			count % 2 === 1
+				? sorted[Math.floor(count / 2)]
+				: (sorted[count / 2 - 1] + sorted[count / 2]) / 2;
+		const stdDev = Math.sqrt(sorted.reduce((s, v) => s + (v - avg) ** 2, 0) / count);
+		const lastReading = values[values.length - 1];
+		const trend: CwStatCardData['trend'] =
+			values.length >= 2
+				? values[values.length - 1] > values[values.length - 2]
+					? 'up'
+					: values[values.length - 1] < values[values.length - 2]
+						? 'down'
+						: 'stable'
+				: 'stable';
+		return { min, max, avg, median, stdDev, count, lastReading, trend };
+	}
 
 	// ---- Soil-specific row shape -----------------------------------------------
 
@@ -62,11 +90,20 @@
 		ph: Number(latestData?.ph) || 0
 	});
 
-	let moistureSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
+	let temperatureStats = $derived(computeStats(rows.map((r) => r.temperature_c)));
+	let soilMoistureStats = $derived(computeStats(rows.map((r) => r.moisture)));
+
+	let moistureSeries = $derived<CwLineChartDataPoint[]>(
 		rows.map((p) => ({
 			timestamp: p.created_at,
-			created_at: p.created_at,
 			value: p.moisture
+		}))
+	);
+
+	let temperatureSeries = $derived(
+		rows.map((p) => ({
+			timestamp: p.created_at,
+			value: p.temperature_c
 		}))
 	);
 
@@ -111,13 +148,9 @@
 <div class="soil-display">
 	<!-- KPI cards -->
 	<div class="kpi-grid">
-		<CwCard title="Soil Temperature" subtitle="Latest" elevated>
-			<p class="kpi-value">{latest.temperature_c.toFixed(1)}<span>°C</span></p>
-		</CwCard>
+		<CwStatCard title="Temperature" stats={temperatureStats} unit="°C" />
 
-		<CwCard title="Moisture" subtitle="Latest" elevated>
-			<p class="kpi-value">{latest.moisture.toFixed(1)}<span>%</span></p>
-		</CwCard>
+		<CwStatCard title="Soil Moisture" stats={soilMoistureStats} unit="%" />
 
 		<CwCard title="EC" subtitle="Latest" elevated>
 			<p class="kpi-value">{latest.ec.toFixed(0)}<span>µS/cm</span></p>
@@ -129,11 +162,14 @@
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<CwCard title="Soil Moisture" subtitle="Time series" elevated>
+		<CwCard title="Soil Moisture & Temperature" subtitle="Time series" elevated>
 			<CwLineChart
 				data={moistureSeries}
+				secondaryData={temperatureSeries}
 				primaryLabel="Moisture"
 				primaryUnit="%"
+				secondaryLabel="Temperature"
+				secondaryUnit="°C"
 				height={400}
 			/>
 		</CwCard>
