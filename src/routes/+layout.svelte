@@ -13,65 +13,93 @@
 	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Sidebar from './Sidebar.svelte';
 	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
+	import type { IJWT } from '$lib/interfaces/jwt.interface';
+	import type { IDevice } from '$lib/interfaces/device.interface';
+	import type { LocationDto, RuleDto, TriggeredRulesCountResponse } from '$lib/api/api.dtos';
 	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
 
-	let { data, children }: LayoutProps = $props();
+	let { children }: LayoutProps = $props();
 	createCwToastContext();
 
 	let mode = $state<CwSideNavMode>('open');
-	let isAuthRoute: boolean = $derived(page.url.pathname.startsWith('/auth'));
+	let isAuthRoute = $derived(page.url.pathname.startsWith('/auth'));
 	let resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
-	function syncAppContextFromLayoutData() {
-		const rawTriggeredRulesCount = data.triggeredRulesCount;
-		let triggeredRulesCount = 0;
+	interface DashboardPageData {
+		session?: IJWT | null;
+		authToken?: string | null;
+		devices?: IDevice[];
+		totalDeviceCount?: number;
+		deviceStatuses?: { online: number; offline: number };
+		triggeredRules?: RuleDto[];
+		triggeredRulesCount?: TriggeredRulesCountResponse;
+		deviceGroups?: string[];
+		locationGroups?: string[];
+		locations?: LocationDto[];
+		dashboardDebug?: Record<string, unknown> | null;
+	}
 
+	function readTriggeredRulesCount(
+		rawTriggeredRulesCount: TriggeredRulesCountResponse | undefined
+	): number {
 		if (typeof rawTriggeredRulesCount === 'number' && Number.isFinite(rawTriggeredRulesCount)) {
-			triggeredRulesCount = rawTriggeredRulesCount;
-		} else if (rawTriggeredRulesCount && typeof rawTriggeredRulesCount === 'object') {
+			return rawTriggeredRulesCount;
+		}
+
+		if (rawTriggeredRulesCount && typeof rawTriggeredRulesCount === 'object') {
 			const maybeCount =
 				(rawTriggeredRulesCount as Record<string, unknown>).count ??
 				(rawTriggeredRulesCount as Record<string, unknown>).triggered_count;
 			if (typeof maybeCount === 'number' && Number.isFinite(maybeCount)) {
-				triggeredRulesCount = maybeCount;
+				return maybeCount;
 			}
 		}
 
-		app.session = data.session ?? null;
-		app.devices = data.devices ?? [];
-		app.totalDeviceCount = data.totalDeviceCount ?? app.devices.length;
-		app.deviceStatuses = data.deviceStatuses ?? { online: 0, offline: 0 };
-		app.triggeredRules = data.triggeredRules ?? [];
-		app.triggeredRulesCount = triggeredRulesCount;
-		app.accessToken = data.authToken ?? undefined;
-		app.deviceGroups = (data.deviceGroups ?? []).filter((g): g is string => !!g);
-		app.locationGroups = (data.locationGroups ?? []).filter((g): g is string => !!g);
-		app.locations = data.locations ?? [];
+		return 0;
 	}
 
 	const app = $state(createAppContext());
-	let layoutDebugDeviceDevEuis = $derived(
-		(data.devices ?? [])
-			.slice(0, 10)
-			.map((device) => ('dev_eui' in device ? String(device.dev_eui ?? '') : ''))
-	);
+	setAppContext(app);
 
-	syncAppContextFromLayoutData();
-	afterNavigate(() => {
-		syncAppContextFromLayoutData();
-	});
+	function syncAppFromPageData() {
+		const routeData = page.data as DashboardPageData;
+		const isDashboardRoute = page.url.pathname === '/';
+		const devices = isDashboardRoute ? (routeData.devices ?? []) : [];
+
+		app.session = routeData.session ?? null;
+		app.accessToken = routeData.authToken ?? undefined;
+		app.devices = devices;
+		app.totalDeviceCount = isDashboardRoute ? (routeData.totalDeviceCount ?? devices.length) : 0;
+		app.deviceStatuses = isDashboardRoute
+			? (routeData.deviceStatuses ?? { online: 0, offline: 0 })
+			: { online: 0, offline: 0 };
+		app.triggeredRules = isDashboardRoute ? (routeData.triggeredRules ?? []) : [];
+		app.triggeredRulesCount = readTriggeredRulesCount(
+			isDashboardRoute ? routeData.triggeredRulesCount : 0
+		);
+		app.deviceGroups = isDashboardRoute
+			? (routeData.deviceGroups ?? []).filter((group): group is string => !!group)
+			: [];
+		app.locationGroups = isDashboardRoute
+			? (routeData.locationGroups ?? []).filter((group): group is string => !!group)
+			: [];
+		app.locations = isDashboardRoute ? (routeData.locations ?? []) : [];
+	}
+
+	syncAppFromPageData();
+	afterNavigate(syncAppFromPageData);
 
 	if (dev) {
 		$inspect(
 			page.url.pathname,
 			page.url.search,
-			!!data.authToken,
-			(data.devices ?? []).length,
-			data.totalDeviceCount ?? (data.devices ?? []).length,
-			data.deviceStatuses ?? null,
-			layoutDebugDeviceDevEuis,
-			data.dashboardDebug ?? null
+			!!(page.data as DashboardPageData).authToken,
+			((page.data as DashboardPageData).devices ?? []).length,
+			(page.data as DashboardPageData).totalDeviceCount ??
+				((page.data as DashboardPageData).devices ?? []).length,
+			(page.data as DashboardPageData).deviceStatuses ?? null,
+			(page.data as DashboardPageData).dashboardDebug ?? null
 		).with(
 			(
 				type,
@@ -81,10 +109,9 @@
 				devicesLength,
 				totalDeviceCount,
 				deviceStatuses,
-				deviceDevEuis,
 				dashboardDebug
 			) => {
-				console.info('[layout] client data snapshot', {
+				console.info('[layout] route data snapshot', {
 					type,
 					pathname,
 					search,
@@ -92,13 +119,11 @@
 					devicesLength,
 					totalDeviceCount,
 					deviceStatuses,
-					deviceDevEuis,
 					dashboardDebug
 				});
-			});
+			}
+		);
 	}
-
-	setAppContext(app);
 
 	function handleWindowResize() {
 		document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
@@ -125,7 +150,7 @@
 	{#if !isAuthRoute}
 		<Sidebar bind:mode />
 		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
-			<Header bind:mode={mode} />
+			<Header bind:mode />
 			<main class="flex min-h-0 flex-1 flex-col overflow-hidden p-1">
 				{@render children()}
 			</main>

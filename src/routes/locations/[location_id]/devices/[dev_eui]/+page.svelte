@@ -153,6 +153,16 @@
 		}
 	});
 
+	// Auto-load "Today Only" on first visit to this device route
+	$effect(() => {
+		const key = routeKey;
+		const token = authToken;
+		if (!token || !key) return;
+		if (!routeStateByKey[key]) {
+			selectRange(RANGE_OPTIONS[0].value);
+		}
+	});
+
 	let csvRangeLabel = $derived(activeRangeHours === null ? 'custom' : `${activeRangeHours}h`);
 	let childLoading = $derived(fetching && historicalData.length === 0);
 

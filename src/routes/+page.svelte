@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { CwBadge, CwButton } from '@cropwatchdevelopment/cwui';
+	import { afterNavigate } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import DashboardDeviceTable from '$lib/components/dashboard/DashboardDeviceTable.svelte';
@@ -13,6 +14,7 @@
 	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { page } from '$app/state';
+	import type { PageProps } from './$types';
 
 	type DashboardView = 'table' | 'sensor-cards';
 
@@ -20,6 +22,46 @@
 	const MOBILE_DASHBOARD_MEDIA_QUERY = '(max-width: 767px)';
 
 	const app = getAppContext();
+
+	function readTriggeredRulesCount(
+		rawTriggeredRulesCount: PageProps['data']['triggeredRulesCount']
+	): number {
+		if (typeof rawTriggeredRulesCount === 'number' && Number.isFinite(rawTriggeredRulesCount)) {
+			return rawTriggeredRulesCount;
+		}
+
+		if (rawTriggeredRulesCount && typeof rawTriggeredRulesCount === 'object') {
+			const maybeCount =
+				(rawTriggeredRulesCount as Record<string, unknown>).count ??
+				(rawTriggeredRulesCount as Record<string, unknown>).triggered_count;
+			if (typeof maybeCount === 'number' && Number.isFinite(maybeCount)) {
+				return maybeCount;
+			}
+		}
+
+		return 0;
+	}
+
+	function syncDashboardContext(pageData: PageProps['data']) {
+		app.accessToken = pageData.authToken ?? undefined;
+		app.devices = pageData.devices ?? [];
+		app.totalDeviceCount = pageData.totalDeviceCount ?? app.devices.length;
+		app.deviceStatuses = pageData.deviceStatuses ?? { online: 0, offline: 0 };
+		app.triggeredRules = pageData.triggeredRules ?? [];
+		app.triggeredRulesCount = readTriggeredRulesCount(pageData.triggeredRulesCount);
+		app.deviceGroups = (pageData.deviceGroups ?? []).filter((group): group is string => !!group);
+		app.locationGroups = (pageData.locationGroups ?? []).filter(
+			(group): group is string => !!group
+		);
+		app.locations = pageData.locations ?? [];
+	}
+
+	syncDashboardContext(page.data as PageProps['data']);
+	afterNavigate(() => {
+		if (page.url.pathname === '/') {
+			syncDashboardContext(page.data as PageProps['data']);
+		}
+	});
 
 	// ── Reactive filter state from URL search params ────────────
 	let activeGroup = $derived(page.url.searchParams.get('group') ?? '');
