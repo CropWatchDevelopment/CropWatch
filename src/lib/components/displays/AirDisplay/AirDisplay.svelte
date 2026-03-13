@@ -27,7 +27,7 @@
 		{ key: 'temperature_c', header: 'Temp (°C)', sortable: true, width: '8rem' },
 		{ key: 'humidity', header: 'Humidity (%)', sortable: true, width: '9rem' },
 		{ key: 'co2', header: 'CO2 (ppm)', sortable: true, width: '9rem' },
-		{ key: 'alerts', header: 'Alerts', width: '6rem' }
+		{ key: 'alerts', header: 'Alerts', width: '3rem' },
 	];
 
 	const ALARM_AFTER_MINUTES = 10.5;
@@ -273,7 +273,7 @@
 		</div>
 
 		<CwCard title="Telemetry Table" subtitle="Searchable, sortable data" elevated>
-			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
+			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" rowActionsHeader="Actions" searchable>
 				{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
 					<div class="text-2xl">
 						{#if col.key === 'created_at'}

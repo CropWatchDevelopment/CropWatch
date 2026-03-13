@@ -12,8 +12,8 @@
 	}
 </script>
 
-<CwButton variant="secondary" onclick={() => (open = true)}>
-	<img src={EYE_ICON} />
+<CwButton variant="secondary" size="sm" onclick={() => (open = true)}>
+	<img src={EYE_ICON} alt="View Note" />
 </CwButton>
 
 <CwDialog

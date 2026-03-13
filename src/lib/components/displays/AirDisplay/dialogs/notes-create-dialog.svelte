@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CwButton, CwDialog, CwTextArea } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
+	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
 
 	let { row, dev_eui }: { row: AirRow; dev_eui: string } = $props();
 	let open = $state(false);
@@ -34,7 +35,9 @@
 	}
 </script>
 
-<CwButton variant="info" onclick={() => (open = true)}>Add a Note</CwButton>
+<CwButton variant="info" size="sm" onclick={() => (open = true)}>
+	<img src={ADD_NOTE_ICON} alt="Add Note" />
+</CwButton>
 
 <CwDialog
 	{open}

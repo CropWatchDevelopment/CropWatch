@@ -1,45 +1,41 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { SvelteDate } from 'svelte/reactivity';
 	import { resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService } from '$lib/api/api.service';
 	import {
 		CwButton,
 		CwCard,
-		CwDateTimeRangePicker,
-		CwDuration,
 		CwSpinner,
-		useCwToast,
-		type CwDateValue,
-		type CwRangeDateValue
+		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import { downloadCsv, type CsvRow } from './csvExport';
 	import type { PageProps } from './$types';
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 
+	type RangeSelection = 'today' | 24 | 48 | 72;
+
 	interface TimeRangeOptions {
 		label: string;
-		value: number | null;
+		value: RangeSelection;
 	}
 
 	type TelemetryRow = Record<string, unknown>;
-	const HoursSinceStartOfToday = Math.floor(
-		(Date.now() - new Date().setHours(0, 0, 0, 0)) / (60 * 60 * 1000)
-	);
-	export const RANGE_OPTIONS: TimeRangeOptions[] = [
-		{ label: 'Today Only', value: HoursSinceStartOfToday },
+	const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
+	const DEFAULT_RANGE_SELECTION: RangeSelection = 'today';
+	const RANGE_OPTIONS: TimeRangeOptions[] = [
+		{ label: 'Today Only', value: DEFAULT_RANGE_SELECTION },
 		{ label: 'Last 24 Hours', value: 24 },
 		{ label: 'Last 48 Hours', value: 48 },
 		{ label: 'Last 72 Hours', value: 72 }
 	];
-	type RangeHours = (typeof RANGE_OPTIONS)[number];
 	const MAX_RANGE_RECORDS = 432;
 
 	interface RouteState {
 		requestedHistoricalData: TelemetryRow[] | null;
-		activeRangeHours: RangeHours | null;
-		dateRange: CwRangeDateValue | undefined;
+		activeRange: RangeSelection | null;
 		fetching: boolean;
 		fetchError: string | null;
 	}
@@ -85,23 +81,6 @@
 		return 'Unknown';
 	}
 
-	function readTimestamp(row: TelemetryRow | null): string | null {
-		if (!row) {
-			return null;
-		}
-
-		const value = row.created_at;
-		if (typeof value === 'string' && value.length > 0) {
-			return value;
-		}
-
-		if (value instanceof Date) {
-			return value.toISOString();
-		}
-
-		return null;
-	}
-
 	function toIsoString(value: Date | string): string {
 		return new Date(value).toISOString();
 	}
@@ -109,14 +88,14 @@
 	function createRouteState(): RouteState {
 		return {
 			requestedHistoricalData: null,
-			activeRangeHours: null,
-			dateRange: undefined,
+			activeRange: null,
 			fetching: false,
 			fetchError: null
 		};
 	}
 
 	let routeStateByKey = $state<Record<string, RouteState>>({});
+	const initializedRouteKeys: Record<string, true> = {};
 
 	function getRouteState(key: string): RouteState {
 		if (!routeStateByKey[key]) {
@@ -134,7 +113,6 @@
 	let locationName = $derived(readLocationName(data.device));
 	let serverHistoricalData = $derived(normalizeTelemetryRows(data.deviceData));
 	let DisplayComponent = $derived(resolveDisplayComponent(data.dataTable));
-	let lastSeen = $derived(readTimestamp(latestData));
 	let controlsDisabled = $derived(!authToken || !devEui);
 	let routeKey = $derived(`${locationId}:${devEui}`);
 
@@ -142,34 +120,45 @@
 		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
 	);
 	let historicalData = $derived(requestedHistoricalData ?? serverHistoricalData);
-	let activeRangeHours = $derived(routeStateByKey[routeKey]?.activeRangeHours ?? null);
-	let dateRange = $derived(routeStateByKey[routeKey]?.dateRange ?? undefined);
+	let activeRange = $derived(routeStateByKey[routeKey]?.activeRange ?? null);
 	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
 	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
 
-	$effect(() => {
-		if (fetchError) {
-			toast.add({ tone: 'danger', message: fetchError });
-		}
-	});
-
-	// Auto-load "Today Only" on first visit to this device route
-	$effect(() => {
+	afterNavigate(() => {
 		const key = routeKey;
-		const token = authToken;
-		if (!token || !key) return;
-		if (!routeStateByKey[key]) {
-			selectRange(RANGE_OPTIONS[0].value);
-		}
+		if (!authToken || !devEui || !key || initializedRouteKeys[key]) return;
+
+		initializedRouteKeys[key] = true;
+		void selectRange(DEFAULT_RANGE_SELECTION);
 	});
 
-	let csvRangeLabel = $derived(activeRangeHours === null ? 'custom' : `${activeRangeHours}h`);
+	let csvRangeLabel = $derived(
+		activeRange === null ? 'custom' : activeRange === 'today' ? 'today' : `${activeRange}h`
+	);
 	let childLoading = $derived(fetching && historicalData.length === 0);
+
+	function getRangeBounds(selection: RangeSelection): { start: string; end: string } {
+		const end = new SvelteDate();
+		const endTime = end.getTime();
+		if (selection === 'today') {
+			const start = new SvelteDate(endTime);
+			start.setHours(0, 0, 0, 0);
+			return {
+				start: start.toISOString(),
+				end: end.toISOString()
+			};
+		}
+
+		return {
+			start: new SvelteDate(endTime - selection * MILLISECONDS_PER_HOUR).toISOString(),
+			end: end.toISOString()
+		};
+	}
 
 	async function loadHistoricalData(
 		start: Date | string,
 		end: Date | string,
-		rangeHours: RangeHours | null
+		rangeSelection: RangeSelection | null
 	): Promise<void> {
 		if (!authToken || !devEui) {
 			return;
@@ -188,37 +177,19 @@
 			});
 
 			state.requestedHistoricalData = normalizeTelemetryRows(result);
-			state.activeRangeHours = rangeHours;
-			if (rangeHours !== null) {
-				state.dateRange = undefined;
-			}
+			state.activeRange = rangeSelection;
 		} catch (error) {
 			console.error('Failed to fetch device data:', error);
 			state.fetchError = 'Unable to load telemetry for the selected range.';
+			toast.add({ tone: 'danger', message: state.fetchError });
 		} finally {
 			state.fetching = false;
 		}
 	}
 
-	async function selectRange(hours: RangeHours): Promise<void> {
-		const end = new Date();
-		const start = new Date(end.getTime() - hours * 60 * 60 * 1000);
-		await loadHistoricalData(start, end, hours);
-	}
-
-	function isRangeDateValue(value: CwDateValue | undefined): value is CwRangeDateValue {
-		return !!value && 'start' in value && 'end' in value;
-	}
-
-	async function handleDateRangeChange(value: CwDateValue | undefined): Promise<void> {
-		const state = getRouteState(routeKey);
-		state.dateRange = isRangeDateValue(value) ? value : undefined;
-
-		if (!isRangeDateValue(value) || !value.start || !value.end) {
-			return;
-		}
-
-		await loadHistoricalData(value.start, value.end, null);
+	async function selectRange(selection: RangeSelection): Promise<void> {
+		const { start, end } = getRangeBounds(selection);
+		await loadHistoricalData(start, end, selection);
 	}
 
 	function handleCsvDownload(): void {
@@ -259,7 +230,7 @@
 			<div class="device-page__group device-page__group--ranges">
 				{#each RANGE_OPTIONS as ranges (ranges.value)}
 					<CwButton
-						variant={activeRangeHours === ranges.value ? 'primary' : 'secondary'}
+						variant={activeRange === ranges.value ? 'primary' : 'secondary'}
 						size="sm"
 						disabled={controlsDisabled}
 						onclick={() => selectRange(ranges.value)}
@@ -302,12 +273,18 @@
 			</div>
 		</div>
 
-		{#if fetching}
+		{#if fetching || fetchError}
 			<div class="device-page__status">
-				<div class="device-page__status-row">
-					<CwSpinner />
-					<span>Loading telemetry…</span>
-				</div>
+				{#if fetching}
+					<div class="device-page__status-row">
+						<CwSpinner />
+						<span>Loading telemetry…</span>
+					</div>
+				{/if}
+
+				{#if fetchError}
+					<p class="device-page__status-error">{fetchError}</p>
+				{/if}
 			</div>
 		{/if}
 	</CwCard>
@@ -373,6 +350,11 @@
 		align-items: center;
 		gap: 0.75rem;
 		color: var(--cw-text-muted);
+	}
+
+	.device-page__status-error {
+		margin: 0;
+		color: var(--cw-danger, #b91c1c);
 	}
 
 	.device-page__display {
