@@ -1,4 +1,10 @@
-import { ApiService, ApiServiceError, type DeviceDto, type LocationDto } from '$lib/api/api.service';
+import { env } from '$env/dynamic/private';
+import {
+	ApiService,
+	ApiServiceError,
+	type DeviceDto,
+	type LocationDto
+} from '$lib/api/api.service';
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -31,6 +37,15 @@ type NormalizedDeviceOwner = {
 	email: string;
 	userId: string;
 	permissionLevel: number;
+};
+
+type SensorCertificateRow = {
+	key: 'sensor' | 'sensor2';
+	label: string;
+	serial: string;
+	product: string;
+	downloadPath: string;
+	downloadDisabledReason: string | null;
 };
 
 const readString = (value: FormDataEntryValue | null): string => {
@@ -68,7 +83,11 @@ function readProfileIdentity(record: Record<string, unknown>): OwnerIdentity {
 	const profiles = record.profiles as Record<string, unknown> | undefined;
 	return {
 		email: str(record.email) || str(record.user_email) || str(profiles?.email),
-		name: str(record.name) || str(record.full_name) || str(profiles?.full_name) || str(profiles?.display_name)
+		name:
+			str(record.name) ||
+			str(record.full_name) ||
+			str(profiles?.full_name) ||
+			str(profiles?.display_name)
 	};
 }
 
@@ -103,10 +122,7 @@ function normalizeDeviceOwners(
 			const locationOwnerIdentity = locationOwnerIdentities.get(userId);
 			const ownerIdentity = readProfileIdentity(owner);
 			const email =
-				ownerIdentity.email ||
-				str(owner.targetUserEmail) ||
-				locationOwnerIdentity?.email ||
-				'';
+				ownerIdentity.email || str(owner.targetUserEmail) || locationOwnerIdentity?.email || '';
 			const name =
 				ownerIdentity.name || locationOwnerIdentity?.name || userId || `User ${index + 1}`;
 			const rawId = owner.id;
@@ -130,6 +146,42 @@ function normalizeDeviceOwners(
 		);
 }
 
+function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificateRow[] {
+	if (!device) return [];
+
+	const product = str(device.cw_device_type?.model);
+	const hasApiToken = str(env.PRIVATE_LIBELLUS_API_TOKEN).length > 0;
+	const hasBaseUrl = str(env.PRIVATE_LIBELLUS_BASE_URL).length > 0;
+	const record = device as Record<string, unknown>;
+	const rows = [
+		{
+			key: 'sensor' as const,
+			label: 'Sensor 1',
+			serial: str(record.sensor1_serial) || str(record.sensor_serial)
+		},
+		{
+			key: 'sensor2' as const,
+			label: 'Sensor 2',
+			serial: str(record.sensor2_serial)
+		}
+	];
+
+	return rows
+		.filter((row) => row.serial.length > 0)
+		.map((row) => ({
+			...row,
+			product,
+			downloadPath: `libellus-certificates/${row.key}`,
+			downloadDisabledReason: !hasApiToken
+				? 'PRIVATE_LIBELLUS_API_TOKEN is not configured.'
+				: !hasBaseUrl
+					? 'PRIVATE_LIBELLUS_BASE_URL is not configured.'
+					: !product
+						? 'cw_device_type.model is missing, so Libellus product_name is unknown.'
+						: null
+		}));
+}
+
 export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const authToken = locals.jwtString ?? null;
 	const devEui = String(params.dev_eui ?? '').trim();
@@ -141,6 +193,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 			deviceName: '',
 			deviceGroup: '',
 			deviceGroups: [] as string[],
+			sensorCertificates: [] as SensorCertificateRow[],
 			deviceOwners: [] as NormalizedDeviceOwner[]
 		};
 	}
@@ -154,13 +207,14 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		api.getDevice(devEui).catch(() => null),
 		api.getDeviceGroups().catch(() => []),
 		Number.isFinite(locationId)
-		? api.getLocation(locationId).catch(() => null)
-		: Promise.resolve(null),
-		api.getLocations().catch(() => []),
+			? api.getLocation(locationId).catch(() => null)
+			: Promise.resolve(null),
+		api.getLocations().catch(() => [])
 	]);
 
 	const locationOwnerIdentities = buildLocationOwnerIdentityMap(location);
 	const deviceName = device?.name || devEui.toUpperCase();
+	const sensorCertificates = buildSensorCertificateRows(device);
 
 	return {
 		devEui,
@@ -169,6 +223,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		deviceGroup: device?.group || '',
 		deviceGroups,
 		locations,
+		sensorCertificates,
 		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities)
 	};
 };
@@ -234,7 +289,7 @@ export const actions: Actions = {
 			await api.updateDevice(devEui, {
 				name: values.name,
 				group: values.group || null,
-				location_id: +values.location_id,
+				location_id: +values.location_id
 			});
 		} catch (error) {
 			return fail(error instanceof ApiServiceError ? error.status : 502, {

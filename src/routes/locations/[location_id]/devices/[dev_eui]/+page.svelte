@@ -4,15 +4,10 @@
 	import { SvelteDate } from 'svelte/reactivity';
 	import { resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService } from '$lib/api/api.service';
-	import {
-		CwButton,
-		CwCard,
-		CwSpinner,
-		useCwToast
-	} from '@cropwatchdevelopment/cwui';
-	import { downloadCsv, type CsvRow } from './csvExport';
+	import { CwButton, CwCard, CwSpinner, useCwToast } from '@cropwatchdevelopment/cwui';
+	import CsvExportDialog from './csvExportDialog.svelte';
+	import { resolveExportTimeZone } from './csvExport';
 	import type { PageProps } from './$types';
-	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 
 	type RangeSelection = 'today' | 24 | 48 | 72;
@@ -111,6 +106,7 @@
 	let permissionLevel = $derived(Number(data.permissionLevel) || 4);
 	let latestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
 	let locationName = $derived(readLocationName(data.device));
+	let exportTimeZone = $derived(resolveExportTimeZone(data.device));
 	let serverHistoricalData = $derived(normalizeTelemetryRows(data.deviceData));
 	let DisplayComponent = $derived(resolveDisplayComponent(data.dataTable));
 	let controlsDisabled = $derived(!authToken || !devEui);
@@ -132,9 +128,6 @@
 		void selectRange(DEFAULT_RANGE_SELECTION);
 	});
 
-	let csvRangeLabel = $derived(
-		activeRange === null ? 'custom' : activeRange === 'today' ? 'today' : `${activeRange}h`
-	);
 	let childLoading = $derived(fetching && historicalData.length === 0);
 
 	function getRangeBounds(selection: RangeSelection): { start: string; end: string } {
@@ -191,14 +184,6 @@
 		const { start, end } = getRangeBounds(selection);
 		await loadHistoricalData(start, end, selection);
 	}
-
-	function handleCsvDownload(): void {
-		downloadCsv(historicalData as CsvRow[], {
-			locationName,
-			devEui,
-			rangeLabel: csvRangeLabel
-		});
-	}
 </script>
 
 <svelte:head>
@@ -242,15 +227,13 @@
 
 			<div class="device-page__group device-page__group--actions">
 				{#if permissionLevel <= 2}
-					<CwButton
-						variant="secondary"
-						size="sm"
-						disabled={historicalData.length === 0}
-						onclick={handleCsvDownload}
-					>
-						<img src={DOWNLOAD_ICON} alt="" class="toolbar-icon" />
-						CSV
-					</CwButton>
+					<CsvExportDialog
+						{authToken}
+						{devEui}
+						{locationName}
+						timeZone={exportTimeZone}
+						disabled={controlsDisabled}
+					/>
 				{/if}
 
 				{#if permissionLevel <= 1}

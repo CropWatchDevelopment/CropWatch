@@ -6,9 +6,9 @@
 		CwChip,
 		CwDropdown,
 		CwInput,
-		CwSeparator,
-		useCwToast
+		CwSeparator
 	} from '@cropwatchdevelopment/cwui';
+	import { resolve } from '$app/paths';
 	import type { PageProps } from './$types';
 	import './settings-style.css';
 	import { goto } from '$app/navigation';
@@ -40,32 +40,13 @@
 	let { data, form }: PageProps = $props();
 	const app = getAppContext();
 
-	const toast = useCwToast();
-
-	$effect(() => {
-		if (actionForm?.message) {
-			toast.add({
-				tone: actionForm.success ? 'success' : 'danger',
-				message: actionForm.message
-			});
-		}
-	});
-
 	let deviceSubmitting = $state(false);
 	let ownerSubmittingByKey = $state<Record<string, boolean>>({});
 	let deviceName = $derived(data.deviceName ?? '');
 	let deviceGroup = $derived(data.deviceGroup ?? '');
-	let permissionRows: DeviceOwnerRow[] = $state([]);
-
-	$effect(() => {
-		permissionRows = createOwnerRows(data.deviceOwners ?? []);
-	});
-
-	if (!data.location_id) {
-		throw new Error('Device location_id is required in page data.');
-	}
-	let location_id = $state(String(data.location_id));
-	$inspect(location_id);
+	let location_id = $derived(String(data.location_id ?? ''));
+	let sensorCertificates = $derived(data.sensorCertificates ?? []);
+	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
 
 	function createOwnerRows(
 		owners: Array<{
@@ -122,10 +103,6 @@
 	let canSubmitDevice = $derived(
 		!deviceSubmitting && deviceDirty && !deviceNameError && !deviceGroupError
 	);
-	let groupOptions = $derived([
-		{ label: 'Unassigned', value: '' },
-		...(data.deviceGroups ?? []).map((group) => ({ label: group, value: group }))
-	]);
 
 	const permissionOptions = [
 		{ label: 'Admin', value: '1' },
@@ -146,8 +123,15 @@
 </svelte:head>
 
 <div class="device-settings-page">
-	<CwButton onclick={() => goto(`/locations/${location_id}`)} class="back-button"
-		>&larr; Back To Location</CwButton
+	<CwButton
+		onclick={() =>
+			goto(
+				resolve('/locations/[location_id]/devices/[dev_eui]', {
+					location_id,
+					dev_eui: data.devEui
+				})
+			)}
+		class="back-button">&larr; Back To Device Detail</CwButton
 	>
 	<CwCard title="Device Settings" subtitle="Update the cw_device name and group fields." elevated>
 		<form
@@ -182,7 +166,9 @@
 			</div>
 
 			{#if deviceForm?.message}
-				<!-- Toast shown via $effect -->
+				<p class:feedback-success={deviceForm.success} class="form-feedback">
+					{deviceForm.message}
+				</p>
 			{/if}
 
 			<div class="panel-grid">
@@ -251,6 +237,68 @@
 	</CwCard>
 
 	<CwCard
+		title="Device Sensor Certificates"
+		subtitle="Download the Libellus PDF certificate for each configured sensor serial."
+		elevated
+	>
+		{#if sensorCertificates.length === 0}
+			<p class="empty-state">No sensor serial value is available for this device.</p>
+		{:else}
+			<div class="certificate-list">
+				{#each sensorCertificates as target, index (target.key)}
+					<div class="certificate-item">
+						<div class="certificate-item__meta">
+							<div class="device-form__header">
+								<CwChip label={target.label} tone="info" variant="soft" />
+								<CwChip label={`Serial ${target.serial}`} tone="secondary" variant="soft" />
+								{#if target.product}
+									<CwChip label={target.product} tone="secondary" variant="soft" />
+								{/if}
+							</div>
+
+							<p class="panel-note">
+								Downloads the individual ISO17025 PDF returned by Sensirion Libellus for this serial
+								number.
+							</p>
+
+							{#if target.downloadDisabledReason}
+								<p class="field-error">{target.downloadDisabledReason}</p>
+							{/if}
+						</div>
+
+						<form
+							method="GET"
+							action={resolve(
+								'/locations/[location_id]/devices/[dev_eui]/settings/libellus-certificates/[sensor_key]',
+								{
+									location_id,
+									dev_eui: data.devEui,
+									sensor_key: target.key
+								}
+							)}
+							target="_blank"
+							class="certificate-download-form"
+						>
+							<CwButton
+								type="submit"
+								variant="primary"
+								size="sm"
+								disabled={Boolean(target.downloadDisabledReason)}
+							>
+								Download PDF
+							</CwButton>
+						</form>
+					</div>
+
+					{#if index < sensorCertificates.length - 1}
+						<CwSeparator spacing="0" />
+					{/if}
+				{/each}
+			</div>
+		{/if}
+	</CwCard>
+
+	<CwCard
 		title="Device Owner Permissions"
 		subtitle="Update only. Add and delete actions are intentionally omitted here."
 		elevated
@@ -262,8 +310,6 @@
 				{#each permissionRows as row, index (row.key)}
 					{@const ownerForm = ownerFormFor(row.key)}
 					{#if row.email && row.email !== ''}
-
-					
 						{#if !row.email.includes('@cropwatch.io') || app.session?.email.includes('@cropwatch.io')}
 							<div class="permission-row">
 								<form
@@ -328,6 +374,15 @@
 									{#if ownerForm?.fieldErrors?.targetUserEmail}
 										<p class="field-error permission-feedback">
 											{ownerForm.fieldErrors.targetUserEmail}
+										</p>
+									{/if}
+
+									{#if ownerForm?.message}
+										<p
+											class:feedback-success={ownerForm.success}
+											class="form-feedback permission-feedback"
+										>
+											{ownerForm.message}
 										</p>
 									{/if}
 								</form>

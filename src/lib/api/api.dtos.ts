@@ -75,6 +75,7 @@ export interface DeviceListQuery extends PaginationQuery {
 export interface DeviceDataWithinRangeQuery extends PaginationQuery {
 	start?: string | Date;
 	end?: string | Date;
+	timezone?: string;
 }
 
 export interface LatestPrimaryDataQuery extends PaginationQuery {

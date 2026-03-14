@@ -68,6 +68,28 @@ describe('ApiService created_at timezone handling', () => {
 			dev_eui: 'device-123'
 		});
 	});
+
+	it('forwards timezone when requesting device data within range', async () => {
+		let requestedUrl = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+			requestedUrl = String(input);
+			return createJsonResponse([]);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.getDeviceDataWithinRange('device-123', {
+			start: '2026-03-08T12:00:00.000Z',
+			end: '2026-03-08T13:00:00.000Z',
+			timezone: 'America/New_York'
+		});
+
+		expect(requestedUrl).toContain('timezone=America%2FNew_York');
+	});
 });
 
 describe('ApiService list response normalization', () => {

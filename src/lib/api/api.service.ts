@@ -362,8 +362,7 @@ export class ApiService {
 		const { body, headers, query, authToken, responseType = 'json', ...requestInit } = options;
 		const url = buildUrl(this.baseUrl, path, query);
 
-		const resolvedHeaders = 
-		new Headers(headers);
+		const resolvedHeaders = new Headers(headers);
 		const resolvedToken = authToken === undefined ? this.authToken : authToken;
 
 		if (!resolvedHeaders.has('Accept')) {
@@ -497,9 +496,7 @@ export class ApiService {
 		);
 	}
 
-	public async getDevicesPage(
-		query: DeviceListQuery = {}
-	): Promise<PaginatedResponse<DeviceDto>> {
+	public async getDevicesPage(query: DeviceListQuery = {}): Promise<PaginatedResponse<DeviceDto>> {
 		const payload = await this.request<
 			DeviceDto[] | PaginatedResponse<DeviceDto> | Record<string, unknown>
 		>(DEVICES_ENDPOINT, {
@@ -780,7 +777,8 @@ export class ApiService {
 					skip: query.skip,
 					take: query.take,
 					start: toIsoIfDate(query.start),
-					end: toIsoIfDate(query.end)
+					end: toIsoIfDate(query.end),
+					timezone: query.timezone
 				}
 			}
 		);
