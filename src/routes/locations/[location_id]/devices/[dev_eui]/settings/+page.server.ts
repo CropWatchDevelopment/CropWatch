@@ -168,6 +168,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		location_id: device?.location_id,
 		deviceGroup: device?.group || '',
 		deviceGroups,
+		locations,
 		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities)
 	};
 };

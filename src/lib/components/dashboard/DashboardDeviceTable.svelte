@@ -133,6 +133,7 @@
 			rowKey="dev_eui"
 			filters={tableFilters}
 			fillParent
+			groupBy="location_name"
 			{virtualScroll}
 			virtualRowHeight={DASHBOARD_DEVICE_ROW_HEIGHT}
 			virtualOverscan={DASHBOARD_DEVICE_OVERSCAN}

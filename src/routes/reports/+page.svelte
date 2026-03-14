@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-	CwButton,
+		CwButton,
 		CwCard,
 		CwDataTable,
 		type CwColumnDef,
@@ -12,7 +12,7 @@
 	import ReportHistoryDialog from './ReportHistoryDialog.svelte';
 
 	let { data }: { data: { reports: ReportDto[] } } = $props();
-    let loading = $state(true);
+	let loading = $state(true);
 
 	const columns: CwColumnDef<ReportDto>[] = [
 		{ key: 'name', header: 'Name', sortable: true },
@@ -22,15 +22,21 @@
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<ReportDto>> {
 		const rows = data.reports ?? [];
-        loading = false;
+		loading = false;
 		return { rows, total: rows.length };
 	}
 </script>
 
+<svelte:head>
+	<title>Reports - CropWatch</title>
+</svelte:head>
+
 <CwCard title="Weekly Reports" class="min-h-0 flex-1 p-4">
-	<CwDataTable {columns} {loadData} {loading} rowActionsHeader="Actions" rowKey="id">
-		{#snippet rowActions(row: ReportDto)}
-			<ReportHistoryDialog dev_eui={row.dev_eui} />
-		{/snippet}
-	</CwDataTable>
+	<div class="overflow-y-scroll">
+		<CwDataTable {columns} {loadData} {loading} rowActionsHeader="Actions" rowKey="id">
+			{#snippet rowActions(row: ReportDto)}
+				<ReportHistoryDialog dev_eui={row.dev_eui} />
+			{/snippet}
+		</CwDataTable>
+	</div>
 </CwCard>
