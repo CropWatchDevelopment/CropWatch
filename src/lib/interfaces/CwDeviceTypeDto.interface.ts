@@ -1,23 +1,26 @@
 export interface CwDeviceType {
-  id: number
-  name: string
-  model: string
-  decoder: string
-  isActive: boolean
-  created_at: string
-  data_table: string
-  manufacturer: string
-  primary_data: string
-  data_table_v2: string
-  secondary_data: string
-  primary_data_v2: string
-  primary_divider: number
-  secondary_data_v2: string
-  secondary_divider: number
-  TTI_application_id: string
-  primary_multiplier: number
-  secondary_multiplier: number
-  primary_data_notation: string
-  default_upload_interval: number
-  secondary_data_notation: string
+	id: number;
+	name: string;
+	model: string;
+	decoder?: string | null;
+	is_active?: boolean | null;
+	isActive?: boolean | null;
+	created_at?: string | null;
+	data_table?: string | null;
+	manufacturer?: string | null;
+	primary_data?: string | null;
+	data_table_v2?: string | null;
+	secondary_data?: string | null;
+	primary_data_v2?: string | null;
+	primary_divider?: number | null;
+	secondary_data_v2?: string | null;
+	secondary_divider?: number | null;
+	tti_application_id?: string | null;
+	TTI_application_id?: string | null;
+	primary_multiplier?: number | null;
+	secondary_multiplier?: number | null;
+	primary_data_notation?: string | null;
+	default_upload_interval?: number | null;
+	secondary_data_notation?: string | null;
+	[key: string]: unknown;
 }

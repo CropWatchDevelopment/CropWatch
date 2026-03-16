@@ -12,6 +12,7 @@ import {
 } from '$env/static/public';
 import type { PdfFile } from '../interfaces/PdfFile.interface';
 import type {
+	CreateDeviceRequest,
 	CreateLocationRequest,
 	CreateReportRequest,
 	CreateRuleRequest,
@@ -19,6 +20,7 @@ import type {
 	DeviceListQuery,
 	DeviceDto,
 	DevicePrimaryDataDto,
+	DeviceTypeDto,
 	DeviceStatusSummary,
 	LatestPrimaryDataQuery,
 	ListOrPaginatedResponse,
@@ -89,6 +91,7 @@ const TIMEZONE_SUFFIX_PATTERN = /(?:[zZ]|[+-]\d{2}(?::?\d{2})?)$/;
 const AUTH_ENDPOINT = '/auth';
 const AIR_ENDPOINT = '/air/{dev_eui}';
 const DEVICES_ENDPOINT = '/devices';
+const DEVICE_TYPES_ENDPOINT = '/devices/device-types';
 const DEVICE_BY_DEV_EUI_ENDPOINT = '/devices/{dev_eui}';
 const DEVICE_DATA_ENDPOINT = '/devices/{dev_eui}/data';
 const DEVICE_DATA_WITHIN_RANGE_ENDPOINT = '/devices/{dev_eui}/data-within-range';
@@ -710,6 +713,16 @@ export class ApiService {
 		});
 	}
 
+	public async getDeviceTypes(): Promise<DeviceTypeDto[]> {
+		const payload = await this.request<
+			DeviceTypeDto[] | PaginatedResponse<DeviceTypeDto> | Record<string, unknown>
+		>(DEVICE_TYPES_ENDPOINT, {
+			method: 'GET'
+		});
+
+		return normalizePaginatedListResponse<DeviceTypeDto>(payload).data ?? [];
+	}
+
 	public getLatestPrimaryDeviceData(
 		query: LatestPrimaryDataQuery = {},
 		options: ApiMethodOptions = {}
@@ -740,11 +753,12 @@ export class ApiService {
 		);
 	}
 
-	public createDevice(devEui: string): Promise<unknown> {
-		return this.request<unknown>(
+	public createDevice(devEui: string, payload: CreateDeviceRequest): Promise<DeviceDto> {
+		return this.request<DeviceDto>(
 			replacePathParams(DEVICE_BY_DEV_EUI_ENDPOINT, { dev_eui: devEui }),
 			{
-				method: 'POST'
+				method: 'POST',
+				body: payload
 			}
 		);
 	}

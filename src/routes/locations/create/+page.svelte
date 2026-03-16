@@ -1,30 +1,31 @@
 <script lang="ts">
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import BACK_ICON from '$lib/images/icons/back.svg';
+
+	type CreateLocationForm = {
+		error?: string;
+		name?: string;
+		description?: string;
+		group?: string;
+		lat?: string;
+		long?: string;
+		location_id?: number;
+		success?: boolean;
+	} | null;
 
 	const toast = useCwToast();
 
-	let { form }: { form: Record<string, unknown> | null } = $props();
+	let { form }: { form: CreateLocationForm } = $props();
 
 	let submitting = $state(false);
-	let name = $state('');
-	let description = $state('');
-	let group = $state('');
-	let lat = $state('');
-	let long = $state('');
-
-	$effect(() => {
-		if (form) {
-			name = (form.name as string) ?? '';
-			description = (form.description as string) ?? '';
-			group = (form.group as string) ?? '';
-			if (form.error) {
-				toast.add({ tone: 'danger', message: form.error as string });
-			}
-		}
-	});
+	let name = $derived(form?.name ?? '');
+	let description = $derived(form?.description ?? '');
+	let group = $derived(form?.group ?? '');
+	let lat = $derived(form?.lat ?? '');
+	let long = $derived(form?.long ?? '');
 </script>
 
 <div class="create-location-page">
@@ -33,13 +34,35 @@
 			method="POST"
 			use:enhance={() => {
 				submitting = true;
-				return async ({ update }) => {
+				return async ({ result }) => {
 					submitting = false;
-					await update();
+
+					if (result.type === 'success') {
+						const locationId = result.data?.location_id;
+						if (typeof locationId === 'number' && Number.isFinite(locationId)) {
+							await goto(
+								resolve('/locations/[location_id]', {
+									location_id: String(locationId)
+								}),
+								{ invalidateAll: true }
+							);
+							return;
+						}
+					}
+
+					await applyAction(result);
+
+					if (result.type === 'failure' && typeof result.data?.error === 'string') {
+						toast.add({ tone: 'danger', message: result.data.error });
+					}
 				};
 			}}
 		>
 			<div class="form-fields">
+				{#if form?.error}
+					<p class="form-error">{form.error}</p>
+				{/if}
+
 				<CwInput
 					label="Name"
 					name="name"
@@ -55,35 +78,20 @@
 					placeholder="Optional description"
 				/>
 
-				<CwInput
-					label="Group"
-					name="group"
-					bind:value={group}
-					placeholder="Optional group name"
-				/>
+				<CwInput label="Group" name="group" bind:value={group} placeholder="Optional group name" />
 
 				<div class="coord-row">
-					<CwInput
-						label="Latitude"
-						name="lat"
-						bind:value={lat}
-						placeholder="e.g. 35.6762"
-					/>
-					<CwInput
-						label="Longitude"
-						name="long"
-						bind:value={long}
-						placeholder="e.g. 139.6503"
-					/>
+					<CwInput label="Latitude (optional)" name="lat" bind:value={lat} placeholder="e.g. 35.6762" />
+					<CwInput label="Longitude (optional)" name="long" bind:value={long} placeholder="e.g. 139.6503" />
 				</div>
 			</div>
 
 			<div class="form-actions">
-				<CwButton variant="secondary" onclick={() => goto('/locations')}>
+				<CwButton type="button" variant="secondary" onclick={() => goto('/locations')}>
 					<img src={BACK_ICON} alt="Back" class="h-4 w-4" />
 					Cancel
 				</CwButton>
-				<CwButton variant="primary" loading={submitting} disabled={!name.trim()}>
+				<CwButton type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>
 					Create Location
 				</CwButton>
 			</div>
@@ -94,8 +102,8 @@
 <style>
 	.create-location-page {
 		padding: 1rem;
-        width: 100%;
-        height: 100%;
+		width: 100%;
+		height: 100%;
 	}
 
 	.form-fields {
@@ -115,5 +123,11 @@
 		display: flex;
 		justify-content: flex-end;
 		gap: 0.75rem;
+	}
+
+	.form-error {
+		color: #b42318;
+		font-size: 0.95rem;
+		margin: 0;
 	}
 </style>

@@ -157,8 +157,13 @@
 							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
 							>Settings</CwButton
 						>
+						<CwButton
+							variant="primary"
+							onclick={() =>
+								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/devices/create`)}
+							>Add Device</CwButton
+						>
 					{/if}
-					<CwButton variant="primary" onclick={handleAddDevice}>Add Device</CwButton>
 				</div>
 			{/snippet}
 

@@ -1,4 +1,6 @@
-import { type CwDeviceType } from '../interfaces/CwDeviceTypeDto.interface.ts';
+import type { CwDevice } from '../interfaces/CwDevice.interface.ts';
+import type { CwDeviceOwner } from '../interfaces/CwDeviceOwner.interface.ts';
+import type { CwDeviceType } from '../interfaces/CwDeviceTypeDto.interface.ts';
 
 export interface LoginRequest {
 	email: string;
@@ -16,17 +18,33 @@ export interface LoginResponse {
 	[key: string]: unknown;
 }
 
-export interface DeviceDto {
-	dev_eui: string;
-	name: string;
-	cw_device_type: CwDeviceType;
-	location_id?: number | null;
-	location_name?: string;
-	group?: string | null;
+export interface DeviceOwnerDto extends CwDeviceOwner {}
+
+export interface DeviceTypeDto extends CwDeviceType {}
+
+export interface DeviceDto extends CwDevice {
+	cw_device_type: DeviceTypeDto;
 	cw_locations?: Record<string, unknown> | Array<Record<string, unknown>>;
-	cw_device_owners?: Array<Record<string, unknown>>;
+	cw_device_owners?: DeviceOwnerDto[];
+}
+
+export interface CreateDeviceOwnerRequest {
+	user_id: string;
+	permission_level: number;
+	dev_eui?: string;
+	owner_id?: number | null;
 	[key: string]: unknown;
 }
+
+export interface CreateDeviceRequest extends Partial<CwDevice> {
+	dev_eui: string;
+	name: string;
+	type?: number | null;
+	location_id?: number | null;
+	cw_device_owners?: CreateDeviceOwnerRequest[];
+}
+
+export type UpdateDeviceRequest = Partial<CreateDeviceRequest>;
 
 export interface DevicePrimaryDataDto {
 	dev_eui: string;
