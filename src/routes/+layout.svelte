@@ -2,6 +2,7 @@
 	import './layout.css';
 	import { onDestroy } from 'svelte';
 	import { dev } from '$app/environment';
+	import { asset, resolve } from '$app/paths';
 	import {
 		createCwToastContext,
 		CwOfflineOverlay,
@@ -18,6 +19,7 @@
 	import type { IDevice } from '$lib/interfaces/device.interface';
 	import type { LocationDto, RuleDto, TriggeredRulesCountResponse } from '$lib/api/api.dtos';
 	import type { LayoutProps } from './$types';
+	import PwaDock from '$lib/components/pwa/PwaDock.svelte';
 	import Header from './Header.svelte';
 
 	let { children }: LayoutProps = $props();
@@ -25,6 +27,7 @@
 
 	let mode = $state<CwSideNavMode>('open');
 	let isAuthRoute = $derived(page.url.pathname.startsWith('/auth'));
+	let isOfflineRoute = $derived(page.url.pathname === '/offline');
 	let resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
 	interface DashboardPageData {
@@ -143,12 +146,34 @@
 	});
 </script>
 
+<svelte:head>
+	<link rel="manifest" href={resolve('/manifest.webmanifest')} />
+	<link rel="icon" href={asset('/icons/favicon.svg')} sizes="any" type="image/svg+xml" />
+	<link rel="icon" href={asset('/icons/icon-32x32.png')} sizes="32x32" type="image/png" />
+	<link rel="icon" href={asset('/icons/icon-192x192.png')} sizes="192x192" type="image/png" />
+	<link rel="shortcut icon" href={asset('/favicon.ico')} />
+	<link rel="apple-touch-icon" href={asset('/icons/apple-touch-icon.png')} sizes="180x180" />
+	<meta name="application-name" content="CropWatch" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-title" content="CropWatch" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="color-scheme" content="dark light" />
+	<meta name="theme-color" content="#1f283b" />
+	<meta name="theme-color" content="#eef1f7" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#1f283b" media="(prefers-color-scheme: dark)" />
+</svelte:head>
+
 <CwOfflineOverlay />
 <CwToastContainer />
+{#if !isOfflineRoute}
+	<PwaDock />
+{/if}
 <svelte:window onresize={handleWindowResize} />
 
-<div class="flex h-dvh w-full overflow-hidden">
-	{#if !isAuthRoute}
+<div class="app-shell flex h-dvh w-full overflow-hidden">
+	{#if !isAuthRoute && !isOfflineRoute}
 		<Sidebar bind:mode />
 		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 			<Header bind:mode />
