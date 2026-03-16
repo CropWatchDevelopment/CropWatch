@@ -41,6 +41,49 @@ body {
 		var(--app-safe-area-left);
 }
 
+/* ── Keep offline status dots visibly pulsing across app layouts ── */
+.cw-status-dot,
+.cw-sensor-card__status-indicator,
+.dashboard-device-table__cell {
+	overflow: visible;
+}
+
+.cw-status-dot .cw-status-dot__dot--offline.cw-status-dot__dot--offline {
+	animation-name: app-status-dot-offline-core !important;
+	animation-duration: 1.05s !important;
+	animation-timing-function: ease-in-out !important;
+	animation-iteration-count: infinite !important;
+	box-shadow:
+		0 0 0 1px color-mix(in srgb, var(--cw-bg-surface) 72%, transparent),
+		0 0 0.7rem color-mix(in srgb, var(--cw-danger-500) 34%, transparent);
+	transform-origin: center;
+}
+
+.cw-status-dot .cw-status-dot__dot--offline.cw-status-dot__dot--offline::after {
+	inset: -0.28rem;
+	border-color: color-mix(in srgb, var(--cw-danger-500) 74%, transparent);
+	animation-name: app-status-dot-offline-ring !important;
+	animation-duration: 1.05s !important;
+	animation-timing-function: ease-out !important;
+	animation-iteration-count: infinite !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cw-status-dot .cw-status-dot__dot--offline.cw-status-dot__dot--offline {
+		animation-name: app-status-dot-offline-core !important;
+		animation-duration: 1.05s !important;
+		animation-timing-function: ease-in-out !important;
+		animation-iteration-count: infinite !important;
+	}
+
+	.cw-status-dot .cw-status-dot__dot--offline.cw-status-dot__dot--offline::after {
+		animation-name: app-status-dot-offline-ring !important;
+		animation-duration: 1.05s !important;
+		animation-timing-function: ease-out !important;
+		animation-iteration-count: infinite !important;
+	}
+}
+
 /*
  * Disable sidebar width transition during window resize so the sidebar
  * snaps instantly at responsive breakpoints instead of animating 300ms behind.
@@ -48,4 +91,29 @@ body {
  */
 .cw-sidenav--resizing {
 	transition: none !important;
+}
+
+@keyframes app-status-dot-offline-core {
+	0%,
+	100% {
+		transform: scale(0.9);
+	}
+	45% {
+		transform: scale(1);
+	}
+}
+
+@keyframes app-status-dot-offline-ring {
+	0% {
+		opacity: 0.7;
+		transform: scale(0.62);
+	}
+	72% {
+		opacity: 0;
+		transform: scale(1.9);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.9);
+	}
 }

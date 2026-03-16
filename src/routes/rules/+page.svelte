@@ -32,6 +32,7 @@
 	<title>Rules - CropWatch</title>
 </Svelte:head>
 
+<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>← Back to Dashboard</CwButton>
 <div class="overflow-y-auto p-4">
 <CwCard title="Configured Rules" class="min-h-0 flex-1">
 	<CwDataTable {columns} {loadData} {loading} rowActionsHeader="Actions" rowKey="id" class="w-full">

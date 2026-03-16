@@ -49,6 +49,7 @@
 			{loadData}
 			{loading}
 			rowKey="location_id"
+			groupBy="group"
 			searchable
 			pageSize={10}
 			rowActionsHeader="Actions"

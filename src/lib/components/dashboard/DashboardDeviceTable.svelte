@@ -3,7 +3,6 @@
 		CwButton,
 		CwDataTable,
 		CwDuration,
-		CwStatusDot,
 		type CwColumnDef,
 		type CwTableQuery,
 		type CwTableResult
@@ -12,6 +11,7 @@
 	import { resolve } from '$app/paths';
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import AppStatusDot from '$lib/components/status/AppStatusDot.svelte';
 	import type { IDevice } from '$lib/interfaces/device.interface';
 	import {
 		applyDashboardLatestReadings,
@@ -65,6 +65,7 @@
 	let tableFilters = $derived(buildDashboardTableFilters(filters));
 	let loading = $state(false);
 	let virtualScroll = $state(false);
+	const DEVICE_OFFLINE_THRESHOLD_MS = 11 * 60 * 1000;
 	let tableSourceKey = $derived.by(() =>
 		[
 			app.accessToken ? 'auth' : 'anon',
@@ -78,7 +79,16 @@
 	}
 
 	function getMetricDisplayValue(value: number | null | undefined): string {
-		return value == null ? '--' : String(value);
+		return value == null ? '--' : value.toLocaleString('en', { useGrouping: true });
+	}
+
+	function isOffline(row: IDevice): boolean {
+		if (row.has_primary_data === false) {
+			return true;
+		}
+
+		const lastSeenMs = new Date(row.created_at).getTime();
+		return !Number.isFinite(lastSeenMs) || lastSeenMs < Date.now() - DEVICE_OFFLINE_THRESHOLD_MS;
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
@@ -148,11 +158,10 @@
 						class="dashboard-device-table__cell"
 						class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
 					>
-						<CwStatusDot
-							status={row.has_primary_data === false ||
-							new Date(row.created_at).getTime() < Date.now() - 11 * 60 * 1000
-								? 'offline'
-								: 'online'}
+						<AppStatusDot
+							class="dashboard-device-table__status-dot"
+							size={isOffline(row) ? 'lg' : 'md'}
+							status={isOffline(row) ? 'offline' : 'online'}
 						/>
 						{#if row.has_primary_data === false}
 							<span>No data yet</span>
@@ -173,6 +182,8 @@
 							{getMetricDisplayValue(row.soil_temperature_c)}
 						{:else if col.key === 'soil_humidity'}
 							{getMetricDisplayValue(row.soil_humidity)}
+						{:else if col.key === 'co2'}
+							{getMetricDisplayValue(row.co2)}
 						{:else}
 							{defaultValue}
 						{/if}
@@ -201,9 +212,9 @@
 				>
 					Virtual Scroll
 					{#if virtualScroll}
-						<CwStatusDot status="online" />
+						<AppStatusDot status="online" />
 					{:else}
-						<CwStatusDot status="warning" />
+						<AppStatusDot status="warning" />
 					{/if}
 				</CwButton>
 			{/snippet}
@@ -226,7 +237,13 @@
 		align-items: center;
 		gap: 0.5rem;
 		min-height: 1.5rem;
-		font-size: 1.2rem;
+		font-size: 1.4rem;
+
+	}
+
+	:global(.dashboard-device-table__status-dot) {
+		display: inline-flex;
+		flex: none;
 	}
 
 	.dashboard-device-table__cell--refreshing {

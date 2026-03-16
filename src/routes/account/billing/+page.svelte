@@ -307,7 +307,7 @@
 		</header>
 
 		<div class="billing-kpis">
-			<CwCard title="Active Plans" subtitle="Currently billed subscriptions" elevated>
+			<CwCard title="Active Seats" subtitle="Currently billed subscriptions" elevated>
 				<p class="billing-kpi__value">{subscriptionState.activeSubscriptionCount}</p>
 			</CwCard>
 
@@ -342,7 +342,7 @@
 
 		<div class="billing-grid">
 			<CwCard
-				title="Create Checkout Session"
+				title="Buy Seats & Devices"
 				subtitle="Choose one or more products, then launch hosted checkout"
 				elevated
 				class="billing-grid__checkout"

@@ -33,7 +33,7 @@
 	let submitting = $state(false);
 	let newUserEmail = $state('');
 	let permission_level: string = $state<string>(String(permissions[0].permission_level));
-	let applyToAllDevices = $state(false);
+	let applyToAllDevices = $state(true);
 
 	function getResultMessage(result: { data?: Record<string, unknown> | null }): string | null {
 		const message = result.data?.message;

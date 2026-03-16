@@ -1,27 +1,45 @@
 <script lang="ts">
 	import {
-		CwButton,
 		CwCard,
 		CwDataTable,
 		type CwColumnDef,
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import type { ReportDto } from '$lib/api/api.dtos';
-	import { goto } from '$app/navigation';
 	import ReportHistoryDialog from './ReportHistoryDialog.svelte';
+	import DeleteReportDialog from './DeleteReportDialog.svelte';
+	import type { ReportRow } from './report-row';
 
-	let { data }: { data: { reports: ReportDto[] } } = $props();
+	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
+	let deletedReportIds = $state<string[]>([]);
 
-	const columns: CwColumnDef<ReportDto>[] = [
+	const columns: CwColumnDef<ReportRow>[] = [
 		{ key: 'name', header: 'Name', sortable: true },
+		{ key: 'device_name', header: 'For Device Device', sortable: true },
 		{ key: 'dev_eui', header: 'Device EUI' },
-		{ key: 'created_at', header: 'Created' }
+		{ key: 'location_name', header: 'Location', sortable: true }
 	];
 
-	async function loadData(query: CwTableQuery): Promise<CwTableResult<ReportDto>> {
-		const rows = data.reports ?? [];
+	const visibleReports = $derived.by(() => {
+		const deletedIds = new Set(deletedReportIds);
+		return (data.reports ?? []).filter((report) => !deletedIds.has(report.report_id));
+	});
+
+	const tableKey = $derived(
+		visibleReports
+			.map((report) => `${report.report_id}:${report.name}:${report.created_at}`)
+			.join('|')
+	);
+
+	function handleReportDeleted(reportId: string) {
+		if (deletedReportIds.includes(reportId)) return;
+		deletedReportIds = [...deletedReportIds, reportId];
+	}
+
+	async function loadData(query: CwTableQuery): Promise<CwTableResult<ReportRow>> {
+		void query;
+		const rows = visibleReports;
 		loading = false;
 		return { rows, total: rows.length };
 	}
@@ -31,12 +49,41 @@
 	<title>Reports - CropWatch</title>
 </svelte:head>
 
-<CwCard title="Weekly Reports" class="min-h-0 flex-1 p-4">
-	<div class="overflow-y-scroll">
-		<CwDataTable {columns} {loadData} {loading} rowActionsHeader="Actions" rowKey="id">
-			{#snippet rowActions(row: ReportDto)}
-				<ReportHistoryDialog dev_eui={row.dev_eui} />
-			{/snippet}
-		</CwDataTable>
-	</div>
-</CwCard>
+<div class="overflow-y-scroll">
+	<CwCard title="Weekly Reports" class="min-h-0 flex-1 p-4">
+		{#key tableKey}
+			<CwDataTable
+				{columns}
+				{loadData}
+				{loading}
+				groupBy="location_name"
+				rowActionsHeader="Actions"
+				rowKey="id"
+			>
+				{#snippet cell(row: ReportRow, col: CwColumnDef<ReportRow>, defaultValue: string)}
+					{#if col.key === 'device_name'}
+						<a
+							href={`/locations/${row.cw_devices?.cw_locations?.location_id}/devices/${row.dev_eui}`}
+							class="ml-2 text-sm text-blue-500 hover:underline"
+						>
+							{row.cw_devices?.name ?? 'Unknown Device'}
+						</a>
+					{:else}
+						{defaultValue}
+					{/if}
+				{/snippet}
+
+				{#snippet rowActions(row: ReportRow)}
+					<div class="flex flex-row gap-2">
+						<ReportHistoryDialog dev_eui={row.dev_eui} />
+						<DeleteReportDialog
+							reportId={row.report_id}
+							reportName={row.name}
+							onDeleted={handleReportDeleted}
+						/>
+					</div>
+				{/snippet}
+			</CwDataTable>
+		{/key}
+	</CwCard>
+</div>
