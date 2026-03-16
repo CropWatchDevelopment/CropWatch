@@ -1,26 +1,18 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import {
 		CwButton,
 		CwCard,
 		CwDropdown,
 		CwInput,
-		CwSwitch
+		CwSwitch,
+		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import type { LocationOwnerDto } from '$lib/api/api.dtos';
 
 	interface SettingsPageData {
-		locationId: number | null;
 		locationName: string;
-		locationOwners: LocationOwnerDto[];
 		[key: string]: unknown;
-	}
-
-	interface PermissionRow {
-		id: number;
-		ownerId: number;
-		userId: string;
-		adminUserId: string;
 	}
 
 	interface IPermissions {
@@ -35,12 +27,18 @@
 		{ permission_level: 4, permission_name: 'Disabled' }
 	];
 
-	let { data, form }: { data: SettingsPageData; form: Record<string, unknown> | null } = $props();
+	let { data }: { data: SettingsPageData } = $props();
+	const toast = useCwToast();
 
 	let submitting = $state(false);
 	let newUserEmail = $state('');
 	let permission_level: string = $state<string>(String(permissions[0].permission_level));
 	let applyToAllDevices = $state(false);
+
+	function getResultMessage(result: { data?: Record<string, unknown> | null }): string | null {
+		const message = result.data?.message;
+		return typeof message === 'string' && message.trim().length > 0 ? message.trim() : null;
+	}
 </script>
 
 <div class="settings-page">
@@ -52,13 +50,21 @@
 		<form
 			method="POST"
 			action="?/addPermission"
-			use:enhance={({ cancel }) => {
+			use:enhance={() => {
 				submitting = true;
 				return async ({ result }) => {
 					try {
 						await applyAction(result);
+						const message = getResultMessage(result);
+						if (message) {
+							toast.add({
+								message,
+								tone: result.type === 'success' ? 'success' : 'danger'
+							});
+						}
 						if (result.type === 'success') {
 							newUserEmail = '';
+							await invalidateAll();
 						}
 					} finally {
 						submitting = false;
@@ -109,13 +115,6 @@
 <style>
 	.settings-page {
 		padding: 1rem;
-	}
-
-	.settings-page__chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-bottom: 0.75rem;
 	}
 
 	.permissions-form {

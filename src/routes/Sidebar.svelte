@@ -15,6 +15,7 @@
 	import RULES_ICON from '$lib/images/icons/rules.svg';
 	import REPORTS_ICON from '$lib/images/icons/report.svg';
 	import { goto } from '$app/navigation';
+	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
 
 	let { mode = $bindable() } = $props();
 
@@ -57,14 +58,13 @@
 			badgeTone: 'secondary',
 			endText: String(app.devices?.length ?? 0)
 		};
-		const groupItems: CwListBoxItem<string>[] = (app.deviceGroups ?? [])
-			.filter((g) => g)
+		const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(app.deviceGroups)
 			.map((group) => ({
-				value: group.group,
-				label: group.group,
-				badge: group.group.toUpperCase().substring(0, 2),
+				value: group,
+				label: group,
+				badge: group.toUpperCase().substring(0, 2),
 				badgeTone: 'info' as const,
-				endText: String(app.devices?.filter((d) => d.group === group.group).length ?? 0)
+				endText: String(app.devices?.filter((d) => d.group === group).length ?? 0)
 			}));
 		return [allItem, ...groupItems];
 	});
@@ -78,8 +78,9 @@
 			badgeTone: 'secondary',
 			endText: String(app.locations?.length ?? 0)
 		};
-		const groupItems: CwListBoxItem<string>[] = (app.locationGroups ?? [])
-			.filter((g) => g)
+		const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(
+			app.locationGroups
+		)
 			.map((group) => ({
 				value: group,
 				label: group,
@@ -123,8 +124,7 @@
 		<CwSearchInput
 			placeholder="Search devices..."
 			value={page.url.searchParams.get('search') ?? ''}
-			oninput={(e) => {
-				const value = (e.target as HTMLInputElement).value;
+			oninput={(value) => {
 				const params = new URLSearchParams(page.url.searchParams);
 				if (value) {
 					params.set('search', value);
@@ -140,10 +140,11 @@
 
 	{#snippet aboveContent()}
 		{#if page.url.pathname === '/'}
-			<!-- <div style="overflow-y: scroll; -webkit-overflow-scrolling: touch;" class="flex max-h-[50vh] flex-col gap-2 px-2 py-1"> -->
 			<CwExpandPanel title="Dashboard Filters" open={dashboardFiltersOpen}>
 				<div class="px-4 py-2 text-sm text-slate-400">Filter devices in view</div>
-				<div class="overflow-y-scroll">
+				<div
+					class="dashboard-filters-scroll flex max-h-[50dvh] flex-col gap-2 overflow-y-auto overscroll-contain pr-1"
+				>
 					<CwListBox
 						heading="Device Groups"
 						items={groups}
@@ -166,7 +167,6 @@
 					/>
 				</div>
 			</CwExpandPanel>
-			<!-- </div> -->
 		{/if}
 	{/snippet}
 	{#snippet footer()}
@@ -187,3 +187,13 @@
 		</div>
 	{/snippet}
 </CwSideNav>
+
+<style>
+	:global(.cw-sidenav__above-content) {
+		min-height: 0;
+	}
+
+	.dashboard-filters-scroll {
+		-webkit-overflow-scrolling: touch;
+	}
+</style>

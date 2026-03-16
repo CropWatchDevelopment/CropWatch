@@ -6,6 +6,7 @@ import {
 	mapDashboardPrimaryDataToDevice,
 	mergeDashboardDevices
 } from '$lib/components/dashboard/dashboard-device-data';
+import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
 import type { PageServerLoad } from './$types';
 
 const LATEST_PRIMARY_DATA_PAGE_SIZE = 250;
@@ -186,7 +187,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	const allDevices = devicesResult.value;
 	const deviceStatuses = deviceStatusesResult.value;
 	const locations = locationsResult.value;
-	const locationGroups = locationGroupsResult.value;
+	const locationGroups = normalizeDashboardFilterValues(locationGroupsResult.value);
 
 	// ── Diagnostic: remove after debugging ──
 	const metadataDevices = allDevices.map((device) => mapDashboardDeviceMetadataToDevice(device));
@@ -204,13 +205,10 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	const mergedWithPrimaryData = devices.filter(d => d.has_primary_data === true).length;
 	console.info('[dashboard-load] merged devices:', devices.length, 'with primary data:', mergedWithPrimaryData);
 
-	const groups: string[] = Array.from(
-		new Set(devices.map((device) => device.group).filter((group): group is string => !!group))
-	);
-	groups.sort((left, right) => left.localeCompare(right));
+	const groups = normalizeDashboardFilterValues(devices.map((device) => device.group));
+	const deviceGroups = normalizeDashboardFilterValues(deviceGroupsResult.value);
 
-	const resolvedDeviceGroups =
-		deviceGroupsResult.value.length > 0 ? deviceGroupsResult.value : groups;
+	const resolvedDeviceGroups = deviceGroups.length > 0 ? deviceGroups : groups;
 	const derivedLocations = buildDerivedLocations(latestPrimaryData);
 	const resolvedLocations = locations.length > 0 ? locations : derivedLocations;
 

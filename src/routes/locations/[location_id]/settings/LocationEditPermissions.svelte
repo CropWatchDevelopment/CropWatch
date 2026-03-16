@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import {
 		CwButton,
 		CwDataTable,
@@ -22,6 +23,14 @@
 	let selectedRow = $state<Permission | null>(null);
 	let location_id = $state(page.params.location_id);
 	let editingPermissionId = $state<number | null>(null);
+	let permissionsKey = $derived(
+		permissions
+			.map(
+				(permission) =>
+					`${permission.id}:${permission.email}:${permission.name}:${permission.permission_level}`
+			)
+			.join('|')
+	);
 
 	const loadData = async (query: CwTableQuery): Promise<CwTableResult<Permission>> => {
 		void query;
@@ -45,83 +54,84 @@
 		});
 
 		if (response.ok) {
-			// Optionally, you can reload the permissions data here to reflect any changes from the server
-			await loadData({} as CwTableQuery);
+			await invalidateAll();
 		}
 		editingPermissionId = null;
 	};
 </script>
 
-<CwDataTable
-	{loadData}
-	rowKey="id"
-	rowActionsHeader="Actions"
-	columns={[
-		{ key: 'id', header: 'ID' },
-		{ key: 'email', header: 'Email' },
-		{ key: 'name', header: 'Name' },
-		{ key: 'permission_level', header: 'Permission Level' }
-	]}
->
-	{#snippet cell(row: Permission, col: CwColumnDef<Permission>, defaultValue: string)}
-		{#if col.key === 'permission_level'}
-			{#if editingPermissionId === row.id}
-				<CwDropdown
-					options={[
-						{ label: 'Admin', value: '1' },
-						{ label: 'Manager', value: '2' },
-						{ label: 'Viewer', value: '3' },
-						{ label: 'Disabled', value: '4' }
-					]}
-					bind:value={row.permission_level}
-					placeholder="Choose a permission level…"
-				/>
-			{:else if row.permission_level === '1'}
-				Admin
-			{:else if row.permission_level === '2'}
-				Manager
-			{:else if row.permission_level === '3'}
-				Viewer
+{#key permissionsKey}
+	<CwDataTable
+		{loadData}
+		rowKey="id"
+		rowActionsHeader="Actions"
+		columns={[
+			{ key: 'id', header: 'ID' },
+			{ key: 'email', header: 'Email' },
+			{ key: 'name', header: 'Name' },
+			{ key: 'permission_level', header: 'Permission Level' }
+		]}
+	>
+		{#snippet cell(row: Permission, col: CwColumnDef<Permission>, defaultValue: string)}
+			{#if col.key === 'permission_level'}
+				{#if editingPermissionId === row.id}
+					<CwDropdown
+						options={[
+							{ label: 'Admin', value: '1' },
+							{ label: 'Manager', value: '2' },
+							{ label: 'Viewer', value: '3' },
+							{ label: 'Disabled', value: '4' }
+						]}
+						bind:value={row.permission_level}
+						placeholder="Choose a permission level…"
+					/>
+				{:else if row.permission_level === '1'}
+					Admin
+				{:else if row.permission_level === '2'}
+					Manager
+				{:else if row.permission_level === '3'}
+					Viewer
+				{:else}
+					Disabled
+				{/if}
 			{:else}
-				Disabled
+				{defaultValue}
 			{/if}
-		{:else}
-			{defaultValue}
-		{/if}
-	{/snippet}
-	{#snippet rowActions(row: Permission)}
-		{#if editingPermissionId === row.id}
-			<CwButton
-				variant="primary"
-				onclick={() => {
-					savePermissionLevelUpdate(row);
-				}}>Save Changes</CwButton
-			>
-			<CwButton
-				variant="danger"
-				onclick={() => {
-					selectedRow = row;
-					openDeletePermissionDialog = true;
-				}}>Delete</CwButton
-			>
-			<CwButton
-				variant="primary"
-				onclick={() => {
-					selectedRow = null;
-					editingPermissionId = null;
-				}}>Cancel</CwButton
-			>
-		{:else}
-			<CwButton
-				variant="primary"
-				onclick={() => {
-					editingPermissionId = row.id;
-				}}>
+		{/snippet}
+		{#snippet rowActions(row: Permission)}
+			{#if editingPermissionId === row.id}
+				<CwButton
+					variant="primary"
+					onclick={() => {
+						savePermissionLevelUpdate(row);
+					}}>Save Changes</CwButton
+				>
+				<CwButton
+					variant="danger"
+					onclick={() => {
+						selectedRow = row;
+						openDeletePermissionDialog = true;
+					}}>Delete</CwButton
+				>
+				<CwButton
+					variant="primary"
+					onclick={() => {
+						selectedRow = null;
+						editingPermissionId = null;
+					}}>Cancel</CwButton
+				>
+			{:else}
+				<CwButton
+					variant="primary"
+					onclick={() => {
+						editingPermissionId = row.id;
+					}}
+				>
 					<img src={EDIT_ICON} alt="edit" />
-				</CwButton
-			>
-		{/if}
-	{/snippet}
-</CwDataTable>
+				</CwButton>
+			{/if}
+		{/snippet}
+	</CwDataTable>
+{/key}
 
 <DeletePermissionDialog bind:openDeletePermissionDialog {location_id} {selectedRow} />

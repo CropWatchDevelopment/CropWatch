@@ -10,6 +10,7 @@
 		getLocationGroupName,
 		type DashboardDeviceFilters
 	} from '$lib/components/dashboard/device-table';
+	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
 	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
 	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
@@ -49,10 +50,8 @@
 		app.deviceStatuses = pageData.deviceStatuses ?? { online: 0, offline: 0 };
 		app.triggeredRules = pageData.triggeredRules ?? [];
 		app.triggeredRulesCount = readTriggeredRulesCount(pageData.triggeredRulesCount);
-		app.deviceGroups = (pageData.deviceGroups ?? []).filter((group): group is string => !!group);
-		app.locationGroups = (pageData.locationGroups ?? []).filter(
-			(group): group is string => !!group
-		);
+		app.deviceGroups = normalizeDashboardFilterValues(pageData.deviceGroups);
+		app.locationGroups = normalizeDashboardFilterValues(pageData.locationGroups);
 		app.locations = pageData.locations ?? [];
 	}
 

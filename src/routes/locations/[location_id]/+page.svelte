@@ -2,24 +2,18 @@
 	import {
 		CwButton,
 		CwCard,
-		CwChip,
 		CwCopy,
 		CwDataTable,
-		useCwToast,
 		type CwColumnDef,
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { page } from '$app/state';
-	import type { DevicePrimaryDataDto } from '$lib/api/api.service';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
-	import { getAppContext } from '$lib/appContext.svelte';
+	import type { PageProps } from './$types';
 
 	type DeviceStatus = 'Online' | 'Offline';
-	interface PageData {
-		allLocationDevices: DevicePrimaryDataDto[];
-	}
 
 	interface LocationDeviceRow {
 		dev_eui: string;
@@ -27,16 +21,15 @@
 		status: DeviceStatus;
 	}
 
-	let { data }: { data: PageData } = $props();
-
-	const toast = useCwToast();
+	let { data }: PageProps = $props();
 	const offlineThresholdMs = 11 * 60 * 1000;
 	let loading = $state(false);
 
 	const selectedLocationId = $derived(page.params.location_id);
 	const selectedLocationName = $derived((page.url.searchParams.get('location_name') ?? '').trim());
 	const locationLabel = $derived(
-		selectedLocationName ||
+		(data.currentLocation ?? '').trim() ||
+			selectedLocationName ||
 			(selectedLocationId ? `Location ${selectedLocationId}` : 'Current Location')
 	);
 
@@ -101,20 +94,6 @@
 		} finally {
 			loading = false;
 		}
-	}
-
-	function handleSettings() {
-		toast.add({
-			tone: 'info',
-			message: `Open location settings for ${locationLabel}.`
-		});
-	}
-
-	function handleAddDevice() {
-		toast.add({
-			tone: 'info',
-			message: `Add device to ${locationLabel}.`
-		});
 	}
 
 	function handleViewDevice(row: LocationDeviceRow) {

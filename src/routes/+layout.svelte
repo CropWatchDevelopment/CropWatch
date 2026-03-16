@@ -13,6 +13,7 @@
 	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Sidebar from './Sidebar.svelte';
 	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
+	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
 	import type { IJWT } from '$lib/interfaces/jwt.interface';
 	import type { IDevice } from '$lib/interfaces/device.interface';
 	import type { LocationDto, RuleDto, TriggeredRulesCountResponse } from '$lib/api/api.dtos';
@@ -79,10 +80,10 @@
 			isDashboardRoute ? routeData.triggeredRulesCount : 0
 		);
 		app.deviceGroups = isDashboardRoute
-			? (routeData.deviceGroups ?? []).filter((group): group is string => !!group)
+			? normalizeDashboardFilterValues(routeData.deviceGroups)
 			: [];
 		app.locationGroups = isDashboardRoute
-			? (routeData.locationGroups ?? []).filter((group): group is string => !!group)
+			? normalizeDashboardFilterValues(routeData.locationGroups)
 			: [];
 		app.locations = isDashboardRoute ? (routeData.locations ?? []) : [];
 	}
