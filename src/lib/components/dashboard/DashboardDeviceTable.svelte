@@ -13,6 +13,8 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import AppStatusDot from '$lib/components/status/AppStatusDot.svelte';
 	import type { IDevice } from '$lib/interfaces/device.interface';
+	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
+	import ALERT_ICON from '$lib/images/icons/active_alert.svg';
 	import {
 		applyDashboardLatestReadings,
 		mapDashboardPrimaryDataToDevice,
@@ -38,21 +40,22 @@
 	const app = getAppContext();
 
 	const columns: CwColumnDef<IDevice>[] = [
-		{ key: 'name', header: 'Device Name', sortable: true },
-		{ key: 'temperature_c', header: 'Temperature (°C)', width: '12rem', sortable: true },
+		{ key: 'name', header: '📱Device Name', width: '16rem', sortable: true },
+		{ key: 'temperature_c', header: '🌡️Temperature (°C)', width: '10rem', sortable: true },
+		{ key: 'humidity', header: '💧Humidity (%)', width: '10rem', sortable: true },
 		{ key: 'co2', header: 'CO₂ (ppm)', width: '10rem', sortable: true },
-		{ key: 'humidity', header: 'Humidity (%)', width: '10rem', sortable: true },
 		{
 			key: 'soil_temperature_c',
-			header: 'Soil Temperature (°C)',
+			header: '🌡️Soil Temperature (°C)',
 			width: '14rem',
 			sortable: true
 		},
-		{ key: 'soil_humidity', header: 'Soil Humidity (%)', width: '12rem', sortable: true },
-		{ key: 'location_name', header: 'Location', sortable: true },
+		{ key: 'soil_humidity', header: '💧Soil Humidity (%)', width: '12rem', sortable: true },
+		{ key: 'location_name', header: '🗺️Location', sortable: true },
+		{ key: 'alert_count', header: '⚠️ Alerts', width: '8rem', sortable: true },
 		{
 			key: 'created_at',
-			header: 'Last Seen',
+			header: '⏱️Last Seen',
 			sortable: true,
 			hideBelow: 'md',
 			width: '14rem',
@@ -92,6 +95,7 @@
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
+		$inspect(app.devices);
 		return queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
 	}
 
@@ -143,7 +147,7 @@
 			rowKey="dev_eui"
 			filters={tableFilters}
 			fillParent
-			groupBy="location_name"
+			groupBy={app.privacyModeEnabled ? undefined : 'location_name'}
 			{virtualScroll}
 			virtualRowHeight={DASHBOARD_DEVICE_ROW_HEIGHT}
 			virtualOverscan={DASHBOARD_DEVICE_OVERSCAN}
@@ -173,6 +177,10 @@
 							/>
 						{/if}
 					</div>
+				{:else if (col.key === 'name' || col.key === 'location_name') && app.privacyModeEnabled}
+					<div class="dashboard-device-table__cell">
+						<span class="text-2xl">• • • • • • • •</span>
+					</div>
 				{:else}
 					<div
 						class="dashboard-device-table__cell"
@@ -180,10 +188,22 @@
 					>
 						{#if col.key === 'soil_temperature_c'}
 							{getMetricDisplayValue(row.soil_temperature_c)}
+						{:else if col.key === 'temperature_c'}
+							{getMetricDisplayValue(row.temperature_c)}
+						{:else if col.key === 'humidity'}
+							{getMetricDisplayValue(row.humidity)}
 						{:else if col.key === 'soil_humidity'}
 							{getMetricDisplayValue(row.soil_humidity)}
 						{:else if col.key === 'co2'}
 							{getMetricDisplayValue(row.co2)}
+						{:else if col.key === 'alert_count'}
+							<span class="text-2xl">
+								{#if row.alert_count != null || row.alert_count !== 0}
+									<img src={CHECK_CIRCLE_ICON} alt="No Alerts" />
+								{:else}
+									<img src={ALERT_ICON} alt="Active Alert" />
+								{/if}
+							</span>
 						{:else}
 							{defaultValue}
 						{/if}
@@ -238,7 +258,6 @@
 		gap: 0.5rem;
 		min-height: 1.5rem;
 		font-size: 1.4rem;
-
 	}
 
 	:global(.dashboard-device-table__status-dot) {

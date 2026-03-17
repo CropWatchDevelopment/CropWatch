@@ -1452,7 +1452,7 @@
 		padding: 0.55rem 0.7rem;
 		border-radius: 0.85rem;
 		border: 1px solid color-mix(in srgb, var(--cw-border-default) 46%, transparent);
-		background: color-mix(in srgb, var(--cw-surface, #f8fafc) 86%, #dbeafe 14%);
+		/* background: color-mix(in srgb, var(--cw-surface, #f8fafc) 86%, #dbeafe 14%); DO NOT PUT THIS BACK IN */
 		font-size: 0.95rem;
 	}
 

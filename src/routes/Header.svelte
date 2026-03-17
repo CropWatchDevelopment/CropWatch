@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { CwHeader, CwProfileMenu, CwThemePicker, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
+	import {
+		CwHeader,
+		CwProfileMenu,
+		CwSwitch,
+		CwThemePicker,
+		type CwSideNavMode
+	} from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
 	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
 
@@ -12,7 +18,7 @@
 		{ id: 'profile', label: 'Profile' },
 		{ id: 'billing', label: 'Billing' },
 		{ id: 'settings', label: 'Settings' },
-		{ id: 'logout', label: 'Logout', separator: true, danger: true  }
+		{ id: 'logout', label: 'Logout', separator: true, danger: true }
 	];
 </script>
 
@@ -29,25 +35,42 @@
 	{/snippet}
 
 	{#snippet actions()}
+		{#if app.session?.email.endsWith('@cropwatch.io')}
+			<CwSwitch
+				class="mr-20"
+				label="Privacy Mode"
+				onchange={(event: boolean) => {
+					debugger;
+					app.privacyModeEnabled = event;
+				}}
+			/>
+		{/if}
 		<CwThemePicker onchange={(theme) => console.log(theme)} />
-		<CwProfileMenu name={app.session?.email ?? ''} subtitle={app.session?.role ?? ''} {menuItems} onselect={(event) => {
-			if (event.id === 'logout') {
-				goto(resolve('/auth/logout')).then(() => {
-					// Optionally, you can also clear the app context or perform any other cleanup here
-					Object.assign(app, defaultAppContext);
-					window.location.reload();
-				}).catch(() => {
-					// Handle any errors that occur during logout
-					alert('An error occurred while logging out. Please try again.');
-				});
-			} else if (event.id === 'profile') {
-				goto(resolve('/account/profile'));
-			} else if (event.id === 'settings') {
-				goto(resolve('/settings'));
-			} else if (event.id === 'billing') {
-				goto(resolve('/account/billing'));
-			}
-		}} />
+		<CwProfileMenu
+			name={app.session?.email ?? ''}
+			subtitle={app.session?.role ?? ''}
+			{menuItems}
+			onselect={(event) => {
+				if (event.id === 'logout') {
+					goto(resolve('/auth/logout'))
+						.then(() => {
+							// Optionally, you can also clear the app context or perform any other cleanup here
+							Object.assign(app, defaultAppContext);
+							window.location.reload();
+						})
+						.catch(() => {
+							// Handle any errors that occur during logout
+							alert('An error occurred while logging out. Please try again.');
+						});
+				} else if (event.id === 'profile') {
+					goto(resolve('/account/profile'));
+				} else if (event.id === 'settings') {
+					goto(resolve('/settings'));
+				} else if (event.id === 'billing') {
+					goto(resolve('/account/billing'));
+				}
+			}}
+		/>
 	{/snippet}
 </CwHeader>
 

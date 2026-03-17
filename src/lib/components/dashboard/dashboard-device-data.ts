@@ -172,6 +172,7 @@ export function applyDashboardLatestReadings(target: IDevice, source: IDevice): 
 	target.location_id = preferIncomingLocationId(source.location_id, target.location_id);
 	target.location_name = preferIncomingText(source.location_name, target.location_name) ?? '';
 	target.group = preferIncomingText(source.group, target.group);
+	target.alert_count = source.alert_count ?? target.alert_count ?? 0;
 	target.data_table = resolvedDataTable;
 	target.name = preferIncomingText(source.name, target.name) ?? target.dev_eui;
 }
@@ -211,7 +212,8 @@ export function mergeDashboardDevices(
 				(isSoilDevice ? (device.soil_temperature_c ?? null) : null),
 			soil_humidity:
 				latestDevice.soil_humidity ?? (isSoilDevice ? (device.soil_humidity ?? null) : null),
-			cwloading: device.cwloading ?? latestDevice.cwloading ?? false
+			cwloading: device.cwloading ?? latestDevice.cwloading ?? false,
+			alert_count: latestDevice.alert_count ?? device.alert_count ?? 0
 		};
 	});
 
@@ -219,7 +221,8 @@ export function mergeDashboardDevices(
 		mergedDevices.push({
 			...latestDevice,
 			has_primary_data: latestDevice.has_primary_data ?? false,
-			cwloading: latestDevice.cwloading ?? false
+			cwloading: latestDevice.cwloading ?? false,
+			alert_count: latestDevice.alert_count ?? 0
 		});
 	}
 

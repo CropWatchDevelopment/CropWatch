@@ -133,7 +133,7 @@
 	{#if open}
 		<CwDataTable
 			columns={[
-				{ key: 'id', header: 'ID' },
+				// { key: 'id', header: 'ID' },
 				{ key: 'name', header: 'Name' },
 				{ key: 'created_at', header: 'Created At' }
 			]}

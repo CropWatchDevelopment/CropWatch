@@ -76,22 +76,6 @@
 		})
 	);
 
-	let activeLocationGroupName = $derived.by(() => {
-		if (!activeLocationGroup) return '';
-		const location = (app.locations ?? []).find(
-			(loc) => getLocationGroupName(loc) === activeLocationGroup
-		);
-		return getLocationGroupName(location) || activeLocationGroup;
-	});
-
-	let activeLocationName = $derived.by(() => {
-		if (!activeLocation) return '';
-		const location = (app.locations ?? []).find(
-			(loc) => String(loc.location_id) === activeLocation
-		);
-		return location?.name ?? activeLocation;
-	});
-
 	let devicesInView = $derived(
 		countDashboardDevices(app.devices ?? [], app.locations ?? [], dashboardFilters)
 	);

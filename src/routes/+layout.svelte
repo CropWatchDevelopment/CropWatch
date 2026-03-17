@@ -1,14 +1,17 @@
 <script lang="ts">
+	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import './layout.css';
 	import { onDestroy } from 'svelte';
 	import { dev } from '$app/environment';
 	import { asset, resolve } from '$app/paths';
+
 	import {
 		createCwToastContext,
 		CwOfflineOverlay,
 		CwToastContainer,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
+
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import OverviewDrawer from './OverviewDrawer.svelte';
@@ -23,6 +26,7 @@
 	import Header from './Header.svelte';
 
 	let { children }: LayoutProps = $props();
+
 	createCwToastContext();
 
 	let mode = $state<CwSideNavMode>('open');
@@ -55,6 +59,7 @@
 			const maybeCount =
 				(rawTriggeredRulesCount as Record<string, unknown>).count ??
 				(rawTriggeredRulesCount as Record<string, unknown>).triggered_count;
+
 			if (typeof maybeCount === 'number' && Number.isFinite(maybeCount)) {
 				return maybeCount;
 			}
@@ -64,6 +69,7 @@
 	}
 
 	const app = $state(createAppContext());
+
 	setAppContext(app);
 
 	function syncAppFromPageData() {
@@ -75,19 +81,24 @@
 		app.accessToken = routeData.authToken ?? undefined;
 		app.devices = devices;
 		app.totalDeviceCount = isDashboardRoute ? (routeData.totalDeviceCount ?? devices.length) : 0;
+
 		app.deviceStatuses = isDashboardRoute
 			? (routeData.deviceStatuses ?? { online: 0, offline: 0 })
 			: { online: 0, offline: 0 };
+
 		app.triggeredRules = isDashboardRoute ? (routeData.triggeredRules ?? []) : [];
 		app.triggeredRulesCount = readTriggeredRulesCount(
 			isDashboardRoute ? routeData.triggeredRulesCount : 0
 		);
+
 		app.deviceGroups = isDashboardRoute
 			? normalizeDashboardFilterValues(routeData.deviceGroups)
 			: [];
+
 		app.locationGroups = isDashboardRoute
 			? normalizeDashboardFilterValues(routeData.locationGroups)
 			: [];
+
 		app.locations = isDashboardRoute ? (routeData.locations ?? []) : [];
 	}
 
@@ -131,9 +142,11 @@
 
 	function handleWindowResize() {
 		document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
+
 		if (resizeTimer) {
 			clearTimeout(resizeTimer);
 		}
+
 		resizeTimer = setTimeout(() => {
 			document.querySelector('.cw-sidenav')?.classList.remove('cw-sidenav--resizing');
 		}, 100);
@@ -148,43 +161,61 @@
 
 <svelte:head>
 	<link rel="manifest" href={resolve('/manifest.webmanifest')} />
+
 	<link rel="icon" href={asset('/icons/favicon.svg')} sizes="any" type="image/svg+xml" />
+
 	<link rel="icon" href={asset('/icons/icon-32x32.png')} sizes="32x32" type="image/png" />
+
 	<link rel="icon" href={asset('/icons/icon-192x192.png')} sizes="192x192" type="image/png" />
+
 	<link rel="shortcut icon" href={asset('/favicon.ico')} />
+
 	<link rel="apple-touch-icon" href={asset('/icons/apple-touch-icon.png')} sizes="180x180" />
+
 	<meta name="application-name" content="CropWatch" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
+
 	<meta name="apple-mobile-web-app-title" content="CropWatch" />
+
 	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
 	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="format-detection" content="telephone=no" />
 	<meta name="color-scheme" content="dark light" />
 	<meta name="theme-color" content="#1f283b" />
+
 	<meta name="theme-color" content="#eef1f7" media="(prefers-color-scheme: light)" />
+
 	<meta name="theme-color" content="#1f283b" media="(prefers-color-scheme: dark)" />
 </svelte:head>
 
 <CwOfflineOverlay />
 <CwToastContainer />
+
 {#if !isOfflineRoute}
 	<PwaDock />
 {/if}
+
 <svelte:window onresize={handleWindowResize} />
 
 <div class="app-shell flex h-dvh w-full overflow-hidden">
 	{#if !isAuthRoute && !isOfflineRoute}
 		<Sidebar bind:mode />
+
 		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 			<Header bind:mode />
-			<main class="flex min-h-0 flex-1 flex-col overflow-hidden p-1">
-				{@render children()}
-			</main>
+
+			<main class="flex min-h-0 flex-1 flex-col overflow-hidden p-1">{@render children()}</main>
+
 			<OverviewDrawer />
 		</div>
 	{:else}
-		<main class="flex-1 overflow-y-auto">
-			{@render children()}
-		</main>
+		<main class="flex-1 overflow-y-auto">{@render children()}</main>
 	{/if}
+</div>
+
+<div style="display:none">
+	{#each locales as locale}
+		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
+	{/each}
 </div>

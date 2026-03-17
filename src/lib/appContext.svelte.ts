@@ -26,6 +26,7 @@ export interface AppContext {
 	staleDeviceIds: string[];
 	accessToken?: string;
 	drawerOpen?: boolean;
+	privacyModeEnabled?: boolean;
 }
 
 export const appContextKey = Symbol('appContext');
@@ -42,6 +43,7 @@ export const defaultAppContext: AppContext = {
 	locationGroups: [],
 	accessToken: undefined,
 	drawerOpen: false,
+	privacyModeEnabled: false
 };
 
 export function createAppContext(initial: Partial<AppContext> = {}): AppContext {
@@ -64,6 +66,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 				staleDeviceIds: [],
 				locationGroups: [],
 				drawerOpen: false,
+				privacyModeEnabled: false,
 				...initial
 			};
 		}
@@ -81,6 +84,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 			staleDeviceIds: [],
 			locationGroups: [],
 			drawerOpen: false,
+			privacyModeEnabled: false,
 			...initial
 		};
 	}

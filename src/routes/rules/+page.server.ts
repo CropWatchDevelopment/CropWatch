@@ -21,9 +21,16 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 
     const rules = await apiServiceInstance.getRules().catch(() => []);
 
+    const ruleResult = rules.map(rule => {
+        return {
+            location_name: rule.cw_devices.cw_locations.name,
+            ...rule
+        }
+    });
+    
     return {
         session,
         authToken,
-        rules
+        rules: ruleResult,
     };
 }

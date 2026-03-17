@@ -20,6 +20,7 @@
 		"@eslint/compat": "^2.0.2",
 		"@eslint/js": "^9.39.2",
 		"@fontsource/fira-mono": "^5.2.7",
+		"@inlang/paraglide-js": "^2.10.0",
 		"@neoconfetti/svelte": "^2.2.2",
 		"@playwright/test": "^1.58.2",
 		"@sveltejs/adapter-vercel": "^6.3.2",
@@ -51,7 +52,7 @@
 	},
 	"packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd",
 	"dependencies": {
-		"@cropwatchdevelopment/cwui": "0.1.40",
+		"@cropwatchdevelopment/cwui": "0.1.43",
 		"@supabase/supabase-js": "^2.98.0"
 	}
 }

@@ -13,4 +13,5 @@ export interface IDevice {
 	soil_humidity?: number | null;
 	cwloading?: boolean;
 	location_id: number;
+	alert_count?: number;
 }
