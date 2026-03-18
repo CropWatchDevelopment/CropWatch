@@ -152,15 +152,6 @@
 				loggingIn = true;
 
 				try {
-					await ensureRecaptchaLoaded().catch((error) => {
-						console.error('reCAPTCHA load error:', error);
-						toast.add({
-							message: 'Unable to load site security. Please refresh the page and try again.',
-							tone: 'danger'
-						});
-						loggingIn = false;
-						cancel();
-					});
 					const token = await getRecaptchaToken();
 					if (typeof token !== 'string' || token.length === 0) {
 						throw new Error('reCAPTCHA token missing');
