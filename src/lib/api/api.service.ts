@@ -4,10 +4,7 @@ import {
 	PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT,
 	PUBLIC_DEVICE_STATUS_ENDPOINT,
 	PUBLIC_LOGIN_ENDPOINT,
-	PUBLIC_AIR_NOTES_ENDPOINT,
-	PUBLIC_RULES_ENDPOINT,
-	PUBLIC_TRIGGERED_RULES_ENDPOINT,
-	PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT
+	PUBLIC_AIR_NOTES_ENDPOINT
 } from '$env/static/public';
 import { env as publicEnv } from '$env/dynamic/public';
 import type { PdfFile } from '../interfaces/PdfFile.interface';
@@ -110,9 +107,14 @@ const REPORTS_ENDPOINT = '/reports';
 const REPORT_BY_ID_ENDPOINT = '/reports/{id}';
 const REPORT_BY_REPORT_ID_ENDPOINT = '/reports/{report_id}';
 const REPORTS_BASE_ENDPOINT = publicEnv.PUBLIC_REPORTS_ENDPOINT ?? REPORTS_ENDPOINT;
+const RULES_BASE_ENDPOINT = publicEnv.PUBLIC_RULES_ENDPOINT ?? '/rules';
+const TRIGGERED_RULES_BASE_ENDPOINT =
+	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT ?? `${RULES_BASE_ENDPOINT}/triggered`;
+const TRIGGERED_RULES_COUNT_ENDPOINT =
+	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT ?? `${TRIGGERED_RULES_BASE_ENDPOINT}/count`;
 const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
 const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{name}`;
-const RULE_BY_ID_ENDPOINT = `${PUBLIC_RULES_ENDPOINT}/{id}`;
+const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
 const AIR_NOTES_CREATE_ENDPOINT = PUBLIC_AIR_NOTES_ENDPOINT;
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
 const TRAFFIC_ENDPOINT = '/traffic/{dev_eui}';
@@ -864,24 +866,24 @@ export class ApiService {
 	}
 
 	public createRule(payload: CreateRuleRequest): Promise<RuleDto> {
-		return this.request<RuleDto>(PUBLIC_RULES_ENDPOINT, {
+		return this.request<RuleDto>(RULES_BASE_ENDPOINT, {
 			method: 'POST',
 			body: payload
 		});
 	}
 
 	public getRules(): Promise<RuleDto[]> {
-		return this.request<RuleDto[]>(PUBLIC_RULES_ENDPOINT, { method: 'GET' });
+		return this.request<RuleDto[]>(RULES_BASE_ENDPOINT, { method: 'GET' });
 	}
 
 	public getTriggeredRules(): Promise<RuleDto[]> {
-		return this.request<RuleDto[]>(PUBLIC_TRIGGERED_RULES_ENDPOINT, {
+		return this.request<RuleDto[]>(TRIGGERED_RULES_BASE_ENDPOINT, {
 			method: 'GET'
 		});
 	}
 
 	public getTriggeredRulesCount(): Promise<TriggeredRulesCountResponse> {
-		return this.request<TriggeredRulesCountResponse>(PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT, {
+		return this.request<TriggeredRulesCountResponse>(TRIGGERED_RULES_COUNT_ENDPOINT, {
 			method: 'GET'
 		});
 	}
