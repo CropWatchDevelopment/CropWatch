@@ -1,4 +1,4 @@
-import { PUBLIC_RECAPTCHA_SITE_KEY } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 
 declare global {
 	interface Window {
@@ -15,7 +15,7 @@ let scriptLoaded = false;
 let scriptLoading: Promise<boolean> | null = null;
 
 function getPublicSiteKey(): string | null {
-	const key = (PUBLIC_RECAPTCHA_SITE_KEY ?? '').trim();
+	const key = (publicEnv.PUBLIC_RECAPTCHA_SITE_KEY ?? '').trim();
 	return key.length > 0 ? key : null;
 }
 

@@ -1,11 +1,3 @@
-import {
-	PUBLIC_API_BASE_URL,
-	PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT,
-	PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT,
-	PUBLIC_DEVICE_STATUS_ENDPOINT,
-	PUBLIC_LOGIN_ENDPOINT,
-	PUBLIC_AIR_NOTES_ENDPOINT
-} from '$env/static/public';
 import { env as publicEnv } from '$env/dynamic/public';
 import type { PdfFile } from '../interfaces/PdfFile.interface';
 import type {
@@ -84,6 +76,14 @@ const CREATED_AT_KEY = 'created_at';
 const MINUTES_PER_HOUR = 60;
 const MILLISECONDS_PER_MINUTE = 60_000;
 const TIMEZONE_SUFFIX_PATTERN = /(?:[zZ]|[+-]\d{2}(?::?\d{2})?)$/;
+const API_BASE_URL = publicEnv.PUBLIC_API_BASE_URL ?? '';
+const LOGIN_ENDPOINT = publicEnv.PUBLIC_LOGIN_ENDPOINT ?? '/auth/login';
+const DEVICE_STATUS_ENDPOINT = publicEnv.PUBLIC_DEVICE_STATUS_ENDPOINT ?? '/devices/status';
+const DEVICE_LATEST_PRIMARY_ENDPOINT =
+	publicEnv.PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT ?? '/devices/latest-primary-data';
+const DEVICE_LATEST_PRIMARY_BY_DEV_EUI_ENDPOINT =
+	publicEnv.PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT ??
+	'/devices/{dev_eui}/latest-primary-data';
 
 const AUTH_ENDPOINT = '/auth';
 const AIR_ENDPOINT = '/air/{dev_eui}';
@@ -115,7 +115,7 @@ const TRIGGERED_RULES_COUNT_ENDPOINT =
 const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
 const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{name}`;
 const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
-const AIR_NOTES_CREATE_ENDPOINT = PUBLIC_AIR_NOTES_ENDPOINT;
+const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air-notes';
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
 const TRAFFIC_ENDPOINT = '/traffic/{dev_eui}';
 const WATER_ENDPOINT = '/water/{dev_eui}';
@@ -338,7 +338,7 @@ export class ApiService {
 	private timeZoneOffset: number;
 
 	public constructor(options: ApiServiceOptions = {}) {
-		this.baseUrl = options.baseUrl ?? PUBLIC_API_BASE_URL;
+		this.baseUrl = options.baseUrl ?? API_BASE_URL;
 		this.fetchFn = options.fetchFn ?? fetch;
 		this.authToken = options.authToken ?? null;
 		const configuredTimeZoneOffset = options.timeZoneOffset;
@@ -436,7 +436,7 @@ export class ApiService {
 	}
 
 	public login(payload: LoginRequest): Promise<LoginResponse> {
-		return this.request<LoginResponse>(PUBLIC_LOGIN_ENDPOINT, {
+		return this.request<LoginResponse>(LOGIN_ENDPOINT, {
 			method: 'POST',
 			body: payload,
 			authToken: null
@@ -705,7 +705,7 @@ export class ApiService {
 	}
 
 	public getDeviceStatuses(): Promise<DeviceStatusSummary> {
-		return this.request<DeviceStatusSummary>(PUBLIC_DEVICE_STATUS_ENDPOINT, {
+		return this.request<DeviceStatusSummary>(DEVICE_STATUS_ENDPOINT, {
 			method: 'GET'
 		});
 	}
@@ -731,7 +731,7 @@ export class ApiService {
 		options: ApiMethodOptions = {}
 	): Promise<PaginatedResponse<DevicePrimaryDataDto>> {
 		return this.request<DevicePrimaryDataDto[] | PaginatedResponse<DevicePrimaryDataDto>>(
-			PUBLIC_DEVICE_LATEST_PRIMARY_DATA_ENDPOINT,
+			DEVICE_LATEST_PRIMARY_ENDPOINT,
 			{
 				method: 'GET',
 				signal: options.signal,
@@ -815,7 +815,7 @@ export class ApiService {
 		options: ApiMethodOptions = {}
 	): Promise<DevicePrimaryDataDto> {
 		return this.request<DevicePrimaryDataDto>(
-			replacePathParams(PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT, {
+			replacePathParams(DEVICE_LATEST_PRIMARY_BY_DEV_EUI_ENDPOINT, {
 				dev_eui: devEui
 			}),
 			{

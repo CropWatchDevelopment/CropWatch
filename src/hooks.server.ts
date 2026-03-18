@@ -5,9 +5,10 @@ import type { IJWT } from '$lib/interfaces/jwt.interface';
 import type { HandleFetch } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { jwtDecode } from 'jwt-decode';
-import { PUBLIC_API_BASE_URL } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 
 const PUBLIC_PATHS = new Set(['/manifest.webmanifest', '/offline', '/service-worker.js']);
+const PUBLIC_API_BASE_URL = publicEnv.PUBLIC_API_BASE_URL ?? '';
 
 export const originalHandle = async ({ event, resolve }) => {
 	const token = event.cookies.get('jwt');
@@ -69,7 +70,7 @@ const checkAuthToken = (token: string, event: any) => {
 };
 
 const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
-	if (request.url.startsWith(PUBLIC_API_BASE_URL)) {
+	if (PUBLIC_API_BASE_URL && request.url.startsWith(PUBLIC_API_BASE_URL)) {
 		const token = event.cookies.get('jwt');
 
 		checkAuthToken(token ?? '', event);

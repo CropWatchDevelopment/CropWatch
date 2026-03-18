@@ -1,5 +1,5 @@
 import { dev } from '$app/environment';
-import { PUBLIC_API_BASE_URL, PUBLIC_LOGIN_ENDPOINT } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 
@@ -14,6 +14,8 @@ type LoginApiResponse = {
 const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
 const SECURITY_CHECK_MESSAGE = 'Security verification failed. Please try again.';
 const LOGIN_FAILED_MESSAGE = 'Unable to sign in right now. Please try again.';
+const PUBLIC_API_BASE_URL = (publicEnv.PUBLIC_API_BASE_URL ?? '').trim();
+const PUBLIC_LOGIN_ENDPOINT = publicEnv.PUBLIC_LOGIN_ENDPOINT ?? '/auth/login';
 
 function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 	if (typeof value !== 'string') return null;
@@ -23,6 +25,11 @@ function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 
 export const actions: Actions = {
 	default: async ({ request, cookies, fetch }) => {
+		if (!PUBLIC_API_BASE_URL) {
+			console.error('Missing PUBLIC_API_BASE_URL for login action');
+			return fail(500, { message: LOGIN_FAILED_MESSAGE });
+		}
+
 		const data = await request.formData();
 		const email = readNonEmptyString(data.get('email'));
 		const password = readNonEmptyString(data.get('password'));
