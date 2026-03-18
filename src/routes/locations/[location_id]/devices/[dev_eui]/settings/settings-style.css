@@ -1,0 +1,177 @@
+.device-settings-page {
+	display: grid;
+	gap: 1rem;
+	padding: 0.75rem;
+}
+
+.device-form {
+	display: grid;
+	gap: 0.875rem;
+}
+
+.device-form__header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.panel-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+.panel-actions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.panel-note {
+	margin: 0;
+	color: rgba(15, 23, 42, 0.72);
+	font-size: 0.92rem;
+}
+
+.field-stack {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.field-error {
+	margin: 0;
+	color: #b42318;
+	font-size: 0.85rem;
+}
+
+.form-feedback {
+	margin: 0;
+	padding: 0.75rem 0.875rem;
+	border-radius: 0.75rem;
+	background: #fee4e2;
+	color: #912018;
+	font-size: 0.92rem;
+}
+
+.feedback-success {
+	background: #d1fadf;
+	color: #166534;
+}
+
+.permissions-tag {
+	margin-bottom: 0.75rem;
+}
+
+.permission-list {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.permission-row {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.permission-row__form {
+	display: grid;
+	grid-template-columns: 2fr 1.6fr;
+	gap: 0.75rem;
+}
+
+.permission-user {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+.permission-edit {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: end;
+	gap: 0.5rem;
+}
+
+.permission-meta {
+	display: grid;
+	gap: 0.35rem;
+	align-self: end;
+}
+
+.permission-user-id {
+	margin: 0;
+	font-size: 0.78rem;
+	color: rgba(15, 23, 42, 0.62);
+}
+
+.permission-feedback {
+	grid-column: 1 / -1;
+}
+
+.empty-state {
+	margin: 0;
+	color: rgba(15, 23, 42, 0.72);
+}
+
+.certificate-list {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.certificate-item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 0.75rem;
+	align-items: end;
+}
+
+.certificate-item__meta {
+	display: grid;
+	gap: 0.5rem;
+}
+
+.certificate-download-form {
+	display: flex;
+	justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+	.panel-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.permission-row__form {
+		grid-template-columns: 1fr;
+	}
+
+	.permission-edit {
+		grid-template-columns: 1fr;
+	}
+
+	.certificate-item {
+		grid-template-columns: 1fr;
+	}
+
+	.certificate-download-form {
+		justify-content: stretch;
+	}
+}
+
+@media (max-width: 640px) {
+	.permission-user {
+		grid-template-columns: 1fr;
+	}
+
+	.panel-actions {
+		align-items: stretch;
+	}
+
+	.panel-actions :global(button) {
+		width: 100%;
+	}
+
+	.certificate-download-form :global(button) {
+		width: 100%;
+	}
+}

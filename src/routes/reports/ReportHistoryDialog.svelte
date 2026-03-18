@@ -1,160 +1,161 @@
 <script lang="ts">
-	import type { SupabaseClient } from '@supabase/supabase-js';
-	import CWButton from '$lib/components/CWButton.svelte';
-	import CWDialog from '$lib/components/CWDialog.svelte';
+	import { ApiService, ApiServiceError } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import {
+		CwButton,
+		CwCard,
+		CwDataTable,
+		CwDialog,
+		CwTooltip,
+		useCwToast,
+		type CwTableQuery,
+		type CwTableResult
+	} from '@cropwatchdevelopment/cwui';
+	import { type PdfFile } from '$lib/interfaces/PdfFile.interface';
 
-	type StorageItem = {
-		name: string;
-		fullPath: string;
-		id?: string;
-		updated_at?: string;
-		created_at?: string;
-		metadata?: { size?: number };
-	};
+	type ReportHistoryRow = { id: string; name: string; created_at: string };
 
-	interface Props {
-		open?: boolean;
-		devEui: string | null;
-		deviceLabel?: string;
-		supabase: SupabaseClient;
+	let { open = $bindable(), dev_eui }: { open?: boolean; dev_eui: string } = $props();
+	const app = $state(getAppContext());
+	const toast = useCwToast();
+
+	function isRecord(value: unknown): value is Record<string, unknown> {
+		return typeof value === 'object' && value !== null && !Array.isArray(value);
 	}
 
-	let {
-		open = $bindable(false),
-		devEui,
-		deviceLabel = 'Device',
-		supabase
-	}: Props = $props();
-
-	const HISTORY_BUCKET = 'Reports';
-
-	const formatBytes = (bytes?: number) => {
-		if (!bytes || bytes <= 0) return '—';
-		const units = ['B', 'KB', 'MB', 'GB'];
-		let size = bytes;
-		let unit = units[0];
-		for (let i = 1; i < units.length && size >= 1024; i += 1) {
-			size /= 1024;
-			unit = units[i];
+	function readErrorMessage(value: unknown): string | null {
+		if (typeof value === 'string') {
+			const trimmed = value.trim();
+			return trimmed.length > 0 ? trimmed : null;
 		}
-		return `${size.toFixed(size >= 10 || unit === 'B' ? 0 : 1)} ${unit}`;
-	};
 
-	const formatTimestamp = (value?: string) =>
-		value ? new Date(value).toLocaleString() : '—';
+		if (Array.isArray(value)) {
+			for (const item of value) {
+				const message = readErrorMessage(item);
+				if (message) return message;
+			}
+			return null;
+		}
 
-	const getDisplayName = (name: string) => name.split('/').pop() ?? name;
+		if (!isRecord(value)) {
+			return null;
+		}
 
-	const fetchHistory = async (eui: string) => {
-		const bucket = supabase.storage.from(HISTORY_BUCKET);
-		const { data, error: listError } = await bucket.list(eui, {
-			sortBy: { column: 'updated_at', order: 'desc' }
+		return (
+			readErrorMessage(value.message) ??
+			readErrorMessage(value.error) ??
+			readErrorMessage(value.detail) ??
+			readErrorMessage(value.payload)
+		);
+	}
+
+	function getRequestErrorMessage(action: 'load' | 'download', error: unknown): string {
+		const fallback =
+			action === 'load'
+				? 'Unable to load report history right now.'
+				: 'Unable to download this report right now.';
+
+		if (error instanceof ApiServiceError) {
+			return readErrorMessage(error.payload) ?? fallback;
+		}
+
+		if (error instanceof Error) {
+			const message = error.message.trim();
+			return message.length > 0 ? message : fallback;
+		}
+
+		return fallback;
+	}
+
+	function createApiService(): ApiService {
+		return new ApiService({
+			authToken: app.accessToken ?? null
 		});
+	}
 
-		if (listError) {
-			throw new Error(listError.message);
-		}
-
-		let entries = (data ?? []).map((item) => ({
-			...item,
-			fullPath: `${eui}/${item.name}`
+	function mapHistoryRows(files: PdfFile[]): ReportHistoryRow[] {
+		return files.map((file) => ({
+			id: file.id,
+			name: file.name,
+			created_at: new Date(file.created_at).toLocaleString()
 		}));
-		if (entries.length === 0) {
-			const { data: rootData, error: rootError } = await bucket.list('', {
-				search: eui,
-				sortBy: { column: 'updated_at', order: 'desc' }
-			});
+	}
 
-			if (rootError) {
-				throw new Error(rootError.message);
+	async function loadData(
+		_query: CwTableQuery
+	): Promise<CwTableResult<ReportHistoryRow>> {
+		void _query;
+
+		try {
+			const rows = mapHistoryRows(await createApiService().getReportHistory(dev_eui));
+			return { rows, total: rows.length };
+		} catch (error) {
+			const message = getRequestErrorMessage('load', error);
+			console.error('Failed to load report history', { dev_eui, error });
+			toast.add({ tone: 'danger', message });
+			throw new Error(message);
+		}
+	}
+
+	async function handleDownload(name: string) {
+		try {
+			const response = await createApiService().getReportDownloadUrl(dev_eui, name);
+			const signedUrl = typeof response.url === 'string' ? response.url : null;
+			if (!signedUrl) {
+				const message = 'Unable to download this report because the signed URL was missing.';
+				console.error('Download failed: signed URL missing', { dev_eui, name, response });
+				toast.add({ tone: 'danger', message });
+				return;
 			}
 
-			entries = (rootData ?? []).map((item) => ({
-				...item,
-				fullPath: item.name
-			}));
+			window.open(signedUrl, '_blank', 'noopener');
+		} catch (error) {
+			const message = getRequestErrorMessage('download', error);
+			console.error('Error downloading file', { dev_eui, name, error });
+			toast.add({ tone: 'danger', message });
 		}
-
-		return entries;
-	};
-
-	const historyPromise = $derived.by(() => {
-		if (!open || !devEui) return null;
-		return fetchHistory(devEui);
-	});
-
-	let downloading = $state<string | null>(null);
-
-	const handleDownload = async (item: StorageItem) => {
-		if (typeof window === 'undefined') return;
-		downloading = item.fullPath;
-		const { data, error } = await supabase.storage
-			.from(HISTORY_BUCKET)
-			.createSignedUrl(item.fullPath, 60);
-
-		if (error || !data?.signedUrl) {
-			console.error('Failed to create download URL', error);
-			downloading = null;
-			return;
-		}
-
-		const url = new URL(data.signedUrl);
-		url.searchParams.set('download', getDisplayName(item.name));
-		window.location.href = url.toString();
-		downloading = null;
-	};
+	}
 </script>
 
-<CWDialog bind:open title={`Report history for ${deviceLabel}`}>
-	{#if !devEui}
-		<p class="text-sm text-slate-400">Select a device to view report history.</p>
-	{:else if historyPromise}
-		{#await historyPromise}
-			<p class="text-sm text-slate-400">Loading history...</p>
-		{:then items}
-			{#if items.length === 0}
-				<p class="text-sm text-slate-400">No history entries found for this device.</p>
-			{:else}
-				<div class="max-h-[60vh] overflow-auto rounded-lg border border-slate-800">
-					<table class="w-full text-sm">
-						<thead class="bg-slate-900/60 text-slate-300">
-							<tr>
-								<th class="px-3 py-2 text-left font-medium">File</th>
-								<th class="px-3 py-2 text-left font-medium">Updated</th>
-								<th class="px-3 py-2 text-right font-medium">Size</th>
-								<th class="px-3 py-2 text-right font-medium">Download</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each items as item (item.id ?? item.name)}
-								<tr class="border-t border-slate-800 text-slate-200">
-									<td class="px-3 py-2">{getDisplayName(item.name)}</td>
-									<td class="px-3 py-2">{formatTimestamp(item.updated_at ?? item.created_at)}</td>
-									<td class="px-3 py-2 text-right">{formatBytes(item.metadata?.size)}</td>
-									<td class="px-3 py-2 text-right">
-										<CWButton
-											variant="primary"
-											size="sm"
-											disabled={downloading === item.fullPath}
-											onclick={() => handleDownload(item)}
-										>
-											{downloading === item.fullPath ? 'Preparing...' : 'Download'}
-										</CWButton>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			{/if}
-		{:catch err}
-			<p class="text-sm text-rose-300">
-				{err instanceof Error ? err.message : 'Failed to load report history.'}
-			</p>
-		{/await}
+<CwButton variant="info" size="sm" onclick={() => (open = true)}>History</CwButton>
+
+<CwDialog {open} title="Report History" onclose={() => (open = false)} class="w-full">
+	<CwCard title="Problem Reports" class="mb-4 p-4">
+		<CwTooltip
+			tone="info"
+			position="left"
+			value="This report is under development. Please check back later."
+		>
+			<CwButton variant="primary" disabled>Problems Only Report</CwButton>
+		</CwTooltip>
+	</CwCard>
+
+	{#if open}
+		<CwDataTable
+			columns={[
+				// { key: 'id', header: 'ID' },
+				{ key: 'name', header: 'Name' },
+				{ key: 'created_at', header: 'Created At' }
+			]}
+			rowActionsHeader="Actions"
+			{loadData}
+			rowKey="id"
+		>
+			{#snippet rowActions(row: ReportHistoryRow)}
+				<CwButton
+					size="sm"
+					variant="secondary"
+					onclick={() => {
+						handleDownload(row.name);
+					}}
+				>
+					Download
+				</CwButton>
+			{/snippet}
+		</CwDataTable>
 	{/if}
 
-	<div class="mt-4 flex justify-end">
-		<CWButton variant="secondary" onclick={() => (open = false)}>Close</CWButton>
-	</div>
-</CWDialog>
+	{#snippet actions()}
+		<CwButton variant="secondary" onclick={() => (open = false)}>Close</CwButton>
+	{/snippet}
+</CwDialog>

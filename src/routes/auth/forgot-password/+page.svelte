@@ -1,26 +1,106 @@
 <script lang="ts">
-	import CWButton from '$lib/components/CWButton.svelte';
 	import logo from '$lib/images/cropwatch_static.svg';
-	import FORGOT_SHIELD_ICON from '$lib/images/icons/forgot_shield.svg';
+	import KEY_ICON from '$lib/images/icons/key.svg';
 	import BACK_ICON from '$lib/images/icons/back.svg';
+	import ADD_PERSON_ICON from '$lib/images/icons/person_add.svg';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { loadRecaptchaScript, executeRecaptcha } from '$lib/utils/recaptcha';
-	import { getToastContext } from '$lib/components/toast';
-	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { onDestroy, onMount } from 'svelte';
+	import {
+		loadRecaptchaScript,
+		executeRecaptcha,
+		unloadRecaptchaScript
+	} from '$lib/utils/recaptcha';
+	import { applyAction, enhance } from '$app/forms';
+	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 
-	let { form } = $props<{
+	interface Props {
 		form: { message?: string; success?: boolean } | null;
-	}>();
+	}
 
-	let submitting: boolean = $state<boolean>(false);
+	const toast = useCwToast();
 
-	const toast = getToastContext();
+	let { form }: Props = $props();
+
+	let submitting: boolean = $state(false);
+	let loadingCaptcha: boolean = $state(true);
+	let recaptchaReady: boolean = $state(false);
+	let sent: boolean = $derived(form?.success === true);
+
+	$effect(() => {
+		if (form?.message) {
+			toast.add({ message: form.message, tone: 'danger' });
+		}
+	});
+
+	// ── reCAPTCHA helpers ──────────────────────────────────────
+	const RECAPTCHA_TIMEOUT_MS = 12_000;
+	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 5;
+	const RECAPTCHA_RETRY_DELAY_MS = 900;
+
+	function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+		return new Promise<T>((res, rej) => {
+			const id = window.setTimeout(() => rej(new Error('Operation timed out')), timeoutMs);
+			promise
+				.then(res)
+				.catch(rej)
+				.finally(() => window.clearTimeout(id));
+		});
+	}
+
+	function sleep(ms: number): Promise<void> {
+		return new Promise((res) => window.setTimeout(res, ms));
+	}
+
+	async function ensureRecaptchaLoaded(): Promise<boolean> {
+		for (let attempt = 1; attempt <= RECAPTCHA_MAX_LOAD_ATTEMPTS; attempt++) {
+			try {
+				const loaded = await withTimeout(
+					loadRecaptchaScript({
+						setLoadingCaptcha: (loading: boolean) => {
+							loadingCaptcha = loading;
+						}
+					}),
+					RECAPTCHA_TIMEOUT_MS
+				);
+				if (loaded) {
+					recaptchaReady = true;
+					loadingCaptcha = false;
+					return true;
+				}
+			} catch (error) {
+				console.error(`reCAPTCHA load error (attempt ${attempt}):`, error);
+			}
+			recaptchaReady = false;
+			loadingCaptcha = false;
+			if (attempt < RECAPTCHA_MAX_LOAD_ATTEMPTS) {
+				await sleep(RECAPTCHA_RETRY_DELAY_MS * attempt);
+			}
+		}
+		return false;
+	}
+
+	async function getRecaptchaToken(): Promise<string> {
+		if (!recaptchaReady) {
+			const loaded = await ensureRecaptchaLoaded();
+			if (!loaded) throw new Error('reCAPTCHA not ready');
+		}
+		try {
+			return await withTimeout(executeRecaptcha('FORGOT_PASSWORD'), RECAPTCHA_TIMEOUT_MS);
+		} catch (firstError) {
+			console.error('reCAPTCHA execute failed; retrying load once:', firstError);
+			recaptchaReady = false;
+			const loaded = await ensureRecaptchaLoaded();
+			if (!loaded) throw firstError;
+			return await withTimeout(executeRecaptcha('FORGOT_PASSWORD'), RECAPTCHA_TIMEOUT_MS);
+		}
+	}
 
 	onMount(() => {
-		// Preload reCAPTCHA script
-		loadRecaptchaScript();
+		void ensureRecaptchaLoaded();
+	});
+
+	onDestroy(() => {
+		unloadRecaptchaScript();
 	});
 </script>
 
@@ -28,245 +108,259 @@
 	<title>Forgot Password - CropWatch Temp</title>
 </svelte:head>
 
-<main
-	class="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-900 text-slate-100"
->
-	<!-- Animated background gradient orbs -->
-	<div class="pointer-events-none absolute inset-0 overflow-hidden">
-		<!-- Large animated orbs -->
-		<div
-			class="animate-float-slow absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-sky-500/25 blur-3xl"
-		></div>
-		<div
-			class="animate-float-slower absolute -bottom-48 -right-32 h-[600px] w-[600px] rounded-full bg-indigo-500/25 blur-3xl"
-		></div>
-		<div
-			class="animate-float absolute -bottom-20 left-1/4 h-[400px] w-[400px] rounded-full bg-emerald-500/20 blur-3xl"
-		></div>
-		<div
-			class="animate-float-slow absolute -top-20 right-1/4 h-[350px] w-[350px] rounded-full bg-violet-500/20 blur-3xl"
-		></div>
-
-		<!-- Center glow behind the card -->
-		<div
-			class="absolute left-1/2 top-1/2 h-[800px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-700/50 blur-3xl"
-		></div>
-	</div>
-
-	<!-- Floating particles -->
-	<div class="pointer-events-none absolute inset-0 overflow-hidden">
-		<div class="animate-rise absolute bottom-0 left-[10%] h-1 w-1 rounded-full bg-sky-400/60"></div>
-		<div
-			class="animate-rise-slow absolute bottom-0 left-[20%] h-1.5 w-1.5 rounded-full bg-indigo-400/50"
-		></div>
-		<div
-			class="animate-rise-slower absolute bottom-0 left-[35%] h-1 w-1 rounded-full bg-emerald-400/60"
-		></div>
-		<div class="animate-rise absolute bottom-0 left-[50%] h-2 w-2 rounded-full bg-sky-400/40"></div>
-		<div
-			class="animate-rise-slow absolute bottom-0 left-[65%] h-1 w-1 rounded-full bg-violet-400/60"
-		></div>
-		<div
-			class="animate-rise-slower absolute bottom-0 left-[80%] h-1.5 w-1.5 rounded-full bg-sky-400/50"
-		></div>
-		<div
-			class="animate-rise absolute bottom-0 left-[90%] h-1 w-1 rounded-full bg-indigo-400/60"
-		></div>
-	</div>
-
-	<!-- Grid pattern overlay -->
-	<div
-		class="pointer-events-none absolute inset-0 opacity-[0.04]"
-		style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 48px 48px;"
-	></div>
-
-	<!-- Diagonal lines accent -->
-	<div
-		class="pointer-events-none absolute inset-0 opacity-[0.02]"
-		style="background-image: repeating-linear-gradient(45deg, transparent, transparent 100px, rgba(255,255,255,0.05) 100px, rgba(255,255,255,0.05) 101px);"
-	></div>
-
-	<!-- Radial vignette for depth -->
-	<div
-		class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(15,23,42,0.3)_60%,rgba(15,23,42,0.6)_100%)]"
-	></div>
-
-	<!-- Forgot Password card -->
-	<div
-		class="relative z-10 w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900/80 p-3 shadow-2xl shadow-black/40 backdrop-blur-sm"
-	>
-		<!-- Logo -->
-		<div class="mb-6 flex justify-center">
-			<div class="rounded-2xl border border-slate-700/50 bg-slate-800/50 p-3 shadow-lg">
-				<img src={logo} alt="CropWatch" class="h-10 w-10" />
-			</div>
+<CwCard padded={false} class="auth-card">
+	<div class="auth-shell">
+		<div class="logo-frame">
+			<img src={logo} alt="CropWatch" class="logo-image" />
 		</div>
 
-		<h1 class="text-center text-lg font-semibold text-slate-50">Reset Your Password</h1>
-		<p class="mt-1 text-center text-sm text-slate-400">Enter your email and we'll send you a reset link</p>
-
-		{#if form?.message}
-			<p
-				class={`mt-4 rounded-lg border px-3 py-2 text-sm ${
-					form.success
-						? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
-						: 'border-amber-500/40 bg-amber-500/10 text-amber-100'
-				}`}
-			>
-				{form.message}
+		{#if sent}
+			<h1 class="auth-title">Check your email</h1>
+			<p class="auth-subtitle">
+				If an account exists with that email, we've sent a password reset link. Please check your
+				inbox (and spam folder).
 			</p>
-		{/if}
 
-		{#if !form?.success}
+			<CwButton
+				class="auth-primary"
+				type="button"
+				variant="primary"
+				size="md"
+				fullWidth={true}
+				onclick={() => goto('/auth/login')}
+			>
+				<img src={BACK_ICON} alt="Back to login icon" class="h-4 w-4" />
+				Back to Login
+			</CwButton>
+		{:else}
+			<h1 class="auth-title">Forgot your password?</h1>
+			<p class="auth-subtitle">Enter your account email and we will send you a reset link.</p>
+
 			<form
 				method="POST"
-				action="?/resetPassword"
-				class="mt-6 space-y-4"
+				action="?/forgot-password"
+				class="auth-form"
 				use:enhance={async ({ formData, cancel }) => {
+					if (submitting) {
+						cancel();
+						return;
+					}
 					submitting = true;
-					
+
 					try {
-						const token = await executeRecaptcha('FORGOT_PASSWORD');
+						const token = await getRecaptchaToken();
 						formData.set('recaptchaToken', token);
-					} catch (error) {
-						console.error('reCAPTCHA error:', error);
-						toast.error('reCAPTCHA verification failed. Please try again.');
+					} catch (err) {
+						console.error('reCAPTCHA token failed:', err);
+						toast.add({ message: 'Security verification failed. Please try again.', tone: 'danger' });
 						submitting = false;
 						cancel();
 						return;
 					}
 
-					return async ({ result, update }) => {
+					return async ({ result }) => {
 						submitting = false;
-						if (result.type === 'failure') {
-							const message = (result.data as { message?: string })?.message || 'Failed to send reset link';
-							toast.error(message);
-						} else if (result.type === 'success') {
-							await update();
-						} else if (result.type === 'error') {
-							toast.error('An error occurred. Please try again.');
-						}
+						await applyAction(result);
 					};
 				}}
 			>
-				<label class="block text-sm text-slate-300">
-					<span class="mb-1 block text-xs uppercase tracking-wide text-slate-400">Email</span>
-					<input
+				<label class="field-block">
+					<span class="field-label">EMAIL</span>
+					<CwInput
+						class="auth-input"
 						name="email"
 						type="email"
 						required
-						class="w-full rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-slate-100 placeholder:text-slate-400 transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
 						placeholder="you@example.com"
 						autocomplete="email"
 					/>
 				</label>
 
-				<CWButton type="submit" variant="primary" loading={submitting} size="md" fullWidth={true}>
-					<img src={FORGOT_SHIELD_ICON} alt="Reset password icon" class="h-5 w-5" />
-					Send Reset Link
-				</CWButton>
+				<CwButton
+					class="auth-primary"
+					type="submit"
+					variant="primary"
+					size="md"
+					fullWidth={true}
+					disabled={submitting || loadingCaptcha}
+				>
+					{#if submitting}
+						Sending…
+					{:else}
+						<img src={KEY_ICON} alt="Send reset link icon" class="h-4 w-4" />
+						Send Reset Link
+					{/if}
+				</CwButton>
+
+				<div class="action-grid">
+					<CwButton
+						class="auth-secondary"
+						type="button"
+						variant="secondary"
+						size="md"
+						fullWidth={true}
+						onclick={() => goto('/auth/login')}
+					>
+						<img src={BACK_ICON} alt="Back to login icon" class="h-4 w-4" />
+						Back to Login
+					</CwButton>
+
+					<CwButton
+						class="auth-secondary"
+						type="button"
+						variant="secondary"
+						size="md"
+						fullWidth={true}
+						onclick={() => goto('/auth/create-account')}
+					>
+						<img src={ADD_PERSON_ICON} alt="Create account icon" class="h-4 w-4" />
+						Create Account
+					</CwButton>
+				</div>
 			</form>
 		{/if}
 
-		<div class="mt-4">
-			<CWButton type="button" variant="secondary" size="md" fullWidth={true} onclick={() => goto('/auth')}>
-				<img src={BACK_ICON} alt="Back icon" class="h-5 w-5" />
-				Back to Sign In
-			</CWButton>
-		</div>
-
-		<!-- Footer -->
-		<p class="mt-6 text-center text-xs text-slate-400">
-			Protected by reCAPTCHA and CropWatch Security
-		</p>
+		<p class="security-copy">Protected by reCAPTCHA and CropWatch Security</p>
 	</div>
-
-	<!-- Bottom ambient light reflection -->
-	<div
-		class="pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent"
-	></div>
-</main>
+</CwCard>
 
 <style>
-	@keyframes float {
-		0%,
-		100% {
-			transform: translate(0, 0) scale(1);
-		}
-		25% {
-			transform: translate(10px, -15px) scale(1.02);
-		}
-		50% {
-			transform: translate(-5px, 10px) scale(0.98);
-		}
-		75% {
-			transform: translate(-15px, -5px) scale(1.01);
-		}
+	:global(.auth-card.cw-card) {
+		width: 100%;
+		border-radius: 1rem;
+		border-color: rgb(65 91 136 / 60%);
+		background: linear-gradient(180deg, rgb(11 27 62 / 95%) 0%, rgb(11 25 58 / 93%) 100%);
+		box-shadow: 0 34px 90px rgb(2 8 24 / 70%);
+		overflow: hidden;
 	}
 
-	@keyframes float-slow {
-		0%,
-		100% {
-			transform: translate(0, 0) scale(1);
-		}
-		33% {
-			transform: translate(-20px, 15px) scale(1.03);
-		}
-		66% {
-			transform: translate(15px, -10px) scale(0.97);
-		}
+	:global(.auth-card .cw-card__body) {
+		padding: 0;
 	}
 
-	@keyframes float-slower {
-		0%,
-		100% {
-			transform: translate(0, 0) scale(1);
+	.auth-shell {
+		padding: 1.8rem 1.4rem 1rem;
+	}
+
+	.logo-frame {
+		display: grid;
+		height: 3.95rem;
+		width: 3.95rem;
+		place-items: center;
+		margin: 0 auto 1.35rem;
+		border-radius: 0.9rem;
+		border: 1px solid rgb(61 88 130 / 56%);
+		background: linear-gradient(180deg, rgb(19 42 85 / 90%), rgb(15 33 71 / 88%));
+		box-shadow: inset 0 1px 0 rgb(128 163 214 / 15%);
+	}
+
+	.logo-image {
+		height: 2rem;
+		width: 2rem;
+	}
+
+	.auth-title {
+		margin: 0;
+		text-align: center;
+		font-size: 1.5rem;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		color: rgb(239 245 255);
+	}
+
+	.auth-subtitle {
+		margin: 0.45rem 0 1.3rem;
+		text-align: center;
+		font-size: 1rem;
+		color: rgb(158 176 205);
+	}
+
+	.auth-form {
+		display: grid;
+		gap: 0.82rem;
+	}
+
+	.field-block {
+		display: grid;
+		gap: 0.42rem;
+	}
+
+	.field-label {
+		font-size: 0.84rem;
+		font-weight: 500;
+		letter-spacing: 0.06em;
+		color: rgb(151 171 201);
+	}
+
+	:global(.auth-input .cw-input__field) {
+		min-height: 3rem;
+		border-color: rgb(58 84 126 / 80%);
+		border-radius: 0.8rem;
+		background: rgb(23 41 79 / 78%);
+		padding: 0.78rem 0.9rem;
+		font-size: 1.06rem;
+		color: rgb(223 236 255);
+	}
+
+	:global(.auth-input .cw-input__field::placeholder) {
+		color: rgb(140 162 196);
+	}
+
+	:global(.auth-input .cw-input__field:focus) {
+		border-color: rgb(86 140 214 / 90%);
+		box-shadow: 0 0 0 2px rgb(70 137 220 / 26%);
+	}
+
+	:global(.auth-primary.cw-button) {
+		min-height: 3rem;
+		border-radius: 0.8rem;
+		border-color: rgb(83 149 213 / 70%);
+		background: linear-gradient(180deg, #3889cb 0%, #2f74b3 100%);
+		color: rgb(242 248 255);
+		font-size: 1.12rem;
+		font-weight: 500;
+	}
+
+	:global(.auth-primary.cw-button:hover:not(:disabled)) {
+		border-color: rgb(108 167 228 / 76%);
+		background: linear-gradient(180deg, #4395d8 0%, #347fbe 100%);
+	}
+
+	.action-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.7rem;
+	}
+
+	:global(.auth-secondary.cw-button) {
+		min-height: 2.48rem;
+		border-radius: 0.75rem;
+		border-color: rgb(72 96 136 / 80%);
+		background: rgb(33 53 90 / 84%);
+		color: rgb(218 229 245);
+		font-size: 1rem;
+		font-weight: 450;
+	}
+
+	:global(.auth-secondary.cw-button:hover:not(:disabled)) {
+		border-color: rgb(95 126 174 / 85%);
+		background: rgb(39 62 102 / 88%);
+	}
+
+	.security-copy {
+		margin: 1.25rem 0 0;
+		text-align: center;
+		font-size: 0.84rem;
+		color: rgb(135 155 187);
+	}
+
+	@media (max-width: 420px) {
+		.auth-shell {
+			padding: 1.45rem 1rem 0.85rem;
 		}
-		50% {
-			transform: translate(25px, -20px) scale(1.05);
+
+		.action-grid {
+			grid-template-columns: 1fr;
 		}
-	}
-
-	@keyframes rise {
-		0% {
-			transform: translateY(0) scale(1);
-			opacity: 0;
-		}
-		10% {
-			opacity: 1;
-		}
-		90% {
-			opacity: 1;
-		}
-		100% {
-			transform: translateY(-100vh) scale(0.5);
-			opacity: 0;
-		}
-	}
-
-	:global(.animate-float) {
-		animation: float 8s ease-in-out infinite;
-	}
-
-	:global(.animate-float-slow) {
-		animation: float-slow 12s ease-in-out infinite;
-	}
-
-	:global(.animate-float-slower) {
-		animation: float-slower 16s ease-in-out infinite;
-	}
-
-	:global(.animate-rise) {
-		animation: rise 15s ease-in-out infinite;
-	}
-
-	:global(.animate-rise-slow) {
-		animation: rise 20s ease-in-out infinite;
-		animation-delay: 2s;
-	}
-
-	:global(.animate-rise-slower) {
-		animation: rise 25s ease-in-out infinite;
-		animation-delay: 5s;
 	}
 </style>

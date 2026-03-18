@@ -1,0 +1,89 @@
+import { ApiServiceError, type PaginationQuery, ApiService } from '$lib/api/api.service';
+import { fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ params, fetch, parent }) => {
+	const parentData = await parent();
+	const authToken = parentData.authToken ?? null;
+	const locationId = Number.parseInt(params.location_id, 10);
+
+	if (!authToken || !Number.isFinite(locationId)) {
+		return {
+			deviceData: [],
+			latestData: null
+		};
+	}
+
+	const api = new ApiService({
+		fetchFn: fetch,
+		authToken
+	});
+
+	const pagination: PaginationQuery = {
+		skip: 0,
+		take: 144
+	};
+
+	const [deviceData, latestData] = await Promise.all([
+		api.getDeviceData(params.dev_eui, pagination),
+		api.getDeviceLatestData(params.dev_eui)
+	]);
+
+	return {
+		deviceData: deviceData ?? [],
+		latestData: latestData ?? null
+	};
+};
+
+export const actions: Actions = {
+	saveDataNote: async ({ request, fetch, locals }) => {
+		const authToken = locals.jwtString ?? null;
+		const data = await request.formData();
+		const noteContent = data.get('note')?.toString() ?? '';
+		const telemetryId = data.get('created_at')?.toString() ?? '';
+		const devEui = data.get('dev_eui')?.toString() ?? '';
+
+		if (!authToken) {
+			return fail(401, {
+				action: 'saveDataNote',
+				message: 'You must be logged in to save a note.'
+			});
+		}
+
+		const api = new ApiService({
+			fetchFn: fetch,
+			authToken
+		});
+
+		try {
+			await api.createAirNote({
+				note: noteContent,
+				created_at: telemetryId,
+				dev_eui: devEui
+			});
+		} catch (error) {
+			const responsePayload = error instanceof ApiServiceError ? error.payload : error;
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
+				action: 'saveDataNote',
+				message: readApiError(responsePayload, 'Unable to save note.')
+			});
+		}
+
+		return {
+			success: true,
+			message: 'Note saved successfully.'
+		};
+	}
+};
+
+function readApiError(payload: unknown, fallback: string): string {
+	if (payload && typeof payload === 'object') {
+		const message = (payload as Record<string, unknown>).message;
+		if (typeof message === 'string' && message.length > 0) return message;
+		if (Array.isArray(message)) {
+			const text = message.filter((m): m is string => typeof m === 'string' && m.length > 0).join(', ');
+			if (text) return text;
+		}
+	}
+	return fallback;
+};

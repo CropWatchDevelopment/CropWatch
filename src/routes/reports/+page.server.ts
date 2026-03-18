@@ -1,63 +1,45 @@
-import { redirect } from '@sveltejs/kit';
+import { ApiService } from '$lib/api/api.service';
+import type { ReportDeviceRelations, ReportRow } from './report-row';
 import type { PageServerLoad } from './$types';
 
-type ReportRow = {
-	id: number;
-	report_id: string;
-	name: string;
-	dev_eui: string;
+type ReportApiRow = ReportDeviceRelations & {
 	created_at: string;
-	device: { dev_eui: string; name: string | null; location_id: number | null } | null;
 };
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const { session } = await locals.safeGetSession();
+export const load: PageServerLoad = async ({ locals, fetch }) => {
+	const session = locals.jwt ?? null;
+	const authToken = locals.jwtString ?? null;
 
-	if (!session) {
-		throw redirect(303, '/auth');
+	if (!authToken) {
+		return {
+			session,
+			devices: [],
+			totalDeviceCount: 0,
+			triggeredRulesCount: 0
+		};
 	}
 
-	const { supabase } = locals;
+	const apiServiceInstance = new ApiService({
+		fetchFn: fetch,
+		authToken
+	});
 
-	const { data, error } = await supabase
-		.from('reports')
-		.select(
-			`
-			id,
-			report_id,
-			name,
-			dev_eui,
-			created_at,
-			device:cw_devices (
-				dev_eui,
-				name,
-				location_id
-			)
-		`
-		)
-		.eq('user_id', session.user.id)
-		.order('created_at', { ascending: false });
+	const reports = await apiServiceInstance.getReports().catch(() => []);
 
-	if (error) {
-		console.error('Error fetching reports', error);
-	}
+	const reportsResult: ReportRow[] = reports.map((report) => {
+		const reportWithRelations = report as typeof report & ReportApiRow;
 
-	const reports =
-		data?.map((row: ReportRow) => {
-			const deviceData = Array.isArray(row.device) ? row.device[0] : row.device;
-			return {
-				id: row.id,
-				report_id: row.report_id,
-				name: row.name,
-				dev_eui: row.dev_eui,
-				created_at: row.created_at,
-				device_name: deviceData?.name ?? 'Unknown device',
-				location_id: deviceData?.location_id ?? null
-			};
-		}) ?? [];
+		return {
+			...reportWithRelations,
+			created_at: new Date(reportWithRelations.created_at).toLocaleString(),
+			location_name: reportWithRelations.cw_devices?.cw_locations?.name ?? 'Unknown Location',
+			device_name: reportWithRelations.cw_devices?.name ?? 'Unknown Device'
+		};
+	});
 
 	return {
 		session,
-		reports
+		authToken,
+		reports: reportsResult
 	};
 };
