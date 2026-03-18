@@ -7,7 +7,7 @@ import { redirect } from '@sveltejs/kit';
 import { jwtDecode } from 'jwt-decode';
 import { env as publicEnv } from '$env/dynamic/public';
 
-const PUBLIC_PATHS = new Set(['/manifest.webmanifest', '/offline', '/service-worker.js']);
+const PUBLIC_PATHS = new Set(['/manifest.webmanifest', '/offline', '/offline/', '/service-worker.js']);
 const PUBLIC_API_BASE_URL = publicEnv.PUBLIC_API_BASE_URL ?? '';
 
 export const originalHandle = async ({ event, resolve }) => {
