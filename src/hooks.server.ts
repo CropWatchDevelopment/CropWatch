@@ -1,11 +1,11 @@
 import { sequence } from '@sveltejs/kit/hooks';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
-import { PUBLIC_API_BASE_URL } from '$env/static/public';
 import type { IJWT } from '$lib/interfaces/jwt.interface';
 import type { HandleFetch } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { jwtDecode } from 'jwt-decode';
+import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
 const PUBLIC_PATHS = new Set(['/manifest.webmanifest', '/offline', '/service-worker.js']);
 

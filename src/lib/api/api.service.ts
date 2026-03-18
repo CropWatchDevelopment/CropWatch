@@ -5,11 +5,11 @@ import {
 	PUBLIC_DEVICE_STATUS_ENDPOINT,
 	PUBLIC_LOGIN_ENDPOINT,
 	PUBLIC_AIR_NOTES_ENDPOINT,
-	PUBLIC_REPORTS_ENDPOINT,
 	PUBLIC_RULES_ENDPOINT,
 	PUBLIC_TRIGGERED_RULES_ENDPOINT,
 	PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT
 } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 import type { PdfFile } from '../interfaces/PdfFile.interface';
 import type {
 	CreateDeviceRequest,
@@ -109,8 +109,9 @@ const PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT = '/payments/subscriptions/portal';
 const REPORTS_ENDPOINT = '/reports';
 const REPORT_BY_ID_ENDPOINT = '/reports/{id}';
 const REPORT_BY_REPORT_ID_ENDPOINT = '/reports/{report_id}';
-const REPORT_HISTORY_ENDPOINT = `${PUBLIC_REPORTS_ENDPOINT}/history/{dev_eui}`;
-const REPORT_DOWNLOAD_ENDPOINT = `${PUBLIC_REPORTS_ENDPOINT}/download/{dev_eui}/{name}`;
+const REPORTS_BASE_ENDPOINT = publicEnv.PUBLIC_REPORTS_ENDPOINT ?? REPORTS_ENDPOINT;
+const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
+const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{name}`;
 const RULE_BY_ID_ENDPOINT = `${PUBLIC_RULES_ENDPOINT}/{id}`;
 const AIR_NOTES_CREATE_ENDPOINT = PUBLIC_AIR_NOTES_ENDPOINT;
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
