@@ -42,6 +42,7 @@
 	}
 </script>
 
+<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>← Back to Dashboard</CwButton>
 <div class="locations-page overflow-y-scroll">
 	<CwCard title="All Locations" subtitle="Aggregated from current device telemetry" elevated>
 		<CwDataTable

@@ -71,6 +71,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
         return {
             locationId: Number.isFinite(locationId) ? locationId : null,
             locationName: '',
+            locationGroup: '',
             locationOwners: [] as LocationOwnerDto[]
         };
     }
@@ -94,6 +95,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
     return {
         locationId,
         locationName: String(location?.name ?? `Location ${locationId}`),
+        locationGroup: String(location?.group ?? ''),
         locationOwners: (location?.cw_location_owners ?? []) as LocationOwnerDto[]
     };
 };
@@ -118,6 +120,7 @@ export const actions: Actions = {
 
         const formData = await request.formData();
         const newName = readString(formData.get('locationName'));
+        const newGroup = readString(formData.get('group'));
 
         if (!newName) {
             return fail(400, {
@@ -132,7 +135,7 @@ export const actions: Actions = {
         });
 
         try {
-            await apiService.updateLocation(locationId, { name: newName });
+            await apiService.updateLocation(locationId, { name: newName, group: newGroup });
 
             return {
                 action: 'updateLocationName',

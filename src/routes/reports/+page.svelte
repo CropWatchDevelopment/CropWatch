@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+	CwButton,
 		CwCard,
 		CwDataTable,
 		type CwColumnDef,
@@ -9,6 +10,7 @@
 	import ReportHistoryDialog from './ReportHistoryDialog.svelte';
 	import DeleteReportDialog from './DeleteReportDialog.svelte';
 	import type { ReportRow } from './report-row';
+	import { goto } from '$app/navigation';
 
 	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
@@ -49,7 +51,8 @@
 	<title>Reports - CropWatch</title>
 </svelte:head>
 
-<div class="overflow-y-scroll">
+<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>← Back to Dashboard</CwButton>
+<div class="overflow-y-auto p-4">
 	<CwCard title="Weekly Reports" class="min-h-0 flex-1 p-4">
 		{#key tableKey}
 			<CwDataTable

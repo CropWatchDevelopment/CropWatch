@@ -15,6 +15,15 @@
 				placeholder="Enter location name"
 				required
 				bind:value={data.locationName}
+				class="mb-4"
+			/>
+			<CwInput
+				name="group"
+				type="text"
+				label="Group"
+				placeholder="Enter group name"
+				required
+				bind:value={data.locationGroup}
 			/>
             <input type="hidden" name="location_id" value={data.locationId} />
 			<div class="permissions-form__actions" style="margin-top: 1rem;">

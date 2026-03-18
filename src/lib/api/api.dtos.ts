@@ -18,9 +18,9 @@ export interface LoginResponse {
 	[key: string]: unknown;
 }
 
-export interface DeviceOwnerDto extends CwDeviceOwner {}
+export interface DeviceOwnerDto extends CwDeviceOwner { }
 
-export interface DeviceTypeDto extends CwDeviceType {}
+export interface DeviceTypeDto extends CwDeviceType { }
 
 export interface DeviceDto extends CwDevice {
 	cw_device_type: DeviceTypeDto;
@@ -218,9 +218,9 @@ export type UpdateReportRequest = Partial<CreateReportRequest>;
 export type TriggeredRulesCountResponse =
 	| number
 	| {
-			count: number;
-			[key: string]: unknown;
-	  };
+		count: number;
+		[key: string]: unknown;
+	};
 
 export interface LocationOwnerDto {
 	admin_user_id: string;
@@ -281,4 +281,8 @@ export interface CreateLocationRequest {
 	[key: string]: unknown;
 }
 
-export type UpdateLocationRequest = Record<string, unknown>;
+export type UpdateLocationRequest = {
+	name: string;
+	description?: string | null;
+	group?: string | null;
+}
