@@ -15,7 +15,33 @@ export const originalHandle = async ({ event, resolve }) => {
 
 	checkAuthToken(token ?? '', event);
 
-	return await resolve(event);
+	const response = await resolve(event);
+
+	return ensureHtmlCharset(response);
+};
+
+const ensureHtmlCharset = (response: Response): Response => {
+	const contentType = response.headers.get('content-type');
+
+	if (!contentType) {
+		return response;
+	}
+
+	const isHtml = contentType.toLowerCase().includes('text/html');
+	const hasCharset = contentType.toLowerCase().includes('charset=');
+
+	if (!isHtml || hasCharset) {
+		return response;
+	}
+
+	const headers = new Headers(response.headers);
+	headers.set('content-type', `${contentType}; charset=utf-8`);
+
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers
+	});
 };
 
 const checkAuthToken = (token: string, event: any) => {
