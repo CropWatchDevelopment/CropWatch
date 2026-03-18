@@ -41,12 +41,13 @@
 		{ name: 'SA', count: 11 }
 	];
 	const maxGroupCount = Math.max(...topGroups.map((g) => g.count));
-	const alerts: AlertRow[] = app?.triggeredRules?.map((rule) => ({
-		id: rule.id,
+	const triggeredRules = Array.isArray(app?.triggeredRules) ? app.triggeredRules : [];
+	const alerts: AlertRow[] = triggeredRules.map((rule) => ({
+		id: String(rule.id),
 		icon: '🔔',
 		name: rule.name,
-		reported: new Date(rule.last_triggered as Date).toLocaleString()
-	})) ?? [];
+		reported: rule.last_triggered ? new Date(rule.last_triggered).toLocaleString() : 'N/A'
+	}));
 </script>
 
 <CwDrawer bind:open={app.drawerOpen} label="Alerts" items={barItems} height="18rem">
