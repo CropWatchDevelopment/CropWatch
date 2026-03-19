@@ -104,16 +104,16 @@ const PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT = '/payments/subscriptions/state';
 const PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT = '/payments/subscriptions/checkout';
 const PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT = '/payments/subscriptions/portal';
 const REPORTS_ENDPOINT = '/reports';
-const REPORT_BY_ID_ENDPOINT = '/reports/{id}';
-const REPORT_BY_REPORT_ID_ENDPOINT = '/reports/{report_id}';
 const REPORTS_BASE_ENDPOINT = publicEnv.PUBLIC_REPORTS_ENDPOINT ?? REPORTS_ENDPOINT;
+const REPORT_BY_ID_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/{id}`;
+const REPORT_BY_REPORT_ID_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/{report_id}`;
 const RULES_BASE_ENDPOINT = publicEnv.PUBLIC_RULES_ENDPOINT ?? '/rules';
 const TRIGGERED_RULES_BASE_ENDPOINT =
 	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT ?? `${RULES_BASE_ENDPOINT}/triggered`;
 const TRIGGERED_RULES_COUNT_ENDPOINT =
 	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT ?? `${TRIGGERED_RULES_BASE_ENDPOINT}/count`;
 const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
-const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{name}`;
+const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{report_id}`;
 const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
 const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air-notes';
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
@@ -907,15 +907,15 @@ export class ApiService {
 		});
 	}
 
-	public createReport(payload: CreateReportRequest): Promise<CreateReportRequest | ReportDto> {
-		return this.request<CreateReportRequest | ReportDto>(REPORTS_ENDPOINT, {
+	public createReport(payload: CreateReportRequest): Promise<ReportDto> {
+		return this.request<ReportDto>(REPORTS_BASE_ENDPOINT, {
 			method: 'POST',
 			body: payload
 		});
 	}
 
 	public getReports(): Promise<ReportDto[]> {
-		return this.request<ReportDto[]>(REPORTS_ENDPOINT, { method: 'GET' });
+		return this.request<ReportDto[]>(REPORTS_BASE_ENDPOINT, { method: 'GET' });
 	}
 
 	public getReportHistory(devEui: string): Promise<PdfFile[]> {
@@ -929,7 +929,7 @@ export class ApiService {
 
 	public getReportDownloadUrl(devEui: string, name: string): Promise<Record<string, unknown>> {
 		return this.request<Record<string, unknown>>(
-			replacePathParams(REPORT_DOWNLOAD_ENDPOINT, { dev_eui: devEui, name }),
+			replacePathParams(REPORT_DOWNLOAD_ENDPOINT, { dev_eui: devEui, report_id: name }),
 			{
 				method: 'GET'
 			}

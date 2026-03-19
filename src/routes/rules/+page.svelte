@@ -65,10 +65,7 @@
 				{#snippet rowActions(row: RuleRow)}
 					<div class="flex w-full flex-row gap-2">
 						<ViewRuleDialog {row} />
-						<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
-							<img src={EDIT_ICON} alt={m.rules_edit_rule()} />
-							{m.action_edit()}
-						</CwButton>
+						<CwButton variant="primary" icon={EDIT_ICON} size="md" onclick={() => goto(`/rules/edit/${row.id}`)} />
 						<DeleteRuleDialog
 							ruleGroupId={row.ruleGroupId}
 							ruleName={row.name}

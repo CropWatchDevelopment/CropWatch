@@ -1,17 +1,18 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import {
-	CwButton,
+		CwButton,
 		CwCard,
 		CwDataTable,
 		type CwColumnDef,
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 	import ReportHistoryDialog from './ReportHistoryDialog.svelte';
 	import DeleteReportDialog from './DeleteReportDialog.svelte';
 	import type { ReportRow } from './report-row';
-	import { goto } from '$app/navigation';
-	import { m } from '$lib/paraglide/messages.js';
 
 	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
@@ -20,7 +21,7 @@
 	const columns: CwColumnDef<ReportRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
 		{ key: 'device_name', header: m.reports_for_device(), sortable: true },
-		{ key: 'dev_eui', header: 'Device EUI' },
+		{ key: 'dev_eui', header: m.devices_dev_eui_label() },
 		{ key: 'location_name', header: m.nav_locations(), sortable: true }
 	];
 
@@ -52,7 +53,7 @@
 	<title>{m.reports_page_title()}</title>
 </svelte:head>
 
-<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>
+<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
 	{m.action_back_to_dashboard()}
 </CwButton>
 <div class="overflow-y-auto p-4">
@@ -63,17 +64,24 @@
 				{loadData}
 				{loading}
 				groupBy="location_name"
-				rowActionsHeader="Actions"
+				rowActionsHeader={m.common_actions()}
 				rowKey="id"
 			>
 				{#snippet cell(row: ReportRow, col: CwColumnDef<ReportRow>, defaultValue: string)}
 					{#if col.key === 'device_name'}
-						<a
-							href={`/locations/${row.cw_devices?.cw_locations?.location_id}/devices/${row.dev_eui}`}
-							class="ml-2 text-sm text-blue-500 hover:underline"
-						>
-							{row.cw_devices?.name ?? m.reports_unknown_device()}
-						</a>
+						{#if row.cw_devices?.cw_locations?.location_id}
+							<a
+								href={resolve('/locations/[location_id]/devices/[dev_eui]', {
+									location_id: String(row.cw_devices.cw_locations.location_id),
+									dev_eui: row.dev_eui
+								})}
+								class="ml-2 text-sm text-[color:var(--cw-info-500,#0ea5e9)] hover:underline"
+							>
+								{row.cw_devices?.name ?? m.reports_unknown_device()}
+							</a>
+						{:else}
+							<span class="ml-2 text-sm">{row.cw_devices?.name ?? m.reports_unknown_device()}</span>
+						{/if}
 					{:else}
 						{defaultValue}
 					{/if}
@@ -88,6 +96,17 @@
 							onDeleted={handleReportDeleted}
 						/>
 					</div>
+				{/snippet}
+
+				{#snippet toolbarActions()}
+					<CwButton
+						variant="primary"
+						onclick={() => {
+							goto(resolve('/reports/create'));
+						}}
+					>
+						{m.reports_create_new_report()}
+					</CwButton>
 				{/snippet}
 			</CwDataTable>
 		{/key}

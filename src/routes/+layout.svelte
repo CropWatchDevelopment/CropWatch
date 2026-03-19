@@ -75,31 +75,24 @@
 	function syncAppFromPageData() {
 		const routeData = page.data as DashboardPageData;
 		const isDashboardRoute = page.url.pathname === '/';
-		const devices = isDashboardRoute ? (routeData.devices ?? []) : [];
 
 		app.session = routeData.session ?? null;
 		app.accessToken = routeData.authToken ?? undefined;
+
+		if (!isDashboardRoute) {
+			return;
+		}
+
+		const devices = routeData.devices ?? [];
+
 		app.devices = devices;
-		app.totalDeviceCount = isDashboardRoute ? (routeData.totalDeviceCount ?? devices.length) : 0;
-
-		app.deviceStatuses = isDashboardRoute
-			? (routeData.deviceStatuses ?? { online: 0, offline: 0 })
-			: { online: 0, offline: 0 };
-
-		app.triggeredRules = isDashboardRoute ? (routeData.triggeredRules ?? []) : [];
-		app.triggeredRulesCount = readTriggeredRulesCount(
-			isDashboardRoute ? routeData.triggeredRulesCount : 0
-		);
-
-		app.deviceGroups = isDashboardRoute
-			? normalizeDashboardFilterValues(routeData.deviceGroups)
-			: [];
-
-		app.locationGroups = isDashboardRoute
-			? normalizeDashboardFilterValues(routeData.locationGroups)
-			: [];
-
-		app.locations = isDashboardRoute ? (routeData.locations ?? []) : [];
+		app.totalDeviceCount = routeData.totalDeviceCount ?? devices.length;
+		app.deviceStatuses = routeData.deviceStatuses ?? { online: 0, offline: 0 };
+		app.triggeredRules = routeData.triggeredRules ?? [];
+		app.triggeredRulesCount = readTriggeredRulesCount(routeData.triggeredRulesCount);
+		app.deviceGroups = normalizeDashboardFilterValues(routeData.deviceGroups);
+		app.locationGroups = normalizeDashboardFilterValues(routeData.locationGroups);
+		app.locations = routeData.locations ?? [];
 	}
 
 	syncAppFromPageData();
@@ -215,7 +208,7 @@
 </div>
 
 <div style="display:none">
-	{#each locales as locale}
+	{#each locales as locale (locale)}
 		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
 	{/each}
 </div>

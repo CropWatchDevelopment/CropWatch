@@ -4,6 +4,7 @@
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import TRASH_ICON from '$lib/images/icons/trash.svg';
 
 	let {
 		ruleGroupId,
@@ -42,8 +43,7 @@
 	};
 </script>
 
-<CwButton variant="danger" size="md" onclick={() => (open = true)}>{m.rules_delete_rule()}</CwButton
->
+<CwButton variant="danger" icon={TRASH_ICON} size="md" onclick={() => (open = true)} />
 
 <CwDialog {open} title={m.rules_delete_rule()} onclose={() => (open = false)}>
 	<p>{m.rules_delete_confirmation({ name: ruleName })}</p>

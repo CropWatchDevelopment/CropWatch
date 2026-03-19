@@ -73,10 +73,7 @@
 	}
 </script>
 
-<CwButton variant="secondary" size="md" onclick={() => (open = true)}>
-	<img src={EYE_ICON} alt={m.action_view()} class="h-4 w-4" />
-    {m.action_view()}
-</CwButton>
+<CwButton variant="secondary" icon={EYE_ICON} size="md" onclick={() => (open = true)} />
 
 <CwDialog bind:open title={m.rules_rule_summary()} class="w-full max-w-2xl">
 	<div class="flex flex-col gap-4">

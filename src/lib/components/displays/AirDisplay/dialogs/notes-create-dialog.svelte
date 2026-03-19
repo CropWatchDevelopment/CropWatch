@@ -56,6 +56,8 @@
 		style="width: 100%; height: 150px; padding: 0.5rem; font-size: 1rem;"
 		bind:value={noteText}
 	></CwTextArea>
+	<p>{noteText.length}/300</p>
+
 	{#snippet actions()}
 		<CwButton variant="primary" onclick={() => handleSaveNote()}>{m.display_save_note()}</CwButton>
 		<CwButton variant="secondary" onclick={() => (open = false)}>{m.action_cancel()}</CwButton>

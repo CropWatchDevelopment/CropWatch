@@ -4,6 +4,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import TRASH_ICON from '$lib/images/icons/trash.svg';
 
 	type DeleteReportDialogProps = {
 		reportId: string;
@@ -111,7 +112,7 @@
 	};
 </script>
 
-<CwButton variant="danger" disabled={deleting} onclick={() => (open = true)}>
+<CwButton icon={TRASH_ICON} variant="danger" disabled={deleting} onclick={() => (open = true)}>
 	{m.reports_delete_report()}
 </CwButton>
 

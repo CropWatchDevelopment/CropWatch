@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
+	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
@@ -162,9 +163,17 @@
 			{/snippet}
 
 			{#snippet rowActions(row: LocationDeviceRow)}
-				<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
-					<img src={EYE_ICON} alt={m.action_view()} />
-				</CwButton>
+				<div class="nowarp flex flex-row gap-2">
+					<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
+						<img src={EYE_ICON} alt={m.action_view()} />
+					</CwButton>
+					<CwButton
+						icon={EDIT_ICON}
+						size="md"
+						variant="secondary"
+						onclick={() => handleViewDevice(row)}
+					/>
+				</div>
 			{/snippet}
 		</CwDataTable>
 	</CwCard>
