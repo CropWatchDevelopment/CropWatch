@@ -894,15 +894,15 @@ export class ApiService {
 		});
 	}
 
-	public updateRule(id: number, payload: UpdateRuleRequest): Promise<RuleDto> {
-		return this.request<RuleDto>(replacePathParams(RULE_BY_ID_ENDPOINT, { id }), {
+	public updateRule(ruleGroupId: string, payload: UpdateRuleRequest): Promise<RuleDto> {
+		return this.request<RuleDto>(replacePathParams(RULE_BY_ID_ENDPOINT, { id: ruleGroupId }), {
 			method: 'PATCH',
 			body: payload
 		});
 	}
 
-	public deleteRule(id: number): Promise<number> {
-		return this.request<number>(replacePathParams(RULE_BY_ID_ENDPOINT, { id }), {
+	public deleteRule(ruleGroupId: string): Promise<number> {
+		return this.request<number>(replacePathParams(RULE_BY_ID_ENDPOINT, { id: ruleGroupId }), {
 			method: 'DELETE'
 		});
 	}

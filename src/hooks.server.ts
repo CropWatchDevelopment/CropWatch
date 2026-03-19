@@ -114,9 +114,9 @@ const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 	return fetch(request);
 };
 
-const handleParaglide: Handle = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request, locale }) => {
-		event.request = request;
+const paraglideHandle: Handle = ({ event, resolve }) =>
+	paraglideMiddleware(event.request, ({ request: localizedRequest, locale }) => {
+		event.request = localizedRequest;
 
 		return resolve(event, {
 			transformPageChunk: ({ html }) =>
@@ -126,4 +126,4 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 		});
 	});
 
-export const handle = sequence(handleParaglide, originalHandle);
+export const handle = sequence(paraglideHandle, originalHandle);

@@ -108,7 +108,6 @@
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
-		$inspect(app.devices);
 		return queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
 	}
 

@@ -65,7 +65,7 @@
 	const particles = createSceneParticles(PARTICLE_COUNT);
 </script>
 
-<main class="auth-scene">
+<section class="auth-scene p-0 md:p-8">
 	<div class="auth-locale-switcher">
 		<LanguageSwitcher compact />
 	</div>
@@ -77,10 +77,10 @@
 		{/each}
 	</div>
 
-	<div class="auth-content">
+	<div class="relative z-2 w-full md:max-w-md auth-content">
 		{@render children()}
 	</div>
-</main>
+</section>
 
 <style>
 	.auth-scene {
@@ -90,7 +90,7 @@
 		align-items: center;
 		justify-content: center;
 		overflow: hidden;
-		padding: 2rem 1rem;
+		/* padding: 2rem 1rem; */
 		background: #0a1331;
 	}
 
@@ -160,7 +160,7 @@
 	.auth-content {
 		position: relative;
 		z-index: 2;
-		width: min(100%, 24rem);
+		width: min(100%, 35rem);
 	}
 
 	.auth-locale-switcher {

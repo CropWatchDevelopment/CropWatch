@@ -13,11 +13,17 @@
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import DeleteRuleDialog from './DeleteRuleDialog.svelte';
+	import ViewRuleDialog from './ViewRuleDialog.svelte';
 
 	type RuleRow = RulesDto & { location_name: string };
 
 	let { data }: { data: { rules: RuleRow[] } } = $props();
 	let loading = $state(false);
+	let deletedRuleGroupIds = $state<string[]>([]);
+	let rules = $derived(
+		(data.rules ?? []).filter((rule) => !deletedRuleGroupIds.includes(rule.ruleGroupId))
+	);
+	let tableKey = $derived(rules.map((rule) => rule.ruleGroupId).join('|'));
 
 	const columns: CwColumnDef<RuleRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
@@ -28,8 +34,13 @@
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleRow>> {
 		void query;
-		const rows = data.rules ?? [];
+		const rows = rules;
 		return { rows, total: rows.length };
+	}
+
+	function handleRuleDeleted(ruleGroupId: string) {
+		if (deletedRuleGroupIds.includes(ruleGroupId)) return;
+		deletedRuleGroupIds = [...deletedRuleGroupIds, ruleGroupId];
 	}
 </script>
 
@@ -42,37 +53,40 @@
 </CwButton>
 <div class="overflow-y-auto p-4">
 	<CwCard title={m.rules_configured_rules()} class="min-h-0 flex-1">
-		<CwDataTable
-			{columns}
-			{loadData}
-			{loading}
-			rowActionsHeader={m.common_actions()}
-			rowKey="id"
-			class="w-full"
-		>
-			{#snippet rowActions(row: RuleRow)}
-				<div class="flex w-full flex-row gap-2">
-					<CwButton variant="info" size="md" onclick={() => goto(`/rules/${row.id}`)}>
-						<img src={EYE_ICON} alt={m.rules_view_rule()} />
-						{m.action_view()}
+		{#key tableKey}
+			<CwDataTable
+				{columns}
+				{loadData}
+				{loading}
+				rowActionsHeader={m.common_actions()}
+				rowKey="id"
+				class="w-full"
+			>
+				{#snippet rowActions(row: RuleRow)}
+					<div class="flex w-full flex-row gap-2">
+						<ViewRuleDialog {row} />
+						<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
+							<img src={EDIT_ICON} alt={m.rules_edit_rule()} />
+							{m.action_edit()}
+						</CwButton>
+						<DeleteRuleDialog
+							ruleGroupId={row.ruleGroupId}
+							ruleName={row.name}
+							onDeleted={handleRuleDeleted}
+						/>
+					</div>
+				{/snippet}
+				{#snippet toolbarActions()}
+					<CwButton
+						variant="primary"
+						onclick={() => {
+							goto('/rules/create');
+						}}
+					>
+						{m.rules_create_new_rule()}
 					</CwButton>
-					<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
-						<img src={EDIT_ICON} alt={m.rules_edit_rule()} />
-						{m.action_edit()}
-					</CwButton>
-					<DeleteRuleDialog ruleGroupId={row.ruleGroupId} ruleName={row.name} />
-				</div>
-			{/snippet}
-			{#snippet toolbarActions()}
-				<CwButton
-					variant="primary"
-					onclick={() => {
-						goto('/rules/create');
-					}}
-				>
-					{m.rules_create_new_rule()}
-				</CwButton>
-			{/snippet}
-		</CwDataTable>
+				{/snippet}
+			</CwDataTable>
+		{/key}
 	</CwCard>
 </div>

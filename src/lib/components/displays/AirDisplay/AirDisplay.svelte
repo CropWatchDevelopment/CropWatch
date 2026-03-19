@@ -228,6 +228,7 @@
 
 <div class="air-display">
 	{#if lastSeenTimestamp}
+	<CwCard elevated>
 		<div class="air-display__last-updated">
 			<span>{m.display_last_updated()}:</span>
 			<CwDuration
@@ -236,6 +237,7 @@
 				alarmCallback={fetchLatestData}
 			/>
 		</div>
+	</CwCard>
 	{/if}
 
 	<div class="kpi-grid">

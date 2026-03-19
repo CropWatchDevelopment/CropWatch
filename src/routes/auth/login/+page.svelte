@@ -2,8 +2,6 @@
 	import './style.css';
 	import KEY_ICON from '$lib/images/icons/key.svg';
 	import logo from '$lib/images/cropwatch_static.svg';
-	import ADD_PERSON_ICON from '$lib/images/icons/person_add.svg';
-	import FORGOT_SHIELD_ICON from '$lib/images/icons/forgot_shield.svg';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onDestroy, onMount } from 'svelte';
@@ -47,9 +45,12 @@
 				reject(new Error('Operation timed out'));
 			}, timeoutMs);
 
-			promise.then(resolve).catch(reject).finally(() => {
-				window.clearTimeout(timeoutId);
-			});
+			promise
+				.then(resolve)
+				.catch(reject)
+				.finally(() => {
+					window.clearTimeout(timeoutId);
+				});
 		});
 	}
 
@@ -220,7 +221,7 @@
 				type="submit"
 				variant="primary"
 				loading={loggingIn || loadingCaptcha}
-				disabled={loggingIn || loadingCaptcha || !recaptchaReady || (!username || !password)}
+				disabled={loggingIn || loadingCaptcha || !recaptchaReady || !username || !password}
 				size="md"
 				fullWidth={true}
 			>
@@ -237,11 +238,10 @@
 					class="auth-secondary"
 					type="button"
 					variant="secondary"
-					size="md"
+					size="lg"
 					fullWidth={true}
 					onclick={() => goto(resolve('/auth/create-account'))}
 				>
-					<img src={ADD_PERSON_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
 					{m.auth_create_account()}
 				</CwButton>
 
@@ -249,12 +249,11 @@
 					class="auth-secondary"
 					type="button"
 					variant="secondary"
-					size="md"
+					size="lg"
 					fullWidth={true}
 					onclick={() => goto(resolve('/auth/forgot-password'))}
 				>
-					<img src={FORGOT_SHIELD_ICON} alt={m.auth_forgot_password()} class="h-4 w-4" />
-					{m.auth_forgot_password()}
+					<span class="text-sm">{m.auth_forgot_password()}</span>
 				</CwButton>
 			</div>
 		</form>

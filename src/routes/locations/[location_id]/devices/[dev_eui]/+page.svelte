@@ -194,6 +194,20 @@
 	<title>{m.devices_dashboard_page_title({ devEui: devEui.toUpperCase() })}</title>
 </svelte:head>
 
+<div class="flex flex-row gap-2 my-2">
+	<CwButton
+		variant="secondary"
+		size="md"
+		disabled={!locationId}
+		fullWidth={true}
+		onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
+	>
+		← {m.devices_back_to_location()}
+	</CwButton>
+	<CwButton variant="secondary" size="md" disabled={!locationId} fullWidth={true} onclick={() => goto(resolve('/'))}>
+		← {m.action_back_to_dashboard()}
+	</CwButton>
+</div>
 <div class="device-page">
 	<CwCard
 		title={m.devices_dashboard_card_title({ devEui: devEui.toUpperCase() })}
@@ -201,25 +215,6 @@
 		elevated
 	>
 		<div class="device-page__toolbar">
-			<div class="flex flex-col gap-2">
-				<CwButton
-					variant="secondary"
-					size="sm"
-					disabled={!locationId}
-					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
-				>
-					← {m.devices_back_to_location()}
-				</CwButton>
-				<CwButton
-					variant="secondary"
-					size="sm"
-					disabled={!locationId}
-					onclick={() => goto(resolve('/'))}
-				>
-					← {m.action_back_to_dashboard()}
-				</CwButton>
-			</div>
-
 			<div class="device-page__group device-page__group--ranges">
 				{#each getRangeOptions() as ranges (ranges.value)}
 					<CwButton
