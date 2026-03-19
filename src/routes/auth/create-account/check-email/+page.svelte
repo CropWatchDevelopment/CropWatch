@@ -10,16 +10,17 @@
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import EMAIL_ICON from '$lib/images/icons/email.svg';
 	import SPAM_ICON from '$lib/images/icons/spam.svg';
+	import { m } from '$lib/paraglide/messages.js';
 </script>
 
 <svelte:head>
-	<title>Check Your Email - CropWatch</title>
+	<title>{m.auth_check_email_page_title()}</title>
 </svelte:head>
 
 <CwCard padded={false} class="auth-card">
 	<div class="auth-shell">
 		<div class="logo-frame">
-			<img src={logo} alt="CropWatch" class="logo-image" />
+			<img src={logo} alt={m.app_name()} class="logo-image" />
 		</div>
 
 		<!-- Big email icon -->
@@ -39,63 +40,66 @@
 			</svg>
 		</div>
 
-		<h1 class="check-title">Check Your Email</h1>
+		<h1 class="check-title">{m.auth_check_email_heading()}</h1>
 
 		<div class="check-message-box">
 			<p class="check-message">
-				<strong>Your account has been created!</strong>
+				<strong>{m.auth_check_email_account_created()}</strong>
 			</p>
 			<p class="check-message">
-				We've sent an <strong>activation link</strong> to the email address you provided.
+				{m.auth_check_email_activation_link_prefix()}
+				<strong>{m.auth_check_email_activation_link_highlight()}</strong>
+				{m.auth_check_email_activation_link_suffix()}
 			</p>
 			<p class="check-message check-message--action">
-				Open your inbox, find the email from CropWatch, and <strong>click the link inside</strong> to
-				activate your account.
+				{m.auth_check_email_open_inbox_prefix()}
+				<strong>{m.auth_check_email_open_inbox_highlight()}</strong>
+				{m.auth_check_email_open_inbox_suffix()}
 			</p>
 		</div>
 
 		<div class="check-tips">
-			<p class="tip-heading">Don't see the email?</p>
+			<p class="tip-heading">{m.auth_check_email_missing_heading()}</p>
 			<ul class="tip-list">
-				<li>Check your <strong>spam</strong> or <strong>junk</strong> folder</li>
-				<li>Make sure you entered the correct email address</li>
-				<li>Allow a few minutes for delivery</li>
+				<li>{m.auth_check_email_tip_spam()}</li>
+				<li>{m.auth_check_email_tip_address()}</li>
+				<li>{m.auth_check_email_tip_delivery()}</li>
 			</ul>
 			<div class="flex flex-row">
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={YOU_ICON} alt="You icon" class="mx-auto" />
-					<span class="text-lg text-gray-400">YOU</span>
+					<img src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
+					<span class="text-lg text-gray-400">{m.auth_check_email_you()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt="Forward icon" class="mx-4 my-2" />
+				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={EYE_ICON} alt="You icon" class="mx-auto" />
-					<span class="text-lg text-gray-400">CHECK</span>
+					<img src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
+					<span class="text-lg text-gray-400">{m.auth_check_email_check()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt="Forward icon" class="mx-4 my-2" />
+				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={EMAIL_ICON} alt="You icon" class="mx-auto" />
-					<span class="text-lg text-gray-400">EMAIL</span>
+					<img src={EMAIL_ICON} alt={m.auth_check_email_email()} class="mx-auto" />
+					<span class="text-lg text-gray-400">{m.auth_check_email_email()}</span>
 				</div>
 			</div>
-			<p class="my-3 w-full text-center font-bold">Can't find it???</p>
+			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_cant_find_it()}</p>
 			<div class="flex flex-row">
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={YOU_ICON} alt="You icon" class="mx-auto" />
-					<span class="text-lg text-gray-400">YOU</span>
+					<img src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
+					<span class="text-lg text-gray-400">{m.auth_check_email_you()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt="Forward icon" class="mx-4 my-2" />
+				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={EYE_ICON} alt="You icon" class="mx-auto" />
-					<span class="text-lg text-gray-400">CHECK</span>
+					<img src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
+					<span class="text-lg text-gray-400">{m.auth_check_email_check()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt="Forward icon" class="mx-4 my-2" />
+				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={SPAM_ICON} alt="You icon" class="mx-auto" />
-					<span class="text-lg text-gray-400">SPAM</span>
+					<img src={SPAM_ICON} alt={m.auth_check_email_spam()} class="mx-auto" />
+					<span class="text-lg text-gray-400">{m.auth_check_email_spam()}</span>
 				</div>
 			</div>
-			<p class="my-3 w-full text-center font-bold">Not there???</p>
-			<a href="mailto:sayaka@cropwatch.io" class="text-center w-full text-sm">Please contact support</a>
+			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_not_there()}</p>
+			<a href="mailto:sayaka@cropwatch.io" class="text-center w-full text-sm">{m.auth_check_email_contact_support()}</a>
 		</div>
 
 		<CwButton
@@ -106,11 +110,11 @@
 			fullWidth={true}
 			onclick={() => goto(resolve('/auth/login'))}
 		>
-			<img src={KEY_ICON} alt="Sign in icon" class="h-4 w-4" />
-			Go to Sign In
+			<img src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
+			{m.auth_go_to_sign_in()}
 		</CwButton>
 
-		<p class="security-copy">Protected by reCAPTCHA and CropWatch Security</p>
+		<p class="security-copy">{m.auth_security_copy()}</p>
 	</div>
 </CwCard>
 

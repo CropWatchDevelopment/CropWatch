@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { formatDateTime } from '$lib/i18n/format';
+	import { m } from '$lib/paraglide/messages.js';
 	import {
 		CwCard,
 		CwDonutChart,
@@ -24,18 +26,18 @@
 
 	let drawerOpen: boolean = $state(app.drawerOpen ?? false);
 	let barItems = $derived<CwDrawerItem[]>([
-		{ id: 'online', label: `Online ${onlineDevices}`, tone: 'success' },
-		{ id: 'offline', label: `Offline ${offlineDevices}`, tone: 'danger' },
-		{ id: 'alerts', label: `Alerts ${alertCount}`, tone: 'warning' }
+		{ id: 'online', label: m.overview_online_count({ count: String(onlineDevices) }), tone: 'success' },
+		{ id: 'offline', label: m.overview_offline_count({ count: String(offlineDevices) }), tone: 'danger' },
+		{ id: 'alerts', label: m.overview_alert_count({ count: String(alertCount) }), tone: 'warning' }
 	]);
 	let statusSegments = $derived<CwDonutSegment[]>([
-		{ label: 'Online', value: onlineDevices, color: 'var(--cw-success-500)' },
-		{ label: 'Offline', value: offlineDevices, color: 'var(--cw-danger-500)' },
-		{ label: 'Alerts', value: alertCount, color: 'var(--cw-warning-500)' }
+		{ label: m.status_online(), value: onlineDevices, color: 'var(--cw-success-500)' },
+		{ label: m.status_offline(), value: offlineDevices, color: 'var(--cw-danger-500)' },
+		{ label: m.status_alerts(), value: alertCount, color: 'var(--cw-warning-500)' }
 	]);
 
 	const topGroups = [
-		{ name: 'Ungrouped', count: 91 },
+		{ name: m.overview_ungrouped(), count: 91 },
 		{ name: 'TK-Ebisu', count: 49 },
 		{ name: 'Seagaia', count: 41 },
 		{ name: 'SA', count: 11 }
@@ -46,19 +48,21 @@
 		id: String(rule.id),
 		icon: '🔔',
 		name: rule.name,
-		reported: rule.last_triggered ? new Date(rule.last_triggered).toLocaleString() : 'N/A'
+		reported: rule.last_triggered
+			? formatDateTime(rule.last_triggered)
+			: m.common_not_available()
 	}));
 </script>
 
-<CwDrawer bind:open={app.drawerOpen} label="Alerts" items={barItems} height="18rem">
+<CwDrawer bind:open={app.drawerOpen} label={m.status_alerts()} items={barItems} height="18rem">
 	<div class="flex w-full flex-row gap-6">
 		<!-- Status Mix card -->
 		<CwCard class="w-full">
 			<div class="status-card">
 				<div class="status-card__header">
-					<span class="status-card__title">Status mix</span>
+					<span class="status-card__title">{m.overview_status_mix()}</span>
 					<span class="status-card__total"
-						>Total {statusSegments.reduce((s, x) => s + x.value, 0)}</span
+						>{m.overview_total({ count: String(statusSegments.reduce((s, x) => s + x.value, 0)) })}</span
 					>
 				</div>
 				<div class="status-card__body">
@@ -89,8 +93,8 @@
 		<CwCard class="w-full">
 			<div class="groups-card">
 				<div class="groups-card__header">
-					<span class="groups-card__title">Top groups</span>
-					<span class="groups-card__subtitle">In view</span>
+					<span class="groups-card__title">{m.overview_top_groups()}</span>
+					<span class="groups-card__subtitle">{m.overview_in_view()}</span>
 				</div>
 				{#each topGroups as group (group.name)}
 					<div class="groups-card__row">
@@ -111,8 +115,8 @@
 		<CwCard class="w-full">
 			<div class="alerts-card">
 				<div class="alerts-card__header">
-					<span class="alerts-card__title">Active Alert List</span>
-					<span class="alerts-card__subtitle">Reported Time</span>
+					<span class="alerts-card__title">{m.overview_active_alert_list()}</span>
+					<span class="alerts-card__subtitle">{m.overview_reported_time()}</span>
 				</div>
 				<div class="alerts-card__list" style="overflow-y: scroll;">
 					{#each alerts as alert (alert.id)}

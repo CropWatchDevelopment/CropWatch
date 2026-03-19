@@ -1,20 +1,21 @@
+<script lang="ts">
+	import { m } from '$lib/paraglide/messages.js';
+</script>
+
 <svelte:head>
-	<title>CropWatch Offline</title>
+	<title>{m.offline_page_title()}</title>
 	<meta
 		name="description"
-		content="CropWatch is offline. Reconnect to load live device data, reports, and settings."
+		content={m.offline_page_description()}
 	/>
 </svelte:head>
 
 <div class="offline-page">
 	<section class="offline-card">
-		<p class="offline-eyebrow">Offline</p>
-		<h1>CropWatch needs a connection for live data.</h1>
-		<p>
-			The app shell is installed and ready, but dashboards, reports, and settings still depend on
-			reaching the network.
-		</p>
-		<button type="button" onclick={() => window.location.reload()}>Try again</button>
+		<p class="offline-eyebrow">{m.offline_eyebrow()}</p>
+		<h1>{m.offline_heading()}</h1>
+		<p>{m.offline_body()}</p>
+		<button type="button" onclick={() => window.location.reload()}>{m.action_try_again()}</button>
 	</section>
 </div>
 

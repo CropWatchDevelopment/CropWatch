@@ -6,6 +6,7 @@
 	import BACK_ICON from '$lib/images/icons/back.svg';
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let {
 		ruleGroupId,
@@ -28,7 +29,7 @@
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
-				message: 'Unable to delete this rule.'
+				message: m.rules_delete_failed()
 			});
 			deleting = false;
 			return;
@@ -36,22 +37,19 @@
 	};
 </script>
 
-<CwButton variant="danger" size="md" onclick={() => (open = true)}>Delete Rule</CwButton>
+<CwButton variant="danger" size="md" onclick={() => (open = true)}>{m.rules_delete_rule()}</CwButton>
 
-<CwDialog {open} title="Delete Rule" onclose={() => (open = false)}>
+<CwDialog {open} title={m.rules_delete_rule()} onclose={() => (open = false)}>
 	{#snippet children()}
-		<p>
-			Are you sure you want to delete the rule <strong>{ruleName}</strong>? This action cannot be
-			undone.
-		</p>
+		<p>{m.rules_delete_confirmation({ name: ruleName })}</p>
 	{/snippet}
 	{#snippet actions()}
 		<div class="flex flex-row gap-2">
 			<CwButton variant="secondary" size="md" onclick={() => (open = false)}>
-				<img src={BACK_ICON} alt="Cancel" /> Cancel
+				<img src={BACK_ICON} alt={m.action_cancel()} /> {m.action_cancel()}
 			</CwButton>
 			<CwButton variant="danger" size="md" onclick={handleDelete} disabled={deleting}>
-				Delete
+				{m.action_delete()}
 			</CwButton>
 		</div>
 	{/snippet}

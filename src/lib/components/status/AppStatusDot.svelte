@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { m } from '$lib/paraglide/messages.js';
+
 	type Status = 'online' | 'offline' | 'loading' | 'warning';
 	type Size = 'sm' | 'md' | 'lg';
 
@@ -27,12 +29,12 @@
 	const statusLabel = $derived(
 		label ??
 			(status === 'online'
-				? 'Online'
+				? m.status_online()
 				: status === 'offline'
-					? 'Offline'
+					? m.status_offline()
 					: status === 'warning'
-						? 'Warning'
-						: 'Loading')
+						? m.status_warning()
+						: m.status_loading())
 	);
 
 	const sizeConfig = $derived(SIZE_MAP[size]);

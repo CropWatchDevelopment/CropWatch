@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CwButton } from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
+	import { m } from '$lib/paraglide/messages.js';
 	import LocationEditPermissions from './LocationEditPermissions.svelte';
 	import LocationPermissions from './LocationPermissions.svelte';
 	import LocationUpdate from './LocationUpdate.svelte';
@@ -10,12 +11,14 @@
 </script>
 
 <svelte:head>
-	<title>Location Settings - {data.locationName}</title>
+	<title>{m.locations_settings_page_title({ name: data.locationName })}</title>
 </svelte:head>
 
 <div class="settings-page overflow-y-scroll">
-	<CwButton onclick={() => goto(`/locations/${data.locationId}`)} class="back-button">&larr; Back To Location</CwButton>
+	<CwButton onclick={() => goto(`/locations/${data.locationId}`)} class="back-button">
+		{m.locations_back_to_location()}
+	</CwButton>
 	<LocationUpdate {data} {form} />
-	<LocationPermissions {data} {form} />
-	<LocationEditPermissions {data} {form} />
+	<LocationPermissions {data} />
+	<LocationEditPermissions {data} />
 </div>

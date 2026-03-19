@@ -12,6 +12,7 @@
 	} from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {
 		form: { message?: string; success?: boolean } | null;
@@ -105,21 +106,18 @@
 </script>
 
 <svelte:head>
-	<title>Forgot Password - CropWatch Temp</title>
+	<title>{m.auth_forgot_password_page_title()}</title>
 </svelte:head>
 
 <CwCard padded={false} class="auth-card">
 	<div class="auth-shell">
 		<div class="logo-frame">
-			<img src={logo} alt="CropWatch" class="logo-image" />
+			<img src={logo} alt={m.app_name()} class="logo-image" />
 		</div>
 
 		{#if sent}
-			<h1 class="auth-title">Check your email</h1>
-			<p class="auth-subtitle">
-				If an account exists with that email, we've sent a password reset link. Please check your
-				inbox (and spam folder).
-			</p>
+			<h1 class="auth-title">{m.auth_check_email_heading()}</h1>
+			<p class="auth-subtitle">{m.auth_forgot_password_sent_body()}</p>
 
 			<CwButton
 				class="auth-primary"
@@ -129,12 +127,12 @@
 				fullWidth={true}
 				onclick={() => goto('/auth/login')}
 			>
-				<img src={BACK_ICON} alt="Back to login icon" class="h-4 w-4" />
-				Back to Login
+				<img src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
+				{m.auth_back_to_login()}
 			</CwButton>
 		{:else}
-			<h1 class="auth-title">Forgot your password?</h1>
-			<p class="auth-subtitle">Enter your account email and we will send you a reset link.</p>
+			<h1 class="auth-title">{m.auth_forgot_password()}</h1>
+			<p class="auth-subtitle">{m.auth_forgot_password_subtitle()}</p>
 
 			<form
 				method="POST"
@@ -152,7 +150,7 @@
 						formData.set('recaptchaToken', token);
 					} catch (err) {
 						console.error('reCAPTCHA token failed:', err);
-						toast.add({ message: 'Security verification failed. Please try again.', tone: 'danger' });
+						toast.add({ message: m.auth_security_try_again(), tone: 'danger' });
 						submitting = false;
 						cancel();
 						return;
@@ -165,13 +163,13 @@
 				}}
 			>
 				<label class="field-block">
-					<span class="field-label">EMAIL</span>
+					<span class="field-label">{m.auth_email_label()}</span>
 					<CwInput
 						class="auth-input"
 						name="email"
 						type="email"
 						required
-						placeholder="you@example.com"
+						placeholder={m.auth_email_placeholder()}
 						autocomplete="email"
 					/>
 				</label>
@@ -185,10 +183,10 @@
 					disabled={submitting || loadingCaptcha}
 				>
 					{#if submitting}
-						Sending…
+						{m.auth_sending()}
 					{:else}
-						<img src={KEY_ICON} alt="Send reset link icon" class="h-4 w-4" />
-						Send Reset Link
+						<img src={KEY_ICON} alt={m.auth_send_reset_link()} class="h-4 w-4" />
+						{m.auth_send_reset_link()}
 					{/if}
 				</CwButton>
 
@@ -201,8 +199,8 @@
 						fullWidth={true}
 						onclick={() => goto('/auth/login')}
 					>
-						<img src={BACK_ICON} alt="Back to login icon" class="h-4 w-4" />
-						Back to Login
+						<img src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
+						{m.auth_back_to_login()}
 					</CwButton>
 
 					<CwButton
@@ -213,14 +211,14 @@
 						fullWidth={true}
 						onclick={() => goto('/auth/create-account')}
 					>
-						<img src={ADD_PERSON_ICON} alt="Create account icon" class="h-4 w-4" />
-						Create Account
+						<img src={ADD_PERSON_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
+						{m.auth_create_account()}
 					</CwButton>
 				</div>
 			</form>
 		{/if}
 
-		<p class="security-copy">Protected by reCAPTCHA and CropWatch Security</p>
+		<p class="security-copy">{m.auth_security_copy()}</p>
 	</div>
 </CwCard>
 

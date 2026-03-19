@@ -11,16 +11,17 @@
 	import DeleteReportDialog from './DeleteReportDialog.svelte';
 	import type { ReportRow } from './report-row';
 	import { goto } from '$app/navigation';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
 	let deletedReportIds = $state<string[]>([]);
 
 	const columns: CwColumnDef<ReportRow>[] = [
-		{ key: 'name', header: 'Name', sortable: true },
-		{ key: 'device_name', header: 'For Device Device', sortable: true },
+		{ key: 'name', header: m.common_name(), sortable: true },
+		{ key: 'device_name', header: m.reports_for_device(), sortable: true },
 		{ key: 'dev_eui', header: 'Device EUI' },
-		{ key: 'location_name', header: 'Location', sortable: true }
+		{ key: 'location_name', header: m.nav_locations(), sortable: true }
 	];
 
 	const visibleReports = $derived.by(() => {
@@ -48,12 +49,14 @@
 </script>
 
 <svelte:head>
-	<title>Reports - CropWatch</title>
+	<title>{m.reports_page_title()}</title>
 </svelte:head>
 
-<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>← Back to Dashboard</CwButton>
+<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>
+	{m.action_back_to_dashboard()}
+</CwButton>
 <div class="overflow-y-auto p-4">
-	<CwCard title="Weekly Reports" class="min-h-0 flex-1 p-4">
+	<CwCard title={m.reports_weekly_reports()} class="min-h-0 flex-1 p-4">
 		{#key tableKey}
 			<CwDataTable
 				{columns}
@@ -69,7 +72,7 @@
 							href={`/locations/${row.cw_devices?.cw_locations?.location_id}/devices/${row.dev_eui}`}
 							class="ml-2 text-sm text-blue-500 hover:underline"
 						>
-							{row.cw_devices?.name ?? 'Unknown Device'}
+							{row.cw_devices?.name ?? m.reports_unknown_device()}
 						</a>
 					{:else}
 						{defaultValue}

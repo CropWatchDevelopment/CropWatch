@@ -1,4 +1,5 @@
 import { ApiServiceError, type PaginationQuery, ApiService } from '$lib/api/api.service';
+import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -46,7 +47,7 @@ export const actions: Actions = {
 		if (!authToken) {
 			return fail(401, {
 				action: 'saveDataNote',
-				message: 'You must be logged in to save a note.'
+				message: m.devices_save_note_requires_login()
 			});
 		}
 
@@ -65,13 +66,13 @@ export const actions: Actions = {
 			const responsePayload = error instanceof ApiServiceError ? error.payload : error;
 			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'saveDataNote',
-				message: readApiError(responsePayload, 'Unable to save note.')
+				message: readApiError(responsePayload, m.devices_save_note_failed())
 			});
 		}
 
 		return {
 			success: true,
-			message: 'Note saved successfully.'
+			message: m.devices_save_note_success()
 		};
 	}
 };
@@ -81,9 +82,11 @@ function readApiError(payload: unknown, fallback: string): string {
 		const message = (payload as Record<string, unknown>).message;
 		if (typeof message === 'string' && message.length > 0) return message;
 		if (Array.isArray(message)) {
-			const text = message.filter((m): m is string => typeof m === 'string' && m.length > 0).join(', ');
+			const text = message
+				.filter((m): m is string => typeof m === 'string' && m.length > 0)
+				.join(', ');
 			if (text) return text;
 		}
 	}
 	return fallback;
-};
+}

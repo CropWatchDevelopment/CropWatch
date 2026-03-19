@@ -1,4 +1,6 @@
 import { ApiService } from '$lib/api/api.service';
+import { formatDateTime } from '$lib/i18n/format';
+import { m } from '$lib/paraglide/messages.js';
 import type { ReportDeviceRelations, ReportRow } from './report-row';
 import type { PageServerLoad } from './$types';
 
@@ -31,9 +33,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
 		return {
 			...reportWithRelations,
-			created_at: new Date(reportWithRelations.created_at).toLocaleString(),
-			location_name: reportWithRelations.cw_devices?.cw_locations?.name ?? 'Unknown Location',
-			device_name: reportWithRelations.cw_devices?.name ?? 'Unknown Device'
+			created_at: formatDateTime(reportWithRelations.created_at),
+			location_name: reportWithRelations.cw_devices?.cw_locations?.name ?? m.reports_unknown_location(),
+			device_name: reportWithRelations.cw_devices?.name ?? m.reports_unknown_device()
 		};
 	});
 

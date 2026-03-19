@@ -1,4 +1,5 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import { m } from '$lib/paraglide/messages.js';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -6,7 +7,7 @@ export const GET: RequestHandler = async ({ fetch, locals }) => {
 	const authToken = locals.jwtString ?? null;
 
 	if (!authToken) {
-		return json({ message: 'Not authenticated.' }, { status: 401 });
+		return json({ message: m.auth_not_authenticated() }, { status: 401 });
 	}
 
 	const api = new ApiService({
@@ -18,6 +19,6 @@ export const GET: RequestHandler = async ({ fetch, locals }) => {
 		return json(await api.getDeviceTypes());
 	} catch (error) {
 		const status = error instanceof ApiServiceError ? error.status : 500;
-		return json({ message: 'Failed to load device types.' }, { status });
+		return json({ message: m.devices_load_device_types_failed() }, { status });
 	}
 };

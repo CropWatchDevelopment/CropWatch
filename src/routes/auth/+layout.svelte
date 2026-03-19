@@ -1,4 +1,6 @@
 <script lang="ts">
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+
 	let { children } = $props();
 
 	type ParticleSize = 'sm' | 'md' | 'lg';
@@ -64,6 +66,9 @@
 </script>
 
 <main class="auth-scene">
+	<div class="auth-locale-switcher">
+		<LanguageSwitcher compact />
+	</div>
 	<div class="scene-gradient"></div>
 	<div class="scene-vignette"></div>
 	<div class="particle-layer" aria-hidden="true">
@@ -156,6 +161,13 @@
 		position: relative;
 		z-index: 2;
 		width: min(100%, 24rem);
+	}
+
+	.auth-locale-switcher {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		z-index: 3;
 	}
 
 	@keyframes -global-bg-rise {

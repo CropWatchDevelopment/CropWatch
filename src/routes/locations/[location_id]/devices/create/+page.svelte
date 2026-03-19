@@ -12,6 +12,7 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import BACK_ICON from '$lib/images/icons/back.svg';
+	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
 	type CreateDeviceForm = {
@@ -62,6 +63,8 @@
 	const toast = useCwToast();
 
 	let { data, form }: PageProps = $props();
+	let locationId = $derived(data.locationId ?? '');
+	let deviceTypeOptions = $derived(data.deviceTypeOptions ?? []);
 
 	let submitting = $state(false);
 	let actionForm = $derived((form ?? null) as CreateDeviceForm);
@@ -78,7 +81,7 @@
 			type: fieldValue('type'),
 			group: fieldValue('group'),
 			upload_interval: fieldValue('upload_interval'),
-			location_id: fieldValue('location_id', data.locationId),
+			location_id: fieldValue('location_id', locationId),
 			lat: fieldValue('lat'),
 			long: fieldValue('long'),
 			installed_at: fieldValue('installed_at'),
@@ -128,10 +131,14 @@
 	);
 </script>
 
+<svelte:head>
+	<title>{m.devices_create_page_title()}</title>
+</svelte:head>
+
 <div class="create-device-page overflow-y-auto p-4">
 	<CwCard
-		title="Create Device"
-		subtitle={`Prepare a new cw_device payload for location ${data.locationId}`}
+		title={m.devices_create_page_title()}
+		subtitle={m.devices_create_page_subtitle({ locationId })}
 		elevated
 	>
 		<form
@@ -146,7 +153,7 @@
 					if (result.type === 'success' && typeof result.data?.dev_eui === 'string') {
 						await goto(
 							resolve('/locations/[location_id]/devices/[dev_eui]', {
-								location_id: data.locationId,
+								location_id: locationId,
 								dev_eui: result.data.dev_eui
 							}),
 							{ invalidateAll: true }
@@ -167,97 +174,95 @@
 			{/if}
 
 			<p class="form-note">
-				This form maps directly to the new `cw_device` and `cw_device_owners` DTOs. The `type` field
-				should match `cw_device_type.id`.
+				{m.devices_create_form_note()}
 			</p>
 
 			<input type="hidden" name="location_id" value={fields.location_id} />
 
 			<section class="form-section">
 				<div>
-					<h2>Device Identity</h2>
-					<p>Core `cw_device` fields used for the initial POST payload.</p>
+					<h2>{m.devices_identity_section_title()}</h2>
+					<p>{m.devices_identity_section_subtitle()}</p>
 				</div>
 
 				<div class="field-grid">
 					<CwInput
 						name="dev_eui"
 						type="devEui"
-						label="Device EUI"
+						label={m.devices_dev_eui_label()}
 						required
 						autocomplete="off"
-						placeholder="A1:B2:C3:D4:E5:F6:07:08"
+						placeholder={m.devices_dev_eui_placeholder()}
 						bind:value={fields.dev_eui}
 					/>
 
 					<CwInput
 						name="name"
-						label="Device Name"
+						label={m.devices_device_name_label()}
 						required
-						placeholder="Greenhouse Sensor 1"
+						placeholder={m.devices_device_name_placeholder()}
 						bind:value={fields.name}
 					/>
 
 					<CwDropdown
 						name="type"
-						label="Device Type"
+						label={m.devices_device_type_label()}
 						required
-						placeholder="Select a device type..."
-						options={data.deviceTypeOptions}
+						placeholder={m.devices_device_type_placeholder()}
+						options={deviceTypeOptions}
 						bind:value={fields.type}
 					/>
-                    <pre>{JSON.stringify(data, null, 2)}</pre>
 
 					<CwInput
 						name="group"
-						label="Group"
-						placeholder="Optional device group"
+						label={m.common_group()}
+						placeholder={m.devices_group_placeholder()}
 						bind:value={fields.group}
 					/>
 
 					<CwInput
 						name="upload_interval"
 						type="numeric"
-						label="Upload Interval (minutes)"
-						placeholder="15"
+						label={m.devices_upload_interval_label()}
+						placeholder={m.devices_upload_interval_placeholder()}
 						bind:value={fields.upload_interval}
 					/>
 
-					<CwInput label="Location ID" disabled value={fields.location_id} />
+					<CwInput label={m.devices_location_id_label()} disabled value={fields.location_id} />
 				</div>
 			</section>
 
 			<section class="form-section">
 				<div>
-					<h2>Deployment</h2>
-					<p>Optional placement and lifecycle values stored on the device row.</p>
+					<h2>{m.devices_deployment_section_title()}</h2>
+					<p>{m.devices_deployment_section_subtitle()}</p>
 				</div>
 
 				<div class="field-grid">
 					<CwInput
 						name="lat"
 						type="numeric"
-						label="Latitude"
-						placeholder="35.6762"
+						label={m.locations_latitude_optional()}
+						placeholder={m.locations_latitude_placeholder()}
 						bind:value={fields.lat}
 					/>
 
 					<CwInput
 						name="long"
 						type="numeric"
-						label="Longitude"
-						placeholder="139.6503"
+						label={m.locations_longitude_optional()}
+						placeholder={m.locations_longitude_placeholder()}
 						bind:value={fields.long}
 					/>
 
 					<div class="field">
-						<span class="field-label">Installed At</span>
+						<span class="field-label">{m.devices_installed_at_label()}</span>
 						<CwDateTimeRangePicker
 							name="installed_at"
 							mode="single"
 							granularity="day"
 							maxDate={new Date()}
-							placeholder="Select install date"
+							placeholder={m.devices_installed_at_placeholder()}
 							bind:value={installedAt}
 						/>
 					</div>
@@ -268,14 +273,15 @@
 				<CwButton
 					type="button"
 					variant="secondary"
-					onclick={() =>
-						goto(resolve('/locations/[location_id]', { location_id: data.locationId }))}
+					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 				>
 					<img src={BACK_ICON} alt="" class="button-icon" />
-					Cancel
+					{m.action_cancel()}
 				</CwButton>
 
-				<CwButton type="submit" variant="primary" loading={submitting}>Create Device</CwButton>
+				<CwButton type="submit" variant="primary" loading={submitting}
+					>{m.devices_create_submit()}</CwButton
+				>
 			</div>
 		</form>
 	</CwCard>

@@ -1,4 +1,5 @@
 import { ApiService } from '$lib/api/api.service';
+import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
@@ -37,14 +38,14 @@ export const actions: Actions = {
 	default: async ({ request, locals, fetch }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) {
-			return fail(401, { error: 'Not authenticated' });
+			return fail(401, { error: m.auth_not_authenticated() });
 		}
 
 		const formData = await request.formData();
 		const name = formData.get('name')?.toString().trim() ?? '';
 
 		if (!name) {
-			return fail(400, { error: 'Name is required', name });
+			return fail(400, { error: m.validation_name_required(), name });
 		}
 
 		const description = formData.get('description')?.toString().trim() || null;
@@ -62,10 +63,10 @@ export const actions: Actions = {
 		};
 
 		if (latRaw && isNaN(lat!)) {
-			return fail(400, { error: 'Latitude must be a number', ...formValues });
+			return fail(400, { error: m.locations_latitude_must_be_number(), ...formValues });
 		}
 		if (longRaw && isNaN(long!)) {
-			return fail(400, { error: 'Longitude must be a number', ...formValues });
+			return fail(400, { error: m.locations_longitude_must_be_number(), ...formValues });
 		}
 
 		const api = new ApiService({ fetchFn: fetch, authToken });
@@ -76,7 +77,7 @@ export const actions: Actions = {
 
 			if (!location_id) {
 				return fail(502, {
-					error: 'Location was created but the API response did not include location_id.',
+					error: m.locations_missing_location_id(),
 					...formValues
 				});
 			}
@@ -86,7 +87,7 @@ export const actions: Actions = {
 				location_id
 			};
 		} catch (err: unknown) {
-			const message = err instanceof Error ? err.message : 'Failed to create location';
+			const message = err instanceof Error ? err.message : m.locations_create_failed();
 			return fail(500, { error: message, ...formValues });
 		}
 	}

@@ -13,7 +13,9 @@
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import { ApiService } from '$lib/api/api.service';
+	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { m } from '$lib/paraglide/messages.js';
 	import './AirDisplay.css';
 	import NotesCreateDialog from './dialogs/notes-create-dialog.svelte';
 	import type { AirRow } from './interfaces/AirRow.interface';
@@ -23,11 +25,11 @@
 	const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 	const columns: CwColumnDef<AirRow>[] = [
-		{ key: 'created_at', header: 'Timestamp', sortable: true, width: '13.5rem' },
-		{ key: 'temperature_c', header: 'Temp (°C)', sortable: true, width: '8rem' },
-		{ key: 'humidity', header: 'Humidity (%)', sortable: true, width: '9rem' },
-		{ key: 'co2', header: 'CO2 (ppm)', sortable: true, width: '9rem' },
-		{ key: 'alerts', header: 'Alerts', width: '3rem' },
+		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
+		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
+		{ key: 'humidity', header: m.rule_subject_humidity(), sortable: true, width: '9rem' },
+		{ key: 'co2', header: m.rule_subject_co2(), sortable: true, width: '9rem' },
+		{ key: 'alerts', header: m.status_alerts(), width: '3rem' }
 	];
 
 	const ALARM_AFTER_MINUTES = 10.5;
@@ -42,9 +44,12 @@
 			humidity: Number(row.humidity) || 0,
 			co2: Number(row.co2) || 0,
 			dev_eui: String(row.dev_eui ?? ''),
-			alerts: row.alerts,
+			alerts: Array.isArray(row.alerts) ? (row.alerts as AirRow['alerts']) : [],
 			cw_air_annotations: Array.isArray(row.cw_air_annotations)
 				? row.cw_air_annotations.map((annotation) => ({
+						id: String(
+							annotation.id ?? `${annotation.created_at ?? 'note'}-${annotation.note ?? index}`
+						),
 						note: String(annotation.note ?? ''),
 						created_at: String(annotation.created_at ?? '')
 					}))
@@ -52,7 +57,17 @@
 		}));
 	}
 
-	let extraRows = $state<Record<string, unknown>[]>([]);
+	let historicalDataKey = $derived.by(() => {
+		const firstId = String(historicalData[0]?.id ?? historicalData[0]?.created_at ?? '');
+		const lastId = String(
+			historicalData[historicalData.length - 1]?.id ??
+				historicalData[historicalData.length - 1]?.created_at ??
+				''
+		);
+		return `${historicalData.length}:${firstId}:${lastId}`;
+	});
+	let extraRowsByKey = $state<Record<string, Record<string, unknown>[]>>({});
+	let extraRows = $derived(extraRowsByKey[historicalDataKey] ?? []);
 	let allRawData = $derived([...historicalData, ...extraRows]);
 	let rows = $derived(
 		toAirRows(allRawData).sort(
@@ -60,20 +75,14 @@
 		)
 	);
 
-	// Reset extra rows when the parent provides new historical data (e.g. range change)
-	let historicalDataVersion = $derived(historicalData.length > 0 ? historicalData[0] : null);
-	$effect(() => {
-		historicalDataVersion;
-		extraRows = [];
-	});
-
 	let latest = $derived.by(() => {
 		// Use the most recent row if we have fetched newer data, otherwise fall back to latestData prop
-		const newestRow = rows.length > 0
-			? rows.reduce((best, row) =>
-				new Date(row.created_at).getTime() > new Date(best.created_at).getTime() ? row : best
-			)
-			: null;
+		const newestRow =
+			rows.length > 0
+				? rows.reduce((best, row) =>
+						new Date(row.created_at).getTime() > new Date(best.created_at).getTime() ? row : best
+					)
+				: null;
 
 		const propTime = latestData?.created_at ? new Date(String(latestData.created_at)).getTime() : 0;
 		const rowTime = newestRow ? new Date(newestRow.created_at).getTime() : 0;
@@ -113,11 +122,12 @@
 
 			if (result && typeof result === 'object' && result.created_at) {
 				const existingIds = new Set(rows.map((r) => r.id));
-				const newId = String(
-					result.id ?? result.data_id ?? `${result.created_at}-latest`
-				);
+				const newId = String(result.id ?? result.data_id ?? `${result.created_at}-latest`);
 				if (!existingIds.has(newId)) {
-					extraRows = [...extraRows, result];
+					extraRowsByKey = {
+						...extraRowsByKey,
+						[historicalDataKey]: [...extraRows, result]
+					};
 				}
 			}
 		} catch (err) {
@@ -219,7 +229,7 @@
 <div class="air-display">
 	{#if lastSeenTimestamp}
 		<div class="air-display__last-updated">
-			<span>Last updated:</span>
+			<span>{m.display_last_updated()}:</span>
 			<CwDuration
 				from={lastSeenTimestamp}
 				alarmAfterMinutes={ALARM_AFTER_MINUTES}
@@ -229,15 +239,15 @@
 	{/if}
 
 	<div class="kpi-grid">
-		<CwCard title="Current Temperature" subtitle="Latest reading" elevated>
+		<CwCard title={m.display_current_temperature()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.temperature_c.toFixed(1)}<span>°C</span></p>
 		</CwCard>
 
-		<CwCard title="Current Humidity" subtitle="Latest reading" elevated>
+		<CwCard title={m.display_current_humidity()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.humidity.toFixed(1)}<span>%</span></p>
 		</CwCard>
 
-		<CwCard title="Current CO2" subtitle="Latest reading" elevated>
+		<CwCard title={m.display_current_co2()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.co2.toFixed(0)}<span>ppm</span></p>
 		</CwCard>
 	</div>
@@ -245,12 +255,16 @@
 	{#if !loading && rows.length > 0}
 		<div class="chart-grid">
 			<div class="chart-grid__item">
-				<CwCard title="Temperature & Humidity" subtitle="Time series" elevated>
+				<CwCard
+					title={m.display_temperature_humidity_chart()}
+					subtitle={m.display_time_series()}
+					elevated
+				>
 					<CwLineChart
 						data={lineSeries}
 						secondaryData={secondarySeries}
-						primaryLabel="Temperature"
-						secondaryLabel="Humidity"
+						primaryLabel={m.rule_subject_temperature()}
+						secondaryLabel={m.rule_subject_humidity()}
 						primaryUnit="°C"
 						secondaryUnit="%"
 						height={400}
@@ -259,7 +273,11 @@
 			</div>
 
 			<div class="chart-grid__item">
-				<CwCard title="Temperature Heatmap" subtitle="Reading density" elevated>
+				<CwCard
+					title={m.display_temperature_heatmap()}
+					subtitle={m.display_reading_density()}
+					elevated
+				>
 					<CwHeatmap
 						data={heatmapSeries}
 						days={heatmapDays}
@@ -272,12 +290,23 @@
 			</div>
 		</div>
 
-		<CwCard title="Telemetry Table" subtitle="Searchable, sortable data" elevated>
-			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" rowActionsHeader="Actions" searchable>
+		<CwCard
+			title={m.display_telemetry_table()}
+			subtitle={m.display_searchable_sortable_data()}
+			elevated
+		>
+			<CwDataTable
+				{columns}
+				loadData={loadTableData}
+				loading={tableLoading}
+				rowKey="id"
+				rowActionsHeader={m.common_actions()}
+				searchable
+			>
 				{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
 					<div class="text-2xl">
 						{#if col.key === 'created_at'}
-							{new Date(row.created_at).toLocaleString()}
+							{formatDateTime(row.created_at)}
 						{:else if col.key === 'temperature_c'}
 							{row.temperature_c.toFixed(2)} °C
 						{:else if col.key === 'humidity'}
@@ -304,8 +333,8 @@
 			</CwDataTable>
 		</CwCard>
 	{:else if !loading}
-		<CwCard title="No Data" elevated>
-			<p>No air quality data available for the selected range.</p>
+		<CwCard title={m.display_no_data()} elevated>
+			<p>{m.display_no_air_quality_data_selected_range()}</p>
 		</CwCard>
 	{/if}
 </div>

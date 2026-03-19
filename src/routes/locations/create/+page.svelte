@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import BACK_ICON from '$lib/images/icons/back.svg';
+	import { m } from '$lib/paraglide/messages.js';
 
 	type CreateLocationForm = {
 		error?: string;
@@ -29,7 +30,7 @@
 </script>
 
 <div class="create-location-page">
-	<CwCard title="Create Location" subtitle="Add a new location to your account" elevated>
+	<CwCard title={m.locations_create_title()} subtitle={m.locations_create_subtitle()} elevated>
 		<form
 			method="POST"
 			use:enhance={() => {
@@ -64,35 +65,50 @@
 				{/if}
 
 				<CwInput
-					label="Name"
+					label={m.common_name()}
 					name="name"
 					bind:value={name}
 					required
-					placeholder="e.g. Greenhouse A"
+					placeholder={m.locations_name_placeholder()}
 				/>
 
 				<CwInput
-					label="Description"
+					label={m.common_description()}
 					name="description"
 					bind:value={description}
-					placeholder="Optional description"
+					placeholder={m.locations_optional_description()}
 				/>
 
-				<CwInput label="Group" name="group" bind:value={group} placeholder="Optional group name" />
+				<CwInput
+					label={m.common_group()}
+					name="group"
+					bind:value={group}
+					placeholder={m.locations_optional_group_name()}
+				/>
 
 				<div class="coord-row">
-					<CwInput label="Latitude (optional)" name="lat" bind:value={lat} placeholder="e.g. 35.6762" />
-					<CwInput label="Longitude (optional)" name="long" bind:value={long} placeholder="e.g. 139.6503" />
+					<CwInput
+						label={m.locations_latitude_optional()}
+						name="lat"
+						bind:value={lat}
+						placeholder={m.locations_latitude_placeholder()}
+					/>
+					<CwInput
+						label={m.locations_longitude_optional()}
+						name="long"
+						bind:value={long}
+						placeholder={m.locations_longitude_placeholder()}
+					/>
 				</div>
 			</div>
 
 			<div class="form-actions">
 				<CwButton type="button" variant="secondary" onclick={() => goto('/locations')}>
-					<img src={BACK_ICON} alt="Back" class="h-4 w-4" />
-					Cancel
+					<img src={BACK_ICON} alt={m.action_back()} class="h-4 w-4" />
+					{m.action_cancel()}
 				</CwButton>
 				<CwButton type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>
-					Create Location
+					{m.locations_create_submit()}
 				</CwButton>
 			</div>
 		</form>

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import type { ActionResult } from '@sveltejs/kit';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 	import type { PermissionRow } from './location-permission-rows';
 
 	type DeletePermissionDialogProps = {
@@ -18,7 +20,9 @@
 	const toast = useCwToast();
 	let deleting = $state(false);
 
-	function getResultMessage(data: unknown): string | null {
+	function getResultMessage(result: ActionResult): string | null {
+		if (result.type !== 'success' && result.type !== 'failure') return null;
+		const data = result.data;
 		if (!data || typeof data !== 'object') return null;
 		const message = (data as Record<string, unknown>).message;
 		return typeof message === 'string' && message.trim().length > 0 ? message.trim() : null;
@@ -41,7 +45,7 @@
 			const result = deserialize(await response.text());
 			await applyAction(result);
 
-			const message = getResultMessage(result.data);
+			const message = getResultMessage(result);
 			if (message) {
 				toast.add({
 					message,
@@ -57,7 +61,7 @@
 		} catch (error) {
 			console.error('Error deleting permission:', error);
 			toast.add({
-				message: error instanceof Error ? error.message : 'Failed to delete permission.',
+				message: error instanceof Error ? error.message : m.locations_delete_permission_failed(),
 				tone: 'danger'
 			});
 		} finally {
@@ -66,20 +70,22 @@
 	};
 </script>
 
-<CwDialog bind:open={openDeletePermissionDialog} title="Confirm Action">
-	<p>Are you sure you want to proceed?</p>
-	<pre>{JSON.stringify(selectedRow, null, 2)}</pre>
+<CwDialog
+	bind:open={openDeletePermissionDialog}
+	title={m.locations_confirm_delete_permission_title()}
+>
+	<p>{m.locations_confirm_delete_permission_body({ email: selectedRow?.email ?? '' })}</p>
 	{#snippet actions()}
 		<CwButton
 			variant="primary"
 			disabled={deleting}
-			onclick={() => (openDeletePermissionDialog = false)}>Cancel</CwButton
+			onclick={() => (openDeletePermissionDialog = false)}>{m.action_cancel()}</CwButton
 		>
 		<CwButton
 			variant="danger"
 			loading={deleting}
 			disabled={deleting}
-			onclick={() => handlePermissionDelete(selectedRow)}>Delete</CwButton
+			onclick={() => handlePermissionDelete(selectedRow)}>{m.action_delete()}</CwButton
 		>
 	{/snippet}
 </CwDialog>

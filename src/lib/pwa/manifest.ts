@@ -1,3 +1,6 @@
+import { getUiLocale } from '$lib/i18n/format';
+import { m } from '$lib/paraglide/messages.js';
+
 type ManifestIcon = {
 	src: string;
 	sizes: string;
@@ -53,8 +56,9 @@ function withBase(basePath: string, path: string): string {
 	return `${normalizeBasePath(basePath)}${path}`;
 }
 
-export function buildManifest(basePath = ''): WebAppManifest {
+export function buildManifest(basePath = '', locale: 'ja' | 'en' = 'ja'): WebAppManifest {
 	const appRoot = rootPath(basePath);
+	const resolvedLocale = getUiLocale(locale);
 	const shortcutIcon: ManifestIcon = {
 		src: withBase(basePath, '/icons/maskable-icon-192x192.png'),
 		sizes: '192x192',
@@ -63,11 +67,10 @@ export function buildManifest(basePath = ''): WebAppManifest {
 
 	return {
 		id: appRoot,
-		name: 'CropWatch',
-		short_name: 'CropWatch',
-		description:
-			'Monitor locations, devices, rules, and reports with an installable CropWatch app experience.',
-		lang: 'en-US',
+		name: m.app_name({}, { locale: resolvedLocale }),
+		short_name: m.app_name({}, { locale: resolvedLocale }),
+		description: m.manifest_description({}, { locale: resolvedLocale }),
+		lang: resolvedLocale === 'en' ? 'en-US' : 'ja-JP',
 		dir: 'ltr',
 		display: 'standalone',
 		display_override: ['window-controls-overlay', 'standalone', 'minimal-ui', 'browser'],
@@ -103,26 +106,26 @@ export function buildManifest(basePath = ''): WebAppManifest {
 		],
 		shortcuts: [
 			{
-				name: 'Dashboard',
-				description: 'Open the device dashboard.',
+				name: m.manifest_shortcut_dashboard_name({}, { locale: resolvedLocale }),
+				description: m.manifest_shortcut_dashboard_description({}, { locale: resolvedLocale }),
 				url: appRoot,
 				icons: [shortcutIcon]
 			},
 			{
-				name: 'Locations',
-				description: 'Jump straight to all locations.',
+				name: m.manifest_shortcut_locations_name({}, { locale: resolvedLocale }),
+				description: m.manifest_shortcut_locations_description({}, { locale: resolvedLocale }),
 				url: withBase(basePath, '/locations'),
 				icons: [shortcutIcon]
 			},
 			{
-				name: 'Rules',
-				description: 'Review and manage rules.',
+				name: m.manifest_shortcut_rules_name({}, { locale: resolvedLocale }),
+				description: m.manifest_shortcut_rules_description({}, { locale: resolvedLocale }),
 				url: withBase(basePath, '/rules'),
 				icons: [shortcutIcon]
 			},
 			{
-				name: 'Reports',
-				description: 'Open reporting history and schedules.',
+				name: m.manifest_shortcut_reports_name({}, { locale: resolvedLocale }),
+				description: m.manifest_shortcut_reports_description({}, { locale: resolvedLocale }),
 				url: withBase(basePath, '/reports'),
 				icons: [shortcutIcon]
 			}

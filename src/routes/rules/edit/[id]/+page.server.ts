@@ -1,4 +1,5 @@
 import { ApiService } from '$lib/api/api.service';
+import { m } from '$lib/paraglide/messages.js';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -7,11 +8,11 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const ruleId = parseInt(params.id, 10);
 
 	if (!authToken) {
-		error(401, 'Unauthorized');
+		error(401, m.error_unauthorized_title());
 	}
 
 	if (isNaN(ruleId)) {
-		error(400, 'Invalid rule ID');
+		error(400, m.rules_invalid_rule_id());
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
@@ -22,7 +23,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	]);
 
 	if (!rule) {
-		error(404, 'Rule not found');
+		error(404, m.rules_rule_not_found());
 	}
 
 	const devices = rawDevices;

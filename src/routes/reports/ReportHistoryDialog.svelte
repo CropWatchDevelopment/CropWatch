@@ -11,6 +11,8 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { formatDateTime } from '$lib/i18n/format';
+	import { m } from '$lib/paraglide/messages.js';
 	import { type PdfFile } from '$lib/interfaces/PdfFile.interface';
 
 	type ReportHistoryRow = { id: string; name: string; created_at: string };
@@ -52,8 +54,8 @@
 	function getRequestErrorMessage(action: 'load' | 'download', error: unknown): string {
 		const fallback =
 			action === 'load'
-				? 'Unable to load report history right now.'
-				: 'Unable to download this report right now.';
+				? m.reports_history_load_failed()
+				: m.reports_download_failed();
 
 		if (error instanceof ApiServiceError) {
 			return readErrorMessage(error.payload) ?? fallback;
@@ -77,7 +79,7 @@
 		return files.map((file) => ({
 			id: file.id,
 			name: file.name,
-			created_at: new Date(file.created_at).toLocaleString()
+			created_at: formatDateTime(file.created_at)
 		}));
 	}
 
@@ -102,7 +104,7 @@
 			const response = await createApiService().getReportDownloadUrl(dev_eui, name);
 			const signedUrl = typeof response.url === 'string' ? response.url : null;
 			if (!signedUrl) {
-				const message = 'Unable to download this report because the signed URL was missing.';
+				const message = m.reports_download_missing_signed_url();
 				console.error('Download failed: signed URL missing', { dev_eui, name, response });
 				toast.add({ tone: 'danger', message });
 				return;
@@ -117,16 +119,16 @@
 	}
 </script>
 
-<CwButton variant="info" size="sm" onclick={() => (open = true)}>History</CwButton>
+<CwButton variant="info" size="sm" onclick={() => (open = true)}>{m.reports_history()}</CwButton>
 
-<CwDialog {open} title="Report History" onclose={() => (open = false)} class="w-full">
-	<CwCard title="Problem Reports" class="mb-4 p-4">
+<CwDialog {open} title={m.reports_history_title()} onclose={() => (open = false)} class="w-full">
+	<CwCard title={m.reports_problem_reports()} class="mb-4 p-4">
 		<CwTooltip
 			tone="info"
 			position="left"
-			value="This report is under development. Please check back later."
+			value={m.reports_problem_reports_tooltip()}
 		>
-			<CwButton variant="primary" disabled>Problems Only Report</CwButton>
+			<CwButton variant="primary" disabled>{m.reports_problems_only_report()}</CwButton>
 		</CwTooltip>
 	</CwCard>
 
@@ -135,9 +137,9 @@
 			columns={[
 				// { key: 'id', header: 'ID' },
 				{ key: 'name', header: 'Name' },
-				{ key: 'created_at', header: 'Created At' }
+				{ key: 'created_at', header: m.reports_created_at() }
 			]}
-			rowActionsHeader="Actions"
+			rowActionsHeader={m.common_actions()}
 			{loadData}
 			rowKey="id"
 		>
@@ -149,13 +151,13 @@
 						handleDownload(row.name);
 					}}
 				>
-					Download
+					{m.action_download()}
 				</CwButton>
 			{/snippet}
 		</CwDataTable>
 	{/if}
 
 	{#snippet actions()}
-		<CwButton variant="secondary" onclick={() => (open = false)}>Close</CwButton>
+		<CwButton variant="secondary" onclick={() => (open = false)}>{m.action_close()}</CwButton>
 	{/snippet}
 </CwDialog>

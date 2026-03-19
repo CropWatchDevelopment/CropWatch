@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
+	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
 	type DeviceStatus = 'Online' | 'Offline';
@@ -30,11 +31,13 @@
 	const locationLabel = $derived(
 		(data.currentLocation ?? '').trim() ||
 			selectedLocationName ||
-			(selectedLocationId ? `Location ${selectedLocationId}` : 'Current Location')
+			(selectedLocationId
+				? m.locations_location_with_id({ id: selectedLocationId })
+				: m.locations_current_location())
 	);
 
 	const columns: CwColumnDef<LocationDeviceRow>[] = [
-		{ key: 'name', header: 'Device Name', sortable: true },
+		{ key: 'name', header: m.devices_device_name(), sortable: true },
 		{ key: 'dev_eui', header: 'DevEUI', sortable: true, width: '14rem', hideBelow: 'sm' }
 	];
 
@@ -46,7 +49,7 @@
 			const isOffline = !Number.isFinite(createdAtMs) || now - createdAtMs > offlineThresholdMs;
 			return {
 				dev_eui: String(device.dev_eui ?? ''),
-				name: String(device.name ?? device.dev_eui ?? 'Unnamed Device'),
+				name: String(device.name ?? device.dev_eui ?? m.devices_unnamed_device()),
 				status: isOffline ? 'Offline' : 'Online'
 			} satisfies LocationDeviceRow;
 		});
@@ -112,11 +115,11 @@
 
 <div class="location-page overflow-y-scroll">
 	<div style="margin-bottom: 1rem;">
-		<CwButton variant="primary" onclick={() => goto(`/`)}>← Back to Dashboard</CwButton>
+		<CwButton variant="primary" onclick={() => goto(`/`)}>{m.action_back_to_dashboard()}</CwButton>
 	</div>
 	<CwCard
-		title={`Location: ${locationLabel}`}
-		subtitle="Devices returned for this location"
+		title={m.locations_location_title({ name: locationLabel })}
+		subtitle={m.locations_devices_for_location()}
 		elevated
 	>
 		<CwDataTable
@@ -126,7 +129,7 @@
 			rowKey="dev_eui"
 			searchable
 			pageSize={10}
-			rowActionsHeader="Actions"
+			rowActionsHeader={m.common_actions()}
 		>
 			{#snippet toolbarActions()}
 				<div class="location-page__actions">
@@ -134,13 +137,13 @@
 						<CwButton
 							variant="secondary"
 							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
-							>Settings</CwButton
+							>{m.nav_settings()}</CwButton
 						>
 						<CwButton
 							variant="primary"
 							onclick={() =>
 								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/devices/create`)}
-							>Add Device</CwButton
+							>{m.devices_add_device()}</CwButton
 						>
 					{/if}
 				</div>
@@ -162,7 +165,7 @@
 
 			{#snippet rowActions(row: LocationDeviceRow)}
 				<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
-					<img src={EYE_ICON} alt="View" />
+					<img src={EYE_ICON} alt={m.action_view()} />
 				</CwButton>
 			{/snippet}
 		</CwDataTable>

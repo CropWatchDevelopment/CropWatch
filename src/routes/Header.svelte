@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 	import {
 		CwHeader,
 		CwProfileMenu,
@@ -14,12 +16,12 @@
 	let { mode = $bindable<CwSideNavMode>() } = $props();
 	const app = getAppContext();
 
-	const menuItems = [
-		{ id: 'profile', label: 'Profile' },
-		{ id: 'billing', label: 'Billing' },
-		{ id: 'settings', label: 'Settings' },
-		{ id: 'logout', label: 'Logout', separator: true, danger: true }
-	];
+	const menuItems = $derived([
+		{ id: 'profile', label: m.nav_profile() },
+		{ id: 'billing', label: m.nav_billing() },
+		{ id: 'settings', label: m.nav_settings() },
+		{ id: 'logout', label: m.nav_logout(), separator: true, danger: true }
+	]);
 </script>
 
 <CwHeader
@@ -29,7 +31,7 @@
 >
 	{#snippet logo()}
 		<div class="flex flex-row items-center gap-2">
-			<img src={CROPWATCH_LOGO} alt="CropWatch Logo" style="width:2rem;height:2rem" />
+			<img src={CROPWATCH_LOGO} alt={m.app_name()} style="width:2rem;height:2rem" />
 			<span class="text-lg font-semibold">CropWatch</span>
 		</div>
 	{/snippet}
@@ -38,13 +40,14 @@
 		{#if app.session?.email.endsWith('@cropwatch.io')}
 			<CwSwitch
 				class="mr-20"
-				label="Privacy Mode"
+				label={m.header_privacy_mode()}
 				onchange={(event: boolean) => {
 					debugger;
 					app.privacyModeEnabled = event;
 				}}
 			/>
 		{/if}
+		<LanguageSwitcher compact class="mr-3" />
 		<CwThemePicker onchange={(theme) => console.log(theme)} />
 		<CwProfileMenu
 			name={app.session?.email ?? ''}
@@ -59,8 +62,7 @@
 							window.location.reload();
 						})
 						.catch(() => {
-							// Handle any errors that occur during logout
-							alert('An error occurred while logging out. Please try again.');
+							alert(m.header_logout_error());
 						});
 				} else if (event.id === 'profile') {
 					goto(resolve('/account/profile'));

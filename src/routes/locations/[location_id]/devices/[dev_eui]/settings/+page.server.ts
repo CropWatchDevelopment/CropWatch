@@ -5,6 +5,7 @@ import {
 	type DeviceDto,
 	type LocationDto
 } from '$lib/api/api.service';
+import { m } from '$lib/paraglide/messages.js';
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -124,7 +125,10 @@ function normalizeDeviceOwners(
 			const email =
 				ownerIdentity.email || str(owner.targetUserEmail) || locationOwnerIdentity?.email || '';
 			const name =
-				ownerIdentity.name || locationOwnerIdentity?.name || userId || `User ${index + 1}`;
+				ownerIdentity.name ||
+				locationOwnerIdentity?.name ||
+				userId ||
+				m.devices_owner_fallback_name({ index: String(index + 1) });
 			const rawId = owner.id;
 			const id = typeof rawId === 'number' && Number.isFinite(rawId) ? rawId : index + 1;
 			const rawPerm = owner.permission_level;
@@ -156,12 +160,12 @@ function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificate
 	const rows = [
 		{
 			key: 'sensor' as const,
-			label: 'Sensor 1',
+			label: m.devices_sensor_one(),
 			serial: str(record.sensor1_serial) || str(record.sensor_serial)
 		},
 		{
 			key: 'sensor2' as const,
-			label: 'Sensor 2',
+			label: m.devices_sensor_two(),
 			serial: str(record.sensor2_serial)
 		}
 	];
@@ -173,11 +177,11 @@ function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificate
 			product,
 			downloadPath: `libellus-certificates/${row.key}`,
 			downloadDisabledReason: !hasApiToken
-				? 'PRIVATE_LIBELLUS_API_TOKEN is not configured.'
+				? m.devices_libellus_api_token_missing()
 				: !hasBaseUrl
-					? 'PRIVATE_LIBELLUS_BASE_URL is not configured.'
+					? m.devices_libellus_base_url_missing()
 					: !product
-						? 'cw_device_type.model is missing, so Libellus product_name is unknown.'
+						? m.devices_libellus_product_name_missing()
 						: null
 		}));
 }
@@ -236,14 +240,14 @@ export const actions: Actions = {
 		if (!authToken) {
 			return fail(401, {
 				action: 'updateDevice',
-				message: 'You must be logged in to update device settings.'
+				message: m.devices_update_requires_login()
 			});
 		}
 
 		if (!devEui) {
 			return fail(400, {
 				action: 'updateDevice',
-				message: 'Invalid device id.'
+				message: m.devices_invalid_device_id()
 			});
 		}
 
@@ -257,23 +261,25 @@ export const actions: Actions = {
 		const fieldErrors: Partial<Record<keyof DeviceFormValues, string>> = {};
 
 		if (!values.name) {
-			fieldErrors.name = 'Device name is required.';
+			fieldErrors.name = m.devices_device_name_required();
 		} else if (values.name.length > DEVICE_NAME_MAX_LENGTH) {
-			fieldErrors.name = `Device name must be ${DEVICE_NAME_MAX_LENGTH} characters or fewer.`;
+			fieldErrors.name = m.devices_device_name_length({ max: String(DEVICE_NAME_MAX_LENGTH) });
 		}
 
 		if (values.group.length > DEVICE_GROUP_MAX_LENGTH) {
-			fieldErrors.group = `Device group must be ${DEVICE_GROUP_MAX_LENGTH} characters or fewer.`;
+			fieldErrors.group = m.devices_device_group_length({
+				max: String(DEVICE_GROUP_MAX_LENGTH)
+			});
 		}
 
 		if (!values.location_id) {
-			fieldErrors.location_id = 'Location is required.';
+			fieldErrors.location_id = m.devices_location_required();
 		}
 
 		if (Object.keys(fieldErrors).length > 0) {
 			return fail(400, {
 				action: 'updateDevice',
-				message: 'Please correct the highlighted fields.',
+				message: m.validation_correct_highlighted_fields(),
 				values,
 				fieldErrors
 			});
@@ -296,7 +302,7 @@ export const actions: Actions = {
 				action: 'updateDevice',
 				message: readApiMessage(
 					error instanceof ApiServiceError ? error.payload : error,
-					'The API rejected the update request.'
+					m.devices_settings_update_rejected()
 				),
 				values,
 				fieldErrors
@@ -306,7 +312,7 @@ export const actions: Actions = {
 		return {
 			action: 'updateDevice',
 			success: true,
-			message: 'Device settings updated.'
+			message: m.devices_settings_updated()
 		};
 	},
 	updateDeviceOwnerPermission: async ({ request, locals, fetch, params }) => {
@@ -316,14 +322,14 @@ export const actions: Actions = {
 		if (!authToken) {
 			return fail(401, {
 				action: 'updateDeviceOwnerPermission',
-				message: 'You must be logged in to update device owner permissions.'
+				message: m.devices_update_owner_permission_requires_login()
 			});
 		}
 
 		if (!devEui) {
 			return fail(400, {
 				action: 'updateDeviceOwnerPermission',
-				message: 'Invalid device id.'
+				message: m.devices_invalid_device_id()
 			});
 		}
 
@@ -338,13 +344,13 @@ export const actions: Actions = {
 		const permissionLevel = Number.parseInt(values.permissionLevel, 10);
 
 		if (!values.targetUserEmail) {
-			fieldErrors.targetUserEmail = 'Owner email is required.';
+			fieldErrors.targetUserEmail = m.devices_owner_email_required();
 		} else if (!EMAIL_PATTERN.test(values.targetUserEmail)) {
-			fieldErrors.targetUserEmail = 'Owner email must be a valid email address.';
+			fieldErrors.targetUserEmail = m.devices_owner_email_invalid();
 		}
 
 		if (!Number.isFinite(permissionLevel) || !VALID_PERMISSION_LEVELS.has(permissionLevel)) {
-			fieldErrors.permissionLevel = 'Choose a valid permission level.';
+			fieldErrors.permissionLevel = m.devices_choose_valid_permission_level();
 		}
 
 		const ownerKey = values.ownerKey || values.targetUserEmail;
@@ -353,7 +359,7 @@ export const actions: Actions = {
 			return fail(400, {
 				action: 'updateDeviceOwnerPermission',
 				ownerKey,
-				message: 'Please correct the highlighted fields.',
+				message: m.validation_correct_highlighted_fields(),
 				values,
 				fieldErrors
 			});
@@ -375,7 +381,7 @@ export const actions: Actions = {
 				ownerKey,
 				message: readApiMessage(
 					error instanceof ApiServiceError ? error.payload : error,
-					'The API rejected the permission update request.'
+					m.devices_permission_update_rejected()
 				),
 				values,
 				fieldErrors
@@ -386,7 +392,7 @@ export const actions: Actions = {
 			action: 'updateDeviceOwnerPermission',
 			ownerKey,
 			success: true,
-			message: `Permission updated for ${values.targetUserEmail}.`
+			message: m.devices_permission_updated_for_email({ email: values.targetUserEmail })
 		};
 	}
 };

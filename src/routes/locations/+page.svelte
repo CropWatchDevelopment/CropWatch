@@ -10,6 +10,7 @@
 	import type { LocationDto } from '$lib/api/api.service';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import { goto } from '$app/navigation';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let { data }: { data: { allLocations: LocationDto[] } } = $props();
 
@@ -17,7 +18,7 @@
 
 	const columns: CwColumnDef<LocationDto>[] = [
 		{ key: 'location_id', header: 'ID', hideBelow: 'md' },
-		{ key: 'name', header: 'Location', sortable: true }
+		{ key: 'name', header: m.nav_locations(), sortable: true }
 	];
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<LocationDto>> {
@@ -42,9 +43,11 @@
 	}
 </script>
 
-<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>← Back to Dashboard</CwButton>
+<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>
+	{m.action_back_to_dashboard()}
+</CwButton>
 <div class="locations-page overflow-y-scroll">
-	<CwCard title="All Locations" subtitle="Aggregated from current device telemetry" elevated>
+	<CwCard title={m.locations_all_title()} subtitle={m.locations_all_subtitle()} elevated>
 		<CwDataTable
 			{columns}
 			{loadData}
@@ -53,15 +56,17 @@
 			groupBy="group"
 			searchable
 			pageSize={10}
-			rowActionsHeader="Actions"
+			rowActionsHeader={m.common_actions()}
 		>
 			{#snippet toolbarActions()}
-				<CwButton variant="primary" onclick={() => goto('/locations/create')}>Add Location</CwButton>
+				<CwButton variant="primary" onclick={() => goto('/locations/create')}>
+					{m.locations_add_location()}
+				</CwButton>
 			{/snippet}
 
 			{#snippet rowActions(row: LocationDto)}
 				<CwButton size="md" variant="info" onclick={() => handleViewLocation(row)}>
-					<img src={EYE_ICON} alt="View" />
+					<img src={EYE_ICON} alt={m.action_view()} />
 				</CwButton>
 			{/snippet}
 		</CwDataTable>

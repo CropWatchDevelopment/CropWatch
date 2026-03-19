@@ -4,6 +4,7 @@
 	import { SvelteDate } from 'svelte/reactivity';
 	import { resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService } from '$lib/api/api.service';
+	import { m } from '$lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwSpinner, useCwToast } from '@cropwatchdevelopment/cwui';
 	import CsvExportDialog from './csvExportDialog.svelte';
 	import { resolveExportTimeZone } from './csvExport';
@@ -20,12 +21,6 @@
 	type TelemetryRow = Record<string, unknown>;
 	const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 	const DEFAULT_RANGE_SELECTION: RangeSelection = 'today';
-	const RANGE_OPTIONS: TimeRangeOptions[] = [
-		{ label: 'Today Only', value: DEFAULT_RANGE_SELECTION },
-		{ label: 'Last 24 Hours', value: 24 },
-		{ label: 'Last 48 Hours', value: 48 },
-		{ label: 'Last 72 Hours', value: 72 }
-	];
 	const MAX_RANGE_RECORDS = 432;
 
 	interface RouteState {
@@ -57,7 +52,7 @@
 
 	function readLocationName(value: unknown): string {
 		if (!isTelemetryRow(value)) {
-			return 'Unknown';
+			return m.devices_unknown_location();
 		}
 
 		const locationRecord = value.cw_locations;
@@ -73,7 +68,16 @@
 			return value.location_name;
 		}
 
-		return 'Unknown';
+		return m.devices_unknown_location();
+	}
+
+	function getRangeOptions(): TimeRangeOptions[] {
+		return [
+			{ label: m.devices_range_today_only(), value: DEFAULT_RANGE_SELECTION },
+			{ label: m.devices_range_last_hours({ hours: '24' }), value: 24 },
+			{ label: m.devices_range_last_hours({ hours: '48' }), value: 48 },
+			{ label: m.devices_range_last_hours({ hours: '72' }), value: 72 }
+		];
 	}
 
 	function toIsoString(value: Date | string): string {
@@ -173,7 +177,7 @@
 			state.activeRange = rangeSelection;
 		} catch (error) {
 			console.error('Failed to fetch device data:', error);
-			state.fetchError = 'Unable to load telemetry for the selected range.';
+			state.fetchError = m.devices_load_telemetry_failed();
 			toast.add({ tone: 'danger', message: state.fetchError });
 		} finally {
 			state.fetching = false;
@@ -187,11 +191,15 @@
 </script>
 
 <svelte:head>
-	<title>Device Dashboard - {devEui.toUpperCase()} - CropWatch</title>
+	<title>{m.devices_dashboard_page_title({ devEui: devEui.toUpperCase() })}</title>
 </svelte:head>
 
 <div class="device-page">
-	<CwCard title={`Device ${devEui.toUpperCase()}`} subtitle={`Location ${locationName}`} elevated>
+	<CwCard
+		title={m.devices_dashboard_card_title({ devEui: devEui.toUpperCase() })}
+		subtitle={m.devices_dashboard_card_subtitle({ locationName })}
+		elevated
+	>
 		<div class="device-page__toolbar">
 			<div class="flex flex-col gap-2">
 				<CwButton
@@ -200,7 +208,7 @@
 					disabled={!locationId}
 					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 				>
-					← Location
+					← {m.devices_back_to_location()}
 				</CwButton>
 				<CwButton
 					variant="secondary"
@@ -208,12 +216,12 @@
 					disabled={!locationId}
 					onclick={() => goto(resolve('/'))}
 				>
-					← Dashboard
+					← {m.action_back_to_dashboard()}
 				</CwButton>
 			</div>
 
 			<div class="device-page__group device-page__group--ranges">
-				{#each RANGE_OPTIONS as ranges (ranges.value)}
+				{#each getRangeOptions() as ranges (ranges.value)}
 					<CwButton
 						variant={activeRange === ranges.value ? 'primary' : 'secondary'}
 						size="sm"
@@ -250,7 +258,7 @@
 							)}
 					>
 						<img src={SETTINGS_ICON} alt="" class="toolbar-icon" />
-						Settings
+						{m.nav_settings()}
 					</CwButton>
 				{/if}
 			</div>
@@ -261,7 +269,7 @@
 				{#if fetching}
 					<div class="device-page__status-row">
 						<CwSpinner />
-						<span>Loading telemetry…</span>
+						<span>{m.devices_loading_telemetry()}</span>
 					</div>
 				{/if}
 

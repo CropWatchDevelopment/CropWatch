@@ -2,6 +2,7 @@
 	import { browser, dev } from '$app/environment';
 	import { base } from '$app/paths';
 	import { CwButton } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 	import { onMount } from 'svelte';
 
 	type InstallOutcome = 'accepted' | 'dismissed';
@@ -217,37 +218,31 @@
 	<aside class="pwa-dock" aria-live="polite">
 		{#if canShowUpdate}
 			<div class="pwa-card">
-				<p class="pwa-eyebrow">Update ready</p>
-				<h2>Reload into the latest CropWatch build.</h2>
-				<p>The new app shell has already downloaded and is ready to activate.</p>
+				<p class="pwa-eyebrow">{m.pwa_update_ready()}</p>
+				<h2>{m.pwa_update_title()}</h2>
+				<p>{m.pwa_update_body()}</p>
 				<div class="pwa-actions">
-					<CwButton variant="info" onclick={applyUpdate}>Update now</CwButton>
-					<CwButton variant="secondary" onclick={dismissUpdatePrompt}>Later</CwButton>
+					<CwButton variant="info" onclick={applyUpdate}>{m.pwa_update_now()}</CwButton>
+					<CwButton variant="secondary" onclick={dismissUpdatePrompt}>{m.action_later()}</CwButton>
 				</div>
 			</div>
 		{:else if canShowInstall}
 			<div class="pwa-card">
-				<p class="pwa-eyebrow">Install app</p>
-				<h2>Put CropWatch on your device like a native app.</h2>
-				<p>
-					Launch faster from your home screen, taskbar, or desktop and keep the app shell
-					offline-ready.
-				</p>
+				<p class="pwa-eyebrow">{m.pwa_install_app()}</p>
+				<h2>{m.pwa_install_title()}</h2>
+				<p>{m.pwa_install_body()}</p>
 				<div class="pwa-actions">
-					<CwButton variant="info" onclick={promptInstall}>Install</CwButton>
-					<CwButton variant="secondary" onclick={dismissInstallPrompt}>Not now</CwButton>
+					<CwButton variant="info" onclick={promptInstall}>{m.action_install()}</CwButton>
+					<CwButton variant="secondary" onclick={dismissInstallPrompt}>{m.action_not_now()}</CwButton>
 				</div>
 			</div>
 		{:else if canShowIosHint}
 			<div class="pwa-card">
-				<p class="pwa-eyebrow">Install on iPhone</p>
-				<h2>Add CropWatch to your home screen from Safari.</h2>
-				<p>
-					Open Safari’s Share menu, then choose Add to Home Screen for the full-screen app
-					experience.
-				</p>
+				<p class="pwa-eyebrow">{m.pwa_install_iphone()}</p>
+				<h2>{m.pwa_install_iphone_title()}</h2>
+				<p>{m.pwa_install_iphone_body()}</p>
 				<div class="pwa-actions">
-					<CwButton variant="secondary" onclick={dismissIosHint}>Dismiss</CwButton>
+					<CwButton variant="secondary" onclick={dismissIosHint}>{m.action_dismiss()}</CwButton>
 				</div>
 			</div>
 		{/if}

@@ -7,7 +7,6 @@
 <script lang="ts">
 	import {
 		CwCard,
-		CwChip,
 		CwLineChart,
 		CwDataTable,
 		type CwColumnDef,
@@ -15,7 +14,9 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
@@ -45,11 +46,11 @@
 	// ---- Columns ---------------------------------------------------------------
 
 	const columns: CwColumnDef<WaterRow>[] = [
-		{ key: 'created_at', header: 'Timestamp', sortable: true, width: '13.5rem' },
-		{ key: 'temperature_c', header: 'Temp (°C)', sortable: true, width: '8rem' },
-		{ key: 'depth_cm', header: 'Depth (cm)', sortable: true, width: '9rem' },
-		{ key: 'pressure', header: 'Pressure', sortable: true, width: '9rem' },
-		{ key: 'spo2', header: 'SpO₂', sortable: true, width: '7rem' }
+		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
+		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
+		{ key: 'depth_cm', header: m.rule_subject_water_depth(), sortable: true, width: '9rem' },
+		{ key: 'pressure', header: m.rule_subject_pressure(), sortable: true, width: '9rem' },
+		{ key: 'spo2', header: m.rule_subject_spo2(), sortable: true, width: '7rem' }
 	];
 
 	// ---- Derived state ---------------------------------------------------------
@@ -112,44 +113,38 @@
 <div class="water-display">
 	<!-- KPI cards -->
 	<div class="kpi-grid">
-		<CwCard title="Water Temperature" subtitle="Latest" elevated>
+		<CwCard title={m.display_water_temperature()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.temperature_c.toFixed(1)}<span>°C</span></p>
 		</CwCard>
 
-		<CwCard title="Depth" subtitle="Latest" elevated>
+		<CwCard title={m.display_depth()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.depth_cm.toFixed(1)}<span>cm</span></p>
 		</CwCard>
 
-		<CwCard title="Pressure" subtitle="Latest" elevated>
+		<CwCard title={m.rule_subject_pressure()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.pressure.toFixed(1)}</p>
 		</CwCard>
 
-		<CwCard title="SpO₂" subtitle="Latest" elevated>
+		<CwCard title={m.rule_subject_spo2()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.spo2.toFixed(1)}</p>
 		</CwCard>
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<CwCard title="Water Depth" subtitle="Time series" elevated>
+		<CwCard title={m.display_water_depth()} subtitle={m.display_time_series()} elevated>
 			<CwLineChart
 				data={depthSeries}
-				primaryLabel="Depth"
+				primaryLabel={m.display_depth()}
 				primaryUnit="cm"
 				height={400}
 			/>
 		</CwCard>
 
-		<CwCard title="Water Telemetry" subtitle="Searchable, sortable" elevated>
-			<CwDataTable
-				{columns}
-				loadData={loadTableData}
-				loading={tableLoading}
-				rowKey="id"
-				searchable
-			>
+		<CwCard title={m.display_water_telemetry()} subtitle={m.display_searchable_sortable()} elevated>
+			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
 				{#snippet cell(row: WaterRow, col: CwColumnDef<WaterRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
-						{new Date(row.created_at).toLocaleString()}
+						{formatDateTime(row.created_at)}
 					{:else if col.key === 'temperature_c'}
 						{row.temperature_c.toFixed(2)} °C
 					{:else if col.key === 'depth_cm'}
@@ -161,8 +156,8 @@
 			</CwDataTable>
 		</CwCard>
 	{:else if !loading}
-		<CwCard title="No Data" elevated>
-			<p>No water data available for the selected range.</p>
+		<CwCard title={m.display_no_data()} elevated>
+			<p>{m.display_no_water_data_selected_range()}</p>
 		</CwCard>
 	{/if}
 </div>
