@@ -1,13 +1,40 @@
 <script lang="ts">
-	import { CwButton, CwDialog, CwTextArea } from '@cropwatchdevelopment/cwui';
+	import { applyAction, deserialize } from '$app/forms';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { CwButton, CwDialog, CwTextArea, useCwToast } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
+	import type { Note } from '../interfaces/note.interface';
 	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
 
-	let { row, dev_eui }: { row: AirRow; dev_eui: string } = $props();
+	type NotesCreateDialogProps = {
+		row: AirRow;
+		dev_eui: string;
+		onSaved?: (note: Note) => void | Promise<void>;
+	};
+
+	let { row, dev_eui, onSaved }: NotesCreateDialogProps = $props();
+	const toast = useCwToast();
 	let open = $state(false);
 	let noteText = $state('');
+	let saving = $state(false);
+
+	function getResultMessage(result: ActionResult): string | null {
+		if (result.type !== 'success' && result.type !== 'failure') return null;
+		const data = result.data;
+		if (!data || typeof data !== 'object') return null;
+		const message = (data as Record<string, unknown>).message;
+		return typeof message === 'string' && message.trim().length > 0 ? message.trim() : null;
+	}
+
+	function createOptimisticNote(note: string): Note {
+		return {
+			id: globalThis.crypto?.randomUUID?.() ?? `note-${Date.now()}`,
+			created_at: new Date().toISOString(),
+			note
+		};
+	}
 
 	function handleEditorKeydown(event: KeyboardEvent) {
 		// The table row listens for Space/Enter and cancels them, which breaks typing in the modal.
@@ -17,18 +44,53 @@
 	}
 
 	async function handleSaveNote() {
+		if (saving) return false;
+
+		const trimmedNote = noteText.trim();
+		if (!trimmedNote) return false;
+
 		const formData = new FormData();
-		formData.append('note', noteText);
+		formData.append('note', trimmedNote);
 		formData.append('created_at', row.created_at);
 		formData.append('dev_eui', dev_eui);
 
-		const result = await fetch('?/saveDataNote', {
-			method: 'POST',
-			body: formData
-		});
-		open = false;
-		noteText = '';
-		return result.ok;
+		saving = true;
+
+		try {
+			const response = await fetch('?/saveDataNote', {
+				method: 'POST',
+				body: formData
+			});
+			const result = deserialize(await response.text());
+			await applyAction(result);
+
+			const message = getResultMessage(result);
+			if (result.type === 'success') {
+				toast.add({
+					tone: 'success',
+					message: message ?? m.devices_save_note_success()
+				});
+				await onSaved?.(createOptimisticNote(trimmedNote));
+				open = false;
+				noteText = '';
+				return true;
+			}
+
+			toast.add({
+				tone: 'danger',
+				message: message ?? m.devices_save_note_failed()
+			});
+			return false;
+		} catch (error) {
+			console.error('Failed to save air note:', error);
+			toast.add({
+				tone: 'danger',
+				message: error instanceof Error ? error.message : m.devices_save_note_failed()
+			});
+			return false;
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -59,8 +121,17 @@
 	<p>{noteText.length}/300</p>
 
 	{#snippet actions()}
-		<CwButton variant="primary" onclick={() => handleSaveNote()}>{m.display_save_note()}</CwButton>
-		<CwButton variant="secondary" onclick={() => (open = false)}>{m.action_cancel()}</CwButton>
+		<CwButton
+			variant="primary"
+			loading={saving}
+			disabled={saving || noteText.trim().length === 0}
+			onclick={() => handleSaveNote()}
+		>
+			{m.display_save_note()}
+		</CwButton>
+		<CwButton variant="secondary" disabled={saving} onclick={() => (open = false)}
+			>{m.action_cancel()}</CwButton
+		>
 	{/snippet}
 </CwDialog>
 

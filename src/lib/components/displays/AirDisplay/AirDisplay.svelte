@@ -19,6 +19,7 @@
 	import './AirDisplay.css';
 	import NotesCreateDialog from './dialogs/notes-create-dialog.svelte';
 	import type { AirRow } from './interfaces/AirRow.interface';
+	import type { Note } from './interfaces/note.interface';
 	import NotesViewDialog from './dialogs/notes-view-dialog.svelte';
 
 	const HEATMAP_FALLBACK_DAYS = 1;
@@ -35,6 +36,9 @@
 	const ALARM_AFTER_MINUTES = 10.5;
 
 	let { latestData, historicalData, loading, devEui, authToken }: DeviceDisplayProps = $props();
+	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
+	let tableRevision = $state(0);
+	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
 
 	function toAirRows(raw: Record<string, unknown>[]): AirRow[] {
 		return raw.map((row, index) => ({
@@ -45,15 +49,17 @@
 			co2: Number(row.co2) || 0,
 			dev_eui: String(row.dev_eui ?? ''),
 			alerts: Array.isArray(row.alerts) ? (row.alerts as AirRow['alerts']) : [],
-			cw_air_annotations: Array.isArray(row.cw_air_annotations)
-				? row.cw_air_annotations.map((annotation) => ({
-						id: String(
-							annotation.id ?? `${annotation.created_at ?? 'note'}-${annotation.note ?? index}`
-						),
-						note: String(annotation.note ?? ''),
-						created_at: String(annotation.created_at ?? '')
-					}))
-				: []
+			cw_air_annotations:
+				noteOverrides[String(row.created_at ?? '')] ??
+				(Array.isArray(row.cw_air_annotations)
+					? row.cw_air_annotations.map((annotation) => ({
+							id: String(
+								annotation.id ?? `${annotation.created_at ?? 'note'}-${annotation.note ?? index}`
+							),
+							note: String(annotation.note ?? ''),
+							created_at: String(annotation.created_at ?? '')
+						}))
+					: [])
 		}));
 	}
 
@@ -74,6 +80,12 @@
 			(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
 		)
 	);
+	let rowSetKey = $derived.by(() => {
+		const firstId = rows[0]?.id ?? '';
+		const lastId = rows[rows.length - 1]?.id ?? '';
+		return `${rows.length}:${firstId}:${lastId}`;
+	});
+	let tableKey = $derived(`${rowSetKey}:${tableRevision}`);
 
 	let latest = $derived.by(() => {
 		// Use the most recent row if we have fetched newer data, otherwise fall back to latestData prop
@@ -224,6 +236,21 @@
 			tableLoading = false;
 		}
 	}
+
+	function handleNoteSaved(row: AirRow, note: Note) {
+		const deviceKey = devEui;
+		const rowKey = row.created_at;
+		const existingNotes = noteOverrides[rowKey] ?? row.cw_air_annotations ?? [];
+
+		noteOverridesByDevice = {
+			...noteOverridesByDevice,
+			[deviceKey]: {
+				...(noteOverridesByDevice[deviceKey] ?? {}),
+				[rowKey]: [...existingNotes, note]
+			}
+		};
+		tableRevision += 1;
+	}
 </script>
 
 <div class="air-display">
@@ -297,42 +324,48 @@
 			subtitle={m.display_searchable_sortable_data()}
 			elevated
 		>
-			<CwDataTable
-				{columns}
-				loadData={loadTableData}
-				loading={tableLoading}
-				rowKey="id"
-				rowActionsHeader={m.common_actions()}
-				searchable
-			>
-				{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
-					<div class="text-2xl">
-						{#if col.key === 'created_at'}
-							{formatDateTime(row.created_at)}
-						{:else if col.key === 'temperature_c'}
-							{row.temperature_c.toFixed(2)} °C
-						{:else if col.key === 'humidity'}
-							{row.humidity.toFixed(2)} %
-						{:else if col.key === 'co2'}
-							{row.co2} ppm
-						{:else if col.key === 'alerts'}
-							{#if row.alerts && row.alerts.length > 0}
-								❌
+			{#key tableKey}
+				<CwDataTable
+					{columns}
+					loadData={loadTableData}
+					loading={tableLoading}
+					rowKey="id"
+					rowActionsHeader={m.common_actions()}
+					searchable
+				>
+					{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
+						<div class="text-2xl">
+							{#if col.key === 'created_at'}
+								{formatDateTime(row.created_at)}
+							{:else if col.key === 'temperature_c'}
+								{row.temperature_c.toFixed(2)} °C
+							{:else if col.key === 'humidity'}
+								{row.humidity.toFixed(2)} %
+							{:else if col.key === 'co2'}
+								{row.co2} ppm
+							{:else if col.key === 'alerts'}
+								{#if row.alerts && row.alerts.length > 0}
+									❌
+								{:else}
+									✅
+								{/if}
 							{:else}
-								✅
+								{defaultValue}
 							{/if}
-						{:else}
-							{defaultValue}
+						</div>
+					{/snippet}
+					{#snippet rowActions(row: AirRow)}
+						<NotesCreateDialog
+							{row}
+							dev_eui={row.dev_eui || devEui}
+							onSaved={(note) => handleNoteSaved(row, note)}
+						/>
+						{#if row.cw_air_annotations && row.cw_air_annotations.length > 0}
+							<NotesViewDialog {row} />
 						{/if}
-					</div>
-				{/snippet}
-				{#snippet rowActions(row: AirRow)}
-					<NotesCreateDialog {row} dev_eui={row.dev_eui} />
-					{#if row.cw_air_annotations && row.cw_air_annotations.length > 0}
-						<NotesViewDialog {row} />
-					{/if}
-				{/snippet}
-			</CwDataTable>
+					{/snippet}
+				</CwDataTable>
+			{/key}
 		</CwCard>
 	{:else if !loading}
 		<CwCard title={m.display_no_data()} elevated>

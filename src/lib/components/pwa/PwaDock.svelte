@@ -102,12 +102,39 @@
 		});
 	}
 
+	async function clearCropWatchCaches(): Promise<void> {
+		if (!('caches' in window)) return;
+
+		const cacheKeys = await window.caches.keys();
+		const cropWatchCacheKeys = cacheKeys.filter((cacheKey) => cacheKey.startsWith('cropwatch-'));
+
+		await Promise.all(cropWatchCacheKeys.map((cacheKey) => window.caches.delete(cacheKey)));
+	}
+
+	async function resetDevelopmentServiceWorker(): Promise<void> {
+		if (!('serviceWorker' in navigator)) return;
+
+		const registrations = await navigator.serviceWorker.getRegistrations();
+
+		await Promise.all(registrations.map((serviceWorkerRegistration) => serviceWorkerRegistration.unregister()));
+		await clearCropWatchCaches();
+
+		registration = null;
+		updateReady = false;
+		hideUpdatePrompt = false;
+	}
+
 	async function registerServiceWorker(): Promise<void> {
 		if (!('serviceWorker' in navigator)) return;
 
+		if (dev) {
+			await resetDevelopmentServiceWorker();
+			return;
+		}
+
 		try {
 			registration = await navigator.serviceWorker.register(`${base}/service-worker.js`, {
-				type: dev ? 'module' : 'classic'
+				type: 'classic'
 			});
 
 			if (!registration) return;

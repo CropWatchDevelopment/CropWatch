@@ -18,6 +18,9 @@ function shouldCacheRuntimeAsset(request: Request, url: URL): boolean {
 	if (url.origin !== self.location.origin) return false;
 	if (url.pathname.includes('__data.json')) return false;
 	if (url.pathname.startsWith(`${base}/api/`)) return false;
+	if (url.pathname.startsWith('/src/')) return false;
+	if (url.pathname.startsWith('/@')) return false;
+	if (url.pathname.includes('/node_modules/')) return false;
 
 	return ['font', 'image', 'manifest', 'script', 'style', 'worker'].includes(request.destination);
 }
