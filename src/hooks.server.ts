@@ -2,15 +2,20 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import type { IJWT } from '$lib/interfaces/jwt.interface';
-import type { HandleFetch } from '@sveltejs/kit';
+import type { Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { jwtDecode } from 'jwt-decode';
 import { env as publicEnv } from '$env/dynamic/public';
 
-const PUBLIC_PATHS = new Set(['/manifest.webmanifest', '/offline', '/offline/', '/service-worker.js']);
+const PUBLIC_PATHS = new Set([
+	'/manifest.webmanifest',
+	'/offline',
+	'/offline/',
+	'/service-worker.js'
+]);
 const PUBLIC_API_BASE_URL = publicEnv.PUBLIC_API_BASE_URL ?? '';
 
-export const originalHandle = async ({ event, resolve }) => {
+export const originalHandle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get('jwt');
 
 	checkAuthToken(token ?? '', event);
@@ -44,7 +49,7 @@ const ensureHtmlCharset = (response: Response): Response => {
 	});
 };
 
-const checkAuthToken = (token: string, event: any) => {
+const checkAuthToken = (token: string, event: RequestEvent) => {
 	const authRoute = event.url.pathname.startsWith('/auth');
 	const publicRoute = PUBLIC_PATHS.has(event.url.pathname);
 	const bypassAuth = authRoute || publicRoute;
@@ -109,9 +114,9 @@ const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 	return fetch(request);
 };
 
-const handleParaglide = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request, locale }) => {
-		event.request = request;
+const paraglideHandle: Handle = ({ event, resolve }) =>
+	paraglideMiddleware(event.request, ({ request: localizedRequest, locale }) => {
+		event.request = localizedRequest;
 
 		return resolve(event, {
 			transformPageChunk: ({ html }) =>
@@ -121,6 +126,4 @@ const handleParaglide = ({ event, resolve }) =>
 		});
 	});
 
-export const handle = sequence(originalHandle, handleParaglide);
-// looking good, add to locals
-// Token is valid and not expired, proceed as normal
+export const handle = sequence(paraglideHandle, originalHandle);

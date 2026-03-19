@@ -10,7 +10,7 @@
 		align-items: center;
 		gap: 0.4rem;
 		font-size: 0.875rem;
-		color: var(--cw-text-muted);
+		/* color: var(--cw-text-muted); */
 	}
 
 	.kpi-grid {

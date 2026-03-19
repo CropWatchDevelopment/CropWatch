@@ -11,6 +11,7 @@
 	import { resolve } from '$app/paths';
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 	import AppStatusDot from '$lib/components/status/AppStatusDot.svelte';
 	import type { IDevice } from '$lib/interfaces/device.interface';
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
@@ -40,27 +41,39 @@
 	const app = getAppContext();
 
 	const columns: CwColumnDef<IDevice>[] = [
-		{ key: 'name', header: '📱Device Name', width: '16rem', sortable: true },
-		{ key: 'temperature_c', header: '🌡️Temperature (°C)', width: '10rem', sortable: true },
-		{ key: 'humidity', header: '💧Humidity (%)', width: '10rem', sortable: true },
-		{ key: 'co2', header: 'CO₂ (ppm)', width: '10rem', sortable: true },
+		{ key: 'name', header: m.dashboard_column_device_name(), width: '16rem', sortable: true },
+		{
+			key: 'temperature_c',
+			header: m.dashboard_column_temperature(),
+			width: '10rem',
+			sortable: true
+		},
+		{ key: 'humidity', header: m.dashboard_column_humidity(), width: '10rem', sortable: true },
+		{ key: 'co2', header: m.dashboard_column_co2(), width: '10rem', sortable: true },
 		{
 			key: 'soil_temperature_c',
-			header: '🌡️Soil Temperature (°C)',
+			header: m.dashboard_column_soil_temperature(),
 			width: '14rem',
 			sortable: true
 		},
-		{ key: 'soil_humidity', header: '💧Soil Humidity (%)', width: '12rem', sortable: true },
-		{ key: 'location_name', header: '🗺️Location', sortable: true },
-		{ key: 'alert_count', header: '⚠️ Alerts', width: '8rem', sortable: true },
+		{
+			key: 'soil_humidity',
+			header: m.dashboard_column_soil_humidity(),
+			width: '12rem',
+			sortable: true
+		},
+		{ key: 'location_name', header: m.dashboard_column_location(), sortable: true },
+		{ key: 'alert_count', header: m.dashboard_column_alerts(), width: '8rem', sortable: true },
 		{
 			key: 'created_at',
-			header: '⏱️Last Seen',
+			header: m.dashboard_column_last_seen(),
 			sortable: true,
 			hideBelow: 'md',
 			width: '14rem',
 			cell: (row) =>
-				row.has_primary_data === false ? 'No data yet' : new Date(row.created_at).toLocaleString()
+				row.has_primary_data === false
+					? m.dashboard_no_data_yet()
+					: new Date(row.created_at).toLocaleString()
 		}
 	];
 
@@ -95,7 +108,6 @@
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
-		$inspect(app.devices);
 		return queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
 	}
 
@@ -168,7 +180,7 @@
 							status={isOffline(row) ? 'offline' : 'online'}
 						/>
 						{#if row.has_primary_data === false}
-							<span>No data yet</span>
+							<span>{m.dashboard_no_data_yet()}</span>
 						{:else}
 							<CwDuration
 								from={row.created_at}
@@ -198,10 +210,10 @@
 							{getMetricDisplayValue(row.co2)}
 						{:else if col.key === 'alert_count'}
 							<span class="text-2xl">
-								{#if row.alert_count != null || row.alert_count !== 0}
-									<img src={CHECK_CIRCLE_ICON} alt="No Alerts" />
+								{#if row.alert_count == null || row.alert_count === 0}
+									<img src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} />
 								{:else}
-									<img src={ALERT_ICON} alt="Active Alert" />
+									<img src={ALERT_ICON} alt={m.dashboard_active_alert_alt()} />
 								{/if}
 							</span>
 						{:else}
@@ -218,7 +230,7 @@
 					disabled={isRefreshing(row.dev_eui)}
 					onclick={() => openDeviceDetails(row)}
 				>
-					<img src={EYE_ICON} alt="View" />
+					<img src={EYE_ICON} alt={m.action_view()} />
 				</CwButton>
 			{/snippet}
 
@@ -230,7 +242,7 @@
 						virtualScroll = !virtualScroll;
 					}}
 				>
-					Virtual Scroll
+					{m.dashboard_virtual_scroll()}
 					{#if virtualScroll}
 						<AppStatusDot status="online" />
 					{:else}

@@ -10,6 +10,7 @@
 <script lang="ts">
 	import { CwCard, CwChip } from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
@@ -35,7 +36,7 @@
 	{#if latestData}
 		<div class="kpi-grid">
 			{#each numericColumns as col (col)}
-				<CwCard title={col} subtitle="Latest" elevated>
+				<CwCard title={col} subtitle={m.display_latest_reading()} elevated>
 					<p class="kpi-value">{Number(latestData[col] ?? 0).toFixed(2)}</p>
 				</CwCard>
 			{/each}
@@ -43,16 +44,16 @@
 	{/if}
 
 	{#if loading}
-		<CwCard title="Loading…" elevated>
-			<p>Fetching power data…</p>
+		<CwCard title={m.status_loading()} elevated>
+			<p>{m.display_loading_power_data()}</p>
 		</CwCard>
 	{:else if historicalData.length === 0}
-		<CwCard title="No Data" elevated>
-			<p>No power data available for the selected range.</p>
+		<CwCard title={m.display_no_data()} elevated>
+			<p>{m.display_no_power_data_selected_range()}</p>
 		</CwCard>
 	{:else}
-		<CwCard title="Power Data" subtitle={devEui} elevated>
-			<CwChip label="Power" tone="warning" variant="soft" />
+		<CwCard title={m.display_power_data()} subtitle={devEui} elevated>
+			<CwChip label={m.display_power()} tone="warning" variant="soft" />
 			<div class="table-wrapper">
 				<table>
 					<thead>

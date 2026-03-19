@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 	import {
 		CwDuration,
 		CwExpandPanel,
@@ -27,34 +28,34 @@
 	let selectedLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 	let dashboardFiltersOpen = $state(false);
 
-	const navItems: CwSideNavItem[] = [
-		{ id: 'dashboard', label: 'Dashboard', href: '/', icon: { DASHBOARD_ICON } },
+	const navItems = $derived<CwSideNavItem[]>([
+		{ id: 'dashboard', label: m.nav_dashboard(), href: '/', icon: { DASHBOARD_ICON } },
 		{
 			id: 'locations',
-			label: 'Locations',
+			label: m.nav_locations(),
 			href: '/locations',
 			icon: { LOCATIONS_ICON }
 		},
 		{
 			id: 'rules',
-			label: 'Rules',
+			label: m.nav_rules(),
 			href: '/rules',
 			icon: { RULES_ICON }
 		},
 		{
 			id: 'reports',
-			label: 'Reports',
+			label: m.nav_reports(),
 			href: '/reports',
 			icon: { REPORTS_ICON }
 		}
-	];
+	]);
 
 	// ── Groups list (dynamic from API) ──────────────────────────
 	const groups: CwListBoxItem<string>[] = $derived.by(() => {
 		const allItem: CwListBoxItem<string> = {
 			value: '',
-			label: 'All groups',
-			badge: 'ALL',
+			label: m.sidebar_all_groups(),
+			badge: m.common_all_short(),
 			badgeTone: 'secondary',
 			endText: String(app.devices?.length ?? 0)
 		};
@@ -73,8 +74,8 @@
 	const locationGroups: CwListBoxItem<string>[] = $derived.by(() => {
 		const allItem: CwListBoxItem<string> = {
 			value: '',
-			label: 'All location groups',
-			badge: 'ALL',
+			label: m.sidebar_all_location_groups(),
+			badge: m.common_all_short(),
 			badgeTone: 'secondary',
 			endText: String(app.locations?.length ?? 0)
 		};
@@ -95,7 +96,7 @@
 	const locations: CwListBoxItem<string>[] = $derived.by(() => {
 		const allItem: CwListBoxItem<string> = {
 			value: '',
-			label: 'All locations',
+			label: m.sidebar_all_locations(),
 			endText: String(app.devices?.length ?? 0)
 		};
 		const locationItems: CwListBoxItem<string>[] = (app.locations ?? []).map((loc) => ({
@@ -122,7 +123,7 @@
 <CwSideNav bind:mode items={navItems} responsive>
 	{#snippet header()}
 		<CwSearchInput
-			placeholder="Search devices..."
+			placeholder={m.sidebar_search_devices_placeholder()}
 			value={page.url.searchParams.get('search') ?? ''}
 			oninput={(value) => {
 				const params = new URLSearchParams(page.url.searchParams);
@@ -140,27 +141,27 @@
 
 	{#snippet aboveContent()}
 		{#if page.url.pathname === '/'}
-			<CwExpandPanel title="Dashboard Filters" open={dashboardFiltersOpen}>
-				<div class="px-4 py-2 text-sm text-slate-400">Filter devices in view</div>
+			<CwExpandPanel title={m.sidebar_dashboard_filters()} open={dashboardFiltersOpen}>
+				<div class="px-4 py-2 text-sm text-slate-400">{m.sidebar_filter_devices_in_view()}</div>
 				<div
 					class="dashboard-filters-scroll flex max-h-[50dvh] flex-col gap-2 overflow-y-auto overscroll-contain pr-1"
 				>
 					<CwListBox
-						heading="Device Groups"
+						heading={m.sidebar_device_groups()}
 						items={groups}
 						value={selectedGroup}
 						onselect={(item) => applyFilter('group', item.value)}
 					/>
 
 					<CwListBox
-						heading="Location Groups"
+						heading={m.sidebar_location_groups()}
 						items={locationGroups}
 						value={selectedLocationGroup}
 						onselect={(item) => applyFilter('locationGroup', item.value)}
 					/>
 
 					<CwListBox
-						heading="Locations"
+						heading={m.sidebar_locations()}
 						items={locations}
 						value={selectedLocation}
 						onselect={(item) => applyFilter('location', item.value)}
@@ -173,7 +174,7 @@
 		<div style="padding: 1rem; font-size: 0.875rem; color: #888">
 			{#if app.session?.exp}
 				<p class="text-xs">
-					Current Session Expires: <CwDuration
+					{m.sidebar_current_session_expires()}: <CwDuration
 						from={new Date(app.session.exp * 1000)}
 						countDown={true}
 						alarmAfterMinutes={0.5}

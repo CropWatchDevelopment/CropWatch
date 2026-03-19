@@ -6,6 +6,7 @@
 	import { resolve } from '$app/paths';
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 	import { mapDashboardPrimaryDataToDevice, mergeDashboardDevices } from './dashboard-device-data';
 	import {
 		buildDashboardLocationSensorCards,
@@ -187,8 +188,8 @@
 		<div class="dashboard-device-cards__scroll" data-dashboard-device-card-scroll="true">
 			{#if locationCards.length === 0}
 				<div class="dashboard-device-cards__empty">
-					<h3>No devices match these filters</h3>
-					<p>Adjust the dashboard filters or clear them to load more locations.</p>
+					<h3>{m.dashboard_no_matching_locations_title()}</h3>
+					<p>{m.dashboard_no_matching_locations_body()}</p>
 				</div>
 			{:else}
 				<div class="dashboard-device-cards__grid">
@@ -226,7 +227,7 @@
 
 				{#if enableInfiniteScroll && canLoadMore}
 					<p class="dashboard-device-cards__load-more">
-						Loading 10 more locations when you reach the fifth remaining card.
+						{m.dashboard_loading_more_locations_hint()}
 					</p>
 				{/if}
 			{/if}

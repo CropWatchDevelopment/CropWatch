@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types';
 
 import { buildManifest } from '$lib/pwa/manifest';
+import { getLocale } from '$lib/paraglide/runtime';
 
 const MANIFEST_ROUTE_SUFFIX = '/manifest.webmanifest';
 
@@ -11,7 +12,7 @@ function getBasePath(pathname: string): string {
 }
 
 export const GET: RequestHandler = ({ url }) => {
-	const manifest = buildManifest(getBasePath(url.pathname));
+	const manifest = buildManifest(getBasePath(url.pathname), getLocale());
 
 	return new Response(JSON.stringify(manifest, null, 2), {
 		headers: {

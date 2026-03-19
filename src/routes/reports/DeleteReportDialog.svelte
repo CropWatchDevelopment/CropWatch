@@ -3,6 +3,8 @@
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
+	import TRASH_ICON from '$lib/images/icons/trash.svg';
 
 	type DeleteReportDialogProps = {
 		reportId: string;
@@ -48,7 +50,7 @@
 	}
 
 	function getDeleteErrorMessage(error: unknown): string {
-		const fallback = 'Unable to delete this report right now.';
+		const fallback = m.reports_delete_failed();
 
 		if (error instanceof ApiServiceError) {
 			return readErrorMessage(error.payload) ?? fallback;
@@ -64,7 +66,9 @@
 
 	function getDeleteSuccessMessage(name: string): string {
 		const trimmed = name.trim();
-		return trimmed.length > 0 ? `Deleted report "${trimmed}".` : 'Report deleted successfully.';
+		return trimmed.length > 0
+			? m.reports_deleted_named({ name: trimmed })
+			: m.reports_deleted_successfully();
 	}
 
 	const deleteReport = async (id: string) => {
@@ -73,7 +77,7 @@
 		if (!trimmedId) {
 			toast.add({
 				tone: 'danger',
-				message: 'Unable to delete this report because the report ID is missing.'
+				message: m.reports_delete_missing_id()
 			});
 			return;
 		}
@@ -108,17 +112,21 @@
 	};
 </script>
 
-<CwButton variant="danger" disabled={deleting} onclick={() => (open = true)}>Delete Report</CwButton>
+<CwButton icon={TRASH_ICON} variant="danger" disabled={deleting} onclick={() => (open = true)}>
+	{m.reports_delete_report()}
+</CwButton>
 
-<CwDialog bind:open title="Confirm Report Deletion">
-	<p>Are you sure you want to delete the report "{reportName}"? This action cannot be undone.</p>
+<CwDialog bind:open title={m.reports_confirm_delete_title()}>
+	<p>{m.reports_confirm_delete_body({ name: reportName })}</p>
 	<div class="mt-4 flex justify-end gap-2">
-		<CwButton variant="primary" disabled={deleting} onclick={() => (open = false)}>Cancel</CwButton>
+		<CwButton variant="primary" disabled={deleting} onclick={() => (open = false)}>
+			{m.action_cancel()}
+		</CwButton>
 		<CwButton
 			variant="danger"
 			loading={deleting}
 			disabled={deleting}
-			onclick={() => void deleteReport(reportId)}>Delete</CwButton
+			onclick={() => void deleteReport(reportId)}>{m.action_delete()}</CwButton
 		>
 	</div>
 </CwDialog>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import type { ActionResult } from '@sveltejs/kit';
 	import {
 		CwButton,
 		CwCard,
@@ -9,6 +10,8 @@
 		CwSwitch,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
+	import { getPermissionLevelOptions } from '$lib/i18n/options';
+	import { m } from '$lib/paraglide/messages.js';
 
 	interface SettingsPageData {
 		locationName: string;
@@ -20,12 +23,10 @@
 		permission_name: string;
 	}
 
-	const permissions: IPermissions[] = [
-		{ permission_level: 1, permission_name: 'Admin' },
-		{ permission_level: 2, permission_name: 'Manager' },
-		{ permission_level: 3, permission_name: 'User' },
-		{ permission_level: 4, permission_name: 'Disabled' }
-	];
+	const permissions: IPermissions[] = getPermissionLevelOptions().map((option) => ({
+		permission_level: Number(option.value),
+		permission_name: option.label
+	}));
 
 	let { data }: { data: SettingsPageData } = $props();
 	const toast = useCwToast();
@@ -35,7 +36,8 @@
 	let permission_level: string = $state<string>(String(permissions[0].permission_level));
 	let applyToAllDevices = $state(true);
 
-	function getResultMessage(result: { data?: Record<string, unknown> | null }): string | null {
+	function getResultMessage(result: ActionResult): string | null {
+		if (result.type !== 'success' && result.type !== 'failure') return null;
 		const message = result.data?.message;
 		return typeof message === 'string' && message.trim().length > 0 ? message.trim() : null;
 	}
@@ -43,8 +45,8 @@
 
 <div class="settings-page">
 	<CwCard
-		title={`Add new user to ${data.locationName} with permissions`}
-		subtitle="Create a permission for a user on this location"
+		title={m.locations_add_user_permissions_title({ name: data.locationName })}
+		subtitle={m.locations_add_user_permissions_subtitle()}
 		elevated
 	>
 		<form
@@ -76,14 +78,14 @@
 			<CwInput
 				name="newUserEmail"
 				type="email"
-				label="User Email"
+				label={m.auth_email_label()}
 				placeholder="user@example.com"
 				required
 				bind:value={newUserEmail}
 			/>
 			<CwDropdown
 				name="permission_level"
-				label="Permission Level"
+				label={m.locations_permission_level()}
 				options={permissions.map((p) => ({
 					value: String(p.permission_level),
 					label: p.permission_name
@@ -93,7 +95,7 @@
 
 			<CwSwitch
 				checked={applyToAllDevices}
-				label="Apply to all devices in this location"
+				label={m.locations_apply_to_all_devices()}
 				onchange={(checked) => (applyToAllDevices = checked)}
 			/>
 			<input type="hidden" name="applyToAllDevices" value={applyToAllDevices ? 'true' : 'false'} />
@@ -105,7 +107,7 @@
 					loading={submitting}
 					disabled={submitting || !newUserEmail.trim()}
 				>
-					Add Permission
+					{m.locations_add_permission()}
 				</CwButton>
 			</div>
 		</form>

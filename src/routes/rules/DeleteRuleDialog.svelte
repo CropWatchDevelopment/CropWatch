@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { CwButton, CwCard, CwDialog, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { applyAction, enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
+	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import BACK_ICON from '$lib/images/icons/back.svg';
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { m } from '$lib/paraglide/messages.js';
+	import TRASH_ICON from '$lib/images/icons/trash.svg';
 
 	let {
 		ruleGroupId,
 		ruleName,
 		onDeleted
-	}: { ruleGroupId: string; ruleName: string; onDeleted?: () => void } = $props();
+	}: { ruleGroupId: string; ruleName: string; onDeleted?: (ruleGroupId: string) => void } =
+		$props();
 
 	let app = getAppContext();
 	let open = $state(false);
@@ -25,10 +25,17 @@
 			const api = new ApiService({
 				authToken: app.accessToken
 			});
+			await api.deleteRule(ruleGroupId);
+			onDeleted?.(ruleGroupId);
+			open = false;
+			toast.add({
+				tone: 'success',
+				message: 'Success!' // m.rules_delete_success()
+			});
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
-				message: 'Unable to delete this rule.'
+				message: m.rules_delete_failed()
 			});
 			deleting = false;
 			return;
@@ -36,22 +43,18 @@
 	};
 </script>
 
-<CwButton variant="danger" size="md" onclick={() => (open = true)}>Delete Rule</CwButton>
+<CwButton variant="danger" icon={TRASH_ICON} size="md" onclick={() => (open = true)} />
 
-<CwDialog {open} title="Delete Rule" onclose={() => (open = false)}>
-	{#snippet children()}
-		<p>
-			Are you sure you want to delete the rule <strong>{ruleName}</strong>? This action cannot be
-			undone.
-		</p>
-	{/snippet}
+<CwDialog {open} title={m.rules_delete_rule()} onclose={() => (open = false)}>
+	<p>{m.rules_delete_confirmation({ name: ruleName })}</p>
 	{#snippet actions()}
 		<div class="flex flex-row gap-2">
 			<CwButton variant="secondary" size="md" onclick={() => (open = false)}>
-				<img src={BACK_ICON} alt="Cancel" /> Cancel
+				<img src={BACK_ICON} alt={m.action_cancel()} />
+				{m.action_cancel()}
 			</CwButton>
 			<CwButton variant="danger" size="md" onclick={handleDelete} disabled={deleting}>
-				Delete
+				{m.action_delete()}
 			</CwButton>
 		</div>
 	{/snippet}

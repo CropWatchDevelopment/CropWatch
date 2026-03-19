@@ -15,7 +15,9 @@
 		type CwTableResult,
 		type CwTone
 	} from '@cropwatchdevelopment/cwui';
+	import { formatNumber } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { m } from '$lib/paraglide/messages.js';
 
 	type TelemetryRow = Record<string, unknown>;
 	type CsvRow = Record<string, string | number | null>;
@@ -220,11 +222,11 @@
 
 	function formatTrafficValue(value: unknown): string {
 		const numeric = readNumber(value);
-		return numeric === null ? '0' : numeric.toLocaleString();
+		return numeric === null ? '0' : formatNumber(numeric);
 	}
 
 	function formatCoordinate(value: number | null): string {
-		return value === null ? 'n/a' : value.toFixed(4);
+		return value === null ? m.common_not_available() : value.toFixed(4);
 	}
 
 	function formatCompactTemperature(value: number | null): string {
@@ -365,8 +367,8 @@
 		weatherCode: null;
 	} {
 		return {
-			summary: loadingState ? 'Loading weather...' : 'Weather unavailable',
-			label: loadingState ? 'Weather' : 'Unavailable',
+			summary: loadingState ? m.traffic_loading_weather() : m.traffic_weather_unavailable(),
+			label: loadingState ? m.common_weather() : m.traffic_unavailable(),
 			tone: 'secondary',
 			temperatureLabel: null,
 			temperatureHighC: null,
@@ -383,42 +385,58 @@
 		tone: CwTone;
 	} {
 		if (code === 0) {
-			return { label: 'Clear', description: 'Clear sky', tone: 'success' };
+			return { label: m.weather_clear(), description: m.weather_clear_sky(), tone: 'success' };
 		}
 
 		if (code === 1) {
-			return { label: 'Mostly Clear', description: 'Mostly clear', tone: 'success' };
+			return {
+				label: m.weather_mostly_clear(),
+				description: m.weather_mostly_clear_description(),
+				tone: 'success'
+			};
 		}
 
 		if (code === 2) {
-			return { label: 'Partly Cloudy', description: 'Partly cloudy', tone: 'info' };
+			return {
+				label: m.weather_partly_cloudy(),
+				description: m.weather_partly_cloudy_description(),
+				tone: 'info'
+			};
 		}
 
 		if (code === 3) {
-			return { label: 'Cloudy', description: 'Overcast', tone: 'secondary' };
+			return { label: m.weather_cloudy(), description: m.weather_overcast(), tone: 'secondary' };
 		}
 
 		if (code === 45 || code === 48) {
-			return { label: 'Fog', description: 'Foggy', tone: 'secondary' };
+			return { label: m.weather_fog(), description: m.weather_foggy(), tone: 'secondary' };
 		}
 
 		if ([51, 53, 55, 56, 57].includes(code ?? -1)) {
-			return { label: 'Drizzle', description: 'Drizzle', tone: 'info' };
+			return { label: m.weather_drizzle(), description: m.weather_drizzle(), tone: 'info' };
 		}
 
 		if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code ?? -1)) {
-			return { label: 'Rain', description: 'Rain', tone: 'info' };
+			return { label: m.weather_rain(), description: m.weather_rain(), tone: 'info' };
 		}
 
 		if ([71, 73, 75, 77, 85, 86].includes(code ?? -1)) {
-			return { label: 'Snow', description: 'Snow', tone: 'secondary' };
+			return { label: m.weather_snow(), description: m.weather_snow(), tone: 'secondary' };
 		}
 
 		if ([95, 96, 99].includes(code ?? -1)) {
-			return { label: 'Storm', description: 'Thunderstorm', tone: 'danger' };
+			return {
+				label: m.weather_storm(),
+				description: m.weather_thunderstorm(),
+				tone: 'danger'
+			};
 		}
 
-		return { label: 'Weather', description: 'Weather unavailable', tone: 'secondary' };
+		return {
+			label: m.common_weather(),
+			description: m.traffic_weather_unavailable(),
+			tone: 'secondary'
+		};
 	}
 
 	function buildWeatherDaySummary(
@@ -441,11 +459,11 @@
 		}
 
 		if (precipitationMm !== null) {
-			summaryParts.push(`${precipitationMm.toFixed(1)} mm precip`);
+			summaryParts.push(m.traffic_precip_summary({ value: precipitationMm.toFixed(1) }));
 		}
 
 		if (windSpeedKmh !== null) {
-			summaryParts.push(`${windSpeedKmh.toFixed(0)} km/h wind`);
+			summaryParts.push(m.traffic_wind_summary({ value: windSpeedKmh.toFixed(0) }));
 		}
 
 		return {
@@ -779,7 +797,7 @@
 	let weatherLocationLabel = $derived(
 		deviceLatitude !== null && deviceLongitude !== null
 			? `${formatCoordinate(deviceLatitude)}, ${formatCoordinate(deviceLongitude)}`
-			: 'Device coordinates unavailable'
+			: m.traffic_device_coordinates_unavailable()
 	);
 
 	let allRows = $derived.by<TrafficRow[]>(() =>
@@ -850,20 +868,22 @@
 	});
 
 	let currentHourLabel = $derived(
-		currentHourRow?.id === currentHourKey ? 'Current hour today' : 'Latest available hour today'
+		currentHourRow?.id === currentHourKey
+			? m.traffic_current_hour_today()
+			: m.traffic_latest_available_hour_today()
 	);
 
 	let hourlyColumns = $derived<CwColumnDef<HourlyTrafficRow>[]>([
-		{ key: 'traffic_hour', header: 'Hour', sortable: true, width: '14rem' },
-		{ key: 'total_traffic', header: 'Total Traffic', sortable: true, width: '8rem' },
-		{ key: 'samples', header: 'Samples', sortable: true, width: '7rem' },
+		{ key: 'traffic_hour', header: m.traffic_hour(), sortable: true, width: '14rem' },
+		{ key: 'total_traffic', header: m.traffic_total_traffic(), sortable: true, width: '8rem' },
+		{ key: 'samples', header: m.traffic_samples(), sortable: true, width: '7rem' },
 		...trafficMetricKeys.map((key) => ({
 			key,
 			header: prettifyKey(key),
 			sortable: true,
 			width: '8rem'
 		})),
-		{ key: 'weather_summary', header: 'Weather', sortable: true, width: '20rem' }
+		{ key: 'weather_summary', header: m.common_weather(), sortable: true, width: '20rem' }
 	]);
 
 	let tableLoading = $state(false);
@@ -922,7 +942,7 @@
 		if (latitude === null || longitude === null) {
 			selectedWeatherByDay = {};
 			selectedWeatherLoading = false;
-			selectedWeatherError = 'Weather requires device latitude and longitude.';
+			selectedWeatherError = m.traffic_weather_requires_coordinates();
 			return;
 		}
 
@@ -938,7 +958,7 @@
 			if (requestId !== selectedWeatherRequestId) return;
 			console.error('Failed to fetch selected-period weather:', error);
 			selectedWeatherByDay = {};
-			selectedWeatherError = 'Unable to load weather for today.';
+			selectedWeatherError = m.traffic_weather_today_failed();
 		} finally {
 			if (requestId === selectedWeatherRequestId) {
 				selectedWeatherLoading = false;
@@ -968,7 +988,7 @@
 			calendarMonthRows = [];
 			calendarWeatherByDay = {};
 			calendarLoading = false;
-			calendarError = deviceKey ? 'Calendar data requires an authenticated session.' : null;
+			calendarError = deviceKey ? m.traffic_calendar_auth_required() : null;
 			return;
 		}
 
@@ -1002,7 +1022,7 @@
 			console.error('Failed to fetch calendar month traffic:', error);
 			calendarMonthRows = [];
 			calendarWeatherByDay = {};
-			calendarError = 'Unable to load traffic for the visible month.';
+			calendarError = m.traffic_load_month_failed();
 		} finally {
 			if (requestId === calendarRequestId) {
 				calendarLoading = false;
@@ -1045,8 +1065,8 @@
 				day: formatDay(new Date(row.hour_timestamp)),
 				total_traffic: row.total_traffic,
 				samples: row.samples,
-				weather_label: weather?.label ?? 'Unavailable',
-				weather_summary: weather?.summary ?? 'Weather unavailable',
+				weather_label: weather?.label ?? m.traffic_unavailable(),
+				weather_summary: weather?.summary ?? m.traffic_weather_unavailable(),
 				weather_code: weather?.weatherCode ?? null,
 				weather_temp_high_c: weather?.temperatureHighC ?? null,
 				weather_temp_low_c: weather?.temperatureLowC ?? null,
@@ -1148,21 +1168,21 @@
 
 <div class="traffic-display">
 	<div class="traffic-display__summary-grid">
-		<CwCard title="Current Hour Total" subtitle={currentHourLabel} elevated>
+		<CwCard title={m.traffic_current_hour_total()} subtitle={currentHourLabel} elevated>
 			{#if loading && !currentHourRow}
 				<div class="traffic-display__status">
 					<CwSpinner />
-					<span>Loading current traffic...</span>
+					<span>{m.traffic_loading_current_traffic()}</span>
 				</div>
 			{:else if currentHourRow}
 				<p class="traffic-display__kpi">
-					{currentHourRow.total_traffic.toLocaleString()}
+					{formatNumber(currentHourRow.total_traffic)}
 					<span>{formatHour(currentHourRow.traffic_hour)}</span>
 				</p>
 
 				<div class="traffic-display__chips">
 					<CwChip
-						label={`${currentHourRow.samples.toLocaleString()} samples`}
+						label={m.traffic_samples_count({ count: formatNumber(currentHourRow.samples) })}
 						tone="secondary"
 						variant="soft"
 					/>
@@ -1179,28 +1199,28 @@
 					</div>
 				{/if}
 			{:else}
-				<p class="traffic-display__supporting-copy">No traffic data is available for today.</p>
+				<p class="traffic-display__supporting-copy">{m.traffic_no_data_today()}</p>
 			{/if}
 		</CwCard>
 
 		<CwCard
-			title="Selected Period"
-			subtitle={hourlyRows.length > 0 ? 'Today only' : 'No traffic today'}
+			title={m.traffic_selected_period()}
+			subtitle={hourlyRows.length > 0 ? m.traffic_today_only() : m.traffic_no_traffic_today()}
 			elevated
 		>
 			<p class="traffic-display__kpi">
-				{selectedPeriodTotal.toLocaleString()}
-				<span>{hourlyRows.length.toLocaleString()} tracked hour(s)</span>
+				{formatNumber(selectedPeriodTotal)}
+				<span>{m.traffic_tracked_hours_count({ count: formatNumber(hourlyRows.length) })}</span>
 			</p>
 
 			<div class="traffic-display__chips">
 				<CwChip
-					label={`${todayRows.length.toLocaleString()} raw records`}
+					label={m.traffic_raw_records_count({ count: formatNumber(todayRows.length) })}
 					tone="secondary"
 					variant="soft"
 				/>
 				<CwChip
-					label={`${dailySummaries.length.toLocaleString()} weather day(s)`}
+					label={m.traffic_weather_days_count({ count: formatNumber(dailySummaries.length) })}
 					tone="success"
 					variant="soft"
 				/>
@@ -1218,11 +1238,11 @@
 			{/if}
 		</CwCard>
 
-		<CwCard title="Daily Weather" subtitle="Today via device coordinates" elevated>
+		<CwCard title={m.traffic_daily_weather()} subtitle={m.traffic_today_via_coordinates()} elevated>
 			{#if selectedWeatherLoading && !currentDaySummary}
 				<div class="traffic-display__status traffic-display__status--compact">
 					<CwSpinner />
-					<span>Loading weather...</span>
+					<span>{m.traffic_loading_weather()}</span>
 				</div>
 			{:else if currentDaySummary}
 				<div class="traffic-display__weather-panel">
@@ -1232,7 +1252,9 @@
 							{formatCompactTemperature(currentDaySummary.temperatureHighC)}
 						</p>
 						<p class="traffic-display__weather-low">
-							Low {formatCompactTemperature(currentDaySummary.temperatureLowC)}
+							{m.traffic_low_temperature({
+								value: formatCompactTemperature(currentDaySummary.temperatureLowC)
+							})}
 						</p>
 					</div>
 
@@ -1264,12 +1286,16 @@
 			{:else if selectedWeatherError}
 				<p class="traffic-display__supporting-copy">{selectedWeatherError}</p>
 			{:else}
-				<p class="traffic-display__supporting-copy">Weather unavailable.</p>
+				<p class="traffic-display__supporting-copy">{m.traffic_weather_unavailable()}</p>
 			{/if}
 		</CwCard>
 	</div>
 
-	<CwCard title="Hourly Traffic" subtitle="Summed by hour for today" elevated>
+	<CwCard
+		title={m.traffic_hourly_traffic()}
+		subtitle={m.traffic_hourly_traffic_subtitle()}
+		elevated
+	>
 		<div class="traffic-display__actions">
 			<CwButton
 				variant="secondary"
@@ -1277,17 +1303,17 @@
 				disabled={hourlyRows.length === 0 || csvDownloading}
 				onclick={handleCsvDownload}
 			>
-				{csvDownloading ? 'Preparing CSV...' : 'Download Hourly CSV'}
+				{csvDownloading ? m.traffic_preparing_csv() : m.traffic_download_hourly_csv()}
 			</CwButton>
 		</div>
 
 		{#if loading && hourlyRows.length === 0}
 			<div class="traffic-display__status">
 				<CwSpinner />
-				<span>Fetching traffic data...</span>
+				<span>{m.traffic_fetching_traffic_data()}</span>
 			</div>
 		{:else if hourlyRows.length === 0}
-			<p class="traffic-display__supporting-copy">No traffic data is available for today.</p>
+			<p class="traffic-display__supporting-copy">{m.traffic_no_data_today()}</p>
 		{:else}
 			<CwDataTable
 				columns={hourlyColumns}
@@ -1316,30 +1342,32 @@
 	</CwCard>
 
 	<CwCard
-		title="Daily Traffic & Weather"
-		subtitle={`${calendarMonthLabel} calendar fetch`}
+		title={m.traffic_daily_traffic_weather()}
+		subtitle={m.traffic_calendar_fetch_subtitle({ monthLabel: calendarMonthLabel })}
 		elevated
 	>
 		<div class="traffic-display__calendar-meta">
 			<CwChip
-				label={`Month traffic ${calendarDailySummaries.length.toLocaleString()} day(s)`}
+				label={m.traffic_month_traffic_days({
+					count: formatNumber(calendarDailySummaries.length)
+				})}
 				tone="info"
 				variant="soft"
 			/>
 			<CwChip
-				label={`Lat/Lng ${weatherLocationLabel}`}
+				label={m.traffic_lat_lng_label({ label: weatherLocationLabel })}
 				tone={deviceLatitude !== null && deviceLongitude !== null ? 'secondary' : 'warning'}
 				variant="soft"
 			/>
 
 			{#if calendarLoading}
-				<CwChip label="Loading visible month..." tone="secondary" variant="soft" />
+				<CwChip label={m.traffic_loading_visible_month()} tone="secondary" variant="soft" />
 			{/if}
 
 			{#if calendarError}
 				<CwChip label={calendarError} tone="danger" variant="soft" />
 			{:else if !calendarLoading && calendarDailySummaries.length === 0}
-				<CwChip label="No traffic recorded for this month" tone="secondary" variant="soft" />
+				<CwChip label={m.traffic_no_data_this_month()} tone="secondary" variant="soft" />
 			{/if}
 		</div>
 
@@ -1360,7 +1388,9 @@
 									{formatCompactTemperature(summary.temperatureHighC)}
 								</p>
 								<p class="traffic-display__calendar-weather-low">
-									Low {formatCompactTemperature(summary.temperatureLowC)}
+									{m.traffic_low_temperature({
+										value: formatCompactTemperature(summary.temperatureLowC)
+									})}
 								</p>
 							</div>
 
@@ -1375,7 +1405,7 @@
 
 						<div class="traffic-display__calendar-traffic-panel">
 							<p class="traffic-display__calendar-section-heading">
-								🚦 Traffic Total: {summary.totalTraffic.toLocaleString()}
+								{m.traffic_calendar_total({ count: formatNumber(summary.totalTraffic) })}
 							</p>
 
 							{#if calendarTrafficMetricKeys.length > 0}
@@ -1387,7 +1417,7 @@
 									{/each}
 								</div>
 							{:else}
-								<p class="traffic-display__calendar-copy">No class data recorded.</p>
+								<p class="traffic-display__calendar-copy">{m.traffic_no_class_data_recorded()}</p>
 							{/if}
 						</div>
 					</div>

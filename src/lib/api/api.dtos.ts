@@ -18,9 +18,9 @@ export interface LoginResponse {
 	[key: string]: unknown;
 }
 
-export interface DeviceOwnerDto extends CwDeviceOwner { }
+export type DeviceOwnerDto = CwDeviceOwner;
 
-export interface DeviceTypeDto extends CwDeviceType { }
+export type DeviceTypeDto = CwDeviceType;
 
 export interface DeviceDto extends CwDevice {
 	cw_device_type: DeviceTypeDto;
@@ -169,6 +169,19 @@ export interface ReportUserScheduleDto {
 	[key: string]: unknown;
 }
 
+export interface CreateReportUserScheduleRequest {
+	created_at?: string;
+	dev_eui: string;
+	end_of_month?: boolean;
+	end_of_week?: boolean;
+	id?: number;
+	is_active?: boolean;
+	report_id?: string | null;
+	report_user_schedule_id?: number;
+	user_id?: string;
+	[key: string]: unknown;
+}
+
 export interface ReportAlertPointDto {
 	id?: number;
 	data_point_key: string;
@@ -184,6 +197,21 @@ export interface ReportAlertPointDto {
 	[key: string]: unknown;
 }
 
+export interface CreateReportAlertPointRequest {
+	created_at?: string;
+	data_point_key: string;
+	hex_color?: string | null;
+	id?: number;
+	max?: number | null;
+	min?: number | null;
+	name: string;
+	operator?: string | null;
+	report_id?: string | null;
+	user_id?: string | null;
+	value?: number | null;
+	[key: string]: unknown;
+}
+
 export interface ReportRecipientDto {
 	id?: number;
 	communication_method: number;
@@ -192,6 +220,17 @@ export interface ReportRecipientDto {
 	email?: string | null;
 	user_id?: string | null;
 	created_at?: string;
+	[key: string]: unknown;
+}
+
+export interface CreateReportRecipientRequest {
+	communication_method: number;
+	created_at?: string;
+	email?: string | null;
+	id?: number;
+	name?: string | null;
+	report_id?: string | null;
+	user_id?: string | null;
 	[key: string]: unknown;
 }
 
@@ -208,9 +247,16 @@ export interface ReportDto {
 	[key: string]: unknown;
 }
 
-export interface CreateReportRequest extends Partial<ReportDto> {
+export interface CreateReportRequest {
+	created_at?: string;
 	dev_eui: string;
+	id?: number;
 	name: string;
+	report_id?: string;
+	user_id?: string | null;
+	report_user_schedule?: CreateReportUserScheduleRequest[];
+	report_alert_points?: CreateReportAlertPointRequest[];
+	report_recipients?: CreateReportRecipientRequest[];
 }
 
 export type UpdateReportRequest = Partial<CreateReportRequest>;
@@ -218,9 +264,9 @@ export type UpdateReportRequest = Partial<CreateReportRequest>;
 export type TriggeredRulesCountResponse =
 	| number
 	| {
-		count: number;
-		[key: string]: unknown;
-	};
+			count: number;
+			[key: string]: unknown;
+	  };
 
 export interface LocationOwnerDto {
 	admin_user_id: string;
@@ -285,4 +331,4 @@ export type UpdateLocationRequest = {
 	name: string;
 	description?: string | null;
 	group?: string | null;
-}
+};

@@ -17,6 +17,8 @@
 		type CwTableResult,
 		type CwTone
 	} from '@cropwatchdevelopment/cwui';
+	import { formatDateTime, formatNumber } from '$lib/i18n/format';
+	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
 	type BillingProduct = {
@@ -60,7 +62,12 @@
 	const toast = useCwToast();
 
 	$effect(() => {
-		if (form && typeof form === 'object' && typeof form.message === 'string' && form.message.length > 0) {
+		if (
+			form &&
+			typeof form === 'object' &&
+			typeof form.message === 'string' &&
+			form.message.length > 0
+		) {
 			const tone: CwTone = form.action === 'cancel' ? 'warning' : 'info';
 			toast.add({ tone, message: form.message });
 		}
@@ -93,11 +100,29 @@
 	);
 
 	const subscriptionColumns: CwColumnDef<BillingSubscription>[] = [
-		{ key: 'productName', header: 'Plan', sortable: true },
-		{ key: 'status', header: 'Status', sortable: true, width: '10rem' },
-		{ key: 'amountLabel', header: 'Price', sortable: true, width: '9rem', hideBelow: 'sm' },
-		{ key: 'startedAt', header: 'Started', sortable: true, width: '12rem', hideBelow: 'md' },
-		{ key: 'renewsAt', header: 'Renews', sortable: true, width: '12rem', hideBelow: 'md' }
+		{ key: 'productName', header: m.billing_column_plan(), sortable: true },
+		{ key: 'status', header: m.billing_column_status(), sortable: true, width: '10rem' },
+		{
+			key: 'amountLabel',
+			header: m.billing_column_price(),
+			sortable: true,
+			width: '9rem',
+			hideBelow: 'sm'
+		},
+		{
+			key: 'startedAt',
+			header: m.billing_column_started(),
+			sortable: true,
+			width: '12rem',
+			hideBelow: 'md'
+		},
+		{
+			key: 'renewsAt',
+			header: m.billing_column_renews(),
+			sortable: true,
+			width: '12rem',
+			hideBelow: 'md'
+		}
 	];
 
 	const toPayload = (result: ActionPayloadResult): BillingFormPayload => {
@@ -130,10 +155,7 @@
 	}
 
 	function formatDate(value: string | null): string {
-		if (!value) return 'N/A';
-		const parsed = new Date(value);
-		if (Number.isNaN(parsed.getTime())) return 'N/A';
-		return parsed.toLocaleString();
+		return formatDateTime(value ?? '', undefined, m.common_not_available());
 	}
 
 	function subscriptionTone(status: string): CwTone {
@@ -143,6 +165,19 @@
 		if (normalized.includes('cancel') || normalized.includes('revoke')) return 'danger';
 		if (normalized.includes('past') || normalized.includes('unpaid')) return 'warning';
 		return 'secondary';
+	}
+
+	function translateSubscriptionStatus(status: string): string {
+		const normalized = status.toLowerCase();
+		if (normalized.includes('active')) return m.billing_status_active();
+		if (normalized.includes('trial')) return m.billing_status_trial();
+		if (normalized.includes('cancel') || normalized.includes('revoke')) {
+			return m.billing_status_canceled();
+		}
+		if (normalized.includes('past')) return m.billing_status_past_due();
+		if (normalized.includes('unpaid')) return m.billing_status_unpaid();
+		if (normalized.includes('unknown')) return m.billing_status_unknown();
+		return status;
 	}
 
 	function accountStateTone(): CwTone {
@@ -208,7 +243,7 @@
 
 	const checkoutEnhance: SubmitFunction = ({ cancel }) => {
 		if (selectedProductIds.length === 0) {
-			maybeToast('warning', undefined, 'Select at least one product before checkout.');
+			maybeToast('warning', undefined, m.billing_select_product_before_checkout());
 			cancel();
 			return;
 		}
@@ -222,12 +257,12 @@
 				const payload = toPayload(result);
 
 				if (result.type === 'success') {
-					maybeToast('success', payload.message, 'Checkout session created.');
+					maybeToast('success', payload.message, m.billing_checkout_session_created());
 					if (payload.redirectUrl) {
 						window.location.assign(payload.redirectUrl);
 					}
 				} else {
-					maybeToast('danger', payload.message, 'Unable to create checkout session.');
+					maybeToast('danger', payload.message, m.billing_checkout_session_failed());
 				}
 				return;
 			}
@@ -246,12 +281,12 @@
 				const payload = toPayload(result);
 
 				if (result.type === 'success') {
-					maybeToast('success', payload.message, 'Billing portal opened.');
+					maybeToast('success', payload.message, m.billing_portal_opened());
 					if (payload.redirectUrl) {
 						window.location.assign(payload.redirectUrl);
 					}
 				} else {
-					maybeToast('danger', payload.message, 'Unable to open billing portal.');
+					maybeToast('danger', payload.message, m.billing_portal_open_failed());
 				}
 				return;
 			}
@@ -270,10 +305,10 @@
 				const payload = toPayload(result);
 
 				if (result.type === 'success') {
-					maybeToast('warning', payload.message, 'Subscription canceled.');
+					maybeToast('warning', payload.message, m.billing_subscription_canceled());
 					closeCancelDialog();
 				} else {
-					maybeToast('danger', payload.message, 'Unable to cancel subscription.');
+					maybeToast('danger', payload.message, m.billing_subscription_cancel_failed());
 				}
 				return;
 			}
@@ -283,18 +318,26 @@
 	};
 </script>
 
+<svelte:head>
+	<title>{m.nav_billing()} - {m.app_name()}</title>
+</svelte:head>
+
 <div class="billing-page">
 	<!-- <div class="billing-page__background" aria-hidden="true"></div> -->
 
 	<div class="billing-shell">
 		<header class="billing-header">
 			<div>
-				<h1>Billing & Subscriptions</h1>
-				<p>Manage plan purchases, active subscriptions, and customer portal access.</p>
+				<h1>{m.billing_heading()}</h1>
+				<p>{m.billing_subtitle()}</p>
 			</div>
 			<div class="billing-header__status">
 				<CwChip
-					label={`Account: ${subscriptionState.status || 'unknown'}`}
+					label={m.billing_account_status({
+						status: translateSubscriptionStatus(
+							subscriptionState.status || m.billing_status_unknown()
+						)
+					})}
 					tone={accountStateTone()}
 					variant="soft"
 				/>
@@ -307,34 +350,56 @@
 		</header>
 
 		<div class="billing-kpis">
-			<CwCard title="Active Seats" subtitle="Currently billed subscriptions" elevated>
-				<p class="billing-kpi__value">{subscriptionState.activeSubscriptionCount}</p>
+			<CwCard
+				title={m.billing_active_seats()}
+				subtitle={m.billing_active_seats_subtitle()}
+				elevated
+			>
+				<p class="billing-kpi__value">{formatNumber(subscriptionState.activeSubscriptionCount)}</p>
 			</CwCard>
 
-			<CwCard title="Trial Plans" subtitle="In trial period" elevated>
-				<p class="billing-kpi__value">{subscriptionState.trialSubscriptionCount}</p>
+			<CwCard title={m.billing_trial_plans()} subtitle={m.billing_trial_plans_subtitle()} elevated>
+				<p class="billing-kpi__value">{formatNumber(subscriptionState.trialSubscriptionCount)}</p>
 			</CwCard>
 
-			<CwCard title="Canceled" subtitle="Historical cancellations" elevated>
-				<p class="billing-kpi__value">{subscriptionState.cancelledSubscriptionCount}</p>
+			<CwCard title={m.billing_canceled()} subtitle={m.billing_canceled_subtitle()} elevated>
+				<p class="billing-kpi__value">
+					{formatNumber(subscriptionState.cancelledSubscriptionCount)}
+				</p>
 			</CwCard>
 
-			<CwCard title="Available Products" subtitle="Returned by payments API" elevated>
-				<p class="billing-kpi__value">{products.length}</p>
+			<CwCard
+				title={m.billing_available_products()}
+				subtitle={m.billing_available_products_subtitle()}
+				elevated
+			>
+				<p class="billing-kpi__value">{formatNumber(products.length)}</p>
 			</CwCard>
 		</div>
 
 		{#if hasLoadErrors}
-			<CwCard title="API Warnings" subtitle="Some endpoints returned errors">
+			<CwCard title={m.billing_api_warnings()} subtitle={m.billing_api_warnings_subtitle()}>
 				<div class="billing-errors">
 					{#if data.errors?.products}
-						<CwChip label={`Products: ${data.errors.products}`} tone="danger" variant="soft" />
+						<CwChip
+							label={m.billing_error_products({ message: data.errors.products })}
+							tone="danger"
+							variant="soft"
+						/>
 					{/if}
 					{#if data.errors?.subscriptions}
-						<CwChip label={`Subscriptions: ${data.errors.subscriptions}`} tone="danger" variant="soft" />
+						<CwChip
+							label={m.billing_error_subscriptions({ message: data.errors.subscriptions })}
+							tone="danger"
+							variant="soft"
+						/>
 					{/if}
 					{#if data.errors?.state}
-						<CwChip label={`State: ${data.errors.state}`} tone="warning" variant="soft" />
+						<CwChip
+							label={m.billing_error_state({ message: data.errors.state })}
+							tone="warning"
+							variant="soft"
+						/>
 					{/if}
 				</div>
 			</CwCard>
@@ -342,15 +407,20 @@
 
 		<div class="billing-grid">
 			<CwCard
-				title="Buy Seats & Devices"
-				subtitle="Choose one or more products, then launch hosted checkout"
+				title={m.billing_checkout_title()}
+				subtitle={m.billing_checkout_subtitle()}
 				elevated
 				class="billing-grid__checkout"
 			>
-				<form method="POST" action="?/createCheckoutSession" use:enhance={checkoutEnhance} class="billing-form">
+				<form
+					method="POST"
+					action="?/createCheckoutSession"
+					use:enhance={checkoutEnhance}
+					class="billing-form"
+				>
 					<div class="billing-products">
 						{#if visibleProducts.length === 0}
-							<p class="billing-empty">No products found for checkout.</p>
+							<p class="billing-empty">{m.billing_no_products()}</p>
 						{:else}
 							{#each visibleProducts as product (product.id)}
 								<article
@@ -362,7 +432,7 @@
 									<div class="billing-product__header">
 										<div>
 											<h3>{product.name}</h3>
-											<p>{product.description || 'No description provided by API.'}</p>
+											<p>{product.description || m.billing_no_product_description()}</p>
 										</div>
 										<CwChip
 											label={product.priceLabel}
@@ -374,13 +444,13 @@
 									<div class="billing-product__meta">
 										<CwChip label={product.billingLabel} tone="primary" variant="soft" />
 										{#if !product.active}
-											<CwChip label="Archived" tone="warning" variant="soft" />
+											<CwChip label={m.billing_archived()} tone="warning" variant="soft" />
 										{/if}
 									</div>
 
 									<CwSwitch
 										checked={isProductSelected(product.id)}
-										label="Include in checkout"
+										label={m.billing_include_in_checkout()}
 										onchange={(checked) => toggleProductSelection(product.id, checked)}
 									/>
 
@@ -395,43 +465,47 @@
 					<div class="billing-form__controls">
 						<CwSwitch
 							checked={showArchivedProducts}
-							label="Include archived products"
+							label={m.billing_include_archived_products()}
 							onchange={(checked) => (showArchivedProducts = checked)}
 						/>
 						<CwButton type="button" variant="secondary" size="sm" onclick={clearProductSelection}
-							>Clear Selection</CwButton
+							>{m.billing_clear_selection()}</CwButton
 						>
 					</div>
 
-					<CwExpandPanel title="Optional Checkout Settings">
+					<CwExpandPanel title={m.billing_optional_checkout_settings()}>
 						<div class="billing-options">
 							<CwInput
-								label="Customer name"
+								label={m.billing_customer_name()}
 								value={customerName}
-								placeholder="Jane Smith"
+								placeholder={m.billing_customer_name_placeholder()}
 								oninput={(event) => (customerName = (event.target as HTMLInputElement).value)}
 							/>
 							<CwInput
 								type="email"
-								label="Customer email"
+								label={m.billing_customer_email()}
 								value={customerEmail}
-								placeholder="jane@example.com"
+								placeholder={m.billing_customer_email_placeholder()}
 								oninput={(event) => (customerEmail = (event.target as HTMLInputElement).value)}
 							/>
 							<CwSwitch
 								checked={allowDiscountCodes}
-								label="Allow discount codes"
+								label={m.billing_allow_discount_codes()}
 								onchange={(checked) => (allowDiscountCodes = checked)}
 							/>
 							<CwSwitch
 								checked={allowTrial}
-								label="Allow trial"
+								label={m.billing_allow_trial()}
 								onchange={(checked) => (allowTrial = checked)}
 							/>
 						</div>
 					</CwExpandPanel>
 
-					<input type="hidden" name="allow_discount_codes" value={allowDiscountCodes ? 'true' : 'false'} />
+					<input
+						type="hidden"
+						name="allow_discount_codes"
+						value={allowDiscountCodes ? 'true' : 'false'}
+					/>
 					<input type="hidden" name="allow_trial" value={allowTrial ? 'true' : 'false'} />
 					{#if customerName}
 						<input type="hidden" name="customer_name" value={customerName} />
@@ -446,18 +520,24 @@
 							variant="primary"
 							loading={checkoutBusy}
 							disabled={checkoutBusy || selectedProductIds.length === 0}
-							>Launch Checkout</CwButton
+							>{m.billing_launch_checkout()}</CwButton
 						>
-						<span>{selectedProductIds.length} selected</span>
+						<span
+							>{m.billing_selected_count({ count: formatNumber(selectedProductIds.length) })}</span
+						>
 					</div>
 				</form>
 			</CwCard>
 
-			<CwCard title="Subscriptions" subtitle="Current and historical subscription records" elevated>
+			<CwCard
+				title={m.billing_subscriptions_title()}
+				subtitle={m.billing_subscriptions_subtitle()}
+				elevated
+			>
 				<div class="billing-subscriptions__actions">
 					<form method="POST" action="?/createPortalSession" use:enhance={portalEnhance}>
 						<CwButton type="submit" variant="info" loading={portalBusy} disabled={portalBusy}
-							>Open Billing Portal</CwButton
+							>{m.billing_open_portal()}</CwButton
 						>
 					</form>
 				</div>
@@ -468,11 +548,19 @@
 					rowKey="id"
 					searchable
 					bind:pageSize
-					rowActionsHeader="Actions"
+					rowActionsHeader={m.common_actions()}
 				>
-					{#snippet cell(row: BillingSubscription, col: CwColumnDef<BillingSubscription>, defaultValue: string)}
+					{#snippet cell(
+						row: BillingSubscription,
+						col: CwColumnDef<BillingSubscription>,
+						defaultValue: string
+					)}
 						{#if col.key === 'status'}
-							<CwChip label={row.status} tone={subscriptionTone(row.status)} variant="soft" />
+							<CwChip
+								label={translateSubscriptionStatus(row.status)}
+								tone={subscriptionTone(row.status)}
+								variant="soft"
+							/>
 						{:else if col.key === 'startedAt'}
 							{formatDate(row.startedAt)}
 						{:else if col.key === 'renewsAt'}
@@ -483,39 +571,47 @@
 					{/snippet}
 
 					{#snippet rowActions(row: BillingSubscription)}
-						{#if row.status.toLowerCase().includes('cancel') || row.status.toLowerCase().includes('revoke')}
-							<CwChip label="Ended" tone="secondary" variant="soft" />
+						{#if row.status.toLowerCase().includes('cancel') || row.status
+								.toLowerCase()
+								.includes('revoke')}
+							<CwChip label={m.billing_ended()} tone="secondary" variant="soft" />
 						{:else}
 							<CwButton
 								size="sm"
 								variant="danger"
 								disabled={cancelBusy}
-								onclick={() => openCancelDialog(row)}
-								>Cancel</CwButton
+								onclick={() => openCancelDialog(row)}>{m.action_cancel()}</CwButton
 							>
 						{/if}
 					{/snippet}
 				</CwDataTable>
 			</CwCard>
 		</div>
-
-
 	</div>
 </div>
 
-<CwDialog bind:open={cancelDialogOpen} title="Cancel Subscription" onclose={closeCancelDialog}>
+<CwDialog
+	bind:open={cancelDialogOpen}
+	title={m.billing_cancel_subscription_title()}
+	onclose={closeCancelDialog}
+>
 	{#if subscriptionToCancel}
 		<p class="billing-dialog__text">
-			Cancel <strong>{subscriptionToCancel.productName}</strong> ({subscriptionToCancel.id})?
+			{m.billing_cancel_subscription_body({
+				productName: subscriptionToCancel.productName,
+				id: subscriptionToCancel.id
+			})}
 		</p>
 		<p class="billing-dialog__text billing-dialog__warning">
-			This action calls the revoke endpoint and cannot be undone from this page.
+			{m.billing_cancel_subscription_warning()}
 		</p>
 	{/if}
 
 	{#snippet actions()}
 		<div class="billing-dialog__actions">
-			<CwButton type="button" variant="secondary" onclick={closeCancelDialog}>Keep Subscription</CwButton>
+			<CwButton type="button" variant="secondary" onclick={closeCancelDialog}
+				>{m.billing_keep_subscription()}</CwButton
+			>
 			<form method="POST" action="?/cancelSubscription" use:enhance={cancelEnhance}>
 				<input type="hidden" name="subscription_id" value={subscriptionToCancel?.id ?? ''} />
 				<CwButton
@@ -524,7 +620,7 @@
 					loading={cancelBusy}
 					disabled={!subscriptionToCancel || cancelBusy}
 				>
-					Confirm Cancel
+					{m.billing_confirm_cancel()}
 				</CwButton>
 			</form>
 		</div>

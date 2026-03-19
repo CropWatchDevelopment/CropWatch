@@ -8,8 +8,9 @@
 <script lang="ts">
 	import { CwCard, CwChip } from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { m } from '$lib/paraglide/messages.js';
 
-	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+	let { devEui, historicalData, loading }: DeviceDisplayProps = $props();
 
 	/** Auto-discover column keys from the first data row, excluding metadata fields. */
 	const EXCLUDED_KEYS = new Set(['id', 'dev_eui', 'is_simulated']);
@@ -22,13 +23,13 @@
 </script>
 
 <div class="default-display">
-	<CwCard title="Device Data" subtitle={devEui} elevated>
-		<CwChip label="Generic view" tone="info" variant="soft" />
+	<CwCard title={m.display_device_data()} subtitle={devEui} elevated>
+		<CwChip label={m.display_generic_view()} tone="info" variant="soft" />
 
 		{#if loading}
-			<p>Loading data…</p>
+			<p>{m.display_loading_data()}</p>
 		{:else if historicalData.length === 0}
-			<p>No data available for the selected range.</p>
+			<p>{m.display_no_data_selected_range()}</p>
 		{:else}
 			<div class="table-wrapper">
 				<table>

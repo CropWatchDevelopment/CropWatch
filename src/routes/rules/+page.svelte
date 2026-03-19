@@ -11,62 +11,79 @@
 	import type { RulesDto } from '$lib/interfaces/rule.interface';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import { m } from '$lib/paraglide/messages.js';
 	import DeleteRuleDialog from './DeleteRuleDialog.svelte';
+	import ViewRuleDialog from './ViewRuleDialog.svelte';
 
-	let { data }: { data: { rules: RulesDto[] } } = $props();
+	type RuleRow = RulesDto & { location_name: string };
+
+	let { data }: { data: { rules: RuleRow[] } } = $props();
 	let loading = $state(false);
+	let deletedRuleGroupIds = $state<string[]>([]);
+	let rules = $derived(
+		(data.rules ?? []).filter((rule) => !deletedRuleGroupIds.includes(rule.ruleGroupId))
+	);
+	let tableKey = $derived(rules.map((rule) => rule.ruleGroupId).join('|'));
 
-	const columns: CwColumnDef<RulesDto>[] = [
-		{ key: 'name', header: 'Name', sortable: true },
+	const columns: CwColumnDef<RuleRow>[] = [
+		{ key: 'name', header: m.common_name(), sortable: true },
 		{ key: 'dev_eui', header: 'Device EUI' },
-		{ key: 'created_at', header: 'Created' },
-		{ key: 'location_name', header: 'Location' }
+		{ key: 'created_at', header: m.common_created() },
+		{ key: 'location_name', header: m.nav_locations() }
 	];
 
-	async function loadData(query: CwTableQuery): Promise<CwTableResult<RulesDto>> {
+	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleRow>> {
 		void query;
-		const rows = data.rules ?? [];
+		const rows = rules;
 		return { rows, total: rows.length };
+	}
+
+	function handleRuleDeleted(ruleGroupId: string) {
+		if (deletedRuleGroupIds.includes(ruleGroupId)) return;
+		deletedRuleGroupIds = [...deletedRuleGroupIds, ruleGroupId];
 	}
 </script>
 
-<Svelte:head>
-	<title>Rules - CropWatch</title>
-</Svelte:head>
+<svelte:head>
+	<title>{m.rules_page_title()}</title>
+</svelte:head>
 
-<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>← Back to Dashboard</CwButton>
+<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>
+	{m.action_back_to_dashboard()}
+</CwButton>
 <div class="overflow-y-auto p-4">
-	<CwCard title="Configured Rules" class="min-h-0 flex-1">
-		<CwDataTable
-			{columns}
-			{loadData}
-			{loading}
-			groupBy="location_name"
-			rowActionsHeader="Actions"
-			rowKey="id"
-			class="w-full"
-		>
-			{#snippet rowActions(row: RulesDto)}
-				<div class="flex flex-row gap-2 w-full">
-					<CwButton variant="info" size="md" onclick={() => goto(`/rules/${row.id}`)}>
-						<img src={EYE_ICON} alt="View Rule" /> View
+	<CwCard title={m.rules_configured_rules()} class="min-h-0 flex-1">
+		{#key tableKey}
+			<CwDataTable
+				{columns}
+				{loadData}
+				{loading}
+				rowActionsHeader={m.common_actions()}
+				rowKey="id"
+				class="w-full"
+			>
+				{#snippet rowActions(row: RuleRow)}
+					<div class="flex w-full flex-row gap-2">
+						<ViewRuleDialog {row} />
+						<CwButton variant="primary" icon={EDIT_ICON} size="md" onclick={() => goto(`/rules/edit/${row.id}`)} />
+						<DeleteRuleDialog
+							ruleGroupId={row.ruleGroupId}
+							ruleName={row.name}
+							onDeleted={handleRuleDeleted}
+						/>
+					</div>
+				{/snippet}
+				{#snippet toolbarActions()}
+					<CwButton
+						variant="primary"
+						onclick={() => {
+							goto('/rules/create');
+						}}
+					>
+						{m.rules_create_new_rule()}
 					</CwButton>
-					<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
-						<img src={EDIT_ICON} alt="Edit Rule" /> Edit
-					</CwButton>
-					<DeleteRuleDialog ruleGroupId={row.ruleGroupId} ruleName={row.name} />
-				</div>
-			{/snippet}
-			{#snippet toolbarActions()}
-				<CwButton
-					variant="primary"
-					onclick={() => {
-						goto('/rules/create');
-					}}
-				>
-					Create New Rule
-				</CwButton>
-			{/snippet}
-		</CwDataTable>
+				{/snippet}
+			</CwDataTable>
+		{/key}
 	</CwCard>
 </div>

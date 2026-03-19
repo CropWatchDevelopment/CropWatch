@@ -2,15 +2,12 @@
 	import { CwButton, CwDialog, CwTextArea } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
 	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
+	import { formatDateTime } from '$lib/i18n/format';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let { row, dev_eui }: { row: AirRow; dev_eui: string } = $props();
 	let open = $state(false);
 	let noteText = $state('');
-
-	function formatCreatedAt(value: string): string {
-		const parsed = new Date(value);
-		return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
-	}
 
 	function handleEditorKeydown(event: KeyboardEvent) {
 		// The table row listens for Space/Enter and cancels them, which breaks typing in the modal.
@@ -36,30 +33,34 @@
 </script>
 
 <CwButton variant="info" size="sm" onclick={() => (open = true)}>
-	<img src={ADD_NOTE_ICON} alt="Add Note" />
+	<img src={ADD_NOTE_ICON} alt={m.display_add_note()} />
 </CwButton>
 
 <CwDialog
 	{open}
 	onclose={() => (open = false)}
-	title={`Add Note for ${formatCreatedAt(row.created_at)}`}
+	title={m.display_add_note_title({ createdAt: formatDateTime(row.created_at) })}
 >
 	<p style="margin-bottom: 1rem;">
-		Add a note for the telemetry entry at {formatCreatedAt(row.created_at)}
-		with temperature {row.temperature_c}°C.
+		{m.display_add_note_body({
+			createdAt: formatDateTime(row.created_at),
+			temperature: row.temperature_c.toFixed(1)
+		})}
 	</p>
 
 	<CwTextArea
 		required
 		class="rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
 		onkeydown={handleEditorKeydown}
-		placeholder="Enter your note here..."
+		placeholder={m.display_enter_note_here()}
 		style="width: 100%; height: 150px; padding: 0.5rem; font-size: 1rem;"
 		bind:value={noteText}
 	></CwTextArea>
+	<p>{noteText.length}/300</p>
+
 	{#snippet actions()}
-		<CwButton variant="primary" onclick={() => handleSaveNote()}>Save Note</CwButton>
-		<CwButton variant="secondary" onclick={() => (open = false)}>Cancel</CwButton>
+		<CwButton variant="primary" onclick={() => handleSaveNote()}>{m.display_save_note()}</CwButton>
+		<CwButton variant="secondary" onclick={() => (open = false)}>{m.action_cancel()}</CwButton>
 	{/snippet}
 </CwDialog>
 

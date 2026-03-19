@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import { ApiService } from '$lib/api/api.service';
 import type { DeviceDto } from '$lib/api/api.dtos';
+import { m } from '$lib/paraglide/messages.js';
 import type { RequestHandler } from './$types';
 
 function readString(value: unknown): string {
@@ -30,13 +31,15 @@ async function readErrorMessage(response: Response): Promise<string> {
 		if (contentType.includes('application/json')) {
 			const payload = (await response.json()) as Record<string, unknown>;
 			return (
-				readString(payload.detail) || readString(payload.message) || 'Libellus request failed.'
+				readString(payload.detail) ||
+				readString(payload.message) ||
+				m.devices_libellus_request_failed()
 			);
 		}
 
-		return readString(await response.text()) || 'Libellus request failed.';
+		return readString(await response.text()) || m.devices_libellus_request_failed();
 	} catch {
-		return 'Libellus request failed.';
+		return m.devices_libellus_request_failed();
 	}
 }
 
@@ -48,31 +51,31 @@ export const GET: RequestHandler = async ({ fetch, locals, params, url }) => {
 	const baseUrl = getLibellusBaseUrl();
 
 	if (!authToken) {
-		return new Response('You must be logged in to download sensor certificates.', { status: 401 });
+		return new Response(m.devices_sensor_certificate_requires_login(), { status: 401 });
 	}
 
 	if (!devEui || (sensorKey !== 'sensor' && sensorKey !== 'sensor2')) {
-		return new Response('Invalid certificate target.', { status: 400 });
+		return new Response(m.devices_invalid_certificate_target(), { status: 400 });
 	}
 
 	if (!apiToken) {
-		return new Response('PRIVATE_LIBELLUS_API_TOKEN is not configured.', { status: 500 });
+		return new Response(m.devices_libellus_api_token_missing(), { status: 500 });
 	}
 
 	if (!baseUrl) {
-		return new Response('PRIVATE_LIBELLUS_BASE_URL is not configured.', { status: 500 });
+		return new Response(m.devices_libellus_base_url_missing(), { status: 500 });
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
 	const device = await api.getDevice(devEui).catch(() => null);
 
 	if (!device) {
-		return new Response('Device not found.', { status: 404 });
+		return new Response(m.devices_not_found(), { status: 404 });
 	}
 
 	const sensorSerial = getSensorSerial(device, sensorKey);
 	if (!sensorSerial) {
-		return new Response('No sensor serial is configured for this device.', { status: 404 });
+		return new Response(m.devices_no_sensor_serial_configured(), { status: 404 });
 	}
 
 	const libellusUrl = new URL(

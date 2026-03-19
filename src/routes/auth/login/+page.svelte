@@ -2,12 +2,10 @@
 	import './style.css';
 	import KEY_ICON from '$lib/images/icons/key.svg';
 	import logo from '$lib/images/cropwatch_static.svg';
-	import ADD_PERSON_ICON from '$lib/images/icons/person_add.svg';
-	import FORGOT_SHIELD_ICON from '$lib/images/icons/forgot_shield.svg';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onDestroy, onMount } from 'svelte';
-    import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
+	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
 	import {
 		loadRecaptchaScript,
 		executeRecaptcha,
@@ -15,6 +13,7 @@
 	} from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {
 		form: { message?: string } | null;
@@ -33,8 +32,8 @@
 	let loggingIn: boolean = $state(false);
 	let loadingCaptcha: boolean = $state(true);
 	let recaptchaReady: boolean = $state(false);
-    let username: string = $state('');
-    let password: string = $state('');
+	let username: string = $state('');
+	let password: string = $state('');
 
 	const RECAPTCHA_TIMEOUT_MS = 12_000;
 	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 5;
@@ -46,9 +45,12 @@
 				reject(new Error('Operation timed out'));
 			}, timeoutMs);
 
-			promise.then(resolve).catch(reject).finally(() => {
-				window.clearTimeout(timeoutId);
-			});
+			promise
+				.then(resolve)
+				.catch(reject)
+				.finally(() => {
+					window.clearTimeout(timeoutId);
+				});
 		});
 	}
 
@@ -113,10 +115,9 @@
 		}
 	}
 
-    function passwordStrengthCheck(password: string) {
-        // Simple password strength check (can be enhanced with a library like zxcvbn)
-        const result = isStrongPassword(password);
-    }
+	function passwordStrengthCheck(value: string) {
+		void isStrongPassword(value);
+	}
 
 	onMount(() => {
 		void ensureRecaptchaLoaded();
@@ -128,17 +129,17 @@
 </script>
 
 <svelte:head>
-	<title>Login - CropWatch Temp</title>
+	<title>{m.auth_login_page_title()}</title>
 </svelte:head>
 
 <CwCard padded={false} class="auth-card">
 	<div class="auth-shell">
 		<div class="logo-frame">
-			<img src={logo} alt="CropWatch" class="logo-image" />
+			<img src={logo} alt={m.app_name()} class="logo-image" />
 		</div>
 
-		<h1 class="auth-title">Welcome to CropWatch!</h1>
-		<p class="auth-subtitle">Sign-in to your account for your latest updates</p>
+		<h1 class="auth-title">{m.auth_login_heading()}</h1>
+		<p class="auth-subtitle">{m.auth_login_subtitle()}</p>
 
 		<form
 			method="POST"
@@ -160,7 +161,7 @@
 				} catch (error) {
 					console.error('reCAPTCHA execution error:', error);
 					toast.add({
-						message: 'Unable to verify site security. Please refresh the page and try again.',
+						message: m.auth_security_refresh_error(),
 						tone: 'danger'
 					});
 					loggingIn = false;
@@ -173,7 +174,7 @@
 						if (result.type === 'success') {
 							await applyAction(result);
 							toast.add({
-								message: 'Login successful! Redirecting...',
+								message: m.auth_login_success_redirecting(),
 								tone: 'success'
 							});
 							const redirectTo = typeof result.data === 'string' ? result.data : '/';
@@ -189,45 +190,47 @@
 			}}
 		>
 			<label class="field-block">
-				<span class="field-label">EMAIL</span>
+				<span class="field-label">{m.auth_email_label()}</span>
 				<CwInput
-                    bind:value={username}
+					bind:value={username}
 					class="auth-input"
 					name="email"
 					type="email"
 					required
-					placeholder="you@example.com"
+					placeholder={m.auth_email_placeholder()}
 					autocomplete="email"
 				/>
 			</label>
 
 			<label class="field-block">
-				<span class="field-label">PASSWORD</span>
+				<span class="field-label">{m.auth_password_label()}</span>
 				<CwInput
-                    bind:value={password}
-                    onchange={(event) => passwordStrengthCheck(password)}
+					bind:value={password}
+					onchange={() => passwordStrengthCheck(password)}
 					class="auth-input"
 					name="password"
 					type="password"
 					required
-					placeholder="••••••••"
+					placeholder={m.auth_password_placeholder()}
 					autocomplete="current-password"
 				/>
 			</label>
-            <span class="flex flex-row">
-                
-            </span>
+			<span class="flex flex-row"></span>
 			<CwButton
 				class="auth-primary"
 				type="submit"
 				variant="primary"
 				loading={loggingIn || loadingCaptcha}
-				disabled={loggingIn || loadingCaptcha || !recaptchaReady || (!username || !password)}
+				disabled={loggingIn || loadingCaptcha || !recaptchaReady || !username || !password}
 				size="md"
 				fullWidth={true}
 			>
-				<img src={KEY_ICON} alt="Sign in icon" class="h-4 w-4" />
-				{loggingIn ? 'Signing in...' : loadingCaptcha ? 'Loading Site Security...' : 'Sign in'}
+				<img src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
+				{loggingIn
+					? m.auth_signing_in()
+					: loadingCaptcha
+						? m.auth_loading_site_security()
+						: m.auth_sign_in()}
 			</CwButton>
 
 			<div class="action-grid">
@@ -235,28 +238,26 @@
 					class="auth-secondary"
 					type="button"
 					variant="secondary"
-					size="md"
+					size="lg"
 					fullWidth={true}
 					onclick={() => goto(resolve('/auth/create-account'))}
 				>
-					<img src={ADD_PERSON_ICON} alt="Create account icon" class="h-4 w-4" />
-					Create Account
+					{m.auth_create_account()}
 				</CwButton>
 
 				<CwButton
 					class="auth-secondary"
 					type="button"
 					variant="secondary"
-					size="md"
+					size="lg"
 					fullWidth={true}
 					onclick={() => goto(resolve('/auth/forgot-password'))}
 				>
-					<img src={FORGOT_SHIELD_ICON} alt="Forgot password icon" class="h-4 w-4" />
-					Forgot Password
+					<span class="text-sm">{m.auth_forgot_password()}</span>
 				</CwButton>
 			</div>
 		</form>
 
-		<p class="security-copy">Protected by reCAPTCHA and CropWatch Security</p>
+		<p class="security-copy">{m.auth_security_copy()}</p>
 	</div>
 </CwCard>

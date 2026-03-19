@@ -14,6 +14,7 @@
 		resolveCsvRequestRange,
 		type CsvRow
 	} from './csvExport';
+	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {
 		authToken: string | null;
@@ -151,7 +152,7 @@
 			const rows = await fetchCsvRows(requestRange);
 
 			if (rows.length === 0) {
-				exportError = 'No telemetry was found for the selected date range.';
+				exportError = m.devices_export_no_data();
 				toast.add({ tone: 'info', message: exportError });
 				return;
 			}
@@ -165,12 +166,12 @@
 
 			toast.add({
 				tone: 'success',
-				message: `Exported ${rows.length} telemetry ${rows.length === 1 ? 'row' : 'rows'}.`
+				message: m.devices_export_success({ count: String(rows.length) })
 			});
 			open = false;
 		} catch (error) {
 			console.error('Failed to export device telemetry as CSV:', error);
-			exportError = 'Unable to export telemetry for the selected range.';
+			exportError = m.devices_export_failed();
 			toast.add({ tone: 'danger', message: exportError });
 		} finally {
 			exporting = false;
@@ -185,13 +186,12 @@
 	onclick={openDialog}
 >
 	<img src={DOWNLOAD_ICON} alt="" class="toolbar-icon" />
-	CSV
+	{m.devices_csv_export()}
 </CwButton>
 
 <CwDialog
-    style="max-width: 50vw;"
 	bind:open
-	title="Export Telemetry Data"
+	title={m.devices_export_dialog_title()}
 	closeOnBackdrop={!exporting}
 	closeOnEscape={!exporting}
 	onclose={closeDialog}
@@ -202,12 +202,12 @@
 			granularity="day"
 			includeTime
 			bind:value={csvRange}
-			placeholder="Select export range"
+			placeholder={m.devices_export_select_range()}
 			maxDate={new Date()}
 		/>
 
 		<p class="csv-export-dialog__hint">
-			Request and export timestamps use <strong>{timeZone}</strong>.
+			{m.devices_export_timezone_hint({ timeZone })}
 		</p>
 
 		{#if exportError}
@@ -217,7 +217,7 @@
 	{#snippet actions()}
 		<CwButton variant="secondary" disabled={exporting} onclick={closeDialog}>Cancel</CwButton>
 		<CwButton variant="primary" loading={exporting} onclick={handleCsvDownload}>
-			Download CSV
+			{m.action_download()} CSV
 		</CwButton>
 	{/snippet}
 </CwDialog>

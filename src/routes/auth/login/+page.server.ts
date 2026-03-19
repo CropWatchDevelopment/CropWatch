@@ -1,5 +1,6 @@
 import { dev } from '$app/environment';
 import { env as publicEnv } from '$env/dynamic/public';
+import { m } from '$lib/paraglide/messages.js';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 
@@ -11,9 +12,6 @@ type LoginApiResponse = {
 	};
 };
 
-const INVALID_CREDENTIALS_MESSAGE = 'Invalid email or password.';
-const SECURITY_CHECK_MESSAGE = 'Security verification failed. Please try again.';
-const LOGIN_FAILED_MESSAGE = 'Unable to sign in right now. Please try again.';
 const PUBLIC_API_BASE_URL = (publicEnv.PUBLIC_API_BASE_URL ?? '').trim();
 const PUBLIC_LOGIN_ENDPOINT = publicEnv.PUBLIC_LOGIN_ENDPOINT ?? '/auth/login';
 
@@ -27,7 +25,7 @@ export const actions: Actions = {
 	default: async ({ request, cookies, fetch }) => {
 		if (!PUBLIC_API_BASE_URL) {
 			console.error('Missing PUBLIC_API_BASE_URL for login action');
-			return fail(500, { message: LOGIN_FAILED_MESSAGE });
+			return fail(500, { message: m.auth_login_failed() });
 		}
 
 		const data = await request.formData();
@@ -36,12 +34,12 @@ export const actions: Actions = {
 		const recaptchaToken = readNonEmptyString(data.get('recaptchaToken'));
 
 		if (!email || !password || !recaptchaToken) {
-			return fail(400, { message: 'Invalid form submission.' });
+			return fail(400, { message: m.auth_invalid_form_submission() });
 		}
 
 		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'LOGIN');
 		if (!recaptchaResult.success) {
-			return fail(400, { message: SECURITY_CHECK_MESSAGE });
+			return fail(400, { message: m.auth_security_try_again() });
 		}
 
 		let response: Response;
@@ -53,14 +51,14 @@ export const actions: Actions = {
 			});
 		} catch (error) {
 			console.error('Login request failed:', error);
-			return fail(502, { message: LOGIN_FAILED_MESSAGE });
+			return fail(502, { message: m.auth_login_failed() });
 		}
 
 		if (!response.ok && (response.status === 401 || response.status === 403)) {
-			return fail(401, { message: INVALID_CREDENTIALS_MESSAGE });
+			return fail(401, { message: m.auth_invalid_credentials() });
 		}
 		if (!response.ok) {
-			return fail(502, { message: LOGIN_FAILED_MESSAGE });
+			return fail(502, { message: m.auth_login_failed() });
 		}
 
 		let result: LoginApiResponse;
@@ -68,7 +66,7 @@ export const actions: Actions = {
 			result = (await response.json()) as LoginApiResponse;
 		} catch (error) {
 			console.error('Login response parse failed:', error);
-			return fail(502, { message: LOGIN_FAILED_MESSAGE });
+			return fail(502, { message: m.auth_login_failed() });
 		}
 
 		const accessToken = result.result?.accessToken;
@@ -81,12 +79,12 @@ export const actions: Actions = {
 			!expiresAt ||
 			Number.isNaN(expiresAt.getTime())
 		) {
-			return fail(401, { message: INVALID_CREDENTIALS_MESSAGE });
+			return fail(401, { message: m.auth_invalid_credentials() });
 		}
 
 		const maxAge = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
 		if (!Number.isFinite(maxAge) || maxAge <= 0) {
-			return fail(502, { message: LOGIN_FAILED_MESSAGE });
+			return fail(502, { message: m.auth_login_failed() });
 		}
 
 		cookies.set('jwt', accessToken, {

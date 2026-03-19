@@ -1,4 +1,6 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import { formatCurrency } from '$lib/i18n/format';
+import { m } from '$lib/paraglide/messages.js';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -100,19 +102,6 @@ const toIsoStringOrNull = (value: unknown): string | null => {
 	return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 };
 
-const formatCurrency = (amountMajor: number, currencyCode: string): string => {
-	try {
-		return new Intl.NumberFormat('en-US', {
-			style: 'currency',
-			currency: currencyCode.toUpperCase(),
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		}).format(amountMajor);
-	} catch {
-		return `${amountMajor.toFixed(2)} ${currencyCode.toUpperCase()}`;
-	}
-};
-
 const extractRecords = (payload: unknown, keys: string[]): UnknownRecord[] => {
 	if (Array.isArray(payload)) {
 		return payload.filter(isRecord);
@@ -162,8 +151,8 @@ const extractPriceLabel = (source: UnknownRecord): { priceLabel: string; billing
 		asString(source.interval);
 
 	const priceLabel =
-		amountMinor === null ? 'Custom pricing' : formatCurrency(amountMinor / 100, currency);
-	const billingLabel = interval ? `Billed ${interval}` : 'One-time';
+		amountMinor === null ? m.billing_custom_pricing() : formatCurrency(amountMinor / 100, currency);
+	const billingLabel = interval ? m.billing_billed_interval({ interval }) : m.billing_one_time();
 	return { priceLabel, billingLabel };
 };
 
@@ -238,7 +227,7 @@ const normalizeSubscriptions = (payload: unknown): BillingSubscription[] => {
 			asString(item.status) ??
 			asString(item.state) ??
 			asString(item.subscription_status) ??
-			'unknown';
+			m.billing_status_unknown();
 		const productName =
 			asString(getPathValue(item, ['product', 'name'])) ??
 			asString(getPathValue(item, ['product', 'display_name'])) ??
@@ -246,7 +235,7 @@ const normalizeSubscriptions = (payload: unknown): BillingSubscription[] => {
 			asString(getPathValue(item, ['product_price', 'product', 'name'])) ??
 			asString(item.product_name) ??
 			asString(item.productName) ??
-			'Unknown plan';
+			m.billing_unknown_plan();
 		const startedAt =
 			toIsoStringOrNull(item.started_at) ??
 			toIsoStringOrNull(item.start_date) ??
@@ -291,7 +280,7 @@ const normalizeState = (payload: unknown): BillingState => {
 		asString(state.customer_id) ??
 		asString(state.customerId) ??
 		asString(getPathValue(state, ['customer', 'id']));
-	const status = asString(state.status) ?? 'unknown';
+	const status = asString(state.status) ?? m.billing_status_unknown();
 
 	return {
 		status,
@@ -383,12 +372,9 @@ export const load: PageServerLoad = async ({ fetch, locals }) => {
 	});
 
 	const [productsResult, subscriptionsResult, stateResult] = await Promise.all([
-		executeApiRequest(() => api.getPaymentsProducts(), 'Unable to load billing products.'),
-		executeApiRequest(() => api.getPaymentsSubscriptions(), 'Unable to load subscriptions.'),
-		executeApiRequest(
-			() => api.getPaymentsSubscriptionState(),
-			'Unable to load subscription state.'
-		)
+		executeApiRequest(() => api.getPaymentsProducts(), m.billing_load_products_failed()),
+		executeApiRequest(() => api.getPaymentsSubscriptions(), m.billing_load_subscriptions_failed()),
+		executeApiRequest(() => api.getPaymentsSubscriptionState(), m.billing_load_state_failed())
 	]);
 
 	const subscriptions = normalizeSubscriptions(subscriptionsResult.data);
@@ -422,7 +408,7 @@ export const actions: Actions = {
 		if (products.length === 0) {
 			return fail(400, {
 				action: 'checkout',
-				message: 'Select at least one product before starting checkout.'
+				message: m.billing_select_product_before_checkout()
 			});
 		}
 
@@ -452,7 +438,7 @@ export const actions: Actions = {
 				action: 'checkout',
 				message: readApiError(
 					error instanceof ApiServiceError ? error.payload : error,
-					'Unable to create checkout session.'
+					m.billing_checkout_session_failed()
 				)
 			});
 		}
@@ -461,13 +447,13 @@ export const actions: Actions = {
 		if (!redirectUrl) {
 			return fail(502, {
 				action: 'checkout',
-				message: 'Checkout session was created, but no redirect URL was returned.'
+				message: m.billing_checkout_redirect_missing()
 			});
 		}
 
 		return {
 			action: 'checkout',
-			message: 'Checkout session created.',
+			message: m.billing_checkout_session_created(),
 			redirectUrl
 		};
 	},
@@ -491,7 +477,7 @@ export const actions: Actions = {
 				action: 'portal',
 				message: readApiError(
 					error instanceof ApiServiceError ? error.payload : error,
-					'Unable to open billing portal.'
+					m.billing_portal_open_failed()
 				)
 			});
 		}
@@ -500,13 +486,13 @@ export const actions: Actions = {
 		if (!redirectUrl) {
 			return fail(502, {
 				action: 'portal',
-				message: 'Portal session was created, but no redirect URL was returned.'
+				message: m.billing_portal_redirect_missing()
 			});
 		}
 
 		return {
 			action: 'portal',
-			message: 'Billing portal session created.',
+			message: m.billing_portal_session_created(),
 			redirectUrl
 		};
 	},
@@ -524,7 +510,7 @@ export const actions: Actions = {
 		if (!subscriptionId) {
 			return fail(400, {
 				action: 'cancel',
-				message: 'Subscription id is required.'
+				message: m.billing_subscription_id_required()
 			});
 		}
 
@@ -535,14 +521,14 @@ export const actions: Actions = {
 				action: 'cancel',
 				message: readApiError(
 					error instanceof ApiServiceError ? error.payload : error,
-					'Unable to cancel subscription.'
+					m.billing_subscription_cancel_failed()
 				)
 			});
 		}
 
 		return {
 			action: 'cancel',
-			message: 'Subscription canceled successfully.',
+			message: m.billing_subscription_canceled(),
 			cancelledId: subscriptionId
 		};
 	}

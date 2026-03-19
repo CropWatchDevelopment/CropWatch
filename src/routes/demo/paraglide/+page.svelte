@@ -7,17 +7,16 @@
 
 <div>
 	<button onclick={() => setLocale('en')}>en</button>
-	<button onclick={() => setLocale('es')}>es</button>
 	<button onclick={() => setLocale('ja')}>ja</button>
 </div>
 
 <p>
-	If you use VSCode, install the
+	{m.demo_paraglide_vscode_prefix()}
 
 	<a
 		href="https://marketplace.visualstudio.com/items?itemName=inlang.vs-code-extension"
-		target="_blank">Sherlock i18n extension</a
+		target="_blank">{m.demo_paraglide_sherlock_link()}</a
 	>
 
-	for a better i18n experience.
+	{m.demo_paraglide_vscode_suffix()}
 </p>

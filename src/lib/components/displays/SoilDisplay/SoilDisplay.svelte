@@ -7,7 +7,6 @@
 <script lang="ts">
 	import {
 		CwCard,
-		CwChip,
 		CwLineChart,
 		CwDataTable,
 		type CwColumnDef,
@@ -15,11 +14,11 @@
 		type CwStatCardData,
 		type CwTableQuery,
 		type CwTableResult,
-
 		CwStatCard
-
 	} from '@cropwatchdevelopment/cwui';
+	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
@@ -72,11 +71,11 @@
 	// ---- Columns ---------------------------------------------------------------
 
 	const columns: CwColumnDef<SoilRow>[] = [
-		{ key: 'created_at', header: 'Timestamp', sortable: true, width: '13.5rem' },
-		{ key: 'temperature_c', header: 'Temp (°C)', sortable: true, width: '8rem' },
-		{ key: 'moisture', header: 'Moisture (%)', sortable: true, width: '9rem' },
+		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
+		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
+		{ key: 'moisture', header: m.rule_subject_soil_moisture(), sortable: true, width: '9rem' },
 		{ key: 'ec', header: 'EC (µS/cm)', sortable: true, width: '9rem' },
-		{ key: 'ph', header: 'pH', sortable: true, width: '6rem' }
+		{ key: 'ph', header: m.rule_subject_ph(), sortable: true, width: '6rem' }
 	];
 
 	// ---- Derived state ---------------------------------------------------------
@@ -148,43 +147,41 @@
 <div class="soil-display">
 	<!-- KPI cards -->
 	<div class="kpi-grid">
-		<CwStatCard title="Temperature" stats={temperatureStats} unit="°C" />
+		<CwStatCard title={m.rule_subject_temperature()} stats={temperatureStats} unit="°C" />
 
-		<CwStatCard title="Soil Moisture" stats={soilMoistureStats} unit="%" />
+		<CwStatCard title={m.rule_subject_soil_moisture()} stats={soilMoistureStats} unit="%" />
 
-		<CwCard title="EC" subtitle="Latest" elevated>
+		<CwCard title="EC" subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.ec.toFixed(0)}<span>µS/cm</span></p>
 		</CwCard>
 
-		<CwCard title="pH" subtitle="Latest" elevated>
+		<CwCard title={m.rule_subject_ph()} subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.ph.toFixed(1)}</p>
 		</CwCard>
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<CwCard title="Soil Moisture & Temperature" subtitle="Time series" elevated>
+		<CwCard
+			title={m.display_soil_moisture_temperature()}
+			subtitle={m.display_time_series()}
+			elevated
+		>
 			<CwLineChart
 				data={moistureSeries}
 				secondaryData={temperatureSeries}
-				primaryLabel="Moisture"
+				primaryLabel={m.rule_subject_soil_moisture()}
 				primaryUnit="%"
-				secondaryLabel="Temperature"
+				secondaryLabel={m.rule_subject_temperature()}
 				secondaryUnit="°C"
 				height={400}
 			/>
 		</CwCard>
 
-		<CwCard title="Soil Telemetry" subtitle="Searchable, sortable" elevated>
-			<CwDataTable
-				{columns}
-				loadData={loadTableData}
-				loading={tableLoading}
-				rowKey="id"
-				searchable
-			>
+		<CwCard title={m.display_soil_telemetry()} subtitle={m.display_searchable_sortable()} elevated>
+			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
 				{#snippet cell(row: SoilRow, col: CwColumnDef<SoilRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
-						{new Date(row.created_at).toLocaleString()}
+						{formatDateTime(row.created_at)}
 					{:else if col.key === 'temperature_c'}
 						{row.temperature_c.toFixed(2)} °C
 					{:else if col.key === 'moisture'}
@@ -200,8 +197,8 @@
 			</CwDataTable>
 		</CwCard>
 	{:else if !loading}
-		<CwCard title="No Data" elevated>
-			<p>No soil data available for the selected range.</p>
+		<CwCard title={m.display_no_data()} elevated>
+			<p>{m.display_no_soil_data_selected_range()}</p>
 		</CwCard>
 	{/if}
 </div>

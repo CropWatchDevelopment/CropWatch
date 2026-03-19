@@ -9,8 +9,15 @@
 		CwSeparator,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
+	import {
+		getRuleNotifierTypeOptions,
+		getRuleOperatorOptions,
+		getRuleSendMethodOptions,
+		getRuleSubjectOptions
+	} from '$lib/i18n/options';
 	import { goto } from '$app/navigation';
 	import { ApiService } from '$lib/api/api.service';
+	import { m } from '$lib/paraglide/messages.js';
 	import type { CreateRuleRequest, DeviceDto } from '$lib/api/api.dtos';
 
 	// ── Props ───────────────────────────────────────────────────────────────
@@ -20,49 +27,10 @@
 	const toast = useCwToast();
 
 	// ── Constants ────────────────────────────────────────────────────────────
-	const OPERATORS = [
-		{ label: 'Greater than (>)', value: '>' },
-		{ label: 'Less than (<)', value: '<' },
-		{ label: 'Equal to (=)', value: '=' },
-		{ label: 'Greater or equal (>=)', value: '>=' },
-		{ label: 'Less or equal (<=)', value: '<=' },
-		{ label: 'Not equal (!=)', value: '!=' }
-	];
-
-	const NOTIFIER_TYPES = [
-		{ label: 'Email', value: '1' },
-		{ label: 'SMS', value: '2' },
-		{ label: 'Push Notification', value: '3' },
-		{ label: 'Discord', value: '4' }
-	];
-
-	const SEND_METHODS = [
-		{ label: 'Email', value: 'email' },
-		{ label: 'SMS', value: 'sms' },
-		{ label: 'Both', value: 'both' }
-	];
-
-	const SUBJECT_OPTIONS = [
-		// Air sensors
-		{ label: 'Temperature (°C)', value: 'temperature_c' },
-		{ label: 'Humidity (%)', value: 'humidity' },
-		{ label: 'CO₂ (ppm)', value: 'co2' },
-		{ label: 'CO (ppm)', value: 'co' },
-		{ label: 'Pressure (hPa)', value: 'pressure' },
-		{ label: 'Lux (Light)', value: 'lux' },
-		{ label: 'UV Index', value: 'uv_index' },
-		{ label: 'Wind Speed', value: 'wind_speed' },
-		{ label: 'Wind Direction', value: 'wind_direction' },
-		{ label: 'Rainfall', value: 'rainfall' },
-		{ label: 'Battery Level', value: 'battery_level' },
-		// Soil sensors
-		{ label: 'Soil Moisture', value: 'moisture' },
-		{ label: 'Electrical Conductivity (EC)', value: 'ec' },
-		{ label: 'pH', value: 'ph' },
-		// Water sensors
-		{ label: 'Water Depth (cm)', value: 'deapth_cm' },
-		{ label: 'SpO₂', value: 'spo2' }
-	];
+	const OPERATORS = getRuleOperatorOptions();
+	const NOTIFIER_TYPES = getRuleNotifierTypeOptions();
+	const SEND_METHODS = getRuleSendMethodOptions();
+	const SUBJECT_OPTIONS = getRuleSubjectOptions();
 
 	// ── Form state ──────────────────────────────────────────────────────────
 	let ruleName = $state('');
@@ -170,7 +138,7 @@
 
 			toast.add({
 				tone: 'success',
-				message: `Rule "${ruleName}" created successfully!`,
+				message: m.rules_created_success({ name: ruleName }),
 				duration: 4000,
 				dismissible: true
 			});
@@ -180,7 +148,7 @@
 			console.error('Failed to create rule:', err);
 			toast.add({
 				tone: 'danger',
-				message: 'Failed to create rule. Please try again.',
+				message: m.rules_create_failed(),
 				duration: 5000,
 				dismissible: true
 			});
@@ -197,17 +165,19 @@
 <div class="h-full overflow-y-auto">
 	<div class="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
 		<!-- ── Page header ──────────────────────────────────────────────────── -->
-		<CwButton variant="secondary" size="sm" onclick={() => goto('/rules')}>← Back</CwButton>
+		<CwButton variant="secondary" size="sm" onclick={() => goto('/rules')}>
+			{m.action_back()}
+		</CwButton>
 		<div class="flex items-center gap-3">
-			<h1 class="text-2xl font-semibold">Create New Rule</h1>
+			<h1 class="text-2xl font-semibold">{m.rules_create_new_rule()}</h1>
 		</div>
 
 		<!-- ── Step 1 — Basic Info ─────────────────────────────────────────── -->
-		<CwCard title="1. Rule Details" subtitle="Give your rule a name and choose how to be notified">
+		<CwCard title={m.rules_step_1_title()} subtitle={m.rules_step_1_subtitle()}>
 			<div class="flex flex-col gap-4 p-4">
 				<CwInput
-					label="Rule Name"
-					placeholder="e.g. High Temperature Alert"
+					label={m.rules_rule_name()}
+					placeholder={m.rules_rule_name_placeholder()}
 					bind:value={ruleName}
 					required
 					error={ruleName.length === 0 ? '' : undefined}
@@ -215,17 +185,17 @@
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwDropdown
-						label="Notification Type"
+						label={m.rules_notification_type()}
 						options={NOTIFIER_TYPES}
 						bind:value={notifierType}
 					/>
-					<CwDropdown label="Send Using" options={SEND_METHODS} bind:value={sendUsing} />
+					<CwDropdown label={m.rules_send_using()} options={SEND_METHODS} bind:value={sendUsing} />
 				</div>
 
 				<CwInput
-					label="Recipient"
+					label={m.rules_recipient()}
 					type="email"
-					placeholder="alert@example.com"
+					placeholder={m.rules_recipient_placeholder()}
 					bind:value={actionRecipient}
 					required
 				>
@@ -237,21 +207,21 @@
 		</CwCard>
 
 		<!-- ── Step 2 — Device Selection ───────────────────────────────────── -->
-		<CwCard title="2. Select Device" subtitle="Choose which device this rule monitors">
+		<CwCard title={m.rules_step_2_title()} subtitle={m.rules_step_2_subtitle()}>
 			<div class="flex flex-col gap-4 p-4">
 				{#if deviceOptions.length === 0}
-					<p class="text-sm opacity-60">No devices available. Please add a device first.</p>
+					<p class="text-sm opacity-60">{m.rules_no_devices_available()}</p>
 				{:else}
 					<CwDropdown
-						label="Device"
-						placeholder="Select a device..."
+						label={m.devices_device()}
+						placeholder={m.rules_select_device_placeholder()}
 						options={deviceOptions}
 						bind:value={selectedDevEui}
 						required
 						disabled={deviceLocked}
 					/>
 					{#if deviceLocked}
-						<p class="text-xs opacity-50">Device was pre-selected from the query parameter.</p>
+						<p class="text-xs opacity-50">{m.rules_device_preselected()}</p>
 					{/if}
 					{#if selectedDevEui}
 						<div class="flex items-center gap-2">
@@ -265,8 +235,8 @@
 
 		<!-- ── Step 3 — Criteria ───────────────────────────────────────────── -->
 		<CwCard
-			title="3. Alert Criteria"
-			subtitle="Define when this rule should trigger — add one or more conditions"
+			title={m.rules_step_3_title()}
+			subtitle={m.rules_step_3_subtitle()}
 		>
 			<div class="flex flex-col gap-4 p-4">
 				{#each criteria as criterion, idx (criterion.id)}
@@ -274,25 +244,25 @@
 						class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
 					>
 						<div class="mb-3 flex items-center justify-between">
-							<span class="text-sm font-medium">Condition {idx + 1}</span>
+							<span class="text-sm font-medium">{m.rules_condition_number({ count: String(idx + 1) })}</span>
 							{#if criteria.length > 1}
 								<CwButton variant="danger" size="sm" onclick={() => removeCriterion(criterion.id)}>
-									Remove
+									{m.action_remove()}
 								</CwButton>
 							{/if}
 						</div>
 
 						<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
 							<CwDropdown
-								label="Data Field"
+								label={m.rules_data_field()}
 								options={SUBJECT_OPTIONS}
 								bind:value={criterion.subject}
 							/>
-							<CwDropdown label="Operator" options={OPERATORS} bind:value={criterion.operator} />
+							<CwDropdown label={m.rules_operator()} options={OPERATORS} bind:value={criterion.operator} />
 							<CwInput
-								label="Trigger Value"
+								label={m.rules_trigger_value()}
 								type="numeric"
-								placeholder="e.g. 30"
+								placeholder={m.rules_trigger_value_placeholder()}
 								bind:value={criterion.triggerValue}
 								required
 							/>
@@ -301,10 +271,10 @@
 						<div class="mt-3">
 							<div class="p-2">
 								<CwInput
-									label="Reset Value"
+									label={m.rules_reset_value()}
 									type="numeric"
 									required
-									placeholder="Value to reset the trigger"
+									placeholder={m.rules_reset_value_placeholder()}
 									bind:value={criterion.resetValue}
 								/>
 							</div>
@@ -317,24 +287,24 @@
 		</CwCard>
 
 		<!-- ── Preview & Submit ────────────────────────────────────────────── -->
-		<CwCard title="4. Review & Create" subtitle="Check your rule settings before saving">
+		<CwCard title={m.rules_step_4_title()} subtitle={m.rules_step_4_subtitle()}>
 			<div class="flex flex-col gap-4 p-4">
 				{#if isFormValid}
 					<div
 						class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950"
 					>
-						<p class="mb-2 text-sm font-medium">Rule Summary</p>
+						<p class="mb-2 text-sm font-medium">{m.rules_rule_summary()}</p>
 						<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-							<dt class="font-medium opacity-70">Name:</dt>
+							<dt class="font-medium opacity-70">{m.common_name()}:</dt>
 							<dd>{ruleName}</dd>
-							<dt class="font-medium opacity-70">Device:</dt>
+							<dt class="font-medium opacity-70">{m.devices_device()}:</dt>
 							<dd>{selectedDeviceName}</dd>
-							<dt class="font-medium opacity-70">Notify via:</dt>
+							<dt class="font-medium opacity-70">{m.rules_notify_via()}:</dt>
 							<dd>
 								{NOTIFIER_TYPES.find((n) => n.value === notifierType)?.label}
 								({sendUsing}) → {actionRecipient}
 							</dd>
-							<dt class="font-medium opacity-70">Conditions:</dt>
+							<dt class="font-medium opacity-70">{m.rules_conditions()}:</dt>
 							<dd>
 								<div class="flex flex-wrap gap-1">
 									{#each criteriaPreview as preview, i (i)}
@@ -346,7 +316,7 @@
 					</div>
 				{:else}
 					<p class="text-sm opacity-60">
-						Complete all required fields above to see a preview of your rule.
+						{m.rules_complete_required_fields()}
 					</p>
 				{/if}
 
@@ -354,16 +324,16 @@
 
 				<div class="flex items-center justify-end gap-3">
 					<CwButton variant="ghost" onclick={() => goto('/rules')} disabled={submitting}>
-						Cancel
+						{m.action_cancel()}
 					</CwButton>
 					<CwButton
 						variant="primary"
 						onclick={handleSubmit}
 						disabled={!isFormValid || submitting}
 						loading={submitting}
-					>
-						{submitting ? 'Creating…' : 'Create Rule'}
-					</CwButton>
+				>
+					{submitting ? m.rules_creating() : m.rules_create_rule()}
+				</CwButton>
 				</div>
 			</div>
 		</CwCard>

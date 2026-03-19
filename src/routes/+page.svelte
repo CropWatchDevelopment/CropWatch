@@ -14,6 +14,7 @@
 	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
 	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { m } from '$lib/paraglide/messages.js';
 	import { page } from '$app/state';
 	import type { PageProps } from './$types';
 
@@ -105,7 +106,7 @@
 </script>
 
 <svelte:head>
-	<title>CropWatch Dashboard</title>
+	<title>{m.dashboard_page_title()}</title>
 </svelte:head>
 
 <div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -115,17 +116,21 @@
 				<div class="flex flex-wrap items-center gap-3">
 					<span class="flex items-center gap-1">
 						<span class="font-mono text-slate-100">{devicesInView}</span>
-						<span>devices in view</span>
+						<span>{m.dashboard_devices_in_view()}</span>
 					</span>
 					<span class="flex items-center gap-1 text-amber-200">
 						<span class="font-mono">{app.triggeredRules?.length ?? 0}</span>
-						<span>with active alerts</span>
+						<span>{m.dashboard_with_active_alerts()}</span>
 					</span>
 				</div>
 				<span class="flex items-center gap-1">
-					<p class="text-emerald-300">Total Online: {app.deviceStatuses?.online ?? 0}</p>
+					<p class="text-emerald-300">
+						{m.dashboard_total_online({ count: String(app.deviceStatuses?.online ?? 0) })}
+					</p>
 					|
-					<p class="text-rose-300">Total Offline: {app.deviceStatuses?.offline ?? 0}</p>
+					<p class="text-rose-300">
+						{m.dashboard_total_offline({ count: String(app.deviceStatuses?.offline ?? 0) })}
+					</p>
 				</span>
 			</div>
 
@@ -140,13 +145,13 @@
 						variant={dashboardView === 'table' ? 'info' : 'secondary'}
 						onclick={() => setDashboardView('table')}
 					>
-						Table
+						{m.dashboard_table_view()}
 					</CwButton>
 					<CwButton
 						variant={dashboardView === 'sensor-cards' ? 'info' : 'secondary'}
 						onclick={() => setDashboardView('sensor-cards')}
 					>
-						Sensor Cards
+						{m.dashboard_sensor_cards_view()}
 					</CwButton>
 				</div>
 
@@ -157,7 +162,7 @@
 							app.drawerOpen = !app.drawerOpen;
 						}}
 					>
-						<img src={NOTIFICATIONS_ICON} alt="Notifications Icon" class="h-5 w-5" />
+						<img src={NOTIFICATIONS_ICON} alt={m.dashboard_notifications_alt()} class="h-5 w-5" />
 					</CwButton>
 				</CwBadge>
 			</div>
@@ -172,7 +177,7 @@
 		{/if}
 	{:else}
 		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
-			<p class="text-sm text-slate-400">Loading dashboard view...</p>
+			<p class="text-sm text-slate-400">{m.dashboard_loading_view()}</p>
 		</div>
 	{/if}
 </div>

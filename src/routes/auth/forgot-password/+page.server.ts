@@ -1,8 +1,7 @@
+import { m } from '$lib/paraglide/messages.js';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { getSupabaseClient } from '$lib/supabase.server';
 import { fail, type Actions } from '@sveltejs/kit';
-
-const SECURITY_CHECK_MESSAGE = 'Security verification failed. Please try again.';
 
 function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 	if (typeof value !== 'string') return null;
@@ -17,16 +16,16 @@ export const actions: Actions = {
 		const recaptchaToken = readNonEmptyString(data.get('recaptchaToken'));
 
 		if (!email) {
-			return fail(400, { message: 'Please enter your email address.' });
+			return fail(400, { message: m.auth_enter_email() });
 		}
 
 		if (!recaptchaToken) {
-			return fail(400, { message: SECURITY_CHECK_MESSAGE });
+			return fail(400, { message: m.auth_security_try_again() });
 		}
 
 		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'FORGOT_PASSWORD');
 		if (!recaptchaResult.success) {
-			return fail(400, { message: SECURITY_CHECK_MESSAGE });
+			return fail(400, { message: m.auth_security_try_again() });
 		}
 
 		const supabase = getSupabaseClient();

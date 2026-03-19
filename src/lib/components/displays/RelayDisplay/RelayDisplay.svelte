@@ -15,7 +15,9 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
+	import { m } from '$lib/paraglide/messages.js';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
@@ -40,9 +42,9 @@
 	// ---- Columns ---------------------------------------------------------------
 
 	const columns: CwColumnDef<RelayRow>[] = [
-		{ key: 'created_at', header: 'Timestamp', sortable: true, width: '13.5rem' },
-		{ key: 'relay_1', header: 'Relay 1', sortable: true, width: '8rem' },
-		{ key: 'relay_2', header: 'Relay 2', sortable: true, width: '8rem' }
+		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
+		{ key: 'relay_1', header: m.display_relay_one(), sortable: true, width: '8rem' },
+		{ key: 'relay_2', header: m.display_relay_two(), sortable: true, width: '8rem' }
 	];
 
 	// ---- Derived state ---------------------------------------------------------
@@ -83,22 +85,22 @@
 <div class="relay-display">
 	<!-- Current relay status -->
 	<div class="relay-grid">
-		<CwCard title="Relay 1" subtitle="Current state" elevated>
+		<CwCard title={m.display_relay_one()} subtitle={m.display_current_state()} elevated>
 			<div class="relay-state">
 				<CwSwitch checked={latestRelay1} disabled />
 				<CwChip
-					label={latestRelay1 ? 'ON' : 'OFF'}
+					label={latestRelay1 ? m.display_on() : m.display_off()}
 					tone={latestRelay1 ? 'success' : 'danger'}
 					variant="soft"
 				/>
 			</div>
 		</CwCard>
 
-		<CwCard title="Relay 2" subtitle="Current state" elevated>
+		<CwCard title={m.display_relay_two()} subtitle={m.display_current_state()} elevated>
 			<div class="relay-state">
 				<CwSwitch checked={latestRelay2} disabled />
 				<CwChip
-					label={latestRelay2 ? 'ON' : 'OFF'}
+					label={latestRelay2 ? m.display_on() : m.display_off()}
 					tone={latestRelay2 ? 'success' : 'danger'}
 					variant="soft"
 				/>
@@ -107,23 +109,18 @@
 	</div>
 
 	{#if lastUpdate}
-		<p class="last-update">Last updated: {new Date(lastUpdate).toLocaleString()}</p>
+		<p class="last-update">{m.display_last_updated()}: {formatDateTime(lastUpdate)}</p>
 	{/if}
 
 	{#if !loading && rows.length > 0}
-		<CwCard title="Relay History" subtitle="State change log" elevated>
-			<CwDataTable
-				{columns}
-				loadData={loadTableData}
-				loading={tableLoading}
-				rowKey="id"
-			>
+		<CwCard title={m.display_relay_history()} subtitle={m.display_state_change_log()} elevated>
+			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id">
 				{#snippet cell(row: RelayRow, col: CwColumnDef<RelayRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
-						{new Date(row.created_at).toLocaleString()}
+						{formatDateTime(row.created_at)}
 					{:else if col.key === 'relay_1' || col.key === 'relay_2'}
 						<CwChip
-							label={row[col.key] ? 'ON' : 'OFF'}
+							label={row[col.key] ? m.display_on() : m.display_off()}
 							tone={row[col.key] ? 'success' : 'danger'}
 							variant="outline"
 						/>
@@ -134,8 +131,8 @@
 			</CwDataTable>
 		</CwCard>
 	{:else if !loading}
-		<CwCard title="No Data" elevated>
-			<p>No relay history available.</p>
+		<CwCard title={m.display_no_data()} elevated>
+			<p>{m.display_no_relay_history()}</p>
 		</CwCard>
 	{/if}
 </div>

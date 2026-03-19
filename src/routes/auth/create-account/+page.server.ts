@@ -1,9 +1,7 @@
+import { m } from '$lib/paraglide/messages.js';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { getSupabaseClient } from '$lib/supabase.server';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
-
-const SECURITY_CHECK_MESSAGE = 'Security verification failed. Please try again.';
-const REGISTRATION_FAILED_MESSAGE = 'Unable to create account right now. Please try again.';
 
 function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 	if (typeof value !== 'string') return null;
@@ -30,7 +28,7 @@ export const actions: Actions = {
 		// ── Validation ─────────────────────────────────────────────
 		if (!firstName || !lastName || !email || !password || !confirmPassword || !company) {
 			return fail(400, {
-				message: 'All fields are required.',
+				message: m.auth_all_fields_required(),
 				firstName,
 				lastName,
 				email,
@@ -40,7 +38,7 @@ export const actions: Actions = {
 
 		if (!recaptchaToken) {
 			return fail(400, {
-				message: SECURITY_CHECK_MESSAGE,
+				message: m.auth_security_try_again(),
 				firstName,
 				lastName,
 				email,
@@ -50,7 +48,7 @@ export const actions: Actions = {
 
 		if (password !== confirmPassword) {
 			return fail(400, {
-				message: 'Passwords do not match.',
+				message: m.auth_passwords_do_not_match_plain(),
 				firstName,
 				lastName,
 				email,
@@ -60,7 +58,7 @@ export const actions: Actions = {
 
 		if (!agreedTerms || !agreedPrivacy || !agreedCookies) {
 			return fail(400, {
-				message: 'You must agree to all required policies to register.',
+				message: m.auth_must_agree_all_policies(),
 				firstName,
 				lastName,
 				email,
@@ -72,7 +70,7 @@ export const actions: Actions = {
 		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'REGISTER');
 		if (!recaptchaResult.success) {
 			return fail(400, {
-				message: SECURITY_CHECK_MESSAGE,
+				message: m.auth_security_try_again(),
 				firstName,
 				lastName,
 				email,
@@ -106,8 +104,8 @@ export const actions: Actions = {
 				msg.includes('already been registered') ||
 				msg.includes('already registered') ||
 				msg.includes('duplicate')
-					? 'An account with this email already exists.'
-					: REGISTRATION_FAILED_MESSAGE;
+					? m.auth_account_exists()
+					: m.auth_registration_failed();
 
 			return fail(signUpError.status ?? 500, {
 				message: userFacingMessage,

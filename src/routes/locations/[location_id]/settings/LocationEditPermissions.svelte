@@ -9,6 +9,8 @@
 		type CwTableQuery
 	} from '@cropwatchdevelopment/cwui';
 	import type { LocationOwnerDto } from '$lib/api/api.dtos';
+	import { getPermissionLevelLabel, getPermissionLevelOptions } from '$lib/i18n/options';
+	import { m } from '$lib/paraglide/messages.js';
 	import DeletePermissionDialog from './DeletePermissionDialog.svelte';
 	import { page } from '$app/state';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
@@ -67,32 +69,21 @@
 		rowActionsHeader="Actions"
 		columns={[
 			{ key: 'id', header: 'ID' },
-			{ key: 'email', header: 'Email' },
-			{ key: 'name', header: 'Name' },
-			{ key: 'permission_level', header: 'Permission Level' }
+			{ key: 'email', header: m.auth_email_label() },
+			{ key: 'name', header: m.common_name() },
+			{ key: 'permission_level', header: m.locations_permission_level() }
 		]}
 	>
 		{#snippet cell(row: Permission, col: CwColumnDef<Permission>, defaultValue: string)}
 			{#if col.key === 'permission_level'}
 				{#if editingPermissionId === row.id}
 					<CwDropdown
-						options={[
-							{ label: 'Admin', value: '1' },
-							{ label: 'Manager', value: '2' },
-							{ label: 'Viewer', value: '3' },
-							{ label: 'Disabled', value: '4' }
-						]}
+						options={getPermissionLevelOptions(m.permission_level_viewer())}
 						bind:value={row.permission_level}
-						placeholder="Choose a permission level…"
+						placeholder={m.locations_choose_permission_level()}
 					/>
-				{:else if row.permission_level === '1'}
-					Admin
-				{:else if row.permission_level === '2'}
-					Manager
-				{:else if row.permission_level === '3'}
-					Viewer
 				{:else}
-					Disabled
+					{getPermissionLevelLabel(row.permission_level, m.permission_level_viewer())}
 				{/if}
 			{:else}
 				{defaultValue}
@@ -104,21 +95,21 @@
 					variant="primary"
 					onclick={() => {
 						savePermissionLevelUpdate(row);
-					}}>Save Changes</CwButton
+					}}>{m.action_save_changes()}</CwButton
 				>
 				<CwButton
 					variant="danger"
 					onclick={() => {
 						selectedRow = row;
 						openDeletePermissionDialog = true;
-					}}>Delete</CwButton
+					}}>{m.action_delete()}</CwButton
 				>
 				<CwButton
 					variant="primary"
 					onclick={() => {
 						selectedRow = null;
 						editingPermissionId = null;
-					}}>Cancel</CwButton
+					}}>{m.action_cancel()}</CwButton
 				>
 			{:else}
 				<CwButton
@@ -127,7 +118,7 @@
 						editingPermissionId = row.id;
 					}}
 				>
-					<img src={EDIT_ICON} alt="edit" />
+					<img src={EDIT_ICON} alt={m.action_edit()} />
 				</CwButton>
 			{/if}
 		{/snippet}

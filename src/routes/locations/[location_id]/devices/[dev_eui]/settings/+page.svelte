@@ -13,6 +13,8 @@
 	import './settings-style.css';
 	import { goto } from '$app/navigation';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { getPermissionLevelOptions } from '$lib/i18n/options';
+	import { m } from '$lib/paraglide/messages.js';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
 	const DEVICE_GROUP_MAX_LENGTH = 120;
@@ -46,7 +48,7 @@
 	let deviceGroup = $derived(data.deviceGroup ?? '');
 	let location_id = $derived(String(data.location_id ?? ''));
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
-	let permissionRows: DeviceOwnerRow[] = $state(createOwnerRows(data.deviceOwners ?? []));
+	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
 
 	function createOwnerRows(
 		owners: Array<{
@@ -86,30 +88,27 @@
 	let deviceGroupValue = $derived(deviceGroup.trim());
 	let deviceNameError = $derived(
 		deviceNameValue.length === 0
-			? 'Device name is required.'
+			? m.devices_device_name_required()
 			: deviceNameValue.length > DEVICE_NAME_MAX_LENGTH
-				? `Device name must be ${DEVICE_NAME_MAX_LENGTH} characters or fewer.`
+				? m.devices_device_name_length({ max: String(DEVICE_NAME_MAX_LENGTH) })
 				: (deviceForm?.fieldErrors?.name ?? '')
 	);
 	let deviceGroupError = $derived(
 		deviceGroupValue.length > DEVICE_GROUP_MAX_LENGTH
-			? `Device group must be ${DEVICE_GROUP_MAX_LENGTH} characters or fewer.`
+			? m.devices_device_group_length({ max: String(DEVICE_GROUP_MAX_LENGTH) })
 			: (deviceForm?.fieldErrors?.group ?? '')
 	);
+	let locationError = $derived(deviceForm?.fieldErrors?.location_id ?? '');
 	let deviceDirty = $derived(
 		deviceNameValue !== (data.deviceName ?? '').trim() ||
-			deviceGroupValue !== (data.deviceGroup ?? '').trim()
+			deviceGroupValue !== (data.deviceGroup ?? '').trim() ||
+			location_id !== String(data.location_id ?? '')
 	);
 	let canSubmitDevice = $derived(
-		!deviceSubmitting && deviceDirty && !deviceNameError && !deviceGroupError
+		!deviceSubmitting && deviceDirty && !deviceNameError && !deviceGroupError && !locationError
 	);
 
-	const permissionOptions = [
-		{ label: 'Admin', value: '1' },
-		{ label: 'Manager', value: '2' },
-		{ label: 'User', value: '3' },
-		{ label: 'Disabled', value: '4' }
-	];
+	const permissionOptions = getPermissionLevelOptions();
 
 	function ownerFormFor(key: string): FormPayload {
 		return actionForm?.action === 'updateDeviceOwnerPermission' && actionForm.ownerKey === key
@@ -119,7 +118,8 @@
 </script>
 
 <svelte:head>
-	<title>Device Settings | {data.devEui?.toUpperCase() ?? 'UNKNOWN'} | CropWatch</title>
+	<title>{m.devices_settings_page_title({ devEui: data.devEui?.toUpperCase() ?? 'UNKNOWN' })}</title
+	>
 </svelte:head>
 
 <div class="device-settings-page">
@@ -131,9 +131,9 @@
 					dev_eui: data.devEui
 				})
 			)}
-		class="back-button">&larr; Back To Device Detail</CwButton
+		class="back-button">&larr; {m.devices_back_to_detail()}</CwButton
 	>
-	<CwCard title="Device Settings" subtitle="Update the cw_device name and group fields." elevated>
+	<CwCard title={m.devices_settings_title()} subtitle={m.devices_settings_subtitle()} elevated>
 		<form
 			method="POST"
 			action="?/updateDevice"
@@ -156,12 +156,16 @@
 		>
 			<div class="device-form__header">
 				<CwChip
-					label={`DevEUI ${data.devEui?.toUpperCase() ?? 'UNKNOWN'}`}
+					label={m.devices_deveui_chip({ devEui: data.devEui?.toUpperCase() ?? 'UNKNOWN' })}
 					tone="info"
 					variant="soft"
 				/>
 				{#if data.deviceGroup}
-					<CwChip label={`Current group: ${data.deviceGroup}`} tone="secondary" variant="soft" />
+					<CwChip
+						label={m.devices_current_group_chip({ group: data.deviceGroup })}
+						tone="secondary"
+						variant="soft"
+					/>
 				{/if}
 			</div>
 
@@ -174,7 +178,7 @@
 			<div class="panel-grid">
 				<div class="field-stack">
 					<CwInput
-						label="Device Name"
+						label={m.devices_device_name_label()}
 						name="name"
 						required
 						maxlength={DEVICE_NAME_MAX_LENGTH}
@@ -188,7 +192,7 @@
 
 				<div class="field-stack">
 					<CwInput
-						label="Device Group"
+						label={m.common_group()}
 						name="group"
 						required={false}
 						maxlength={DEVICE_GROUP_MAX_LENGTH}
@@ -203,46 +207,46 @@
 
 				<div class="field-stack">
 					<CwDropdown
-						label="Location"
+						label={m.common_location()}
 						name="location_id"
 						options={[
-							{ label: 'Unassigned', value: '' },
+							{ label: m.devices_unassigned_location(), value: '' },
 							...(data.locations ?? []).map((loc) => ({
 								label: loc.name,
 								value: String(loc.location_id)
 							}))
 						]}
 						bind:value={location_id}
-						error={deviceGroupError || undefined}
+						error={locationError || undefined}
 					/>
 					<input type="hidden" name="location_id" bind:value={location_id} />
-					{#if deviceGroupError}
-						<p class="field-error">{deviceGroupError}</p>
+					{#if locationError}
+						<p class="field-error">{locationError}</p>
 					{/if}
 				</div>
 			</div>
 
 			<div class="panel-actions">
-				<p class="panel-note">Validation runs in the browser and again on the server.</p>
+				<p class="panel-note">{m.devices_validation_runs_note()}</p>
 				<CwButton
 					type="submit"
 					variant="primary"
 					loading={deviceSubmitting}
 					disabled={!canSubmitDevice}
 				>
-					Update Device
+					{m.devices_update_submit()}
 				</CwButton>
 			</div>
 		</form>
 	</CwCard>
 
 	<CwCard
-		title="Device Sensor Certificates"
-		subtitle="Download the Libellus PDF certificate for each configured sensor serial."
+		title={m.devices_sensor_certificates_title()}
+		subtitle={m.devices_sensor_certificates_subtitle()}
 		elevated
 	>
 		{#if sensorCertificates.length === 0}
-			<p class="empty-state">No sensor serial value is available for this device.</p>
+			<p class="empty-state">{m.devices_no_sensor_serial()}</p>
 		{:else}
 			<div class="certificate-list">
 				{#each sensorCertificates as target, index (target.key)}
@@ -250,16 +254,17 @@
 						<div class="certificate-item__meta">
 							<div class="device-form__header">
 								<CwChip label={target.label} tone="info" variant="soft" />
-								<CwChip label={`Serial ${target.serial}`} tone="secondary" variant="soft" />
+								<CwChip
+									label={m.devices_sensor_serial_chip({ serial: target.serial })}
+									tone="secondary"
+									variant="soft"
+								/>
 								{#if target.product}
 									<CwChip label={target.product} tone="secondary" variant="soft" />
 								{/if}
 							</div>
 
-							<p class="panel-note">
-								Downloads the individual ISO17025 PDF returned by Sensirion Libellus for this serial
-								number.
-							</p>
+							<p class="panel-note">{m.devices_sensor_certificate_note()}</p>
 
 							{#if target.downloadDisabledReason}
 								<p class="field-error">{target.downloadDisabledReason}</p>
@@ -285,7 +290,7 @@
 								size="sm"
 								disabled={Boolean(target.downloadDisabledReason)}
 							>
-								Download PDF
+								{m.devices_download_pdf()}
 							</CwButton>
 						</form>
 					</div>
@@ -299,12 +304,12 @@
 	</CwCard>
 
 	<CwCard
-		title="Device Owner Permissions"
-		subtitle="Update only. Add and delete actions are intentionally omitted here."
+		title={m.devices_owner_permissions_title()}
+		subtitle={m.devices_owner_permissions_subtitle()}
 		elevated
 	>
 		{#if permissionRows.length === 0}
-			<p class="empty-state">No device owners were returned for this device.</p>
+			<p class="empty-state">{m.devices_no_device_owners()}</p>
 		{:else}
 			<div class="permission-list">
 				{#each permissionRows as row, index (row.key)}
@@ -341,8 +346,8 @@
 									<div class="permission-user">
 										<input type="hidden" value={row.name} disabled />
 										<CwInput
-											label="Email"
-											value={row.email || row.userId || 'Unavailable'}
+											label={m.auth_email_label()}
+											value={row.email || row.userId || m.common_not_available()}
 											disabled
 										/>
 									</div>
@@ -350,11 +355,13 @@
 									<div class="permission-edit">
 										<div class="field-stack">
 											<CwDropdown
-												label="Permission Level"
+												label={m.locations_permission_level()}
 												options={permissionOptions}
 												bind:value={row.permissionLevel}
 												error={ownerForm?.fieldErrors?.permissionLevel ||
-													(!isOwnerRowValid(row) ? 'Choose a valid permission level.' : undefined)}
+													(!isOwnerRowValid(row)
+														? m.devices_choose_valid_permission_level()
+														: undefined)}
 											/>
 											{#if ownerForm?.fieldErrors?.permissionLevel}
 												<p class="field-error">{ownerForm.fieldErrors.permissionLevel}</p>
@@ -367,7 +374,7 @@
 											loading={ownerSubmittingByKey[row.key] ?? false}
 											disabled={(ownerSubmittingByKey[row.key] ?? false) || !isOwnerRowValid(row)}
 										>
-											Update Permission
+											{m.devices_update_permission()}
 										</CwButton>
 									</div>
 

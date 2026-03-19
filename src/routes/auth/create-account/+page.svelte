@@ -14,6 +14,7 @@
 	} from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {
 		form: {
@@ -176,18 +177,19 @@
 </script>
 
 <svelte:head>
-	<title>Create Account - CropWatch</title>
+	<title>{m.auth_create_account_page_title()}</title>
 </svelte:head>
 
 <CwCard padded={false} class="auth-card">
 	<div class="auth-shell">
 		<div class="logo-frame">
-			<img src={logo} alt="CropWatch" class="logo-image" />
+			<img src={logo} alt={m.app_name()} class="logo-image" />
 		</div>
 
-		<h1 class="auth-title">Create Account</h1>
+		<h1 class="auth-title">{m.auth_create_account()}</h1>
 		<p class="auth-subtitle">
-			or <a href={resolve('/auth/login')} class="auth-link">sign in with an existing account</a>
+			{m.auth_or_prefix()}
+			<a href={resolve('/auth/login')} class="auth-link">{m.auth_sign_in_existing_account()}</a>
 		</p>
 
 		<form
@@ -209,7 +211,7 @@
 				} catch (error) {
 					console.error('reCAPTCHA execution error:', error);
 					toast.add({
-						message: 'Unable to verify site security. Please try again.',
+						message: m.auth_security_try_again(),
 						tone: 'danger'
 					});
 					submitting = false;
@@ -238,27 +240,27 @@
 			<!-- Name row -->
 			<div class="name-row">
 				<label class="field-block">
-					<span class="field-label">FIRST NAME *</span>
+					<span class="field-label">{m.auth_first_name_label_required()}</span>
 					<CwInput
 						bind:value={firstName}
 						class="auth-input"
 						name="firstName"
 						type="text"
 						required
-						placeholder="John"
+						placeholder={m.auth_first_name_placeholder()}
 						autocomplete="given-name"
 					/>
 				</label>
 
 				<label class="field-block">
-					<span class="field-label">LAST NAME *</span>
+					<span class="field-label">{m.auth_last_name_label_required()}</span>
 					<CwInput
 						bind:value={lastName}
 						class="auth-input"
 						name="lastName"
 						type="text"
 						required
-						placeholder="Doe"
+						placeholder={m.auth_last_name_placeholder()}
 						autocomplete="family-name"
 					/>
 				</label>
@@ -266,21 +268,21 @@
 
 			<!-- Email -->
 			<label class="field-block">
-				<span class="field-label">EMAIL *</span>
+				<span class="field-label">{m.auth_email_label_required()}</span>
 				<CwInput
 					bind:value={email}
 					class="auth-input"
 					name="email"
 					type="email"
 					required
-					placeholder="you@example.com"
+					placeholder={m.auth_email_placeholder()}
 					autocomplete="email"
 				/>
 			</label>
 
 			<!-- Password -->
 			<label class="field-block">
-				<span class="field-label">PASSWORD *</span>
+				<span class="field-label">{m.auth_password_label_required()}</span>
 				<CwInput
 					value={password}
 					oninput={handlePasswordInput}
@@ -288,40 +290,40 @@
 					name="password"
 					type="password"
 					required
-					placeholder="••••••••"
+					placeholder={m.auth_password_placeholder()}
 					autocomplete="new-password"
 				/>
 			</label>
 
 			<!-- Password strength checklist -->
 			{#if password.length > 0}
-				<ul class="pw-checklist" aria-label="Password requirements">
+				<ul class="pw-checklist" aria-label={m.auth_password_requirements()}>
 					<li class:met={passwordValidation.hasMinLength}>
 						<span class="pw-icon">{passwordValidation.hasMinLength ? '✓' : '○'}</span>
-						At least 6 characters
+						{m.auth_password_requirement_length()}
 					</li>
 					<li class:met={passwordValidation.hasLowerCase}>
 						<span class="pw-icon">{passwordValidation.hasLowerCase ? '✓' : '○'}</span>
-						Lowercase letter (a–z)
+						{m.auth_password_requirement_lowercase()}
 					</li>
 					<li class:met={passwordValidation.hasUpperCase}>
 						<span class="pw-icon">{passwordValidation.hasUpperCase ? '✓' : '○'}</span>
-						Uppercase letter (A–Z)
+						{m.auth_password_requirement_uppercase()}
 					</li>
 					<li class:met={passwordValidation.hasNumber}>
 						<span class="pw-icon">{passwordValidation.hasNumber ? '✓' : '○'}</span>
-						Number (0–9)
+						{m.auth_password_requirement_number()}
 					</li>
 					<li class:met={passwordValidation.hasSymbol}>
 						<span class="pw-icon">{passwordValidation.hasSymbol ? '✓' : '○'}</span>
-						Symbol (!@#$ etc.)
+						{m.auth_password_requirement_symbol()}
 					</li>
 				</ul>
 			{/if}
 
 			<!-- Confirm password -->
 			<label class="field-block">
-				<span class="field-label">CONFIRM PASSWORD *</span>
+				<span class="field-label">{m.auth_confirm_password_label_required()}</span>
 				<CwInput
 					value={confirmPassword}
 					oninput={handleConfirmPasswordInput}
@@ -329,61 +331,61 @@
 					name="confirmPassword"
 					type="password"
 					required
-					placeholder="••••••••"
+					placeholder={m.auth_password_placeholder()}
 					autocomplete="new-password"
 				/>
 			</label>
 
 			{#if confirmPassword.length > 0}
 				<p class="pw-match-hint" class:pw-match-ok={passwordsMatch} class:pw-match-fail={!passwordsMatch}>
-					{passwordsMatch ? '✓ Passwords match' : 'Passwords do not match'}
+					{passwordsMatch ? m.auth_passwords_match() : m.auth_passwords_do_not_match()}
 				</p>
 			{/if}
 
 			<!-- Company -->
 			<label class="field-block">
-				<span class="field-label">COMPANY NAME *</span>
+				<span class="field-label">{m.auth_company_name_label_required()}</span>
 				<CwInput
 					bind:value={company}
 					class="auth-input"
 					name="company"
 					type="text"
 					required
-					placeholder="Acme Corp"
+					placeholder={m.auth_company_name_placeholder()}
 					autocomplete="organization"
 				/>
 			</label>
 
 			<!-- Consent checkboxes -->
 			<fieldset class="consent-group">
-				<legend class="field-label">REQUIRED AGREEMENTS *</legend>
+				<legend class="field-label">{m.auth_required_agreements_label()}</legend>
 
 				<label class="consent-item">
 					<input type="checkbox" bind:checked={agreedTerms} class="consent-checkbox" />
 					<span>
-						I agree to the
-						<a href="https://app.cropwatch.io/legal/EULA" target="_blank" rel="noopener noreferrer" class="auth-link">Terms of Service</a>
+						{m.auth_agree_to()}
+						<a href="https://app.cropwatch.io/legal/EULA" target="_blank" rel="noopener noreferrer" class="auth-link">{m.auth_terms_of_service()}</a>
 					</span>
 				</label>
 
 				<label class="consent-item">
 					<input type="checkbox" bind:checked={agreedPrivacy} class="consent-checkbox" />
 					<span>
-						I agree to the
-						<a href="https://app.cropwatch.io/legal/privacy-policy" target="_blank" rel="noopener noreferrer" class="auth-link">Privacy Policy</a>
+						{m.auth_agree_to()}
+						<a href="https://app.cropwatch.io/legal/privacy-policy" target="_blank" rel="noopener noreferrer" class="auth-link">{m.auth_privacy_policy()}</a>
 					</span>
 				</label>
 
 				<label class="consent-item">
 					<input type="checkbox" bind:checked={agreedCookies} class="consent-checkbox" />
 					<span>
-						I agree to the
-						<a href="https://app.cropwatch.io/legal/cookie-policy" target="_blank" rel="noopener noreferrer" class="auth-link">Cookie Policy</a>
+						{m.auth_agree_to()}
+						<a href="https://app.cropwatch.io/legal/cookie-policy" target="_blank" rel="noopener noreferrer" class="auth-link">{m.auth_cookie_policy()}</a>
 					</span>
 				</label>
 
 				{#if !allConsentsGiven && (agreedTerms || agreedPrivacy || agreedCookies)}
-					<p class="consent-hint">All three agreements are required to register.</p>
+					<p class="consent-hint">{m.auth_all_three_required()}</p>
 				{/if}
 			</fieldset>
 
@@ -397,12 +399,12 @@
 				size="md"
 				fullWidth={true}
 			>
-				<img src={PERSON_ADD_ICON} alt="Create account icon" class="h-4 w-4" />
+				<img src={PERSON_ADD_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
 				{submitting
-					? 'Creating account...'
+					? m.auth_creating_account()
 					: loadingCaptcha
-						? 'Loading Site Security...'
-						: 'Create Account'}
+						? m.auth_loading_site_security()
+						: m.auth_create_account()}
 			</CwButton>
 
 			<CwButton
@@ -413,12 +415,12 @@
 				fullWidth={true}
 				onclick={() => goto(resolve('/auth/login'))}
 			>
-				<img src={KEY_ICON} alt="Sign in icon" class="h-4 w-4" />
-				Sign in instead
+				<img src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
+				{m.auth_sign_in_instead()}
 			</CwButton>
 		</form>
 
-		<p class="security-copy">Protected by reCAPTCHA and CropWatch Security</p>
+		<p class="security-copy">{m.auth_security_copy()}</p>
 	</div>
 </CwCard>
 
