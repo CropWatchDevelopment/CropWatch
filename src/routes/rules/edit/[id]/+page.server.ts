@@ -17,14 +17,26 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
 
-	const [rule, rawDevices] = await Promise.all([
+	const [rawRule, rawDevices] = await Promise.all([
 		api.getRule(ruleId).catch(() => null),
 		api.getAllDevices().catch(() => [])
 	]);
 
-	if (!rule) {
+	if (!rawRule) {
 		error(404, m.rules_rule_not_found());
 	}
+
+	const rule = {
+		...rawRule,
+		cw_rule_criteria: (rawRule.cw_rule_criteria ?? []).map((criterion) => {
+			const parsedId = typeof criterion.id === 'number' ? criterion.id : Number(criterion.id);
+
+			return {
+				...criterion,
+				id: Number.isFinite(parsedId) ? parsedId : 0
+			};
+		})
+	};
 
 	const devices = rawDevices;
 
