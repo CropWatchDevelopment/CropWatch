@@ -11,7 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
-	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
@@ -134,15 +134,15 @@
 				<div class="location-page__actions">
 					{#if selectedLocationId}
 						<CwButton
-							variant="secondary"
-							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
-							>{m.nav_settings()}</CwButton
-						>
-						<CwButton
 							variant="primary"
 							onclick={() =>
 								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/devices/create`)}
 							>{m.devices_add_device()}</CwButton
+						>
+						<CwButton
+							variant="secondary"
+							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
+							>{m.nav_settings()}</CwButton
 						>
 					{/if}
 				</div>
@@ -168,10 +168,13 @@
 						<img src={EYE_ICON} alt={m.action_view()} />
 					</CwButton>
 					<CwButton
-						icon={EDIT_ICON}
+						icon={SETTINGS_ICON}
 						size="md"
 						variant="secondary"
-						onclick={() => handleViewDevice(row)}
+						onclick={() =>
+							goto(
+								`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}/settings`
+							)}
 					/>
 				</div>
 			{/snippet}
