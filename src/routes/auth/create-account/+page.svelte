@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import '../login/style.css';
 	import logo from '$lib/images/cropwatch_static.svg';
 	import KEY_ICON from '$lib/images/icons/key.svg';
@@ -337,7 +338,11 @@
 			</label>
 
 			{#if confirmPassword.length > 0}
-				<p class="pw-match-hint" class:pw-match-ok={passwordsMatch} class:pw-match-fail={!passwordsMatch}>
+				<p
+					class="pw-match-hint"
+					class:pw-match-ok={passwordsMatch}
+					class:pw-match-fail={!passwordsMatch}
+				>
 					{passwordsMatch ? m.auth_passwords_match() : m.auth_passwords_do_not_match()}
 				</p>
 			{/if}
@@ -364,7 +369,12 @@
 					<input type="checkbox" bind:checked={agreedTerms} class="consent-checkbox" />
 					<span>
 						{m.auth_agree_to()}
-						<a href="https://app.cropwatch.io/legal/EULA" target="_blank" rel="noopener noreferrer" class="auth-link">{m.auth_terms_of_service()}</a>
+						<a
+							href="https://app.cropwatch.io/legal/EULA"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="auth-link">{m.auth_terms_of_service()}</a
+						>
 					</span>
 				</label>
 
@@ -372,7 +382,12 @@
 					<input type="checkbox" bind:checked={agreedPrivacy} class="consent-checkbox" />
 					<span>
 						{m.auth_agree_to()}
-						<a href="https://app.cropwatch.io/legal/privacy-policy" target="_blank" rel="noopener noreferrer" class="auth-link">{m.auth_privacy_policy()}</a>
+						<a
+							href="https://app.cropwatch.io/legal/privacy-policy"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="auth-link">{m.auth_privacy_policy()}</a
+						>
 					</span>
 				</label>
 
@@ -380,7 +395,12 @@
 					<input type="checkbox" bind:checked={agreedCookies} class="consent-checkbox" />
 					<span>
 						{m.auth_agree_to()}
-						<a href="https://app.cropwatch.io/legal/cookie-policy" target="_blank" rel="noopener noreferrer" class="auth-link">{m.auth_cookie_policy()}</a>
+						<a
+							href="https://app.cropwatch.io/legal/cookie-policy"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="auth-link">{m.auth_cookie_policy()}</a
+						>
 					</span>
 				</label>
 
@@ -399,7 +419,7 @@
 				size="md"
 				fullWidth={true}
 			>
-				<img src={PERSON_ADD_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
+				<Icon src={PERSON_ADD_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
 				{submitting
 					? m.auth_creating_account()
 					: loadingCaptcha
@@ -415,7 +435,7 @@
 				fullWidth={true}
 				onclick={() => goto(resolve('/auth/login'))}
 			>
-				<img src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
+				<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
 				{m.auth_sign_in_instead()}
 			</CwButton>
 		</form>

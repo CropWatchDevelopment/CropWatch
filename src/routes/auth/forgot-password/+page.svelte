@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import logo from '$lib/images/cropwatch_static.svg';
 	import KEY_ICON from '$lib/images/icons/key.svg';
 	import BACK_ICON from '$lib/images/icons/back.svg';
@@ -127,7 +128,7 @@
 				fullWidth={true}
 				onclick={() => goto('/auth/login')}
 			>
-				<img src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
+				<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
 				{m.auth_back_to_login()}
 			</CwButton>
 		{:else}
@@ -185,7 +186,7 @@
 					{#if submitting}
 						{m.auth_sending()}
 					{:else}
-						<img src={KEY_ICON} alt={m.auth_send_reset_link()} class="h-4 w-4" />
+						<Icon src={KEY_ICON} alt={m.auth_send_reset_link()} class="h-4 w-4" />
 						{m.auth_send_reset_link()}
 					{/if}
 				</CwButton>
@@ -199,7 +200,7 @@
 						fullWidth={true}
 						onclick={() => goto('/auth/login')}
 					>
-						<img src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
+						<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
 						{m.auth_back_to_login()}
 					</CwButton>
 
@@ -211,7 +212,7 @@
 						fullWidth={true}
 						onclick={() => goto('/auth/create-account')}
 					>
-						<img src={ADD_PERSON_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
+						<Icon src={ADD_PERSON_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
 						{m.auth_create_account()}
 					</CwButton>
 				</div>

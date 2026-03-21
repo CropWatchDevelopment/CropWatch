@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { CwButton, CwChip, CwDialog, CwSeparator } from '@cropwatchdevelopment/cwui';
 	import {
 		getRuleNotifierTypeOptions,
@@ -73,7 +74,9 @@
 	}
 </script>
 
-<CwButton variant="secondary" icon={EYE_ICON} size="md" onclick={() => (open = true)} />
+<CwButton variant="secondary" size="md" onclick={() => (open = true)}>
+	<Icon src={EYE_ICON} alt={m.action_view()} />
+</CwButton>
 
 <CwDialog bind:open title={m.rules_rule_summary()} class="w-full max-w-2xl">
 	<div class="flex flex-col gap-4">

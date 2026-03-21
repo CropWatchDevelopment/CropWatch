@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { ApiService } from '$lib/api/api.service';
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import {
@@ -185,7 +186,7 @@
 	disabled={disabled || !authToken || !devEui}
 	onclick={openDialog}
 >
-	<img src={DOWNLOAD_ICON} alt="" class="toolbar-icon" />
+	<Icon src={DOWNLOAD_ICON} alt="" class="h-4 w-4" />
 	{m.devices_csv_export()}
 </CwButton>
 
@@ -242,10 +243,5 @@
 
 	.csv-export-dialog__error {
 		color: var(--cw-danger, #b91c1c);
-	}
-
-	.toolbar-icon {
-		width: 1rem;
-		height: 1rem;
 	}
 </style>

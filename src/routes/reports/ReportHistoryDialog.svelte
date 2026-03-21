@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwCard,
@@ -14,6 +15,7 @@
 	import { formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
 	import { type PdfFile } from '$lib/interfaces/PdfFile.interface';
+	import HISTORY_ICON from '$lib/images/icons/history.svg';
 
 	type ReportHistoryRow = { id: string; name: string; created_at: string };
 
@@ -53,9 +55,7 @@
 
 	function getRequestErrorMessage(action: 'load' | 'download', error: unknown): string {
 		const fallback =
-			action === 'load'
-				? m.reports_history_load_failed()
-				: m.reports_download_failed();
+			action === 'load' ? m.reports_history_load_failed() : m.reports_download_failed();
 
 		if (error instanceof ApiServiceError) {
 			return readErrorMessage(error.payload) ?? fallback;
@@ -83,9 +83,7 @@
 		}));
 	}
 
-	async function loadData(
-		_query: CwTableQuery
-	): Promise<CwTableResult<ReportHistoryRow>> {
+	async function loadData(_query: CwTableQuery): Promise<CwTableResult<ReportHistoryRow>> {
 		void _query;
 
 		try {
@@ -119,15 +117,13 @@
 	}
 </script>
 
-<CwButton variant="info" size="sm" onclick={() => (open = true)}>{m.reports_history()}</CwButton>
+<CwButton variant="info" size="md" onclick={() => (open = true)}>
+	<Icon src={HISTORY_ICON} alt={m.reports_history_title()} />
+</CwButton>
 
 <CwDialog {open} title={m.reports_history_title()} onclose={() => (open = false)} class="w-full">
 	<CwCard title={m.reports_problem_reports()} class="mb-4 p-4">
-		<CwTooltip
-			tone="info"
-			position="left"
-			value={m.reports_problem_reports_tooltip()}
-		>
+		<CwTooltip tone="info" position="left" value={m.reports_problem_reports_tooltip()}>
 			<CwButton variant="primary" disabled>{m.reports_problems_only_report()}</CwButton>
 		</CwTooltip>
 	</CwCard>

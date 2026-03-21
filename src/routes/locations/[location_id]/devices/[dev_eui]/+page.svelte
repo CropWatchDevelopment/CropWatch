@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { SvelteDate } from 'svelte/reactivity';
@@ -194,7 +195,7 @@
 	<title>{m.devices_dashboard_page_title({ devEui: devEui.toUpperCase() })}</title>
 </svelte:head>
 
-<div class="flex flex-row gap-2 my-2">
+<div class="my-2 flex flex-row gap-2">
 	<CwButton
 		variant="secondary"
 		size="md"
@@ -204,7 +205,13 @@
 	>
 		← {m.devices_back_to_location()}
 	</CwButton>
-	<CwButton variant="secondary" size="md" disabled={!locationId} fullWidth={true} onclick={() => goto(resolve('/'))}>
+	<CwButton
+		variant="secondary"
+		size="md"
+		disabled={!locationId}
+		fullWidth={true}
+		onclick={() => goto(resolve('/'))}
+	>
 		← {m.action_back_to_dashboard()}
 	</CwButton>
 </div>
@@ -216,6 +223,14 @@
 	>
 		<div class="device-page__toolbar">
 			<div class="device-page__group device-page__group--ranges">
+				<CwButton
+					size="sm"
+					fullWidth={true}
+					disabled={controlsDisabled}
+					onclick={() => selectRange(DEFAULT_RANGE_SELECTION)}
+				>
+					Today
+				</CwButton>
 				{#each getRangeOptions() as ranges (ranges.value)}
 					<CwButton
 						variant={activeRange === ranges.value ? 'primary' : 'secondary'}
@@ -252,7 +267,7 @@
 								})
 							)}
 					>
-						<img src={SETTINGS_ICON} alt="" class="toolbar-icon" />
+						<Icon src={SETTINGS_ICON} alt="" class="h-4 w-4" />
 						{m.nav_settings()}
 					</CwButton>
 				{/if}
@@ -345,11 +360,6 @@
 
 	.device-page__display {
 		min-width: 0;
-	}
-
-	.toolbar-icon {
-		width: 1rem;
-		height: 1rem;
 	}
 
 	@media (max-width: 1200px) {

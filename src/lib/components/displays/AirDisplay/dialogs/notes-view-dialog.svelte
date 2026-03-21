@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
@@ -10,7 +11,7 @@
 </script>
 
 <CwButton variant="secondary" size="sm" onclick={() => (open = true)}>
-	<img src={EYE_ICON} alt={m.display_view_notes()} />
+	<Icon src={EYE_ICON} alt={m.display_view_notes()} />
 </CwButton>
 
 <CwDialog

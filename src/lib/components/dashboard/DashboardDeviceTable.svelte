@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwDataTable,
@@ -69,7 +70,7 @@
 			header: m.dashboard_column_last_seen(),
 			sortable: true,
 			hideBelow: 'md',
-			width: '14rem',
+			width: '8rem',
 			cell: (row) =>
 				row.has_primary_data === false
 					? m.dashboard_no_data_yet()
@@ -211,9 +212,9 @@
 						{:else if col.key === 'alert_count'}
 							<span class="text-2xl">
 								{#if row.alert_count == null || row.alert_count === 0}
-									<img src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} />
+									<Icon src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} preserveColor />
 								{:else}
-									<img src={ALERT_ICON} alt={m.dashboard_active_alert_alt()} />
+									<Icon src={ALERT_ICON} alt={m.dashboard_active_alert_alt()} preserveColor />
 								{/if}
 							</span>
 						{:else}
@@ -225,12 +226,12 @@
 
 			{#snippet rowActions(row: IDevice)}
 				<CwButton
-					size="sm"
+					size="md"
 					variant="info"
 					disabled={isRefreshing(row.dev_eui)}
 					onclick={() => openDeviceDetails(row)}
 				>
-					<img src={EYE_ICON} alt={m.action_view()} />
+					<Icon src={EYE_ICON} alt={m.action_view()} />
 				</CwButton>
 			{/snippet}
 
@@ -264,13 +265,13 @@
 		margin: 0 0.5rem 0.5rem;
 	}
 
-	.dashboard-device-table__cell {
+	/* .dashboard-device-table__cell {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
 		min-height: 1.5rem;
 		font-size: 1.4rem;
-	}
+	} */
 
 	:global(.dashboard-device-table__status-dot) {
 		display: inline-flex;
@@ -278,6 +279,10 @@
 	}
 
 	.dashboard-device-table__cell--refreshing {
-		background-color: var(--cw-warning-700);
+		background-color: rgba(255, 255, 255, 0.3);
+		/* Apply the blur effect to the background behind the table */
+		backdrop-filter: blur(10px);
+		/* Vendor prefix for Safari support */
+		-webkit-backdrop-filter: blur(10px);
 	}
 </style>

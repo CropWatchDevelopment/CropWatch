@@ -24,12 +24,19 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 			.catch(() => []),
 		apiServiceInstance
 			.getLocation(locationId)
-			.then((location) => location.name ?? null)
-			.catch(() => null)
+			.then((location) => location ?? null)
+			.catch(() => null),
 	]);
+
+	let hasSettings = false;
+	if (currentLocation) {
+		
+	}
 
 	return {
 		allLocationDevices,
-		currentLocation
+		currentLocation: currentLocation?.name ?? 'Not Found',
+		location: currentLocation,
+		hasSettings,
 	};
 };

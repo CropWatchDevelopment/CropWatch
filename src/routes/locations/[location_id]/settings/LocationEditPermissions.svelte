@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import {
 		CwButton,
@@ -118,7 +119,7 @@
 						editingPermissionId = row.id;
 					}}
 				>
-					<img src={EDIT_ICON} alt={m.action_edit()} />
+					<Icon src={EDIT_ICON} alt={m.action_edit()} />
 				</CwButton>
 			{/if}
 		{/snippet}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwCard,
@@ -14,7 +15,8 @@
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
-
+	import { getAppContext } from '$lib/appContext.svelte';
+	import ADD_ICON from '$lib/images/icons/add.svg';
 	type DeviceStatus = 'Online' | 'Offline';
 
 	interface LocationDeviceRow {
@@ -137,13 +139,16 @@
 							variant="primary"
 							onclick={() =>
 								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/devices/create`)}
-							>{m.devices_add_device()}</CwButton
 						>
+							<Icon src={ADD_ICON} alt="" />
+							{m.devices_add_device()}
+						</CwButton>
 						<CwButton
 							variant="secondary"
 							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
-							>{m.nav_settings()}</CwButton
 						>
+							<Icon src={SETTINGS_ICON} alt={m.nav_settings()} />
+						</CwButton>
 					{/if}
 				</div>
 			{/snippet}
@@ -165,17 +170,23 @@
 			{#snippet rowActions(row: LocationDeviceRow)}
 				<div class="nowarp flex flex-row gap-2">
 					<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
-						<img src={EYE_ICON} alt={m.action_view()} />
+						<Icon src={EYE_ICON} alt={m.action_view()} />
 					</CwButton>
-					<CwButton
-						icon={SETTINGS_ICON}
-						size="md"
-						variant="secondary"
-						onclick={() =>
-							goto(
-								`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}/settings`
-							)}
-					/>
+					{#if data.hasSettings}
+						<CwButton
+							size="md"
+							variant="secondary"
+							onclick={() => {
+								if (!selectedLocationId) return;
+
+								goto(
+									`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}/settings`
+								);
+							}}
+						>
+							<Icon src={SETTINGS_ICON} alt={m.nav_settings()} />
+						</CwButton>
+					{/if}
 				</div>
 			{/snippet}
 		</CwDataTable>

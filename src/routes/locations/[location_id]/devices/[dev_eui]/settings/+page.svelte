@@ -48,7 +48,7 @@
 	let deviceGroup = $derived(data.deviceGroup ?? '');
 	let location_id = $derived(String(data.location_id ?? ''));
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
-	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
+	let permissionRows = $state(createOwnerRows(data.deviceOwners ?? []));
 
 	function createOwnerRows(
 		owners: Array<{

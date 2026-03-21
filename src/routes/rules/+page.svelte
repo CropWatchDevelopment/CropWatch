@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwCard,
@@ -65,7 +66,9 @@
 				{#snippet rowActions(row: RuleRow)}
 					<div class="flex w-full flex-row gap-2">
 						<ViewRuleDialog {row} />
-						<CwButton variant="primary" icon={EDIT_ICON} size="md" onclick={() => goto(`/rules/edit/${row.id}`)} />
+						<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
+							<Icon src={EDIT_ICON} alt={m.action_edit()} />
+						</CwButton>
 						<DeleteRuleDialog
 							ruleGroupId={row.ruleGroupId}
 							ruleName={row.name}

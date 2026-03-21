@@ -6,14 +6,15 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { onMount } from 'svelte';
 	import {
+		CwAlertPointsEditor,
 		CwButton,
 		CwCard,
 		CwDropdown,
-		CwExpandPanel,
 		CwInput,
 		CwSwitch,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
+	import type { CwAlertPointCondition, CwAlertPointsValue } from '@cropwatchdevelopment/cwui';
 	import type {
 		CreateReportAlertPointRequest,
 		CreateReportRecipientRequest,
@@ -23,6 +24,8 @@
 	} from '$lib/api/api.dtos';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
+	import ADD_ICON from '$lib/images/icons/add.svg';
+	import Icon from '$lib/components/Icon.svelte';
 
 	type CreateReportForm = {
 		error?: string;
@@ -61,21 +64,6 @@
 		user_id: string;
 	};
 
-	type AlertDraft = {
-		created_at: string;
-		data_point_key: string;
-		hex_color: string;
-		id: string;
-		key: string;
-		max: string;
-		min: string;
-		name: string;
-		operator: string;
-		report_id: string;
-		user_id: string;
-		value: string;
-	};
-
 	type RecipientDraft = {
 		communication_method: string;
 		created_at: string;
@@ -92,99 +80,13 @@
 		dev_eui: string;
 		id: string;
 		name: string;
-		report_alert_points: AlertDraft[];
 		report_id: string;
 		report_recipients: RecipientDraft[];
 		report_user_schedule: ScheduleDraft[];
 		user_id: string;
 	};
 
-	const ISO_TIMESTAMP_PLACEHOLDER = '2026-03-19T15:49:41.027Z';
-	const UUID_PLACEHOLDER = '00000000-0000-0000-0000-000000000000';
-	const NUMBER_PLACEHOLDER = '0';
-
-	const DATA_POINT_KEYS = [
-		'battery_level',
-		'bicycle_count',
-		'bus_count',
-		'car_count',
-		'co',
-		'co2',
-		'current',
-		'deapth_cm',
-		'ec',
-		'humidity',
-		'id',
-		'is_simulated',
-		'line_number',
-		'lux',
-		'moisture',
-		'motorcycle_count',
-		'people_count',
-		'ph',
-		'pressure',
-		'rainfall',
-		'smoke_detected',
-		'spo2',
-		'temperature_c',
-		'traffic_hour',
-		'train_count',
-		'truck_count',
-		'uv_index',
-		'vape_detected',
-		'voltage',
-		'watts',
-		'wind_direction',
-		'wind_speed'
-	];
-
-	function humanizeMetricKey(value: string): string {
-		return value
-			.split('_')
-			.map((part) =>
-				part.length <= 2 ? part.toUpperCase() : `${part[0]?.toUpperCase() ?? ''}${part.slice(1)}`
-			)
-			.join(' ');
-	}
-
-	function getMetricKeyLabel(value: string): string {
-		switch (value) {
-			case 'battery_level':
-				return m.rule_subject_battery_level();
-			case 'co':
-				return m.rule_subject_co();
-			case 'co2':
-				return m.rule_subject_co2();
-			case 'deapth_cm':
-				return m.rule_subject_water_depth();
-			case 'ec':
-				return m.rule_subject_electrical_conductivity();
-			case 'humidity':
-				return m.rule_subject_humidity();
-			case 'lux':
-				return m.rule_subject_lux();
-			case 'moisture':
-				return m.rule_subject_soil_moisture();
-			case 'ph':
-				return m.rule_subject_ph();
-			case 'pressure':
-				return m.rule_subject_pressure();
-			case 'rainfall':
-				return m.rule_subject_rainfall();
-			case 'spo2':
-				return m.rule_subject_spo2();
-			case 'temperature_c':
-				return m.rule_subject_temperature();
-			case 'uv_index':
-				return m.rule_subject_uv_index();
-			case 'wind_direction':
-				return m.rule_subject_wind_direction();
-			case 'wind_speed':
-				return m.rule_subject_wind_speed();
-			default:
-				return humanizeMetricKey(value);
-		}
-	}
+	const DEFAULT_ALERT_DATA_POINT_KEY = 'temperature_c';
 
 	const toast = useCwToast();
 	const app = getAppContext();
@@ -192,25 +94,11 @@
 	let { data, form }: PageProps = $props();
 	let actionForm = $derived((form ?? null) as CreateReportForm);
 	let currentUser = $derived((data.currentUser ?? null) as CurrentUser);
-	let alertOperatorOptions = $derived<SelectOption[]>([
-		{ label: m.reports_create_operator_gt(), value: '>' },
-		{ label: m.reports_create_operator_gte(), value: '>=' },
-		{ label: m.reports_create_operator_lt(), value: '<' },
-		{ label: m.reports_create_operator_lte(), value: '<=' },
-		{ label: m.reports_create_operator_eq(), value: '=' },
-		{ label: m.reports_create_operator_range(), value: 'range' }
-	]);
 	let communicationMethodOptions = $derived<SelectOption[]>([
 		{ label: m.reports_create_method_email(), value: '1' },
 		{ label: m.reports_create_method_sms(), value: '2' },
 		{ label: m.reports_create_method_discord(), value: '3' }
 	]);
-	let dataPointOptions = $derived<SelectOption[]>(
-		DATA_POINT_KEYS.map((value) => ({
-			label: getMetricKeyLabel(value),
-			value
-		}))
-	);
 
 	let submitting = $state(false);
 	let submitAttempted = $state(false);
@@ -249,6 +137,135 @@
 		return Number.isFinite(parsed) ? parsed : undefined;
 	}
 
+	function preventImplicitFormSubmission(node: HTMLFormElement) {
+		function normalizeButtonTypes() {
+			for (const button of node.querySelectorAll<HTMLButtonElement>('button:not([type])')) {
+				button.type = 'button';
+			}
+		}
+
+		function handleKeydown(event: KeyboardEvent) {
+			if (event.key !== 'Enter' || event.defaultPrevented) return;
+
+			const target = event.target;
+			if (!(target instanceof HTMLElement)) return;
+			if (target instanceof HTMLButtonElement) return;
+			if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
+			if (target instanceof HTMLInputElement) {
+				if (['button', 'checkbox', 'file', 'radio', 'reset', 'submit'].includes(target.type)) {
+					return;
+				}
+			}
+
+			event.preventDefault();
+		}
+
+		normalizeButtonTypes();
+
+		const observer = new MutationObserver(() => {
+			normalizeButtonTypes();
+		});
+
+		observer.observe(node, { childList: true, subtree: true });
+		node.addEventListener('keydown', handleKeydown);
+
+		return {
+			destroy() {
+				observer.disconnect();
+				node.removeEventListener('keydown', handleKeydown);
+			}
+		};
+	}
+
+	function createEmptyAlertPointsValue(): CwAlertPointsValue {
+		return {
+			unit: 'C',
+			center: '0',
+			points: []
+		};
+	}
+
+	function mapAlertConditionToOperator(condition: CwAlertPointCondition): string {
+		switch (condition) {
+			case 'greaterThan':
+				return '>';
+			case 'greaterThanOrEqual':
+				return '>=';
+			case 'lessThan':
+				return '<';
+			case 'lessThanOrEqual':
+				return '<=';
+			case 'range':
+				return 'range';
+			case 'equals':
+			default:
+				return '=';
+		}
+	}
+
+	function buildReportAlertPoints(
+		alertPoints: CwAlertPointsValue,
+		defaults: {
+			reportId?: string;
+			userId?: string;
+		}
+	): CreateReportAlertPointRequest[] {
+		return alertPoints.points.map((point) => {
+			const alertPayload: CreateReportAlertPointRequest = {
+				data_point_key: DEFAULT_ALERT_DATA_POINT_KEY,
+				name: point.name.trim()
+			};
+
+			const alertHexColor = cleanOptional(point.color)?.toUpperCase();
+			const alertMax = parseOptionalNumber(point.max);
+			const alertMin = parseOptionalNumber(point.min);
+			const alertOperator = cleanOptional(mapAlertConditionToOperator(point.condition));
+			const alertValue = parseOptionalNumber(point.value);
+
+			if (alertHexColor) alertPayload.hex_color = alertHexColor;
+			if (alertMax !== undefined) alertPayload.max = alertMax;
+			if (alertMin !== undefined) alertPayload.min = alertMin;
+			if (alertOperator) alertPayload.operator = alertOperator;
+			if (defaults.reportId) alertPayload.report_id = defaults.reportId;
+			if (defaults.userId) alertPayload.user_id = defaults.userId;
+			if (alertValue !== undefined) alertPayload.value = alertValue;
+
+			return alertPayload;
+		});
+	}
+
+	function buildAlertValidationIssues(alertPoints: CwAlertPointsValue): string[] {
+		const issues: string[] = [];
+
+		alertPoints.points.forEach((point, index) => {
+			const rowIndex = String(index + 1);
+
+			if (!point.name.trim()) {
+				issues.push(m.reports_create_validation_alert_name({ index: rowIndex }));
+			}
+
+			if (point.condition === 'range') {
+				const min = parseOptionalNumber(point.min);
+				const max = parseOptionalNumber(point.max);
+
+				if (min === undefined || max === undefined) {
+					issues.push(m.reports_create_validation_alert_range_required({ index: rowIndex }));
+				} else if (min > max) {
+					issues.push(m.reports_create_validation_alert_range_order({ index: rowIndex }));
+				}
+			} else if (parseOptionalNumber(point.value) === undefined) {
+				issues.push(m.reports_create_validation_alert_value({ index: rowIndex }));
+			}
+
+			const hexColor = cleanOptional(point.color);
+			if (hexColor && !/^#[0-9a-fA-F]{6}$/.test(hexColor)) {
+				issues.push(m.reports_create_validation_alert_hex({ index: rowIndex }));
+			}
+		});
+
+		return issues;
+	}
+
 	function createEmptySchedule(): ScheduleDraft {
 		return {
 			created_at: '',
@@ -261,23 +278,6 @@
 			report_id: '',
 			report_user_schedule_id: '',
 			user_id: currentUser?.id ?? ''
-		};
-	}
-
-	function createEmptyAlert(): AlertDraft {
-		return {
-			created_at: '',
-			data_point_key: 'temperature_c',
-			hex_color: '#0F766E',
-			id: '',
-			key: nextRowKey('alert'),
-			max: '',
-			min: '',
-			name: '',
-			operator: '>',
-			report_id: '',
-			user_id: currentUser?.id ?? '',
-			value: ''
 		};
 	}
 
@@ -300,7 +300,6 @@
 			dev_eui: normalizeDevEui(data.devEui ?? ''),
 			id: '',
 			name: '',
-			report_alert_points: [],
 			report_id: '',
 			report_recipients: [createEmptyRecipient()],
 			report_user_schedule: [createEmptySchedule()],
@@ -308,7 +307,11 @@
 		};
 	}
 
-	function buildRequestPayload(draft: ReportDraft, rootDevEui: string): CreateReportRequest {
+	function buildRequestPayload(
+		draft: ReportDraft,
+		rootDevEui: string,
+		alertPoints: CwAlertPointsValue
+	): CreateReportRequest {
 		const createdAt = cleanOptional(draft.created_at);
 		const id = parseOptionalInteger(draft.id);
 		const reportId = cleanOptional(draft.report_id);
@@ -340,36 +343,7 @@
 			}
 		);
 
-		const reportAlertPoints: CreateReportAlertPointRequest[] = draft.report_alert_points.map(
-			(alert) => {
-				const alertPayload: CreateReportAlertPointRequest = {
-					data_point_key: alert.data_point_key.trim(),
-					name: alert.name.trim()
-				};
-
-				const alertCreatedAt = cleanOptional(alert.created_at);
-				const alertHexColor = cleanOptional(alert.hex_color)?.toUpperCase();
-				const alertId = parseOptionalInteger(alert.id);
-				const alertMax = parseOptionalNumber(alert.max);
-				const alertMin = parseOptionalNumber(alert.min);
-				const alertOperator = cleanOptional(alert.operator);
-				const alertReportId = cleanOptional(alert.report_id) ?? reportId;
-				const alertUserId = cleanOptional(alert.user_id) ?? userId;
-				const alertValue = parseOptionalNumber(alert.value);
-
-				if (alertCreatedAt) alertPayload.created_at = alertCreatedAt;
-				if (alertHexColor) alertPayload.hex_color = alertHexColor;
-				if (alertId !== undefined) alertPayload.id = alertId;
-				if (alertMax !== undefined) alertPayload.max = alertMax;
-				if (alertMin !== undefined) alertPayload.min = alertMin;
-				if (alertOperator) alertPayload.operator = alertOperator;
-				if (alertReportId) alertPayload.report_id = alertReportId;
-				if (alertUserId) alertPayload.user_id = alertUserId;
-				if (alertValue !== undefined) alertPayload.value = alertValue;
-
-				return alertPayload;
-			}
-		);
+		const reportAlertPoints = buildReportAlertPoints(alertPoints, { reportId, userId });
 
 		const reportRecipients: CreateReportRecipientRequest[] = draft.report_recipients.map(
 			(recipient) => {
@@ -411,7 +385,11 @@
 		return payload;
 	}
 
-	function buildValidationIssues(draft: ReportDraft, rootDevEui: string): string[] {
+	function buildValidationIssues(
+		draft: ReportDraft,
+		rootDevEui: string,
+		alertPoints: CwAlertPointsValue
+	): string[] {
 		const issues: string[] = [];
 		const normalizedRootDevEui = normalizeDevEui(rootDevEui);
 		const rootUserId = cleanOptional(draft.user_id) ?? currentUser?.id ?? undefined;
@@ -437,39 +415,7 @@
 			}
 		});
 
-		draft.report_alert_points.forEach((alert, index) => {
-			const rowIndex = String(index + 1);
-
-			if (!alert.name.trim()) {
-				issues.push(m.reports_create_validation_alert_name({ index: rowIndex }));
-			}
-
-			if (!alert.data_point_key.trim()) {
-				issues.push(m.reports_create_validation_alert_metric({ index: rowIndex }));
-			}
-
-			if (!alert.operator.trim()) {
-				issues.push(m.reports_create_validation_alert_operator({ index: rowIndex }));
-			}
-
-			if (alert.operator === 'range') {
-				const min = parseOptionalNumber(alert.min);
-				const max = parseOptionalNumber(alert.max);
-
-				if (min === undefined || max === undefined) {
-					issues.push(m.reports_create_validation_alert_range_required({ index: rowIndex }));
-				} else if (min > max) {
-					issues.push(m.reports_create_validation_alert_range_order({ index: rowIndex }));
-				}
-			} else if (parseOptionalNumber(alert.value) === undefined) {
-				issues.push(m.reports_create_validation_alert_value({ index: rowIndex }));
-			}
-
-			const hexColor = cleanOptional(alert.hex_color);
-			if (hexColor && !/^#[0-9a-fA-F]{6}$/.test(hexColor)) {
-				issues.push(m.reports_create_validation_alert_hex({ index: rowIndex }));
-			}
-		});
+		issues.push(...buildAlertValidationIssues(alertPoints));
 
 		draft.report_recipients.forEach((recipient, index) => {
 			const rowIndex = String(index + 1);
@@ -493,24 +439,6 @@
 		return issues;
 	}
 
-	function addSchedule() {
-		fields.report_user_schedule = [...fields.report_user_schedule, createEmptySchedule()];
-	}
-
-	function removeSchedule(key: string) {
-		fields.report_user_schedule = fields.report_user_schedule.filter(
-			(schedule) => schedule.key !== key
-		);
-	}
-
-	function addAlert() {
-		fields.report_alert_points = [...fields.report_alert_points, createEmptyAlert()];
-	}
-
-	function removeAlert(key: string) {
-		fields.report_alert_points = fields.report_alert_points.filter((alert) => alert.key !== key);
-	}
-
 	function addRecipient() {
 		fields.report_recipients = [...fields.report_recipients, createEmptyRecipient()];
 	}
@@ -522,6 +450,7 @@
 	}
 
 	let fields = $state<ReportDraft>(buildDefaultDraft());
+	let alertPointsValue = $state<CwAlertPointsValue>(createEmptyAlertPointsValue());
 	let fallbackDevices = $state<DeviceDto[]>([]);
 	let loadingDevices = $state(false);
 	let selectedDevEui = $state('');
@@ -576,9 +505,13 @@
 			}))
 			.sort((left, right) => left.label.localeCompare(right.label))
 	);
-	let requestPayload = $derived.by(() => buildRequestPayload(fields, normalizedSelectedDevEui));
+	let requestPayload = $derived.by(() =>
+		buildRequestPayload(fields, normalizedSelectedDevEui, alertPointsValue)
+	);
 	let requestPayloadCompact = $derived.by(() => JSON.stringify(requestPayload));
-	let validationIssues = $derived.by(() => buildValidationIssues(fields, normalizedSelectedDevEui));
+	let validationIssues = $derived.by(() =>
+		buildValidationIssues(fields, normalizedSelectedDevEui, alertPointsValue)
+	);
 	let canSubmit = $derived(validationIssues.length === 0);
 </script>
 
@@ -595,6 +528,7 @@
 		<form
 			method="POST"
 			class="report-form"
+			use:preventImplicitFormSubmission
 			use:enhance={({ cancel }) => {
 				submitAttempted = true;
 
@@ -720,12 +654,12 @@
 				elevated
 			>
 				<div class="card-stack">
-					<div class="section-toolbar">
+					<!-- <div class="section-toolbar">
 						<p class="section-copy">{m.reports_create_schedules_copy()}</p>
 						<CwButton type="button" variant="secondary" onclick={addSchedule}
 							>{m.reports_create_add_schedule()}</CwButton
 						>
-					</div>
+					</div> -->
 
 					{#if fields.report_user_schedule.length === 0}
 						<div class="empty-panel">{m.reports_create_empty_schedules()}</div>
@@ -738,14 +672,14 @@
 									<h3>{m.reports_create_schedule_heading({ index: String(index + 1) })}</h3>
 									<p>{m.reports_create_schedule_copy()}</p>
 								</div>
-								<CwButton
+								<!-- <CwButton
 									type="button"
 									variant="danger"
 									size="sm"
 									onclick={() => removeSchedule(schedule.key)}
 								>
 									{m.action_remove()}
-								</CwButton>
+								</CwButton> -->
 							</div>
 
 							<div class="switch-grid">
@@ -820,109 +754,8 @@
 				elevated
 			>
 				<div class="card-stack">
-					<div class="section-toolbar">
-						<p class="section-copy">{m.reports_create_alerts_copy()}</p>
-						<CwButton type="button" variant="secondary" onclick={addAlert}
-							>{m.reports_create_add_alert()}</CwButton
-						>
-					</div>
-
-					{#if fields.report_alert_points.length === 0}
-						<div class="empty-panel">{m.reports_create_empty_alerts()}</div>
-					{/if}
-
-					{#each fields.report_alert_points as alert, index (alert.key)}
-						<div class="entry-card">
-							<div class="entry-card__header">
-								<div>
-									<h3>{m.reports_create_alert_heading({ index: String(index + 1) })}</h3>
-									<p>{m.reports_create_alert_copy()}</p>
-								</div>
-								<CwButton
-									type="button"
-									variant="danger"
-									size="sm"
-									onclick={() => removeAlert(alert.key)}
-								>
-									{m.action_remove()}
-								</CwButton>
-							</div>
-
-							<div class="field-grid field-grid--three">
-								<CwInput
-									label={m.common_name()}
-									placeholder={m.reports_create_alert_name_placeholder()}
-									bind:value={alert.name}
-								/>
-								<CwDropdown
-									label={m.reports_create_alert_metric_key()}
-									options={dataPointOptions}
-									bind:value={alert.data_point_key}
-								/>
-								<CwDropdown
-									label={m.reports_create_alert_operator()}
-									options={alertOperatorOptions}
-									bind:value={alert.operator}
-								/>
-							</div>
-
-							<div class="field-grid field-grid--three">
-								{#if alert.operator === 'range'}
-									<CwInput
-										label={m.reports_create_alert_minimum()}
-										type="numeric"
-										placeholder="18"
-										bind:value={alert.min}
-									/>
-									<CwInput
-										label={m.reports_create_alert_maximum()}
-										type="numeric"
-										placeholder="26"
-										bind:value={alert.max}
-									/>
-								{:else}
-									<CwInput
-										label={m.reports_create_alert_value()}
-										type="numeric"
-										placeholder="30"
-										bind:value={alert.value}
-									/>
-								{/if}
-
-								<CwInput
-									label={m.reports_create_alert_hex_color()}
-									placeholder="#0F766E"
-									bind:value={alert.hex_color}
-								/>
-								<CwInput
-									label={m.reports_create_alert_user_label()}
-									placeholder={m.reports_create_alert_user_placeholder()}
-									bind:value={alert.user_id}
-								/>
-							</div>
-
-							<CwExpandPanel title={m.reports_create_advanced_alert_metadata()}>
-								<div class="meta-grid">
-									<CwInput
-										label={m.reports_created_at()}
-										placeholder={ISO_TIMESTAMP_PLACEHOLDER}
-										bind:value={alert.created_at}
-									/>
-									<CwInput
-										label={m.reports_create_field_id()}
-										type="numeric"
-										placeholder={NUMBER_PLACEHOLDER}
-										bind:value={alert.id}
-									/>
-									<CwInput
-										label={m.reports_create_field_report_id()}
-										placeholder={UUID_PLACEHOLDER}
-										bind:value={alert.report_id}
-									/>
-								</div>
-							</CwExpandPanel>
-						</div>
-					{/each}
+					<p class="section-copy">{m.reports_create_alerts_copy()}</p>
+					<CwAlertPointsEditor bind:value={alertPointsValue} />
 				</div>
 			</CwCard>
 
@@ -934,9 +767,12 @@
 				<div class="card-stack">
 					<div class="section-toolbar">
 						<p class="section-copy">{m.reports_create_recipients_copy()}</p>
-						<CwButton type="button" variant="secondary" onclick={addRecipient}
+						<!-- <CwButton type="button" variant="secondary" onclick={addRecipient}
 							>{m.reports_create_add_recipient()}</CwButton
-						>
+						> -->
+						<CwButton class="text-white" type="button" variant="secondary" onclick={addRecipient}>
+							<Icon src={ADD_ICON} class="h-4 w-4" />
+						</CwButton>
 					</div>
 
 					{#if fields.report_recipients.length === 0}
@@ -950,14 +786,16 @@
 									<h3>{m.reports_create_recipient_heading({ index: String(index + 1) })}</h3>
 									<p>{m.reports_create_recipient_copy()}</p>
 								</div>
-								<CwButton
-									type="button"
-									variant="danger"
-									size="sm"
-									onclick={() => removeRecipient(recipient.key)}
-								>
-									{m.action_remove()}
-								</CwButton>
+								{#if fields.report_recipients.length > 1}
+									<CwButton
+										type="button"
+										variant="danger"
+										size="sm"
+										onclick={() => removeRecipient(recipient.key)}
+									>
+										{m.action_remove()}
+									</CwButton>
+								{/if}
 							</div>
 
 							<div class="field-grid field-grid--three">
@@ -1125,14 +963,12 @@
 	}
 
 	.field-grid,
-	.meta-grid,
 	.switch-grid {
 		display: grid;
 		gap: 1rem;
 	}
 
-	.field-grid--two,
-	.meta-grid {
+	.field-grid--two {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
@@ -1237,7 +1073,6 @@
 	@media (max-width: 720px) {
 		.field-grid--two,
 		.field-grid--three,
-		.meta-grid,
 		.switch-grid {
 			grid-template-columns: 1fr;
 		}

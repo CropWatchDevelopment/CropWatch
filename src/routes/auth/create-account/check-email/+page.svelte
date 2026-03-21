@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import '../../login/style.css';
 	import logo from '$lib/images/cropwatch_static.svg';
 	import KEY_ICON from '$lib/images/icons/key.svg';
@@ -67,39 +68,41 @@
 			</ul>
 			<div class="flex flex-row">
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
+					<Icon src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
 					<span class="text-lg text-gray-400">{m.auth_check_email_you()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
+				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
+					<Icon src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
 					<span class="text-lg text-gray-400">{m.auth_check_email_check()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
+				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={EMAIL_ICON} alt={m.auth_check_email_email()} class="mx-auto" />
+					<Icon src={EMAIL_ICON} alt={m.auth_check_email_email()} class="mx-auto" />
 					<span class="text-lg text-gray-400">{m.auth_check_email_email()}</span>
 				</div>
 			</div>
 			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_cant_find_it()}</p>
 			<div class="flex flex-row">
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
+					<Icon src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
 					<span class="text-lg text-gray-400">{m.auth_check_email_you()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
+				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
+					<Icon src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
 					<span class="text-lg text-gray-400">{m.auth_check_email_check()}</span>
 				</div>
-				<img src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
+				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
-					<img src={SPAM_ICON} alt={m.auth_check_email_spam()} class="mx-auto" />
+					<Icon src={SPAM_ICON} alt={m.auth_check_email_spam()} class="mx-auto" preserveColor />
 					<span class="text-lg text-gray-400">{m.auth_check_email_spam()}</span>
 				</div>
 			</div>
 			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_not_there()}</p>
-			<a href="mailto:sayaka@cropwatch.io" class="text-center w-full text-sm">{m.auth_check_email_contact_support()}</a>
+			<a href="mailto:sayaka@cropwatch.io" class="w-full text-center text-sm"
+				>{m.auth_check_email_contact_support()}</a
+			>
 		</div>
 
 		<CwButton
@@ -110,7 +113,7 @@
 			fullWidth={true}
 			onclick={() => goto(resolve('/auth/login'))}
 		>
-			<img src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
+			<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
 			{m.auth_go_to_sign_in()}
 		</CwButton>
 

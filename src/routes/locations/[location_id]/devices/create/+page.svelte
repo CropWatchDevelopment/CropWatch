@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -275,7 +276,7 @@
 					variant="secondary"
 					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 				>
-					<img src={BACK_ICON} alt="" class="button-icon" />
+					<Icon src={BACK_ICON} alt="" class="h-4 w-4" />
 					{m.action_cancel()}
 				</CwButton>
 
@@ -359,11 +360,6 @@
 		display: flex;
 		justify-content: flex-end;
 		gap: 0.75rem;
-	}
-
-	.button-icon {
-		width: 1rem;
-		height: 1rem;
 	}
 
 	@media (max-width: 720px) {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { applyAction, deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { CwButton, CwDialog, CwTextArea, useCwToast } from '@cropwatchdevelopment/cwui';
@@ -95,7 +96,7 @@
 </script>
 
 <CwButton variant="info" size="sm" onclick={() => (open = true)}>
-	<img src={ADD_NOTE_ICON} alt={m.display_add_note()} />
+	<Icon src={ADD_NOTE_ICON} alt={m.display_add_note()} />
 </CwButton>
 
 <CwDialog

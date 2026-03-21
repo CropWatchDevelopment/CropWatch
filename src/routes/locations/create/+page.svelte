@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
@@ -104,7 +105,7 @@
 
 			<div class="form-actions">
 				<CwButton type="button" variant="secondary" onclick={() => goto('/locations')}>
-					<img src={BACK_ICON} alt={m.action_back()} class="h-4 w-4" />
+					<Icon src={BACK_ICON} alt={m.action_back()} class="h-4 w-4" />
 					{m.action_cancel()}
 				</CwButton>
 				<CwButton type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>

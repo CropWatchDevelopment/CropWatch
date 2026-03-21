@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import BACK_ICON from '$lib/images/icons/back.svg';
 	import { ApiService } from '$lib/api/api.service';
@@ -43,14 +44,16 @@
 	};
 </script>
 
-<CwButton variant="danger" icon={TRASH_ICON} size="md" onclick={() => (open = true)} />
+<CwButton variant="danger" size="md" onclick={() => (open = true)}>
+	<Icon src={TRASH_ICON} alt={m.action_delete()} />
+</CwButton>
 
 <CwDialog {open} title={m.rules_delete_rule()} onclose={() => (open = false)}>
 	<p>{m.rules_delete_confirmation({ name: ruleName })}</p>
 	{#snippet actions()}
 		<div class="flex flex-row gap-2">
 			<CwButton variant="secondary" size="md" onclick={() => (open = false)}>
-				<img src={BACK_ICON} alt={m.action_cancel()} />
+				<Icon src={BACK_ICON} alt={m.action_cancel()} />
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton variant="danger" size="md" onclick={handleDelete} disabled={deleting}>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwCard,
@@ -11,6 +12,7 @@
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import { goto } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';
+	import ADD_ICON from '$lib/images/icons/add.svg';
 
 	let { data }: { data: { allLocations: LocationDto[] } } = $props();
 
@@ -60,13 +62,13 @@
 		>
 			{#snippet toolbarActions()}
 				<CwButton variant="primary" onclick={() => goto('/locations/create')}>
-					{m.locations_add_location()}
+					<Icon src={ADD_ICON} alt={m.locations_create_title()} />
 				</CwButton>
 			{/snippet}
 
 			{#snippet rowActions(row: LocationDto)}
 				<CwButton size="md" variant="info" onclick={() => handleViewLocation(row)}>
-					<img src={EYE_ICON} alt={m.action_view()} />
+					<Icon src={EYE_ICON} alt={m.action_view()} />
 				</CwButton>
 			{/snippet}
 		</CwDataTable>

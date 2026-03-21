@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import './style.css';
 	import KEY_ICON from '$lib/images/icons/key.svg';
 	import logo from '$lib/images/cropwatch_static.svg';
@@ -225,7 +226,7 @@
 				size="md"
 				fullWidth={true}
 			>
-				<img src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
+				<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
 				{loggingIn
 					? m.auth_signing_in()
 					: loadingCaptcha

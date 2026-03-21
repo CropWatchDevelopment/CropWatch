@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import Icon from '$lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwCard,
@@ -13,6 +14,7 @@
 	import ReportHistoryDialog from './ReportHistoryDialog.svelte';
 	import DeleteReportDialog from './DeleteReportDialog.svelte';
 	import type { ReportRow } from './report-row';
+	import ADD_ICON from '$lib/images/icons/add.svg';
 
 	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
@@ -53,7 +55,7 @@
 	<title>{m.reports_page_title()}</title>
 </svelte:head>
 
-<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
+<CwButton variant="secondary" fullWidth={true} size="sm" onclick={() => goto('/')}>
 	{m.action_back_to_dashboard()}
 </CwButton>
 <div class="overflow-y-auto p-4">
@@ -100,12 +102,12 @@
 
 				{#snippet toolbarActions()}
 					<CwButton
-						variant="primary"
+						variant="secondary"
 						onclick={() => {
 							goto(resolve('/reports/create'));
 						}}
 					>
-						{m.reports_create_new_report()}
+						<Icon src={ADD_ICON} alt={m.reports_create_page_title()} />
 					</CwButton>
 				{/snippet}
 			</CwDataTable>

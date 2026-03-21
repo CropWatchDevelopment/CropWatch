@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import TRASH_ICON from '$lib/images/icons/trash.svg';
@@ -112,8 +113,8 @@
 	};
 </script>
 
-<CwButton icon={TRASH_ICON} variant="danger" disabled={deleting} onclick={() => (open = true)}>
-	{m.reports_delete_report()}
+<CwButton size="md" variant="danger" disabled={deleting} onclick={() => (open = true)}>
+	<Icon src={TRASH_ICON} alt={m.action_delete()} />
 </CwButton>
 
 <CwDialog bind:open title={m.reports_confirm_delete_title()}>
