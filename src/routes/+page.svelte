@@ -18,6 +18,8 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { page } from '$app/state';
 	import type { PageProps } from './$types';
+	import TABLE_ICON from '$lib/images/icons/table.svg';
+	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
 
 	type DashboardView = 'table' | 'sensor-cards';
 
@@ -146,12 +148,14 @@
 						variant={dashboardView === 'table' ? 'info' : 'secondary'}
 						onclick={() => setDashboardView('table')}
 					>
+						<Icon src={TABLE_ICON} alt={m.dashboard_table_view()} />
 						{m.dashboard_table_view()}
 					</CwButton>
 					<CwButton
 						variant={dashboardView === 'sensor-cards' ? 'info' : 'secondary'}
 						onclick={() => setDashboardView('sensor-cards')}
 					>
+						<Icon src={SENSOR_CARDS_ICON} alt={m.dashboard_sensor_cards_view()} />
 						{m.dashboard_sensor_cards_view()}
 					</CwButton>
 				</div>
