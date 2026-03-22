@@ -683,12 +683,12 @@
 							</div>
 
 							<div class="switch-grid">
-								<CwSwitch
+								<!-- <CwSwitch
 									checked={schedule.is_active}
 									label={m.reports_create_schedule_active_label()}
 									description={m.reports_create_schedule_active_description()}
 									onchange={(checked) => (schedule.is_active = checked)}
-								/>
+								/> -->
 								<CwSwitch
 									checked={schedule.end_of_week}
 									label={m.reports_create_schedule_week_label()}

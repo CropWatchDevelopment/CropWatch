@@ -215,64 +215,67 @@
 		← {m.action_back_to_dashboard()}
 	</CwButton>
 </div>
+
+
 <div class="device-page">
 	<CwCard
-		title={m.devices_dashboard_card_title({ devEui: devEui.toUpperCase() })}
+		title={m.devices_dashboard_card_title({ devEui: data?.device?.name || devEui.toUpperCase() })}
 		subtitle={m.devices_dashboard_card_subtitle({ locationName })}
 		elevated
 	>
-		<div class="device-page__toolbar">
-			<div class="device-page__group device-page__group--ranges">
+		<div class="flex flex-row w-full">
+		<div class="flex flex-start flex-wrap gap-2">
+			<CwButton
+				size="sm"
+				fullWidth={true}
+				disabled={controlsDisabled}
+				onclick={() => selectRange(DEFAULT_RANGE_SELECTION)}
+			>
+				Today
+			</CwButton>
+			{#each getRangeOptions() as ranges (ranges.value)}
 				<CwButton
+					variant={activeRange === ranges.value ? 'primary' : 'secondary'}
 					size="sm"
-					fullWidth={true}
 					disabled={controlsDisabled}
-					onclick={() => selectRange(DEFAULT_RANGE_SELECTION)}
+					onclick={() => selectRange(ranges.value)}
 				>
-					Today
+					{ranges.label}
 				</CwButton>
-				{#each getRangeOptions() as ranges (ranges.value)}
-					<CwButton
-						variant={activeRange === ranges.value ? 'primary' : 'secondary'}
-						size="sm"
-						disabled={controlsDisabled}
-						onclick={() => selectRange(ranges.value)}
-					>
-						{ranges.label}
-					</CwButton>
-				{/each}
-			</div>
-
-			<div class="device-page__group device-page__group--actions">
-				{#if permissionLevel <= 2}
-					<CsvExportDialog
-						{authToken}
-						{devEui}
-						{locationName}
-						timeZone={exportTimeZone}
-						disabled={controlsDisabled}
-					/>
-				{/if}
-
-				{#if permissionLevel <= 1}
-					<CwButton
-						variant="secondary"
-						size="sm"
-						disabled={!locationId || !devEui}
-						onclick={() =>
-							goto(
-								resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
-									location_id: locationId,
-									dev_eui: devEui
-								})
-							)}
-					>
-						<Icon src={SETTINGS_ICON} alt="" class="h-4 w-4" />
-						{m.nav_settings()}
-					</CwButton>
-				{/if}
-			</div>
+			{/each}
 		</div>
+
+		<span class="flex-1"></span>
+		<div class="flex flex-row gap-2">
+			{#if permissionLevel <= 2}
+				<CsvExportDialog
+					{authToken}
+					{devEui}
+					{locationName}
+					timeZone={exportTimeZone}
+					disabled={controlsDisabled}
+				/>
+			{/if}
+
+			{#if permissionLevel <= 1}
+				<CwButton
+					variant="secondary"
+					size="sm"
+					disabled={!locationId || !devEui}
+					onclick={() =>
+						goto(
+							resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
+								location_id: locationId,
+								dev_eui: devEui
+							})
+						)}
+				>
+					<Icon src={SETTINGS_ICON} alt="" class="h-4 w-4" />
+					{m.nav_settings()}
+				</CwButton>
+			{/if}
+		</div>
+		<!-- </div> -->
 
 		{#if fetching || fetchError}
 			<div class="device-page__status">
