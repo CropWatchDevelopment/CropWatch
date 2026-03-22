@@ -7,22 +7,15 @@
 		CwSeparator,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
+	import type { Profile } from '$lib/interfaces/profile.interface';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
-
-	type ProfileDraft = {
-		username: string;
-		full_name: string;
-		website: string;
-		employer: string;
-		phone_number: string;
-	};
 
 	let { data }: PageProps = $props();
 
 	const toast = useCwToast();
 
-	function getInitialProfile(): ProfileDraft {
+	function getInitialProfile(): Profile {
 		return data.profile;
 	}
 

@@ -20,6 +20,7 @@
 	import type { PageProps } from './$types';
 	import TABLE_ICON from '$lib/images/icons/table.svg';
 	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
+	import GATEWAYS_ICON from '$lib/images/icons/router.svg';
 
 	type DashboardView = 'table' | 'sensor-cards';
 
@@ -114,29 +115,7 @@
 
 <div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 	<header class="flex-none">
-		<div class="my-0 my-1 flex flex-row justify-between px-6 text-xs md:my-2 md:my-4">
-			<div class="hidden flex-col gap-2 text-slate-400 md:flex">
-				<div class="flex flex-wrap items-center gap-3">
-					<span class="flex items-center gap-1">
-						<span class="font-mono text-slate-100">{devicesInView}</span>
-						<span>{m.dashboard_devices_in_view()}</span>
-					</span>
-					<span class="flex items-center gap-1 text-amber-200">
-						<span class="font-mono">{app.triggeredRules?.length ?? 0}</span>
-						<span>{m.dashboard_with_active_alerts()}</span>
-					</span>
-				</div>
-				<span class="flex items-center gap-1">
-					<p class="text-emerald-300">
-						{m.dashboard_total_online({ count: String(app.deviceStatuses?.online ?? 0) })}
-					</p>
-					|
-					<p class="text-rose-300">
-						{m.dashboard_total_offline({ count: String(app.deviceStatuses?.offline ?? 0) })}
-					</p>
-				</span>
-			</div>
-
+		<div class="my-0 my-1 flex flex-row justify-between w-full items-center gap-4">
 			<div
 				id="Dashboard__Overview__actions"
 				class="flex w-full items-center justify-end gap-3 md:w-auto"

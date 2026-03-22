@@ -139,6 +139,7 @@
 			{loadData}
 			rowKey="id"
 		>
+
 			{#snippet rowActions(row: ReportHistoryRow)}
 				<CwButton
 					size="sm"

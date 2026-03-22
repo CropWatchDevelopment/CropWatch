@@ -3,6 +3,7 @@ import { getContext, setContext } from 'svelte';
 import type { IJWT } from './interfaces/jwt.interface';
 import type { IDevice } from './interfaces/device.interface';
 import type { IRule } from './interfaces/rule.interface';
+import type { Profile } from './interfaces/profile.interface';
 import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
 import type { RuleDto, TriggeredRulesCountResponse } from './api/api.service';
 import type { LocationDto } from './api/api.dtos';
@@ -13,6 +14,7 @@ const deviceAlarms = createCwAlarmScheduler();
 const app = createAppContext();
 
 export interface AppContext {
+	user?: Profile;
 	session: IJWT | null;
 	devices: IDevice[];
 	deviceGroups?: string[];
@@ -32,6 +34,7 @@ export interface AppContext {
 export const appContextKey = Symbol('appContext');
 
 export const defaultAppContext: AppContext = {
+	user: undefined,
 	session: null,
 	devices: [],
 	deviceStatuses: { online: 0, offline: 0 },
@@ -55,6 +58,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 			return existing;
 		} else {
 			return {
+				user: undefined,
 				session: null,
 				devices: [],
 				deviceStatuses: { online: 0, offline: 0 },
@@ -73,6 +77,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 	} catch {
 		// No existing context, will create a new one
 		return {
+			user: undefined,
 			session: null,
 			devices: [],
 			deviceStatuses: { online: 0, offline: 0 },

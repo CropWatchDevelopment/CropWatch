@@ -43,7 +43,9 @@
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
 	let tableRevision = $state(0);
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
-	let hasCo2: boolean = $state(historicalData.every(row => row.co2 !== undefined && row.co2 !== null && row.co2 !== 0));
+	let hasCo2: boolean = $state(
+		historicalData.every((row) => row.co2 !== undefined && row.co2 !== null && row.co2 !== 0)
+	);
 
 	function toAirRows(raw: Record<string, unknown>[]): AirRow[] {
 		return raw.map((row, index) => ({
@@ -93,31 +95,46 @@
 	let tableKey = $derived(`${rowSetKey}:${tableRevision}`);
 
 	let latestTemperature: CwStatCardData = $derived.by(() => {
-	return {
-		min: historicalData.reduce((min, row) => Math.min(min, Number(row.temperature_c) || 0), Infinity),
-		max: historicalData.reduce((max, row) => Math.max(max, Number(row.temperature_c) || 0), -Infinity),
-		avg: historicalData.reduce((sum, row) => sum + (Number(row.temperature_c) || 0), 0) / historicalData.length,
-		median: (() => {
-			const temps = historicalData.map((row) => Number(row.temperature_c) || 0).sort((a, b) => a - b);
-			const mid = Math.floor(temps.length / 2);
-			return temps.length % 2 !== 0 ? temps[mid] : (temps[mid - 1] + temps[mid]) / 2;
-		})(),
-		stdDev: (() => {
-			const temps = historicalData.map((row) => Number(row.temperature_c) || 0);
-			const mean = temps.reduce((sum, value) => sum + value, 0) / temps.length;
-			const variance = temps.reduce((sum, value) => sum + (value - mean) ** 2, 0) / temps.length;
-			return Math.sqrt(variance);
-		})(),
-		count: historicalData.length,
-		lastReading: historicalData.length > 0 ? Number(historicalData[historicalData.length - 1].temperature_c) || 0 : 0,
-		trend: 'up'
-	};
+		return {
+			min: historicalData.reduce(
+				(min, row) => Math.min(min, Number(row.temperature_c) || 0),
+				Infinity
+			),
+			max: historicalData.reduce(
+				(max, row) => Math.max(max, Number(row.temperature_c) || 0),
+				-Infinity
+			),
+			avg:
+				historicalData.reduce((sum, row) => sum + (Number(row.temperature_c) || 0), 0) /
+				historicalData.length,
+			median: (() => {
+				const temps = historicalData
+					.map((row) => Number(row.temperature_c) || 0)
+					.sort((a, b) => a - b);
+				const mid = Math.floor(temps.length / 2);
+				return temps.length % 2 !== 0 ? temps[mid] : (temps[mid - 1] + temps[mid]) / 2;
+			})(),
+			stdDev: (() => {
+				const temps = historicalData.map((row) => Number(row.temperature_c) || 0);
+				const mean = temps.reduce((sum, value) => sum + value, 0) / temps.length;
+				const variance = temps.reduce((sum, value) => sum + (value - mean) ** 2, 0) / temps.length;
+				return Math.sqrt(variance);
+			})(),
+			count: historicalData.length,
+			lastReading:
+				historicalData.length > 0
+					? Number(historicalData[historicalData.length - 1].temperature_c) || 0
+					: 0,
+			trend: 'up'
+		};
 	});
 	let latestHumidity: CwStatCardData = $derived.by(() => {
 		return {
 			min: historicalData.reduce((min, row) => Math.min(min, Number(row.humidity) || 0), Infinity),
 			max: historicalData.reduce((max, row) => Math.max(max, Number(row.humidity) || 0), -Infinity),
-			avg: historicalData.reduce((sum, row) => sum + (Number(row.humidity) || 0), 0) / historicalData.length,
+			avg:
+				historicalData.reduce((sum, row) => sum + (Number(row.humidity) || 0), 0) /
+				historicalData.length,
 			median: (() => {
 				const hums = historicalData.map((row) => Number(row.humidity) || 0).sort((a, b) => a - b);
 				const mid = Math.floor(hums.length / 2);
@@ -130,45 +147,13 @@
 				return Math.sqrt(variance);
 			})(),
 			count: historicalData.length,
-			lastReading: historicalData.length > 0 ? Number(historicalData[historicalData.length - 1].humidity) || 0 : 0,
+			lastReading:
+				historicalData.length > 0
+					? Number(historicalData[historicalData.length - 1].humidity) || 0
+					: 0,
 			trend: 'up'
 		};
 	});
-
-	let lastSeenTimestamp = $derived.by(() => {
-		if (rows.length === 0) return null;
-		return rows.reduce((latest, row) => {
-			const t = new Date(row.created_at).getTime();
-			return t > new Date(latest).getTime() ? row.created_at : latest;
-		}, rows[0].created_at);
-	});
-
-	let refreshing = $state(false);
-
-	// async function fetchLatestData() {
-	// 	if (!authToken || !devEui || refreshing) return;
-
-	// 	refreshing = true;
-	// 	try {
-	// 		const api = new ApiService({ fetchFn: fetch, authToken });
-	// 		const result = await api.getDeviceLatestData(devEui);
-
-	// 		if (result && typeof result === 'object' && result.created_at) {
-	// 			const existingIds = new Set(rows.map((r) => r.id));
-	// 			const newId = String(result.id ?? result.data_id ?? `${result.created_at}-latest`);
-	// 			if (!existingIds.has(newId)) {
-	// 				extraRowsByKey = {
-	// 					...extraRowsByKey,
-	// 					[historicalDataKey]: [...extraRows, result]
-	// 				};
-	// 			}
-	// 		}
-	// 	} catch (err) {
-	// 		console.error('Failed to fetch latest air data:', err);
-	// 	} finally {
-	// 		refreshing = false;
-	// 	}
-	// }
 
 	let lineSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
 		rows.map((row) => ({
@@ -275,7 +260,6 @@
 </script>
 
 <div class="air-display">
-
 	<div class="kpi-grid">
 		<CwStatCard
 			title="Temperature"
@@ -290,7 +274,9 @@
 				stats={{
 					min: historicalData.reduce((min, row) => Math.min(min, Number(row.co2) || 0), Infinity),
 					max: historicalData.reduce((max, row) => Math.max(max, Number(row.co2) || 0), -Infinity),
-					avg: historicalData.reduce((sum, row) => sum + (Number(row.co2) || 0), 0) / historicalData.length,
+					avg:
+						historicalData.reduce((sum, row) => sum + (Number(row.co2) || 0), 0) /
+						historicalData.length,
 					median: (() => {
 						const co2s = historicalData.map((row) => Number(row.co2) || 0).sort((a, b) => a - b);
 						const mid = Math.floor(co2s.length / 2);
@@ -299,11 +285,15 @@
 					stdDev: (() => {
 						const co2s = historicalData.map((row) => Number(row.co2) || 0);
 						const mean = co2s.reduce((sum, value) => sum + value, 0) / co2s.length;
-						const variance = co2s.reduce((sum, value) => sum + (value - mean) ** 2, 0) / co2s.length;
+						const variance =
+							co2s.reduce((sum, value) => sum + (value - mean) ** 2, 0) / co2s.length;
 						return Math.sqrt(variance);
 					})(),
 					count: historicalData.length,
-					lastReading: historicalData.length > 0 ? Number(historicalData[historicalData.length - 1].co2) || 0 : 0,
+					lastReading:
+						historicalData.length > 0
+							? Number(historicalData[historicalData.length - 1].co2) || 0
+							: 0,
 					trend: 'up'
 				}}
 				unit="ppm"
@@ -367,7 +357,7 @@
 					{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
 						<div class="text-2xl">
 							{#if col.key === 'created_at'}
-								{formatDateTime(row.created_at)}
+								{new Date(row.created_at).toLocaleString()}
 							{:else if col.key === 'temperature_c'}
 								{row.temperature_c.toFixed(2)} °C
 							{:else if col.key === 'humidity'}

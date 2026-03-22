@@ -14,6 +14,8 @@ export interface RulesDto {
     cw_rule_criteria: CwRuleCriterum[];
 }
 
+export type IRule = RulesDto;
+
 export interface CwRuleCriterum {
     created_at: Date;
     criteria_id: string;

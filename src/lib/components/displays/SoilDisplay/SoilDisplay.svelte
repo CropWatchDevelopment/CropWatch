@@ -181,7 +181,7 @@
 			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
 				{#snippet cell(row: SoilRow, col: CwColumnDef<SoilRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
-						{formatDateTime(row.created_at)}
+						{new Date(row.created_at).toLocaleString()}
 					{:else if col.key === 'temperature_c'}
 						{row.temperature_c.toFixed(2)} °C
 					{:else if col.key === 'moisture'}

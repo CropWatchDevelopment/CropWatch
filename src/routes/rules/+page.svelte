@@ -10,8 +10,8 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { goto } from '$app/navigation';
 	import type { RulesDto } from '$lib/interfaces/rule.interface';
-	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import ADD_ICON from '$lib/images/icons/add.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import DeleteRuleDialog from './DeleteRuleDialog.svelte';
 	import ViewRuleDialog from './ViewRuleDialog.svelte';
@@ -32,7 +32,7 @@
 		{ key: 'name', header: m.common_name(), sortable: true },
 		{ key: 'device_name', header: 'Device Name' },
 		{ key: 'location_name', header: m.nav_locations() },
-		{ key: 'created_at', header: m.common_created() },
+		{ key: 'created_at', header: m.common_created() }
 	];
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleRow>> {
@@ -52,7 +52,7 @@
 </svelte:head>
 
 <CwButton variant="secondary" size="sm" onclick={() => goto('/')}>
-	{m.action_back_to_dashboard()}
+	&larr; {m.action_back_to_dashboard()}
 </CwButton>
 <div class="overflow-y-auto p-4">
 	<CwCard title={m.rules_configured_rules()} class="min-h-0 flex-1">
@@ -66,8 +66,15 @@
 				rowKey="id"
 				class="w-full"
 			>
+				{#snippet cell(row: RuleRow, col: CwColumnDef<RuleRow>, defaultValue: string)}
+					{#if col.key === 'created_at'}
+						{new Date(row.created_at).toLocaleString()}
+					{:else}
+						{defaultValue}
+					{/if}
+				{/snippet}
 				{#snippet rowActions(row: RuleRow)}
-					<div class="flex w-full flex-row gap-2 justify-end">
+					<div class="flex w-full flex-row justify-end gap-2">
 						<ViewRuleDialog {row} />
 						{#if row.profile_id === app.session?.sub}
 							<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
@@ -88,6 +95,7 @@
 							goto('/rules/create');
 						}}
 					>
+						<Icon src={ADD_ICON} alt={m.rules_create_new_rule()} />
 						{m.rules_create_new_rule()}
 					</CwButton>
 				{/snippet}

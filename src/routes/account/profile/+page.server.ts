@@ -1,12 +1,5 @@
+import type { Profile } from '$lib/interfaces/profile.interface';
 import type { PageServerLoad } from './$types';
-
-type ProfileDraft = {
-	username: string;
-	full_name: string;
-	website: string;
-	employer: string;
-	phone_number: string;
-};
 
 const readString = (value: unknown): string => {
 	if (typeof value !== 'string') {
@@ -28,7 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const usernameFromMetadata = readString(session?.user_metadata?.name);
 	const phoneNumber = readString(session?.phone);
 
-	const profile: ProfileDraft = {
+	const profile: Profile = {
 		username: usernameFromMetadata || emailToUsername(email),
 		full_name: fullName,
 		website: '',
