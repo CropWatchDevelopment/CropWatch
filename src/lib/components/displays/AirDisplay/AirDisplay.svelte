@@ -145,30 +145,30 @@
 
 	let refreshing = $state(false);
 
-	async function fetchLatestData() {
-		if (!authToken || !devEui || refreshing) return;
+	// async function fetchLatestData() {
+	// 	if (!authToken || !devEui || refreshing) return;
 
-		refreshing = true;
-		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
-			const result = await api.getDeviceLatestData(devEui);
+	// 	refreshing = true;
+	// 	try {
+	// 		const api = new ApiService({ fetchFn: fetch, authToken });
+	// 		const result = await api.getDeviceLatestData(devEui);
 
-			if (result && typeof result === 'object' && result.created_at) {
-				const existingIds = new Set(rows.map((r) => r.id));
-				const newId = String(result.id ?? result.data_id ?? `${result.created_at}-latest`);
-				if (!existingIds.has(newId)) {
-					extraRowsByKey = {
-						...extraRowsByKey,
-						[historicalDataKey]: [...extraRows, result]
-					};
-				}
-			}
-		} catch (err) {
-			console.error('Failed to fetch latest air data:', err);
-		} finally {
-			refreshing = false;
-		}
-	}
+	// 		if (result && typeof result === 'object' && result.created_at) {
+	// 			const existingIds = new Set(rows.map((r) => r.id));
+	// 			const newId = String(result.id ?? result.data_id ?? `${result.created_at}-latest`);
+	// 			if (!existingIds.has(newId)) {
+	// 				extraRowsByKey = {
+	// 					...extraRowsByKey,
+	// 					[historicalDataKey]: [...extraRows, result]
+	// 				};
+	// 			}
+	// 		}
+	// 	} catch (err) {
+	// 		console.error('Failed to fetch latest air data:', err);
+	// 	} finally {
+	// 		refreshing = false;
+	// 	}
+	// }
 
 	let lineSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
 		rows.map((row) => ({
@@ -275,18 +275,6 @@
 </script>
 
 <div class="air-display">
-	{#if lastSeenTimestamp}
-		<CwCard elevated>
-			<div class="air-display__last-updated">
-				<span>{m.display_last_updated()}:</span>
-				<CwDuration
-					from={lastSeenTimestamp}
-					alarmAfterMinutes={ALARM_AFTER_MINUTES}
-					alarmCallback={fetchLatestData}
-				/>
-			</div>
-		</CwCard>
-	{/if}
 
 	<div class="kpi-grid">
 		<CwStatCard
@@ -319,7 +307,7 @@
 					trend: 'up'
 				}}
 				unit="ppm"
-				accentColor="var(--cw-success-500)"
+				accentColor="purple"
 			/>
 		{/if}
 	</div>

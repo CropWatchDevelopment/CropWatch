@@ -105,7 +105,6 @@ const PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT = '/payments/subscriptions/checko
 const PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT = '/payments/subscriptions/portal';
 const REPORTS_ENDPOINT = '/reports';
 const REPORTS_BASE_ENDPOINT = publicEnv.PUBLIC_REPORTS_ENDPOINT ?? REPORTS_ENDPOINT;
-const REPORT_BY_ID_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/{id}`;
 const REPORT_BY_REPORT_ID_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/{report_id}`;
 const RULES_BASE_ENDPOINT = publicEnv.PUBLIC_RULES_ENDPOINT ?? '/rules';
 const TRIGGERED_RULES_BASE_ENDPOINT =
@@ -936,10 +935,13 @@ export class ApiService {
 		);
 	}
 
-	public getReport(id: string): Promise<ReportDto> {
-		return this.request<ReportDto>(replacePathParams(REPORT_BY_ID_ENDPOINT, { id }), {
-			method: 'GET'
-		});
+	public getReport(reportId: string): Promise<ReportDto> {
+		return this.request<ReportDto>(
+			replacePathParams(REPORT_BY_REPORT_ID_ENDPOINT, { report_id: reportId }),
+			{
+				method: 'GET'
+			}
+		);
 	}
 
 	public updateReport(reportId: string, payload: UpdateReportRequest): Promise<ReportDto> {

@@ -6,7 +6,7 @@
 	import { resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService } from '$lib/api/api.service';
 	import { m } from '$lib/paraglide/messages.js';
-	import { CwButton, CwCard, CwSpinner, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { CwButton, CwCard, CwDuration, CwSpinner, useCwToast } from '@cropwatchdevelopment/cwui';
 	import CsvExportDialog from './csvExportDialog.svelte';
 	import { resolveExportTimeZone } from './csvExport';
 	import type { PageProps } from './$types';
@@ -116,6 +116,9 @@
 	let DisplayComponent = $derived(resolveDisplayComponent(data.dataTable));
 	let controlsDisabled = $derived(!authToken || !devEui);
 	let routeKey = $derived(`${locationId}:${devEui}`);
+	let upload_interval = $derived(
+		data.device?.upload_interval ?? data.device?.cw_device_type?.default_upload_interval
+	);
 
 	let requestedHistoricalData = $derived(
 		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
@@ -168,6 +171,7 @@
 
 		try {
 			const api = new ApiService({ fetchFn: fetch, authToken });
+			console.log(start, end);
 			const result = await api.getDeviceDataWithinRange(devEui, {
 				start: toIsoString(start),
 				end: toIsoString(end),
@@ -188,6 +192,24 @@
 	async function selectRange(selection: RangeSelection): Promise<void> {
 		const { start, end } = getRangeBounds(selection);
 		await loadHistoricalData(start, end, selection);
+	}
+
+	async function fetchLatestData() {
+		if (!authToken || !devEui) return;
+
+		try {
+			const api = new ApiService({ fetchFn: fetch, authToken });
+			const result = await api.getDeviceLatestData(devEui);
+
+			if (isTelemetryRow(result)) {
+				latestData = result;
+				historicalData = [result, ...(historicalData ?? [])];
+			} else {
+				console.warn('Latest data response is not an object:', result);
+			}
+		} catch (err) {
+			console.error('Failed to fetch latest air data:', err);
+		}
 	}
 </script>
 
@@ -216,74 +238,89 @@
 	</CwButton>
 </div>
 
-
 <div class="device-page">
 	<CwCard
 		title={m.devices_dashboard_card_title({ devEui: data?.device?.name || devEui.toUpperCase() })}
 		subtitle={m.devices_dashboard_card_subtitle({ locationName })}
 		elevated
 	>
-		<div class="flex flex-row w-full">
-		<div class="flex flex-start flex-wrap gap-2">
-			{#each getRangeOptions() as ranges (ranges.value)}
-				<CwButton
-					variant={activeRange === ranges.value ? 'primary' : 'secondary'}
-					size="sm"
-					disabled={controlsDisabled}
-					onclick={() => selectRange(ranges.value)}
-				>
-					{ranges.label}
-				</CwButton>
-			{/each}
-		</div>
-
-		<span class="flex-1"></span>
-		<div class="flex flex-row gap-2">
-			{#if permissionLevel <= 2}
-				<CsvExportDialog
-					{authToken}
-					{devEui}
-					{locationName}
-					timeZone={exportTimeZone}
-					disabled={controlsDisabled}
-				/>
-			{/if}
-
-			{#if permissionLevel == 1}
-				<CwButton
-					variant="secondary"
-					size="sm"
-					disabled={!locationId || !devEui}
-					onclick={() =>
-						goto(
-							resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
-								location_id: locationId,
-								dev_eui: devEui
-							})
-						)}
-				>
-					<Icon src={SETTINGS_ICON} alt="" class="h-4 w-4" />
-					{m.nav_settings()}
-				</CwButton>
-			{/if}
-		</div>
-		<!-- </div> -->
-
-		{#if fetching || fetchError}
-			<div class="device-page__status">
-				{#if fetching}
-					<div class="device-page__status-row">
-						<CwSpinner />
-						<span>{m.devices_loading_telemetry()}</span>
-					</div>
+		{#snippet actions()}
+			<p class="text-right text-md" style="color: var(--cw-text-muted)">
+				{m.display_last_updated()}:
+				{#if historicalData && historicalData.length > 0}
+					<CwDuration
+						from={historicalData[0].created_at}
+						alarmAfterMinutes={(upload_interval || 10) + 0.5}
+						alarmCallback={fetchLatestData}
+					/>
+				{:else}
+					<span>Data Not available</span>
 				{/if}
-
-				{#if fetchError}
-					<p class="device-page__status-error">{fetchError}</p>
-				{/if}
+			</p>
+		{/snippet}
+		<div class="flex w-full flex-row">
+			<div class="flex-start flex flex-wrap gap-2">
+				{#each getRangeOptions() as ranges (ranges.value)}
+					<CwButton
+						variant={activeRange === ranges.value ? 'primary' : 'secondary'}
+						size="sm"
+						disabled={controlsDisabled}
+						onclick={() => selectRange(ranges.value)}
+					>
+						{ranges.label}
+					</CwButton>
+				{/each}
 			</div>
-		{/if}
-	</CwCard>
+
+			<span class="flex-1"></span>
+			<div class="flex flex-col gap-2">
+				<div class="flex flex-row gap-2">
+					{#if permissionLevel <= 2}
+						<CsvExportDialog
+							{authToken}
+							{devEui}
+							{locationName}
+							timeZone={exportTimeZone}
+							disabled={controlsDisabled}
+						/>
+					{/if}
+
+					{#if permissionLevel == 1}
+						<CwButton
+							variant="secondary"
+							size="lg"
+							disabled={!locationId || !devEui}
+							onclick={() =>
+								goto(
+									resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
+										location_id: locationId,
+										dev_eui: devEui
+									})
+								)}
+						>
+							<Icon src={SETTINGS_ICON} alt="" class="h-4 w-4" />
+							{m.nav_settings()}
+						</CwButton>
+					{/if}
+				</div>
+			</div>
+
+			{#if fetching || fetchError}
+				<div class="device-page__status">
+					{#if fetching}
+						<div class="device-page__status-row">
+							<CwSpinner />
+							<span>{m.devices_loading_telemetry()}</span>
+						</div>
+					{/if}
+
+					{#if fetchError}
+						<p class="device-page__status-error">{fetchError}</p>
+					{/if}
+				</div>
+			{/if}
+		</div></CwCard
+	>
 
 	<div class="device-page__display">
 		<DisplayComponent

@@ -15,6 +15,7 @@
 	import DeleteReportDialog from './DeleteReportDialog.svelte';
 	import type { ReportRow } from './report-row';
 	import ADD_ICON from '$lib/images/icons/add.svg';
+	import EDIT_ICON from '$lib/images/icons/edit.svg';
 
 	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
@@ -92,6 +93,14 @@
 				{#snippet rowActions(row: ReportRow)}
 					<div class="flex flex-row gap-2">
 						<ReportHistoryDialog dev_eui={row.dev_eui} />
+						<CwButton
+							variant="secondary"
+							onclick={() => {
+								goto(`/reports/${row.report_id}/edit`);
+							}}
+						>
+							<Icon src={EDIT_ICON} alt="Edit" />
+						</CwButton>
 						<DeleteReportDialog
 							reportId={row.report_id}
 							reportName={row.name}

@@ -19,15 +19,25 @@
 
 	const app = getAppContext();
 
-	let totalDevices = $derived((app.deviceStatuses?.online ?? 0) + (app.deviceStatuses?.offline ?? 0));
+	let totalDevices = $derived(
+		(app.deviceStatuses?.online ?? 0) + (app.deviceStatuses?.offline ?? 0)
+	);
 	let offlineDevices = $derived(app.deviceStatuses?.offline ?? 0);
 	let onlineDevices = $derived(Math.max(0, totalDevices - offlineDevices));
 	let alertCount = $derived(app.triggeredRulesCount || 0);
 
 	let drawerOpen: boolean = $state(app.drawerOpen ?? false);
 	let barItems = $derived<CwDrawerItem[]>([
-		{ id: 'online', label: m.overview_online_count({ count: String(onlineDevices) }), tone: 'success' },
-		{ id: 'offline', label: m.overview_offline_count({ count: String(offlineDevices) }), tone: 'danger' },
+		{
+			id: 'online',
+			label: m.overview_online_count({ count: String(onlineDevices) }),
+			tone: 'success'
+		},
+		{
+			id: 'offline',
+			label: m.overview_offline_count({ count: String(offlineDevices) }),
+			tone: 'danger'
+		},
 		{ id: 'alerts', label: m.overview_alert_count({ count: String(alertCount) }), tone: 'warning' }
 	]);
 	let statusSegments = $derived<CwDonutSegment[]>([
@@ -48,77 +58,33 @@
 		id: String(rule.id),
 		icon: '🔔',
 		name: rule.name,
-		reported: rule.last_triggered
-			? formatDateTime(rule.last_triggered)
-			: m.common_not_available()
+		reported: rule.last_triggered ? formatDateTime(rule.last_triggered) : m.common_not_available()
 	}));
 </script>
 
-<CwDrawer bind:open={app.drawerOpen} label={m.status_alerts()} items={barItems} height="18rem">
+<CwDrawer bind:open={app.drawerOpen} label={m.status_alerts()} items={barItems}>
 	<div class="flex w-full flex-row gap-6">
 		<!-- Status Mix card -->
-		<CwCard class="w-full">
+		<CwCard
+			title={m.overview_status_mix()}
+			subtitle={m.overview_total({
+				count: String(statusSegments.reduce((s, x) => s + x.value, 0))
+			})}
+			class="w-full"
+		>
 			<div class="status-card">
-				<div class="status-card__header">
-					<span class="status-card__title">{m.overview_status_mix()}</span>
-					<span class="status-card__total"
-						>{m.overview_total({ count: String(statusSegments.reduce((s, x) => s + x.value, 0)) })}</span
-					>
-				</div>
 				<div class="status-card__body">
 					<div class="status-card__chart">
 						<CwDonutChart segments={statusSegments} size={120} thickness={14} />
 					</div>
-					<div class="status-card__legend">
-						<!-- {#each statusSegments as seg}
-							<div class="legend-row">
-								<CwChip
-									label="{seg.label}  {seg.value}"
-									tone={seg.label === 'Online'
-										? 'success'
-										: seg.label === 'Offline'
-											? 'danger'
-											: 'warning'}
-									size="sm"
-									variant="soft"
-								/>
-							</div>
-						{/each} -->
-					</div>
 				</div>
-			</div>
-		</CwCard>
-
-		<!-- Top Groups card -->
-		<CwCard class="w-full">
-			<div class="groups-card">
-				<div class="groups-card__header">
-					<span class="groups-card__title">{m.overview_top_groups()}</span>
-					<span class="groups-card__subtitle">{m.overview_in_view()}</span>
-				</div>
-				{#each topGroups as group (group.name)}
-					<div class="groups-card__row">
-						<span class="groups-card__name">{group.name}</span>
-						<span class="groups-card__count">{group.count}</span>
-					</div>
-					<div class="groups-card__bar-track">
-						<div
-							class="groups-card__bar-fill"
-							style:width="{(group.count / maxGroupCount) * 100}%"
-						></div>
-					</div>
-				{/each}
 			</div>
 		</CwCard>
 
 		<!-- Active Alert List card -->
-		<CwCard class="w-full">
-			<div class="alerts-card">
-				<div class="alerts-card__header">
-					<span class="alerts-card__title">{m.overview_active_alert_list()}</span>
-					<span class="alerts-card__subtitle">{m.overview_reported_time()}</span>
-				</div>
-				<div class="alerts-card__list" style="overflow-y: scroll;">
+		<CwCard title={m.overview_active_alert_list()} subtitle={m.overview_reported_time()} class="w-full">
+			<div class="alerts-card overflow-y-scroll">
+				<div class="alerts-card__list">
 					{#each alerts as alert (alert.id)}
 						<div class="alerts-card__row">
 							<span class="alerts-card__icon">🔔</span>
