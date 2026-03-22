@@ -15,6 +15,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import DeleteRuleDialog from './DeleteRuleDialog.svelte';
 	import ViewRuleDialog from './ViewRuleDialog.svelte';
+	import { getAppContext } from '$lib/appContext.svelte';
 
 	type RuleRow = RulesDto & { location_name: string };
 
@@ -25,12 +26,13 @@
 		(data.rules ?? []).filter((rule) => !deletedRuleGroupIds.includes(rule.ruleGroupId))
 	);
 	let tableKey = $derived(rules.map((rule) => rule.ruleGroupId).join('|'));
+	let app = getAppContext();
 
 	const columns: CwColumnDef<RuleRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
-		{ key: 'dev_eui', header: 'Device EUI' },
+		{ key: 'device_name', header: 'Device Name' },
+		{ key: 'location_name', header: m.nav_locations() },
 		{ key: 'created_at', header: m.common_created() },
-		{ key: 'location_name', header: m.nav_locations() }
 	];
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleRow>> {
@@ -59,21 +61,24 @@
 				{columns}
 				{loadData}
 				{loading}
+				groupBy="device_name"
 				rowActionsHeader={m.common_actions()}
 				rowKey="id"
 				class="w-full"
 			>
 				{#snippet rowActions(row: RuleRow)}
-					<div class="flex w-full flex-row gap-2">
+					<div class="flex w-full flex-row gap-2 justify-end">
 						<ViewRuleDialog {row} />
-						<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
-							<Icon src={EDIT_ICON} alt={m.action_edit()} />
-						</CwButton>
-						<DeleteRuleDialog
-							ruleGroupId={row.ruleGroupId}
-							ruleName={row.name}
-							onDeleted={handleRuleDeleted}
-						/>
+						{#if row.profile_id === app.session?.sub}
+							<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
+								<Icon src={EDIT_ICON} alt={m.action_edit()} />
+							</CwButton>
+							<DeleteRuleDialog
+								ruleGroupId={row.ruleGroupId}
+								ruleName={row.name}
+								onDeleted={handleRuleDeleted}
+							/>
+						{/if}
 					</div>
 				{/snippet}
 				{#snippet toolbarActions()}

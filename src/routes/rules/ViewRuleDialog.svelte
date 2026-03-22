@@ -74,7 +74,7 @@
 	}
 </script>
 
-<CwButton variant="secondary" size="md" onclick={() => (open = true)}>
+<CwButton variant="info" size="md" onclick={() => (open = true)}>
 	<Icon src={EYE_ICON} alt={m.action_view()} />
 </CwButton>
 

@@ -1,21 +1,81 @@
 <script lang="ts">
-	import { CwButton, CwCard, CwInput } from '@cropwatchdevelopment/cwui';
+	import { applyAction, enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import type { ActionResult } from '@sveltejs/kit';
+	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import Icon from '$lib/components/Icon.svelte';
+	import SAVE_ICON from '$lib/images/icons/save.svg';
 
-	let { data, form }: { data: any; form: any } = $props();
+	type SettingsPageData = {
+		locationId: string | number | null;
+		locationName?: string | null;
+		locationGroup?: string | null;
+	};
+
+	let { data, form }: { data: SettingsPageData; form?: unknown } = $props();
+	const toast = useCwToast();
+
 	let submitting = $state(false);
+	let locationName = $derived(data.locationName ?? '');
+	let locationGroup = $derived(data.locationGroup ?? '');
+	let locationNameValue = $derived(locationName.trim());
+	let locationGroupValue = $derived(locationGroup.trim());
+	let locationDirty = $derived(
+		locationNameValue !== (data.locationName ?? '').trim() ||
+			locationGroupValue !== (data.locationGroup ?? '').trim()
+	);
+	let canSubmitLocation = $derived(
+		!submitting && locationDirty && locationNameValue.length > 0
+	);
+
+	function getResultMessage(result: ActionResult): string | null {
+		if (result.type !== 'success' && result.type !== 'failure') return null;
+		const message = result.data?.message;
+		return typeof message === 'string' && message.trim().length > 0 ? message.trim() : null;
+	}
 </script>
 
 <div class="settings-page">
 	<CwCard title={m.locations_settings_title()} subtitle={m.locations_settings_subtitle()} elevated>
-		<form method="POST" action="?/updateLocationName">
+		<form
+			method="POST"
+			action="?/updateLocationName"
+			use:enhance={({ cancel }) => {
+				if (!canSubmitLocation) {
+					cancel();
+					return;
+				}
+
+				submitting = true;
+				return async ({ result }) => {
+					try {
+						await applyAction(result);
+
+						const message = getResultMessage(result);
+						if (message) {
+							toast.add({
+								message,
+								tone: result.type === 'success' ? 'success' : 'danger'
+							});
+						}
+
+						if (result.type === 'success') {
+							await invalidateAll();
+						}
+					} finally {
+						submitting = false;
+					}
+				};
+			}}
+		>
 			<CwInput
 				name="locationName"
 				type="text"
 				label={m.locations_location_name()}
 				placeholder={m.locations_enter_location_name()}
 				required
-				bind:value={data.locationName}
+				bind:value={locationName}
 				class="mb-4"
 			/>
 			<CwInput
@@ -24,7 +84,7 @@
 				label={m.common_group()}
 				placeholder={m.locations_enter_group_name()}
 				required
-				bind:value={data.locationGroup}
+				bind:value={locationGroup}
 			/>
 			<input type="hidden" name="location_id" value={data.locationId} />
 			<div class="permissions-form__actions" style="margin-top: 1rem;">
@@ -32,9 +92,9 @@
 					type="submit"
 					variant="primary"
 					loading={submitting}
-					disabled={submitting || !data.locationName.trim()}
+					disabled={!canSubmitLocation}
 				>
-					{m.locations_update_location_name()}
+					<Icon src={SAVE_ICON} />
 				</CwButton>
 			</div>
 		</form>

@@ -16,10 +16,12 @@
 	import type { ReportRow } from './report-row';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import { getAppContext } from '$lib/appContext.svelte';
 
 	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
 	let deletedReportIds = $state<string[]>([]);
+	let app = getAppContext();
 
 	const columns: CwColumnDef<ReportRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
@@ -93,19 +95,21 @@
 				{#snippet rowActions(row: ReportRow)}
 					<div class="flex flex-row gap-2">
 						<ReportHistoryDialog dev_eui={row.dev_eui} />
-						<CwButton
-							variant="secondary"
-							onclick={() => {
-								goto(`/reports/${row.report_id}/edit`);
-							}}
-						>
-							<Icon src={EDIT_ICON} alt="Edit" />
-						</CwButton>
-						<DeleteReportDialog
-							reportId={row.report_id}
-							reportName={row.name}
-							onDeleted={handleReportDeleted}
-						/>
+						{#if row.user_id === app.session?.sub}
+							<CwButton
+								variant="secondary"
+								onclick={() => {
+									goto(`/reports/${row.report_id}/edit`);
+								}}
+							>
+								<Icon src={EDIT_ICON} alt="Edit" />
+							</CwButton>
+							<DeleteReportDialog
+								reportId={row.report_id}
+								reportName={row.name}
+								onDeleted={handleReportDeleted}
+							/>
+						{/if}
 					</div>
 				{/snippet}
 

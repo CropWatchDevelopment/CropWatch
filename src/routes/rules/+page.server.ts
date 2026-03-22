@@ -32,6 +32,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 				: null;
 
 		return {
+			device_name: deviceRecord?.name && typeof deviceRecord.name === 'string' ? deviceRecord.name : '',
 			location_name:
 				typeof locationRecord?.name === 'string' && locationRecord.name.trim().length > 0
 					? locationRecord.name
