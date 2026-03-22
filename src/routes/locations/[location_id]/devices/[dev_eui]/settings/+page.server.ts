@@ -45,7 +45,6 @@ type SensorCertificateRow = {
 	label: string;
 	serial: string;
 	product: string;
-	downloadPath: string;
 	downloadDisabledReason: string | null;
 };
 
@@ -175,14 +174,16 @@ function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificate
 		.map((row) => ({
 			...row,
 			product,
-			downloadPath: `libellus-certificates/${row.key}`,
-			downloadDisabledReason: !hasApiToken
-				? m.devices_libellus_api_token_missing()
-				: !hasBaseUrl
-					? m.devices_libellus_base_url_missing()
-					: !product
-						? m.devices_libellus_product_name_missing()
-						: null
+			downloadDisabledReason:
+				row.key !== 'sensor'
+					? null
+					: !hasApiToken
+						? m.devices_libellus_api_token_missing()
+						: !hasBaseUrl
+							? m.devices_libellus_base_url_missing()
+							: !product
+								? m.devices_libellus_product_name_missing()
+								: null
 		}));
 }
 

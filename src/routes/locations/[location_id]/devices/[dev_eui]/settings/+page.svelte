@@ -8,13 +8,15 @@
 		CwInput,
 		CwSeparator
 	} from '@cropwatchdevelopment/cwui';
-	import { resolve } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import type { PageProps } from './$types';
 	import './settings-style.css';
 	import { goto } from '$app/navigation';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
+	import Icon from '$lib/components/Icon.svelte';
+	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
 	const DEVICE_GROUP_MAX_LENGTH = 120;
@@ -48,7 +50,17 @@
 	let deviceGroup = $derived(data.deviceGroup ?? '');
 	let location_id = $derived(String(data.location_id ?? ''));
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
-	let permissionRows = $state(createOwnerRows(data.deviceOwners ?? []));
+	let sensorOneCertificate = $derived(
+		sensorCertificates.find((target) => target.key === 'sensor') ?? null
+	);
+	let sensorTwoCertificate = $derived(
+		sensorCertificates.find((target) => target.key === 'sensor2') ?? null
+	);
+	let hasSensorCertificates = $derived(Boolean(sensorOneCertificate || sensorTwoCertificate));
+	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
+	const sensorTwoCertificateDownloadPath = asset(
+		'/files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf'
+	);
 
 	function createOwnerRows(
 		owners: Array<{
@@ -227,7 +239,6 @@
 			</div>
 
 			<div class="panel-actions">
-				<p class="panel-note">{m.devices_validation_runs_note()}</p>
 				<CwButton
 					type="submit"
 					variant="primary"
@@ -245,29 +256,29 @@
 		subtitle={m.devices_sensor_certificates_subtitle()}
 		elevated
 	>
-		{#if sensorCertificates.length === 0}
+		{#if !hasSensorCertificates}
 			<p class="empty-state">{m.devices_no_sensor_serial()}</p>
 		{:else}
 			<div class="certificate-list">
-				{#each sensorCertificates as target, index (target.key)}
+				{#if sensorOneCertificate}
 					<div class="certificate-item">
 						<div class="certificate-item__meta">
 							<div class="device-form__header">
-								<CwChip label={target.label} tone="info" variant="soft" />
+								<CwChip label={sensorOneCertificate.label} tone="info" variant="soft" />
 								<CwChip
-									label={m.devices_sensor_serial_chip({ serial: target.serial })}
+									label={m.devices_sensor_serial_chip({ serial: sensorOneCertificate.serial })}
 									tone="secondary"
 									variant="soft"
 								/>
-								{#if target.product}
-									<CwChip label={target.product} tone="secondary" variant="soft" />
+								{#if sensorOneCertificate.product}
+									<CwChip label={sensorOneCertificate.product} tone="secondary" variant="soft" />
 								{/if}
 							</div>
 
 							<p class="panel-note">{m.devices_sensor_certificate_note()}</p>
 
-							{#if target.downloadDisabledReason}
-								<p class="field-error">{target.downloadDisabledReason}</p>
+							{#if sensorOneCertificate.downloadDisabledReason}
+								<p class="field-error">{sensorOneCertificate.downloadDisabledReason}</p>
 							{/if}
 						</div>
 
@@ -278,7 +289,7 @@
 								{
 									location_id,
 									dev_eui: data.devEui,
-									sensor_key: target.key
+									sensor_key: sensorOneCertificate.key
 								}
 							)}
 							target="_blank"
@@ -288,17 +299,48 @@
 								type="submit"
 								variant="primary"
 								size="sm"
-								disabled={Boolean(target.downloadDisabledReason)}
+								disabled={Boolean(sensorOneCertificate.downloadDisabledReason)}
 							>
-								{m.devices_download_pdf()}
+								<Icon src={DOWNLOAD_ICON} />
 							</CwButton>
 						</form>
 					</div>
+				{/if}
 
-					{#if index < sensorCertificates.length - 1}
-						<CwSeparator spacing="0" />
-					{/if}
-				{/each}
+				{#if sensorOneCertificate && sensorTwoCertificate}
+					<CwSeparator spacing="0" />
+				{/if}
+
+				{#if sensorTwoCertificate}
+					<div class="certificate-item">
+						<div class="certificate-item__meta">
+							<div class="device-form__header">
+								<CwChip label={sensorTwoCertificate.label} tone="info" variant="soft" />
+								<CwChip
+									label={m.devices_sensor_serial_chip({ serial: sensorTwoCertificate.serial })}
+									tone="secondary"
+									variant="soft"
+								/>
+								{#if sensorTwoCertificate.product}
+									<CwChip label={sensorTwoCertificate.product} tone="secondary" variant="soft" />
+								{/if}
+							</div>
+
+							<p class="panel-note">{m.devices_sensor_certificate_note()}</p>
+						</div>
+
+						<form
+							method="GET"
+							action={sensorTwoCertificateDownloadPath}
+							target="_blank"
+							class="certificate-download-form"
+						>
+							<CwButton type="submit" variant="primary" size="sm">
+								<Icon src={DOWNLOAD_ICON} />
+							</CwButton>
+						</form>
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</CwCard>

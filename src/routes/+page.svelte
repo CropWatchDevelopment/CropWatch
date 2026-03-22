@@ -155,17 +155,6 @@
 						{m.dashboard_sensor_cards_view()}
 					</CwButton>
 				</div>
-
-				<!-- <CwBadge value={app.triggeredRulesCount} position="bottom_left" size="md" tone="danger">
-					<CwButton
-						variant="secondary"
-						onclick={() => {
-							app.drawerOpen = !app.drawerOpen;
-						}}
-					>
-						<Icon src={NOTIFICATIONS_ICON} alt={m.dashboard_notifications_alt()} class="h-5 w-5"  />
-					</CwButton>
-				</CwBadge> -->
 			</div>
 		</div>
 	</header>

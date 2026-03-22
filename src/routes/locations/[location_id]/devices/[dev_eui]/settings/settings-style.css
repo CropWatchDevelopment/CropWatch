@@ -31,8 +31,8 @@
 
 .panel-note {
 	margin: 0;
-	color: rgba(15, 23, 42, 0.72);
 	font-size: 0.92rem;
+	color: var(--cw-text-muted);
 }
 
 .field-stack {

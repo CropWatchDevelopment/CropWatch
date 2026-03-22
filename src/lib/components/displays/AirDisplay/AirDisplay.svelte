@@ -23,6 +23,8 @@
 	import type { AirRow } from './interfaces/AirRow.interface';
 	import type { Note } from './interfaces/note.interface';
 	import NotesViewDialog from './dialogs/notes-view-dialog.svelte';
+	import Icon from '$lib/components/Icon.svelte';
+	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
 
 	const HEATMAP_FALLBACK_DAYS = 1;
 	const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -388,7 +390,7 @@
 								{#if row.alerts && row.alerts.length > 0}
 									❌
 								{:else}
-									✅
+									<Icon src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} preserveColor />
 								{/if}
 							{:else}
 								{defaultValue}

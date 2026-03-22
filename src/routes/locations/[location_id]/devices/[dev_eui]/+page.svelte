@@ -225,14 +225,6 @@
 	>
 		<div class="flex flex-row w-full">
 		<div class="flex flex-start flex-wrap gap-2">
-			<CwButton
-				size="sm"
-				fullWidth={true}
-				disabled={controlsDisabled}
-				onclick={() => selectRange(DEFAULT_RANGE_SELECTION)}
-			>
-				Today
-			</CwButton>
 			{#each getRangeOptions() as ranges (ranges.value)}
 				<CwButton
 					variant={activeRange === ranges.value ? 'primary' : 'secondary'}
@@ -257,7 +249,7 @@
 				/>
 			{/if}
 
-			{#if permissionLevel <= 1}
+			{#if permissionLevel == 1}
 				<CwButton
 					variant="secondary"
 					size="sm"

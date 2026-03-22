@@ -7,7 +7,6 @@
 		CwHeader,
 		CwProfileMenu,
 		CwSwitch,
-		CwThemePicker,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
@@ -48,7 +47,6 @@
 			/>
 		{/if}
 		<LanguageSwitcher compact class="mr-3" />
-		<CwThemePicker onchange={(theme) => console.log(theme)} />
 		<CwProfileMenu
 			name={app.session?.email ?? ''}
 			subtitle={app.session?.role ?? ''}

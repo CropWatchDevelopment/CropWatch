@@ -103,55 +103,6 @@
 
 <div class="settings-page">
 	<div class="settings-shell">
-		<CwCard
-			title={m.nav_settings()}
-			subtitle="Define the notation, language, and presentation defaults CropWatch should use across dashboards, telemetry tables, and exports."
-			elevated
-		>
-			{#snippet actions()}
-				<div class="settings-meta">
-					{#if data.email}
-						<CwChip label={data.email} tone="info" variant="soft" size="sm" />
-					{/if}
-					{#if data.role}
-						<CwChip label={data.role} tone="secondary" variant="outline" size="sm" />
-					{/if}
-					<CwChip label="Mockup only" tone="warning" variant="soft" size="sm" />
-				</div>
-			{/snippet}
-
-			<div class="settings-hero">
-				<div class="hero-copy">
-					<p class="hero-eyebrow">Workspace defaults</p>
-					<h2>Standardize how every sensor reading is presented before you wire persistence.</h2>
-					<p>
-						This page focuses on the preferences CropWatch is already surfacing elsewhere in the
-						app: environmental units, field reporting notation, and the UI defaults that shape day
-						to day monitoring.
-					</p>
-				</div>
-
-				<div class="hero-grid">
-					<div class="hero-stat">
-						<span class="hero-stat__label">Language</span>
-						<strong>{languageLabel}</strong>
-					</div>
-					<div class="hero-stat">
-						<span class="hero-stat__label">Theme</span>
-						<strong>{themeLabel}</strong>
-					</div>
-					<div class="hero-stat">
-						<span class="hero-stat__label">Temperature</span>
-						<strong>{temperatureLabel}</strong>
-					</div>
-					<div class="hero-stat">
-						<span class="hero-stat__label">EC</span>
-						<strong>{ecLabel}</strong>
-					</div>
-				</div>
-			</div>
-		</CwCard>
-
 		<form class="settings-grid" onsubmit={(event) => event.preventDefault()}>
 			<div class="settings-card settings-card--regional">
 				<CwCard
@@ -189,7 +140,6 @@
 
 						<div class="chip-row">
 							<CwChip label={formatLabel} tone="primary" variant="soft" />
-							<CwChip label={languageLabel} tone="secondary" variant="outline" />
 						</div>
 					</div>
 				</CwCard>
@@ -227,11 +177,6 @@
 								options={data.options.area}
 								bind:value={preferences.areaUnit}
 							/>
-						</div>
-
-						<div class="chip-row">
-							<CwChip label={themeLabel} tone="info" variant="soft" />
-							<CwChip label={spatialLabel} tone="secondary" variant="outline" />
 						</div>
 					</div>
 				</CwCard>
@@ -294,87 +239,6 @@
 								tone="secondary"
 								variant="outline"
 							/>
-						</div>
-					</div>
-				</CwCard>
-			</div>
-
-			<div class="settings-card settings-card--presentation">
-				<CwCard
-					title="Presentation defaults"
-					subtitle="Decide how much context CropWatch should expose by default in dashboards and exports."
-					elevated
-				>
-					<div class="switch-grid">
-						<CwSwitch
-							checked={preferences.compactDashboard}
-							label="Compact dashboard cards"
-							description="Fit more device summaries into one view for high density monitoring."
-							onchange={(checked) => (preferences.compactDashboard = checked)}
-						/>
-
-						<CwSwitch
-							checked={preferences.showDerivedMetrics}
-							label="Show derived metrics"
-							description="Surface calculated context such as combined summaries when it is available."
-							onchange={(checked) => (preferences.showDerivedMetrics = checked)}
-						/>
-
-						<CwSwitch
-							checked={preferences.includeUnitsInExports}
-							label="Include units in exports"
-							description="Append the selected notation to CSV, PDF, and table exports by default."
-							onchange={(checked) => (preferences.includeUnitsInExports = checked)}
-						/>
-
-						<CwSwitch
-							checked={preferences.highlightAlertThresholds}
-							label="Highlight alert thresholds"
-							description="Keep threshold-sensitive values visually emphasized inside telemetry views."
-							onchange={(checked) => (preferences.highlightAlertThresholds = checked)}
-						/>
-					</div>
-				</CwCard>
-			</div>
-
-			<div class="settings-card settings-card--save">
-				<CwCard
-					title="Preview summary"
-					subtitle="Keep the save action mocked until the API service is ready."
-					elevated
-				>
-					<div class="card-stack">
-						<div class="preview-panel">
-							<div class="preview-panel__copy">
-								<p class="section-title">Current preview</p>
-								<p class="section-copy">
-									Your formatting profile is currently centered on {temperatureLabel},
-									{` ${ecLabel}, ${formatLabel}, and ${themeLabel.toLowerCase()} mode.`}
-								</p>
-							</div>
-
-							<div class="chip-row">
-								<CwChip label={languageLabel} tone="secondary" variant="outline" />
-								<CwChip label={temperatureLabel} tone="primary" variant="soft" />
-								<CwChip label={ecLabel} tone="info" variant="soft" />
-								<CwChip label={themeLabel} tone="warning" variant="outline" />
-							</div>
-						</div>
-
-						<CwSeparator spacing="0" />
-
-						<div class="action-row">
-							<CwButton
-								type="button"
-								variant="ghost"
-								onclick={() => void resetForm()}
-								disabled={!isDirty}
-							>
-								Reset
-							</CwButton>
-							<CwButton type="button" variant="primary" onclick={handleSave}>
-								Save Settings
-							</CwButton>
 						</div>
 					</div>
 				</CwCard>

@@ -8,6 +8,7 @@
 		CwListBox,
 		CwSearchInput,
 		CwSideNav,
+		CwThemePicker,
 		type CwListBoxItem,
 		type CwSideNavItem
 	} from '@cropwatchdevelopment/cwui';
@@ -59,14 +60,15 @@
 			badgeTone: 'secondary',
 			endText: String(app.devices?.length ?? 0)
 		};
-		const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(app.deviceGroups)
-			.map((group) => ({
-				value: group,
-				label: group,
-				badge: group.toUpperCase().substring(0, 2),
-				badgeTone: 'info' as const,
-				endText: String(app.devices?.filter((d) => d.group === group).length ?? 0)
-			}));
+		const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(
+			app.deviceGroups
+		).map((group) => ({
+			value: group,
+			label: group,
+			badge: group.toUpperCase().substring(0, 2),
+			badgeTone: 'info' as const,
+			endText: String(app.devices?.filter((d) => d.group === group).length ?? 0)
+		}));
 		return [allItem, ...groupItems];
 	});
 
@@ -81,14 +83,13 @@
 		};
 		const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(
 			app.locationGroups
-		)
-			.map((group) => ({
-				value: group,
-				label: group,
-				badge: group.toUpperCase().substring(0, 2),
-				badgeTone: 'info' as const,
-				endText: String(app.locations?.filter((d) => d.location_group === group).length ?? 0)
-			}));
+		).map((group) => ({
+			value: group,
+			label: group,
+			badge: group.toUpperCase().substring(0, 2),
+			badgeTone: 'info' as const,
+			endText: String(app.locations?.filter((d) => d.location_group === group).length ?? 0)
+		}));
 		return [allItem, ...groupItems];
 	});
 
@@ -171,21 +172,23 @@
 		{/if}
 	{/snippet}
 	{#snippet footer()}
-		<div style="padding: 1rem; font-size: 0.875rem; color: #888">
-			{#if app.session?.exp}
+		<span class="flex flex-col gap-4">
+			<div style="padding: 1rem; font-size: 0.875rem; color: #888">
+				{#if app.session?.exp}
 				<p class="text-xs">
-					{m.sidebar_current_session_expires()}: <CwDuration
-						from={new Date(app.session.exp * 1000)}
-						countDown={true}
-						alarmAfterMinutes={0.5}
-						alarmCallback={() => {
-							// goto(`/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`);
-							document.location = `/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`;
-						}}
-					/>
-				</p>
-			{/if}
-		</div>
+						{m.sidebar_current_session_expires()}: <CwDuration
+							from={new Date(app.session.exp * 1000)}
+							countDown={true}
+							alarmAfterMinutes={0.5}
+							alarmCallback={() => {
+								// goto(`/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`);
+								document.location = `/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`;
+							}}
+						/>
+					</p>
+				{/if}
+			</div>
+		</span>
 	{/snippet}
 </CwSideNav>
 
