@@ -10,40 +10,30 @@
 	import type { Profile } from '$lib/interfaces/profile.interface';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
+	import { getAppContext } from '$lib/appContext.svelte';
 
 	let { data }: PageProps = $props();
 
 	const toast = useCwToast();
+	const app = getAppContext();
 
 	function getInitialProfile(): Profile {
-		return data.profile;
+		return {
+			username: app.profile?.username ?? '',
+			full_name: app.profile?.full_name ?? '',
+			website: app.profile?.website ?? '',
+			employer: app.profile?.employer ?? '',
+			phone_number: app.profile?.phone_number ?? ''
+		};
 	}
+	
+	let username = $state(app.profile?.username ?? '');
+	let fullName = $state(app.profile?.full_name ?? '');
+	let website = $state(app.profile?.website ?? '');
+	let employer = $state(app.profile?.employer ?? '');
+	let phoneNumber = $state(app.profile?.phone_number ?? '');
 
-	let username = $state(getInitialProfile().username);
-	let fullName = $state(getInitialProfile().full_name);
-	let website = $state(getInitialProfile().website);
-	let employer = $state(getInitialProfile().employer);
-	let phoneNumber = $state(getInitialProfile().phone_number);
-
-	const usernameTrimmed = $derived(username.trim());
-	const fullNameTrimmed = $derived(fullName.trim());
-	const websiteTrimmed = $derived(website.trim());
-	const employerTrimmed = $derived(employer.trim());
-	const phoneNumberTrimmed = $derived(phoneNumber.trim());
-
-	const usernameError = $derived(
-		usernameTrimmed.length > 0 && usernameTrimmed.length < 3
-			? 'Username must be at least 3 characters.'
-			: ''
-	);
-
-	const websiteError = $derived(
-		websiteTrimmed.length > 0 && !isLikelyWebsite(websiteTrimmed)
-			? 'Enter a valid website or leave this field blank.'
-			: ''
-	);
-
-	const hasErrors = $derived(Boolean(usernameError || websiteError));
+	const hasErrors = $derived(false);
 	const isDirty = $derived.by(() => {
 		const initialProfile = getInitialProfile();
 		return (
@@ -54,11 +44,6 @@
 			phoneNumber !== initialProfile.phone_number
 		);
 	});
-
-	const displayName = $derived(fullNameTrimmed || usernameTrimmed || data.email || 'Your profile');
-	const companyLabel = $derived(employerTrimmed || 'Add your company');
-	const websiteLabel = $derived(websiteTrimmed || 'Add your website');
-	const phoneLabel = $derived(phoneNumberTrimmed || 'Add your phone number');
 
 	function isLikelyWebsite(value: string): boolean {
 		try {
@@ -128,7 +113,7 @@
 			<div class="profile-intro">
 				<div class="profile-summary">
 					<p class="summary-eyebrow">Account profile</p>
-					<h2>{displayName}</h2>
+					<h2>{fullName || username || data.email || 'Your profile'}</h2>
 					<p>
 						Use this page to shape how your identity appears anywhere CropWatch surfaces profile
 						data.
@@ -138,15 +123,15 @@
 				<div class="profile-highlights">
 					<div class="highlight">
 						<span class="highlight-label">Employer</span>
-						<strong>{companyLabel}</strong>
+						<strong>{employer || 'Add your company'}</strong>
 					</div>
 					<div class="highlight">
 						<span class="highlight-label">Website</span>
-						<strong>{websiteLabel}</strong>
+						<strong>{website || 'Add your website'}</strong>
 					</div>
 					<div class="highlight">
 						<span class="highlight-label">Phone</span>
-						<strong>{phoneLabel}</strong>
+						<strong>{phoneNumber || 'Add your phone number'}</strong>
 					</div>
 				</div>
 			</div>
@@ -167,7 +152,6 @@
 							name="username"
 							bind:value={username}
 							placeholder="e.g. cropwatch-kevin"
-							error={usernameError}
 							clearable
 						/>
 
@@ -200,7 +184,6 @@
 							name="website"
 							bind:value={website}
 							placeholder="e.g. https://cropwatch.io"
-							error={websiteError}
 							clearable
 						/>
 

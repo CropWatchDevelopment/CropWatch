@@ -24,6 +24,7 @@
 	import type { LayoutProps } from './$types';
 	import PwaDock from '$lib/components/pwa/PwaDock.svelte';
 	import Header from './Header.svelte';
+	import type { Profile } from '$lib/interfaces/profile.interface';
 
 	let { children }: LayoutProps = $props();
 
@@ -45,6 +46,7 @@
 		deviceGroups?: string[];
 		locationGroups?: string[];
 		locations?: LocationDto[];
+		profile?: Profile | undefined;
 		dashboardDebug?: Record<string, unknown> | null;
 	}
 
@@ -78,6 +80,7 @@
 
 		app.session = routeData.session ?? null;
 		app.accessToken = routeData.authToken ?? undefined;
+		app.profile = routeData.profile ?? undefined;
 
 		if (!isDashboardRoute) {
 			return;
@@ -107,7 +110,8 @@
 			(page.data as DashboardPageData).totalDeviceCount ??
 				((page.data as DashboardPageData).devices ?? []).length,
 			(page.data as DashboardPageData).deviceStatuses ?? null,
-			(page.data as DashboardPageData).dashboardDebug ?? null
+			(page.data as DashboardPageData).dashboardDebug ?? null,
+			(page.data as DashboardPageData).profile ?? null
 		).with(
 			(
 				type,
@@ -117,7 +121,8 @@
 				devicesLength,
 				totalDeviceCount,
 				deviceStatuses,
-				dashboardDebug
+				dashboardDebug,
+				profile,
 			) => {
 				console.info('[layout] route data snapshot', {
 					type,
@@ -127,7 +132,8 @@
 					devicesLength,
 					totalDeviceCount,
 					deviceStatuses,
-					dashboardDebug
+					dashboardDebug,
+					profile,
 				});
 			}
 		);

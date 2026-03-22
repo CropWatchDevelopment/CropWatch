@@ -22,7 +22,7 @@
 		{ id: 'logout', label: m.nav_logout(), separator: true, danger: true }
 	]);
 </script>
-<pre>{JSON.stringify(app.user, null, 2)}</pre>
+
 <CwHeader
 	class="app-header"
 	bind:sideNavMode={mode}
@@ -49,9 +49,10 @@
 			/>
 		{/if}
 		<LanguageSwitcher compact class="mr-3" />
+		
 		<CwProfileMenu
 			name={app.session?.email ?? ''}
-			subtitle={''}
+			subtitle={app.profile?.employer ?? ''}
 			{menuItems}
 			onselect={(event) => {
 				if (event.id === 'logout') {

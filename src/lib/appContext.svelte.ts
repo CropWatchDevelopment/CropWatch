@@ -14,7 +14,7 @@ const deviceAlarms = createCwAlarmScheduler();
 const app = createAppContext();
 
 export interface AppContext {
-	user?: Profile;
+	profile?: Profile;
 	session: IJWT | null;
 	devices: IDevice[];
 	deviceGroups?: string[];
@@ -34,7 +34,7 @@ export interface AppContext {
 export const appContextKey = Symbol('appContext');
 
 export const defaultAppContext: AppContext = {
-	user: undefined,
+	profile: undefined,
 	session: null,
 	devices: [],
 	deviceStatuses: { online: 0, offline: 0 },
@@ -58,7 +58,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 			return existing;
 		} else {
 			return {
-				user: undefined,
+				profile: undefined,
 				session: null,
 				devices: [],
 				deviceStatuses: { online: 0, offline: 0 },
@@ -77,7 +77,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 	} catch {
 		// No existing context, will create a new one
 		return {
-			user: undefined,
+			profile: undefined,
 			session: null,
 			devices: [],
 			deviceStatuses: { online: 0, offline: 0 },

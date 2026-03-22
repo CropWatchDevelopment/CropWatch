@@ -86,6 +86,7 @@ const DEVICE_LATEST_PRIMARY_BY_DEV_EUI_ENDPOINT =
 	'/devices/{dev_eui}/latest-primary-data';
 
 const AUTH_ENDPOINT = '/auth';
+const AUTH_USER_PROFILE_ENDPOINT = '/auth/user-profile';
 const AIR_ENDPOINT = '/air/{dev_eui}';
 const DEVICES_ENDPOINT = '/devices';
 const DEVICE_TYPES_ENDPOINT = '/devices/device-types';
@@ -432,6 +433,10 @@ export class ApiService {
 
 	public getAuthenticatedUser(): Promise<Record<string, unknown>> {
 		return this.request<Record<string, unknown>>(AUTH_ENDPOINT, { method: 'GET' });
+	}
+
+		public getUserProfile(): Promise<Record<string, unknown>> {
+		return this.request<Record<string, unknown>>(AUTH_USER_PROFILE_ENDPOINT, { method: 'GET' });
 	}
 
 	public login(payload: LoginRequest): Promise<LoginResponse> {
