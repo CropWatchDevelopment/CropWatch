@@ -123,7 +123,7 @@
 			count: historicalData.length,
 			lastReading:
 				historicalData.length > 0
-					? Number(historicalData[historicalData.length - 1].temperature_c) || 0
+					? Number(historicalData.at(0)?.temperature_c) || 0
 					: 0,
 			trend: 'up'
 		};
@@ -149,7 +149,7 @@
 			count: historicalData.length,
 			lastReading:
 				historicalData.length > 0
-					? Number(historicalData[historicalData.length - 1].humidity) || 0
+					? Number(historicalData.at(0)?.humidity) || 0
 					: 0,
 			trend: 'up'
 		};
@@ -292,7 +292,7 @@
 					count: historicalData.length,
 					lastReading:
 						historicalData.length > 0
-							? Number(historicalData[historicalData.length - 1].co2) || 0
+							? Number(historicalData.at(0)?.co2) || 0
 							: 0,
 					trend: 'up'
 				}}

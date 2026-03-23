@@ -116,7 +116,8 @@
 	}
 </script>
 
-<CwButton variant="primary" onclick={() => goto(`/`)}>{m.action_back_to_dashboard()}</CwButton>
+<CwButton variant="primary" class="mt-2" onclick={() => goto(`/`)}>&larr; {m.action_back_to_dashboard()}</CwButton>
+
 <div class="location-page overflow-y-scroll">
 	<CwCard
 		title={m.locations_location_title({ name: locationLabel })}

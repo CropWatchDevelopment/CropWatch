@@ -58,8 +58,8 @@
 	<title>{m.reports_page_title()}</title>
 </svelte:head>
 
-<CwButton variant="secondary" fullWidth={true} size="sm" onclick={() => goto('/')}>
-	{m.action_back_to_dashboard()}
+<CwButton variant="secondary" fullWidth={true} class="mt-2" onclick={() => goto('/')}>
+	&larr; {m.action_back_to_dashboard()}
 </CwButton>
 <div class="overflow-y-auto p-4">
 	<CwCard title={m.reports_weekly_reports()} class="min-h-0 flex-1 p-4">

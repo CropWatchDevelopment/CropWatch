@@ -162,12 +162,12 @@
 <!-- Layout                                                                 -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
+<CwButton variant="secondary" class="my-2" onclick={() => goto('/rules')}>
+	 &larr; {m.action_back()}
+</CwButton>
 <div class="h-full overflow-y-auto">
 	<div class="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
 		<!-- ── Page header ──────────────────────────────────────────────────── -->
-		<CwButton variant="secondary" size="sm" onclick={() => goto('/rules')}>
-			{m.action_back()}
-		</CwButton>
 		<div class="flex items-center gap-3">
 			<h1 class="text-2xl font-semibold">{m.rules_create_new_rule()}</h1>
 		</div>

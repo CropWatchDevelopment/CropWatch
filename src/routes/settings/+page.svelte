@@ -113,30 +113,27 @@
 				>
 					<div class="card-stack">
 						<div class="field-grid field-grid--two">
-							<!-- <CwDropdown
-								label="Language"
-								options={data.options.language}
-								bind:value={preferences.language}
-								onchange={(value) => void handleLanguageChange(value as SupportedLocale)}
-							/> -->
 							<LanguageSwitcher compact class="mr-3" />
 
 							<CwDropdown
 								label="Date format"
 								options={data.options.dateFormat}
 								bind:value={preferences.dateFormat}
+								disabled
 							/>
 
 							<CwDropdown
 								label="Time format"
 								options={data.options.timeFormat}
 								bind:value={preferences.timeFormat}
+								disabled
 							/>
 
 							<CwDropdown
 								label="Decimal separator"
 								options={data.options.decimalSeparator}
 								bind:value={preferences.decimalSeparator}
+								disabled
 							/>
 						</div>
 
@@ -157,12 +154,11 @@
 						<div class="theme-row">
 							<div class="theme-copy">
 								<p class="section-title">Theme mode</p>
-								<p class="section-copy">
-									Preview how CropWatch should follow system appearance or lock into a single theme.
-								</p>
+								<div class="flex flex-row items-center gap-2">
+									<CwThemePicker bind:theme={preferences.theme} />
+									{preferences.theme}
+								</div>
 							</div>
-
-							<CwThemePicker bind:theme={preferences.theme} />
 						</div>
 
 						<CwSeparator spacing="0" />
@@ -172,12 +168,14 @@
 								label="Distance"
 								options={data.options.distance}
 								bind:value={preferences.distanceUnit}
+								disabled
 							/>
 
 							<CwDropdown
 								label="Area"
 								options={data.options.area}
 								bind:value={preferences.areaUnit}
+								disabled
 							/>
 						</div>
 					</div>
@@ -196,41 +194,57 @@
 								label="Temperature"
 								options={data.options.temperature}
 								bind:value={preferences.temperatureUnit}
+								disabled
 							/>
 
-							<CwDropdown label="EC" options={data.options.ec} bind:value={preferences.ecUnit} />
+							<CwDropdown
+								label="EC"
+								options={data.options.ec}
+								bind:value={preferences.ecUnit}
+								disabled
+							/>
 
 							<CwDropdown
 								label="Soil moisture"
 								options={data.options.soilMoisture}
 								bind:value={preferences.soilMoistureUnit}
+								disabled
 							/>
 
 							<CwDropdown
 								label="Pressure"
 								options={data.options.pressure}
 								bind:value={preferences.pressureUnit}
+								disabled
 							/>
 
 							<CwDropdown
 								label="Rainfall"
 								options={data.options.rainfall}
 								bind:value={preferences.rainfallUnit}
+								disabled
 							/>
 
 							<CwDropdown
 								label="Wind speed"
 								options={data.options.windSpeed}
 								bind:value={preferences.windSpeedUnit}
+								disabled
 							/>
 
 							<CwDropdown
 								label="Water depth"
 								options={data.options.waterDepth}
 								bind:value={preferences.waterDepthUnit}
+								disabled
 							/>
 
-							<CwDropdown label="CO2" options={data.options.co2} bind:value={preferences.co2Unit} />
+							<CwDropdown
+								label="CO2"
+								options={data.options.co2}
+								bind:value={preferences.co2Unit}
+								disabled
+							/>
 						</div>
 
 						<div class="chip-row">

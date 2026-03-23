@@ -519,11 +519,11 @@
 	<title>{m.reports_create_page_title()} | CropWatch</title>
 </svelte:head>
 
+<CwButton variant="secondary" class="mt-2" onclick={() => goto(resolve('/reports'))}>
+	&larr; {m.action_back()}
+</CwButton>
 <div class="create-report-page overflow-y-auto p-4">
 	<div class="page-shell">
-		<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/reports'))}>
-			{m.action_back()}
-		</CwButton>
 
 		<form
 			method="POST"

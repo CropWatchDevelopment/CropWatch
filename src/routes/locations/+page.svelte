@@ -45,8 +45,8 @@
 	}
 </script>
 
-<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>
-	{m.action_back_to_dashboard()}
+<CwButton variant="secondary" class="mt-2" onclick={() => goto('/')}>
+	&larr; {m.action_back_to_dashboard()}
 </CwButton>
 <div class="locations-page overflow-y-scroll">
 	<CwCard title={m.locations_all_title()} subtitle={m.locations_all_subtitle()} elevated>

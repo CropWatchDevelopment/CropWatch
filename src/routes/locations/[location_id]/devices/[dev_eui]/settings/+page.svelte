@@ -257,7 +257,7 @@
 		elevated
 	>
 		{#if !hasSensorCertificates}
-			<p class="empty-state">{m.devices_no_sensor_serial()}</p>
+			<p class="text-muted text-xs">{m.devices_no_sensor_serial()}</p>
 		{:else}
 			<div class="certificate-list">
 				{#if sensorOneCertificate}
@@ -351,7 +351,7 @@
 		elevated
 	>
 		{#if permissionRows.length === 0}
-			<p class="empty-state">{m.devices_no_device_owners()}</p>
+			<p class="text-muted text-xs">{m.devices_no_device_owners()}</p>
 		{:else}
 			<div class="permission-list">
 				{#each permissionRows as row, index (row.key)}
@@ -385,13 +385,14 @@
 									<input type="hidden" name="targetUserEmail" value={row.email} />
 									<input type="hidden" name="permissionLevel" value={row.permissionLevel} />
 
-									<div class="permission-user">
+									<div class="permission-user flex items-center justify-center">
 										<input type="hidden" value={row.name} disabled />
-										<CwInput
+										<!-- <CwInput
 											label={m.auth_email_label()}
 											value={row.email || row.userId || m.common_not_available()}
 											disabled
-										/>
+										/> -->
+										<p class="text-xl">{row.name} ({row.email})</p>
 									</div>
 
 									<div class="permission-edit">

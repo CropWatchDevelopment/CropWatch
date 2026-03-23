@@ -32,7 +32,9 @@
 		{ key: 'name', header: m.common_name(), sortable: true },
 		{ key: 'device_name', header: 'Device Name' },
 		{ key: 'location_name', header: m.nav_locations() },
-		{ key: 'created_at', header: m.common_created() }
+		{ key: 'created_at', header: m.common_created() },
+		{ key: 'last_triggered', header: 'Last Triggered', sortable: true },
+		{ key: 'trigger_count', header: 'Trigger Count', sortable: true }
 	];
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleRow>> {
@@ -51,7 +53,7 @@
 	<title>{m.rules_page_title()}</title>
 </svelte:head>
 
-<CwButton variant="secondary" size="sm" onclick={() => goto('/')}>
+<CwButton variant="secondary" class="mt-2" onclick={() => goto('/')}>
 	&larr; {m.action_back_to_dashboard()}
 </CwButton>
 <div class="overflow-y-auto p-4">
@@ -69,6 +71,8 @@
 				{#snippet cell(row: RuleRow, col: CwColumnDef<RuleRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
 						{new Date(row.created_at).toLocaleString()}
+					{:else if col.key === 'last_triggered'}
+						{new Date(row.last_triggered).toLocaleString()}
 					{:else}
 						{defaultValue}
 					{/if}
