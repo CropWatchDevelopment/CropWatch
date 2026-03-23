@@ -17,7 +17,7 @@
 	import ViewRuleDialog from './ViewRuleDialog.svelte';
 	import { getAppContext } from '$lib/appContext.svelte';
 
-	type RuleRow = RulesDto & { location_name: string };
+	type RuleRow = RulesDto & { location_name: string, permission_level?: number };
 
 	let { data }: { data: { rules: RuleRow[] } } = $props();
 	let loading = $state(false);
@@ -75,10 +75,10 @@
 				{/snippet}
 				{#snippet rowActions(row: RuleRow)}
 					<div class="flex w-full flex-row justify-end gap-2">
-						{#if row.permission_level <= 3}
+						{#if row.permission_level && row.permission_level <= 3}
 							<ViewRuleDialog {row} />
 						{/if}
-						{#if row.permission_level <= 2}
+						{#if row.permission_level && row.permission_level <= 2}
 							<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
 								<Icon src={EDIT_ICON} alt={m.action_edit()} />
 							</CwButton>
