@@ -115,15 +115,16 @@
 
 <div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 	<header class="flex-none">
-		<div class="my-0 my-1 flex flex-row justify-between w-full items-center gap-4">
+		<div class="my-0 my-1 flex flex-row w-full items-center gap-4">
 			<div
 				id="Dashboard__Overview__actions"
-				class="flex w-full items-center justify-end gap-3 md:w-auto"
+				class="flex w-full items-center justify-center md:justify-end gap-3 md:w-auto"
 			>
 				<span class="hidden flex-1 md:flex"></span>
 
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2 w-full">
 					<CwButton
+						class="w-full md:w-auto"
 						variant={dashboardView === 'table' ? 'info' : 'secondary'}
 						onclick={() => setDashboardView('table')}
 					>
@@ -131,6 +132,7 @@
 						{m.dashboard_table_view()}
 					</CwButton>
 					<CwButton
+						class="w-full md:w-auto"
 						variant={dashboardView === 'sensor-cards' ? 'info' : 'secondary'}
 						onclick={() => setDashboardView('sensor-cards')}
 					>

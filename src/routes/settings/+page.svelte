@@ -12,6 +12,7 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
 	type SupportedLocale = 'ja' | 'en';
 	type PreferenceDraft = PageProps['data']['preferences'];
@@ -112,12 +113,13 @@
 				>
 					<div class="card-stack">
 						<div class="field-grid field-grid--two">
-							<CwDropdown
+							<!-- <CwDropdown
 								label="Language"
 								options={data.options.language}
 								bind:value={preferences.language}
 								onchange={(value) => void handleLanguageChange(value as SupportedLocale)}
-							/>
+							/> -->
+							<LanguageSwitcher compact class="mr-3" />
 
 							<CwDropdown
 								label="Date format"

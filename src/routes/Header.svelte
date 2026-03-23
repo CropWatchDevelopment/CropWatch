@@ -38,16 +38,15 @@
 	{/snippet}
 
 	{#snippet actions()}
-		{#if app.session?.email.endsWith('@cropwatch.io')}
+		<!-- {#if app.session?.email.endsWith('@cropwatch.io')}
 			<CwSwitch
 				class="mr-20"
 				label={m.header_privacy_mode()}
 				onchange={(event: boolean) => {
-					debugger;
 					app.privacyModeEnabled = event;
 				}}
 			/>
-		{/if}
+		{/if} -->
 		<LanguageSwitcher compact class="mr-3" />
 		
 		<CwProfileMenu
