@@ -243,7 +243,7 @@
 			<div class="flex flex-col gap-4 p-4">
 				{#each criteria as criterion, idx (criterion.id)}
 					<div
-						class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+						class="rounded-lg border border-gray-200 p-4"
 					>
 						<div class="mb-3 flex items-center justify-between">
 							<span class="text-sm font-medium"
@@ -306,7 +306,7 @@
 			<div class="flex flex-col gap-4 p-4">
 				{#if isFormValid}
 					<div
-						class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950"
+						class="rounded-lg border border-blue-200 p-4"
 					>
 						<p class="mb-2 text-sm font-medium">{m.rules_rule_summary()}</p>
 						<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
