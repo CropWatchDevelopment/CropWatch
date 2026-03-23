@@ -37,6 +37,8 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 				typeof locationRecord?.name === 'string' && locationRecord.name.trim().length > 0
 					? locationRecord.name
 					: '',
+			hasPermission: rule.hasPermission || false,
+			last_triggered: rule.last_triggered ? new Date(rule.last_triggered) : null,
 			...rule
 		};
 	});

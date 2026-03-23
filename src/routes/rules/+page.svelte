@@ -75,8 +75,8 @@
 				{/snippet}
 				{#snippet rowActions(row: RuleRow)}
 					<div class="flex w-full flex-row justify-end gap-2">
+						{#if row.permission_level <= 2}
 						<ViewRuleDialog {row} />
-						{#if row.profile_id === app.session?.sub}
 							<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
 								<Icon src={EDIT_ICON} alt={m.action_edit()} />
 							</CwButton>
