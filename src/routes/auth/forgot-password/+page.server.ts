@@ -36,6 +36,7 @@ export const actions: Actions = {
 
 		if (error) {
 			console.error('Supabase resetPasswordForEmail error:', error);
+			throw error;
 			// Don't reveal whether the email exists — always show success
 		}
 
