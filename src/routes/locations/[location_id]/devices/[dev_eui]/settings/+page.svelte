@@ -57,7 +57,7 @@
 		sensorCertificates.find((target) => target.key === 'sensor2') ?? null
 	);
 	let hasSensorCertificates = $derived(Boolean(sensorOneCertificate || sensorTwoCertificate));
-	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
+	let permissionRows = $state(createOwnerRows(data.deviceOwners ?? []));
 	const sensorTwoCertificateDownloadPath = asset(
 		'/files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf'
 	);

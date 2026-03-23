@@ -75,8 +75,10 @@
 				{/snippet}
 				{#snippet rowActions(row: RuleRow)}
 					<div class="flex w-full flex-row justify-end gap-2">
+						{#if row.permission_level <= 3}
+							<ViewRuleDialog {row} />
+						{/if}
 						{#if row.permission_level <= 2}
-						<ViewRuleDialog {row} />
 							<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
 								<Icon src={EDIT_ICON} alt={m.action_edit()} />
 							</CwButton>
