@@ -137,7 +137,7 @@
 
 			<form
 				method="POST"
-				action="?/forgot-password"
+				action="?/forgotPassword"
 				class="auth-form"
 				use:enhance={async ({ formData, cancel }) => {
 					if (submitting) {

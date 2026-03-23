@@ -10,7 +10,7 @@ function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 }
 
 export const actions: Actions = {
-	'forgot-password': async ({ request, url }) => {
+	forgotPassword: async ({ request, url }) => {
 		const data = await request.formData();
 		const email = readNonEmptyString(data.get('email'));
 		const recaptchaToken = readNonEmptyString(data.get('recaptchaToken'));

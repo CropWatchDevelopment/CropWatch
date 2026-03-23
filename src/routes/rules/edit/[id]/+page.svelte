@@ -19,6 +19,8 @@
 	import { ApiService } from '$lib/api/api.service';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { DeviceDto, RuleDto, UpdateRuleRequest } from '$lib/api/api.dtos';
+	import Icon from '$lib/components/Icon.svelte';
+	import SAVE_ICON from '$lib/images/icons/save.svg';
 
 	// ── Props ───────────────────────────────────────────────────────────────
 	let { data }: { data: { rule: RuleDto; devices: DeviceDto[]; authToken?: string } } = $props();
@@ -242,9 +244,7 @@
 		<CwCard title={m.rules_step_3_title()} subtitle={m.rules_edit_step_3_subtitle()}>
 			<div class="flex flex-col gap-4 p-4">
 				{#each criteria as criterion, idx (criterion.id)}
-					<div
-						class="rounded-lg border border-gray-200 p-4"
-					>
+					<div class="rounded-lg border border-gray-200 p-4">
 						<div class="mb-3 flex items-center justify-between">
 							<span class="text-sm font-medium"
 								>{m.rules_condition_number({ count: String(idx + 1) })}</span
@@ -291,7 +291,7 @@
 						</div>
 					</div>
 				{/each}
-<!-- 
+				<!-- 
 				<CwButton variant="secondary" onclick={addCriterion}>
 					{m.rules_add_another_condition()}
 				</CwButton> -->
@@ -305,9 +305,7 @@
 		>
 			<div class="flex flex-col gap-4 p-4">
 				{#if isFormValid}
-					<div
-						class="rounded-lg border border-blue-200 p-4"
-					>
+					<div class="rounded-lg border border-blue-200 p-4">
 						<p class="mb-2 text-sm font-medium">{m.rules_rule_summary()}</p>
 						<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
 							<dt class="font-medium opacity-70">{m.common_name()}:</dt>
@@ -347,6 +345,7 @@
 						disabled={!isFormValid || submitting}
 						loading={submitting}
 					>
+						<Icon src={SAVE_ICON} />
 						{submitting ? m.action_saving() : m.action_save_changes()}
 					</CwButton>
 				</div>
