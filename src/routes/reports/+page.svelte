@@ -94,8 +94,10 @@
 
 				{#snippet rowActions(row: ReportRow)}
 					<div class="flex flex-row gap-2">
-						<ReportHistoryDialog dev_eui={row.dev_eui} />
-						{#if row.user_id === app.session?.sub}
+						{#if row.permission_level <= 3}
+							<ReportHistoryDialog dev_eui={row.dev_eui} />
+						{/if}
+						{#if row.permission_level <= 2}
 							<CwButton
 								variant="secondary"
 								onclick={() => {
@@ -104,6 +106,8 @@
 							>
 								<Icon src={EDIT_ICON} alt="Edit" />
 							</CwButton>
+						{/if}
+						{#if row.user_id === app.session?.sub}
 							<DeleteReportDialog
 								reportId={row.report_id}
 								reportName={row.name}
