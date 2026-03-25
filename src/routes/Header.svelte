@@ -7,6 +7,7 @@
 		CwHeader,
 		CwProfileMenu,
 		CwSwitch,
+		CwThemePicker,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
@@ -30,10 +31,10 @@
 >
 	{#snippet logo()}
 		{#if mode === 'mini'}
-		<div class="flex flex-row items-center gap-2">
-			<img src={CROPWATCH_LOGO} alt={m.app_name()} style="width:2rem;height:2rem" />
-			<span class="text-lg font-semibold">CropWatch</span>
-		</div>
+			<div class="flex flex-row items-center gap-2">
+				<img src={CROPWATCH_LOGO} alt={m.app_name()} style="width:2rem;height:2rem" />
+				<span class="text-lg font-semibold">CropWatch</span>
+			</div>
 		{/if}
 	{/snippet}
 
@@ -48,7 +49,7 @@
 			/>
 		{/if} -->
 		<LanguageSwitcher compact class="mr-3" />
-		
+		<CwThemePicker />
 		<CwProfileMenu
 			name={app.session?.email ?? ''}
 			subtitle={app.profile?.employer ?? ''}

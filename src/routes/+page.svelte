@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { CwBadge, CwButton } from '@cropwatchdevelopment/cwui';
+	import { CwBadge, CwButton, CwCard } from '@cropwatchdevelopment/cwui';
 	import { afterNavigate } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
@@ -115,14 +115,14 @@
 
 <div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 	<header class="flex-none">
-		<div class="my-0 my-1 flex flex-row w-full items-center gap-4">
+		<div class="my-0 my-1 flex w-full flex-row items-center gap-4">
 			<div
 				id="Dashboard__Overview__actions"
-				class="flex w-full items-center justify-center md:justify-end gap-3 md:w-auto"
+				class="flex w-full items-center justify-center gap-3 md:w-auto md:justify-end"
 			>
 				<span class="hidden flex-1 md:flex"></span>
 
-				<div class="flex items-center gap-2 w-full">
+				<div class="flex w-full items-center gap-2">
 					<CwButton
 						class="w-full md:w-auto"
 						variant={dashboardView === 'table' ? 'info' : 'secondary'}
@@ -145,11 +145,11 @@
 	</header>
 
 	{#if dashboardViewReady}
-		{#if dashboardView === 'sensor-cards'}
-			<DashboardDeviceCards filters={dashboardFilters} />
-		{:else}
-			<DashboardDeviceTable filters={dashboardFilters} />
-		{/if}
+			{#if dashboardView === 'sensor-cards'}
+				<DashboardDeviceCards filters={dashboardFilters} />
+			{:else}
+				<DashboardDeviceTable filters={dashboardFilters} />
+			{/if}
 	{:else}
 		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
 			<p class="text-sm text-slate-400">{m.dashboard_loading_view()}</p>
