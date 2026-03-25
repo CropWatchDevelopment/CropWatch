@@ -144,7 +144,7 @@
 	{#snippet header()}
 		<div class="flex h-full w-full flex-row items-center gap-2">
 			<img src={CROPWATCH_LOGO} alt={m.app_name()} style="width:2rem;height:2rem" />
-			<span class="text-lg font-semibold">CropWatch</span>
+			<span class="text-lg text-[var(--cw-accent)] font-semibold">CropWatch</span>
 		</div>
 	{/snippet}
 
