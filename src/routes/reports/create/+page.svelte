@@ -9,7 +9,9 @@
 		CwAlertPointsEditor,
 		CwButton,
 		CwCard,
+		CwDateTimeRangePicker,
 		CwDropdown,
+		CwExpandPanel,
 		CwInput,
 		CwSwitch,
 		useCwToast
@@ -99,6 +101,18 @@
 		{ label: m.reports_create_method_sms(), value: '2' },
 		{ label: m.reports_create_method_discord(), value: '3' }
 	]);
+	let daysOfTheWeek = $derived<SelectOption[]>([
+		{ label: m.common_day_sunday(), value: '1' },
+		{ label: m.common_day_monday(), value: '2' },
+		{ label: m.common_day_tuesday(), value: '3' },
+		{ label: m.common_day_wednesday(), value: '4' },
+		{ label: m.common_day_thursday(), value: '5' },
+		{ label: m.common_day_friday(), value: '6' },
+		{ label: m.common_day_saturday(), value: '7' }
+	]);
+	let selectedDayOfWeek = $state('');
+	let selectedStartTime = $state('');
+	let selectedEndTime = $state('');
 
 	let submitting = $state(false);
 	let submitAttempted = $state(false);
@@ -524,7 +538,6 @@
 </CwButton>
 <div class="create-report-page overflow-y-auto p-4">
 	<div class="page-shell">
-
 		<form
 			method="POST"
 			class="report-form"
@@ -618,33 +631,6 @@
 					{#if !loadingDevices && deviceOptions.length === 0}
 						<p class="hint">{m.reports_create_no_devices_loaded()}</p>
 					{/if}
-
-					<!-- <CwExpandPanel title={m.reports_create_advanced_report_metadata()}>
-						<div class="meta-grid">
-							<CwInput
-								label={m.reports_created_at()}
-								placeholder={ISO_TIMESTAMP_PLACEHOLDER}
-								bind:value={fields.created_at}
-							/>
-							<CwInput
-								label={m.reports_create_field_id()}
-								type="numeric"
-								placeholder={NUMBER_PLACEHOLDER}
-								bind:value={fields.id}
-							/>
-							<CwInput
-								label={m.reports_create_field_report_id()}
-								placeholder={UUID_PLACEHOLDER}
-								bind:value={fields.report_id}
-							/>
-							<CwInput
-								label={m.reports_create_field_user_id()}
-								placeholder={UUID_PLACEHOLDER}
-								bind:value={fields.user_id}
-							/>
-						</div>
-						<p class="hint">{m.reports_create_advanced_report_metadata_hint()}</p>
-					</CwExpandPanel> -->
 				</div>
 			</CwCard>
 
@@ -654,13 +640,6 @@
 				elevated
 			>
 				<div class="card-stack">
-					<!-- <div class="section-toolbar">
-						<p class="section-copy">{m.reports_create_schedules_copy()}</p>
-						<CwButton type="button" variant="secondary" onclick={addSchedule}
-							>{m.reports_create_add_schedule()}</CwButton
-						>
-					</div> -->
-
 					{#if fields.report_user_schedule.length === 0}
 						<div class="empty-panel">{m.reports_create_empty_schedules()}</div>
 					{/if}
@@ -672,23 +651,9 @@
 									<h3>{m.reports_create_schedule_heading({ index: String(index + 1) })}</h3>
 									<p>{m.reports_create_schedule_copy()}</p>
 								</div>
-								<!-- <CwButton
-									type="button"
-									variant="danger"
-									size="sm"
-									onclick={() => removeSchedule(schedule.key)}
-								>
-									{m.action_remove()}
-								</CwButton> -->
 							</div>
 
 							<div class="switch-grid">
-								<!-- <CwSwitch
-									checked={schedule.is_active}
-									label={m.reports_create_schedule_active_label()}
-									description={m.reports_create_schedule_active_description()}
-									onchange={(checked) => (schedule.is_active = checked)}
-								/> -->
 								<CwSwitch
 									checked={schedule.end_of_week}
 									label={m.reports_create_schedule_week_label()}
@@ -702,50 +667,71 @@
 									onchange={(checked) => (schedule.end_of_month = checked)}
 								/>
 							</div>
-
-							<!-- <div class="field-grid field-grid--two">
-								<CwInput
-									label={m.reports_create_schedule_child_device_label()}
-									type="devEui"
-									placeholder={m.reports_create_schedule_child_device_placeholder()}
-									bind:value={schedule.dev_eui}
-								/>
-								<CwInput
-									label={m.reports_create_schedule_user_label()}
-									placeholder={m.reports_create_schedule_user_placeholder()}
-									bind:value={schedule.user_id}
-								/>
-							</div>
-
-							<CwExpandPanel title={m.reports_create_advanced_schedule_metadata()}>
-								<div class="meta-grid">
-									<CwInput
-										label={m.reports_created_at()}
-										placeholder={ISO_TIMESTAMP_PLACEHOLDER}
-										bind:value={schedule.created_at}
-									/>
-									<CwInput
-										label={m.reports_create_field_id()}
-										type="numeric"
-										placeholder={NUMBER_PLACEHOLDER}
-										bind:value={schedule.id}
-									/>
-									<CwInput
-										label={m.reports_create_field_schedule_id()}
-										type="numeric"
-										placeholder={NUMBER_PLACEHOLDER}
-										bind:value={schedule.report_user_schedule_id}
-									/>
-									<CwInput
-										label={m.reports_create_field_report_id()}
-										placeholder={UUID_PLACEHOLDER}
-										bind:value={schedule.report_id}
-									/>
-								</div>
-							</CwExpandPanel> -->
 						</div>
 					{/each}
 				</div>
+			</CwCard>
+
+			<CwCard
+				title="Report's Data Processing Scheduling (Advanced)"
+				subtitle="Configure what data to include, or exclude from the report based on time ranges, such as between 11am and 2pm, monday, and thursday."
+				elevated
+			>
+				<CwExpandPanel title={m.reports_create_advanced_report_metadata()}>
+					<div class="meta-grid">
+						<div class="field-grid field-grid--three">
+							<CwDropdown
+								label="Day of week"
+								placeholder="Select a day of the week"
+								options={daysOfTheWeek}
+								bind:value={selectedDayOfWeek}
+								disabled={deviceOptions.length === 0 || loadingDevices}
+							/>
+							{#if selectedDayOfWeek != ''}
+								<CwDateTimeRangePicker
+									mode="single"
+									label="Time range for data inclusion"
+									granularity="day"
+									includeTime
+									bind:value={selectedStartTime}
+								/>
+
+								<CwDateTimeRangePicker
+									mode="single"
+									label="Time range for data exclusion"
+									granularity="day"
+									includeTime
+									bind:value={selectedEndTime}
+								/>
+
+								<CwSwitch
+									checked={false}
+									label="Time Crosses Midnight"
+								/>
+							{/if}
+						</div>
+						<div class="flex flex-col gap-4 items-center">
+							<label for="include">Include data only within the specified time range</label>
+							<input
+								type="radio"
+								id="include"
+								group="timeFilterType"
+								name="timeFilterType"
+								value="include"
+								checked
+							/>
+
+							<label for="exclude">Exclude data only within the specified time range</label>
+							<input
+								type="radio"
+								id="exclude"
+								group="timeFilterType"
+								name="timeFilterType"
+								value="exclude"
+							/>
+						</div>
+					</div></CwExpandPanel
+				>
 			</CwCard>
 
 			<CwCard

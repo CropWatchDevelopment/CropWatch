@@ -91,8 +91,15 @@
 				<dt class="font-medium opacity-70">{m.devices_device()}:</dt>
 				<dd>{getDeviceLabel(row)}</dd>
 
+				<dt class="font-medium opacity-70">{m.rules_trigger_count()}:</dt>
+				<dd>{row.trigger_count}</dd>
+
 				<dt class="font-medium opacity-70">{m.rules_notify_via()}:</dt>
-				<dd>{getNotificationSummary(row)}</dd>
+				<ul>
+					{#each row.action_recipient.split(',') as recipient (recipient)}
+						<li>{recipient.trim()}</li>
+					{/each}
+				</ul>
 
 				<dt class="font-medium opacity-70">{m.rules_conditions()}:</dt>
 				<dd>
