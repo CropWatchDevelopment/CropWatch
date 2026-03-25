@@ -113,7 +113,7 @@ const TRIGGERED_RULES_BASE_ENDPOINT =
 const TRIGGERED_RULES_COUNT_ENDPOINT =
 	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT ?? `${TRIGGERED_RULES_BASE_ENDPOINT}/count`;
 const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
-const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{report_id}`;
+const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{report_id}/{reportName}`;
 const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
 const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air-notes';
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
@@ -931,9 +931,9 @@ export class ApiService {
 		);
 	}
 
-	public getReportDownloadUrl(devEui: string, name: string): Promise<Record<string, unknown>> {
+	public getReportDownloadUrl(dev_eui: string, report_id: string, reportName: string): Promise<Record<string, unknown>> {
 		return this.request<Record<string, unknown>>(
-			replacePathParams(REPORT_DOWNLOAD_ENDPOINT, { dev_eui: devEui, report_id: name }),
+			replacePathParams(REPORT_DOWNLOAD_ENDPOINT, { dev_eui, report_id, reportName }),
 			{
 				method: 'GET'
 			}

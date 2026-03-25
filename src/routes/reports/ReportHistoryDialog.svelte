@@ -17,9 +17,9 @@
 	import { type PdfFile } from '$lib/interfaces/PdfFile.interface';
 	import HISTORY_ICON from '$lib/images/icons/history.svg';
 
-	type ReportHistoryRow = { id: string; name: string; created_at: string };
+	type ReportHistoryRow = { dev_eui: string; report_id: string; name: string; created_at: string };
 
-	let { open = $bindable(), dev_eui }: { open?: boolean; dev_eui: string } = $props();
+	let { open = $bindable(), dev_eui, report_id }: { open?: boolean; dev_eui: string; report_id: string } = $props();
 	const app = $state(getAppContext());
 	const toast = useCwToast();
 
@@ -77,7 +77,6 @@
 
 	function mapHistoryRows(files: PdfFile[]): ReportHistoryRow[] {
 		return files.map((file) => ({
-			id: file.id,
 			name: file.name,
 			created_at: formatDateTime(file.created_at)
 		}));
@@ -97,13 +96,13 @@
 		}
 	}
 
-	async function handleDownload(name: string) {
+	async function handleDownload(dev_eui: string, report_id: string, name: string) {
 		try {
-			const response = await createApiService().getReportDownloadUrl(dev_eui, name);
+			const response = await createApiService().getReportDownloadUrl(dev_eui, report_id, name);
 			const signedUrl = typeof response.url === 'string' ? response.url : null;
 			if (!signedUrl) {
 				const message = m.reports_download_missing_signed_url();
-				console.error('Download failed: signed URL missing', { dev_eui, name, response });
+				console.error('Download failed: signed URL missing', { dev_eui, report_id, response });
 				toast.add({ tone: 'danger', message });
 				return;
 			}
@@ -111,7 +110,7 @@
 			window.open(signedUrl, '_blank', 'noopener');
 		} catch (error) {
 			const message = getRequestErrorMessage('download', error);
-			console.error('Error downloading file', { dev_eui, name, error });
+			console.error('Error downloading file', { dev_eui, report_id, error });
 			toast.add({ tone: 'danger', message });
 		}
 	}
@@ -131,13 +130,14 @@
 	{#if open}
 		<CwDataTable
 			columns={[
-				// { key: 'id', header: 'ID' },
+				{ key: 'id', header: 'ID' },
 				{ key: 'name', header: 'Name' },
-				{ key: 'created_at', header: m.reports_created_at() }
+				{ key: 'created_at', header: m.reports_created_at() },
+				// { key: 'dev_eui', header: 'Dev EUI' },
 			]}
 			rowActionsHeader={m.common_actions()}
 			{loadData}
-			rowKey="id"
+			rowKey="name"
 		>
 
 			{#snippet rowActions(row: ReportHistoryRow)}
@@ -145,7 +145,7 @@
 					size="sm"
 					variant="secondary"
 					onclick={() => {
-						handleDownload(row.name);
+						handleDownload(dev_eui, report_id, row.name);
 					}}
 				>
 					{m.action_download()}

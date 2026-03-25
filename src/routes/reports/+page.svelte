@@ -95,7 +95,7 @@
 				{#snippet rowActions(row: ReportRow)}
 					<div class="flex flex-row gap-2">
 						{#if row.permission_level <= 3}
-							<ReportHistoryDialog dev_eui={row.dev_eui} />
+							<ReportHistoryDialog report_id={row.report_id} dev_eui={row.dev_eui} />
 						{/if}
 						{#if row.permission_level <= 2}
 							<CwButton
