@@ -7,6 +7,7 @@
 	import {
 		createCwToastContext,
 		CwOfflineOverlay,
+		CwStatusDot,
 		CwToastContainer,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
