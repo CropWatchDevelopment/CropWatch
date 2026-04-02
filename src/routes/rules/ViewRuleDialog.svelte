@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { AppNotice } from '$lib/components/layout';
 	import { CwButton, CwChip, CwDialog, CwSeparator } from '@cropwatchdevelopment/cwui';
 	import {
 		getRuleNotifierTypeOptions,
@@ -79,11 +80,8 @@
 </CwButton>
 
 <CwDialog bind:open title={m.rules_rule_summary()} class="w-full max-w-2xl">
-	<div class="flex flex-col gap-4">
-		<div
-			class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950"
-		>
-			<p class="mb-2 text-sm font-medium">{m.rules_rule_summary()}</p>
+	<div class="rule-dialog">
+		<AppNotice title={m.rules_rule_summary()} tone="info">
 			<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
 				<dt class="font-medium opacity-70">{m.common_name()}:</dt>
 				<dd>{row.name}</dd>
@@ -95,11 +93,7 @@
 				<dd>{row.trigger_count}</dd>
 
 				<dt class="font-medium opacity-70">{m.rules_notify_via()}:</dt>
-				<ul>
-					{#each row.action_recipient.split(',') as recipient (recipient)}
-						<li>{recipient.trim()}</li>
-					{/each}
-				</ul>
+				<dd>{getNotificationSummary(row)}</dd>
 
 				<dt class="font-medium opacity-70">{m.rules_conditions()}:</dt>
 				<dd>
@@ -114,18 +108,16 @@
 					{/if}
 				</dd>
 			</dl>
-		</div>
+		</AppNotice>
 
 		{#if row.cw_rule_criteria?.length}
 			<CwSeparator />
 
-			<div class="flex flex-col gap-3">
+			<div class="rule-dialog__criteria">
 				{#each row.cw_rule_criteria as criterion, idx (criterion.id)}
-					<div
-						class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
-					>
-						<div class="mb-3 flex items-center justify-between">
-							<span class="text-sm font-medium">
+					<div class="rule-dialog__criterion">
+						<div class="rule-dialog__criterion-header">
+							<span class="rule-dialog__criterion-title">
 								{m.rules_condition_number({ count: String(idx + 1) })}
 							</span>
 						</div>
@@ -161,3 +153,36 @@
 		<CwButton onclick={() => (open = false)}>{m.action_close()}</CwButton>
 	{/snippet}
 </CwDialog>
+
+<style>
+	.rule-dialog {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-4);
+	}
+
+	.rule-dialog__criteria {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-3);
+	}
+
+	.rule-dialog__criterion {
+		padding: var(--cw-space-3);
+		border: 1px solid var(--cw-border-muted);
+		border-radius: var(--cw-radius-lg);
+		background: var(--cw-bg-subtle);
+	}
+
+	.rule-dialog__criterion-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: var(--cw-space-3);
+	}
+
+	.rule-dialog__criterion-title {
+		font-size: var(--cw-text-sm);
+		font-weight: var(--cw-font-medium);
+	}
+</style>

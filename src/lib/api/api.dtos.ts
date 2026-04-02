@@ -234,6 +234,40 @@ export interface CreateReportRecipientRequest {
 	[key: string]: unknown;
 }
 
+export interface ReportDataProcessingScheduleDto {
+	created_at: string;
+	crosses_midnight: boolean;
+	day_of_week: number;
+	end_time: string;
+	id: string;
+	is_enabled: boolean;
+	report_id: string;
+	rule_type: string;
+	start_time: string;
+	timezone: string;
+	updated_at: string;
+	valid_from?: unknown | null;
+	valid_to?: unknown | null;
+	[key: string]: unknown;
+}
+
+export interface CreateReportDataProcessingScheduleRequest {
+	created_at?: string;
+	crosses_midnight?: boolean;
+	day_of_week: number;
+	end_time: string;
+	id?: string;
+	is_enabled?: boolean;
+	report_id?: string;
+	rule_type?: string;
+	start_time: string;
+	timezone?: string;
+	updated_at?: string;
+	valid_from?: unknown | null;
+	valid_to?: unknown | null;
+	[key: string]: unknown;
+}
+
 export interface ReportDto {
 	id: number;
 	report_id: string;
@@ -244,6 +278,7 @@ export interface ReportDto {
 	report_user_schedule?: ReportUserScheduleDto[];
 	report_alert_points?: ReportAlertPointDto[];
 	report_recipients?: ReportRecipientDto[];
+	report_data_processing_schedules?: ReportDataProcessingScheduleDto[];
 	[key: string]: unknown;
 }
 
@@ -257,6 +292,7 @@ export interface CreateReportRequest {
 	report_user_schedule?: CreateReportUserScheduleRequest[];
 	report_alert_points?: CreateReportAlertPointRequest[];
 	report_recipients?: CreateReportRecipientRequest[];
+	report_data_processing_schedules?: CreateReportDataProcessingScheduleRequest[];
 }
 
 export type UpdateReportRequest = Partial<CreateReportRequest>;

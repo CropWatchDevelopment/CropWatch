@@ -3,129 +3,45 @@
 	import './style.css';
 	import KEY_ICON from '$lib/images/icons/key.svg';
 	import logo from '$lib/images/cropwatch_static.svg';
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { onDestroy, onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
 	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
-	import {
-		loadRecaptchaScript,
-		executeRecaptcha,
-		unloadRecaptchaScript
-	} from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
+	import { readLoginReason, readRedirectPath } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 
-	interface Props {
-		form: { message?: string } | null;
-	}
-
 	const toast = useCwToast();
 
-	let { form }: Props = $props();
-
-	$effect(() => {
-		if (form?.message) {
-			toast.add({ tone: 'danger', message: form.message });
-		}
-	});
-
 	let loggingIn: boolean = $state(false);
-	let loadingCaptcha: boolean = $state(true);
-	let recaptchaReady: boolean = $state(false);
 	let username: string = $state('');
 	let password: string = $state('');
-
-	const RECAPTCHA_TIMEOUT_MS = 12_000;
-	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 5;
-	const RECAPTCHA_RETRY_DELAY_MS = 900;
-
-	function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-		return new Promise<T>((resolve, reject) => {
-			const timeoutId = window.setTimeout(() => {
-				reject(new Error('Operation timed out'));
-			}, timeoutMs);
-
-			promise
-				.then(resolve)
-				.catch(reject)
-				.finally(() => {
-					window.clearTimeout(timeoutId);
-				});
-		});
-	}
-
-	function sleep(ms: number): Promise<void> {
-		return new Promise((resolve) => {
-			window.setTimeout(resolve, ms);
-		});
-	}
-
-	async function ensureRecaptchaLoaded(): Promise<boolean> {
-		for (let attempt = 1; attempt <= RECAPTCHA_MAX_LOAD_ATTEMPTS; attempt++) {
-			try {
-				const loaded = await withTimeout(
-					loadRecaptchaScript({
-						setLoadingCaptcha: (loading: boolean) => {
-							loadingCaptcha = loading;
-						}
-					}),
-					RECAPTCHA_TIMEOUT_MS
-				);
-
-				if (loaded) {
-					recaptchaReady = true;
-					loadingCaptcha = false;
-					return true;
-				}
-			} catch (error) {
-				console.error(`reCAPTCHA load error (attempt ${attempt}):`, error);
-			}
-
-			recaptchaReady = false;
-			loadingCaptcha = false;
-
-			if (attempt < RECAPTCHA_MAX_LOAD_ATTEMPTS) {
-				await sleep(RECAPTCHA_RETRY_DELAY_MS * attempt);
-			}
+	const recaptcha = createAuthRecaptcha();
+	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
+	let loginReason = $derived(readLoginReason(page.url.searchParams));
+	let reasonMessage = $derived.by(() => {
+		switch (loginReason) {
+			case 'auth-required':
+				return m.auth_login_reason_auth_required();
+			case 'expired':
+				return m.auth_login_reason_expired();
+			case 'signed-out':
+				return m.auth_login_reason_signed_out();
+			case 'password-reset':
+				return m.auth_login_reason_password_reset();
+			default:
+				return null;
 		}
-
-		return false;
-	}
-
-	async function getRecaptchaToken(): Promise<string> {
-		if (!recaptchaReady) {
-			const loaded = await ensureRecaptchaLoaded();
-			if (!loaded) {
-				throw new Error('reCAPTCHA not ready');
-			}
-		}
-
-		try {
-			return await withTimeout(executeRecaptcha('LOGIN'), RECAPTCHA_TIMEOUT_MS);
-		} catch (firstError) {
-			console.error('reCAPTCHA execute failed; retrying load once:', firstError);
-			recaptchaReady = false;
-
-			const loaded = await ensureRecaptchaLoaded();
-			if (!loaded) {
-				throw firstError;
-			}
-
-			return await withTimeout(executeRecaptcha('LOGIN'), RECAPTCHA_TIMEOUT_MS);
-		}
-	}
+	});
 
 	function passwordStrengthCheck(value: string) {
 		void isStrongPassword(value);
 	}
 
 	onMount(() => {
-		void ensureRecaptchaLoaded();
-	});
-
-	onDestroy(() => {
-		unloadRecaptchaScript();
+		void recaptcha.warmup();
 	});
 </script>
 
@@ -154,16 +70,13 @@
 				loggingIn = true;
 
 				try {
-					const token = await getRecaptchaToken();
-					if (typeof token !== 'string' || token.length === 0) {
-						throw new Error('reCAPTCHA token missing');
-					}
-					formData.set('recaptchaToken', token);
+					formData.set('recaptchaToken', await recaptcha.runAction('LOGIN'));
 				} catch (error) {
 					console.error('reCAPTCHA execution error:', error);
 					toast.add({
-						message: m.auth_security_refresh_error(),
-						tone: 'danger'
+						message: m.auth_security_try_again(),
+						tone: 'danger',
+						duration: 7000
 					});
 					loggingIn = false;
 					cancel();
@@ -172,15 +85,18 @@
 
 				return async ({ result }) => {
 					try {
-						if (result.type === 'success') {
-							await applyAction(result);
+						if (result.type === 'failure' && typeof result.data?.message === 'string') {
+							toast.add({
+								message: result.data.message,
+								tone: 'danger'
+							});
+						}
+
+						if (result.type === 'redirect') {
 							toast.add({
 								message: m.auth_login_success_redirecting(),
 								tone: 'success'
 							});
-							const redirectTo = typeof result.data === 'string' ? result.data : '/';
-							await goto(redirectTo, { invalidateAll: true });
-							return;
 						}
 
 						await applyAction(result);
@@ -221,42 +137,36 @@
 				class="auth-primary"
 				type="submit"
 				variant="primary"
-				loading={loggingIn || loadingCaptcha}
-				disabled={loggingIn || loadingCaptcha || !recaptchaReady || !username || !password}
+				loading={loggingIn}
+				disabled={loggingIn || !username || !password}
 				size="md"
 				fullWidth={true}
 			>
 				<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
-				{loggingIn
-					? m.auth_signing_in()
-					: loadingCaptcha
-						? m.auth_loading_site_security()
-						: m.auth_sign_in()}
+				{loggingIn ? m.auth_signing_in() : m.auth_sign_in()}
 			</CwButton>
 
+			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<div class="action-grid">
-				<CwButton
-					class="auth-secondary"
-					type="button"
-					variant="secondary"
-					size="lg"
-					fullWidth={true}
-					onclick={() => goto(resolve('/auth/create-account'))}
+				<a
+					class="auth-button-link auth-button-link--secondary"
+					href={redirectPath
+						? `${resolve('/auth/create-account')}?redirect=${encodeURIComponent(redirectPath)}`
+						: resolve('/auth/create-account')}
 				>
 					{m.auth_create_account()}
-				</CwButton>
+				</a>
 
-				<CwButton
-					class="auth-secondary"
-					type="button"
-					variant="secondary"
-					size="lg"
-					fullWidth={true}
-					onclick={() => goto(resolve('/auth/forgot-password'))}
+				<a
+					class="auth-button-link auth-button-link--secondary"
+					href={redirectPath
+						? `${resolve('/auth/forgot-password')}?redirect=${encodeURIComponent(redirectPath)}`
+						: resolve('/auth/forgot-password')}
 				>
 					<span class="text-sm">{m.auth_forgot_password()}</span>
-				</CwButton>
+				</a>
 			</div>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</form>
 
 		<p class="security-copy">{m.auth_security_copy()}</p>

@@ -1,9 +1,10 @@
 import { sequence } from '@sveltejs/kit/hooks';
+import { buildLoginPath } from '$lib/utils/auth-redirect';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import type { IJWT } from '$lib/interfaces/jwt.interface';
 import type { Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
-import { redirect } from '@sveltejs/kit';
+import { isRedirect, redirect } from '@sveltejs/kit';
 import { jwtDecode } from 'jwt-decode';
 import { env as publicEnv } from '$env/dynamic/public';
 
@@ -14,6 +15,10 @@ const PUBLIC_PATHS = new Set([
 	'/service-worker.js'
 ]);
 const PUBLIC_API_BASE_URL = publicEnv.PUBLIC_API_BASE_URL ?? '';
+
+function getAuthRedirectTarget(event: RequestEvent): string {
+	return `${event.url.pathname}${event.url.search}`;
+}
 
 export const originalHandle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get('jwt');
@@ -55,45 +60,69 @@ const checkAuthToken = (token: string, event: RequestEvent) => {
 	const bypassAuth = authRoute || publicRoute;
 
 	if (token) {
+		let decodedJWT: IJWT;
+
 		try {
-			const decodedJWT: IJWT = jwtDecode(token) as IJWT;
-
-			event.locals.jwt = decodedJWT; // looking good, add to locals
-			event.locals.jwtString = token;
-
-			const now = Math.floor(Date.now() / 1000);
-
-			if (decodedJWT.exp < now) {
-				console.log('JWT token expired, redirecting to login');
-				event.cookies.delete('jwt', { path: '/' });
-				event.locals.jwt = null;
-				event.locals.jwtString = null;
-
-				if (!bypassAuth) {
-					throw redirect(
-						303,
-						`/auth/login?expired=true&redirect=${encodeURIComponent(event.url.pathname)}`
-					);
-				}
+			decodedJWT = jwtDecode(token) as IJWT;
+		} catch (error) {
+			if (isRedirect(error)) {
+				throw error;
 			}
 
-			// Token is valid and not expired, proceed as normal
-			return true;
-		} catch (error) {
 			if (!bypassAuth) {
 				event.locals.jwt = null;
 				event.locals.jwtString = null;
 
-				throw redirect(303, `/auth/login?redirect=${encodeURIComponent(event.url.pathname)}`);
+				throw redirect(
+					303,
+					buildLoginPath({
+						redirectTo: getAuthRedirectTarget(event),
+						reason: 'auth-required'
+					})
+				);
 			}
+
+			return false;
 		}
+
+		event.locals.jwt = decodedJWT;
+		event.locals.jwtString = token;
+
+		const now = Math.floor(Date.now() / 1000);
+
+		if (decodedJWT.exp < now) {
+			console.log('JWT token expired, redirecting to login');
+			event.cookies.delete('jwt', { path: '/' });
+			event.locals.jwt = null;
+			event.locals.jwtString = null;
+
+			if (!bypassAuth) {
+				throw redirect(
+					303,
+					buildLoginPath({
+						redirectTo: getAuthRedirectTarget(event),
+						reason: 'expired'
+					})
+				);
+			}
+
+			return false;
+		}
+
+		return true;
 	} else {
 		if (!bypassAuth) {
 			console.log('No JWT token found, redirecting to login');
 			event.locals.jwt = null;
 			event.locals.jwtString = null;
 
-			throw redirect(303, `/auth/login?redirect=${encodeURIComponent(event.url.pathname)}`);
+			throw redirect(
+				303,
+				buildLoginPath({
+					redirectTo: getAuthRedirectTarget(event),
+					reason: 'auth-required'
+				})
+			);
 		}
 	}
 

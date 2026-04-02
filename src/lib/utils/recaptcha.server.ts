@@ -3,6 +3,7 @@ import {
 	PRIVATE_RECAPTCHA_SITE_KEY,
 	PRIVATE_RECAPTCHA_API_KEY
 } from '$env/static/private';
+import { env as privateEnv } from '$env/dynamic/private';
 
 export interface RecaptchaVerificationResult {
 	success: boolean;
@@ -42,6 +43,12 @@ function getLogLevel(): LogLevel {
 	return process.env.NODE_ENV === 'production' ? 'error' : 'info';
 }
 
+function getRecaptchaApiBaseUrl(): string {
+	return (
+		privateEnv.PRIVATE_RECAPTCHA_API_BASE_URL ?? 'https://recaptchaenterprise.googleapis.com'
+	).replace(/\/+$/, '');
+}
+
 function mask(value: string | null | undefined, keepStart = 6, keepEnd = 4): string {
 	if (!value) return '<empty>';
 	const v = String(value);
@@ -78,7 +85,11 @@ export async function verifyRecaptchaToken(
 	context: RecaptchaLogContext = {}
 ): Promise<RecaptchaVerificationResult> {
 	try {
-		if (!PRIVATE_RECAPTCHA_PROJECT_ID || !PRIVATE_RECAPTCHA_API_KEY || !PRIVATE_RECAPTCHA_SITE_KEY) {
+		if (
+			!PRIVATE_RECAPTCHA_PROJECT_ID ||
+			!PRIVATE_RECAPTCHA_API_KEY ||
+			!PRIVATE_RECAPTCHA_SITE_KEY
+		) {
 			log('error', 'reCAPTCHA server env is missing', {
 				route: context.route,
 				flow: context.flow,
@@ -104,7 +115,7 @@ export async function verifyRecaptchaToken(
 			userAgent: context.userAgent
 		});
 
-		const url = `https://recaptchaenterprise.googleapis.com/v1/projects/${PRIVATE_RECAPTCHA_PROJECT_ID}/assessments?key=${PRIVATE_RECAPTCHA_API_KEY}`;
+		const url = `${getRecaptchaApiBaseUrl()}/v1/projects/${PRIVATE_RECAPTCHA_PROJECT_ID}/assessments?key=${PRIVATE_RECAPTCHA_API_KEY}`;
 
 		const response = await fetch(url, {
 			method: 'POST',

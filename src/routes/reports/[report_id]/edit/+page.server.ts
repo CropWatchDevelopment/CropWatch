@@ -1,6 +1,7 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import type {
 	CreateReportAlertPointRequest,
+	CreateReportDataProcessingScheduleRequest,
 	CreateReportRecipientRequest,
 	CreateReportRequest,
 	CreateReportUserScheduleRequest
@@ -15,6 +16,7 @@ type CurrentUser = {
 	name: string;
 };
 
+const REPORT_CREATED_SUCCESS_MESSAGE = 'Report created successfully.';
 const REPORT_UPDATED_SUCCESS_MESSAGE = 'Report updated successfully.';
 const REPORT_UPDATE_FAILED_MESSAGE = 'Failed to update report.';
 
@@ -100,6 +102,27 @@ function readApiMessage(sourceError: unknown, fallback: string): string {
 	}
 
 	return fallback;
+}
+
+function readReportId(payload: unknown): string | null {
+	if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+		return null;
+	}
+
+	const record = payload as Record<string, unknown>;
+	const reportId = record.report_id;
+	if (typeof reportId === 'string' && reportId.trim()) {
+		return reportId.trim();
+	}
+
+	for (const nestedKey of ['data', 'result']) {
+		const nestedReportId = readReportId(record[nestedKey]);
+		if (nestedReportId) {
+			return nestedReportId;
+		}
+	}
+
+	return null;
 }
 
 function readApiStatus(sourceError: unknown, fallback = 500): number {
@@ -274,6 +297,54 @@ function sanitizeRecipientEntries(
 	return recipients.length > 0 ? recipients : undefined;
 }
 
+function sanitizeDataProcessingScheduleEntries(
+	value: unknown,
+	defaults: { report_id?: string }
+): CreateReportDataProcessingScheduleRequest[] | undefined {
+	if (!Array.isArray(value)) return undefined;
+
+	// Validate HH:mm format
+	const isValidTime = (t: unknown): t is string =>
+		typeof t === 'string' && /^\d{2}:\d{2}$/.test(t);
+
+	const entries = value
+		.filter(isRecord)
+		.map((entry) => {
+			const dayOfWeek = readOptionalInteger(entry.day_of_week);
+			const startTime = isValidTime(entry.start_time) ? entry.start_time : undefined;
+			const endTime = isValidTime(entry.end_time) ? entry.end_time : undefined;
+
+			if (dayOfWeek === undefined || !startTime || !endTime) {
+				return null;
+			}
+
+			const schedule: CreateReportDataProcessingScheduleRequest = {
+				day_of_week: dayOfWeek,
+				start_time: startTime,
+				end_time: endTime
+			};
+
+			const crossesMidnight = readOptionalBoolean(entry.crosses_midnight);
+			const id = readOptionalString(entry.id);
+			const isEnabled = readOptionalBoolean(entry.is_enabled);
+			const reportId = readOptionalString(entry.report_id) ?? defaults.report_id;
+			const ruleType = readOptionalString(entry.rule_type);
+			const timezone = readOptionalString(entry.timezone);
+
+			if (crossesMidnight !== undefined) schedule.crosses_midnight = crossesMidnight;
+			if (id) schedule.id = id;
+			if (isEnabled !== undefined) schedule.is_enabled = isEnabled;
+			if (reportId) schedule.report_id = reportId;
+			if (ruleType) schedule.rule_type = ruleType;
+			if (timezone) schedule.timezone = timezone;
+
+			return schedule;
+		})
+		.filter((e): e is CreateReportDataProcessingScheduleRequest => e !== null);
+
+	return entries.length > 0 ? entries : undefined;
+}
+
 function sanitizeReportPayload(
 	payload: Record<string, unknown>,
 	defaults: {
@@ -313,9 +384,16 @@ function sanitizeReportPayload(
 		user_id: userId
 	});
 
+	const reportDataProcessingSchedules = sanitizeDataProcessingScheduleEntries(
+		payload.report_data_processing_schedules,
+		{ report_id: reportId }
+	);
+
 	if (reportUserSchedule) sanitized.report_user_schedule = reportUserSchedule;
 	if (reportAlertPoints) sanitized.report_alert_points = reportAlertPoints;
 	if (reportRecipients) sanitized.report_recipients = reportRecipients;
+	if (reportDataProcessingSchedules)
+		sanitized.report_data_processing_schedules = reportDataProcessingSchedules;
 
 	return sanitized;
 }
@@ -334,20 +412,27 @@ function readCurrentUser(locals: App.Locals): CurrentUser | null {
 	return { id, email, name };
 }
 
-export const load: PageServerLoad = async ({ locals, fetch, params }) => {
+export const load: PageServerLoad = async ({ locals, fetch, params, url }) => {
 	const authToken = locals.jwtString ?? null;
 	const reportId = readString(params.report_id);
+	const isCreate = reportId === 'new';
 	const currentUser = readCurrentUser(locals);
 
 	if (!authToken) {
 		error(401, m.error_unauthorized_title());
 	}
 
+	const api = new ApiService({ fetchFn: fetch, authToken });
+
+	if (isCreate) {
+		const devEui = url.searchParams.get('dev_eui')?.trim() || null;
+		const devices = await api.getAllDevices().catch(() => []);
+		return { authToken, currentUser, devices, devEui, report: null };
+	}
+
 	if (!reportId) {
 		error(404, m.error_not_found_title());
 	}
-
-	const api = new ApiService({ fetchFn: fetch, authToken });
 
 	try {
 		const [report, devices] = await Promise.all([
@@ -359,6 +444,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 			authToken,
 			currentUser,
 			devices,
+			devEui: null,
 			report
 		};
 	} catch (sourceError) {
@@ -372,13 +458,14 @@ export const actions: Actions = {
 	default: async ({ request, locals, fetch, params }) => {
 		const authToken = locals.jwtString ?? null;
 		const reportId = readString(params.report_id);
+		const isCreate = reportId === 'new';
 		const currentUser = readCurrentUser(locals);
 
 		if (!authToken) {
 			return fail(401, { error: m.auth_not_authenticated() });
 		}
 
-		if (!reportId) {
+		if (!isCreate && !reportId) {
 			return fail(404, { error: m.error_not_found_title() });
 		}
 
@@ -390,7 +477,7 @@ export const actions: Actions = {
 		}
 
 		const sanitizedPayload = sanitizeReportPayload(parsedPayload.value, {
-			report_id: reportId,
+			report_id: isCreate ? undefined : reportId,
 			user_id: currentUser?.id
 		});
 
@@ -421,6 +508,16 @@ export const actions: Actions = {
 		});
 
 		try {
+			if (isCreate) {
+				const createdReport = await api.createReport(sanitizedPayload);
+
+				return {
+					success: true,
+					message: REPORT_CREATED_SUCCESS_MESSAGE,
+					report_id: readReportId(createdReport) ?? undefined
+				};
+			}
+
 			await api.updateReport(reportId, sanitizedPayload);
 
 			return {
@@ -429,7 +526,10 @@ export const actions: Actions = {
 				report_id: reportId
 			};
 		} catch (sourceError) {
-			const message = readApiMessage(sourceError, REPORT_UPDATE_FAILED_MESSAGE);
+			const message = readApiMessage(
+				sourceError,
+				isCreate ? m.reports_create_failed() : REPORT_UPDATE_FAILED_MESSAGE
+			);
 			const status = readApiStatus(sourceError);
 
 			return fail(status, {

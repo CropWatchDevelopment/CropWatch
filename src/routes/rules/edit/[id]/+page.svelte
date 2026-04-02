@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import {
 		CwButton,
 		CwCard,
 		CwChip,
 		CwDropdown,
-		CwExpandPanel,
 		CwInput,
 		CwSeparator,
 		useCwToast
@@ -16,6 +16,7 @@
 		getRuleSubjectOptions
 	} from '$lib/i18n/options';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { ApiService } from '$lib/api/api.service';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { DeviceDto, RuleDto, UpdateRuleRequest } from '$lib/api/api.dtos';
@@ -84,10 +85,6 @@
 		return entry;
 	}
 
-	function addCriterion() {
-		criteria = [...criteria, createEmptyCriterion()];
-	}
-
 	function removeCriterion(id: number) {
 		if (criteria.length <= 1) return;
 		criteria = criteria.filter((c) => c.id !== id);
@@ -153,7 +150,7 @@
 				dismissible: true
 			});
 
-			goto('/rules');
+			goto(resolve('/rules'));
 		} catch (err) {
 			console.error('Failed to update rule:', err);
 			toast.add({
@@ -172,20 +169,20 @@
 <!-- Layout                                                                 -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
-<div class="h-full overflow-y-auto">
-	<div class="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
+<AppPage width="lg" class="rules-page">
+	<div class="rules-page__shell">
 		<!-- ── Page header ──────────────────────────────────────────────────── -->
-		<div class="flex items-center gap-3">
-			<CwButton variant="ghost" size="sm" onclick={() => goto('/rules')}>
+		<div class="rules-page__header">
+			<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/rules'))}>
 				{m.action_back()}
 			</CwButton>
-			<h1 class="text-2xl font-semibold">{m.rules_edit_rule()}</h1>
+			<h1 class="rules-page__title">{m.rules_edit_rule()}</h1>
 			<CwChip label={`ID: ${rule.id}`} tone="info" variant="outline" size="sm" />
 		</div>
 
 		<!-- ── Step 1 — Basic Info ─────────────────────────────────────────── -->
 		<CwCard title={m.rules_step_1_title()} subtitle={m.rules_edit_step_1_subtitle()}>
-			<div class="flex flex-col gap-4 p-4">
+			<AppFormStack padded>
 				<CwInput
 					label={m.rules_rule_name()}
 					placeholder={m.rules_rule_name_placeholder()}
@@ -214,14 +211,16 @@
 						<span class="text-sm opacity-60">📧</span>
 					{/snippet}
 				</CwInput>
-			</div>
+			</AppFormStack>
 		</CwCard>
 
 		<!-- ── Step 2 — Device Selection ───────────────────────────────────── -->
 		<CwCard title={m.rules_step_2_title()} subtitle={m.rules_step_2_subtitle()}>
-			<div class="flex flex-col gap-4 p-4">
+			<AppFormStack padded>
 				{#if deviceOptions.length === 0}
-					<p class="text-sm opacity-60">{m.rules_no_devices_available()}</p>
+					<AppNotice tone="neutral">
+						<p>{m.rules_no_devices_available()}</p>
+					</AppNotice>
 				{:else}
 					<CwDropdown
 						label={m.devices_device()}
@@ -237,16 +236,16 @@
 						</div>
 					{/if}
 				{/if}
-			</div>
+			</AppFormStack>
 		</CwCard>
 
 		<!-- ── Step 3 — Criteria ───────────────────────────────────────────── -->
 		<CwCard title={m.rules_step_3_title()} subtitle={m.rules_edit_step_3_subtitle()}>
-			<div class="flex flex-col gap-4 p-4">
+			<AppFormStack padded>
 				{#each criteria as criterion, idx (criterion.id)}
-					<div class="rounded-lg border border-gray-200 p-4">
-						<div class="mb-3 flex items-center justify-between">
-							<span class="text-sm font-medium"
+					<div class="rules-criterion">
+						<div class="rules-criterion__header">
+							<span class="rules-criterion__title"
 								>{m.rules_condition_number({ count: String(idx + 1) })}</span
 							>
 							{#if criteria.length > 1}
@@ -292,10 +291,10 @@
 					</div>
 				{/each}
 				<!-- 
-				<CwButton variant="secondary" onclick={addCriterion}>
-					{m.rules_add_another_condition()}
-				</CwButton> -->
-			</div>
+					<CwButton variant="secondary" onclick={addCriterion}>
+						{m.rules_add_another_condition()}
+					</CwButton> -->
+			</AppFormStack>
 		</CwCard>
 
 		<!-- ── Preview & Submit ────────────────────────────────────────────── -->
@@ -303,10 +302,9 @@
 			title={m.rules_step_4_review_save_title()}
 			subtitle={m.rules_step_4_review_save_subtitle()}
 		>
-			<div class="flex flex-col gap-4 p-4">
+			<AppFormStack padded>
 				{#if isFormValid}
-					<div class="rounded-lg border border-blue-200 p-4">
-						<p class="mb-2 text-sm font-medium">{m.rules_rule_summary()}</p>
+					<AppNotice title={m.rules_rule_summary()} tone="info">
 						<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
 							<dt class="font-medium opacity-70">{m.common_name()}:</dt>
 							<dd>{ruleName}</dd>
@@ -326,17 +324,17 @@
 								</div>
 							</dd>
 						</dl>
-					</div>
+					</AppNotice>
 				{:else}
-					<p class="text-sm opacity-60">
-						{m.rules_complete_required_fields()}
-					</p>
+					<AppNotice tone="neutral">
+						<p>{m.rules_complete_required_fields()}</p>
+					</AppNotice>
 				{/if}
 
 				<CwSeparator />
 
-				<div class="flex items-center justify-end gap-3">
-					<CwButton variant="ghost" onclick={() => goto('/rules')} disabled={submitting}>
+				<AppActionRow>
+					<CwButton variant="ghost" onclick={() => goto(resolve('/rules'))} disabled={submitting}>
 						{m.action_cancel()}
 					</CwButton>
 					<CwButton
@@ -348,8 +346,51 @@
 						<Icon src={SAVE_ICON} />
 						{submitting ? m.action_saving() : m.action_save_changes()}
 					</CwButton>
-				</div>
-			</div>
+				</AppActionRow>
+			</AppFormStack>
 		</CwCard>
 	</div>
-</div>
+</AppPage>
+
+<style>
+	.rules-page__shell {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-4);
+	}
+
+	.rules-page__header {
+		display: flex;
+		align-items: center;
+		gap: var(--cw-space-3);
+		flex-wrap: wrap;
+	}
+
+	.rules-page__title {
+		margin: 0;
+		font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+		font-weight: var(--cw-font-semibold);
+	}
+
+	.rules-criterion {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-3);
+		padding: var(--cw-space-3);
+		border: 1px solid var(--cw-border-muted);
+		border-radius: var(--cw-radius-lg);
+		background: var(--cw-bg-subtle);
+	}
+
+	.rules-criterion__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--cw-space-3);
+	}
+
+	.rules-criterion__title {
+		font-size: var(--cw-text-sm);
+		font-weight: var(--cw-font-medium);
+	}
+</style>

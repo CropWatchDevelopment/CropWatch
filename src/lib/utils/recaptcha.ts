@@ -2,8 +2,8 @@ import { env as publicEnv } from '$env/dynamic/public';
 
 declare global {
 	interface Window {
-		grecaptcha: {
-			enterprise: {
+		grecaptcha?: {
+			enterprise?: {
 				ready: (callback: () => void) => void;
 				execute: (siteKey: string, options: { action: string }) => Promise<string>;
 			};
@@ -11,149 +11,258 @@ declare global {
 	}
 }
 
-let scriptLoaded = false;
-let scriptLoading: Promise<boolean> | null = null;
+export const RECAPTCHA_ACTIONS = ['LOGIN', 'REGISTER', 'FORGOT_PASSWORD'] as const;
+
+export type RecaptchaAction = (typeof RECAPTCHA_ACTIONS)[number];
+export type RecaptchaStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+const SCRIPT_ID = 'cw-recaptcha-enterprise';
+const SCRIPT_SRC_MATCHER = 'script[src*="recaptcha/enterprise.js"]';
+const READY_TIMEOUT_MS = 8_000;
+const EXECUTE_TIMEOUT_MS = 12_000;
+
+let status: RecaptchaStatus = 'idle';
+let inflightLoad: Promise<void> | null = null;
+let inflightReady: Promise<void> | null = null;
+let lastError: Error | null = null;
 
 function getPublicSiteKey(): string | null {
 	const key = (publicEnv.PUBLIC_RECAPTCHA_SITE_KEY ?? '').trim();
 	return key.length > 0 ? key : null;
 }
 
-type LoadRecaptchaOptions = {
-	/**
-	 * Optional hook to keep UI state in sync.
-	 * Convention: true while loading, false once loading finishes (success or failure).
-	 */
-	setLoadingCaptcha?: (loading: boolean) => void;
-};
+function hasUsableEnterpriseApi(): boolean {
+	return Boolean(
+		typeof window !== 'undefined' &&
+		window.grecaptcha?.enterprise &&
+		typeof window.grecaptcha.enterprise.ready === 'function' &&
+		typeof window.grecaptcha.enterprise.execute === 'function'
+	);
+}
 
-/**
- * Load the reCAPTCHA Enterprise script if not already loaded
- */
+function setStatus(nextStatus: RecaptchaStatus, error: Error | null = null) {
+	status = nextStatus;
+	lastError = error;
+}
 
-export async function loadRecaptchaScript(options: LoadRecaptchaOptions = {}): Promise<boolean> {
-	const { setLoadingCaptcha } = options;
-	const siteKey = getPublicSiteKey();
-
-	if (!siteKey) {
-		console.error(
-			'reCAPTCHA is not configured: PUBLIC_RECAPTCHA_SITE_KEY is missing/empty. '
-		);
-		setLoadingCaptcha?.(false);
-		return false;
+function toError(error: unknown, fallback: string): Error {
+	if (error instanceof Error) {
+		return error;
 	}
 
-	// If already loaded, still ensure the UI loading state is cleared.
-	if (scriptLoaded) {
-		setLoadingCaptcha?.(false);
-		return true;
+	return new Error(fallback);
+}
+
+function getExistingScripts(): HTMLScriptElement[] {
+	if (typeof document === 'undefined') {
+		return [];
 	}
 
-	setLoadingCaptcha?.(true);
+	return Array.from(document.querySelectorAll<HTMLScriptElement>(SCRIPT_SRC_MATCHER));
+}
 
-	try {
-		if (typeof window === 'undefined') {
-			return false;
-		}
+function removeRecaptchaArtifacts() {
+	if (typeof document === 'undefined') {
+		return;
+	}
 
-		if (!scriptLoading) {
-			scriptLoading = new Promise<boolean>((resolve) => {
-				// Check if script already exists
-				const existingScript = document.querySelector(
-					`script[src*="recaptcha/enterprise.js"]`
-				);
-				if (existingScript) {
-					scriptLoaded = true;
-					resolve(true);
-					return;
-				}
+	document.querySelector('.grecaptcha-badge')?.parentElement?.remove();
+	document.getElementById(SCRIPT_ID)?.remove();
 
-				const script = document.createElement('script');
-				script.id = 'cw-recaptcha-enterprise';
-				script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`;
-				script.async = true;
-				script.defer = true;
-
-				script.onload = () => {
-					scriptLoaded = true;
-					resolve(true);
-				};
-
-				script.onerror = () => {
-					scriptLoading = null;
-					resolve(false);
-				};
-
-				document.head.appendChild(script);
-			});
-		}
-
-		return await scriptLoading;
-	} catch (error) {
-		console.error('reCAPTCHA load error:', error);
-		scriptLoading = null;
-		return false;
-	} finally {
-		setLoadingCaptcha?.(false);
+	for (const script of getExistingScripts()) {
+		script.remove();
 	}
 }
 
-/**
- * Execute reCAPTCHA Enterprise and get a token
- * @param action - The action name for this reCAPTCHA execution (e.g., 'LOGIN', 'REGISTER', 'FORGOT_PASSWORD')
- * @returns Promise resolving to the reCAPTCHA token
- */
-export async function executeRecaptcha(action: string): Promise<string> {
-	const siteKey = getPublicSiteKey();
-	if (!siteKey) {
-		throw new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
+async function withTimeout<T>(
+	promise: Promise<T>,
+	timeoutMs: number,
+	errorMessage: string
+): Promise<T> {
+	let timeoutId: number | undefined;
+
+	try {
+		return await Promise.race([
+			promise,
+			new Promise<T>((_, reject) => {
+				timeoutId = window.setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+			})
+		]);
+	} finally {
+		if (timeoutId !== undefined) {
+			window.clearTimeout(timeoutId);
+		}
+	}
+}
+
+async function waitForEnterpriseReady(): Promise<void> {
+	if (inflightReady) {
+		return inflightReady;
 	}
 
-	const loaded = await loadRecaptchaScript();
-	if (!loaded) {
-		throw new Error('reCAPTCHA script failed to load');
+	if (!hasUsableEnterpriseApi()) {
+		throw new Error('reCAPTCHA Enterprise API is unavailable');
 	}
 
-	return new Promise((resolve, reject) => {
-		window.grecaptcha.enterprise.ready(() => {
-			window.grecaptcha.enterprise
-				.execute(siteKey, { action })
-				.then(resolve)
-				.catch(reject);
-		});
+	inflightReady = withTimeout(
+		new Promise<void>((resolve, reject) => {
+			try {
+				window.grecaptcha!.enterprise!.ready(() => {
+					resolve();
+				});
+			} catch (error) {
+				reject(error);
+			}
+		}),
+		READY_TIMEOUT_MS,
+		'reCAPTCHA Enterprise did not become ready in time'
+	).finally(() => {
+		inflightReady = null;
+	});
+
+	return inflightReady;
+}
+
+async function loadRecaptchaScriptElement(siteKey: string): Promise<void> {
+	const existingScripts = getExistingScripts();
+	if (existingScripts.length > 0 && !hasUsableEnterpriseApi()) {
+		removeRecaptchaArtifacts();
+	}
+
+	if (hasUsableEnterpriseApi()) {
+		return;
+	}
+
+	await new Promise<void>((resolve, reject) => {
+		const script = document.createElement('script');
+		script.id = SCRIPT_ID;
+		script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`;
+		script.async = true;
+		script.defer = true;
+
+		script.onload = () => {
+			resolve();
+		};
+
+		script.onerror = () => {
+			script.remove();
+			reject(new Error('reCAPTCHA script failed to load'));
+		};
+
+		document.head.appendChild(script);
 	});
 }
 
-/**
- * Unload Google reCaptcha from the page
- * @param {String} recaptchaSiteKey
- */
-const unload = (recaptchaSiteKey: string) => {
-	const nodeBadge = document.querySelector('.grecaptcha-badge');
-	if (nodeBadge) {
-		nodeBadge.parentElement?.remove();
-	}
-
-	// Prefer removing by our known id
-	const byId = document.getElementById('cw-recaptcha-enterprise');
-	if (byId) byId.remove();
-
-	// Fallback: remove any enterprise scripts (including ones without our id)
-	const scripts = document.querySelectorAll('script[src*="recaptcha/enterprise.js"]');
-	for (const s of scripts) {
-		s.remove();
-	}
-};
-
-export function unloadRecaptchaScript() {
-	if (typeof window === 'undefined') {
-		return;
-	}
+async function ensureRecaptchaReady(): Promise<void> {
 	const siteKey = getPublicSiteKey();
 	if (!siteKey) {
+		const error = new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
+		setStatus('error', error);
+		throw error;
+	}
+
+	if (hasUsableEnterpriseApi() && status === 'ready') {
 		return;
 	}
-	unload(siteKey);
-	scriptLoaded = false;
-	scriptLoading = null;
+
+	if (!inflightLoad) {
+		setStatus('loading');
+
+		inflightLoad = (async () => {
+			try {
+				await loadRecaptchaScriptElement(siteKey);
+
+				if (!hasUsableEnterpriseApi()) {
+					throw new Error('reCAPTCHA script loaded without a usable Enterprise API');
+				}
+
+				await waitForEnterpriseReady();
+				setStatus('ready');
+			} catch (error) {
+				const normalizedError = toError(error, 'reCAPTCHA failed to initialize');
+				removeRecaptchaArtifacts();
+				setStatus('error', normalizedError);
+				throw normalizedError;
+			} finally {
+				inflightLoad = null;
+			}
+		})();
+	}
+
+	return inflightLoad;
+}
+
+function resetInternalState(nextStatus: RecaptchaStatus = 'idle') {
+	inflightLoad = null;
+	inflightReady = null;
+	setStatus(nextStatus);
+}
+
+function getExecuteFn() {
+	const execute = window.grecaptcha?.enterprise?.execute;
+	if (typeof execute !== 'function') {
+		throw new Error('reCAPTCHA Enterprise execute API is unavailable');
+	}
+
+	return execute;
+}
+
+export function getRecaptchaStatus(): RecaptchaStatus {
+	return status;
+}
+
+export function getRecaptchaError(): Error | null {
+	return lastError;
+}
+
+export async function warmupRecaptcha(): Promise<boolean> {
+	try {
+		await ensureRecaptchaReady();
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export async function runRecaptchaAction(action: RecaptchaAction): Promise<string> {
+	await ensureRecaptchaReady();
+
+	const siteKey = getPublicSiteKey();
+	if (!siteKey) {
+		const error = new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
+		setStatus('error', error);
+		throw error;
+	}
+
+	try {
+		const execute = getExecuteFn();
+		const token = await withTimeout(
+			execute(siteKey, { action }),
+			EXECUTE_TIMEOUT_MS,
+			'reCAPTCHA token generation timed out'
+		);
+
+		if (typeof token !== 'string' || token.length === 0) {
+			throw new Error('reCAPTCHA returned an empty token');
+		}
+
+		setStatus('ready');
+		return token;
+	} catch (error) {
+		const normalizedError = toError(error, 'reCAPTCHA token generation failed');
+		removeRecaptchaArtifacts();
+		resetInternalState('error');
+		lastError = normalizedError;
+		throw normalizedError;
+	}
+}
+
+export function resetRecaptchaFailureState() {
+	removeRecaptchaArtifacts();
+	delete window.grecaptcha;
+	resetInternalState();
+}
+
+export function unloadRecaptchaScript() {
+	resetRecaptchaFailureState();
 }

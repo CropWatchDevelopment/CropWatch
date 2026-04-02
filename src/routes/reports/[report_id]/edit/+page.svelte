@@ -5,6 +5,7 @@
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { m } from '$lib/paraglide/messages.js';
 	import { onMount } from 'svelte';
 	import {
@@ -13,12 +14,12 @@
 		CwCard,
 		CwDropdown,
 		CwInput,
-		CwSwitch,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import type { CwAlertPointCondition, CwAlertPointsValue } from '@cropwatchdevelopment/cwui';
+	import { type CwAlertPointCondition, type CwAlertPointsValue } from '@cropwatchdevelopment/cwui';
 	import type {
 		CreateReportAlertPointRequest,
+		CreateReportDataProcessingScheduleRequest,
 		CreateReportRecipientRequest,
 		CreateReportRequest,
 		CreateReportUserScheduleRequest,
@@ -26,11 +27,20 @@
 		ReportDto
 	} from '$lib/api/api.dtos';
 	import type { PageProps } from './$types';
-	import ADD_ICON from '$lib/images/icons/add.svg';
+	import ReportCadenceSection from './ReportCadenceSection.svelte';
+	import ReportProcessingSchedulesSection from './ReportProcessingSchedulesSection.svelte';
+	import ReportRecipientsSection from './ReportRecipientsSection.svelte';
 	import SAVE_ICON from '$lib/images/icons/save.svg';
 	import CANCEL_ICON from '$lib/images/icons/no.svg';
+	import type {
+		DataProcessingScheduleDraft,
+		RecipientDraft,
+		ReportDraft,
+		ScheduleDraft,
+		SelectOption
+	} from './report-form.types';
 
-	type EditReportForm = {
+	type ReportForm = {
 		error?: string;
 		message?: string;
 		payload?: string;
@@ -44,71 +54,43 @@
 		name: string;
 	} | null;
 
-	type SelectOption = {
-		disabled?: boolean;
-		label: string;
-		value: string;
-	};
-
 	type DeviceListEntry = {
 		dev_eui: string;
 		name?: string | null;
 	};
 
-	type ScheduleDraft = {
-		created_at: string;
-		dev_eui: string;
-		end_of_month: boolean;
-		end_of_week: boolean;
-		id: string;
-		is_active: boolean;
-		key: string;
-		report_id: string;
-		report_user_schedule_id: string;
-		user_id: string;
-	};
-
-	type RecipientDraft = {
-		communication_method: string;
-		created_at: string;
-		email: string;
-		id: string;
-		key: string;
-		name: string;
-		report_id: string;
-		user_id: string;
-	};
-
-	type ReportDraft = {
-		created_at: string;
-		dev_eui: string;
-		id: string;
-		name: string;
-		report_id: string;
-		report_recipients: RecipientDraft[];
-		report_user_schedule: ScheduleDraft[];
-		user_id: string;
-	};
-
-	const DEFAULT_ALERT_COLOR = '#0EA5E9';
+	const DEFAULT_ALERT_COLOR = '';
 	const DEFAULT_ALERT_DATA_POINT_KEY = 'temperature_c';
-	const EDIT_PAGE_TITLE = 'Edit report';
+	const REPORT_CREATED_SUCCESS_MESSAGE = 'Report created successfully.';
 	const REPORT_UPDATED_SUCCESS_MESSAGE = 'Report updated successfully.';
-	const REPORT_UPDATE_FAILED_MESSAGE = 'Failed to update report.';
 
 	const toast = useCwToast();
 	const app = getAppContext();
 
 	let { data, form }: PageProps = $props();
-	const report = (() => data.report)();
+	const report = (() => data.report ?? null)();
+	const isEditing = report !== null;
 	const authToken = (() => data.authToken ?? null)();
 	const serverDevices = (() => data.devices ?? [])();
-	let actionForm = $derived((form ?? null) as EditReportForm);
+	let actionForm = $derived((form ?? null) as ReportForm);
 	let currentUser = $derived((data.currentUser ?? null) as CurrentUser);
 	let communicationMethodOptions = $derived<SelectOption[]>([
 		{ label: m.reports_create_method_email(), value: '1' },
 		{ label: m.reports_create_method_sms(), value: '2' },
 		{ label: m.reports_create_method_discord(), value: '3' }
+	]);
+	let daysOfTheWeek = $derived<SelectOption[]>([
+		{ label: m.common_day_sunday(), value: '0' },
+		{ label: m.common_day_monday(), value: '1' },
+		{ label: m.common_day_tuesday(), value: '2' },
+		{ label: m.common_day_wednesday(), value: '3' },
+		{ label: m.common_day_thursday(), value: '4' },
+		{ label: m.common_day_friday(), value: '5' },
+		{ label: m.common_day_saturday(), value: '6' }
+	]);
+	let dataProcessingRuleTypeOptions = $derived<SelectOption[]>([
+		{ label: m.reports_schedule_rule_type_include(), value: 'include' },
+		{ label: m.reports_schedule_rule_type_exclude(), value: 'exclude' }
 	]);
 
 	let submitting = $state(false);
@@ -237,37 +219,35 @@
 			userId?: string;
 		}
 	): CreateReportAlertPointRequest[] {
-		   return alertPoints.points.map((point) => {
-			   const alertPayload: CreateReportAlertPointRequest = {
-				   data_point_key: DEFAULT_ALERT_DATA_POINT_KEY,
-				   name: point.name.trim()
-			   };
+		return alertPoints.points.map((point) => {
+			const alertPayload: CreateReportAlertPointRequest = {
+				data_point_key: DEFAULT_ALERT_DATA_POINT_KEY,
+				name: point.name.trim()
+			};
 
-			   // Include the id if present
-			   if (point.id !== undefined && point.id !== null && point.id !== '') {
-				   // If it's a string that can be parsed as int, do so
-				   const parsedId = Number(point.id);
-				   if (!isNaN(parsedId)) {
-					   alertPayload.id = parsedId;
-				   }
-			   }
+			if (point.id !== undefined && point.id !== null && point.id !== '') {
+				const parsedId = Number(point.id);
+				if (!isNaN(parsedId)) {
+					alertPayload.id = parsedId;
+				}
+			}
 
-			   const alertHexColor = cleanOptional(point.color)?.toUpperCase();
-			   const alertMax = parseOptionalNumber(point.max);
-			   const alertMin = parseOptionalNumber(point.min);
-			   const alertOperator = cleanOptional(mapAlertConditionToOperator(point.condition));
-			   const alertValue = parseOptionalNumber(point.value);
+			const alertHexColor = cleanOptional(point.color)?.toUpperCase();
+			const alertMax = parseOptionalNumber(point.max);
+			const alertMin = parseOptionalNumber(point.min);
+			const alertOperator = cleanOptional(mapAlertConditionToOperator(point.condition));
+			const alertValue = parseOptionalNumber(point.value);
 
-			   if (alertHexColor) alertPayload.hex_color = alertHexColor;
-			   if (alertMax !== undefined) alertPayload.max = alertMax;
-			   if (alertMin !== undefined) alertPayload.min = alertMin;
-			   if (alertOperator) alertPayload.operator = alertOperator;
-			   if (defaults.reportId) alertPayload.report_id = defaults.reportId;
-			   if (defaults.userId) alertPayload.user_id = defaults.userId;
-			   if (alertValue !== undefined) alertPayload.value = alertValue;
+			if (alertHexColor) alertPayload.hex_color = alertHexColor;
+			if (alertMax !== undefined) alertPayload.max = alertMax;
+			if (alertMin !== undefined) alertPayload.min = alertMin;
+			if (alertOperator) alertPayload.operator = alertOperator;
+			if (defaults.reportId) alertPayload.report_id = defaults.reportId;
+			if (defaults.userId) alertPayload.user_id = defaults.userId;
+			if (alertValue !== undefined) alertPayload.value = alertValue;
 
-			   return alertPayload;
-		   });
+			return alertPayload;
+		});
 	}
 
 	function buildAlertValidationIssues(alertPoints: CwAlertPointsValue): string[] {
@@ -311,9 +291,24 @@
 			id: '',
 			is_active: true,
 			key: nextRowKey('schedule'),
-			report_id: report.report_id ?? '',
+			report_id: report?.report_id ?? '',
 			report_user_schedule_id: '',
 			user_id: rootUserId
+		};
+	}
+
+	function createEmptyDataProcessingSchedule(): DataProcessingScheduleDraft {
+		return {
+			crosses_midnight: false,
+			day_of_week: '1',
+			end_time: '17:00',
+			id: '',
+			is_enabled: true,
+			key: nextRowKey('dps'),
+			report_id: report?.report_id ?? '',
+			rule_type: 'include',
+			start_time: '09:00',
+			timezone: 'JST'
 		};
 	}
 
@@ -325,18 +320,32 @@
 			id: '',
 			key: nextRowKey('recipient'),
 			name: currentUser?.name ?? '',
-			report_id: report.report_id ?? '',
+			report_id: report?.report_id ?? '',
 			user_id: rootUserId
 		};
 	}
 
-	function buildDraftFromReport(report: ReportDto): ReportDraft {
-		const normalizedReportDevEui = normalizeDevEui(report.dev_eui ?? '');
-		const rootUserId = cleanOptional(report.user_id ?? '') ?? currentUser?.id ?? '';
-		const reportId = report.report_id ?? '';
+	function buildDefaultDraft(): ReportDraft {
+		return {
+			created_at: '',
+			dev_eui: normalizeDevEui(data.devEui ?? ''),
+			id: '',
+			name: '',
+			report_id: '',
+			report_data_processing_schedules: [],
+			report_recipients: [createEmptyRecipient()],
+			report_user_schedule: [createEmptySchedule()],
+			user_id: currentUser?.id ?? ''
+		};
+	}
+
+	function buildDraftFromReport(source: ReportDto): ReportDraft {
+		const normalizedReportDevEui = normalizeDevEui(source.dev_eui ?? '');
+		const rootUserId = cleanOptional(source.user_id ?? '') ?? currentUser?.id ?? '';
+		const reportId = source.report_id ?? '';
 
 		const schedules =
-			report.report_user_schedule?.map((schedule) => {
+			source.report_user_schedule?.map((schedule) => {
 				const scheduleDevEui = normalizeDevEui(schedule.dev_eui ?? '');
 
 				return {
@@ -357,7 +366,7 @@
 			}) ?? [];
 
 		const recipients =
-			report.report_recipients?.map((recipient) => ({
+			source.report_recipients?.map((recipient) => ({
 				communication_method:
 					recipient.communication_method != null ? String(recipient.communication_method) : '1',
 				created_at: recipient.created_at ?? '',
@@ -369,22 +378,37 @@
 				user_id: cleanOptional(recipient.user_id ?? '') ?? rootUserId
 			})) ?? [];
 
+		const dataProcessingSchedules =
+			source.report_data_processing_schedules?.map((s) => ({
+				crosses_midnight: s.crosses_midnight ?? false,
+				day_of_week: s.day_of_week != null ? String(s.day_of_week) : '1',
+				end_time: s.end_time ?? '17:00',
+				id: s.id ?? '',
+				is_enabled: s.is_enabled ?? true,
+				key: nextRowKey('dps'),
+				report_id: s.report_id ?? reportId,
+				rule_type: s.rule_type ?? 'include',
+				start_time: s.start_time ?? '09:00',
+				timezone: s.timezone ?? 'UTC'
+			})) ?? [];
+
 		return {
-			created_at: report.created_at ?? '',
+			created_at: source.created_at ?? '',
 			dev_eui: normalizedReportDevEui,
-			id: report.id != null ? String(report.id) : '',
-			name: report.name ?? '',
+			id: source.id != null ? String(source.id) : '',
+			name: source.name ?? '',
 			report_id: reportId,
+			report_data_processing_schedules: dataProcessingSchedules,
 			report_recipients: recipients.length > 0 ? recipients : [createEmptyRecipient(rootUserId)],
 			report_user_schedule: schedules.length > 0 ? schedules : [createEmptySchedule(rootUserId)],
 			user_id: rootUserId
 		};
 	}
 
-	function buildAlertPointsValueFromReport(report: ReportDto): CwAlertPointsValue {
+	function buildAlertPointsValueFromReport(source: ReportDto): CwAlertPointsValue {
 		const baseValue = createEmptyAlertPointsValue();
 		const points =
-			report.report_alert_points?.map((point, index) => {
+			source.report_alert_points?.map((point, index) => {
 				const condition =
 					typeof point.operator === 'string' && point.operator.trim().length > 0
 						? mapOperatorToAlertCondition(point.operator)
@@ -404,10 +428,7 @@
 				};
 			}) ?? [];
 
-		return {
-			...baseValue,
-			points
-		};
+		return { ...baseValue, points };
 	}
 
 	function buildRequestPayload(
@@ -472,10 +493,29 @@
 			}
 		);
 
+		const reportDataProcessingSchedules: CreateReportDataProcessingScheduleRequest[] =
+			draft.report_data_processing_schedules
+				.filter((s) => s.day_of_week && s.start_time && s.end_time)
+				.map((s) => {
+					const entry: CreateReportDataProcessingScheduleRequest = {
+						day_of_week: parseInt(s.day_of_week, 10),
+						start_time: s.start_time,
+						end_time: s.end_time
+					};
+					if (s.crosses_midnight !== undefined) entry.crosses_midnight = s.crosses_midnight;
+					if (s.id) entry.id = s.id;
+					entry.is_enabled = s.is_enabled;
+					if (s.report_id) entry.report_id = s.report_id;
+					if (s.rule_type) entry.rule_type = s.rule_type;
+					if (s.timezone) entry.timezone = s.timezone;
+					return entry;
+				});
+
 		const payload: CreateReportRequest = {
 			dev_eui: devEui,
 			name: draft.name.trim(),
 			report_alert_points: reportAlertPoints,
+			report_data_processing_schedules: reportDataProcessingSchedules,
 			report_recipients: reportRecipients,
 			report_user_schedule: reportUserSchedule
 		};
@@ -542,6 +582,19 @@
 		return issues;
 	}
 
+	function addDataProcessingSchedule() {
+		fields.report_data_processing_schedules = [
+			...fields.report_data_processing_schedules,
+			createEmptyDataProcessingSchedule()
+		];
+	}
+
+	function removeDataProcessingSchedule(key: string) {
+		fields.report_data_processing_schedules = fields.report_data_processing_schedules.filter(
+			(s) => s.key !== key
+		);
+	}
+
 	function addRecipient() {
 		fields.report_recipients = [...fields.report_recipients, createEmptyRecipient(fields.user_id)];
 	}
@@ -552,11 +605,16 @@
 		);
 	}
 
-	let fields = $state<ReportDraft>(buildDraftFromReport(report));
-	let alertPointsValue = $state<CwAlertPointsValue>(buildAlertPointsValueFromReport(report));
+	let fields = $state<ReportDraft>(report ? buildDraftFromReport(report) : buildDefaultDraft());
+	let alertPointsValue = $state<CwAlertPointsValue>(
+		report ? buildAlertPointsValueFromReport(report) : createEmptyAlertPointsValue()
+	);
 	let fallbackDevices = $state<DeviceDto[]>([]);
 	let loadingDevices = $state(false);
-	let selectedDevEui = $state(normalizeDevEui(report.dev_eui ?? ''));
+	const initialDevEui = (() => data.devEui ?? '')();
+	let selectedDevEui = $state(
+		report ? normalizeDevEui(report.dev_eui ?? '') : normalizeDevEui(initialDevEui)
+	);
 
 	async function loadDevicesFromApi() {
 		if (!authToken || loadingDevices) return;
@@ -571,7 +629,7 @@
 				fallbackDevices = devices;
 			}
 		} catch (sourceError) {
-			console.error('Failed to load devices for report edit:', sourceError);
+			console.error('Failed to load devices:', sourceError);
 		} finally {
 			loadingDevices = false;
 		}
@@ -594,7 +652,7 @@
 				: fallbackDevices.length > 0
 					? fallbackDevices
 					: serverDevices;
-		const normalizedCurrentDevEui = normalizeDevEui(report.dev_eui ?? fields.dev_eui);
+		const normalizedCurrentDevEui = normalizeDevEui(report?.dev_eui ?? fields.dev_eui);
 		const merged: DeviceListEntry[] = (baseDevices ?? []).map((device) => ({
 			dev_eui: device.dev_eui,
 			name: device.name
@@ -640,18 +698,20 @@
 </script>
 
 <svelte:head>
-	<title>{EDIT_PAGE_TITLE} | CropWatch</title>
+	<title
+		>{isEditing ? m.reports_edit_page_title() : m.reports_create_page_title()} | CropWatch</title
+	>
 </svelte:head>
 
-<div class="create-report-page overflow-y-auto p-4">
-	<div class="page-shell">
+<AppPage width="xl" class="report-page">
+	<div class="report-page__shell">
 		<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/reports'))}>
 			{m.action_back()}
 		</CwButton>
 
 		<form
 			method="POST"
-			class="report-form"
+			class="flex flex-col gap-4"
 			{@attach preventImplicitFormSubmission}
 			use:enhance={({ cancel }) => {
 				submitAttempted = true;
@@ -676,7 +736,9 @@
 							message:
 								typeof result.data?.message === 'string'
 									? result.data.message
-									: REPORT_UPDATED_SUCCESS_MESSAGE
+									: isEditing
+										? REPORT_UPDATED_SUCCESS_MESSAGE
+										: REPORT_CREATED_SUCCESS_MESSAGE
 						});
 						await goto(resolve('/reports'), { invalidateAll: true });
 						return;
@@ -690,7 +752,10 @@
 					}
 
 					if (result.type === 'error') {
-						toast.add({ tone: 'danger', message: REPORT_UPDATE_FAILED_MESSAGE });
+						toast.add({
+							tone: 'danger',
+							message: isEditing ? REPORT_UPDATED_SUCCESS_MESSAGE : REPORT_CREATED_SUCCESS_MESSAGE
+						});
 					}
 				};
 			}}
@@ -698,22 +763,23 @@
 			<input type="hidden" name="payload" value={requestPayloadCompact} />
 
 			{#if actionForm?.error}
-				<p class="form-error">{actionForm.error}</p>
+				<AppNotice tone="danger">
+					<p>{actionForm.error}</p>
+				</AppNotice>
 			{/if}
 
 			{#if submitAttempted && validationIssues.length > 0}
-				<div class="validation-panel" aria-live="polite">
+				<AppNotice tone="warning" title={m.reports_create_validation_title()} ariaLive="polite">
 					<div>
-						<p class="validation-panel__title">{m.reports_create_validation_title()}</p>
-						<p class="validation-panel__copy">{m.reports_create_validation_copy()}</p>
+						<p>{m.reports_create_validation_copy()}</p>
 					</div>
 
-					<ul class="validation-list">
+					<ul class="list-disc pl-5">
 						{#each validationIssues as issue (issue)}
 							<li>{issue}</li>
 						{/each}
 					</ul>
-				</div>
+				</AppNotice>
 			{/if}
 
 			<CwCard
@@ -721,8 +787,8 @@
 				subtitle={m.reports_create_basics_subtitle()}
 				elevated
 			>
-				<div class="card-stack">
-					<div class="field-grid field-grid--two">
+				<AppFormStack padded>
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<CwInput
 							label={m.common_name()}
 							required
@@ -740,323 +806,69 @@
 					</div>
 
 					{#if !loadingDevices && deviceOptions.length === 0}
-						<p class="hint">{m.reports_create_no_devices_loaded()}</p>
+						<AppNotice tone="neutral">
+							<p>{m.reports_create_no_devices_loaded()}</p>
+						</AppNotice>
 					{/if}
-				</div>
+				</AppFormStack>
 			</CwCard>
 
-			<CwCard
-				title={m.reports_create_schedules_title()}
-				subtitle={m.reports_create_schedules_subtitle()}
-				elevated
-			>
-				<div class="card-stack">
-					{#if fields.report_user_schedule.length === 0}
-						<div class="empty-panel">{m.reports_create_empty_schedules()}</div>
-					{/if}
+			<ReportCadenceSection bind:schedules={fields.report_user_schedule} />
 
-					{#each fields.report_user_schedule as schedule, index (schedule.key)}
-						<div class="entry-card">
-							<div class="entry-card__header">
-								<div>
-									<h3>{m.reports_create_schedule_heading({ index: String(index + 1) })}</h3>
-									<p>{m.reports_create_schedule_copy()}</p>
-								</div>
-							</div>
-
-							<div class="switch-grid">
-								<CwSwitch
-									checked={schedule.end_of_week}
-									label={m.reports_create_schedule_week_label()}
-									description={m.reports_create_schedule_week_description()}
-									onchange={(checked) => (schedule.end_of_week = checked)}
-								/>
-								<CwSwitch
-									checked={schedule.end_of_month}
-									label={m.reports_create_schedule_month_label()}
-									description={m.reports_create_schedule_month_description()}
-									onchange={(checked) => (schedule.end_of_month = checked)}
-								/>
-							</div>
-						</div>
-					{/each}
-				</div>
-			</CwCard>
+			<ReportProcessingSchedulesSection
+				bind:schedules={fields.report_data_processing_schedules}
+				{daysOfTheWeek}
+				ruleTypeOptions={dataProcessingRuleTypeOptions}
+				onAdd={addDataProcessingSchedule}
+				onRemove={removeDataProcessingSchedule}
+			/>
 
 			<CwCard
 				title={m.reports_create_alerts_title()}
 				subtitle={m.reports_create_alerts_subtitle()}
 				elevated
 			>
-				<div class="card-stack">
-					<p class="section-copy">{m.reports_create_alerts_copy()}</p>
+				<AppFormStack padded>
+					<p class="text-[color:var(--cw-text-secondary)]">{m.reports_create_alerts_copy()}</p>
 					<CwAlertPointsEditor bind:value={alertPointsValue} />
-				</div>
+				</AppFormStack>
 			</CwCard>
 
-			<CwCard
-				title={m.reports_create_recipients_title()}
-				subtitle={m.reports_create_recipients_subtitle()}
-				elevated
-			>
-				<div class="card-stack">
-					<div class="section-toolbar">
-						<p class="section-copy">{m.reports_create_recipients_copy()}</p>
-						<CwButton class="text-white" type="button" variant="secondary" onclick={addRecipient}>
-							<Icon src={ADD_ICON} class="h-4 w-4" />
-						</CwButton>
-					</div>
-
-					{#if fields.report_recipients.length === 0}
-						<div class="empty-panel">{m.reports_create_empty_recipients()}</div>
-					{/if}
-
-					{#each fields.report_recipients as recipient, index (recipient.key)}
-						<div class="entry-card">
-							<div class="entry-card__header">
-								<div>
-									<h3>{m.reports_create_recipient_heading({ index: String(index + 1) })}</h3>
-									<p>{m.reports_create_recipient_copy()}</p>
-								</div>
-								{#if fields.report_recipients.length > 1}
-									<CwButton
-										type="button"
-										variant="danger"
-										size="sm"
-										onclick={() => removeRecipient(recipient.key)}
-									>
-										{m.action_remove()}
-									</CwButton>
-								{/if}
-							</div>
-
-							<div class="field-grid field-grid--three">
-								<CwDropdown
-									label={m.reports_create_communication_method()}
-									options={communicationMethodOptions}
-									bind:value={recipient.communication_method}
-								/>
-								<CwInput
-									label={m.reports_create_email_label()}
-									type="email"
-									placeholder={m.reports_create_email_placeholder()}
-									bind:value={recipient.email}
-								/>
-								<CwInput
-									label={m.common_name()}
-									placeholder={m.reports_create_recipient_name_placeholder()}
-									bind:value={recipient.name}
-								/>
-							</div>
-						</div>
-					{/each}
-				</div>
-			</CwCard>
+			<ReportRecipientsSection
+				bind:recipients={fields.report_recipients}
+				{communicationMethodOptions}
+				onAdd={addRecipient}
+				onRemove={removeRecipient}
+			/>
 
 			<CwCard elevated>
-				<div class="card-stack">
-					<div class="form-actions">
+				<AppFormStack padded>
+					<AppActionRow>
 						<CwButton type="button" variant="secondary" onclick={() => goto(resolve('/reports'))}>
 							<Icon src={CANCEL_ICON} class="h-4 w-4" />
 							{m.action_cancel()}
 						</CwButton>
 						<CwButton type="submit" variant="primary" loading={submitting} disabled={!canSubmit}>
 							<Icon src={SAVE_ICON} class="h-4 w-4" />
-							{submitting ? m.action_saving() : m.action_save_changes()}
+							{#if submitting}
+								{m.action_saving()}
+							{:else if isEditing}
+								{m.action_save_changes()}
+							{:else}
+								{m.reports_create_submit()}
+							{/if}
 						</CwButton>
-					</div>
-				</div>
+					</AppActionRow>
+				</AppFormStack>
 			</CwCard>
 		</form>
 	</div>
-</div>
+</AppPage>
 
 <style>
-	.create-report-page {
-		width: 100%;
-		--report-surface: color-mix(in srgb, var(--cw-bg-surface, #0f172a) 94%, transparent);
-		--report-surface-soft: color-mix(
-			in srgb,
-			var(--cw-bg-subtle, var(--cw-bg-surface, #0f172a)) 88%,
-			var(--cw-primary-500, #0f766e) 12%
-		);
-		--report-panel: color-mix(
-			in srgb,
-			var(--cw-bg-surface-elevated, var(--cw-bg-surface, #0f172a)) 92%,
-			var(--cw-bg-muted, #e2e8f0) 8%
-		);
-		--report-panel-strong: color-mix(
-			in srgb,
-			var(--cw-bg-surface-elevated, var(--cw-bg-surface, #0f172a)) 88%,
-			var(--cw-primary-500, #0f766e) 12%
-		);
-		--report-border: color-mix(in srgb, var(--cw-border-default, #334155) 74%, transparent);
-		--report-border-strong: color-mix(
-			in srgb,
-			var(--cw-border-default, #334155) 78%,
-			var(--cw-primary-500, #0f766e) 22%
-		);
-		--report-copy: var(--cw-text-primary, #f8fafc);
-		--report-muted: var(--cw-text-secondary, #94a3b8);
-		--report-danger-bg: color-mix(
-			in srgb,
-			var(--cw-danger-500, #ef4444) 18%,
-			var(--cw-bg-surface, #0f172a)
-		);
-		--report-danger-border: color-mix(
-			in srgb,
-			var(--cw-danger-500, #ef4444) 44%,
-			var(--cw-border-default, #334155)
-		);
-		--report-danger-text: color-mix(
-			in srgb,
-			var(--cw-danger-500, #ef4444) 72%,
-			var(--cw-text-primary, #f8fafc)
-		);
-	}
-
-	.page-shell {
+	.report-page__shell {
 		display: flex;
 		flex-direction: column;
-		gap: 1.25rem;
-		margin: 0 auto;
-		max-width: 72rem;
-		padding-bottom: 2rem;
-	}
-
-	.report-form {
-		display: flex;
-		flex-direction: column;
-		gap: 1.25rem;
-	}
-
-	.card-stack {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		padding: 1rem;
-	}
-
-	.field-grid,
-	.switch-grid {
-		display: grid;
-		gap: 1rem;
-	}
-
-	.field-grid--two {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-
-	.field-grid--three,
-	.switch-grid {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-	}
-
-	.empty-panel,
-	.validation-panel {
-		background: var(--report-surface);
-		border: 1px solid var(--report-border);
-		border-radius: 1rem;
-		padding: 1rem;
-	}
-
-	.empty-panel,
-	.hint,
-	.section-copy,
-	.entry-card__header p,
-	.validation-panel__copy {
-		color: var(--report-muted);
-		margin: 0;
-	}
-
-	.section-toolbar,
-	.entry-card__header,
-	.form-actions {
-		align-items: flex-start;
-		display: flex;
-		gap: 1rem;
-		justify-content: space-between;
-	}
-
-	.section-copy {
-		max-width: 48rem;
-	}
-
-	.entry-card {
-		background:
-			linear-gradient(
-				180deg,
-				color-mix(in srgb, var(--report-panel-strong) 82%, transparent),
-				var(--report-panel)
-			),
-			var(--report-panel);
-		border: 1px solid var(--report-border);
-		border-radius: 1rem;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		padding: 1rem;
-	}
-
-	.entry-card__header h3,
-	.validation-panel__title {
-		font-size: 1rem;
-		font-weight: 700;
-		margin: 0;
-	}
-
-	.form-error {
-		background: var(--report-danger-bg);
-		border: 1px solid var(--report-danger-border);
-		border-radius: 0.9rem;
-		color: var(--report-danger-text);
-		margin: 0;
-		padding: 0.9rem 1rem;
-	}
-
-	.validation-panel {
-		background:
-			linear-gradient(
-				145deg,
-				color-mix(in srgb, var(--cw-warning-500, #f59e0b) 9%, transparent),
-				transparent 50%
-			),
-			var(--report-surface);
-		border-color: color-mix(in srgb, var(--cw-warning-500, #f59e0b) 32%, var(--report-border));
-		display: grid;
-		gap: 0.75rem;
-	}
-
-	.validation-list {
-		display: grid;
-		gap: 0.45rem;
-		margin: 0;
-		padding-left: 1.25rem;
-	}
-
-	.form-actions {
-		justify-content: flex-end;
-	}
-
-	@media (max-width: 960px) {
-		.field-grid--three,
-		.switch-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
-
-	@media (max-width: 720px) {
-		.field-grid--two,
-		.field-grid--three,
-		.switch-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.section-toolbar,
-		.entry-card__header,
-		.form-actions {
-			align-items: stretch;
-			flex-direction: column;
-		}
+		gap: var(--cw-space-4);
 	}
 </style>

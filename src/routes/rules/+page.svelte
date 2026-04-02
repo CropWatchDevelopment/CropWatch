@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { AppPage } from '$lib/components/layout';
 	import {
 		CwButton,
 		CwCard,
@@ -9,15 +10,19 @@
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { RulesDto } from '$lib/interfaces/rule.interface';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import DeleteRuleDialog from './DeleteRuleDialog.svelte';
 	import ViewRuleDialog from './ViewRuleDialog.svelte';
-	import { getAppContext } from '$lib/appContext.svelte';
 
-	type RuleRow = RulesDto & { location_name: string, permission_level?: number };
+	type RuleRow = RulesDto & {
+		device_name: string;
+		location_name: string;
+		permission_level: number | null;
+	};
 
 	let { data }: { data: { rules: RuleRow[] } } = $props();
 	let loading = $state(false);
@@ -26,7 +31,6 @@
 		(data.rules ?? []).filter((rule) => !deletedRuleGroupIds.includes(rule.ruleGroupId))
 	);
 	let tableKey = $derived(rules.map((rule) => rule.ruleGroupId).join('|'));
-	let app = getAppContext();
 
 	const columns: CwColumnDef<RuleRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
@@ -53,10 +57,11 @@
 	<title>{m.rules_page_title()}</title>
 </svelte:head>
 
-<CwButton variant="secondary" class="mt-2" onclick={() => goto('/')}>
-	&larr; {m.action_back_to_dashboard()}
-</CwButton>
-<div class="overflow-y-auto p-4">
+<AppPage>
+	<CwButton variant="secondary" onclick={() => goto(resolve('/'))}>
+		&larr; {m.action_back_to_dashboard()}
+	</CwButton>
+
 	<CwCard title={m.rules_configured_rules()} class="min-h-0 flex-1">
 		{#key tableKey}
 			<CwDataTable
@@ -72,18 +77,24 @@
 					{#if col.key === 'created_at'}
 						{new Date(row.created_at).toLocaleString()}
 					{:else if col.key === 'last_triggered'}
-						{new Date(row.last_triggered).toLocaleString()}
+						{row.last_triggered
+							? new Date(row.last_triggered).toLocaleString()
+							: m.common_not_available()}
 					{:else}
 						{defaultValue}
 					{/if}
 				{/snippet}
 				{#snippet rowActions(row: RuleRow)}
 					<div class="flex w-full flex-row justify-end gap-2">
-						{#if row.permission_level && row.permission_level <= 3}
+						{#if row.permission_level != null && row.permission_level <= 3}
 							<ViewRuleDialog {row} />
 						{/if}
-						{#if row.permission_level && row.permission_level <= 2}
-							<CwButton variant="primary" size="md" onclick={() => goto(`/rules/edit/${row.id}`)}>
+						{#if row.permission_level != null && row.permission_level <= 2}
+							<CwButton
+								variant="primary"
+								size="md"
+								onclick={() => goto(resolve('/rules/edit/[id]', { id: String(row.id) }))}
+							>
 								<Icon src={EDIT_ICON} alt={m.action_edit()} />
 							</CwButton>
 							<DeleteRuleDialog
@@ -98,7 +109,7 @@
 					<CwButton
 						variant="primary"
 						onclick={() => {
-							goto('/rules/create');
+							goto(resolve('/rules/create'));
 						}}
 					>
 						<Icon src={ADD_ICON} alt={m.rules_create_new_rule()} />
@@ -108,4 +119,4 @@
 			</CwDataTable>
 		{/key}
 	</CwCard>
-</div>
+</AppPage>

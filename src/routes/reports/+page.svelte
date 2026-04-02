@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import Icon from '$lib/components/Icon.svelte';
+	import { AppPage } from '$lib/components/layout';
 	import {
 		CwButton,
 		CwCard,
@@ -58,11 +59,12 @@
 	<title>{m.reports_page_title()}</title>
 </svelte:head>
 
-<CwButton variant="secondary" fullWidth={true} class="mt-2" onclick={() => goto('/')}>
-	&larr; {m.action_back_to_dashboard()}
-</CwButton>
-<div class="overflow-y-auto p-4">
-	<CwCard title={m.reports_weekly_reports()} class="min-h-0 flex-1 p-4">
+<AppPage>
+	<CwButton variant="secondary" onclick={() => goto(resolve('/'))}>
+		&larr; {m.action_back_to_dashboard()}
+	</CwButton>
+
+	<CwCard title={m.reports_weekly_reports()} class="min-h-0 flex-1">
 		{#key tableKey}
 			<CwDataTable
 				{columns}
@@ -80,7 +82,7 @@
 									location_id: String(row.cw_devices.cw_locations.location_id),
 									dev_eui: row.dev_eui
 								})}
-								class="ml-2 text-sm text-[color:var(--cw-info-500,#0ea5e9)] hover:underline"
+								class="reports-page__device-link ml-2 text-sm hover:underline"
 							>
 								{row.cw_devices?.name ?? m.reports_unknown_device()}
 							</a>
@@ -94,14 +96,14 @@
 
 				{#snippet rowActions(row: ReportRow)}
 					<div class="flex flex-row gap-2">
-						{#if row.permission_level <= 3}
+						{#if row.permission_level != null && row.permission_level <= 3}
 							<ReportHistoryDialog report_id={row.report_id} dev_eui={row.dev_eui} />
 						{/if}
-						{#if row.permission_level <= 2}
+						{#if row.permission_level != null && row.permission_level <= 2}
 							<CwButton
 								variant="secondary"
 								onclick={() => {
-									goto(`/reports/${row.report_id}/edit`);
+									goto(resolve('/reports/[report_id]/edit', { report_id: row.report_id }));
 								}}
 							>
 								<Icon src={EDIT_ICON} alt="Edit" />
@@ -121,7 +123,7 @@
 					<CwButton
 						variant="secondary"
 						onclick={() => {
-							goto(resolve('/reports/create'));
+							goto(resolve('/reports/new/edit'));
 						}}
 					>
 						<Icon src={ADD_ICON} alt={m.reports_create_page_title()} />
@@ -130,4 +132,10 @@
 			</CwDataTable>
 		{/key}
 	</CwCard>
-</div>
+</AppPage>
+
+<style>
+	.reports-page__device-link {
+		color: var(--cw-info-500);
+	}
+</style>

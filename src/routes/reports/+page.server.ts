@@ -30,11 +30,20 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
 	const reportsResult: ReportRow[] = reports.map((report) => {
 		const reportWithRelations = report as typeof report & ReportApiRow;
+		const deviceOwners = reportWithRelations.cw_devices?.cw_device_owners ?? [];
 
 		return {
 			...reportWithRelations,
+			permission_level:
+				deviceOwners.find(
+					(owner) =>
+						owner.user_id === session?.sub &&
+						owner.permission_level != null &&
+						owner.permission_level <= 3
+				)?.permission_level ?? null,
 			created_at: formatDateTime(reportWithRelations.created_at),
-			location_name: reportWithRelations.cw_devices?.cw_locations?.name ?? m.reports_unknown_location(),
+			location_name:
+				reportWithRelations.cw_devices?.cw_locations?.name ?? m.reports_unknown_location(),
 			device_name: reportWithRelations.cw_devices?.name ?? m.reports_unknown_device()
 		};
 	});

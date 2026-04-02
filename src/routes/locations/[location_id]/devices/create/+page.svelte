@@ -65,6 +65,7 @@
 
 	let { data, form }: PageProps = $props();
 	let locationId = $derived(data.locationId ?? '');
+	let locationName = $derived(data.locationName ?? locationId);
 	let deviceTypeOptions = $derived(data.deviceTypeOptions ?? []);
 
 	let submitting = $state(false);
@@ -139,7 +140,7 @@
 <div class="create-device-page overflow-y-auto p-4">
 	<CwCard
 		title={m.devices_create_page_title()}
-		subtitle={m.devices_create_page_subtitle({ locationId })}
+		subtitle={m.devices_create_page_subtitle({ locationId: locationName })}
 		elevated
 	>
 		<form
@@ -173,10 +174,6 @@
 			{#if actionForm?.error}
 				<p class="form-error">{actionForm.error}</p>
 			{/if}
-
-			<p class="form-note">
-				{m.devices_create_form_note()}
-			</p>
 
 			<input type="hidden" name="location_id" value={fields.location_id} />
 

@@ -11,8 +11,10 @@
 		type CwSideNavItem
 	} from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
+	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
+	import { buildLogoutPath } from '$lib/utils/auth-redirect';
 
 	let { mode = $bindable() } = $props();
 
@@ -24,10 +26,6 @@
 		'M3 4.5h6M3 8h6M3 11.5h6M10.5 4.5l1 1 2-2M10.5 8l1 1 2-2M10.5 11.5l1 1 2-2';
 	const REPORTS_ICON_PATH =
 		'M4 2.5h5l3 3V13a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1zM9 2.5V5a1 1 0 001 1h2M5.5 8.5h5M5.5 10.5h5';
-	// Scaled and centered for 16x16 viewBox
-	const GATEWAYS_ICON_PATH =
-		'M2.67 13.2q-.55 0-.94-.39t-.39-.94V4.53q0-.55.39-.94t.94-.39h10.66v-1.6h1.33v1.6h1.34q.55 0 .94.39t.39.94v7.34q0 .55-.39.94t-.94.39H2.67Zm0-1.33h12.66V4.53H2.67v7.34Zm1.8-.37q.28 0 .47-.19t.19-.47q0-.28-.19-.47t-.47-.19q-.28 0-.47.19t-.19.47q0 .28.19.47t.47.19Zm2.33 0q.28 0 .47-.19t.19-.47q0-.28-.19-.47t-.47-.19q-.28 0-.47.19t-.19.47q0 .28.19.47t.47.19Zm2.33 0q.28 0 .47-.19t.19-.47q0-.28-.19-.47t-.47-.19q-.28 0-.47.19t-.19.47q0 .28.19.47t.47.19Zm.14-5.42-.77-.77q.35-.32.77-.5t.93-.18q.5 0 .93.18t.77.5l-.77.77q-.19-.19-.42-.3t-.51-.11q-.28 0-.51.11t-.42.3Zm-1.25-1.25-.74-.74q.58-.58 1.35-.91t1.65-.33q.88 0 1.65.33t1.35.91l-.74.74q-.44-.44-1.02-.68t-1.24-.24q-.82 0-1.24.24t-1.02.68Z';
-
 	// ── Read active filters from URL search params ──────────────
 	let selectedGroup = $derived(page.url.searchParams.get('group') ?? '');
 	let selectedLocation = $derived(page.url.searchParams.get('location') ?? '');
@@ -60,7 +58,7 @@
 			href: '/reports',
 			icon: { path: REPORTS_ICON_PATH },
 			group: 'Info and Management'
-		},
+		}
 		// {
 		// 	id: 'gateways',
 		// 	label: 'Gateways',
@@ -129,29 +127,34 @@
 
 	// ── Navigate with updated search params on filter change ────
 	function applyFilter(key: string, value: string) {
-		const params = new URLSearchParams(page.url.searchParams);
+		const params = new URL(page.url);
 		if (value) {
-			params.set(key, value);
+			params.searchParams.set(key, value);
 		} else {
-			params.delete(key);
+			params.searchParams.delete(key);
 		}
-		const qs = params.toString();
-		goto(qs ? `/?${qs}` : '/', { replaceState: true, keepFocus: true, noScroll: true });
+		const qs = params.searchParams.toString();
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		goto(new URL(`${resolve('/')}${qs ? `?${qs}` : ''}`, page.url.origin), {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true
+		});
 	}
 </script>
 
 <CwSideNav bind:mode items={navItems} responsive>
 	{#snippet header()}
-		<div class="flex h-full w-full flex-row items-center gap-2">
-			<img src={CROPWATCH_LOGO} alt={m.app_name()} style="width:2rem;height:2rem" />
-			<span class="text-lg text-[var(--cw-accent)] font-semibold">CropWatch</span>
+		<div class="app-sidebar__brand">
+			<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-sidebar__brand-mark" />
+			<span class="app-sidebar__brand-name">CropWatch</span>
 		</div>
 	{/snippet}
 
 	{#snippet aboveContent()}
 		{#if page.url.pathname === '/'}
 			<CwExpandPanel title={m.sidebar_dashboard_filters()} open={dashboardFiltersOpen}>
-				<div class="px-4 py-2 text-sm text-slate-400">{m.sidebar_filter_devices_in_view()}</div>
+				<div class="app-sidebar__filters-copy">{m.sidebar_filter_devices_in_view()}</div>
 				<div
 					class="dashboard-filters-scroll flex max-h-[50dvh] flex-col gap-2 overflow-y-auto overscroll-contain pr-1"
 				>
@@ -180,17 +183,19 @@
 		{/if}
 	{/snippet}
 	{#snippet footer()}
-		<span class="flex flex-col gap-4">
-			<div style="padding: 1rem; font-size: 0.875rem; color: #888">
+		<span class="app-sidebar__footer">
+			<div class="app-sidebar__session">
 				{#if app.session?.exp}
-					<p class="text-xs">
+					<p class="app-sidebar__session-copy">
 						{m.sidebar_current_session_expires()}: <CwDuration
 							from={new Date(app.session.exp * 1000)}
 							countDown={true}
 							alarmAfterMinutes={0.5}
 							alarmCallback={() => {
-								// goto(`/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`);
-								document.location = `/auth/logout?redirect=${encodeURIComponent(page.url.pathname)}`;
+								document.location = buildLogoutPath({
+									path: resolve('/auth/logout'),
+									redirectTo: `${page.url.pathname}${page.url.search}`
+								});
 							}}
 						/>
 					</p>
@@ -201,8 +206,51 @@
 </CwSideNav>
 
 <style>
+	.app-sidebar__brand {
+		display: flex;
+		height: 100%;
+		width: 100%;
+		flex-direction: row;
+		align-items: center;
+		gap: var(--cw-space-2);
+		color: var(--cw-text-primary);
+	}
+
+	.app-sidebar__brand-mark {
+		width: 2rem;
+		height: 2rem;
+	}
+
+	.app-sidebar__brand-name {
+		font-size: 1.125rem;
+		font-weight: var(--cw-font-semibold);
+	}
+
 	:global(.cw-sidenav__above-content) {
 		min-height: 0;
+	}
+
+	.app-sidebar__filters-copy {
+		padding: var(--cw-space-3) var(--cw-space-4) var(--cw-space-2);
+		font-size: var(--cw-text-sm);
+		color: var(--cw-text-secondary);
+	}
+
+	.app-sidebar__footer {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-4);
+	}
+
+	.app-sidebar__session {
+		padding: var(--cw-space-4);
+		font-size: var(--cw-text-sm);
+		color: var(--cw-text-secondary);
+	}
+
+	.app-sidebar__session-copy {
+		margin: 0;
+		font-size: var(--cw-text-xs);
 	}
 
 	.dashboard-filters-scroll {

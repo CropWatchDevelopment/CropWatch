@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
 	import {
 		CwButton,
@@ -322,12 +323,10 @@
 	<title>{m.nav_billing()} - {m.app_name()}</title>
 </svelte:head>
 
-<div class="billing-page">
-	<!-- <div class="billing-page__background" aria-hidden="true"></div> -->
-
+<AppPage width="xl" class="billing-page">
 	<div class="billing-shell">
 		<header class="billing-header">
-			<div>
+			<div class="billing-header__copy">
 				<h1>{m.billing_heading()}</h1>
 				<p>{m.billing_subtitle()}</p>
 			</div>
@@ -378,217 +377,218 @@
 		</div>
 
 		{#if hasLoadErrors}
-			<CwCard title={m.billing_api_warnings()} subtitle={m.billing_api_warnings_subtitle()}>
-				<div class="billing-errors">
+			<AppNotice tone="warning" title={m.billing_api_warnings()}>
+				<p>{m.billing_api_warnings_subtitle()}</p>
+				<ul class="billing-errors">
 					{#if data.errors?.products}
-						<CwChip
-							label={m.billing_error_products({ message: data.errors.products })}
-							tone="danger"
-							variant="soft"
-						/>
+						<li>{m.billing_error_products({ message: data.errors.products })}</li>
 					{/if}
 					{#if data.errors?.subscriptions}
-						<CwChip
-							label={m.billing_error_subscriptions({ message: data.errors.subscriptions })}
-							tone="danger"
-							variant="soft"
-						/>
+						<li>{m.billing_error_subscriptions({ message: data.errors.subscriptions })}</li>
 					{/if}
 					{#if data.errors?.state}
-						<CwChip
-							label={m.billing_error_state({ message: data.errors.state })}
-							tone="warning"
-							variant="soft"
-						/>
+						<li>{m.billing_error_state({ message: data.errors.state })}</li>
 					{/if}
-				</div>
-			</CwCard>
+				</ul>
+			</AppNotice>
 		{/if}
 
 		<div class="billing-grid">
-			<CwCard
-				title={m.billing_checkout_title()}
-				subtitle={m.billing_checkout_subtitle()}
-				elevated
-				class="billing-grid__checkout"
-			>
-				<form
-					method="POST"
-					action="?/createCheckoutSession"
-					use:enhance={checkoutEnhance}
-					class="billing-form"
+			<div class="billing-grid__checkout">
+				<CwCard
+					title={m.billing_checkout_title()}
+					subtitle={m.billing_checkout_subtitle()}
+					elevated
 				>
-					<div class="billing-products">
-						{#if visibleProducts.length === 0}
-							<p class="billing-empty">{m.billing_no_products()}</p>
-						{:else}
-							{#each visibleProducts as product (product.id)}
-								<article
-									class={[
-										'billing-product',
-										isProductSelected(product.id) && 'billing-product--selected'
-									]}
+					<form method="POST" action="?/createCheckoutSession" use:enhance={checkoutEnhance}>
+						<AppFormStack padded class="billing-form">
+							<div class="billing-products">
+								{#if visibleProducts.length === 0}
+									<AppNotice tone="neutral">
+										<p>{m.billing_no_products()}</p>
+									</AppNotice>
+								{:else}
+									{#each visibleProducts as product (product.id)}
+										<article
+											class={[
+												'billing-product',
+												isProductSelected(product.id) && 'billing-product--selected'
+											]}
+										>
+											<div class="billing-product__header">
+												<div>
+													<h3>{product.name}</h3>
+													<p>{product.description || m.billing_no_product_description()}</p>
+												</div>
+												<CwChip
+													label={product.priceLabel}
+													tone={product.active ? 'info' : 'secondary'}
+													variant="outline"
+												/>
+											</div>
+
+											<div class="billing-product__meta">
+												<CwChip label={product.billingLabel} tone="primary" variant="soft" />
+												{#if !product.active}
+													<CwChip label={m.billing_archived()} tone="warning" variant="soft" />
+												{/if}
+											</div>
+
+											<CwSwitch
+												checked={isProductSelected(product.id)}
+												label={m.billing_include_in_checkout()}
+												onchange={(checked) => toggleProductSelection(product.id, checked)}
+											/>
+
+											{#if isProductSelected(product.id)}
+												<input type="hidden" name="products" value={product.id} />
+											{/if}
+										</article>
+									{/each}
+								{/if}
+							</div>
+
+							<div class="billing-form__controls">
+								<CwSwitch
+									checked={showArchivedProducts}
+									label={m.billing_include_archived_products()}
+									onchange={(checked) => (showArchivedProducts = checked)}
+								/>
+								<CwButton
+									type="button"
+									variant="secondary"
+									size="sm"
+									onclick={clearProductSelection}
 								>
-									<div class="billing-product__header">
-										<div>
-											<h3>{product.name}</h3>
-											<p>{product.description || m.billing_no_product_description()}</p>
-										</div>
-										<CwChip
-											label={product.priceLabel}
-											tone={product.active ? 'info' : 'secondary'}
-											variant="outline"
-										/>
-									</div>
+									{m.billing_clear_selection()}
+								</CwButton>
+							</div>
 
-									<div class="billing-product__meta">
-										<CwChip label={product.billingLabel} tone="primary" variant="soft" />
-										{#if !product.active}
-											<CwChip label={m.billing_archived()} tone="warning" variant="soft" />
-										{/if}
-									</div>
-
-									<CwSwitch
-										checked={isProductSelected(product.id)}
-										label={m.billing_include_in_checkout()}
-										onchange={(checked) => toggleProductSelection(product.id, checked)}
+							<CwExpandPanel title={m.billing_optional_checkout_settings()}>
+								<div class="billing-options">
+									<CwInput
+										label={m.billing_customer_name()}
+										value={customerName}
+										placeholder={m.billing_customer_name_placeholder()}
+										oninput={(event) => (customerName = (event.target as HTMLInputElement).value)}
 									/>
+									<CwInput
+										type="email"
+										label={m.billing_customer_email()}
+										value={customerEmail}
+										placeholder={m.billing_customer_email_placeholder()}
+										oninput={(event) => (customerEmail = (event.target as HTMLInputElement).value)}
+									/>
+									<CwSwitch
+										checked={allowDiscountCodes}
+										label={m.billing_allow_discount_codes()}
+										onchange={(checked) => (allowDiscountCodes = checked)}
+									/>
+									<CwSwitch
+										checked={allowTrial}
+										label={m.billing_allow_trial()}
+										onchange={(checked) => (allowTrial = checked)}
+									/>
+								</div>
+							</CwExpandPanel>
 
-									{#if isProductSelected(product.id)}
-										<input type="hidden" name="products" value={product.id} />
-									{/if}
-								</article>
-							{/each}
-						{/if}
-					</div>
-
-					<div class="billing-form__controls">
-						<CwSwitch
-							checked={showArchivedProducts}
-							label={m.billing_include_archived_products()}
-							onchange={(checked) => (showArchivedProducts = checked)}
-						/>
-						<CwButton type="button" variant="secondary" size="sm" onclick={clearProductSelection}
-							>{m.billing_clear_selection()}</CwButton
-						>
-					</div>
-
-					<CwExpandPanel title={m.billing_optional_checkout_settings()}>
-						<div class="billing-options">
-							<CwInput
-								label={m.billing_customer_name()}
-								value={customerName}
-								placeholder={m.billing_customer_name_placeholder()}
-								oninput={(event) => (customerName = (event.target as HTMLInputElement).value)}
+							<input
+								type="hidden"
+								name="allow_discount_codes"
+								value={allowDiscountCodes ? 'true' : 'false'}
 							/>
-							<CwInput
-								type="email"
-								label={m.billing_customer_email()}
-								value={customerEmail}
-								placeholder={m.billing_customer_email_placeholder()}
-								oninput={(event) => (customerEmail = (event.target as HTMLInputElement).value)}
-							/>
-							<CwSwitch
-								checked={allowDiscountCodes}
-								label={m.billing_allow_discount_codes()}
-								onchange={(checked) => (allowDiscountCodes = checked)}
-							/>
-							<CwSwitch
-								checked={allowTrial}
-								label={m.billing_allow_trial()}
-								onchange={(checked) => (allowTrial = checked)}
-							/>
-						</div>
-					</CwExpandPanel>
+							<input type="hidden" name="allow_trial" value={allowTrial ? 'true' : 'false'} />
+							{#if customerName}
+								<input type="hidden" name="customer_name" value={customerName} />
+							{/if}
+							{#if customerEmail}
+								<input type="hidden" name="customer_email" value={customerEmail} />
+							{/if}
 
-					<input
-						type="hidden"
-						name="allow_discount_codes"
-						value={allowDiscountCodes ? 'true' : 'false'}
-					/>
-					<input type="hidden" name="allow_trial" value={allowTrial ? 'true' : 'false'} />
-					{#if customerName}
-						<input type="hidden" name="customer_name" value={customerName} />
-					{/if}
-					{#if customerEmail}
-						<input type="hidden" name="customer_email" value={customerEmail} />
-					{/if}
-
-					<div class="billing-form__submit">
-						<CwButton
-							type="submit"
-							variant="primary"
-							loading={checkoutBusy}
-							disabled={checkoutBusy || selectedProductIds.length === 0}
-							>{m.billing_launch_checkout()}</CwButton
-						>
-						<span
-							>{m.billing_selected_count({ count: formatNumber(selectedProductIds.length) })}</span
-						>
-					</div>
-				</form>
-			</CwCard>
+							<div class="billing-form__submit">
+								<span
+									>{m.billing_selected_count({
+										count: formatNumber(selectedProductIds.length)
+									})}</span
+								>
+								<AppActionRow stackOnMobile={false}>
+									<CwButton
+										type="submit"
+										variant="primary"
+										loading={checkoutBusy}
+										disabled={checkoutBusy || selectedProductIds.length === 0}
+									>
+										{m.billing_launch_checkout()}
+									</CwButton>
+								</AppActionRow>
+							</div>
+						</AppFormStack>
+					</form>
+				</CwCard>
+			</div>
 
 			<CwCard
 				title={m.billing_subscriptions_title()}
 				subtitle={m.billing_subscriptions_subtitle()}
 				elevated
 			>
-				<div class="billing-subscriptions__actions">
-					<form method="POST" action="?/createPortalSession" use:enhance={portalEnhance}>
-						<CwButton type="submit" variant="info" loading={portalBusy} disabled={portalBusy}
-							>{m.billing_open_portal()}</CwButton
-						>
-					</form>
-				</div>
-
-				<CwDataTable
-					columns={subscriptionColumns}
-					loadData={loadSubscriptions}
-					rowKey="id"
-					searchable
-					bind:pageSize
-					rowActionsHeader={m.common_actions()}
-				>
-					{#snippet cell(
-						row: BillingSubscription,
-						col: CwColumnDef<BillingSubscription>,
-						defaultValue: string
-					)}
-						{#if col.key === 'status'}
-							<CwChip
-								label={translateSubscriptionStatus(row.status)}
-								tone={subscriptionTone(row.status)}
-								variant="soft"
-							/>
-						{:else if col.key === 'startedAt'}
-							{formatDate(row.startedAt)}
-						{:else if col.key === 'renewsAt'}
-							{formatDate(row.renewsAt)}
-						{:else}
-							{defaultValue}
-						{/if}
-					{/snippet}
-
-					{#snippet rowActions(row: BillingSubscription)}
-						{#if row.status.toLowerCase().includes('cancel') || row.status
-								.toLowerCase()
-								.includes('revoke')}
-							<CwChip label={m.billing_ended()} tone="secondary" variant="soft" />
-						{:else}
-							<CwButton
-								size="sm"
-								variant="danger"
-								disabled={cancelBusy}
-								onclick={() => openCancelDialog(row)}>{m.action_cancel()}</CwButton
+				<AppFormStack padded>
+					<AppActionRow stackOnMobile={false} class="billing-subscriptions__actions">
+						<form method="POST" action="?/createPortalSession" use:enhance={portalEnhance}>
+							<CwButton type="submit" variant="info" loading={portalBusy} disabled={portalBusy}
+								>{m.billing_open_portal()}</CwButton
 							>
-						{/if}
-					{/snippet}
-				</CwDataTable>
+						</form>
+					</AppActionRow>
+
+					<CwDataTable
+						columns={subscriptionColumns}
+						loadData={loadSubscriptions}
+						rowKey="id"
+						searchable
+						bind:pageSize
+						rowActionsHeader={m.common_actions()}
+					>
+						{#snippet cell(
+							row: BillingSubscription,
+							col: CwColumnDef<BillingSubscription>,
+							defaultValue: string
+						)}
+							{#if col.key === 'status'}
+								<CwChip
+									label={translateSubscriptionStatus(row.status)}
+									tone={subscriptionTone(row.status)}
+									variant="soft"
+								/>
+							{:else if col.key === 'startedAt'}
+								{formatDate(row.startedAt)}
+							{:else if col.key === 'renewsAt'}
+								{formatDate(row.renewsAt)}
+							{:else}
+								{defaultValue}
+							{/if}
+						{/snippet}
+
+						{#snippet rowActions(row: BillingSubscription)}
+							{#if row.status.toLowerCase().includes('cancel') || row.status
+									.toLowerCase()
+									.includes('revoke')}
+								<CwChip label={m.billing_ended()} tone="secondary" variant="soft" />
+							{:else}
+								<CwButton
+									size="sm"
+									variant="danger"
+									disabled={cancelBusy}
+									onclick={() => openCancelDialog(row)}>{m.action_cancel()}</CwButton
+								>
+							{/if}
+						{/snippet}
+					</CwDataTable>
+				</AppFormStack>
 			</CwCard>
 		</div>
 	</div>
-</div>
+</AppPage>
 
 <CwDialog
 	bind:open={cancelDialogOpen}
@@ -596,19 +596,21 @@
 	onclose={closeCancelDialog}
 >
 	{#if subscriptionToCancel}
-		<p class="billing-dialog__text">
-			{m.billing_cancel_subscription_body({
-				productName: subscriptionToCancel.productName,
-				id: subscriptionToCancel.id
-			})}
-		</p>
-		<p class="billing-dialog__text billing-dialog__warning">
-			{m.billing_cancel_subscription_warning()}
-		</p>
+		<AppFormStack gap="sm">
+			<p class="billing-dialog__text">
+				{m.billing_cancel_subscription_body({
+					productName: subscriptionToCancel.productName,
+					id: subscriptionToCancel.id
+				})}
+			</p>
+			<p class="billing-dialog__text billing-dialog__warning">
+				{m.billing_cancel_subscription_warning()}
+			</p>
+		</AppFormStack>
 	{/if}
 
 	{#snippet actions()}
-		<div class="billing-dialog__actions">
+		<AppActionRow class="billing-dialog__actions">
 			<CwButton type="button" variant="secondary" onclick={closeCancelDialog}
 				>{m.billing_keep_subscription()}</CwButton
 			>
@@ -623,154 +625,135 @@
 					{m.billing_confirm_cancel()}
 				</CwButton>
 			</form>
-		</div>
+		</AppActionRow>
 	{/snippet}
 </CwDialog>
 
 <style>
-	.billing-page {
-		position: relative;
-		min-height: 100%;
-		padding: 1.2rem;
-	}
-
-	.billing-page__background {
-		position: fixed;
-		inset: 0;
-		pointer-events: none;
-		background:
-			radial-gradient(circle at 18% 18%, rgb(0 140 255 / 22%), transparent 40%),
-			radial-gradient(circle at 78% 8%, rgb(0 255 200 / 16%), transparent 38%),
-			radial-gradient(circle at 82% 86%, rgb(93 77 255 / 20%), transparent 42%),
-			linear-gradient(180deg, rgb(6 17 37 / 96%), rgb(6 15 30 / 92%));
-	}
-
-	.billing-page__background::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background-image:
-			linear-gradient(rgb(73 111 170 / 10%) 1px, transparent 1px),
-			linear-gradient(90deg, rgb(73 111 170 / 10%) 1px, transparent 1px);
-		background-size: 28px 28px;
-		mask-image: linear-gradient(to bottom, transparent 0%, rgb(0 0 0 / 80%) 25%, black 100%);
-	}
-
 	.billing-shell {
-		position: relative;
-		z-index: 1;
-		max-width: 1480px;
-		margin: 0 auto;
 		display: grid;
-		gap: 1rem;
+		gap: var(--cw-space-4);
 	}
 
 	.billing-header {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		gap: 1rem;
+		gap: var(--cw-space-4);
 		flex-wrap: wrap;
 	}
 
-	.billing-header h1 {
+	.billing-header__copy {
+		display: grid;
+		gap: var(--cw-space-2);
+	}
+
+	.billing-header h1,
+	.billing-header p {
 		margin: 0;
+	}
+
+	.billing-header h1 {
 		font-size: clamp(1.4rem, 1rem + 1.2vw, 2rem);
 	}
 
 	.billing-header p {
-		margin: 0.4rem 0 0;
 		color: var(--cw-text-secondary);
 	}
 
 	.billing-header__status {
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
+		gap: var(--cw-space-2);
 		flex-wrap: wrap;
 	}
 
 	.billing-customer-id {
-		font-size: 0.75rem;
+		font-size: var(--cw-text-xs);
 		padding: 0.3rem 0.5rem;
-		background: rgb(4 12 28 / 70%);
-		border: 1px solid rgb(95 148 211 / 35%);
-		border-radius: 0.45rem;
+		border: 1px solid var(--cw-border-muted);
+		border-radius: var(--cw-radius-sm);
+		background: var(--cw-bg-subtle);
+		color: var(--cw-text-secondary);
 	}
 
 	.billing-kpis {
 		display: grid;
-		gap: 0.8rem;
+		gap: var(--cw-space-3);
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 
 	.billing-kpi__value {
 		margin: 0;
-		font-size: 1.9rem;
-		font-weight: 700;
+		font-size: clamp(1.6rem, 1.2rem + 0.9vw, 2rem);
+		font-weight: var(--cw-font-semibold);
 		letter-spacing: 0.02em;
 	}
 
 	.billing-errors {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.45rem;
+		margin: 0;
+		padding-left: 1.25rem;
+		display: grid;
+		gap: var(--cw-space-2);
 	}
 
 	.billing-grid {
 		display: grid;
-		gap: 1rem;
+		gap: var(--cw-space-4);
 		grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
 		align-items: start;
 	}
 
-	.billing-form {
-		display: grid;
-		gap: 0.9rem;
+	.billing-grid__checkout {
+		min-width: 0;
+	}
+
+	:global(.billing-form) {
+		gap: var(--cw-space-4);
 	}
 
 	.billing-products {
 		display: grid;
-		gap: 0.7rem;
+		gap: var(--cw-space-3);
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.billing-product {
-		border: 1px solid rgb(90 133 191 / 24%);
-		border-radius: 0.9rem;
-		padding: 0.8rem;
-		background: rgb(8 20 46 / 62%);
 		display: grid;
-		gap: 0.55rem;
+		gap: var(--cw-space-3);
+		padding: var(--cw-space-3);
+		border: 1px solid var(--cw-border-muted);
+		border-radius: var(--cw-radius-lg);
+		background: var(--cw-bg-subtle);
 	}
 
 	.billing-product--selected {
-		border-color: rgb(70 164 255 / 72%);
-		box-shadow: 0 0 0 1px rgb(70 164 255 / 42%);
+		border-color: color-mix(in srgb, var(--cw-info-500) 40%, var(--cw-border-muted));
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cw-info-500) 24%, transparent);
 	}
 
 	.billing-product__header {
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		gap: 0.6rem;
+		gap: var(--cw-space-3);
 	}
 
 	.billing-product__header h3 {
 		margin: 0;
-		font-size: 0.97rem;
-		font-weight: 600;
+		font-size: var(--cw-text-base);
+		font-weight: var(--cw-font-semibold);
 	}
 
 	.billing-product__header p {
-		margin: 0.3rem 0 0;
-		font-size: 0.82rem;
-		color: var(--cw-text-muted);
+		margin: 0.35rem 0 0;
+		font-size: var(--cw-text-sm);
+		color: var(--cw-text-secondary);
 	}
 
 	.billing-product__meta {
 		display: flex;
-		gap: 0.4rem;
+		gap: var(--cw-space-2);
 		flex-wrap: wrap;
 	}
 
@@ -778,39 +761,24 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.8rem;
+		gap: var(--cw-space-3);
 		flex-wrap: wrap;
 	}
 
 	.billing-options {
 		display: grid;
-		gap: 0.8rem;
+		gap: var(--cw-space-3);
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		padding: 0.1rem 0.05rem 0.25rem;
 	}
 
 	.billing-form__submit {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 0.8rem;
-		font-size: 0.9rem;
+		gap: var(--cw-space-3);
+		font-size: var(--cw-text-sm);
 		color: var(--cw-text-secondary);
-	}
-
-	.billing-subscriptions__actions {
-		display: flex;
-		justify-content: flex-end;
-		margin-bottom: 0.8rem;
-	}
-
-	.billing-empty {
-		margin: 0;
-		padding: 1rem;
-		text-align: center;
-		border: 1px dashed rgb(107 144 199 / 35%);
-		border-radius: 0.8rem;
-		color: var(--cw-text-secondary);
+		flex-wrap: wrap;
 	}
 
 	.billing-dialog__text {
@@ -818,19 +786,11 @@
 	}
 
 	.billing-dialog__warning {
-		margin-top: 0.45rem;
 		color: var(--cw-text-secondary);
-		font-size: 0.9rem;
+		font-size: var(--cw-text-sm);
 	}
 
-	.billing-dialog__actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.55rem;
-		flex-wrap: wrap;
-	}
-
-	@media (max-width: 1220px) {
+	@media (max-width: 1023px) {
 		.billing-grid {
 			grid-template-columns: 1fr;
 		}
@@ -840,14 +800,14 @@
 		}
 	}
 
-	@media (max-width: 820px) {
+	@media (max-width: 767px) {
 		.billing-products,
 		.billing-options {
 			grid-template-columns: 1fr;
 		}
 	}
 
-	@media (max-width: 600px) {
+	@media (max-width: 639px) {
 		.billing-kpis {
 			grid-template-columns: 1fr;
 		}

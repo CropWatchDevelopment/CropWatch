@@ -3,15 +3,18 @@
 	import '../../login/style.css';
 	import logo from '$lib/images/cropwatch_static.svg';
 	import KEY_ICON from '$lib/images/icons/key.svg';
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
+	import { page } from '$app/state';
+	import { readRedirectPath } from '$lib/utils/auth-redirect';
+	import { CwCard } from '@cropwatchdevelopment/cwui';
 	import YOU_ICON from '$lib/images/icons/you.svg';
 	import FORWARD_ICON from '$lib/images/icons/forward.svg';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import EMAIL_ICON from '$lib/images/icons/email.svg';
 	import SPAM_ICON from '$lib/images/icons/spam.svg';
 	import { m } from '$lib/paraglide/messages.js';
+
+	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 </script>
 
 <svelte:head>
@@ -100,22 +103,21 @@
 				</div>
 			</div>
 			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_not_there()}</p>
-			<a href="mailto:sayaka@cropwatch.io" class="w-full text-center text-sm"
+			<a href="mailto:sayaka@cropwatch.io" rel="external" class="w-full text-center text-sm"
 				>{m.auth_check_email_contact_support()}</a
 			>
 		</div>
 
-		<CwButton
-			class="auth-primary"
-			type="button"
-			variant="primary"
-			size="md"
-			fullWidth={true}
-			onclick={() => goto(resolve('/auth/login'))}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a
+			class="auth-button-link auth-button-link--primary"
+			href={redirectPath
+				? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
+				: resolve('/auth/login')}
 		>
 			<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
 			{m.auth_go_to_sign_in()}
-		</CwButton>
+		</a>
 
 		<p class="security-copy">{m.auth_security_copy()}</p>
 	</div>

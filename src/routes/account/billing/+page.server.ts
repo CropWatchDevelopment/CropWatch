@@ -1,6 +1,7 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import { formatCurrency } from '$lib/i18n/format';
 import { m } from '$lib/paraglide/messages.js';
+import { buildLoginPath } from '$lib/utils/auth-redirect';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -358,14 +359,20 @@ const findRedirectUrl = (payload: unknown): string | null => {
 	return null;
 };
 
-const requireAuth = (jwt: string | null) => {
+const requireAuth = (jwt: string | null, redirectTarget: string) => {
 	if (!jwt) {
-		throw redirect(303, '/auth/login');
+		throw redirect(
+			303,
+			buildLoginPath({
+				redirectTo: redirectTarget,
+				reason: 'auth-required'
+			})
+		);
 	}
 };
 
-export const load: PageServerLoad = async ({ fetch, locals }) => {
-	requireAuth(locals.jwtString);
+export const load: PageServerLoad = async ({ fetch, locals, url }) => {
+	requireAuth(locals.jwtString, `${url.pathname}${url.search}`);
 	const api = new ApiService({
 		fetchFn: fetch,
 		authToken: locals.jwtString
@@ -393,7 +400,7 @@ export const load: PageServerLoad = async ({ fetch, locals }) => {
 
 export const actions: Actions = {
 	createCheckoutSession: async ({ request, fetch, url, locals }) => {
-		requireAuth(locals.jwtString);
+		requireAuth(locals.jwtString, `${url.pathname}${url.search}`);
 		const api = new ApiService({
 			fetchFn: fetch,
 			authToken: locals.jwtString
@@ -459,7 +466,7 @@ export const actions: Actions = {
 	},
 
 	createPortalSession: async ({ request, fetch, url, locals }) => {
-		requireAuth(locals.jwtString);
+		requireAuth(locals.jwtString, `${url.pathname}${url.search}`);
 		const api = new ApiService({
 			fetchFn: fetch,
 			authToken: locals.jwtString
@@ -497,8 +504,8 @@ export const actions: Actions = {
 		};
 	},
 
-	cancelSubscription: async ({ request, fetch, locals }) => {
-		requireAuth(locals.jwtString);
+	cancelSubscription: async ({ request, fetch, locals, url }) => {
+		requireAuth(locals.jwtString, `${url.pathname}${url.search}`);
 		const api = new ApiService({
 			fetchFn: fetch,
 			authToken: locals.jwtString

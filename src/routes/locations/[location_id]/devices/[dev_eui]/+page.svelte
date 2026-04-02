@@ -72,6 +72,10 @@
 		return m.devices_unknown_location();
 	}
 
+	function readCreatedAt(value: TelemetryRow | null | undefined): string | null {
+		return value && typeof value.created_at === 'string' ? value.created_at : null;
+	}
+
 	function getRangeOptions(): TimeRangeOptions[] {
 		return [
 			{ label: m.devices_range_today_only(), value: DEFAULT_RANGE_SELECTION },
@@ -245,11 +249,11 @@
 		elevated
 	>
 		{#snippet actions()}
-			<p class="text-right text-md" style="color: var(--cw-text-muted)">
+			<p class="text-md text-right" style="color: var(--cw-text-muted)">
 				{m.display_last_updated()}:
-				{#if historicalData && historicalData.length > 0}
+				{#if readCreatedAt(historicalData[0])}
 					<CwDuration
-						from={historicalData[0].created_at}
+						from={readCreatedAt(historicalData[0]) ?? ''}
 						alarmAfterMinutes={(upload_interval || 10) + 0.5}
 						alarmCallback={fetchLatestData}
 					/>

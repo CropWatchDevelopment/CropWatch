@@ -19,7 +19,11 @@
 
 	type ReportHistoryRow = { dev_eui: string; report_id: string; name: string; created_at: string };
 
-	let { open = $bindable(), dev_eui, report_id }: { open?: boolean; dev_eui: string; report_id: string } = $props();
+	let {
+		open = $bindable(),
+		dev_eui,
+		report_id
+	}: { open?: boolean; dev_eui: string; report_id: string } = $props();
 	const app = $state(getAppContext());
 	const toast = useCwToast();
 
@@ -77,6 +81,8 @@
 
 	function mapHistoryRows(files: PdfFile[]): ReportHistoryRow[] {
 		return files.map((file) => ({
+			dev_eui,
+			report_id,
 			name: file.name,
 			created_at: formatDateTime(file.created_at)
 		}));
@@ -132,14 +138,13 @@
 			columns={[
 				{ key: 'id', header: 'ID' },
 				{ key: 'name', header: 'Name' },
-				{ key: 'created_at', header: m.reports_created_at() },
+				{ key: 'created_at', header: m.reports_created_at() }
 				// { key: 'dev_eui', header: 'Dev EUI' },
 			]}
 			rowActionsHeader={m.common_actions()}
 			{loadData}
 			rowKey="name"
 		>
-
 			{#snippet rowActions(row: ReportHistoryRow)}
 				<CwButton
 					size="sm"

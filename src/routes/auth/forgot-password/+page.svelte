@@ -4,14 +4,12 @@
 	import KEY_ICON from '$lib/images/icons/key.svg';
 	import BACK_ICON from '$lib/images/icons/back.svg';
 	import ADD_PERSON_ICON from '$lib/images/icons/person_add.svg';
-	import { goto } from '$app/navigation';
-	import { onDestroy, onMount } from 'svelte';
-	import {
-		loadRecaptchaScript,
-		executeRecaptcha,
-		unloadRecaptchaScript
-	} from '$lib/utils/recaptcha';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
 	import { applyAction, enhance } from '$app/forms';
+	import { readRedirectPath } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -24,85 +22,12 @@
 	let { form }: Props = $props();
 
 	let submitting: boolean = $state(false);
-	let loadingCaptcha: boolean = $state(true);
-	let recaptchaReady: boolean = $state(false);
+	const recaptcha = createAuthRecaptcha();
 	let sent: boolean = $derived(form?.success === true);
-
-	$effect(() => {
-		if (form?.message) {
-			toast.add({ message: form.message, tone: 'danger' });
-		}
-	});
-
-	// ── reCAPTCHA helpers ──────────────────────────────────────
-	const RECAPTCHA_TIMEOUT_MS = 12_000;
-	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 5;
-	const RECAPTCHA_RETRY_DELAY_MS = 900;
-
-	function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-		return new Promise<T>((res, rej) => {
-			const id = window.setTimeout(() => rej(new Error('Operation timed out')), timeoutMs);
-			promise
-				.then(res)
-				.catch(rej)
-				.finally(() => window.clearTimeout(id));
-		});
-	}
-
-	function sleep(ms: number): Promise<void> {
-		return new Promise((res) => window.setTimeout(res, ms));
-	}
-
-	async function ensureRecaptchaLoaded(): Promise<boolean> {
-		for (let attempt = 1; attempt <= RECAPTCHA_MAX_LOAD_ATTEMPTS; attempt++) {
-			try {
-				const loaded = await withTimeout(
-					loadRecaptchaScript({
-						setLoadingCaptcha: (loading: boolean) => {
-							loadingCaptcha = loading;
-						}
-					}),
-					RECAPTCHA_TIMEOUT_MS
-				);
-				if (loaded) {
-					recaptchaReady = true;
-					loadingCaptcha = false;
-					return true;
-				}
-			} catch (error) {
-				console.error(`reCAPTCHA load error (attempt ${attempt}):`, error);
-			}
-			recaptchaReady = false;
-			loadingCaptcha = false;
-			if (attempt < RECAPTCHA_MAX_LOAD_ATTEMPTS) {
-				await sleep(RECAPTCHA_RETRY_DELAY_MS * attempt);
-			}
-		}
-		return false;
-	}
-
-	async function getRecaptchaToken(): Promise<string> {
-		if (!recaptchaReady) {
-			const loaded = await ensureRecaptchaLoaded();
-			if (!loaded) throw new Error('reCAPTCHA not ready');
-		}
-		try {
-			return await withTimeout(executeRecaptcha('FORGOT_PASSWORD'), RECAPTCHA_TIMEOUT_MS);
-		} catch (firstError) {
-			console.error('reCAPTCHA execute failed; retrying load once:', firstError);
-			recaptchaReady = false;
-			const loaded = await ensureRecaptchaLoaded();
-			if (!loaded) throw firstError;
-			return await withTimeout(executeRecaptcha('FORGOT_PASSWORD'), RECAPTCHA_TIMEOUT_MS);
-		}
-	}
+	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 
 	onMount(() => {
-		void ensureRecaptchaLoaded();
-	});
-
-	onDestroy(() => {
-		unloadRecaptchaScript();
+		void recaptcha.warmup();
 	});
 </script>
 
@@ -120,17 +45,16 @@
 			<h1 class="auth-title">{m.auth_check_email_heading()}</h1>
 			<p class="auth-subtitle">{m.auth_forgot_password_sent_body()}</p>
 
-			<CwButton
-				class="auth-primary"
-				type="button"
-				variant="primary"
-				size="md"
-				fullWidth={true}
-				onclick={() => goto('/auth/login')}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a
+				class="auth-button-link auth-button-link--primary"
+				href={redirectPath
+					? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
+					: resolve('/auth/login')}
 			>
 				<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
 				{m.auth_back_to_login()}
-			</CwButton>
+			</a>
 		{:else}
 			<h1 class="auth-title">{m.auth_forgot_password()}</h1>
 			<p class="auth-subtitle">{m.auth_forgot_password_subtitle()}</p>
@@ -147,8 +71,7 @@
 					submitting = true;
 
 					try {
-						const token = await getRecaptchaToken();
-						formData.set('recaptchaToken', token);
+						formData.set('recaptchaToken', await recaptcha.runAction('FORGOT_PASSWORD'));
 					} catch (err) {
 						console.error('reCAPTCHA token failed:', err);
 						toast.add({ message: m.auth_security_try_again(), tone: 'danger' });
@@ -158,6 +81,13 @@
 					}
 
 					return async ({ result }) => {
+						if (result.type === 'failure' && typeof result.data?.message === 'string') {
+							toast.add({
+								message: result.data.message,
+								tone: 'danger'
+							});
+						}
+
 						submitting = false;
 						await applyAction(result);
 					};
@@ -181,7 +111,7 @@
 					variant="primary"
 					size="md"
 					fullWidth={true}
-					disabled={submitting || loadingCaptcha}
+					disabled={submitting}
 				>
 					{#if submitting}
 						{m.auth_sending()}
@@ -191,31 +121,29 @@
 					{/if}
 				</CwButton>
 
+				<!-- eslint-disable svelte/no-navigation-without-resolve -->
 				<div class="action-grid">
-					<CwButton
-						class="auth-secondary"
-						type="button"
-						variant="secondary"
-						size="md"
-						fullWidth={true}
-						onclick={() => goto('/auth/login')}
+					<a
+						class="auth-button-link auth-button-link--secondary"
+						href={redirectPath
+							? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
+							: resolve('/auth/login')}
 					>
 						<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
 						{m.auth_back_to_login()}
-					</CwButton>
+					</a>
 
-					<CwButton
-						class="auth-secondary"
-						type="button"
-						variant="secondary"
-						size="md"
-						fullWidth={true}
-						onclick={() => goto('/auth/create-account')}
+					<a
+						class="auth-button-link auth-button-link--secondary"
+						href={redirectPath
+							? `${resolve('/auth/create-account')}?redirect=${encodeURIComponent(redirectPath)}`
+							: resolve('/auth/create-account')}
 					>
 						<Icon src={ADD_PERSON_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
 						{m.auth_create_account()}
-					</CwButton>
+					</a>
 				</div>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			</form>
 		{/if}
 
@@ -279,6 +207,43 @@
 		gap: 0.82rem;
 	}
 
+	.auth-button-link {
+		display: inline-flex;
+		width: 100%;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		box-sizing: border-box;
+		border: 1px solid transparent;
+		text-decoration: none;
+		line-height: 1;
+		transition:
+			background-color 120ms ease,
+			border-color 120ms ease,
+			color 120ms ease,
+			box-shadow 120ms ease;
+	}
+
+	.auth-button-link:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px rgb(70 137 220 / 26%);
+	}
+
+	.auth-button-link--primary {
+		min-height: 3rem;
+		border-radius: 0.8rem;
+		border-color: rgb(83 149 213 / 70%);
+		background: linear-gradient(180deg, #3889cb 0%, #2f74b3 100%);
+		color: rgb(242 248 255);
+		font-size: 1.12rem;
+		font-weight: 500;
+	}
+
+	.auth-button-link--primary:hover {
+		border-color: rgb(108 167 228 / 76%);
+		background: linear-gradient(180deg, #4395d8 0%, #347fbe 100%);
+	}
+
 	.field-block {
 		display: grid;
 		gap: 0.42rem;
@@ -329,6 +294,21 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 0.7rem;
+	}
+
+	.auth-button-link--secondary {
+		min-height: 2.48rem;
+		border-radius: 0.75rem;
+		border-color: rgb(72 96 136 / 80%);
+		background: rgb(33 53 90 / 84%);
+		color: rgb(218 229 245);
+		font-size: 1rem;
+		font-weight: 450;
+	}
+
+	.auth-button-link--secondary:hover {
+		border-color: rgb(95 126 174 / 85%);
+		background: rgb(39 62 102 / 88%);
 	}
 
 	:global(.auth-secondary.cw-button) {

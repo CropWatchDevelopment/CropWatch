@@ -57,22 +57,6 @@
 	let prefetchTriggerIndex = $derived(
 		Math.max(0, visibleLocationCards.length - DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING - 1)
 	);
-	let summaryText = $derived.by(() => {
-		const locationTotal = locationCards.length;
-		const loadedLocationTotal = visibleLocationCards.length;
-		const deviceTotal = filteredDevices.length;
-
-		if (locationTotal === 0) {
-			return 'No matching locations';
-		}
-
-		if (useMobileCardWindow && loadedLocationTotal < locationTotal) {
-			return `${loadedLocationTotal} of ${locationTotal} locations loaded · ${deviceTotal} devices`;
-		}
-
-		return `${locationTotal} locations · ${deviceTotal} devices`;
-	});
-
 	async function loadMoreLocations() {
 		if (!canLoadMore || isExpandingLocationWindow) {
 			return;
@@ -115,6 +99,81 @@
 
 		observer.observe(element);
 		return () => observer.disconnect();
+	}
+
+	function normalizeWheelDelta(event: WheelEvent, scrollContainer: HTMLDivElement): number {
+		switch (event.deltaMode) {
+			case WheelEvent.DOM_DELTA_LINE:
+				return event.deltaY * 16;
+			case WheelEvent.DOM_DELTA_PAGE:
+				return event.deltaY * scrollContainer.clientHeight;
+			default:
+				return event.deltaY;
+		}
+	}
+
+	function canScrollVertically(element: HTMLElement, deltaY: number): boolean {
+		if (deltaY < 0) {
+			return element.scrollTop > 0;
+		}
+
+		if (deltaY > 0) {
+			return element.scrollTop + element.clientHeight < element.scrollHeight;
+		}
+
+		return false;
+	}
+
+	function nestedScrollableAncestorCanHandleWheel(
+		target: EventTarget | null,
+		deltaY: number,
+		scrollContainer: HTMLDivElement
+	): boolean {
+		if (!(target instanceof Element)) {
+			return false;
+		}
+
+		let current: Element | null = target;
+		while (current && current !== scrollContainer) {
+			if (current instanceof HTMLElement) {
+				const { overflowY } = window.getComputedStyle(current);
+				const isScrollable =
+					(overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+					current.scrollHeight > current.clientHeight;
+
+				if (isScrollable && canScrollVertically(current, deltaY)) {
+					return true;
+				}
+			}
+
+			current = current.parentElement;
+		}
+
+		return false;
+	}
+
+	function handleWheelScroll(event: WheelEvent) {
+		const scrollContainer = event.currentTarget;
+		if (
+			!(scrollContainer instanceof HTMLDivElement) ||
+			event.defaultPrevented ||
+			event.ctrlKey ||
+			event.metaKey
+		) {
+			return;
+		}
+
+		const deltaY = normalizeWheelDelta(event, scrollContainer);
+		if (deltaY === 0 || !canScrollVertically(scrollContainer, deltaY)) {
+			return;
+		}
+
+		if (nestedScrollableAncestorCanHandleWheel(event.target, deltaY, scrollContainer)) {
+			return;
+		}
+
+		event.preventDefault();
+		scrollContainer.scrollTop += deltaY;
 	}
 
 	function handleNavigationFailure(error: unknown) {
@@ -185,7 +244,11 @@
 
 <section class="dashboard-device-cards">
 	{#key filterKey}
-		<div class="dashboard-device-cards__scroll" data-dashboard-device-card-scroll="true">
+		<div
+			class="dashboard-device-cards__scroll"
+			data-dashboard-device-card-scroll="true"
+			onwheelcapture={handleWheelScroll}
+		>
 			{#if locationCards.length === 0}
 				<div class="dashboard-device-cards__empty">
 					<h3>{m.dashboard_no_matching_locations_title()}</h3>
@@ -252,48 +315,6 @@
 		overscroll-behavior: contain;
 	}
 
-	.dashboard-device-cards__summary {
-		position: sticky;
-		top: 0;
-		z-index: 1;
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		padding: 1rem 0 1.25rem;
-		margin-bottom: 0.75rem;
-		background: linear-gradient(
-			180deg,
-			color-mix(in srgb, var(--cw-bg-base) 96%, transparent),
-			color-mix(in srgb, var(--cw-bg-base) 84%, transparent) 78%,
-			transparent
-		);
-		backdrop-filter: blur(14px);
-	}
-
-	.dashboard-device-cards__summary-copy {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.dashboard-device-cards__eyebrow {
-		margin: 0;
-		font-size: 0.72rem;
-		font-weight: 600;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: color-mix(in srgb, var(--cw-accent-text) 74%, var(--cw-text-muted));
-	}
-
-	.dashboard-device-cards__headline {
-		margin: 0;
-		font-size: clamp(1.1rem, 2.8vw, 1.45rem);
-		font-weight: 700;
-		line-height: 1.1;
-		color: var(--cw-text-primary);
-	}
-
-	.dashboard-device-cards__meta,
 	.dashboard-device-cards__load-more,
 	.dashboard-device-cards__empty p {
 		margin: 0;
@@ -346,13 +367,6 @@
 	@media (min-width: 768px) {
 		.dashboard-device-cards__scroll {
 			padding-inline: 1.5rem;
-		}
-
-		.dashboard-device-cards__summary {
-			flex-direction: row;
-			align-items: end;
-			justify-content: space-between;
-			gap: 1rem;
 		}
 
 		.dashboard-device-cards__grid {

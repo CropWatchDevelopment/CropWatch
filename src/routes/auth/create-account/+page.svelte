@@ -4,16 +4,13 @@
 	import logo from '$lib/images/cropwatch_static.svg';
 	import KEY_ICON from '$lib/images/icons/key.svg';
 	import PERSON_ADD_ICON from '$lib/images/icons/person_add.svg';
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { onDestroy, onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
 	import { isStrongPassword, type IPasswordValidationResult } from '$lib/utils/strongPasswordCheck';
-	import {
-		loadRecaptchaScript,
-		executeRecaptcha,
-		unloadRecaptchaScript
-	} from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
+	import { readRedirectPath } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -31,15 +28,8 @@
 
 	let { form }: Props = $props();
 
-	$effect(() => {
-		if (form?.message) {
-			toast.add({ tone: 'danger', message: form.message });
-		}
-	});
-
 	let submitting: boolean = $state(false);
-	let loadingCaptcha: boolean = $state(true);
-	let recaptchaReady: boolean = $state(false);
+	const recaptcha = createAuthRecaptcha();
 
 	let firstName: string = $state('');
 	let lastName: string = $state('');
@@ -47,16 +37,6 @@
 	let company: string = $state('');
 	let password: string = $state('');
 	let confirmPassword: string = $state('');
-
-	// Re-populate fields when the form action returns validation errors
-	$effect(() => {
-		if (form) {
-			firstName = form.firstName ?? '';
-			lastName = form.lastName ?? '';
-			email = form.email ?? '';
-			company = form.company ?? '';
-		}
-	});
 
 	let agreedTerms: boolean = $state(false);
 	let agreedPrivacy: boolean = $state(false);
@@ -91,6 +71,7 @@
 	);
 
 	let allConsentsGiven: boolean = $derived(agreedTerms && agreedPrivacy && agreedCookies);
+	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 
 	let canSubmit: boolean = $derived(
 		firstName.trim().length > 0 &&
@@ -100,80 +81,11 @@
 			passwordValidation.isValid &&
 			passwordsMatch &&
 			allConsentsGiven &&
-			recaptchaReady &&
-			!submitting &&
-			!loadingCaptcha
+			!submitting
 	);
 
-	// ── reCAPTCHA helpers (same pattern as login) ──────────────
-	const RECAPTCHA_TIMEOUT_MS = 12_000;
-	const RECAPTCHA_MAX_LOAD_ATTEMPTS = 5;
-	const RECAPTCHA_RETRY_DELAY_MS = 900;
-
-	function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-		return new Promise<T>((res, rej) => {
-			const id = window.setTimeout(() => rej(new Error('Operation timed out')), timeoutMs);
-			promise
-				.then(res)
-				.catch(rej)
-				.finally(() => window.clearTimeout(id));
-		});
-	}
-
-	function sleep(ms: number): Promise<void> {
-		return new Promise((res) => window.setTimeout(res, ms));
-	}
-
-	async function ensureRecaptchaLoaded(): Promise<boolean> {
-		for (let attempt = 1; attempt <= RECAPTCHA_MAX_LOAD_ATTEMPTS; attempt++) {
-			try {
-				const loaded = await withTimeout(
-					loadRecaptchaScript({
-						setLoadingCaptcha: (loading: boolean) => {
-							loadingCaptcha = loading;
-						}
-					}),
-					RECAPTCHA_TIMEOUT_MS
-				);
-				if (loaded) {
-					recaptchaReady = true;
-					loadingCaptcha = false;
-					return true;
-				}
-			} catch (error) {
-				console.error(`reCAPTCHA load error (attempt ${attempt}):`, error);
-			}
-			recaptchaReady = false;
-			loadingCaptcha = false;
-			if (attempt < RECAPTCHA_MAX_LOAD_ATTEMPTS) {
-				await sleep(RECAPTCHA_RETRY_DELAY_MS * attempt);
-			}
-		}
-		return false;
-	}
-
-	async function getRecaptchaToken(): Promise<string> {
-		if (!recaptchaReady) {
-			const loaded = await ensureRecaptchaLoaded();
-			if (!loaded) throw new Error('reCAPTCHA not ready');
-		}
-		try {
-			return await withTimeout(executeRecaptcha('REGISTER'), RECAPTCHA_TIMEOUT_MS);
-		} catch (firstError) {
-			console.error('reCAPTCHA execute failed; retrying load once:', firstError);
-			recaptchaReady = false;
-			const loaded = await ensureRecaptchaLoaded();
-			if (!loaded) throw firstError;
-			return await withTimeout(executeRecaptcha('REGISTER'), RECAPTCHA_TIMEOUT_MS);
-		}
-	}
-
 	onMount(() => {
-		void ensureRecaptchaLoaded();
-	});
-
-	onDestroy(() => {
-		unloadRecaptchaScript();
+		void recaptcha.warmup();
 	});
 </script>
 
@@ -190,7 +102,15 @@
 		<h1 class="auth-title">{m.auth_create_account()}</h1>
 		<p class="auth-subtitle">
 			{m.auth_or_prefix()}
-			<a href={resolve('/auth/login')} class="auth-link">{m.auth_sign_in_existing_account()}</a>
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a
+				class="auth-link auth-link-button"
+				href={redirectPath
+					? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
+					: resolve('/auth/login')}
+			>
+				{m.auth_sign_in_existing_account()}
+			</a>
 		</p>
 
 		<form
@@ -204,11 +124,7 @@
 				submitting = true;
 
 				try {
-					const token = await getRecaptchaToken();
-					if (typeof token !== 'string' || token.length === 0) {
-						throw new Error('reCAPTCHA token missing');
-					}
-					formData.set('recaptchaToken', token);
+					formData.set('recaptchaToken', await recaptcha.runAction('REGISTER'));
 				} catch (error) {
 					console.error('reCAPTCHA execution error:', error);
 					toast.add({
@@ -227,10 +143,18 @@
 
 				return async ({ result }) => {
 					try {
-						if (result.type === 'redirect') {
-							await goto(result.location, { invalidateAll: true });
-							return;
+						if (result.type === 'failure' && typeof result.data?.message === 'string') {
+							firstName = typeof result.data.firstName === 'string' ? result.data.firstName : '';
+							lastName = typeof result.data.lastName === 'string' ? result.data.lastName : '';
+							email = typeof result.data.email === 'string' ? result.data.email : '';
+							company = typeof result.data.company === 'string' ? result.data.company : '';
+
+							toast.add({
+								message: result.data.message,
+								tone: 'danger'
+							});
 						}
+
 						await applyAction(result);
 					} finally {
 						submitting = false;
@@ -414,30 +338,25 @@
 				class="auth-primary"
 				type="submit"
 				variant="primary"
-				loading={submitting || loadingCaptcha}
+				loading={submitting}
 				disabled={!canSubmit}
 				size="md"
 				fullWidth={true}
 			>
 				<Icon src={PERSON_ADD_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
-				{submitting
-					? m.auth_creating_account()
-					: loadingCaptcha
-						? m.auth_loading_site_security()
-						: m.auth_create_account()}
+				{submitting ? m.auth_creating_account() : m.auth_create_account()}
 			</CwButton>
 
-			<CwButton
-				class="auth-secondary"
-				type="button"
-				variant="secondary"
-				size="md"
-				fullWidth={true}
-				onclick={() => goto(resolve('/auth/login'))}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a
+				class="auth-button-link auth-button-link--secondary"
+				href={redirectPath
+					? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
+					: resolve('/auth/login')}
 			>
 				<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
 				{m.auth_sign_in_instead()}
-			</CwButton>
+			</a>
 		</form>
 
 		<p class="security-copy">{m.auth_security_copy()}</p>
@@ -453,6 +372,14 @@
 
 	.auth-link:hover {
 		color: rgb(160 205 255);
+	}
+
+	.auth-link-button {
+		padding: 0;
+		border: 0;
+		background: transparent;
+		font: inherit;
+		cursor: pointer;
 	}
 
 	/* ── Name row (side-by-side on wider screens) ──────────── */

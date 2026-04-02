@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { buildLogoutPath } from '$lib/utils/auth-redirect';
 	import {
 		CwHeader,
 		CwProfileMenu,
-		CwSwitch,
 		CwThemePicker,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
@@ -31,9 +32,9 @@
 >
 	{#snippet logo()}
 		{#if mode === 'mini'}
-			<div class="flex flex-row items-center gap-2">
-				<img src={CROPWATCH_LOGO} alt={m.app_name()} style="width:2rem;height:2rem" />
-				<span class="text-lg font-semibold">CropWatch</span>
+			<div class="app-header__brand">
+				<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-header__brand-mark" />
+				<span class="app-header__brand-name">CropWatch</span>
 			</div>
 		{/if}
 	{/snippet}
@@ -56,15 +57,11 @@
 			{menuItems}
 			onselect={(event) => {
 				if (event.id === 'logout') {
-					goto(resolve('/auth/logout'))
-						.then(() => {
-							// Optionally, you can also clear the app context or perform any other cleanup here
-							Object.assign(app, defaultAppContext);
-							window.location.reload();
-						})
-						.catch(() => {
-							alert(m.header_logout_error());
-						});
+					Object.assign(app, defaultAppContext);
+					window.location.href = buildLogoutPath({
+						path: resolve('/auth/logout'),
+						redirectTo: `${page.url.pathname}${page.url.search}`
+					});
 				} else if (event.id === 'profile') {
 					goto(resolve('/account/profile'));
 				} else if (event.id === 'settings') {
@@ -80,5 +77,22 @@
 <style>
 	:global(.cw-header.app-header) {
 		background: var(--cw-sidenav-bg);
+	}
+
+	.app-header__brand {
+		display: flex;
+		align-items: center;
+		gap: var(--cw-space-2);
+		color: var(--cw-text-primary);
+	}
+
+	.app-header__brand-mark {
+		width: 2rem;
+		height: 2rem;
+	}
+
+	.app-header__brand-name {
+		font-size: 1.125rem;
+		font-weight: var(--cw-font-semibold);
 	}
 </style>

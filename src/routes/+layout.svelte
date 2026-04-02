@@ -2,7 +2,6 @@
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import './layout.css';
 	import { onDestroy } from 'svelte';
-	import { dev } from '$app/environment';
 	import { asset, resolve } from '$app/paths';
 
 	import {
@@ -22,7 +21,6 @@
 	import type { IDevice } from '$lib/interfaces/device.interface';
 	import type { LocationDto, RuleDto, TriggeredRulesCountResponse } from '$lib/api/api.dtos';
 	import type { LayoutProps } from './$types';
-	import PwaDock from '$lib/components/pwa/PwaDock.svelte';
 	import Header from './Header.svelte';
 	import type { Profile } from '$lib/interfaces/profile.interface';
 
@@ -101,44 +99,6 @@
 	syncAppFromPageData();
 	afterNavigate(syncAppFromPageData);
 
-	if (dev) {
-		$inspect(
-			page.url.pathname,
-			page.url.search,
-			!!(page.data as DashboardPageData).authToken,
-			((page.data as DashboardPageData).devices ?? []).length,
-			(page.data as DashboardPageData).totalDeviceCount ??
-				((page.data as DashboardPageData).devices ?? []).length,
-			(page.data as DashboardPageData).deviceStatuses ?? null,
-			(page.data as DashboardPageData).dashboardDebug ?? null,
-			(page.data as DashboardPageData).profile ?? null
-		).with(
-			(
-				type,
-				pathname,
-				search,
-				hasAuthToken,
-				devicesLength,
-				totalDeviceCount,
-				deviceStatuses,
-				dashboardDebug,
-				profile,
-			) => {
-				console.info('[layout] route data snapshot', {
-					type,
-					pathname,
-					search,
-					hasAuthToken,
-					devicesLength,
-					totalDeviceCount,
-					deviceStatuses,
-					dashboardDebug,
-					profile,
-				});
-			}
-		);
-	}
-
 	function handleWindowResize() {
 		document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
 
@@ -156,6 +116,10 @@
 			clearTimeout(resizeTimer);
 		}
 	});
+
+	function localizedHref(locale: (typeof locales)[number]): string {
+		return localizeHref(page.url.pathname, { locale });
+	}
 </script>
 
 <svelte:head>
@@ -191,30 +155,35 @@
 <CwOfflineOverlay />
 <CwToastContainer />
 
-{#if !isOfflineRoute}
-	<PwaDock />
-{/if}
-
 <svelte:window onresize={handleWindowResize} />
 
-<div class="app-shell flex h-dvh w-full overflow-hidden">
+<div class="app-shell">
 	{#if !isAuthRoute && !isOfflineRoute}
 		<Sidebar bind:mode />
 
-		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
+		<div class="app-shell__content">
 			<Header bind:mode />
 
-			<main class="flex min-h-0 flex-1 flex-col overflow-hidden p-1">{@render children()}</main>
+			<main class="app-shell__main">{@render children()}</main>
 
-			<OverviewDrawer />
+			<div class="app-shell__bottom-chrome">
+				<OverviewDrawer />
+			</div>
 		</div>
 	{:else}
-		<main class="flex-1 overflow-y-auto">{@render children()}</main>
+		<main class="app-shell__main app-shell__main--standalone">{@render children()}</main>
 	{/if}
 </div>
 
 <div style="display:none">
 	{#each locales as locale (locale)}
-		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={localizedHref(locale)}>{locale}</a>
 	{/each}
 </div>
+
+<style>
+	.grecaptcha-badge {
+		visibility: hidden !important;
+	}
+</style>

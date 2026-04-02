@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { AppNotice } from '$lib/components/layout';
 	import { formatDateTime } from '$lib/i18n/format';
+	import { appChartPalette } from '$lib/theme/chartPalette';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
 		CwCard,
@@ -25,8 +27,6 @@
 	let offlineDevices = $derived(app.deviceStatuses?.offline ?? 0);
 	let onlineDevices = $derived(Math.max(0, totalDevices - offlineDevices));
 	let alertCount = $derived(app.triggeredRulesCount || 0);
-
-	let drawerOpen: boolean = $state(app.drawerOpen ?? false);
 	let barItems = $derived<CwDrawerItem[]>([
 		{
 			id: 'online',
@@ -41,18 +41,10 @@
 		{ id: 'alerts', label: m.overview_alert_count({ count: String(alertCount) }), tone: 'warning' }
 	]);
 	let statusSegments = $derived<CwDonutSegment[]>([
-		{ label: m.status_online(), value: onlineDevices, color: 'var(--cw-success-500)' },
-		{ label: m.status_offline(), value: offlineDevices, color: 'var(--cw-danger-500)' },
-		{ label: m.status_alerts(), value: alertCount, color: 'var(--cw-warning-500)' }
+		{ label: m.status_online(), value: onlineDevices, color: appChartPalette.success },
+		{ label: m.status_offline(), value: offlineDevices, color: appChartPalette.danger },
+		{ label: m.status_alerts(), value: alertCount, color: appChartPalette.warning }
 	]);
-
-	const topGroups = [
-		{ name: m.overview_ungrouped(), count: 91 },
-		{ name: 'TK-Ebisu', count: 49 },
-		{ name: 'Seagaia', count: 41 },
-		{ name: 'SA', count: 11 }
-	];
-	const maxGroupCount = Math.max(...topGroups.map((g) => g.count));
 	const triggeredRules = Array.isArray(app?.triggeredRules) ? app.triggeredRules : [];
 	const alerts: AlertRow[] = triggeredRules.map((rule) => ({
 		id: String(rule.id),
@@ -62,38 +54,133 @@
 	}));
 </script>
 
-<CwDrawer bind:open={app.drawerOpen} label={m.status_alerts()} items={barItems}>
-	<div class="flex w-full flex-row gap-6">
-		<!-- Status Mix card -->
-		<CwCard
-			title={m.overview_status_mix()}
-			subtitle={m.overview_total({
-				count: String(statusSegments.reduce((s, x) => s + x.value, 0))
-			})}
-			class="w-full"
-		>
-			<div class="status-card">
-				<div class="status-card__body">
-					<div class="status-card__chart">
-						<CwDonutChart segments={statusSegments} size={120} thickness={14} />
+<CwDrawer
+	bind:open={app.drawerOpen}
+	label={m.status_alerts()}
+	items={barItems}
+	height="min(22rem, 46vh)"
+	class="app-overview-drawer"
+>
+	<div class="app-overview-drawer__grid">
+		<div class="app-overview-drawer__card">
+			<CwCard
+				title={m.overview_status_mix()}
+				subtitle={m.overview_total({
+					count: String(statusSegments.reduce((s, x) => s + x.value, 0))
+				})}
+			>
+				<div class="status-card">
+					<div class="status-card__body">
+						<div class="status-card__chart">
+							<CwDonutChart segments={statusSegments} size={120} thickness={14} />
+						</div>
 					</div>
 				</div>
-			</div>
-		</CwCard>
+			</CwCard>
+		</div>
 
-		<!-- Active Alert List card -->
-		<CwCard title={m.overview_active_alert_list()} subtitle={m.overview_reported_time()} class="w-full">
-			<div class="alerts-card overflow-y-scroll">
-				<div class="alerts-card__list">
-					{#each alerts as alert (alert.id)}
-						<div class="alerts-card__row">
-							<span class="alerts-card__icon">🔔</span>
-							<span class="alerts-card__name">{alert.name}</span>
-							<span class="alerts-card__time">{alert.reported}</span>
+		<div class="app-overview-drawer__card">
+			<CwCard title={m.overview_active_alert_list()} subtitle={m.overview_reported_time()}>
+				<div class="alerts-card">
+					{#if alerts.length === 0}
+						<AppNotice tone="neutral">
+							<p>{m.common_not_available()}</p>
+						</AppNotice>
+					{:else}
+						<div class="alerts-card__list">
+							{#each alerts as alert (alert.id)}
+								<div class="alerts-card__row">
+									<span class="alerts-card__icon">🔔</span>
+									<span class="alerts-card__name">{alert.name}</span>
+									<span class="alerts-card__time">{alert.reported}</span>
+								</div>
+							{/each}
 						</div>
-					{/each}
+					{/if}
 				</div>
-			</div>
-		</CwCard>
+			</CwCard>
+		</div>
 	</div>
 </CwDrawer>
+
+<style>
+	.app-overview-drawer__grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--cw-space-4);
+		width: 100%;
+		height: 100%;
+	}
+
+	.app-overview-drawer__card {
+		height: 100%;
+	}
+
+	.status-card {
+		height: 100%;
+	}
+
+	.status-card__body {
+		height: 100%;
+		min-height: 12rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--cw-space-4);
+	}
+
+	.alerts-card {
+		height: 100%;
+		overflow: auto;
+		padding: var(--cw-space-4);
+	}
+
+	.alerts-card__list {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.alerts-card__row {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: start;
+		gap: var(--cw-space-2);
+		padding: var(--cw-space-3) 0;
+		border-top: 1px solid var(--cw-border-muted);
+	}
+
+	.alerts-card__row:first-child {
+		padding-top: 0;
+		border-top: none;
+	}
+
+	.alerts-card__icon {
+		line-height: 1.2;
+	}
+
+	.alerts-card__name,
+	.alerts-card__time {
+		min-width: 0;
+		font-size: var(--cw-text-sm);
+	}
+
+	.alerts-card__time {
+		color: var(--cw-text-secondary);
+		text-align: right;
+	}
+
+	@media (max-width: 767px) {
+		.app-overview-drawer__grid {
+			grid-template-columns: 1fr;
+		}
+
+		.alerts-card__row {
+			grid-template-columns: auto minmax(0, 1fr);
+		}
+
+		.alerts-card__time {
+			grid-column: 2;
+			text-align: left;
+		}
+	}
+</style>

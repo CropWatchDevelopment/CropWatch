@@ -124,14 +124,23 @@ export const load: PageServerLoad = async ({ params, fetch, locals }) => {
 
 		const response = await apiService.getDeviceTypes();
 		deviceTypeOptions = mapDeviceTypeOptions(response);
+
+		const locationResponse = await apiService.getLocation(locationId);
+		const locationName = locationResponse.name ?? '';
+		return {
+			locationId,
+			locationName,
+			deviceTypeOptions
+		};
 	} catch {
 		deviceTypeOptions = [];
 	}
 
-	return {
-		locationId,
-		deviceTypeOptions
-	};
+	// return {
+	// 	locationId,
+	// 	locationName,
+	// 	deviceTypeOptions
+	// };
 };
 
 export const actions: Actions = {

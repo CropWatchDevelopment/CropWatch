@@ -45,9 +45,9 @@
 		align-items: center;
 		gap: 0.25rem;
 		padding: 0.2rem;
-		border: 1px solid color-mix(in srgb, var(--cw-border-default, #334155) 72%, transparent);
+		border: 1px solid var(--cw-border-muted);
 		border-radius: 999px;
-		background: color-mix(in srgb, var(--cw-bg-surface, #0f172a) 92%, transparent);
+		background: var(--cw-bg-surface);
 	}
 
 	.language-switcher__button {
@@ -57,7 +57,7 @@
 		font: inherit;
 		font-size: 0.82rem;
 		font-weight: 600;
-		color: var(--cw-text-secondary, #cbd5e1);
+		color: var(--cw-text-secondary);
 		background: transparent;
 		cursor: pointer;
 		transition:
@@ -66,12 +66,13 @@
 	}
 
 	.language-switcher__button:hover {
-		color: var(--cw-text-primary, #f8fafc);
+		color: var(--cw-text-primary);
+		background: var(--cw-bg-muted);
 	}
 
 	.language-switcher__button--active {
-		color: #0f172a;
-		background: linear-gradient(135deg, #facc15, #f59e0b);
+		color: var(--cw-bg-base);
+		background: var(--cw-primary-500);
 	}
 
 	.language-switcher--compact .language-switcher__button {

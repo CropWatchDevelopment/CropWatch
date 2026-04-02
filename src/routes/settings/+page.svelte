@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { AppActionRow, AppFormStack, AppPage } from '$lib/components/layout';
 	import { setLocale } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
@@ -6,15 +7,12 @@
 		CwCard,
 		CwChip,
 		CwDropdown,
-		CwSeparator,
-		CwSwitch,
 		CwThemePicker,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
-	type SupportedLocale = 'ja' | 'en';
 	type PreferenceDraft = PageProps['data']['preferences'];
 	type Option = { label: string; value: string };
 
@@ -52,26 +50,12 @@
 		return 'System';
 	}
 
-	async function handleLanguageChange(nextLanguage: SupportedLocale) {
-		preferences.language = nextLanguage;
-
-		try {
-			await setLocale(nextLanguage as SupportedLocale);
-		} catch (error) {
-			console.error('Failed to update locale:', error);
-			toast.add({
-				tone: 'danger',
-				message: 'Unable to switch languages in this preview.'
-			});
-		}
-	}
-
 	async function resetForm() {
 		const initialPreferences = getInitialPreferences();
 		preferences = { ...initialPreferences };
 
 		try {
-			await setLocale(initialPreferences.language as SupportedLocale);
+			await setLocale(initialPreferences.language);
 		} catch (error) {
 			console.error('Failed to reset locale:', error);
 		}
@@ -102,257 +86,190 @@
 	<title>{m.nav_settings()} - CropWatch</title>
 </svelte:head>
 
-<div class="settings-page">
-	<div class="settings-shell">
-		<form class="settings-grid" onsubmit={(event) => event.preventDefault()}>
-			<div class="settings-card settings-card--regional">
-				<CwCard
-					title="Regional preferences"
-					subtitle="Control localization, number formatting, and the calendar notation used in reports."
-					elevated
-				>
-					<div class="card-stack">
-						<div class="field-grid field-grid--two">
-							<LanguageSwitcher compact class="mr-3" />
+<AppPage width="xl" class="settings-page">
+	<form class="settings-grid" onsubmit={(event) => event.preventDefault()}>
+		<div class="settings-card settings-card--regional">
+			<CwCard
+				title="Regional preferences"
+				subtitle="Control localization, number formatting, and the calendar notation used in reports."
+				elevated
+			>
+				<AppFormStack padded>
+					<div class="field-grid field-grid--two">
+						<LanguageSwitcher compact class="mr-3" />
 
-							<CwDropdown
-								label="Date format"
-								options={data.options.dateFormat}
-								bind:value={preferences.dateFormat}
-								disabled
-							/>
+						<CwDropdown
+							label="Date format"
+							options={data.options.dateFormat}
+							bind:value={preferences.dateFormat}
+							disabled
+						/>
 
-							<CwDropdown
-								label="Time format"
-								options={data.options.timeFormat}
-								bind:value={preferences.timeFormat}
-								disabled
-							/>
+						<CwDropdown
+							label="Time format"
+							options={data.options.timeFormat}
+							bind:value={preferences.timeFormat}
+							disabled
+						/>
 
-							<CwDropdown
-								label="Decimal separator"
-								options={data.options.decimalSeparator}
-								bind:value={preferences.decimalSeparator}
-								disabled
-							/>
-						</div>
-
-						<div class="chip-row">
-							<CwChip label={formatLabel} tone="primary" variant="soft" />
-						</div>
+						<CwDropdown
+							label="Decimal separator"
+							options={data.options.decimalSeparator}
+							bind:value={preferences.decimalSeparator}
+							disabled
+						/>
 					</div>
-				</CwCard>
-			</div>
 
-			<div class="settings-card settings-card--appearance">
-				<CwCard
-					title="Appearance and mapping"
-					subtitle="Keep the UI theme and spatial notation aligned with the operators reading the data."
-					elevated
-				>
-					<div class="card-stack">
-						<div class="theme-row">
-							<div class="theme-copy">
-								<p class="section-title">Theme mode</p>
-								<div class="flex flex-row items-center gap-2">
-									<CwThemePicker bind:theme={preferences.theme} />
-									{preferences.theme}
-								</div>
-							</div>
-						</div>
-
-						<CwSeparator spacing="0" />
-
-						<div class="field-grid field-grid--two">
-							<CwDropdown
-								label="Distance"
-								options={data.options.distance}
-								bind:value={preferences.distanceUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="Area"
-								options={data.options.area}
-								bind:value={preferences.areaUnit}
-								disabled
-							/>
-						</div>
+					<div class="chip-row">
+						<CwChip label={languageLabel} tone="secondary" variant="outline" />
+						<CwChip label={formatLabel} tone="primary" variant="soft" />
 					</div>
-				</CwCard>
-			</div>
+				</AppFormStack>
+			</CwCard>
+		</div>
 
-			<div class="settings-card settings-card--notation">
-				<CwCard
-					title="Sensor notation"
-					subtitle="Choose the units operators will expect when comparing air, soil, and water measurements."
-					elevated
-				>
-					<div class="card-stack">
-						<div class="field-grid field-grid--two">
-							<CwDropdown
-								label="Temperature"
-								options={data.options.temperature}
-								bind:value={preferences.temperatureUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="EC"
-								options={data.options.ec}
-								bind:value={preferences.ecUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="Soil moisture"
-								options={data.options.soilMoisture}
-								bind:value={preferences.soilMoistureUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="Pressure"
-								options={data.options.pressure}
-								bind:value={preferences.pressureUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="Rainfall"
-								options={data.options.rainfall}
-								bind:value={preferences.rainfallUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="Wind speed"
-								options={data.options.windSpeed}
-								bind:value={preferences.windSpeedUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="Water depth"
-								options={data.options.waterDepth}
-								bind:value={preferences.waterDepthUnit}
-								disabled
-							/>
-
-							<CwDropdown
-								label="CO2"
-								options={data.options.co2}
-								bind:value={preferences.co2Unit}
-								disabled
-							/>
+		<div class="settings-card settings-card--appearance">
+			<CwCard
+				title="Appearance and mapping"
+				subtitle="Keep the UI theme and spatial notation aligned with the operators reading the data."
+				elevated
+			>
+				<AppFormStack padded>
+					<div class="theme-row">
+						<div class="theme-copy">
+							<p class="section-title">Theme mode</p>
+							<p class="section-copy">{themeLabel}</p>
 						</div>
-
-						<div class="chip-row">
-							<CwChip label={temperatureLabel} tone="primary" variant="soft" />
-							<CwChip label={ecLabel} tone="info" variant="soft" />
-							<CwChip
-								label={getOptionLabel(data.options.soilMoisture, preferences.soilMoistureUnit)}
-								tone="secondary"
-								variant="outline"
-							/>
-						</div>
+						<CwThemePicker bind:theme={preferences.theme} />
 					</div>
-				</CwCard>
-			</div>
-		</form>
-	</div>
-</div>
+
+					<div class="field-grid field-grid--two">
+						<CwDropdown
+							label="Distance"
+							options={data.options.distance}
+							bind:value={preferences.distanceUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="Area"
+							options={data.options.area}
+							bind:value={preferences.areaUnit}
+							disabled
+						/>
+					</div>
+
+					<div class="chip-row">
+						<CwChip label={spatialLabel} tone="info" variant="soft" />
+					</div>
+				</AppFormStack>
+			</CwCard>
+		</div>
+
+		<div class="settings-card settings-card--notation">
+			<CwCard
+				title="Sensor notation"
+				subtitle="Choose the units operators will expect when comparing air, soil, and water measurements."
+				elevated
+			>
+				<AppFormStack padded>
+					<div class="field-grid field-grid--two">
+						<CwDropdown
+							label="Temperature"
+							options={data.options.temperature}
+							bind:value={preferences.temperatureUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="EC"
+							options={data.options.ec}
+							bind:value={preferences.ecUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="Soil moisture"
+							options={data.options.soilMoisture}
+							bind:value={preferences.soilMoistureUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="Pressure"
+							options={data.options.pressure}
+							bind:value={preferences.pressureUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="Rainfall"
+							options={data.options.rainfall}
+							bind:value={preferences.rainfallUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="Wind speed"
+							options={data.options.windSpeed}
+							bind:value={preferences.windSpeedUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="Water depth"
+							options={data.options.waterDepth}
+							bind:value={preferences.waterDepthUnit}
+							disabled
+						/>
+
+						<CwDropdown
+							label="CO2"
+							options={data.options.co2}
+							bind:value={preferences.co2Unit}
+							disabled
+						/>
+					</div>
+
+					<div class="chip-row">
+						<CwChip label={temperatureLabel} tone="primary" variant="soft" />
+						<CwChip label={ecLabel} tone="info" variant="soft" />
+						<CwChip
+							label={getOptionLabel(data.options.soilMoisture, preferences.soilMoistureUnit)}
+							tone="secondary"
+							variant="outline"
+						/>
+					</div>
+				</AppFormStack>
+			</CwCard>
+		</div>
+
+		<div class="settings-card settings-card--actions">
+			<CwCard
+				title="Preview and actions"
+				subtitle="These controls still operate on the local preview state until the settings API is wired."
+				elevated
+			>
+				<AppFormStack padded>
+					<div class="chip-row">
+						<CwChip label={themeLabel} tone="secondary" variant="outline" />
+						<CwChip label={spatialLabel} tone="info" variant="soft" />
+						<CwChip label={formatLabel} tone="primary" variant="soft" />
+					</div>
+
+					<AppActionRow>
+						<CwButton type="button" variant="secondary" onclick={resetForm} disabled={!isDirty}>
+							Reset preview
+						</CwButton>
+						<CwButton type="button" variant="primary" onclick={handleSave}>Save settings</CwButton>
+					</AppActionRow>
+				</AppFormStack>
+			</CwCard>
+		</div>
+	</form>
+</AppPage>
 
 <style>
-	.settings-page {
-		width: 100%;
-		min-height: 100%;
-		padding: 1rem;
-		overflow-y: auto;
-	}
-
-	.settings-shell {
-		width: min(100%, 82rem);
-		margin: 0 auto;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
-	.settings-meta {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: flex-end;
-		gap: 0.5rem;
-	}
-
-	.settings-hero {
-		display: grid;
-		grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 1fr);
-		gap: 1rem;
-		align-items: stretch;
-	}
-
-	.hero-copy {
-		padding: 1.25rem;
-		border-radius: 1.25rem;
-		background:
-			linear-gradient(135deg, color-mix(in srgb, #0f766e 30%, transparent), transparent 55%),
-			color-mix(in srgb, var(--cw-bg-surface, #0f172a) 94%, transparent);
-		border: 1px solid color-mix(in srgb, var(--cw-border-default, #334155) 72%, transparent);
-	}
-
-	.hero-eyebrow {
-		margin: 0 0 0.75rem;
-		font-size: 0.78rem;
-		font-weight: 700;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: var(--cw-text-secondary, #94a3b8);
-	}
-
-	.hero-copy h2 {
-		margin: 0;
-		font-size: clamp(1.4rem, 2vw, 2rem);
-		line-height: 1.15;
-	}
-
-	.hero-copy p:last-child {
-		margin: 0.85rem 0 0;
-		max-width: 44rem;
-		line-height: 1.6;
-		color: var(--cw-text-secondary, #94a3b8);
-	}
-
-	.hero-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.85rem;
-	}
-
-	.hero-stat {
-		padding: 1rem;
-		border-radius: 1rem;
-		border: 1px solid color-mix(in srgb, var(--cw-border-default, #334155) 72%, transparent);
-		background: color-mix(in srgb, var(--cw-bg-surface, #0f172a) 94%, transparent);
-		display: flex;
-		flex-direction: column;
-		gap: 0.45rem;
-	}
-
-	.hero-stat__label {
-		font-size: 0.78rem;
-		font-weight: 700;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--cw-text-secondary, #94a3b8);
-	}
-
-	.hero-stat strong {
-		font-size: 1rem;
-		line-height: 1.35;
-	}
-
 	.settings-grid {
 		display: grid;
 		grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -369,15 +286,8 @@
 	}
 
 	.settings-card--notation,
-	.settings-card--presentation,
-	.settings-card--save {
+	.settings-card--actions {
 		grid-column: span 12;
-	}
-
-	.card-stack {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
 	}
 
 	.field-grid {
@@ -394,11 +304,9 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
-		padding: 0.25rem 0;
 	}
 
-	.theme-copy,
-	.preview-panel__copy {
+	.theme-copy {
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
@@ -413,7 +321,7 @@
 	.section-copy {
 		margin: 0;
 		line-height: 1.55;
-		color: var(--cw-text-secondary, #94a3b8);
+		color: var(--cw-text-secondary);
 	}
 
 	.chip-row {
@@ -422,58 +330,21 @@
 		gap: 0.65rem;
 	}
 
-	.switch-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1rem;
-	}
-
-	.preview-panel {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 1rem;
-		padding: 1.1rem;
-		border-radius: 1rem;
-		background:
-			linear-gradient(140deg, color-mix(in srgb, #f59e0b 12%, transparent), transparent 50%),
-			color-mix(in srgb, var(--cw-bg-surface, #0f172a) 94%, transparent);
-		border: 1px solid color-mix(in srgb, var(--cw-border-default, #334155) 72%, transparent);
-	}
-
-	.action-row {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.75rem;
-	}
-
-	@media (max-width: 900px) {
-		.settings-hero,
-		.field-grid--two,
-		.switch-grid {
+	@media (max-width: 1023px) {
+		.field-grid--two {
 			grid-template-columns: 1fr;
 		}
 
 		.settings-card--regional,
 		.settings-card--appearance,
 		.settings-card--notation,
-		.settings-card--presentation,
-		.settings-card--save {
+		.settings-card--actions {
 			grid-column: span 12;
 		}
 
-		.theme-row,
-		.preview-panel {
+		.theme-row {
 			flex-direction: column;
 			align-items: stretch;
-		}
-
-		.action-row {
-			justify-content: stretch;
-		}
-
-		.action-row :global(.cw-button) {
-			flex: 1 1 auto;
 		}
 	}
 </style>

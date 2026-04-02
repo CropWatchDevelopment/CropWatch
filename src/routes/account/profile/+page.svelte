@@ -1,39 +1,48 @@
 <script lang="ts">
-	import {
-		CwButton,
-		CwCard,
-		CwChip,
-		CwInput,
-		CwSeparator,
-		useCwToast
-	} from '@cropwatchdevelopment/cwui';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import type { Profile } from '$lib/interfaces/profile.interface';
 	import { m } from '$lib/paraglide/messages.js';
+	import { CwButton, CwCard, CwChip, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
-	import { getAppContext } from '$lib/appContext.svelte';
 
 	let { data }: PageProps = $props();
 
 	const toast = useCwToast();
 	const app = getAppContext();
 
+	function getProfileSource(): Profile {
+		return (
+			data.profile ??
+			app.profile ?? {
+				username: '',
+				full_name: '',
+				website: '',
+				employer: '',
+				phone_number: ''
+			}
+		);
+	}
+
 	function getInitialProfile(): Profile {
+		const source = getProfileSource();
 		return {
-			username: app.profile?.username ?? '',
-			full_name: app.profile?.full_name ?? '',
-			website: app.profile?.website ?? '',
-			employer: app.profile?.employer ?? '',
-			phone_number: app.profile?.phone_number ?? ''
+			username: source.username ?? '',
+			full_name: source.full_name ?? '',
+			website: source.website ?? '',
+			employer: source.employer ?? '',
+			phone_number: source.phone_number ?? ''
 		};
 	}
-	
-	let username = $state(app.profile?.username ?? '');
-	let fullName = $state(app.profile?.full_name ?? '');
-	let website = $state(app.profile?.website ?? '');
-	let employer = $state(app.profile?.employer ?? '');
-	let phoneNumber = $state(app.profile?.phone_number ?? '');
 
-	const hasErrors = $derived(false);
+	let username = $state(getInitialProfile().username);
+	let fullName = $state(getInitialProfile().full_name);
+	let website = $state(getInitialProfile().website);
+	let employer = $state(getInitialProfile().employer);
+	let phoneNumber = $state(getInitialProfile().phone_number);
+
+	const hasWebsiteError = $derived(website.trim().length > 0 && !isLikelyWebsite(website));
+	const hasErrors = $derived(hasWebsiteError);
 	const isDirty = $derived.by(() => {
 		const initialProfile = getInitialProfile();
 		return (
@@ -44,6 +53,7 @@
 			phoneNumber !== initialProfile.phone_number
 		);
 	});
+	const displayName = $derived(fullName || username || data.email || 'Your profile');
 
 	function isLikelyWebsite(value: string): boolean {
 		try {
@@ -92,8 +102,8 @@
 	<title>{m.nav_profile()} - CropWatch</title>
 </svelte:head>
 
-<div class="profile-page overflow-y-scroll">
-	<div class="profile-card">
+<AppPage width="lg" class="profile-page">
+	<div class="profile-page__shell">
 		<CwCard
 			title={m.nav_profile()}
 			subtitle="Keep the account details used across reports, notifications, and shared views current."
@@ -110,43 +120,51 @@
 				</div>
 			{/snippet}
 
-			<div class="profile-intro">
+			<AppFormStack padded>
 				<div class="profile-summary">
-					<p class="summary-eyebrow">Account profile</p>
-					<h2>{fullName || username || data.email || 'Your profile'}</h2>
-					<p>
-						Use this page to shape how your identity appears anywhere CropWatch surfaces profile
-						data.
-					</p>
-				</div>
-
-				<div class="profile-highlights">
-					<div class="highlight">
-						<span class="highlight-label">Employer</span>
-						<strong>{employer || 'Add your company'}</strong>
-					</div>
-					<div class="highlight">
-						<span class="highlight-label">Website</span>
-						<strong>{website || 'Add your website'}</strong>
-					</div>
-					<div class="highlight">
-						<span class="highlight-label">Phone</span>
-						<strong>{phoneNumber || 'Add your phone number'}</strong>
-					</div>
-				</div>
-			</div>
-
-			<CwSeparator spacing="0" />
-
-			<form class="profile-form" onsubmit={(event) => event.preventDefault()}>
-				<div class="profile-grid">
-					<div class="profile-section">
-						<p class="section-title">Identity</p>
-						<p class="section-copy">
-							These details are the ones teammates will see first when the app references your
-							account.
+					<div class="profile-summary__copy">
+						<p class="profile-eyebrow">Account profile</p>
+						<h2>{displayName}</h2>
+						<p>
+							Use this page to shape how your identity appears anywhere CropWatch surfaces profile
+							data.
 						</p>
+					</div>
 
+					<div class="profile-highlights">
+						<div class="profile-highlight">
+							<span class="profile-highlight__label">Employer</span>
+							<strong class="profile-highlight__value">{employer || 'Add your company'}</strong>
+						</div>
+						<div class="profile-highlight">
+							<span class="profile-highlight__label">Website</span>
+							<strong class="profile-highlight__value">{website || 'Add your website'}</strong>
+						</div>
+						<div class="profile-highlight">
+							<span class="profile-highlight__label">Phone</span>
+							<strong class="profile-highlight__value"
+								>{phoneNumber || 'Add your phone number'}</strong
+							>
+						</div>
+					</div>
+				</div>
+			</AppFormStack>
+		</CwCard>
+
+		{#if hasWebsiteError}
+			<AppNotice tone="warning" title="Check the website field">
+				<p>Enter a valid domain or URL before saving this profile preview.</p>
+			</AppNotice>
+		{/if}
+
+		<form class="profile-form" onsubmit={(event) => event.preventDefault()}>
+			<div class="profile-grid">
+				<CwCard
+					title="Identity"
+					subtitle="The details teammates see first when CropWatch references your account."
+					elevated
+				>
+					<AppFormStack padded>
 						<CwInput
 							label="Username"
 							name="username"
@@ -156,7 +174,7 @@
 						/>
 
 						<CwInput
-							label="Full Name"
+							label="Full name"
 							name="full_name"
 							bind:value={fullName}
 							placeholder="e.g. Kevin Smith"
@@ -170,15 +188,15 @@
 							placeholder="e.g. CropWatch LLC"
 							clearable
 						/>
-					</div>
+					</AppFormStack>
+				</CwCard>
 
-					<div class="profile-section">
-						<p class="section-title">Contact</p>
-						<p class="section-copy">
-							Use the fields below for the public-facing contact details associated with your
-							profile.
-						</p>
-
+				<CwCard
+					title="Contact"
+					subtitle="Public-facing contact details associated with your profile."
+					elevated
+				>
+					<AppFormStack padded>
 						<CwInput
 							label="Website"
 							name="website"
@@ -188,174 +206,147 @@
 						/>
 
 						<CwInput
-							label="Phone Number"
+							label="Phone number"
 							name="phone_number"
 							bind:value={phoneNumber}
 							placeholder="e.g. +1 555 123 4567"
 							clearable
 						/>
+					</AppFormStack>
+				</CwCard>
+			</div>
+
+			<CwCard
+				title="Preview and actions"
+				subtitle="This page still operates on local preview state until the profile API is wired."
+				elevated
+			>
+				<AppFormStack padded>
+					<div class="profile-chip-row">
+						{#if username}
+							<CwChip label={username} tone="secondary" variant="outline" />
+						{/if}
+						{#if employer}
+							<CwChip label={employer} tone="primary" variant="soft" />
+						{/if}
+						{#if website}
+							<CwChip label={website} tone="info" variant="soft" />
+						{/if}
 					</div>
-				</div>
 
-				<CwSeparator spacing="0" />
-
-				<div class="profile-actions">
-					<CwButton type="button" variant="ghost" onclick={resetForm} disabled={!isDirty}>
-						Reset
-					</CwButton>
-					<CwButton
-						type="button"
-						variant="primary"
-						onclick={handleSave}
-						disabled={!isDirty || hasErrors}
-					>
-						Save Profile
-					</CwButton>
-				</div>
-			</form>
-		</CwCard>
+					<AppActionRow>
+						<CwButton type="button" variant="ghost" onclick={resetForm} disabled={!isDirty}>
+							Reset
+						</CwButton>
+						<CwButton
+							type="button"
+							variant="primary"
+							onclick={handleSave}
+							disabled={!isDirty || hasErrors}
+						>
+							Save profile
+						</CwButton>
+					</AppActionRow>
+				</AppFormStack>
+			</CwCard>
+		</form>
 	</div>
-</div>
+</AppPage>
 
 <style>
-	.profile-page {
-		padding: 1rem;
-		width: 100%;
-		min-height: 100%;
+	.profile-page__shell,
+	.profile-form {
+		display: grid;
+		gap: var(--cw-space-4);
 	}
 
-	.profile-card {
-		width: min(100%, 72rem);
-		margin: 0 auto;
+	.profile-meta,
+	.profile-chip-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--cw-space-2);
 	}
 
 	.profile-meta {
-		display: flex;
-		flex-wrap: wrap;
 		justify-content: flex-end;
-		gap: 0.5rem;
-	}
-
-	.profile-intro {
-		display: grid;
-		grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
-		gap: 1.5rem;
-		align-items: start;
-		margin-bottom: 1.5rem;
 	}
 
 	.profile-summary {
 		display: grid;
-		gap: 0.65rem;
+		grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+		gap: var(--cw-space-4);
+		align-items: start;
 	}
 
-	.summary-eyebrow {
+	.profile-summary__copy,
+	.profile-highlights {
+		display: grid;
+		gap: var(--cw-space-3);
+	}
+
+	.profile-eyebrow {
 		margin: 0;
 		font-size: var(--cw-text-xs);
 		font-weight: var(--cw-font-semibold);
-		text-transform: uppercase;
 		letter-spacing: 0.08em;
+		text-transform: uppercase;
 		color: var(--cw-text-tertiary);
 	}
 
-	.profile-summary h2 {
+	.profile-summary__copy h2,
+	.profile-summary__copy p {
 		margin: 0;
+	}
+
+	.profile-summary__copy h2 {
 		font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.5rem);
 		line-height: 1.05;
 		color: var(--cw-text-primary);
 	}
 
-	.profile-summary p {
-		margin: 0;
-		max-width: 42rem;
+	.profile-summary__copy p {
 		font-size: var(--cw-text-sm);
 		line-height: 1.65;
 		color: var(--cw-text-secondary);
 	}
 
-	.profile-highlights {
+	.profile-highlight {
 		display: grid;
-		gap: 0.75rem;
-	}
-
-	.highlight {
-		display: grid;
-		gap: 0.25rem;
-		padding: 0.9rem 1rem;
+		gap: var(--cw-space-1);
+		padding: var(--cw-space-3);
 		border: 1px solid var(--cw-border-muted);
 		border-radius: var(--cw-radius-md);
-		background:
-			linear-gradient(180deg, color-mix(in srgb, var(--cw-bg-muted) 65%, transparent), transparent),
-			var(--cw-bg-subtle);
+		background: var(--cw-bg-subtle);
 	}
 
-	.highlight-label {
+	.profile-highlight__label {
 		font-size: var(--cw-text-xs);
 		font-weight: var(--cw-font-medium);
-		text-transform: uppercase;
 		letter-spacing: 0.08em;
+		text-transform: uppercase;
 		color: var(--cw-text-tertiary);
 	}
 
-	.highlight strong {
+	.profile-highlight__value {
 		font-size: var(--cw-text-sm);
 		font-weight: var(--cw-font-semibold);
 		color: var(--cw-text-primary);
-	}
-
-	.profile-form {
-		display: grid;
-		gap: 1.5rem;
-		margin-top: 1.5rem;
 	}
 
 	.profile-grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1.25rem;
+		gap: var(--cw-space-4);
 	}
 
-	.profile-section {
-		display: grid;
-		align-content: start;
-		gap: 1rem;
-		padding: 1.15rem;
-		border: 1px solid var(--cw-border-muted);
-		border-radius: var(--cw-radius-md);
-		background-color: var(--cw-bg-subtle);
-	}
-
-	.section-title {
-		margin: 0;
-		font-size: var(--cw-text-sm);
-		font-weight: var(--cw-font-semibold);
-		color: var(--cw-text-primary);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-	}
-
-	.section-copy {
-		margin: 0 0 0.15rem;
-		font-size: var(--cw-text-sm);
-		line-height: 1.6;
-		color: var(--cw-text-secondary);
-	}
-
-	.profile-actions {
-		display: flex;
-		justify-content: flex-end;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-	}
-
-	@media (max-width: 820px) {
-		.profile-intro,
-		.profile-grid {
-			grid-template-columns: 1fr;
-		}
-
+	@media (max-width: 767px) {
 		.profile-meta {
 			justify-content: flex-start;
+		}
+
+		.profile-summary,
+		.profile-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

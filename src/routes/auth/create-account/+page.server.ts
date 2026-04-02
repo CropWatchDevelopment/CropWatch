@@ -1,4 +1,5 @@
 import { m } from '$lib/paraglide/messages.js';
+import { readRedirectPathFromUrl, withRedirectParam } from '$lib/utils/auth-redirect';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { getSupabaseClient } from '$lib/supabase.server';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
@@ -10,8 +11,9 @@ function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 }
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, url }) => {
 		const data = await request.formData();
+		const redirectPath = readRedirectPathFromUrl(url, '');
 
 		const firstName = readNonEmptyString(data.get('firstName'));
 		const lastName = readNonEmptyString(data.get('lastName'));
@@ -67,7 +69,11 @@ export const actions: Actions = {
 		}
 
 		// ── reCAPTCHA verification ─────────────────────────────────
-		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'REGISTER');
+		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'REGISTER', 0.5, {
+			route: '/auth/create-account',
+			flow: 'register',
+			userAgent: request.headers.get('user-agent') ?? undefined
+		});
 		if (!recaptchaResult.success) {
 			return fail(400, {
 				message: m.auth_security_try_again(),
@@ -117,6 +123,6 @@ export const actions: Actions = {
 		}
 
 		// Success – send user to the "check your email" page
-		throw redirect(303, '/auth/create-account/check-email');
+		throw redirect(303, withRedirectParam('/auth/create-account/check-email', redirectPath));
 	}
 };

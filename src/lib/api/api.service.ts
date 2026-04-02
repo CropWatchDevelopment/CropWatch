@@ -1,4 +1,5 @@
 import { env as publicEnv } from '$env/dynamic/public';
+import { buildLoginPath } from '$lib/utils/auth-redirect';
 import type { PdfFile } from '../interfaces/PdfFile.interface';
 import type {
 	CreateDeviceRequest,
@@ -175,15 +176,18 @@ async function parseResponsePayload(response: Response): Promise<unknown> {
 
 function buildLoginRedirectPath(): string {
 	if (typeof location === 'undefined') {
-		return '/auth/login';
+		return buildLoginPath({ reason: 'auth-required' });
 	}
 
 	const redirectTarget = `${location.pathname}${location.search}`;
 	if (!redirectTarget) {
-		return '/auth/login';
+		return buildLoginPath({ reason: 'auth-required' });
 	}
 
-	return `/auth/login?redirect=${encodeURIComponent(redirectTarget)}`;
+	return buildLoginPath({
+		redirectTo: redirectTarget,
+		reason: 'auth-required'
+	});
 }
 
 function isCreatedAtKey(key: string): boolean {
@@ -435,7 +439,7 @@ export class ApiService {
 		return this.request<Record<string, unknown>>(AUTH_ENDPOINT, { method: 'GET' });
 	}
 
-		public getUserProfile(): Promise<Record<string, unknown>> {
+	public getUserProfile(): Promise<Record<string, unknown>> {
 		return this.request<Record<string, unknown>>(AUTH_USER_PROFILE_ENDPOINT, { method: 'GET' });
 	}
 
@@ -931,7 +935,11 @@ export class ApiService {
 		);
 	}
 
-	public getReportDownloadUrl(dev_eui: string, report_id: string, reportName: string): Promise<Record<string, unknown>> {
+	public getReportDownloadUrl(
+		dev_eui: string,
+		report_id: string,
+		reportName: string
+	): Promise<Record<string, unknown>> {
 		return this.request<Record<string, unknown>>(
 			replacePathParams(REPORT_DOWNLOAD_ENDPOINT, { dev_eui, report_id, reportName }),
 			{
