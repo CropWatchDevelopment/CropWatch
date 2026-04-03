@@ -401,7 +401,7 @@
 					searchable
 				>
 					{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
-						<div class="text-2xl">
+						<div class="text-xl">
 							{#if col.key === 'created_at'}
 								{new Date(row.created_at).toLocaleString()}
 							{:else if col.key === 'temperature_c'}

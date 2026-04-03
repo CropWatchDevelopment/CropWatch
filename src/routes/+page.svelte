@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { CwBadge, CwButton, CwCard } from '@cropwatchdevelopment/cwui';
-	import { afterNavigate } from '$app/navigation';
+	import { CwBadge, CwButton, CwCard, CwSpinner } from '@cropwatchdevelopment/cwui';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import DashboardDeviceTable from '$lib/components/dashboard/DashboardDeviceTable.svelte';
@@ -18,10 +17,11 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { page } from '$app/state';
-	import type { PageProps } from './$types';
 	import TABLE_ICON from '$lib/images/icons/table.svg';
 	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
 	import GATEWAYS_ICON from '$lib/images/icons/router.svg';
+	import GRID_VIEW_ICON from '$lib/images/icons/grid_view.svg';
+	import MASONRY_VIEW_ICON from '$lib/images/icons/masonary.svg';
 
 	type DashboardView = 'table' | 'sensor-cards';
 
@@ -31,9 +31,7 @@
 
 	const app = getAppContext();
 
-	function readTriggeredRulesCount(
-		rawTriggeredRulesCount: PageProps['data']['triggeredRulesCount']
-	): number {
+	function readTriggeredRulesCount(rawTriggeredRulesCount: unknown): number {
 		if (typeof rawTriggeredRulesCount === 'number' && Number.isFinite(rawTriggeredRulesCount)) {
 			return rawTriggeredRulesCount;
 		}
@@ -50,22 +48,45 @@
 		return 0;
 	}
 
-	function syncDashboardContext(pageData: PageProps['data']) {
-		app.accessToken = pageData.authToken ?? undefined;
-		app.devices = pageData.devices ?? [];
-		app.totalDeviceCount = pageData.totalDeviceCount ?? app.devices.length;
-		app.deviceStatuses = pageData.deviceStatuses ?? { online: 0, offline: 0 };
-		app.triggeredRules = pageData.triggeredRules ?? [];
-		app.triggeredRulesCount = readTriggeredRulesCount(pageData.triggeredRulesCount);
-		app.deviceGroups = normalizeDashboardFilterValues(pageData.deviceGroups);
-		app.locationGroups = normalizeDashboardFilterValues(pageData.locationGroups);
-		app.locations = pageData.locations ?? [];
+	function syncDashboardContext(data: Record<string, unknown>) {
+		app.accessToken = ((page.data as Record<string, unknown>).authToken as string) ?? undefined;
+		app.devices = (data.devices as typeof app.devices) ?? [];
+		app.totalDeviceCount = (data.totalDeviceCount as number) ?? app.devices.length;
+		app.deviceStatuses = (data.deviceStatuses as typeof app.deviceStatuses) ?? {
+			online: 0,
+			offline: 0
+		};
+		app.triggeredRules = (data.triggeredRules as typeof app.triggeredRules) ?? [];
+		app.triggeredRulesCount = readTriggeredRulesCount(data.triggeredRulesCount);
+		app.deviceGroups = normalizeDashboardFilterValues(data.deviceGroups as string[]);
+		app.locationGroups = normalizeDashboardFilterValues(data.locationGroups as string[]);
+		app.locations = (data.locations as typeof app.locations) ?? [];
 	}
 
-	syncDashboardContext(page.data as PageProps['data']);
-	afterNavigate(() => {
-		if (page.url.pathname === '/') {
-			syncDashboardContext(page.data as PageProps['data']);
+	let dashboardLoading = $state(true);
+
+	$effect(() => {
+		const raw = (page.data as Record<string, unknown>).dashboard;
+		if (!raw) {
+			dashboardLoading = false;
+			return;
+		}
+
+		if (raw instanceof Promise) {
+			dashboardLoading = true;
+			let cancelled = false;
+			raw.then((resolved: Record<string, unknown>) => {
+				if (!cancelled) {
+					syncDashboardContext(resolved);
+					dashboardLoading = false;
+				}
+			});
+			return () => {
+				cancelled = true;
+			};
+		} else {
+			syncDashboardContext(raw as Record<string, unknown>);
+			dashboardLoading = false;
 		}
 	});
 
@@ -163,14 +184,14 @@
 								variant={cardLayout === 'grid' ? 'info' : 'secondary'}
 								onclick={() => setCardLayout('grid')}
 							>
-								{m.dashboard_card_layout_grid()}
+								<Icon src={GRID_VIEW_ICON} alt="Grid Layout" />
 							</CwButton>
 							<CwButton
 								class="px-2 py-1 text-xs"
 								variant={cardLayout === 'masonry' ? 'info' : 'secondary'}
 								onclick={() => setCardLayout('masonry')}
 							>
-								{m.dashboard_card_layout_masonry()}
+								<Icon src={MASONRY_VIEW_ICON} alt="Masonry Layout" />
 							</CwButton>
 						</div>
 					{/if}
@@ -179,12 +200,21 @@
 		</div>
 	</header>
 
-	{#if dashboardViewReady}
-			{#if dashboardView === 'sensor-cards'}
-				<DashboardDeviceCards filters={dashboardFilters} {cardLayout} />
-			{:else}
-				<DashboardDeviceTable filters={dashboardFilters} />
-			{/if}
+	{#if dashboardLoading}
+		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
+			<div class="flex flex-col items-center gap-6">
+				<div class="scale-[4]">
+					<CwSpinner />
+				</div>
+				<span class="text-4xl text-slate-400">{m.dashboard_loading_devices()}</span>
+			</div>
+		</div>
+	{:else if dashboardViewReady}
+		{#if dashboardView === 'sensor-cards'}
+			<DashboardDeviceCards filters={dashboardFilters} {cardLayout} />
+		{:else}
+			<DashboardDeviceTable filters={dashboardFilters} />
+		{/if}
 	{:else}
 		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
 			<p class="text-sm text-slate-400">{m.dashboard_loading_view()}</p>

@@ -3,7 +3,7 @@ import { buildLoginPath } from '$lib/utils/auth-redirect';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import type { IJWT } from '$lib/interfaces/jwt.interface';
-import type { Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
+import type { Handle, HandleFetch, HandleServerError, RequestEvent } from '@sveltejs/kit';
 import { isRedirect, redirect } from '@sveltejs/kit';
 import { jwtDecode } from 'jwt-decode';
 import { env as publicEnv } from '$env/dynamic/public';
@@ -156,3 +156,11 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
 	});
 
 export const handle = sequence(paraglideHandle, originalHandle);
+
+export const handleError: HandleServerError = ({ error, status, message }) => {
+	console.error('[CropWatch] Unexpected server error:', error);
+
+	return {
+		message: status === 404 ? 'Not Found' : 'Internal Error'
+	};
+};

@@ -85,6 +85,11 @@
 			return;
 		}
 
+		// Dashboard data is streamed via +page.server.ts → +page.svelte handles the sync
+		if ('dashboard' in routeData) {
+			return;
+		}
+
 		const devices = routeData.devices ?? [];
 
 		app.devices = devices;

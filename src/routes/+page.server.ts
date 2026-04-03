@@ -123,28 +123,7 @@ async function loadDashboardLatestPrimaryData(apiServiceInstance: ApiService): P
 	}
 }
 
-export const load: PageServerLoad = async ({ locals, fetch }) => {
-	const authToken = locals.jwtString ?? null;
-
-	if (!authToken) {
-		return {
-			devices: [] as IDevice[],
-			totalDeviceCount: 0,
-			triggeredRules: [],
-			triggeredRulesCount: 0,
-			deviceStatuses: { online: 0, offline: 0 },
-			deviceGroups: [] as string[],
-			locations: [] as LocationDto[],
-			locationGroups: [] as string[],
-			dashboardDebug: null as Record<string, unknown> | null
-		};
-	}
-
-	const apiServiceInstance = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
-
+async function loadDashboardPayload(apiServiceInstance: ApiService) {
 	const [
 		latestPrimaryDataResult,
 		devicesResult,
@@ -249,5 +228,38 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 				error: locationGroupsResult.error
 			}
 		}
+	};
+}
+
+const EMPTY_DASHBOARD = {
+	devices: [] as IDevice[],
+	totalDeviceCount: 0,
+	triggeredRules: [] as unknown[],
+	triggeredRulesCount: 0,
+	deviceStatuses: { online: 0, offline: 0 },
+	deviceGroups: [] as string[],
+	locations: [] as LocationDto[],
+	locationGroups: [] as string[],
+	dashboardDebug: null as Record<string, unknown> | null
+};
+
+export const load: PageServerLoad = async ({ locals, fetch }) => {
+	const authToken = locals.jwtString ?? null;
+
+	if (!authToken) {
+		return {
+			authToken: null,
+			dashboard: EMPTY_DASHBOARD
+		};
+	}
+
+	const apiServiceInstance = new ApiService({
+		fetchFn: fetch,
+		authToken
+	});
+
+	return {
+		authToken,
+		dashboard: loadDashboardPayload(apiServiceInstance)
 	};
 };

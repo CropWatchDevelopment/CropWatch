@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -51,6 +52,21 @@
 	const knownError = $derived(errorMessages[statusCode]);
 	const title = $derived(knownError?.title ?? m.error_unexpected_title());
 	const description = $derived(page.error?.message ?? knownError?.description ?? m.error_unknown());
+
+	function resetAndLogin() {
+		if (!browser) return;
+		try { localStorage.clear(); } catch { /* ignore */ }
+		try { sessionStorage.clear(); } catch { /* ignore */ }
+		try {
+			document.cookie.split(';').forEach((c) => {
+				const name = c.split('=')[0].trim();
+				if (name) {
+					document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+				}
+			});
+		} catch { /* ignore */ }
+		window.location.href = '/auth/login?reason=error-recovery';
+	}
 </script>
 
 <div class="flex flex-1 items-center justify-center p-4">
@@ -78,6 +94,7 @@
 		<div class="mt-6 flex flex-wrap items-center justify-center gap-3">
 			<CwButton variant="primary" onclick={() => goto('/')}>{m.action_go_home()}</CwButton>
 			<CwButton variant="ghost" onclick={() => history.back()}>{m.action_go_back()}</CwButton>
+			<CwButton variant="danger" onclick={resetAndLogin}>{m.error_reset_and_login()}</CwButton>
 		</div>
 	</CwCard>
 </div>

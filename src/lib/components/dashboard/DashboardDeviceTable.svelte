@@ -70,7 +70,7 @@
 			header: m.dashboard_column_last_seen(),
 			sortable: true,
 			hideBelow: 'md',
-			width: '8rem',
+			width: '10rem',
 			cell: (row) =>
 				row.has_primary_data === false
 					? m.dashboard_no_data_yet()
@@ -170,58 +170,60 @@
 			rowActionsHeader="Actions"
 		>
 			{#snippet cell(row: IDevice, col: CwColumnDef<IDevice>, defaultValue: string)}
-				{#if col.key === 'created_at'}
-					<div
-						class="dashboard-device-table__cell"
-						class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
-					>
-						<AppStatusDot
-							class="dashboard-device-table__status-dot"
-							size={isOffline(row) ? 'lg' : 'md'}
-							status={isOffline(row) ? 'offline' : 'online'}
-						/>
-						{#if row.has_primary_data === false}
-							<span>{m.dashboard_no_data_yet()}</span>
-						{:else}
-							<CwDuration
-								from={row.created_at}
-								alarmAfterMinutes={10.3}
-								alarmCallback={() => void loadSingleDevice(row)}
+				<div class="text-xl">
+					{#if col.key === 'created_at'}
+						<div
+							class="dashboard-device-table__cell"
+							class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
+						>
+							<AppStatusDot
+								class="dashboard-device-table__status-dot"
+								size={isOffline(row) ? 'lg' : 'md'}
+								status={isOffline(row) ? 'offline' : 'online'}
 							/>
-						{/if}
-					</div>
-				{:else if (col.key === 'name' || col.key === 'location_name') && app.privacyModeEnabled}
-					<div class="dashboard-device-table__cell">
-						<span class="text-2xl">• • • • • • • •</span>
-					</div>
-				{:else}
-					<div
-						class="dashboard-device-table__cell"
-						class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
-					>
-						{#if col.key === 'soil_temperature_c'}
-							{getMetricDisplayValue(row.soil_temperature_c)}
-						{:else if col.key === 'temperature_c'}
-							{getMetricDisplayValue(row.temperature_c)}
-						{:else if col.key === 'humidity'}
-							{getMetricDisplayValue(row.humidity)}
-						{:else if col.key === 'soil_humidity'}
-							{getMetricDisplayValue(row.soil_humidity)}
-						{:else if col.key === 'co2'}
-							{getMetricDisplayValue(row.co2)}
-						{:else if col.key === 'alert_count'}
-							<span class="text-2xl">
-								{#if row.alert_count == null || row.alert_count === 0}
-									<Icon src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} preserveColor />
-								{:else}
-									<Icon src={ALERT_ICON} alt={m.dashboard_active_alert_alt()} preserveColor />
-								{/if}
-							</span>
-						{:else}
-							{defaultValue}
-						{/if}
-					</div>
-				{/if}
+							{#if row.has_primary_data === false}
+								<span>{m.dashboard_no_data_yet()}</span>
+							{:else}
+								<CwDuration
+									from={row.created_at}
+									alarmAfterMinutes={10.3}
+									alarmCallback={() => void loadSingleDevice(row)}
+								/>
+							{/if}
+						</div>
+					{:else if (col.key === 'name' || col.key === 'location_name') && app.privacyModeEnabled}
+						<div class="dashboard-device-table__cell">
+							<span class="text-2xl">• • • • • • • •</span>
+						</div>
+					{:else}
+						<div
+							class="dashboard-device-table__cell"
+							class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
+						>
+							{#if col.key === 'soil_temperature_c'}
+								{getMetricDisplayValue(row.soil_temperature_c)}
+							{:else if col.key === 'temperature_c'}
+								{getMetricDisplayValue(row.temperature_c)}
+							{:else if col.key === 'humidity'}
+								{getMetricDisplayValue(row.humidity)}
+							{:else if col.key === 'soil_humidity'}
+								{getMetricDisplayValue(row.soil_humidity)}
+							{:else if col.key === 'co2'}
+								{getMetricDisplayValue(row.co2)}
+							{:else if col.key === 'alert_count'}
+								<span class="text-2xl">
+									{#if row.alert_count == null || row.alert_count === 0}
+										<Icon src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} preserveColor />
+									{:else}
+										<Icon src={ALERT_ICON} alt={m.dashboard_active_alert_alt()} preserveColor />
+									{/if}
+								</span>
+							{:else}
+								{defaultValue}
+							{/if}
+						</div>
+					{/if}
+				</div>
 			{/snippet}
 
 			{#snippet rowActions(row: IDevice)}

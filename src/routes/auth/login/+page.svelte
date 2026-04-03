@@ -31,6 +31,8 @@
 				return m.auth_login_reason_signed_out();
 			case 'password-reset':
 				return m.auth_login_reason_password_reset();
+			case 'error-recovery':
+				return m.auth_login_reason_error_recovery();
 			default:
 				return null;
 		}

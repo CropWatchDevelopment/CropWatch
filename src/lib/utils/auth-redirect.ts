@@ -1,4 +1,4 @@
-export const LOGIN_REASONS = ['auth-required', 'expired', 'signed-out', 'password-reset'] as const;
+export const LOGIN_REASONS = ['auth-required', 'expired', 'signed-out', 'password-reset', 'error-recovery'] as const;
 
 export type LoginReason = (typeof LOGIN_REASONS)[number];
 
