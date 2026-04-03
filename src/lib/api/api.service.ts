@@ -24,6 +24,8 @@ import type {
 	SensorTimeSeriesPoint,
 	TimeRangeQuery,
 	TrafficDataPoint,
+	TrafficMonthlyQuery,
+	TrafficMonthlyReportDto,
 	TriggeredRulesCountResponse,
 	UpdateLocationRequest,
 	UpdateLocationOwnerRequest,
@@ -119,6 +121,7 @@ const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
 const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air-notes';
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
 const TRAFFIC_ENDPOINT = '/traffic/{dev_eui}';
+const TRAFFIC_MONTHLY_ENDPOINT = '/traffic/{dev_eui}/monthly';
 const WATER_ENDPOINT = '/water/{dev_eui}';
 const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
 const DEVICE_LIST_PAGE_SIZE = 1000;
@@ -504,6 +507,23 @@ export class ApiService {
 				query: {
 					start: toIsoIfDate(query.start),
 					end: toIsoIfDate(query.end),
+					timezone: query.timezone
+				}
+			}
+		);
+	}
+
+	public getTrafficMonthlyReport(
+		devEui: string,
+		query: TrafficMonthlyQuery
+	): Promise<TrafficMonthlyReportDto[]> {
+		return this.request<TrafficMonthlyReportDto[]>(
+			replacePathParams(TRAFFIC_MONTHLY_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'GET',
+				query: {
+					year: query.year,
+					month: query.month,
 					timezone: query.timezone
 				}
 			}

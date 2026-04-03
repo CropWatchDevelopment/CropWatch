@@ -797,5 +797,19 @@
 	"weather_rain": "雨",
 	"weather_snow": "雪",
 	"weather_storm": "嵐",
-	"weather_thunderstorm": "雷雨"
+	"weather_thunderstorm": "雷雨",
+	"display_temperature": "現在の温度",
+	"display_temperature_humidity": "現在の湿度",
+	"stat_min": "最小",
+	"stat_avg": "平均",
+	"stat_max": "最大",
+	"stat_count": "件数",
+	"stat_median": "中央値",
+	"stat_stdDev": "標準偏差",
+	"stat_range": "範囲",
+	"stat_aboveAvg": "平均以上",
+	"stat_belowAvg": "平均以下",
+	"stat_atAvg": "平均",
+	"stat_expand": "展開",
+	"stat_collapse": "折りたたむ"
 }

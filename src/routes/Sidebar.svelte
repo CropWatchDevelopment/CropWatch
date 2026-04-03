@@ -147,7 +147,7 @@
 	{#snippet header()}
 		<div class="app-sidebar__brand">
 			<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-sidebar__brand-mark" />
-			<span class="app-sidebar__brand-name">CropWatch</span>
+			<span class="app-sidebar__brand-name">𝘾𝙧𝙤𝙥𝙒𝙖𝙩𝙘𝙝<sup><small>®</small></sup></span>
 		</div>
 	{/snippet}
 

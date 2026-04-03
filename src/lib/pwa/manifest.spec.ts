@@ -4,7 +4,7 @@ import { buildManifest } from './manifest';
 
 describe('buildManifest', () => {
 	it('builds a root-scoped manifest with installable metadata', () => {
-		const manifest = buildManifest();
+		const manifest = buildManifest('', 'en');
 
 		expect(manifest.id).toBe('/');
 		expect(manifest.scope).toBe('/');

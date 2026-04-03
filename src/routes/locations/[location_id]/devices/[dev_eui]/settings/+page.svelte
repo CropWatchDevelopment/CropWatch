@@ -145,7 +145,7 @@
 			)}
 		class="back-button">&larr; {m.devices_back_to_detail()}</CwButton
 	>
-	<CwCard title={m.devices_settings_title()} subtitle={m.devices_settings_subtitle()} elevated>
+	<CwCard title={m.devices_settings_title()} elevated>
 		<form
 			method="POST"
 			action="?/updateDevice"

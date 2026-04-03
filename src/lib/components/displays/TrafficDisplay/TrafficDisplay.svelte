@@ -255,8 +255,19 @@
 		return '🚦';
 	}
 
+	const METRIC_LABEL_KEYS: Record<string, () => string> = {
+		bicycle_count: () => m.traffic_metric_bicycle_count(),
+		bus_count: () => m.traffic_metric_bus_count(),
+		car_count: () => m.traffic_metric_car_count(),
+		motorcycle_count: () => m.traffic_metric_motorcycle_count(),
+		people_count: () => m.traffic_metric_people_count(),
+		train_count: () => m.traffic_metric_train_count(),
+		truck_count: () => m.traffic_metric_truck_count()
+	};
+
 	function metricLabel(key: string): string {
-		return `${metricEmoji(key)} ${prettifyKey(key)}`;
+		const translated = METRIC_LABEL_KEYS[key];
+		return `${metricEmoji(key)} ${translated ? translated() : prettifyKey(key)}`;
 	}
 
 	function weatherEmoji(code: number | null): string {

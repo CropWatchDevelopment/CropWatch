@@ -147,9 +147,9 @@
 <div class="soil-display">
 	<!-- KPI cards -->
 	<div class="kpi-grid">
-		<CwStatCard title={m.rule_subject_temperature()} stats={temperatureStats} unit="°C" />
+		<CwStatCard title={m.rule_subject_temperature()} stats={temperatureStats} unit="°C" labels={{ clickToExpand: m.stat_expand(), clickToCollapse: m.stat_collapse() }} />
 
-		<CwStatCard title={m.rule_subject_soil_moisture()} stats={soilMoistureStats} unit="%" />
+		<CwStatCard title={m.rule_subject_soil_moisture()} stats={soilMoistureStats} unit="%" labels={{ clickToExpand: m.stat_expand(), clickToCollapse: m.stat_collapse() }} />
 
 		<CwCard title="EC" subtitle={m.display_latest_reading()} elevated>
 			<p class="kpi-value">{latest.ec.toFixed(0)}<span>µS/cm</span></p>

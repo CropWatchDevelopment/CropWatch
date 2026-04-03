@@ -117,6 +117,19 @@ export interface TrafficDataPoint extends SensorTimeSeriesPoint {
 	id: number;
 }
 
+export interface TrafficMonthlyReportDto {
+	traffic_day: string;
+	total_people: number;
+	total_bicycles: number;
+	total_vehicles: number;
+}
+
+export interface TrafficMonthlyQuery {
+	year: number;
+	month: number;
+	timezone?: string;
+}
+
 export interface RuleCriteriaDto {
 	id: number;
 	operator: string;

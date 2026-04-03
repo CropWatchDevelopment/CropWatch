@@ -138,11 +138,7 @@
 </svelte:head>
 
 <div class="create-device-page overflow-y-auto p-4">
-	<CwCard
-		title={m.devices_create_page_title()}
-		subtitle={m.devices_create_page_subtitle({ locationId: locationName })}
-		elevated
-	>
+	<CwCard title={m.devices_create_page_title()} elevated>
 		<form
 			method="POST"
 			class="device-form"
@@ -178,11 +174,6 @@
 			<input type="hidden" name="location_id" value={fields.location_id} />
 
 			<section class="form-section">
-				<div>
-					<h2>{m.devices_identity_section_title()}</h2>
-					<p>{m.devices_identity_section_subtitle()}</p>
-				</div>
-
 				<div class="field-grid">
 					<CwInput
 						name="dev_eui"
@@ -218,22 +209,15 @@
 						bind:value={fields.group}
 					/>
 
-					<CwInput
-						name="upload_interval"
-						type="numeric"
-						label={m.devices_upload_interval_label()}
-						placeholder={m.devices_upload_interval_placeholder()}
-						bind:value={fields.upload_interval}
-					/>
+					<input type="hidden" name="upload_interval" />
 
-					<CwInput label={m.devices_location_id_label()} disabled value={fields.location_id} />
+					<input type="hidden" name="location_id" value={fields.location_id} />
 				</div>
 			</section>
 
 			<section class="form-section">
 				<div>
 					<h2>{m.devices_deployment_section_title()}</h2>
-					<p>{m.devices_deployment_section_subtitle()}</p>
 				</div>
 
 				<div class="field-grid">
@@ -254,15 +238,18 @@
 					/>
 
 					<div class="field">
-						<span class="field-label">{m.devices_installed_at_label()}</span>
-						<CwDateTimeRangePicker
-							name="installed_at"
-							mode="single"
-							granularity="day"
-							maxDate={new Date()}
-							placeholder={m.devices_installed_at_placeholder()}
-							bind:value={installedAt}
-						/>
+						<div>
+							<h2>{m.devices_installed_at_label()}</h2>
+
+							<CwDateTimeRangePicker
+								name="installed_at"
+								mode="single"
+								granularity="day"
+								maxDate={new Date()}
+								placeholder={m.devices_installed_at_placeholder()}
+								bind:value={installedAt}
+							/>
+						</div>
 					</div>
 				</div>
 			</section>

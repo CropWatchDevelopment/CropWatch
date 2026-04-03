@@ -16,15 +16,18 @@
 	} from './device-cards';
 	import { listDashboardDevices, type DashboardDeviceFilters } from './device-table';
 
+	export type CardLayout = 'grid' | 'masonry';
+
 	interface Props {
 		filters: DashboardDeviceFilters;
+		cardLayout?: CardLayout;
 	}
 
 	const PHONE_BREAKPOINT_PX = 768;
 	const SCROLL_CONTAINER_SELECTOR = '[data-dashboard-device-card-scroll="true"]';
 	const PREFETCH_ROOT_MARGIN = '0px 0px 45% 0px';
 
-	let { filters }: Props = $props();
+	let { filters, cardLayout = 'grid' }: Props = $props();
 
 	const app = getAppContext();
 
@@ -255,7 +258,7 @@
 					<p>{m.dashboard_no_matching_locations_body()}</p>
 				</div>
 			{:else}
-				<div class="dashboard-device-cards__grid">
+				<div class="dashboard-device-cards__grid {cardLayout === 'masonry' ? 'dashboard-device-cards__grid--masonry' : 'dashboard-device-cards__grid--equal-rows'}">
 					{#each visibleLocationCards as card, index (card.id)}
 						<div class="dashboard-device-cards__item">
 							<CwSensorCard
@@ -339,10 +342,36 @@
 	}
 
 	.dashboard-device-cards__grid {
+		gap: 0.5rem;
+	}
+
+	/* ── Equal-height rows (default grid) ── */
+	.dashboard-device-cards__grid--equal-rows {
 		display: grid;
-		gap: 1rem;
 		grid-template-columns: minmax(0, 1fr);
 		align-content: start;
+		align-items: stretch;
+	}
+
+	.dashboard-device-cards__grid--equal-rows .dashboard-device-cards__item {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.dashboard-device-cards__grid--equal-rows :global(.dashboard-device-cards__sensor-card.cw-sensor-card) {
+		flex: 1;
+	}
+
+	/* ── Masonry / mosaic layout ── */
+	.dashboard-device-cards__grid--masonry {
+		display: block;
+		columns: 1;
+		column-gap: 0.5rem;
+	}
+
+	.dashboard-device-cards__grid--masonry .dashboard-device-cards__item {
+		break-inside: avoid;
+		margin-bottom: 0.5rem;
 	}
 
 	.dashboard-device-cards__item {
@@ -369,8 +398,12 @@
 			padding-inline: 1.5rem;
 		}
 
-		.dashboard-device-cards__grid {
-			grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+		.dashboard-device-cards__grid--equal-rows {
+			grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+		}
+
+		.dashboard-device-cards__grid--masonry {
+			columns: auto 19rem;
 		}
 	}
 </style>

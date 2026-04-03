@@ -42,6 +42,7 @@
 	const app = getAppContext();
 
 	const columns: CwColumnDef<IDevice>[] = [
+		{ key: 'alert_count', header: m.dashboard_column_alerts(), width: '5rem', sortable: true },
 		{ key: 'name', header: m.dashboard_column_device_name(), width: '16rem', sortable: true },
 		{
 			key: 'temperature_c',
@@ -64,7 +65,6 @@
 			sortable: true
 		},
 		{ key: 'location_name', header: m.dashboard_column_location(), sortable: true },
-		{ key: 'alert_count', header: m.dashboard_column_alerts(), width: '8rem', sortable: true },
 		{
 			key: 'created_at',
 			header: m.dashboard_column_last_seen(),

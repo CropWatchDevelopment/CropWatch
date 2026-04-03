@@ -23,7 +23,7 @@
 	"action_later": "Later",
 	"action_not_now": "Not now",
 	"action_remove": "Remove",
-	"action_save_changes": "Save ",
+	"action_save_changes": "Save Changes",
 	"action_saving": "Saving…",
 	"action_try_again": "Try again",
 	"action_view": "View",
@@ -797,5 +797,17 @@
 	"weather_rain": "Rain",
 	"weather_snow": "Snow",
 	"weather_storm": "Storm",
-	"weather_thunderstorm": "Thunderstorm"
+	"weather_thunderstorm": "Thunderstorm",
+	"display_temperature": "Current Temperature",
+	"display_temperature_humidity": "CurreHumidity",
+	"stat_min": "Min",
+	"stat_avg": "Avg",
+	"stat_max": "Max",
+	"stat_count": "Count",
+	"stat_median": "Median",
+	"stat_stdDev": "Std Dev",
+	"stat_range": "Range",
+	"stat_aboveAvg": "Above Avg",
+	"stat_belowAvg": "Below Avg",
+	"stat_atAvg": "At Avg"
 }

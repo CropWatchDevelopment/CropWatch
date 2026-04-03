@@ -12,6 +12,9 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
+	import Icon from '$lib/components/Icon.svelte';
+	import ADD_ICON from '$lib/images/icons/add.svg';
+
 
 	interface SettingsPageData {
 		locationName: string;
@@ -43,10 +46,9 @@
 	}
 </script>
 
-<div class="settings-page">
+<div class="settings-page py-4">
 	<CwCard
 		title={m.locations_add_user_permissions_title({ name: data.locationName })}
-		subtitle={m.locations_add_user_permissions_subtitle()}
 		elevated
 	>
 		<form
@@ -107,6 +109,7 @@
 					loading={submitting}
 					disabled={submitting || !newUserEmail.trim()}
 				>
+					<Icon src={ADD_ICON} alt="create new user" />
 					{m.locations_add_permission()}
 				</CwButton>
 			</div>
@@ -115,10 +118,6 @@
 </div>
 
 <style>
-	.settings-page {
-		padding: 1rem;
-	}
-
 	.permissions-form {
 		display: flex;
 		flex-direction: column;

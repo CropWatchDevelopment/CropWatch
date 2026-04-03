@@ -8,6 +8,8 @@
 	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import NO_ICON from '$lib/images/icons/no.svg';
+	import SAVE_ICON from '$lib/images/icons/save.svg';
 
 	type NotesCreateDialogProps = {
 		row: AirRow;
@@ -104,12 +106,6 @@
 	onclose={() => (open = false)}
 	title={m.display_add_note_title({ createdAt: formatDateTime(row.created_at) })}
 >
-	<p style="margin-bottom: 1rem;">
-		{m.display_add_note_body({
-			createdAt: formatDateTime(row.created_at),
-			temperature: row.temperature_c.toFixed(1)
-		})}
-	</p>
 
 	<CwTextArea
 		required
@@ -118,21 +114,24 @@
 		placeholder={m.display_enter_note_here()}
 		style="width: 100%; height: 150px; padding: 0.5rem; font-size: 1rem;"
 		bind:value={noteText}
+		maxlength={500}
 	></CwTextArea>
-	<p>{noteText.length}/300</p>
+	<p>{noteText.length}/500</p>
 
 	{#snippet actions()}
+		<CwButton variant="secondary" disabled={saving} onclick={() => (open = false)}>
+			<Icon src={NO_ICON} alt={m.action_cancel()} />
+			{m.action_cancel()}
+		</CwButton>
 		<CwButton
 			variant="primary"
 			loading={saving}
 			disabled={saving || noteText.trim().length === 0}
 			onclick={() => handleSaveNote()}
 		>
+		<Icon src={SAVE_ICON} alt={m.action_save_changes()} />
 			{m.display_save_note()}
 		</CwButton>
-		<CwButton variant="secondary" disabled={saving} onclick={() => (open = false)}
-			>{m.action_cancel()}</CwButton
-		>
 	{/snippet}
 </CwDialog>
 

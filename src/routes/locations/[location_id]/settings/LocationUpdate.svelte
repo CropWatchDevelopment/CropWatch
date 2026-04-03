@@ -37,7 +37,7 @@
 </script>
 
 <div class="settings-page">
-	<CwCard title={m.locations_settings_title()} subtitle={m.locations_settings_subtitle()} elevated>
+	<CwCard title={m.locations_settings_title()} elevated>
 		<form
 			method="POST"
 			action="?/updateLocationName"
@@ -95,6 +95,7 @@
 					disabled={!canSubmitLocation}
 				>
 					<Icon src={SAVE_ICON} />
+					{m.action_save_changes()}
 				</CwButton>
 			</div>
 		</form>

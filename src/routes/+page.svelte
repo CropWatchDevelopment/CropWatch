@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import DashboardDeviceTable from '$lib/components/dashboard/DashboardDeviceTable.svelte';
 	import DashboardDeviceCards from '$lib/components/dashboard/DashboardDeviceCards.svelte';
+	import type { CardLayout } from '$lib/components/dashboard/DashboardDeviceCards.svelte';
 	import {
 		countDashboardDevices,
 		getLocationGroupName,
@@ -25,6 +26,7 @@
 	type DashboardView = 'table' | 'sensor-cards';
 
 	const DASHBOARD_VIEW_STORAGE_KEY = 'cropwatch.dashboard.view';
+	const DASHBOARD_CARD_LAYOUT_STORAGE_KEY = 'cropwatch.dashboard.cardLayout';
 	const MOBILE_DASHBOARD_MEDIA_QUERY = '(max-width: 767px)';
 
 	const app = getAppContext();
@@ -72,6 +74,7 @@
 	let activeLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 	let activeLocation = $derived(page.url.searchParams.get('location') ?? '');
 	let dashboardView = $state<DashboardView>('table');
+	let cardLayout = $state<CardLayout>('grid');
 	let dashboardViewReady = $state(!browser);
 	let dashboardFilters = $derived.by(
 		(): DashboardDeviceFilters => ({
@@ -97,12 +100,25 @@
 		}
 	}
 
+	function setCardLayout(layout: CardLayout) {
+		cardLayout = layout;
+
+		if (browser) {
+			window.localStorage.setItem(DASHBOARD_CARD_LAYOUT_STORAGE_KEY, layout);
+		}
+	}
+
 	onMount(() => {
 		const storedDashboardView = window.localStorage.getItem(DASHBOARD_VIEW_STORAGE_KEY);
 		if (storedDashboardView === 'table' || storedDashboardView === 'sensor-cards') {
 			dashboardView = storedDashboardView;
 		} else if (window.matchMedia(MOBILE_DASHBOARD_MEDIA_QUERY).matches) {
 			dashboardView = 'sensor-cards';
+		}
+
+		const storedCardLayout = window.localStorage.getItem(DASHBOARD_CARD_LAYOUT_STORAGE_KEY);
+		if (storedCardLayout === 'grid' || storedCardLayout === 'masonry') {
+			cardLayout = storedCardLayout;
 		}
 
 		dashboardViewReady = true;
@@ -139,6 +155,25 @@
 						<Icon src={SENSOR_CARDS_ICON} alt={m.dashboard_sensor_cards_view()} />
 						{m.dashboard_sensor_cards_view()}
 					</CwButton>
+
+					{#if dashboardView === 'sensor-cards'}
+						<div class="flex items-center gap-1 border-l border-slate-600 pl-2">
+							<CwButton
+								class="px-2 py-1 text-xs"
+								variant={cardLayout === 'grid' ? 'info' : 'secondary'}
+								onclick={() => setCardLayout('grid')}
+							>
+								{m.dashboard_card_layout_grid()}
+							</CwButton>
+							<CwButton
+								class="px-2 py-1 text-xs"
+								variant={cardLayout === 'masonry' ? 'info' : 'secondary'}
+								onclick={() => setCardLayout('masonry')}
+							>
+								{m.dashboard_card_layout_masonry()}
+							</CwButton>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -146,7 +181,7 @@
 
 	{#if dashboardViewReady}
 			{#if dashboardView === 'sensor-cards'}
-				<DashboardDeviceCards filters={dashboardFilters} />
+				<DashboardDeviceCards filters={dashboardFilters} {cardLayout} />
 			{:else}
 				<DashboardDeviceTable filters={dashboardFilters} />
 			{/if}

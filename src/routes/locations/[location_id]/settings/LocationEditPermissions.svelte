@@ -91,37 +91,39 @@
 			{/if}
 		{/snippet}
 		{#snippet rowActions(row: Permission)}
-			{#if editingPermissionId === row.id}
-				<CwButton
-					variant="primary"
-					onclick={() => {
-						savePermissionLevelUpdate(row);
-					}}>{m.action_save_changes()}</CwButton
-				>
-				<CwButton
-					variant="danger"
-					onclick={() => {
-						selectedRow = row;
-						openDeletePermissionDialog = true;
-					}}>{m.action_delete()}</CwButton
-				>
-				<CwButton
-					variant="primary"
-					onclick={() => {
-						selectedRow = null;
-						editingPermissionId = null;
-					}}>{m.action_cancel()}</CwButton
-				>
-			{:else}
-				<CwButton
-					variant="primary"
-					onclick={() => {
-						editingPermissionId = row.id;
-					}}
-				>
-					<Icon src={EDIT_ICON} alt={m.action_edit()} />
-				</CwButton>
-			{/if}
+			<span class="flex flex-row gap-2">
+				{#if editingPermissionId === row.id}
+					<CwButton
+						variant="primary"
+						onclick={() => {
+							savePermissionLevelUpdate(row);
+						}}>{m.action_save_changes()}</CwButton
+					>
+					<CwButton
+						variant="danger"
+						onclick={() => {
+							selectedRow = row;
+							openDeletePermissionDialog = true;
+						}}>{m.action_delete()}</CwButton
+					>
+					<CwButton
+						variant="primary"
+						onclick={() => {
+							selectedRow = null;
+							editingPermissionId = null;
+						}}>{m.action_cancel()}</CwButton
+					>
+				{:else}
+					<CwButton
+						variant="primary"
+						onclick={() => {
+							editingPermissionId = row.id;
+						}}
+					>
+						<Icon src={EDIT_ICON} alt={m.action_edit()} />
+					</CwButton>
+				{/if}
+			</span>
 		{/snippet}
 	</CwDataTable>
 {/key}

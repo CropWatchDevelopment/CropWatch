@@ -11,6 +11,7 @@
 	import { resolveExportTimeZone } from './csvExport';
 	import type { PageProps } from './$types';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
+	import CsvTrafficExportDialog from './csvTrafficExportDialog.svelte';
 
 	type RangeSelection = 'today' | 24 | 48 | 72;
 
@@ -22,7 +23,7 @@
 	type TelemetryRow = Record<string, unknown>;
 	const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 	const DEFAULT_RANGE_SELECTION: RangeSelection = 'today';
-	const MAX_RANGE_RECORDS = 432;
+	const MAX_RANGE_RECORDS = 1500;
 
 	interface RouteState {
 		requestedHistoricalData: TelemetryRow[] | null;
@@ -264,16 +265,18 @@
 		{/snippet}
 		<div class="flex w-full flex-row">
 			<div class="flex-start flex flex-wrap gap-2">
-				{#each getRangeOptions() as ranges (ranges.value)}
-					<CwButton
-						variant={activeRange === ranges.value ? 'primary' : 'secondary'}
-						size="sm"
-						disabled={controlsDisabled}
-						onclick={() => selectRange(ranges.value)}
-					>
-						{ranges.label}
-					</CwButton>
-				{/each}
+				{#if data.device?.cw_device_type.name !== '[CROPWATCH] Nvidia Jetson'}
+					{#each getRangeOptions() as ranges (ranges.value)}
+						<CwButton
+							variant={activeRange === ranges.value ? 'primary' : 'secondary'}
+							size="sm"
+							disabled={controlsDisabled}
+							onclick={() => selectRange(ranges.value)}
+						>
+							{ranges.label}
+						</CwButton>
+					{/each}
+				{/if}
 			</div>
 
 			<span class="flex-1"></span>
@@ -287,12 +290,23 @@
 							timeZone={exportTimeZone}
 							disabled={controlsDisabled}
 						/>
+
+						{#if data.device?.cw_device_type.name === '[CROPWATCH] Nvidia Jetson'}
+							<CsvTrafficExportDialog
+								{authToken}
+								{devEui}
+								{locationName}
+								timeZone={exportTimeZone}
+								disabled={controlsDisabled}
+							/>
+						{/if}
+
 					{/if}
 
 					{#if permissionLevel == 1}
 						<CwButton
 							variant="secondary"
-							size="lg"
+							size="md"
 							disabled={!locationId || !devEui}
 							onclick={() =>
 								goto(

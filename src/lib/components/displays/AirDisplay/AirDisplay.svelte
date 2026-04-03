@@ -262,15 +262,62 @@
 <div class="air-display">
 	<div class="kpi-grid">
 		<CwStatCard
-			title="Temperature"
+			title={m.display_temperature()}
 			stats={latestTemperature}
 			unit="°C"
 			accentColor="var(--cw-danger-500)"
+			labels={{
+				min: m.stat_min(),
+				avg: m.stat_avg(),
+				max: m.stat_max(),
+				count: m.stat_count(),
+				median: m.stat_median(),
+				stdDev: m.stat_stdDev(),
+				range: m.stat_range(),
+				aboveAvg: m.stat_aboveAvg(),
+				belowAvg: m.stat_belowAvg(),
+				atAvg: m.stat_atAvg(),
+				clickToExpand: m.stat_expand(),
+				clickToCollapse: m.stat_collapse()
+			}}
 		/>
-		<CwStatCard title="Humidity" stats={latestHumidity} unit="%" accentColor="var(--cw-info-500)" />
+		<CwStatCard
+			title={m.display_temperature_humidity()}
+			stats={latestHumidity}
+			unit="%"
+			accentColor="var(--cw-info-500)"
+			labels={{
+				min: m.stat_min(),
+				avg: m.stat_avg(),
+				max: m.stat_max(),
+				count: m.stat_count(),
+				median: m.stat_median(),
+				stdDev: m.stat_stdDev(),
+				range: m.stat_range(),
+				aboveAvg: m.stat_aboveAvg(),
+				belowAvg: m.stat_belowAvg(),
+				atAvg: m.stat_atAvg(),
+				clickToExpand: m.stat_expand(),
+				clickToCollapse: m.stat_collapse()
+			}}
+		/>
 		{#if hasCo2}
 			<CwStatCard
 				title="CO₂"
+				labels={{
+					min: m.stat_min(),
+					avg: m.stat_avg(),
+					max: m.stat_max(),
+					count: m.stat_count(),
+					median: m.stat_median(),
+					stdDev: m.stat_stdDev(),
+					range: m.stat_range(),
+					aboveAvg: m.stat_aboveAvg(),
+					belowAvg: m.stat_belowAvg(),
+					atAvg: m.stat_atAvg(),
+					clickToExpand: m.stat_expand(),
+					clickToCollapse: m.stat_collapse()
+				}}
 				stats={{
 					min: historicalData.reduce((min, row) => Math.min(min, Number(row.co2) || 0), Infinity),
 					max: historicalData.reduce((max, row) => Math.max(max, Number(row.co2) || 0), -Infinity),
