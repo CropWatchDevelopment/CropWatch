@@ -253,7 +253,6 @@
 
 	<CwCard
 		title={m.devices_sensor_certificates_title()}
-		subtitle={m.devices_sensor_certificates_subtitle()}
 		elevated
 	>
 		{#if !hasSensorCertificates}
@@ -347,7 +346,6 @@
 
 	<CwCard
 		title={m.devices_owner_permissions_title()}
-		subtitle={m.devices_owner_permissions_subtitle()}
 		elevated
 	>
 		{#if permissionRows.length === 0}

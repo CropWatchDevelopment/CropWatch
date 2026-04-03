@@ -12,10 +12,7 @@
 </script>
 
 <CwCard
-	title={m.reports_create_schedules_title()}
-	subtitle={m.reports_create_schedules_subtitle()}
-	elevated
->
+	title={m.reports_create_schedules_title()} elevated>
 	<AppFormStack padded>
 		{#if schedules.length === 0}
 			<AppNotice tone="neutral">

@@ -825,7 +825,6 @@
 
 			<CwCard
 				title={m.reports_create_alerts_title()}
-				subtitle={m.reports_create_alerts_subtitle()}
 				elevated
 			>
 				<AppFormStack padded>

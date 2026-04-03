@@ -136,7 +136,6 @@
 	{#if open}
 		<CwDataTable
 			columns={[
-				{ key: 'id', header: 'ID' },
 				{ key: 'name', header: 'Name' },
 				{ key: 'created_at', header: m.reports_created_at() }
 				// { key: 'dev_eui', header: 'Dev EUI' },

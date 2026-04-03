@@ -389,7 +389,6 @@
 
 		<CwCard
 			title={m.display_telemetry_table()}
-			subtitle={m.display_searchable_sortable_data()}
 			elevated
 		>
 			{#key tableKey}

@@ -121,7 +121,6 @@
 <div class="location-page overflow-y-scroll">
 	<CwCard
 		title={m.locations_location_title({ name: locationLabel })}
-		subtitle={m.locations_devices_for_location()}
 		elevated
 	>
 		<CwDataTable

@@ -175,7 +175,7 @@
 		</div>
 
 		<!-- ── Step 1 — Basic Info ─────────────────────────────────────────── -->
-		<CwCard title={m.rules_step_1_title()} subtitle={m.rules_step_1_subtitle()}>
+		<CwCard title={m.rules_step_1_title()}>
 			<AppFormStack padded>
 				<CwInput
 					label={m.rules_rule_name()}
@@ -209,7 +209,7 @@
 		</CwCard>
 
 		<!-- ── Step 2 — Device Selection ───────────────────────────────────── -->
-		<CwCard title={m.rules_step_2_title()} subtitle={m.rules_step_2_subtitle()}>
+		<CwCard title={m.rules_step_2_title()}>
 			<AppFormStack padded>
 				{#if deviceOptions.length === 0}
 					<AppNotice tone="neutral">
@@ -238,7 +238,7 @@
 		</CwCard>
 
 		<!-- ── Step 3 — Criteria ───────────────────────────────────────────── -->
-		<CwCard title={m.rules_step_3_title()} subtitle={m.rules_step_3_subtitle()}>
+		<CwCard title={m.rules_step_3_title()}>
 			<AppFormStack padded>
 				{#each criteria as criterion, idx (criterion.id)}
 					<div class="rules-criterion">
@@ -294,7 +294,7 @@
 		</CwCard>
 
 		<!-- ── Preview & Submit ────────────────────────────────────────────── -->
-		<CwCard title={m.rules_step_4_title()} subtitle={m.rules_step_4_subtitle()}>
+		<CwCard title={m.rules_step_4_title()}>
 			<AppFormStack padded>
 				{#if isFormValid}
 					<AppNotice title={m.rules_rule_summary()} tone="info">

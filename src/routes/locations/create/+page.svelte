@@ -31,7 +31,7 @@
 </script>
 
 <div class="create-location-page">
-	<CwCard title={m.locations_create_title()} subtitle={m.locations_create_subtitle()} elevated>
+	<CwCard title={m.locations_create_title()} elevated>
 		<form
 			method="POST"
 			use:enhance={() => {

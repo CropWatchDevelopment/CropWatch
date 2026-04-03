@@ -35,9 +35,7 @@
 	}
 
 	.app-page__shell {
-		width: min(100%, var(--app-page-max-width));
 		min-width: 0;
-		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
 		gap: var(--cw-space-4);

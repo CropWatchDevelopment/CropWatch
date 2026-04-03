@@ -49,7 +49,7 @@
 	&larr; {m.action_back_to_dashboard()}
 </CwButton>
 <div class="locations-page overflow-y-scroll">
-	<CwCard title={m.locations_all_title()} subtitle={m.locations_all_subtitle()} elevated>
+	<CwCard title={m.locations_all_title()} elevated>
 		<CwDataTable
 			{columns}
 			{loadData}

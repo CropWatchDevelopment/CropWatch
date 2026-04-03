@@ -369,7 +369,6 @@
 
 			<CwCard
 				title={m.billing_available_products()}
-				subtitle={m.billing_available_products_subtitle()}
 				elevated
 			>
 				<p class="billing-kpi__value">{formatNumber(products.length)}</p>

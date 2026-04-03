@@ -224,6 +224,7 @@
 	.app-sidebar__brand-name {
 		font-size: 1.125rem;
 		font-weight: var(--cw-font-semibold);
+		color: white;
 	}
 
 	:global(.cw-sidenav__above-content) {

@@ -32,23 +32,22 @@
 >
 	{#snippet logo()}
 		{#if mode === 'mini'}
-			<div class="app-header__brand">
+			<!-- <div class="app-header__brand">
 				<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-header__brand-mark" />
 				<span class="app-header__brand-name">CropWatch</span>
+			</div> -->
+			<div class="app-header__brand">
+				<img
+					src={CROPWATCH_LOGO}
+					alt="CropWatch Logo"
+					style="width:1.5rem;height:1.5rem"
+				/>
+				<span class="app-header__brand-name">𝘾𝙧𝙤𝙥𝙒𝙖𝙩𝙘𝙝® UI</span>
 			</div>
 		{/if}
 	{/snippet}
 
 	{#snippet actions()}
-		<!-- {#if app.session?.email.endsWith('@cropwatch.io')}
-			<CwSwitch
-				class="mr-20"
-				label={m.header_privacy_mode()}
-				onchange={(event: boolean) => {
-					app.privacyModeEnabled = event;
-				}}
-			/>
-		{/if} -->
 		<LanguageSwitcher compact class="mr-3" />
 		<CwThemePicker />
 		<CwProfileMenu
@@ -75,20 +74,11 @@
 </CwHeader>
 
 <style>
-	:global(.cw-header.app-header) {
-		background: var(--cw-sidenav-bg);
-	}
-
 	.app-header__brand {
 		display: flex;
 		align-items: center;
 		gap: var(--cw-space-2);
-		color: var(--cw-text-primary);
-	}
-
-	.app-header__brand-mark {
-		width: 2rem;
-		height: 2rem;
+		color: white;
 	}
 
 	.app-header__brand-name {

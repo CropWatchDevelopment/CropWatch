@@ -22,10 +22,7 @@
 </script>
 
 <CwCard
-	title={m.reports_create_recipients_title()}
-	subtitle={m.reports_create_recipients_subtitle()}
-	elevated
->
+	title={m.reports_create_recipients_title()} elevated>
 	<AppFormStack padded>
 		<div class="report-section-toolbar">
 			<p class="report-section-copy">{m.reports_create_recipients_copy()}</p>
