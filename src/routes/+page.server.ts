@@ -2,6 +2,7 @@ import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import type { DevicePrimaryDataDto, LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
 import {
+	buildDeviceTypeLookup,
 	mapDashboardDeviceMetadataToDevice,
 	mapDashboardPrimaryDataToDevice,
 	mergeDashboardDevices
@@ -127,6 +128,7 @@ async function loadDashboardPayload(apiServiceInstance: ApiService) {
 	const [
 		latestPrimaryDataResult,
 		devicesResult,
+		deviceTypesResult,
 		triggeredRules,
 		triggeredRulesCount,
 		deviceStatusesResult,
@@ -137,6 +139,10 @@ async function loadDashboardPayload(apiServiceInstance: ApiService) {
 		loadDashboardLatestPrimaryData(apiServiceInstance),
 		apiServiceInstance
 			.getAllDevices()
+			.then((value) => ({ value: value ?? [], error: null as Record<string, unknown> | null }))
+			.catch((error) => ({ value: [], error: serializeError(error) })),
+		apiServiceInstance
+			.getDeviceTypes()
 			.then((value) => ({ value: value ?? [], error: null as Record<string, unknown> | null }))
 			.catch((error) => ({ value: [], error: serializeError(error) })),
 		apiServiceInstance.getTriggeredRules().catch(() => []),
@@ -168,7 +174,8 @@ async function loadDashboardPayload(apiServiceInstance: ApiService) {
 	const locations = locationsResult.value;
 	const locationGroups = normalizeDashboardFilterValues(locationGroupsResult.value);
 
-	// ── Build merged device list ──
+	// ── Build device type lookup from dedicated endpoint ──
+	const deviceTypeLookup = buildDeviceTypeLookup(deviceTypesResult.value);
 	const metadataDevices = allDevices.map((device) => mapDashboardDeviceMetadataToDevice(device));
 	const primaryDataDevices = latestPrimaryData.map((device) => mapDashboardPrimaryDataToDevice(device));
 
@@ -183,6 +190,7 @@ async function loadDashboardPayload(apiServiceInstance: ApiService) {
 
 	return {
 		devices,
+		deviceTypeLookup,
 		totalDeviceCount: devices.length,
 		triggeredRules,
 		triggeredRulesCount,

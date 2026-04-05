@@ -21,6 +21,7 @@
 	import type { IJWT } from '$lib/interfaces/jwt.interface';
 	import type { IDevice } from '$lib/interfaces/device.interface';
 	import type { LocationDto, RuleDto, TriggeredRulesCountResponse } from '$lib/api/api.dtos';
+	import type { DeviceTypeLookup } from '$lib/components/dashboard/dashboard-device-data';
 	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
 	import type { Profile } from '$lib/interfaces/profile.interface';
@@ -38,6 +39,7 @@
 		session?: IJWT | null;
 		authToken?: string | null;
 		devices?: IDevice[];
+		deviceTypeLookup?: DeviceTypeLookup;
 		totalDeviceCount?: number;
 		deviceStatuses?: { online: number; offline: number };
 		triggeredRules?: RuleDto[];
@@ -93,6 +95,7 @@
 		const devices = routeData.devices ?? [];
 
 		app.devices = devices;
+		app.deviceTypeLookup = routeData.deviceTypeLookup ?? { byModel: {}, idToModel: {} };
 		app.totalDeviceCount = routeData.totalDeviceCount ?? devices.length;
 		app.deviceStatuses = routeData.deviceStatuses ?? { online: 0, offline: 0 };
 		app.triggeredRules = routeData.triggeredRules ?? [];

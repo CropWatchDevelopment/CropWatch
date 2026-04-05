@@ -854,7 +854,7 @@
 	"weather_storm": "Storm",
 	"weather_thunderstorm": "Thunderstorm",
 	"display_temperature": "Current Temperature",
-	"display_temperature_humidity": "CurreHumidity",
+	"display_temperature_humidity": "Current Humidity",
 	"stat_min": "Min",
 	"stat_avg": "Avg",
 	"stat_max": "Max",

@@ -14,4 +14,9 @@ export interface IDevice {
 	cwloading?: boolean;
 	location_id: number;
 	alert_count?: number;
+
+	/** cw_device_type.id FK – used to look up device-type config */
+	device_type_id?: number;
+	/** Full raw sensor payload so dynamic keys can be resolved */
+	raw_data?: Record<string, unknown>;
 }

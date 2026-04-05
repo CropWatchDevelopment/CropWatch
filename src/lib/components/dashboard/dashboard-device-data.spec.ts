@@ -33,7 +33,8 @@ describe('dashboard-device-data helpers', () => {
 			soil_temperature_c: null,
 			soil_humidity: null,
 			location_id: 17,
-			cwloading: false
+			cwloading: false,
+			device_type_id: undefined
 		});
 	});
 
@@ -84,7 +85,19 @@ describe('dashboard-device-data helpers', () => {
 			soil_temperature_c: null,
 			soil_humidity: null,
 			location_id: 42,
-			cwloading: false
+			cwloading: false,
+			device_type_id: undefined,
+			raw_data: {
+				dev_eui: 'dev-1',
+				name: 'Canopy 1',
+				location_name: 'Zone A',
+				group: 'air',
+				created_at: '2026-03-13T00:00:00.000Z',
+				co2: 914,
+				humidity: 63.2,
+				temperature_c: 24.8,
+				location_id: 42
+			}
 		});
 	});
 

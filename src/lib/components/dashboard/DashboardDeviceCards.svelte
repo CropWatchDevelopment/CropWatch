@@ -47,10 +47,10 @@
 		listDashboardDevices(app.devices ?? [], app.locations ?? [], filters, search)
 	);
 	let locationCards = $derived(
-		buildDashboardLocationSensorCards(filteredDevices, app.locations ?? [])
+		buildDashboardLocationSensorCards(filteredDevices, app.locations ?? [], app.deviceTypeLookup)
 	);
-	let useMobileCardWindow = $derived(viewportWidth === 0 || viewportWidth < PHONE_BREAKPOINT_PX);
-	let enableInfiniteScroll = $derived(viewportWidth > 0 && viewportWidth < PHONE_BREAKPOINT_PX);
+	let useMobileCardWindow = $derived(true);
+	let enableInfiniteScroll = $derived(viewportWidth > 0);
 	let visibleLocationCards = $derived(
 		useMobileCardWindow ? locationCards.slice(0, visibleLocationCount) : locationCards
 	);

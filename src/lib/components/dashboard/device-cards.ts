@@ -1,6 +1,7 @@
 import type { CwSensorCardDetailRow, CwSensorCardDevice } from '@cropwatchdevelopment/cwui';
 import type { LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
+import { resolveDeviceTypeConfig, type DeviceTypeLookup } from './dashboard-device-data';
 
 export const DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES = 10;
 export const DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE = 10;
@@ -29,6 +30,17 @@ function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): 
 	return (duplicateCounts.get(baseLabel) ?? 0) > 1 ? `${baseLabel} (${device.dev_eui})` : baseLabel;
 }
 
+function applyTransform(rawValue: unknown, multiplier?: number | null, divider?: number | null): number {
+	let value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0) || 0;
+	if (multiplier != null && multiplier !== 0) {
+		value *= multiplier;
+	}
+	if (divider != null && divider !== 0) {
+		value /= divider;
+	}
+	return value;
+}
+
 function getDeviceStatus(device: IDevice): 'online' | 'offline' {
 	if (device.has_primary_data === false) {
 		return 'offline';
@@ -40,17 +52,19 @@ function getDeviceStatus(device: IDevice): 'online' | 'offline' {
 		: 'online';
 }
 
-function buildUnavailableDetailRows(label: string): CwSensorCardDetailRow[] {
+function buildUnavailableDetailRows(label: string, typeConfig: DeviceTypeConfig | undefined): CwSensorCardDetailRow[] {
+	const primaryLabel = typeConfig?.primary_data_key ?? 'Temperature';
+	const secondaryLabel = typeConfig?.secondary_data_key ?? 'Humidity';
 	return [
 		{
-			id: `${label}-temperature`,
-			label: 'Temperature',
+			id: `${label}-primary`,
+			label: primaryLabel,
 			value: 'No reading',
 			icon: 'thermo'
 		},
 		{
-			id: `${label}-humidity`,
-			label: 'Humidity',
+			id: `${label}-secondary`,
+			label: secondaryLabel,
 			value: 'No reading',
 			icon: 'drop'
 		},
@@ -85,7 +99,8 @@ function getLocationTitle(
 
 export function buildDashboardLocationSensorCards(
 	devices: IDevice[],
-	locations: LocationDto[]
+	locations: LocationDto[],
+	deviceTypeLookup?: DeviceTypeLookup
 ): DashboardLocationSensorCard[] {
 	const locationsById = new Map(
 		locations.map((location) => [Number(location.location_id), location] as const)
@@ -134,22 +149,39 @@ export function buildDashboardLocationSensorCards(
 				};
 
 				if (device.has_primary_data === false) {
+					const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
 					return {
 						label,
 						primaryValue: 0,
-						primaryUnit: '°C',
+						primaryUnit: typeConfig?.primary_data_notation ?? '°C',
 						status: 'offline',
-						detailRows: buildUnavailableDetailRows(label)
+						detailRows: buildUnavailableDetailRows(label, typeConfig)
 					} satisfies CwSensorCardDevice;
 				}
+
+				const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
+				const primaryKey = typeConfig?.primary_data_key;
+				const secondaryKey = typeConfig?.secondary_data_key;
+
+				// Resolve primary value: try dynamic key from raw_data, fall back to temperature_c
+				const rawPrimary = primaryKey && device.raw_data?.[primaryKey] !== undefined
+					? device.raw_data[primaryKey]
+					: device.temperature_c;
+				const primaryValue = applyTransform(rawPrimary, typeConfig?.primary_multiplier, typeConfig?.primary_divider);
+
+				// Resolve secondary value: try dynamic key from raw_data, fall back to humidity
+				const rawSecondary = secondaryKey && device.raw_data?.[secondaryKey] !== undefined
+					? device.raw_data[secondaryKey]
+					: device.humidity;
+				const secondaryValue = applyTransform(rawSecondary, typeConfig?.secondary_multiplier, typeConfig?.secondary_divider);
 
 				const staleness = Date.now() - new Date(device.created_at).getTime();
 				return {
 					label,
-					primaryValue: Number(device.temperature_c ?? 0),
-					primaryUnit: '°C',
-					secondaryValue: Number(device.humidity ?? 0),
-					secondaryUnit: '%',
+					primaryValue,
+					primaryUnit: typeConfig?.primary_data_notation ?? '°C',
+					secondaryValue,
+					secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
 					status: getDeviceStatus(device),
 					lastUpdated: device.created_at,
 					expectedUpdateAfterMinutes:

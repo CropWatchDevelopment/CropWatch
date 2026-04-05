@@ -51,6 +51,8 @@
 	function syncDashboardContext(data: Record<string, unknown>) {
 		app.accessToken = ((page.data as Record<string, unknown>).authToken as string) ?? undefined;
 		app.devices = (data.devices as typeof app.devices) ?? [];
+		app.deviceTypeLookup =
+			(data.deviceTypeLookup as typeof app.deviceTypeLookup) ?? { byModel: {}, idToModel: {} };
 		app.totalDeviceCount = (data.totalDeviceCount as number) ?? app.devices.length;
 		app.deviceStatuses = (data.deviceStatuses as typeof app.deviceStatuses) ?? {
 			online: 0,
