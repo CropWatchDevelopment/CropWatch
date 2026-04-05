@@ -85,6 +85,7 @@ export interface PaginationQuery {
 }
 
 export interface DeviceListQuery extends PaginationQuery {
+	dev_eui?: string;
 	group?: string;
 	name?: string;
 	location?: string;
@@ -97,6 +98,7 @@ export interface DeviceDataWithinRangeQuery extends PaginationQuery {
 }
 
 export interface LatestPrimaryDataQuery extends PaginationQuery {
+	dev_eui?: string;
 	group?: string;
 	locationGroup?: string;
 	location?: string;
@@ -130,6 +132,16 @@ export interface TrafficMonthlyQuery {
 	timezone?: string;
 }
 
+export interface PulseRelayRequest {
+	relay: number;
+	durationSeconds: number;
+}
+
+export interface UpdateRelayRequest {
+	relay: number;
+	targetState: 'on' | 'off';
+}
+
 export interface RuleCriteriaDto {
 	id: number;
 	operator: string;
@@ -141,6 +153,10 @@ export interface RuleCriteriaDto {
 	parent_id?: string | null;
 	reset_value?: number | null;
 	[key: string]: unknown;
+}
+
+export interface RulesQuery {
+	name?: string;
 }
 
 export interface RuleDto {
@@ -281,6 +297,10 @@ export interface CreateReportDataProcessingScheduleRequest {
 	[key: string]: unknown;
 }
 
+export interface ReportsQuery {
+	name?: string;
+}
+
 export interface ReportDto {
 	id: number;
 	report_id: string;
@@ -327,6 +347,10 @@ export interface LocationOwnerDto {
 	permission_level?: Record<string, unknown> | null;
 	user_id: string;
 	[key: string]: unknown;
+}
+
+export interface LocationsQuery {
+	name?: string;
 }
 
 export interface LocationDto {

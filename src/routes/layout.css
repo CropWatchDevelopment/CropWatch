@@ -57,6 +57,9 @@ body {
 	background: var(--cw-bg-base);
 }
 
+/* This hides the reCAPTCHA badge, do not touch it! */
+.grecaptcha-badge { visibility: hidden !important; }
+
 .app-shell__main--standalone {
 	height: 100%;
 }

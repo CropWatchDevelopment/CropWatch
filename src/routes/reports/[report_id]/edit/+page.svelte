@@ -39,6 +39,7 @@
 		ScheduleDraft,
 		SelectOption
 	} from './report-form.types';
+	import { createReportAlertPointsEditorText } from './alert-points-editor-text';
 
 	type ReportForm = {
 		error?: string;
@@ -694,6 +695,7 @@
 	let validationIssues = $derived.by(() =>
 		buildValidationIssues(fields, normalizedSelectedDevEui, alertPointsValue)
 	);
+	let alertPointsEditorText = $derived.by(() => createReportAlertPointsEditorText());
 	let canSubmit = $derived(validationIssues.length === 0);
 </script>
 
@@ -823,13 +825,10 @@
 				onRemove={removeDataProcessingSchedule}
 			/>
 
-			<CwCard
-				title={m.reports_create_alerts_title()}
-				elevated
-			>
+			<CwCard title={m.reports_create_alerts_title()} elevated>
 				<AppFormStack padded>
 					<p class="text-[color:var(--cw-text-secondary)]">{m.reports_create_alerts_copy()}</p>
-					<CwAlertPointsEditor bind:value={alertPointsValue} />
+					<CwAlertPointsEditor bind:value={alertPointsValue} text={alertPointsEditorText} />
 				</AppFormStack>
 			</CwCard>
 

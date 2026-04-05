@@ -261,3 +261,91 @@ describe('ApiService list response normalization', () => {
 		expect(result[1000]?.dev_eui).toBe('dev-1001');
 	});
 });
+
+describe('ApiService relay endpoints', () => {
+	it('uses GET for the latest relay state', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			return createJsonResponse({
+				id: 'relay-row-1',
+				last_update: '2026-04-05T10:00:00.000Z',
+				relay_1: true,
+				relay_2: false
+			});
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.getRelayData('device-123');
+
+		expect(requestedMethod).toBe('GET');
+		expect(requestedUrl).toBe('https://example.com/relay/device-123');
+	});
+
+	it('uses PATCH for manual relay state changes', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+		let requestedBody = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			requestedBody = String(init?.body ?? '');
+			return createJsonResponse(null);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.updateRelay('device-123', {
+			relay: 1,
+			targetState: 'on'
+		});
+
+		expect(requestedMethod).toBe('PATCH');
+		expect(requestedUrl).toBe('https://example.com/relay/device-123');
+		expect(JSON.parse(requestedBody)).toEqual({
+			relay: 1,
+			targetState: 'on'
+		});
+	});
+
+	it('uses POST for relay pulse commands', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+		let requestedBody = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			requestedBody = String(init?.body ?? '');
+			return createJsonResponse(null);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.pulseRelay('device-123', {
+			durationSeconds: 30,
+			relay: 2
+		});
+
+		expect(requestedMethod).toBe('POST');
+		expect(requestedUrl).toBe('https://example.com/relay/device-123/pulse');
+		expect(JSON.parse(requestedBody)).toEqual({
+			durationSeconds: 30,
+			relay: 2
+		});
+	});
+});

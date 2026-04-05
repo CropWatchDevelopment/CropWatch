@@ -28,8 +28,7 @@
 		type DashboardDeviceFilters,
 		DASHBOARD_DEVICE_OVERSCAN,
 		DASHBOARD_DEVICE_PAGE_SIZE_OPTIONS,
-		DASHBOARD_DEVICE_ROW_HEIGHT,
-		queryDashboardDevices
+		DASHBOARD_DEVICE_ROW_HEIGHT
 	} from './device-table';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 
@@ -109,7 +108,55 @@
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
-		return queryDashboardDevices(app.devices ?? [], app.locations ?? [], filters, query);
+		if (!app.accessToken) {
+			return { rows: [], total: 0 };
+		}
+
+		const api = new ApiService({ authToken: app.accessToken });
+		const skip = (query.page - 1) * query.pageSize;
+		const take = query.pageSize;
+		const search = query.search?.trim() || '';
+		const filterParams = {
+			group: filters.group || undefined,
+			locationGroup: filters.locationGroup || undefined,
+			location: filters.location || undefined
+		};
+
+		const result = await api.getLatestPrimaryDeviceData(
+			{ ...filterParams, name: search || undefined, skip, take },
+			{ signal: query.signal }
+		);
+
+		let devices = (result.data ?? []).map(mapDashboardPrimaryDataToDevice);
+		const total = typeof result.total === 'number' ? result.total : devices.length;
+
+		if (query.sort) {
+			devices = sortDevices(devices, query.sort.column, query.sort.direction);
+		}
+
+		return { rows: devices, total };
+	}
+
+	function sortDevices(devices: IDevice[], column: string, direction: 'asc' | 'desc'): IDevice[] {
+		const numericColumns = new Set(['co2', 'humidity', 'temperature_c', 'soil_temperature_c', 'soil_humidity', 'alert_count']);
+		const dir = direction === 'asc' ? 1 : -1;
+
+		return [...devices].sort((a, b) => {
+			const aVal = column === 'created_at'
+				? new Date(a.created_at).getTime()
+				: (a as unknown as Record<string, unknown>)[column];
+			const bVal = column === 'created_at'
+				? new Date(b.created_at).getTime()
+				: (b as unknown as Record<string, unknown>)[column];
+
+			if (numericColumns.has(column) || column === 'created_at') {
+				const aNum = typeof aVal === 'number' && Number.isFinite(aVal) ? aVal : Number.NEGATIVE_INFINITY;
+				const bNum = typeof bVal === 'number' && Number.isFinite(bVal) ? bVal : Number.NEGATIVE_INFINITY;
+				return (aNum - bNum) * dir;
+			}
+
+			return String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+		});
 	}
 
 	async function loadSingleDevice(row: IDevice) {

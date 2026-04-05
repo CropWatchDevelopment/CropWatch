@@ -9,6 +9,7 @@
 		CwSeparator
 	} from '@cropwatchdevelopment/cwui';
 	import { asset, resolve } from '$app/paths';
+	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
 	import type { PageProps } from './$types';
 	import './settings-style.css';
 	import { goto } from '$app/navigation';
@@ -48,6 +49,7 @@
 	let ownerSubmittingByKey = $state<Record<string, boolean>>({});
 	let deviceName = $derived(data.deviceName ?? '');
 	let deviceGroup = $derived(data.deviceGroup ?? '');
+	let ttiName = $derived(data.ttiName ?? '');
 	let location_id = $derived(String(data.location_id ?? ''));
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
 	let sensorOneCertificate = $derived(
@@ -57,7 +59,7 @@
 		sensorCertificates.find((target) => target.key === 'sensor2') ?? null
 	);
 	let hasSensorCertificates = $derived(Boolean(sensorOneCertificate || sensorTwoCertificate));
-	let permissionRows = $state(createOwnerRows(data.deviceOwners ?? []));
+	let permissionRows = $derived(createOwnerRows(data.deviceOwners ?? []));
 	const sensorTwoCertificateDownloadPath = asset(
 		'/files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf'
 	);
@@ -94,6 +96,17 @@
 		return EMAIL_PATTERN.test(row.email) && VALID_PERMISSION_LEVELS.has(permissionLevel);
 	}
 
+	function updateOwnerPermissionLevel(key: string, permissionLevel: string) {
+		permissionRows = permissionRows.map((row) =>
+			row.key === key
+				? {
+						...row,
+						permissionLevel
+					}
+				: row
+		);
+	}
+
 	let actionForm = $derived((form ?? null) as FormPayload);
 	let deviceForm = $derived(actionForm?.action === 'updateDevice' ? actionForm : null);
 	let deviceNameValue = $derived(deviceName.trim());
@@ -110,14 +123,22 @@
 			? m.devices_device_group_length({ max: String(DEVICE_GROUP_MAX_LENGTH) })
 			: (deviceForm?.fieldErrors?.group ?? '')
 	);
+	let ttiNameValue = $derived(ttiName.trim().toLowerCase());
+	let ttiNameError = $derived(deviceForm?.fieldErrors?.tti_name ?? '');
 	let locationError = $derived(deviceForm?.fieldErrors?.location_id ?? '');
 	let deviceDirty = $derived(
 		deviceNameValue !== (data.deviceName ?? '').trim() ||
 			deviceGroupValue !== (data.deviceGroup ?? '').trim() ||
+			ttiNameValue !== (data.ttiName ?? '').trim().toLowerCase() ||
 			location_id !== String(data.location_id ?? '')
 	);
 	let canSubmitDevice = $derived(
-		!deviceSubmitting && deviceDirty && !deviceNameError && !deviceGroupError && !locationError
+		!deviceSubmitting &&
+			deviceDirty &&
+			!deviceNameError &&
+			!deviceGroupError &&
+			!ttiNameError &&
+			!locationError
 	);
 
 	const permissionOptions = getPermissionLevelOptions();
@@ -218,6 +239,22 @@
 				</div>
 
 				<div class="field-stack">
+					<CwInput
+						label={m.devices_tti_device_id_label()}
+						name="tti_name"
+						required={false}
+						maxlength={TTI_DEVICE_ID_MAX_LENGTH}
+						placeholder={m.devices_tti_device_id_placeholder()}
+						bind:value={ttiName}
+						error={ttiNameError || undefined}
+					/>
+					<input type="hidden" name="tti_name" value={ttiNameValue} />
+					{#if ttiNameError}
+						<p class="field-error">{ttiNameError}</p>
+					{/if}
+				</div>
+
+				<div class="field-stack">
 					<CwDropdown
 						label={m.common_location()}
 						name="location_id"
@@ -251,10 +288,7 @@
 		</form>
 	</CwCard>
 
-	<CwCard
-		title={m.devices_sensor_certificates_title()}
-		elevated
-	>
+	<CwCard title={m.devices_sensor_certificates_title()} elevated>
 		{#if !hasSensorCertificates}
 			<p class="text-muted text-xs">{m.devices_no_sensor_serial()}</p>
 		{:else}
@@ -344,10 +378,7 @@
 		{/if}
 	</CwCard>
 
-	<CwCard
-		title={m.devices_owner_permissions_title()}
-		elevated
-	>
+	<CwCard title={m.devices_owner_permissions_title()} elevated>
 		{#if permissionRows.length === 0}
 			<p class="text-muted text-xs">{m.devices_no_device_owners()}</p>
 		{:else}
@@ -398,7 +429,10 @@
 											<CwDropdown
 												label={m.locations_permission_level()}
 												options={permissionOptions}
-												bind:value={row.permissionLevel}
+												bind:value={
+													() => row.permissionLevel,
+													(value) => updateOwnerPermissionLevel(row.key, String(value ?? ''))
+												}
 												error={ownerForm?.fieldErrors?.permissionLevel ||
 													(!isOwnerRowValid(row)
 														? m.devices_choose_valid_permission_level()

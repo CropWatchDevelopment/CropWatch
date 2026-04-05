@@ -9,7 +9,7 @@ import {
 import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
 import type { PageServerLoad } from './$types';
 
-const LATEST_PRIMARY_DATA_PAGE_SIZE = 250;
+const LATEST_PRIMARY_DATA_PAGE_SIZE = 25;
 function serializeError(error: unknown): Record<string, unknown> {
 	if (error instanceof ApiServiceError) {
 		return {
@@ -168,21 +168,11 @@ async function loadDashboardPayload(apiServiceInstance: ApiService) {
 	const locations = locationsResult.value;
 	const locationGroups = normalizeDashboardFilterValues(locationGroupsResult.value);
 
-	// ── Diagnostic: remove after debugging ──
+	// ── Build merged device list ──
 	const metadataDevices = allDevices.map((device) => mapDashboardDeviceMetadataToDevice(device));
 	const primaryDataDevices = latestPrimaryData.map((device) => mapDashboardPrimaryDataToDevice(device));
-	console.info('[dashboard-load] metadata devices:', metadataDevices.length, 'sample dev_euis:', metadataDevices.slice(0, 3).map(d => d.dev_eui));
-	console.info('[dashboard-load] primary data devices:', primaryDataDevices.length, 'sample dev_euis:', primaryDataDevices.slice(0, 3).map(d => d.dev_eui));
-	console.info('[dashboard-load] primary data error:', latestPrimaryDataResult.error, 'source:', latestPrimaryDataResult.source);
-	if (primaryDataDevices.length > 0) {
-		const sample = primaryDataDevices[0];
-		console.info('[dashboard-load] primary sample:', { dev_eui: sample.dev_eui, has_primary_data: sample.has_primary_data, temperature_c: sample.temperature_c, created_at: sample.created_at });
-	}
 
 	const devices: IDevice[] = mergeDashboardDevices(metadataDevices, primaryDataDevices);
-
-	const mergedWithPrimaryData = devices.filter(d => d.has_primary_data === true).length;
-	console.info('[dashboard-load] merged devices:', devices.length, 'with primary data:', mergedWithPrimaryData);
 
 	const groups = normalizeDashboardFilterValues(devices.map((device) => device.group));
 	const deviceGroups = normalizeDashboardFilterValues(deviceGroupsResult.value);

@@ -155,12 +155,36 @@
 		};
 	});
 
+	let temperatureThreshold = $derived.by(() => {
+		for (const row of rows) {
+			for (const rule of row.alerts) {
+				const criteria = rule.cw_rule_criteria?.find((c) => c.subject === 'temperature');
+				if (criteria) return criteria.trigger_value;
+			}
+		}
+		return undefined;
+	});
+
 	let lineSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
-		rows.map((row) => ({
-			timestamp: row.created_at,
-			created_at: row.created_at,
-			value: row.temperature_c
-		}))
+		rows.map((row) => {
+			const tempAlert = row.alerts.find((rule) =>
+				rule.cw_rule_criteria?.some((c) => c.subject === 'temperature')
+			);
+			return {
+				timestamp: row.created_at,
+				created_at: row.created_at,
+				value: row.temperature_c,
+				...(tempAlert
+					? {
+							alert: {
+								id: String(tempAlert.id),
+								message: tempAlert.name,
+								severity: 'critical' as const
+							}
+						}
+					: {})
+			};
+		})
 	);
 
 	let secondarySeries = $derived<(CwLineChartSecondaryDataPoint & { timestamp: string })[]>(
@@ -360,6 +384,7 @@
 					<CwLineChart
 						data={lineSeries}
 						secondaryData={secondarySeries}
+						threshold={temperatureThreshold}
 						primaryLabel={m.rule_subject_temperature()}
 						secondaryLabel={m.rule_subject_humidity()}
 						primaryUnit="°C"

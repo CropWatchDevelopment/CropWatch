@@ -13,6 +13,7 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import BACK_ICON from '$lib/images/icons/back.svg';
+	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
@@ -209,6 +210,14 @@
 						bind:value={fields.group}
 					/>
 
+					<CwInput
+						name="tti_name"
+						label={m.devices_tti_device_id_label()}
+						maxlength={TTI_DEVICE_ID_MAX_LENGTH}
+						placeholder={m.devices_tti_device_id_placeholder()}
+						bind:value={fields.tti_name}
+					/>
+
 					<input type="hidden" name="upload_interval" />
 
 					<input type="hidden" name="location_id" value={fields.location_id} />
@@ -285,15 +294,6 @@
 		gap: 1.5rem;
 	}
 
-	.form-note {
-		margin: 0;
-		padding: 0.9rem 1rem;
-		border-radius: 0.75rem;
-		background: #f4f7f3;
-		color: #365314;
-		font-size: 0.95rem;
-	}
-
 	.form-error {
 		margin: 0;
 		padding: 0.9rem 1rem;
@@ -316,12 +316,6 @@
 		font-weight: 700;
 	}
 
-	.form-section p {
-		margin: 0;
-		color: #475467;
-		font-size: 0.94rem;
-	}
-
 	.field-grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -332,12 +326,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.45rem;
-	}
-
-	.field-label {
-		font-size: 0.92rem;
-		font-weight: 600;
-		color: #1f2937;
 	}
 
 	.form-actions {

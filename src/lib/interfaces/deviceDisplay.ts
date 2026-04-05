@@ -1,4 +1,9 @@
 import type { Component, SvelteComponent } from 'svelte';
+import type {
+	PendingRelayStates,
+	RelayNumber,
+	RelayTargetState
+} from '$lib/devices/relay-types';
 
 /**
  * Common props contract that every device display component must accept.
@@ -28,6 +33,19 @@ export interface DeviceDisplayProps {
 
 	/** Whether historical data is currently being fetched. */
 	loading: boolean;
+
+	/** Effective permission level for the current user on this device. */
+	permissionLevel: number;
+
+	/** Relay confirmation state keyed by relay number. Relay-only. */
+	pendingRelayStates?: PendingRelayStates;
+
+	/** Relay downlink action callback. Relay-only. */
+	queueRelayCommand?: (
+		relay: RelayNumber,
+		targetState: RelayTargetState,
+		durationSeconds?: number
+	) => Promise<void>;
 
 	/** JWT auth token forwarded for any client-side API calls. */
 	authToken: string | null;

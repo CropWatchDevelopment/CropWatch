@@ -15,18 +15,23 @@ import type {
 	LatestPrimaryDataQuery,
 	ListOrPaginatedResponse,
 	LocationDto,
+	LocationsQuery,
 	LoginRequest,
 	LoginResponse,
 	PaginatedResponse,
 	PaginationQuery,
 	ReportDto,
+	ReportsQuery,
 	RuleDto,
+	RulesQuery,
 	SensorTimeSeriesPoint,
 	TimeRangeQuery,
 	TrafficDataPoint,
 	TrafficMonthlyQuery,
 	TrafficMonthlyReportDto,
 	TriggeredRulesCountResponse,
+	PulseRelayRequest,
+	UpdateRelayRequest,
 	UpdateLocationRequest,
 	UpdateLocationOwnerRequest,
 	UpdateReportRequest,
@@ -71,9 +76,18 @@ interface ApiRequestOptions extends Omit<RequestInit, 'body' | 'headers'> {
 	query?: ApiQuery;
 	authToken?: string | null;
 	responseType?: 'json' | 'text';
+	suppressErrorStatuses?: number[];
 }
 
 type ApiMethodOptions = Pick<ApiRequestOptions, 'signal'>;
+
+interface GetDeviceLatestDataOptions extends ApiMethodOptions {
+	suppressNotFoundError?: boolean;
+}
+
+interface GetRelayDataOptions extends ApiMethodOptions {
+	suppressNotFoundError?: boolean;
+}
 
 const CREATED_AT_KEY = 'created_at';
 const MINUTES_PER_HOUR = 60;
@@ -102,6 +116,8 @@ const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
 const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
 const LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT = '/locations/{id}/permission-level';
 const POWER_ENDPOINT = '/power/{id}';
+const RELAY_ENDPOINT = '/relay/{dev_eui}';
+const RELAY_PULSE_ENDPOINT = '/relay/{dev_eui}/pulse';
 const PAYMENTS_PRODUCTS_ENDPOINT = '/payments/products';
 const PAYMENTS_SUBSCRIPTIONS_ENDPOINT = '/payments/subscriptions';
 const PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT = '/payments/subscriptions/state';
@@ -372,7 +388,15 @@ export class ApiService {
 	}
 
 	private async request<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-		const { body, headers, query, authToken, responseType = 'json', ...requestInit } = options;
+		const {
+			body,
+			headers,
+			query,
+			authToken,
+			responseType = 'json',
+			suppressErrorStatuses,
+			...requestInit
+		} = options;
 		const url = buildUrl(this.baseUrl, path, query);
 
 		const resolvedHeaders = new Headers(headers);
@@ -407,13 +431,15 @@ export class ApiService {
 
 		const payload = await parseResponsePayload(response);
 		if (!response.ok) {
-			console.error('API request failed', {
-				url,
-				method: requestInit.method ?? 'GET',
-				status: response.status,
-				statusText: response.statusText,
-				payload
-			});
+			if (!(suppressErrorStatuses ?? []).includes(response.status)) {
+				console.error('API request failed', {
+					url,
+					method: requestInit.method ?? 'GET',
+					status: response.status,
+					statusText: response.statusText,
+					payload
+				});
+			}
 			if (response.status === 401) {
 				this.clearAuthToken();
 				if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
@@ -499,6 +525,33 @@ export class ApiService {
 		});
 	}
 
+	public getRelayData(
+		devEui: string,
+		options: GetRelayDataOptions = {}
+	): Promise<Record<string, unknown>> {
+		return this.request<Record<string, unknown>>(
+			replacePathParams(RELAY_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'GET',
+				signal: options.signal,
+				suppressErrorStatuses: options.suppressNotFoundError ? [404] : undefined
+			}
+		);
+	}
+
+	public updateRelay(
+		devEui: string,
+		payload: UpdateRelayRequest
+	): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(RELAY_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'PATCH',
+				body: payload
+			}
+		);
+	}
+
 	public getTrafficData(devEui: string, query: TimeRangeQuery = {}): Promise<TrafficDataPoint[]> {
 		return this.request<TrafficDataPoint[]>(
 			replacePathParams(TRAFFIC_ENDPOINT, { dev_eui: devEui }),
@@ -530,6 +583,19 @@ export class ApiService {
 		);
 	}
 
+	public pulseRelay(
+		devEui: string,
+		payload: PulseRelayRequest
+	): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(RELAY_PULSE_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'POST',
+				body: payload
+			}
+		);
+	}
+
 	public async getDevicesPage(query: DeviceListQuery = {}): Promise<PaginatedResponse<DeviceDto>> {
 		const payload = await this.request<
 			DeviceDto[] | PaginatedResponse<DeviceDto> | Record<string, unknown>
@@ -538,6 +604,7 @@ export class ApiService {
 			query: {
 				skip: query.skip,
 				take: query.take,
+				dev_eui: query.dev_eui,
 				group: query.group,
 				name: query.name,
 				location: query.location
@@ -603,10 +670,17 @@ export class ApiService {
 		return normalizePaginatedListResponse<DevicePrimaryDataDto>(payload);
 	}
 
-	public async getAllLocations(): Promise<PaginatedResponse<LocationDto>> {
+	public async getAllLocations(
+		query: LocationsQuery = {}
+	): Promise<PaginatedResponse<LocationDto>> {
 		const payload = await this.request<LocationDto[] | PaginatedResponse<LocationDto>>(
 			LOCATIONS_ENDPOINT,
-			{ method: 'GET' }
+			{
+				method: 'GET',
+				query: {
+					name: query.name
+				}
+			}
 		);
 
 		return normalizePaginatedListResponse<LocationDto>(payload);
@@ -766,6 +840,7 @@ export class ApiService {
 				query: {
 					skip: query.skip,
 					take: query.take,
+					dev_eui: query.dev_eui,
 					'group-by-device-group': query.group,
 					locationGroup: query.locationGroup,
 					location: query.location,
@@ -829,11 +904,16 @@ export class ApiService {
 		);
 	}
 
-	public getDeviceLatestData(devEui: string): Promise<Record<string, unknown>> {
+	public getDeviceLatestData(
+		devEui: string,
+		options: GetDeviceLatestDataOptions = {}
+	): Promise<Record<string, unknown>> {
 		return this.request<Record<string, unknown>>(
 			replacePathParams(DEVICE_LATEST_DATA_ENDPOINT, { dev_eui: devEui }),
 			{
-				method: 'GET'
+				method: 'GET',
+				signal: options.signal,
+				suppressErrorStatuses: options.suppressNotFoundError ? [404] : undefined
 			}
 		);
 	}
@@ -900,8 +980,13 @@ export class ApiService {
 		});
 	}
 
-	public getRules(): Promise<RuleDto[]> {
-		return this.request<RuleDto[]>(RULES_BASE_ENDPOINT, { method: 'GET' });
+	public getRules(query: RulesQuery = {}): Promise<RuleDto[]> {
+		return this.request<RuleDto[]>(RULES_BASE_ENDPOINT, {
+			method: 'GET',
+			query: {
+				name: query.name
+			}
+		});
 	}
 
 	public getTriggeredRules(): Promise<RuleDto[]> {
@@ -942,8 +1027,13 @@ export class ApiService {
 		});
 	}
 
-	public getReports(): Promise<ReportDto[]> {
-		return this.request<ReportDto[]>(REPORTS_BASE_ENDPOINT, { method: 'GET' });
+	public getReports(query: ReportsQuery = {}): Promise<ReportDto[]> {
+		return this.request<ReportDto[]>(REPORTS_BASE_ENDPOINT, {
+			method: 'GET',
+			query: {
+				name: query.name
+			}
+		});
 	}
 
 	public getReportHistory(devEui: string): Promise<PdfFile[]> {

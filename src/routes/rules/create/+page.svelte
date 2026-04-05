@@ -238,7 +238,7 @@
 		</CwCard>
 
 		<!-- ── Step 3 — Criteria ───────────────────────────────────────────── -->
-		<CwCard title={m.rules_step_3_title()}>
+		<CwCard title={m.rules_step_3_title()} subtitle={m.rules_step_3_subtitle()}>
 			<AppFormStack padded>
 				{#each criteria as criterion, idx (criterion.id)}
 					<div class="rules-criterion">

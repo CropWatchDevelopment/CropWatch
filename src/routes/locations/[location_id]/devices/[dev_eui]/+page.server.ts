@@ -3,6 +3,21 @@ import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
+async function loadLatestDeviceDataOrNull(
+	api: ApiService,
+	devEui: string
+): Promise<Record<string, unknown> | null> {
+	try {
+		return await api.getDeviceLatestData(devEui, { suppressNotFoundError: true });
+	} catch (error) {
+		if (error instanceof ApiServiceError && error.status === 404) {
+			return null;
+		}
+
+		throw error;
+	}
+}
+
 export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 	const parentData = await parent();
 	const authToken = parentData.authToken ?? null;
@@ -27,7 +42,7 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 
 	const [deviceData, latestData] = await Promise.all([
 		api.getDeviceData(params.dev_eui, pagination),
-		api.getDeviceLatestData(params.dev_eui)
+		loadLatestDeviceDataOrNull(api, params.dev_eui)
 	]);
 
 	return {
@@ -79,7 +94,8 @@ export const actions: Actions = {
 
 function readApiError(payload: unknown, fallback: string): string {
 	if (payload && typeof payload === 'object') {
-		const message = (payload as Record<string, unknown>).message;
+		const payloadRecord = payload as Record<string, unknown>;
+		const message = payloadRecord.message;
 		if (typeof message === 'string' && message.length > 0) return message;
 		if (Array.isArray(message)) {
 			const text = message
@@ -87,6 +103,8 @@ function readApiError(payload: unknown, fallback: string): string {
 				.join(', ');
 			if (text) return text;
 		}
+
+		return readApiError(payloadRecord.payload, fallback);
 	}
 	return fallback;
 }

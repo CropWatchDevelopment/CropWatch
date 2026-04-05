@@ -5,6 +5,11 @@ import {
 	type DeviceDto,
 	type LocationDto
 } from '$lib/api/api.service';
+import {
+	isValidTtiDeviceId,
+	normalizeTtiDeviceId,
+	TTI_DEVICE_ID_MAX_LENGTH
+} from '$lib/devices/tti-device-id';
 import { m } from '$lib/paraglide/messages.js';
 import { fail, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -18,6 +23,7 @@ type DeviceFormValues = {
 	name: string;
 	group: string;
 	location_id: number;
+	tti_name: string;
 };
 
 type DeviceOwnerPermissionValues = {
@@ -197,6 +203,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 			devEui,
 			deviceName: '',
 			deviceGroup: '',
+			ttiName: '',
 			deviceGroups: [] as string[],
 			sensorCertificates: [] as SensorCertificateRow[],
 			deviceOwners: [] as NormalizedDeviceOwner[]
@@ -226,6 +233,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		deviceName,
 		location_id: device?.location_id,
 		deviceGroup: device?.group || '',
+		ttiName: normalizeTtiDeviceId(str(device?.tti_name)),
 		deviceGroups,
 		locations,
 		sensorCertificates,
@@ -256,7 +264,8 @@ export const actions: Actions = {
 		const values: DeviceFormValues = {
 			name: readString(formData.get('name')),
 			group: readString(formData.get('group')),
-			location_id: Number.parseInt(readString(formData.get('location_id')), 10)
+			location_id: Number.parseInt(readString(formData.get('location_id')), 10),
+			tti_name: normalizeTtiDeviceId(readString(formData.get('tti_name')))
 		};
 
 		const fieldErrors: Partial<Record<keyof DeviceFormValues, string>> = {};
@@ -271,6 +280,13 @@ export const actions: Actions = {
 			fieldErrors.group = m.devices_device_group_length({
 				max: String(DEVICE_GROUP_MAX_LENGTH)
 			});
+		}
+
+		if (
+			values.tti_name.length > TTI_DEVICE_ID_MAX_LENGTH ||
+			(values.tti_name.length > 0 && !isValidTtiDeviceId(values.tti_name))
+		) {
+			fieldErrors.tti_name = m.devices_tti_device_id_invalid();
 		}
 
 		if (!values.location_id) {
@@ -296,7 +312,8 @@ export const actions: Actions = {
 			await api.updateDevice(devEui, {
 				name: values.name,
 				group: values.group || null,
-				location_id: +values.location_id
+				location_id: +values.location_id,
+				tti_name: values.tti_name || null
 			});
 		} catch (error) {
 			return fail(error instanceof ApiServiceError ? error.status : 502, {

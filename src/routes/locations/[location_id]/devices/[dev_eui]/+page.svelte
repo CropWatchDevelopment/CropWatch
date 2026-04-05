@@ -3,8 +3,15 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { SvelteDate } from 'svelte/reactivity';
-	import { resolveDisplayComponent } from '$lib/config/deviceTables';
-	import { ApiService } from '$lib/api/api.service';
+	import { isRelayTable, resolveDisplayComponent } from '$lib/config/deviceTables';
+	import { ApiService, ApiServiceError } from '$lib/api/api.service';
+	import {
+		type RelayStateSnapshot,
+		type RelayVerificationResult,
+		RelayStateManager
+	} from '$lib/devices/relay-control';
+	import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
+	import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwDuration, CwSpinner, useCwToast } from '@cropwatchdevelopment/cwui';
 	import CsvExportDialog from './csvExportDialog.svelte';
@@ -12,6 +19,7 @@
 	import type { PageProps } from './$types';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import CsvTrafficExportDialog from './csvTrafficExportDialog.svelte';
+	import { onDestroy } from 'svelte';
 
 	type RangeSelection = 'today' | 24 | 48 | 72;
 
@@ -77,6 +85,23 @@
 		return value && typeof value.created_at === 'string' ? value.created_at : null;
 	}
 
+	function readRelayTelemetryRow(value: unknown): TelemetryRow | null {
+		const normalizedRow = normalizeRelayTelemetryRow(value);
+		if (normalizedRow) {
+			return normalizedRow;
+		}
+
+		if (isTelemetryRow(value)) {
+			const nestedRow = normalizeRelayTelemetryRow(value.data);
+			if (nestedRow) {
+				return nestedRow;
+			}
+		}
+
+		const [firstRow] = normalizeTelemetryRows(value);
+		return firstRow ?? null;
+	}
+
 	function getRangeOptions(): TimeRangeOptions[] {
 		return [
 			{ label: m.devices_range_today_only(), value: DEFAULT_RANGE_SELECTION },
@@ -99,6 +124,87 @@
 		};
 	}
 
+	function createEmptyRelaySnapshot(): RelayStateSnapshot {
+		return {
+			historicalData: [],
+			latestData: null,
+			pendingRelayStates: {}
+		};
+	}
+
+	function getRelayTargetStateLabel(targetState: RelayTargetState): string {
+		return targetState === 'on' ? m.display_on() : m.display_off();
+	}
+
+	function getVerifiedRelayStateLabel(
+		relay: RelayNumber,
+		row: Record<string, unknown> | null
+	): string {
+		const value = getRelayState(normalizeRelayTelemetryRow(row), relay);
+		if (value === null) {
+			return m.display_unknown();
+		}
+
+		return value ? m.display_on() : m.display_off();
+	}
+
+	function handleRelayConfirmationResolved(result: RelayVerificationResult): void {
+		if (result.matched) {
+			toast.add({
+				tone: 'success',
+				message: m.devices_relay_confirmation_changed({
+					relay: String(result.relay),
+					state: getRelayTargetStateLabel(result.targetState)
+				})
+			});
+			return;
+		}
+
+		toast.add({
+			tone: 'warning',
+			message: m.devices_relay_confirmation_mismatch({
+				relay: String(result.relay),
+				state: getVerifiedRelayStateLabel(result.relay, result.row)
+			})
+		});
+	}
+
+	function mapRelayApiErrorMessage(error: unknown): string {
+		if (!(error instanceof ApiServiceError)) {
+			return m.devices_relay_command_failed();
+		}
+
+		switch (error.status) {
+			case 401:
+			case 403:
+				return m.devices_relay_downlink_not_authorized();
+			case 404:
+				return m.devices_relay_downlink_target_not_found();
+			case 429:
+				return m.devices_relay_downlink_rate_limited();
+			default:
+				return m.devices_relay_command_failed();
+		}
+	}
+
+	function readApiError(payload: unknown, fallback: string): string {
+		if (payload && typeof payload === 'object') {
+			const payloadRecord = payload as Record<string, unknown>;
+			const message = payloadRecord.message;
+			if (typeof message === 'string' && message.length > 0) return message;
+			if (Array.isArray(message)) {
+				const text = message
+					.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0)
+					.join(', ');
+				if (text) return text;
+			}
+
+			return readApiError(payloadRecord.payload, fallback);
+		}
+
+		return fallback;
+	}
+
 	let routeStateByKey = $state<Record<string, RouteState>>({});
 	const initializedRouteKeys: Record<string, true> = {};
 
@@ -113,6 +219,7 @@
 	let devEui = $derived(data.devEui ?? '');
 	let locationId = $derived(data.locationId ?? '');
 	let authToken = $derived(data.authToken ?? null);
+	let isRelayDevice = $derived(isRelayTable(data.dataTable));
 	let permissionLevel = $derived(Number(data.permissionLevel) || 4);
 	let latestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
 	let locationName = $derived(readLocationName(data.device));
@@ -132,16 +239,93 @@
 	let activeRange = $derived(routeStateByKey[routeKey]?.activeRange ?? null);
 	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
 	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
+	let relayStateManager: RelayStateManager | null = null;
+	let relayStateManagerKey = '';
+	let unsubscribeRelayState = () => {};
+	let relayStateSnapshot = $state<RelayStateSnapshot>(createEmptyRelaySnapshot());
+	let displayLatestData = $derived(
+		isRelayDevice ? (relayStateSnapshot.latestData ?? latestData) : latestData
+	);
+	let displayHistoricalData = $derived(
+		isRelayDevice && relayStateSnapshot.historicalData.length > 0
+			? relayStateSnapshot.historicalData
+			: historicalData
+	);
+	let displayCurrentRecord = $derived(displayLatestData ?? displayHistoricalData[0] ?? null);
+	let noDataYet = $derived(
+		!isRelayDevice &&
+			!fetching &&
+			!fetchError &&
+			!displayLatestData &&
+			displayHistoricalData.length === 0
+	);
 
 	afterNavigate(() => {
 		const key = routeKey;
+		if (isRelayDevice && authToken) {
+			ensureRelayStateManager();
+		} else {
+			destroyRelayStateManager();
+		}
+
 		if (!authToken || !devEui || !key || initializedRouteKeys[key]) return;
 
 		initializedRouteKeys[key] = true;
 		void selectRange(DEFAULT_RANGE_SELECTION);
 	});
 
-	let childLoading = $derived(fetching && historicalData.length === 0);
+	onDestroy(() => {
+		destroyRelayStateManager();
+	});
+
+	function syncRelayStateBaseData(): void {
+		if (!isRelayDevice || !relayStateManager) {
+			return;
+		}
+
+		relayStateManager.replaceBaseData({
+			historicalData,
+			latestData
+		});
+	}
+
+	function destroyRelayStateManager(): void {
+		unsubscribeRelayState();
+		unsubscribeRelayState = () => {};
+		relayStateManager?.destroy();
+		relayStateManager = null;
+		relayStateManagerKey = '';
+		relayStateSnapshot = createEmptyRelaySnapshot();
+	}
+
+	function ensureRelayStateManager(): void {
+		if (!isRelayDevice || !authToken || !devEui) {
+			destroyRelayStateManager();
+			return;
+		}
+
+		const nextManagerKey = `${routeKey}:${authToken}`;
+		if (relayStateManager && relayStateManagerKey === nextManagerKey) {
+			syncRelayStateBaseData();
+			return;
+		}
+
+		destroyRelayStateManager();
+
+		const manager = new RelayStateManager({
+			fetchLatestData: async (signal) => await fetchRelayData({ signal }),
+			historicalData,
+			latestData,
+			onVerificationResolved: handleRelayConfirmationResolved
+		});
+		unsubscribeRelayState = manager.subscribe((snapshot) => {
+			relayStateSnapshot = snapshot;
+		});
+		relayStateManager = manager;
+		relayStateManagerKey = nextManagerKey;
+	}
+
+	let childLoading = $derived(fetching && displayHistoricalData.length === 0);
 
 	function getRangeBounds(selection: RangeSelection): { start: string; end: string } {
 		const end = new SvelteDate();
@@ -176,7 +360,6 @@
 
 		try {
 			const api = new ApiService({ fetchFn: fetch, authToken });
-			console.log(start, end);
 			const result = await api.getDeviceDataWithinRange(devEui, {
 				start: toIsoString(start),
 				end: toIsoString(end),
@@ -185,6 +368,7 @@
 
 			state.requestedHistoricalData = normalizeTelemetryRows(result);
 			state.activeRange = rangeSelection;
+			syncRelayStateBaseData();
 		} catch (error) {
 			console.error('Failed to fetch device data:', error);
 			state.fetchError = m.devices_load_telemetry_failed();
@@ -199,21 +383,122 @@
 		await loadHistoricalData(start, end, selection);
 	}
 
-	async function fetchLatestData() {
-		if (!authToken || !devEui) return;
+	async function fetchLatestData(options: { apply?: boolean; signal?: AbortSignal } = {}) {
+		if (!authToken || !devEui) return null;
 
 		try {
 			const api = new ApiService({ fetchFn: fetch, authToken });
-			const result = await api.getDeviceLatestData(devEui);
+			const result = await api.getDeviceLatestData(devEui, { signal: options.signal });
 
 			if (isTelemetryRow(result)) {
-				latestData = result;
-				historicalData = [result, ...(historicalData ?? [])];
-			} else {
-				console.warn('Latest data response is not an object:', result);
+				if (options.apply !== false) {
+					latestData = result;
+					const resultKey = String(result.id ?? result.created_at ?? '');
+					historicalData = [
+						result,
+						...historicalData.filter((row) => String(row.id ?? row.created_at ?? '') !== resultKey)
+					];
+					syncRelayStateBaseData();
+				}
+
+				return result;
 			}
 		} catch (err) {
+			if (err instanceof ApiServiceError && err.status === 404) {
+				return null;
+			}
+
 			console.error('Failed to fetch latest air data:', err);
+		}
+
+		return null;
+	}
+
+	async function fetchRelayData(options: { signal?: AbortSignal } = {}) {
+		if (!authToken || !devEui) return null;
+
+		try {
+			const api = new ApiService({ fetchFn: fetch, authToken });
+			const result = await api.getRelayData(devEui, {
+				signal: options.signal,
+				suppressNotFoundError: true
+			});
+
+			return readRelayTelemetryRow(result);
+		} catch (err) {
+			if (err instanceof ApiServiceError && err.status === 404) {
+				return null;
+			}
+
+			console.error('Failed to fetch latest relay data:', err);
+		}
+
+		return null;
+	}
+
+	async function refreshRelayDisplayData(): Promise<TelemetryRow | null> {
+		if (!authToken || !devEui) {
+			return null;
+		}
+
+		ensureRelayStateManager();
+		return (await relayStateManager?.refreshLatestData()) ?? null;
+	}
+
+	async function refreshDisplayedData(): Promise<TelemetryRow | null> {
+		return isRelayDevice ? await refreshRelayDisplayData() : await fetchLatestData();
+	}
+
+	async function queueRelayCommand(
+		relay: RelayNumber,
+		targetState: RelayTargetState,
+		durationSeconds?: number
+	): Promise<void> {
+		const hasPendingRelayVerification =
+			Object.keys(relayStateSnapshot.pendingRelayStates).length > 0;
+
+		if (
+			!isRelayDevice ||
+			!authToken ||
+			!devEui ||
+			permissionLevel > 2 ||
+			hasPendingRelayVerification
+		) {
+			return;
+		}
+
+		try {
+			ensureRelayStateManager();
+			const api = new ApiService({ fetchFn: fetch, authToken });
+
+			if (typeof durationSeconds === 'number' && Number.isFinite(durationSeconds)) {
+				await api.pulseRelay(devEui, {
+					durationSeconds,
+					relay
+				});
+			} else {
+				await api.updateRelay(devEui, { relay, targetState });
+			}
+
+			relayStateManager?.startVerification(relay, targetState);
+			toast.add({
+				tone: 'info',
+				message: m.devices_relay_command_queued({ relay: String(relay) })
+			});
+		} catch (error) {
+			console.error('[relay-control] command failed', {
+				devEui,
+				durationSeconds,
+				error,
+				relay,
+				targetState
+			});
+
+			const fallback = mapRelayApiErrorMessage(error);
+			toast.add({
+				tone: 'danger',
+				message: error instanceof ApiServiceError ? readApiError(error.payload, fallback) : fallback
+			});
 		}
 	}
 </script>
@@ -252,11 +537,11 @@
 		{#snippet actions()}
 			<p class="text-md text-right" style="color: var(--cw-text-muted)">
 				{m.display_last_updated()}:
-				{#if readCreatedAt(historicalData[0])}
+				{#if readCreatedAt(displayCurrentRecord)}
 					<CwDuration
-						from={readCreatedAt(historicalData[0]) ?? ''}
+						from={readCreatedAt(displayCurrentRecord) ?? ''}
 						alarmAfterMinutes={(upload_interval || 10) + 0.5}
-						alarmCallback={fetchLatestData}
+						alarmCallback={refreshDisplayedData}
 					/>
 				{:else}
 					<span>Data Not available</span>
@@ -300,7 +585,6 @@
 								disabled={controlsDisabled}
 							/>
 						{/if}
-
 					{/if}
 
 					{#if permissionLevel == 1}
@@ -340,17 +624,26 @@
 		</div></CwCard
 	>
 
-	<div class="device-page__display">
-		<DisplayComponent
-			{devEui}
-			{locationId}
-			{locationName}
-			{latestData}
-			{historicalData}
-			loading={childLoading}
-			{authToken}
-		/>
-	</div>
+	{#if noDataYet}
+		<CwCard title={m.display_no_data()} elevated>
+			<p class="device-page__empty-message">{m.devices_no_data_yet()}</p>
+		</CwCard>
+	{:else}
+		<div class="device-page__display">
+			<DisplayComponent
+				{devEui}
+				{locationId}
+				{locationName}
+				latestData={displayLatestData}
+				historicalData={displayHistoricalData}
+				loading={childLoading}
+				{permissionLevel}
+				pendingRelayStates={relayStateSnapshot.pendingRelayStates}
+				{queueRelayCommand}
+				{authToken}
+			/>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -360,31 +653,6 @@
 		gap: 1rem;
 		min-width: 0;
 		padding: 0 0.25rem 1rem 0;
-	}
-
-	.device-page__toolbar {
-		display: grid;
-		grid-template-columns: repeat(12, minmax(0, 1fr));
-		gap: 0.75rem;
-		align-items: start;
-	}
-
-	.device-page__group {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		min-width: 0;
-	}
-
-	.device-page__group--ranges {
-		grid-column: span 3;
-	}
-
-	.device-page__group--actions {
-		grid-column: span 3;
-		flex-direction: column;
-		align-items: flex-end;
-		justify-content: flex-start;
 	}
 
 	.device-page__status {
@@ -412,32 +680,15 @@
 		min-width: 0;
 	}
 
-	@media (max-width: 1200px) {
-		.device-page__group--ranges,
-		.device-page__group--actions {
-			grid-column: span 6;
-		}
+	.device-page__empty-message {
+		margin: 0;
+		color: var(--cw-text-muted, #475467);
 	}
 
 	@media (max-width: 720px) {
 		.device-page {
 			padding-right: 0;
 			padding-bottom: 0.75rem;
-		}
-
-		.device-page__toolbar {
-			grid-template-columns: 1fr;
-		}
-
-		.device-page__group--ranges,
-		.device-page__group--actions {
-			grid-column: auto;
-		}
-
-		.device-page__group--actions {
-			flex-direction: row;
-			align-items: center;
-			justify-content: flex-start;
 		}
 	}
 </style>

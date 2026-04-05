@@ -17,6 +17,8 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import DeleteRuleDialog from './DeleteRuleDialog.svelte';
 	import ViewRuleDialog from './ViewRuleDialog.svelte';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { ApiService } from '$lib/api/api.service';
 
 	type RuleRow = RulesDto & {
 		device_name: string;
@@ -27,10 +29,8 @@
 	let { data }: { data: { rules: RuleRow[] } } = $props();
 	let loading = $state(false);
 	let deletedRuleGroupIds = $state<string[]>([]);
-	let rules = $derived(
-		(data.rules ?? []).filter((rule) => !deletedRuleGroupIds.includes(rule.ruleGroupId))
-	);
-	let tableKey = $derived(rules.map((rule) => rule.ruleGroupId).join('|'));
+	let tableKey = $derived(deletedRuleGroupIds.join(','));
+	let app = getAppContext();
 
 	const columns: CwColumnDef<RuleRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
@@ -41,10 +41,69 @@
 		{ key: 'trigger_count', header: 'Trigger Count', sortable: true }
 	];
 
+	function sortRules(rows: RuleRow[], column: string, direction: 'asc' | 'desc'): RuleRow[] {
+		const dir = direction === 'asc' ? 1 : -1;
+		return [...rows].sort((a, b) => {
+			const aVal = (a as unknown as Record<string, unknown>)[column];
+			const bVal = (b as unknown as Record<string, unknown>)[column];
+			if (aVal == null && bVal == null) return 0;
+			if (aVal == null) return dir;
+			if (bVal == null) return -dir;
+			if (column === 'trigger_count') return (Number(aVal) - Number(bVal)) * dir;
+			return String(aVal).localeCompare(String(bVal)) * dir;
+		});
+	}
+
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleRow>> {
-		void query;
-		const rows = rules;
-		return { rows, total: rows.length };
+		const search = query.search?.trim() || '';
+		const api = new ApiService({ authToken: app.accessToken });
+		const rules = await api.getRules({ name: search || undefined });
+
+		const deletedIds = new Set(deletedRuleGroupIds);
+		let rows: RuleRow[] = rules
+			.map((rule) => {
+				const deviceRecord =
+					rule.cw_devices && typeof rule.cw_devices === 'object'
+						? (rule.cw_devices as Record<string, unknown>)
+						: null;
+				const deviceOwners = Array.isArray(deviceRecord?.cw_device_owners)
+					? (deviceRecord.cw_device_owners as Array<{
+							user_id?: string | null;
+							permission_level?: number | null;
+						}>)
+					: [];
+				const locationRecord =
+					deviceRecord?.cw_locations && typeof deviceRecord.cw_locations === 'object'
+						? (deviceRecord.cw_locations as Record<string, unknown>)
+						: null;
+
+				return {
+					...rule,
+					device_name:
+						deviceRecord?.name && typeof deviceRecord.name === 'string'
+							? deviceRecord.name
+							: '',
+					location_name:
+						typeof locationRecord?.name === 'string' && locationRecord.name.trim().length > 0
+							? locationRecord.name
+							: '',
+					permission_level:
+						deviceOwners.find((o) => o.user_id === app.session?.sub)?.permission_level ?? null,
+					created_at: new Date(rule.created_at),
+					last_triggered: rule.last_triggered ? new Date(rule.last_triggered) : null
+				} as unknown as RuleRow;
+			})
+			.filter((r) => !deletedIds.has(r.ruleGroupId));
+
+		if (query.sort) {
+			rows = sortRules(rows, query.sort.column, query.sort.direction);
+		}
+
+		const total = rows.length;
+		const skip = (query.page - 1) * query.pageSize;
+		rows = rows.slice(skip, skip + query.pageSize);
+
+		return { rows, total };
 	}
 
 	function handleRuleDeleted(ruleGroupId: string) {

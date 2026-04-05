@@ -1,4 +1,5 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import { isValidTtiDeviceId, normalizeTtiDeviceId } from '$lib/devices/tti-device-id';
 import type { CreateDeviceRequest } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { fail, type Actions } from '@sveltejs/kit';
@@ -18,6 +19,7 @@ type CreateDeviceFormValues = {
 	lat: string;
 	long: string;
 	installed_at: string;
+	tti_name: string;
 };
 
 const readString = (value: FormDataEntryValue | null): string =>
@@ -103,7 +105,8 @@ function readFormValues(formData: FormData, locationId: string): CreateDeviceFor
 		location_id: readString(formData.get('location_id')) || locationId,
 		lat: readString(formData.get('lat')),
 		long: readString(formData.get('long')),
-		installed_at: readString(formData.get('installed_at'))
+		installed_at: readString(formData.get('installed_at')),
+		tti_name: normalizeTtiDeviceId(readString(formData.get('tti_name')))
 	};
 }
 
@@ -180,6 +183,13 @@ export const actions: Actions = {
 			return fail(400, { error: m.devices_location_id_required(), ...values });
 		}
 
+		if (values.tti_name && !isValidTtiDeviceId(values.tti_name)) {
+			return fail(400, {
+				error: m.devices_tti_device_id_invalid(),
+				...values
+			});
+		}
+
 		const payload: CreateDeviceRequest = {
 			dev_eui: normalizedDevEui,
 			type: typeId,
@@ -188,7 +198,8 @@ export const actions: Actions = {
 			location_id: locationId,
 			lat: readOptionalNumber(values.lat),
 			long: readOptionalNumber(values.long),
-			installed_at: readOptionalText(values.installed_at)
+			installed_at: readOptionalText(values.installed_at),
+			tti_name: readOptionalText(values.tti_name)
 		};
 
 		const api = new ApiService({
@@ -204,7 +215,8 @@ export const actions: Actions = {
 			await api.updateDevice(normalizedDevEui, {
 				name: values.name,
 				group: readOptionalText(values.group),
-				location_id: locationId
+				location_id: locationId,
+				tti_name: readOptionalText(values.tti_name)
 			});
 
 			return {

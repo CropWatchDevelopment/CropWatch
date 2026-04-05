@@ -13,27 +13,52 @@
 	import { goto } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';
 	import ADD_ICON from '$lib/images/icons/add.svg';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { ApiService } from '$lib/api/api.service';
 
 	let { data }: { data: { allLocations: LocationDto[] } } = $props();
 
 	let loading = $state(false);
+	let app = getAppContext();
 
 	const columns: CwColumnDef<LocationDto>[] = [
 		{ key: 'location_id', header: 'ID', hideBelow: 'md' },
 		{ key: 'name', header: m.nav_locations(), sortable: true }
 	];
 
+	function sortLocations(
+		rows: LocationDto[],
+		column: string,
+		direction: 'asc' | 'desc'
+	): LocationDto[] {
+		const dir = direction === 'asc' ? 1 : -1;
+		return [...rows].sort((a, b) => {
+			const aVal = (a as unknown as Record<string, unknown>)[column];
+			const bVal = (b as unknown as Record<string, unknown>)[column];
+			if (aVal == null && bVal == null) return 0;
+			if (aVal == null) return dir;
+			if (bVal == null) return -dir;
+			if (column === 'location_id') return (Number(aVal) - Number(bVal)) * dir;
+			return String(aVal).localeCompare(String(bVal)) * dir;
+		});
+	}
+
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<LocationDto>> {
-		loading = true;
-		try {
-			void query;
-			return {
-				rows: data.allLocations,
-				total: data.allLocations.length
-			};
-		} finally {
-			loading = false;
+		const search = query.search?.trim() || '';
+		const api = new ApiService({ authToken: app.accessToken });
+		const result = await api.getAllLocations({ name: search || undefined });
+		let rows = result.data ?? [];
+
+		if (query.sort) {
+			rows = sortLocations(rows, query.sort.column, query.sort.direction);
 		}
+
+		const total = rows.length;
+		const skip = (query.page - 1) * query.pageSize;
+		rows = rows.slice(skip, skip + query.pageSize);
+
+		loading = false;
+		return { rows, total };
 	}
 
 	function handleViewLocation(row: LocationDto) {
