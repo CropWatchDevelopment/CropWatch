@@ -186,12 +186,14 @@
 				/>
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<CwDropdown
+					<!-- <CwDropdown
 						label={m.rules_notification_type()}
 						options={NOTIFIER_TYPES}
 						bind:value={notifierType}
-					/>
-					<CwDropdown label={m.rules_send_using()} options={SEND_METHODS} bind:value={sendUsing} />
+					/> -->
+					<input type="hidden" bind:value={notifierType} />
+					<!-- <CwDropdown label={m.rules_send_using()} options={SEND_METHODS} bind:value={sendUsing} /> -->
+					<input type="hidden" bind:value={sendUsing} />
 				</div>
 
 				<CwInput
