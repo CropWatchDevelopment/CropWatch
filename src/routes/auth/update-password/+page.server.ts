@@ -1,6 +1,5 @@
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { createClient } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ cookies }) => {
@@ -30,23 +29,20 @@ export const actions: Actions = {
 			return fail(400, { message: 'Passwords do not match.' });
 		}
 
-		// Create a Supabase client authenticated with the recovery access token
-		const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			auth: {
-				autoRefreshToken: false,
-				persistSession: false
+		// Call Supabase Auth REST API directly with the recovery access token
+		const res = await fetch(`${PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+				apikey: PUBLIC_SUPABASE_ANON_KEY
 			},
-			global: {
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			}
+			body: JSON.stringify({ password })
 		});
 
-		const { error } = await supabase.auth.updateUser({ password });
-
-		if (error) {
-			console.error('Password update error:', error);
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({}));
+			console.error('Password update error:', res.status, body);
 			return fail(500, { message: 'Failed to update password. The link may have expired.' });
 		}
 
