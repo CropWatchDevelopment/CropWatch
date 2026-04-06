@@ -1,60 +1,43 @@
-<h1 align="center">CropWatch Web UI</h1>
-<p align="center"><i>Our PWA Web Application for viewing and controlling your farm from anywhere and everywhere.</i></p>
-<div style="display:flex; flex-direction: row; gap: 5px;" align="center">
-  
-  [![CodeQL - Master](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
-  [![CodeQL - Develop](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql/badge.svg?branch=develop)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/github-code-scanning/codeql)
-  [![codecov](https://codecov.io/gh/CropWatchDevelopment/CropWatch/graph/badge.svg?token=H0LAIQ38KG)](https://codecov.io/gh/CropWatchDevelopment/CropWatch)
-  [![Maintainability](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/maintainability.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
+# sv
 
-</div>
-<br>
-<p align="center"><i>Loved the project? Please visit our <a href="https://CropWatch.io">Website</a></i></p>
-<br>
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-## About CropWatch Web UI
-CropWatch Web UI is a progressive web application (PWA) built with SvelteKit, designed for farmers, agronomists, and farm managers to monitor and control their farm operations remotely.
-It aggregates sensor data from soil and air devices, visualizes key metrics, and enables custom rule-based alerts to streamline decision-making.
+## Creating a project
 
-### Key Features
-- **Dashboard**: Customizable data cards and interactive charts for real-time insights.
-- **Mapping**: Geospatial views of sensor locations using Leaflet.
-- **Alerts & Rules**: Configure thresholds to trigger push notifications and highlight anomalies.
-- **PDF Reports**: Export detailed device and trend reports via jsPDF and html2canvas.
-- **Localization**: Multi-language support with svelte-i18n for English, Spanish, and Japanese.
+If you're seeing this, you've probably already done this step. Congrats!
 
-### How It Works
-1. Field sensors collect environmental and soil metrics and send them to a Supabase backend.
-2. The UI uses @supabase/supabase-js for data retrieval and @supabase/ssr for server-side rendering.
-3. Reactive Svelte stores (@stencil/store) manage state and update UI components dynamically.
-4. Users define rules in the UI; when sensor data crosses thresholds, the system highlights issues in real time.
-5. On-demand PDF generation allows exporting reports for offline sharing or record-keeping.
+```sh
+# create a new project
+npx sv create my-app
+```
 
-### Why Contribute?
-We welcome contributions from developers, designers, and farmers alike to make CropWatch more robust and user-friendly:
-- Enhance existing UI components or add new visualizations.
-- Integrate new sensor types or third-party services.
-- Improve performance, accessibility, and test coverage.
-- Translate the application into additional languages.
+To recreate this project with the same configuration:
 
-Fork the repo, create a branch with your feature or fix, and submit a pull request. See the [Contribute](#contribute) section below for details.
+```sh
+# recreate this project
+pnpm dlx sv create --template demo --types ts --add prettier eslint vitest="usages:unit,component" playwright tailwindcss="plugins:typography,forms" sveltekit-adapter="adapter:vercel" devtools-json mcp="ide:vscode+setup:remote" --install pnpm CropWatch
+```
 
-This repo aims to host a UI that everyone can update and add to so that we can make farming as easy as possible through the use of technology.
+## Developing
 
-If you are interested, please create a PR to add your `README` profile here.
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-If you like this Repo, please click the :star:
+```sh
+npm run dev
 
-List of `CropWatch UI` categories mentioned below
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
+```
 
-## Contents
-  - [Contribute](#contribute)
+## Building
 
-## Website
+To create a production version of your app:
 
-Link : https://app.CropWatch.io
+```sh
+npm run build
+```
 
-<a href="https://app.CropWatch.io">Current Production UI</a>
+You can preview the production build with `npm run preview`.
 
 # Environments
 - [UAT](https://crop-watch-i2xiyd6mo-crop-watch-team.vercel.app/)

@@ -1,0 +1,248 @@
+<svg width="256" height="320" id="CropWatchSVG" viewBox="0 0 256 320" fill="none"
+  xmlns="http://www.w3.org/2000/svg" style="margin-right: 5px;">
+  <defs>
+    <!-- soft glow for christmas lights -->
+    <filter id="lightGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- subtle shadow -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feOffset dy="2" />
+      <feGaussianBlur stdDeviation="2" result="b" />
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0.25 0" />
+      <feMerge>
+        <feMergeNode in="b" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- your original tree filters -->
+    <filter id="filter0_d_1_2" x="116.5" y="42" width="100.728" height="215.576"
+      filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" result="hardAlpha"></feColorMatrix>
+      <feOffset dy="4"></feOffset>
+      <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+      <feComposite in2="hardAlpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.25 0"></feColorMatrix>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2"></feBlend>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2" result="shape"></feBlend>
+    </filter>
+
+    <filter id="filter1_d_1_2" x="57.7022" y="64.0757" width="80.7978" height="160.5"
+      filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" result="hardAlpha"></feColorMatrix>
+      <feOffset dy="4"></feOffset>
+      <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+      <feComposite in2="hardAlpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.25 0"></feColorMatrix>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2"></feBlend>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2" result="shape"></feBlend>
+    </filter>
+
+    <filter id="filter2_d_1_2" x="84" y="104.576" width="54.5" height="51"
+      filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" result="hardAlpha"></feColorMatrix>
+      <feOffset dy="4"></feOffset>
+      <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+      <feComposite in2="hardAlpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.25 0"></feColorMatrix>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2"></feBlend>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2" result="shape"></feBlend>
+    </filter>
+
+    <filter id="filter3_d_1_2" x="17" y="92.5757" width="46" height="52"
+      filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+      <feColorMatrix in="SourceAlpha" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" result="hardAlpha"></feColorMatrix>
+      <feOffset dy="4"></feOffset>
+      <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+      <feComposite in2="hardAlpha" operator="out"></feComposite>
+      <feColorMatrix type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.25 0"></feColorMatrix>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2"></feBlend>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2" result="shape"></feBlend>
+    </filter>
+
+    <clipPath id="clip0_1_2">
+      <rect width="256" height="320" fill="white"></rect>
+    </clipPath>
+  </defs>
+
+  <g id="CropWatch" clip-path="url(#clip0_1_2)">
+
+    <!-- RUG (original detailed version) -->
+    <g id="rug" filter="url(#softShadow)">
+      <path d="M28 260 C50 246, 206 246, 228 260 C240 268, 240 292, 228 300 C206 314, 50 314, 28 300 C16 292, 16 268, 28 260 Z"
+        fill="#8B1E1E" opacity="0.95"/>
+      <path d="M40 270 C60 260, 196 260, 216 270" stroke="#F2D27A" stroke-width="3" opacity="0.8"/>
+      <path d="M42 286 C70 298, 186 298, 214 286" stroke="#F2D27A" stroke-width="3" opacity="0.8"/>
+      <path d="M52 260 L52 304" stroke="#F2D27A" stroke-width="2" opacity="0.35"/>
+      <path d="M204 260 L204 304" stroke="#F2D27A" stroke-width="2" opacity="0.35"/>
+    </g>
+
+    <!-- ANGEL (kept, at the top) -->
+    <g id="angel" transform="translate(178 18)" filter="url(#softShadow)">
+      <ellipse cx="0" cy="-8" rx="8" ry="3" fill="#F2D27A" opacity="0.95"/>
+      <circle cx="0" cy="0" r="6" fill="#FFD1B5"/>
+      <path d="M-14 10 C-8 0, -6 0, -2 10 C-6 12, -10 12, -14 10 Z" fill="#FFFFFF" opacity="0.92"/>
+      <path d="M14 10 C8 0, 6 0, 2 10 C6 12, 10 12, 14 10 Z" fill="#FFFFFF" opacity="0.92"/>
+      <path d="M0 6 C-7 16, -8 26, 0 30 C8 26, 7 16, 0 6 Z" fill="#FFFFFF"/>
+      <path d="M0 -18 L2 -14 L6 -13 L2 -11 L0 -7 L-2 -11 L-6 -13 L-2 -14 Z" fill="#F2D27A" opacity="0.9"/>
+    </g>
+
+    <!-- TREE + LEAVES + LIGHTS lowered by 25px (everything stays aligned) -->
+    <g id="treeScene" transform="translate(0,25)">
+
+      <!-- TREE (your original) -->
+      <g id="tree" fill="#B86B40">
+        <g id="mainTree" filter="url(#filter0_d_1_2)">
+          <path
+            d="M186.5 153.576C173.417 181.128 139.5 187.576 120.5 249.576H172.5C172.5 197.076 206.4 193.949 212 153.576C219.439 99.9417 190.836 39.5654 186.5 42.0757C189.929 43.5304 208.161 107.958 186.5 153.576Z"/>
+        </g>
+        <g id="largeBranch" filter="url(#filter1_d_1_2)">
+          <path
+            d="M113 216.576L134.5 188.076C87.5512 162.445 72.9708 135.885 70.5 64.0757C51.1169 125.679 63.1066 158.916 113 216.576Z"/>
+        </g>
+        <g id="smallRightBranch" filter="url(#filter2_d_1_2)">
+          <path
+            d="M95 147.576L88 137.576C100.344 119.134 111.335 112.682 134.5 104.576C115.013 118.197 105.982 127.314 95 147.576Z"/>
+        </g>
+        <g id="smallLeftBranch" filter="url(#filter3_d_1_2)">
+          <path
+            d="M59 120.576V136.576C49.2877 113.817 40.4889 104.703 21 92.5757C38.579 98.4346 47.5139 103.426 59 120.576Z"/>
+        </g>
+      </g>
+
+      <!-- LEAVES (animations REMOVED, but shapes unchanged) -->
+      <g id="leafs" fill="#4EBA3D">
+        <circle id="leaf1"  class="leaf" cx="66.5"  cy="173.5" r="7.5"  opacity="1"/>
+        <circle id="leaf2"  class="leaf" cx="53"    cy="148.076" r="10.5" opacity="1"/>
+        <circle id="leaf3"  class="leaf" cx="33.5"  cy="124.5" r="12.5" opacity="1"/>
+        <circle id="leaf4"  class="leaf" cx="16.5"  cy="103.5" r="10.5" opacity="1"/>
+        <circle id="leaf5"  class="leaf" cx="8.5"   cy="82.5"  r="7.5"  opacity="1"/>
+        <circle id="leaf6"  class="leaf" cx="31.5"  cy="82.5"  r="10.5" opacity="1"/>
+        <circle id="leaf7"  class="leaf" cx="51.5"  cy="93.5"  r="10.5" opacity="1"/>
+        <circle id="leaf8"  class="leaf" cx="57.5"  cy="72.5"  r="8.5"  opacity="1"/>
+        <circle id="leaf9"  class="leaf" cx="70.5"  cy="56.5"  r="6.5"  opacity="1"/>
+        <circle id="leaf10" class="leaf" cx="81.5"  cy="78.5"  r="8.5"  opacity="1"/>
+        <circle id="leaf11" class="leaf" cx="92.5"  cy="107.5" r="13.5" opacity="1"/>
+        <circle id="leaf12" class="leaf" cx="122.5" cy="98.5"  r="8.5"  opacity="1"/>
+        <circle id="leaf13" class="leaf" cx="140.5" cy="101.5" r="6.5"  opacity="1"/>
+        <circle id="leaf14" class="leaf" cx="133.5" cy="117.5" r="8.5"  opacity="1"/>
+        <circle id="leaf15" class="leaf" cx="119"   cy="136"   r="12"   opacity="1"/>
+        <circle id="leaf17" class="leaf" cx="175"   cy="118"   r="20"   opacity="1"/>
+        <circle id="leaf18" class="leaf" cx="176"   cy="67"    r="16"   opacity="1"/>
+        <circle id="leaf19" class="leaf" cx="178.5" cy="27.5"  r="10.5" opacity="1"/>
+        <circle id="leaf20" class="leaf" cx="215"   cy="48"    r="16"   opacity="1"/>
+        <circle id="leaf21" class="leaf" cx="231"   cy="95"    r="18"   opacity="1"/>
+        <circle id="leaf22" class="leaf" cx="235"   cy="140"   r="21"   opacity="1"/>
+        <circle id="leaf23" class="leaf" cx="221"   cy="183"   r="16"   opacity="1"/>
+        <circle id="leaf24" class="leaf" cx="200.5" cy="213.5" r="14.5" opacity="1"/>
+      </g>
+
+      <!-- CHRISTMAS LIGHTS (original wires + blinking bulbs) -->
+      <g id="lights" filter="url(#lightGlow)">
+        <path d="M45 120 C70 100, 105 95, 140 110 C170 123, 190 110, 214 95"
+          stroke="#2B2B2B" stroke-width="2" opacity="0.55" fill="none"/>
+        <path d="M55 165 C85 145, 120 145, 150 160 C182 176, 205 170, 232 150"
+          stroke="#2B2B2B" stroke-width="2" opacity="0.55" fill="none"/>
+        <path d="M78 205 C110 190, 145 190, 175 205 C196 216, 212 214, 224 206"
+          stroke="#2B2B2B" stroke-width="2" opacity="0.55" fill="none"/>
+
+        <circle cx="52" cy="116" r="4" fill="#FF3B30"><animate attributeName="opacity" values="1;0.2;1" dur="4.8s" begin="0.0s" repeatCount="indefinite"/></circle>
+        <circle cx="70" cy="106" r="4" fill="#34C759"><animate attributeName="opacity" values="1;0.2;1" dur="5.6s" begin="0.7s" repeatCount="indefinite"/></circle>
+        <circle cx="88" cy="100" r="4" fill="#0A84FF"><animate attributeName="opacity" values="1;0.2;1" dur="4.2s" begin="1.1s" repeatCount="indefinite"/></circle>
+        <circle cx="106" cy="97" r="4" fill="#FFD60A"><animate attributeName="opacity" values="1;0.2;1" dur="6.2s" begin="0.4s" repeatCount="indefinite"/></circle>
+        <circle cx="124" cy="100" r="4" fill="#FF9F0A"><animate attributeName="opacity" values="1;0.2;1" dur="5.0s" begin="1.6s" repeatCount="indefinite"/></circle>
+        <circle cx="142" cy="108" r="4" fill="#FF3B30"><animate attributeName="opacity" values="1;0.2;1" dur="5.8s" begin="0.9s" repeatCount="indefinite"/></circle>
+        <circle cx="160" cy="115" r="4" fill="#34C759"><animate attributeName="opacity" values="1;0.2;1" dur="4.6s" begin="1.9s" repeatCount="indefinite"/></circle>
+        <circle cx="178" cy="118" r="4" fill="#0A84FF"><animate attributeName="opacity" values="1;0.2;1" dur="6.0s" begin="0.2s" repeatCount="indefinite"/></circle>
+        <circle cx="196" cy="111" r="4" fill="#FFD60A"><animate attributeName="opacity" values="1;0.2;1" dur="5.4s" begin="1.3s" repeatCount="indefinite"/></circle>
+        <circle cx="212" cy="98" r="4" fill="#FF9F0A"><animate attributeName="opacity" values="1;0.2;1" dur="4.9s" begin="2.1s" repeatCount="indefinite"/></circle>
+
+        <circle cx="60" cy="160" r="4" fill="#FFD60A"><animate attributeName="opacity" values="1;0.2;1" dur="6.4s" begin="0.5s" repeatCount="indefinite"/></circle>
+        <circle cx="80" cy="150" r="4" fill="#FF3B30"><animate attributeName="opacity" values="1;0.2;1" dur="5.1s" begin="1.5s" repeatCount="indefinite"/></circle>
+        <circle cx="100" cy="146" r="4" fill="#34C759"><animate attributeName="opacity" values="1;0.2;1" dur="4.7s" begin="0.9s" repeatCount="indefinite"/></circle>
+        <circle cx="120" cy="148" r="4" fill="#0A84FF"><animate attributeName="opacity" values="1;0.2;1" dur="5.9s" begin="0.1s" repeatCount="indefinite"/></circle>
+        <circle cx="140" cy="156" r="4" fill="#FF9F0A"><animate attributeName="opacity" values="1;0.2;1" dur="6.1s" begin="1.8s" repeatCount="indefinite"/></circle>
+        <circle cx="160" cy="166" r="4" fill="#FFD60A"><animate attributeName="opacity" values="1;0.2;1" dur="4.4s" begin="2.3s" repeatCount="indefinite"/></circle>
+        <circle cx="180" cy="174" r="4" fill="#34C759"><animate attributeName="opacity" values="1;0.2;1" dur="5.3s" begin="1.0s" repeatCount="indefinite"/></circle>
+        <circle cx="200" cy="174" r="4" fill="#0A84FF"><animate attributeName="opacity" values="1;0.2;1" dur="6.6s" begin="0.6s" repeatCount="indefinite"/></circle>
+        <circle cx="220" cy="158" r="4" fill="#FF3B30"><animate attributeName="opacity" values="1;0.2;1" dur="4.3s" begin="1.9s" repeatCount="indefinite"/></circle>
+        <circle cx="234" cy="148" r="4" fill="#FF9F0A"><animate attributeName="opacity" values="1;0.2;1" dur="5.7s" begin="0.3s" repeatCount="indefinite"/></circle>
+
+        <circle cx="86" cy="202" r="4" fill="#34C759"><animate attributeName="opacity" values="1;0.2;1" dur="6.0s" begin="0.8s" repeatCount="indefinite"/></circle>
+        <circle cx="108" cy="194" r="4" fill="#FF3B30"><animate attributeName="opacity" values="1;0.2;1" dur="4.9s" begin="1.7s" repeatCount="indefinite"/></circle>
+        <circle cx="130" cy="192" r="4" fill="#FFD60A"><animate attributeName="opacity" values="1;0.2;1" dur="5.5s" begin="0.2s" repeatCount="indefinite"/></circle>
+        <circle cx="152" cy="196" r="4" fill="#0A84FF"><animate attributeName="opacity" values="1;0.2;1" dur="6.3s" begin="1.2s" repeatCount="indefinite"/></circle>
+        <circle cx="174" cy="204" r="4" fill="#FF9F0A"><animate attributeName="opacity" values="1;0.2;1" dur="4.6s" begin="2.0s" repeatCount="indefinite"/></circle>
+        <circle cx="196" cy="214" r="4" fill="#34C759"><animate attributeName="opacity" values="1;0.2;1" dur="5.8s" begin="0.4s" repeatCount="indefinite"/></circle>
+        <circle cx="214" cy="214" r="4" fill="#FF3B30"><animate attributeName="opacity" values="1;0.2;1" dur="6.7s" begin="1.6s" repeatCount="indefinite"/></circle>
+        <circle cx="228" cy="206" r="4" fill="#FFD60A"><animate attributeName="opacity" values="1;0.2;1" dur="4.2s" begin="0.9s" repeatCount="indefinite"/></circle>
+      </g>
+    </g>
+
+    <!-- PRESENTS (kept good version: in front + bows, on top of tree) -->
+    <g id="presents" filter="url(#softShadow)">
+      <!-- left box -->
+      <g transform="translate(56 238)">
+        <rect x="0" y="18" width="44" height="34" rx="4" fill="#1F6FEB"/>
+        <rect x="20" y="18" width="6" height="34" fill="#F2D27A"/>
+        <rect x="0" y="32" width="44" height="6" fill="#F2D27A"/>
+        <rect x="0" y="12" width="44" height="10" rx="4" fill="#2B7BE0"/>
+
+        <!-- bow (top) -->
+        <circle cx="23" cy="12" r="3.2" fill="#F2D27A"/>
+        <path d="M23 12 C10 0, 8 18, 23 12 Z" fill="#FFD98A"/>
+        <path d="M23 12 C36 0, 38 18, 23 12 Z" fill="#FFD98A"/>
+      </g>
+
+      <!-- center box -->
+      <g transform="translate(106 244)">
+        <rect x="0" y="10" width="54" height="44" rx="5" fill="#D12C2C"/>
+        <rect x="24" y="10" width="6" height="44" fill="#48C774"/>
+        <rect x="0" y="30" width="54" height="6" fill="#48C774"/>
+        <rect x="0" y="4" width="54" height="10" rx="5" fill="#E23A3A"/>
+
+        <!-- bow (top) -->
+        <circle cx="27" cy="4" r="3.6" fill="#48C774"/>
+        <path d="M27 4 C12 -8, 10 14, 27 4 Z" fill="#7BE495"/>
+        <path d="M27 4 C42 -8, 44 14, 27 4 Z" fill="#7BE495"/>
+      </g>
+
+      <!-- right box -->
+      <g transform="translate(170 244)">
+        <rect x="0" y="14" width="42" height="38" rx="4" fill="#F59E0B"/>
+        <rect x="18" y="14" width="6" height="38" fill="#2563EB"/>
+        <rect x="0" y="30" width="42" height="6" fill="#2563EB"/>
+        <rect x="0" y="8" width="42" height="10" rx="4" fill="#FDBA2D"/>
+
+        <!-- bow (top) -->
+        <circle cx="21" cy="8" r="3.0" fill="#2563EB"/>
+        <path d="M21 8 C8 -4, 6 16, 21 8 Z" fill="#60A5FA"/>
+        <path d="M21 8 C34 -4, 36 16, 21 8 Z" fill="#60A5FA"/>
+      </g>
+    </g>
+
+  </g>
+</svg>
+

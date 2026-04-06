@@ -1,264 +1,176 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import Icon from '$lib/components/Icon.svelte';
+	import './style.css';
+	import KEY_ICON from '$lib/images/icons/key.svg';
+	import logo from '$lib/images/cropwatch_static.svg';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
-	import { success, error as toastError } from '$lib/stores/toast.svelte';
-	import GoogleAuthLogin from './GoogleAuthLogin.svelte';
-	import DiscordAuthLogin from './DiscordAuthLogin.svelte';
-	import { _ } from 'svelte-i18n';
+	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
+	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
+	import { applyAction, enhance } from '$app/forms';
+	import { readLoginReason, readRedirectPath } from '$lib/utils/auth-redirect';
+	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 
-	let { data } = $props();
+	const toast = useCwToast();
 
-	let { supabase } = $derived(data);
-
-	// Form state
-	let email = $state('');
-	let password = $state('');
-	let loading = $state(false);
-	let submitting = $state(false);
-	let error = $state<string | null>(null);
-	let successMessage = $state<string | null>(null);
-
-	// Toggle for password visibility
-	let showPassword = $state(false);
-
-	// Check if already logged in
-	let isLoggedIn = $state(false);
-
-	// Random background image selection
-	const backgroundImages = [
-		'/login-background-images/greenhouse.jpg',
-		'/login-background-images/field1.jpg',
-		'/login-background-images/field2.jpg',
-		'/login-background-images/beach.jpg'
-	];
-
-	let selectedBackground = $state('');
-
-	// Select random background on component mount
-	onMount(async () => {
-		// Select random background image
-		const randomIndex = Math.floor(Math.random() * backgroundImages.length);
-		selectedBackground = backgroundImages[randomIndex];
-
-		// Check if user has just registered
-		if ($page.url.searchParams.get('registered') === 'true') {
-			success('Registration successful! You can now log in.');
-		}
-
-		// Check if user is already logged in
-		try {
-			const response = await fetch('/api/auth/status');
-			const data = await response.json();
-			isLoggedIn = data.authenticated;
-
-			if (isLoggedIn) {
-				successMessage = $_('You are already logged in');
-				//console.log('Login page: User is logged in, showing success message');
-				// Add a button for manual navigation rather than automatic redirect
-				// This prevents potential redirect loops
-			}
-		} catch (err) {
-			console.error($_('loginErrorMessage'), err);
-			// Ignore error, assume not logged in
-			isLoggedIn = false;
+	let loggingIn: boolean = $state(false);
+	let username: string = $state('');
+	let password: string = $state('');
+	const recaptcha = createAuthRecaptcha();
+	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
+	let loginReason = $derived(readLoginReason(page.url.searchParams));
+	let reasonMessage = $derived.by(() => {
+		switch (loginReason) {
+			case 'auth-required':
+				return m.auth_login_reason_auth_required();
+			case 'expired':
+				return m.auth_login_reason_expired();
+			case 'signed-out':
+				return m.auth_login_reason_signed_out();
+			case 'password-reset':
+				return m.auth_login_reason_password_reset();
+			case 'error-recovery':
+				return m.auth_login_reason_error_recovery();
+			default:
+				return null;
 		}
 	});
 
-	// Handle login form submission
-	async function handleSubmit(event: Event) {
-		if (submitting) return;
-		event.preventDefault();
-		submitting = true;
-		loading = true;
-		error = null;
-
-		try {
-			const response = await fetch('/api/auth/login', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ email, password })
-			});
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				throw new Error(data.error || 'Login failed');
-			}
-
-			// Immediately redirect to dashboard - no delay, no success message
-			// window.location.href = '/app/dashboard';
-			successMessage = $_('Login successful! Redirecting to dashboard...');
-			success(successMessage);
-			goto('/app/dashboard');
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Login failed. Please try again.';
-			loading = false;
-			submitting = false;
-			toastError($_('loginErrorMessage'));
-		}
+	function passwordStrengthCheck(value: string) {
+		void isStrongPassword(value);
 	}
+
+	onMount(() => {
+		void recaptcha.warmup();
+	});
 </script>
 
 <svelte:head>
-	<title>{$_('Login')} | {$_('IoT Dashboard')}</title>
+	<title>{m.auth_login_page_title()}</title>
 </svelte:head>
 
-<div
-	class="bg-background-light dark:bg-background-dark relative flex h-screen items-center justify-center overflow-hidden p-5 transition-colors duration-300"
-	style="background-image: url('{selectedBackground}'); background-size: cover; background-position: center; background-repeat: no-repeat;"
->
-	<!-- Background overlay for better readability -->
-	<div class="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
-
-	<!-- Content container with higher z-index -->
-	<div class="relative z-10 w-full max-w-md">
-		<div
-			class="auth-panel bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark rounded-lg border border-white/20 p-6 shadow-xl backdrop-blur-lg dark:border-gray-700/50"
-		>
-			<h1 class="mb-6 text-center text-2xl font-bold">{$_('Login')}</h1>
-
-			<!-- {#if error}
-			<div
-				class="mb-4 rounded-md bg-red-100 p-3 text-center text-red-700 dark:bg-red-900/30 dark:text-red-400"
-			>
-				{error}
-			</div>
-		{/if} -->
-
-			{#if successMessage}
-				<div
-					class="mb-4 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
-				>
-					<p>{successMessage}</p>
-					<button class="auth-primary-button mt-4 w-full" onclick={() => goto('/app/dashboard')}>
-						{$_('Go to Dashboard')}
-					</button>
-				</div>
-			{:else if !isLoggedIn}
-				<form onsubmit={handleSubmit} class="space-y-4">
-					<div>
-						<label for="email" class="mb-1 block text-sm font-medium">{$_('Email')}</label>
-						<input
-							type="email"
-							id="email"
-							bind:value={email}
-							required
-							autocomplete="email"
-							placeholder="✉️ {$_('Enter your email')}"
-							disabled={loading}
-							class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
-                               bg-white px-3 py-2 focus:border-transparent
-                               focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
-						/>
-					</div>
-
-					<div>
-						<label for="password" class="mb-1 block text-sm font-medium">{$_('Password')}</label>
-						<div class="relative">
-							<input
-								id="password"
-								type={showPassword ? 'text' : 'password'}
-								bind:value={password}
-								required
-								placeholder="🔒 {$_('Enter your password')}"
-								disabled={loading}
-								autocomplete="current-password"
-								class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
-							/>
-							<button
-								type="button"
-								class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 transition-colors hover:text-gray-700 focus:outline-none dark:text-gray-400 dark:hover:text-gray-200"
-								onclick={() => (showPassword = !showPassword)}
-								aria-label={showPassword ? $_('Hide password') : $_('Show password')}
-								title={showPassword ? $_('Hide password') : $_('Show password')}
-							>
-								{#if showPassword}
-									<!-- Eye off icon -->
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="h-5 w-5"
-									>
-										<path
-											d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-10-8-10-8a21.77 21.77 0 0 1 5.17-7.19m3.11-1.6A10.94 10.94 0 0 1 12 4c7 0 10 8 10 8a21.83 21.83 0 0 1-2.16 3.19"
-										/>
-										<path d="M1 1l22 22" />
-									</svg>
-								{:else}
-									<!-- Eye icon -->
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke-width="2"
-										stroke="currentColor"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="h-5 w-5"
-									>
-										<path d="M1 12s3-8 11-8 11 8 11 8-3 8-11 8-11-8-11-8Z" />
-										<circle cx="12" cy="12" r="3" />
-									</svg>
-								{/if}
-							</button>
-						</div>
-					</div>
-
-					<div>
-						<button
-							id="login-button"
-							type="submit"
-							class="auth-primary-button w-full"
-							disabled={submitting}
-						>
-							{submitting ? $_('Logging in...') : $_('Login')}
-						</button>
-					</div>
-				</form>
-				<div class="mt-2 flex w-full flex-col items-center gap-2 md:flex-row md:justify-between">
-					<GoogleAuthLogin {data} />
-					<DiscordAuthLogin {data} />
-				</div>
-
-				<div
-					class="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
-				>
-					<button
-						type="button"
-						class="auth-secondary-button w-full"
-						disabled={loading}
-						onclick={() => goto('/api/')}
-					>
-						{$_('Go to API')}
-					</button>
-
-					<button
-						type="button"
-						class="auth-secondary-button w-full"
-						disabled={loading}
-						onclick={() => goto('/auth/register')}
-					>
-						{$_('Create an account')}
-					</button>
-
-					<button
-						type="button"
-						class="auth-secondary-button w-full"
-						disabled={loading}
-						onclick={() => goto('/auth/forgot-password')}
-					>
-						{$_('Forgot Password')}
-					</button>
-				</div>
-			{/if}
+<CwCard padded={false} class="auth-card">
+	<div class="auth-shell">
+		<div class="logo-frame">
+			<img src={logo} alt={m.app_name()} class="logo-image" />
 		</div>
+
+		<h1 class="auth-title">{m.auth_login_heading()}</h1>
+		<p class="auth-subtitle">{m.auth_login_subtitle()}</p>
+
+		<form
+			method="POST"
+			class="auth-form"
+			use:enhance={async ({ formData, cancel }) => {
+				if (loggingIn) {
+					cancel();
+					return;
+				}
+
+				loggingIn = true;
+
+				try {
+					formData.set('recaptchaToken', await recaptcha.runAction('LOGIN'));
+				} catch (error) {
+					console.error('reCAPTCHA execution error:', error);
+					toast.add({
+						message: m.auth_security_try_again(),
+						tone: 'danger',
+						duration: 7000
+					});
+					loggingIn = false;
+					cancel();
+					return;
+				}
+
+				return async ({ result }) => {
+					try {
+						if (result.type === 'failure' && typeof result.data?.message === 'string') {
+							toast.add({
+								message: result.data.message,
+								tone: 'danger'
+							});
+						}
+
+						if (result.type === 'redirect') {
+							toast.add({
+								message: m.auth_login_success_redirecting(),
+								tone: 'success'
+							});
+						}
+
+						await applyAction(result);
+					} finally {
+						loggingIn = false;
+					}
+				};
+			}}
+		>
+			<label class="field-block">
+				<span class="field-label">{m.auth_email_label()}</span>
+				<CwInput
+					bind:value={username}
+					class="auth-input"
+					name="email"
+					type="email"
+					required
+					placeholder={m.auth_email_placeholder()}
+					autocomplete="email"
+				/>
+			</label>
+
+			<label class="field-block">
+				<span class="field-label">{m.auth_password_label()}</span>
+				<CwInput
+					bind:value={password}
+					onchange={() => passwordStrengthCheck(password)}
+					class="auth-input"
+					name="password"
+					type="password"
+					required
+					placeholder={m.auth_password_placeholder()}
+					autocomplete="current-password"
+				/>
+			</label>
+			<span class="flex flex-row"></span>
+			<CwButton
+				class="auth-primary"
+				type="submit"
+				variant="primary"
+				loading={loggingIn}
+				disabled={loggingIn || !username || !password}
+				size="md"
+				fullWidth={true}
+			>
+				<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
+				{loggingIn ? m.auth_signing_in() : m.auth_sign_in()}
+			</CwButton>
+
+			<!-- eslint-disable svelte/no-navigation-without-resolve -->
+			<div class="action-grid">
+				<a
+					class="auth-button-link auth-button-link--secondary"
+					href={redirectPath
+						? `${resolve('/auth/create-account')}?redirect=${encodeURIComponent(redirectPath)}`
+						: resolve('/auth/create-account')}
+				>
+					{m.auth_create_account()}
+				</a>
+
+				<a
+					class="auth-button-link auth-button-link--secondary"
+					href={redirectPath
+						? `${resolve('/auth/forgot-password')}?redirect=${encodeURIComponent(redirectPath)}`
+						: resolve('/auth/forgot-password')}
+				>
+					<span class="text-sm">{m.auth_forgot_password()}</span>
+				</a>
+			</div>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+		</form>
+
+		<p class="security-copy">{m.auth_security_copy()}</p>
 	</div>
-</div>
+</CwCard>

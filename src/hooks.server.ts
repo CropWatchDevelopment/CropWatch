@@ -1,316 +1,166 @@
-import { error, redirect, type Handle } from '@sveltejs/kit';
-import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
-import { createClient } from '@supabase/supabase-js';
-import type { Session, User } from '@supabase/supabase-js';
-import type { Database } from '../database.types';
+import { sequence } from '@sveltejs/kit/hooks';
+import { buildLoginPath } from '$lib/utils/auth-redirect';
+import { getTextDirection } from '$lib/paraglide/runtime';
+import { paraglideMiddleware } from '$lib/paraglide/server';
+import type { IJWT } from '$lib/interfaces/jwt.interface';
+import type { Handle, HandleFetch, HandleServerError, RequestEvent } from '@sveltejs/kit';
+import { isRedirect, redirect } from '@sveltejs/kit';
+import { jwtDecode } from 'jwt-decode';
+import { env as publicEnv } from '$env/dynamic/public';
 
-const PUBLIC_ROUTES = [
-	'/offline.html',
-	'/auth', // All routes under /auth/
-	'/legal',
-	'/api/auth', // Only authentication-related API routes
-	'/api/webhook', // Webhook endpoints (authenticated via webhook signatures)
-	'/static', // All static assets
-	'/static/icons',
-	'/static/screenshots'
-];
+const PUBLIC_PATHS = new Set([
+	'/manifest.webmanifest',
+	'/offline',
+	'/offline/',
+	'/service-worker.js'
+]);
+const PUBLIC_API_BASE_URL = publicEnv.PUBLIC_API_BASE_URL ?? '';
 
-// Additional check for exact /api/ route
-const isExactApiRoute = (pathname: string) => pathname === '/api' || pathname === '/api/';
+function getAuthRedirectTarget(event: RequestEvent): string {
+	return `${event.url.pathname}${event.url.search}`;
+}
 
-// Handle for CORS
-const handleCORS: Handle = async ({ event, resolve }) => {
-	// Apply CORS header for API routes and preflight requests
-	if (event.url.pathname.startsWith('/api')) {
-		// Handle preflight requests
-		if (event.request.method === 'OPTIONS') {
-			return new Response(null, {
-				status: 200,
-				headers: {
-					'Access-Control-Allow-Origin': '*',
-					'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-					'Access-Control-Allow-Headers':
-						'Content-Type, Authorization, apikey, X-Requested-With, X-Refresh-Token',
-					'Access-Control-Max-Age': '86400'
-				}
-			});
-		}
-	}
+export const originalHandle: Handle = async ({ event, resolve }) => {
+	const token = event.cookies.get('jwt');
+
+	checkAuthToken(token ?? '', event);
 
 	const response = await resolve(event);
 
-	// Add CORS headers to API responses
-	if (event.url.pathname.startsWith('/api')) {
-		response.headers.set('Access-Control-Allow-Origin', '*');
-		response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-		response.headers.set(
-			'Access-Control-Allow-Headers',
-			'Content-Type, Authorization, apikey, X-Requested-With, X-Refresh-Token'
-		);
-	}
-
-	return response;
+	return ensureHtmlCharset(response);
 };
 
-// Handle for Supabase authentication and session management
-const handleSupabase: Handle = async ({ event, resolve }) => {
-	// Create a Supabase client specific for server-side rendering (SSR)
-	event.locals.supabase = createServerClient<Database>(
-		PUBLIC_SUPABASE_URL,
-		PUBLIC_SUPABASE_ANON_KEY,
-		{
-			cookies: {
-				getAll: () => event.cookies.getAll(),
-				setAll: (cookiesToSet) => {
-					// Store cookies to be set later instead of setting them immediately
-					event.locals.supabaseCookies = cookiesToSet;
-				}
-			}
-		}
-	) as any;
+const ensureHtmlCharset = (response: Response): Response => {
+	const contentType = response.headers.get('content-type');
 
-	// Handle JWT token authentication for API routes
-	let tokenSession: Session | null = null;
-	let tokenUser: User | null = null;
-
-	// Get headers from the request for better debugging
-	const headers = new Headers(event.request.headers);
-
-	// Check for authorization headers (case-insensitive)
-	const authorizationHeader = headers.get('authorization') || headers.get('Authorization');
-	const refreshTokenHeader = headers.get('x-refresh-token') || headers.get('X-Refresh-Token');
-
-	// Extract tokens
-	const jwt = authorizationHeader?.replace(/^Bearer\s+/i, '').trim();
-	const refreshToken = refreshTokenHeader?.trim();
-
-	// If we have a token and this is an API route, try to validate it
-	const isApiOrAppRoute =
-		event.url.pathname.startsWith('/api') || event.url.pathname.includes('/reports/pdf');
-
-	if (jwt && isApiOrAppRoute) {
-		const bearer = authorizationHeader?.replace(/^Bearer\s+/i, '').trim();
-		if (!bearer) {
-			throw error(401, 'Unauthorized access: No JWT token provided');
-		}
-		const jwtSupabase = createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			global: {
-				headers: { Authorization: `Bearer ${bearer}` }
-			},
-			auth: { persistSession: false }
-		});
-
-		const [{ data: sessionData, error: sessionError }, { data: userData, error: userError }] =
-			await Promise.all([jwtSupabase.auth.getSession(), jwtSupabase.auth.getUser()]);
-
-		if (sessionError) {
-			console.error('JWT session lookup error:', sessionError.message);
-		}
-
-		if (userError || !userData?.user) {
-			throw error(401, 'Unauthorized access: Invalid JWT token');
-		}
-
-		tokenSession = sessionData.session ?? null;
-		tokenUser = userData.user;
-
-		event.locals.supabase = jwtSupabase as any;
-		return await resolve(event, {
-			filterSerializedResponseHeaders(name) {
-				return name === 'content-range' || name === 'x-supabase-api-version';
-			}
-		});
+	if (!contentType) {
+		return response;
 	}
 
-	// Enhance session validation to include explicit debug logging
-	event.locals.safeGetSession = async () => {
-		// ✅ If JWT token has already been validated, return user even if no session
-		if (tokenUser && event.url.pathname.startsWith('/api')) {
-			console.log('Using tokenUser from earlier validation (safeGetSession)');
-			return { session: tokenSession, user: tokenUser }; // tokenSession may be null — that's okay
-		}
+	const isHtml = contentType.toLowerCase().includes('text/html');
+	const hasCharset = contentType.toLowerCase().includes('charset=');
 
-		// 🧪 Else, try to get session from Supabase client (cookie-based)
+	if (!isHtml || hasCharset) {
+		return response;
+	}
+
+	const headers = new Headers(response.headers);
+	headers.set('content-type', `${contentType}; charset=utf-8`);
+
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers
+	});
+};
+
+const checkAuthToken = (token: string, event: RequestEvent) => {
+	const authRoute = event.url.pathname.startsWith('/auth');
+	const publicRoute = PUBLIC_PATHS.has(event.url.pathname);
+	const bypassAuth = authRoute || publicRoute;
+
+	if (token) {
+		let decodedJWT: IJWT;
+
 		try {
-			// console.log(`Session validation for path: ${event.url.pathname}`);
-			const {
-				data: { session }
-			} = await event.locals.supabase.auth.getSession();
-
-			if (!session) {
-				console.warn(`No session found during validation for path: ${event.url.pathname}`);
-				return { session: null, user: null };
+			decodedJWT = jwtDecode(token) as IJWT;
+		} catch (error) {
+			if (isRedirect(error)) {
+				throw error;
 			}
 
-			const {
-				data: { user },
-				error
-			} = await event.locals.supabase.auth.getUser();
+			if (!bypassAuth) {
+				event.locals.jwt = null;
+				event.locals.jwtString = null;
 
-			if (error) {
-				console.error(
-					`Error validating user session for path: ${event.url.pathname}`,
-					error.message
+				throw redirect(
+					303,
+					buildLoginPath({
+						redirectTo: getAuthRedirectTarget(event),
+						reason: 'auth-required'
+					})
 				);
-				return { session: null, user: null };
 			}
-			return { session, user };
-		} catch (err) {
-			return { session: null, user: null };
+
+			return false;
 		}
-	};
 
-	// Execute session validation once and store results in locals
-	const sessionData = await event.locals.safeGetSession();
+		event.locals.jwt = decodedJWT;
+		event.locals.jwtString = token;
 
-	// We need to run this after Supabase handle to have access to session data
-	// This will be called in the correct order in our sequence
-	const pathname = event.url.pathname;
+		const now = Math.floor(Date.now() / 1000);
 
-	// Check if current route requires authentication
-	const isPublicRoute =
-		PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/')) ||
-		isExactApiRoute(pathname);
+		if (decodedJWT.exp < now) {
+			console.log('JWT token expired, redirecting to login');
+			event.cookies.delete('jwt', { path: '/' });
+			event.locals.jwt = null;
+			event.locals.jwtString = null;
 
-	// Special handling for API routes with JWT tokens
-	if (pathname.startsWith('/api') && !sessionData.session && !isPublicRoute) {
-		// For API device-data routes, check if we have a token in the Authorization header
-		const headers = event.request.headers;
-		const authHeader = headers.get('authorization') || headers.get('Authorization');
-		const apiToken = authHeader?.replace(/^Bearer\s+/i, '').trim();
-
-		// If we have a token, validate it before proceeding
-		if (apiToken) {
-			// console.log('Validating API token for:', pathname);
-
-			try {
-				// Validate the token using Supabase auth
-				const { data, error } = await event.locals.supabase.auth.getUser(apiToken);
-
-				if (error || !data?.user) {
-					console.error('Invalid API token:', error?.message || 'User not found');
-					return new Response(JSON.stringify({ error: 'Invalid API token' }), {
-						status: 401,
-						headers: {
-							'Content-Type': 'application/json',
-							'Access-Control-Allow-Origin': '*',
-							'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-							'Access-Control-Allow-Headers':
-								'Content-Type, Authorization, apikey, X-Requested-With, X-Refresh-Token'
-						}
-					});
-				}
-
-				// Token is valid, set the user from the validated token
-				//console.log('Valid API token for user:', data.user.email);
-				event.locals.user = data.user;
-				tokenUser = data.user;
-				tokenSession = null;
-
-				// Continue processing the request
-				const response = await resolve(event, {
-					filterSerializedResponseHeaders(name) {
-						return name === 'content-range' || name === 'x-supabase-api-version';
-					}
-				});
-				return response;
-			} catch (err) {
-				console.error('Error validating API token:', err);
-				return new Response(JSON.stringify({ error: 'Error validating API token' }), {
-					status: 401,
-					headers: {
-						'Content-Type': 'application/json',
-						'Access-Control-Allow-Origin': '*',
-						'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-						'Access-Control-Allow-Headers':
-							'Content-Type, Authorization, apikey, X-Requested-With, X-Refresh-Token'
-					}
-				});
+			if (!bypassAuth) {
+				throw redirect(
+					303,
+					buildLoginPath({
+						redirectTo: getAuthRedirectTarget(event),
+						reason: 'expired'
+					})
+				);
 			}
+
+			return false;
+		}
+
+		return true;
+	} else {
+		if (!bypassAuth) {
+			console.log('No JWT token found, redirecting to login');
+			event.locals.jwt = null;
+			event.locals.jwtString = null;
+
+			throw redirect(
+				303,
+				buildLoginPath({
+					redirectTo: getAuthRedirectTarget(event),
+					reason: 'auth-required'
+				})
+			);
 		}
 	}
 
-	if (!isPublicRoute && !sessionData.session) {
-		// For API routes, return 401 Unauthorized instead of redirecting
-		if (pathname.startsWith('/api')) {
-			// console.log(`Unauthorized API access attempt: ${pathname}`);
-			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-				status: 401,
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-		}
-
-		// console.log(`Redirecting unauthenticated user from protected route: ${pathname}`);
-		throw redirect(302, '/auth/login');
-	}
-
-	// Store validated session and user in locals for routes to use
-	event.locals.session = sessionData.session;
-	event.locals.user = sessionData.user;
-	// console.log('Session validated and stored in locals:', sessionData.user?.email || 'Guest');
-
-	// Resolve the response
-	const response = await resolve(event, {
-		filterSerializedResponseHeaders(name) {
-			return name === 'content-range' || name === 'x-supabase-api-version';
-		}
-	});
-
-	// After the response is generated, apply the stored cookies if they exist
-	if (event.locals.supabaseCookies) {
-		event.locals.supabaseCookies.forEach(({ name, value, options }) => {
-			// Format sameSite value correctly
-			let sameSiteValue: string | undefined;
-			if (options.sameSite === true) sameSiteValue = 'Strict';
-			else if (options.sameSite === false) sameSiteValue = 'None';
-			else if (options.sameSite)
-				sameSiteValue = options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1);
-
-			// Construct cookie string
-			const cookieHeader = [
-				`${name}=${value}`,
-				`Path=${options.path || '/'}`,
-				options.httpOnly ? 'HttpOnly' : '',
-				options.secure ? 'Secure' : '',
-				sameSiteValue ? `SameSite=${sameSiteValue}` : '',
-				options.maxAge ? `Max-Age=${options.maxAge}` : '',
-				options.domain ? `Domain=${options.domain}` : ''
-			]
-				.filter(Boolean)
-				.join('; ');
-
-			response.headers.append('set-cookie', cookieHeader);
-		});
-	}
-
-	return response;
+	return false;
 };
 
-// Combine the handles - CORS first, then Supabase
-export const handle: Handle = async ({ event, resolve }) => {
-	const { url } = event;
-	if (
-		url.pathname.startsWith('/sw.js') ||
-		url.pathname.startsWith('/workbox-') ||
-		url.pathname.startsWith('/manifest.webmanifest') ||
-		url.pathname.startsWith('/registerSW.js') ||
-		url.pathname.startsWith('/offline.html')
-	) {
-		return resolve(event);
+const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
+	if (PUBLIC_API_BASE_URL && request.url.startsWith(PUBLIC_API_BASE_URL)) {
+		const token = event.cookies.get('jwt');
+
+		checkAuthToken(token ?? '', event);
+
+		if (token) {
+			request.headers.set('Authorization', `Bearer ${token}`);
+		}
 	}
 
-	// First apply CORS (handles preflight requests immediately)
-	return await handleCORS({
-		event,
-		resolve: async (corsEvent) => {
-			// Then apply Supabase handle (which includes route guards and may throw redirects)
-			return await handleSupabase({
-				event: corsEvent,
-				resolve
-			});
-		}
+	return fetch(request);
+};
+
+const paraglideHandle: Handle = ({ event, resolve }) =>
+	paraglideMiddleware(event.request, ({ request: localizedRequest, locale }) => {
+		event.request = localizedRequest;
+
+		return resolve(event, {
+			transformPageChunk: ({ html }) =>
+				html
+					.replace('%paraglide.lang%', locale)
+					.replace('%paraglide.dir%', getTextDirection(locale))
+		});
 	});
+
+export const handle = sequence(paraglideHandle, originalHandle);
+
+export const handleError: HandleServerError = ({ error, status, message }) => {
+	console.error('[CropWatch] Unexpected server error:', error);
+
+	return {
+		message: status === 404 ? 'Not Found' : 'Internal Error'
+	};
 };

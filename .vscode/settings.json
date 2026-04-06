@@ -1,8 +1,7 @@
 {
-    "i18n-ally.localesPaths": [
-        "messages",
-        "src/lib/i18n",
-        "src/lib/i18n/locales",
-        "src/lib/paraglide/messages"
-    ]
+	"files.associations": {
+		"*.css": "css"
+	},
+	"files.autoSave": "afterDelay",
+	"files.autoSaveDelay": 250
 }

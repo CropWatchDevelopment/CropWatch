@@ -1,173 +1,198 @@
 <script lang="ts">
-	import { invalidate, beforeNavigate, afterNavigate } from '$app/navigation';
+	import { locales, localizeHref } from '$lib/paraglide/runtime';
+	import './layout.css';
+	import { onDestroy } from 'svelte';
+	import { asset, resolve } from '$app/paths';
+
+	import {
+		createCwToastContext,
+		CwOfflineOverlay,
+		CwStatusDot,
+		CwToastContainer,
+		type CwSideNavMode
+	} from '@cropwatchdevelopment/cwui';
+
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
-	import Header from '$lib/components/Header.svelte';
-	import GlobalSidebar from '$lib/components/GlobalSidebar.svelte';
-	import GlobalLoading from '$lib/components/GlobalLoading.svelte';
-	import ToastContainer from '$lib/components/Toast/ToastContainer.svelte';
-	import { i18n } from '$lib/i18n/index.svelte';
-	import { sidebarStore } from '$lib/stores/SidebarStore.svelte';
-	import { globalLoading, startLoading, stopLoading } from '$lib/stores/loadingStore';
-	import { createBrowserClient } from '@supabase/ssr';
-	import { onMount } from 'svelte';
-	import '../app.css';
-	import { info, warning } from '$lib/stores/toast.svelte';
-	import { ONE_SIGNAL_PUBLIC_CONFIG } from '$lib/onesignalPublic';
-	import { themeStore, initThemeOnce } from '$lib/stores/theme';
+	import OverviewDrawer from './OverviewDrawer.svelte';
+	import Sidebar from './Sidebar.svelte';
+	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
+	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
+	import type { IJWT } from '$lib/interfaces/jwt.interface';
+	import type { IDevice } from '$lib/interfaces/device.interface';
+	import type { LocationDto, RuleDto, TriggeredRulesCountResponse } from '$lib/api/api.dtos';
+	import type { DeviceTypeLookup } from '$lib/components/dashboard/dashboard-device-data';
+	import type { LayoutProps } from './$types';
+	import Header from './Header.svelte';
+	import type { Profile } from '$lib/interfaces/profile.interface';
 
-	// No preloading needed - dashboard will load its data when navigated to
+	let { children }: LayoutProps = $props();
 
-	let { children, data } = $props();
+	createCwToastContext();
 
-	// Create a browser client for client-side auth
-	const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-		auth: {
-			persistSession: true,
-			detectSessionInUrl: true
+	let mode = $state<CwSideNavMode>('open');
+	let isAuthRoute = $derived(page.url.pathname.startsWith('/auth'));
+	let isOfflineRoute = $derived(page.url.pathname === '/offline');
+	let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+	interface DashboardPageData {
+		session?: IJWT | null;
+		authToken?: string | null;
+		devices?: IDevice[];
+		deviceTypeLookup?: DeviceTypeLookup;
+		totalDeviceCount?: number;
+		deviceStatuses?: { online: number; offline: number };
+		triggeredRules?: RuleDto[];
+		triggeredRulesCount?: TriggeredRulesCountResponse;
+		deviceGroups?: string[];
+		locationGroups?: string[];
+		locations?: LocationDto[];
+		profile?: Profile | undefined;
+		dashboardDebug?: Record<string, unknown> | null;
+	}
+
+	function readTriggeredRulesCount(
+		rawTriggeredRulesCount: TriggeredRulesCountResponse | undefined
+	): number {
+		if (typeof rawTriggeredRulesCount === 'number' && Number.isFinite(rawTriggeredRulesCount)) {
+			return rawTriggeredRulesCount;
 		}
-	});
 
-	// Use derived values instead of state to avoid infinite loops
-	let session = $derived(data.session);
-	let user = $derived(data.user);
+		if (rawTriggeredRulesCount && typeof rawTriggeredRulesCount === 'object') {
+			const maybeCount =
+				(rawTriggeredRulesCount as Record<string, unknown>).count ??
+				(rawTriggeredRulesCount as Record<string, unknown>).triggered_count;
 
-	// Check if we should show the sidebar (not on auth pages)
-	let showSidebar = $derived(!page.url.pathname.startsWith('/auth'));
-
-	// Dynamic margin based on sidebar state
-	let mainMargin = $derived(() => {
-		if (!showSidebar) return '';
-		if (sidebarStore.isOpen) return 'lg:ml-64';
-		if (sidebarStore.isSmallIconMode) return 'lg:ml-16';
-		return 'lg:ml-16'; // default collapsed state on desktop
-	});
-
-	// Log user updates without creating an infinite loop
-	$effect(() => {
-		if (user) {
-			//console.log('User data updated:', user.email || 'Guest');
-		}
-	});
-
-	// Improved auth listener to handle session initialization more robustly
-	onMount(() => {
-		//console.log('Setting up auth listener');
-		const { data: authData } = supabase.auth.onAuthStateChange((event, _session) => {
-			console.log('Auth state change event:', event);
-			switch (event) {
-				case 'TOKEN_REFRESHED':
-					info('Your session was refreshed successfully.');
-					break;
-
-				case 'SIGNED_OUT':
-					warning('Your session has ended. Please login again.');
-					break;
-				default:
-					break;
+			if (typeof maybeCount === 'number' && Number.isFinite(maybeCount)) {
+				return maybeCount;
 			}
-			// Invalidate to refresh server data when session changes
-			invalidate('supabase:auth');
-		});
-
-		return () => authData.subscription.unsubscribe();
-	});
-
-	onMount(() => {
-		i18n.initialize();
-	});
-
-	// OneSignal Web Push (2025 docs style) - only loads if appId present
-	onMount(() => {
-		if (typeof window === 'undefined') return;
-		if (!ONE_SIGNAL_PUBLIC_CONFIG.appId) return;
-		// Inject script once
-		if (!document.querySelector('script[data-onesignal-sdk]')) {
-			const s = document.createElement('script');
-			s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
-			s.defer = true;
-			s.setAttribute('data-onesignal-sdk', 'true');
-			document.head.appendChild(s);
 		}
-		// Queue init
-		(window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
-		(window as any).OneSignalDeferred.push(async function (OneSignal: any) {
-			await OneSignal.init({
-				appId: ONE_SIGNAL_PUBLIC_CONFIG.appId,
-				safari_web_id: ONE_SIGNAL_PUBLIC_CONFIG.safari_web_id,
-				notifyButton: { enable: true }
-			});
-		});
-	});
 
-	// Handle navigation loading states with a small delay to avoid flash on fast transitions
-	let navTimer: ReturnType<typeof setTimeout> | null = null;
-	beforeNavigate(() => {
-		if (navTimer) clearTimeout(navTimer);
-		navTimer = setTimeout(() => startLoading(), 150); // show after 150ms if still navigating
-	});
+		return 0;
+	}
 
-	afterNavigate(() => {
-		if (navTimer) {
-			clearTimeout(navTimer);
-			navTimer = null;
+	const app = $state(createAppContext());
+
+	setAppContext(app);
+
+	function syncAppFromPageData() {
+		const routeData = page.data as DashboardPageData;
+		const isDashboardRoute = page.url.pathname === '/';
+
+		app.session = routeData.session ?? null;
+		app.accessToken = routeData.authToken ?? undefined;
+		app.profile = routeData.profile ?? undefined;
+
+		if (!isDashboardRoute) {
+			return;
 		}
-		stopLoading();
+
+		// Dashboard data is streamed via +page.server.ts → +page.svelte handles the sync
+		if ('dashboard' in routeData) {
+			return;
+		}
+
+		const devices = routeData.devices ?? [];
+
+		app.devices = devices;
+		app.deviceTypeLookup = routeData.deviceTypeLookup ?? { byModel: {}, idToModel: {} };
+		app.totalDeviceCount = routeData.totalDeviceCount ?? devices.length;
+		app.deviceStatuses = routeData.deviceStatuses ?? { online: 0, offline: 0 };
+		app.triggeredRules = routeData.triggeredRules ?? [];
+		app.triggeredRulesCount = readTriggeredRulesCount(routeData.triggeredRulesCount);
+		app.deviceGroups = normalizeDashboardFilterValues(routeData.deviceGroups);
+		app.locationGroups = normalizeDashboardFilterValues(routeData.locationGroups);
+		app.locations = routeData.locations ?? [];
+	}
+
+	syncAppFromPageData();
+	afterNavigate(syncAppFromPageData);
+
+	function handleWindowResize() {
+		document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
+
+		if (resizeTimer) {
+			clearTimeout(resizeTimer);
+		}
+
+		resizeTimer = setTimeout(() => {
+			document.querySelector('.cw-sidenav')?.classList.remove('cw-sidenav--resizing');
+		}, 100);
+	}
+
+	onDestroy(() => {
+		if (resizeTimer) {
+			clearTimeout(resizeTimer);
+		}
 	});
 
-	const theme = $derived(themeStore);
-	onMount(() => {
-		initThemeOnce();
-	});
+	function localizedHref(locale: (typeof locales)[number]): string {
+		return localizeHref(page.url.pathname, { locale });
+	}
 </script>
 
-<!-- Wait until svelte-i18n is initialized -->
-{#if i18n.initialized}
-	<div class="page-transition-container" data-theme={theme.effective}>
-		{#if !page.url.pathname.startsWith('/auth')}
-			<Header userName={user?.email ?? 'Unknown User'} />
-		{/if}
-		{#if showSidebar}
-			<GlobalSidebar />
-		{/if}
-		<main
-			class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen transition-all duration-300"
-			style="margin-left: {showSidebar ? (sidebarStore.isOpen ? '64px' : '64px') : '0'}; 
-				   padding-top: {showSidebar ? '64px' : '0'};
-				   --sidebar-width: {showSidebar ? (sidebarStore.isOpen ? '64px' : '64px') : '0'};"
-			data-auth-page={page.url.pathname.startsWith('/auth') ? 'true' : undefined}
-		>
-			{@render children?.()}
-			<ToastContainer position="top-right" />
-		</main>
-		<GlobalLoading />
-	</div>
-{/if}
+<svelte:head>
+	<link rel="manifest" href={resolve('/manifest.webmanifest')} />
+
+	<link rel="icon" href={asset('/icons/favicon.svg')} sizes="any" type="image/svg+xml" />
+
+	<link rel="icon" href={asset('/icons/icon-32x32.png')} sizes="32x32" type="image/png" />
+
+	<link rel="icon" href={asset('/icons/icon-192x192.png')} sizes="192x192" type="image/png" />
+
+	<link rel="shortcut icon" href={asset('/favicon.ico')} />
+
+	<link rel="apple-touch-icon" href={asset('/icons/apple-touch-icon.png')} sizes="180x180" />
+
+	<meta name="application-name" content="CropWatch" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+
+	<meta name="apple-mobile-web-app-title" content="CropWatch" />
+
+	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="color-scheme" content="dark light" />
+	<meta name="theme-color" content="#1f283b" />
+
+	<meta name="theme-color" content="#eef1f7" media="(prefers-color-scheme: light)" />
+
+	<meta name="theme-color" content="#1f283b" media="(prefers-color-scheme: dark)" />
+</svelte:head>
+
+<CwOfflineOverlay />
+<CwToastContainer />
+
+<svelte:window onresize={handleWindowResize} />
+
+<div class="app-shell">
+	{#if !isAuthRoute && !isOfflineRoute}
+		<Sidebar bind:mode />
+
+		<div class="app-shell__content">
+			<Header bind:mode />
+
+			<main class="app-shell__main">{@render children()}</main>
+
+			<div class="app-shell__bottom-chrome">
+				<OverviewDrawer />
+			</div>
+		</div>
+	{:else}
+		<main class="app-shell__main app-shell__main--standalone">{@render children()}</main>
+	{/if}
+</div>
+
+<div style="display:none">
+	{#each locales as locale (locale)}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={localizedHref(locale)}>{locale}</a>
+	{/each}
+</div>
 
 <style>
-	.page-transition-container {
-		animation: fadeIn 0.3s ease-in-out;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	/* Mobile: no sidebar margin */
-	@media (max-width: 1023px) {
-		main {
-			margin-left: 0 !important;
-			padding-top: 119px !important;
-		}
-
-		/* Auth pages should have no padding even on mobile */
-		main[data-auth-page] {
-			padding-top: 0 !important;
-		}
+	.grecaptcha-badge {
+		visibility: hidden !important;
 	}
 </style>

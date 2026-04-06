@@ -1,185 +1,345 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
-	import { success, error, warning, info, neutral } from '$lib/stores/toast.svelte';
-	import { _ } from 'svelte-i18n';
+	import Icon from '$lib/components/Icon.svelte';
+	import logo from '$lib/images/cropwatch_static.svg';
+	import KEY_ICON from '$lib/images/icons/key.svg';
+	import BACK_ICON from '$lib/images/icons/back.svg';
+	import ADD_PERSON_ICON from '$lib/images/icons/person_add.svg';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
+	import { applyAction, enhance } from '$app/forms';
+	import { readRedirectPath } from '$lib/utils/auth-redirect';
+	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 
-	let { data } = $props();
-	let form = $derived(data.form);
-
-	let email = $state('');
-	let loading = $state(false);
-
-	function handleSubmit() {
-		return () => {
-			loading = true;
-
-			return async ({ result, update }) => {
-				loading = false;
-				await update();
-				if (result.status === 200) {
-					success($_('Password reset link sent to your email.'));
-					goto('/auth/check-email');
-				} else {
-					error($_(result.error));
-				}
-			};
-		};
+	interface Props {
+		form: { message?: string; success?: boolean } | null;
 	}
+
+	const toast = useCwToast();
+
+	let { form }: Props = $props();
+
+	let submitting: boolean = $state(false);
+	const recaptcha = createAuthRecaptcha();
+	let sent: boolean = $derived(form?.success === true);
+	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
+
+	onMount(() => {
+		void recaptcha.warmup();
+	});
 </script>
 
 <svelte:head>
-	<title>{$_('Forgot Password')} | CropWatch</title>
+	<title>{m.auth_forgot_password_page_title()}</title>
 </svelte:head>
 
-<!-- Geometric Background Layer -->
-<div class="geometric-background"></div>
+<CwCard padded={false} class="auth-card">
+	<div class="auth-shell">
+		<div class="logo-frame">
+			<img src={logo} alt={m.app_name()} class="logo-image" />
+		</div>
 
-<div
-	class="bg-background-light/30 dark:bg-background-dark/30 relative z-10 flex h-screen items-center justify-center p-5 transition-colors duration-300"
->
-	<div
-		class="auth-panel bg-card-light/95 dark:bg-card-dark/95 text-text-light dark:text-text-dark w-full max-w-md rounded-lg border-2 border-white/40 p-6 shadow-2xl backdrop-blur-xl dark:border-blue-400/30"
-	>
-		<h1 class="mb-6 text-center text-2xl font-bold">{$_('Reset Password')}</h1>
+		{#if sent}
+			<h1 class="auth-title">{m.auth_check_email_heading()}</h1>
+			<p class="auth-subtitle">{m.auth_forgot_password_sent_body()}</p>
 
-		{#if form?.success}
-			<div
-				class="mb-4 rounded-md bg-green-100 p-4 text-center text-green-700 dark:bg-green-900/30 dark:text-green-400"
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a
+				class="auth-button-link auth-button-link--primary"
+				href={redirectPath
+					? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
+					: resolve('/auth/login')}
 			>
-				<p>
-					{$_('If an account exists with the email')} <strong>{form.email}</strong>, {$_(
-						"you'll receive a password reset link shortly."
-					)}
-				</p>
-
-				<a
-					href="/auth/login"
-					class="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-				>
-					← {$_('Back to login')}
-				</a>
-			</div>
+				<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
+				{m.auth_back_to_login()}
+			</a>
 		{:else}
-			<p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
-				{$_("Enter your email address and we'll send you a link to reset your password.")}
-			</p>
+			<h1 class="auth-title">{m.auth_forgot_password()}</h1>
+			<p class="auth-subtitle">{m.auth_forgot_password_subtitle()}</p>
 
-			<form method="POST" use:enhance={handleSubmit()} class="space-y-4">
-				<div>
-					<label for="email" class="mb-1 block text-sm font-medium">{$_('Email address')}</label>
-					<input
-						type="email"
-						id="email"
+			<form
+				method="POST"
+				action="?/forgotPassword"
+				class="auth-form"
+				use:enhance={async ({ formData, cancel }) => {
+					if (submitting) {
+						cancel();
+						return;
+					}
+					submitting = true;
+
+					try {
+						formData.set('recaptchaToken', await recaptcha.runAction('FORGOT_PASSWORD'));
+					} catch (err) {
+						console.error('reCAPTCHA token failed:', err);
+						toast.add({ message: m.auth_security_try_again(), tone: 'danger' });
+						submitting = false;
+						cancel();
+						return;
+					}
+
+					return async ({ result }) => {
+						if (result.type === 'failure' && typeof result.data?.message === 'string') {
+							toast.add({
+								message: result.data.message,
+								tone: 'danger'
+							});
+						}
+
+						submitting = false;
+						await applyAction(result);
+					};
+				}}
+			>
+				<label class="field-block">
+					<span class="field-label">{m.auth_email_label()}</span>
+					<CwInput
+						class="auth-input"
 						name="email"
-						bind:value={email}
-						autocomplete="email"
+						type="email"
 						required
-						placeholder="✉️ {$_('Enter your email')}"
-						disabled={loading}
-						class="text-text-light dark:text-text-dark focus:ring-primary w-full rounded-md border border-gray-300
-                   bg-white px-3 py-2 focus:border-transparent
-                   focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+						placeholder={m.auth_email_placeholder()}
+						autocomplete="email"
 					/>
-				</div>
+				</label>
 
-				{#if form?.error}
-					<div
-						class="mb-4 rounded-md bg-red-100 p-3 text-center text-red-700 dark:bg-red-900/30 dark:text-red-400"
-					>
-						{$_(form.error)}
-					</div>
-				{/if}
+				<CwButton
+					class="auth-primary"
+					type="submit"
+					variant="primary"
+					size="md"
+					fullWidth={true}
+					disabled={submitting}
+				>
+					{#if submitting}
+						{m.auth_sending()}
+					{:else}
+						<Icon src={KEY_ICON} alt={m.auth_send_reset_link()} class="h-4 w-4" />
+						{m.auth_send_reset_link()}
+					{/if}
+				</CwButton>
 
-				<div>
-					<button type="submit" class="auth-primary-button w-full" disabled={loading}>
-						{loading ? $_('Sending...') : $_('Send reset link')}
-					</button>
-				</div>
-
-				<div class="mt-4 text-center">
+				<!-- eslint-disable svelte/no-navigation-without-resolve -->
+				<div class="action-grid">
 					<a
-						href="/auth/login"
-						class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+						class="auth-button-link auth-button-link--secondary"
+						href={redirectPath
+							? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
+							: resolve('/auth/login')}
 					>
-						{$_('Back to login')}
+						<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
+						{m.auth_back_to_login()}
+					</a>
+
+					<a
+						class="auth-button-link auth-button-link--secondary"
+						href={redirectPath
+							? `${resolve('/auth/create-account')}?redirect=${encodeURIComponent(redirectPath)}`
+							: resolve('/auth/create-account')}
+					>
+						<Icon src={ADD_PERSON_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
+						{m.auth_create_account()}
 					</a>
 				</div>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			</form>
 		{/if}
+
+		<p class="security-copy">{m.auth_security_copy()}</p>
 	</div>
-</div>
+</CwCard>
 
 <style>
-	.geometric-background {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: 100vh;
-		z-index: 1;
-
-		/* Rich corporate gradient - more vibrant blues */
-		background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 25%, #2563eb 75%, #1d4ed8 100%);
-
-		/* Ensure it's visible */
-		opacity: 1;
-
-		/* Professional corporate overlay patterns */
-		background-image: 
-			/* Corporate highlight orbs */
-			radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
-			radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.25) 0%, transparent 45%),
-			radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.2) 0%, transparent 40%),
-			/* Subtle business texture */
-				radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 35%),
-			radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 30%);
-
-		background-size:
-			1000px 1000px,
-			800px 800px,
-			600px 600px,
-			400px 400px,
-			500px 500px;
-
-		background-position:
-			0 0,
-			100px 100px,
-			300px 200px,
-			500px 300px,
-			200px 400px;
-
-		/* Subtle floating animation */
-		animation: floatBackground 20s ease-in-out infinite;
+	:global(.auth-card.cw-card) {
+		width: 100%;
+		border-radius: 1rem;
+		border-color: rgb(65 91 136 / 60%);
+		background: linear-gradient(180deg, rgb(11 27 62 / 95%) 0%, rgb(11 25 58 / 93%) 100%);
+		box-shadow: 0 34px 90px rgb(2 8 24 / 70%);
+		overflow: hidden;
 	}
 
-	@keyframes floatBackground {
-		0%,
-		100% {
-			transform: translateX(0) translateY(0);
-		}
-		25% {
-			transform: translateX(-20px) translateY(-10px);
-		}
-		50% {
-			transform: translateX(10px) translateY(-20px);
-		}
-		75% {
-			transform: translateX(-10px) translateY(10px);
-		}
+	:global(.auth-card .cw-card__body) {
+		padding: 0;
 	}
 
-	/* Dark mode - rich professional dark gradient */
-	:global(.dark) .geometric-background {
-		background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #1e40af 75%, #1e3a8a 100%);
+	.auth-shell {
+		padding: 1.8rem 1.4rem 1rem;
+	}
 
-		background-image: 
-			/* Dark mode corporate highlights */
-			radial-gradient(circle at 15% 25%, rgba(59, 130, 246, 0.4) 0%, transparent 50%),
-			radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.35) 0%, transparent 45%),
-			radial-gradient(circle at 50% 10%, rgba(37, 99, 235, 0.3) 0%, transparent 40%),
-			/* Professional dark texture */
-				radial-gradient(circle at 25% 80%, rgba(255, 255, 255, 0.04) 0%, transparent 35%),
-			radial-gradient(circle at 75% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 30%);
+	.logo-frame {
+		display: grid;
+		height: 3.95rem;
+		width: 3.95rem;
+		place-items: center;
+		margin: 0 auto 1.35rem;
+		border-radius: 0.9rem;
+		border: 1px solid rgb(61 88 130 / 56%);
+		background: linear-gradient(180deg, rgb(19 42 85 / 90%), rgb(15 33 71 / 88%));
+		box-shadow: inset 0 1px 0 rgb(128 163 214 / 15%);
+	}
+
+	.logo-image {
+		height: 2rem;
+		width: 2rem;
+	}
+
+	.auth-title {
+		margin: 0;
+		text-align: center;
+		font-size: 1.5rem;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		color: rgb(239 245 255);
+	}
+
+	.auth-subtitle {
+		margin: 0.45rem 0 1.3rem;
+		text-align: center;
+		font-size: 1rem;
+		color: rgb(158 176 205);
+	}
+
+	.auth-form {
+		display: grid;
+		gap: 0.82rem;
+	}
+
+	.auth-button-link {
+		display: inline-flex;
+		width: 100%;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		box-sizing: border-box;
+		border: 1px solid transparent;
+		text-decoration: none;
+		line-height: 1;
+		transition:
+			background-color 120ms ease,
+			border-color 120ms ease,
+			color 120ms ease,
+			box-shadow 120ms ease;
+	}
+
+	.auth-button-link:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px rgb(70 137 220 / 26%);
+	}
+
+	.auth-button-link--primary {
+		min-height: 3rem;
+		border-radius: 0.8rem;
+		border-color: rgb(83 149 213 / 70%);
+		background: linear-gradient(180deg, #3889cb 0%, #2f74b3 100%);
+		color: rgb(242 248 255);
+		font-size: 1.12rem;
+		font-weight: 500;
+	}
+
+	.auth-button-link--primary:hover {
+		border-color: rgb(108 167 228 / 76%);
+		background: linear-gradient(180deg, #4395d8 0%, #347fbe 100%);
+	}
+
+	.field-block {
+		display: grid;
+		gap: 0.42rem;
+	}
+
+	.field-label {
+		font-size: 0.84rem;
+		font-weight: 500;
+		letter-spacing: 0.06em;
+		color: rgb(151 171 201);
+	}
+
+	:global(.auth-input .cw-input__field) {
+		min-height: 3rem;
+		border-color: rgb(58 84 126 / 80%);
+		border-radius: 0.8rem;
+		background: rgb(23 41 79 / 78%);
+		padding: 0.78rem 0.9rem;
+		font-size: 1.06rem;
+		color: rgb(223 236 255);
+	}
+
+	:global(.auth-input .cw-input__field::placeholder) {
+		color: rgb(140 162 196);
+	}
+
+	:global(.auth-input .cw-input__field:focus) {
+		border-color: rgb(86 140 214 / 90%);
+		box-shadow: 0 0 0 2px rgb(70 137 220 / 26%);
+	}
+
+	:global(.auth-primary.cw-button) {
+		min-height: 3rem;
+		border-radius: 0.8rem;
+		border-color: rgb(83 149 213 / 70%);
+		background: linear-gradient(180deg, #3889cb 0%, #2f74b3 100%);
+		color: rgb(242 248 255);
+		font-size: 1.12rem;
+		font-weight: 500;
+	}
+
+	:global(.auth-primary.cw-button:hover:not(:disabled)) {
+		border-color: rgb(108 167 228 / 76%);
+		background: linear-gradient(180deg, #4395d8 0%, #347fbe 100%);
+	}
+
+	.action-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.7rem;
+	}
+
+	.auth-button-link--secondary {
+		min-height: 2.48rem;
+		border-radius: 0.75rem;
+		border-color: rgb(72 96 136 / 80%);
+		background: rgb(33 53 90 / 84%);
+		color: rgb(218 229 245);
+		font-size: 1rem;
+		font-weight: 450;
+	}
+
+	.auth-button-link--secondary:hover {
+		border-color: rgb(95 126 174 / 85%);
+		background: rgb(39 62 102 / 88%);
+	}
+
+	:global(.auth-secondary.cw-button) {
+		min-height: 2.48rem;
+		border-radius: 0.75rem;
+		border-color: rgb(72 96 136 / 80%);
+		background: rgb(33 53 90 / 84%);
+		color: rgb(218 229 245);
+		font-size: 1rem;
+		font-weight: 450;
+	}
+
+	:global(.auth-secondary.cw-button:hover:not(:disabled)) {
+		border-color: rgb(95 126 174 / 85%);
+		background: rgb(39 62 102 / 88%);
+	}
+
+	.security-copy {
+		margin: 1.25rem 0 0;
+		text-align: center;
+		font-size: 0.84rem;
+		color: rgb(135 155 187);
+	}
+
+	@media (max-width: 420px) {
+		.auth-shell {
+			padding: 1.45rem 1rem 0.85rem;
+		}
+
+		.action-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>
