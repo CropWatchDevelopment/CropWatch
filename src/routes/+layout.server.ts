@@ -3,14 +3,18 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 
-const apiServiceInstance = new ApiService({
-		fetchFn: fetch,
-		authToken: locals.jwtString ?? null
-	});
+let profile;
 
-	const profile = await apiServiceInstance.getUserProfile().catch((error) => {
-		console.error('Failed to fetch authenticated user:', error);
-	});
+	if (locals.jwtString) {
+		const apiServiceInstance = new ApiService({
+			fetchFn: fetch,
+			authToken: locals.jwtString
+		});
+
+		profile = await apiServiceInstance.getUserProfile().catch((error) => {
+			console.error('Failed to fetch authenticated user:', error);
+		});
+	}
 
 	return {
 		session: locals.jwt ?? null,
