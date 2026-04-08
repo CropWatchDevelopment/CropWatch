@@ -74,8 +74,8 @@
 		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
 		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
 		{ key: 'moisture', header: m.rule_subject_soil_moisture(), sortable: true, width: '9rem' },
-		{ key: 'ec', header: 'EC (µS/cm)', sortable: true, width: '9rem' },
-		{ key: 'ph', header: m.rule_subject_ph(), sortable: true, width: '6rem' }
+		{ key: 'ec', header: 'EC (dS/cm)', sortable: true, width: '9rem' },
+		// { key: 'ph', header: m.rule_subject_ph(), sortable: true, width: '6rem' }
 	];
 
 	// ---- Derived state ---------------------------------------------------------
@@ -147,17 +147,29 @@
 <div class="soil-display">
 	<!-- KPI cards -->
 	<div class="kpi-grid">
-		<CwStatCard title={m.rule_subject_temperature()} stats={temperatureStats} unit="°C" labels={{ clickToExpand: m.stat_expand(), clickToCollapse: m.stat_collapse() }} />
+		<CwStatCard
+			title={m.rule_subject_temperature()}
+			stats={temperatureStats}
+			unit="°C"
+			labels={{ clickToExpand: m.stat_expand(), clickToCollapse: m.stat_collapse() }}
+		/>
 
-		<CwStatCard title={m.rule_subject_soil_moisture()} stats={soilMoistureStats} unit="%" labels={{ clickToExpand: m.stat_expand(), clickToCollapse: m.stat_collapse() }} />
+		<CwStatCard
+			title={m.rule_subject_soil_moisture()}
+			stats={soilMoistureStats}
+			unit="%"
+			labels={{ clickToExpand: m.stat_expand(), clickToCollapse: m.stat_collapse() }}
+		/>
 
 		<CwCard title="EC" subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.ec.toFixed(0)}<span>µS/cm</span></p>
+			<p class="kpi-value">{latest.ec.toFixed(2)}<span>dS/cm</span></p>
 		</CwCard>
 
-		<CwCard title={m.rule_subject_ph()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.ph.toFixed(1)}</p>
-		</CwCard>
+		{#if latest.ph > 0}
+			<CwCard title={m.rule_subject_ph()} subtitle={m.display_latest_reading()} elevated>
+				<p class="kpi-value">{latest.ph.toFixed(1)}</p>
+			</CwCard>
+		{/if}
 	</div>
 
 	{#if !loading && rows.length > 0}
@@ -169,10 +181,10 @@
 			<CwLineChart
 				data={moistureSeries}
 				secondaryData={temperatureSeries}
-				primaryLabel={m.rule_subject_soil_moisture()}
-				primaryUnit="%"
-				secondaryLabel={m.rule_subject_temperature()}
-				secondaryUnit="°C"
+				secondaryLabel={m.rule_subject_soil_moisture()}
+				secondaryUnit="%"
+				primaryLabel={m.rule_subject_temperature()}
+				primaryUnit="°C"
 				height={400}
 			/>
 		</CwCard>
@@ -187,7 +199,7 @@
 					{:else if col.key === 'moisture'}
 						{row.moisture.toFixed(2)} %
 					{:else if col.key === 'ec'}
-						{row.ec.toFixed(0)} µS/cm
+						{row.ec.toFixed(2)} dS/cm
 					{:else if col.key === 'ph'}
 						{row.ph.toFixed(2)}
 					{:else}
