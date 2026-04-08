@@ -22,8 +22,7 @@
 		filters: DashboardDeviceFilters;
 		cardLayout?: CardLayout;
 	}
-
-	const PHONE_BREAKPOINT_PX = 768;
+	
 	const SCROLL_CONTAINER_SELECTOR = '[data-dashboard-device-card-scroll="true"]';
 	const PREFETCH_ROOT_MARGIN = '0px 0px 45% 0px';
 
