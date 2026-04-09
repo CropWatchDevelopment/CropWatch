@@ -1,24 +1,29 @@
 import type { CwSensorCardDetailRow, CwSensorCardDevice } from '@cropwatchdevelopment/cwui';
 import type { LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
-import { resolveDeviceTypeConfig, type DeviceTypeLookup } from './dashboard-device-data';
+import {
+	resolveDeviceTypeConfig,
+	type DeviceTypeConfig,
+	type DeviceTypeLookup
+} from './dashboard-device-data';
+import { isDashboardDeviceOffline } from './dashboard-device-refresh';
 
-export const DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES = 10;
 export const DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE = 10;
 export const DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING = 5;
 
-const DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MS =
-	DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES * 60_000;
-
-/** Stop arming the CwDuration alarm once a device is stale beyond this (ms). */
-const DASHBOARD_SENSOR_CARD_ALARM_CUTOFF_MS = 60 * 60_000; // 1 hour
+export interface DashboardLocationSensorCardDeviceBinding {
+	devEui: string;
+	locationId: number;
+	sourceDevice: IDevice;
+}
 
 export interface DashboardLocationSensorCard {
 	id: string;
+	renderKey: string;
 	locationId: number;
 	title: string;
 	devices: CwSensorCardDevice[];
-	deviceRouteParamsByLabel: Record<string, { devEui: string; locationId: number }>;
+	deviceBindingsByLabel: Record<string, DashboardLocationSensorCardDeviceBinding>;
 }
 
 function getDeviceBaseLabel(device: IDevice): string {
@@ -42,14 +47,14 @@ function applyTransform(rawValue: unknown, multiplier?: number | null, divider?:
 }
 
 function getDeviceStatus(device: IDevice): 'online' | 'offline' {
-	if (device.has_primary_data === false) {
-		return 'offline';
-	}
+	return isDashboardDeviceOffline(device) ? 'offline' : 'online';
+}
 
-	return Date.now() - new Date(device.created_at).getTime() >
-		DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MS
-		? 'offline'
-		: 'online';
+function toCardRenderKey(locationId: number, devices: IDevice[]): string {
+	return [
+		`location:${locationId}`,
+		...devices.map((device) => `${device.dev_eui}:${device.created_at.toISOString()}`)
+	].join('|');
 }
 
 function buildUnavailableDetailRows(label: string, typeConfig: DeviceTypeConfig | undefined): CwSensorCardDetailRow[] {
@@ -139,13 +144,14 @@ export function buildDashboardLocationSensorCards(
 				duplicateCounts.set(baseLabel, (duplicateCounts.get(baseLabel) ?? 0) + 1);
 			}
 
-			const deviceRouteParamsByLabel: DashboardLocationSensorCard['deviceRouteParamsByLabel'] = {};
+			const deviceBindingsByLabel: DashboardLocationSensorCard['deviceBindingsByLabel'] = {};
 			const sensorDevices = sortedLocationDevices.map((device) => {
 				const label = getDeviceLabel(device, duplicateCounts);
 
-				deviceRouteParamsByLabel[label] = {
+				deviceBindingsByLabel[label] = {
 					devEui: device.dev_eui,
-					locationId: Number(device.location_id)
+					locationId: Number(device.location_id),
+					sourceDevice: device
 				};
 
 				if (device.has_primary_data === false) {
@@ -175,7 +181,6 @@ export function buildDashboardLocationSensorCards(
 					: device.humidity;
 				const secondaryValue = applyTransform(rawSecondary, typeConfig?.secondary_multiplier, typeConfig?.secondary_divider);
 
-				const staleness = Date.now() - new Date(device.created_at).getTime();
 				return {
 					label,
 					primaryValue,
@@ -183,20 +188,17 @@ export function buildDashboardLocationSensorCards(
 					secondaryValue,
 					secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
 					status: getDeviceStatus(device),
-					lastUpdated: device.created_at,
-					expectedUpdateAfterMinutes:
-						staleness <= DASHBOARD_SENSOR_CARD_ALARM_CUTOFF_MS
-							? DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES
-							: undefined
+					lastUpdated: device.created_at
 				} satisfies CwSensorCardDevice;
 			});
 
 			return {
 				id: `location:${locationId}`,
+				renderKey: toCardRenderKey(locationId, sortedLocationDevices),
 				locationId,
 				title: getLocationTitle(locationId, locationsById, sortedLocationDevices),
 				devices: sensorDevices,
-				deviceRouteParamsByLabel
+				deviceBindingsByLabel
 			} satisfies DashboardLocationSensorCard;
 		})
 		.sort((left, right) =>

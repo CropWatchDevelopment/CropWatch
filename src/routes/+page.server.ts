@@ -1,3 +1,4 @@
+import { env as publicEnv } from '$env/dynamic/public';
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import type { DevicePrimaryDataDto, LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
@@ -11,6 +12,12 @@ import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashbo
 import type { PageServerLoad } from './$types';
 
 const LATEST_PRIMARY_DATA_PAGE_SIZE = 25;
+
+function resolveDashboardApiBaseUrl(url: URL): string {
+	const configuredBaseUrl = publicEnv.PUBLIC_API_BASE_URL?.trim();
+	return configuredBaseUrl && configuredBaseUrl.length > 0 ? configuredBaseUrl : url.origin;
+}
+
 function serializeError(error: unknown): Record<string, unknown> {
 	if (error instanceof ApiServiceError) {
 		return {
@@ -241,7 +248,7 @@ const EMPTY_DASHBOARD = {
 	dashboardDebug: null as Record<string, unknown> | null
 };
 
-export const load: PageServerLoad = async ({ locals, fetch }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const authToken = locals.jwtString ?? null;
 
 	if (!authToken) {
@@ -252,7 +259,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	}
 
 	const apiServiceInstance = new ApiService({
-		fetchFn: fetch,
+		baseUrl: resolveDashboardApiBaseUrl(url),
 		authToken
 	});
 

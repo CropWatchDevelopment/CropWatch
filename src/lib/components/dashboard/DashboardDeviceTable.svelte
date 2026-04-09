@@ -17,11 +17,12 @@
 	import type { IDevice } from '$lib/interfaces/device.interface';
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
 	import ALERT_ICON from '$lib/images/icons/active_alert.svg';
+	import { mapDashboardPrimaryDataToDevice } from './dashboard-device-data';
 	import {
-		applyDashboardLatestReadings,
-		mapDashboardPrimaryDataToDevice,
-		mergeDashboardDevices
-	} from './dashboard-device-data';
+		DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES,
+		isDashboardDeviceOffline,
+		refreshDashboardDevice
+	} from './dashboard-device-refresh';
 	import {
 		buildDashboardTableFilters,
 		DASHBOARD_DEVICE_BATCH_SIZE,
@@ -81,7 +82,6 @@
 	let tableFilters = $derived(buildDashboardTableFilters(filters));
 	let loading = $state(false);
 	let virtualScroll = $state(false);
-	const DEVICE_OFFLINE_THRESHOLD_MS = 11 * 60 * 1000;
 	let tableSourceKey = $derived.by(() =>
 		[
 			app.accessToken ? 'auth' : 'anon',
@@ -99,12 +99,7 @@
 	}
 
 	function isOffline(row: IDevice): boolean {
-		if (row.has_primary_data === false) {
-			return true;
-		}
-
-		const lastSeenMs = new Date(row.created_at).getTime();
-		return !Number.isFinite(lastSeenMs) || lastSeenMs < Date.now() - DEVICE_OFFLINE_THRESHOLD_MS;
+		return isDashboardDeviceOffline(row);
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
@@ -168,14 +163,11 @@
 		refreshingByDevEui[devEui] = true;
 
 		try {
-			const api = new ApiService({
-				authToken: app.accessToken
+			await refreshDashboardDevice({
+				app,
+				devEui,
+				targetDevice: row
 			});
-			const latestDevice = mapDashboardPrimaryDataToDevice(
-				await api.getDeviceLatestPrimaryData(devEui)
-			);
-			applyDashboardLatestReadings(row, latestDevice);
-			app.devices = mergeDashboardDevices(app.devices, [latestDevice]);
 		} finally {
 			refreshingByDevEui[devEui] = false;
 		}
@@ -233,7 +225,7 @@
 							{:else}
 								<CwDuration
 									from={row.created_at}
-									alarmAfterMinutes={10.3}
+									alarmAfterMinutes={DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES}
 									alarmCallback={() => void loadSingleDevice(row)}
 								/>
 							{/if}
