@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
+import { buildDashboardLocationSensorCards } from './device-cards';
 import {
-	buildDashboardLocationSensorCards,
-	DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES
-} from './device-cards';
+	DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES,
+	getDashboardDeviceNextRefreshDelayMs
+} from './dashboard-device-refresh';
 
 describe('device-cards helpers', () => {
 	it('groups devices by location, sorts titles, and disambiguates duplicate labels', () => {
@@ -63,13 +64,14 @@ describe('device-cards helpers', () => {
 			'Canopy (dev-1)',
 			'Canopy (dev-2)'
 		]);
-		expect(cards[1]?.deviceRouteParamsByLabel['Canopy (dev-1)']).toEqual({
+		expect(cards[1]?.deviceBindingsByLabel['Canopy (dev-1)']).toEqual({
 			devEui: 'dev-1',
-			locationId: 2
+			locationId: 2,
+			sourceDevice: devices[1]
 		});
 	});
 
-	it('marks stale devices offline and removes the alarm window after one hour', () => {
+	it('uses the shared 11-minute offline threshold and keeps refresh cadence beyond one hour', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-03-13T12:00:00.000Z'));
 
@@ -109,14 +111,17 @@ describe('device-cards helpers', () => {
 
 		expect(cards[0]?.devices[0]).toMatchObject({
 			label: 'Old Sensor',
-			status: 'offline',
-			expectedUpdateAfterMinutes: undefined
+			status: 'offline'
 		});
 		expect(cards[0]?.devices[1]).toMatchObject({
 			label: 'Recent Sensor',
-			status: 'online',
-			expectedUpdateAfterMinutes: DASHBOARD_SENSOR_CARD_EXPECTED_UPDATE_AFTER_MINUTES
+			status: 'online'
 		});
+		expect(cards[0]?.devices[1]?.expectedUpdateAfterMinutes).toBeUndefined();
+		expect(
+			getDashboardDeviceNextRefreshDelayMs(cards[0]!.deviceBindingsByLabel['Old Sensor'].sourceDevice)
+		).not.toBeNull();
+		expect(DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES).toBe(10.3);
 
 		vi.useRealTimers();
 	});

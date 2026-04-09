@@ -1,19 +1,22 @@
 <script lang="ts">
-	import { CwSensorCard } from '@cropwatchdevelopment/cwui';
-	import { tick } from 'svelte';
+	import { createCwAlarmScheduler, CwSensorCard } from '@cropwatchdevelopment/cwui';
+	import { onDestroy, tick } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import type { IDevice } from '$lib/interfaces/device.interface';
 	import { m } from '$lib/paraglide/messages.js';
-	import { mapDashboardPrimaryDataToDevice, mergeDashboardDevices } from './dashboard-device-data';
 	import {
 		buildDashboardLocationSensorCards,
 		DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE,
 		DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING,
 		type DashboardLocationSensorCard
 	} from './device-cards';
+	import {
+		getDashboardDeviceNextRefreshDelayMs,
+		refreshDashboardDevice
+	} from './dashboard-device-refresh';
 	import { listDashboardDevices, type DashboardDeviceFilters } from './device-table';
 
 	export type CardLayout = 'grid' | 'masonry';
@@ -22,18 +25,20 @@
 		filters: DashboardDeviceFilters;
 		cardLayout?: CardLayout;
 	}
-	
+
 	const SCROLL_CONTAINER_SELECTOR = '[data-dashboard-device-card-scroll="true"]';
 	const PREFETCH_ROOT_MARGIN = '0px 0px 45% 0px';
 
 	let { filters, cardLayout = 'grid' }: Props = $props();
 
 	const app = getAppContext();
+	const cardRefreshAlarms = createCwAlarmScheduler();
 
 	let viewportWidth = $state(0);
 	let visibleLocationCountsByFilter = $state<Record<string, number>>({});
 	let refreshingByDevEui = $state<Record<string, boolean>>({});
 	let isExpandingLocationWindow = $state(false);
+	let monitoredCardRefreshIds: string[] = [];
 
 	let search = $derived(page.url.searchParams.get('search') ?? '');
 	let filterKey = $derived(
@@ -59,6 +64,84 @@
 	let prefetchTriggerIndex = $derived(
 		Math.max(0, visibleLocationCards.length - DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING - 1)
 	);
+
+	onDestroy(() => {
+		cardRefreshAlarms.clear();
+	});
+
+	function getCardRefreshAlarmId(devEui: string): string {
+		return `dashboard-device-card-refresh:${devEui}`;
+	}
+
+	function resolveLiveDashboardDevice(device: IDevice | null | undefined): IDevice | null {
+		if (!device?.dev_eui) {
+			return null;
+		}
+
+		return app.devices.find((candidate) => candidate.dev_eui === device.dev_eui) ?? device;
+	}
+
+	function queueCardRefresh(device: IDevice) {
+		const delayMs = getDashboardDeviceNextRefreshDelayMs(device);
+		if (delayMs == null) {
+			return;
+		}
+
+		const devEui = device.dev_eui;
+		const alarmId = getCardRefreshAlarmId(devEui);
+
+		cardRefreshAlarms.schedule({
+			id: alarmId,
+			from: Date.now(),
+			alarmAfterMs: delayMs,
+			callback: () => {
+				const liveDevice = resolveLiveDashboardDevice(device);
+				if (!liveDevice) {
+					return;
+				}
+
+				void refreshSingleDevice(liveDevice).finally(() => {
+					const currentDevice = resolveLiveDashboardDevice(liveDevice);
+					if (!currentDevice || !monitoredCardRefreshIds.includes(alarmId)) {
+						return;
+					}
+
+					queueCardRefresh(currentDevice);
+				});
+			}
+		});
+	}
+
+	$effect(() => {
+		if (!app.accessToken) {
+			cardRefreshAlarms.clear();
+			monitoredCardRefreshIds = [];
+			return;
+		}
+
+		const nextRefreshIds: string[] = [];
+
+		for (const device of filteredDevices) {
+			const alarmId = getCardRefreshAlarmId(device.dev_eui);
+			const delayMs = getDashboardDeviceNextRefreshDelayMs(device);
+			if (delayMs == null) {
+				cardRefreshAlarms.cancel(alarmId);
+				continue;
+			}
+
+			nextRefreshIds.push(alarmId);
+			queueCardRefresh(device);
+		}
+
+		for (const alarmId of monitoredCardRefreshIds) {
+			if (!nextRefreshIds.includes(alarmId)) {
+				cardRefreshAlarms.cancel(alarmId);
+			}
+		}
+
+		monitoredCardRefreshIds = nextRefreshIds;
+	});
+
 	async function loadMoreLocations() {
 		if (!canLoadMore || isExpandingLocationWindow) {
 			return;
@@ -199,29 +282,32 @@
 	}
 
 	function openDeviceDetails(card: DashboardLocationSensorCard, label: string) {
-		const routeParams = card.deviceRouteParamsByLabel[label];
-		if (!routeParams) {
+		const binding = card.deviceBindingsByLabel[label];
+		if (!binding) {
 			return;
 		}
 
 		goto(
 			resolve('/locations/[location_id]/devices/[dev_eui]', {
-				location_id: String(routeParams.locationId),
-				dev_eui: routeParams.devEui
+				location_id: String(binding.locationId),
+				dev_eui: binding.devEui
 			})
 		).catch(handleNavigationFailure);
 	}
 
 	function handleTimerExpired(card: DashboardLocationSensorCard, label: string) {
-		const routeParams = card.deviceRouteParamsByLabel[label];
-		if (!routeParams) {
+		const binding = card.deviceBindingsByLabel[label];
+		if (!binding) {
 			return;
 		}
 
-		void refreshSingleDevice(routeParams.devEui);
+		void refreshSingleDevice(binding.sourceDevice);
 	}
 
-	async function refreshSingleDevice(devEui: string) {
+	async function refreshSingleDevice(device: IDevice | null | undefined) {
+		const targetDevice = resolveLiveDashboardDevice(device);
+		const devEui = targetDevice?.dev_eui;
+
 		if (!devEui || !app.accessToken || refreshingByDevEui[devEui]) {
 			return;
 		}
@@ -229,11 +315,11 @@
 		refreshingByDevEui[devEui] = true;
 
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const latestDevice = mapDashboardPrimaryDataToDevice(
-				await api.getDeviceLatestPrimaryData(devEui)
-			);
-			app.devices = mergeDashboardDevices(app.devices, [latestDevice]);
+			await refreshDashboardDevice({
+				app,
+				devEui,
+				targetDevice
+			});
 		} catch (error) {
 			console.error(`Failed to refresh device ${devEui}:`, error);
 		} finally {
@@ -260,23 +346,25 @@
 				<div class="dashboard-device-cards__grid {cardLayout === 'masonry' ? 'dashboard-device-cards__grid--masonry' : 'dashboard-device-cards__grid--equal-rows'}">
 					{#each visibleLocationCards as card, index (card.id)}
 						<div class="dashboard-device-cards__item">
-							<CwSensorCard
-								title={card.title}
-								devices={card.devices}
-								storageKey={card.id}
-								class="dashboard-device-cards__sensor-card"
-								onNavigate={(target) => {
-									if (target === 'location') {
-										openLocation(card);
-										return;
-									}
+							{#key card.renderKey}
+								<CwSensorCard
+									title={card.title}
+									devices={card.devices}
+									storageKey={card.id}
+									class="dashboard-device-cards__sensor-card"
+									onNavigate={(target) => {
+										if (target === 'location') {
+											openLocation(card);
+											return;
+										}
 
-									if (target.startsWith('device-detail:')) {
-										openDeviceDetails(card, target.replace('device-detail:', ''));
-									}
-								}}
-								onTimerExpired={(label) => handleTimerExpired(card, label)}
-							/>
+										if (target.startsWith('device-detail:')) {
+											openDeviceDetails(card, target.replace('device-detail:', ''));
+										}
+									}}
+									onTimerExpired={(label) => handleTimerExpired(card, label)}
+								/>
+							{/key}
 						</div>
 
 						{#if enableInfiniteScroll && canLoadMore && index === prefetchTriggerIndex}
