@@ -40,6 +40,12 @@
 		SelectOption
 	} from './report-form.types';
 	import { createReportAlertPointsEditorText } from './alert-points-editor-text';
+	import {
+		DEFAULT_REPORT_DATA_PULL_INTERVAL,
+		buildReportDataPullIntervalOptions,
+		normalizeReportDataPullInterval,
+		parseReportDataPullInterval
+	} from './data-pull-interval';
 
 	type ReportForm = {
 		error?: string;
@@ -329,6 +335,7 @@
 	function buildDefaultDraft(): ReportDraft {
 		return {
 			created_at: '',
+			data_pull_interval: DEFAULT_REPORT_DATA_PULL_INTERVAL,
 			dev_eui: normalizeDevEui(data.devEui ?? ''),
 			id: '',
 			name: '',
@@ -395,6 +402,7 @@
 
 		return {
 			created_at: source.created_at ?? '',
+			data_pull_interval: normalizeReportDataPullInterval(source.data_pull_interval),
 			dev_eui: normalizedReportDevEui,
 			id: source.id != null ? String(source.id) : '',
 			name: source.name ?? '',
@@ -442,6 +450,7 @@
 		const reportId = cleanOptional(draft.report_id);
 		const userId = cleanOptional(draft.user_id) ?? currentUser?.id ?? undefined;
 		const devEui = normalizeDevEui(rootDevEui);
+		const dataPullInterval = parseReportDataPullInterval(draft.data_pull_interval);
 
 		const reportUserSchedule: CreateReportUserScheduleRequest[] = draft.report_user_schedule.map(
 			(schedule) => {
@@ -522,6 +531,7 @@
 		};
 
 		if (createdAt) payload.created_at = createdAt;
+		if (dataPullInterval !== undefined) payload.data_pull_interval = dataPullInterval;
 		if (id !== undefined) payload.id = id;
 		if (reportId) payload.report_id = reportId;
 		if (userId) payload.user_id = userId;
@@ -688,6 +698,9 @@
 			left.label.localeCompare(right.label)
 		);
 	});
+	let dataPullIntervalOptions = $derived.by<SelectOption[]>(() => [
+		...buildReportDataPullIntervalOptions(fields.data_pull_interval)
+	]);
 	let requestPayload = $derived.by(() =>
 		buildRequestPayload(fields, normalizedSelectedDevEui, alertPointsValue)
 	);
@@ -804,6 +817,14 @@
 							options={deviceOptions}
 							bind:value={selectedDevEui}
 							disabled={deviceOptions.length === 0 || loadingDevices}
+						/>
+					</div>
+
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+						<CwDropdown
+							label="Data pull interval"
+							options={dataPullIntervalOptions}
+							bind:value={fields.data_pull_interval}
 						/>
 					</div>
 
