@@ -55,7 +55,9 @@ export const actions: Actions = {
 	saveDataNote: async ({ request, fetch, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		const data = await request.formData();
-		const noteContent = data.get('note')?.toString() ?? '';
+		const noteContent = data.get('note')?.toString().trim() ?? '';
+		const noteTitle = data.get('title')?.toString().trim() ?? '';
+		const includeInReport = data.get('include_in_report')?.toString() !== 'false';
 		const telemetryId = data.get('created_at')?.toString() ?? '';
 		const devEui = data.get('dev_eui')?.toString() ?? '';
 
@@ -74,6 +76,8 @@ export const actions: Actions = {
 		try {
 			await api.createAirNote({
 				note: noteContent,
+				title: noteTitle,
+				include_in_report: includeInReport,
 				created_at: telemetryId,
 				dev_eui: devEui
 			});

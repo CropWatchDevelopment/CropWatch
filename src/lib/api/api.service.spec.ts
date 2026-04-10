@@ -57,13 +57,17 @@ describe('ApiService created_at timezone handling', () => {
 		});
 
 		await api.createAirNote({
+			title: 'Fan maintenance',
 			note: 'Check telemetry row',
+			include_in_report: true,
 			created_at: '2026-03-08T07:00:00.000-05:00',
 			dev_eui: 'device-123'
 		});
 
 		expect(JSON.parse(serializedBody)).toEqual({
+			title: 'Fan maintenance',
 			note: 'Check telemetry row',
+			include_in_report: true,
 			created_at: '2026-03-08T12:00:00.000Z',
 			dev_eui: 'device-123'
 		});

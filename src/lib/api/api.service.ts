@@ -134,7 +134,9 @@ const TRIGGERED_RULES_COUNT_ENDPOINT =
 const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
 const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{report_id}/{reportName}`;
 const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
-const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air-notes';
+const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air/notes';
+const GET_AIR_NOTES_ENDPOINT =
+	publicEnv.PUBLIC_GET_AIR_NOTES_ENDPOINT ?? '/air/notes/{dev_eui}/month/{month}/year/{year}';
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
 const TRAFFIC_ENDPOINT = '/traffic/{dev_eui}';
 const TRAFFIC_MONTHLY_ENDPOINT = '/traffic/{dev_eui}/monthly';
@@ -935,12 +937,28 @@ export class ApiService {
 
 	public createAirNote(payload: {
 		note: string;
+		title: string;
+		include_in_report: boolean;
 		created_at: string;
 		dev_eui: string;
 	}): Promise<Record<string, unknown> | null> {
 		return this.request<Record<string, unknown> | null>(AIR_NOTES_CREATE_ENDPOINT, {
 			method: 'POST',
 			body: payload
+		});
+	}
+
+	public getAllAirNotesForMonth(payload: {
+		dev_eui: string;
+		date: Date;
+	}): Promise<Record<string, unknown> | null> {
+		const requestUrl = replacePathParams(GET_AIR_NOTES_ENDPOINT, {
+			dev_eui: payload.dev_eui,
+			month: String(payload.date.getMonth() + 1).padStart(2, '0'),
+			year: String(payload.date.getFullYear())
+		});
+		return this.request<Record<string, unknown> | null>(requestUrl, {
+			method: 'GET'
 		});
 	}
 
