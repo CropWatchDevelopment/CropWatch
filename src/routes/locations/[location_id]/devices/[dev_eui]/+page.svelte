@@ -20,6 +20,7 @@
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import CsvTrafficExportDialog from './csvTrafficExportDialog.svelte';
 	import { onDestroy } from 'svelte';
+	import NotesReviewDialog from './NotesReviewDialog.svelte';
 
 	type RangeSelection = 'today' | 24 | 48 | 72;
 
@@ -568,6 +569,15 @@
 			<div class="flex flex-col gap-2">
 				<div class="flex flex-row gap-2">
 					{#if permissionLevel <= 2}
+
+						<NotesReviewDialog
+							{authToken}
+							{devEui}
+							{locationName}
+							timeZone={exportTimeZone}
+							disabled={controlsDisabled}
+						/>
+
 						<CsvExportDialog
 							{authToken}
 							{devEui}

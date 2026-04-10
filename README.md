@@ -2,6 +2,8 @@
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
+[![Maintainability](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/maintainability.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
+
 ## Creating a project
 
 If you're seeing this, you've probably already done this step. Congrats!

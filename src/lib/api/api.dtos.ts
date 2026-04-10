@@ -305,6 +305,7 @@ export interface ReportDto {
 	id: number;
 	report_id: string;
 	name: string;
+	data_pull_interval?: number | null;
 	dev_eui: string;
 	created_at: string;
 	user_id?: string | null;
@@ -317,6 +318,7 @@ export interface ReportDto {
 
 export interface CreateReportRequest {
 	created_at?: string;
+	data_pull_interval?: number;
 	dev_eui: string;
 	id?: number;
 	name: string;

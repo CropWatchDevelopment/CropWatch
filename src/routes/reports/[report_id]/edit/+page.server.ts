@@ -44,6 +44,11 @@ const readOptionalInteger = (value: unknown): number | undefined => {
 	return Number.isFinite(parsed) ? parsed : undefined;
 };
 
+const readOptionalPositiveInteger = (value: unknown): number | undefined => {
+	const parsed = readOptionalInteger(value);
+	return parsed !== undefined && parsed > 0 ? parsed : undefined;
+};
+
 const readOptionalNumber = (value: unknown): number | undefined => {
 	if (typeof value === 'number' && Number.isFinite(value)) {
 		return value;
@@ -304,8 +309,7 @@ function sanitizeDataProcessingScheduleEntries(
 	if (!Array.isArray(value)) return undefined;
 
 	// Validate HH:mm format
-	const isValidTime = (t: unknown): t is string =>
-		typeof t === 'string' && /^\d{2}:\d{2}$/.test(t);
+	const isValidTime = (t: unknown): t is string => typeof t === 'string' && /^\d{2}:\d{2}$/.test(t);
 
 	const entries = value
 		.filter(isRecord)
@@ -363,9 +367,11 @@ function sanitizeReportPayload(
 	};
 
 	const createdAt = readOptionalString(payload.created_at);
+	const dataPullInterval = readOptionalPositiveInteger(payload.data_pull_interval);
 	const id = readOptionalInteger(payload.id);
 
 	if (createdAt) sanitized.created_at = createdAt;
+	if (dataPullInterval !== undefined) sanitized.data_pull_interval = dataPullInterval;
 	if (id !== undefined) sanitized.id = id;
 	if (reportId) sanitized.report_id = reportId;
 	if (userId) sanitized.user_id = userId;

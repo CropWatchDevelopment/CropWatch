@@ -23,6 +23,7 @@
 	import type { AirRow } from './interfaces/AirRow.interface';
 	import type { Note } from './interfaces/note.interface';
 	import NotesViewDialog from './dialogs/notes-view-dialog.svelte';
+	import { parseAirNotesResponse } from './utils/air-notes';
 	import Icon from '$lib/components/Icon.svelte';
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
 
@@ -43,7 +44,7 @@
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
 	let tableRevision = $state(0);
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
-	let hasCo2: boolean = $state(
+	let hasCo2 = $derived(
 		historicalData.every((row) => row.co2 !== undefined && row.co2 !== null && row.co2 !== 0)
 	);
 
@@ -57,16 +58,7 @@
 			dev_eui: String(row.dev_eui ?? ''),
 			alerts: Array.isArray(row.alerts) ? (row.alerts as AirRow['alerts']) : [],
 			cw_air_annotations:
-				noteOverrides[String(row.created_at ?? '')] ??
-				(Array.isArray(row.cw_air_annotations)
-					? row.cw_air_annotations.map((annotation) => ({
-							id: String(
-								annotation.id ?? `${annotation.created_at ?? 'note'}-${annotation.note ?? index}`
-							),
-							note: String(annotation.note ?? ''),
-							created_at: String(annotation.created_at ?? '')
-						}))
-					: [])
+				noteOverrides[String(row.created_at ?? '')] ?? parseAirNotesResponse(row.cw_air_annotations)
 		}));
 	}
 
@@ -121,10 +113,7 @@
 				return Math.sqrt(variance);
 			})(),
 			count: historicalData.length,
-			lastReading:
-				historicalData.length > 0
-					? Number(historicalData.at(0)?.temperature_c) || 0
-					: 0,
+			lastReading: historicalData.length > 0 ? Number(historicalData.at(0)?.temperature_c) || 0 : 0,
 			trend: 'up'
 		};
 	});
@@ -147,10 +136,7 @@
 				return Math.sqrt(variance);
 			})(),
 			count: historicalData.length,
-			lastReading:
-				historicalData.length > 0
-					? Number(historicalData.at(0)?.humidity) || 0
-					: 0,
+			lastReading: historicalData.length > 0 ? Number(historicalData.at(0)?.humidity) || 0 : 0,
 			trend: 'up'
 		};
 	});
@@ -361,10 +347,7 @@
 						return Math.sqrt(variance);
 					})(),
 					count: historicalData.length,
-					lastReading:
-						historicalData.length > 0
-							? Number(historicalData.at(0)?.co2) || 0
-							: 0,
+					lastReading: historicalData.length > 0 ? Number(historicalData.at(0)?.co2) || 0 : 0,
 					trend: 'up'
 				}}
 				unit="ppm"
@@ -412,10 +395,7 @@
 			</div>
 		</div>
 
-		<CwCard
-			title={m.display_telemetry_table()}
-			elevated
-		>
+		<CwCard title={m.display_telemetry_table()} elevated>
 			{#key tableKey}
 				<CwDataTable
 					{columns}

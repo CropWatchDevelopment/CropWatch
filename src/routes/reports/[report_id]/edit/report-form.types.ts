@@ -43,6 +43,7 @@ export type DataProcessingScheduleDraft = {
 
 export type ReportDraft = {
 	created_at: string;
+	data_pull_interval: string;
 	dev_eui: string;
 	id: string;
 	name: string;
