@@ -56,6 +56,7 @@ export interface DevicePrimaryDataDto {
 	co2?: number | null;
 	humidity?: number | null;
 	temperature_c?: number | null;
+	uplink_interval?: number | null;
 	[key: string]: unknown;
 }
 

@@ -1,36 +1,18 @@
-// appContext.ts
 import { getContext, setContext } from 'svelte';
 import type { IJWT } from './interfaces/jwt.interface';
-import type { IDevice } from './interfaces/device.interface';
-import type { IRule } from './interfaces/rule.interface';
 import type { Profile } from './interfaces/profile.interface';
-import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
-import type { RuleDto, TriggeredRulesCountResponse } from './api/api.service';
-import type { LocationDto } from './api/api.dtos';
-import type { DeviceTypeLookup } from './components/dashboard/dashboard-device-data';
 
-const DEVICE_STALE_MINUTES = 10;
-const deviceAlarms = createCwAlarmScheduler();
-
-const app = createAppContext();
+type AppDevice = {
+	dev_eui: string;
+	name?: string;
+	location_id?: number | null;
+};
 
 export interface AppContext {
 	profile?: Profile;
 	session: IJWT | null;
-	devices: IDevice[];
-	deviceGroups?: string[];
-	locationGroups?: string[];
-	locations?: LocationDto[];
-	deviceTypeLookup: DeviceTypeLookup;
-	deviceStatuses: { online: number; offline: number };
-	totalDeviceCount?: number;
-	rules: IRule[];
-	triggeredRules: RuleDto[];
-	triggeredRulesCount: number;
-	staleDeviceIds: string[];
+	devices: AppDevice[];
 	accessToken?: string;
-	drawerOpen?: boolean;
-	privacyModeEnabled?: boolean;
 }
 
 export const appContextKey = Symbol('appContext');
@@ -39,65 +21,14 @@ export const defaultAppContext: AppContext = {
 	profile: undefined,
 	session: null,
 	devices: [],
-	deviceTypeLookup: { byModel: {}, idToModel: {} },
-	deviceStatuses: { online: 0, offline: 0 },
-	totalDeviceCount: 0,
-	rules: [],
-	triggeredRules: [],
-	triggeredRulesCount: 0,
-	staleDeviceIds: [],
-	locationGroups: [],
-	accessToken: undefined,
-	drawerOpen: false,
-	privacyModeEnabled: false
+	accessToken: undefined
 };
 
 export function createAppContext(initial: Partial<AppContext> = {}): AppContext {
-
-	// Check if context already exists to avoid overwriting it (e.g. during hot reload)
-	try {
-		const existing = getContext<AppContext>(appContextKey);
-		if (existing) {
-			return existing;
-		} else {
-			return {
-				profile: undefined,
-				session: null,
-				devices: [],
-				deviceTypeLookup: { byModel: {}, idToModel: {} },
-				deviceStatuses: { online: 0, offline: 0 },
-				totalDeviceCount: 0,
-				rules: [],
-				triggeredRules: [],
-				triggeredRulesCount: 0,
-				accessToken: undefined,
-				staleDeviceIds: [],
-				locationGroups: [],
-				drawerOpen: false,
-				privacyModeEnabled: false,
-				...initial
-			};
-		}
-	} catch {
-		// No existing context, will create a new one
-		return {
-			profile: undefined,
-			session: null,
-			devices: [],
-			deviceTypeLookup: { byModel: {}, idToModel: {} },
-			deviceStatuses: { online: 0, offline: 0 },
-			totalDeviceCount: 0,
-			rules: [],
-			triggeredRules: [],
-			triggeredRulesCount: 0,
-			accessToken: undefined,
-			staleDeviceIds: [],
-			locationGroups: [],
-			drawerOpen: false,
-			privacyModeEnabled: false,
-			...initial
-		};
-	}
+	return {
+		...defaultAppContext,
+		...initial
+	};
 }
 
 export function setAppContext(context: AppContext) {
@@ -106,8 +37,4 @@ export function setAppContext(context: AppContext) {
 
 export function getAppContext(): AppContext {
 	return getContext(appContextKey);
-}
-
-export function updateAppContext(updates: Partial<AppContext>) {
-	Object.assign(app, updates);
 }

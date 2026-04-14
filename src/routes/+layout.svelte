@@ -1,30 +1,29 @@
 <script lang="ts">
-	import { locales, localizeHref } from '$lib/paraglide/runtime';
-	import './layout.css';
-	import { onDestroy } from 'svelte';
+	import { afterNavigate } from '$app/navigation';
 	import { asset, resolve } from '$app/paths';
-
+	import { page } from '$app/state';
+	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
+	import type { Profile } from '$lib/interfaces/profile.interface';
+	import type { IJWT } from '$lib/interfaces/jwt.interface';
+	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import {
 		createCwToastContext,
 		CwOfflineOverlay,
-		CwStatusDot,
 		CwToastContainer,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
-
-	import { afterNavigate } from '$app/navigation';
-	import { page } from '$app/state';
-	import OverviewDrawer from './OverviewDrawer.svelte';
-	import Sidebar from './Sidebar.svelte';
-	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
-	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
-	import type { IJWT } from '$lib/interfaces/jwt.interface';
-	import type { IDevice } from '$lib/interfaces/device.interface';
-	import type { LocationDto, RuleDto, TriggeredRulesCountResponse } from '$lib/api/api.dtos';
-	import type { DeviceTypeLookup } from '$lib/components/dashboard/dashboard-device-data';
+	import { onDestroy } from 'svelte';
 	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
-	import type { Profile } from '$lib/interfaces/profile.interface';
+	import Sidebar from './Sidebar.svelte';
+	import './layout.css';
+
+	interface LayoutRouteData {
+		session?: IJWT | null;
+		authToken?: string | null;
+		devices?: { dev_eui: string; name?: string; location_id?: number | null }[];
+		profile?: Profile;
+	}
 
 	let { children }: LayoutProps = $props();
 
@@ -35,74 +34,17 @@
 	let isOfflineRoute = $derived(page.url.pathname === '/offline');
 	let resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
-	interface DashboardPageData {
-		session?: IJWT | null;
-		authToken?: string | null;
-		devices?: IDevice[];
-		deviceTypeLookup?: DeviceTypeLookup;
-		totalDeviceCount?: number;
-		deviceStatuses?: { online: number; offline: number };
-		triggeredRules?: RuleDto[];
-		triggeredRulesCount?: TriggeredRulesCountResponse;
-		deviceGroups?: string[];
-		locationGroups?: string[];
-		locations?: LocationDto[];
-		profile?: Profile | undefined;
-		dashboardDebug?: Record<string, unknown> | null;
-	}
-
-	function readTriggeredRulesCount(
-		rawTriggeredRulesCount: TriggeredRulesCountResponse | undefined
-	): number {
-		if (typeof rawTriggeredRulesCount === 'number' && Number.isFinite(rawTriggeredRulesCount)) {
-			return rawTriggeredRulesCount;
-		}
-
-		if (rawTriggeredRulesCount && typeof rawTriggeredRulesCount === 'object') {
-			const maybeCount =
-				(rawTriggeredRulesCount as Record<string, unknown>).count ??
-				(rawTriggeredRulesCount as Record<string, unknown>).triggered_count;
-
-			if (typeof maybeCount === 'number' && Number.isFinite(maybeCount)) {
-				return maybeCount;
-			}
-		}
-
-		return 0;
-	}
-
 	const app = $state(createAppContext());
 
 	setAppContext(app);
 
 	function syncAppFromPageData() {
-		const routeData = page.data as DashboardPageData;
-		const isDashboardRoute = page.url.pathname === '/';
+		const routeData = page.data as LayoutRouteData;
 
 		app.session = routeData.session ?? null;
 		app.accessToken = routeData.authToken ?? undefined;
 		app.profile = routeData.profile ?? undefined;
-
-		if (!isDashboardRoute) {
-			return;
-		}
-
-		// Dashboard data is streamed via +page.server.ts → +page.svelte handles the sync
-		if ('dashboard' in routeData) {
-			return;
-		}
-
-		const devices = routeData.devices ?? [];
-
-		app.devices = devices;
-		app.deviceTypeLookup = routeData.deviceTypeLookup ?? { byModel: {}, idToModel: {} };
-		app.totalDeviceCount = routeData.totalDeviceCount ?? devices.length;
-		app.deviceStatuses = routeData.deviceStatuses ?? { online: 0, offline: 0 };
-		app.triggeredRules = routeData.triggeredRules ?? [];
-		app.triggeredRulesCount = readTriggeredRulesCount(routeData.triggeredRulesCount);
-		app.deviceGroups = normalizeDashboardFilterValues(routeData.deviceGroups);
-		app.locationGroups = normalizeDashboardFilterValues(routeData.locationGroups);
-		app.locations = routeData.locations ?? [];
+		app.devices = routeData.devices ?? [];
 	}
 
 	syncAppFromPageData();
@@ -174,10 +116,6 @@
 			<Header bind:mode />
 
 			<main class="app-shell__main">{@render children()}</main>
-
-			<div class="app-shell__bottom-chrome">
-				<OverviewDrawer />
-			</div>
 		</div>
 	{:else}
 		<main class="app-shell__main app-shell__main--standalone">{@render children()}</main>
@@ -192,7 +130,7 @@
 </div>
 
 <style>
-	.grecaptcha-badge {
+	:global(.grecaptcha-badge) {
 		visibility: hidden !important;
 	}
 </style>

@@ -1,225 +1,203 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import { CwBadge, CwButton, CwCard, CwSpinner } from '@cropwatchdevelopment/cwui';
-	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
-	import DashboardDeviceTable from '$lib/components/dashboard/DashboardDeviceTable.svelte';
-	import DashboardDeviceCards from '$lib/components/dashboard/DashboardDeviceCards.svelte';
-	import type { CardLayout } from '$lib/components/dashboard/DashboardDeviceCards.svelte';
-	import {
-		countDashboardDevices,
-		getLocationGroupName,
-		type DashboardDeviceFilters
-	} from '$lib/components/dashboard/device-table';
-	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
-	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
-	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import TABLE_ICON from '$lib/images/icons/table.svg';
-	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
-	import GATEWAYS_ICON from '$lib/images/icons/router.svg';
-	import GRID_VIEW_ICON from '$lib/images/icons/grid_view.svg';
-	import MASONRY_VIEW_ICON from '$lib/images/icons/masonary.svg';
+	import DashboardTable from '$lib/components/dashboard/DashboardTable.svelte';
+	import { AppNotice, AppPage } from '$lib/components/layout';
+	import {
+		CwCard,
+		CwDropdown,
+		CwExpandPanel,
+		CwSpinner
+	} from '@cropwatchdevelopment/cwui';
+	import type { PageProps } from './$types';
 
-	type DashboardView = 'table' | 'sensor-cards';
+	let { data }: PageProps = $props();
 
-	const DASHBOARD_VIEW_STORAGE_KEY = 'cropwatch.dashboard.view';
-	const DASHBOARD_CARD_LAYOUT_STORAGE_KEY = 'cropwatch.dashboard.cardLayout';
-	const MOBILE_DASHBOARD_MEDIA_QUERY = '(max-width: 767px)';
-
-	const app = getAppContext();
-
-	function readTriggeredRulesCount(rawTriggeredRulesCount: unknown): number {
-		if (typeof rawTriggeredRulesCount === 'number' && Number.isFinite(rawTriggeredRulesCount)) {
-			return rawTriggeredRulesCount;
-		}
-
-		if (rawTriggeredRulesCount && typeof rawTriggeredRulesCount === 'object') {
-			const maybeCount =
-				(rawTriggeredRulesCount as Record<string, unknown>).count ??
-				(rawTriggeredRulesCount as Record<string, unknown>).triggered_count;
-			if (typeof maybeCount === 'number' && Number.isFinite(maybeCount)) {
-				return maybeCount;
-			}
-		}
-
-		return 0;
-	}
-
-	function syncDashboardContext(data: Record<string, unknown>) {
-		app.accessToken = ((page.data as Record<string, unknown>).authToken as string) ?? undefined;
-		app.devices = (data.devices as typeof app.devices) ?? [];
-		app.deviceTypeLookup =
-			(data.deviceTypeLookup as typeof app.deviceTypeLookup) ?? { byModel: {}, idToModel: {} };
-		app.totalDeviceCount = (data.totalDeviceCount as number) ?? app.devices.length;
-		app.deviceStatuses = (data.deviceStatuses as typeof app.deviceStatuses) ?? {
-			online: 0,
-			offline: 0
-		};
-		app.triggeredRules = (data.triggeredRules as typeof app.triggeredRules) ?? [];
-		app.triggeredRulesCount = readTriggeredRulesCount(data.triggeredRulesCount);
-		app.deviceGroups = normalizeDashboardFilterValues(data.deviceGroups as string[]);
-		app.locationGroups = normalizeDashboardFilterValues(data.locationGroups as string[]);
-		app.locations = (data.locations as typeof app.locations) ?? [];
-	}
-
-	let dashboardLoading = $state(true);
-
-	$effect(() => {
-		const raw = (page.data as Record<string, unknown>).dashboard;
-		if (!raw) {
-			dashboardLoading = false;
-			return;
-		}
-
-		if (raw instanceof Promise) {
-			dashboardLoading = true;
-			let cancelled = false;
-			raw.then((resolved: Record<string, unknown>) => {
-				if (!cancelled) {
-					syncDashboardContext(resolved);
-					dashboardLoading = false;
-				}
-			});
-			return () => {
-				cancelled = true;
-			};
-		} else {
-			syncDashboardContext(raw as Record<string, unknown>);
-			dashboardLoading = false;
-		}
-	});
-
-	// ── Reactive filter state from URL search params ────────────
 	let activeGroup = $derived(page.url.searchParams.get('group') ?? '');
 	let activeLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 	let activeLocation = $derived(page.url.searchParams.get('location') ?? '');
-	let dashboardView = $state<DashboardView>('table');
-	let cardLayout = $state<CardLayout>('grid');
-	let dashboardViewReady = $state(!browser);
-	let dashboardFilters = $derived.by(
-		(): DashboardDeviceFilters => ({
-			group: activeGroup,
-			locationGroup: activeLocationGroup,
-			location: activeLocation
-		})
-	);
-
-	let devicesInView = $derived(
-		countDashboardDevices(app.devices ?? [], app.locations ?? [], dashboardFilters)
-	);
-
-	function refreshDashboard() {
-		window.location.reload();
-	}
-
-	function setDashboardView(view: DashboardView) {
-		dashboardView = view;
-
-		if (browser) {
-			window.localStorage.setItem(DASHBOARD_VIEW_STORAGE_KEY, view);
-		}
-	}
-
-	function setCardLayout(layout: CardLayout) {
-		cardLayout = layout;
-
-		if (browser) {
-			window.localStorage.setItem(DASHBOARD_CARD_LAYOUT_STORAGE_KEY, layout);
-		}
-	}
-
-	onMount(() => {
-		const storedDashboardView = window.localStorage.getItem(DASHBOARD_VIEW_STORAGE_KEY);
-		if (storedDashboardView === 'table' || storedDashboardView === 'sensor-cards') {
-			dashboardView = storedDashboardView;
-		} else if (window.matchMedia(MOBILE_DASHBOARD_MEDIA_QUERY).matches) {
-			dashboardView = 'sensor-cards';
-		}
-
-		const storedCardLayout = window.localStorage.getItem(DASHBOARD_CARD_LAYOUT_STORAGE_KEY);
-		if (storedCardLayout === 'grid' || storedCardLayout === 'masonry') {
-			cardLayout = storedCardLayout;
-		}
-
-		dashboardViewReady = true;
+	let dashboardFilters = $derived({
+		group: activeGroup,
+		locationGroup: activeLocationGroup,
+		location: activeLocation
 	});
+	let dashboardFilterKey = $derived(JSON.stringify(dashboardFilters));
+
+	function buildStringOptions(values: string[], allLabel: string) {
+		return [{ label: allLabel, value: '' }, ...values.map((value) => ({ label: value, value }))];
+	}
+
+	function buildLocationOptions(locations: Array<{ location_id: number; name: string }>) {
+		return [
+			{ label: 'All locations', value: '' },
+			...locations.map((location) => ({
+				label: location.name,
+				value: String(location.location_id)
+			}))
+		];
+	}
+
+	function applyFilter(key: 'group' | 'locationGroup' | 'location', value: string) {
+		const nextUrl = new URL(page.url);
+
+		if (value) {
+			nextUrl.searchParams.set(key, value);
+		} else {
+			nextUrl.searchParams.delete(key);
+		}
+
+		const href = `${resolve('/')}${nextUrl.search}`;
+
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		void goto(href, {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true
+		});
+	}
+
+	async function refreshDashboardData() {
+		await invalidateAll();
+	}
 </script>
 
 <svelte:head>
-	<title>{m.dashboard_page_title()}</title>
+	<title>Dashboard - CropWatch</title>
 </svelte:head>
 
-<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-	<header class="flex-none">
-		<div class="my-0 my-1 flex w-full flex-row items-center gap-4">
-			<div
-				id="Dashboard__Overview__actions"
-				class="flex w-full items-center justify-center gap-3 md:w-auto md:justify-end"
-			>
-				<span class="hidden flex-1 md:flex"></span>
-
-				<div class="flex w-full items-center gap-2">
-					<CwButton
-						class="w-full md:w-auto"
-						variant={dashboardView === 'table' ? 'info' : 'secondary'}
-						onclick={() => setDashboardView('table')}
-					>
-						<Icon src={TABLE_ICON} alt={m.dashboard_table_view()} />
-						{m.dashboard_table_view()}
-					</CwButton>
-					<CwButton
-						class="w-full md:w-auto"
-						variant={dashboardView === 'sensor-cards' ? 'info' : 'secondary'}
-						onclick={() => setDashboardView('sensor-cards')}
-					>
-						<Icon src={SENSOR_CARDS_ICON} alt={m.dashboard_sensor_cards_view()} />
-						{m.dashboard_sensor_cards_view()}
-					</CwButton>
-
-					{#if dashboardView === 'sensor-cards'}
-						<div class="flex items-center gap-1 border-l border-slate-600 pl-2">
-							<CwButton
-								class="px-2 py-1 text-xs"
-								variant={cardLayout === 'grid' ? 'info' : 'secondary'}
-								onclick={() => setCardLayout('grid')}
-							>
-								<Icon src={GRID_VIEW_ICON} alt="Grid Layout" />
-							</CwButton>
-							<CwButton
-								class="px-2 py-1 text-xs"
-								variant={cardLayout === 'masonry' ? 'info' : 'secondary'}
-								onclick={() => setCardLayout('masonry')}
-							>
-								<Icon src={MASONRY_VIEW_ICON} alt="Masonry Layout" />
-							</CwButton>
-						</div>
-					{/if}
+<AppPage width="full" class="dashboard-page">
+	<section class="dashboard-page__section">
+		<CwExpandPanel title="Filters">
+			{#await data.filterOptions}
+				<div class="dashboard-page__loading">
+					<CwSpinner size="md" showLabel label="Loading dashboard filters..." />
 				</div>
-			</div>
-		</div>
-	</header>
+			{:then filterOptions}
+				<CwCard elevated>
+					<div class="flex flex-row flex-wrap gap-4">
+						<CwDropdown
+							label="Device group"
+							options={buildStringOptions(filterOptions.deviceGroups, 'All device groups')}
+							value={activeGroup}
+							onchange={(value) => applyFilter('group', value)}
+						/>
 
-	{#if dashboardLoading}
-		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
-			<div class="flex flex-col items-center gap-6">
-				<div class="scale-[4]">
-					<CwSpinner />
-				</div>
-				<span class="text-4xl text-slate-400">{m.dashboard_loading_devices()}</span>
-			</div>
-		</div>
-	{:else if dashboardViewReady}
-		{#if dashboardView === 'sensor-cards'}
-			<DashboardDeviceCards filters={dashboardFilters} {cardLayout} />
-		{:else}
-			<DashboardDeviceTable filters={dashboardFilters} />
-		{/if}
-	{:else}
-		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
-			<p class="text-sm text-slate-400">{m.dashboard_loading_view()}</p>
-		</div>
-	{/if}
-</div>
+						<CwDropdown
+							label="Location group"
+							options={buildStringOptions(filterOptions.locationGroups, 'All location groups')}
+							value={activeLocationGroup}
+							onchange={(value) => applyFilter('locationGroup', value)}
+						/>
+
+						<CwDropdown
+							label="Location"
+							options={buildLocationOptions(filterOptions.locations)}
+							value={activeLocation}
+							onchange={(value) => applyFilter('location', value)}
+						/>
+					</div>
+				</CwCard>
+			{/await}
+		</CwExpandPanel>
+	</section>
+
+	<section class="dashboard-page__section dashboard-page__section--table">
+		{#key dashboardFilterKey}
+			<DashboardTable
+				authToken={data.authToken}
+				filters={dashboardFilters}
+				initialTable={data.initialTable}
+				onRefreshAll={refreshDashboardData}
+			/>
+		{/key}
+	</section>
+</AppPage>
+
+<style>
+	:global(.dashboard-page) {
+		min-height: 100%;
+	}
+
+	.dashboard-page__header {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-3);
+	}
+
+	.dashboard-page__copy {
+		display: grid;
+		gap: var(--cw-space-1);
+	}
+
+	.dashboard-page__copy h1 {
+		margin: 0;
+		font-size: clamp(1.75rem, 2vw + 1rem, 2.5rem);
+		line-height: 1.1;
+		color: var(--cw-text-primary);
+	}
+
+	.dashboard-page__copy p {
+		margin: 0;
+		color: var(--cw-text-secondary);
+	}
+
+	.dashboard-page__section {
+		display: grid;
+		gap: var(--cw-space-3);
+		min-width: 0;
+	}
+
+	.dashboard-page__section--table {
+		flex: 1 1 auto;
+		min-height: 24rem;
+	}
+
+	.dashboard-page__loading {
+		display: flex;
+		justify-content: center;
+		padding: var(--cw-space-6);
+	}
+
+	.dashboard-summary {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+		gap: var(--cw-space-3);
+	}
+
+	.dashboard-summary__value {
+		margin: 0;
+		font-size: clamp(2rem, 3vw, 2.75rem);
+		font-weight: var(--cw-font-bold);
+		line-height: 1;
+		color: var(--cw-text-primary);
+	}
+
+	.dashboard-filters {
+		display: grid;
+		gap: var(--cw-space-4);
+	}
+
+	.dashboard-filters__inputs {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+		gap: var(--cw-space-3);
+	}
+
+	.dashboard-filters__actions {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.dashboard-filters__notice {
+		padding-top: var(--cw-space-2);
+	}
+
+	@media (min-width: 768px) {
+		.dashboard-page__header {
+			align-items: start;
+			flex-direction: row;
+			justify-content: space-between;
+		}
+	}
+</style>
