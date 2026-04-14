@@ -5,6 +5,7 @@ import {
 	type DeviceDto,
 	type LocationDto
 } from '$lib/api/api.service';
+import { readApiErrorMessage } from '$lib/api/api-error';
 import {
 	isValidTtiDeviceId,
 	normalizeTtiDeviceId,
@@ -59,27 +60,6 @@ const readString = (value: FormDataEntryValue | null): string => {
 	return value.trim();
 };
 
-function readApiMessage(payload: unknown, fallback: string): string {
-	if (payload && typeof payload === 'object') {
-		const message = (payload as Record<string, unknown>).message;
-		if (Array.isArray(message)) {
-			const combined = message
-				.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
-				.join(', ');
-			if (combined.length > 0) return combined;
-		}
-
-		if (typeof message === 'string' && message.trim().length > 0) {
-			return message.trim();
-		}
-	}
-
-	if (typeof payload === 'string' && payload.trim().length > 0) {
-		return payload.trim();
-	}
-
-	return fallback;
-}
 
 function str(value: unknown): string {
 	return typeof value === 'string' ? value.trim() : '';
@@ -193,8 +173,11 @@ function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificate
 		}));
 }
 
-export const load: PageServerLoad = async ({ locals, fetch, params }) => {
-	const authToken = locals.jwtString ?? null;
+export const load: PageServerLoad = async ({ fetch, params, parent }) => {
+	// Get authToken and the already-fetched device from the device layout to
+	// avoid a duplicate API call — the layout owns device loading for this route tree.
+	const parentData = await parent();
+	const authToken = parentData.authToken ?? null;
 	const devEui = String(params.dev_eui ?? '').trim();
 	const locationId = Number.parseInt(params.location_id ?? '', 10);
 
@@ -210,13 +193,12 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		};
 	}
 
-	const api = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
+	const api = new ApiService({ fetchFn: fetch, authToken });
 
-	const [device, deviceGroups, location, locations] = await Promise.all([
-		api.getDevice(devEui).catch(() => null),
+	// Reuse device from the device layout; fetch only what the layout doesn't supply.
+	const device = parentData.device;
+
+	const [deviceGroups, location, locations] = await Promise.all([
 		api.getDeviceGroups().catch(() => []),
 		Number.isFinite(locationId)
 			? api.getLocation(locationId).catch(() => null)
@@ -318,7 +300,7 @@ export const actions: Actions = {
 		} catch (error) {
 			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'updateDevice',
-				message: readApiMessage(
+				message: readApiErrorMessage(
 					error instanceof ApiServiceError ? error.payload : error,
 					m.devices_settings_update_rejected()
 				),
@@ -397,7 +379,7 @@ export const actions: Actions = {
 			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'updateDeviceOwnerPermission',
 				ownerKey,
-				message: readApiMessage(
+				message: readApiErrorMessage(
 					error instanceof ApiServiceError ? error.payload : error,
 					m.devices_permission_update_rejected()
 				),

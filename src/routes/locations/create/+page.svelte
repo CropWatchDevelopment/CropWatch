@@ -1,10 +1,9 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import BACK_ICON from '$lib/images/icons/back.svg';
 	import { m } from '$lib/paraglide/messages.js';
 
 	type CreateLocationForm = {
@@ -23,14 +22,18 @@
 	let { form }: { form: CreateLocationForm } = $props();
 
 	let submitting = $state(false);
-	let name = $derived(form?.name ?? '');
-	let description = $derived(form?.description ?? '');
-	let group = $derived(form?.group ?? '');
-	let lat = $derived(form?.lat ?? '');
-	let long = $derived(form?.long ?? '');
+	let name = $state(form?.name ?? '');
+	let description = $state(form?.description ?? '');
+	let group = $state(form?.group ?? '');
+	let lat = $state(form?.lat ?? '');
+	let long = $state(form?.long ?? '');
 </script>
 
-<div class="create-location-page">
+<AppPage width="md">
+	<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/locations'))}>
+		&larr; {m.action_back()}
+	</CwButton>
+
 	<CwCard title={m.locations_create_title()} elevated>
 		<form
 			method="POST"
@@ -60,9 +63,11 @@
 				};
 			}}
 		>
-			<div class="form-fields">
+			<AppFormStack padded>
 				{#if form?.error}
-					<p class="form-error">{form.error}</p>
+					<AppNotice tone="danger">
+						<p>{form.error}</p>
+					</AppNotice>
 				{/if}
 
 				<CwInput
@@ -87,7 +92,7 @@
 					placeholder={m.locations_optional_group_name()}
 				/>
 
-				<div class="coord-row">
+				<div class="grid grid-cols-2 gap-4">
 					<CwInput
 						label={m.locations_latitude_optional()}
 						name="lat"
@@ -101,50 +106,16 @@
 						placeholder={m.locations_longitude_placeholder()}
 					/>
 				</div>
-			</div>
 
-			<div class="form-actions">
-				<CwButton type="button" variant="secondary" onclick={() => goto('/locations')}>
-					<Icon src={BACK_ICON} alt={m.action_back()} class="h-4 w-4" />
-					{m.action_cancel()}
-				</CwButton>
-				<CwButton type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>
-					{m.locations_create_submit()}
-				</CwButton>
-			</div>
+				<AppActionRow>
+					<CwButton type="button" variant="ghost" onclick={() => goto(resolve('/locations'))}>
+						{m.action_cancel()}
+					</CwButton>
+					<CwButton type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>
+						{m.locations_create_submit()}
+					</CwButton>
+				</AppActionRow>
+			</AppFormStack>
 		</form>
 	</CwCard>
-</div>
-
-<style>
-	.create-location-page {
-		padding: 1rem;
-		width: 100%;
-		height: 100%;
-	}
-
-	.form-fields {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.coord-row {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1rem;
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.75rem;
-	}
-
-	.form-error {
-		color: #b42318;
-		font-size: 0.95rem;
-		margin: 0;
-	}
-</style>
+</AppPage>

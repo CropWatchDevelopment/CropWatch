@@ -53,7 +53,7 @@
 		{ key: 'humidity', header: m.dashboard_column_humidity(), width: '10rem', sortable: true },
 		{ key: 'co2', header: m.dashboard_column_co2(), width: '10rem', sortable: true },
 		{
-			key: 'soil_temperature_c',
+			key: 'temperature_c',
 			header: m.dashboard_column_soil_temperature(),
 			width: '14rem',
 			sortable: true
@@ -133,7 +133,7 @@
 	}
 
 	function sortDevices(devices: IDevice[], column: string, direction: 'asc' | 'desc'): IDevice[] {
-		const numericColumns = new Set(['co2', 'humidity', 'temperature_c', 'soil_temperature_c', 'soil_humidity', 'alert_count']);
+		const numericColumns = new Set(['co2', 'humidity', 'temperature_c', 'temperature_c', 'soil_humidity', 'alert_count']);
 		const dir = direction === 'asc' ? 1 : -1;
 
 		return [...devices].sort((a, b) => {
@@ -239,8 +239,8 @@
 							class="dashboard-device-table__cell"
 							class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
 						>
-							{#if col.key === 'soil_temperature_c'}
-								{getMetricDisplayValue(row.soil_temperature_c)}
+							{#if col.key === 'temperature_c'}
+								{getMetricDisplayValue(row.temperature_c)}
 							{:else if col.key === 'temperature_c'}
 								{getMetricDisplayValue(row.temperature_c)}
 							{:else if col.key === 'humidity'}

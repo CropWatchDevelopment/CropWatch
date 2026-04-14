@@ -201,7 +201,6 @@ export function mapDashboardDeviceMetadataToDevice(
 		co2: 0,
 		humidity: 0,
 		temperature_c: 0,
-		soil_temperature_c: null,
 		soil_humidity: null,
 		location_id: getDashboardDeviceLocationId(device),
 		cwloading: false,
@@ -214,7 +213,6 @@ export function mapDashboardPrimaryDataToDevice(
 ): IDevice {
 	const dataTable = getDeviceDataTable(device);
 	const soilHumidity = toOptionalNumberValue(device.moisture);
-	const isSoilDevice = dataTable === 'cw_soil_data' || soilHumidity != null;
 
 	// Preserve the full raw payload so dynamic column keys can be resolved
 	const raw_data: Record<string, unknown> = {};
@@ -235,7 +233,6 @@ export function mapDashboardPrimaryDataToDevice(
 		co2: toNumberValue(device.co2),
 		humidity: toNumberValue(device.humidity),
 		temperature_c: toNumberValue(device.temperature_c),
-		soil_temperature_c: isSoilDevice ? toOptionalNumberValue(device.temperature_c) : null,
 		soil_humidity: soilHumidity,
 		location_id: toNumberValue(device.location_id),
 		cwloading: false,
@@ -251,11 +248,6 @@ export function applyDashboardLatestReadings(target: IDevice, source: IDevice): 
 	target.temperature_c = source.temperature_c;
 	target.co2 = source.co2;
 	target.humidity = source.humidity;
-	target.soil_temperature_c =
-		source.soil_temperature_c ??
-		(isSoilDevice ? source.temperature_c : null) ??
-		target.soil_temperature_c ??
-		null;
 	target.soil_humidity =
 		source.soil_humidity ?? (isSoilDevice ? (target.soil_humidity ?? null) : null);
 	target.created_at = source.created_at;
@@ -305,10 +297,6 @@ export function mergeDashboardDevices(
 			location_name: preferIncomingText(latestDevice.location_name, device.location_name) ?? '',
 			location_id: preferIncomingLocationId(latestDevice.location_id, device.location_id),
 			has_primary_data: latestDevice.has_primary_data ?? device.has_primary_data ?? false,
-			soil_temperature_c:
-				latestDevice.soil_temperature_c ??
-				(isSoilDevice ? latestDevice.temperature_c : null) ??
-				(isSoilDevice ? (device.soil_temperature_c ?? null) : null),
 			soil_humidity:
 				latestDevice.soil_humidity ?? (isSoilDevice ? (device.soil_humidity ?? null) : null),
 			cwloading: device.cwloading ?? latestDevice.cwloading ?? false,

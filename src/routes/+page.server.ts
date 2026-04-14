@@ -248,7 +248,7 @@ const EMPTY_DASHBOARD = {
 	dashboardDebug: null as Record<string, unknown> | null
 };
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	const authToken = locals.jwtString ?? null;
 
 	if (!authToken) {
@@ -259,6 +259,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const apiServiceInstance = new ApiService({
+		fetchFn: fetch,
 		baseUrl: resolveDashboardApiBaseUrl(url),
 		authToken
 	});

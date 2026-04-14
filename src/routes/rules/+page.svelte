@@ -26,7 +26,6 @@
 		permission_level: number | null;
 	};
 
-	let { data }: { data: { rules: RuleRow[] } } = $props();
 	let loading = $state(false);
 	let deletedRuleGroupIds = $state<string[]>([]);
 	let tableKey = $derived(deletedRuleGroupIds.join(','));

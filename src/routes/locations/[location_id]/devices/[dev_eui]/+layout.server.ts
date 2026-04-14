@@ -17,6 +17,7 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 
 	if (!authToken || !dev_eui) {
 		return {
+			authToken: null,
 			devEui: dev_eui ?? '',
 			locationId: location_id ?? '',
 			device: null,
@@ -44,15 +45,17 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 		const deviceDataTable = device.cw_device_type.data_table_v2;
 
 		return {
+			authToken,
 			devEui: dev_eui,
 			locationId: location_id,
 			device,
-            dataTable: deviceDataTable,
+			dataTable: deviceDataTable,
 			permissionLevel
 		};
 	} catch (err) {
 		console.error(`[layout] Failed to load device ${dev_eui}:`, err);
 		return {
+			authToken,
 			devEui: dev_eui,
 			locationId: location_id,
 			device: null,

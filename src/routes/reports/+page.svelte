@@ -23,7 +23,6 @@
 
 	type ReportApiRow = ReportDeviceRelations & { created_at: string };
 
-	let { data }: { data: { reports: ReportRow[] } } = $props();
 	let loading = $state(true);
 	let deletedReportIds = $state<string[]>([]);
 	let app = getAppContext();

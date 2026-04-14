@@ -20,7 +20,6 @@ function createDevice(overrides: Partial<IDevice> = {}): IDevice {
 		co2: 820,
 		humidity: 56,
 		temperature_c: 24.5,
-		soil_temperature_c: null,
 		soil_humidity: null,
 		location_id: 7,
 		alert_count: 1,

@@ -6,7 +6,10 @@ import {
 	type DeviceTypeConfig,
 	type DeviceTypeLookup
 } from './dashboard-device-data';
-import { isDashboardDeviceOffline } from './dashboard-device-refresh';
+import {
+	DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES,
+	isDashboardDeviceOffline
+} from './dashboard-device-refresh';
 
 export const DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE = 10;
 export const DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING = 5;
@@ -100,6 +103,109 @@ function getLocationTitle(
 	}
 
 	return locationId > 0 ? `Location ${locationId}` : 'Unassigned';
+}
+
+/** Metadata keys present in the /latest-data payload that are not sensor readings. */
+const SENSOR_SKIP_KEYS = new Set([
+	'dev_eui', 'name', 'location_id', 'location_name', 'group',
+	'data_table', 'data_table_v2', 'type', 'id',
+	'created_at', 'cw_device_type', 'cw_locations', 'cw_device_owners'
+]);
+
+interface SensorFieldMeta { label: string; unit: string; icon: string }
+
+const KNOWN_SENSOR_FIELDS: Record<string, SensorFieldMeta> = {
+	temperature_c:       { label: 'Temperature',      unit: '°C',   icon: 'thermo' },
+	humidity:            { label: 'Humidity',          unit: '%',    icon: 'drop'   },
+	co2:                 { label: 'CO₂',              unit: 'ppm',  icon: 'thermo' },
+	moisture:            { label: 'Moisture',          unit: '%',    icon: 'drop'   },
+	ec:                  { label: 'EC',                unit: 'dS/m', icon: 'drop'   },
+	battery:             { label: 'Battery',           unit: '%',    icon: 'timer'  },
+	pressure:            { label: 'Pressure',          unit: 'hPa',  icon: 'thermo' },
+	light:               { label: 'Light',             unit: 'lux',  icon: 'thermo' },
+	light_level:         { label: 'Light',             unit: 'lux',  icon: 'thermo' },
+	voltage:             { label: 'Voltage',           unit: 'V',    icon: 'timer'  },
+};
+
+function formatKeyLabel(key: string): string {
+	return key
+		.replace(/_c$/, '')
+		.replace(/_/g, ' ')
+		.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function buildDeviceLoadingDetailRows(deviceLabel: string): CwSensorCardDetailRow[] {
+	return [
+		{ id: `${deviceLabel}-loading-primary`, label: 'Loading…', value: '—', icon: 'thermo' },
+		{ id: `${deviceLabel}-loading-secondary`, label: 'Loading…', value: '—', icon: 'drop' }
+	];
+}
+
+/**
+ * Builds detail rows from the raw /latest-data payload, showing every numeric
+ * sensor field. Type-config transforms are applied to the primary/secondary keys.
+ */
+export function buildDeviceExpandedDetailRows(
+	rawData: Record<string, unknown>,
+	typeConfig: DeviceTypeConfig | undefined,
+	deviceLabel: string
+): CwSensorCardDetailRow[] {
+	const rows: CwSensorCardDetailRow[] = [];
+
+	for (const [key, rawValue] of Object.entries(rawData)) {
+		if (SENSOR_SKIP_KEYS.has(key)) continue;
+		if (typeof rawValue !== 'number' || !Number.isFinite(rawValue)) continue;
+
+		const isPrimary = typeConfig?.primary_data_key === key;
+		const isSecondary = typeConfig?.secondary_data_key === key;
+
+		const displayValue = isPrimary
+			? applyTransform(rawValue, typeConfig?.primary_multiplier, typeConfig?.primary_divider)
+			: isSecondary
+				? applyTransform(rawValue, typeConfig?.secondary_multiplier, typeConfig?.secondary_divider)
+				: rawValue;
+
+		const known = KNOWN_SENSOR_FIELDS[key];
+		const label = isPrimary
+			? (typeConfig?.primary_data_key ?? known?.label ?? formatKeyLabel(key))
+			: isSecondary
+				? (typeConfig?.secondary_data_key ?? known?.label ?? formatKeyLabel(key))
+				: (known?.label ?? formatKeyLabel(key));
+		const unit = isPrimary
+			? (typeConfig?.primary_data_notation ?? known?.unit ?? '')
+			: isSecondary
+				? (typeConfig?.secondary_data_notation ?? known?.unit ?? '')
+				: (known?.unit ?? '');
+		const icon = known?.icon ?? 'thermo';
+
+		rows.push({
+			id: `${deviceLabel}-${key}`,
+			label,
+			value: displayValue.toLocaleString('en-US', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2
+			}),
+			unit,
+			icon
+		});
+	}
+
+	// Last updated timestamp
+	const createdAt = rawData.created_at;
+	if (createdAt != null) {
+		const lastUpdatedDate = createdAt instanceof Date ? createdAt : new Date(String(createdAt));
+		if (Number.isFinite(lastUpdatedDate.getTime())) {
+			rows.push({
+				id: `${deviceLabel}-updated`,
+				label: 'Last Update',
+				icon: 'timer',
+				lastUpdated: lastUpdatedDate,
+				expectedUpdateAfter: DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES
+			});
+		}
+	}
+
+	return rows;
 }
 
 export function buildDashboardLocationSensorCards(

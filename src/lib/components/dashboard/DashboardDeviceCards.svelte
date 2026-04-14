@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createCwAlarmScheduler, CwSensorCard } from '@cropwatchdevelopment/cwui';
+	import type { CwSensorCardDetailRow } from '@cropwatchdevelopment/cwui';
 	import { onDestroy, tick } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -9,6 +10,8 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import {
 		buildDashboardLocationSensorCards,
+		buildDeviceExpandedDetailRows,
+		buildDeviceLoadingDetailRows,
 		DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE,
 		DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING,
 		type DashboardLocationSensorCard
@@ -17,6 +20,8 @@
 		getDashboardDeviceNextRefreshDelayMs,
 		refreshDashboardDevice
 	} from './dashboard-device-refresh';
+	import { resolveDeviceTypeConfig } from './dashboard-device-data';
+	import { ApiService } from '$lib/api/api.service';
 	import { listDashboardDevices, type DashboardDeviceFilters } from './device-table';
 
 	export type CardLayout = 'grid' | 'masonry';
@@ -37,6 +42,8 @@
 	let viewportWidth = $state(0);
 	let visibleLocationCountsByFilter = $state<Record<string, number>>({});
 	let refreshingByDevEui = $state<Record<string, boolean>>({});
+	/** null = loading; CwSensorCardDetailRow[] = loaded; absent key = not yet requested */
+	let expandedDetailRowsByDevEui = $state<Record<string, CwSensorCardDetailRow[] | null>>({});
 	let isExpandingLocationWindow = $state(false);
 	let monitoredCardRefreshIds: string[] = [];
 
@@ -111,6 +118,25 @@
 			}
 		});
 	}
+
+	// On mount and whenever locationCards or the access token become available,
+	// check localStorage for any cards that were already expanded and pre-fetch their data.
+	$effect(() => {
+		if (!app.accessToken || locationCards.length === 0) return;
+
+		for (const card of locationCards) {
+			try {
+				const stored = localStorage.getItem(`cw-sensor-card-expand:${card.id}`);
+				if (!stored) continue;
+				const expandedMap: Record<string, boolean> = JSON.parse(stored);
+				for (const [label, isExpanded] of Object.entries(expandedMap)) {
+					if (isExpanded) void handleDeviceExpand(card, label);
+				}
+			} catch {
+				// localStorage unavailable or invalid JSON
+			}
+		}
+	});
 
 	$effect(() => {
 		if (!app.accessToken) {
@@ -304,6 +330,43 @@
 		void refreshSingleDevice(binding.sourceDevice);
 	}
 
+	async function handleDeviceExpand(card: DashboardLocationSensorCard, label: string) {
+		console.log('[expand] handleDeviceExpand called', label, !!app.accessToken);
+		const binding = card.deviceBindingsByLabel[label];
+		if (!binding || !app.accessToken) return;
+
+		const { devEui, sourceDevice } = binding;
+
+		// Skip if already fetched or currently loading
+		if (devEui in expandedDetailRowsByDevEui) return;
+
+		// Mark as loading
+		expandedDetailRowsByDevEui[devEui] = null;
+
+		try {
+			const api = new ApiService({ authToken: app.accessToken });
+			const rawData = await api.getDeviceLatestData(devEui);
+			console.log('[expand] raw /latest-data response:', devEui, rawData);
+			// Some fields arrive as string-encoded numbers (e.g. ec, moisture, ph) — coerce them
+			const freshData = Object.fromEntries(
+				Object.entries(rawData).map(([k, v]) => [
+					k,
+					typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)) ? Number(v) : v
+				])
+			);
+			const typeConfig = resolveDeviceTypeConfig(sourceDevice, app.deviceTypeLookup);
+			expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
+				freshData,
+				typeConfig,
+				label
+			);
+		} catch (err) {
+			console.error(`Failed to load expanded data for ${devEui}:`, err);
+			// Remove loading marker so the user can retry by collapsing and re-expanding
+			delete expandedDetailRowsByDevEui[devEui];
+		}
+	}
+
 	async function refreshSingleDevice(device: IDevice | null | undefined) {
 		const targetDevice = resolveLiveDashboardDevice(device);
 		const devEui = targetDevice?.dev_eui;
@@ -349,7 +412,15 @@
 							{#key card.renderKey}
 								<CwSensorCard
 									title={card.title}
-									devices={card.devices}
+									devices={card.devices.map((dev) => {
+										const devEui = card.deviceBindingsByLabel[dev.label]?.devEui;
+										if (!devEui || !(devEui in expandedDetailRowsByDevEui)) return dev;
+										const rows = expandedDetailRowsByDevEui[devEui];
+										return {
+											...dev,
+											detailRows: rows ?? buildDeviceLoadingDetailRows(dev.label)
+										};
+									})}
 									storageKey={card.id}
 									class="dashboard-device-cards__sensor-card"
 									onNavigate={(target) => {
@@ -362,6 +433,7 @@
 											openDeviceDetails(card, target.replace('device-detail:', ''));
 										}
 									}}
+									onDeviceExpand={(label) => handleDeviceExpand(card, label)}
 									onTimerExpired={(label) => handleTimerExpired(card, label)}
 								/>
 							{/key}

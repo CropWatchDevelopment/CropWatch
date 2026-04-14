@@ -20,7 +20,6 @@ const NUMERIC_SORT_COLUMNS = new Set([
 	'co2',
 	'humidity',
 	'temperature_c',
-	'soil_temperature_c',
 	'soil_humidity'
 ]);
 

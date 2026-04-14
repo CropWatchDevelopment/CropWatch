@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { AppPage } from '$lib/components/layout';
 	import {
 		CwButton,
 		CwCard,
@@ -11,12 +12,11 @@
 	import type { LocationDto } from '$lib/api/api.service';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { ApiService } from '$lib/api/api.service';
-
-	let { data }: { data: { allLocations: LocationDto[] } } = $props();
 
 	let loading = $state(false);
 	let app = getAppContext();
@@ -70,10 +70,11 @@
 	}
 </script>
 
-<CwButton variant="secondary" class="mt-2" onclick={() => goto('/')}>
-	&larr; {m.action_back_to_dashboard()}
-</CwButton>
-<div class="locations-page overflow-y-scroll">
+<AppPage>
+	<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/'))}>
+		&larr; {m.action_back_to_dashboard()}
+	</CwButton>
+
 	<CwCard title={m.locations_all_title()} elevated>
 		<CwDataTable
 			{columns}
@@ -86,7 +87,7 @@
 			rowActionsHeader={m.common_actions()}
 		>
 			{#snippet toolbarActions()}
-				<CwButton variant="primary" onclick={() => goto('/locations/create')}>
+				<CwButton variant="primary" onclick={() => goto(resolve('/locations/create'))}>
 					<Icon src={ADD_ICON} alt={m.locations_create_title()} />
 				</CwButton>
 			{/snippet}
@@ -98,10 +99,4 @@
 			{/snippet}
 		</CwDataTable>
 	</CwCard>
-</div>
-
-<style>
-	.locations-page {
-		padding: 1rem;
-	}
-</style>
+</AppPage>
