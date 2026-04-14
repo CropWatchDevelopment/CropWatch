@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { IDevice } from '$lib/interfaces/device.interface';
 import {
-	DASHBOARD_DEVICE_OFFLINE_THRESHOLD_MS,
 	DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES,
 	getDashboardDeviceNextRefreshDelayMs,
 	isDashboardDeviceOffline,
@@ -145,7 +144,6 @@ describe('dashboard-device-refresh helpers', () => {
 		expect(isDashboardDeviceOffline(nearlyOfflineDevice)).toBe(false);
 		expect(isDashboardDeviceOffline(longStaleDevice)).toBe(true);
 		expect(getDashboardDeviceNextRefreshDelayMs(longStaleDevice)).not.toBeNull();
-		expect(DASHBOARD_DEVICE_OFFLINE_THRESHOLD_MS).toBe(11 * 60_000);
 
 		vi.useRealTimers();
 	});

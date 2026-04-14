@@ -4,7 +4,12 @@ export interface IDevice {
 	location_name: string;
 	group?: string;
 	data_table?: string;
+	/** Timestamp of the latest sensor reading */
 	created_at: Date;
+	/** cw_devices.last_data_updated_at — preferred for "last seen" display */
+	last_data_updated_at?: Date | null;
+	/** cw_devices.upload_interval in minutes — used for freshness thresholds */
+	upload_interval?: number | null;
 	has_primary_data?: boolean;
 	co2: number;
 	humidity: number;

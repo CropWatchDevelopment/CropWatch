@@ -128,6 +128,8 @@ export interface DeviceTypeConfig {
 	primary_divider?: number | null;
 	secondary_multiplier?: number | null;
 	secondary_divider?: number | null;
+	/** cw_device_type.default_upload_interval in minutes — freshness fallback */
+	default_upload_interval?: number | null;
 }
 
 /** Lookup maps built from the `/devices/device-types` endpoint. */
@@ -168,7 +170,8 @@ export function buildDeviceTypeLookup(
 			primary_multiplier: toOptionalNumberValue(dt.primary_multiplier),
 			primary_divider: toOptionalNumberValue(dt.primary_divider),
 			secondary_multiplier: toOptionalNumberValue(dt.secondary_multiplier),
-			secondary_divider: toOptionalNumberValue(dt.secondary_divider)
+			secondary_divider: toOptionalNumberValue(dt.secondary_divider),
+			default_upload_interval: toOptionalNumberValue(dt.default_upload_interval)
 		};
 	}
 
@@ -197,6 +200,10 @@ export function mapDashboardDeviceMetadataToDevice(
 		group: toStringValue(device.group),
 		data_table: dataTable || undefined,
 		created_at: new Date(0),
+		last_data_updated_at: device.last_data_updated_at
+			? toDateValue(device.last_data_updated_at)
+			: null,
+		upload_interval: toOptionalNumberValue(device.upload_interval),
 		has_primary_data: false,
 		co2: 0,
 		humidity: 0,
@@ -220,6 +227,11 @@ export function mapDashboardPrimaryDataToDevice(
 		if (key !== 'cw_device_type' && key !== 'cw_locations' && key !== 'cw_device_owners') {
 			raw_data[key] = value;
 		}
+	}
+	// Normalize misspelled DB column 'deapth_cm' so device-type configs using
+	// either spelling ('depth_cm' or 'deapth_cm') resolve the primary value correctly.
+	if ('deapth_cm' in raw_data && !('depth_cm' in raw_data)) {
+		raw_data['depth_cm'] = raw_data['deapth_cm'];
 	}
 
 	return {
@@ -262,6 +274,11 @@ export function applyDashboardLatestReadings(target: IDevice, source: IDevice): 
 	// Preserve device_type_id (metadata device has it, primary data refresh may not)
 	target.device_type_id = source.device_type_id ?? target.device_type_id;
 
+	// Preserve upload_interval and last_data_updated_at — these come from device
+	// metadata (getAllDevices), not from a primary-data refresh.
+	target.upload_interval = target.upload_interval ?? source.upload_interval;
+	target.last_data_updated_at = target.last_data_updated_at ?? source.last_data_updated_at;
+
 	// Merge raw sensor data
 	if (source.raw_data) {
 		target.raw_data = { ...target.raw_data, ...source.raw_data };
@@ -303,6 +320,9 @@ export function mergeDashboardDevices(
 			alert_count: latestDevice.alert_count ?? device.alert_count ?? 0,
 			// Preserve device_type_id (metadata device has it, primary data refresh may not)
 			device_type_id: device.device_type_id ?? latestDevice.device_type_id,
+			// Preserve upload_interval and last_data_updated_at from metadata device
+			upload_interval: device.upload_interval ?? latestDevice.upload_interval,
+			last_data_updated_at: device.last_data_updated_at ?? latestDevice.last_data_updated_at,
 			raw_data: latestDevice.raw_data
 				? { ...device.raw_data, ...latestDevice.raw_data }
 				: device.raw_data

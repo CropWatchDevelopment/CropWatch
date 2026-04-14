@@ -1,6 +1,6 @@
 <script lang="ts">
+	import './DashboardDeviceCards.css';
 	import { createCwAlarmScheduler, CwSensorCard } from '@cropwatchdevelopment/cwui';
-	import type { CwSensorCardDetailRow } from '@cropwatchdevelopment/cwui';
 	import { onDestroy, tick } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -10,19 +10,19 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import {
 		buildDashboardLocationSensorCards,
-		buildDeviceExpandedDetailRows,
 		buildDeviceLoadingDetailRows,
 		DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE,
 		DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING,
 		type DashboardLocationSensorCard
 	} from './device-cards';
 	import {
+		DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES,
 		getDashboardDeviceNextRefreshDelayMs,
 		refreshDashboardDevice
 	} from './dashboard-device-refresh';
 	import { resolveDeviceTypeConfig } from './dashboard-device-data';
-	import { ApiService } from '$lib/api/api.service';
 	import { listDashboardDevices, type DashboardDeviceFilters } from './device-table';
+	import { createDeviceExpandManager } from './device-expand.svelte';
 
 	export type CardLayout = 'grid' | 'masonry';
 
@@ -38,12 +38,11 @@
 
 	const app = getAppContext();
 	const cardRefreshAlarms = createCwAlarmScheduler();
+	const expand = createDeviceExpandManager();
 
 	let viewportWidth = $state(0);
 	let visibleLocationCountsByFilter = $state<Record<string, number>>({});
 	let refreshingByDevEui = $state<Record<string, boolean>>({});
-	/** null = loading; CwSensorCardDetailRow[] = loaded; absent key = not yet requested */
-	let expandedDetailRowsByDevEui = $state<Record<string, CwSensorCardDetailRow[] | null>>({});
 	let isExpandingLocationWindow = $state(false);
 	let monitoredCardRefreshIds: string[] = [];
 
@@ -60,14 +59,9 @@
 	let locationCards = $derived(
 		buildDashboardLocationSensorCards(filteredDevices, app.locations ?? [], app.deviceTypeLookup)
 	);
-	let useMobileCardWindow = $derived(true);
+	let visibleLocationCards = $derived(locationCards.slice(0, visibleLocationCount));
+	let canLoadMore = $derived(visibleLocationCards.length < locationCards.length);
 	let enableInfiniteScroll = $derived(viewportWidth > 0);
-	let visibleLocationCards = $derived(
-		useMobileCardWindow ? locationCards.slice(0, visibleLocationCount) : locationCards
-	);
-	let canLoadMore = $derived(
-		useMobileCardWindow && visibleLocationCards.length < locationCards.length
-	);
 	let prefetchTriggerIndex = $derived(
 		Math.max(0, visibleLocationCards.length - DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING - 1)
 	);
@@ -76,68 +70,17 @@
 		cardRefreshAlarms.clear();
 	});
 
-	function getCardRefreshAlarmId(devEui: string): string {
-		return `dashboard-device-card-refresh:${devEui}`;
-	}
-
-	function resolveLiveDashboardDevice(device: IDevice | null | undefined): IDevice | null {
-		if (!device?.dev_eui) {
-			return null;
-		}
-
-		return app.devices.find((candidate) => candidate.dev_eui === device.dev_eui) ?? device;
-	}
-
-	function queueCardRefresh(device: IDevice) {
-		const delayMs = getDashboardDeviceNextRefreshDelayMs(device);
-		if (delayMs == null) {
-			return;
-		}
-
-		const devEui = device.dev_eui;
-		const alarmId = getCardRefreshAlarmId(devEui);
-
-		cardRefreshAlarms.schedule({
-			id: alarmId,
-			from: Date.now(),
-			alarmAfterMs: delayMs,
-			callback: () => {
-				const liveDevice = resolveLiveDashboardDevice(device);
-				if (!liveDevice) {
-					return;
-				}
-
-				void refreshSingleDevice(liveDevice).finally(() => {
-					const currentDevice = resolveLiveDashboardDevice(liveDevice);
-					if (!currentDevice || !monitoredCardRefreshIds.includes(alarmId)) {
-						return;
-					}
-
-					queueCardRefresh(currentDevice);
-				});
-			}
-		});
-	}
-
-	// On mount and whenever locationCards or the access token become available,
-	// check localStorage for any cards that were already expanded and pre-fetch their data.
+	// Pre-load expanded detail rows for cards that were still open when the page
+	// last unloaded. CwSensorCard persists its expand state in localStorage under
+	// the key 'cw-sensor-card-expand:{card.id}'.
 	$effect(() => {
 		if (!app.accessToken || locationCards.length === 0) return;
-
 		for (const card of locationCards) {
-			try {
-				const stored = localStorage.getItem(`cw-sensor-card-expand:${card.id}`);
-				if (!stored) continue;
-				const expandedMap: Record<string, boolean> = JSON.parse(stored);
-				for (const [label, isExpanded] of Object.entries(expandedMap)) {
-					if (isExpanded) void handleDeviceExpand(card, label);
-				}
-			} catch {
-				// localStorage unavailable or invalid JSON
-			}
+			preloadExpandedCard(card);
 		}
 	});
 
+	// Keep background refresh alarms in sync with the currently visible device set.
 	$effect(() => {
 		if (!app.accessToken) {
 			cardRefreshAlarms.clear();
@@ -145,105 +88,225 @@
 			return;
 		}
 
-		const nextRefreshIds: string[] = [];
-
+		const nextIds: string[] = [];
 		for (const device of filteredDevices) {
 			const alarmId = getCardRefreshAlarmId(device.dev_eui);
-			const delayMs = getDashboardDeviceNextRefreshDelayMs(device);
+			const uploadInterval = resolveDeviceUploadIntervalMinutes(device);
+			const delayMs = getDashboardDeviceNextRefreshDelayMs(device, uploadInterval);
 			if (delayMs == null) {
 				cardRefreshAlarms.cancel(alarmId);
 				continue;
 			}
-
-			nextRefreshIds.push(alarmId);
+			nextIds.push(alarmId);
 			queueCardRefresh(device);
 		}
 
 		for (const alarmId of monitoredCardRefreshIds) {
-			if (!nextRefreshIds.includes(alarmId)) {
-				cardRefreshAlarms.cancel(alarmId);
-			}
+			if (!nextIds.includes(alarmId)) cardRefreshAlarms.cancel(alarmId);
 		}
-
-		monitoredCardRefreshIds = nextRefreshIds;
+		monitoredCardRefreshIds = nextIds;
 	});
 
-	async function loadMoreLocations() {
-		if (!canLoadMore || isExpandingLocationWindow) {
+	// ── Upload interval resolution ─────────────────────────────────────────────
+
+	function resolveDeviceUploadIntervalMinutes(device: IDevice): number {
+		if (device.upload_interval != null && device.upload_interval > 0) {
+			return device.upload_interval;
+		}
+		const typeConfig = app.deviceTypeLookup
+			? resolveDeviceTypeConfig(device, app.deviceTypeLookup)
+			: undefined;
+		return typeConfig?.default_upload_interval ?? DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES;
+	}
+
+	// ── Expand / collapse ──────────────────────────────────────────────────────
+
+	function handleDeviceExpand(card: DashboardLocationSensorCard, label: string): void {
+		const binding = card.deviceBindingsByLabel[label];
+		if (!binding || !app.accessToken) return;
+		// Devices that have never sent data already show "No reading" rows from
+		// buildUnavailableDetailRows — calling getDeviceLatestData for them always
+		// fails and would only cause a spam loop.
+		if (binding.sourceDevice.has_primary_data === false) return;
+		void expand.load(binding.devEui, app.accessToken, binding.sourceDevice, app.deviceTypeLookup, label);
+	}
+
+	function handleDeviceCollapse(card: DashboardLocationSensorCard, label: string): void {
+		const devEui = card.deviceBindingsByLabel[label]?.devEui;
+		if (devEui) expand.clear(devEui);
+	}
+
+	function preloadExpandedCard(card: DashboardLocationSensorCard): void {
+		try {
+			const stored = localStorage.getItem(`cw-sensor-card-expand:${card.id}`);
+			if (!stored) return;
+			const expandedMap: Record<string, boolean> = JSON.parse(stored);
+			for (const [label, isExpanded] of Object.entries(expandedMap)) {
+				if (isExpanded) handleDeviceExpand(card, label);
+			}
+		} catch {
+			// localStorage unavailable or JSON parse error — skip silently
+		}
+	}
+
+	// ── Background refresh ─────────────────────────────────────────────────────
+
+	function getCardRefreshAlarmId(devEui: string): string {
+		return `dashboard-device-card-refresh:${devEui}`;
+	}
+
+	function resolveLiveDashboardDevice(device: IDevice | null | undefined): IDevice | null {
+		if (!device?.dev_eui) return null;
+		return app.devices.find((d) => d.dev_eui === device.dev_eui) ?? device;
+	}
+
+	function queueCardRefresh(device: IDevice): void {
+		const uploadInterval = resolveDeviceUploadIntervalMinutes(device);
+		const delayMs = getDashboardDeviceNextRefreshDelayMs(device, uploadInterval);
+		if (delayMs == null) return;
+
+		const alarmId = getCardRefreshAlarmId(device.dev_eui);
+		cardRefreshAlarms.schedule({
+			id: alarmId,
+			from: Date.now(),
+			alarmAfterMs: delayMs,
+			callback: () => {
+				const liveDevice = resolveLiveDashboardDevice(device);
+				if (!liveDevice) return;
+				void refreshSingleDevice(liveDevice).finally(() => {
+					const currentDevice = resolveLiveDashboardDevice(liveDevice);
+					if (currentDevice && monitoredCardRefreshIds.includes(alarmId)) {
+						queueCardRefresh(currentDevice);
+					}
+				});
+			}
+		});
+	}
+
+	async function refreshSingleDevice(device: IDevice | null | undefined): Promise<void> {
+		const targetDevice = resolveLiveDashboardDevice(device);
+		const devEui = targetDevice?.dev_eui;
+		if (!devEui || !app.accessToken || refreshingByDevEui[devEui]) return;
+
+		refreshingByDevEui[devEui] = true;
+		try {
+			await refreshDashboardDevice({ app, devEui, targetDevice });
+			// Invalidate cached expanded rows so the next expand fetches fresh data.
+			expand.invalidate(devEui);
+		} catch (error) {
+			console.error(`Failed to refresh device ${devEui}:`, error);
+		} finally {
+			refreshingByDevEui[devEui] = false;
+		}
+	}
+
+	// ── Navigation ─────────────────────────────────────────────────────────────
+
+	function openLocation(card: DashboardLocationSensorCard): void {
+		if (card.locationId > 0) {
+			goto(resolve('/locations/[location_id]', { location_id: String(card.locationId) }))
+				.catch((e) => console.error('Failed to navigate to location:', e));
 			return;
 		}
+		const firstLabel = card.devices[0]?.label;
+		if (firstLabel) openDeviceDetails(card, firstLabel);
+	}
 
+	function openDeviceDetails(card: DashboardLocationSensorCard, label: string): void {
+		const binding = card.deviceBindingsByLabel[label];
+		if (!binding) return;
+		goto(resolve('/locations/[location_id]/devices/[dev_eui]', {
+			location_id: String(binding.locationId),
+			dev_eui: binding.devEui
+		})).catch((e) => console.error('Failed to navigate to device:', e));
+	}
+
+	// ── Card device resolution ────────────────────────────────────────────────
+
+	function resolveCardDevices(card: DashboardLocationSensorCard) {
+		return card.devices.map((dev) => {
+			const binding = card.deviceBindingsByLabel[dev.label];
+			const devEui = binding?.devEui;
+			if (!devEui || !expand.isActive(devEui)) return dev;
+			const freshPrimary = binding
+				? expand.getPrimaryValue(devEui, binding.sourceDevice, app.deviceTypeLookup)
+				: null;
+			return {
+				...dev,
+				...(freshPrimary !== null ? { primaryValue: freshPrimary } : {}),
+				detailRows: expand.getRows(devEui) ?? buildDeviceLoadingDetailRows(dev.label)
+			};
+		});
+	}
+
+	// ── Infinite scroll ────────────────────────────────────────────────────────
+
+	async function loadMoreLocations(): Promise<void> {
+		if (!canLoadMore || isExpandingLocationWindow) return;
 		isExpandingLocationWindow = true;
-		setVisibleLocationCount(visibleLocationCount + DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE);
+		visibleLocationCountsByFilter = {
+			...visibleLocationCountsByFilter,
+			[filterKey]: Math.min(
+				visibleLocationCount + DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE,
+				locationCards.length
+			)
+		};
 		await tick();
 		isExpandingLocationWindow = false;
 	}
 
-	function setVisibleLocationCount(nextCount: number) {
-		visibleLocationCountsByFilter = {
-			...visibleLocationCountsByFilter,
-			[filterKey]: Math.min(
-				Math.max(nextCount, DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE),
-				locationCards.length
-			)
-		};
-	}
-
 	function prefetchWhenVisible(element: HTMLElement) {
 		const scrollContainer = element.closest<HTMLElement>(SCROLL_CONTAINER_SELECTOR);
-		if (!scrollContainer) {
-			return;
-		}
-
+		if (!scrollContainer) return;
 		const observer = new IntersectionObserver(
-			(entries) => {
-				if (entries.some((entry) => entry.isIntersecting)) {
-					void loadMoreLocations();
-				}
-			},
-			{
-				root: scrollContainer,
-				rootMargin: PREFETCH_ROOT_MARGIN,
-				threshold: 0.01
-			}
+			(entries) => { if (entries.some((e) => e.isIntersecting)) void loadMoreLocations(); },
+			{ root: scrollContainer, rootMargin: PREFETCH_ROOT_MARGIN, threshold: 0.01 }
 		);
-
 		observer.observe(element);
 		return () => observer.disconnect();
 	}
 
-	function normalizeWheelDelta(event: WheelEvent, scrollContainer: HTMLDivElement): number {
+	// ── Wheel scroll passthrough ───────────────────────────────────────────────
+	// Forwards wheel events to the scroll container so the page doesn't steal
+	// scroll when the cursor is over a nested non-scrollable element.
+
+	function handleWheelScroll(event: WheelEvent): void {
+		const scrollContainer = event.currentTarget;
+		if (
+			!(scrollContainer instanceof HTMLDivElement) ||
+			event.defaultPrevented ||
+			event.ctrlKey ||
+			event.metaKey
+		) return;
+
+		const deltaY = normalizeWheelDelta(event, scrollContainer);
+		if (deltaY === 0 || !canScrollContainer(scrollContainer, deltaY)) return;
+		if (nestedScrollableCanHandle(event.target, deltaY, scrollContainer)) return;
+
+		event.preventDefault();
+		scrollContainer.scrollTop += deltaY;
+	}
+
+	function normalizeWheelDelta(event: WheelEvent, container: HTMLDivElement): number {
 		switch (event.deltaMode) {
-			case WheelEvent.DOM_DELTA_LINE:
-				return event.deltaY * 16;
-			case WheelEvent.DOM_DELTA_PAGE:
-				return event.deltaY * scrollContainer.clientHeight;
-			default:
-				return event.deltaY;
+			case WheelEvent.DOM_DELTA_LINE: return event.deltaY * 16;
+			case WheelEvent.DOM_DELTA_PAGE: return event.deltaY * container.clientHeight;
+			default: return event.deltaY;
 		}
 	}
 
-	function canScrollVertically(element: HTMLElement, deltaY: number): boolean {
-		if (deltaY < 0) {
-			return element.scrollTop > 0;
-		}
-
-		if (deltaY > 0) {
-			return element.scrollTop + element.clientHeight < element.scrollHeight;
-		}
-
+	function canScrollContainer(element: HTMLElement, deltaY: number): boolean {
+		if (deltaY < 0) return element.scrollTop > 0;
+		if (deltaY > 0) return element.scrollTop + element.clientHeight < element.scrollHeight;
 		return false;
 	}
 
-	function nestedScrollableAncestorCanHandleWheel(
+	function nestedScrollableCanHandle(
 		target: EventTarget | null,
 		deltaY: number,
 		scrollContainer: HTMLDivElement
 	): boolean {
-		if (!(target instanceof Element)) {
-			return false;
-		}
-
+		if (!(target instanceof Element)) return false;
 		let current: Element | null = target;
 		while (current && current !== scrollContainer) {
 			if (current instanceof HTMLElement) {
@@ -251,143 +314,11 @@
 				const isScrollable =
 					(overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
 					current.scrollHeight > current.clientHeight;
-
-				if (isScrollable && canScrollVertically(current, deltaY)) {
-					return true;
-				}
+				if (isScrollable && canScrollContainer(current, deltaY)) return true;
 			}
-
 			current = current.parentElement;
 		}
-
 		return false;
-	}
-
-	function handleWheelScroll(event: WheelEvent) {
-		const scrollContainer = event.currentTarget;
-		if (
-			!(scrollContainer instanceof HTMLDivElement) ||
-			event.defaultPrevented ||
-			event.ctrlKey ||
-			event.metaKey
-		) {
-			return;
-		}
-
-		const deltaY = normalizeWheelDelta(event, scrollContainer);
-		if (deltaY === 0 || !canScrollVertically(scrollContainer, deltaY)) {
-			return;
-		}
-
-		if (nestedScrollableAncestorCanHandleWheel(event.target, deltaY, scrollContainer)) {
-			return;
-		}
-
-		event.preventDefault();
-		scrollContainer.scrollTop += deltaY;
-	}
-
-	function handleNavigationFailure(error: unknown) {
-		console.error('Failed to navigate from dashboard cards:', error);
-	}
-
-	function openLocation(card: DashboardLocationSensorCard) {
-		if (card.locationId > 0) {
-			goto(
-				resolve('/locations/[location_id]', {
-					location_id: String(card.locationId)
-				})
-			).catch(handleNavigationFailure);
-			return;
-		}
-
-		const firstDeviceLabel = card.devices[0]?.label;
-		if (firstDeviceLabel) {
-			openDeviceDetails(card, firstDeviceLabel);
-		}
-	}
-
-	function openDeviceDetails(card: DashboardLocationSensorCard, label: string) {
-		const binding = card.deviceBindingsByLabel[label];
-		if (!binding) {
-			return;
-		}
-
-		goto(
-			resolve('/locations/[location_id]/devices/[dev_eui]', {
-				location_id: String(binding.locationId),
-				dev_eui: binding.devEui
-			})
-		).catch(handleNavigationFailure);
-	}
-
-	function handleTimerExpired(card: DashboardLocationSensorCard, label: string) {
-		const binding = card.deviceBindingsByLabel[label];
-		if (!binding) {
-			return;
-		}
-
-		void refreshSingleDevice(binding.sourceDevice);
-	}
-
-	async function handleDeviceExpand(card: DashboardLocationSensorCard, label: string) {
-		console.log('[expand] handleDeviceExpand called', label, !!app.accessToken);
-		const binding = card.deviceBindingsByLabel[label];
-		if (!binding || !app.accessToken) return;
-
-		const { devEui, sourceDevice } = binding;
-
-		// Skip if already fetched or currently loading
-		if (devEui in expandedDetailRowsByDevEui) return;
-
-		// Mark as loading
-		expandedDetailRowsByDevEui[devEui] = null;
-
-		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const rawData = await api.getDeviceLatestData(devEui);
-			console.log('[expand] raw /latest-data response:', devEui, rawData);
-			// Some fields arrive as string-encoded numbers (e.g. ec, moisture, ph) — coerce them
-			const freshData = Object.fromEntries(
-				Object.entries(rawData).map(([k, v]) => [
-					k,
-					typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)) ? Number(v) : v
-				])
-			);
-			const typeConfig = resolveDeviceTypeConfig(sourceDevice, app.deviceTypeLookup);
-			expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
-				freshData,
-				typeConfig,
-				label
-			);
-		} catch (err) {
-			console.error(`Failed to load expanded data for ${devEui}:`, err);
-			// Remove loading marker so the user can retry by collapsing and re-expanding
-			delete expandedDetailRowsByDevEui[devEui];
-		}
-	}
-
-	async function refreshSingleDevice(device: IDevice | null | undefined) {
-		const targetDevice = resolveLiveDashboardDevice(device);
-		const devEui = targetDevice?.dev_eui;
-
-		if (!devEui || !app.accessToken || refreshingByDevEui[devEui]) {
-			return;
-		}
-
-		refreshingByDevEui[devEui] = true;
-
-		try {
-			await refreshDashboardDevice({
-				app,
-				devEui,
-				targetDevice
-			});
-		} catch (error) {
-			console.error(`Failed to refresh device ${devEui}:`, error);
-		} finally {
-			refreshingByDevEui[devEui] = false;
-		}
 	}
 </script>
 
@@ -412,15 +343,7 @@
 							{#key card.renderKey}
 								<CwSensorCard
 									title={card.title}
-									devices={card.devices.map((dev) => {
-										const devEui = card.deviceBindingsByLabel[dev.label]?.devEui;
-										if (!devEui || !(devEui in expandedDetailRowsByDevEui)) return dev;
-										const rows = expandedDetailRowsByDevEui[devEui];
-										return {
-											...dev,
-											detailRows: rows ?? buildDeviceLoadingDetailRows(dev.label)
-										};
-									})}
+									devices={resolveCardDevices(card)}
 									storageKey={card.id}
 									class="dashboard-device-cards__sensor-card"
 									onNavigate={(target) => {
@@ -428,13 +351,13 @@
 											openLocation(card);
 											return;
 										}
-
 										if (target.startsWith('device-detail:')) {
 											openDeviceDetails(card, target.replace('device-detail:', ''));
 										}
 									}}
-									onDeviceExpand={(label) => handleDeviceExpand(card, label)}
-									onTimerExpired={(label) => handleTimerExpired(card, label)}
+									onExpand={(label) => handleDeviceExpand(card, label)}
+									onCollapse={(label) => handleDeviceCollapse(card, label)}
+									onExpire={(label) => refreshSingleDevice(card.deviceBindingsByLabel[label]?.sourceDevice)}
 								/>
 							{/key}
 						</div>
@@ -459,110 +382,3 @@
 		</div>
 	{/key}
 </section>
-
-<style>
-	.dashboard-device-cards {
-		flex: 1;
-		min-height: 0;
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-	}
-
-	.dashboard-device-cards__scroll {
-		flex: 1;
-		min-height: 0;
-		overflow-y: auto;
-		padding: 0 1rem 1.5rem;
-		overscroll-behavior: contain;
-	}
-
-	.dashboard-device-cards__load-more,
-	.dashboard-device-cards__empty p {
-		margin: 0;
-		font-size: 0.92rem;
-		line-height: 1.4;
-		color: var(--cw-text-muted);
-	}
-
-	.dashboard-device-cards__empty {
-		display: grid;
-		gap: 0.35rem;
-		padding: 1.1rem 1rem;
-		border-radius: 1.2rem;
-		border: 1px dashed color-mix(in srgb, var(--cw-border-default) 78%, transparent);
-		background: color-mix(in srgb, var(--cw-bg-surface) 88%, transparent);
-	}
-
-	.dashboard-device-cards__empty h3 {
-		margin: 0;
-		font-size: 1rem;
-		color: var(--cw-text-primary);
-	}
-
-	.dashboard-device-cards__grid {
-		gap: 0.5rem;
-	}
-
-	/* ── Equal-height rows (default grid) ── */
-	.dashboard-device-cards__grid--equal-rows {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		align-content: start;
-		align-items: stretch;
-	}
-
-	.dashboard-device-cards__grid--equal-rows .dashboard-device-cards__item {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.dashboard-device-cards__grid--equal-rows :global(.dashboard-device-cards__sensor-card.cw-sensor-card) {
-		flex: 1;
-	}
-
-	/* ── Masonry / mosaic layout ── */
-	.dashboard-device-cards__grid--masonry {
-		display: block;
-		columns: 1;
-		column-gap: 0.5rem;
-	}
-
-	.dashboard-device-cards__grid--masonry .dashboard-device-cards__item {
-		break-inside: avoid;
-		margin-bottom: 0.5rem;
-	}
-
-	.dashboard-device-cards__item {
-		min-width: 0;
-	}
-
-	:global(.dashboard-device-cards__sensor-card.cw-sensor-card) {
-		width: 100%;
-		max-width: none;
-	}
-
-	.dashboard-device-cards__prefetch-sentinel {
-		width: 100%;
-		height: 1px;
-	}
-
-	.dashboard-device-cards__load-more {
-		padding: 1rem 0 0.25rem;
-		text-align: center;
-	}
-
-	@media (min-width: 768px) {
-		.dashboard-device-cards__scroll {
-			padding-inline: 1.5rem;
-		}
-
-		.dashboard-device-cards__grid--equal-rows {
-			grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
-		}
-
-		.dashboard-device-cards__grid--masonry {
-			columns: auto 19rem;
-		}
-	}
-</style>

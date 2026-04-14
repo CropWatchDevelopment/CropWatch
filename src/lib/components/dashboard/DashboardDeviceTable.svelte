@@ -53,12 +53,6 @@
 		{ key: 'humidity', header: m.dashboard_column_humidity(), width: '10rem', sortable: true },
 		{ key: 'co2', header: m.dashboard_column_co2(), width: '10rem', sortable: true },
 		{
-			key: 'temperature_c',
-			header: m.dashboard_column_soil_temperature(),
-			width: '14rem',
-			sortable: true
-		},
-		{
 			key: 'soil_humidity',
 			header: m.dashboard_column_soil_humidity(),
 			width: '12rem',
@@ -133,24 +127,39 @@
 	}
 
 	function sortDevices(devices: IDevice[], column: string, direction: 'asc' | 'desc'): IDevice[] {
-		const numericColumns = new Set(['co2', 'humidity', 'temperature_c', 'temperature_c', 'soil_humidity', 'alert_count']);
+		const numericColumns = new Set([
+			'co2',
+			'humidity',
+			'temperature_c',
+			'soil_humidity',
+			'alert_count'
+		]);
 		const dir = direction === 'asc' ? 1 : -1;
 
 		return [...devices].sort((a, b) => {
-			const aVal = column === 'created_at'
-				? new Date(a.created_at).getTime()
-				: (a as unknown as Record<string, unknown>)[column];
-			const bVal = column === 'created_at'
-				? new Date(b.created_at).getTime()
-				: (b as unknown as Record<string, unknown>)[column];
+			const aVal =
+				column === 'created_at'
+					? new Date(a.created_at).getTime()
+					: (a as unknown as Record<string, unknown>)[column];
+			const bVal =
+				column === 'created_at'
+					? new Date(b.created_at).getTime()
+					: (b as unknown as Record<string, unknown>)[column];
 
 			if (numericColumns.has(column) || column === 'created_at') {
-				const aNum = typeof aVal === 'number' && Number.isFinite(aVal) ? aVal : Number.NEGATIVE_INFINITY;
-				const bNum = typeof bVal === 'number' && Number.isFinite(bVal) ? bVal : Number.NEGATIVE_INFINITY;
+				const aNum =
+					typeof aVal === 'number' && Number.isFinite(aVal) ? aVal : Number.NEGATIVE_INFINITY;
+				const bNum =
+					typeof bVal === 'number' && Number.isFinite(bVal) ? bVal : Number.NEGATIVE_INFINITY;
 				return (aNum - bNum) * dir;
 			}
 
-			return String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+			return (
+				String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, {
+					numeric: true,
+					sensitivity: 'base'
+				}) * dir
+			);
 		});
 	}
 
@@ -240,8 +249,6 @@
 							class:dashboard-device-table__cell--refreshing={isRefreshing(row.dev_eui)}
 						>
 							{#if col.key === 'temperature_c'}
-								{getMetricDisplayValue(row.temperature_c)}
-							{:else if col.key === 'temperature_c'}
 								{getMetricDisplayValue(row.temperature_c)}
 							{:else if col.key === 'humidity'}
 								{getMetricDisplayValue(row.humidity)}

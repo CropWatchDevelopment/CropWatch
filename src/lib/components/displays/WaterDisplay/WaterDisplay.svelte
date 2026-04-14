@@ -14,7 +14,6 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -26,7 +25,7 @@
 		id: string;
 		created_at: string;
 		temperature_c: number;
-		depth_cm: number;
+		deapth_cm: number;
 		pressure: number;
 		spo2: number;
 	}
@@ -37,7 +36,7 @@
 			created_at: String(row.created_at ?? ''),
 			temperature_c: Number(row.temperature_c) || 0,
 			// Note: DB column is misspelled as `deapth_cm` — handle both
-			depth_cm: Number(row.depth_cm ?? row.deapth_cm) || 0,
+			deapth_cm: Number(row.deapth_cm ?? row.deapth_cm) || 0,
 			pressure: Number(row.pressure) || 0,
 			spo2: Number(row.spo2) || 0
 		}));
@@ -48,7 +47,7 @@
 	const columns: CwColumnDef<WaterRow>[] = [
 		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
 		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
-		{ key: 'depth_cm', header: m.rule_subject_water_depth(), sortable: true, width: '9rem' },
+		{ key: 'deapth_cm', header: m.rule_subject_water_depth(), sortable: true, width: '9rem' },
 		{ key: 'pressure', header: m.rule_subject_pressure(), sortable: true, width: '9rem' },
 		{ key: 'spo2', header: m.rule_subject_spo2(), sortable: true, width: '7rem' }
 	];
@@ -59,7 +58,7 @@
 
 	let latest = $derived({
 		temperature_c: Number(latestData?.temperature_c) || 0,
-		depth_cm: Number(latestData?.depth_cm ?? latestData?.deapth_cm) || 0,
+		deapth_cm: Number(latestData?.deapth_cm ?? latestData?.deapth_cm) || 0,
 		pressure: Number(latestData?.pressure) || 0,
 		spo2: Number(latestData?.spo2) || 0
 	});
@@ -68,7 +67,7 @@
 		rows.map((p) => ({
 			timestamp: p.created_at,
 			created_at: p.created_at,
-			value: p.depth_cm
+			value: p.deapth_cm
 		}))
 	);
 
@@ -84,7 +83,7 @@
 			if (query.search.trim()) {
 				const search = query.search.trim().toLowerCase();
 				filtered = filtered.filter((r) =>
-					[r.created_at, r.temperature_c, r.depth_cm, r.pressure, r.spo2]
+					[r.created_at, r.temperature_c, r.deapth_cm, r.pressure, r.spo2]
 						.map(String)
 						.join(' ')
 						.toLowerCase()
@@ -118,7 +117,7 @@
 		</CwCard>
 
 		<CwCard title={m.display_depth()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.depth_cm.toFixed(1)}<span>cm</span></p>
+			<p class="kpi-value">{latest.deapth_cm.toFixed(1)}<span>cm</span></p>
 		</CwCard>
 
 		<CwCard title={m.rule_subject_pressure()} subtitle={m.display_latest_reading()} elevated>
@@ -147,8 +146,8 @@
 						{new Date(row.created_at).toLocaleString()}
 					{:else if col.key === 'temperature_c'}
 						{row.temperature_c.toFixed(2)} °C
-					{:else if col.key === 'depth_cm'}
-						{row.depth_cm.toFixed(1)} cm
+					{:else if col.key === 'deapth_cm'}
+						{row.deapth_cm.toFixed(1)} cm
 					{:else}
 						{defaultValue}
 					{/if}

@@ -186,7 +186,33 @@ async function loadDashboardPayload(apiServiceInstance: ApiService) {
 	const metadataDevices = allDevices.map((device) => mapDashboardDeviceMetadataToDevice(device));
 	const primaryDataDevices = latestPrimaryData.map((device) => mapDashboardPrimaryDataToDevice(device));
 
-	const devices: IDevice[] = mergeDashboardDevices(metadataDevices, primaryDataDevices);
+	let devices: IDevice[] = mergeDashboardDevices(metadataDevices, primaryDataDevices);
+
+	// The bulk /devices/latest-primary-data endpoint only covers air and soil sensors.
+	// Devices on other tables (e.g. cw_water_data) remain has_primary_data === false after
+	// the merge — fetch their latest readings individually so the dashboard shows real data.
+	const BULK_PRIMARY_DATA_TABLES = new Set(['cw_air_data', 'cw_soil_data']);
+	const devicesNeedingIndividualFetch = devices.filter(
+		(device) =>
+			device.has_primary_data === false &&
+			device.device_type_id != null &&
+			(!device.data_table || !BULK_PRIMARY_DATA_TABLES.has(device.data_table))
+	);
+	if (devicesNeedingIndividualFetch.length > 0) {
+		const individualResults = await Promise.allSettled(
+			devicesNeedingIndividualFetch.map((device) =>
+				apiServiceInstance
+					.getDeviceLatestData(device.dev_eui, { suppressNotFoundError: true })
+					.then((raw) => mapDashboardPrimaryDataToDevice(raw))
+			)
+		);
+		const resolvedDevices = individualResults
+			.filter((r): r is PromiseFulfilledResult<IDevice> => r.status === 'fulfilled')
+			.map((r) => r.value);
+		if (resolvedDevices.length > 0) {
+			devices = mergeDashboardDevices(devices, resolvedDevices);
+		}
+	}
 
 	const groups = normalizeDashboardFilterValues(devices.map((device) => device.group));
 	const deviceGroups = normalizeDashboardFilterValues(deviceGroupsResult.value);

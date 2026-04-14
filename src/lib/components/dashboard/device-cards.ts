@@ -49,8 +49,19 @@ function applyTransform(rawValue: unknown, multiplier?: number | null, divider?:
 	return value;
 }
 
-function getDeviceStatus(device: IDevice): 'online' | 'offline' {
-	return isDashboardDeviceOffline(device) ? 'offline' : 'online';
+function getDeviceStatus(device: IDevice, uploadIntervalMinutes?: number | null): 'online' | 'offline' {
+	return isDashboardDeviceOffline(device, uploadIntervalMinutes) ? 'offline' : 'online';
+}
+
+function resolveUploadIntervalMinutes(
+	device: IDevice,
+	typeConfig: DeviceTypeConfig | undefined
+): number {
+	return (
+		(device.upload_interval != null && device.upload_interval > 0 ? device.upload_interval : null) ??
+		typeConfig?.default_upload_interval ??
+		DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES
+	);
 }
 
 function toCardRenderKey(locationId: number, devices: IDevice[]): string {
@@ -125,6 +136,9 @@ const KNOWN_SENSOR_FIELDS: Record<string, SensorFieldMeta> = {
 	light:               { label: 'Light',             unit: 'lux',  icon: 'thermo' },
 	light_level:         { label: 'Light',             unit: 'lux',  icon: 'thermo' },
 	voltage:             { label: 'Voltage',           unit: 'V',    icon: 'timer'  },
+	depth_cm:            { label: 'Water Depth',       unit: 'cm',   icon: 'drop'   },
+	deapth_cm:           { label: 'Water Depth',       unit: 'cm',   icon: 'drop'   },
+	spo2:                { label: 'SpO₂',             unit: '%',    icon: 'drop'   },
 };
 
 function formatKeyLabel(key: string): string {
@@ -148,7 +162,8 @@ export function buildDeviceLoadingDetailRows(deviceLabel: string): CwSensorCardD
 export function buildDeviceExpandedDetailRows(
 	rawData: Record<string, unknown>,
 	typeConfig: DeviceTypeConfig | undefined,
-	deviceLabel: string
+	deviceLabel: string,
+	uploadIntervalMinutes?: number
 ): CwSensorCardDetailRow[] {
 	const rows: CwSensorCardDetailRow[] = [];
 
@@ -166,11 +181,7 @@ export function buildDeviceExpandedDetailRows(
 				: rawValue;
 
 		const known = KNOWN_SENSOR_FIELDS[key];
-		const label = isPrimary
-			? (typeConfig?.primary_data_key ?? known?.label ?? formatKeyLabel(key))
-			: isSecondary
-				? (typeConfig?.secondary_data_key ?? known?.label ?? formatKeyLabel(key))
-				: (known?.label ?? formatKeyLabel(key));
+		const label = known?.label ?? formatKeyLabel(key);
 		const unit = isPrimary
 			? (typeConfig?.primary_data_notation ?? known?.unit ?? '')
 			: isSecondary
@@ -200,7 +211,7 @@ export function buildDeviceExpandedDetailRows(
 				label: 'Last Update',
 				icon: 'timer',
 				lastUpdated: lastUpdatedDate,
-				expectedUpdateAfter: DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES
+				expectedUpdateAfter: uploadIntervalMinutes ?? DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES
 			});
 		}
 	}
@@ -260,8 +271,10 @@ export function buildDashboardLocationSensorCards(
 					sourceDevice: device
 				};
 
+				const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
+				const uploadIntervalMinutes = resolveUploadIntervalMinutes(device, typeConfig);
+
 				if (device.has_primary_data === false) {
-					const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
 					return {
 						label,
 						primaryValue: 0,
@@ -271,7 +284,6 @@ export function buildDashboardLocationSensorCards(
 					} satisfies CwSensorCardDevice;
 				}
 
-				const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
 				const primaryKey = typeConfig?.primary_data_key;
 				const secondaryKey = typeConfig?.secondary_data_key;
 
@@ -293,8 +305,9 @@ export function buildDashboardLocationSensorCards(
 					primaryUnit: typeConfig?.primary_data_notation ?? '°C',
 					secondaryValue,
 					secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
-					status: getDeviceStatus(device),
-					lastUpdated: device.created_at
+					status: getDeviceStatus(device, uploadIntervalMinutes),
+					lastSeenAt: device.last_data_updated_at ?? device.created_at,
+					expireAfterMinutes: uploadIntervalMinutes
 				} satisfies CwSensorCardDevice;
 			});
 
