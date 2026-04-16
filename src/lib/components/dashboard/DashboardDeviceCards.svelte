@@ -409,11 +409,37 @@
 		refreshingByDevEui[devEui] = true;
 
 		try {
-			await refreshDashboardDevice({
+			const latestDevice = await refreshDashboardDevice({
 				app,
 				devEui,
 				targetDevice
 			});
+
+			// If this device's expanded detail rows were already loaded, rebuild them
+			// with the fresh payload so CwDataList shows current values and an
+			// up-to-date "Last Update" timestamp.
+			if (latestDevice?.raw_data && devEui in expandedDetailRowsByDevEui) {
+				// Apply the same string-to-number coercion used in handleSensorExpand
+				const coercedData = Object.fromEntries(
+					Object.entries(latestDevice.raw_data).map(([k, v]) => [
+						k,
+						typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))
+							? Number(v)
+							: v
+					])
+				);
+				const sensorEntry = locationCards
+					.flatMap((c) => c.sensors)
+					.find((s) => s.devEui === devEui);
+				const typeConfig = sensorEntry
+					? resolveDeviceTypeConfig(sensorEntry.sourceDevice, app.deviceTypeLookup)
+					: undefined;
+				expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
+					coercedData,
+					typeConfig,
+					sensorEntry?.sensor.label ?? devEui
+				);
+			}
 		} catch (error) {
 			console.error(`Failed to refresh device ${devEui}:`, error);
 		} finally {
