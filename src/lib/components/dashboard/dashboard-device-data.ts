@@ -5,32 +5,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function toStringValue(value: unknown): string {
-	return typeof value === 'string' ? value : value == null ? '' : String(value);
-}
-
-function toNumberValue(value: unknown): number {
-	return typeof value === 'number' && Number.isFinite(value) ? value : Number(value ?? 0) || 0;
-}
-
-function toOptionalNumberValue(value: unknown): number | null {
-	if (value == null || value === '') {
-		return null;
-	}
-
-	const nextValue = typeof value === 'number' && Number.isFinite(value) ? value : Number(value);
-	return Number.isFinite(nextValue) ? nextValue : null;
-}
-
-function toDateValue(value: unknown): Date {
-	if (value instanceof Date) {
-		return value;
-	}
-
-	const nextValue = new Date(toStringValue(value));
-	return Number.isNaN(nextValue.getTime()) ? new Date(0) : nextValue;
-}
-
 function getDashboardEmbeddedLocations(
 	device: DeviceDto | Record<string, unknown>
 ): Record<string, unknown>[] {
@@ -46,32 +20,22 @@ function getDashboardEmbeddedLocations(
 }
 
 function getDashboardDeviceLocationName(device: DeviceDto | Record<string, unknown>): string {
-	const directName = toStringValue(device.location_name).trim();
-	if (directName) {
-		return directName;
-	}
+	if (device.location_name) return device.location_name as string;
 
 	for (const location of getDashboardEmbeddedLocations(device)) {
-		const locationName = toStringValue(location?.name).trim();
-		if (locationName) {
-			return locationName;
-		}
+		if (location?.name) return location.name as string;
 	}
 
 	return '';
 }
 
 function getDashboardDeviceLocationId(device: DeviceDto | Record<string, unknown>): number {
-	const directId = toNumberValue(device.location_id);
-	if (directId > 0) {
-		return directId;
-	}
+	const directId = Number(device.location_id);
+	if (directId > 0) return directId;
 
 	for (const location of getDashboardEmbeddedLocations(device)) {
-		const locationId = toNumberValue(location.location_id);
-		if (locationId > 0) {
-			return locationId;
-		}
+		const id = Number(location.location_id);
+		if (id > 0) return id;
 	}
 
 	return directId;
@@ -91,23 +55,14 @@ function preferIncomingLocationId(incoming: number, current: number): number {
 function getDeviceDataTable(
 	device: DeviceDto | DevicePrimaryDataDto | Record<string, unknown>
 ): string {
-	const directDataTable = toStringValue(device.data_table_v2 ?? device.data_table).trim();
-	if (directDataTable) {
-		return directDataTable;
-	}
+	const directDataTable = device.data_table_v2 ?? device.data_table;
+	if (directDataTable) return directDataTable as string;
 
 	if (isRecord(device.cw_device_type)) {
-		return toStringValue(
-			device.cw_device_type.data_table_v2 ?? device.cw_device_type.data_table
-		).trim();
+		return (device.cw_device_type.data_table_v2 ?? device.cw_device_type.data_table ?? '') as string;
 	}
 
 	return '';
-}
-
-function toOptionalStringValue(value: unknown): string | undefined {
-	if (value == null || value === '') return undefined;
-	return String(value);
 }
 
 function extractDeviceTypeId(
@@ -124,10 +79,6 @@ export interface DeviceTypeConfig {
 	secondary_data_key?: string;
 	primary_data_notation?: string;
 	secondary_data_notation?: string;
-	primary_multiplier?: number | null;
-	primary_divider?: number | null;
-	secondary_multiplier?: number | null;
-	secondary_divider?: number | null;
 }
 
 /** Lookup maps built from the `/devices/device-types` endpoint. */
@@ -143,32 +94,24 @@ export interface DeviceTypeLookup {
  * Keyed by `cw_device_type.model` with an id→model bridge so individual
  * devices can resolve their type via their numeric FK (`device.type`).
  */
-export function buildDeviceTypeLookup(
-	deviceTypes: DeviceTypeDto[]
-): DeviceTypeLookup {
+export function buildDeviceTypeLookup(deviceTypes: DeviceTypeDto[]): DeviceTypeLookup {
 	const byModel: Record<string, DeviceTypeConfig> = {};
 	const idToModel: Record<number, string> = {};
 
 	for (const dt of deviceTypes) {
-		const model = toOptionalStringValue(dt.model);
+		const model = dt.model || undefined;
 		if (!model) continue;
 
 		const id = typeof dt.id === 'number' && Number.isFinite(dt.id) ? dt.id : undefined;
-		if (id != null) {
-			idToModel[id] = model;
-		}
+		if (id != null) idToModel[id] = model;
 
 		if (byModel[model]) continue;
 
 		byModel[model] = {
-			primary_data_key: toOptionalStringValue(dt.primary_data_v2),
-			secondary_data_key: toOptionalStringValue(dt.secondary_data_v2),
-			primary_data_notation: toOptionalStringValue(dt.primary_data_notation),
-			secondary_data_notation: toOptionalStringValue(dt.secondary_data_notation),
-			primary_multiplier: toOptionalNumberValue(dt.primary_multiplier),
-			primary_divider: toOptionalNumberValue(dt.primary_divider),
-			secondary_multiplier: toOptionalNumberValue(dt.secondary_multiplier),
-			secondary_divider: toOptionalNumberValue(dt.secondary_divider)
+			primary_data_key: dt.primary_data_v2 ?? undefined,
+			secondary_data_key: dt.secondary_data_v2 ?? undefined,
+			primary_data_notation: dt.primary_data_notation ?? undefined,
+			secondary_data_notation: dt.secondary_data_notation ?? undefined,
 		};
 	}
 
@@ -188,14 +131,12 @@ export function resolveDeviceTypeConfig(
 export function mapDashboardDeviceMetadataToDevice(
 	device: DeviceDto | Record<string, unknown>
 ): IDevice {
-	const dataTable = getDeviceDataTable(device);
-
 	return {
-		dev_eui: toStringValue(device.dev_eui),
-		name: toStringValue(device.name ?? device.dev_eui),
+		dev_eui: device.dev_eui as string,
+		name: (device.name ?? device.dev_eui) as string,
 		location_name: getDashboardDeviceLocationName(device),
-		group: toStringValue(device.group),
-		data_table: dataTable || undefined,
+		group: device.group as string,
+		data_table: getDeviceDataTable(device) || undefined,
 		created_at: new Date(0),
 		has_primary_data: false,
 		co2: 0,
@@ -212,7 +153,8 @@ export function mapDashboardPrimaryDataToDevice(
 	device: DevicePrimaryDataDto | Record<string, unknown>
 ): IDevice {
 	const dataTable = getDeviceDataTable(device);
-	const soilHumidity = toOptionalNumberValue(device.moisture);
+	const moisture = device.moisture;
+	const soilHumidity = moisture != null ? Number(moisture) : null;
 
 	// Preserve the full raw payload so dynamic column keys can be resolved
 	const raw_data: Record<string, unknown> = {};
@@ -222,19 +164,22 @@ export function mapDashboardPrimaryDataToDevice(
 		}
 	}
 
+	const createdAt = device.created_at;
+	const parsedDate = createdAt instanceof Date ? createdAt : new Date(createdAt as string);
+
 	return {
-		dev_eui: toStringValue(device.dev_eui),
-		name: toStringValue(device.name),
-		location_name: toStringValue(device.location_name),
-		group: toStringValue(device.group),
+		dev_eui: device.dev_eui as string,
+		name: device.name as string,
+		location_name: device.location_name as string,
+		group: device.group as string,
 		...(dataTable ? { data_table: dataTable } : {}),
-		created_at: toDateValue(device.created_at),
+		created_at: parsedDate,
 		has_primary_data: true,
-		co2: toNumberValue(device.co2),
-		humidity: toNumberValue(device.humidity),
-		temperature_c: toNumberValue(device.temperature_c),
+		co2: Number(device.co2) || 0,
+		humidity: Number(device.humidity) || 0,
+		temperature_c: Number(device.temperature_c) || 0,
 		soil_humidity: soilHumidity,
-		location_id: toNumberValue(device.location_id),
+		location_id: Number(device.location_id) || 0,
 		cwloading: false,
 		raw_data,
 		device_type_id: extractDeviceTypeId(device)
@@ -272,17 +217,13 @@ export function mergeDashboardDevices(
 	currentDevices: IDevice[],
 	latestDevices: IDevice[]
 ): IDevice[] {
-	if (latestDevices.length === 0) {
-		return currentDevices;
-	}
+	if (latestDevices.length === 0) return currentDevices;
 
 	const latestByDevEui = new Map(latestDevices.map((device) => [device.dev_eui, device] as const));
 
 	const mergedDevices = currentDevices.map((device) => {
 		const latestDevice = latestByDevEui.get(device.dev_eui);
-		if (!latestDevice) {
-			return device;
-		}
+		if (!latestDevice) return device;
 
 		latestByDevEui.delete(device.dev_eui);
 		const resolvedDataTable = preferIncomingText(latestDevice.data_table, device.data_table);

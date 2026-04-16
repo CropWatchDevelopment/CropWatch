@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
 		CwDuration,
 		CwExpandPanel,
 		CwListBox,
 		CwSideNav,
+		CwThemePicker,
 		type CwListBoxItem,
 		type CwSideNavItem
 	} from '@cropwatchdevelopment/cwui';
@@ -134,8 +136,7 @@
 			params.searchParams.delete(key);
 		}
 		const qs = params.searchParams.toString();
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(new URL(`${resolve('/')}${qs ? `?${qs}` : ''}`, page.url.origin), {
+		goto(resolve(qs ? `/?${qs}` : '/'), {
 			replaceState: true,
 			keepFocus: true,
 			noScroll: true
@@ -152,6 +153,14 @@
 	{/snippet}
 
 	{#snippet aboveContent()}
+		<div class="app-sidebar__mobile-utilities lg:hidden">
+			<p class="app-sidebar__mobile-utilities-label">{m.nav_settings()}</p>
+			<div class="app-sidebar__mobile-utilities-controls">
+				<LanguageSwitcher compact />
+				<CwThemePicker />
+			</div>
+		</div>
+
 		{#if page.url.pathname === '/'}
 			<CwExpandPanel title={m.sidebar_dashboard_filters()} open={dashboardFiltersOpen}>
 				<div class="app-sidebar__filters-copy">{m.sidebar_filter_devices_in_view()}</div>
@@ -229,6 +238,43 @@
 
 	:global(.cw-sidenav__above-content) {
 		min-height: 0;
+	}
+
+	:global(.cw-sidenav__header),
+	:global(.cw-sidenav__header--mini) {
+		height: calc(5rem + var(--app-shell-padding-block-start));
+		padding-top: var(--app-shell-padding-block-start);
+	}
+
+	:global(.cw-sidenav__items) {
+		padding-bottom: max(var(--cw-space-2), var(--app-shell-padding-block-end));
+	}
+
+	:global(.cw-sidenav__footer) {
+		padding-bottom: max(var(--cw-space-3), var(--app-shell-padding-block-end));
+	}
+
+	.app-sidebar__mobile-utilities {
+		display: grid;
+		gap: var(--cw-space-3);
+		padding: var(--cw-space-3) var(--cw-space-4);
+		border-bottom: 1px solid color-mix(in srgb, var(--cw-border-muted) 65%, transparent);
+	}
+
+	.app-sidebar__mobile-utilities-label {
+		margin: 0;
+		font-size: var(--cw-text-xs);
+		font-weight: var(--cw-font-semibold);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--cw-text-secondary);
+	}
+
+	.app-sidebar__mobile-utilities-controls {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--cw-space-3);
 	}
 
 	.app-sidebar__filters-copy {

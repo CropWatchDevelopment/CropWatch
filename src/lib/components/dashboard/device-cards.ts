@@ -14,19 +14,20 @@ import {
 export const DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE = 10;
 export const DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING = 5;
 
-export interface DashboardLocationSensorCardDeviceBinding {
+export interface DashboardSensorCardEntry {
+	id: string;
+	storageKey: string;
 	devEui: string;
 	locationId: number;
 	sourceDevice: IDevice;
+	sensor: CwSensorCardDevice;
 }
 
 export interface DashboardLocationSensorCard {
 	id: string;
-	renderKey: string;
 	locationId: number;
 	title: string;
-	devices: CwSensorCardDevice[];
-	deviceBindingsByLabel: Record<string, DashboardLocationSensorCardDeviceBinding>;
+	sensors: DashboardSensorCardEntry[];
 }
 
 function getDeviceBaseLabel(device: IDevice): string {
@@ -38,26 +39,13 @@ function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): 
 	return (duplicateCounts.get(baseLabel) ?? 0) > 1 ? `${baseLabel} (${device.dev_eui})` : baseLabel;
 }
 
-function applyTransform(rawValue: unknown, multiplier?: number | null, divider?: number | null): number {
-	let value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0) || 0;
-	if (multiplier != null && multiplier !== 0) {
-		value *= multiplier;
-	}
-	if (divider != null && divider !== 0) {
-		value /= divider;
-	}
-	return value;
-}
 
 function getDeviceStatus(device: IDevice): 'online' | 'offline' {
 	return isDashboardDeviceOffline(device) ? 'offline' : 'online';
 }
 
-function toCardRenderKey(locationId: number, devices: IDevice[]): string {
-	return [
-		`location:${locationId}`,
-		...devices.map((device) => `${device.dev_eui}:${device.created_at.toISOString()}`)
-	].join('|');
+function getSensorStorageKey(device: IDevice): string {
+	return `dashboard-device-card:${device.dev_eui}`;
 }
 
 function buildUnavailableDetailRows(label: string, typeConfig: DeviceTypeConfig | undefined): CwSensorCardDetailRow[] {
@@ -125,6 +113,8 @@ const KNOWN_SENSOR_FIELDS: Record<string, SensorFieldMeta> = {
 	light:               { label: 'Light',             unit: 'lux',  icon: 'thermo' },
 	light_level:         { label: 'Light',             unit: 'lux',  icon: 'thermo' },
 	voltage:             { label: 'Voltage',           unit: 'V',    icon: 'timer'  },
+	deapth_cm:           { label: 'Depth',             unit: 'cm',   icon: 'drop'   },
+	depth_cm:            { label: 'Depth',             unit: 'cm',   icon: 'drop'   },
 };
 
 function formatKeyLabel(key: string): string {
@@ -159,17 +149,13 @@ export function buildDeviceExpandedDetailRows(
 		const isPrimary = typeConfig?.primary_data_key === key;
 		const isSecondary = typeConfig?.secondary_data_key === key;
 
-		const displayValue = isPrimary
-			? applyTransform(rawValue, typeConfig?.primary_multiplier, typeConfig?.primary_divider)
-			: isSecondary
-				? applyTransform(rawValue, typeConfig?.secondary_multiplier, typeConfig?.secondary_divider)
-				: rawValue;
+		const displayValue = rawValue;
 
 		const known = KNOWN_SENSOR_FIELDS[key];
 		const label = isPrimary
-			? (typeConfig?.primary_data_key ?? known?.label ?? formatKeyLabel(key))
+			? (known?.label ?? typeConfig?.primary_data_key ?? formatKeyLabel(key))
 			: isSecondary
-				? (typeConfig?.secondary_data_key ?? known?.label ?? formatKeyLabel(key))
+				? (known?.label ?? typeConfig?.secondary_data_key ?? formatKeyLabel(key))
 				: (known?.label ?? formatKeyLabel(key));
 		const unit = isPrimary
 			? (typeConfig?.primary_data_notation ?? known?.unit ?? '')
@@ -206,6 +192,54 @@ export function buildDeviceExpandedDetailRows(
 	}
 
 	return rows;
+}
+
+function buildDashboardSensorCardEntry(
+	device: IDevice,
+	duplicateCounts: Map<string, number>,
+	deviceTypeLookup?: DeviceTypeLookup
+): DashboardSensorCardEntry {
+	const label = getDeviceLabel(device, duplicateCounts);
+	const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
+
+	if (device.has_primary_data === false) {
+		return {
+			id: `sensor:${device.dev_eui}`,
+			storageKey: getSensorStorageKey(device),
+			devEui: device.dev_eui,
+			locationId: Number(device.location_id),
+			sourceDevice: device,
+			sensor: {
+				label,
+				primaryValue: 0,
+				primaryUnit: typeConfig?.primary_data_notation ?? '°C',
+				status: 'offline',
+				detailRows: buildUnavailableDetailRows(label, typeConfig)
+			} satisfies CwSensorCardDevice
+		};
+	}
+
+	const rawPrimary = device.raw_data?.[typeConfig?.primary_data_key];
+	const rawSecondary = device.raw_data?.[typeConfig?.secondary_data_key] || null;
+
+	return {
+		id: `sensor:${device.dev_eui}`,
+		storageKey: getSensorStorageKey(device),
+		devEui: device.dev_eui,
+		locationId: Number(device.location_id),
+		sourceDevice: device,
+		sensor: {
+			label,
+			primaryValue: typeof rawPrimary === 'number' ? rawPrimary : Number(rawPrimary ?? 0) || 0,
+			primaryUnit: typeConfig?.primary_data_notation ?? '°C',
+			...(rawSecondary !== null && {
+				secondaryValue: typeof rawSecondary === 'number' ? rawSecondary : Number(rawSecondary) || 0,
+				secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
+			}),
+			status: getDeviceStatus(device),
+			lastUpdated: device.created_at
+		} satisfies CwSensorCardDevice
+	};
 }
 
 export function buildDashboardLocationSensorCards(
@@ -250,61 +284,13 @@ export function buildDashboardLocationSensorCards(
 				duplicateCounts.set(baseLabel, (duplicateCounts.get(baseLabel) ?? 0) + 1);
 			}
 
-			const deviceBindingsByLabel: DashboardLocationSensorCard['deviceBindingsByLabel'] = {};
-			const sensorDevices = sortedLocationDevices.map((device) => {
-				const label = getDeviceLabel(device, duplicateCounts);
-
-				deviceBindingsByLabel[label] = {
-					devEui: device.dev_eui,
-					locationId: Number(device.location_id),
-					sourceDevice: device
-				};
-
-				if (device.has_primary_data === false) {
-					const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
-					return {
-						label,
-						primaryValue: 0,
-						primaryUnit: typeConfig?.primary_data_notation ?? '°C',
-						status: 'offline',
-						detailRows: buildUnavailableDetailRows(label, typeConfig)
-					} satisfies CwSensorCardDevice;
-				}
-
-				const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
-				const primaryKey = typeConfig?.primary_data_key;
-				const secondaryKey = typeConfig?.secondary_data_key;
-
-				// Resolve primary value: try dynamic key from raw_data, fall back to temperature_c
-				const rawPrimary = primaryKey && device.raw_data?.[primaryKey] !== undefined
-					? device.raw_data[primaryKey]
-					: device.temperature_c;
-				const primaryValue = applyTransform(rawPrimary, typeConfig?.primary_multiplier, typeConfig?.primary_divider);
-
-				// Resolve secondary value: try dynamic key from raw_data, fall back to humidity
-				const rawSecondary = secondaryKey && device.raw_data?.[secondaryKey] !== undefined
-					? device.raw_data[secondaryKey]
-					: device.humidity;
-				const secondaryValue = applyTransform(rawSecondary, typeConfig?.secondary_multiplier, typeConfig?.secondary_divider);
-
-				return {
-					label,
-					primaryValue,
-					primaryUnit: typeConfig?.primary_data_notation ?? '°C',
-					secondaryValue,
-					secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
-					status: getDeviceStatus(device),
-					lastUpdated: device.created_at
-				} satisfies CwSensorCardDevice;
-			});
-
 			return {
 				id: `location:${locationId}`,
-				renderKey: toCardRenderKey(locationId, sortedLocationDevices),
 				locationId,
 				title: getLocationTitle(locationId, locationsById, sortedLocationDevices),
-				devices: sensorDevices,
-				deviceBindingsByLabel
+				sensors: sortedLocationDevices.map((device) =>
+					buildDashboardSensorCardEntry(device, duplicateCounts, deviceTypeLookup)
+				)
 			} satisfies DashboardLocationSensorCard;
 		})
 		.sort((left, right) =>

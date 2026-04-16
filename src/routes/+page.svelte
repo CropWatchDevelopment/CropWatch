@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { CwBadge, CwButton, CwCard, CwSpinner } from '@cropwatchdevelopment/cwui';
+	import { AppPage } from '$lib/components/layout';
+	import { CwButton, CwSpinner } from '@cropwatchdevelopment/cwui';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import DashboardDeviceTable from '$lib/components/dashboard/DashboardDeviceTable.svelte';
@@ -8,18 +9,14 @@
 	import type { CardLayout } from '$lib/components/dashboard/DashboardDeviceCards.svelte';
 	import {
 		countDashboardDevices,
-		getLocationGroupName,
 		type DashboardDeviceFilters
 	} from '$lib/components/dashboard/device-table';
 	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
-	import NOTIFICATIONS_ICON from '$lib/images/icons/notifications.svg';
-	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { page } from '$app/state';
 	import TABLE_ICON from '$lib/images/icons/table.svg';
 	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
-	import GATEWAYS_ICON from '$lib/images/icons/router.svg';
 	import GRID_VIEW_ICON from '$lib/images/icons/grid_view.svg';
 	import MASONRY_VIEW_ICON from '$lib/images/icons/masonary.svg';
 
@@ -152,16 +149,14 @@
 	<title>{m.dashboard_page_title()}</title>
 </svelte:head>
 
-<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-	<header class="flex-none">
-		<div class="my-0 my-1 flex w-full flex-row items-center gap-4">
-			<div
-				id="Dashboard__Overview__actions"
-				class="flex w-full items-center justify-center gap-3 md:w-auto md:justify-end"
-			>
-				<span class="hidden flex-1 md:flex"></span>
-
-				<div class="flex w-full items-center gap-2">
+<AppPage width="full" class="dashboard-page">
+	<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+		<header class="flex-none">
+			<div class="flex w-full flex-col gap-4 mb-4">
+				<div
+					id="Dashboard__Overview__actions"
+					class="flex w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
+				>
 					<CwButton
 						class="w-full md:w-auto"
 						variant={dashboardView === 'table' ? 'info' : 'secondary'}
@@ -178,9 +173,10 @@
 						<Icon src={SENSOR_CARDS_ICON} alt={m.dashboard_sensor_cards_view()} />
 						{m.dashboard_sensor_cards_view()}
 					</CwButton>
-
 					{#if dashboardView === 'sensor-cards'}
-						<div class="flex items-center gap-1 border-l border-slate-600 pl-2">
+						<div
+							class="hidden md:flex items-center justify-end gap-1 border-t border-slate-600/70 pt-2 sm:border-t-0 sm:border-l sm:pl-2 sm:pt-0"
+						>
 							<CwButton
 								class="px-2 py-1 text-xs"
 								variant={cardLayout === 'grid' ? 'info' : 'secondary'}
@@ -199,27 +195,29 @@
 					{/if}
 				</div>
 			</div>
-		</div>
-	</header>
+		</header>
 
-	{#if dashboardLoading}
-		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
-			<div class="flex flex-col items-center gap-6">
-				<div class="scale-[4]">
-					<CwSpinner />
+		{#if dashboardLoading}
+			<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
+				<div class="flex flex-col items-center gap-6">
+					<div class="scale-[4]">
+						<CwSpinner />
+					</div>
+					<span class="text-center text-3xl text-slate-400 sm:text-4xl">
+						{m.dashboard_loading_devices()}
+					</span>
 				</div>
-				<span class="text-4xl text-slate-400">{m.dashboard_loading_devices()}</span>
 			</div>
-		</div>
-	{:else if dashboardViewReady}
-		{#if dashboardView === 'sensor-cards'}
-			<DashboardDeviceCards filters={dashboardFilters} {cardLayout} />
+		{:else if dashboardViewReady}
+			{#if dashboardView === 'sensor-cards'}
+				<DashboardDeviceCards filters={dashboardFilters} {cardLayout} />
+			{:else}
+				<DashboardDeviceTable filters={dashboardFilters} />
+			{/if}
 		{:else}
-			<DashboardDeviceTable filters={dashboardFilters} />
+			<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
+				<p class="text-sm text-slate-400">{m.dashboard_loading_view()}</p>
+			</div>
 		{/if}
-	{:else}
-		<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
-			<p class="text-sm text-slate-400">{m.dashboard_loading_view()}</p>
-		</div>
-	{/if}
-</div>
+	</div>
+</AppPage>

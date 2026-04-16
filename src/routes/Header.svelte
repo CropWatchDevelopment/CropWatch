@@ -23,6 +23,19 @@
 		{ id: 'settings', label: m.nav_settings() },
 		{ id: 'logout', label: m.nav_logout(), separator: true, danger: true }
 	]);
+	const profileMenuName = $derived(app.profile?.full_name?.trim() || app.session?.email || '');
+	const profileMenuSubtitle = $derived.by(() => {
+		const employer = app.profile?.employer?.trim();
+		if (employer) {
+			return employer;
+		}
+
+		if (profileMenuName !== (app.session?.email || '')) {
+			return app.session?.email || '';
+		}
+
+		return '';
+	});
 </script>
 
 <CwHeader
@@ -31,28 +44,23 @@
 	onToggleNav={() => (mode = mode === 'hidden' ? 'open' : 'hidden')}
 >
 	{#snippet logo()}
-		{#if mode === 'mini'}
-			<!-- <div class="app-header__brand">
-				<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-header__brand-mark" />
-				<span class="app-header__brand-name">CropWatch</span>
-			</div> -->
-			<div class="app-header__brand">
-				<img
-					src={CROPWATCH_LOGO}
-					alt="CropWatch Logo"
-					style="width:1.5rem;height:1.5rem"
-				/>
-				<span class="app-header__brand-name">𝘾𝙧𝙤𝙥𝙒𝙖𝙩𝙘𝙝® UI</span>
-			</div>
-		{/if}
+		<div class="app-header__brand">
+			<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-header__brand-mark" />
+			<span class="app-header__brand-name">CropWatch</span>
+		</div>
 	{/snippet}
 
 	{#snippet actions()}
-		<LanguageSwitcher compact class="mr-3" />
-		<CwThemePicker />
+		<div class="app-header__actions-group">
+			<div class="app-header__utility-group">
+				<LanguageSwitcher compact />
+				<CwThemePicker />
+			</div>
+		</div>
 		<CwProfileMenu
-			name={app.session?.email ?? ''}
-			subtitle={app.profile?.employer ?? ''}
+			class="app-header__profile-menu"
+			name={profileMenuName}
+			subtitle={profileMenuSubtitle}
 			{menuItems}
 			onselect={(event) => {
 				if (event.id === 'logout') {
@@ -74,15 +82,86 @@
 </CwHeader>
 
 <style>
+	:global(.app-header) {
+		height: calc(5rem + var(--app-shell-padding-block-start));
+		padding-top: var(--app-shell-padding-block-start);
+		padding-inline: var(--app-shell-padding-inline-start) var(--app-shell-padding-inline-end);
+		gap: var(--cw-space-2);
+	}
+
+	:global(.app-header .cw-header__link) {
+		min-width: 0;
+	}
+
+	:global(.app-header .cw-header__logo) {
+		min-width: 0;
+	}
+
+	:global(.app-header .cw-header__actions) {
+		min-width: 0;
+	}
+
 	.app-header__brand {
 		display: flex;
 		align-items: center;
 		gap: var(--cw-space-2);
+		min-width: 0;
 		color: white;
 	}
 
+	.app-header__brand-mark {
+		width: 1.5rem;
+		height: 1.5rem;
+		flex: none;
+	}
+
 	.app-header__brand-name {
-		font-size: 1.125rem;
+		font-size: 1rem;
 		font-weight: var(--cw-font-semibold);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.app-header__actions-group,
+	.app-header__utility-group {
+		display: flex;
+		align-items: center;
+		gap: var(--cw-space-2);
+		min-width: 0;
+	}
+
+	@media (max-width: 1023px) {
+		.app-header__utility-group {
+			display: none;
+		}
+	}
+
+	@media (max-width: 639px) {
+		:global(.app-header .cw-header__logo) {
+			display: flex;
+		}
+
+		:global(.app-header .cw-profile-menu__trigger) {
+			gap: 0;
+			padding: var(--cw-space-2);
+		}
+
+		:global(.app-header .cw-profile-menu__info),
+		:global(.app-header .cw-profile-menu__chevron),
+		:global(.app-header .cw-profile-menu__icon) {
+			display: none;
+		}
+
+		:global(.app-header .cw-profile-menu__avatar) {
+			width: 2.25rem;
+			height: 2.25rem;
+		}
+	}
+
+	@media (min-width: 640px) {
+		.app-header__brand-name {
+			font-size: 1.0625rem;
+		}
 	}
 </style>

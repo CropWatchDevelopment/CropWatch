@@ -106,7 +106,13 @@ function renderDashboardDeviceCards(options: {
 
 function getButtonsByText(text: string): HTMLButtonElement[] {
 	return [...document.body.querySelectorAll('button')].filter((button): button is HTMLButtonElement =>
-		button.textContent?.includes(text)
+		Boolean(button.textContent?.includes(text) && !button.closest('[aria-hidden="true"]'))
+	);
+}
+
+function getExpandTogglesByText(text: string): HTMLElement[] {
+	return [...document.body.querySelectorAll('[role="button"][aria-expanded]')].filter(
+		(element): element is HTMLElement => element.textContent?.includes(text) ?? false
 	);
 }
 
@@ -142,13 +148,29 @@ describe('DashboardDeviceCards', () => {
 				temperature_c: 25.4,
 				location_id: 1
 			}));
+		vi.spyOn(ApiService.prototype, 'getDeviceLatestData').mockImplementation(async (devEui: string) => ({
+			dev_eui: devEui,
+			name: 'Canopy',
+			location_name: 'Grow Room',
+			group: 'air',
+			created_at: '2026-04-09T10:00:18.000Z',
+			co2: 901,
+			humidity: 60.1,
+			temperature_c: 25.4,
+			location_id: 1
+		}));
 		const { component } = renderDashboardDeviceCards();
 
 		expect(document.body.textContent).toContain('Canopy (dev-1)');
 		expect(document.body.textContent).toContain('Canopy (dev-2)');
 
+		const expandToggles = getExpandTogglesByText('Canopy (dev-1)');
+		expect(expandToggles).toHaveLength(1);
+		expandToggles[0]?.click();
+		flushSync();
+
 		const detailButtons = getButtonsByText('View Device Details');
-		expect(detailButtons).toHaveLength(2);
+		expect(detailButtons).toHaveLength(1);
 		detailButtons[0]?.click();
 		flushSync();
 
@@ -162,7 +184,6 @@ describe('DashboardDeviceCards', () => {
 		expect(getDeviceLatestPrimaryData).toHaveBeenCalledTimes(1);
 		expect(getDeviceLatestPrimaryData).toHaveBeenCalledWith('dev-1');
 		expect(document.body.textContent).toContain('25.40');
-		expect(document.body.textContent).toContain('0s ago');
 
 		await unmount(component);
 	});

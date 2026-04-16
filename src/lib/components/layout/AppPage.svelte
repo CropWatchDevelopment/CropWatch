@@ -13,7 +13,7 @@
 		md: '48rem',
 		lg: '64rem',
 		xl: '82rem',
-		full: '100%'
+		full: 'none'
 	};
 
 	let { children, width = 'xl', class: className = '' }: Props = $props();
@@ -29,13 +29,23 @@
 
 <style>
 	.app-page {
+		flex: 1 1 auto;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
 		width: 100%;
 		min-width: 0;
-		padding: var(--cw-space-3);
+		padding-inline: var(--app-shell-padding-inline-start) var(--app-shell-padding-inline-end);
+		padding-block: var(--cw-space-3) var(--cw-space-4);
 	}
 
 	.app-page__shell {
+		flex: 1 1 auto;
+		width: 100%;
+		max-width: var(--app-page-max-width);
+		margin-inline: auto;
 		min-width: 0;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
 		gap: var(--cw-space-4);
@@ -43,7 +53,7 @@
 
 	@media (min-width: 640px) {
 		.app-page {
-			padding: var(--cw-space-4);
+			padding-block: var(--cw-space-4);
 		}
 	}
 </style>

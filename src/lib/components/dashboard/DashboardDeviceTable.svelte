@@ -53,12 +53,6 @@
 		{ key: 'humidity', header: m.dashboard_column_humidity(), width: '10rem', sortable: true },
 		{ key: 'co2', header: m.dashboard_column_co2(), width: '10rem', sortable: true },
 		{
-			key: 'temperature_c',
-			header: m.dashboard_column_soil_temperature(),
-			width: '14rem',
-			sortable: true
-		},
-		{
 			key: 'soil_humidity',
 			header: m.dashboard_column_soil_humidity(),
 			width: '12rem',
@@ -133,7 +127,7 @@
 	}
 
 	function sortDevices(devices: IDevice[], column: string, direction: 'asc' | 'desc'): IDevice[] {
-		const numericColumns = new Set(['co2', 'humidity', 'temperature_c', 'temperature_c', 'soil_humidity', 'alert_count']);
+		const numericColumns = new Set(['co2', 'humidity', 'temperature_c', 'soil_humidity', 'alert_count']);
 		const dir = direction === 'asc' ? 1 : -1;
 
 		return [...devices].sort((a, b) => {
@@ -241,8 +235,6 @@
 						>
 							{#if col.key === 'temperature_c'}
 								{getMetricDisplayValue(row.temperature_c)}
-							{:else if col.key === 'temperature_c'}
-								{getMetricDisplayValue(row.temperature_c)}
 							{:else if col.key === 'humidity'}
 								{getMetricDisplayValue(row.humidity)}
 							{:else if col.key === 'soil_humidity'}
@@ -303,7 +295,7 @@
 		flex: 1 1 0%;
 		min-height: 0;
 		overflow: hidden;
-		margin: 0 0.5rem 0.5rem;
+		margin: 0 0 var(--cw-space-4);
 	}
 
 	/* .dashboard-device-table__cell {
