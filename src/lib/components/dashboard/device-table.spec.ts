@@ -19,7 +19,6 @@ const devices: IDevice[] = [
 		co2: 900,
 		humidity: 51,
 		temperature_c: 24,
-		soil_temperature_c: null,
 		soil_humidity: null,
 		location_id: 1
 	},
@@ -33,7 +32,6 @@ const devices: IDevice[] = [
 		co2: 870,
 		humidity: 54,
 		temperature_c: 23,
-		soil_temperature_c: null,
 		soil_humidity: null,
 		location_id: 2
 	},
@@ -47,7 +45,6 @@ const devices: IDevice[] = [
 		co2: 0,
 		humidity: 0,
 		temperature_c: 18,
-		soil_temperature_c: 18,
 		soil_humidity: 37,
 		location_id: 3
 	}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { AppPage } from '$lib/components/layout';
 	import {
 		CwButton,
 		CwCard,
@@ -10,13 +11,14 @@
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
-	import { getAppContext } from '$lib/appContext.svelte';
 	import ADD_ICON from '$lib/images/icons/add.svg';
+
 	type DeviceStatus = 'Online' | 'Offline';
 
 	interface LocationDeviceRow {
@@ -116,13 +118,12 @@
 	}
 </script>
 
-<CwButton variant="primary" class="mt-2" onclick={() => goto(`/`)}>&larr; {m.action_back_to_dashboard()}</CwButton>
+<AppPage>
+	<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/'))}>
+		&larr; {m.action_back_to_dashboard()}
+	</CwButton>
 
-<div class="location-page overflow-y-scroll">
-	<CwCard
-		title={m.locations_location_title({ name: locationLabel })}
-		elevated
-	>
+	<CwCard title={m.locations_location_title({ name: locationLabel })} elevated>
 		<CwDataTable
 			{columns}
 			{loadData}
@@ -133,7 +134,7 @@
 			rowActionsHeader={m.common_actions()}
 		>
 			{#snippet toolbarActions()}
-				<div class="location-page__actions">
+				<div class="flex flex-wrap gap-2">
 					{#if selectedLocationId}
 						<CwButton
 							variant="primary"
@@ -145,7 +146,8 @@
 						</CwButton>
 						<CwButton
 							variant="secondary"
-							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
+							onclick={() =>
+								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
 						>
 							<Icon src={SETTINGS_ICON} alt={m.nav_settings()} />
 						</CwButton>
@@ -168,7 +170,7 @@
 			{/snippet}
 
 			{#snippet rowActions(row: LocationDeviceRow)}
-				<div class="nowarp flex flex-row gap-2">
+				<div class="flex flex-row gap-2">
 					<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
 						<Icon src={EYE_ICON} alt={m.action_view()} />
 					</CwButton>
@@ -178,7 +180,6 @@
 							variant="secondary"
 							onclick={() => {
 								if (!selectedLocationId) return;
-
 								goto(
 									`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}/settings`
 								);
@@ -191,16 +192,4 @@
 			{/snippet}
 		</CwDataTable>
 	</CwCard>
-</div>
-
-<style>
-	.location-page {
-		padding: 1rem;
-	}
-
-	.location-page__actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-</style>
+</AppPage>

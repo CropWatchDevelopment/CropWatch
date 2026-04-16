@@ -60,11 +60,13 @@ describe('device-cards helpers', () => {
 		const cards = buildDashboardLocationSensorCards(devices, locations);
 
 		expect(cards.map((card) => card.title)).toEqual(['Atrium', 'Zone B']);
-		expect(cards[1]?.devices.map((device) => device.label)).toEqual([
+		expect(cards[1]?.sensors.map(({ sensor }) => sensor.label)).toEqual([
 			'Canopy (dev-1)',
 			'Canopy (dev-2)'
 		]);
-		expect(cards[1]?.deviceBindingsByLabel['Canopy (dev-1)']).toEqual({
+		expect(cards[1]?.sensors[0]).toMatchObject({
+			id: 'sensor:dev-1',
+			storageKey: 'dashboard-device-card:dev-1',
 			devEui: 'dev-1',
 			locationId: 2,
 			sourceDevice: devices[1]
@@ -109,17 +111,17 @@ describe('device-cards helpers', () => {
 			]
 		);
 
-		expect(cards[0]?.devices[0]).toMatchObject({
+		expect(cards[0]?.sensors[0]?.sensor).toMatchObject({
 			label: 'Old Sensor',
 			status: 'offline'
 		});
-		expect(cards[0]?.devices[1]).toMatchObject({
+		expect(cards[0]?.sensors[1]?.sensor).toMatchObject({
 			label: 'Recent Sensor',
 			status: 'online'
 		});
-		expect(cards[0]?.devices[1]?.expectedUpdateAfterMinutes).toBeUndefined();
+		expect(cards[0]?.sensors[1]?.sensor.expectedUpdateAfterMinutes).toBeUndefined();
 		expect(
-			getDashboardDeviceNextRefreshDelayMs(cards[0]!.deviceBindingsByLabel['Old Sensor'].sourceDevice)
+			getDashboardDeviceNextRefreshDelayMs(cards[0]!.sensors[0]!.sourceDevice)
 		).not.toBeNull();
 		expect(DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES).toBe(10.3);
 
@@ -151,7 +153,7 @@ describe('device-cards helpers', () => {
 			]
 		);
 
-		expect(cards[0]?.devices[0]).toMatchObject({
+		expect(cards[0]?.sensors[0]?.sensor).toMatchObject({
 			label: 'No Data Yet',
 			status: 'offline',
 			detailRows: [

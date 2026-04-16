@@ -30,7 +30,6 @@ describe('dashboard-device-data helpers', () => {
 			co2: 0,
 			humidity: 0,
 			temperature_c: 0,
-			soil_temperature_c: null,
 			soil_humidity: null,
 			location_id: 17,
 			cwloading: false,
@@ -82,7 +81,6 @@ describe('dashboard-device-data helpers', () => {
 			co2: 914,
 			humidity: 63.2,
 			temperature_c: 24.8,
-			soil_temperature_c: null,
 			soil_humidity: null,
 			location_id: 42,
 			cwloading: false,
@@ -118,7 +116,6 @@ describe('dashboard-device-data helpers', () => {
 			dev_eui: 'soil-1',
 			data_table: 'cw_soil_data',
 			temperature_c: 18.6,
-			soil_temperature_c: 18.6,
 			soil_humidity: 34.5,
 			location_id: 77
 		});
@@ -137,7 +134,6 @@ describe('dashboard-device-data helpers', () => {
 				co2: 914,
 				humidity: 63.2,
 				temperature_c: 24.8,
-				soil_temperature_c: null,
 				soil_humidity: null,
 				location_id: 42,
 				cwloading: true
@@ -153,7 +149,6 @@ describe('dashboard-device-data helpers', () => {
 				co2: 880,
 				humidity: 59.1,
 				temperature_c: 23.4,
-				soil_temperature_c: null,
 				soil_humidity: null,
 				location_id: 99
 			}
@@ -198,7 +193,6 @@ describe('dashboard-device-data helpers', () => {
 			co2: 920,
 			humidity: 61.7,
 			temperature_c: 25.1,
-			soil_temperature_c: null,
 			soil_humidity: null
 		});
 
@@ -247,7 +241,6 @@ describe('dashboard-device-data helpers', () => {
 				co2: 0,
 				humidity: 0,
 				temperature_c: 0,
-				soil_temperature_c: null,
 				soil_humidity: null,
 				location_id: 501,
 				cwloading: false
@@ -295,7 +288,7 @@ describe('dashboard-device-data helpers', () => {
 				co2: 0,
 				humidity: 0,
 				temperature_c: 18.1,
-				soil_temperature_c: 18.1,
+				temperature_c: 18.1,
 				soil_humidity: 31.4,
 				location_id: 612,
 				cwloading: false
@@ -318,7 +311,7 @@ describe('dashboard-device-data helpers', () => {
 			dev_eui: 'soil-2',
 			data_table: 'cw_soil_data',
 			temperature_c: 19.2,
-			soil_temperature_c: 19.2,
+			temperature_c: 19.2,
 			soil_humidity: 31.4
 		});
 	});

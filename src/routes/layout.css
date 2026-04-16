@@ -8,6 +8,16 @@
 
 :root {
 	--app-shell-gutter: var(--cw-space-3);
+	--app-safe-top: env(safe-area-inset-top, 0px);
+	--app-safe-right: env(safe-area-inset-right, 0px);
+	--app-safe-bottom: env(safe-area-inset-bottom, 0px);
+	--app-safe-left: env(safe-area-inset-left, 0px);
+	--app-shell-inline-padding: var(--app-shell-gutter);
+	--app-shell-block-padding: 0px;
+	--app-shell-padding-inline-start: max(var(--app-shell-inline-padding), var(--app-safe-left));
+	--app-shell-padding-inline-end: max(var(--app-shell-inline-padding), var(--app-safe-right));
+	--app-shell-padding-block-start: max(var(--app-shell-block-padding), var(--app-safe-top));
+	--app-shell-padding-block-end: max(var(--app-shell-block-padding), var(--app-safe-bottom));
 }
 
 html,
@@ -26,6 +36,7 @@ body {
 	display: flex;
 	width: 100%;
 	height: 100dvh;
+	min-height: 100dvh;
 	overflow: hidden;
 	background: var(--cw-bg-base);
 }
@@ -55,6 +66,7 @@ body {
 	flex-shrink: 0;
 	min-height: 0;
 	background: var(--cw-bg-base);
+	padding-bottom: var(--app-shell-padding-block-end);
 }
 
 /* This hides the reCAPTCHA badge, do not touch it! */
@@ -67,5 +79,25 @@ body {
 @media (min-width: 640px) {
 	:root {
 		--app-shell-gutter: var(--cw-space-4);
+	}
+}
+
+@media (max-width: 639px) {
+	.app-shell {
+		position: relative;
+	}
+
+	.app-shell__content {
+		min-width: 100%;
+	}
+
+	:global(.cw-sidenav) {
+		position: fixed;
+		inset-block: 0;
+		inset-inline-start: 0;
+		z-index: calc(var(--cw-z-overlay) + 1);
+		height: 100dvh;
+		max-width: calc(100vw - var(--app-shell-padding-inline-start) - var(--app-shell-padding-inline-end));
+		box-shadow: var(--cw-shadow-lg);
 	}
 }

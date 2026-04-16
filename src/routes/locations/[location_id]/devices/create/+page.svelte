@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -12,7 +12,6 @@
 		type CwSingleDateValue,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import BACK_ICON from '$lib/images/icons/back.svg';
 	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
@@ -66,7 +65,6 @@
 
 	let { data, form }: PageProps = $props();
 	let locationId = $derived(data.locationId ?? '');
-	let locationName = $derived(data.locationName ?? locationId);
 	let deviceTypeOptions = $derived(data.deviceTypeOptions ?? []);
 
 	let submitting = $state(false);
@@ -117,32 +115,27 @@
 		};
 	}
 
-	const permissionLevels = [
-		{ label: 'Admin', value: '1' },
-		{ label: 'Manager', value: '2' },
-		{ label: 'User', value: '3' },
-		{ label: 'Disabled', value: '4' }
-	];
-
 	let fields = $state<CreateDeviceFieldValues>(buildFieldValues());
 	let installedAt = $state<CwSingleDateValue | undefined>(toSingleDateValue(fields.installed_at));
-	let batteryChangedAt = $state<CwSingleDateValue | undefined>(
-		toSingleDateValue(fields.battery_changed_at)
-	);
-	let warrantyStartDate = $state<CwSingleDateValue | undefined>(
-		toSingleDateValue(fields.warranty_start_date)
-	);
 </script>
 
 <svelte:head>
 	<title>{m.devices_create_page_title()}</title>
 </svelte:head>
 
-<div class="create-device-page overflow-y-auto p-4">
+<AppPage width="lg">
+	<CwButton
+		variant="ghost"
+		size="sm"
+		onclick={() =>
+			goto(resolve('/locations/[location_id]', { location_id: locationId }))}
+	>
+		&larr; {m.action_back()}
+	</CwButton>
+
 	<CwCard title={m.devices_create_page_title()} elevated>
 		<form
 			method="POST"
-			class="device-form"
 			use:enhance={() => {
 				submitting = true;
 
@@ -168,14 +161,17 @@
 				};
 			}}
 		>
-			{#if actionForm?.error}
-				<p class="form-error">{actionForm.error}</p>
-			{/if}
+			<AppFormStack padded>
+				{#if actionForm?.error}
+					<AppNotice tone="danger">
+						<p>{actionForm.error}</p>
+					</AppNotice>
+				{/if}
 
-			<input type="hidden" name="location_id" value={fields.location_id} />
+				<input type="hidden" name="location_id" value={fields.location_id} />
 
-			<section class="form-section">
-				<div class="field-grid">
+				<!-- Basic info -->
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwInput
 						name="dev_eui"
 						type="devEui"
@@ -219,17 +215,13 @@
 					/>
 
 					<input type="hidden" name="upload_interval" />
-
-					<input type="hidden" name="location_id" value={fields.location_id} />
-				</div>
-			</section>
-
-			<section class="form-section">
-				<div>
-					<h2>{m.devices_deployment_section_title()}</h2>
 				</div>
 
-				<div class="field-grid">
+				<!-- Deployment -->
+				<hr class="border-[var(--cw-border-muted)]" />
+				<h2 class="m-0 text-sm font-bold">{m.devices_deployment_section_title()}</h2>
+
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwInput
 						name="lat"
 						type="numeric"
@@ -246,97 +238,33 @@
 						bind:value={fields.long}
 					/>
 
-					<div class="field">
-						<div>
-							<h2>{m.devices_installed_at_label()}</h2>
-
-							<CwDateTimeRangePicker
-								name="installed_at"
-								mode="single"
-								granularity="day"
-								maxDate={new Date()}
-								placeholder={m.devices_installed_at_placeholder()}
-								bind:value={installedAt}
-							/>
-						</div>
+					<div>
+						<p class="m-0 mb-1 text-sm font-bold">{m.devices_installed_at_label()}</p>
+						<CwDateTimeRangePicker
+							name="installed_at"
+							mode="single"
+							granularity="day"
+							maxDate={new Date()}
+							placeholder={m.devices_installed_at_placeholder()}
+							bind:value={installedAt}
+						/>
 					</div>
 				</div>
-			</section>
 
-			<div class="form-actions">
-				<CwButton
-					type="button"
-					variant="secondary"
-					onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
-				>
-					<Icon src={BACK_ICON} alt="" class="h-4 w-4" />
-					{m.action_cancel()}
-				</CwButton>
-
-				<CwButton type="submit" variant="primary" loading={submitting}
-					>{m.devices_create_submit()}</CwButton
-				>
-			</div>
+				<AppActionRow>
+					<CwButton
+						type="button"
+						variant="ghost"
+						onclick={() =>
+							goto(resolve('/locations/[location_id]', { location_id: locationId }))}
+					>
+						{m.action_cancel()}
+					</CwButton>
+					<CwButton type="submit" variant="primary" loading={submitting}>
+						{m.devices_create_submit()}
+					</CwButton>
+				</AppActionRow>
+			</AppFormStack>
 		</form>
 	</CwCard>
-</div>
-
-<style>
-	.create-device-page {
-		padding: 1rem;
-		width: 100%;
-		height: 100%;
-	}
-
-	.device-form {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
-	.form-error {
-		margin: 0;
-		padding: 0.9rem 1rem;
-		border-radius: 0.75rem;
-		background: #fef3f2;
-		color: #b42318;
-		font-size: 0.95rem;
-	}
-
-	.form-section {
-		display: grid;
-		gap: 1rem;
-		padding-top: 1.25rem;
-		border-top: 1px solid #e5e7eb;
-	}
-
-	.form-section h2 {
-		margin: 0 0 0.25rem;
-		font-size: 1rem;
-		font-weight: 700;
-	}
-
-	.field-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1rem;
-	}
-
-	.field {
-		display: flex;
-		flex-direction: column;
-		gap: 0.45rem;
-	}
-
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.75rem;
-	}
-
-	@media (max-width: 720px) {
-		.field-grid {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>
+</AppPage>

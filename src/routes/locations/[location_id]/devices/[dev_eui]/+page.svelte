@@ -1,10 +1,12 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { AppPage } from '$lib/components/layout';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { SvelteDate } from 'svelte/reactivity';
 	import { isRelayTable, resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
+	import { readApiErrorMessage } from '$lib/api/api-error';
 	import {
 		type RelayStateSnapshot,
 		type RelayVerificationResult,
@@ -188,23 +190,6 @@
 		}
 	}
 
-	function readApiError(payload: unknown, fallback: string): string {
-		if (payload && typeof payload === 'object') {
-			const payloadRecord = payload as Record<string, unknown>;
-			const message = payloadRecord.message;
-			if (typeof message === 'string' && message.length > 0) return message;
-			if (Array.isArray(message)) {
-				const text = message
-					.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0)
-					.join(', ');
-				if (text) return text;
-			}
-
-			return readApiError(payloadRecord.payload, fallback);
-		}
-
-		return fallback;
-	}
 
 	let routeStateByKey = $state<Record<string, RouteState>>({});
 	const initializedRouteKeys: Record<string, true> = {};
@@ -222,7 +207,9 @@
 	let authToken = $derived(data.authToken ?? null);
 	let isRelayDevice = $derived(isRelayTable(data.dataTable));
 	let permissionLevel = $derived(Number(data.permissionLevel) || 4);
-	let latestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
+	const serverLatestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
+	let clientLatestData = $state<TelemetryRow | null>(null);
+	let latestData = $derived(clientLatestData ?? serverLatestData);
 	let locationName = $derived(readLocationName(data.device));
 	let exportTimeZone = $derived(resolveExportTimeZone(data.device));
 	let serverHistoricalData = $derived(normalizeTelemetryRows(data.deviceData));
@@ -393,11 +380,15 @@
 
 			if (isTelemetryRow(result)) {
 				if (options.apply !== false) {
-					latestData = result;
+					clientLatestData = result;
 					const resultKey = String(result.id ?? result.created_at ?? '');
-					historicalData = [
+					const state = getRouteState(routeKey);
+					const currentHistory = state.requestedHistoricalData ?? serverHistoricalData;
+					state.requestedHistoricalData = [
 						result,
-						...historicalData.filter((row) => String(row.id ?? row.created_at ?? '') !== resultKey)
+						...currentHistory.filter(
+							(row) => String(row.id ?? row.created_at ?? '') !== resultKey
+						)
 					];
 					syncRelayStateBaseData();
 				}
@@ -498,7 +489,7 @@
 			const fallback = mapRelayApiErrorMessage(error);
 			toast.add({
 				tone: 'danger',
-				message: error instanceof ApiServiceError ? readApiError(error.payload, fallback) : fallback
+				message: error instanceof ApiServiceError ? readApiErrorMessage(error.payload, fallback) : fallback
 			});
 		}
 	}
@@ -508,28 +499,17 @@
 	<title>{m.devices_dashboard_page_title({ devEui: devEui.toUpperCase() })}</title>
 </svelte:head>
 
-<div class="my-2 flex flex-row gap-2">
+<AppPage>
 	<CwButton
-		variant="secondary"
-		size="md"
+		variant="ghost"
+		size="sm"
 		disabled={!locationId}
-		fullWidth={true}
 		onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 	>
-		← {m.devices_back_to_location()}
+		&larr; {m.devices_back_to_location()}
 	</CwButton>
-	<CwButton
-		variant="secondary"
-		size="md"
-		disabled={!locationId}
-		fullWidth={true}
-		onclick={() => goto(resolve('/'))}
-	>
-		← {m.action_back_to_dashboard()}
-	</CwButton>
-</div>
 
-<div class="device-page">
+	<div class="device-page">
 	<CwCard
 		title={m.devices_dashboard_card_title({ devEui: data?.device?.name || devEui.toUpperCase() })}
 		subtitle={m.devices_dashboard_card_subtitle({ locationName })}
@@ -545,7 +525,7 @@
 						alarmCallback={refreshDisplayedData}
 					/>
 				{:else}
-					<span>Data Not available</span>
+					<span>{m.common_not_available()}</span>
 				{/if}
 			</p>
 		{/snippet}
@@ -654,7 +634,8 @@
 			/>
 		</div>
 	{/if}
-</div>
+	</div>
+</AppPage>
 
 <style>
 	.device-page {
@@ -662,7 +643,6 @@
 		flex-direction: column;
 		gap: 1rem;
 		min-width: 0;
-		padding: 0 0.25rem 1rem 0;
 	}
 
 	.device-page__status {

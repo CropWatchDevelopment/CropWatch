@@ -9,7 +9,6 @@ export interface IDevice {
 	co2: number;
 	humidity: number;
 	temperature_c: number;
-	soil_temperature_c?: number | null;
 	soil_humidity?: number | null;
 	cwloading?: boolean;
 	location_id: number;

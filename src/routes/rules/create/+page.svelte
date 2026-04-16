@@ -12,7 +12,6 @@
 	import {
 		getRuleNotifierTypeOptions,
 		getRuleOperatorOptions,
-		getRuleSendMethodOptions,
 		getRuleSubjectOptions
 	} from '$lib/i18n/options';
 	import { goto } from '$app/navigation';
@@ -30,7 +29,6 @@
 	// ── Constants ────────────────────────────────────────────────────────────
 	const OPERATORS = getRuleOperatorOptions();
 	const NOTIFIER_TYPES = getRuleNotifierTypeOptions();
-	const SEND_METHODS = getRuleSendMethodOptions();
 	const SUBJECT_OPTIONS = getRuleSubjectOptions();
 
 	// ── Form state ──────────────────────────────────────────────────────────
@@ -164,9 +162,9 @@
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
 <AppPage width="lg" class="rules-page">
-	<CwButton variant="secondary" onclick={() => goto(resolve('/rules'))}
-		>&larr; {m.action_back()}</CwButton
-	>
+	<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/rules'))}>
+		&larr; {m.action_back()}
+	</CwButton>
 
 	<div class="rules-page__shell">
 		<!-- ── Page header ──────────────────────────────────────────────────── -->

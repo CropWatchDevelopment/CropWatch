@@ -720,8 +720,8 @@
 
 <AppPage width="xl" class="report-page">
 	<div class="report-page__shell">
-		<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/reports'))}>
-			{m.action_back()}
+		<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/reports'))}>
+			&larr; {m.action_back()}
 		</CwButton>
 
 		<form

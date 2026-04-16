@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@cropwatchdevelopment/cwui':
-        specifier: 0.1.77
-        version: 0.1.77(svelte@5.53.0)
+        specifier: 0.1.80
+        version: 0.1.80(svelte@5.53.0)
       '@supabase/supabase-js':
         specifier: ^2.98.0
         version: 2.98.0
@@ -114,8 +114,8 @@ importers:
 
 packages:
 
-  '@cropwatchdevelopment/cwui@0.1.77':
-    resolution: {integrity: sha512-/ME5yHnsfC3sPHdy8e2iIC2oscIfpUbbUImIAvPHnKgo3BAyLWAtFI6jVk228vUrdXIqMX6b5beRofHBHKYV4g==, tarball: https://npm.pkg.github.com/download/@cropwatchdevelopment/cwui/0.1.77/312b39567e38d6375fff6f1b37a0e0633cc298e3}
+  '@cropwatchdevelopment/cwui@0.1.80':
+    resolution: {integrity: sha512-GxAM4CHhInGz7mlOthne1q9y9Zepdjb6xLNiB0wetVdDKxrK8KzYmYKhGYhbY7p2pNheTshbmOpwGXyu+S17Sg==, tarball: https://npm.pkg.github.com/download/@cropwatchdevelopment/cwui/0.1.80/7e3089a477c33f11969eb0c30e54e3cbe81a4ef9}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2074,7 +2074,7 @@ packages:
 
 snapshots:
 
-  '@cropwatchdevelopment/cwui@0.1.77(svelte@5.53.0)':
+  '@cropwatchdevelopment/cwui@0.1.80(svelte@5.53.0)':
     dependencies:
       svelte: 5.53.0
 

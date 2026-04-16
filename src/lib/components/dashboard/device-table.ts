@@ -20,29 +20,17 @@ const NUMERIC_SORT_COLUMNS = new Set([
 	'co2',
 	'humidity',
 	'temperature_c',
-	'soil_temperature_c',
 	'soil_humidity'
 ]);
 
-function toTrimmedString(value: unknown): string {
-	return typeof value === 'string' ? value.trim() : '';
-}
-
 function readGroupValue(value: unknown): string {
-	if (typeof value === 'string') {
-		return value.trim();
-	}
-
-	if (!value || typeof value !== 'object') {
-		return '';
-	}
+	if (typeof value === 'string') return value.trim();
+	if (!value || typeof value !== 'object') return '';
 
 	const record = value as Record<string, unknown>;
 	for (const key of LOCATION_GROUP_VALUE_KEYS) {
-		const candidate = toTrimmedString(record[key]);
-		if (candidate) {
-			return candidate;
-		}
+		const candidate = typeof record[key] === 'string' ? (record[key] as string).trim() : '';
+		if (candidate) return candidate;
 	}
 
 	return '';

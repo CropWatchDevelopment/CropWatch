@@ -35,16 +35,25 @@ function getDeviceTimestampMs(device: Pick<IDevice, 'created_at'>): number {
 }
 
 export function isDashboardDeviceOffline(
-	device: Pick<IDevice, 'created_at' | 'has_primary_data'>
+	device: Pick<IDevice, 'created_at' | 'has_primary_data'> & { raw_data?: Record<string, unknown> }
 ): boolean {
 	if (device.has_primary_data === false) {
 		return true;
 	}
 
 	const lastSeenMs = getDeviceTimestampMs(device);
-	return (
-		!Number.isFinite(lastSeenMs) || lastSeenMs < Date.now() - DASHBOARD_DEVICE_OFFLINE_THRESHOLD_MS
-	);
+	if (!Number.isFinite(lastSeenMs)) return true;
+
+	const intervalMinutes =
+		typeof device.raw_data?.default_upload_interval === 'number'
+			? device.raw_data.default_upload_interval
+			: null;
+	const thresholdMs =
+		intervalMinutes != null && intervalMinutes > 0
+			? intervalMinutes * 60_000
+			: DASHBOARD_DEVICE_OFFLINE_THRESHOLD_MS;
+
+	return lastSeenMs < Date.now() - thresholdMs;
 }
 
 export function getDashboardDeviceNextRefreshDelayMs(

@@ -80,8 +80,7 @@ function buildDerivedLocations(latestPrimaryData: DevicePrimaryDataDto[]): Locat
 
 	for (const device of latestPrimaryData) {
 		const locationId = Number(device.location_id);
-		const locationName =
-			typeof device.location_name === 'string' ? device.location_name.trim() : '';
+		const locationName = device.location_name?.trim() ?? '';
 
 		if (!Number.isFinite(locationId) || locationId <= 0 || !locationName) {
 			continue;
@@ -248,7 +247,7 @@ const EMPTY_DASHBOARD = {
 	dashboardDebug: null as Record<string, unknown> | null
 };
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	const authToken = locals.jwtString ?? null;
 
 	if (!authToken) {
@@ -259,12 +258,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const apiServiceInstance = new ApiService({
+		fetchFn: fetch,
 		baseUrl: resolveDashboardApiBaseUrl(url),
 		authToken
 	});
 
 	return {
 		authToken,
-		dashboard: loadDashboardPayload(apiServiceInstance)
+		// Keep all dashboard fetches within the lifetime of this load function.
+		dashboard: await loadDashboardPayload(apiServiceInstance)
 	};
 };

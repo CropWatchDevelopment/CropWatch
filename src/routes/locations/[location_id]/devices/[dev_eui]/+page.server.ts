@@ -1,4 +1,5 @@
 import { ApiServiceError, type PaginationQuery, ApiService } from '$lib/api/api.service';
+import { readApiErrorMessage } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -85,7 +86,7 @@ export const actions: Actions = {
 			const responsePayload = error instanceof ApiServiceError ? error.payload : error;
 			return fail(error instanceof ApiServiceError ? error.status : 502, {
 				action: 'saveDataNote',
-				message: readApiError(responsePayload, m.devices_save_note_failed())
+				message: readApiErrorMessage(responsePayload, m.devices_save_note_failed())
 			});
 		}
 
@@ -96,19 +97,3 @@ export const actions: Actions = {
 	}
 };
 
-function readApiError(payload: unknown, fallback: string): string {
-	if (payload && typeof payload === 'object') {
-		const payloadRecord = payload as Record<string, unknown>;
-		const message = payloadRecord.message;
-		if (typeof message === 'string' && message.length > 0) return message;
-		if (Array.isArray(message)) {
-			const text = message
-				.filter((m): m is string => typeof m === 'string' && m.length > 0)
-				.join(', ');
-			if (text) return text;
-		}
-
-		return readApiError(payloadRecord.payload, fallback);
-	}
-	return fallback;
-}
