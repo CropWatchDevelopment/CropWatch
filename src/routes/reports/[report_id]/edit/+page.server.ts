@@ -182,7 +182,7 @@ function sanitizeScheduleEntries(
 
 			const schedule: CreateReportUserScheduleRequest = {
 				dev_eui: devEui,
-				end_of_month: readOptionalBoolean(entry.end_of_month, false) ?? false,
+				end_of_day: readOptionalBoolean(entry.end_of_day, false) ?? false,
 				end_of_week: readOptionalBoolean(entry.end_of_week, false) ?? false,
 				is_active: readOptionalBoolean(entry.is_active, true) ?? true
 			};

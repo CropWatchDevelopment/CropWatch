@@ -293,7 +293,7 @@
 		return {
 			created_at: '',
 			dev_eui: '',
-			end_of_month: false,
+			end_of_day: false,
 			end_of_week: true,
 			id: '',
 			is_active: true,
@@ -359,7 +359,7 @@
 				return {
 					created_at: schedule.created_at ?? '',
 					dev_eui: scheduleDevEui === normalizedReportDevEui ? '' : scheduleDevEui,
-					end_of_month: schedule.end_of_month ?? false,
+					end_of_day: schedule.end_of_day ?? false,
 					end_of_week: schedule.end_of_week ?? false,
 					id: schedule.id != null ? String(schedule.id) : '',
 					is_active: schedule.is_active ?? true,
@@ -456,7 +456,7 @@
 			(schedule) => {
 				const schedulePayload: CreateReportUserScheduleRequest = {
 					dev_eui: normalizeDevEui(schedule.dev_eui) || devEui,
-					end_of_month: schedule.end_of_month,
+					end_of_day: schedule.end_of_day,
 					end_of_week: schedule.end_of_week,
 					is_active: schedule.is_active
 				};
@@ -564,7 +564,7 @@
 				issues.push(m.reports_create_validation_schedule_dev_eui({ index: rowIndex }));
 			}
 
-			if (schedule.is_active && !schedule.end_of_week && !schedule.end_of_month) {
+			if (schedule.is_active && !schedule.end_of_week && !schedule.end_of_day) {
 				issues.push(m.reports_create_validation_schedule_cadence({ index: rowIndex }));
 			}
 		});
@@ -720,7 +720,7 @@
 
 <AppPage width="xl" class="report-page">
 	<div class="report-page__shell">
-		<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/reports'))}>
+		<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/reports'))}>
 			&larr; {m.action_back()}
 		</CwButton>
 

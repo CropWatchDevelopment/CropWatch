@@ -39,7 +39,7 @@ Every page that can be reached by navigating "into" something (create, edit, set
 
 **Always use:**
 ```svelte
-<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/target-route'))}>
+<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/target-route'))}>
   &larr; {m.action_back()}
 </CwButton>
 ```
@@ -401,6 +401,28 @@ import { AppActionRow, AppFormStack, AppNotice, AppPage, AppSection } from '$lib
 - `+layout.svelte` / `+layout.server.ts` — shared shell, loaded once per layout boundary
 - Feature-local sub-components live alongside the page file (e.g., `LocationUpdate.svelte` next to the settings `+page.svelte`)
 - Shared reusable components go in `src/lib/components/`
+
+---
+
+## Scrollable list pages
+
+Pages such as `/reports` and `/rules` that render a `CwDataTable` **must remain vertically scrollable on all devices**. The app shell's `.app-shell__main` is the single scroll container (`overflow: auto`). `AppPage` uses `flex: 1 0 auto` (grow but never shrink) so that tall pages force `.app-shell__main` to scroll rather than compressing the content to fit the viewport.
+
+**Rules:**
+- Never change `AppPage`'s flex to `1 1 auto` (shrinkable) — that re-breaks scrolling on every page.
+- Never put `flex-1` or `min-h-0` on a `CwCard` that wraps a data table — it pins the card to viewport height.
+
+```svelte
+<!-- ✅ Card grows with content; page scrolls via app-shell__main -->
+<CwCard title={...}>
+  <CwDataTable ... />
+</CwCard>
+
+<!-- ❌ Card is viewport-height locked; page cannot scroll -->
+<CwCard title={...} class="min-h-0 flex-1">
+  <CwDataTable ... />
+</CwCard>
+```
 
 ---
 

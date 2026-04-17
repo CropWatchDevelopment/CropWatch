@@ -120,7 +120,7 @@
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
-	<CwCard title={m.rules_configured_rules()} class="min-h-0 flex-1">
+	<CwCard title={m.rules_configured_rules()}>
 		{#key tableKey}
 			<CwDataTable
 				{columns}

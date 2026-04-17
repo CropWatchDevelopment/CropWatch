@@ -41,6 +41,7 @@
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.5.0",
 		"prettier-plugin-tailwindcss": "^0.7.2",
+		"supabase": "^2.92.0",
 		"svelte": "^5.53.0",
 		"svelte-check": "^4.4.1",
 		"tailwindcss": "^4.2.0",
@@ -53,7 +54,7 @@
 	},
 	"packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd",
 	"dependencies": {
-		"@cropwatchdevelopment/cwui": "0.1.80",
+		"@cropwatchdevelopment/cwui": "0.1.81",
 		"@supabase/supabase-js": "^2.98.0"
 	}
 }

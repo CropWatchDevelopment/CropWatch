@@ -381,6 +381,8 @@
 	"reports_create_schedule_active_description": "この配信スケジュールを有効にします。",
 	"reports_create_schedule_week_label": "毎週",
 	"reports_create_schedule_week_description": "このレポートを毎週送信します。",
+	"reports_create_schedule_day_label": "毎日",
+	"reports_create_schedule_day_description": "このレポートを毎日送信します。",
 	"reports_create_schedule_month_label": "月末",
 	"reports_create_schedule_month_description": "このレポートを月末に送信します。",
 	"reports_create_schedule_child_device_label": "デバイス ID",

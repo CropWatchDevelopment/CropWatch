@@ -157,6 +157,8 @@
 
 <div class="device-settings-page">
 	<CwButton
+		variant="secondary"
+		size="sm"
 		onclick={() =>
 			goto(
 				resolve('/locations/[location_id]/devices/[dev_eui]', {

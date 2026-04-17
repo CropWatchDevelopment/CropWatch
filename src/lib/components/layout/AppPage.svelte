@@ -29,8 +29,7 @@
 
 <style>
 	.app-page {
-		flex: 1 1 auto;
-		min-height: 0;
+		flex: 1 0 auto;
 		display: flex;
 		flex-direction: column;
 		width: 100%;
@@ -40,12 +39,11 @@
 	}
 
 	.app-page__shell {
-		flex: 1 1 auto;
+		flex: 1 0 auto;
 		width: 100%;
 		max-width: var(--app-page-max-width);
 		margin-inline: auto;
 		min-width: 0;
-		min-height: 0;
 		display: flex;
 		flex-direction: column;
 		gap: var(--cw-space-4);

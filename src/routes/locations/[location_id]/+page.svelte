@@ -119,7 +119,7 @@
 </script>
 
 <AppPage>
-	<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/'))}>
+	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 

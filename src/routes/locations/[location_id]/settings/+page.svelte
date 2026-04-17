@@ -17,7 +17,7 @@
 
 <AppPage>
 	<CwButton
-		variant="ghost"
+		variant="secondary"
 		size="sm"
 		onclick={() => goto(`/locations/${data.locationId}`)}
 	>

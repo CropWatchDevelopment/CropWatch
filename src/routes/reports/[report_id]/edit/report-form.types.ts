@@ -7,7 +7,7 @@ export type SelectOption = {
 export type ScheduleDraft = {
 	created_at: string;
 	dev_eui: string;
-	end_of_month: boolean;
+	end_of_day: boolean;
 	end_of_week: boolean;
 	id: string;
 	is_active: boolean;

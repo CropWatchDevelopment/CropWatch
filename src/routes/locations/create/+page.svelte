@@ -30,7 +30,7 @@
 </script>
 
 <AppPage width="md">
-	<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/locations'))}>
+	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/locations'))}>
 		&larr; {m.action_back()}
 	</CwButton>
 
