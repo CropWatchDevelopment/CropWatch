@@ -201,7 +201,7 @@
 		<CwDateTimeRangePicker
 			mode="range"
 			granularity="day"
-			includeTime
+			includeTime={false}
 			bind:value={csvRange}
 			placeholder={m.devices_export_select_range()}
 			maxDate={new Date()}

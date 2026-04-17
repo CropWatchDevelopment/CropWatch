@@ -501,7 +501,7 @@
 
 <AppPage>
 	<CwButton
-		variant="ghost"
+		variant="secondary"
 		size="sm"
 		disabled={!locationId}
 		onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
@@ -597,18 +597,12 @@
 				</div>
 			</div>
 
-			{#if fetching || fetchError}
+			{#if fetching}
 				<div class="device-page__status">
-					{#if fetching}
-						<div class="device-page__status-row">
-							<CwSpinner />
-							<span>{m.devices_loading_telemetry()}</span>
-						</div>
-					{/if}
-
-					{#if fetchError}
-						<p class="device-page__status-error">{fetchError}</p>
-					{/if}
+					<div class="device-page__status-row">
+						<CwSpinner />
+						<span>{m.devices_loading_telemetry()}</span>
+					</div>
 				</div>
 			{/if}
 		</div></CwCard
@@ -659,11 +653,6 @@
 		align-items: center;
 		gap: 0.75rem;
 		color: var(--cw-text-muted);
-	}
-
-	.device-page__status-error {
-		margin: 0;
-		color: var(--cw-danger, #b91c1c);
 	}
 
 	.device-page__display {

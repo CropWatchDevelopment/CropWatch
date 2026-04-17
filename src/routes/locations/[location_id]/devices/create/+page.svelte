@@ -125,7 +125,7 @@
 
 <AppPage width="lg">
 	<CwButton
-		variant="ghost"
+		variant="secondary"
 		size="sm"
 		onclick={() =>
 			goto(resolve('/locations/[location_id]', { location_id: locationId }))}

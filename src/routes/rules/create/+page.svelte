@@ -162,7 +162,7 @@
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
 <AppPage width="lg" class="rules-page">
-	<CwButton variant="ghost" size="sm" onclick={() => goto(resolve('/rules'))}>
+	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/rules'))}>
 		&larr; {m.action_back()}
 	</CwButton>
 

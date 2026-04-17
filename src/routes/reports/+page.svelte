@@ -102,7 +102,7 @@
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
-	<CwCard title={m.reports_weekly_reports()} class="min-h-0 flex-1">
+	<CwCard title={m.reports_weekly_reports()}>
 		{#key tableKey}
 			<CwDataTable
 				{columns}

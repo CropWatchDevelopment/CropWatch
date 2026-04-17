@@ -37,10 +37,10 @@
 						onchange={(checked) => (schedule.end_of_week = checked)}
 					/>
 					<CwSwitch
-						checked={schedule.end_of_month}
-						label={m.reports_create_schedule_month_label()}
-						description={m.reports_create_schedule_month_description()}
-						onchange={(checked) => (schedule.end_of_month = checked)}
+						checked={schedule.end_of_day}
+						label={m.reports_create_schedule_day_label()}
+						description={m.reports_create_schedule_day_description()}
+						onchange={(checked) => (schedule.end_of_day = checked)}
 					/>
 				</div>
 			</div>

@@ -381,6 +381,8 @@
 	"reports_create_schedule_active_description": "Turn this delivery schedule on.",
 	"reports_create_schedule_week_label": "Weekly",
 	"reports_create_schedule_week_description": "Send this report each week.",
+	"reports_create_schedule_day_label": "Daily",
+	"reports_create_schedule_day_description": "Send this report each day.",
 	"reports_create_schedule_month_label": "Month-end",
 	"reports_create_schedule_month_description": "Send this report at the end of the month.",
 	"reports_create_schedule_child_device_label": "Device ID",

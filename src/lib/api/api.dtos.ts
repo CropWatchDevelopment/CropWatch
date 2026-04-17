@@ -192,6 +192,7 @@ export interface ReportUserScheduleDto {
 	is_active?: boolean;
 	end_of_week?: boolean;
 	end_of_month?: boolean;
+	end_of_day?: boolean;
 	user_id?: string;
 	report_id?: string | null;
 	created_at?: string;
@@ -202,6 +203,7 @@ export interface CreateReportUserScheduleRequest {
 	created_at?: string;
 	dev_eui: string;
 	end_of_month?: boolean;
+	end_of_day?: boolean;
 	end_of_week?: boolean;
 	id?: number;
 	is_active?: boolean;
