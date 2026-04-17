@@ -22,7 +22,7 @@ interface DownloadCsvOptions {
 
 const CREATED_AT_KEY = 'created_at';
 const TIMESTAMP_COLUMN_NAMES = new Set(['created_at', 'timestamp', 'traffic_hour']);
-const MINUTES_PER_HOUR = 60;
+const CSV_ALLOWED_COLUMNS = [CREATED_AT_KEY, 'co2', 'humidity', 'temperature_c', 'moisture', 'ec'];
 const MILLISECONDS_PER_MINUTE = 60_000;
 const TIMEZONE_SUFFIX_PATTERN = /(?:[zZ]|[+-]\d{2}(?::?\d{2})?)$/;
 
@@ -155,11 +155,7 @@ function getColumns(rows: CsvRow[]): string[] {
 		}
 	}
 
-	const preferredOrder = ['created_at', 'traffic_hour', 'timestamp', 'id', 'dev_eui'];
-	const ordered = preferredOrder.filter((key) => keys.delete(key) || false);
-	const remaining = Array.from(keys).sort((a, b) => a.localeCompare(b));
-
-	return [...ordered, ...remaining];
+	return CSV_ALLOWED_COLUMNS.filter((col) => keys.has(col));
 }
 
 function sanitizeFileName(value: string): string {
@@ -290,13 +286,6 @@ function getTimeZoneOffsetMilliseconds(date: Date, timeZone: string): number {
 	return asUtc - date.getTime();
 }
 
-function formatOffset(offsetMinutes: number): string {
-	const sign = offsetMinutes >= 0 ? '+' : '-';
-	const absoluteMinutes = Math.abs(offsetMinutes);
-	const hours = Math.floor(absoluteMinutes / MINUTES_PER_HOUR);
-	const minutes = absoluteMinutes % MINUTES_PER_HOUR;
-	return `${sign}${padDatePart(hours)}:${padDatePart(minutes)}`;
-}
 
 function formatDateForTimeZone(date: Date, timeZone: string): string {
 	const offsetMinutes = Math.round(
@@ -304,10 +293,9 @@ function formatDateForTimeZone(date: Date, timeZone: string): string {
 	);
 	const shiftedDate = new Date(date.getTime() + offsetMinutes * MILLISECONDS_PER_MINUTE);
 
-	return [
-		`${shiftedDate.getUTCFullYear()}-${padDatePart(shiftedDate.getUTCMonth() + 1)}-${padDatePart(shiftedDate.getUTCDate())}`,
-		`${padDatePart(shiftedDate.getUTCHours())}:${padDatePart(shiftedDate.getUTCMinutes())}:${padDatePart(shiftedDate.getUTCSeconds())}.${padDatePart(shiftedDate.getUTCMilliseconds(), 3)}${formatOffset(offsetMinutes)}`
-	].join('T');
+	const datePart = `${shiftedDate.getUTCFullYear()}-${padDatePart(shiftedDate.getUTCMonth() + 1)}-${padDatePart(shiftedDate.getUTCDate())}`;
+	const timePart = `${padDatePart(shiftedDate.getUTCHours())}:${padDatePart(shiftedDate.getUTCMinutes())}:${padDatePart(shiftedDate.getUTCSeconds())}`;
+	return `${datePart} ${timePart}`;
 }
 
 function formatFileDateTime(date: Date, timeZone: string): string {

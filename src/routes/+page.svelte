@@ -145,6 +145,21 @@
 	});
 </script>
 
+<style>
+	/*
+	 * The dashboard uses viewport-fill layout (internal scroll in table/cards).
+	 * AppPage now uses flex: 1 0 auto globally to allow page-scroll on other routes,
+	 * but the dashboard needs the old bounded/shrinkable behaviour so its child
+	 * scroll containers (CwDataTable fillParent, .dashboard-device-cards__scroll)
+	 * receive a definite height from the flex chain.
+	 */
+	:global(.app-page.dashboard-page),
+	:global(.app-page.dashboard-page .app-page__shell) {
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+</style>
+
 <svelte:head>
 	<title>{m.dashboard_page_title()}</title>
 </svelte:head>

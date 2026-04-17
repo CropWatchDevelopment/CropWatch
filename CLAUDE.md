@@ -426,6 +426,38 @@ Pages such as `/reports` and `/rules` that render a `CwDataTable` **must remain 
 
 ---
 
+## Viewport-fill pages (dashboard exception)
+
+The `/` dashboard is a **viewport-fill** page: it fills the full viewport height and handles its own scrolling internally (the table uses `CwDataTable fillParent`; the card view has its own `overflow-y: auto` scroll container). It does **not** scroll via `.app-shell__main`.
+
+Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolling), the dashboard must override that behaviour with a scoped `:global` style so that `AppPage` and its shell are bounded to viewport height and pass a definite height down the flex chain:
+
+```svelte
+<!-- src/routes/+page.svelte -->
+<style>
+  :global(.app-page.dashboard-page),
+  :global(.app-page.dashboard-page .app-page__shell) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+</style>
+
+<AppPage width="full" class="dashboard-page">
+  <div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <!-- header (flex-none) + DashboardDeviceTable or DashboardDeviceCards -->
+  </div>
+</AppPage>
+```
+
+**Why this matters — past regression:** Changing `AppPage`'s CSS from `flex: 1 1 auto; min-height: 0` to `flex: 1 0 auto` (no `min-height`) was the correct fix for list-page scrolling, but it silently broke the dashboard because neither the table's internal scroll nor the card view's scroll container received a definite height. The scoped override keeps both modes working without conflict.
+
+**Rules:**
+- Never remove the `flex: 1 1 auto; min-height: 0` override from `.app-page.dashboard-page` — doing so will break scrolling in both the table and card views on the dashboard.
+- Never change the global `AppPage` flex back to `flex: 1 1 auto` to "fix" the dashboard — that re-breaks scrolling on every other page.
+- The dashboard's inner wrapper div **must** keep `flex-1 min-h-0 overflow-hidden` so the bounded height is propagated to the child scroll containers.
+
+---
+
 ## Checklist for new pages
 
 ### UI
