@@ -28,6 +28,8 @@
 		'M3 4.5h6M3 8h6M3 11.5h6M10.5 4.5l1 1 2-2M10.5 8l1 1 2-2M10.5 11.5l1 1 2-2';
 	const REPORTS_ICON_PATH =
 		'M4 2.5h5l3 3V13a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1zM9 2.5V5a1 1 0 001 1h2M5.5 8.5h5M5.5 10.5h5';
+	const GATEWAYS_ICON_PATH =
+		'M3 4a1 1 0 011-1h1v2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H4a1 1 0 01-1-1zm5-10a1 1 0 011-1h1v2H9a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H9a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H9a1 1 0 01-1-1z';
 	// ── Read active filters from URL search params ──────────────
 	let selectedGroup = $derived(page.url.searchParams.get('group') ?? '');
 	let selectedLocation = $derived(page.url.searchParams.get('location') ?? '');
@@ -60,14 +62,14 @@
 			href: '/reports',
 			icon: { path: REPORTS_ICON_PATH },
 			group: 'Info and Management'
+		},
+		{
+			id: 'gateways',
+			label: 'Gateways',
+			href: '/gateways',
+			icon: { path: GATEWAYS_ICON_PATH },
+			group: 'Connectivity & Hardware'
 		}
-		// {
-		// 	id: 'gateways',
-		// 	label: 'Gateways',
-		// 	href: '/gateways',
-		// 	icon: { path: GATEWAYS_ICON_PATH },
-		// 	group: 'Connectivity & Hardware'
-		// }
 	]);
 
 	// ── Groups list (dynamic from API) ──────────────────────────

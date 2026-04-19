@@ -27,9 +27,11 @@
 		onAdd,
 		onRemove
 	}: Props = $props();
+
+	let open = $state(schedules.length > 0);
 </script>
 
-<CwExpandPanel title={m.reports_schedule_card_title()}>
+<CwExpandPanel title={m.reports_schedule_card_title()} {open}>
 	<AppFormStack padded>
 		<div class="report-section-toolbar">
 			<p class="report-section-copy">{m.reports_schedule_card_copy()}</p>
