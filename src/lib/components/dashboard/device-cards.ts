@@ -40,8 +40,8 @@ function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): 
 }
 
 
-function getDeviceStatus(device: IDevice): 'online' | 'offline' {
-	return isDashboardDeviceOffline(device) ? 'offline' : 'online';
+function getDeviceStatus(device: IDevice, nowMs: number): 'online' | 'offline' {
+	return isDashboardDeviceOffline(device, nowMs) ? 'offline' : 'online';
 }
 
 function getSensorStorageKey(device: IDevice): string {
@@ -197,6 +197,7 @@ export function buildDeviceExpandedDetailRows(
 function buildDashboardSensorCardEntry(
 	device: IDevice,
 	duplicateCounts: Map<string, number>,
+	nowMs: number,
 	deviceTypeLookup?: DeviceTypeLookup
 ): DashboardSensorCardEntry {
 	const label = getDeviceLabel(device, duplicateCounts);
@@ -236,7 +237,7 @@ function buildDashboardSensorCardEntry(
 				secondaryValue: typeof rawSecondary === 'number' ? rawSecondary : Number(rawSecondary) || 0,
 				secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
 			}),
-			status: getDeviceStatus(device),
+			status: getDeviceStatus(device, nowMs),
 			lastUpdated: device.created_at
 		} satisfies CwSensorCardDevice
 	};
@@ -245,6 +246,7 @@ function buildDashboardSensorCardEntry(
 export function buildDashboardLocationSensorCards(
 	devices: IDevice[],
 	locations: LocationDto[],
+	nowMs: number,
 	deviceTypeLookup?: DeviceTypeLookup
 ): DashboardLocationSensorCard[] {
 	const locationsById = new Map(
@@ -289,7 +291,7 @@ export function buildDashboardLocationSensorCards(
 				locationId,
 				title: getLocationTitle(locationId, locationsById, sortedLocationDevices),
 				sensors: sortedLocationDevices.map((device) =>
-					buildDashboardSensorCardEntry(device, duplicateCounts, deviceTypeLookup)
+					buildDashboardSensorCardEntry(device, duplicateCounts, nowMs, deviceTypeLookup)
 				)
 			} satisfies DashboardLocationSensorCard;
 		})

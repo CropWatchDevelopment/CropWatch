@@ -31,6 +31,7 @@
 		DASHBOARD_DEVICE_PAGE_SIZE_OPTIONS,
 		DASHBOARD_DEVICE_ROW_HEIGHT
 	} from './device-table';
+	import { reactiveNow } from '$lib/utils/reactive-now.svelte';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 
 	interface Props {
@@ -93,7 +94,7 @@
 	}
 
 	function isOffline(row: IDevice): boolean {
-		return isDashboardDeviceOffline(row);
+		return isDashboardDeviceOffline(row, reactiveNow.value);
 	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<IDevice>> {
