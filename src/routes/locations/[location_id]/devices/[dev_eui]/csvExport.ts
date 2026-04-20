@@ -22,7 +22,7 @@ interface DownloadCsvOptions {
 
 const CREATED_AT_KEY = 'created_at';
 const TIMESTAMP_COLUMN_NAMES = new Set(['created_at', 'timestamp', 'traffic_hour']);
-const CSV_ALLOWED_COLUMNS = [CREATED_AT_KEY, 'co2', 'humidity', 'temperature_c', 'moisture', 'ec'];
+const CSV_ALLOWED_COLUMNS = [CREATED_AT_KEY, 'co2', 'humidity', 'temperature_c', 'moisture', 'ec', 'traffic_day', 'total_people', 'total_bicycles', 'total_vehicles'];
 const MILLISECONDS_PER_MINUTE = 60_000;
 const TIMEZONE_SUFFIX_PATTERN = /(?:[zZ]|[+-]\d{2}(?::?\d{2})?)$/;
 
