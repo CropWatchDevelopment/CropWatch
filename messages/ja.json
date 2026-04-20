@@ -671,6 +671,11 @@
 	"devices_export_select_range": "エクスポート範囲を選択",
 	"devices_export_success": "テレメトリ {count} 行をエクスポートしました。",
 	"devices_export_timezone_hint": "リクエストとエクスポートのタイムスタンプには {timeZone} を使用します。",
+	"devices_export_traffic_button": "トラフィックをエクスポート",
+	"devices_export_traffic_dialog_title": "トラフィックデータのエクスポート",
+	"devices_export_traffic_invalid_input": "有効な年と月を選択してください。",
+	"devices_export_traffic_label_month": "月",
+	"devices_export_traffic_label_year": "年",
 	"devices_group_placeholder": "任意のデバイスグループ",
 	"devices_identity_section_subtitle": "初回 POST ペイロードで使用する主要な cw_device フィールドです。",
 	"devices_identity_section_title": "デバイス識別情報",
@@ -887,5 +892,12 @@
 	"stat_belowAvg": "平均以下",
 	"stat_atAvg": "平均",
 	"stat_expand": "展開",
-	"stat_collapse": "折りたたむ"
+	"stat_collapse": "折りたたむ",
+	"traffic_metric_bicycle_count": "自転車台数",
+	"traffic_metric_bus_count": "バス台数",
+	"traffic_metric_car_count": "車台数",
+	"traffic_metric_motorcycle_count": "バイク台数",
+	"traffic_metric_people_count": "人数",
+	"traffic_metric_train_count": "電車本数",
+	"traffic_metric_truck_count": "トラック台数"
 }
