@@ -57,7 +57,7 @@ describe('device-cards helpers', () => {
 			} as LocationDto
 		];
 
-		const cards = buildDashboardLocationSensorCards(devices, locations);
+		const cards = buildDashboardLocationSensorCards(devices, locations, Date.now());
 
 		expect(cards.map((card) => card.title)).toEqual(['Atrium', 'Zone B']);
 		expect(cards[1]?.sensors.map(({ sensor }) => sensor.label)).toEqual([
@@ -108,7 +108,8 @@ describe('device-cards helpers', () => {
 					name: 'Zone A',
 					created_at: '2026-03-01T00:00:00.000Z'
 				} as LocationDto
-			]
+			],
+			Date.now()
 		);
 
 		expect(cards[0]?.sensors[0]?.sensor).toMatchObject({
@@ -150,7 +151,8 @@ describe('device-cards helpers', () => {
 					name: 'Zone X',
 					created_at: '2026-03-01T00:00:00.000Z'
 				} as LocationDto
-			]
+			],
+			Date.now()
 		);
 
 		expect(cards[0]?.sensors[0]?.sensor).toMatchObject({

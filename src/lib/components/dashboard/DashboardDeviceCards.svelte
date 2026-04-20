@@ -28,6 +28,7 @@
 	} from './dashboard-device-refresh';
 	import { resolveDeviceTypeConfig } from './dashboard-device-data';
 	import { ApiService } from '$lib/api/api.service';
+	import { reactiveNow } from '$lib/utils/reactive-now.svelte';
 	import { listDashboardDevices, type DashboardDeviceFilters } from './device-table';
 
 	export type CardLayout = 'grid' | 'masonry';
@@ -66,13 +67,18 @@
 		listDashboardDevices(app.devices ?? [], app.locations ?? [], filters, search)
 	);
 	let locationCards = $derived(
-		buildDashboardLocationSensorCards(filteredDevices, app.locations ?? [], app.deviceTypeLookup)
+		buildDashboardLocationSensorCards(
+			filteredDevices,
+			app.locations ?? [],
+			reactiveNow.value,
+			app.deviceTypeLookup
+		)
 	);
 	let deviceRefreshPlans = $derived(
 		filteredDevices.map((device) => ({
 			device,
 			alarmId: getCardRefreshAlarmId(device.dev_eui),
-			delayMs: getDashboardDeviceNextRefreshDelayMs(device)
+			delayMs: getDashboardDeviceNextRefreshDelayMs(device, reactiveNow.value)
 		}))
 	);
 	let enableInfiniteScroll = $derived(viewportWidth > 0);

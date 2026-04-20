@@ -671,6 +671,11 @@
 	"devices_export_select_range": "Select export range",
 	"devices_export_success": "Exported {count} telemetry rows.",
 	"devices_export_timezone_hint": "Request and export timestamps use {timeZone}.",
+	"devices_export_traffic_button": "Export Traffic",
+	"devices_export_traffic_dialog_title": "Export Traffic Data",
+	"devices_export_traffic_invalid_input": "Please select a valid year and month.",
+	"devices_export_traffic_label_month": "Month",
+	"devices_export_traffic_label_year": "Year",
 	"devices_group_placeholder": "Optional device group",
 	"devices_identity_section_subtitle": "Core cw_device fields used for the initial POST payload.",
 	"devices_identity_section_title": "Device Identity",
@@ -885,5 +890,12 @@
 	"stat_range": "Range",
 	"stat_aboveAvg": "Above Avg",
 	"stat_belowAvg": "Below Avg",
-	"stat_atAvg": "At Avg"
+	"stat_atAvg": "At Avg",
+	"traffic_metric_bicycle_count": "Bicycle Count",
+	"traffic_metric_bus_count": "Bus Count",
+	"traffic_metric_car_count": "Car Count",
+	"traffic_metric_motorcycle_count": "Motorcycle Count",
+	"traffic_metric_people_count": "People Count",
+	"traffic_metric_train_count": "Train Count",
+	"traffic_metric_truck_count": "Truck Count"
 }
