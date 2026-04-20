@@ -35,7 +35,8 @@ function getDeviceTimestampMs(device: Pick<IDevice, 'created_at'>): number {
 }
 
 export function isDashboardDeviceOffline(
-	device: Pick<IDevice, 'created_at' | 'has_primary_data'> & { raw_data?: Record<string, unknown> }
+	device: Pick<IDevice, 'created_at' | 'has_primary_data'> & { raw_data?: Record<string, unknown> },
+	nowMs = Date.now()
 ): boolean {
 	if (device.has_primary_data === false) {
 		return true;
@@ -53,7 +54,7 @@ export function isDashboardDeviceOffline(
 			? intervalMinutes * 60_000
 			: DASHBOARD_DEVICE_OFFLINE_THRESHOLD_MS;
 
-	return lastSeenMs < Date.now() - thresholdMs;
+	return lastSeenMs < nowMs - thresholdMs;
 }
 
 export function getDashboardDeviceNextRefreshDelayMs(
