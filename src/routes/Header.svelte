@@ -51,12 +51,12 @@
 	{/snippet}
 
 	{#snippet actions()}
-		<div class="app-header__actions-group">
+		<!-- <div class="app-header__actions-group">
 			<div class="app-header__utility-group">
 				<LanguageSwitcher compact />
 				<CwThemePicker />
 			</div>
-		</div>
+		</div> -->
 		<CwProfileMenu
 			class="app-header__profile-menu"
 			name={profileMenuName}
