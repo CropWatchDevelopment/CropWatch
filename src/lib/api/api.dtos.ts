@@ -409,3 +409,21 @@ export type UpdateLocationRequest = {
 	description?: string | null;
 	group?: string | null;
 };
+
+export interface GatewayOwnerDto {
+	created_at: string;
+	gateway_id: number;
+	id: number;
+	user_id: string;
+}
+
+export interface GatewayDto {
+	created_at: string;
+	gateway_id: string;
+	gateway_name: string;
+	id: number;
+	is_online: boolean;
+	is_public: boolean;
+	updated_at: string | null;
+	cw_gateways_owners?: GatewayOwnerDto[];
+}

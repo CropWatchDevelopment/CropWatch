@@ -36,7 +36,8 @@ import type {
 	UpdateLocationOwnerRequest,
 	UpdateReportRequest,
 	UpdateRuleRequest,
-	WaterDataPoint
+	WaterDataPoint,
+	GatewayDto
 } from './api.dtos';
 
 type FetchLike = typeof fetch;
@@ -142,6 +143,7 @@ const TRAFFIC_ENDPOINT = '/traffic/{dev_eui}';
 const TRAFFIC_MONTHLY_ENDPOINT = '/traffic/{dev_eui}/monthly';
 const WATER_ENDPOINT = '/water/{dev_eui}';
 const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
+const GATEWAYS_ENDPOINT = '/gateway';
 const DEVICE_LIST_PAGE_SIZE = 1000;
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
@@ -1127,6 +1129,12 @@ export class ApiService {
 		return this.request<unknown>(PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT, {
 			method: 'POST',
 			body: payload
+		});
+	}
+
+	public getGateways(): Promise<GatewayDto[]> {
+		return this.request<GatewayDto[]>(GATEWAYS_ENDPOINT, {
+			method: 'GET'
 		});
 	}
 

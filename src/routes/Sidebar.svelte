@@ -54,21 +54,21 @@
 			label: m.nav_rules(),
 			href: '/rules',
 			icon: { path: RULES_ICON_PATH },
-			group: 'Info and Management'
+			group: m.nav_group_info_management()
 		},
 		{
 			id: 'reports',
 			label: m.nav_reports(),
 			href: '/reports',
 			icon: { path: REPORTS_ICON_PATH },
-			group: 'Info and Management'
+			group: m.nav_group_info_management()
 		},
 		{
 			id: 'gateways',
-			label: 'Gateways',
+			label: m.nav_gateways(),
 			href: '/gateways',
 			icon: { path: GATEWAYS_ICON_PATH },
-			group: 'Connectivity & Hardware'
+			group: m.nav_group_connectivity_hardware()
 		}
 	]);
 
@@ -138,7 +138,7 @@
 			params.searchParams.delete(key);
 		}
 		const qs = params.searchParams.toString();
-		goto(resolve(qs ? `/?${qs}` : '/'), {
+		goto(resolve((qs ? `/?${qs}` : '/') as '/'), {
 			replaceState: true,
 			keepFocus: true,
 			noScroll: true

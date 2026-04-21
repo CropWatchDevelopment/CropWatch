@@ -42,6 +42,8 @@
 	"nav_billing": "請求",
 	"nav_settings": "設定",
 	"nav_logout": "ログアウト",
+	"nav_group_info_management": "情報と管理",
+	"nav_group_connectivity_hardware": "接続とハードウェア",
 	"header_privacy_mode": "プライバシーモード",
 	"header_logout_error": "ログアウト中にエラーが発生しました。もう一度お試しください。",
 	"status_online": "オンライン",
@@ -899,5 +901,15 @@
 	"traffic_metric_motorcycle_count": "バイク台数",
 	"traffic_metric_people_count": "人数",
 	"traffic_metric_train_count": "電車本数",
-	"traffic_metric_truck_count": "トラック台数"
+	"traffic_metric_truck_count": "トラック台数",
+	"nav_gateways": "ゲートウェイ",
+	"gateways_page_title": "ゲートウェイ",
+	"gateways_your_gateways": "あなたのゲートウェイ",
+	"gateways_gateway_id": "ゲートウェイ ID",
+	"gateways_gateway_name": "ゲートウェイ名",
+	"gateways_status": "状態",
+	"gateways_public": "公開",
+	"gateways_online": "オンライン",
+	"gateways_offline": "オフライン",
+	"gateways_private": "非公開"
 }
