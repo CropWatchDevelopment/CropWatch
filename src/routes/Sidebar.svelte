@@ -29,7 +29,7 @@
 	const REPORTS_ICON_PATH =
 		'M4 2.5h5l3 3V13a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1zM9 2.5V5a1 1 0 001 1h2M5.5 8.5h5M5.5 10.5h5';
 	const GATEWAYS_ICON_PATH =
-		'M3 4a1 1 0 011-1h1v2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H4a1 1 0 01-1-1zm5-10a1 1 0 011-1h1v2H9a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H9a1 1 0 01-1-1zm0 5a1 1 0 011-1h1v2H9a1 1 0 01-1-1z';
+		'M3 8.5h10A1.5 1.5 0 0 1 14.5 10v2A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12v-2A1.5 1.5 0 0 1 3 8.5Zm0 2.5h.01M5.5 11h.01M8 11h.01M8 8.5V6M6 4.5a3.2 3.2 0 0 1 4 0M4.5 3a5.5 5.5 0 0 1 7 0';
 	// ── Read active filters from URL search params ──────────────
 	let selectedGroup = $derived(page.url.searchParams.get('group') ?? '');
 	let selectedLocation = $derived(page.url.searchParams.get('location') ?? '');

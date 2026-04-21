@@ -13,61 +13,28 @@
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { ApiService, type GatewayDto } from '$lib/api/api.service';
+	import { ApiService } from '$lib/api/api.service';
 	import { formatDateTime } from '$lib/i18n/format';
 	import CHECK_ICON from '$lib/images/icons/check_circle.svg';
 	import NO_ICON from '$lib/images/icons/no.svg';
+	import { buildGatewayTableResult, type GatewayTableRow } from './gateway-table';
 
 	let loading = $state(false);
 	let app = getAppContext();
 
-	const columns: CwColumnDef<GatewayDto>[] = [
+	const columns: CwColumnDef<GatewayTableRow>[] = [
 		{ key: 'gateway_name', header: m.gateways_gateway_name(), sortable: true },
 		{ key: 'gateway_id', header: m.gateways_gateway_id() },
 		{ key: 'is_online', header: m.gateways_status(), sortable: true },
 		{ key: 'is_public', header: m.gateways_public(), sortable: true },
-		{ key: 'created_at', header: m.common_created(), sortable: true }
+		{ key: 'updated_at', header: m.common_created(), sortable: true }
 	];
 
-	function sortGateways(
-		rows: GatewayDto[],
-		column: string,
-		direction: 'asc' | 'desc'
-	): GatewayDto[] {
-		const dir = direction === 'asc' ? 1 : -1;
-		return [...rows].sort((a, b) => {
-			const aVal = (a as unknown as Record<string, unknown>)[column];
-			const bVal = (b as unknown as Record<string, unknown>)[column];
-			if (aVal == null && bVal == null) return 0;
-			if (aVal == null) return dir;
-			if (bVal == null) return -dir;
-			if (typeof aVal === 'boolean') return (Number(aVal) - Number(bVal)) * dir;
-			return String(aVal).localeCompare(String(bVal)) * dir;
-		});
-	}
-
-	async function loadData(query: CwTableQuery): Promise<CwTableResult<GatewayDto>> {
-		const search = query.search?.trim().toLowerCase() || '';
+	async function loadData(query: CwTableQuery): Promise<CwTableResult<GatewayTableRow>> {
 		const api = new ApiService({ authToken: app.accessToken });
 		const gateways = await api.getGateways();
 
-		let rows = search
-			? gateways.filter(
-					(gw) =>
-						gw.gateway_name.toLowerCase().includes(search) ||
-						gw.gateway_id.toLowerCase().includes(search)
-				)
-			: gateways;
-
-		if (query.sort) {
-			rows = sortGateways(rows, query.sort.column, query.sort.direction);
-		}
-
-		const total = rows.length;
-		const skip = (query.page - 1) * query.pageSize;
-		rows = rows.slice(skip, skip + query.pageSize);
-
-		return { rows, total };
+		return buildGatewayTableResult(gateways, query);
 	}
 </script>
 
@@ -81,8 +48,8 @@
 	</CwButton>
 
 	<CwCard title={m.gateways_your_gateways()}>
-		<CwDataTable {columns} {loadData} {loading} rowKey="id" class="w-full">
-			{#snippet cell(row: GatewayDto, col: CwColumnDef<GatewayDto>, defaultValue: string)}
+		<CwDataTable {columns} {loadData} {loading} rowKey="tableRowKey" class="w-full">
+			{#snippet cell(row: GatewayTableRow, col: CwColumnDef<GatewayTableRow>, defaultValue: string)}
 				{#if col.key === 'is_online'}
 					{#if row.is_online}
 						<Icon src={CHECK_ICON} alt={m.gateways_online()} preserveColor />
@@ -99,8 +66,8 @@
 							<Icon src={NO_ICON} alt={m.gateways_private()} />
 						</span>
 					{/if}
-				{:else if col.key === 'created_at'}
-					{formatDateTime(row.created_at, undefined, m.common_not_available())}
+				{:else if col.key === 'updated_at'}
+					{formatDateTime(row.updated_at, undefined, m.common_not_available())}
 				{:else}
 					{defaultValue}
 				{/if}
