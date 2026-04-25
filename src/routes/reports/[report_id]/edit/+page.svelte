@@ -594,16 +594,12 @@
 	}
 
 	function addDataProcessingSchedule() {
-		fields.report_data_processing_schedules = [
-			...fields.report_data_processing_schedules,
-			createEmptyDataProcessingSchedule()
-		];
+		fields.report_data_processing_schedules.push(createEmptyDataProcessingSchedule());
 	}
 
 	function removeDataProcessingSchedule(key: string) {
-		fields.report_data_processing_schedules = fields.report_data_processing_schedules.filter(
-			(s) => s.key !== key
-		);
+		const idx = fields.report_data_processing_schedules.findIndex((s) => s.key === key);
+		if (idx >= 0) fields.report_data_processing_schedules.splice(idx, 1);
 	}
 
 	function addRecipient() {

@@ -308,15 +308,20 @@ function sanitizeDataProcessingScheduleEntries(
 ): CreateReportDataProcessingScheduleRequest[] | undefined {
 	if (!Array.isArray(value)) return undefined;
 
-	// Validate HH:mm format
-	const isValidTime = (t: unknown): t is string => typeof t === 'string' && /^\d{2}:\d{2}$/.test(t);
+	// Accept both HH:mm and HH:mm:ss; normalize to HH:mm.
+	const TIME_PATTERN = /^(\d{2}:\d{2})(?::\d{2})?$/;
+	const normalizeTime = (t: unknown): string | undefined => {
+		if (typeof t !== 'string') return undefined;
+		const match = TIME_PATTERN.exec(t.trim());
+		return match ? match[1] : undefined;
+	};
 
 	const entries = value
 		.filter(isRecord)
 		.map((entry) => {
 			const dayOfWeek = readOptionalInteger(entry.day_of_week);
-			const startTime = isValidTime(entry.start_time) ? entry.start_time : undefined;
-			const endTime = isValidTime(entry.end_time) ? entry.end_time : undefined;
+			const startTime = normalizeTime(entry.start_time);
+			const endTime = normalizeTime(entry.end_time);
 
 			if (dayOfWeek === undefined || !startTime || !endTime) {
 				return null;
