@@ -153,10 +153,10 @@ describe('DashboardDeviceCards', () => {
 			name: 'Canopy',
 			location_name: 'Grow Room',
 			group: 'air',
-			created_at: '2026-04-09T10:00:18.000Z',
-			co2: 901,
-			humidity: 60.1,
-			temperature_c: 25.4,
+			created_at: '2026-04-09T09:50:00.000Z',
+			co2: 820,
+			humidity: 56,
+			temperature_c: 24.5,
 			location_id: 1
 		}));
 		const { component } = renderDashboardDeviceCards();

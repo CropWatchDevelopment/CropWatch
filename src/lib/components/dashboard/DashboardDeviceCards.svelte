@@ -26,7 +26,11 @@
 		getDashboardDeviceNextRefreshDelayMs,
 		refreshDashboardDevice
 	} from './dashboard-device-refresh';
-	import { resolveDeviceTypeConfig } from './dashboard-device-data';
+	import {
+		mapDashboardPrimaryDataToDevice,
+		mergeDashboardDevices,
+		resolveDeviceTypeConfig
+	} from './dashboard-device-data';
 	import { ApiService } from '$lib/api/api.service';
 	import { reactiveNow } from '$lib/utils/reactive-now.svelte';
 	import { listDashboardDevices, type DashboardDeviceFilters } from './device-table';
@@ -55,6 +59,9 @@
 	let expandedDetailRowsByDevEui = $state<Record<string, CwSensorCardDetailRow[] | null>>({});
 	let isExpandingLocationWindow = $state(false);
 	let monitoredCardRefreshIds: string[] = [];
+	// Dedupe guard for the missing-primary-data backfill effect below; a plain
+	// Set is fine because we never want to render from it.
+	const backfilledDevEuis = new Set<string>();
 
 	let search = $derived(page.url.searchParams.get('search') ?? '');
 	let filterKey = $derived(
@@ -145,6 +152,23 @@
 				if (isSensorExpandedInStorage(card, sensor)) {
 					void handleSensorExpand(sensor);
 				}
+			}
+		}
+	});
+
+	// Backfill visible cards whose device came back from the bulk primary-data
+	// endpoint without any reading. Scoped to visible cards so we don't spray
+	// requests across hundreds of never-seen devices.
+	$effect(() => {
+		if (!app.accessToken) return;
+
+		for (const card of visibleLocationCards) {
+			for (const sensor of card.sensors) {
+				if (backfilledDevEuis.has(sensor.devEui)) continue;
+				if (sensor.sourceDevice.has_primary_data !== false) continue;
+
+				backfilledDevEuis.add(sensor.devEui);
+				void fetchAndMergeLatestDeviceData(sensor.devEui);
 			}
 		}
 	});
@@ -365,20 +389,10 @@
 		}
 	}
 
-	async function handleSensorExpand(sensor: DashboardSensorCardEntry) {
-		if (!app.accessToken || sensor.sourceDevice.has_primary_data === false) {
-			return;
-		}
-
-		const { devEui, sourceDevice } = sensor;
-
-		// Skip if already fetched or currently loading
-		if (devEui in expandedDetailRowsByDevEui) {
-			return;
-		}
-
-		// Mark as loading
-		expandedDetailRowsByDevEui[devEui] = null;
+	async function fetchAndMergeLatestDeviceData(
+		devEui: string
+	): Promise<Record<string, unknown> | null> {
+		if (!app.accessToken) return null;
 
 		try {
 			const api = new ApiService({ authToken: app.accessToken });
@@ -391,17 +405,51 @@
 					typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)) ? Number(v) : v
 				])
 			);
-			const typeConfig = resolveDeviceTypeConfig(sourceDevice, app.deviceTypeLookup);
-			expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
-				freshData,
-				typeConfig,
-				sensor.sensor.label
-			);
+
+			// Merge into app.devices so the card header's primary/secondary
+			// values re-derive — otherwise the card keeps whatever (possibly
+			// empty) reading the bulk primary-data endpoint returned at page load.
+			const freshDevice = mapDashboardPrimaryDataToDevice(freshData);
+			app.devices = mergeDashboardDevices(app.devices, [freshDevice]);
+
+			return freshData;
 		} catch (err) {
-			console.error(`Failed to load expanded data for ${devEui}:`, err);
+			console.error(`Failed to load latest data for ${devEui}:`, err);
+			return null;
+		}
+	}
+
+	async function handleSensorExpand(sensor: DashboardSensorCardEntry) {
+		if (!app.accessToken) {
+			return;
+		}
+
+		const { devEui } = sensor;
+
+		// Skip if already fetched or currently loading
+		if (devEui in expandedDetailRowsByDevEui) {
+			return;
+		}
+
+		// Mark as loading
+		expandedDetailRowsByDevEui[devEui] = null;
+
+		const freshData = await fetchAndMergeLatestDeviceData(devEui);
+		if (!freshData) {
 			// Remove loading marker so the user can retry by collapsing and re-expanding
 			delete expandedDetailRowsByDevEui[devEui];
+			return;
 		}
+
+		backfilledDevEuis.add(devEui);
+
+		const liveDevice = resolveLiveDashboardDevice(sensor.sourceDevice) ?? sensor.sourceDevice;
+		const typeConfig = resolveDeviceTypeConfig(liveDevice, app.deviceTypeLookup);
+		expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
+			freshData,
+			typeConfig,
+			sensor.sensor.label
+		);
 	}
 
 	async function refreshSingleDevice(device: IDevice | null | undefined) {
