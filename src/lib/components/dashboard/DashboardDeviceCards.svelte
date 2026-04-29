@@ -142,12 +142,15 @@
 		});
 	}
 
-	// On mount and whenever locationCards or the access token become available,
-	// check localStorage for any cards that were already expanded and pre-fetch their data.
+	// Pre-fetch data for any cards that were already expanded in localStorage.
+	// Scoped to visibleLocationCards so off-screen cards don't fan out fetches at
+	// page load — as the user scrolls and visibleLocationCount grows, this effect
+	// re-runs and picks up the newly-visible expanded cards. Already-fetched ones
+	// are dedup'd via the marker in expandedDetailRowsByDevEui.
 	$effect(() => {
-		if (!app.accessToken || locationCards.length === 0) return;
+		if (!app.accessToken || visibleLocationCards.length === 0) return;
 
-		for (const card of locationCards) {
+		for (const card of visibleLocationCards) {
 			for (const sensor of card.sensors) {
 				if (isSensorExpandedInStorage(card, sensor)) {
 					void handleSensorExpand(sensor);
@@ -436,8 +439,12 @@
 
 		const freshData = await fetchAndMergeLatestDeviceData(devEui);
 		if (!freshData) {
-			// Remove loading marker so the user can retry by collapsing and re-expanding
-			delete expandedDetailRowsByDevEui[devEui];
+			// Leave the marker in place. Deleting it would let the auto-expand $effect
+			// (which re-runs whenever locationCards re-derives — every 30s from reactiveNow,
+			// plus on every app.devices mutation) re-fire handleSensorExpand on every tick,
+			// hammering the API with retries that compound when the server returns 429s.
+			// The marker stays null (showing "Loading…" rows); the periodic 10-min refresh
+			// uses a different endpoint and will replace these rows when it next fires.
 			return;
 		}
 
@@ -445,11 +452,31 @@
 
 		const liveDevice = resolveLiveDashboardDevice(sensor.sourceDevice) ?? sensor.sourceDevice;
 		const typeConfig = resolveDeviceTypeConfig(liveDevice, app.deviceTypeLookup);
+		// /latest-data can return an older created_at than what's already in app.devices
+		// (the two endpoints query different tables for relay-style devices). The merge
+		// in fetchAndMergeLatestDeviceData prefers the newer one, so use the live device's
+		// created_at for the "Last Update" row — but fall back to the response's value
+		// if liveDevice somehow lacks a valid date, so the row builder always has input.
+		const liveCreatedAt = liveDevice?.created_at;
+		const liveCreatedAtMs =
+			liveCreatedAt instanceof Date ? liveCreatedAt.getTime() : NaN;
+		const createdAtForRow = Number.isFinite(liveCreatedAtMs)
+			? liveCreatedAt
+			: freshData.created_at;
 		expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
-			freshData,
+			{ ...freshData, created_at: createdAtForRow },
 			typeConfig,
 			sensor.sensor.label
 		);
+	}
+
+	function handleSensorCollapse(sensor: DashboardSensorCardEntry) {
+		// Allow the user to retry a failed/stuck expansion by collapsing and
+		// re-expanding. We only clear the marker when it's null (loading/failed) —
+		// successful fetches (rows array) stay cached so re-expanding doesn't refetch.
+		if (expandedDetailRowsByDevEui[sensor.devEui] === null) {
+			delete expandedDetailRowsByDevEui[sensor.devEui];
+		}
 	}
 
 	async function refreshSingleDevice(device: IDevice | null | undefined) {
@@ -541,6 +568,7 @@
 											expireAfterMinutes={sensor?.sourceDevice?.raw_data?.default_upload_interval ?? 10}
 											class="dashboard-device-cards__sensor-card"
 											onExpand={() => handleSensorExpand(sensor)}
+											onCollapse={() => handleSensorCollapse(sensor)}
 										>
 											<div class="dashboard-device-cards__sensor-details">
 												<CwDataList rows={resolveSensorDetailRows(sensor)} />

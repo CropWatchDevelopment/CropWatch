@@ -223,6 +223,7 @@ function buildDashboardSensorCardEntry(
 	const rawPrimary = device.raw_data?.[typeConfig?.primary_data_key];
 	const rawSecondary = device.raw_data?.[typeConfig?.secondary_data_key] || null;
 
+	console.log(device);
 	return {
 		id: `sensor:${device.dev_eui}`,
 		storageKey: getSensorStorageKey(device),

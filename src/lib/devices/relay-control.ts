@@ -12,7 +12,7 @@ import type {
 	RelayTelemetryRow
 } from './relay-types';
 
-export const RELAY_VERIFICATION_DELAY_MS = 15_000;
+export const RELAY_VERIFICATION_DELAY_MS = 10_000;
 export const RELAY_REFRESH_INTERVAL_MS = 30_000;
 export const MIN_RELAY_PULSE_DURATION_SECONDS = 15;
 export const MAX_RELAY_PULSE_DURATION_SECONDS = 4_294_967;

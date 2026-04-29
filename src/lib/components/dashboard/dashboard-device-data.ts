@@ -52,6 +52,14 @@ function preferIncomingLocationId(incoming: number, current: number): number {
 	return incoming > 0 ? incoming : current;
 }
 
+function preferNewerCreatedAt(incoming: Date, current: Date): Date {
+	const incomingMs = incoming instanceof Date ? incoming.getTime() : NaN;
+	const currentMs = current instanceof Date ? current.getTime() : NaN;
+	if (!Number.isFinite(incomingMs)) return current;
+	if (!Number.isFinite(currentMs)) return incoming;
+	return incomingMs > currentMs ? incoming : current;
+}
+
 function getDeviceDataTable(
 	device: DeviceDto | DevicePrimaryDataDto | Record<string, unknown>
 ): string {
@@ -244,6 +252,7 @@ export function mergeDashboardDevices(
 			alert_count: latestDevice.alert_count ?? device.alert_count ?? 0,
 			// Preserve device_type_id (metadata device has it, primary data refresh may not)
 			device_type_id: device.device_type_id ?? latestDevice.device_type_id,
+			created_at: preferNewerCreatedAt(latestDevice.created_at, device.created_at),
 			raw_data: latestDevice.raw_data
 				? { ...device.raw_data, ...latestDevice.raw_data }
 				: device.raw_data
