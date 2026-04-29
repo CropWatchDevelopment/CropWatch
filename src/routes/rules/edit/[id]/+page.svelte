@@ -141,7 +141,7 @@
 				}))
 			};
 
-			await api.updateRule(rule.ruleGroupId, payload);
+			await api.updateRule(rule.id, payload);
 
 			toast.add({
 				tone: 'success',

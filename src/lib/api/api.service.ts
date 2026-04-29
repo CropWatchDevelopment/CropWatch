@@ -1027,8 +1027,8 @@ export class ApiService {
 		});
 	}
 
-	public updateRule(ruleGroupId: string, payload: UpdateRuleRequest): Promise<RuleDto> {
-		return this.request<RuleDto>(replacePathParams(RULE_BY_ID_ENDPOINT, { id: ruleGroupId }), {
+	public updateRule(id: number, payload: UpdateRuleRequest): Promise<RuleDto> {
+		return this.request<RuleDto>(replacePathParams(RULE_BY_ID_ENDPOINT, { id }), {
 			method: 'PATCH',
 			body: payload
 		});
