@@ -1,6 +1,9 @@
 import type { CwSensorCardDetailRow, CwSensorCardDevice } from '@cropwatchdevelopment/cwui';
 import type { LocationDto } from '$lib/api/api.dtos';
+import { isRelayTable } from '$lib/config/deviceTables';
+import { coerceRelayValue } from '$lib/devices/relay-telemetry';
 import type { IDevice } from '$lib/interfaces/device.interface';
+import { m } from '$lib/paraglide/messages.js';
 import {
 	resolveDeviceTypeConfig,
 	type DeviceTypeConfig,
@@ -30,12 +33,12 @@ export interface DashboardLocationSensorCard {
 	sensors: DashboardSensorCardEntry[];
 }
 
-function getDeviceBaseLabel(device: IDevice): string {
-	return device.name.trim() || device.dev_eui;
-}
+// function getDeviceBaseLabel(device: IDevice): string {
+// 	return device.name.trim() || device.dev_eui;
+// }
 
 function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): string {
-	const baseLabel = getDeviceBaseLabel(device);
+	const baseLabel = device.name;
 	return (duplicateCounts.get(baseLabel) ?? 0) > 1 ? `${baseLabel} (${device.dev_eui})` : baseLabel;
 }
 
@@ -46,6 +49,58 @@ function getDeviceStatus(device: IDevice, nowMs: number): 'online' | 'offline' {
 
 function getSensorStorageKey(device: IDevice): string {
 	return `dashboard-device-card:${device.dev_eui}`;
+}
+
+function getRelayStateLabel(value: boolean | null): string {
+	if (value === true) return m.display_relay_state_on();
+	if (value === false) return m.display_relay_state_off();
+	return m.display_relay_state_unknown();
+}
+
+export function hasRelayKeys(payload: Record<string, unknown> | null | undefined): boolean {
+	return payload != null && ('relay_1' in payload || 'relay_2' in payload);
+}
+
+function isRelayDevice(device: IDevice): boolean {
+	return isRelayTable(device.data_table) || hasRelayKeys(device.raw_data);
+}
+
+export function buildRelayExpandedDetailRows(
+	rawData: Record<string, unknown>,
+	deviceLabel: string
+): CwSensorCardDetailRow[] {
+	const relay1 = coerceRelayValue(rawData.relay_1);
+	const relay2 = coerceRelayValue(rawData.relay_2);
+	const rows: CwSensorCardDetailRow[] = [
+		{
+			id: `${deviceLabel}-relay_1`,
+			label: m.display_relay_one(),
+			value: getRelayStateLabel(relay1),
+			icon: 'relay'
+		},
+		{
+			id: `${deviceLabel}-relay_2`,
+			label: m.display_relay_two(),
+			value: getRelayStateLabel(relay2),
+			icon: 'relay'
+		}
+	];
+
+	const createdAt = rawData.created_at;
+	if (createdAt != null) {
+		const lastUpdatedDate = createdAt instanceof Date ? createdAt : new Date(String(createdAt));
+		if (Number.isFinite(lastUpdatedDate.getTime())) {
+			rows.push({
+				id: `${deviceLabel}-updated`,
+				label: 'Last Update',
+				icon: 'timer',
+				lastUpdated: lastUpdatedDate,
+				expectedUpdateAfter: DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES
+			});
+		}
+	}
+
+	return rows;
 }
 
 function buildUnavailableDetailRows(label: string, typeConfig: DeviceTypeConfig | undefined): CwSensorCardDetailRow[] {
@@ -194,6 +249,41 @@ export function buildDeviceExpandedDetailRows(
 	return rows;
 }
 
+function buildRelaySensorCardEntry(
+	device: IDevice,
+	label: string,
+	nowMs: number
+): DashboardSensorCardEntry {
+	const relay1 = coerceRelayValue(device.raw_data?.relay_1);
+	const relay2 = coerceRelayValue(device.raw_data?.relay_2);
+	const relayToValue = (value: boolean | null): number => (value === true ? 1 : 0);
+
+	return {
+		id: `sensor:${device.dev_eui}`,
+		storageKey: getSensorStorageKey(device),
+		devEui: device.dev_eui,
+		locationId: Number(device.location_id),
+		sourceDevice: device,
+		sensor: {
+			label,
+			primaryValue: relayToValue(relay1),
+			primaryLabel: getRelayStateLabel(relay1),
+			primaryUnit: m.display_relay_one(),
+			primary_icon: 'relay',
+			secondaryValue: relayToValue(relay2),
+			secondaryLabel: getRelayStateLabel(relay2),
+			secondaryUnit: m.display_relay_two(),
+			secondary_icon: 'relay',
+			status: getDeviceStatus(device, nowMs),
+			lastUpdated: device.created_at,
+			detailRows: buildRelayExpandedDetailRows(
+				{ ...(device.raw_data ?? {}), created_at: device.created_at },
+				label
+			)
+		} satisfies CwSensorCardDevice
+	};
+}
+
 function buildDashboardSensorCardEntry(
 	device: IDevice,
 	duplicateCounts: Map<string, number>,
@@ -201,6 +291,11 @@ function buildDashboardSensorCardEntry(
 	deviceTypeLookup?: DeviceTypeLookup
 ): DashboardSensorCardEntry {
 	const label = getDeviceLabel(device, duplicateCounts);
+
+	if (isRelayDevice(device)) {
+		return buildRelaySensorCardEntry(device, label, nowMs);
+	}
+
 	const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
 
 	if (device.has_primary_data === false) {
@@ -223,7 +318,6 @@ function buildDashboardSensorCardEntry(
 	const rawPrimary = device.raw_data?.[typeConfig?.primary_data_key];
 	const rawSecondary = device.raw_data?.[typeConfig?.secondary_data_key] || null;
 
-	console.log(device);
 	return {
 		id: `sensor:${device.dev_eui}`,
 		storageKey: getSensorStorageKey(device),
@@ -271,7 +365,7 @@ export function buildDashboardLocationSensorCards(
 		.map(([locationId, locationDevices]) => {
 			const sortedLocationDevices = [...locationDevices].sort(
 				(left, right) =>
-					getDeviceBaseLabel(left).localeCompare(getDeviceBaseLabel(right), undefined, {
+					left.name.localeCompare(right.name, undefined, {
 						numeric: true,
 						sensitivity: 'base'
 					}) ||
@@ -283,7 +377,7 @@ export function buildDashboardLocationSensorCards(
 			const duplicateCounts = new Map<string, number>();
 
 			for (const device of sortedLocationDevices) {
-				const baseLabel = getDeviceBaseLabel(device);
+				const baseLabel = device.name;
 				duplicateCounts.set(baseLabel, (duplicateCounts.get(baseLabel) ?? 0) + 1);
 			}
 

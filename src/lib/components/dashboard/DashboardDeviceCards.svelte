@@ -17,11 +17,14 @@
 		buildDashboardLocationSensorCards,
 		buildDeviceExpandedDetailRows,
 		buildDeviceLoadingDetailRows,
+		buildRelayExpandedDetailRows,
 		DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE,
 		DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING,
+		hasRelayKeys,
 		type DashboardLocationSensorCard,
 		type DashboardSensorCardEntry
 	} from './device-cards';
+	import { isRelayTable } from '$lib/config/deviceTables';
 	import {
 		getDashboardDeviceNextRefreshDelayMs,
 		refreshDashboardDevice
@@ -463,11 +466,11 @@
 		const createdAtForRow = Number.isFinite(liveCreatedAtMs)
 			? liveCreatedAt
 			: freshData.created_at;
-		expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
-			{ ...freshData, created_at: createdAtForRow },
-			typeConfig,
-			sensor.sensor.label
-		);
+		const dataForRows = { ...freshData, created_at: createdAtForRow };
+		const isRelay = isRelayTable(liveDevice.data_table) || hasRelayKeys(dataForRows);
+		expandedDetailRowsByDevEui[devEui] = isRelay
+			? buildRelayExpandedDetailRows(dataForRows, sensor.sensor.label)
+			: buildDeviceExpandedDetailRows(dataForRows, typeConfig, sensor.sensor.label);
 	}
 
 	function handleSensorCollapse(sensor: DashboardSensorCardEntry) {
@@ -512,14 +515,17 @@
 				const sensorEntry = locationCards
 					.flatMap((c) => c.sensors)
 					.find((s) => s.devEui === devEui);
-				const typeConfig = sensorEntry
-					? resolveDeviceTypeConfig(sensorEntry.sourceDevice, app.deviceTypeLookup)
-					: undefined;
-				expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
-					coercedData,
-					typeConfig,
-					sensorEntry?.sensor.label ?? devEui
-				);
+				const rowLabel = sensorEntry?.sensor.label ?? devEui;
+				const isRelay = isRelayTable(latestDevice.data_table) || hasRelayKeys(coercedData);
+				expandedDetailRowsByDevEui[devEui] = isRelay
+					? buildRelayExpandedDetailRows(coercedData, rowLabel)
+					: buildDeviceExpandedDetailRows(
+							coercedData,
+							sensorEntry
+								? resolveDeviceTypeConfig(sensorEntry.sourceDevice, app.deviceTypeLookup)
+								: undefined,
+							rowLabel
+						);
 			}
 		} catch (error) {
 			console.error(`Failed to refresh device ${devEui}:`, error);
@@ -561,9 +567,11 @@
 											primaryValue={sensor.sensor.primaryValue}
 											primaryUnit={sensor.sensor.primaryUnit}
 											primary_icon={sensor.sensor.primary_icon}
+											primaryLabel={sensor.sensor.primaryLabel}
 											secondaryValue={sensor.sensor.secondaryValue}
 											secondaryUnit={sensor.sensor.secondaryUnit}
 											secondary_icon={sensor.sensor.secondary_icon}
+											secondaryLabel={sensor.sensor.secondaryLabel}
 											lastUpdated={sensor.sensor.lastUpdated}
 											expireAfterMinutes={sensor?.sourceDevice?.raw_data?.default_upload_interval ?? 10}
 											class="dashboard-device-cards__sensor-card"
