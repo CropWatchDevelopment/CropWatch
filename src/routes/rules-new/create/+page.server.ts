@@ -6,11 +6,14 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 	const devEui = url.searchParams.get('dev_eui') ?? null;
 
 	if (!authToken) {
-		return { devices: [], devEui };
+		return { devices: [], actionTypes: [], authToken, devEui };
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
-	const devices = await api.getAllDevices().catch(() => []);
+	const [devices, actionTypes] = await Promise.all([
+		api.getAllDevices().catch(() => []),
+		api.getRuleTemplateActionTypes().catch(() => [])
+	]);
 
-	return { devices, devEui };
+	return { devices, actionTypes, authToken, devEui };
 };

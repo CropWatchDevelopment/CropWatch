@@ -109,7 +109,7 @@
 	}
 </script>
 
-<CwCard title={m.rules_new_test_rule()} subtitle={m.rules_new_test_rule_subtitle()}>
+<!-- <CwCard title={m.rules_new_test_rule()} subtitle={m.rules_new_test_rule_subtitle()}>
 	<AppFormStack padded>
 		<CwTextArea
 			label={m.rules_new_test_payload()}
@@ -180,7 +180,7 @@
 			</AppNotice>
 		{/if}
 	</AppFormStack>
-</CwCard>
+</CwCard> -->
 
 <style>
 	.rules-new-test__criteria {

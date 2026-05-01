@@ -50,7 +50,7 @@
 
 	@media (min-width: 640px) {
 		.app-page {
-			padding-block: var(--cw-space-4);
+			padding-block: var(--cw-space-2);
 		}
 	}
 </style>

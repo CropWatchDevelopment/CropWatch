@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { AppPage } from '$lib/components/layout';
-	import type { DeviceDto } from '$lib/api/api.dtos';
+	import type { DeviceDto, RuleActionTypeDto } from '$lib/api/api.dtos';
 	import type { RuleTemplateDto } from '$lib/rules-new/rule-template.types';
 	import { CwButton, CwChip } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
@@ -12,6 +12,7 @@
 	let { data }: PageProps = $props();
 	const template = (() => data.template as RuleTemplateDto)();
 	const devices = (() => data.devices as DeviceDto[])();
+	const actionTypes = (() => data.actionTypes as RuleActionTypeDto[])();
 </script>
 
 <svelte:head>
@@ -33,7 +34,13 @@
 		/>
 	</div>
 
-	<RuleTemplateForm mode="edit" {devices} initialTemplate={template} />
+	<RuleTemplateForm
+		mode="edit"
+		{devices}
+		{actionTypes}
+		authToken={data.authToken}
+		initialTemplate={template}
+	/>
 </AppPage>
 
 <style>

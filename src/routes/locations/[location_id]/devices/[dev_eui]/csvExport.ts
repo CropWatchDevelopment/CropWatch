@@ -22,7 +22,18 @@ interface DownloadCsvOptions {
 
 const CREATED_AT_KEY = 'created_at';
 const TIMESTAMP_COLUMN_NAMES = new Set(['created_at', 'timestamp', 'traffic_hour']);
-const CSV_ALLOWED_COLUMNS = [CREATED_AT_KEY, 'co2', 'humidity', 'temperature_c', 'moisture', 'ec', 'traffic_day', 'total_people', 'total_bicycles', 'total_vehicles'];
+const CSV_ALLOWED_COLUMNS = [
+	CREATED_AT_KEY,
+	'co2',
+	'humidity',
+	'temperature_c',
+	'moisture',
+	'ec',
+	'traffic_day',
+	'total_people',
+	'total_bicycles',
+	'total_vehicles'
+];
 const MILLISECONDS_PER_MINUTE = 60_000;
 const TIMEZONE_SUFFIX_PATTERN = /(?:[zZ]|[+-]\d{2}(?::?\d{2})?)$/;
 
@@ -238,6 +249,15 @@ function padDatePart(value: number, size = 2): string {
 	return String(value).padStart(size, '0');
 }
 
+function formatTimeZoneOffset(offsetMinutes: number): string {
+	const sign = offsetMinutes >= 0 ? '+' : '-';
+	const absoluteMinutes = Math.abs(offsetMinutes);
+	const hours = Math.floor(absoluteMinutes / 60);
+	const minutes = absoluteMinutes % 60;
+
+	return `${sign}${padDatePart(hours)}:${padDatePart(minutes)}`;
+}
+
 function normalizeTimestampInput(value: string): string {
 	const trimmed = value.trim();
 	if (!trimmed) return trimmed;
@@ -286,7 +306,6 @@ function getTimeZoneOffsetMilliseconds(date: Date, timeZone: string): number {
 	return asUtc - date.getTime();
 }
 
-
 function formatDateForTimeZone(date: Date, timeZone: string): string {
 	const offsetMinutes = Math.round(
 		getTimeZoneOffsetMilliseconds(date, timeZone) / MILLISECONDS_PER_MINUTE
@@ -295,7 +314,9 @@ function formatDateForTimeZone(date: Date, timeZone: string): string {
 
 	const datePart = `${shiftedDate.getUTCFullYear()}-${padDatePart(shiftedDate.getUTCMonth() + 1)}-${padDatePart(shiftedDate.getUTCDate())}`;
 	const timePart = `${padDatePart(shiftedDate.getUTCHours())}:${padDatePart(shiftedDate.getUTCMinutes())}:${padDatePart(shiftedDate.getUTCSeconds())}`;
-	return `${datePart} ${timePart}`;
+	const milliseconds = padDatePart(shiftedDate.getUTCMilliseconds(), 3);
+
+	return `${datePart}T${timePart}.${milliseconds}${formatTimeZoneOffset(offsetMinutes)}`;
 }
 
 function formatFileDateTime(date: Date, timeZone: string): string {

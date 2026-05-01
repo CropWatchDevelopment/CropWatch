@@ -18,10 +18,25 @@ vi.mock('$env/dynamic/public', () => ({
 }));
 
 vi.mock('$app/navigation', () => ({
-	goto: gotoMock
+	afterNavigate: vi.fn(),
+	beforeNavigate: vi.fn(),
+	disableScrollHandling: vi.fn(),
+	goto: gotoMock,
+	invalidate: vi.fn(),
+	invalidateAll: vi.fn(),
+	onNavigate: vi.fn(),
+	preloadCode: vi.fn(),
+	preloadData: vi.fn(),
+	pushState: vi.fn(),
+	refreshAll: vi.fn(),
+	replaceState: vi.fn()
 }));
 
 vi.mock('$app/paths', () => ({
+	asset: (path: string) => path,
+	base: '',
+	assets: '',
+	match: async () => null,
 	resolve: (path: string, params?: Record<string, string>) => {
 		if (!params) {
 			return path;
@@ -32,6 +47,16 @@ vi.mock('$app/paths', () => ({
 		}
 
 		return `/locations/${params.location_id}`;
+	},
+	resolveRoute: (path: string, params?: Record<string, string>) => {
+		if (!params) {
+			return path;
+		}
+
+		return Object.entries(params).reduce(
+			(resolved, [key, value]) => resolved.replace(`[${key}]`, value),
+			path
+		);
 	}
 }));
 
@@ -63,33 +88,31 @@ function createDevice(overrides: Partial<IDevice> = {}): IDevice {
 	};
 }
 
-function renderDashboardDeviceCards(options: {
-	devices?: IDevice[];
-	locations?: LocationDto[];
-} = {}) {
+function renderDashboardDeviceCards(
+	options: {
+		devices?: IDevice[];
+		locations?: LocationDto[];
+	} = {}
+) {
 	const component = mount(DashboardDeviceCardsTestHarness, {
 		target: document.body,
 		props: {
 			initialApp: {
 				accessToken: 'jwt-token',
-				devices:
-					options.devices ??
-					[
-						createDevice(),
-						createDevice({
-							dev_eui: 'dev-2',
-							created_at: new Date('2026-04-09T09:59:30.000Z')
-						})
-					],
-				locations:
-					options.locations ??
-					[
-						{
-							location_id: 1,
-							name: 'Grow Room',
-							created_at: '2026-04-01T00:00:00.000Z'
-						} as LocationDto
-					]
+				devices: options.devices ?? [
+					createDevice(),
+					createDevice({
+						dev_eui: 'dev-2',
+						created_at: new Date('2026-04-09T09:59:30.000Z')
+					})
+				],
+				locations: options.locations ?? [
+					{
+						location_id: 1,
+						name: 'Grow Room',
+						created_at: '2026-04-01T00:00:00.000Z'
+					} as LocationDto
+				]
 			},
 			filters: {
 				group: '',
@@ -105,8 +128,9 @@ function renderDashboardDeviceCards(options: {
 }
 
 function getButtonsByText(text: string): HTMLButtonElement[] {
-	return [...document.body.querySelectorAll('button')].filter((button): button is HTMLButtonElement =>
-		Boolean(button.textContent?.includes(text) && !button.closest('[aria-hidden="true"]'))
+	return [...document.body.querySelectorAll('button')].filter(
+		(button): button is HTMLButtonElement =>
+			Boolean(button.textContent?.includes(text) && !button.closest('[aria-hidden="true"]'))
 	);
 }
 
@@ -148,17 +172,19 @@ describe('DashboardDeviceCards', () => {
 				temperature_c: 25.4,
 				location_id: 1
 			}));
-		vi.spyOn(ApiService.prototype, 'getDeviceLatestData').mockImplementation(async (devEui: string) => ({
-			dev_eui: devEui,
-			name: 'Canopy',
-			location_name: 'Grow Room',
-			group: 'air',
-			created_at: '2026-04-09T09:50:00.000Z',
-			co2: 820,
-			humidity: 56,
-			temperature_c: 24.5,
-			location_id: 1
-		}));
+		vi.spyOn(ApiService.prototype, 'getDeviceLatestData').mockImplementation(
+			async (devEui: string) => ({
+				dev_eui: devEui,
+				name: 'Canopy',
+				location_name: 'Grow Room',
+				group: 'air',
+				created_at: '2026-04-09T09:50:00.000Z',
+				co2: 820,
+				humidity: 56,
+				temperature_c: 24.5,
+				location_id: 1
+			})
+		);
 		const { component } = renderDashboardDeviceCards();
 
 		expect(document.body.textContent).toContain('Canopy (dev-1)');

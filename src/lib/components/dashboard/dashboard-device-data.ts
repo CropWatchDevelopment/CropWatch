@@ -67,7 +67,9 @@ function getDeviceDataTable(
 	if (directDataTable) return directDataTable as string;
 
 	if (isRecord(device.cw_device_type)) {
-		return (device.cw_device_type.data_table_v2 ?? device.cw_device_type.data_table ?? '') as string;
+		return (device.cw_device_type.data_table_v2 ??
+			device.cw_device_type.data_table ??
+			'') as string;
 	}
 
 	return '';
@@ -78,6 +80,14 @@ function extractDeviceTypeId(
 ): number | undefined {
 	const raw = (device as Record<string, unknown>).type;
 	if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return raw;
+
+	if (isRecord(device.cw_device_type)) {
+		const embeddedId = device.cw_device_type.id;
+		if (typeof embeddedId === 'number' && Number.isFinite(embeddedId) && embeddedId > 0) {
+			return embeddedId;
+		}
+	}
+
 	return undefined;
 }
 
@@ -95,6 +105,31 @@ export interface DeviceTypeLookup {
 	byModel: Record<string, DeviceTypeConfig>;
 	/** cw_device_type.id → model string (bridges CwDevice.type FK) */
 	idToModel: Record<number, string>;
+}
+
+function mapDeviceTypeRecordToConfig(
+	deviceType: Record<string, unknown> | undefined
+): DeviceTypeConfig | undefined {
+	if (!deviceType) {
+		return undefined;
+	}
+
+	const config: DeviceTypeConfig = {
+		primary_data_key:
+			typeof deviceType.primary_data_v2 === 'string' ? deviceType.primary_data_v2 : undefined,
+		secondary_data_key:
+			typeof deviceType.secondary_data_v2 === 'string' ? deviceType.secondary_data_v2 : undefined,
+		primary_data_notation:
+			typeof deviceType.primary_data_notation === 'string'
+				? deviceType.primary_data_notation
+				: undefined,
+		secondary_data_notation:
+			typeof deviceType.secondary_data_notation === 'string'
+				? deviceType.secondary_data_notation
+				: undefined
+	};
+
+	return Object.values(config).some((value) => value != null) ? config : undefined;
 }
 
 /**
@@ -115,22 +150,25 @@ export function buildDeviceTypeLookup(deviceTypes: DeviceTypeDto[]): DeviceTypeL
 
 		if (byModel[model]) continue;
 
-		byModel[model] = {
-			primary_data_key: dt.primary_data_v2 ?? undefined,
-			secondary_data_key: dt.secondary_data_v2 ?? undefined,
-			primary_data_notation: dt.primary_data_notation ?? undefined,
-			secondary_data_notation: dt.secondary_data_notation ?? undefined,
-		};
+		byModel[model] = mapDeviceTypeRecordToConfig(dt) ?? {};
 	}
 
 	return { byModel, idToModel };
 }
 
-/** Resolve a DeviceTypeConfig for an IDevice using its type FK. */
+/** Resolve a DeviceTypeConfig for an IDevice using embedded API data first. */
 export function resolveDeviceTypeConfig(
 	device: IDevice,
-	lookup: DeviceTypeLookup | undefined
+	lookup?: DeviceTypeLookup
 ): DeviceTypeConfig | undefined {
+	const embeddedConfig = mapDeviceTypeRecordToConfig(
+		isRecord(device.raw_data?.cw_device_type) ? device.raw_data.cw_device_type : undefined
+	);
+
+	if (embeddedConfig) {
+		return embeddedConfig;
+	}
+
 	if (!lookup || !device.device_type_id) return undefined;
 	const model = lookup.idToModel[device.device_type_id];
 	return model ? lookup.byModel[model] : undefined;
@@ -164,10 +202,10 @@ export function mapDashboardPrimaryDataToDevice(
 	const moisture = device.moisture;
 	const soilHumidity = moisture != null ? Number(moisture) : null;
 
-	// Preserve the full raw payload so dynamic column keys can be resolved
+	// Preserve raw sensor fields and embedded type config so dynamic keys can be resolved.
 	const raw_data: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(device)) {
-		if (key !== 'cw_device_type' && key !== 'cw_locations' && key !== 'cw_device_owners') {
+		if (key !== 'cw_locations' && key !== 'cw_device_owners') {
 			raw_data[key] = value;
 		}
 	}

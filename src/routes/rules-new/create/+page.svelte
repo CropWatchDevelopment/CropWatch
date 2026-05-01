@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { AppPage } from '$lib/components/layout';
-	import type { DeviceDto } from '$lib/api/api.dtos';
+	import type { DeviceDto, RuleActionTypeDto } from '$lib/api/api.dtos';
 	import { CwButton } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
@@ -10,6 +10,7 @@
 
 	let { data }: PageProps = $props();
 	const devices = (() => data.devices as DeviceDto[])();
+	const actionTypes = (() => data.actionTypes as RuleActionTypeDto[])();
 </script>
 
 <svelte:head>
@@ -25,7 +26,13 @@
 		<h1>{m.rules_new_create_template()}</h1>
 	</div>
 
-	<RuleTemplateForm mode="create" {devices} preselectedDevEui={data.devEui} />
+	<RuleTemplateForm
+		mode="create"
+		{devices}
+		{actionTypes}
+		authToken={data.authToken}
+		preselectedDevEui={data.devEui}
+	/>
 </AppPage>
 
 <style>

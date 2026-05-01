@@ -1,32 +1,27 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { ApiService } from '$lib/api/api.service';
 	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import {
-		createRuleTemplate,
-		readRuleTemplateApiError,
-		updateRuleTemplate
-	} from '$lib/rules-new/rule-template-client';
 	import type {
 		Json,
+		RuleActionTypeDto,
 		RuleTemplateActionDto,
-		RuleTemplateCriterionInput,
+		RuleTemplateActionInput,
 		RuleTemplateDto,
 		RuleTemplateSaveRequest
 	} from '$lib/rules-new/rule-template.types';
 	import type { DeviceDto } from '$lib/api/api.dtos';
+	import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
 	import {
-		getRuleOperatorOptions,
-		getRuleSendMethodOptions,
-		getRuleSubjectOptions,
-		getRuleTemplateActionTypeOptions
-	} from '$lib/i18n/options';
-	import {
+		CwAlertPointsEditor,
 		CwButton,
 		CwCard,
 		CwChip,
 		CwDropdown,
 		CwInput,
+		CwMultiSelect,
 		CwSeparator,
 		CwSwitch,
 		CwTextArea,
@@ -34,47 +29,60 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import RuleTemplateTest from './RuleTemplateTest.svelte';
+	import {
+		areAlertCriteriaGroupsValid,
+		buildInitialAlertCriteriaGroups,
+		buildRuleTemplateCriteriaFromAlertGroups,
+		createBlankAlertCriteriaGroup,
+		createRuleTemplateAlertPointsEditorText,
+		ensureAlertPointsIncludeReset,
+		hasUnsupportedAlertPointConditions
+	} from './rule-template-alert-points';
 
 	type FormMode = 'create' | 'edit';
 
 	interface Props {
 		mode: FormMode;
 		devices: DeviceDto[];
+		actionTypes: RuleActionTypeDto[];
+		authToken?: string | null;
 		initialTemplate?: RuleTemplateDto | null;
 		preselectedDevEui?: string | null;
 	}
 
 	interface AssignmentEntry {
 		localId: number;
-		devEui: string;
+		devices: DeviceSelection[];
 	}
 
-	interface CriteriaEntry {
-		localId: number;
-		persistedId: number | null;
-		subject: string;
-		operator: string;
-		triggerValue: string;
-		resetValue: string;
+	interface DeviceSelection {
+		id: string;
+		label: string;
 	}
 
 	interface ActionEntry {
 		localId: number;
 		persistedId: number | null;
-		actionType: string;
-		sendUsing: string;
+		actionTypeId: string;
+		actionTypeLabel: string | null;
 		recipient: string;
 	}
 
-	let { mode, devices, initialTemplate = null, preselectedDevEui = null }: Props = $props();
+	let {
+		mode,
+		devices,
+		actionTypes,
+		authToken = null,
+		initialTemplate = null,
+		preselectedDevEui = null
+	}: Props = $props();
 
 	const initial = (() => initialTemplate)();
 	const preselectedDevice = (() => preselectedDevEui)();
 	const toast = useCwToast();
-	const OPERATORS = getRuleOperatorOptions();
 	const SUBJECT_OPTIONS = getRuleSubjectOptions();
-	const ACTION_TYPE_OPTIONS = getRuleTemplateActionTypeOptions();
-	const SEND_METHOD_OPTIONS = getRuleSendMethodOptions();
+	const OPERATORS = getRuleOperatorOptions();
+	const alertPointsEditorText = createRuleTemplateAlertPointsEditorText();
 
 	let ruleName = $state(initial?.name ?? '');
 	let description = $state(initial?.description ?? '');
@@ -86,29 +94,19 @@
 		initial?.assignments.length
 			? initial.assignments.map((assignment, index) => ({
 					localId: index + 1,
-					devEui: assignment.devEui
+					devices: [createDeviceSelection(assignment.devEui)]
 				}))
 			: [
 					{
 						localId: 1,
-						devEui: preselectedDevice ?? ''
+						devices: preselectedDevice ? [createDeviceSelection(preselectedDevice)] : []
 					}
 				]
 	);
 
-	let nextCriteriaId = $state((initial?.criteria.length ?? 0) + 1);
-	let criteria = $state<CriteriaEntry[]>(
-		initial?.criteria.length
-			? initial.criteria.map((criterion, index) => ({
-					localId: index + 1,
-					persistedId: criterion.id,
-					subject: criterion.subject,
-					operator: criterion.operator,
-					triggerValue: String(criterion.triggerValue),
-					resetValue: String(criterion.resetValue)
-				}))
-			: [createBlankCriterion(1)]
-	);
+	const initialCriteriaGroups = buildInitialAlertCriteriaGroups(initial?.criteria ?? []);
+	let nextCriteriaGroupId = $state(initialCriteriaGroups.length + 1);
+	let criteriaGroups = $state(initialCriteriaGroups);
 
 	let nextActionId = $state((initial?.actions.length ?? 0) + 1);
 	let actions = $state<ActionEntry[]>(
@@ -116,13 +114,19 @@
 			? initial.actions.map((action, index) => ({
 					localId: index + 1,
 					persistedId: action.id,
-					actionType: action.actionType,
-					sendUsing: readActionSendUsing(action),
+					actionTypeId: String(action.actionType),
+					actionTypeLabel: action.actionTypeName ?? action.actionTypeValue ?? null,
 					recipient: readActionRecipient(action)
 				}))
 			: [createBlankAction(1)]
 	);
 
+	let actionTypeOptions = $derived(
+		(actionTypes ?? []).map((actionType) => ({
+			label: actionType.name,
+			value: String(actionType.actionTypeId)
+		}))
+	);
 	let deviceOptionsBase = $derived(
 		(devices ?? []).map((device) => ({
 			label: device.name ? `${device.name} (${device.dev_eui})` : device.dev_eui,
@@ -131,71 +135,56 @@
 	);
 
 	let selectedDevEuis = $derived(
-		assignments.map((assignment) => assignment.devEui.trim()).filter(Boolean)
+		assignments
+			.flatMap((assignment) => assignment.devices.map((device) => device.id.trim()))
+			.filter(Boolean)
 	);
 	let hasDuplicateDeviceAssignments = $derived(hasDuplicateValues(selectedDevEuis));
 	let selectedDeviceTypeId = $derived(resolveSelectedDeviceTypeId());
-	let criteriaForTest = $derived(criteria.map(mapCriterionForTest));
+	let criteriaForTest = $derived(buildRuleTemplateCriteriaFromAlertGroups(criteriaGroups));
+	let hasUnsupportedCriteria = $derived(hasUnsupportedAlertPointConditions(criteriaGroups));
 	let isFormValid = $derived(
 		ruleName.trim().length > 0 &&
 			selectedDevEuis.length > 0 &&
 			!hasDuplicateDeviceAssignments &&
-			criteria.every(isCriterionValid) &&
+			!hasUnsupportedCriteria &&
+			areAlertCriteriaGroupsValid(criteriaGroups) &&
 			actions.every(isActionValid)
 	);
 	let assignmentPreview = $derived(selectedDevEuis.map(getDeviceLabel));
 	let criteriaPreview = $derived(
-		criteria.map((criterion) => {
+		criteriaForTest.map((criterion) => {
 			const label = SUBJECT_OPTIONS.find((option) => option.value === criterion.subject)?.label;
-			return `${label ?? criterion.subject} ${criterion.operator} ${criterion.triggerValue}`;
+			const operatorLabel =
+				OPERATORS.find((option) => option.value === criterion.operator)?.label ??
+				criterion.operator;
+			return `${label ?? criterion.subject} ${operatorLabel} ${criterion.triggerValue}`;
 		})
 	);
 	let actionPreview = $derived(
 		actions.map((action) => {
-			const label = ACTION_TYPE_OPTIONS.find((option) => option.value === action.actionType)?.label;
-			return `${label ?? action.actionType}: ${action.recipient}`;
+			return `${getActionTypeLabel(action)}: ${action.recipient}`;
 		})
 	);
-
-	function createBlankCriterion(localId: number): CriteriaEntry {
-		return {
-			localId,
-			persistedId: null,
-			subject: 'temperature_c',
-			operator: '>',
-			triggerValue: '',
-			resetValue: ''
-		};
-	}
 
 	function createBlankAction(localId: number): ActionEntry {
 		return {
 			localId,
 			persistedId: null,
-			actionType: 'email',
-			sendUsing: 'email',
+			actionTypeId: String(actionTypes[0]?.actionTypeId ?? ''),
+			actionTypeLabel: actionTypes[0]?.name ?? null,
 			recipient: ''
 		};
 	}
 
 	function addAssignment() {
-		assignments = [...assignments, { localId: nextAssignmentId, devEui: '' }];
+		assignments = [...assignments, { localId: nextAssignmentId, devices: [] }];
 		nextAssignmentId += 1;
 	}
 
 	function removeAssignment(localId: number) {
 		if (assignments.length <= 1) return;
 		assignments = assignments.filter((assignment) => assignment.localId !== localId);
-	}
-
-	function addCriterion() {
-		criteria = [...criteria, createBlankCriterion(nextCriteriaId)];
-		nextCriteriaId += 1;
-	}
-
-	function removeCriterion(localId: number) {
-		if (criteria.length <= 1) return;
-		criteria = criteria.filter((criterion) => criterion.localId !== localId);
 	}
 
 	function addAction() {
@@ -208,10 +197,35 @@
 		actions = actions.filter((action) => action.localId !== localId);
 	}
 
+	function addCriteriaGroup() {
+		criteriaGroups = [...criteriaGroups, createBlankAlertCriteriaGroup(nextCriteriaGroupId)];
+		nextCriteriaGroupId += 1;
+	}
+
+	function removeCriteriaGroup(localId: number) {
+		if (criteriaGroups.length <= 1) return;
+		criteriaGroups = criteriaGroups.filter((group) => group.localId !== localId);
+	}
+
+	function updateCriteriaGroupAlertPoints(
+		localId: number,
+		alertPoints: (typeof criteriaGroups)[number]['alertPoints']
+	) {
+		const nextAlertPoints = ensureAlertPointsIncludeReset(alertPoints);
+		criteriaGroups = criteriaGroups.map((group) =>
+			group.localId === localId
+				? {
+						...group,
+						alertPoints: nextAlertPoints
+					}
+				: group
+		);
+	}
+
 	function deviceOptionsFor(currentAssignment: AssignmentEntry) {
 		const selectedByOtherRows = assignments
 			.filter((assignment) => assignment.localId !== currentAssignment.localId)
-			.map((assignment) => assignment.devEui)
+			.flatMap((assignment) => assignment.devices.map((device) => device.id))
 			.filter(Boolean);
 
 		const options = deviceOptionsBase.map((option) => ({
@@ -220,19 +234,29 @@
 		}));
 
 		if (
-			currentAssignment.devEui &&
-			!options.some((option) => option.value === currentAssignment.devEui)
+			currentAssignment.devices.some(
+				(device) => !options.some((option) => option.value === device.id)
+			)
 		) {
 			return [
-				{
-					label: currentAssignment.devEui,
-					value: currentAssignment.devEui
-				},
+				...currentAssignment.devices
+					.filter((device) => !options.some((option) => option.value === device.id))
+					.map((device) => ({
+						label: device.label,
+						value: device.id
+					})),
 				...options
 			];
 		}
 
 		return options;
+	}
+
+	function createDeviceSelection(devEui: string): DeviceSelection {
+		return {
+			id: devEui,
+			label: getDeviceLabel(devEui)
+		};
 	}
 
 	function getDeviceLabel(devEui: string): string {
@@ -260,37 +284,8 @@
 		return values.some((value, index) => values.indexOf(value) !== index);
 	}
 
-	function isCriterionValid(criterion: CriteriaEntry): boolean {
-		return (
-			criterion.subject.trim().length > 0 &&
-			criterion.operator.trim().length > 0 &&
-			isFiniteNumberText(criterion.triggerValue) &&
-			isFiniteNumberText(criterion.resetValue)
-		);
-	}
-
 	function isActionValid(action: ActionEntry): boolean {
-		return action.actionType.trim().length > 0 && action.recipient.trim().length > 0;
-	}
-
-	function isFiniteNumberText(value: string): boolean {
-		if (!value.trim()) return false;
-		return Number.isFinite(Number(value));
-	}
-
-	function mapCriterionForTest(criterion: CriteriaEntry): RuleTemplateCriterionInput {
-		return {
-			id: criterion.persistedId,
-			subject: criterion.subject,
-			operator: criterion.operator,
-			triggerValue: readNumberOrZero(criterion.triggerValue),
-			resetValue: readNumberOrZero(criterion.resetValue)
-		};
-	}
-
-	function readNumberOrZero(value: string): number {
-		const parsed = Number(value);
-		return Number.isFinite(parsed) ? parsed : 0;
+		return parseActionTypeId(action.actionTypeId) !== null && action.recipient.trim().length > 0;
 	}
 
 	function buildPayload(): RuleTemplateSaveRequest {
@@ -300,22 +295,23 @@
 			deviceTypeId: selectedDeviceTypeId,
 			isActive,
 			devEuis: selectedDevEuis,
-			criteria: criteria.map((criterion) => ({
-				id: criterion.persistedId,
-				subject: criterion.subject,
-				operator: criterion.operator,
-				triggerValue: Number(criterion.triggerValue),
-				resetValue: Number(criterion.resetValue)
-			})),
-			actions: actions.map((action) => ({
-				id: action.persistedId,
-				actionType: action.actionType,
-				config: {
-					recipient: action.recipient.trim(),
-					send_using: action.sendUsing,
-					notifier_type: action.actionType
-				}
-			}))
+			criteria: criteriaForTest,
+			actions: actions.map(buildActionPayload)
+		};
+	}
+
+	function buildActionPayload(action: ActionEntry): RuleTemplateActionInput {
+		const actionType = parseActionTypeId(action.actionTypeId);
+		if (actionType === null) {
+			throw new Error('Action type is required.');
+		}
+
+		return {
+			id: action.persistedId,
+			actionType,
+			config: {
+				recipient: action.recipient.trim()
+			}
 		};
 	}
 
@@ -324,8 +320,10 @@
 		submitting = true;
 
 		try {
+			const api = new ApiService({ authToken });
+
 			if (mode === 'edit' && initial) {
-				await updateRuleTemplate(initial.id, buildPayload());
+				await api.updateRuleTemplate(initial.id, buildPayload());
 				toast.add({
 					tone: 'success',
 					message: m.rules_new_updated_success({ name: ruleName.trim() }),
@@ -333,7 +331,7 @@
 					dismissible: true
 				});
 			} else {
-				await createRuleTemplate(buildPayload());
+				await api.createRuleTemplate(buildPayload());
 				toast.add({
 					tone: 'success',
 					message: m.rules_new_created_success({ name: ruleName.trim() }),
@@ -346,7 +344,7 @@
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
-				message: readRuleTemplateApiError(error, m.rules_new_save_failed()),
+				message: readApiErrorMessage(error, m.rules_new_save_failed()),
 				duration: 5000,
 				dismissible: true
 			});
@@ -365,9 +363,34 @@
 		);
 	}
 
-	function readActionSendUsing(action: RuleTemplateActionDto): string {
-		const config: Record<string, Json | undefined> = isRecord(action.config) ? action.config : {};
-		return readString(config.send_using) ?? readString(config.sendUsing) ?? action.actionType;
+	function actionTypeOptionsFor(action: ActionEntry) {
+		if (
+			!action.actionTypeId ||
+			actionTypeOptions.some((option) => option.value === action.actionTypeId)
+		) {
+			return actionTypeOptions;
+		}
+
+		return [
+			{
+				label: action.actionTypeLabel ?? action.actionTypeId,
+				value: action.actionTypeId
+			},
+			...actionTypeOptions
+		];
+	}
+
+	function getActionTypeLabel(action: ActionEntry): string {
+		return (
+			actionTypes.find((entry) => String(entry.actionTypeId) === action.actionTypeId)?.name ??
+			action.actionTypeLabel ??
+			action.actionTypeId
+		);
+	}
+
+	function parseActionTypeId(value: string): number | null {
+		const id = Number(value);
+		return Number.isInteger(id) && id > 0 ? id : null;
 	}
 
 	function readString(value: Json | undefined): string | null {
@@ -423,11 +446,12 @@
 							</CwButton>
 						{/if}
 					</div>
-					<CwDropdown
+					<CwMultiSelect
+						showAllSelectedItems={true}
 						label={m.devices_device()}
 						placeholder={m.rules_select_device_placeholder()}
 						options={deviceOptionsFor(assignment)}
-						bind:value={assignment.devEui}
+						bind:value={assignment.devices}
 						required
 					/>
 				</div>
@@ -453,49 +477,38 @@
 
 <CwCard title={m.rules_step_3_title()} subtitle={m.rules_step_3_subtitle()}>
 	<AppFormStack padded>
-		{#each criteria as criterion, index (criterion.localId)}
+		{#each criteriaGroups as group, index (group.localId)}
 			<div class="rules-new-form__block">
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_condition_number({ count: String(index + 1) })}</span>
-					{#if criteria.length > 1}
-						<CwButton variant="danger" size="sm" onclick={() => removeCriterion(criterion.localId)}>
+					{#if criteriaGroups.length > 1}
+						<CwButton variant="danger" size="sm" onclick={() => removeCriteriaGroup(group.localId)}>
 							{m.action_remove()}
 						</CwButton>
 					{/if}
 				</div>
 
-				<div class="rules-new-form__criteria-grid">
-					<CwDropdown
-						label={m.rules_data_field()}
-						options={SUBJECT_OPTIONS}
-						bind:value={criterion.subject}
-						required
-					/>
-					<CwDropdown
-						label={m.rules_operator()}
-						options={OPERATORS}
-						bind:value={criterion.operator}
-						required
-					/>
-					<CwInput
-						label={m.rules_trigger_value()}
-						type="numeric"
-						placeholder={m.rules_trigger_value_placeholder()}
-						bind:value={criterion.triggerValue}
-						required
-					/>
-					<CwInput
-						label={m.rules_reset_value()}
-						type="numeric"
-						placeholder={m.rules_reset_value_placeholder()}
-						bind:value={criterion.resetValue}
-						required
-					/>
-				</div>
+				<CwDropdown
+					label={m.rules_data_field()}
+					options={SUBJECT_OPTIONS}
+					bind:value={group.subject}
+					required
+				/>
+				<CwAlertPointsEditor
+					value={group.alertPoints}
+					onchange={(value) => updateCriteriaGroupAlertPoints(group.localId, value)}
+					text={alertPointsEditorText}
+				/>
 			</div>
 		{/each}
 
-		<CwButton variant="secondary" type="button" onclick={addCriterion}>
+		{#if hasUnsupportedCriteria}
+			<AppNotice tone="warning">
+				<p>{m.rules_new_test_reason_unsupported_operator()}</p>
+			</AppNotice>
+		{/if}
+
+		<CwButton variant="secondary" type="button" onclick={addCriteriaGroup}>
 			{m.rules_add_another_condition()}
 		</CwButton>
 	</AppFormStack>
@@ -517,14 +530,8 @@
 				<div class="rules-new-form__actions-grid">
 					<CwDropdown
 						label={m.rules_new_action_type()}
-						options={ACTION_TYPE_OPTIONS}
-						bind:value={action.actionType}
-						required
-					/>
-					<CwDropdown
-						label={m.rules_send_using()}
-						options={SEND_METHOD_OPTIONS}
-						bind:value={action.sendUsing}
+						options={actionTypeOptionsFor(action)}
+						bind:value={action.actionTypeId}
 						required
 					/>
 					<CwInput
@@ -627,7 +634,6 @@
 		font-weight: var(--cw-font-semibold);
 	}
 
-	.rules-new-form__criteria-grid,
 	.rules-new-form__actions-grid {
 		display: grid;
 		grid-template-columns: 1fr;
@@ -658,12 +664,8 @@
 	}
 
 	@media (min-width: 640px) {
-		.rules-new-form__criteria-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-
 		.rules-new-form__actions-grid {
-			grid-template-columns: minmax(8rem, 0.8fr) minmax(8rem, 0.8fr) minmax(0, 1.4fr);
+			grid-template-columns: minmax(10rem, 0.8fr) minmax(0, 1.2fr);
 		}
 	}
 

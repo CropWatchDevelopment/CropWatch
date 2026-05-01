@@ -1,9 +1,8 @@
 <script lang="ts">
+	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import {
-		deleteRuleTemplate,
-		readRuleTemplateApiError
-	} from '$lib/rules-new/rule-template-client';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import TRASH_ICON from '$lib/images/icons/trash.svg';
@@ -17,6 +16,7 @@
 	let { templateId, ruleName, onDeleted }: Props = $props();
 
 	const toast = useCwToast();
+	const app = getAppContext();
 	let open = $state(false);
 	let deleting = $state(false);
 
@@ -25,7 +25,8 @@
 		deleting = true;
 
 		try {
-			await deleteRuleTemplate(templateId);
+			const api = new ApiService({ authToken: app.accessToken });
+			await api.deleteRuleTemplate(templateId);
 			open = false;
 			await onDeleted?.(templateId);
 			toast.add({
@@ -37,7 +38,7 @@
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
-				message: readRuleTemplateApiError(error, m.rules_new_delete_failed()),
+				message: readApiErrorMessage(error, m.rules_new_delete_failed()),
 				duration: 5000,
 				dismissible: true
 			});

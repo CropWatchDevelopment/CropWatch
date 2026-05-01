@@ -45,13 +45,15 @@
 		{ label: m.status_offline(), value: offlineDevices, color: appChartPalette.danger },
 		{ label: m.status_alerts(), value: alertCount, color: appChartPalette.warning }
 	]);
-	const triggeredRules = Array.isArray(app?.triggeredRules) ? app.triggeredRules : [];
-	const alerts: AlertRow[] = triggeredRules.map((rule) => ({
-		id: String(rule.id),
-		icon: '🔔',
-		name: rule.name,
-		reported: rule.last_triggered ? formatDateTime(rule.last_triggered) : m.common_not_available()
-	}));
+	let triggeredRules = $derived(Array.isArray(app?.triggeredRules) ? app.triggeredRules : []);
+	let alerts = $derived<AlertRow[]>(
+		triggeredRules.map((rule) => ({
+			id: String(rule.id),
+			icon: '🔔',
+			name: rule.name,
+			reported: rule.last_triggered ? formatDateTime(rule.last_triggered) : m.common_not_available()
+		}))
+	);
 </script>
 
 <CwDrawer

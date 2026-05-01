@@ -13,6 +13,7 @@ export interface IDevice {
 	cwloading?: boolean;
 	location_id: number;
 	alert_count?: number;
+	upload_interval?: number;
 
 	/** cw_device_type.id FK – used to look up device-type config */
 	device_type_id?: number;

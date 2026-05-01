@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
-	import { listRuleTemplates, readRuleTemplateApiError } from '$lib/rules-new/rule-template-client';
 	import type { RuleTemplateDto } from '$lib/rules-new/rule-template.types';
-	import { getRuleSubjectOptions, getRuleTemplateActionTypeOptions } from '$lib/i18n/options';
+	import { getRuleSubjectOptions } from '$lib/i18n/options';
 	import {
 		CwButton,
 		CwCard,
@@ -30,7 +32,6 @@
 	};
 
 	const SUBJECT_OPTIONS = getRuleSubjectOptions();
-	const ACTION_TYPE_OPTIONS = getRuleTemplateActionTypeOptions();
 	const columns: CwColumnDef<RuleTemplateRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
 		{ key: 'statusLabel', header: m.rules_new_status(), sortable: true },
@@ -44,10 +45,12 @@
 	let loading = $state(true);
 	let deletedTemplateIds = $state<number[]>([]);
 	let tableKey = $derived(deletedTemplateIds.join(','));
+	let app = getAppContext();
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleTemplateRow>> {
 		try {
-			const templates = await listRuleTemplates(
+			const api = new ApiService({ authToken: app.accessToken });
+			const templates = await api.getRuleTemplates(
 				{ search: query.search?.trim() || undefined },
 				{ signal: query.signal }
 			);
@@ -64,7 +67,7 @@
 
 			return { rows, total };
 		} catch (error) {
-			throw new Error(readRuleTemplateApiError(error, m.rules_new_load_failed()));
+			throw new Error(readApiErrorMessage(error, m.rules_new_load_failed()));
 		} finally {
 			loading = false;
 		}
@@ -121,10 +124,7 @@
 
 		return summarizeList(
 			template.actions.map((action) => {
-				const label =
-					ACTION_TYPE_OPTIONS.find((option) => option.value === action.actionType)?.label ??
-					action.actionType;
-				return label;
+				return action.actionTypeName ?? action.actionTypeValue ?? String(action.actionType);
 			})
 		);
 	}

@@ -42,7 +42,6 @@ function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): 
 	return (duplicateCounts.get(baseLabel) ?? 0) > 1 ? `${baseLabel} (${device.dev_eui})` : baseLabel;
 }
 
-
 function getDeviceStatus(device: IDevice, nowMs: number): 'online' | 'offline' {
 	return isDashboardDeviceOffline(device, nowMs) ? 'offline' : 'online';
 }
@@ -103,7 +102,10 @@ export function buildRelayExpandedDetailRows(
 	return rows;
 }
 
-function buildUnavailableDetailRows(label: string, typeConfig: DeviceTypeConfig | undefined): CwSensorCardDetailRow[] {
+function buildUnavailableDetailRows(
+	label: string,
+	typeConfig: DeviceTypeConfig | undefined
+): CwSensorCardDetailRow[] {
 	const primaryLabel = typeConfig?.primary_data_key ?? 'Temperature';
 	const secondaryLabel = typeConfig?.secondary_data_key ?? 'Humidity';
 	return [
@@ -150,26 +152,40 @@ function getLocationTitle(
 
 /** Metadata keys present in the /latest-data payload that are not sensor readings. */
 const SENSOR_SKIP_KEYS = new Set([
-	'dev_eui', 'name', 'location_id', 'location_name', 'group',
-	'data_table', 'data_table_v2', 'type', 'id',
-	'created_at', 'cw_device_type', 'cw_locations', 'cw_device_owners'
+	'dev_eui',
+	'name',
+	'location_id',
+	'location_name',
+	'group',
+	'data_table',
+	'data_table_v2',
+	'type',
+	'id',
+	'created_at',
+	'cw_device_type',
+	'cw_locations',
+	'cw_device_owners'
 ]);
 
-interface SensorFieldMeta { label: string; unit: string; icon: string }
+interface SensorFieldMeta {
+	label: string;
+	unit: string;
+	icon: string;
+}
 
 const KNOWN_SENSOR_FIELDS: Record<string, SensorFieldMeta> = {
-	temperature_c:       { label: 'Temperature',      unit: '°C',   icon: 'thermo' },
-	humidity:            { label: 'Humidity',          unit: '%',    icon: 'drop'   },
-	co2:                 { label: 'CO₂',              unit: 'ppm',  icon: 'thermo' },
-	moisture:            { label: 'Moisture',          unit: '%',    icon: 'drop'   },
-	ec:                  { label: 'EC',                unit: 'dS/m', icon: 'drop'   },
-	battery:             { label: 'Battery',           unit: '%',    icon: 'timer'  },
-	pressure:            { label: 'Pressure',          unit: 'hPa',  icon: 'thermo' },
-	light:               { label: 'Light',             unit: 'lux',  icon: 'thermo' },
-	light_level:         { label: 'Light',             unit: 'lux',  icon: 'thermo' },
-	voltage:             { label: 'Voltage',           unit: 'V',    icon: 'timer'  },
-	deapth_cm:           { label: 'Depth',             unit: 'cm',   icon: 'drop'   },
-	depth_cm:            { label: 'Depth',             unit: 'cm',   icon: 'drop'   },
+	temperature_c: { label: 'Temperature', unit: '°C', icon: 'thermo' },
+	humidity: { label: 'Humidity', unit: '%', icon: 'drop' },
+	co2: { label: 'CO₂', unit: 'ppm', icon: 'thermo' },
+	moisture: { label: 'Moisture', unit: '%', icon: 'drop' },
+	ec: { label: 'EC', unit: 'dS/m', icon: 'drop' },
+	battery: { label: 'Battery', unit: '%', icon: 'timer' },
+	pressure: { label: 'Pressure', unit: 'hPa', icon: 'thermo' },
+	light: { label: 'Light', unit: 'lux', icon: 'thermo' },
+	light_level: { label: 'Light', unit: 'lux', icon: 'thermo' },
+	voltage: { label: 'Voltage', unit: 'V', icon: 'timer' },
+	deapth_cm: { label: 'Depth', unit: 'cm', icon: 'drop' },
+	depth_cm: { label: 'Depth', unit: 'cm', icon: 'drop' }
 };
 
 function formatKeyLabel(key: string): string {
@@ -315,8 +331,15 @@ function buildDashboardSensorCardEntry(
 		};
 	}
 
-	const rawPrimary = device.raw_data?.[typeConfig?.primary_data_key];
-	const rawSecondary = device.raw_data?.[typeConfig?.secondary_data_key] || null;
+	const primaryDataKey = typeConfig?.primary_data_key ?? 'temperature_c';
+	const secondaryDataKey =
+		typeConfig?.secondary_data_key ??
+		(device.data_table === 'cw_soil_data' ? 'moisture' : 'humidity');
+	const rawPrimary = device.raw_data?.[primaryDataKey] ?? device.temperature_c;
+	const rawSecondary =
+		device.raw_data?.[secondaryDataKey] ??
+		(secondaryDataKey === 'moisture' ? device.soil_humidity : device.humidity) ??
+		null;
 
 	return {
 		id: `sensor:${device.dev_eui}`,
@@ -330,7 +353,7 @@ function buildDashboardSensorCardEntry(
 			primaryUnit: typeConfig?.primary_data_notation ?? '°C',
 			...(rawSecondary !== null && {
 				secondaryValue: typeof rawSecondary === 'number' ? rawSecondary : Number(rawSecondary) || 0,
-				secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
+				secondaryUnit: typeConfig?.secondary_data_notation ?? '%'
 			}),
 			status: getDeviceStatus(device, nowMs),
 			lastUpdated: device.created_at

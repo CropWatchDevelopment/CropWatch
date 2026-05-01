@@ -288,7 +288,6 @@ describe('dashboard-device-data helpers', () => {
 				co2: 0,
 				humidity: 0,
 				temperature_c: 18.1,
-				temperature_c: 18.1,
 				soil_humidity: 31.4,
 				location_id: 612,
 				cwloading: false
@@ -310,7 +309,6 @@ describe('dashboard-device-data helpers', () => {
 		expect(mergedDevices[0]).toMatchObject({
 			dev_eui: 'soil-2',
 			data_table: 'cw_soil_data',
-			temperature_c: 19.2,
 			temperature_c: 19.2,
 			soil_humidity: 31.4
 		});
