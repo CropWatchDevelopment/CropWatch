@@ -41,7 +41,6 @@
 	.app-page__shell {
 		flex: 1 0 auto;
 		width: 100%;
-		max-width: var(--app-page-max-width);
 		margin-inline: auto;
 		min-width: 0;
 		display: flex;

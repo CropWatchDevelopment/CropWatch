@@ -57,6 +57,13 @@
 			group: m.nav_group_info_management()
 		},
 		{
+			id: 'rules-new',
+			label: m.nav_rules(),
+			href: '/rules-new',
+			icon: { path: RULES_ICON_PATH },
+			group: m.nav_group_info_management()
+		},
+		{
 			id: 'reports',
 			label: m.nav_reports(),
 			href: '/reports',

@@ -50,6 +50,15 @@ export function getRuleSendMethodOptions() {
 	];
 }
 
+export function getRuleTemplateActionTypeOptions() {
+	return [
+		{ label: m.rule_notifier_email(), value: 'email' },
+		{ label: m.rule_notifier_sms(), value: 'sms' },
+		{ label: m.rule_notifier_push(), value: 'push' },
+		{ label: m.rule_notifier_discord(), value: 'discord' }
+	];
+}
+
 export function getRuleSubjectOptions() {
 	return [
 		{ label: m.rule_subject_temperature(), value: 'temperature_c' },
