@@ -52,6 +52,13 @@ export function createRuleTemplateAlertPointsEditorText(): CwAlertPointsEditorTe
 			count === 1
 				? m.reports_create_alert_points_overlap_preview_single()
 				: m.reports_create_alert_points_overlap_preview_multiple({ count: String(count) }),
+		resetNeverHappensPreviewNote: (count) =>
+			count === 1
+				? m.reports_create_alert_points_reset_never_happens_preview_single()
+				: m.reports_create_alert_points_reset_never_happens_preview_multiple({
+						count: String(count)
+					}),
+		resetNeverHappensError: m.reports_create_alert_points_reset_never_happens_error(),
 		minEqualsMaxWarning: m.reports_create_alert_points_equal_bounds_warning(),
 		defaultPointName: (index) => m.rules_condition_number({ count: String(index) }),
 		unitCelsiusLabel: '°C',
@@ -79,6 +86,17 @@ export function createRuleTemplateAlertPointsEditorText(): CwAlertPointsEditorTe
 			m.reports_create_alert_points_description_greater_than({ value, unit }),
 		pointDescriptionGreaterThanOrEqual: (value, unit) =>
 			m.reports_create_alert_points_description_greater_than_or_equal({ value, unit }),
+		resetDescriptionWaitingForValue: m.reports_create_alert_points_reset_waiting_for_value(),
+		resetDescriptionNotEquals: (value, unit) =>
+			m.reports_create_alert_points_reset_description_not_equals({ value, unit }),
+		resetDescriptionLessThan: (value, unit) =>
+			m.reports_create_alert_points_reset_description_less_than({ value, unit }),
+		resetDescriptionLessThanOrEqual: (value, unit) =>
+			m.reports_create_alert_points_reset_description_less_than_or_equal({ value, unit }),
+		resetDescriptionGreaterThan: (value, unit) =>
+			m.reports_create_alert_points_reset_description_greater_than({ value, unit }),
+		resetDescriptionGreaterThanOrEqual: (value, unit) =>
+			m.reports_create_alert_points_reset_description_greater_than_or_equal({ value, unit }),
 		overlapError: (labels) =>
 			m.reports_create_alert_points_overlap_error({ labels: formatOverlapLabels(labels) })
 	};

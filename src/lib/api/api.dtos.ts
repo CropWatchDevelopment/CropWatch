@@ -209,7 +209,6 @@ export interface RuleTemplateActionDto {
 
 export interface RuleActionTypeDto {
 	id: number;
-	actionTypeId: number;
 	name: string;
 	value?: string | null;
 	createdAt: string;

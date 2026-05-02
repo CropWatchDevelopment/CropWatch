@@ -18,7 +18,6 @@
 		CwAlertPointsEditor,
 		CwButton,
 		CwCard,
-		CwChip,
 		CwDropdown,
 		CwInput,
 		CwMultiSelect,
@@ -38,6 +37,7 @@
 		ensureAlertPointsIncludeReset,
 		hasUnsupportedAlertPointConditions
 	} from './rule-template-alert-points';
+	import RelayActions from '$lib/components/rule-actions/Relay-Actions.svelte';
 
 	type FormMode = 'create' | 'edit';
 
@@ -50,28 +50,24 @@
 		preselectedDevEui?: string | null;
 	}
 
-	interface AssignmentEntry {
-		localId: number;
-		devices: DeviceSelection[];
-	}
-
 	interface DeviceSelection {
 		id: string;
 		label: string;
 	}
 
-	interface ActionEntry {
-		localId: number;
-		persistedId: number | null;
-		actionTypeId: string;
-		actionTypeLabel: string | null;
+	interface RuleTemplateActionConfig {
 		recipient: string;
+		[key: string]: Json | undefined;
 	}
+
+	type EditableTemplateAction = Omit<RuleTemplateActionDto, 'config'> & {
+		config: RuleTemplateActionConfig;
+	};
 
 	let {
 		mode,
 		devices,
-		actionTypes,
+		actionTypes: actions,
 		authToken = null,
 		initialTemplate = null,
 		preselectedDevEui = null
@@ -89,43 +85,31 @@
 	let isActive = $state(initial?.isActive ?? true);
 	let submitting = $state(false);
 
-	let nextAssignmentId = $state((initial?.assignments.length ?? 0) + 1);
-	let assignments = $state<AssignmentEntry[]>(
+	let selectedDevices = $state<DeviceSelection[]>(
 		initial?.assignments.length
-			? initial.assignments.map((assignment, index) => ({
-					localId: index + 1,
-					devices: [createDeviceSelection(assignment.devEui)]
-				}))
-			: [
-					{
-						localId: 1,
-						devices: preselectedDevice ? [createDeviceSelection(preselectedDevice)] : []
-					}
-				]
+			? createDeviceSelections(initial.assignments.map((assignment) => assignment.devEui))
+			: preselectedDevice
+				? [createDeviceSelection(preselectedDevice)]
+				: []
 	);
 
 	const initialCriteriaGroups = buildInitialAlertCriteriaGroups(initial?.criteria ?? []);
 	let nextCriteriaGroupId = $state(initialCriteriaGroups.length + 1);
 	let criteriaGroups = $state(initialCriteriaGroups);
 
-	let nextActionId = $state((initial?.actions.length ?? 0) + 1);
-	let actions = $state<ActionEntry[]>(
+	let templateActions = $state<EditableTemplateAction[]>(
 		initial?.actions.length
-			? initial.actions.map((action, index) => ({
-					localId: index + 1,
-					persistedId: action.id,
-					actionTypeId: String(action.actionType),
-					actionTypeLabel: action.actionTypeName ?? action.actionTypeValue ?? null,
-					recipient: readActionRecipient(action)
-				}))
-			: [createBlankAction(1)]
+			? initial.actions.map(createEditableTemplateAction)
+			: [createBlankTemplateAction()]
 	);
 
 	let actionTypeOptions = $derived(
-		(actionTypes ?? []).map((actionType) => ({
-			label: actionType.name,
-			value: String(actionType.actionTypeId)
-		}))
+		actions
+			.filter((actionType) => isValidActionTypeId(actionType.id))
+			.map((actionType) => ({
+				label: actionType.name,
+				value: String(actionType.id)
+			}))
 	);
 	let deviceOptionsBase = $derived(
 		(devices ?? []).map((device) => ({
@@ -133,123 +117,77 @@
 			value: device.dev_eui
 		}))
 	);
+	let deviceOptions = $derived([
+		...selectedDevices
+			.filter((device) => !deviceOptionsBase.some((option) => option.value === device.id))
+			.map((device) => ({
+				label: device.label || getDeviceLabel(device.id),
+				value: device.id
+			})),
+		...deviceOptionsBase
+	]);
 
-	let selectedDevEuis = $derived(
-		assignments
-			.flatMap((assignment) => assignment.devices.map((device) => device.id.trim()))
-			.filter(Boolean)
-	);
-	let hasDuplicateDeviceAssignments = $derived(hasDuplicateValues(selectedDevEuis));
+	let selectedDevEuis = $derived(selectedDevices.map((device) => device.id.trim()).filter(Boolean));
 	let selectedDeviceTypeId = $derived(resolveSelectedDeviceTypeId());
 	let criteriaForTest = $derived(buildRuleTemplateCriteriaFromAlertGroups(criteriaGroups));
 	let hasUnsupportedCriteria = $derived(hasUnsupportedAlertPointConditions(criteriaGroups));
 	let isFormValid = $derived(
 		ruleName.trim().length > 0 &&
 			selectedDevEuis.length > 0 &&
-			!hasDuplicateDeviceAssignments &&
 			!hasUnsupportedCriteria &&
 			areAlertCriteriaGroupsValid(criteriaGroups) &&
-			actions.every(isActionValid)
+			templateActions.every(
+				(action) =>
+					isValidActionTypeId(action.actionType) && action.config.recipient.trim().length > 0
+			)
 	);
-	let assignmentPreview = $derived(selectedDevEuis.map(getDeviceLabel));
+	let assignmentSummary = $derived(
+		selectedDevices
+			.map((device) => device.label || getDeviceLabel(device.id))
+			.filter(Boolean)
+			.join(', ')
+	);
 	let criteriaPreview = $derived(
 		criteriaForTest.map((criterion) => {
 			const label = SUBJECT_OPTIONS.find((option) => option.value === criterion.subject)?.label;
 			const operatorLabel =
 				OPERATORS.find((option) => option.value === criterion.operator)?.label ??
 				criterion.operator;
-			return `${label ?? criterion.subject} ${operatorLabel} ${criterion.triggerValue}`;
+			return `${label ?? criterion.subject} ${operatorLabel} ${criterion.triggerValue} (${m.rules_reset_value()}: ${criterion.resetValue})`;
 		})
 	);
+	let criteriaSummary = $derived(criteriaPreview.join(', '));
 	let actionPreview = $derived(
-		actions.map((action) => {
-			return `${getActionTypeLabel(action)}: ${action.recipient}`;
+		templateActions.map((action) => {
+			return `${getActionTypeLabel(action)}: ${action.config.recipient}`;
 		})
 	);
+	let actionSummary = $derived(actionPreview.join(', '));
 
-	function createBlankAction(localId: number): ActionEntry {
+	function createBlankTemplateAction(): EditableTemplateAction {
+		const actionType = actions[0];
+
 		return {
-			localId,
-			persistedId: null,
-			actionTypeId: String(actionTypes[0]?.actionTypeId ?? ''),
-			actionTypeLabel: actionTypes[0]?.name ?? null,
-			recipient: ''
+			id: 0,
+			templateId: initial?.id ?? 0,
+			actionType: actionType?.id ?? 0,
+			actionTypeName: actionType?.name ?? null,
+			actionTypeValue: actionType?.value ?? null,
+			config: {
+				recipient: ''
+			},
+			createdAt: null
 		};
 	}
 
-	function addAssignment() {
-		assignments = [...assignments, { localId: nextAssignmentId, devices: [] }];
-		nextAssignmentId += 1;
-	}
-
-	function removeAssignment(localId: number) {
-		if (assignments.length <= 1) return;
-		assignments = assignments.filter((assignment) => assignment.localId !== localId);
-	}
-
-	function addAction() {
-		actions = [...actions, createBlankAction(nextActionId)];
-		nextActionId += 1;
-	}
-
-	function removeAction(localId: number) {
-		if (actions.length <= 1) return;
-		actions = actions.filter((action) => action.localId !== localId);
-	}
-
-	function addCriteriaGroup() {
-		criteriaGroups = [...criteriaGroups, createBlankAlertCriteriaGroup(nextCriteriaGroupId)];
-		nextCriteriaGroupId += 1;
-	}
-
-	function removeCriteriaGroup(localId: number) {
-		if (criteriaGroups.length <= 1) return;
-		criteriaGroups = criteriaGroups.filter((group) => group.localId !== localId);
-	}
-
-	function updateCriteriaGroupAlertPoints(
-		localId: number,
-		alertPoints: (typeof criteriaGroups)[number]['alertPoints']
-	) {
-		const nextAlertPoints = ensureAlertPointsIncludeReset(alertPoints);
-		criteriaGroups = criteriaGroups.map((group) =>
-			group.localId === localId
-				? {
-						...group,
-						alertPoints: nextAlertPoints
-					}
-				: group
-		);
-	}
-
-	function deviceOptionsFor(currentAssignment: AssignmentEntry) {
-		const selectedByOtherRows = assignments
-			.filter((assignment) => assignment.localId !== currentAssignment.localId)
-			.flatMap((assignment) => assignment.devices.map((device) => device.id))
-			.filter(Boolean);
-
-		const options = deviceOptionsBase.map((option) => ({
-			...option,
-			disabled: selectedByOtherRows.includes(option.value)
-		}));
-
-		if (
-			currentAssignment.devices.some(
-				(device) => !options.some((option) => option.value === device.id)
-			)
-		) {
-			return [
-				...currentAssignment.devices
-					.filter((device) => !options.some((option) => option.value === device.id))
-					.map((device) => ({
-						label: device.label,
-						value: device.id
-					})),
-				...options
-			];
-		}
-
-		return options;
+	function createEditableTemplateAction(action: RuleTemplateActionDto): EditableTemplateAction {
+		return {
+			...action,
+			config: {
+				...readActionConfig(action.config),
+				recipient: readActionRecipient(action)
+			}
+		};
 	}
 
 	function createDeviceSelection(devEui: string): DeviceSelection {
@@ -257,6 +195,16 @@
 			id: devEui,
 			label: getDeviceLabel(devEui)
 		};
+	}
+
+	function createDeviceSelections(devEuis: string[]): DeviceSelection[] {
+		const seen: string[] = [];
+		return devEuis.flatMap((devEui) => {
+			const id = devEui.trim();
+			if (!id || seen.includes(id)) return [];
+			seen.push(id);
+			return [createDeviceSelection(id)];
+		});
 	}
 
 	function getDeviceLabel(devEui: string): string {
@@ -280,14 +228,6 @@
 		return types.length === 1 ? types[0] : null;
 	}
 
-	function hasDuplicateValues(values: string[]): boolean {
-		return values.some((value, index) => values.indexOf(value) !== index);
-	}
-
-	function isActionValid(action: ActionEntry): boolean {
-		return parseActionTypeId(action.actionTypeId) !== null && action.recipient.trim().length > 0;
-	}
-
 	function buildPayload(): RuleTemplateSaveRequest {
 		return {
 			name: ruleName.trim(),
@@ -296,21 +236,21 @@
 			isActive,
 			devEuis: selectedDevEuis,
 			criteria: criteriaForTest,
-			actions: actions.map(buildActionPayload)
+			actions: templateActions.map(buildActionPayload)
 		};
 	}
 
-	function buildActionPayload(action: ActionEntry): RuleTemplateActionInput {
-		const actionType = parseActionTypeId(action.actionTypeId);
-		if (actionType === null) {
+	function buildActionPayload(action: EditableTemplateAction): RuleTemplateActionInput {
+		if (!isValidActionTypeId(action.actionType)) {
 			throw new Error('Action type is required.');
 		}
 
 		return {
-			id: action.persistedId,
-			actionType,
+			id: action.id > 0 ? action.id : null,
+			actionType: action.actionType,
 			config: {
-				recipient: action.recipient.trim()
+				...action.config,
+				recipient: action.config.recipient.trim()
 			}
 		};
 	}
@@ -354,7 +294,7 @@
 	}
 
 	function readActionRecipient(action: RuleTemplateActionDto): string {
-		const config: Record<string, Json | undefined> = isRecord(action.config) ? action.config : {};
+		const config = readActionConfig(action.config);
 		return (
 			readString(config.recipient) ??
 			readString(config.action_recipient) ??
@@ -363,34 +303,50 @@
 		);
 	}
 
-	function actionTypeOptionsFor(action: ActionEntry) {
+	function readActionConfig(config: Json): Record<string, Json | undefined> {
+		return isRecord(config) ? config : {};
+	}
+
+	function actionTypeOptionsFor(action: EditableTemplateAction) {
+		const selectedValue = String(action.actionType);
+
 		if (
-			!action.actionTypeId ||
-			actionTypeOptions.some((option) => option.value === action.actionTypeId)
+			!isValidActionTypeId(action.actionType) ||
+			actionTypeOptions.some((option) => option.value === selectedValue)
 		) {
 			return actionTypeOptions;
 		}
 
 		return [
 			{
-				label: action.actionTypeLabel ?? action.actionTypeId,
-				value: action.actionTypeId
+				label: action.actionTypeName ?? action.actionTypeValue ?? selectedValue,
+				value: selectedValue
 			},
 			...actionTypeOptions
 		];
 	}
 
-	function getActionTypeLabel(action: ActionEntry): string {
+	function selectActionType(action: EditableTemplateAction, value: string) {
+		const selectedAction = actions.find((entry) => String(entry.id) === value);
+		const parsedActionType = Number(value);
+
+		action.actionType =
+			selectedAction?.id ?? (Number.isInteger(parsedActionType) ? parsedActionType : 0);
+		action.actionTypeName = selectedAction?.name ?? null;
+		action.actionTypeValue = selectedAction?.value ?? null;
+	}
+
+	function getActionTypeLabel(action: EditableTemplateAction): string {
 		return (
-			actionTypes.find((entry) => String(entry.actionTypeId) === action.actionTypeId)?.name ??
-			action.actionTypeLabel ??
-			action.actionTypeId
+			actions.find((entry) => entry.id === action.actionType)?.name ??
+			action.actionTypeName ??
+			action.actionTypeValue ??
+			String(action.actionType)
 		);
 	}
 
-	function parseActionTypeId(value: string): number | null {
-		const id = Number(value);
-		return Number.isInteger(id) && id > 0 ? id : null;
+	function isValidActionTypeId(value: number): boolean {
+		return Number.isInteger(value) && value > 0;
 	}
 
 	function readString(value: Json | undefined): string | null {
@@ -427,50 +383,21 @@
 
 <CwCard title={m.rules_new_step_assignments()} subtitle={m.rules_new_step_assignments_subtitle()}>
 	<AppFormStack padded>
-		{#if deviceOptionsBase.length === 0}
+		{#if deviceOptions.length === 0}
 			<AppNotice tone="neutral">
 				<p>{m.rules_no_devices_available()}</p>
 			</AppNotice>
 		{:else}
-			{#each assignments as assignment, index (assignment.localId)}
-				<div class="rules-new-form__block">
-					<div class="rules-new-form__block-header">
-						<span>{m.rules_new_assignment_number({ count: String(index + 1) })}</span>
-						{#if assignments.length > 1}
-							<CwButton
-								variant="danger"
-								size="sm"
-								onclick={() => removeAssignment(assignment.localId)}
-							>
-								{m.action_remove()}
-							</CwButton>
-						{/if}
-					</div>
-					<CwMultiSelect
-						showAllSelectedItems={true}
-						label={m.devices_device()}
-						placeholder={m.rules_select_device_placeholder()}
-						options={deviceOptionsFor(assignment)}
-						bind:value={assignment.devices}
-						required
-					/>
-				</div>
-			{/each}
-
-			{#if hasDuplicateDeviceAssignments}
-				<AppNotice tone="warning">
-					<p>{m.rules_new_duplicate_devices()}</p>
-				</AppNotice>
-			{/if}
-
-			<CwButton
-				variant="secondary"
-				type="button"
-				onclick={addAssignment}
-				disabled={assignments.length >= deviceOptionsBase.length}
-			>
-				{m.rules_new_add_device_assignment()}
-			</CwButton>
+			<div class="rules-new-form__block">
+				<CwMultiSelect
+					showAllSelectedItems={true}
+					label={m.devices_device()}
+					placeholder={m.rules_select_device_placeholder()}
+					options={deviceOptions}
+					bind:value={selectedDevices}
+					required
+				/>
+			</div>
 		{/if}
 	</AppFormStack>
 </CwCard>
@@ -482,7 +409,7 @@
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_condition_number({ count: String(index + 1) })}</span>
 					{#if criteriaGroups.length > 1}
-						<CwButton variant="danger" size="sm" onclick={() => removeCriteriaGroup(group.localId)}>
+						<CwButton variant="danger" size="sm" onclick={() => criteriaGroups.splice(index, 1)}>
 							{m.action_remove()}
 						</CwButton>
 					{/if}
@@ -495,8 +422,8 @@
 					required
 				/>
 				<CwAlertPointsEditor
-					value={group.alertPoints}
-					onchange={(value) => updateCriteriaGroupAlertPoints(group.localId, value)}
+					bind:value={group.alertPoints}
+					onchange={(value) => (group.alertPoints = ensureAlertPointsIncludeReset(value))}
 					text={alertPointsEditorText}
 				/>
 			</div>
@@ -508,7 +435,14 @@
 			</AppNotice>
 		{/if}
 
-		<CwButton variant="secondary" type="button" onclick={addCriteriaGroup}>
+		<CwButton
+			variant="secondary"
+			type="button"
+			onclick={() => {
+				criteriaGroups.push(createBlankAlertCriteriaGroup(nextCriteriaGroupId));
+				nextCriteriaGroupId += 1;
+			}}
+		>
 			{m.rules_add_another_condition()}
 		</CwButton>
 	</AppFormStack>
@@ -516,12 +450,12 @@
 
 <CwCard title={m.rules_new_step_actions()} subtitle={m.rules_new_step_actions_subtitle()}>
 	<AppFormStack padded>
-		{#each actions as action, index (action.localId)}
+		{#each templateActions as action, index (action)}
 			<div class="rules-new-form__block">
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_new_action_number({ count: String(index + 1) })}</span>
-					{#if actions.length > 1}
-						<CwButton variant="danger" size="sm" onclick={() => removeAction(action.localId)}>
+					{#if templateActions.length > 1}
+						<CwButton variant="danger" size="sm" onclick={() => templateActions.splice(index, 1)}>
 							{m.action_remove()}
 						</CwButton>
 					{/if}
@@ -531,20 +465,31 @@
 					<CwDropdown
 						label={m.rules_new_action_type()}
 						options={actionTypeOptionsFor(action)}
-						bind:value={action.actionTypeId}
+						value={String(action.actionType || '')}
+						onchange={(value) => selectActionType(action, value)}
 						required
 					/>
-					<CwInput
-						label={m.rules_recipient()}
-						placeholder={m.rules_recipient_placeholder()}
-						bind:value={action.recipient}
-						required
-					/>
+					{#if action.actionTypeName === 'EMail'}
+						<CwInput
+							label={m.rules_recipient()}
+							placeholder={m.rules_recipient_placeholder()}
+							bind:value={action.config.recipient}
+							required
+						/>
+					{:else if action.actionTypeName === 'LoRaWAN'}
+						<RelayActions devices={deviceOptions} />
+					{/if}
 				</div>
 			</div>
 		{/each}
 
-		<CwButton variant="secondary" type="button" onclick={addAction}>
+		<CwButton
+			variant="secondary"
+			type="button"
+			onclick={() => {
+				templateActions.push(createBlankTemplateAction());
+			}}
+		>
 			{m.rules_new_add_action()}
 		</CwButton>
 	</AppFormStack>
@@ -562,29 +507,11 @@
 					<dt>{m.rules_new_status()}:</dt>
 					<dd>{isActive ? m.rules_new_active() : m.rules_new_inactive()}</dd>
 					<dt>{m.rules_new_assigned_devices()}:</dt>
-					<dd>
-						<div class="rules-new-form__chip-list">
-							{#each assignmentPreview as assignment (assignment)}
-								<CwChip label={assignment} tone="info" variant="soft" size="sm" />
-							{/each}
-						</div>
-					</dd>
+					<dd>{assignmentSummary}</dd>
 					<dt>{m.rules_conditions()}:</dt>
-					<dd>
-						<div class="rules-new-form__chip-list">
-							{#each criteriaPreview as item, index (item + index)}
-								<CwChip label={item} tone="warning" variant="soft" size="sm" />
-							{/each}
-						</div>
-					</dd>
+					<dd>{criteriaSummary}</dd>
 					<dt>{m.rules_new_actions()}:</dt>
-					<dd>
-						<div class="rules-new-form__chip-list">
-							{#each actionPreview as action (action)}
-								<CwChip label={action} tone="success" variant="soft" size="sm" />
-							{/each}
-						</div>
-					</dd>
+					<dd>{actionSummary}</dd>
 				</dl>
 			</AppNotice>
 		{:else}
@@ -655,12 +582,6 @@
 	.rules-new-form__summary dd {
 		margin: 0;
 		min-width: 0;
-	}
-
-	.rules-new-form__chip-list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--cw-space-1);
 	}
 
 	@media (min-width: 640px) {

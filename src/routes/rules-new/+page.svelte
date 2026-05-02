@@ -213,7 +213,6 @@
 				{#snippet toolbarActions()}
 					<CwButton variant="primary" onclick={() => goto(resolve('/rules-new/create'))}>
 						<Icon src={ADD_ICON} alt={m.rules_new_create_template()} />
-						{m.rules_new_create_template()}
 					</CwButton>
 				{/snippet}
 			</CwDataTable>
