@@ -34,9 +34,29 @@
 
 	let { devices = [], resultBase64 = $bindable<string>(), resultFPort = $bindable<number>(), resultJson = $bindable<string>() }: Props = $props();
 
-	let selectedDeviceDevEui = $state('');
-	let selectedAction = $state<ActionOption['value']>('ro1_on_timed');
-	let onTimeSeconds = $state(5);
+	const initialResult = parseInitialResult(resultJson);
+
+	let selectedDeviceDevEui = $state(initialResult?.devEui ?? '');
+	let selectedAction = $state<ActionOption['value']>(
+		isActionValue(initialResult?.action) ? initialResult.action : 'ro1_on_timed'
+	);
+	let onTimeSeconds = $state(
+		typeof initialResult?.onTimeSeconds === 'number' ? initialResult.onTimeSeconds : 5
+	);
+
+	function parseInitialResult(json: string | undefined): Partial<DownlinkResult> | null {
+		if (!json) return null;
+		try {
+			const parsed = JSON.parse(json);
+			return parsed && typeof parsed === 'object' ? (parsed as Partial<DownlinkResult>) : null;
+		} catch {
+			return null;
+		}
+	}
+
+	function isActionValue(value: unknown): value is ActionOption['value'] {
+		return value === 'ro1_on_timed' || value === 'ro2_on_timed' || value === 'both_on_timed';
+	}
 
 	let actionOptions: ActionOption[] = $derived([
 		{ label: `Relay 1 ON for ${onTimeSeconds} seconds`, value: 'ro1_on_timed' },

@@ -477,7 +477,7 @@
 							required
 						/>
 					{:else if action.actionTypeName === 'LoRaWAN'}
-						<RelayActions devices={deviceOptions} />
+						<RelayActions devices={deviceOptions} bind:resultJson={action.config.recipient} />
 					{/if}
 				</div>
 			</div>
