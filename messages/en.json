@@ -980,5 +980,11 @@
 	"gateways_public": "Public",
 	"gateways_online": "Online",
 	"gateways_offline": "Offline",
-	"gateways_private": "Private"
+	"gateways_private": "Private",
+	"rule_action_forever_acknowledge_title": "Confirm Permanent Device State",
+	"rule_action_forever_acknowledge_message": "This action will set the device to the chosen state and leave it there indefinitely. The device will not return to its previous state on its own.",
+	"rule_action_forever_acknowledge_responsibility": "You are responsible for periodically verifying that this device remains in the correct state. CropWatch will not change it back for you.",
+	"rule_action_forever_acknowledge_option": "I understand and accept responsibility for monitoring this device.",
+	"rule_action_forever_acknowledge_confirm": "I Understand, Continue",
+	"rule_action_revert_on_reset": "Revert relay state when the rule resets"
 }

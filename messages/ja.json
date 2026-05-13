@@ -980,5 +980,11 @@
 	"gateways_public": "公開",
 	"gateways_online": "オンライン",
 	"gateways_offline": "オフライン",
-	"gateways_private": "非公開"
+	"gateways_private": "非公開",
+	"rule_action_forever_acknowledge_title": "デバイスの永続的な状態を確認",
+	"rule_action_forever_acknowledge_message": "このアクションを実行すると、デバイスは指定された状態に設定され、その状態のまま無期限に維持されます。デバイスが自動的に元の状態に戻ることはありません。",
+	"rule_action_forever_acknowledge_responsibility": "このデバイスが正しい状態にあることを定期的に確認する責任は、お客様にあります。CropWatchが自動で元に戻すことはありません。",
+	"rule_action_forever_acknowledge_option": "このデバイスの監視責任を理解し、引き受けます。",
+	"rule_action_forever_acknowledge_confirm": "理解しました、続行",
+	"rule_action_revert_on_reset": "ルールがリセットされた時にリレーの状態を元に戻す"
 }

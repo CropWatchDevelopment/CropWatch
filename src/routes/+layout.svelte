@@ -127,9 +127,6 @@
 
 			<main class="app-shell__main">{@render children()}</main>
 
-			<div class="app-shell__bottom-chrome">
-				<OverviewDrawer />
-			</div>
 		</div>
 	{:else}
 		<main class="app-shell__main app-shell__main--standalone">{@render children()}</main>

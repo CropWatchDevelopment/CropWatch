@@ -4,7 +4,7 @@
 	import type { TrafficMonthlyReportDto } from '$lib/api/api.dtos';
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import { CwButton, CwDialog, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { downloadCsv } from './csvExport';
+	import { downloadCsv } from '../csvExport';
 	import { m } from '$lib/paraglide/messages.js';
     import NO_ICON from '$lib/images/icons/no.svg';
 

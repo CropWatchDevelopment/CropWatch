@@ -2,7 +2,10 @@ import { env as publicEnv } from '$env/dynamic/public';
 import { ApiService } from '$lib/api/api.service';
 import type { DevicePrimaryDataDto, LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
-import { mapDashboardPrimaryDataToDevice } from '$lib/components/dashboard/dashboard-device-data';
+import {
+	mapDashboardPrimaryDataToDevice,
+	uniqueDashboardDevices
+} from '$lib/components/dashboard/dashboard-device-data';
 import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
 import type { PageServerLoad } from './$types';
 
@@ -68,8 +71,8 @@ async function loadDashboardPayload(apiServiceInstance: ApiService) {
 		loadDashboardList('location groups', () => apiServiceInstance.getLocationGroups())
 	]);
 
-	const devices: IDevice[] = latestPrimaryData.map((device) =>
-		mapDashboardPrimaryDataToDevice(device)
+	const devices: IDevice[] = uniqueDashboardDevices(
+		latestPrimaryData.map((device) => mapDashboardPrimaryDataToDevice(device))
 	);
 
 	return {

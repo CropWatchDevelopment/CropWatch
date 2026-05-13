@@ -6,6 +6,7 @@ import type { IDevice } from '$lib/interfaces/device.interface';
 import { m } from '$lib/paraglide/messages.js';
 import {
 	resolveDeviceTypeConfig,
+	uniqueDashboardDevices,
 	type DeviceTypeConfig,
 	type DeviceTypeLookup
 } from './dashboard-device-data';
@@ -33,21 +34,26 @@ export interface DashboardLocationSensorCard {
 	sensors: DashboardSensorCardEntry[];
 }
 
-// function getDeviceBaseLabel(device: IDevice): string {
-// 	return device.name.trim() || device.dev_eui;
-// }
-
-function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): string {
-	const baseLabel = device.name;
-	return (duplicateCounts.get(baseLabel) ?? 0) > 1 ? `${baseLabel} (${device.dev_eui})` : baseLabel;
+function getDeviceLabel(device: IDevice): string {
+	return device.name?.trim() || device.dev_eui?.trim() || 'Unnamed device';
 }
 
 function getDeviceStatus(device: IDevice, nowMs: number): 'online' | 'offline' {
 	return isDashboardDeviceOffline(device, nowMs) ? 'offline' : 'online';
 }
 
-function getSensorStorageKey(device: IDevice): string {
-	return `dashboard-device-card:${device.dev_eui}`;
+function getDeviceLocationId(device: IDevice): number {
+	const locationId = Number(device.location_id);
+	return Number.isFinite(locationId) ? locationId : 0;
+}
+
+function getSensorEntryId(device: IDevice, fallbackId: string): string {
+	const devEui = device.dev_eui?.trim();
+	return devEui ? `sensor:${devEui}` : fallbackId;
+}
+
+function getSensorStorageKey(device: IDevice, entryId: string): string {
+	return `dashboard-device-card:${device.dev_eui?.trim() || entryId}`;
 }
 
 function getRelayStateLabel(value: boolean | null): string {
@@ -141,7 +147,7 @@ function getLocationTitle(
 	}
 
 	const deviceLocationName = locationDevices.find((device) =>
-		device.location_name.trim()
+		device.location_name?.trim()
 	)?.location_name;
 	if (deviceLocationName) {
 		return deviceLocationName.trim();
@@ -268,17 +274,18 @@ export function buildDeviceExpandedDetailRows(
 function buildRelaySensorCardEntry(
 	device: IDevice,
 	label: string,
-	nowMs: number
+	nowMs: number,
+	entryId: string
 ): DashboardSensorCardEntry {
 	const relay1 = coerceRelayValue(device.raw_data?.relay_1);
 	const relay2 = coerceRelayValue(device.raw_data?.relay_2);
 	const relayToValue = (value: boolean | null): number => (value === true ? 1 : 0);
 
 	return {
-		id: `sensor:${device.dev_eui}`,
-		storageKey: getSensorStorageKey(device),
+		id: entryId,
+		storageKey: getSensorStorageKey(device, entryId),
 		devEui: device.dev_eui,
-		locationId: Number(device.location_id),
+		locationId: getDeviceLocationId(device),
 		sourceDevice: device,
 		sensor: {
 			label,
@@ -302,24 +309,24 @@ function buildRelaySensorCardEntry(
 
 function buildDashboardSensorCardEntry(
 	device: IDevice,
-	duplicateCounts: Map<string, number>,
 	nowMs: number,
-	deviceTypeLookup?: DeviceTypeLookup
+	deviceTypeLookup: DeviceTypeLookup | undefined,
+	entryId: string
 ): DashboardSensorCardEntry {
-	const label = getDeviceLabel(device, duplicateCounts);
+	const label = getDeviceLabel(device);
 
 	if (isRelayDevice(device)) {
-		return buildRelaySensorCardEntry(device, label, nowMs);
+		return buildRelaySensorCardEntry(device, label, nowMs, entryId);
 	}
 
 	const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
 
 	if (device.has_primary_data === false) {
 		return {
-			id: `sensor:${device.dev_eui}`,
-			storageKey: getSensorStorageKey(device),
+			id: entryId,
+			storageKey: getSensorStorageKey(device, entryId),
 			devEui: device.dev_eui,
-			locationId: Number(device.location_id),
+			locationId: getDeviceLocationId(device),
 			sourceDevice: device,
 			sensor: {
 				label,
@@ -342,10 +349,10 @@ function buildDashboardSensorCardEntry(
 		null;
 
 	return {
-		id: `sensor:${device.dev_eui}`,
-		storageKey: getSensorStorageKey(device),
+		id: entryId,
+		storageKey: getSensorStorageKey(device, entryId),
 		devEui: device.dev_eui,
-		locationId: Number(device.location_id),
+		locationId: getDeviceLocationId(device),
 		sourceDevice: device,
 		sensor: {
 			label,
@@ -367,13 +374,18 @@ export function buildDashboardLocationSensorCards(
 	nowMs: number,
 	deviceTypeLookup?: DeviceTypeLookup
 ): DashboardLocationSensorCard[] {
-	const locationsById = new Map(
-		locations.map((location) => [Number(location.location_id), location] as const)
-	);
+	const locationsById = new Map<number, LocationDto>();
+	for (const location of locations) {
+		const locationId = Number(location.location_id);
+		if (Number.isFinite(locationId)) {
+			locationsById.set(locationId, location);
+		}
+	}
+
 	const devicesByLocationId = new Map<number, IDevice[]>();
 
-	for (const device of devices) {
-		const locationId = Number(device.location_id);
+	for (const device of uniqueDashboardDevices(devices)) {
+		const locationId = getDeviceLocationId(device);
 		const locationDevices = devicesByLocationId.get(locationId);
 
 		if (locationDevices) {
@@ -384,36 +396,13 @@ export function buildDashboardLocationSensorCards(
 		devicesByLocationId.set(locationId, [device]);
 	}
 
-	return Array.from(devicesByLocationId.entries())
-		.map(([locationId, locationDevices]) => {
-			const sortedLocationDevices = [...locationDevices].sort(
-				(left, right) =>
-					left.name.localeCompare(right.name, undefined, {
-						numeric: true,
-						sensitivity: 'base'
-					}) ||
-					left.dev_eui.localeCompare(right.dev_eui, undefined, {
-						numeric: true,
-						sensitivity: 'base'
-					})
-			);
-			const duplicateCounts = new Map<string, number>();
-
-			for (const device of sortedLocationDevices) {
-				const baseLabel = device.name;
-				duplicateCounts.set(baseLabel, (duplicateCounts.get(baseLabel) ?? 0) + 1);
-			}
-
-			return {
-				id: `location:${locationId}`,
-				locationId,
-				title: getLocationTitle(locationId, locationsById, sortedLocationDevices),
-				sensors: sortedLocationDevices.map((device) =>
-					buildDashboardSensorCardEntry(device, duplicateCounts, nowMs, deviceTypeLookup)
-				)
-			} satisfies DashboardLocationSensorCard;
+	return Array.from(devicesByLocationId.entries()).map(([locationId, locationDevices]) => ({
+		id: `location:${locationId}`,
+		locationId,
+		title: getLocationTitle(locationId, locationsById, locationDevices),
+		sensors: locationDevices.map((device, index) => {
+			const entryId = getSensorEntryId(device, `sensor:${locationId}:${index}`);
+			return buildDashboardSensorCardEntry(device, nowMs, deviceTypeLookup, entryId);
 		})
-		.sort((left, right) =>
-			left.title.localeCompare(right.title, undefined, { numeric: true, sensitivity: 'base' })
-		);
+	}));
 }

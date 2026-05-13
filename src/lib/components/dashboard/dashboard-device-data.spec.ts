@@ -5,7 +5,8 @@ import {
 	applyDashboardLatestReadings,
 	mapDashboardDeviceMetadataToDevice,
 	mapDashboardPrimaryDataToDevice,
-	mergeDashboardDevices
+	mergeDashboardDevices,
+	uniqueDashboardDevices
 } from './dashboard-device-data';
 
 describe('dashboard-device-data helpers', () => {
@@ -311,6 +312,44 @@ describe('dashboard-device-data helpers', () => {
 			data_table: 'cw_soil_data',
 			temperature_c: 19.2,
 			soil_humidity: 31.4
+		});
+	});
+
+	it('deduplicates dashboard devices by dev_eui and keeps the newest reading', () => {
+		const devices = [
+			mapDashboardPrimaryDataToDevice({
+				dev_eui: 'dev-20',
+				name: 'Canopy',
+				location_name: 'Zone A',
+				group: 'air',
+				created_at: '2026-03-13T00:05:00.000Z',
+				co2: 750,
+				humidity: 47,
+				temperature_c: 21,
+				location_id: 42
+			}),
+			mapDashboardPrimaryDataToDevice({
+				dev_eui: 'DEV-20',
+				name: 'Canopy',
+				location_name: 'Zone A',
+				group: 'air',
+				created_at: '2026-03-13T00:00:00.000Z',
+				co2: 700,
+				humidity: 45,
+				temperature_c: 19,
+				location_id: 42
+			})
+		];
+
+		const uniqueDevices = uniqueDashboardDevices(devices);
+
+		expect(uniqueDevices).toHaveLength(1);
+		expect(uniqueDevices[0]).toMatchObject({
+			dev_eui: 'dev-20',
+			co2: 750,
+			humidity: 47,
+			temperature_c: 21,
+			created_at: new Date('2026-03-13T00:05:00.000Z')
 		});
 	});
 });

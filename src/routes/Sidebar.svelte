@@ -31,8 +31,8 @@
 	const GATEWAYS_ICON_PATH =
 		'M3 8.5h10A1.5 1.5 0 0 1 14.5 10v2A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12v-2A1.5 1.5 0 0 1 3 8.5Zm0 2.5h.01M5.5 11h.01M8 11h.01M8 8.5V6M6 4.5a3.2 3.2 0 0 1 4 0M4.5 3a5.5 5.5 0 0 1 7 0';
 	// ── Read active filters from URL search params ──────────────
-	let selectedGroup = $derived(page.url.searchParams.get('group') ?? '');
-	let selectedLocation = $derived(page.url.searchParams.get('location') ?? '');
+	// let selectedGroup = $derived(page.url.searchParams.get('group') ?? '');
+	// let selectedLocation = $derived(page.url.searchParams.get('location') ?? '');
 	let selectedLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 	let dashboardFiltersOpen = $state(false);
 
@@ -58,7 +58,7 @@
 		},
 		{
 			id: 'rules-new',
-			label: m.nav_rules(),
+			label: `${m.nav_rules()} (beta)`,
 			href: '/rules-new',
 			icon: { path: RULES_ICON_PATH },
 			group: m.nav_group_info_management()
@@ -80,25 +80,25 @@
 	]);
 
 	// ── Groups list (dynamic from API) ──────────────────────────
-	const groups: CwListBoxItem<string>[] = $derived.by(() => {
-		const allItem: CwListBoxItem<string> = {
-			value: '',
-			label: m.sidebar_all_groups(),
-			badge: m.common_all_short(),
-			badgeTone: 'secondary',
-			endText: String(app.devices?.length ?? 0)
-		};
-		const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(
-			app.deviceGroups
-		).map((group) => ({
-			value: group,
-			label: group,
-			badge: group.toUpperCase().substring(0, 2),
-			badgeTone: 'info' as const
-			// endText: String(group.length ?? 0)
-		}));
-		return [allItem, ...groupItems];
-	});
+	// const groups: CwListBoxItem<string>[] = $derived.by(() => {
+	// 	const allItem: CwListBoxItem<string> = {
+	// 		value: '',
+	// 		label: m.sidebar_all_groups(),
+	// 		badge: m.common_all_short(),
+	// 		badgeTone: 'secondary',
+	// 		endText: String(app.devices?.length ?? 0)
+	// 	};
+	// 	const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(
+	// 		app.deviceGroups
+	// 	).map((group) => ({
+	// 		value: group,
+	// 		label: group,
+	// 		badge: group.toUpperCase().substring(0, 2),
+	// 		badgeTone: 'info' as const
+	// 		// endText: String(group.length ?? 0)
+	// 	}));
+	// 	return [allItem, ...groupItems];
+	// });
 
 	// ── Location Groups list (dynamic from API) ──────────────────────────
 	const locationGroups: CwListBoxItem<string>[] = $derived.by(() => {
@@ -122,22 +122,27 @@
 	});
 
 	// ── Locations list (dynamic from API) ───────────────────────
-	const locations: CwListBoxItem<string>[] = $derived.by(() => {
-		const allItem: CwListBoxItem<string> = {
-			value: '',
-			label: m.sidebar_all_locations(),
-			endText: String(app.devices?.length ?? 0)
-		};
-		const locationItems: CwListBoxItem<string>[] = (app.locations ?? []).map((loc) => ({
-			value: String(loc.location_id),
-			label: loc.name,
-			endText: String(app.devices?.filter((d) => d.location_id === loc.location_id).length ?? 0)
-		}));
-		return [allItem, ...locationItems];
-	});
+	// const locations: CwListBoxItem<string>[] = $derived.by(() => {
+	// 	const allItem: CwListBoxItem<string> = {
+	// 		value: '',
+	// 		label: m.sidebar_all_locations(),
+	// 		endText: String(app.devices?.length ?? 0)
+	// 	};
+	// 	const locationItems: CwListBoxItem<string>[] = (app.locations ?? []).map((loc) => ({
+	// 		value: String(loc.location_id),
+	// 		label: loc.name,
+	// 		endText: String(app.devices?.filter((d) => d.location_id === loc.location_id).length ?? 0)
+	// 	}));
+	// 	return [allItem, ...locationItems];
+	// });
 
 	// ── Navigate with updated search params on filter change ────
 	function applyFilter(key: string, value: string) {
+		// Close Sidebar
+		if (window.innerWidth < 1024) {
+			mode = 'closed';
+		}
+		
 		const params = new URL(page.url);
 		if (value) {
 			params.searchParams.set(key, value);
@@ -176,12 +181,12 @@
 				<div
 					class="dashboard-filters-scroll flex max-h-[50dvh] flex-col gap-2 overflow-y-auto overscroll-contain pr-1"
 				>
-					<CwListBox
+					<!-- <CwListBox
 						heading={`📱 ${m.sidebar_device_groups()}`}
 						items={groups}
 						value={selectedGroup}
 						onselect={(item) => applyFilter('group', item.value)}
-					/>
+					/> -->
 
 					<CwListBox
 						heading={`📍 ${m.sidebar_location_groups()}`}
@@ -190,12 +195,12 @@
 						onselect={(item) => applyFilter('locationGroup', item.value)}
 					/>
 
-					<CwListBox
+					<!-- <CwListBox
 						heading={`📍 ${m.sidebar_locations()}`}
 						items={locations}
 						value={selectedLocation}
 						onselect={(item) => applyFilter('location', item.value)}
-					/>
+					/> -->
 				</div>
 			</CwExpandPanel>
 		{/if}

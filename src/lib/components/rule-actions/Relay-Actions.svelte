@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { CwDropdown, CwInput } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
 
 	interface DeviceOption {
 		label: string;
@@ -16,6 +17,7 @@
 		devEui: string;
 		action: ActionOption['value'] | '';
 		onTimeSeconds: number;
+		revertOnReset: boolean;
 		payloadHex: string;
 		frmPayload: string;
 		downlink: {
@@ -27,12 +29,19 @@
 
 	interface Props {
 		devices?: DeviceOption[];
+		revertOnReset?: boolean;
 		resultBase64?: string;
-        resultFPort?: number;
-        resultJson?: string;
+		resultFPort?: number;
+		resultJson?: string;
 	}
 
-	let { devices = [], resultBase64 = $bindable<string>(), resultFPort = $bindable<number>(), resultJson = $bindable<string>() }: Props = $props();
+	let {
+		devices = [],
+		revertOnReset = $bindable<boolean>(true),
+		resultBase64 = $bindable<string>(),
+		resultFPort = $bindable<number>(),
+		resultJson = $bindable<string>()
+	}: Props = $props();
 
 	const initialResult = parseInitialResult(resultJson);
 
@@ -43,6 +52,7 @@
 	let onTimeSeconds = $state(
 		typeof initialResult?.onTimeSeconds === 'number' ? initialResult.onTimeSeconds : 5
 	);
+	let resultRevertOnReset = $state(initialResult?.revertOnReset ?? true);
 
 	function parseInitialResult(json: string | undefined): Partial<DownlinkResult> | null {
 		if (!json) return null;
@@ -76,6 +86,7 @@
 		action: selectedAction,
 		onTimeSeconds: safeOnTimeSeconds,
 		payloadHex,
+		revertOnReset: resultRevertOnReset,
 		frmPayload,
 		downlink: {
 			f_port: resultFPort || 2,
@@ -83,9 +94,10 @@
 			priority: 'NORMAL'
 		}
 	});
+	const serializedResult = $derived(JSON.stringify(result, null, 2));
 
 	$effect(() => {
-		resultJson = JSON.stringify(result, null, 2);
+		resultJson = serializedResult;
 	});
 
 	function buildTimedRelayPayload(action: ActionOption['value'], seconds: number): string {
@@ -98,10 +110,7 @@
 		// 0b10 = Relay 1 ON/NC, Relay 2 OFF/NO
 		// 0b01 = Relay 1 OFF/NO, Relay 2 ON/NC
 		// 0b11 = Both ON/NC
-		const relayState =
-			action === 'ro1_on_timed' ? 0x10 :
-			action === 'ro2_on_timed' ? 0x01 :
-			0x11;
+		const relayState = action === 'ro1_on_timed' ? 0x10 : action === 'ro2_on_timed' ? 0x01 : 0x11;
 
 		const milliseconds = seconds * 1000;
 
@@ -118,7 +127,10 @@
 	}
 
 	function bytesToHex(bytes: number[]): string {
-		return bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+		return bytes
+			.map((byte) => byte.toString(16).padStart(2, '0'))
+			.join('')
+			.toUpperCase();
 	}
 
 	function hexToBase64(hex: string): string {
@@ -145,7 +157,7 @@
 	<CwInput
 		label="On time in seconds"
 		placeholder="Enter time in seconds"
-		type="number"
+		type="numeric"
 		min="1"
 		max="65"
 		value={String(onTimeSeconds)}
@@ -158,4 +170,8 @@
 		options={actionOptions}
 		bind:value={selectedAction}
 	/>
+
+
+	<input type="checkbox" id="revertOnReset" class="w-5 h-5" bind:checked={resultRevertOnReset} />
+	<label for="revertOnReset">{m.rule_action_revert_on_reset()}</label>
 </div>

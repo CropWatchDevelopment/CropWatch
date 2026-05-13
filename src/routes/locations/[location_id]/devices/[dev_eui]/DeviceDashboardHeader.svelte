@@ -5,10 +5,10 @@
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwDuration, CwSpinner } from '@cropwatchdevelopment/cwui';
-	import CsvExportDialog from './csvExportDialog.svelte';
-	import CsvTrafficExportDialog from './csvTrafficExportDialog.svelte';
+	import CsvExportDialog from './dialogs/csvExportDialog.svelte';
+	import CsvTrafficExportDialog from './dialogs/csvTrafficExportDialog.svelte';
 	import type { RangeSelection, TimeRangeOptions } from './device-detail';
-	import NotesReviewDialog from './NotesReviewDialog.svelte';
+	import NotesReviewDialog from './dialogs/NotesReviewDialog.svelte';
 
 	interface Props {
 		activeRange: RangeSelection | null;

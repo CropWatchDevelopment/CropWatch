@@ -2,17 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { LocationDto } from '$lib/api/api.dtos';
 import type { IDevice } from '$lib/interfaces/device.interface';
 import { m } from '$lib/paraglide/messages.js';
-import {
-	buildDashboardLocationSensorCards,
-	buildRelayExpandedDetailRows
-} from './device-cards';
+import { buildDashboardLocationSensorCards, buildRelayExpandedDetailRows } from './device-cards';
 import {
 	DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES,
 	getDashboardDeviceNextRefreshDelayMs
 } from './dashboard-device-refresh';
 
 describe('device-cards helpers', () => {
-	it('groups devices by location, sorts titles, and disambiguates duplicate labels', () => {
+	it('groups devices by location and keeps simple device labels', () => {
 		const devices: IDevice[] = [
 			{
 				dev_eui: 'dev-2',
@@ -63,17 +60,57 @@ describe('device-cards helpers', () => {
 
 		const cards = buildDashboardLocationSensorCards(devices, locations, Date.now());
 
-		expect(cards.map((card) => card.title)).toEqual(['Atrium', 'Zone B']);
-		expect(cards[1]?.sensors.map(({ sensor }) => sensor.label)).toEqual([
-			'Canopy (dev-1)',
-			'Canopy (dev-2)'
-		]);
-		expect(cards[1]?.sensors[0]).toMatchObject({
-			id: 'sensor:dev-1',
-			storageKey: 'dashboard-device-card:dev-1',
-			devEui: 'dev-1',
+		expect(cards.map((card) => card.title)).toEqual(['Zone B', 'Atrium']);
+		expect(cards[0]?.sensors.map(({ sensor }) => sensor.label)).toEqual(['Canopy', 'Canopy']);
+		expect(cards[0]?.sensors[0]).toMatchObject({
+			id: 'sensor:dev-2',
+			storageKey: 'dashboard-device-card:dev-2',
+			devEui: 'dev-2',
 			locationId: 2,
-			sourceDevice: devices[1]
+			sourceDevice: devices[0]
+		});
+	});
+
+	it('deduplicates repeated device rows so sensor keys stay unique', () => {
+		const devices: IDevice[] = [
+			{
+				dev_eui: 'dev-1',
+				name: 'Canopy',
+				location_name: 'Zone A',
+				group: 'air',
+				created_at: new Date('2026-03-13T00:00:00.000Z'),
+				co2: 880,
+				humidity: 54,
+				temperature_c: 21,
+				location_id: 1
+			},
+			{
+				dev_eui: 'dev-1',
+				name: 'Canopy',
+				location_name: 'Zone A',
+				group: 'air',
+				created_at: new Date('2026-03-13T00:10:00.000Z'),
+				co2: 901,
+				humidity: 58,
+				temperature_c: 23,
+				location_id: 1
+			}
+		];
+
+		const cards = buildDashboardLocationSensorCards(
+			devices,
+			[{ location_id: 1, name: 'Zone A' } as LocationDto],
+			Date.now()
+		);
+
+		expect(cards[0]?.sensors).toHaveLength(1);
+		expect(cards[0]?.sensors[0]).toMatchObject({
+			id: 'sensor:dev-1',
+			devEui: 'dev-1',
+			sensor: {
+				label: 'Canopy',
+				primaryValue: 23
+			}
 		});
 	});
 
@@ -117,17 +154,15 @@ describe('device-cards helpers', () => {
 		);
 
 		expect(cards[0]?.sensors[0]?.sensor).toMatchObject({
-			label: 'Old Sensor',
-			status: 'offline'
-		});
-		expect(cards[0]?.sensors[1]?.sensor).toMatchObject({
 			label: 'Recent Sensor',
 			status: 'online'
 		});
-		expect(cards[0]?.sensors[1]?.sensor.expectedUpdateAfterMinutes).toBeUndefined();
-		expect(
-			getDashboardDeviceNextRefreshDelayMs(cards[0]!.sensors[0]!.sourceDevice)
-		).not.toBeNull();
+		expect(cards[0]?.sensors[0]?.sensor.expectedUpdateAfterMinutes).toBeUndefined();
+		expect(cards[0]?.sensors[1]?.sensor).toMatchObject({
+			label: 'Old Sensor',
+			status: 'offline'
+		});
+		expect(getDashboardDeviceNextRefreshDelayMs(cards[0]!.sensors[1]!.sourceDevice)).not.toBeNull();
 		expect(DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES).toBe(10.3);
 
 		vi.useRealTimers();
@@ -189,7 +224,9 @@ describe('device-cards helpers', () => {
 		);
 
 		const sensors = cards[0]!.sensors.map((entry) => entry.sensor);
-		const [greenhouse, idle, pump] = sensors;
+		const greenhouse = sensors.find((sensor) => sensor.label === 'Greenhouse Relay');
+		const pump = sensors.find((sensor) => sensor.label === 'Pump Relay');
+		const idle = sensors.find((sensor) => sensor.label === 'Idle Relay');
 
 		expect(greenhouse).toMatchObject({
 			label: 'Greenhouse Relay',
@@ -201,8 +238,8 @@ describe('device-cards helpers', () => {
 			secondary_icon: 'relay',
 			status: 'online'
 		});
-		expect(greenhouse.primaryUnit).toBe(m.display_relay_one());
-		expect(greenhouse.secondaryUnit).toBe(m.display_relay_two());
+		expect(greenhouse?.primaryUnit).toBe(m.display_relay_one());
+		expect(greenhouse?.secondaryUnit).toBe(m.display_relay_two());
 
 		expect(pump).toMatchObject({
 			primaryValue: 1,
