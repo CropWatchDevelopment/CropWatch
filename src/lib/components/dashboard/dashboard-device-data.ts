@@ -60,6 +60,16 @@ function preferNewerCreatedAt(incoming: Date, current: Date): Date {
 	return incomingMs > currentMs ? incoming : current;
 }
 
+function isNewerDeviceReading(incoming: IDevice, current: IDevice): boolean {
+	return preferNewerCreatedAt(incoming.created_at, current.created_at) === incoming.created_at;
+}
+
+function getDashboardDeviceKey(device: IDevice): string {
+	return String(device.dev_eui ?? '')
+		.trim()
+		.toLowerCase();
+}
+
 function getDeviceDataTable(
 	device: DeviceDto | DevicePrimaryDataDto | Record<string, unknown>
 ): string {
@@ -67,7 +77,9 @@ function getDeviceDataTable(
 	if (directDataTable) return directDataTable as string;
 
 	if (isRecord(device.cw_device_type)) {
-		return (device.cw_device_type.data_table_v2 ?? device.cw_device_type.data_table ?? '') as string;
+		return (device.cw_device_type.data_table_v2 ??
+			device.cw_device_type.data_table ??
+			'') as string;
 	}
 
 	return '';
@@ -78,6 +90,14 @@ function extractDeviceTypeId(
 ): number | undefined {
 	const raw = (device as Record<string, unknown>).type;
 	if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return raw;
+
+	if (isRecord(device.cw_device_type)) {
+		const embeddedId = device.cw_device_type.id;
+		if (typeof embeddedId === 'number' && Number.isFinite(embeddedId) && embeddedId > 0) {
+			return embeddedId;
+		}
+	}
+
 	return undefined;
 }
 
@@ -95,6 +115,31 @@ export interface DeviceTypeLookup {
 	byModel: Record<string, DeviceTypeConfig>;
 	/** cw_device_type.id → model string (bridges CwDevice.type FK) */
 	idToModel: Record<number, string>;
+}
+
+function mapDeviceTypeRecordToConfig(
+	deviceType: Record<string, unknown> | undefined
+): DeviceTypeConfig | undefined {
+	if (!deviceType) {
+		return undefined;
+	}
+
+	const config: DeviceTypeConfig = {
+		primary_data_key:
+			typeof deviceType.primary_data_v2 === 'string' ? deviceType.primary_data_v2 : undefined,
+		secondary_data_key:
+			typeof deviceType.secondary_data_v2 === 'string' ? deviceType.secondary_data_v2 : undefined,
+		primary_data_notation:
+			typeof deviceType.primary_data_notation === 'string'
+				? deviceType.primary_data_notation
+				: undefined,
+		secondary_data_notation:
+			typeof deviceType.secondary_data_notation === 'string'
+				? deviceType.secondary_data_notation
+				: undefined
+	};
+
+	return Object.values(config).some((value) => value != null) ? config : undefined;
 }
 
 /**
@@ -115,22 +160,25 @@ export function buildDeviceTypeLookup(deviceTypes: DeviceTypeDto[]): DeviceTypeL
 
 		if (byModel[model]) continue;
 
-		byModel[model] = {
-			primary_data_key: dt.primary_data_v2 ?? undefined,
-			secondary_data_key: dt.secondary_data_v2 ?? undefined,
-			primary_data_notation: dt.primary_data_notation ?? undefined,
-			secondary_data_notation: dt.secondary_data_notation ?? undefined,
-		};
+		byModel[model] = mapDeviceTypeRecordToConfig(dt) ?? {};
 	}
 
 	return { byModel, idToModel };
 }
 
-/** Resolve a DeviceTypeConfig for an IDevice using its type FK. */
+/** Resolve a DeviceTypeConfig for an IDevice using embedded API data first. */
 export function resolveDeviceTypeConfig(
 	device: IDevice,
-	lookup: DeviceTypeLookup | undefined
+	lookup?: DeviceTypeLookup
 ): DeviceTypeConfig | undefined {
+	const embeddedConfig = mapDeviceTypeRecordToConfig(
+		isRecord(device.raw_data?.cw_device_type) ? device.raw_data.cw_device_type : undefined
+	);
+
+	if (embeddedConfig) {
+		return embeddedConfig;
+	}
+
 	if (!lookup || !device.device_type_id) return undefined;
 	const model = lookup.idToModel[device.device_type_id];
 	return model ? lookup.byModel[model] : undefined;
@@ -164,10 +212,10 @@ export function mapDashboardPrimaryDataToDevice(
 	const moisture = device.moisture;
 	const soilHumidity = moisture != null ? Number(moisture) : null;
 
-	// Preserve the full raw payload so dynamic column keys can be resolved
+	// Preserve raw sensor fields and embedded type config so dynamic keys can be resolved.
 	const raw_data: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(device)) {
-		if (key !== 'cw_device_type' && key !== 'cw_locations' && key !== 'cw_device_owners') {
+		if (key !== 'cw_locations' && key !== 'cw_device_owners') {
 			raw_data[key] = value;
 		}
 	}
@@ -221,43 +269,82 @@ export function applyDashboardLatestReadings(target: IDevice, source: IDevice): 
 	}
 }
 
+function mergeDashboardDevice(device: IDevice, latestDevice: IDevice): IDevice {
+	const resolvedDataTable = preferIncomingText(latestDevice.data_table, device.data_table);
+	const isSoilDevice = resolvedDataTable === 'cw_soil_data';
+
+	return {
+		...device,
+		...latestDevice,
+		name: preferIncomingText(latestDevice.name, device.name) ?? device.dev_eui,
+		group: preferIncomingText(latestDevice.group, device.group),
+		data_table: resolvedDataTable,
+		location_name: preferIncomingText(latestDevice.location_name, device.location_name) ?? '',
+		location_id: preferIncomingLocationId(latestDevice.location_id, device.location_id),
+		has_primary_data: latestDevice.has_primary_data ?? device.has_primary_data,
+		soil_humidity:
+			latestDevice.soil_humidity ?? (isSoilDevice ? (device.soil_humidity ?? null) : null),
+		cwloading: device.cwloading ?? latestDevice.cwloading ?? false,
+		alert_count: latestDevice.alert_count ?? device.alert_count ?? 0,
+		device_type_id: device.device_type_id ?? latestDevice.device_type_id,
+		created_at: preferNewerCreatedAt(latestDevice.created_at, device.created_at),
+		raw_data: latestDevice.raw_data
+			? { ...device.raw_data, ...latestDevice.raw_data }
+			: device.raw_data
+	};
+}
+
+export function uniqueDashboardDevices(devices: IDevice[]): IDevice[] {
+	const uniqueDevices: IDevice[] = [];
+	const indexByDevEui = new Map<string, number>();
+
+	for (const device of devices) {
+		const deviceKey = getDashboardDeviceKey(device);
+		if (!deviceKey) {
+			uniqueDevices.push(device);
+			continue;
+		}
+
+		const existingIndex = indexByDevEui.get(deviceKey);
+		if (existingIndex == null) {
+			indexByDevEui.set(deviceKey, uniqueDevices.length);
+			uniqueDevices.push(device);
+			continue;
+		}
+
+		const existingDevice = uniqueDevices[existingIndex];
+		uniqueDevices[existingIndex] = isNewerDeviceReading(device, existingDevice)
+			? mergeDashboardDevice(existingDevice, device)
+			: mergeDashboardDevice(device, existingDevice);
+	}
+
+	return uniqueDevices;
+}
+
 export function mergeDashboardDevices(
 	currentDevices: IDevice[],
 	latestDevices: IDevice[]
 ): IDevice[] {
-	if (latestDevices.length === 0) return currentDevices;
+	const mergedDevices = uniqueDashboardDevices(currentDevices);
+	if (latestDevices.length === 0) return mergedDevices;
 
-	const latestByDevEui = new Map(latestDevices.map((device) => [device.dev_eui, device] as const));
+	const latestByDevEui = new Map<string, IDevice>();
+	for (const device of uniqueDashboardDevices(latestDevices)) {
+		const deviceKey = getDashboardDeviceKey(device);
+		if (deviceKey) {
+			latestByDevEui.set(deviceKey, device);
+		}
+	}
 
-	const mergedDevices = currentDevices.map((device) => {
-		const latestDevice = latestByDevEui.get(device.dev_eui);
-		if (!latestDevice) return device;
+	for (let index = 0; index < mergedDevices.length; index += 1) {
+		const device = mergedDevices[index];
+		const deviceKey = getDashboardDeviceKey(device);
+		const latestDevice = latestByDevEui.get(deviceKey);
+		if (!latestDevice) continue;
 
-		latestByDevEui.delete(device.dev_eui);
-		const resolvedDataTable = preferIncomingText(latestDevice.data_table, device.data_table);
-		const isSoilDevice = resolvedDataTable === 'cw_soil_data';
-
-		return {
-			...device,
-			...latestDevice,
-			name: preferIncomingText(latestDevice.name, device.name) ?? device.dev_eui,
-			group: preferIncomingText(latestDevice.group, device.group),
-			data_table: resolvedDataTable,
-			location_name: preferIncomingText(latestDevice.location_name, device.location_name) ?? '',
-			location_id: preferIncomingLocationId(latestDevice.location_id, device.location_id),
-			has_primary_data: latestDevice.has_primary_data ?? device.has_primary_data ?? false,
-			soil_humidity:
-				latestDevice.soil_humidity ?? (isSoilDevice ? (device.soil_humidity ?? null) : null),
-			cwloading: device.cwloading ?? latestDevice.cwloading ?? false,
-			alert_count: latestDevice.alert_count ?? device.alert_count ?? 0,
-			// Preserve device_type_id (metadata device has it, primary data refresh may not)
-			device_type_id: device.device_type_id ?? latestDevice.device_type_id,
-			created_at: preferNewerCreatedAt(latestDevice.created_at, device.created_at),
-			raw_data: latestDevice.raw_data
-				? { ...device.raw_data, ...latestDevice.raw_data }
-				: device.raw_data
-		};
-	});
+		latestByDevEui.delete(deviceKey);
+		mergedDevices[index] = mergeDashboardDevice(device, latestDevice);
+	}
 
 	for (const latestDevice of latestByDevEui.values()) {
 		mergedDevices.push({

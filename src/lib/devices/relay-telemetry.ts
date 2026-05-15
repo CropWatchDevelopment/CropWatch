@@ -4,7 +4,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function coerceRelayValue(value: unknown): boolean | null {
+export function coerceRelayValue(value: unknown): boolean | null {
 	if (typeof value === 'boolean') return value;
 	if (value === 1) return true;
 	if (value === 0) return false;

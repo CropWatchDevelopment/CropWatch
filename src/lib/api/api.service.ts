@@ -22,7 +22,11 @@ import type {
 	PaginationQuery,
 	ReportDto,
 	ReportsQuery,
+	RuleActionTypeDto,
 	RuleDto,
+	RuleTemplateDto,
+	RuleTemplateListQuery,
+	RuleTemplateSaveRequest,
 	RulesQuery,
 	SensorTimeSeriesPoint,
 	TimeRangeQuery,
@@ -128,6 +132,8 @@ const REPORTS_ENDPOINT = '/reports';
 const REPORTS_BASE_ENDPOINT = publicEnv.PUBLIC_REPORTS_ENDPOINT ?? REPORTS_ENDPOINT;
 const REPORT_BY_REPORT_ID_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/{report_id}`;
 const RULES_BASE_ENDPOINT = publicEnv.PUBLIC_RULES_ENDPOINT ?? '/rules';
+const RULE_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_RULE_TEMPLATES_ENDPOINT ?? '/rules-new';
+const RULE_TEMPLATE_ACTION_TYPES_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/action-types`;
 const TRIGGERED_RULES_BASE_ENDPOINT =
 	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT ?? `${RULES_BASE_ENDPOINT}/triggered`;
 const TRIGGERED_RULES_COUNT_ENDPOINT =
@@ -135,6 +141,7 @@ const TRIGGERED_RULES_COUNT_ENDPOINT =
 const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
 const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{report_id}/{reportName}`;
 const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
+const RULE_TEMPLATE_BY_ID_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}`;
 const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air/notes';
 const GET_AIR_NOTES_ENDPOINT =
 	publicEnv.PUBLIC_GET_AIR_NOTES_ENDPOINT ?? '/air/notes/{dev_eui}/month/{month}/year/{year}';
@@ -1037,6 +1044,63 @@ export class ApiService {
 	public deleteRule(ruleGroupId: string): Promise<number> {
 		return this.request<number>(replacePathParams(RULE_BY_ID_ENDPOINT, { id: ruleGroupId }), {
 			method: 'DELETE'
+		});
+	}
+
+	public getRuleTemplates(
+		query: RuleTemplateListQuery = {},
+		options: ApiMethodOptions = {}
+	): Promise<RuleTemplateDto[]> {
+		return this.request<RuleTemplateDto[]>(RULE_TEMPLATES_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal,
+			query: {
+				search: query.search
+			}
+		});
+	}
+
+	public getRuleTemplate(id: number, options: ApiMethodOptions = {}): Promise<RuleTemplateDto> {
+		return this.request<RuleTemplateDto>(replacePathParams(RULE_TEMPLATE_BY_ID_ENDPOINT, { id }), {
+			method: 'GET',
+			signal: options.signal
+		});
+	}
+
+	public getRuleTemplateActionTypes(options: ApiMethodOptions = {}): Promise<RuleActionTypeDto[]> {
+		return this.request<RuleActionTypeDto[]>(RULE_TEMPLATE_ACTION_TYPES_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal
+		});
+	}
+
+	public createRuleTemplate(
+		payload: RuleTemplateSaveRequest,
+		options: ApiMethodOptions = {}
+	): Promise<RuleTemplateDto> {
+		return this.request<RuleTemplateDto>(RULE_TEMPLATES_ENDPOINT, {
+			method: 'POST',
+			body: payload,
+			signal: options.signal
+		});
+	}
+
+	public updateRuleTemplate(
+		id: number,
+		payload: RuleTemplateSaveRequest,
+		options: ApiMethodOptions = {}
+	): Promise<RuleTemplateDto> {
+		return this.request<RuleTemplateDto>(replacePathParams(RULE_TEMPLATE_BY_ID_ENDPOINT, { id }), {
+			method: 'PATCH',
+			body: payload,
+			signal: options.signal
+		});
+	}
+
+	public deleteRuleTemplate(id: number, options: ApiMethodOptions = {}): Promise<{ id: number }> {
+		return this.request<{ id: number }>(replacePathParams(RULE_TEMPLATE_BY_ID_ENDPOINT, { id }), {
+			method: 'DELETE',
+			signal: options.signal
 		});
 	}
 

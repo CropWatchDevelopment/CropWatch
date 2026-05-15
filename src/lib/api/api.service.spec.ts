@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApiService } from './api.service';
+import { readApiErrorMessage } from './api-error';
+import { ApiService, ApiServiceError } from './api.service';
 
 function createJsonResponse(payload: unknown): Response {
 	return new Response(JSON.stringify(payload), {
@@ -351,5 +352,167 @@ describe('ApiService relay endpoints', () => {
 			durationSeconds: 30,
 			relay: 2
 		});
+	});
+});
+
+describe('ApiService rule template endpoints', () => {
+	it('lists rule templates through /rules-new with search', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			return createJsonResponse([]);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn,
+			authToken: 'token-123'
+		});
+
+		await api.getRuleTemplates({ search: 'High Temp' });
+
+		expect(requestedMethod).toBe('GET');
+		expect(requestedUrl).toBe('https://example.com/rules-new?search=High+Temp');
+	});
+
+	it('creates rule templates with the documented save payload', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+		let requestedBody = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			requestedBody = String(init?.body ?? '');
+			return createJsonResponse({ id: 1 });
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.createRuleTemplate({
+			name: 'High temp',
+			description: null,
+			deviceTypeId: null,
+			isActive: true,
+			devEuis: ['ABC123'],
+			criteria: [
+				{
+					subject: 'temperature_c',
+					operator: '>',
+					triggerValue: 30,
+					resetValue: 25
+				}
+			],
+			actions: [
+				{
+					actionType: 1,
+					config: {
+						recipient: 'grower@example.com'
+					}
+				}
+			]
+		});
+
+		expect(requestedMethod).toBe('POST');
+		expect(requestedUrl).toBe('https://example.com/rules-new');
+		expect(JSON.parse(requestedBody)).toEqual({
+			name: 'High temp',
+			description: null,
+			deviceTypeId: null,
+			isActive: true,
+			devEuis: ['ABC123'],
+			criteria: [
+				{
+					subject: 'temperature_c',
+					operator: '>',
+					triggerValue: 30,
+					resetValue: 25
+				}
+			],
+			actions: [
+				{
+					actionType: 1,
+					config: {
+						recipient: 'grower@example.com'
+					}
+				}
+			]
+		});
+	});
+
+	it('loads rule template action types from the RulesNew action-types endpoint', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			return createJsonResponse([]);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.getRuleTemplateActionTypes();
+
+		expect(requestedMethod).toBe('GET');
+		expect(requestedUrl).toBe('https://example.com/rules-new/action-types');
+	});
+
+	it('uses /rules-new/{id} for read, update, and delete', async () => {
+		const calls: Array<{ method: string; url: string }> = [];
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			calls.push({
+				method: String(init?.method ?? 'GET'),
+				url: String(input)
+			});
+			return createJsonResponse({ id: 42 });
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.getRuleTemplate(42);
+		await api.updateRuleTemplate(42, {
+			name: 'High temp',
+			devEuis: ['ABC123'],
+			criteria: [{ subject: 'temperature_c', operator: '>', triggerValue: 30, resetValue: 25 }],
+			actions: [{ actionType: 1, config: { recipient: 'grower@example.com' } }]
+		});
+		await api.deleteRuleTemplate(42);
+
+		expect(calls).toEqual([
+			{ method: 'GET', url: 'https://example.com/rules-new/42' },
+			{ method: 'PATCH', url: 'https://example.com/rules-new/42' },
+			{ method: 'DELETE', url: 'https://example.com/rules-new/42' }
+		]);
+	});
+});
+
+describe('readApiErrorMessage', () => {
+	it('prefers nested API payload messages from ApiServiceError objects', () => {
+		const error = new ApiServiceError(400, 'Bad Request', {
+			url: 'https://example.com/rules-new',
+			payload: {
+				statusCode: 400,
+				error: 'Bad Request',
+				message: ['Rule name is required.', 'At least one device is required.']
+			}
+		});
+
+		expect(readApiErrorMessage(error, 'Fallback')).toBe(
+			'Rule name is required., At least one device is required.'
+		);
 	});
 });
