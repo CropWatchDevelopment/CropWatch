@@ -8,14 +8,24 @@
 		disabled?: boolean;
 	}
 
+	type ActionValue =
+		| 'ro1_on_timed'
+		| 'ro2_on_timed'
+		| 'both_on_timed'
+		| 'ro1_on_permanent'
+		| 'ro1_off_permanent'
+		| 'ro2_on_permanent'
+		| 'ro2_off_permanent';
+
 	interface ActionOption {
 		label: string;
-		value: 'ro1_on_timed' | 'ro2_on_timed' | 'both_on_timed';
+		value: ActionValue;
+		isReversable: boolean;
 	}
 
 	interface DownlinkResult {
 		devEui: string;
-		action: ActionOption['value'] | '';
+		action: ActionValue | '';
 		onTimeSeconds: number;
 		revertOnReset: boolean;
 		payloadHex: string;
@@ -46,7 +56,7 @@
 	const initialResult = parseInitialResult(resultJson);
 
 	let selectedDeviceDevEui = $state(initialResult?.devEui ?? '');
-	let selectedAction = $state<ActionOption['value']>(
+	let selectedAction = $state<ActionValue>(
 		isActionValue(initialResult?.action) ? initialResult.action : 'ro1_on_timed'
 	);
 	let onTimeSeconds = $state(
@@ -64,29 +74,51 @@
 		}
 	}
 
-	function isActionValue(value: unknown): value is ActionOption['value'] {
-		return value === 'ro1_on_timed' || value === 'ro2_on_timed' || value === 'both_on_timed';
+	function isActionValue(value: unknown): value is ActionValue {
+		return (
+			value === 'ro1_on_timed' ||
+			value === 'ro2_on_timed' ||
+			value === 'both_on_timed' ||
+			value === 'ro1_on_permanent' ||
+			value === 'ro1_off_permanent' ||
+			value === 'ro2_on_permanent' ||
+			value === 'ro2_off_permanent'
+		);
 	}
 
 	let actionOptions: ActionOption[] = $derived([
-		{ label: `Relay 1 ON for ${onTimeSeconds} seconds`, value: 'ro1_on_timed' },
-		{ label: `Relay 2 ON for ${onTimeSeconds} seconds`, value: 'ro2_on_timed' },
-		{ label: `Both relays ON for ${onTimeSeconds} seconds`, value: 'both_on_timed' }
+		{ label: `Relay 1 ON for ${onTimeSeconds} seconds`, value: 'ro1_on_timed', isReversable: false },
+		{ label: `Relay 2 ON for ${onTimeSeconds} seconds`, value: 'ro2_on_timed', isReversable: false },
+		{
+			label: `Both relays ON for ${onTimeSeconds} seconds`,
+			value: 'both_on_timed',
+			isReversable: false
+		},
+		{ label: 'Relay 1 permanently ON', value: 'ro1_on_permanent', isReversable: true },
+		{ label: 'Relay 1 permanently OFF', value: 'ro1_off_permanent', isReversable: true },
+		{ label: 'Relay 2 permanently ON', value: 'ro2_on_permanent', isReversable: true },
+		{ label: 'Relay 2 permanently OFF', value: 'ro2_off_permanent', isReversable: true }
 	]);
+
+	const selectedActionOption = $derived(actionOptions.find((o) => o.value === selectedAction));
+	const isReversable = $derived(selectedActionOption?.isReversable ?? false);
+	const isTimedAction = $derived(selectedAction.endsWith('_timed'));
 
 	const safeOnTimeSeconds = $derived(
 		Number.isFinite(onTimeSeconds) ? Math.max(1, Math.min(65, Math.trunc(onTimeSeconds))) : 5
 	);
 
-	const payloadHex = $derived(buildTimedRelayPayload(selectedAction, safeOnTimeSeconds));
+	const payloadHex = $derived(buildRelayPayload(selectedAction, safeOnTimeSeconds));
 	const frmPayload = $derived(hexToBase64(payloadHex));
+
+	const effectiveRevertOnReset = $derived(isReversable && resultRevertOnReset);
 
 	const result = $derived<DownlinkResult>({
 		devEui: selectedDeviceDevEui,
 		action: selectedAction,
 		onTimeSeconds: safeOnTimeSeconds,
 		payloadHex,
-		revertOnReset: resultRevertOnReset,
+		revertOnReset: effectiveRevertOnReset,
 		frmPayload,
 		downlink: {
 			f_port: resultFPort || 2,
@@ -100,7 +132,20 @@
 		resultJson = serializedResult;
 	});
 
-	function buildTimedRelayPayload(action: ActionOption['value'], seconds: number): string {
+	$effect(() => {
+		if (!isReversable && resultRevertOnReset) {
+			resultRevertOnReset = false;
+		}
+	});
+
+	function buildRelayPayload(action: ActionValue, seconds: number): string {
+		if (action.endsWith('_timed')) {
+			return buildTimedRelayPayload(action, seconds);
+		}
+		return buildPermanentRelayPayload(action);
+	}
+
+	function buildTimedRelayPayload(action: ActionValue, seconds: number): string {
 		const command = 0x05;
 
 		// 0x01 = return relay(s) to original state after timeout.
@@ -124,6 +169,38 @@
 		const timeLow = milliseconds & 0xff;
 
 		return bytesToHex([command, inverterMode, relayState, timeHigh, timeLow]);
+	}
+
+	function buildPermanentRelayPayload(action: ActionValue): string {
+		// Dragino fixed relay command: [0x03, relay1Byte, relay2Byte]
+		// 0x00 = OFF, 0x01 = ON, 0x11 = no action on that relay.
+		const command = 0x03;
+		const NO_ACTION = 0x11;
+
+		let relay1: number;
+		let relay2: number;
+		switch (action) {
+			case 'ro1_on_permanent':
+				relay1 = 0x01;
+				relay2 = NO_ACTION;
+				break;
+			case 'ro1_off_permanent':
+				relay1 = 0x00;
+				relay2 = NO_ACTION;
+				break;
+			case 'ro2_on_permanent':
+				relay1 = NO_ACTION;
+				relay2 = 0x01;
+				break;
+			case 'ro2_off_permanent':
+				relay1 = NO_ACTION;
+				relay2 = 0x00;
+				break;
+			default:
+				return '';
+		}
+
+		return bytesToHex([command, relay1, relay2]);
 	}
 
 	function bytesToHex(bytes: number[]): string {
@@ -154,16 +231,6 @@
 		bind:value={selectedDeviceDevEui}
 	/>
 
-	<CwInput
-		label="On time in seconds"
-		placeholder="Enter time in seconds"
-		type="numeric"
-		min="1"
-		max="65"
-		value={String(onTimeSeconds)}
-		oninput={handleSecondsInput}
-	/>
-
 	<CwDropdown
 		label="Action"
 		placeholder="Select action"
@@ -171,7 +238,26 @@
 		bind:value={selectedAction}
 	/>
 
+	{#if isTimedAction}
+		<CwInput
+			label="On time in seconds"
+			placeholder="Enter time in seconds"
+			type="numeric"
+			min="1"
+			max="65"
+			value={String(onTimeSeconds)}
+			oninput={handleSecondsInput}
+		/>
+	{/if}
 
-	<input type="checkbox" id="revertOnReset" class="w-5 h-5" bind:checked={resultRevertOnReset} />
-	<label for="revertOnReset">{m.rule_action_revert_on_reset()}</label>
+	<input
+		type="checkbox"
+		id="revertOnReset"
+		class="w-5 h-5 disabled:cursor-not-allowed disabled:opacity-50"
+		bind:checked={resultRevertOnReset}
+		disabled={!isReversable}
+	/>
+	<label for="revertOnReset" class:opacity-50={!isReversable}>
+		{m.rule_action_revert_on_reset()}
+	</label>
 </div>
