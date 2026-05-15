@@ -67,7 +67,9 @@
 						</span>
 					{/if}
 				{:else if col.key === 'updated_at'}
-					{formatDateTime(row.updated_at, undefined, m.common_not_available())}
+					{row.updated_at
+						? formatDateTime(row.updated_at, undefined, m.common_not_available())
+						: m.common_not_available()}
 				{:else}
 					{defaultValue}
 				{/if}

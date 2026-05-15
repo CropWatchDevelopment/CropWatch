@@ -17,11 +17,14 @@
 		buildDashboardLocationSensorCards,
 		buildDeviceExpandedDetailRows,
 		buildDeviceLoadingDetailRows,
+		buildRelayExpandedDetailRows,
 		DASHBOARD_SENSOR_CARD_LOCATION_BATCH_SIZE,
 		DASHBOARD_SENSOR_CARD_PREFETCH_REMAINING,
+		hasRelayKeys,
 		type DashboardLocationSensorCard,
 		type DashboardSensorCardEntry
 	} from './device-cards';
+	import { isRelayTable } from '$lib/config/deviceTables';
 	import {
 		getDashboardDeviceNextRefreshDelayMs,
 		refreshDashboardDevice
@@ -361,6 +364,16 @@
 		return sensor.sensor.detailRows ?? [];
 	}
 
+	function readSensorExpireAfterMinutes(sensor: DashboardSensorCardEntry): number | undefined {
+		const rawValue =
+			sensor.sensor.expectedUpdateAfterMinutes ??
+			sensor.sourceDevice.upload_interval ??
+			sensor.sourceDevice.raw_data?.default_upload_interval;
+		const value = Number(rawValue);
+
+		return Number.isFinite(value) && value > 0 ? value : undefined;
+	}
+
 	function readStoredExpandedState(storageKey: string): boolean | null {
 		try {
 			const stored = localStorage.getItem(SENSOR_EXPAND_STORAGE_PREFIX + storageKey);
@@ -458,16 +471,13 @@
 		// created_at for the "Last Update" row — but fall back to the response's value
 		// if liveDevice somehow lacks a valid date, so the row builder always has input.
 		const liveCreatedAt = liveDevice?.created_at;
-		const liveCreatedAtMs =
-			liveCreatedAt instanceof Date ? liveCreatedAt.getTime() : NaN;
-		const createdAtForRow = Number.isFinite(liveCreatedAtMs)
-			? liveCreatedAt
-			: freshData.created_at;
-		expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
-			{ ...freshData, created_at: createdAtForRow },
-			typeConfig,
-			sensor.sensor.label
-		);
+		const liveCreatedAtMs = liveCreatedAt instanceof Date ? liveCreatedAt.getTime() : NaN;
+		const createdAtForRow = Number.isFinite(liveCreatedAtMs) ? liveCreatedAt : freshData.created_at;
+		const dataForRows = { ...freshData, created_at: createdAtForRow };
+		const isRelay = isRelayTable(liveDevice.data_table) || hasRelayKeys(dataForRows);
+		expandedDetailRowsByDevEui[devEui] = isRelay
+			? buildRelayExpandedDetailRows(dataForRows, sensor.sensor.label)
+			: buildDeviceExpandedDetailRows(dataForRows, typeConfig, sensor.sensor.label);
 	}
 
 	function handleSensorCollapse(sensor: DashboardSensorCardEntry) {
@@ -504,22 +514,23 @@
 				const coercedData = Object.fromEntries(
 					Object.entries(latestDevice.raw_data).map(([k, v]) => [
 						k,
-						typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))
-							? Number(v)
-							: v
+						typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)) ? Number(v) : v
 					])
 				);
 				const sensorEntry = locationCards
 					.flatMap((c) => c.sensors)
 					.find((s) => s.devEui === devEui);
-				const typeConfig = sensorEntry
-					? resolveDeviceTypeConfig(sensorEntry.sourceDevice, app.deviceTypeLookup)
-					: undefined;
-				expandedDetailRowsByDevEui[devEui] = buildDeviceExpandedDetailRows(
-					coercedData,
-					typeConfig,
-					sensorEntry?.sensor.label ?? devEui
-				);
+				const rowLabel = sensorEntry?.sensor.label ?? devEui;
+				const isRelay = isRelayTable(latestDevice.data_table) || hasRelayKeys(coercedData);
+				expandedDetailRowsByDevEui[devEui] = isRelay
+					? buildRelayExpandedDetailRows(coercedData, rowLabel)
+					: buildDeviceExpandedDetailRows(
+							coercedData,
+							sensorEntry
+								? resolveDeviceTypeConfig(sensorEntry.sourceDevice, app.deviceTypeLookup)
+								: undefined,
+							rowLabel
+						);
 			}
 		} catch (error) {
 			console.error(`Failed to refresh device ${devEui}:`, error);
@@ -544,7 +555,11 @@
 					<p>{m.dashboard_no_matching_locations_body()}</p>
 				</div>
 			{:else}
-				<div class="dashboard-device-cards__grid {cardLayout === 'masonry' ? 'dashboard-device-cards__grid--masonry' : 'dashboard-device-cards__grid--equal-rows'}">
+				<div
+					class="dashboard-device-cards__grid {cardLayout === 'masonry'
+						? 'dashboard-device-cards__grid--masonry'
+						: 'dashboard-device-cards__grid--equal-rows'}"
+				>
 					{#each visibleLocationCards as card, index (card.id)}
 						<div class="dashboard-device-cards__item">
 							<CwLocationCard
@@ -561,21 +576,20 @@
 											primaryValue={sensor.sensor.primaryValue}
 											primaryUnit={sensor.sensor.primaryUnit}
 											primary_icon={sensor.sensor.primary_icon}
+											primaryLabel={sensor.sensor.primaryLabel}
 											secondaryValue={sensor.sensor.secondaryValue}
 											secondaryUnit={sensor.sensor.secondaryUnit}
 											secondary_icon={sensor.sensor.secondary_icon}
+											secondaryLabel={sensor.sensor.secondaryLabel}
 											lastUpdated={sensor.sensor.lastUpdated}
-											expireAfterMinutes={sensor?.sourceDevice?.raw_data?.default_upload_interval ?? 10}
+											expireAfterMinutes={readSensorExpireAfterMinutes(sensor)}
 											class="dashboard-device-cards__sensor-card"
 											onExpand={() => handleSensorExpand(sensor)}
 											onCollapse={() => handleSensorCollapse(sensor)}
 										>
 											<div class="dashboard-device-cards__sensor-details">
 												<CwDataList rows={resolveSensorDetailRows(sensor)} />
-												<CwButton
-													variant="secondary"
-													onclick={() => openDeviceDetails(sensor)}
-												>
+												<CwButton variant="secondary" onclick={() => openDeviceDetails(sensor)}>
 													{VIEW_DEVICE_DETAILS_LABEL}
 												</CwButton>
 											</div>
@@ -663,7 +677,8 @@
 		flex-direction: column;
 	}
 
-	.dashboard-device-cards__grid--equal-rows :global(.dashboard-device-cards__location-card.cw-location-card) {
+	.dashboard-device-cards__grid--equal-rows
+		:global(.dashboard-device-cards__location-card.cw-location-card) {
 		flex: 1;
 	}
 
@@ -701,34 +716,6 @@
 	.dashboard-device-cards__sensor-details {
 		display: grid;
 		gap: 0.75rem;
-	}
-
-	.dashboard-device-cards__device-link {
-		justify-self: end;
-		padding: 0.45rem 0.8rem;
-		border: 1px solid var(--cw-border-default);
-		border-radius: 999px;
-		background: var(--cw-bg-surface);
-		color: var(--cw-text-secondary);
-		font: inherit;
-		font-size: 0.82rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition:
-			border-color var(--cw-duration-fast) var(--cw-ease-default),
-			background-color var(--cw-duration-fast) var(--cw-ease-default),
-			color var(--cw-duration-fast) var(--cw-ease-default);
-	}
-
-	.dashboard-device-cards__device-link:hover {
-		border-color: var(--cw-accent);
-		background: color-mix(in srgb, var(--cw-accent) 10%, var(--cw-bg-surface));
-		color: var(--cw-accent);
-	}
-
-	.dashboard-device-cards__device-link:focus-visible {
-		outline: 2px solid var(--cw-accent);
-		outline-offset: 2px;
 	}
 
 	.dashboard-device-cards__prefetch-sentinel {

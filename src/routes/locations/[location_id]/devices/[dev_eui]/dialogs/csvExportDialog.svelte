@@ -14,7 +14,7 @@
 		formatCsvRangeLabel,
 		resolveCsvRequestRange,
 		type CsvRow
-	} from './csvExport';
+	} from '../csvExport';
 	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {

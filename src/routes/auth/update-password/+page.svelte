@@ -104,7 +104,7 @@
 			<CwButton
 				type="submit"
 				class="auth-primary"
-				block
+				fullWidth
 				disabled={submitting || !strength.isValid || !passwordsMatch}
 			>
 				<Icon src={KEY_ICON} alt="" class="h-4 w-4" />

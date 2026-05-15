@@ -1,8 +1,12 @@
 import type { CwSensorCardDetailRow, CwSensorCardDevice } from '@cropwatchdevelopment/cwui';
 import type { LocationDto } from '$lib/api/api.dtos';
+import { isRelayTable } from '$lib/config/deviceTables';
+import { coerceRelayValue } from '$lib/devices/relay-telemetry';
 import type { IDevice } from '$lib/interfaces/device.interface';
+import { m } from '$lib/paraglide/messages.js';
 import {
 	resolveDeviceTypeConfig,
+	uniqueDashboardDevices,
 	type DeviceTypeConfig,
 	type DeviceTypeLookup
 } from './dashboard-device-data';
@@ -30,25 +34,84 @@ export interface DashboardLocationSensorCard {
 	sensors: DashboardSensorCardEntry[];
 }
 
-function getDeviceBaseLabel(device: IDevice): string {
-	return device.name.trim() || device.dev_eui;
+function getDeviceLabel(device: IDevice): string {
+	return device.name?.trim() || device.dev_eui?.trim() || 'Unnamed device';
 }
-
-function getDeviceLabel(device: IDevice, duplicateCounts: Map<string, number>): string {
-	const baseLabel = getDeviceBaseLabel(device);
-	return (duplicateCounts.get(baseLabel) ?? 0) > 1 ? `${baseLabel} (${device.dev_eui})` : baseLabel;
-}
-
 
 function getDeviceStatus(device: IDevice, nowMs: number): 'online' | 'offline' {
 	return isDashboardDeviceOffline(device, nowMs) ? 'offline' : 'online';
 }
 
-function getSensorStorageKey(device: IDevice): string {
-	return `dashboard-device-card:${device.dev_eui}`;
+function getDeviceLocationId(device: IDevice): number {
+	const locationId = Number(device.location_id);
+	return Number.isFinite(locationId) ? locationId : 0;
 }
 
-function buildUnavailableDetailRows(label: string, typeConfig: DeviceTypeConfig | undefined): CwSensorCardDetailRow[] {
+function getSensorEntryId(device: IDevice, fallbackId: string): string {
+	const devEui = device.dev_eui?.trim();
+	return devEui ? `sensor:${devEui}` : fallbackId;
+}
+
+function getSensorStorageKey(device: IDevice, entryId: string): string {
+	return `dashboard-device-card:${device.dev_eui?.trim() || entryId}`;
+}
+
+function getRelayStateLabel(value: boolean | null): string {
+	if (value === true) return m.display_relay_state_on();
+	if (value === false) return m.display_relay_state_off();
+	return m.display_relay_state_unknown();
+}
+
+export function hasRelayKeys(payload: Record<string, unknown> | null | undefined): boolean {
+	return payload != null && ('relay_1' in payload || 'relay_2' in payload);
+}
+
+function isRelayDevice(device: IDevice): boolean {
+	return isRelayTable(device.data_table) || hasRelayKeys(device.raw_data);
+}
+
+export function buildRelayExpandedDetailRows(
+	rawData: Record<string, unknown>,
+	deviceLabel: string
+): CwSensorCardDetailRow[] {
+	const relay1 = coerceRelayValue(rawData.relay_1);
+	const relay2 = coerceRelayValue(rawData.relay_2);
+	const rows: CwSensorCardDetailRow[] = [
+		{
+			id: `${deviceLabel}-relay_1`,
+			label: m.display_relay_one(),
+			value: getRelayStateLabel(relay1),
+			icon: 'relay'
+		},
+		{
+			id: `${deviceLabel}-relay_2`,
+			label: m.display_relay_two(),
+			value: getRelayStateLabel(relay2),
+			icon: 'relay'
+		}
+	];
+
+	const createdAt = rawData.created_at;
+	if (createdAt != null) {
+		const lastUpdatedDate = createdAt instanceof Date ? createdAt : new Date(String(createdAt));
+		if (Number.isFinite(lastUpdatedDate.getTime())) {
+			rows.push({
+				id: `${deviceLabel}-updated`,
+				label: 'Last Update',
+				icon: 'timer',
+				lastUpdated: lastUpdatedDate,
+				expectedUpdateAfter: DASHBOARD_DEVICE_REFRESH_ALARM_AFTER_MINUTES
+			});
+		}
+	}
+
+	return rows;
+}
+
+function buildUnavailableDetailRows(
+	label: string,
+	typeConfig: DeviceTypeConfig | undefined
+): CwSensorCardDetailRow[] {
 	const primaryLabel = typeConfig?.primary_data_key ?? 'Temperature';
 	const secondaryLabel = typeConfig?.secondary_data_key ?? 'Humidity';
 	return [
@@ -84,7 +147,7 @@ function getLocationTitle(
 	}
 
 	const deviceLocationName = locationDevices.find((device) =>
-		device.location_name.trim()
+		device.location_name?.trim()
 	)?.location_name;
 	if (deviceLocationName) {
 		return deviceLocationName.trim();
@@ -95,26 +158,40 @@ function getLocationTitle(
 
 /** Metadata keys present in the /latest-data payload that are not sensor readings. */
 const SENSOR_SKIP_KEYS = new Set([
-	'dev_eui', 'name', 'location_id', 'location_name', 'group',
-	'data_table', 'data_table_v2', 'type', 'id',
-	'created_at', 'cw_device_type', 'cw_locations', 'cw_device_owners'
+	'dev_eui',
+	'name',
+	'location_id',
+	'location_name',
+	'group',
+	'data_table',
+	'data_table_v2',
+	'type',
+	'id',
+	'created_at',
+	'cw_device_type',
+	'cw_locations',
+	'cw_device_owners'
 ]);
 
-interface SensorFieldMeta { label: string; unit: string; icon: string }
+interface SensorFieldMeta {
+	label: string;
+	unit: string;
+	icon: string;
+}
 
 const KNOWN_SENSOR_FIELDS: Record<string, SensorFieldMeta> = {
-	temperature_c:       { label: 'Temperature',      unit: '°C',   icon: 'thermo' },
-	humidity:            { label: 'Humidity',          unit: '%',    icon: 'drop'   },
-	co2:                 { label: 'CO₂',              unit: 'ppm',  icon: 'thermo' },
-	moisture:            { label: 'Moisture',          unit: '%',    icon: 'drop'   },
-	ec:                  { label: 'EC',                unit: 'dS/m', icon: 'drop'   },
-	battery:             { label: 'Battery',           unit: '%',    icon: 'timer'  },
-	pressure:            { label: 'Pressure',          unit: 'hPa',  icon: 'thermo' },
-	light:               { label: 'Light',             unit: 'lux',  icon: 'thermo' },
-	light_level:         { label: 'Light',             unit: 'lux',  icon: 'thermo' },
-	voltage:             { label: 'Voltage',           unit: 'V',    icon: 'timer'  },
-	deapth_cm:           { label: 'Depth',             unit: 'cm',   icon: 'drop'   },
-	depth_cm:            { label: 'Depth',             unit: 'cm',   icon: 'drop'   },
+	temperature_c: { label: 'Temperature', unit: '°C', icon: 'thermo' },
+	humidity: { label: 'Humidity', unit: '%', icon: 'drop' },
+	co2: { label: 'CO₂', unit: 'ppm', icon: 'thermo' },
+	moisture: { label: 'Moisture', unit: '%', icon: 'drop' },
+	ec: { label: 'EC', unit: 'dS/m', icon: 'drop' },
+	battery: { label: 'Battery', unit: '%', icon: 'timer' },
+	pressure: { label: 'Pressure', unit: 'hPa', icon: 'thermo' },
+	light: { label: 'Light', unit: 'lux', icon: 'thermo' },
+	light_level: { label: 'Light', unit: 'lux', icon: 'thermo' },
+	voltage: { label: 'Voltage', unit: 'V', icon: 'timer' },
+	deapth_cm: { label: 'Depth', unit: 'cm', icon: 'drop' },
+	depth_cm: { label: 'Depth', unit: 'cm', icon: 'drop' }
 };
 
 function formatKeyLabel(key: string): string {
@@ -194,21 +271,62 @@ export function buildDeviceExpandedDetailRows(
 	return rows;
 }
 
+function buildRelaySensorCardEntry(
+	device: IDevice,
+	label: string,
+	nowMs: number,
+	entryId: string
+): DashboardSensorCardEntry {
+	const relay1 = coerceRelayValue(device.raw_data?.relay_1);
+	const relay2 = coerceRelayValue(device.raw_data?.relay_2);
+	const relayToValue = (value: boolean | null): number => (value === true ? 1 : 0);
+
+	return {
+		id: entryId,
+		storageKey: getSensorStorageKey(device, entryId),
+		devEui: device.dev_eui,
+		locationId: getDeviceLocationId(device),
+		sourceDevice: device,
+		sensor: {
+			label,
+			primaryValue: relayToValue(relay1),
+			primaryLabel: getRelayStateLabel(relay1),
+			primaryUnit: m.display_relay_one(),
+			primary_icon: 'relay',
+			secondaryValue: relayToValue(relay2),
+			secondaryLabel: getRelayStateLabel(relay2),
+			secondaryUnit: m.display_relay_two(),
+			secondary_icon: 'relay',
+			status: getDeviceStatus(device, nowMs),
+			lastUpdated: device.created_at,
+			detailRows: buildRelayExpandedDetailRows(
+				{ ...(device.raw_data ?? {}), created_at: device.created_at },
+				label
+			)
+		} satisfies CwSensorCardDevice
+	};
+}
+
 function buildDashboardSensorCardEntry(
 	device: IDevice,
-	duplicateCounts: Map<string, number>,
 	nowMs: number,
-	deviceTypeLookup?: DeviceTypeLookup
+	deviceTypeLookup: DeviceTypeLookup | undefined,
+	entryId: string
 ): DashboardSensorCardEntry {
-	const label = getDeviceLabel(device, duplicateCounts);
+	const label = getDeviceLabel(device);
+
+	if (isRelayDevice(device)) {
+		return buildRelaySensorCardEntry(device, label, nowMs, entryId);
+	}
+
 	const typeConfig = resolveDeviceTypeConfig(device, deviceTypeLookup);
 
 	if (device.has_primary_data === false) {
 		return {
-			id: `sensor:${device.dev_eui}`,
-			storageKey: getSensorStorageKey(device),
+			id: entryId,
+			storageKey: getSensorStorageKey(device, entryId),
 			devEui: device.dev_eui,
-			locationId: Number(device.location_id),
+			locationId: getDeviceLocationId(device),
 			sourceDevice: device,
 			sensor: {
 				label,
@@ -220,15 +338,21 @@ function buildDashboardSensorCardEntry(
 		};
 	}
 
-	const rawPrimary = device.raw_data?.[typeConfig?.primary_data_key];
-	const rawSecondary = device.raw_data?.[typeConfig?.secondary_data_key] || null;
+	const primaryDataKey = typeConfig?.primary_data_key ?? 'temperature_c';
+	const secondaryDataKey =
+		typeConfig?.secondary_data_key ??
+		(device.data_table === 'cw_soil_data' ? 'moisture' : 'humidity');
+	const rawPrimary = device.raw_data?.[primaryDataKey] ?? device.temperature_c;
+	const rawSecondary =
+		device.raw_data?.[secondaryDataKey] ??
+		(secondaryDataKey === 'moisture' ? device.soil_humidity : device.humidity) ??
+		null;
 
-	console.log(device);
 	return {
-		id: `sensor:${device.dev_eui}`,
-		storageKey: getSensorStorageKey(device),
+		id: entryId,
+		storageKey: getSensorStorageKey(device, entryId),
 		devEui: device.dev_eui,
-		locationId: Number(device.location_id),
+		locationId: getDeviceLocationId(device),
 		sourceDevice: device,
 		sensor: {
 			label,
@@ -236,7 +360,7 @@ function buildDashboardSensorCardEntry(
 			primaryUnit: typeConfig?.primary_data_notation ?? '°C',
 			...(rawSecondary !== null && {
 				secondaryValue: typeof rawSecondary === 'number' ? rawSecondary : Number(rawSecondary) || 0,
-				secondaryUnit: typeConfig?.secondary_data_notation ?? '%',
+				secondaryUnit: typeConfig?.secondary_data_notation ?? '%'
 			}),
 			status: getDeviceStatus(device, nowMs),
 			lastUpdated: device.created_at
@@ -250,13 +374,18 @@ export function buildDashboardLocationSensorCards(
 	nowMs: number,
 	deviceTypeLookup?: DeviceTypeLookup
 ): DashboardLocationSensorCard[] {
-	const locationsById = new Map(
-		locations.map((location) => [Number(location.location_id), location] as const)
-	);
+	const locationsById = new Map<number, LocationDto>();
+	for (const location of locations) {
+		const locationId = Number(location.location_id);
+		if (Number.isFinite(locationId)) {
+			locationsById.set(locationId, location);
+		}
+	}
+
 	const devicesByLocationId = new Map<number, IDevice[]>();
 
-	for (const device of devices) {
-		const locationId = Number(device.location_id);
+	for (const device of uniqueDashboardDevices(devices)) {
+		const locationId = getDeviceLocationId(device);
 		const locationDevices = devicesByLocationId.get(locationId);
 
 		if (locationDevices) {
@@ -267,36 +396,13 @@ export function buildDashboardLocationSensorCards(
 		devicesByLocationId.set(locationId, [device]);
 	}
 
-	return Array.from(devicesByLocationId.entries())
-		.map(([locationId, locationDevices]) => {
-			const sortedLocationDevices = [...locationDevices].sort(
-				(left, right) =>
-					getDeviceBaseLabel(left).localeCompare(getDeviceBaseLabel(right), undefined, {
-						numeric: true,
-						sensitivity: 'base'
-					}) ||
-					left.dev_eui.localeCompare(right.dev_eui, undefined, {
-						numeric: true,
-						sensitivity: 'base'
-					})
-			);
-			const duplicateCounts = new Map<string, number>();
-
-			for (const device of sortedLocationDevices) {
-				const baseLabel = getDeviceBaseLabel(device);
-				duplicateCounts.set(baseLabel, (duplicateCounts.get(baseLabel) ?? 0) + 1);
-			}
-
-			return {
-				id: `location:${locationId}`,
-				locationId,
-				title: getLocationTitle(locationId, locationsById, sortedLocationDevices),
-				sensors: sortedLocationDevices.map((device) =>
-					buildDashboardSensorCardEntry(device, duplicateCounts, nowMs, deviceTypeLookup)
-				)
-			} satisfies DashboardLocationSensorCard;
+	return Array.from(devicesByLocationId.entries()).map(([locationId, locationDevices]) => ({
+		id: `location:${locationId}`,
+		locationId,
+		title: getLocationTitle(locationId, locationsById, locationDevices),
+		sensors: locationDevices.map((device, index) => {
+			const entryId = getSensorEntryId(device, `sensor:${locationId}:${index}`);
+			return buildDashboardSensorCardEntry(device, nowMs, deviceTypeLookup, entryId);
 		})
-		.sort((left, right) =>
-			left.title.localeCompare(right.title, undefined, { numeric: true, sensitivity: 'base' })
-		);
+	}));
 }
