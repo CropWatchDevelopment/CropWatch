@@ -70,6 +70,7 @@
 			});
 			groups = opts.reset ? page.groups : [...groups, ...page.groups];
 			total = page.total;
+			preloadOpenCardDetails(page.groups);
 		} catch (err) {
 			console.error('Failed to load dashboard page', err);
 		} finally {
@@ -116,6 +117,22 @@
 		} catch (err) {
 			console.error(`Failed to load details for ${devEui}`, err);
 			delete detailsByDevEui[devEui];
+		}
+	}
+
+	// CwSensorCard persists its expanded state to localStorage under this prefix.
+	// When a card mounts already-expanded, it does NOT fire onExpand — so we must
+	// proactively load details for any newly-rendered card the user had open.
+	function isPersistedOpen(devEui: string): boolean {
+		if (typeof window === 'undefined') return false;
+		return window.localStorage.getItem(`cw-sensor-card-expand:dashboard:${devEui}`) === 'true';
+	}
+
+	function preloadOpenCardDetails(newGroups: DashboardLocationGroup[]) {
+		for (const g of newGroups) {
+			for (const d of g.devices) {
+				if (isPersistedOpen(d.dev_eui)) loadDetails(d.dev_eui);
+			}
 		}
 	}
 
@@ -198,6 +215,7 @@
 						{@const secondary = secondaryProps(row)}
 						{@const details = detailsByDevEui[row.dev_eui]}
 						{@const detailRows = details && details !== 'loading' ? detailEntries(details) : []}
+						{@const lastSeen = row.latest?.created_at ?? row.last_data_updated_at ?? null}
 						<CwSensorCard
 							label={row.name}
 							status={statusFor(row)}
@@ -219,25 +237,32 @@
 							{:else}
 								<dl class="dashboard-cards__details-list">
 									{#each detailRows as { col, def, formatted } (col)}
+										{#if def.label() != 'created_at'}
+											<div class="dashboard-cards__details-row">
+												<dt>{def.label()}</dt>
+												<dd>
+													{formatted.display}
+													<small><sup>{def.unit ? ` ${def.unit}` : ''}</sup></small>
+												</dd>
+											</div>
+										{/if}
+									{/each}
+									<!-- Always show Last Seen at the BOTTOM of the details list -->
+									{#if lastSeen}
 										<div class="dashboard-cards__details-row">
-											<dt>{def.label()}</dt>
+											<dt>Last Seen</dt>
 											<dd>
-												{#if def.label() == 'created_at'}
-													<CwDuration
-														from={formatted.display}
-														class="ml-1 text-xs text-slate-400"
-													/>
-												{:else}
-													{formatted.display}{def.unit ? ` ${def.unit}` : ''}
-												{/if}
+												<CwDuration from={lastSeen} class="ml-1 text-xs text-slate-400" />
 											</dd>
 										</div>
-									{/each}
+									{/if}
+									<!-- END OF LAST SEEN -->
 								</dl>
 								<CwButton
 									variant="secondary"
 									class="w-full"
-									onclick={() => goto(`/locations/${row.location?.location_id ?? ''}/devices/${row.dev_eui}`)}
+									onclick={() =>
+										goto(`/locations/${row.location?.location_id ?? ''}/devices/${row.dev_eui}`)}
 									>Details</CwButton
 								>
 							{/if}
