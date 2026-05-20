@@ -11,7 +11,7 @@
 	} from '$lib/devices/relay-control';
 	import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
 	import { m } from '$lib/paraglide/messages.js';
-	import { CwCard, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { CwCard, CwResponsiveLineChart, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { resolveExportTimeZone } from './csvExport';
 	import type { PageProps } from './$types';
 	import { onDestroy } from 'svelte';
@@ -19,6 +19,7 @@
 	import {
 		DEFAULT_RANGE_SELECTION,
 		MAX_RANGE_RECORDS,
+		buildSensorChartSeries,
 		createEmptyRelaySnapshot,
 		createRouteState,
 		getRangeBounds,
@@ -111,6 +112,7 @@
 			: historicalData
 	);
 	let displayCurrentRecord = $derived(displayLatestData ?? displayHistoricalData[0] ?? null);
+	let chartSeries = $derived(buildSensorChartSeries(displayHistoricalData));
 	let isTrafficDevice = $derived(data.device?.cw_device_type.name === '[CROPWATCH] Nvidia Jetson');
 	let rangeOptions = $derived(getRangeOptions());
 	let lastUpdatedAt = $derived(readCreatedAt(displayCurrentRecord));
@@ -376,6 +378,19 @@
 			titleName={data?.device?.name || devEui.toUpperCase()}
 		/>
 
+		{#if chartSeries.length > 0}
+			<div class="device-page__chart">
+				<CwResponsiveLineChart
+					series={chartSeries}
+					title={data?.device?.name || devEui.toUpperCase()}
+					subtitle={m.display_time_series()}
+					ranges={[]}
+					themeAuto
+					height={480}
+				/>
+			</div>
+		{/if}
+
 		{#if noDataYet}
 			<CwCard title={m.display_no_data()} elevated>
 				<p class="device-page__empty-message">{m.devices_no_data_yet()}</p>
@@ -408,6 +423,11 @@
 	}
 
 	.device-page__display {
+		min-width: 0;
+	}
+
+	.device-page__chart {
+		width: 100%;
 		min-width: 0;
 	}
 

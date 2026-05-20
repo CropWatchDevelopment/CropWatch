@@ -1,16 +1,14 @@
 <!--
   SoilDisplay.svelte — Display component for cw_soil_data.
 
-  Renders KPI cards for soil metrics (temperature, moisture, EC, pH),
-  a line chart, and a sortable data table.
+  Renders KPI cards for soil metrics (temperature, moisture, EC, pH)
+  and a sortable data table.
 -->
 <script lang="ts">
 	import {
 		CwCard,
-		CwLineChart,
 		CwDataTable,
 		type CwColumnDef,
-		type CwLineChartDataPoint,
 		type CwStatCardData,
 		type CwTableQuery,
 		type CwTableResult,
@@ -92,20 +90,6 @@
 	let temperatureStats = $derived(computeStats(rows.map((r) => r.temperature_c)));
 	let soilMoistureStats = $derived(computeStats(rows.map((r) => r.moisture)));
 
-	let moistureSeries = $derived<CwLineChartDataPoint[]>(
-		rows.map((p) => ({
-			timestamp: p.created_at,
-			value: p.moisture
-		}))
-	);
-
-	let temperatureSeries = $derived(
-		rows.map((p) => ({
-			timestamp: p.created_at,
-			value: p.temperature_c
-		}))
-	);
-
 	// ---- Table loader ----------------------------------------------------------
 
 	let tableLoading = $state(false);
@@ -173,22 +157,6 @@
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<CwCard
-			title={m.display_soil_moisture_temperature()}
-			subtitle={m.display_time_series()}
-			elevated
-		>
-			<CwLineChart
-				data={moistureSeries}
-				secondaryData={temperatureSeries}
-				secondaryLabel={m.rule_subject_soil_moisture()}
-				secondaryUnit="%"
-				primaryLabel={m.rule_subject_temperature()}
-				primaryUnit="°C"
-				height={400}
-			/>
-		</CwCard>
-
 		<CwCard title={m.display_soil_telemetry()} subtitle={m.display_searchable_sortable()} elevated>
 			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
 				{#snippet cell(row: SoilRow, col: CwColumnDef<SoilRow>, defaultValue: string)}

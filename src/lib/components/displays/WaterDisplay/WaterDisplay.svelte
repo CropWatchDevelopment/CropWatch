@@ -1,16 +1,14 @@
 <!--
   WaterDisplay.svelte — Display component for cw_water_data.
 
-  Renders KPI cards for water metrics (temperature, depth, pressure, SpO₂),
-  a line chart, and a sortable data table.
+  Renders KPI cards for water metrics (temperature, depth, pressure, SpO₂)
+  and a sortable data table.
 -->
 <script lang="ts">
 	import {
 		CwCard,
-		CwLineChart,
 		CwDataTable,
 		type CwColumnDef,
-		type CwLineChartDataPoint,
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
@@ -63,14 +61,6 @@
 		pressure: Number(latestData?.pressure) || 0,
 		spo2: Number(latestData?.spo2) || 0
 	});
-
-	let depthSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
-		rows.map((p) => ({
-			timestamp: p.created_at,
-			created_at: p.created_at,
-			value: p.depth_cm
-		}))
-	);
 
 	// ---- Table loader ----------------------------------------------------------
 
@@ -131,15 +121,6 @@
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<CwCard title={m.display_water_depth()} subtitle={m.display_time_series()} elevated>
-			<CwLineChart
-				data={depthSeries}
-				primaryLabel={m.display_depth()}
-				primaryUnit="cm"
-				height={400}
-			/>
-		</CwCard>
-
 		<CwCard title={m.display_water_telemetry()} subtitle={m.display_searchable_sortable()} elevated>
 			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
 				{#snippet cell(row: WaterRow, col: CwColumnDef<WaterRow>, defaultValue: string)}

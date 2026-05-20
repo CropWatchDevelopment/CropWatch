@@ -32,7 +32,9 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 		const locationId = Number.parseInt(location_id, 10);
 		const [device, location] = await Promise.all([
 			api.getDevice(dev_eui),
-			Number.isFinite(locationId) ? api.getLocation(locationId).catch(() => null) : Promise.resolve(null)
+			Number.isFinite(locationId)
+				? api.getLocation(locationId).catch(() => null)
+				: Promise.resolve(null)
 		]);
 
 		const owners = Array.isArray(location?.cw_location_owners) ? location.cw_location_owners : [];
