@@ -181,6 +181,30 @@ For validation issue lists (multiple items), show them as a `<ul>` inside the no
 
 ---
 
+## Don't wrap one-liners used once
+
+A function whose body is a single trivial expression — a ternary, a `??` chain, a
+template string — and that is called exactly once is **bloat**. It forces a reader to
+jump to the definition and back for no gain. Inline the expression at the call site.
+
+```svelte
+<!-- ❌ single-use trivial wrapper -->
+<script>
+  function statusFor(row) { return row.latest ? 'online' : 'loading'; }
+</script>
+<CwSensorCard status={statusFor(row)} />
+
+<!-- ✅ inlined -->
+<CwSensorCard status={row.latest ? 'online' : 'loading'} />
+```
+
+Use a named function only when it is **reused** (2+ call sites), **multi-statement**,
+or a genuine **multi-branch mapper** (a `switch` / 3+ `if` — inlining those as nested
+ternaries hurts readability more than the wrapper does). In Svelte templates, prefer
+`{@const}` over a helper function for per-row derived values.
+
+---
+
 ## State management
 
 ### Form field state

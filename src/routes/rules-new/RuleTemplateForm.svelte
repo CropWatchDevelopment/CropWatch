@@ -159,7 +159,12 @@
 	let criteriaSummary = $derived(criteriaPreview.join(', '));
 	let actionPreview = $derived(
 		templateActions.map((action) => {
-			return `${getActionTypeLabel(action)}: ${action.config.recipient}`;
+			const label =
+				actions.find((entry) => entry.id === action.actionType)?.name ??
+				action.actionTypeName ??
+				action.actionTypeValue ??
+				String(action.actionType);
+			return `${label}: ${action.config.recipient}`;
 		})
 	);
 	let actionSummary = $derived(actionPreview.join(', '));
@@ -334,15 +339,6 @@
 			selectedAction?.id ?? (Number.isInteger(parsedActionType) ? parsedActionType : 0);
 		action.actionTypeName = selectedAction?.name ?? null;
 		action.actionTypeValue = selectedAction?.value ?? null;
-	}
-
-	function getActionTypeLabel(action: EditableTemplateAction): string {
-		return (
-			actions.find((entry) => entry.id === action.actionType)?.name ??
-			action.actionTypeName ??
-			action.actionTypeValue ??
-			String(action.actionType)
-		);
 	}
 
 	function isValidActionTypeId(value: number): boolean {

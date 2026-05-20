@@ -185,18 +185,6 @@
 		return { value: v.numeric, unit, label: undefined };
 	}
 
-	function statusFor(row: DashboardRow) {
-		return row.latest ? 'online' : 'loading';
-	}
-
-	function expireMinutes(row: DashboardRow): number {
-		return row.upload_interval ?? row.device_type.default_upload_interval ?? 60;
-	}
-
-	function groupLabel(g: DashboardLocationGroup) {
-		return g.location?.name ?? m.dashboard_no_location();
-	}
-
 	$effect(() => {
 		// Track filter values AND the auth token so this effect re-runs on filter
 		// change and once the token arrives after a fresh login — never on internal
@@ -245,7 +233,10 @@
 	{:else}
 		<div class="dashboard-cards__groups">
 			{#each groups as group (group.key)}
-				<CwLocationCard title={groupLabel(group)} class="dashboard-cards__location">
+				<CwLocationCard
+					title={group.location?.name ?? m.dashboard_no_location()}
+					class="dashboard-cards__location"
+				>
 					{#each group.devices as row (row.dev_eui)}
 						{@const primary = primaryProps(row)}
 						{@const secondary = secondaryProps(row)}
@@ -254,7 +245,7 @@
 						{@const lastSeen = row.last_data_updated_at ?? row.latest?.created_at ?? null}
 						<CwSensorCard
 							label={row.name}
-							status={statusFor(row)}
+							status={row.latest ? 'online' : 'loading'}
 							primaryValue={primary.value}
 							primaryUnit={primary.unit}
 							primaryLabel={primary.label}
@@ -262,7 +253,9 @@
 							secondaryUnit={secondary.unit}
 							secondaryLabel={secondary.label}
 							lastSeenAt={row.last_data_updated_at ?? row.latest?.created_at ?? undefined}
-							expireAfterMinutes={expireMinutes(row)}
+							expireAfterMinutes={row.upload_interval ??
+								row.device_type.default_upload_interval ??
+								60}
 							storageKey={`dashboard:${row.dev_eui}`}
 							onExpand={() => loadDetails(row.dev_eui)}
 						>
