@@ -42,6 +42,11 @@
 	// dev_eui -> latest row | 'loading' | undefined (not requested yet).
 	let detailsByDevEui = $state<Record<string, Record<string, unknown> | 'loading'>>({});
 
+	const thousandFormatter = new Intl.NumberFormat('en', {
+		notation: 'compact',
+		compactDisplay: 'short'
+	});
+
 	function buildQuery(overrides: { skip: number; take: number }) {
 		return {
 			skip: overrides.skip,

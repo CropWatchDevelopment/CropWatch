@@ -92,13 +92,7 @@
 
 		<div class="device-header__actions">
 			{#if permissionLevel <= 2}
-				<NotesReviewDialog
-					{authToken}
-					{devEui}
-					{locationName}
-					timeZone={exportTimeZone}
-					disabled={controlsDisabled}
-				/>
+				<NotesReviewDialog {authToken} {devEui} disabled={controlsDisabled} />
 
 				<CsvExportDialog
 					{authToken}
