@@ -65,6 +65,15 @@
 			console.debug('[dashboard] loadPage skipped — already loading');
 			return;
 		}
+		// On a fresh login (new tab) the auth token can still be undefined when
+		// this component first mounts. Stay in the loading state instead of
+		// fetching with no token (which yields an empty "no devices" view) — the
+		// effect below re-runs once app.accessToken becomes available.
+		if (!app.accessToken) {
+			if (opts.reset) reloading = true;
+			console.debug('[dashboard] loadPage deferred — auth token not ready');
+			return;
+		}
 		loading = true;
 		reloading = !!opts.reset;
 		const skip = opts.reset ? 0 : groups.length;
@@ -188,11 +197,20 @@
 	}
 
 	$effect(() => {
-		// Track ONLY filter values so this effect re-runs exclusively on filter change,
-		// never on internal state writes from loadPage itself.
-		const _filterFingerprint =
-			filters.group + '|' + filters.locationGroup + '|' + filters.location + '|' + filters.name;
-		void _filterFingerprint;
+		// Track filter values AND the auth token so this effect re-runs on filter
+		// change and once the token arrives after a fresh login — never on internal
+		// state writes from loadPage itself.
+		const _loadFingerprint =
+			(app.accessToken ?? '') +
+			'|' +
+			filters.group +
+			'|' +
+			filters.locationGroup +
+			'|' +
+			filters.location +
+			'|' +
+			filters.name;
+		void _loadFingerprint;
 		untrack(() => {
 			loadPage({ reset: true });
 		});

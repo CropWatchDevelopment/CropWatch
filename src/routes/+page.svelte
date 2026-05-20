@@ -43,17 +43,24 @@
 			view = 'cards';
 		}
 		viewReady = true;
+	});
 
-		// Populate the sidebar's location-group filter list. Cheap aggregate endpoint.
-		if (app.accessToken) {
-			const api = new ApiService({ authToken: app.accessToken });
-			api.getLocationGroups().then((groups) => {
-				app.locationGroups = groups;
-			}).catch(() => { /* sidebar tolerates an empty list */ });
-			api.getLocations().then((locations) => {
-				app.locations = locations;
-			}).catch(() => { /* sidebar tolerates an empty list */ });
-		}
+	// Populate the sidebar's location-group filter list. Cheap aggregate endpoint.
+	// Runs as an effect (not onMount) because on a fresh login the auth token can
+	// still be undefined at mount — the effect re-runs once app.accessToken
+	// arrives. The guard keeps it to a single fetch.
+	let sidebarDataLoaded = false;
+	$effect(() => {
+		const token = app.accessToken;
+		if (!token || sidebarDataLoaded) return;
+		sidebarDataLoaded = true;
+		const api = new ApiService({ authToken: token });
+		api.getLocationGroups().then((groups) => {
+			app.locationGroups = groups;
+		}).catch(() => { /* sidebar tolerates an empty list */ });
+		api.getLocations().then((locations) => {
+			app.locations = locations;
+		}).catch(() => { /* sidebar tolerates an empty list */ });
 	});
 </script>
 
