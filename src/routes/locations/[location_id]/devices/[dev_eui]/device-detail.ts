@@ -2,8 +2,13 @@ import { ApiServiceError } from '$lib/api/api.service';
 import type { RelayStateSnapshot, RelayVerificationResult } from '$lib/devices/relay-control';
 import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
 import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
+import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 import { m } from '$lib/paraglide/messages.js';
 import { SvelteDate } from 'svelte/reactivity';
+import type {
+	CwResponsiveLineDataPoint,
+	CwResponsiveLineSeries
+} from '@cropwatchdevelopment/cwui';
 
 export type RangeSelection = 'today' | 24 | 48 | 72;
 export type TelemetryRow = Record<string, unknown>;
@@ -165,3 +170,94 @@ export function mapRelayApiErrorMessage(error: unknown): string {
 }
 
 export type RelayConfirmationHandler = (result: RelayVerificationResult) => void;
+
+// ---------------------------------------------------------------------------
+// Telemetry → responsive line chart
+// ---------------------------------------------------------------------------
+
+/** Distinct line colors assigned to chart series in column-discovery order. */
+const CHART_SERIES_COLORS = [
+	'#ef4444',
+	'#3b82f6',
+	'#06b6d4',
+	'#a855f7',
+	'#f59e0b',
+	'#10b981',
+	'#ec4899',
+	'#8b5cf6',
+	'#14b8a6',
+	'#f97316',
+	'#6366f1',
+	'#84cc16'
+];
+
+/** Columns that are never plotted (time axis, identifiers, bucket keys). */
+const CHART_EXCLUDED_COLUMNS = new Set([
+	'created_at',
+	'updated_at',
+	'location_id',
+	'traffic_hour',
+	'traffic_day'
+]);
+
+/** Coerce a raw telemetry cell to a plottable number. Booleans map to 0/1. */
+function toChartValue(value: unknown): number | null {
+	if (value === null || value === undefined) return null;
+	if (typeof value === 'boolean') return value ? 1 : 0;
+	if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+	if (typeof value === 'string' && value.trim() !== '') {
+		const parsed = Number(value);
+		return Number.isFinite(parsed) ? parsed : null;
+	}
+	return null;
+}
+
+/**
+ * Build one `CwResponsiveLineSeries` per numeric column found in the device's
+ * telemetry rows — i.e. every data item the sensor reports. Labels and units
+ * come from the shared `$lib/sensor-labels` lookup so they match the dashboard.
+ */
+export function buildSensorChartSeries(rows: TelemetryRow[]): CwResponsiveLineSeries[] {
+	if (rows.length === 0) return [];
+
+	// Discover plottable columns across every row (a column may be null early on).
+	const columns: string[] = [];
+	const seen = new Set<string>();
+	for (const row of rows) {
+		for (const key of Object.keys(row)) {
+			if (seen.has(key) || CHART_EXCLUDED_COLUMNS.has(key) || !isDisplayableColumn(key)) {
+				continue;
+			}
+			if (toChartValue(row[key]) !== null) {
+				seen.add(key);
+				columns.push(key);
+			}
+		}
+	}
+
+	const series: CwResponsiveLineSeries[] = [];
+	columns.forEach((column, index) => {
+		const data: CwResponsiveLineDataPoint[] = [];
+		for (const row of rows) {
+			const timestamp = new Date(String(row.created_at)).getTime();
+			if (Number.isFinite(timestamp)) {
+				data.push({ t: timestamp, v: toChartValue(row[column]) });
+			}
+		}
+		data.sort((left, right) => left.t - right.t);
+		if (!data.some((point) => point.v !== null)) return;
+
+		const labelInfo = labelFor(column);
+		series.push({
+			id: column,
+			label: labelInfo.label(),
+			unit: labelInfo.unit,
+			color: CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length],
+			gradient: column === 'temperature_c',
+			data,
+			decimals: labelInfo.format === 'number' ? 2 : 0
+		});
+	});
+
+	return series;
+}

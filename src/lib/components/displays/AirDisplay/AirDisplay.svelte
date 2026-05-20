@@ -4,12 +4,9 @@
 		CwDataTable,
 		CwDuration,
 		CwHeatmap,
-		CwLineChart,
 		CwStatCard,
 		type CwColumnDef,
 		type CwHeatmapDataPoint,
-		type CwLineChartDataPoint,
-		type CwLineChartSecondaryDataPoint,
 		type CwStatCardData,
 		type CwTableQuery,
 		type CwTableResult
@@ -138,46 +135,6 @@
 			trend: 'up'
 		};
 	});
-
-	let temperatureThreshold = $derived.by(() => {
-		for (const row of rows) {
-			for (const rule of row.alerts) {
-				const criteria = rule.cw_rule_criteria?.find((c) => c.subject === 'temperature');
-				if (criteria) return criteria.trigger_value;
-			}
-		}
-		return undefined;
-	});
-
-	let lineSeries = $derived<(CwLineChartDataPoint & { timestamp: string })[]>(
-		rows.map((row) => {
-			const tempAlert = row.alerts.find((rule) =>
-				rule.cw_rule_criteria?.some((c) => c.subject === 'temperature')
-			);
-			return {
-				timestamp: row.created_at,
-				created_at: row.created_at,
-				value: row.temperature_c,
-				...(tempAlert
-					? {
-							alert: {
-								id: String(tempAlert.id),
-								message: tempAlert.name,
-								severity: 'critical' as const
-							}
-						}
-					: {})
-			};
-		})
-	);
-
-	let secondarySeries = $derived<(CwLineChartSecondaryDataPoint & { timestamp: string })[]>(
-		rows.map((row) => ({
-			timestamp: row.created_at,
-			created_at: row.created_at,
-			value: row.humidity
-		}))
-	);
 
 	let heatmapSeries = $derived<(CwHeatmapDataPoint & { timestamp: string })[]>(
 		rows.map((row) => ({
@@ -355,43 +312,16 @@
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<div class="chart-grid">
-			<div class="chart-grid__item">
-				<CwCard
-					title={m.display_temperature_humidity_chart()}
-					subtitle={m.display_time_series()}
-					elevated
-				>
-					<CwLineChart
-						data={lineSeries}
-						secondaryData={secondarySeries}
-						threshold={temperatureThreshold}
-						primaryLabel={m.rule_subject_temperature()}
-						secondaryLabel={m.rule_subject_humidity()}
-						primaryUnit="°C"
-						secondaryUnit="%"
-						height={400}
-					/>
-				</CwCard>
-			</div>
-
-			<div class="chart-grid__item">
-				<CwCard
-					title={m.display_temperature_heatmap()}
-					subtitle={m.display_reading_density()}
-					elevated
-				>
-					<CwHeatmap
-						data={heatmapSeries}
-						days={heatmapDays}
-						unit="°C"
-						title=""
-						rowHeight={18}
-						colors={['#0ea5e9', '#84cc16', '#f97316']}
-					/>
-				</CwCard>
-			</div>
-		</div>
+		<CwCard title={m.display_temperature_heatmap()} subtitle={m.display_reading_density()} elevated>
+			<CwHeatmap
+				data={heatmapSeries}
+				days={heatmapDays}
+				unit="°C"
+				title=""
+				rowHeight={18}
+				colors={['#0ea5e9', '#84cc16', '#f97316']}
+			/>
+		</CwCard>
 
 		<CwCard title={m.display_telemetry_table()} elevated>
 			{#key tableKey}

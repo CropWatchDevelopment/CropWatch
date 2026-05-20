@@ -97,7 +97,7 @@
 		<div class="permission-list">
 			{#each permissionRows as row, index (row.key)}
 				{@const ownerForm = ownerFormFor(row.key)}
-				{#if row.email && row.email !== ''}
+				{#if row.email}
 					{#if !row.email.includes('@cropwatch.io') || app.session?.email.includes('@cropwatch.io')}
 						<div class="permission-row">
 							<form
@@ -127,7 +127,6 @@
 								<input type="hidden" name="permissionLevel" value={row.permissionLevel} />
 
 								<div class="permission-user flex items-center justify-center">
-									<input type="hidden" value={row.name} disabled />
 									<p class="text-xl">{row.name} ({row.email})</p>
 								</div>
 

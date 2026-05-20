@@ -1,5 +1,4 @@
 import { env as publicEnv } from '$env/dynamic/public';
-import { buildLoginPath } from '$lib/utils/auth-redirect';
 import type { PdfFile } from '../interfaces/PdfFile.interface';
 import type {
 	CreateDeviceRequest,
@@ -110,6 +109,13 @@ const DEVICE_LATEST_PRIMARY_BY_DEV_EUI_ENDPOINT =
 	publicEnv.PUBLIC_DEVICE_LATEST_PRIMARY_DATA_BY_DEV_EUI_ENDPOINT ??
 	'/devices/{dev_eui}/latest-primary-data';
 
+/**
+ * A freshly issued session can be momentarily rejected by the API gateway
+ * (clock skew, or the session not yet propagated). Retry a browser-side 401
+ * once after this delay before surfacing the failure.
+ */
+const UNAUTHORIZED_RETRY_DELAY_MS = 600;
+
 const AUTH_ENDPOINT = '/auth';
 const AUTH_USER_PROFILE_ENDPOINT = '/auth/user-profile';
 const AIR_ENDPOINT = '/air/{dev_eui}';
@@ -208,22 +214,6 @@ async function parseResponsePayload(response: Response): Promise<unknown> {
 	}
 
 	return rawPayload;
-}
-
-function buildLoginRedirectPath(): string {
-	if (typeof location === 'undefined') {
-		return buildLoginPath({ reason: 'auth-required' });
-	}
-
-	const redirectTarget = `${location.pathname}${location.search}`;
-	if (!redirectTarget) {
-		return buildLoginPath({ reason: 'auth-required' });
-	}
-
-	return buildLoginPath({
-		redirectTo: redirectTarget,
-		reason: 'auth-required'
-	});
 }
 
 function isCreatedAtKey(key: string): boolean {
@@ -440,13 +430,32 @@ export class ApiService {
 			resolvedHeaders.set('Authorization', `Bearer ${resolvedToken}`);
 		}
 
-		const response = await this.fetchFn(url, {
-			...requestInit,
-			headers: resolvedHeaders,
-			body: serializedBody
-		});
+		// A browser-side 401 is retried once: a freshly issued session can be
+		// briefly rejected by the gateway right after login (clock skew / session
+		// propagation). We deliberately do NOT redirect here — the server hook
+		// (`hooks.server.ts`) is the authoritative session guard and will redirect
+		// on the next navigation if the session is genuinely expired. Self-
+		// redirecting on any single 401 tore down valid sessions during that race.
+		const maxAttempts = typeof window !== 'undefined' ? 2 : 1;
+		let response!: Response;
+		let payload: unknown;
 
-		const payload = await parseResponsePayload(response);
+		for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+			response = await this.fetchFn(url, {
+				...requestInit,
+				headers: resolvedHeaders,
+				body: serializedBody
+			});
+
+			payload = await parseResponsePayload(response);
+
+			if (response.ok || response.status !== 401 || attempt >= maxAttempts) {
+				break;
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, UNAUTHORIZED_RETRY_DELAY_MS));
+		}
+
 		if (!response.ok) {
 			if (!(suppressErrorStatuses ?? []).includes(response.status)) {
 				console.error('API request failed', {
@@ -456,13 +465,6 @@ export class ApiService {
 					statusText: response.statusText,
 					payload
 				});
-			}
-			if (response.status === 401) {
-				this.clearAuthToken();
-				if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
-					const loginRedirectPath = buildLoginRedirectPath();
-					window.location.href = loginRedirectPath;
-				}
 			}
 
 			throw new ApiServiceError(response.status, response.statusText, { url, payload });

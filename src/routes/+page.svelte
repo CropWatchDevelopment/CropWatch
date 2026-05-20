@@ -72,8 +72,8 @@
 						variant={view === 'table' ? 'info' : 'secondary'}
 						onclick={() => setView('table')}
 					>
-						<Icon src={TABLE_ICON} alt={m.dashboard_view_table()} />
-						{m.dashboard_view_table()}
+						<Icon src={TABLE_ICON} alt={m.dashboard_table_view()} />
+						{m.dashboard_table_view()}
 					</CwButton>
 					<CwButton
 						class="w-full md:w-auto"
@@ -81,8 +81,8 @@
 						variant={view === 'cards' ? 'info' : 'secondary'}
 						onclick={() => setView('cards')}
 					>
-						<Icon src={SENSOR_CARDS_ICON} alt={m.dashboard_view_cards()} />
-						{m.dashboard_view_cards()}
+						<Icon src={SENSOR_CARDS_ICON} alt={m.dashboard_sensor_cards_view()} />
+						{m.dashboard_sensor_cards_view()}
 					</CwButton>
 				</div>
 			</div>

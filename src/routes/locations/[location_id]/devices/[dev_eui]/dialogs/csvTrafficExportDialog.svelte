@@ -6,7 +6,7 @@
 	import { CwButton, CwDialog, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { downloadCsv } from '../csvExport';
 	import { m } from '$lib/paraglide/messages.js';
-    import NO_ICON from '$lib/images/icons/no.svg';
+	import NO_ICON from '$lib/images/icons/no.svg';
 
 	interface Props {
 		authToken: string | null;
@@ -144,12 +144,12 @@
 	</div>
 	{#snippet actions()}
 		<CwButton variant="secondary" disabled={exporting} onclick={closeDialog}>
-            <Icon src={NO_ICON} alt="" class="h-4 w-4" />
-            {m.action_cancel()}
-        </CwButton>
+			<Icon src={NO_ICON} alt="" class="h-4 w-4" />
+			{m.action_cancel()}
+		</CwButton>
 		<CwButton variant="primary" loading={exporting} onclick={handleCsvDownload}>
 			<Icon src={DOWNLOAD_ICON} alt="" class="h-4 w-4" />
-            {m.action_download()} CSV
+			{m.action_download()} CSV
 		</CwButton>
 	{/snippet}
 </CwDialog>
@@ -161,18 +161,10 @@
 		gap: 0.75rem;
 	}
 
-	.csv-export-dialog__hint,
 	.csv-export-dialog__error {
 		margin: 0;
 		font-size: 0.875rem;
 		line-height: 1.5;
-	}
-
-	.csv-export-dialog__hint {
-		color: var(--cw-text-muted, #6b7280);
-	}
-
-	.csv-export-dialog__error {
 		color: var(--cw-danger, #b91c1c);
 	}
 </style>

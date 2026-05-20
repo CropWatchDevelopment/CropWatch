@@ -36,11 +36,18 @@
 	let groups = $state<DashboardLocationGroup[]>([]);
 	let total = $state(0);
 	let loading = $state(false);
-	let initialLoaded = $state(false);
+	// True while a full reload (initial load or filter change) is in flight, as
+	// opposed to a "load more" append. Drives the full-area loading spinner.
+	let reloading = $state(false);
 	let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 	// dev_eui -> latest row | 'loading' | undefined (not requested yet).
 	let detailsByDevEui = $state<Record<string, Record<string, unknown> | 'loading'>>({});
+
+	const thousandFormatter = new Intl.NumberFormat('en', {
+		notation: 'compact',
+		compactDisplay: 'short'
+	});
 
 	function buildQuery(overrides: { skip: number; take: number }) {
 		return {
@@ -59,6 +66,7 @@
 			return;
 		}
 		loading = true;
+		reloading = !!opts.reset;
 		const skip = opts.reset ? 0 : groups.length;
 		console.debug('[dashboard] loadPage', { reset: !!opts.reset, skip, take: PAGE_SIZE });
 		try {
@@ -75,7 +83,7 @@
 			console.error('Failed to load dashboard page', err);
 		} finally {
 			loading = false;
-			initialLoaded = true;
+			reloading = false;
 		}
 	}
 
@@ -200,7 +208,7 @@
 </script>
 
 <div class="dashboard-cards__scroll">
-	{#if !initialLoaded && loading}
+	{#if reloading}
 		<div class="dashboard-cards__loading">
 			<CwSpinner size="xl" />
 		</div>
@@ -215,7 +223,7 @@
 						{@const secondary = secondaryProps(row)}
 						{@const details = detailsByDevEui[row.dev_eui]}
 						{@const detailRows = details && details !== 'loading' ? detailEntries(details) : []}
-						{@const lastSeen = row.latest?.created_at ?? row.last_data_updated_at ?? null}
+						{@const lastSeen = row.last_data_updated_at ?? row.latest?.created_at ?? null}
 						<CwSensorCard
 							label={row.name}
 							status={statusFor(row)}
@@ -225,7 +233,7 @@
 							secondaryValue={secondary.value}
 							secondaryUnit={secondary.unit}
 							secondaryLabel={secondary.label}
-							lastSeenAt={row.latest?.created_at ?? row.last_data_updated_at ?? undefined}
+							lastSeenAt={row.last_data_updated_at ?? row.latest?.created_at ?? undefined}
 							expireAfterMinutes={expireMinutes(row)}
 							storageKey={`dashboard:${row.dev_eui}`}
 							onExpand={() => loadDetails(row.dev_eui)}

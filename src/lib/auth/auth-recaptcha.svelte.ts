@@ -46,8 +46,11 @@ export function createAuthRecaptcha() {
 			syncStatus();
 			return token;
 		} catch (error) {
+			// Record the error but keep the loaded reCAPTCHA script intact so the
+			// user's next attempt is instant. A hard teardown (`resetFailureState`)
+			// is still available for callers that explicitly need it.
 			state.lastError = toErrorMessage(error);
-			resetFailureState();
+			syncStatus();
 			throw error;
 		}
 	}

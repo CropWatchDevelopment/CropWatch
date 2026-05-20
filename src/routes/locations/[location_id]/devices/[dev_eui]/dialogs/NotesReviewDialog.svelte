@@ -20,8 +20,6 @@
 	interface Props {
 		authToken: string | null;
 		devEui: string;
-		locationName: string;
-		timeZone: string;
 		disabled?: boolean;
 	}
 
@@ -260,16 +258,16 @@
 						{#each item.entries as entry (entry.id)}
 							<article class="notes-review-dialog__note">
 								<div class="w-full flex-row">
-                                    <div>
-									<div class="notes-review-dialog__note-header">
-										<h3 class="notes-review-dialog__note-title">{getNoteTitle(entry)}</h3>
-										<p class="notes-review-dialog__note-meta">{getNoteMeta(entry)}</p>
+									<div>
+										<div class="notes-review-dialog__note-header">
+											<h3 class="notes-review-dialog__note-title">{getNoteTitle(entry)}</h3>
+											<p class="notes-review-dialog__note-meta">{getNoteMeta(entry)}</p>
+										</div>
+										<p class="notes-review-dialog__note-report">
+											{getReportVisibilityLabel(entry)}
+										</p>
+										<p class="notes-review-dialog__note-body">{entry.note}</p>
 									</div>
-									<p class="notes-review-dialog__note-report">
-										{getReportVisibilityLabel(entry)}
-									</p>
-									<p class="notes-review-dialog__note-body">{entry.note}</p>
-                                    </div>
 
 									<CwButton disabled>Delete</CwButton>
 								</div>
@@ -293,9 +291,6 @@
 					</p>
 				{/if}
 			{/snippet}
-			<!-- {#snippet actions(row)}
-                <CwButton>delete</CwButton>
-            {/snippet} -->
 		</CwCalendarScroll>
 	</div>
 	{#snippet actions()}
