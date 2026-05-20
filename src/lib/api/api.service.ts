@@ -6,6 +6,9 @@ import type {
 	CreateLocationRequest,
 	CreateReportRequest,
 	CreateRuleRequest,
+	DashboardLocationPage,
+	DashboardPage,
+	DashboardQuery,
 	DeviceDataWithinRangeQuery,
 	DeviceListQuery,
 	DeviceDto,
@@ -116,6 +119,9 @@ const DEVICE_BY_DEV_EUI_ENDPOINT = '/devices/{dev_eui}';
 const DEVICE_DATA_ENDPOINT = '/devices/{dev_eui}/data';
 const DEVICE_DATA_WITHIN_RANGE_ENDPOINT = '/devices/{dev_eui}/data-within-range';
 const DEVICE_LATEST_DATA_ENDPOINT = '/devices/{dev_eui}/latest-data';
+const DASHBOARD_DEVICES_ENDPOINT = '/dashboard/devices';
+const DASHBOARD_LOCATIONS_ENDPOINT = '/dashboard/locations';
+const DASHBOARD_DEVICE_LATEST_ENDPOINT = '/dashboard/devices/{dev_eui}/latest';
 const LOCATIONS_ENDPOINT = '/locations';
 const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
 const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
@@ -837,6 +843,55 @@ export class ApiService {
 		});
 
 		return normalizePaginatedListResponse<DeviceTypeDto>(payload).data ?? [];
+	}
+
+	public getDashboardDevices(
+		query: DashboardQuery = {},
+		options: ApiMethodOptions = {}
+	): Promise<DashboardPage> {
+		return this.request<DashboardPage>(DASHBOARD_DEVICES_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal,
+			query: {
+				skip: query.skip,
+				take: query.take,
+				group: query.group,
+				name: query.name,
+				location: query.location,
+				locationGroup: query.locationGroup
+			}
+		});
+	}
+
+	public getDashboardLocations(
+		query: DashboardQuery = {},
+		options: ApiMethodOptions = {}
+	): Promise<DashboardLocationPage> {
+		return this.request<DashboardLocationPage>(DASHBOARD_LOCATIONS_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal,
+			query: {
+				skip: query.skip,
+				take: query.take,
+				group: query.group,
+				name: query.name,
+				location: query.location,
+				locationGroup: query.locationGroup
+			}
+		});
+	}
+
+	public getDashboardDeviceLatest(
+		devEui: string,
+		options: ApiMethodOptions = {}
+	): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(DASHBOARD_DEVICE_LATEST_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
 	}
 
 	public getLatestPrimaryDeviceData(

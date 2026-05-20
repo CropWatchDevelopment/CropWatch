@@ -105,6 +105,65 @@ export interface LatestPrimaryDataQuery extends PaginationQuery {
 	name?: string;
 }
 
+export interface DashboardQuery extends PaginationQuery {
+	group?: string;
+	locationGroup?: string;
+	location?: string;
+	name?: string;
+}
+
+export interface DashboardDeviceType {
+	id: number;
+	name: string;
+	data_table_v2: string;
+	primary_data_v2: string;
+	secondary_data_v2: string;
+	default_upload_interval: number | null;
+}
+
+export interface DashboardLocation {
+	location_id: number;
+	name: string;
+	group: string | null;
+}
+
+export interface DashboardLatest {
+	created_at: string | null;
+	primary: number | string | boolean | null;
+	secondary: number | string | boolean | null;
+}
+
+export interface DashboardRow {
+	dev_eui: string;
+	name: string;
+	group: string | null;
+	upload_interval: number | null;
+	last_data_updated_at: string | null;
+	device_type: DashboardDeviceType;
+	location: DashboardLocation | null;
+	latest: DashboardLatest | null;
+}
+
+export interface DashboardPage {
+	rows: DashboardRow[];
+	total: number;
+	skip: number;
+	take: number;
+}
+
+export interface DashboardLocationGroup {
+	key: string;
+	location: DashboardLocation | null;
+	devices: DashboardRow[];
+}
+
+export interface DashboardLocationPage {
+	groups: DashboardLocationGroup[];
+	total: number;
+	skip: number;
+	take: number;
+}
+
 export interface SensorTimeSeriesPoint {
 	created_at: string;
 	dev_eui: string;

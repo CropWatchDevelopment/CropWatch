@@ -15,7 +15,13 @@
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
 	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
-	import { normalizeDashboardFilterValues } from '$lib/components/dashboard/dashboard-filter-values';
+	function dedupSortedStrings(values: readonly unknown[] | null | undefined): string[] {
+		if (!Array.isArray(values)) return [];
+		const cleaned = values
+			.map((v) => (typeof v === 'string' ? v.trim() : ''))
+			.filter((v) => v.length > 0);
+		return [...new Set(cleaned)].sort((a, b) => a.localeCompare(b));
+	}
 	import { buildLogoutPath } from '$lib/utils/auth-redirect';
 
 	let { mode = $bindable() } = $props();
@@ -109,9 +115,7 @@
 			badgeTone: 'secondary',
 			endText: String(app.locations?.length ?? 0)
 		};
-		const groupItems: CwListBoxItem<string>[] = normalizeDashboardFilterValues(
-			app.locationGroups
-		).map((group) => ({
+		const groupItems: CwListBoxItem<string>[] = dedupSortedStrings(app.locationGroups).map((group) => ({
 			value: group,
 			label: group,
 			badge: group.toUpperCase().substring(0, 2),

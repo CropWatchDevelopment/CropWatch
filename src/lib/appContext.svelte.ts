@@ -7,7 +7,6 @@ import type { Profile } from './interfaces/profile.interface';
 import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
 import type { RuleDto, TriggeredRulesCountResponse } from './api/api.service';
 import type { LocationDto } from './api/api.dtos';
-import type { DeviceTypeLookup } from './components/dashboard/dashboard-device-data';
 
 const DEVICE_STALE_MINUTES = 10;
 const deviceAlarms = createCwAlarmScheduler();
@@ -21,7 +20,6 @@ export interface AppContext {
 	deviceGroups?: string[];
 	locationGroups?: string[];
 	locations?: LocationDto[];
-	deviceTypeLookup: DeviceTypeLookup;
 	deviceStatuses: { online: number; offline: number };
 	totalDeviceCount?: number;
 	rules: IRule[];
@@ -39,7 +37,6 @@ export const defaultAppContext: AppContext = {
 	profile: undefined,
 	session: null,
 	devices: [],
-	deviceTypeLookup: { byModel: {}, idToModel: {} },
 	deviceStatuses: { online: 0, offline: 0 },
 	totalDeviceCount: 0,
 	rules: [],
@@ -64,8 +61,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 				profile: undefined,
 				session: null,
 				devices: [],
-				deviceTypeLookup: { byModel: {}, idToModel: {} },
-				deviceStatuses: { online: 0, offline: 0 },
+							deviceStatuses: { online: 0, offline: 0 },
 				totalDeviceCount: 0,
 				rules: [],
 				triggeredRules: [],
@@ -84,8 +80,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 			profile: undefined,
 			session: null,
 			devices: [],
-			deviceTypeLookup: { byModel: {}, idToModel: {} },
-			deviceStatuses: { online: 0, offline: 0 },
+					deviceStatuses: { online: 0, offline: 0 },
 			totalDeviceCount: 0,
 			rules: [],
 			triggeredRules: [],
