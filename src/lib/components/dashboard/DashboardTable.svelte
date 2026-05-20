@@ -75,22 +75,33 @@
 				group: filters.group || undefined,
 				locationGroup: filters.locationGroup || undefined,
 				location: filters.location || undefined,
-				name: query.search?.trim() || filters.name || undefined
+				name: filters.name || undefined
 			},
 			{ signal: query.signal }
 		);
 		return { rows: page.rows, total: page.total };
 	}
+
+	// Mapped into CwDataTable's `Record<string, string[]>` filter shape so the
+	// table re-runs `loadData` whenever the dashboard filters (incl. the search
+	// box) change. The actual values are read from `filters` inside `loadData`.
+	const tableFilters = $derived({
+		group: filters.group ? [filters.group] : [],
+		locationGroup: filters.locationGroup ? [filters.locationGroup] : [],
+		location: filters.location ? [filters.location] : [],
+		name: filters.name ? [filters.name] : []
+	});
 </script>
 
 <CwDataTable
 	{columns}
 	{loadData}
+	filters={tableFilters}
 	rowKey="dev_eui"
+	searchable={false}
 	fillParent
 	pageSize={25}
 	pageSizeOptions={[25, 50, 100]}
-	searchable
 	onRowClick={(row) => {
 		if (row.location?.location_id != null) {
 			goto(resolve(`/locations/${row.location.location_id}/devices/${row.dev_eui}`));

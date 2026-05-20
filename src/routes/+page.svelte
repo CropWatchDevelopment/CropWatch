@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
-	import { CwButton } from '@cropwatchdevelopment/cwui';
+	import { CwButton, CwSearchInput } from '@cropwatchdevelopment/cwui';
 	import DashboardCards from '$lib/components/dashboard/DashboardCards.svelte';
 	import DashboardTable from '$lib/components/dashboard/DashboardTable.svelte';
 	import { getAppContext } from '$lib/appContext.svelte';
@@ -17,17 +17,30 @@
 
 	const VIEW_STORAGE_KEY = 'cropwatch.dashboard.view';
 	const MOBILE_QUERY = '(max-width: 767px)';
+	const SEARCH_DEBOUNCE_MS = 300;
 
 	const app = getAppContext();
 
 	let view = $state<DashboardView>('table');
 	let viewReady = $state(!browser);
 
+	// Free-text search box. `searchName` updates on every keystroke; `debouncedName`
+	// trails it so the views re-fetch once the user pauses, not on every key.
+	let searchName = $state(page.url.searchParams.get('name') ?? '');
+	let debouncedName = $state(page.url.searchParams.get('name') ?? '');
+	$effect(() => {
+		const next = searchName;
+		const timer = setTimeout(() => {
+			debouncedName = next;
+		}, SEARCH_DEBOUNCE_MS);
+		return () => clearTimeout(timer);
+	});
+
 	const filters = $derived({
 		group: page.url.searchParams.get('group') ?? '',
 		locationGroup: page.url.searchParams.get('locationGroup') ?? '',
 		location: page.url.searchParams.get('location') ?? '',
-		name: page.url.searchParams.get('name') ?? ''
+		name: debouncedName.trim()
 	});
 
 	function setView(next: DashboardView) {
@@ -55,12 +68,22 @@
 		if (!token || sidebarDataLoaded) return;
 		sidebarDataLoaded = true;
 		const api = new ApiService({ authToken: token });
-		api.getLocationGroups().then((groups) => {
-			app.locationGroups = groups;
-		}).catch(() => { /* sidebar tolerates an empty list */ });
-		api.getLocations().then((locations) => {
-			app.locations = locations;
-		}).catch(() => { /* sidebar tolerates an empty list */ });
+		api
+			.getLocationGroups()
+			.then((groups) => {
+				app.locationGroups = groups;
+			})
+			.catch(() => {
+				/* sidebar tolerates an empty list */
+			});
+		api
+			.getLocations()
+			.then((locations) => {
+				app.locations = locations;
+			})
+			.catch(() => {
+				/* sidebar tolerates an empty list */
+			});
 	});
 </script>
 
@@ -71,8 +94,20 @@
 <AppPage width="full" class="dashboard-page">
 	<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 		<header class="flex-none">
-			<div class="mb-2 flex w-full flex-col gap-4">
-				<div class="flex w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+			<div class="mb-2 flex w-full flex-row gap-4">
+				<div
+					class="hidden md:flex w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-start"
+				>
+					<CwSearchInput
+						bind:value={searchName}
+						placeholder={m.dashboard_search_placeholder()}
+						class="w-full min-w-0"
+					/>
+				</div>
+				<span class="flex-1"></span>
+				<div
+					class="flex w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
+				>
 					<CwButton
 						class="w-full md:w-auto"
 						size="sm"
