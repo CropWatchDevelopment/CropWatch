@@ -15,6 +15,7 @@
 	import { resolveExportTimeZone } from './csvExport';
 	import type { PageProps } from './$types';
 	import { onDestroy } from 'svelte';
+	import { onAppForeground } from '$lib/utils/onAppForeground';
 	import DeviceDashboardHeader from './DeviceDashboardHeader.svelte';
 	import {
 		DEFAULT_RANGE_SELECTION,
@@ -322,6 +323,18 @@
 	async function refreshDisplayedData(): Promise<TelemetryRow | null> {
 		return isRelayDevice ? await refreshRelayDisplayData() : await fetchLatestData();
 	}
+
+	// Full pull whenever the user returns to the tab/app. A detail page left in
+	// the background goes stale — the device can look offline purely because the
+	// page sat idle past its upload interval. Refresh the active history range
+	// first, then the latest reading so it prepends onto fresh history.
+	async function refreshOnForeground(): Promise<void> {
+		if (!authToken || !devEui) return;
+		await selectRange(activeRange ?? DEFAULT_RANGE_SELECTION);
+		await refreshDisplayedData();
+	}
+
+	$effect(() => onAppForeground(() => void refreshOnForeground()));
 
 	async function queueRelayCommand(
 		relay: RelayNumber,
