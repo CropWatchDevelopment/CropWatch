@@ -148,14 +148,18 @@
 	function buildTimedRelayPayload(action: ActionValue, seconds: number): string {
 		const command = 0x05;
 
-		// 0x01 = return relay(s) to original state after timeout.
-		const inverterMode = 0x01;
+		// Timeout behavior byte:
+		//   0x00 = after timeout, relay(s) switch to the inverted/opposite state
+		//   0x01 = after timeout, relay(s) return to their original pre-command state
+		// Use 0x00 so a timed "ON for N seconds" action always returns the relay to OFF,
+		// even if it was already ON when the rule fired.
+		const timeoutBehavior = 0x00;
 
 		// Dragino timed relay format uses one byte for RO1/RO2 state.
 		// 0b10 = Relay 1 ON/NC, Relay 2 OFF/NO
 		// 0b01 = Relay 1 OFF/NO, Relay 2 ON/NC
 		// 0b11 = Both ON/NC
-		const relayState = action === 'ro1_on_timed' ? 0x10 : action === 'ro2_on_timed' ? 0x01 : 0x11;
+		const relayState = action === 'ro1_on_timed' ? 0b10 : action === 'ro2_on_timed' ? 0b01 : 0b11;
 
 		const milliseconds = seconds * 1000;
 
@@ -168,7 +172,7 @@
 		const timeHigh = (milliseconds >> 8) & 0xff;
 		const timeLow = milliseconds & 0xff;
 
-		return bytesToHex([command, inverterMode, relayState, timeHigh, timeLow]);
+		return bytesToHex([command, timeoutBehavior, relayState, timeHigh, timeLow]);
 	}
 
 	function buildPermanentRelayPayload(action: ActionValue): string {
