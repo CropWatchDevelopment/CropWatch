@@ -31,7 +31,7 @@
 			open = false;
 			toast.add({
 				tone: 'success',
-				message: 'Success!' // m.rules_delete_success()
+				message: m.rules_delete_success({ name: ruleName })
 			});
 		} catch (error) {
 			toast.add({

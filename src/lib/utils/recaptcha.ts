@@ -250,8 +250,12 @@ export async function runRecaptchaAction(action: RecaptchaAction): Promise<strin
 		return token;
 	} catch (error) {
 		const normalizedError = toError(error, 'reCAPTCHA token generation failed');
-		removeRecaptchaArtifacts();
-		resetInternalState('error');
+		// A failed or timed-out `execute()` does not mean the loaded script is
+		// broken — it is usually a transient network blip. Keep the script in
+		// place so the next attempt is instant instead of paying for a full
+		// re-download + re-init (8s + 12s timeouts). If the Enterprise API has
+		// genuinely become unusable, `ensureRecaptchaReady()` detects that via
+		// `hasUsableEnterpriseApi()` and reloads it on the next call.
 		lastError = normalizedError;
 		throw normalizedError;
 	}

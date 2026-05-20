@@ -91,6 +91,16 @@
 	let upload_interval = $derived(
 		data.device?.upload_interval ?? data.device?.cw_device_type?.default_upload_interval
 	);
+	// `upload_interval` is a Postgres `numeric` column, so Supabase returns it as
+	// a STRING ("15", "-1", …). Naively doing `("-1" || 10) * 60_000` yields
+	// -60000, and `setInterval` clamps a negative delay to 0 — firing the poll in
+	// a tight loop that freezes the tab. Coerce to a number, reject non-positive
+	// / non-finite values, and never poll faster than once per minute.
+	let refreshIntervalMs = $derived.by(() => {
+		const minutes = Number(upload_interval);
+		const safeMinutes = Number.isFinite(minutes) && minutes > 0 ? minutes : 10;
+		return Math.max(60_000, safeMinutes * 60_000);
+	});
 
 	let requestedHistoricalData = $derived(
 		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
@@ -116,7 +126,6 @@
 	let isTrafficDevice = $derived(data.device?.cw_device_type.name === '[CROPWATCH] Nvidia Jetson');
 	let rangeOptions = $derived(getRangeOptions());
 	let lastUpdatedAt = $derived(readCreatedAt(displayCurrentRecord));
-	let alarmAfterMinutes = $derived((upload_interval || 10) + 0.5);
 	let noDataYet = $derived(
 		!isRelayDevice &&
 			!fetching &&
@@ -141,6 +150,22 @@
 
 	onDestroy(() => {
 		destroyRelayStateManager();
+	});
+
+	// Poll the device for fresh telemetry at its own upload cadence. Without this
+	// the page never refreshes on its own (the relay manager only covers relay
+	// devices). `upload_interval` is in minutes; fall back to 10 when unset.
+	$effect(() => {
+		if (!authToken || !devEui) return;
+		// Defence-in-depth: never schedule a non-positive interval (see the
+		// `refreshIntervalMs` note above) — `setInterval` would clamp it to 0.
+		if (!Number.isFinite(refreshIntervalMs) || refreshIntervalMs <= 0) return;
+
+		const timer = setInterval(() => {
+			void refreshDisplayedData();
+		}, refreshIntervalMs);
+
+		return () => clearInterval(timer);
 	});
 
 	function syncRelayStateBaseData(): void {
@@ -361,7 +386,6 @@
 	<div class="device-page">
 		<DeviceDashboardHeader
 			{activeRange}
-			{alarmAfterMinutes}
 			{authToken}
 			{controlsDisabled}
 			{devEui}
@@ -371,7 +395,6 @@
 			{lastUpdatedAt}
 			{locationId}
 			{locationName}
-			onRefresh={refreshDisplayedData}
 			onSelectRange={selectRange}
 			{permissionLevel}
 			{rangeOptions}

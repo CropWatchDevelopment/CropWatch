@@ -12,7 +12,6 @@
 
 	interface Props {
 		activeRange: RangeSelection | null;
-		alarmAfterMinutes: number;
 		authToken: string | null;
 		controlsDisabled: boolean;
 		devEui: string;
@@ -22,7 +21,6 @@
 		lastUpdatedAt: string | null;
 		locationId: string;
 		locationName: string;
-		onRefresh: () => unknown;
 		onSelectRange: (selection: RangeSelection) => unknown;
 		permissionLevel: number;
 		rangeOptions: TimeRangeOptions[];
@@ -31,7 +29,6 @@
 
 	let {
 		activeRange,
-		alarmAfterMinutes,
 		authToken,
 		controlsDisabled,
 		devEui,
@@ -41,7 +38,6 @@
 		lastUpdatedAt,
 		locationId,
 		locationName,
-		onRefresh,
 		onSelectRange,
 		permissionLevel,
 		rangeOptions,
@@ -67,7 +63,7 @@
 		<p class="text-md text-right" style="color: var(--cw-text-muted)">
 			{m.display_last_updated()}:
 			{#if lastUpdatedAt}
-				<CwDuration from={lastUpdatedAt} {alarmAfterMinutes} alarmCallback={onRefresh} />
+				<CwDuration from={lastUpdatedAt} />
 			{:else}
 				<span>{m.common_not_available()}</span>
 			{/if}
