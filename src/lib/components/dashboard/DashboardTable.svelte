@@ -8,6 +8,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatSensorValue, labelFor } from '$lib/sensor-labels';
 	import { m } from '$lib/paraglide/messages.js';
+	import { onAppForeground } from '$lib/utils/onAppForeground';
 
 	interface Filters {
 		group: string;
@@ -82,14 +83,21 @@
 		return { rows: page.rows, total: page.total };
 	}
 
+	// Bumped whenever the user returns to the tab/app, to force a fresh pull so
+	// devices that went stale in the background don't show as false offline.
+	let refreshToken = $state(0);
+	$effect(() => onAppForeground(() => (refreshToken += 1)));
+
 	// Mapped into CwDataTable's `Record<string, string[]>` filter shape so the
 	// table re-runs `loadData` whenever the dashboard filters (incl. the search
-	// box) change. The actual values are read from `filters` inside `loadData`.
+	// box) or the refresh token change. The actual filter values are read from
+	// `filters` inside `loadData`; `_refresh` only exists to trigger a reload.
 	const tableFilters = $derived({
 		group: filters.group ? [filters.group] : [],
 		locationGroup: filters.locationGroup ? [filters.locationGroup] : [],
 		location: filters.location ? [filters.location] : [],
-		name: filters.name ? [filters.name] : []
+		name: filters.name ? [filters.name] : [],
+		_refresh: [String(refreshToken)]
 	});
 </script>
 

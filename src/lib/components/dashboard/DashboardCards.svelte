@@ -18,6 +18,7 @@
 	} from '$lib/sensor-labels';
 	import { m } from '$lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
+	import { onAppForeground } from '$lib/utils/onAppForeground';
 
 	interface Filters {
 		group: string;
@@ -216,12 +217,21 @@
 		});
 	});
 
+	let removeForegroundListener: (() => void) | null = null;
+
 	onMount(() => {
 		pollTimer = setInterval(refreshLoaded, REFRESH_INTERVAL_MS);
+		// Pull fresh data whenever the user returns to the tab/app, so devices
+		// that went "stale" while the page sat in the background don't linger as
+		// false offline indicators.
+		removeForegroundListener = onAppForeground(() => {
+			void refreshLoaded();
+		});
 	});
 
 	onDestroy(() => {
 		if (pollTimer) clearInterval(pollTimer);
+		removeForegroundListener?.();
 	});
 </script>
 
