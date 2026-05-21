@@ -140,13 +140,19 @@
 	// 	return [allItem, ...locationItems];
 	// });
 
+	// On mobile the sidebar is an overlay covering the page; collapse it after
+	// the user picks a link or filter so they immediately see the result. On
+	// larger screens the sidebar is docked, so it is left open.
+	function closeSidebarOnMobile() {
+		if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+			mode = 'hidden';
+		}
+	}
+
 	// ── Navigate with updated search params on filter change ────
 	function applyFilter(key: string, value: string) {
-		// Close Sidebar
-		if (window.innerWidth < 1024) {
-			mode = 'closed';
-		}
-		
+		closeSidebarOnMobile();
+
 		const params = new URL(page.url);
 		if (value) {
 			params.searchParams.set(key, value);
@@ -162,7 +168,7 @@
 	}
 </script>
 
-<CwSideNav bind:mode items={navItems} responsive>
+<CwSideNav bind:mode items={navItems} responsive onselect={closeSidebarOnMobile}>
 	{#snippet header()}
 		<div class="app-sidebar__brand">
 			<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-sidebar__brand-mark" />
@@ -172,7 +178,6 @@
 
 	{#snippet aboveContent()}
 		<div class="app-sidebar__mobile-utilities lg:hidden">
-			<p class="app-sidebar__mobile-utilities-label">{m.nav_settings()}</p>
 			<div class="app-sidebar__mobile-utilities-controls">
 				<LanguageSwitcher compact />
 				<CwThemePicker />

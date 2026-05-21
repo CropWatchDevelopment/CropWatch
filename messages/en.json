@@ -80,6 +80,8 @@
 	"dashboard_loading_view": "Loading dashboard view...",
 	"dashboard_loading_devices": "Loading devices…",
 	"dashboard_search_placeholder": "Search by location, device name or EUI…",
+	"dashboard_grid_layout": "Grid layout",
+	"dashboard_masonry_layout": "Masonry layout",
 	"error_bad_request_title": "Bad Request",
 	"error_bad_request_description": "The server could not understand your request. Please check the URL and try again.",
 	"error_unauthorized_title": "Unauthorized",

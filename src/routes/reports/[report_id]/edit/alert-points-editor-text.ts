@@ -2,10 +2,6 @@ import { getUiLocale } from '$lib/i18n/format';
 import { m } from '$lib/paraglide/messages.js';
 import type { CwAlertPointsEditorText } from '@cropwatchdevelopment/cwui';
 
-function formatOverlapLabels(labels: string[]): string {
-	return labels.join(getUiLocale() === 'ja' ? '、' : ', ');
-}
-
 export function createReportAlertPointsEditorText(): CwAlertPointsEditorText {
 	return {
 		unitFieldLabel: m.reports_create_alert_points_unit_label(),
@@ -65,7 +61,7 @@ export function createReportAlertPointsEditorText(): CwAlertPointsEditorText {
 			m.reports_create_alert_points_description_greater_than_or_equal({ value, unit }),
 		overlapError: (labels) =>
 			m.reports_create_alert_points_overlap_error({
-				labels: formatOverlapLabels(labels)
+				labels: labels.join(getUiLocale() === 'ja' ? '、' : ', ')
 			})
 	};
 }

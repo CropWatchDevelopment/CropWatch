@@ -21,10 +21,6 @@ const DEFAULT_RULE_SUBJECT = 'temperature_c';
 const DEFAULT_ALERT_CENTER = '0';
 const ALERT_POINT_COLORS = ['#f7903b', '#42edf0', '#7a8cff', '#e35c8d', '#4fcf7a', '#ffcf5a'];
 
-function formatOverlapLabels(labels: string[]): string {
-	return labels.join(getUiLocale() === 'ja' ? '、' : ', ');
-}
-
 export function createRuleTemplateAlertPointsEditorText(): CwAlertPointsEditorText {
 	return {
 		unitFieldLabel: m.reports_create_alert_points_unit_label(),
@@ -98,7 +94,9 @@ export function createRuleTemplateAlertPointsEditorText(): CwAlertPointsEditorTe
 		resetDescriptionGreaterThanOrEqual: (value, unit) =>
 			m.reports_create_alert_points_reset_description_greater_than_or_equal({ value, unit }),
 		overlapError: (labels) =>
-			m.reports_create_alert_points_overlap_error({ labels: formatOverlapLabels(labels) })
+			m.reports_create_alert_points_overlap_error({
+				labels: labels.join(getUiLocale() === 'ja' ? '、' : ', ')
+			})
 	};
 }
 

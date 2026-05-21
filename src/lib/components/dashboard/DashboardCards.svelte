@@ -1,3 +1,8 @@
+<script module lang="ts">
+	/** Location-card layout: aligned responsive grid, or tightly-packed masonry. */
+	export type CardLayout = 'grid' | 'masonry';
+</script>
+
 <script lang="ts">
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import {
@@ -30,7 +35,8 @@
 	const PAGE_SIZE = 20;
 	const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
-	let { filters }: { filters: Filters } = $props();
+	let { filters, cardLayout = 'grid' }: { filters: Filters; cardLayout?: CardLayout } =
+		$props();
 
 	const app = getAppContext();
 
@@ -185,18 +191,6 @@
 		return { value: v.numeric, unit, label: undefined };
 	}
 
-	function statusFor(row: DashboardRow) {
-		return row.latest ? 'online' : 'loading';
-	}
-
-	function expireMinutes(row: DashboardRow): number {
-		return row.upload_interval ?? row.device_type.default_upload_interval ?? 60;
-	}
-
-	function groupLabel(g: DashboardLocationGroup) {
-		return g.location?.name ?? m.dashboard_no_location();
-	}
-
 	$effect(() => {
 		// Track filter values AND the auth token so this effect re-runs on filter
 		// change and once the token arrives after a fresh login — never on internal
@@ -243,9 +237,12 @@
 	{:else if groups.length === 0}
 		<p class="dashboard-cards__empty">{m.dashboard_no_devices()}</p>
 	{:else}
-		<div class="dashboard-cards__groups">
+		<div class="dashboard-cards__groups dashboard-cards__groups--{cardLayout}">
 			{#each groups as group (group.key)}
-				<CwLocationCard title={groupLabel(group)} class="dashboard-cards__location">
+				<CwLocationCard
+					title={group.location?.name ?? m.dashboard_no_location()}
+					class="dashboard-cards__location"
+				>
 					{#each group.devices as row (row.dev_eui)}
 						{@const primary = primaryProps(row)}
 						{@const secondary = secondaryProps(row)}
@@ -254,7 +251,7 @@
 						{@const lastSeen = row.last_data_updated_at ?? row.latest?.created_at ?? null}
 						<CwSensorCard
 							label={row.name}
-							status={statusFor(row)}
+							status={row.latest ? 'online' : 'loading'}
 							primaryValue={primary.value}
 							primaryUnit={primary.unit}
 							primaryLabel={primary.label}
@@ -262,7 +259,9 @@
 							secondaryUnit={secondary.unit}
 							secondaryLabel={secondary.label}
 							lastSeenAt={row.last_data_updated_at ?? row.latest?.created_at ?? undefined}
-							expireAfterMinutes={expireMinutes(row)}
+							expireAfterMinutes={row.upload_interval ??
+								row.device_type.default_upload_interval ??
+								60}
 							storageKey={`dashboard:${row.dev_eui}`}
 							onExpand={() => loadDetails(row.dev_eui)}
 						>
@@ -347,32 +346,56 @@
 		color: var(--cw-text-muted, #94a3b8);
 	}
 
-	/* Responsive grid of location cards.
-	   Mobile: 1. Tablet: 2. Small laptop: 3. Desktop: 5. */
-	.dashboard-cards__groups {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1rem;
-		align-items: start;
-	}
+	/* Responsive layout of location cards.
+	   Columns — Mobile: 1. Tablet: 2. Small laptop: 3. Desktop: 5. */
 	.dashboard-cards__groups :global(.dashboard-cards__location) {
 		width: 100%;
 		min-width: 0;
 	}
 
+	/* Grid layout: aligned rows — a tall card stretches its whole row, leaving
+	   shorter neighbours with empty space below them. */
+	.dashboard-cards__groups--grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1rem;
+		align-items: start;
+	}
+
+	/* Masonry layout: CSS columns pack cards top-to-bottom, so a short card
+	   sits directly under another regardless of how tall neighbours are. */
+	.dashboard-cards__groups--masonry {
+		display: block;
+		columns: 1;
+		column-gap: 1rem;
+	}
+	.dashboard-cards__groups--masonry :global(.dashboard-cards__location) {
+		break-inside: avoid;
+		margin-bottom: 1rem;
+	}
+
 	@media (min-width: 640px) {
-		.dashboard-cards__groups {
+		.dashboard-cards__groups--grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.dashboard-cards__groups--masonry {
+			columns: 2;
 		}
 	}
 	@media (min-width: 1024px) {
-		.dashboard-cards__groups {
+		.dashboard-cards__groups--grid {
 			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+		.dashboard-cards__groups--masonry {
+			columns: 3;
 		}
 	}
 	@media (min-width: 1280px) {
-		.dashboard-cards__groups {
+		.dashboard-cards__groups--grid {
 			grid-template-columns: repeat(5, minmax(0, 1fr));
+		}
+		.dashboard-cards__groups--masonry {
+			columns: 5;
 		}
 	}
 

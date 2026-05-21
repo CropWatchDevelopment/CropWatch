@@ -140,17 +140,6 @@
 		);
 	}
 
-	function getNoteTitle(entry: Note): string {
-		const trimmedTitle = entry.title.trim();
-		return trimmedTitle.length > 0 ? trimmedTitle : m.display_note_untitled();
-	}
-
-	function getReportVisibilityLabel(entry: Note): string {
-		return entry.includeInReport
-			? m.display_note_report_included()
-			: m.display_note_report_excluded();
-	}
-
 	function getNoteMeta(entry: Note): string {
 		const timestamp = formatDateTime(entry.created_at, { hour: 'numeric', minute: '2-digit' });
 		const author = entry.created_by.trim();
@@ -256,15 +245,20 @@
 				{#if item}
 					<div class="notes-review-dialog__day">
 						{#each item.entries as entry (entry.id)}
+							{@const noteTitle = entry.title.trim()}
 							<article class="notes-review-dialog__note">
 								<div class="w-full flex-row">
 									<div>
 										<div class="notes-review-dialog__note-header">
-											<h3 class="notes-review-dialog__note-title">{getNoteTitle(entry)}</h3>
+											<h3 class="notes-review-dialog__note-title">
+												{noteTitle.length > 0 ? noteTitle : m.display_note_untitled()}
+											</h3>
 											<p class="notes-review-dialog__note-meta">{getNoteMeta(entry)}</p>
 										</div>
 										<p class="notes-review-dialog__note-report">
-											{getReportVisibilityLabel(entry)}
+											{entry.includeInReport
+												? m.display_note_report_included()
+												: m.display_note_report_excluded()}
 										</p>
 										<p class="notes-review-dialog__note-body">{entry.note}</p>
 									</div>

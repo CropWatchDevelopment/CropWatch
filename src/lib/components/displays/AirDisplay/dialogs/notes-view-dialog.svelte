@@ -10,17 +10,6 @@
 	let { row }: { row: AirRow } = $props();
 	let open = $state(false);
 
-	function getNoteTitle(note: Note): string {
-		const trimmedTitle = note.title.trim();
-		return trimmedTitle.length > 0 ? trimmedTitle : m.display_note_untitled();
-	}
-
-	function getReportVisibilityLabel(note: Note): string {
-		return note.includeInReport
-			? m.display_note_report_included()
-			: m.display_note_report_excluded();
-	}
-
 	function getNoteMeta(note: Note): string {
 		const timestamp = formatDateTime(note.created_at);
 		const author = note.created_by.trim();
@@ -39,12 +28,19 @@
 >
 	<div class="notes-view-dialog">
 		{#each row.cw_air_annotations ?? [] as note (note.id)}
+			{@const noteTitle = note.title.trim()}
 			<article class="notes-view-dialog__note">
 				<div class="notes-view-dialog__header">
-					<h3 class="notes-view-dialog__title">{getNoteTitle(note)}</h3>
+					<h3 class="notes-view-dialog__title">
+						{noteTitle.length > 0 ? noteTitle : m.display_note_untitled()}
+					</h3>
 					<p class="notes-view-dialog__meta">{getNoteMeta(note)}</p>
 				</div>
-				<p class="notes-view-dialog__report-status">{getReportVisibilityLabel(note)}</p>
+				<p class="notes-view-dialog__report-status">
+					{note.includeInReport
+						? m.display_note_report_included()
+						: m.display_note_report_excluded()}
+				</p>
 				<p class="notes-view-dialog__body">{note.note}</p>
 			</article>
 		{/each}
