@@ -5,23 +5,29 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
 	import { CwButton, CwSearchInput } from '@cropwatchdevelopment/cwui';
-	import DashboardCards from '$lib/components/dashboard/DashboardCards.svelte';
+	import DashboardCards, {
+		type CardLayout
+	} from '$lib/components/dashboard/DashboardCards.svelte';
 	import DashboardTable from '$lib/components/dashboard/DashboardTable.svelte';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { ApiService } from '$lib/api/api.service';
 	import { m } from '$lib/paraglide/messages.js';
 	import TABLE_ICON from '$lib/images/icons/table.svg';
 	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
+	import GRID_VIEW_ICON from '$lib/images/icons/grid_view.svg';
+	import MASONRY_VIEW_ICON from '$lib/images/icons/masonary.svg';
 
 	type DashboardView = 'table' | 'cards';
 
 	const VIEW_STORAGE_KEY = 'cropwatch.dashboard.view';
+	const CARD_LAYOUT_STORAGE_KEY = 'cropwatch.dashboard.cardLayout';
 	const MOBILE_QUERY = '(max-width: 767px)';
 	const SEARCH_DEBOUNCE_MS = 300;
 
 	const app = getAppContext();
 
 	let view = $state<DashboardView>('table');
+	let cardLayout = $state<CardLayout>('grid');
 	let viewReady = $state(!browser);
 
 	// Free-text search box. `searchName` updates on every keystroke; `debouncedName`
@@ -48,6 +54,11 @@
 		if (browser) window.localStorage.setItem(VIEW_STORAGE_KEY, next);
 	}
 
+	function setCardLayout(next: CardLayout) {
+		cardLayout = next;
+		if (browser) window.localStorage.setItem(CARD_LAYOUT_STORAGE_KEY, next);
+	}
+
 	onMount(() => {
 		const stored = window.localStorage.getItem(VIEW_STORAGE_KEY);
 		if (stored === 'table' || stored === 'cards') {
@@ -55,6 +66,12 @@
 		} else if (window.matchMedia(MOBILE_QUERY).matches) {
 			view = 'cards';
 		}
+
+		const storedLayout = window.localStorage.getItem(CARD_LAYOUT_STORAGE_KEY);
+		if (storedLayout === 'grid' || storedLayout === 'masonry') {
+			cardLayout = storedLayout;
+		}
+
 		viewReady = true;
 	});
 
@@ -106,6 +123,7 @@
 				</div>
 				<span class="flex-1"></span>
 				<div
+					id="view-layout-selection-section"
 					class="flex w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
 				>
 					<CwButton
@@ -126,13 +144,35 @@
 						<Icon src={SENSOR_CARDS_ICON} alt={m.dashboard_sensor_cards_view()} />
 						{m.dashboard_sensor_cards_view()}
 					</CwButton>
+					{#if view === 'cards'}
+						<div
+							class="hidden items-center justify-end gap-1 border-t border-slate-600/70 pt-2 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-2 md:flex"
+						>
+							<CwButton
+								class="px-2 text-xs"
+								size="sm"
+								variant={cardLayout === 'grid' ? 'info' : 'secondary'}
+								onclick={() => setCardLayout('grid')}
+							>
+								<Icon src={GRID_VIEW_ICON} alt={m.dashboard_grid_layout()} />
+							</CwButton>
+							<CwButton
+								class="px-2 text-xs"
+								size="sm"
+								variant={cardLayout === 'masonry' ? 'info' : 'secondary'}
+								onclick={() => setCardLayout('masonry')}
+							>
+								<Icon src={MASONRY_VIEW_ICON} alt={m.dashboard_masonry_layout()} />
+							</CwButton>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</header>
 
 		{#if viewReady}
 			{#if view === 'cards'}
-				<DashboardCards {filters} />
+				<DashboardCards {filters} {cardLayout} />
 			{:else}
 				<DashboardTable {filters} />
 			{/if}
