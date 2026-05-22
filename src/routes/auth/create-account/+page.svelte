@@ -40,9 +40,9 @@
 	let password: string = $state('');
 	let confirmPassword: string = $state('');
 
-	let agreedTerms: boolean = $state(false);
 	let agreedPrivacy: boolean = $state(false);
-	let agreedCookies: boolean = $state(false);
+	let agreedTerms: boolean = $state(false);
+	let agreedEula: boolean = $state(false);
 
 	let passwordValidation: IPasswordValidationResult = $derived(isStrongPassword(password));
 
@@ -50,7 +50,7 @@
 		password.length > 0 && confirmPassword.length > 0 && password === confirmPassword
 	);
 
-	let allConsentsGiven: boolean = $derived(agreedTerms && agreedPrivacy && agreedCookies);
+	let allConsentsGiven: boolean = $derived(agreedPrivacy && agreedTerms && agreedEula);
 	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 
 	let canSubmit: boolean = $derived(
@@ -123,9 +123,9 @@
 					return;
 				}
 
-				formData.set('agreedTerms', String(agreedTerms));
 				formData.set('agreedPrivacy', String(agreedPrivacy));
-				formData.set('agreedCookies', String(agreedCookies));
+				formData.set('agreedTerms', String(agreedTerms));
+				formData.set('agreedEula', String(agreedEula));
 
 				return async ({ result }) => {
 					try {
@@ -210,9 +210,9 @@
 			</label>
 
 			<CreateAccountConsentFields
-				bind:agreedTerms
 				bind:agreedPrivacy
-				bind:agreedCookies
+				bind:agreedTerms
+				bind:agreedEula
 				{allConsentsGiven}
 			/>
 
