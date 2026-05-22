@@ -1,21 +1,18 @@
 <script lang="ts">
 	import { CwDropdown, CwInput } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import {
+		MAX_TIMED_RELAY_SECONDS,
+		buildRelayPayload,
+		hexToBase64,
+		type ActionValue
+	} from './relay-payload';
 
 	interface DeviceOption {
 		label: string;
 		value: string;
 		disabled?: boolean;
 	}
-
-	type ActionValue =
-		| 'ro1_on_timed'
-		| 'ro2_on_timed'
-		| 'both_on_timed'
-		| 'ro1_on_permanent'
-		| 'ro1_off_permanent'
-		| 'ro2_on_permanent'
-		| 'ro2_off_permanent';
 
 	interface ActionOption {
 		label: string;
@@ -105,7 +102,9 @@
 	const isTimedAction = $derived(selectedAction.endsWith('_timed'));
 
 	const safeOnTimeSeconds = $derived(
-		Number.isFinite(onTimeSeconds) ? Math.max(1, Math.min(65, Math.trunc(onTimeSeconds))) : 5
+		Number.isFinite(onTimeSeconds)
+			? Math.max(1, Math.min(MAX_TIMED_RELAY_SECONDS, Math.trunc(onTimeSeconds)))
+			: 5
 	);
 
 	const payloadHex = $derived(buildRelayPayload(selectedAction, safeOnTimeSeconds));
@@ -138,87 +137,6 @@
 		}
 	});
 
-	function buildRelayPayload(action: ActionValue, seconds: number): string {
-		if (action.endsWith('_timed')) {
-			return buildTimedRelayPayload(action, seconds);
-		}
-		return buildPermanentRelayPayload(action);
-	}
-
-	function buildTimedRelayPayload(action: ActionValue, seconds: number): string {
-		const command = 0x05;
-
-		// Timeout behavior byte:
-		//   0x00 = after timeout, relay(s) switch to the inverted/opposite state
-		//   0x01 = after timeout, relay(s) return to their original pre-command state
-		// Use 0x00 so a timed "ON for N seconds" action always returns the relay to OFF,
-		// even if it was already ON when the rule fired.
-		const timeoutBehavior = 0x00;
-
-		// Dragino timed relay format uses one byte for RO1/RO2 state.
-		// 0b10 = Relay 1 ON/NC, Relay 2 OFF/NO
-		// 0b01 = Relay 1 OFF/NO, Relay 2 ON/NC
-		// 0b11 = Both ON/NC
-		const relayState = action === 'ro1_on_timed' ? 0b10 : action === 'ro2_on_timed' ? 0b01 : 0b11;
-
-		const milliseconds = seconds * 1000;
-
-		// Use 2-byte latch time for compatibility with older firmware.
-		// Max = 65535 ms, so this UI clamps to 65 seconds.
-		if (milliseconds > 0xffff) {
-			throw new Error('Timed relay payload exceeds 2-byte latch time limit.');
-		}
-
-		const timeHigh = (milliseconds >> 8) & 0xff;
-		const timeLow = milliseconds & 0xff;
-
-		return bytesToHex([command, timeoutBehavior, relayState, timeHigh, timeLow]);
-	}
-
-	function buildPermanentRelayPayload(action: ActionValue): string {
-		// Dragino fixed relay command: [0x03, relay1Byte, relay2Byte]
-		// 0x00 = OFF, 0x01 = ON, 0x11 = no action on that relay.
-		const command = 0x03;
-		const NO_ACTION = 0x11;
-
-		let relay1: number;
-		let relay2: number;
-		switch (action) {
-			case 'ro1_on_permanent':
-				relay1 = 0x01;
-				relay2 = NO_ACTION;
-				break;
-			case 'ro1_off_permanent':
-				relay1 = 0x00;
-				relay2 = NO_ACTION;
-				break;
-			case 'ro2_on_permanent':
-				relay1 = NO_ACTION;
-				relay2 = 0x01;
-				break;
-			case 'ro2_off_permanent':
-				relay1 = NO_ACTION;
-				relay2 = 0x00;
-				break;
-			default:
-				return '';
-		}
-
-		return bytesToHex([command, relay1, relay2]);
-	}
-
-	function bytesToHex(bytes: number[]): string {
-		return bytes
-			.map((byte) => byte.toString(16).padStart(2, '0'))
-			.join('')
-			.toUpperCase();
-	}
-
-	function hexToBase64(hex: string): string {
-		const bytes = hex.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) ?? [];
-		return btoa(String.fromCharCode(...bytes));
-	}
-
 	function handleSecondsInput(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		const value = Number(input.value);
@@ -248,7 +166,7 @@
 			placeholder="Enter time in seconds"
 			type="numeric"
 			min="1"
-			max="65"
+			max={String(MAX_TIMED_RELAY_SECONDS)}
 			value={String(onTimeSeconds)}
 			oninput={handleSecondsInput}
 		/>
