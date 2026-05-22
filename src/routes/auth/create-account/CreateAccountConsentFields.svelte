@@ -2,63 +2,83 @@
 	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {
-		agreedCookies: boolean;
 		agreedPrivacy: boolean;
 		agreedTerms: boolean;
+		agreedEula: boolean;
 		allConsentsGiven: boolean;
 	}
 
 	let {
-		agreedCookies = $bindable(false),
 		agreedPrivacy = $bindable(false),
 		agreedTerms = $bindable(false),
+		agreedEula = $bindable(false),
 		allConsentsGiven
 	}: Props = $props();
+
+	// The matching checkbox stays disabled until its policy link has been opened.
+	let visitedPrivacy = $state(false);
+	let visitedTerms = $state(false);
+	let visitedEula = $state(false);
 </script>
 
 <fieldset class="consent-group">
 	<legend class="field-label">{m.auth_required_agreements_label()}</legend>
 
+	<p class="consent-note">{m.auth_open_link_first()}</p>
+
 	<label class="consent-item">
-		<input type="checkbox" bind:checked={agreedTerms} class="consent-checkbox" />
+		<input
+			type="checkbox"
+			bind:checked={agreedPrivacy}
+			disabled={!visitedPrivacy}
+			class="consent-checkbox"
+		/>
 		<span>
 			{m.auth_agree_to()}
 			<a
-				href="https://app.cropwatch.io/legal/EULA"
+				href="https://www.cropwatch.io/legal/privacy-policy"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="auth-link">{m.auth_terms_of_service()}</a
+				class="auth-link"
+				onclick={() => (visitedPrivacy = true)}>{m.auth_privacy_policy()}</a
 			>
 		</span>
 	</label>
 
 	<label class="consent-item">
-		<input type="checkbox" bind:checked={agreedPrivacy} class="consent-checkbox" />
+		<input
+			type="checkbox"
+			bind:checked={agreedTerms}
+			disabled={!visitedTerms}
+			class="consent-checkbox"
+		/>
 		<span>
 			{m.auth_agree_to()}
 			<a
-				href="https://app.cropwatch.io/legal/privacy-policy"
+				href="https://www.cropwatch.io/legal/terms-of-service"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="auth-link">{m.auth_privacy_policy()}</a
+				class="auth-link"
+				onclick={() => (visitedTerms = true)}>{m.auth_terms_of_service()}</a
 			>
 		</span>
 	</label>
 
 	<label class="consent-item">
-		<input type="checkbox" bind:checked={agreedCookies} class="consent-checkbox" />
+		<input type="checkbox" bind:checked={agreedEula} disabled={!visitedEula} class="consent-checkbox" />
 		<span>
 			{m.auth_agree_to()}
 			<a
-				href="https://app.cropwatch.io/legal/cookie-policy"
+				href="https://www.cropwatch.io/legal/EULA"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="auth-link">{m.auth_cookie_policy()}</a
+				class="auth-link"
+				onclick={() => (visitedEula = true)}>{m.auth_eula()}</a
 			>
 		</span>
 	</label>
 
-	{#if !allConsentsGiven && (agreedTerms || agreedPrivacy || agreedCookies)}
+	{#if !allConsentsGiven && (agreedPrivacy || agreedTerms || agreedEula)}
 		<p class="consent-hint">{m.auth_all_three_required()}</p>
 	{/if}
 </fieldset>
@@ -77,6 +97,12 @@
 		padding: 0 0.4rem;
 	}
 
+	.consent-note {
+		margin: 0;
+		font-size: 0.82rem;
+		color: rgb(160 180 205);
+	}
+
 	.consent-item {
 		display: flex;
 		align-items: flex-start;
@@ -93,6 +119,11 @@
 		accent-color: rgb(56 137 203);
 		cursor: pointer;
 		flex-shrink: 0;
+	}
+
+	.consent-checkbox:disabled {
+		cursor: not-allowed;
+		opacity: 0.45;
 	}
 
 	.consent-hint {

@@ -23,9 +23,9 @@ export const actions: Actions = {
 		const company = readNonEmptyString(data.get('company'));
 		const recaptchaToken = readNonEmptyString(data.get('recaptchaToken'));
 
-		const agreedTerms = data.get('agreedTerms') === 'true';
 		const agreedPrivacy = data.get('agreedPrivacy') === 'true';
-		const agreedCookies = data.get('agreedCookies') === 'true';
+		const agreedTerms = data.get('agreedTerms') === 'true';
+		const agreedEula = data.get('agreedEula') === 'true';
 
 		// ── Validation ─────────────────────────────────────────────
 		if (!firstName || !lastName || !email || !password || !confirmPassword || !company) {
@@ -58,7 +58,7 @@ export const actions: Actions = {
 			});
 		}
 
-		if (!agreedTerms || !agreedPrivacy || !agreedCookies) {
+		if (!agreedPrivacy || !agreedTerms || !agreedEula) {
 			return fail(400, {
 				message: m.auth_must_agree_all_policies(),
 				firstName,
@@ -95,9 +95,9 @@ export const actions: Actions = {
 					first_name: firstName,
 					last_name: lastName,
 					company,
-					agreed_terms: true,
 					agreed_privacy: true,
-					agreed_cookies: true
+					agreed_terms: true,
+					agreed_eula: true
 				}
 			}
 		});
