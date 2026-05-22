@@ -59,7 +59,7 @@
 				target="_blank"
 				rel="noopener noreferrer"
 				class="auth-link"
-				onclick={() => (visitedTerms = true)}>{m.auth_terms_of_service()}</a
+				onclick={() => (visitedTerms = true)}>{m.auth_cookie_policy()}</a
 			>
 		</span>
 	</label>
