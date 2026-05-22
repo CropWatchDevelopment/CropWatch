@@ -20,6 +20,15 @@ const SCRIPT_ID = 'cw-recaptcha-enterprise';
 const SCRIPT_SRC_MATCHER = 'script[src*="recaptcha/enterprise.js"]';
 const READY_TIMEOUT_MS = 8_000;
 const EXECUTE_TIMEOUT_MS = 12_000;
+// A cold browser frequently fails the very first request to google.com with
+// `ERR_NAME_NOT_RESOLVED` before DNS is warm. Retry the script load a few
+// times with a short backoff so a transient failure doesn't hard-block login.
+const SCRIPT_LOAD_ATTEMPTS = 3;
+const SCRIPT_RETRY_BASE_DELAY_MS = 400;
+// `window.grecaptcha.enterprise` can lag slightly behind the script's `onload`.
+// Poll for it briefly rather than declaring failure on the first synchronous check.
+const API_AVAILABILITY_TIMEOUT_MS = 4_000;
+const API_POLL_INTERVAL_MS = 100;
 
 let status: RecaptchaStatus = 'idle';
 let inflightLoad: Promise<void> | null = null;
@@ -72,6 +81,12 @@ function removeRecaptchaArtifacts() {
 	for (const script of getExistingScripts()) {
 		script.remove();
 	}
+}
+
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => {
+		window.setTimeout(resolve, ms);
+	});
 }
 
 async function withTimeout<T>(
@@ -153,6 +168,42 @@ async function loadRecaptchaScriptElement(siteKey: string): Promise<void> {
 	});
 }
 
+async function loadRecaptchaScriptWithRetry(siteKey: string): Promise<void> {
+	let lastError: Error | null = null;
+
+	for (let attempt = 1; attempt <= SCRIPT_LOAD_ATTEMPTS; attempt += 1) {
+		try {
+			await loadRecaptchaScriptElement(siteKey);
+			return;
+		} catch (error) {
+			lastError = toError(error, 'reCAPTCHA script failed to load');
+			// Drop the failed <script> so the next attempt starts from a clean slate.
+			removeRecaptchaArtifacts();
+			if (attempt < SCRIPT_LOAD_ATTEMPTS) {
+				await delay(SCRIPT_RETRY_BASE_DELAY_MS * attempt);
+			}
+		}
+	}
+
+	throw lastError ?? new Error('reCAPTCHA script failed to load');
+}
+
+async function waitForEnterpriseApi(): Promise<void> {
+	if (hasUsableEnterpriseApi()) {
+		return;
+	}
+
+	const deadline = Date.now() + API_AVAILABILITY_TIMEOUT_MS;
+	while (Date.now() < deadline) {
+		await delay(API_POLL_INTERVAL_MS);
+		if (hasUsableEnterpriseApi()) {
+			return;
+		}
+	}
+
+	throw new Error('reCAPTCHA script loaded without a usable Enterprise API');
+}
+
 async function ensureRecaptchaReady(): Promise<void> {
 	const siteKey = getPublicSiteKey();
 	if (!siteKey) {
@@ -170,12 +221,8 @@ async function ensureRecaptchaReady(): Promise<void> {
 
 		inflightLoad = (async () => {
 			try {
-				await loadRecaptchaScriptElement(siteKey);
-
-				if (!hasUsableEnterpriseApi()) {
-					throw new Error('reCAPTCHA script loaded without a usable Enterprise API');
-				}
-
+				await loadRecaptchaScriptWithRetry(siteKey);
+				await waitForEnterpriseApi();
 				await waitForEnterpriseReady();
 				setStatus('ready');
 			} catch (error) {
