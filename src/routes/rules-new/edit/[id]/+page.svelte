@@ -2,17 +2,13 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { AppPage } from '$lib/components/layout';
-	import type { DeviceDto, RuleActionTypeDto } from '$lib/api/api.dtos';
-	import type { RuleTemplateDto } from '$lib/rules-new/rule-template.types';
 	import { CwButton, CwChip } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 	import RuleTemplateForm from '../../RuleTemplateForm.svelte';
 
 	let { data }: PageProps = $props();
-	const template = (() => data.template as RuleTemplateDto)();
-	const devices = (() => data.devices as DeviceDto[])();
-	const actionTypes = (() => data.actionTypes as RuleActionTypeDto[])();
+	const templateId = (() => data.context.template?.id ?? 0)();
 </script>
 
 <svelte:head>
@@ -27,20 +23,14 @@
 	<div class="rules-new-edit__header">
 		<h1>{m.rules_new_edit_template()}</h1>
 		<CwChip
-			label={`${m.rules_new_template_id()}: ${template.id}`}
+			label={`${m.rules_new_template_id()}: ${templateId}`}
 			tone="info"
 			variant="outline"
 			size="sm"
 		/>
 	</div>
 
-	<RuleTemplateForm
-		mode="edit"
-		{devices}
-		{actionTypes}
-		authToken={data.authToken}
-		initialTemplate={template}
-	/>
+	<RuleTemplateForm mode="edit" context={data.context} authToken={data.authToken} />
 </AppPage>
 
 <style>

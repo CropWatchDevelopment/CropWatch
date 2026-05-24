@@ -6,13 +6,11 @@
 	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
 	import type {
 		Json,
-		RuleActionTypeDto,
 		RuleTemplateActionDto,
 		RuleTemplateActionInput,
-		RuleTemplateDto,
 		RuleTemplateSaveRequest
 	} from '$lib/rules-new/rule-template.types';
-	import type { DeviceDto } from '$lib/api/api.dtos';
+	import type { RuleFormContextDto } from '$lib/api/api.dtos';
 	import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
 	import {
 		CwAlertPointsEditor,
@@ -43,10 +41,8 @@
 
 	interface Props {
 		mode: FormMode;
-		devices: DeviceDto[];
-		actionTypes: RuleActionTypeDto[];
+		context: RuleFormContextDto;
 		authToken?: string | null;
-		initialTemplate?: RuleTemplateDto | null;
 		preselectedDevEui?: string | null;
 	}
 
@@ -66,14 +62,15 @@
 
 	let {
 		mode,
-		devices,
-		actionTypes: actions,
+		context,
 		authToken = null,
-		initialTemplate = null,
 		preselectedDevEui = null
 	}: Props = $props();
 
-	const initial = (() => initialTemplate)();
+	let devices = $derived(context.devices);
+	let actions = $derived(context.actionTypes);
+	let locations = $derived(context.locations);
+	const initial = (() => context.template)();
 	const preselectedDevice = (() => preselectedDevEui)();
 	const toast = useCwToast();
 	const SUBJECT_OPTIONS = getRuleSubjectOptions();
@@ -84,6 +81,7 @@
 	let description = $state(initial?.description ?? '');
 	let isActive = $state(initial?.isActive ?? true);
 	let submitting = $state(false);
+	let showAdvanced = $state(false);
 
 	let selectedDevices = $state<DeviceSelection[]>(
 		initial?.assignments.length
@@ -111,13 +109,19 @@
 				value: String(actionType.id)
 			}))
 	);
-	let deviceOptionsBase = $derived(
+	interface DeviceOption {
+		label: string;
+		value: string;
+		group?: number;
+	}
+	let deviceOptionsBase = $derived<DeviceOption[]>(
 		(devices ?? []).map((device) => ({
 			label: device.name ? `${device.name} (${device.dev_eui})` : device.dev_eui,
-			value: device.dev_eui
+			value: device.dev_eui,
+			group: typeof device.location_id === 'number' ? device.location_id : undefined
 		}))
 	);
-	let deviceOptions = $derived([
+	let deviceOptions = $derived<DeviceOption[]>([
 		...selectedDevices
 			.filter((device) => !deviceOptionsBase.some((option) => option.value === device.id))
 			.map((device) => ({
@@ -126,6 +130,16 @@
 			})),
 		...deviceOptionsBase
 	]);
+	let deviceGroups = $derived.by(() => {
+		const seen = new Map<number, string>();
+		for (const device of devices ?? []) {
+			if (typeof device.location_id !== 'number' || seen.has(device.location_id)) continue;
+			seen.set(device.location_id, resolveLocationName(device.location_id));
+		}
+		return [...seen.entries()]
+			.map(([value, label]) => ({ value, label }))
+			.sort((a, b) => a.label.localeCompare(b.label));
+	});
 
 	let selectedDevEuis = $derived(selectedDevices.map((device) => device.id.trim()).filter(Boolean));
 	let selectedDeviceTypeId = $derived(resolveSelectedDeviceTypeId());
@@ -215,6 +229,12 @@
 	function getDeviceLabel(devEui: string): string {
 		const device = devices.find((entry) => entry.dev_eui === devEui);
 		return device?.name ? `${device.name} (${devEui})` : devEui;
+	}
+
+	function resolveLocationName(locationId: number): string {
+		const match = locations.find((loc) => loc.location_id === locationId);
+		const name = typeof match?.name === 'string' ? match.name.trim() : '';
+		return name || m.locations_location_with_id({ id: String(locationId) });
 	}
 
 	function resolveSelectedDeviceTypeId(): number | null {
@@ -384,12 +404,15 @@
 				<p>{m.rules_no_devices_available()}</p>
 			</AppNotice>
 		{:else}
-			<div class="rules-new-form__block">
+			<div class="rules-new-form__block" id="device-selection">
 				<CwMultiSelect
 					showAllSelectedItems={true}
 					label={m.devices_device()}
 					placeholder={m.rules_select_device_placeholder()}
 					options={deviceOptions}
+					groups={deviceGroups}
+					dropdownHeight="24rem"
+					searchPlaceholder={m.rules_filter_device_placeholder()}
 					bind:value={selectedDevices}
 					required
 				/>
@@ -506,8 +529,20 @@
 					<dd>{assignmentSummary}</dd>
 					<dt>{m.rules_conditions()}:</dt>
 					<dd>{criteriaSummary}</dd>
+					{#if showAdvanced}
+
 					<dt>{m.rules_new_actions()}:</dt>
-					<dd>{actionSummary}</dd>
+					<dd>
+						{actionSummary}
+						<CwButton variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
+						{showAdvanced ? m.common_hide_details() : m.common_show_details()}
+					</CwButton>
+					</dd>
+					{:else}
+					<CwButton variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
+						{showAdvanced ? m.common_hide_details() : m.common_show_details()}
+					</CwButton>
+					{/if}
 				</dl>
 			</AppNotice>
 		{:else}

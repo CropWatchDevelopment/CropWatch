@@ -26,9 +26,11 @@ import type {
 	ReportsQuery,
 	RuleActionTypeDto,
 	RuleDto,
+	RuleFormContextDto,
 	RuleTemplateDto,
 	RuleTemplateListQuery,
 	RuleTemplateSaveRequest,
+	RuleTriggerLogDto,
 	RulesQuery,
 	SensorTimeSeriesPoint,
 	TimeRangeQuery,
@@ -146,6 +148,7 @@ const REPORT_BY_REPORT_ID_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/{report_id}`;
 const RULES_BASE_ENDPOINT = publicEnv.PUBLIC_RULES_ENDPOINT ?? '/rules';
 const RULE_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_RULE_TEMPLATES_ENDPOINT ?? '/rules-new';
 const RULE_TEMPLATE_ACTION_TYPES_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/action-types`;
+const RULE_TEMPLATE_FORM_CONTEXT_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/form-context`;
 const TRIGGERED_RULES_BASE_ENDPOINT =
 	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT ?? `${RULES_BASE_ENDPOINT}/triggered`;
 const TRIGGERED_RULES_COUNT_ENDPOINT =
@@ -154,6 +157,7 @@ const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
 const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{report_id}/{reportName}`;
 const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
 const RULE_TEMPLATE_BY_ID_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}`;
+const RULE_TEMPLATE_HISTORY_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}/history`;
 const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air/notes';
 const GET_AIR_NOTES_ENDPOINT =
 	publicEnv.PUBLIC_GET_AIR_NOTES_ENDPOINT ?? '/air/notes/{dev_eui}/month/{month}/year/{year}';
@@ -1124,10 +1128,34 @@ export class ApiService {
 		});
 	}
 
+	public getRuleTemplateHistory(
+		id: number,
+		options: ApiMethodOptions = {}
+	): Promise<RuleTriggerLogDto[]> {
+		return this.request<RuleTriggerLogDto[]>(
+			replacePathParams(RULE_TEMPLATE_HISTORY_ENDPOINT, { id }),
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
+	}
+
 	public getRuleTemplateActionTypes(options: ApiMethodOptions = {}): Promise<RuleActionTypeDto[]> {
 		return this.request<RuleActionTypeDto[]>(RULE_TEMPLATE_ACTION_TYPES_ENDPOINT, {
 			method: 'GET',
 			signal: options.signal
+		});
+	}
+
+	public getRuleFormContext(
+		templateId?: number,
+		options: ApiMethodOptions = {}
+	): Promise<RuleFormContextDto> {
+		return this.request<RuleFormContextDto>(RULE_TEMPLATE_FORM_CONTEXT_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal,
+			query: typeof templateId === 'number' ? { templateId } : undefined
 		});
 	}
 

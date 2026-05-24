@@ -305,6 +305,18 @@ export interface RuleTemplateDto {
 	actions: RuleTemplateActionDto[];
 }
 
+export interface RuleTriggerLogDto {
+	id: number;
+	devEui: string;
+	deviceName: string | null;
+	templateId: number;
+	triggeredAt: string | null;
+	triggeredValue: number | null;
+	resetAt: string | null;
+	resetValue: number | null;
+	createdAt: string | null;
+}
+
 export interface RuleTemplateCriterionInput {
 	id?: number | null;
 	subject: string;
@@ -331,6 +343,13 @@ export interface RuleTemplateSaveRequest {
 
 export interface RuleTemplateListQuery {
 	search?: string;
+}
+
+export interface RuleFormContextDto {
+	devices: DeviceDto[];
+	locations: LocationDto[];
+	actionTypes: RuleActionTypeDto[];
+	template: RuleTemplateDto | null;
 }
 
 export interface ReportUserScheduleDto {
