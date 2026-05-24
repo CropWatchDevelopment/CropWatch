@@ -1,4 +1,5 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import type { RuleFormContextDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -17,22 +18,20 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
-	let template;
+	let context: RuleFormContextDto;
 	try {
-		template = await api.getRuleTemplate(templateId);
+		context = await api.getRuleFormContext(templateId);
 	} catch (loadError) {
 		if (loadError instanceof ApiServiceError && loadError.status === 404) {
 			error(404, m.rules_new_rule_template_not_found());
 		}
-
 		console.error('Failed to load rule template:', loadError);
 		error(500, m.rules_new_load_failed());
 	}
 
-	const [devices, actionTypes] = await Promise.all([
-		api.getAllDevices().catch(() => []),
-		api.getRuleTemplateActionTypes().catch(() => [])
-	]);
+	if (!context.template) {
+		error(404, m.rules_new_rule_template_not_found());
+	}
 
-	return { template, devices, actionTypes, authToken };
+	return { context, authToken };
 };

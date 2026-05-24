@@ -21,6 +21,7 @@
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import DeleteRuleTemplateDialog from './DeleteRuleTemplateDialog.svelte';
+	import ViewRuleAlertHistory from './ViewRuleAlertHistory.svelte';
 
 	type RuleTemplateRow = RuleTemplateDto & {
 		statusLabel: string;
@@ -202,6 +203,7 @@
 						>
 							<Icon src={EDIT_ICON} alt={m.action_edit()} />
 						</CwButton>
+						<ViewRuleAlertHistory templateId={row.id} ruleName={row.name} />
 						<DeleteRuleTemplateDialog
 							templateId={row.id}
 							ruleName={row.name}
