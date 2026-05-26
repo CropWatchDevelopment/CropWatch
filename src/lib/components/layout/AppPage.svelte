@@ -34,8 +34,7 @@
 		flex-direction: column;
 		width: 100%;
 		min-width: 0;
-		padding-inline: var(--app-shell-padding-inline-start) var(--app-shell-padding-inline-end);
-		padding-block: var(--cw-space-3) var(--cw-space-4);
+
 	}
 
 	.app-page__shell {

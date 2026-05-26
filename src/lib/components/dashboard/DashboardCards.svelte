@@ -24,6 +24,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
+	import TodayDataNoteDialog from '$lib/components/displays/AirDisplay/dialogs/TodayDataNoteDialog.svelte';
 
 	interface Filters {
 		group: string;
@@ -293,6 +294,8 @@
 									{/if}
 									<!-- END OF LAST SEEN -->
 								</dl>
+								<span class="w-full flex flex-row gap-1">
+								<TodayDataNoteDialog devEui={row.dev_eui} />
 								<CwButton
 									variant="secondary"
 									class="w-full"
@@ -300,6 +303,7 @@
 										goto(`/locations/${row.location?.location_id ?? ''}/devices/${row.dev_eui}`)}
 									>Details</CwButton
 								>
+								</span>
 							{/if}
 						</CwSensorCard>
 					{/each}
@@ -333,7 +337,7 @@
 		flex: 1 1 auto;
 		min-height: 0;
 		overflow-y: auto;
-		padding: 0.5rem 1rem 1.5rem;
+		padding: 0.5rem 0.5rem 1.5rem;
 	}
 
 	.dashboard-cards__loading,
@@ -342,7 +346,7 @@
 		width: 100%;
 		height: 100%;
 		justify-content: center;
-		padding: 3rem 1rem;
+		padding: 3rem 0.5rem;
 		color: var(--cw-text-muted, #94a3b8);
 	}
 
@@ -358,7 +362,7 @@
 	.dashboard-cards__groups--grid {
 		display: grid;
 		grid-template-columns: 1fr;
-		gap: 1rem;
+		gap: 0.5rem;
 		align-items: start;
 	}
 
@@ -367,11 +371,11 @@
 	.dashboard-cards__groups--masonry {
 		display: block;
 		columns: 1;
-		column-gap: 1rem;
+		column-gap: 0.5rem;
 	}
 	.dashboard-cards__groups--masonry :global(.dashboard-cards__location) {
 		break-inside: avoid;
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
 	}
 
 	@media (min-width: 640px) {

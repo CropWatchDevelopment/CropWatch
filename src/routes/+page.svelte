@@ -5,9 +5,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
 	import { CwButton, CwSearchInput } from '@cropwatchdevelopment/cwui';
-	import DashboardCards, {
-		type CardLayout
-	} from '$lib/components/dashboard/DashboardCards.svelte';
+	import DashboardCards, { type CardLayout } from '$lib/components/dashboard/DashboardCards.svelte';
 	import DashboardTable from '$lib/components/dashboard/DashboardTable.svelte';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { ApiService } from '$lib/api/api.service';
@@ -111,9 +109,9 @@
 <AppPage width="full" class="dashboard-page">
 	<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 		<header class="flex-none">
-			<div class="mb-2 flex w-full flex-row gap-4">
+			<div class="flex w-full flex-row gap-4">
 				<div
-					class="hidden md:flex w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-start"
+					class="hidden w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-start md:flex"
 				>
 					<CwSearchInput
 						bind:value={searchName}
