@@ -9,7 +9,10 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
 	import type { RulesDto } from '$lib/interfaces/rule.interface';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
@@ -116,13 +119,13 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton variant="secondary" onclick={() => goto(resolve('/'))}>
+	<CwButton variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.rules_configured_rules()}>
 		{#key tableKey}
-			<CwDataTable
+			<CwDataTable labels={cwDataTableLabels()}
 				{columns}
 				{loadData}
 				{loading}

@@ -9,6 +9,7 @@
 		type CwTableResult,
 		type CwTableQuery
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import type { LocationOwnerDto } from '$lib/api/api.dtos';
 	import { getPermissionLevelLabel, getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
@@ -64,7 +65,7 @@
 </script>
 
 {#key permissionsKey}
-	<CwDataTable
+	<CwDataTable labels={cwDataTableLabels()}
 		{loadData}
 		rowKey="id"
 		rowActionsHeader="Actions"

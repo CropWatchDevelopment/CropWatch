@@ -10,6 +10,7 @@
 		CwToastContainer,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
+	import { cwOfflineOverlayLabels } from '$lib/i18n/cwuiLabels';
 
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
@@ -113,7 +114,7 @@
 	<meta name="theme-color" content="#1f283b" media="(prefers-color-scheme: dark)" />
 </svelte:head>
 
-<CwOfflineOverlay />
+<CwOfflineOverlay labels={cwOfflineOverlayLabels()} />
 <CwToastContainer />
 
 <svelte:window onresize={handleWindowResize} />

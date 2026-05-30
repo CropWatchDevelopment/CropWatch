@@ -12,6 +12,8 @@
 	import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CwCard, CwResponsiveLineChart, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { cwResponsiveLineChartLabels } from '$lib/i18n/cwuiLabels';
+	import { appTheme } from '$lib/theme/appTheme.svelte';
 	import { resolveExportTimeZone } from './csvExport';
 	import type { PageProps } from './$types';
 	import { onDestroy } from 'svelte';
@@ -421,8 +423,9 @@
 					title={data?.device?.name || devEui.toUpperCase()}
 					subtitle={m.display_time_series()}
 					ranges={[]}
-					themeAuto
+					theme={appTheme.current}
 					height={480}
+					labels={cwResponsiveLineChartLabels()}
 				/>
 			</div>
 		{/if}

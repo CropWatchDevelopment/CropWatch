@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { ApiService } from '$lib/api/api.service';
@@ -17,6 +19,7 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
@@ -163,13 +166,13 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton variant="secondary" onclick={() => goto(resolve('/'))}>
+	<CwButton variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.rules_new_configured_templates()}>
 		{#key tableKey}
-			<CwDataTable {columns} {loadData} {loading} rowActionsHeader={m.common_actions()} rowKey="id">
+			<CwDataTable labels={cwDataTableLabels()} {columns} {loadData} {loading} rowActionsHeader={m.common_actions()} rowKey="id">
 				{#snippet cell(
 					row: RuleTemplateRow,
 					col: CwColumnDef<RuleTemplateRow>,

@@ -9,6 +9,7 @@
 		type CwRangeDateValue,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDateTimeRangePickerLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		downloadCsv,
 		formatCsvRangeLabel,
@@ -205,6 +206,7 @@
 			bind:value={csvRange}
 			placeholder={m.devices_export_select_range()}
 			maxDate={new Date()}
+			labels={cwDateTimeRangePickerLabels()}
 		/>
 
 		<p class="csv-export-dialog__hint">

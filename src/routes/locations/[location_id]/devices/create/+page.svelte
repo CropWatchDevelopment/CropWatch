@@ -12,6 +12,7 @@
 		type CwSingleDateValue,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDateTimeRangePickerLabels } from '$lib/i18n/cwuiLabels';
 	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
@@ -247,6 +248,7 @@
 							maxDate={new Date()}
 							placeholder={m.devices_installed_at_placeholder()}
 							bind:value={installedAt}
+							labels={cwDateTimeRangePickerLabels()}
 						/>
 					</div>
 				</div>

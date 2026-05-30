@@ -212,6 +212,19 @@
 		});
 	});
 
+	const GoToDetails = (row: DashboardRow) => {
+		if (!row.location?.location_id) {
+			console.warn('Device has no location, cannot go to details', { devEui: row.dev_eui });
+			return;
+		}
+		// Carry the originating page (and active group filter) so the device
+		// page's back button can return to the filtered dashboard.
+		const params = new URLSearchParams({ backTo: '/' });
+		if (filters.locationGroup) params.set('filter', filters.locationGroup);
+		loading = true;
+		goto(`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}`);
+	};
+
 	let removeForegroundListener: (() => void) | null = null;
 
 	onMount(() => {
@@ -243,6 +256,15 @@
 				<CwLocationCard
 					title={group.location?.name ?? m.dashboard_no_location()}
 					class="dashboard-cards__location"
+					onNavigate={() => {
+						const locationId = group.location?.location_id;
+						if (locationId == null) return;
+						// Carry the originating page (+ active group filter) so the location
+						// page's back button returns to the filtered dashboard.
+						const params = new URLSearchParams({ backTo: '/' });
+						if (filters.locationGroup) params.set('filter', filters.locationGroup);
+						goto(`/locations/${locationId}?${params.toString()}`);
+					}}
 				>
 					{#each group.devices as row (row.dev_eui)}
 						{@const primary = primaryProps(row)}
@@ -295,14 +317,17 @@
 									<!-- END OF LAST SEEN -->
 								</dl>
 								<span class="w-full flex flex-row gap-1">
+								{#if row.device_type.data_table_v2 === 'cw_air_data'}
 								<TodayDataNoteDialog devEui={row.dev_eui} />
+								{/if}
 								<CwButton
 									variant="secondary"
 									class="w-full"
-									onclick={() =>
-										goto(`/locations/${row.location?.location_id ?? ''}/devices/${row.dev_eui}`)}
-									>Details</CwButton
+									loading={loading}
+									onclick={() => GoToDetails(row)}
 								>
+									Details
+								</CwButton>
 								</span>
 							{/if}
 						</CwSensorCard>

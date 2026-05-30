@@ -16,6 +16,7 @@
 		type CwTone
 	} from '@cropwatchdevelopment/cwui';
 	import { formatNumber } from '$lib/i18n/format';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -1326,7 +1327,7 @@
 		{:else if hourlyRows.length === 0}
 			<p class="traffic-display__supporting-copy">{m.traffic_no_data_today()}</p>
 		{:else}
-			<CwDataTable
+			<CwDataTable labels={cwDataTableLabels()}
 				columns={hourlyColumns}
 				loadData={loadHourlyData}
 				loading={tableLoading}

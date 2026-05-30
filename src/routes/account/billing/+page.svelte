@@ -19,6 +19,7 @@
 		type CwTone
 	} from '@cropwatchdevelopment/cwui';
 	import { formatDateTime, formatNumber } from '$lib/i18n/format';
+	import { cwCopyLabels, cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
@@ -341,7 +342,7 @@
 					variant="soft"
 				/>
 				{#if subscriptionState.customerId}
-					<CwCopy value={subscriptionState.customerId}>
+					<CwCopy labels={cwCopyLabels()} value={subscriptionState.customerId}>
 						<code class="billing-customer-id">{subscriptionState.customerId}</code>
 					</CwCopy>
 				{/if}
@@ -540,7 +541,7 @@
 						</form>
 					</AppActionRow>
 
-					<CwDataTable
+					<CwDataTable labels={cwDataTableLabels()}
 						columns={subscriptionColumns}
 						loadData={loadSubscriptions}
 						rowKey="id"

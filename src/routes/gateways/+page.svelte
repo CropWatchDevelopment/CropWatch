@@ -9,7 +9,10 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getAppContext } from '$lib/appContext.svelte';
@@ -43,12 +46,12 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton variant="secondary" onclick={() => goto(resolve('/'))}>
+	<CwButton variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.gateways_your_gateways()}>
-		<CwDataTable {columns} {loadData} {loading} rowKey="tableRowKey" class="w-full">
+		<CwDataTable labels={cwDataTableLabels()} {columns} {loadData} {loading} rowKey="tableRowKey" class="w-full">
 			{#snippet cell(row: GatewayTableRow, col: CwColumnDef<GatewayTableRow>, defaultValue: string)}
 				{#if col.key === 'is_online'}
 					{#if row.is_online}

@@ -19,6 +19,7 @@
 		type CwTableResult,
 		CwExpandPanel
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		MAX_RELAY_PULSE_DURATION_SECONDS,
 		MIN_RELAY_PULSE_DURATION_SECONDS
@@ -462,7 +463,7 @@
 
 	{#if !loading && rows.length > 0}
 		<CwCard title={m.display_relay_history()} subtitle={m.display_state_change_log()} elevated>
-			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id">
+			<CwDataTable labels={cwDataTableLabels()} {columns} loadData={loadTableData} loading={tableLoading} rowKey="id">
 				{#snippet cell(
 					row: RelayTelemetryRow,
 					col: CwColumnDef<RelayTelemetryRow>,
