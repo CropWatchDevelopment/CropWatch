@@ -12,6 +12,7 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
@@ -122,7 +123,7 @@
 
 	{#if !loading && rows.length > 0}
 		<CwCard title={m.display_water_telemetry()} subtitle={m.display_searchable_sortable()} elevated>
-			<CwDataTable {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
+			<CwDataTable labels={cwDataTableLabels()} {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
 				{#snippet cell(row: WaterRow, col: CwColumnDef<WaterRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
 						{new Date(row.created_at).toLocaleString()}

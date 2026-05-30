@@ -5,6 +5,7 @@
 		CwDuration,
 		CwHeatmap,
 		CwStatCard,
+		CwWindCompass,
 		type CwColumnDef,
 		type CwHeatmapDataPoint,
 		type CwStatCardData,
@@ -13,6 +14,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDataTableLabels, cwHeatmapLabels, cwWindCompassLabels } from '$lib/i18n/cwuiLabels';
 	import './AirDisplay.css';
 	import NotesCreateDialog from './dialogs/notes-create-dialog.svelte';
 	import type { AirRow } from './interfaces/AirRow.interface';
@@ -41,6 +43,19 @@
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
 	let hasCo2 = $derived(
 		historicalData.every((row) => row.co2 !== undefined && row.co2 !== null && row.co2 !== 0)
+	);
+
+	// Weather-station wind: render the compass only when the latest reading
+	// carries both speed and direction (stored as text, so coerce to number).
+	let windDirection = $derived(
+		latestData?.wind_direction != null ? Number(latestData.wind_direction) : null
+	);
+	let windSpeed = $derived(latestData?.wind_speed != null ? Number(latestData.wind_speed) : null);
+	let hasWind = $derived(
+		windDirection !== null &&
+			Number.isFinite(windDirection) &&
+			windSpeed !== null &&
+			Number.isFinite(windSpeed)
 	);
 
 	function toAirRows(raw: Record<string, unknown>[]): AirRow[] {
@@ -312,20 +327,33 @@
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<CwCard title={m.display_temperature_heatmap()} subtitle={m.display_reading_density()} elevated>
-			<CwHeatmap
-				data={heatmapSeries}
-				days={heatmapDays}
-				unit="°C"
-				title=""
-				rowHeight={18}
-				colors={['#0ea5e9', '#84cc16', '#f97316']}
-			/>
-		</CwCard>
+		<div class="air-wind-row" class:air-wind-row--paired={hasWind}>
+			<CwCard title={m.display_temperature_heatmap()} subtitle={m.display_reading_density()} elevated>
+				<CwHeatmap
+					labels={cwHeatmapLabels()}
+					data={heatmapSeries}
+					days={heatmapDays}
+					unit="°C"
+					title=""
+					rowHeight={18}
+					colors={['#0ea5e9', '#84cc16', '#f97316']}
+				/>
+			</CwCard>
+
+			{#if hasWind}
+				<CwWindCompass
+					direction={windDirection}
+					speed={windSpeed}
+					unit="m/s"
+					labels={cwWindCompassLabels()}
+				/>
+			{/if}
+		</div>
 
 		<CwCard title={m.display_telemetry_table()} elevated>
 			{#key tableKey}
 				<CwDataTable
+					labels={cwDataTableLabels()}
 					{columns}
 					loadData={loadTableData}
 					loading={tableLoading}
@@ -373,3 +401,23 @@
 		</CwCard>
 	{/if}
 </div>
+
+<style>
+	/* Heatmap with the wind compass beside it. Mobile: stacked vertically.
+	   Tablet/desktop (≥48rem) when wind data exists: side by side. */
+	.air-wind-row {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.air-wind-row > :global(*) {
+		min-width: 0;
+	}
+	@media (min-width: 48rem) {
+		.air-wind-row--paired {
+			display: grid;
+			grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+			align-items: start;
+		}
+	}
+</style>

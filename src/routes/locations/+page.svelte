@@ -9,9 +9,12 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import type { LocationDto } from '$lib/api/api.service';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
 	import ADD_ICON from '$lib/images/icons/add.svg';
@@ -71,12 +74,12 @@
 </script>
 
 <AppPage>
-	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
+	<CwButton variant="secondary" size="sm" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.locations_all_title()} elevated>
-		<CwDataTable
+		<CwDataTable labels={cwDataTableLabels()}
 			{columns}
 			{loadData}
 			{loading}

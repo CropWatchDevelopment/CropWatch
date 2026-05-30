@@ -11,6 +11,7 @@
 		type CwDonutSegment,
 		type CwDrawerItem
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDonutChartLabels } from '$lib/i18n/cwuiLabels';
 
 	interface AlertRow {
 		id: string;
@@ -74,7 +75,12 @@
 				<div class="status-card">
 					<div class="status-card__body">
 						<div class="status-card__chart">
-							<CwDonutChart segments={statusSegments} size={120} thickness={14} />
+							<CwDonutChart
+								segments={statusSegments}
+								size={120}
+								thickness={14}
+								labels={cwDonutChartLabels()}
+							/>
 						</div>
 					</div>
 				</div>

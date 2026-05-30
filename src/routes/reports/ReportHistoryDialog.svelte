@@ -15,6 +15,7 @@
 	import { formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
 	import { type PdfFile } from '$lib/interfaces/PdfFile.interface';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import HISTORY_ICON from '$lib/images/icons/history.svg';
 
 	type ReportHistoryRow = { dev_eui: string; report_id: string; name: string; created_at: string };
@@ -134,7 +135,7 @@
 	</CwCard>
 
 	{#if open}
-		<CwDataTable
+		<CwDataTable labels={cwDataTableLabels()}
 			columns={[
 				{ key: 'name', header: 'Name' },
 				{ key: 'created_at', header: m.reports_created_at() }

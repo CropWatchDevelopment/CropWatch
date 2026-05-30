@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
@@ -11,6 +13,7 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
 	import ReportHistoryDialog from './ReportHistoryDialog.svelte';
 	import DeleteReportDialog from './DeleteReportDialog.svelte';
@@ -98,13 +101,13 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton variant="secondary" onclick={() => goto(resolve('/'))}>
+	<CwButton variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.reports_weekly_reports()}>
 		{#key tableKey}
-			<CwDataTable
+			<CwDataTable labels={cwDataTableLabels()}
 				{columns}
 				{loadData}
 				{loading}

@@ -10,6 +10,7 @@
 		type CwCalendarScrollItem,
 		type CwRangeDateValue
 	} from '@cropwatchdevelopment/cwui';
+	import { cwCalendarScrollLabels, cwDateTimeRangePickerLabels } from '$lib/i18n/cwuiLabels';
 	import NOTE_ICON from '$lib/images/icons/notes_history.svg';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
@@ -222,6 +223,7 @@
 				includeTime
 				onchange={() => void loadNotesData()}
 				bind:value={selectedMonth}
+				labels={cwDateTimeRangePickerLabels()}
 			/>
 			<CwSwitch
 				class="w-full"
@@ -240,6 +242,7 @@
 			startDate={calendarRange.start}
 			endDate={calendarRange.end}
 			showAllDates={!showOnlyDatesWithNotes}
+			labels={cwCalendarScrollLabels()}
 		>
 			{#snippet content(item)}
 				{#if item}

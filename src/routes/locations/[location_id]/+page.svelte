@@ -10,7 +10,9 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { cwCopyLabels, cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { goto } from '$app/navigation';
+	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
@@ -119,12 +121,12 @@
 </script>
 
 <AppPage>
-	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
+	<CwButton variant="secondary" size="sm" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.locations_location_title({ name: locationLabel })} elevated>
-		<CwDataTable
+		<CwDataTable labels={cwDataTableLabels()}
 			{columns}
 			{loadData}
 			{loading}
@@ -161,7 +163,7 @@
 				defaultValue: string
 			)}
 				{#if col.key === 'dev_eui'}
-					<CwCopy value={row.dev_eui}>
+					<CwCopy labels={cwCopyLabels()} value={row.dev_eui}>
 						<span>{row.dev_eui}</span>
 					</CwCopy>
 				{:else}

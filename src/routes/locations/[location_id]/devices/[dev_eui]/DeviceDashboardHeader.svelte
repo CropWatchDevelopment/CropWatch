@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { backHref } from '$lib/navigation/backTo';
 	import Icon from '$lib/components/Icon.svelte';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
@@ -43,15 +45,17 @@
 		rangeOptions,
 		titleName
 	}: Props = $props();
+
+	// Return to wherever we came from (e.g. the filtered dashboard) when a
+	// `backTo` was supplied; otherwise fall back to this device's location.
+	// Computed at click time so it never participates in reactive updates.
+	function goBack() {
+		goto(backHref(page.url, resolve('/locations/[location_id]', { location_id: locationId })));
+	}
 </script>
 
-<CwButton
-	variant="secondary"
-	size="sm"
-	disabled={!locationId}
-	onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
->
-	&larr; {m.devices_back_to_location()}
+<CwButton variant="secondary" size="sm" disabled={!locationId} onclick={goBack}>
+	&larr; {m.action_back()}
 </CwButton>
 
 <CwCard
