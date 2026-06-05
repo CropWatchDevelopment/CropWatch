@@ -24,6 +24,12 @@ import type {
 	PaginationQuery,
 	ReportDto,
 	ReportsQuery,
+	ReportTemplateDto,
+	ReportTemplateListQuery,
+	ReportTemplateSaveRequest,
+	ReportFormContextDto,
+	ReportTemplateHistoryItemDto,
+	CommunicationMethodDto,
 	RuleActionTypeDto,
 	RuleDto,
 	RuleFormContextDto,
@@ -158,6 +164,12 @@ const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{r
 const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
 const RULE_TEMPLATE_BY_ID_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}`;
 const RULE_TEMPLATE_HISTORY_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}/history`;
+const REPORT_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_REPORT_TEMPLATES_ENDPOINT ?? '/reports-new';
+const REPORT_TEMPLATE_COMMUNICATION_METHODS_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/communication-methods`;
+const REPORT_TEMPLATE_FORM_CONTEXT_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/form-context`;
+const REPORT_TEMPLATE_BY_ID_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/{id}`;
+const REPORT_TEMPLATE_HISTORY_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/{id}/history`;
+const REPORT_TEMPLATE_DOWNLOAD_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/download/{dev_eui}/{reportName}`;
 const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air/notes';
 const GET_AIR_NOTES_ENDPOINT =
 	publicEnv.PUBLIC_GET_AIR_NOTES_ENDPOINT ?? '/air/notes/{dev_eui}/month/{month}/year/{year}';
@@ -1187,6 +1199,118 @@ export class ApiService {
 			method: 'DELETE',
 			signal: options.signal
 		});
+	}
+
+	public getReportTemplates(
+		query: ReportTemplateListQuery = {},
+		options: ApiMethodOptions = {}
+	): Promise<ReportTemplateDto[]> {
+		return this.request<ReportTemplateDto[]>(REPORT_TEMPLATES_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal,
+			query: {
+				search: query.search
+			}
+		});
+	}
+
+	public getReportTemplate(id: number, options: ApiMethodOptions = {}): Promise<ReportTemplateDto> {
+		return this.request<ReportTemplateDto>(
+			replacePathParams(REPORT_TEMPLATE_BY_ID_ENDPOINT, { id }),
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
+	}
+
+	public getReportTemplateHistory(
+		id: number,
+		options: ApiMethodOptions = {}
+	): Promise<ReportTemplateHistoryItemDto[]> {
+		return this.request<ReportTemplateHistoryItemDto[]>(
+			replacePathParams(REPORT_TEMPLATE_HISTORY_ENDPOINT, { id }),
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
+	}
+
+	public getReportTemplateCommunicationMethods(
+		options: ApiMethodOptions = {}
+	): Promise<CommunicationMethodDto[]> {
+		return this.request<CommunicationMethodDto[]>(
+			REPORT_TEMPLATE_COMMUNICATION_METHODS_ENDPOINT,
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
+	}
+
+	public getReportFormContext(
+		templateId?: number,
+		options: ApiMethodOptions = {}
+	): Promise<ReportFormContextDto> {
+		return this.request<ReportFormContextDto>(REPORT_TEMPLATE_FORM_CONTEXT_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal,
+			query: typeof templateId === 'number' ? { templateId } : undefined
+		});
+	}
+
+	public createReportTemplate(
+		payload: ReportTemplateSaveRequest,
+		options: ApiMethodOptions = {}
+	): Promise<ReportTemplateDto> {
+		return this.request<ReportTemplateDto>(REPORT_TEMPLATES_ENDPOINT, {
+			method: 'POST',
+			body: payload,
+			signal: options.signal
+		});
+	}
+
+	public updateReportTemplate(
+		id: number,
+		payload: ReportTemplateSaveRequest,
+		options: ApiMethodOptions = {}
+	): Promise<ReportTemplateDto> {
+		return this.request<ReportTemplateDto>(
+			replacePathParams(REPORT_TEMPLATE_BY_ID_ENDPOINT, { id }),
+			{
+				method: 'PATCH',
+				body: payload,
+				signal: options.signal
+			}
+		);
+	}
+
+	public deleteReportTemplate(
+		id: number,
+		options: ApiMethodOptions = {}
+	): Promise<{ id: number }> {
+		return this.request<{ id: number }>(
+			replacePathParams(REPORT_TEMPLATE_BY_ID_ENDPOINT, { id }),
+			{
+				method: 'DELETE',
+				signal: options.signal
+			}
+		);
+	}
+
+	public getReportTemplateDownloadUrl(
+		devEui: string,
+		reportName: string,
+		options: ApiMethodOptions = {}
+	): Promise<{ url: string }> {
+		return this.request<{ url: string }>(
+			replacePathParams(REPORT_TEMPLATE_DOWNLOAD_ENDPOINT, { dev_eui: devEui, reportName }),
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
 	}
 
 	public createReport(payload: CreateReportRequest): Promise<ReportDto> {

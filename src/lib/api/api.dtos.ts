@@ -289,6 +289,7 @@ export interface RuleTemplateAssignmentDto {
 	isActive: boolean;
 	createdAt: string | null;
 	deviceName: string | null;
+	locationName: string | null;
 	permissionLevel: number | null;
 	state: RuleTemplateStateDto | null;
 }
@@ -500,6 +501,160 @@ export interface CreateReportRequest {
 }
 
 export type UpdateReportRequest = Partial<CreateReportRequest>;
+
+// --- Report templates (reports-new) ---------------------------------------
+
+export interface ReportTemplateAssignmentDto {
+	id: number;
+	devEui: string;
+	templateId: number;
+	isActive: boolean;
+	createdAt: string | null;
+	deviceName: string | null;
+	locationName: string | null;
+	permissionLevel: number | null;
+}
+
+export interface ReportTemplateScheduleDto {
+	id: number;
+	templateId: number;
+	endOfDay: boolean;
+	endOfWeek: boolean;
+	endOfMonth: boolean;
+	utcOffset: number;
+	isActive: boolean;
+	createdAt: string | null;
+}
+
+export interface ReportTemplateRecipientDto {
+	id: number;
+	templateId: number;
+	communicationMethod: number;
+	email: string | null;
+	name: string | null;
+	createdAt: string | null;
+}
+
+export interface ReportTemplateAlertPointDto {
+	id: number;
+	templateId: number;
+	name: string;
+	dataPointKey: string;
+	operator: string | null;
+	min: number | null;
+	max: number | null;
+	value: number | null;
+	hexColor: string | null;
+	createdAt: string | null;
+}
+
+export interface ReportTemplateDataProcessingScheduleDto {
+	id: string;
+	templateId: number;
+	dayOfWeek: number;
+	startTime: string;
+	endTime: string;
+	crossesMidnight: boolean;
+	ruleType: string;
+	validFrom: string | null;
+	validTo: string | null;
+	timezone: string;
+	isEnabled: boolean;
+	createdAt: string | null;
+	updatedAt: string | null;
+}
+
+export interface ReportTemplateDto {
+	id: number;
+	name: string;
+	description: string | null;
+	deviceTypeId: number | null;
+	dataPullInterval: number;
+	isActive: boolean;
+	createdAt: string | null;
+	assignments: ReportTemplateAssignmentDto[];
+	schedule: ReportTemplateScheduleDto[];
+	recipients: ReportTemplateRecipientDto[];
+	alertPoints: ReportTemplateAlertPointDto[];
+	dataProcessingSchedules: ReportTemplateDataProcessingScheduleDto[];
+}
+
+export interface CommunicationMethodDto {
+	communicationMethodId: number;
+	name: string | null;
+	isActive: boolean;
+}
+
+export interface ReportTemplateHistoryItemDto {
+	devEui: string;
+	deviceName: string | null;
+	name: string;
+	id: string | null;
+	createdAt: string | null;
+	updatedAt: string | null;
+	lastAccessedAt: string | null;
+	metadata: Record<string, unknown> | null;
+}
+
+export interface ReportTemplateScheduleInput {
+	endOfDay?: boolean;
+	endOfWeek?: boolean;
+	endOfMonth?: boolean;
+	utcOffset?: number;
+	isActive?: boolean;
+}
+
+export interface ReportTemplateRecipientInput {
+	communicationMethod: number;
+	email?: string | null;
+	name?: string | null;
+}
+
+export interface ReportTemplateAlertPointInput {
+	name: string;
+	dataPointKey: string;
+	operator?: string | null;
+	min?: number | null;
+	max?: number | null;
+	value?: number | null;
+	hexColor?: string | null;
+}
+
+export interface ReportTemplateDataProcessingScheduleInput {
+	dayOfWeek: number;
+	startTime: string;
+	endTime: string;
+	crossesMidnight?: boolean;
+	ruleType?: string;
+	validFrom?: string | null;
+	validTo?: string | null;
+	timezone?: string;
+	isEnabled?: boolean;
+}
+
+export interface ReportTemplateSaveRequest {
+	name: string;
+	description?: string | null;
+	dataPullInterval?: number;
+	deviceTypeId?: number | null;
+	isActive?: boolean;
+	devEuis: string[];
+	schedule?: ReportTemplateScheduleInput[];
+	recipients?: ReportTemplateRecipientInput[];
+	alertPoints?: ReportTemplateAlertPointInput[];
+	dataProcessingSchedules?: ReportTemplateDataProcessingScheduleInput[];
+}
+
+export interface ReportTemplateListQuery {
+	search?: string;
+}
+
+export interface ReportFormContextDto {
+	devices: DeviceDto[];
+	locations: LocationDto[];
+	communicationMethods: CommunicationMethodDto[];
+	template: ReportTemplateDto | null;
+}
 
 export type TriggeredRulesCountResponse =
 	| number

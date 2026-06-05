@@ -5,7 +5,9 @@ export type SensorFormat = 'number' | 'integer' | 'boolean';
 export interface SensorLabel {
 	label: () => string;
 	unit: string;
-	icon?: 'thermo' | 'drop';
+	// `thermo` | `drop` | `co2` are named glyphs in CWUI's CwDataIcon; any other
+	// string (e.g. the 📏 emoji) is rendered as-is by the card.
+	icon?: 'thermo' | 'drop' | 'co2' | '📏';
 	format: SensorFormat;
 }
 
@@ -13,12 +15,12 @@ const SENSOR_LABELS: Record<string, SensorLabel> = {
 	temperature_c: { label: () => m.sensor_temperature(), unit: '°C', icon: 'thermo', format: 'number' },
 	humidity: { label: () => m.sensor_humidity(), unit: '%', icon: 'drop', format: 'number' },
 	moisture: { label: () => m.sensor_moisture(), unit: '%', icon: 'drop', format: 'number' },
-	co2: { label: () => m.sensor_co2(), unit: 'ppm', format: 'integer' },
+	co2: { label: () => m.sensor_co2(), unit: 'ppm', icon: 'co2', format: 'integer' },
 	co: { label: () => m.sensor_co(), unit: 'ppm', format: 'integer' },
 	pressure: { label: () => m.sensor_pressure(), unit: 'hPa', format: 'number' },
 	ec: { label: () => m.sensor_ec(), unit: 'mS/cm', format: 'number' },
 	ph: { label: () => m.sensor_ph(), unit: '', format: 'number' },
-	deapth_cm: { label: () => m.sensor_depth(), unit: 'mm', format: 'number' },
+	deapth_cm: { label: () => m.sensor_depth(), unit: 'mm', icon: '📏', format: 'number' },
 	battery: { label: () => m.sensor_battery(), unit: '%', format: 'integer' },
 	battery_level: { label: () => m.sensor_battery(), unit: 'V', format: 'number' },
 	voltage: { label: () => m.sensor_voltage(), unit: 'V', format: 'number' },
