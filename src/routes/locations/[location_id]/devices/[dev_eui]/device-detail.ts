@@ -5,9 +5,10 @@ import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 import { m } from '$lib/paraglide/messages.js';
 import { SvelteDate } from 'svelte/reactivity';
-import type {
-	CwResponsiveLineDataPoint,
-	CwResponsiveLineSeries
+import {
+	metricColor,
+	type CwResponsiveLineDataPoint,
+	type CwResponsiveLineSeries
 } from '@cropwatchdevelopment/cwui';
 
 export type RangeSelection = 'today' | 24 | 48 | 72;
@@ -175,22 +176,6 @@ export type RelayConfirmationHandler = (result: RelayVerificationResult) => void
 // Telemetry → responsive line chart
 // ---------------------------------------------------------------------------
 
-/** Distinct line colors assigned to chart series in column-discovery order. */
-const CHART_SERIES_COLORS = [
-	'#ef4444',
-	'#3b82f6',
-	'#06b6d4',
-	'#a855f7',
-	'#f59e0b',
-	'#10b981',
-	'#ec4899',
-	'#8b5cf6',
-	'#14b8a6',
-	'#f97316',
-	'#6366f1',
-	'#84cc16'
-];
-
 /** Columns that are never plotted (time axis, identifiers, bucket keys). */
 const CHART_EXCLUDED_COLUMNS = new Set([
 	'created_at',
@@ -236,7 +221,7 @@ export function buildSensorChartSeries(rows: TelemetryRow[]): CwResponsiveLineSe
 	}
 
 	const series: CwResponsiveLineSeries[] = [];
-	columns.forEach((column, index) => {
+	columns.forEach((column) => {
 		const data: CwResponsiveLineDataPoint[] = [];
 		for (const row of rows) {
 			const timestamp = new Date(String(row.created_at)).getTime();
@@ -255,12 +240,13 @@ export function buildSensorChartSeries(rows: TelemetryRow[]): CwResponsiveLineSe
 		if (data.length === 0) return;
 
 		const labelInfo = labelFor(column);
+		const { color, gradient } = metricColor(column);
 		series.push({
 			id: column,
 			label: labelInfo.label(),
 			unit: labelInfo.unit,
-			color: CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length],
-			gradient: column === 'temperature_c',
+			color,
+			gradient: gradient ?? false,
 			data,
 			decimals: labelInfo.format === 'number' ? 2 : 0
 		});
