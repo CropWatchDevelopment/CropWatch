@@ -240,12 +240,19 @@ export function buildSensorChartSeries(rows: TelemetryRow[]): CwResponsiveLineSe
 		const data: CwResponsiveLineDataPoint[] = [];
 		for (const row of rows) {
 			const timestamp = new Date(String(row.created_at)).getTime();
-			if (Number.isFinite(timestamp)) {
-				data.push({ t: timestamp, v: toChartValue(row[column]) });
-			}
+			if (!Number.isFinite(timestamp)) continue;
+			// Skip null cells instead of pushing them as gap points. A sensor that
+			// reports a column on a slower cadence than the row cadence (e.g. CO2 on
+			// the CW-air-co2 device, present in ~1 of 3 rows) would otherwise leave
+			// every real reading isolated between nulls — and the chart draws a
+			// single-point run as a dot, not a line. Dropping the gaps lets the
+			// reading-to-reading line connect.
+			const value = toChartValue(row[column]);
+			if (value === null) continue;
+			data.push({ t: timestamp, v: value });
 		}
 		data.sort((left, right) => left.t - right.t);
-		if (!data.some((point) => point.v !== null)) return;
+		if (data.length === 0) return;
 
 		const labelInfo = labelFor(column);
 		series.push({

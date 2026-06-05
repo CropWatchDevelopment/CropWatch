@@ -163,16 +163,17 @@
 
 	function primaryProps(row: DashboardRow) {
 		const col = row.device_type.primary_data_v2;
-		if (!col || col === '-') return { value: null, unit: '', label: undefined };
+		if (!col || col === '-') return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
-		return readingProps(def.format, def.unit, row.latest?.primary);
+		return { ...readingProps(def.format, def.unit, row.latest?.primary), icon: def.icon };
 	}
 
 	function secondaryProps(row: DashboardRow) {
 		const col = row.device_type.secondary_data_v2;
-		if (!col || col === '' || col === '-') return { value: null, unit: '', label: undefined };
+		if (!col || col === '' || col === '-')
+			return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
-		return readingProps(def.format, def.unit, row.latest?.secondary);
+		return { ...readingProps(def.format, def.unit, row.latest?.secondary), icon: def.icon };
 	}
 
 	function detailEntries(details: Record<string, unknown>) {
@@ -278,9 +279,11 @@
 							primaryValue={primary.value}
 							primaryUnit={primary.unit}
 							primaryLabel={primary.label}
+							primary_icon={primary.icon}
 							secondaryValue={secondary.value}
 							secondaryUnit={secondary.unit}
 							secondaryLabel={secondary.label}
+							secondary_icon={secondary.icon}
 							lastSeenAt={row.last_data_updated_at ?? row.latest?.created_at ?? undefined}
 							expireAfterMinutes={row.upload_interval ??
 								row.device_type.default_upload_interval ??

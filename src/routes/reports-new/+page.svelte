@@ -8,8 +8,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
-	import type { RuleTemplateDto } from '$lib/rules-new/rule-template.types';
-	import { getRuleSubjectOptions } from '$lib/i18n/options';
+	import type { ReportTemplateDto } from '$lib/api/api.dtos';
 	import {
 		CwButton,
 		CwCard,
@@ -23,28 +22,25 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
-	import DeleteRuleTemplateDialog from './DeleteRuleTemplateDialog.svelte';
-	import ViewRuleAlertHistory from './ViewRuleAlertHistory.svelte';
+	import DeleteReportTemplateDialog from './DeleteReportTemplateDialog.svelte';
+	import ViewReportHistoryDialog from './ViewReportHistoryDialog.svelte';
 
-	type RuleTemplateRow = RuleTemplateDto & {
+	type ReportTemplateRow = ReportTemplateDto & {
 		statusLabel: string;
 		locationName: string;
 		assignmentSummary: string;
-		criteriaSummary: string;
-		actionSummary: string;
+		recipientSummary: string;
+		cadenceSummary: string;
 		createdAtLabel: string;
-		triggeredCount: number;
 	};
 
-	const SUBJECT_OPTIONS = getRuleSubjectOptions();
-	const columns: CwColumnDef<RuleTemplateRow>[] = [
+	const columns: CwColumnDef<ReportTemplateRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
-		// { key: 'statusLabel', header: m.rules_new_status(), sortable: true },
-		{ key: 'assignmentSummary', header: m.rules_new_assigned_devices() },
-		// { key: 'locationName', header: m.nav_locations(), sortable: true },
-		{ key: 'criteriaSummary', header: m.rules_conditions() },
-		{ key: 'actionSummary', header: m.rules_new_actions() },
-		// { key: 'triggeredCount', header: m.rules_new_triggered_devices(), sortable: true },
+		{ key: 'statusLabel', header: m.reports_new_status(), sortable: true },
+		{ key: 'assignmentSummary', header: m.reports_new_assigned_devices() },
+		{ key: 'locationName', header: m.nav_locations(), sortable: true },
+		{ key: 'recipientSummary', header: m.reports_new_recipients() },
+		{ key: 'cadenceSummary', header: m.reports_new_cadence() },
 		{ key: 'createdAtLabel', header: m.common_created(), sortable: true }
 	];
 
@@ -53,10 +49,10 @@
 	let tableKey = $derived(deletedTemplateIds.join(','));
 	let app = getAppContext();
 
-	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleTemplateRow>> {
+	async function loadData(query: CwTableQuery): Promise<CwTableResult<ReportTemplateRow>> {
 		try {
 			const api = new ApiService({ authToken: app.accessToken });
-			const templates = await api.getRuleTemplates(
+			const templates = await api.getReportTemplates(
 				{ search: query.search?.trim() || undefined },
 				{ signal: query.signal }
 			);
@@ -73,7 +69,7 @@
 
 			return { rows, total };
 		} catch (error) {
-			throw new Error(readApiErrorMessage(error, m.rules_new_load_failed()));
+			throw new Error(readApiErrorMessage(error, m.reports_new_load_failed()));
 		} finally {
 			loading = false;
 		}
@@ -84,36 +80,31 @@
 		deletedTemplateIds = [...deletedTemplateIds, templateId];
 	}
 
-	function toRow(template: RuleTemplateDto): RuleTemplateRow {
-		const triggeredCount = template.assignments.filter(
-			(assignment) => assignment.state?.isTriggered
-		).length;
-
+	function toRow(template: ReportTemplateDto): ReportTemplateRow {
 		return {
 			...template,
-			statusLabel: template.isActive ? m.rules_new_active() : m.rules_new_inactive(),
+			statusLabel: template.isActive ? m.reports_new_active() : m.reports_new_inactive(),
 			locationName: summarizeLocations(template),
 			assignmentSummary: summarizeAssignments(template),
-			criteriaSummary: summarizeCriteria(template),
-			actionSummary: summarizeActions(template),
+			recipientSummary: summarizeRecipients(template),
+			cadenceSummary: summarizeCadence(template),
 			createdAtLabel: template.createdAt
 				? new Date(template.createdAt).toLocaleString()
-				: m.common_not_available(),
-			triggeredCount
+				: m.common_not_available()
 		};
 	}
 
-	function summarizeLocations(template: RuleTemplateDto): string {
+	function summarizeLocations(template: ReportTemplateDto): string {
 		const names = template.assignments
 			.map((assignment) => assignment.locationName)
 			.filter((name): name is string => !!name && name.trim().length > 0);
 		const unique = [...new Set(names)];
-		if (unique.length === 0) return m.rules_new_unknown_location();
+		if (unique.length === 0) return m.reports_unknown_location();
 		return unique.length === 1 ? unique[0] : unique.join(', ');
 	}
 
-	function summarizeAssignments(template: RuleTemplateDto): string {
-		if (template.assignments.length === 0) return m.rules_new_no_assignments();
+	function summarizeAssignments(template: ReportTemplateDto): string {
+		if (template.assignments.length === 0) return m.reports_new_no_assignments();
 
 		const labels = template.assignments.map((assignment) =>
 			assignment.deviceName ? `${assignment.deviceName} (${assignment.devEui})` : assignment.devEui
@@ -122,42 +113,41 @@
 		return summarizeList(labels);
 	}
 
-	function summarizeCriteria(template: RuleTemplateDto): string {
-		if (template.criteria.length === 0) return m.common_not_available();
+	function summarizeRecipients(template: ReportTemplateDto): string {
+		if (template.recipients.length === 0) return m.common_not_available();
 
 		return summarizeList(
-			template.criteria.map((criterion) => {
-				const subjectLabel =
-					SUBJECT_OPTIONS.find((option) => option.value === criterion.subject)?.label ??
-					criterion.subject;
-				return `${subjectLabel} ${criterion.operator} ${criterion.triggerValue}`;
-			})
+			template.recipients.map(
+				(recipient) => recipient.email ?? recipient.name ?? String(recipient.communicationMethod)
+			)
 		);
 	}
 
-	function summarizeActions(template: RuleTemplateDto): string {
-		if (template.actions.length === 0) return m.common_not_available();
-
-		return summarizeList(
-			template.actions.map((action) => {
-				return action.actionTypeName ?? action.actionTypeValue ?? String(action.actionType);
-			})
-		);
+	function summarizeCadence(template: ReportTemplateDto): string {
+		const flags: string[] = [];
+		for (const schedule of template.schedule) {
+			if (!schedule.isActive) continue;
+			if (schedule.endOfDay) flags.push(m.reports_new_cadence_daily());
+			if (schedule.endOfWeek) flags.push(m.reports_new_cadence_weekly());
+			if (schedule.endOfMonth) flags.push(m.reports_new_cadence_monthly());
+		}
+		const unique = [...new Set(flags)];
+		return unique.length > 0 ? unique.join(', ') : m.common_not_available();
 	}
 
 	function summarizeList(items: string[]): string {
 		const visible = items.slice(0, 2).join(', ');
 		const remaining = items.length - 2;
 		return remaining > 0
-			? m.rules_new_summary_more({ summary: visible, count: String(remaining) })
+			? m.reports_new_summary_more({ summary: visible, count: String(remaining) })
 			: visible;
 	}
 
 	function sortRows(
-		rows: RuleTemplateRow[],
+		rows: ReportTemplateRow[],
 		column: string,
 		direction: 'asc' | 'desc'
-	): RuleTemplateRow[] {
+	): ReportTemplateRow[] {
 		const dir = direction === 'asc' ? 1 : -1;
 
 		return [...rows].sort((a, b) => {
@@ -174,7 +164,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.rules_new_page_title()}</title>
+	<title>{m.reports_new_page_title()}</title>
 </svelte:head>
 
 <AppPage>
@@ -182,7 +172,7 @@
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
-	<CwCard title={m.rules_new_configured_templates()}>
+	<CwCard title={m.reports_new_configured_templates()}>
 		{#key tableKey}
 			<CwDataTable
 				labels={cwDataTableLabels()}
@@ -194,8 +184,8 @@
 				rowKey="id"
 			>
 				{#snippet cell(
-					row: RuleTemplateRow,
-					col: CwColumnDef<RuleTemplateRow>,
+					row: ReportTemplateRow,
+					col: CwColumnDef<ReportTemplateRow>,
 					defaultValue: string
 				)}
 					{#if col.key === 'statusLabel'}
@@ -205,39 +195,32 @@
 							variant="soft"
 							size="sm"
 						/>
-					{:else if col.key === 'triggeredCount'}
-						<CwChip
-							label={String(row.triggeredCount)}
-							tone={row.triggeredCount > 0 ? 'danger' : 'secondary'}
-							variant="soft"
-							size="sm"
-						/>
 					{:else}
 						{defaultValue}
 					{/if}
 				{/snippet}
 
-				{#snippet rowActions(row: RuleTemplateRow)}
-					<div class="rules-new-page__actions">
+				{#snippet rowActions(row: ReportTemplateRow)}
+					<div class="reports-new-page__actions">
 						<CwButton
 							variant="secondary"
 							size="md"
-							onclick={() => goto(resolve('/rules-new/edit/[id]', { id: String(row.id) }))}
+							onclick={() => goto(resolve('/reports-new/edit/[id]', { id: String(row.id) }))}
 						>
 							<Icon src={EDIT_ICON} alt={m.action_edit()} />
 						</CwButton>
-						<ViewRuleAlertHistory templateId={row.id} ruleName={row.name} />
-						<DeleteRuleTemplateDialog
+						<ViewReportHistoryDialog templateId={row.id} reportName={row.name} />
+						<DeleteReportTemplateDialog
 							templateId={row.id}
-							ruleName={row.name}
+							reportName={row.name}
 							onDeleted={handleDeleted}
 						/>
 					</div>
 				{/snippet}
 
 				{#snippet toolbarActions()}
-					<CwButton variant="primary" onclick={() => goto(resolve('/rules-new/create'))}>
-						<Icon src={ADD_ICON} alt={m.rules_new_create_template()} />
+					<CwButton variant="primary" onclick={() => goto(resolve('/reports-new/create'))}>
+						<Icon src={ADD_ICON} alt={m.reports_new_create_template()} />
 					</CwButton>
 				{/snippet}
 			</CwDataTable>
@@ -246,7 +229,7 @@
 </AppPage>
 
 <style>
-	.rules-new-page__actions {
+	.reports-new-page__actions {
 		display: flex;
 		justify-content: flex-end;
 		gap: var(--cw-space-2);

@@ -77,6 +77,13 @@
 			group: m.nav_group_info_management()
 		},
 		{
+			id: 'reports-new',
+			label: `${m.nav_reports()} (beta)`,
+			href: '/reports-new',
+			icon: { path: REPORTS_ICON_PATH },
+			group: m.nav_group_info_management()
+		},
+		{
 			id: 'gateways',
 			label: m.nav_gateways(),
 			href: '/gateways',

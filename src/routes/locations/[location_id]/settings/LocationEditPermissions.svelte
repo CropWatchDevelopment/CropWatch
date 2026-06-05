@@ -10,6 +10,7 @@
 		type CwTableQuery
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import type { LocationOwnerDto } from '$lib/api/api.dtos';
 	import { getPermissionLevelLabel, getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
@@ -22,7 +23,15 @@
 	} from './location-permission-rows';
 
 	let { data }: { data: { locationOwners: LocationOwnerDto[] } } = $props();
-	let permissions = $derived(mapLocationOwnersToPermissionRows(data.locationOwners));
+	const app = getAppContext();
+	// Hide CropWatch staff (@cropwatch.io) permission rows from customers so they are
+	// unaware we have access — but keep them visible when a CropWatch user is logged in.
+	const viewerIsCropwatch = $derived(app.session?.email?.includes('@cropwatch.io') ?? false);
+	let permissions = $derived(
+		mapLocationOwnersToPermissionRows(data.locationOwners).filter(
+			(permission) => viewerIsCropwatch || !permission.email.includes('@cropwatch.io')
+		)
+	);
 	let openDeletePermissionDialog = $state(false);
 	let selectedRow = $state<Permission | null>(null);
 	let location_id = $state(page.params.location_id);

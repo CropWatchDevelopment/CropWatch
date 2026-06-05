@@ -41,9 +41,43 @@
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
 	let tableRevision = $state(0);
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
-	let hasCo2 = $derived(
-		historicalData.every((row) => row.co2 !== undefined && row.co2 !== null && row.co2 !== 0)
+	// CO2 is reported on a slower cadence than temp/humidity on some devices (the
+	// CW-air-co2 device sends it in ~1 of 3 uplinks), so many rows carry a null
+	// co2. Gate the card on "has at least one real reading" — the old `.every(...)`
+	// check hid the card whenever a single null/zero row appeared — and compute the
+	// stats over only the rows that actually carry a reading (treating null as 0
+	// otherwise drags min to 0 and skews the average).
+	let co2Values = $derived(
+		historicalData
+			.map((row) => Number(row.co2))
+			.filter((value) => Number.isFinite(value) && value > 0)
 	);
+	let hasCo2 = $derived(co2Values.length > 0);
+	let latestCo2: CwStatCardData = $derived.by(() => {
+		if (co2Values.length === 0) {
+			return { min: 0, max: 0, avg: 0, median: 0, stdDev: 0, count: 0, lastReading: 0, trend: 'up' };
+		}
+		const sorted = [...co2Values].sort((a, b) => a - b);
+		const mid = Math.floor(sorted.length / 2);
+		const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+		const mean = co2Values.reduce((sum, value) => sum + value, 0) / co2Values.length;
+		const variance =
+			co2Values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / co2Values.length;
+		// Most-recent row that actually carries CO2 (historicalData is newest-first).
+		const lastWithCo2 = historicalData.find(
+			(row) => Number.isFinite(Number(row.co2)) && Number(row.co2) > 0
+		);
+		return {
+			min: sorted[0],
+			max: sorted[sorted.length - 1],
+			avg: mean,
+			median,
+			stdDev: Math.sqrt(variance),
+			count: co2Values.length,
+			lastReading: lastWithCo2 ? Number(lastWithCo2.co2) : sorted[sorted.length - 1],
+			trend: 'up'
+		};
+	});
 
 	// Weather-station wind: render the compass only when the latest reading
 	// carries both speed and direction (stored as text, so coerce to number).
@@ -298,28 +332,7 @@
 					clickToExpand: m.stat_expand(),
 					clickToCollapse: m.stat_collapse()
 				}}
-				stats={{
-					min: historicalData.reduce((min, row) => Math.min(min, Number(row.co2) || 0), Infinity),
-					max: historicalData.reduce((max, row) => Math.max(max, Number(row.co2) || 0), -Infinity),
-					avg:
-						historicalData.reduce((sum, row) => sum + (Number(row.co2) || 0), 0) /
-						historicalData.length,
-					median: (() => {
-						const co2s = historicalData.map((row) => Number(row.co2) || 0).sort((a, b) => a - b);
-						const mid = Math.floor(co2s.length / 2);
-						return co2s.length % 2 !== 0 ? co2s[mid] : (co2s[mid - 1] + co2s[mid]) / 2;
-					})(),
-					stdDev: (() => {
-						const co2s = historicalData.map((row) => Number(row.co2) || 0);
-						const mean = co2s.reduce((sum, value) => sum + value, 0) / co2s.length;
-						const variance =
-							co2s.reduce((sum, value) => sum + (value - mean) ** 2, 0) / co2s.length;
-						return Math.sqrt(variance);
-					})(),
-					count: historicalData.length,
-					lastReading: historicalData.length > 0 ? Number(historicalData.at(0)?.co2) || 0 : 0,
-					trend: 'up'
-				}}
+				stats={latestCo2}
 				unit="ppm"
 				accentColor="purple"
 			/>
