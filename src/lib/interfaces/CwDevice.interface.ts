@@ -20,6 +20,7 @@ export interface CwDevice {
 	primary_data?: string | null;
 	secondary_data?: string | null;
 	group?: string | null;
+	error_status?: string | null;
 	created_at?: string | null;
 	location_name?: string;
 	has_primary_data?: boolean;
