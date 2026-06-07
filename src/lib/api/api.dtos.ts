@@ -139,6 +139,8 @@ export interface DashboardRow {
 	group: string | null;
 	upload_interval: number | null;
 	last_data_updated_at: string | null;
+	/** Device-reported fault string; non-empty means the sensor needs attention. */
+	error_status: string | null;
 	device_type: DashboardDeviceType;
 	location: DashboardLocation | null;
 	latest: DashboardLatest | null;
