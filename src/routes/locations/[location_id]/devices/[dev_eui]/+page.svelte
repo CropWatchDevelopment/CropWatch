@@ -11,7 +11,13 @@
 	} from '$lib/devices/relay-control';
 	import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
 	import { m } from '$lib/paraglide/messages.js';
-	import { CwCard, CwResponsiveLineChart, useCwToast } from '@cropwatchdevelopment/cwui';
+	import {
+		CwButton,
+		CwCard,
+		CwDialog,
+		CwResponsiveLineChart,
+		useCwToast
+	} from '@cropwatchdevelopment/cwui';
 	import { cwResponsiveLineChartLabels } from '$lib/i18n/cwuiLabels';
 	import { appTheme } from '$lib/theme/appTheme.svelte';
 	import { resolveExportTimeZone } from './csvExport';
@@ -136,6 +142,24 @@
 			!displayLatestData &&
 			displayHistoricalData.length === 0
 	);
+
+	// A non-empty `error_status` on the device row means the sensor has reported a
+	// fault and likely needs replacing. Surface it in an auto-opening dialog.
+	let deviceErrorStatus = $derived(
+		typeof data.device?.error_status === 'string' ? data.device.error_status.trim() : ''
+	);
+	let errorDialogOpen = $state(false);
+	let errorDialogRouteKey = '';
+
+	// Auto-open the error dialog whenever we land on a device that has an error
+	// status set. Keyed on `routeKey` so it re-opens when navigating between
+	// devices, but stays closed once the user dismisses it for the current one.
+	$effect(() => {
+		if (deviceErrorStatus && errorDialogRouteKey !== routeKey) {
+			errorDialogRouteKey = routeKey;
+			errorDialogOpen = true;
+		}
+	});
 
 	afterNavigate(() => {
 		const key = routeKey;
@@ -398,6 +422,20 @@
 </svelte:head>
 
 <AppPage>
+	{#if deviceErrorStatus}
+		<CwDialog bind:open={errorDialogOpen} title={m.devices_error_status_title()}>
+			<p class="device-page__error-body">{m.devices_error_status_body()}</p>
+			<p class="device-page__error-detail">
+				{m.devices_error_status_detail({ status: deviceErrorStatus })}
+			</p>
+			{#snippet actions()}
+				<CwButton variant="primary" onclick={() => (errorDialogOpen = false)}>
+					{m.action_close()}
+				</CwButton>
+			{/snippet}
+		</CwDialog>
+	{/if}
+
 	<div class="device-page">
 		<DeviceDashboardHeader
 			{activeRange}
@@ -472,6 +510,17 @@
 
 	.device-page__empty-message {
 		margin: 0;
+		color: var(--cw-text-muted, #475467);
+	}
+
+	.device-page__error-body {
+		margin: 0;
+		color: var(--cw-text-primary, #101828);
+	}
+
+	.device-page__error-detail {
+		margin: 0.75rem 0 0;
+		font-size: var(--cw-text-sm, 0.875rem);
 		color: var(--cw-text-muted, #475467);
 	}
 
