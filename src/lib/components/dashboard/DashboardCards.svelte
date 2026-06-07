@@ -123,6 +123,7 @@
 						existing.latest = next.latest;
 						existing.last_data_updated_at = next.last_data_updated_at;
 						existing.upload_interval = next.upload_interval;
+						existing.error_status = next.error_status;
 					}
 				}
 			}
@@ -174,6 +175,13 @@
 			return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
 		return { ...readingProps(def.format, def.unit, row.latest?.secondary), icon: def.icon };
+	}
+
+	// A non-empty `error_status` on the device row means the sensor has reported a
+	// fault. Mirrors the device-detail page's convention. The raw status value is a
+	// device-side code (e.g. "-55"), so the card shows a localized message instead.
+	function hasDeviceError(row: DashboardRow): boolean {
+		return typeof row.error_status === 'string' && row.error_status.trim().length > 0;
 	}
 
 	function detailEntries(details: Record<string, unknown>) {
@@ -276,6 +284,7 @@
 						<CwSensorCard
 							label={row.name}
 							status={row.latest ? 'online' : 'loading'}
+							hasError={hasDeviceError(row) ? m.dashboard_sensor_error() : null}
 							primaryValue={primary.value}
 							primaryUnit={primary.unit}
 							primaryLabel={primary.label}

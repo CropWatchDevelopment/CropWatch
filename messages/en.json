@@ -1034,6 +1034,7 @@
 	"dashboard_loading_details": "Loading details…",
 	"dashboard_no_devices": "No devices",
 	"dashboard_no_location": "No location",
+	"dashboard_sensor_error": "Sensor Error",
 	"sensor_temperature": "Temperature",
 	"sensor_humidity": "Humidity",
 	"sensor_moisture": "Moisture",

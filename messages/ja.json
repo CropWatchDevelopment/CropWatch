@@ -728,6 +728,7 @@
 	"dashboard_loading_details": "詳細を読み込み中…",
 	"dashboard_no_devices": "デバイスがありません",
 	"dashboard_no_location": "ロケーションなし",
+	"dashboard_sensor_error": "センサーエラー",
 	"dashboard_no_matching_locations_body": "ダッシュボードのフィルターを調整するか、解除してロケーションをさらに表示してください。",
 	"dashboard_no_matching_locations_title": "この条件に一致するデバイスはありません",
 	"dashboard_virtual_scroll": "仮想スクロール",
