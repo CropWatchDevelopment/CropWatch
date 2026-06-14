@@ -6,6 +6,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
+	import { canManage, isAdmin } from '$lib/constants/permissions';
 	import { CwButton, CwCard, CwDuration, CwSpinner } from '@cropwatchdevelopment/cwui';
 	import CsvExportDialog from './dialogs/csvExportDialog.svelte';
 	import CsvTrafficExportDialog from './dialogs/csvTrafficExportDialog.svelte';
@@ -91,7 +92,7 @@
 		</div>
 
 		<div class="device-header__actions">
-			{#if permissionLevel <= 2}
+			{#if canManage(permissionLevel)}
 				<NotesReviewDialog {authToken} {devEui} disabled={controlsDisabled} />
 
 				<CsvExportDialog
@@ -113,7 +114,7 @@
 				{/if}
 			{/if}
 
-			{#if permissionLevel === 1}
+			{#if isAdmin(permissionLevel)}
 				<CwButton
 					variant="secondary"
 					size="md"

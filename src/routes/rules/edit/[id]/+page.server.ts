@@ -1,44 +1,37 @@
-import { ApiService } from '$lib/api/api.service';
+import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import type { RuleFormContextDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const authToken = locals.jwtString ?? null;
-	const ruleId = parseInt(params.id, 10);
+	const userId = locals.jwt?.sub ?? null;
+	const templateId = Number(params.id);
 
-	if (!authToken) {
+	if (!authToken || !userId) {
 		error(401, m.error_unauthorized_title());
 	}
 
-	if (isNaN(ruleId)) {
-		error(400, m.rules_invalid_rule_id());
+	if (!Number.isInteger(templateId) || templateId <= 0) {
+		error(400, m.rules_new_invalid_template_id());
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
-
-	const [rawRule, rawDevices] = await Promise.all([
-		api.getRule(ruleId).catch(() => null),
-		api.getAllDevices().catch(() => [])
-	]);
-
-	if (!rawRule) {
-		error(404, m.rules_rule_not_found());
+	let context: RuleFormContextDto;
+	try {
+		context = await api.getRuleFormContext(templateId);
+	} catch (loadError) {
+		if (loadError instanceof ApiServiceError && loadError.status === 404) {
+			error(404, m.rules_new_rule_template_not_found());
+		}
+		console.error('Failed to load rule template:', loadError);
+		error(500, m.rules_new_load_failed());
 	}
 
-	const rule = {
-		...rawRule,
-		cw_rule_criteria: (rawRule.cw_rule_criteria ?? []).map((criterion) => {
-			const parsedId = typeof criterion.id === 'number' ? criterion.id : Number(criterion.id);
+	if (!context.template) {
+		error(404, m.rules_new_rule_template_not_found());
+	}
 
-			return {
-				...criterion,
-				id: Number.isFinite(parsedId) ? parsedId : 0
-			};
-		})
-	};
-
-	const devices = rawDevices;
-
-	return { rule, devices, authToken };
+	return { context, authToken };
 };

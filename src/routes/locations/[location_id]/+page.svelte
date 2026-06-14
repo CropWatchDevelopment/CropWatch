@@ -2,14 +2,19 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
 	import {
+		attachCwDeviceRefreshVisibility,
+		createCwDeviceRefreshScheduler,
 		CwButton,
 		CwCard,
 		CwCopy,
 		CwDataTable,
 		type CwColumnDef,
+		type CwDeviceFreshness,
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
+	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { cwCopyLabels, cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { goto } from '$app/navigation';
 	import { backHref } from '$lib/navigation/backTo';
@@ -33,6 +38,54 @@
 	const offlineThresholdMs = 11 * 60 * 1000;
 	let loading = $state(false);
 
+	const app = getAppContext();
+
+	// Live freshness per device, driven by the refresh scheduler: each device is
+	// refetched when its upload window expires, so the status column updates
+	// without reloading the page.
+	let freshnessByDevEui = $state<Record<string, CwDeviceFreshness>>({});
+	let lastSeenByDevEui = $state<Record<string, string>>({});
+
+	$effect(() => {
+		const authToken = app.accessToken;
+		const devices = data.allLocationDevices ?? [];
+		if (!authToken || devices.length === 0) return;
+
+		const api = new ApiService({ authToken });
+		const scheduler = createCwDeviceRefreshScheduler({
+			// The list endpoint has no per-device upload_interval; default to the
+			// page's historical 10 min + 1 min grace ≈ the old 11-minute threshold.
+			defaultIntervalMinutes: 10,
+			fetcher: async (devEui) => {
+				const latest = await api.getDashboardDeviceLatest(devEui);
+				if (!latest) return null;
+				const createdAt = typeof latest.created_at === 'string' ? latest.created_at : null;
+				return { lastSeenAt: createdAt, data: latest };
+			},
+			onData: (devEui, result) => {
+				if (typeof result.lastSeenAt === 'string') {
+					lastSeenByDevEui[devEui] = result.lastSeenAt;
+				}
+			},
+			onStateChange: (devEui, state) => {
+				freshnessByDevEui[devEui] = state;
+			}
+		});
+
+		scheduler.trackAll(
+			devices.map((device) => ({
+				id: String(device.dev_eui ?? ''),
+				lastSeenAt: device.created_at ?? null
+			}))
+		);
+
+		const detachVisibility = attachCwDeviceRefreshVisibility(scheduler);
+		return () => {
+			detachVisibility();
+			scheduler.destroy();
+		};
+	});
+
 	const selectedLocationId = $derived(page.params.location_id);
 	const selectedLocationName = $derived((page.url.searchParams.get('location_name') ?? '').trim());
 	const locationLabel = $derived(
@@ -45,17 +98,25 @@
 
 	const columns: CwColumnDef<LocationDeviceRow>[] = [
 		{ key: 'name', header: m.devices_device_name(), sortable: true },
+		{ key: 'status', header: m.devices_status(), sortable: true, width: '8rem' },
 		{ key: 'dev_eui', header: 'DevEUI', sortable: true, width: '14rem', hideBelow: 'sm' }
 	];
 
 	const locationDevices = $derived.by(() => {
 		const now = Date.now();
 		return (data.allLocationDevices ?? []).map((device) => {
-			const createdAt = device.created_at ? new Date(device.created_at) : null;
-			const createdAtMs = createdAt?.getTime() ?? NaN;
-			const isOffline = !Number.isFinite(createdAtMs) || now - createdAtMs > offlineThresholdMs;
+			const devEui = String(device.dev_eui ?? '');
+			const lastSeen = lastSeenByDevEui[devEui] ?? device.created_at ?? null;
+			const lastSeenMs = lastSeen ? new Date(lastSeen).getTime() : NaN;
+			const freshness = freshnessByDevEui[devEui];
+			// Scheduler verdict wins once available; otherwise fall back to the
+			// load-time threshold check.
+			const isOffline =
+				freshness === 'stale' ||
+				(freshness === undefined &&
+					(!Number.isFinite(lastSeenMs) || now - lastSeenMs > offlineThresholdMs));
 			return {
-				dev_eui: String(device.dev_eui ?? ''),
+				dev_eui: devEui,
 				name: String(device.name ?? device.dev_eui ?? m.devices_unnamed_device()),
 				status: isOffline ? 'Offline' : 'Online'
 			} satisfies LocationDeviceRow;

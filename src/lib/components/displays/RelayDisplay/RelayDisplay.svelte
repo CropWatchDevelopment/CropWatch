@@ -39,6 +39,7 @@
 	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
+	import { canManage } from '$lib/constants/permissions';
 
 	let {
 		latestData,
@@ -82,7 +83,7 @@
 	let lastUpdate = $derived(latestRelayRow?.created_at ?? '');
 	let relayOperationsLocked = $derived(hasLockedRelayOperation());
 	let controlNotice = $derived.by(() => {
-		if (permissionLevel > 2) {
+		if (!canManage(permissionLevel)) {
 			return m.devices_relay_controls_requires_permission();
 		}
 		return '';
@@ -207,7 +208,7 @@
 			relayOperationsLocked ||
 			isRelaySubmittingAny(relay) ||
 			!authToken ||
-			permissionLevel > 2 ||
+			!canManage(permissionLevel) ||
 			!queueRelayCommand
 		) {
 			return true;
@@ -226,7 +227,7 @@
 			relayOperationsLocked ||
 			isRelaySubmittingAny(relay) ||
 			!authToken ||
-			permissionLevel > 2 ||
+			!canManage(permissionLevel) ||
 			!queueRelayCommand ||
 			parseTimedOnDurationSeconds() === null
 		) {
@@ -427,7 +428,7 @@
 					max={MAX_RELAY_PULSE_DURATION_SECONDS}
 					step={1}
 					error={timedOnDurationError || undefined}
-					disabled={!authToken || permissionLevel > 2}
+					disabled={!authToken || !canManage(permissionLevel)}
 				/>
 				<div class="relay-timed-on__actions">
 					<CwButton

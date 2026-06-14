@@ -156,8 +156,7 @@
 		if (usable.length === 0) {
 			return [
 				{ label: m.reports_create_method_email(), value: '1' },
-				{ label: m.reports_create_method_sms(), value: '2' },
-				{ label: m.reports_create_method_discord(), value: '3' }
+				{ label: m.reports_create_method_sms(), value: '2' }
 			];
 		}
 		return usable.map((method) => ({
@@ -250,7 +249,7 @@
 				});
 			}
 
-			await goto(resolve('/reports-new'));
+			await goto(resolve('/reports'));
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
@@ -361,7 +360,7 @@
 	<AppFormStack padded>
 		<CwSeparator />
 		<AppActionRow>
-			<CwButton variant="ghost" onclick={() => goto(resolve('/reports-new'))} disabled={submitting}>
+			<CwButton variant="ghost" onclick={() => goto(resolve('/reports'))} disabled={submitting}>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton

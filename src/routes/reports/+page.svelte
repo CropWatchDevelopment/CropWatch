@@ -3,11 +3,16 @@
 	import { page } from '$app/state';
 	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
+	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
+	import type { ReportTemplateDto } from '$lib/api/api.dtos';
 	import {
 		CwButton,
 		CwCard,
+		CwChip,
 		CwDataTable,
 		type CwColumnDef,
 		type CwTableQuery,
@@ -15,89 +20,151 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
-	import ReportHistoryDialog from './ReportHistoryDialog.svelte';
-	import DeleteReportDialog from './DeleteReportDialog.svelte';
-	import type { ReportDeviceRelations, ReportRow } from './report-row';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { ApiService } from '$lib/api/api.service';
-	import { formatDateTime } from '$lib/i18n/format';
+	import DeleteReportTemplateDialog from './DeleteReportTemplateDialog.svelte';
+	import ViewReportHistoryDialog from './ViewReportHistoryDialog.svelte';
 
-	type ReportApiRow = ReportDeviceRelations & { created_at: string };
+	type ReportTemplateRow = ReportTemplateDto & {
+		statusLabel: string;
+		locationName: string;
+		assignmentSummary: string;
+		recipientSummary: string;
+		cadenceSummary: string;
+		createdAtLabel: string;
+	};
 
-	let loading = $state(true);
-	let deletedReportIds = $state<string[]>([]);
-	let app = getAppContext();
-
-	const columns: CwColumnDef<ReportRow>[] = [
+	const columns: CwColumnDef<ReportTemplateRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
-		{ key: 'device_name', header: m.reports_for_device(), sortable: true },
-		{ key: 'dev_eui', header: m.devices_dev_eui_label() },
-		{ key: 'location_name', header: m.nav_locations(), sortable: true }
+		{ key: 'statusLabel', header: m.reports_new_status(), sortable: true },
+		{ key: 'assignmentSummary', header: m.reports_new_assigned_devices() },
+		{ key: 'locationName', header: m.nav_locations(), sortable: true },
+		{ key: 'recipientSummary', header: m.reports_new_recipients() },
+		{ key: 'cadenceSummary', header: m.reports_new_cadence() },
+		{ key: 'createdAtLabel', header: m.common_created(), sortable: true }
 	];
 
-	const tableKey = $derived(deletedReportIds.join(','));
+	let loading = $state(true);
+	let deletedTemplateIds = $state<number[]>([]);
+	let tableKey = $derived(deletedTemplateIds.join(','));
+	let app = getAppContext();
 
-	function handleReportDeleted(reportId: string) {
-		if (deletedReportIds.includes(reportId)) return;
-		deletedReportIds = [...deletedReportIds, reportId];
-	}
+	async function loadData(query: CwTableQuery): Promise<CwTableResult<ReportTemplateRow>> {
+		try {
+			const api = new ApiService({ authToken: app.accessToken });
+			const templates = await api.getReportTemplates(
+				{ search: query.search?.trim() || undefined },
+				{ signal: query.signal }
+			);
+			const deletedIds = new Set(deletedTemplateIds);
+			let rows = templates.filter((template) => !deletedIds.has(template.id)).map(toRow);
 
-	function sortReports(rows: ReportRow[], column: string, direction: 'asc' | 'desc'): ReportRow[] {
-		const dir = direction === 'asc' ? 1 : -1;
-		return [...rows].sort((a, b) => {
-			const aVal = (a as unknown as Record<string, unknown>)[column];
-			const bVal = (b as unknown as Record<string, unknown>)[column];
-			if (aVal == null && bVal == null) return 0;
-			if (aVal == null) return dir;
-			if (bVal == null) return -dir;
-			return String(aVal).localeCompare(String(bVal)) * dir;
-		});
-	}
+			if (query.sort) {
+				rows = sortRows(rows, query.sort.column, query.sort.direction);
+			}
 
-	async function loadData(query: CwTableQuery): Promise<CwTableResult<ReportRow>> {
-		const search = query.search?.trim() || '';
-		const api = new ApiService({ authToken: app.accessToken });
-		const reports = await api.getReports({ name: search || undefined });
+			const total = rows.length;
+			const skip = (query.page - 1) * query.pageSize;
+			rows = rows.slice(skip, skip + query.pageSize);
 
-		const deletedIds = new Set(deletedReportIds);
-		let rows: ReportRow[] = reports
-			.map((report) => {
-				const r = report as typeof report & ReportApiRow;
-				const deviceOwners = r.cw_devices?.cw_device_owners ?? [];
-				return {
-					...r,
-					permission_level:
-						deviceOwners.find(
-							(o) =>
-								o.user_id === app.session?.sub &&
-								o.permission_level != null &&
-								o.permission_level <= 3
-						)?.permission_level ?? null,
-					created_at: formatDateTime(r.created_at),
-					location_name:
-						r.cw_devices?.cw_locations?.name ?? m.reports_unknown_location(),
-					device_name: r.cw_devices?.name ?? m.reports_unknown_device()
-				};
-			})
-			.filter((r) => !deletedIds.has(r.report_id));
-
-		if (query.sort) {
-			rows = sortReports(rows, query.sort.column, query.sort.direction);
+			return { rows, total };
+		} catch (error) {
+			throw new Error(readApiErrorMessage(error, m.reports_new_load_failed()));
+		} finally {
+			loading = false;
 		}
+	}
 
-		const total = rows.length;
-		const skip = (query.page - 1) * query.pageSize;
-		rows = rows.slice(skip, skip + query.pageSize);
+	function handleDeleted(templateId: number) {
+		if (deletedTemplateIds.includes(templateId)) return;
+		deletedTemplateIds = [...deletedTemplateIds, templateId];
+	}
 
-		loading = false;
-		return { rows, total };
+	function toRow(template: ReportTemplateDto): ReportTemplateRow {
+		return {
+			...template,
+			statusLabel: template.isActive ? m.reports_new_active() : m.reports_new_inactive(),
+			locationName: summarizeLocations(template),
+			assignmentSummary: summarizeAssignments(template),
+			recipientSummary: summarizeRecipients(template),
+			cadenceSummary: summarizeCadence(template),
+			createdAtLabel: template.createdAt
+				? new Date(template.createdAt).toLocaleString()
+				: m.common_not_available()
+		};
+	}
+
+	function summarizeLocations(template: ReportTemplateDto): string {
+		const names = template.assignments
+			.map((assignment) => assignment.locationName)
+			.filter((name): name is string => !!name && name.trim().length > 0);
+		const unique = [...new Set(names)];
+		if (unique.length === 0) return m.reports_unknown_location();
+		return unique.length === 1 ? unique[0] : unique.join(', ');
+	}
+
+	function summarizeAssignments(template: ReportTemplateDto): string {
+		if (template.assignments.length === 0) return m.reports_new_no_assignments();
+
+		const labels = template.assignments.map((assignment) =>
+			assignment.deviceName ? `${assignment.deviceName} (${assignment.devEui})` : assignment.devEui
+		);
+
+		return summarizeList(labels);
+	}
+
+	function summarizeRecipients(template: ReportTemplateDto): string {
+		if (template.recipients.length === 0) return m.common_not_available();
+
+		return summarizeList(
+			template.recipients.map(
+				(recipient) => recipient.email ?? recipient.name ?? String(recipient.communicationMethod)
+			)
+		);
+	}
+
+	function summarizeCadence(template: ReportTemplateDto): string {
+		const flags: string[] = [];
+		for (const schedule of template.schedule) {
+			if (!schedule.isActive) continue;
+			if (schedule.endOfDay) flags.push(m.reports_new_cadence_daily());
+			if (schedule.endOfWeek) flags.push(m.reports_new_cadence_weekly());
+			if (schedule.endOfMonth) flags.push(m.reports_new_cadence_monthly());
+		}
+		const unique = [...new Set(flags)];
+		return unique.length > 0 ? unique.join(', ') : m.common_not_available();
+	}
+
+	function summarizeList(items: string[]): string {
+		const visible = items.slice(0, 2).join(', ');
+		const remaining = items.length - 2;
+		return remaining > 0
+			? m.reports_new_summary_more({ summary: visible, count: String(remaining) })
+			: visible;
+	}
+
+	function sortRows(
+		rows: ReportTemplateRow[],
+		column: string,
+		direction: 'asc' | 'desc'
+	): ReportTemplateRow[] {
+		const dir = direction === 'asc' ? 1 : -1;
+
+		return [...rows].sort((a, b) => {
+			const left = (a as unknown as Record<string, unknown>)[column];
+			const right = (b as unknown as Record<string, unknown>)[column];
+
+			if (typeof left === 'number' && typeof right === 'number') {
+				return (left - right) * dir;
+			}
+
+			return String(left ?? '').localeCompare(String(right ?? '')) * dir;
+		});
 	}
 </script>
 
 <svelte:head>
-	<title>{m.reports_page_title()}</title>
+	<title>{m.reports_new_page_title()}</title>
 </svelte:head>
 
 <AppPage>
@@ -105,69 +172,55 @@
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
-	<CwCard title={m.reports_weekly_reports()}>
+	<CwCard title={m.reports_new_configured_templates()}>
 		{#key tableKey}
-			<CwDataTable labels={cwDataTableLabels()}
+			<CwDataTable
+				labels={cwDataTableLabels()}
 				{columns}
 				{loadData}
 				{loading}
-				groupBy="location_name"
+				groupBy="locationName"
 				rowActionsHeader={m.common_actions()}
 				rowKey="id"
 			>
-				{#snippet cell(row: ReportRow, col: CwColumnDef<ReportRow>, defaultValue: string)}
-					{#if col.key === 'device_name'}
-						{#if row.cw_devices?.cw_locations?.location_id}
-							<a
-								href={resolve('/locations/[location_id]/devices/[dev_eui]', {
-									location_id: String(row.cw_devices.cw_locations.location_id),
-									dev_eui: row.dev_eui
-								})}
-								class="reports-page__device-link ml-2 text-sm hover:underline"
-							>
-								{row.cw_devices?.name ?? m.reports_unknown_device()}
-							</a>
-						{:else}
-							<span class="ml-2 text-sm">{row.cw_devices?.name ?? m.reports_unknown_device()}</span>
-						{/if}
+				{#snippet cell(
+					row: ReportTemplateRow,
+					col: CwColumnDef<ReportTemplateRow>,
+					defaultValue: string
+				)}
+					{#if col.key === 'statusLabel'}
+						<CwChip
+							label={row.statusLabel}
+							tone={row.isActive ? 'success' : 'warning'}
+							variant="soft"
+							size="sm"
+						/>
 					{:else}
 						{defaultValue}
 					{/if}
 				{/snippet}
 
-				{#snippet rowActions(row: ReportRow)}
-					<div class="flex flex-row gap-2">
-						{#if row.permission_level != null && row.permission_level <= 3}
-							<ReportHistoryDialog report_id={row.report_id} dev_eui={row.dev_eui} />
-						{/if}
-						{#if row.permission_level != null && row.permission_level <= 2}
-							<CwButton
-								variant="secondary"
-								onclick={() => {
-									goto(resolve('/reports/[report_id]/edit', { report_id: row.report_id }));
-								}}
-							>
-								<Icon src={EDIT_ICON} alt="Edit" />
-							</CwButton>
-						{/if}
-						{#if row.user_id === app.session?.sub}
-							<DeleteReportDialog
-								reportId={row.report_id}
-								reportName={row.name}
-								onDeleted={handleReportDeleted}
-							/>
-						{/if}
+				{#snippet rowActions(row: ReportTemplateRow)}
+					<div class="reports-new-page__actions">
+						<CwButton
+							variant="secondary"
+							size="md"
+							onclick={() => goto(resolve('/reports/edit/[id]', { id: String(row.id) }))}
+						>
+							<Icon src={EDIT_ICON} alt={m.action_edit()} />
+						</CwButton>
+						<ViewReportHistoryDialog templateId={row.id} reportName={row.name} />
+						<DeleteReportTemplateDialog
+							templateId={row.id}
+							reportName={row.name}
+							onDeleted={handleDeleted}
+						/>
 					</div>
 				{/snippet}
 
 				{#snippet toolbarActions()}
-					<CwButton
-						variant="secondary"
-						onclick={() => {
-							goto(resolve('/reports/new/edit'));
-						}}
-					>
-						<Icon src={ADD_ICON} alt={m.reports_create_page_title()} />
+					<CwButton variant="primary" onclick={() => goto(resolve('/reports/create'))}>
+						<Icon src={ADD_ICON} alt={m.reports_new_create_template()} />
 					</CwButton>
 				{/snippet}
 			</CwDataTable>
@@ -176,7 +229,9 @@
 </AppPage>
 
 <style>
-	.reports-page__device-link {
-		color: var(--cw-info-500);
+	.reports-new-page__actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--cw-space-2);
 	}
 </style>

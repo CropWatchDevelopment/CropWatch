@@ -6,11 +6,16 @@
 <script lang="ts">
 	import { onMount, onDestroy, untrack } from 'svelte';
 	import {
+		attachCwDeviceRefreshVisibility,
+		createCwDeviceRefreshScheduler,
+		normalizeCwUploadIntervalMinutes,
 		CwButton,
 		CwDuration,
 		CwLocationCard,
 		CwSensorCard,
-		CwSpinner
+		CwSpinner,
+		type CwDeviceRefreshResult,
+		type CwDeviceRefreshScheduler
 	} from '@cropwatchdevelopment/cwui';
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardLocationGroup, DashboardRow } from '$lib/api/api.dtos';
@@ -34,7 +39,6 @@
 	}
 
 	const PAGE_SIZE = 20;
-	const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
 	let { filters, cardLayout = 'grid' }: { filters: Filters; cardLayout?: CardLayout } =
 		$props();
@@ -47,7 +51,10 @@
 	// True while a full reload (initial load or filter change) is in flight, as
 	// opposed to a "load more" append. Drives the full-area loading spinner.
 	let reloading = $state(false);
-	let pollTimer: ReturnType<typeof setInterval> | null = null;
+	// Refetches each device when its own upload window (last seen +
+	// upload_interval + grace) expires, with capped backoff while it stays
+	// stale — replaces the old fixed 10-minute full-page poll.
+	let refreshScheduler: CwDeviceRefreshScheduler | null = null;
 
 	// dev_eui -> latest row | 'loading' | undefined (not requested yet).
 	let detailsByDevEui = $state<Record<string, Record<string, unknown> | 'loading'>>({});
@@ -96,6 +103,7 @@
 			groups = opts.reset ? page.groups : [...groups, ...page.groups];
 			total = page.total;
 			preloadOpenCardDetails(page.groups);
+			syncRefreshScheduler();
 		} catch (err) {
 			console.error('Failed to load dashboard page', err);
 		} finally {
@@ -128,8 +136,80 @@
 				}
 			}
 			total = page.total;
+			syncRefreshScheduler();
 		} catch (err) {
 			console.error('Failed to refresh dashboard', err);
+		}
+	}
+
+	function findRowByDevEui(devEui: string): DashboardRow | null {
+		for (const group of groups) {
+			for (const row of group.devices) {
+				if (row.dev_eui === devEui) return row;
+			}
+		}
+		return null;
+	}
+
+	function readLatestColumn(
+		latest: Record<string, unknown>,
+		column: string | null | undefined
+	): number | string | boolean | null {
+		if (!column || column === '-') return null;
+		const value = latest[column];
+		return value === undefined || value === null ? null : (value as number | string | boolean);
+	}
+
+	/** Per-device refetch for the scheduler: the latest full data row. */
+	async function fetchLatestForRefresh(devEui: string): Promise<CwDeviceRefreshResult | null> {
+		if (!app.accessToken) return null;
+		const api = new ApiService({ authToken: app.accessToken });
+		const latest = await api.getDashboardDeviceLatest(devEui);
+		if (!latest) return null;
+		const createdAt = typeof latest.created_at === 'string' ? latest.created_at : null;
+		return { lastSeenAt: createdAt, data: latest };
+	}
+
+	/** Patch a single card in place from a refetched latest-data row. */
+	function applyRefreshedLatest(devEui: string, result: CwDeviceRefreshResult) {
+		const latest = result.data as Record<string, unknown> | undefined;
+		const row = findRowByDevEui(devEui);
+		if (!row || !latest) return;
+
+		const createdAt = typeof latest.created_at === 'string' ? latest.created_at : null;
+		row.latest = {
+			created_at: createdAt ?? row.latest?.created_at ?? null,
+			primary: readLatestColumn(latest, row.device_type.primary_data_v2),
+			secondary: readLatestColumn(latest, row.device_type.secondary_data_v2)
+		};
+		if (createdAt) {
+			row.last_data_updated_at = createdAt;
+		}
+		// Keep the expanded details panel in sync when it is already loaded.
+		if (detailsByDevEui[devEui] !== undefined && detailsByDevEui[devEui] !== 'loading') {
+			detailsByDevEui[devEui] = latest;
+		}
+	}
+
+	/** (Re)register every visible device and drop ones no longer on screen. */
+	function syncRefreshScheduler() {
+		if (!refreshScheduler) return;
+
+		const seen = new Set<string>();
+		for (const group of groups) {
+			for (const row of group.devices) {
+				seen.add(row.dev_eui);
+				refreshScheduler.track({
+					id: row.dev_eui,
+					lastSeenAt: row.last_data_updated_at ?? row.latest?.created_at ?? null,
+					uploadIntervalMinutes:
+						normalizeCwUploadIntervalMinutes(row.upload_interval) ??
+						normalizeCwUploadIntervalMinutes(row.device_type.default_upload_interval)
+				});
+			}
+		}
+		for (const devEui of refreshScheduler.states.keys()) {
+			if (!seen.has(devEui)) refreshScheduler.untrack(devEui);
 		}
 	}
 
@@ -235,19 +315,29 @@
 	};
 
 	let removeForegroundListener: (() => void) | null = null;
+	let detachRefreshVisibility: (() => void) | null = null;
 
 	onMount(() => {
-		pollTimer = setInterval(refreshLoaded, REFRESH_INTERVAL_MS);
+		refreshScheduler = createCwDeviceRefreshScheduler({
+			fetcher: fetchLatestForRefresh,
+			onData: applyRefreshedLatest
+		});
+		detachRefreshVisibility = attachCwDeviceRefreshVisibility(refreshScheduler);
+		syncRefreshScheduler();
+
 		// Pull fresh data whenever the user returns to the tab/app, so devices
 		// that went "stale" while the page sat in the background don't linger as
-		// false offline indicators.
+		// false offline indicators. syncRefreshScheduler() inside refreshLoaded
+		// re-arms each device from its fresh last-seen timestamp.
 		removeForegroundListener = onAppForeground(() => {
 			void refreshLoaded();
 		});
 	});
 
 	onDestroy(() => {
-		if (pollTimer) clearInterval(pollTimer);
+		detachRefreshVisibility?.();
+		refreshScheduler?.destroy();
+		refreshScheduler = null;
 		removeForegroundListener?.();
 	});
 </script>
