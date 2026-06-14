@@ -1,5 +1,5 @@
 import { ApiService } from '$lib/api/api.service';
-import type { DeviceStatusSummary, RuleDto } from '$lib/api/api.dtos';
+import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
 import type { LayoutServerLoad } from './$types';
 
 const EMPTY_DEVICE_STATUSES: DeviceStatusSummary = { online: 0, offline: 0 };
@@ -23,7 +23,7 @@ function readTriggeredRulesCount(rawTriggeredRulesCount: unknown): number {
 
 async function loadOverviewData(apiServiceInstance: ApiService): Promise<{
 	deviceStatuses: DeviceStatusSummary;
-	triggeredRules: RuleDto[];
+	triggeredRules: RuleTemplateDto[];
 	triggeredRulesCount: number;
 }> {
 	const [deviceStatusesResult, triggeredRulesResult, triggeredRulesCountResult] =
@@ -65,7 +65,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 	let profile;
 	let overview = {
 		deviceStatuses: EMPTY_DEVICE_STATUSES,
-		triggeredRules: [] as RuleDto[],
+		triggeredRules: [] as RuleTemplateDto[],
 		triggeredRulesCount: 0
 	};
 

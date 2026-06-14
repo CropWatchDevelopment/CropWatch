@@ -1,10 +1,7 @@
 import { env as publicEnv } from '$env/dynamic/public';
-import type { PdfFile } from '../interfaces/PdfFile.interface';
 import type {
 	CreateDeviceRequest,
 	CreateLocationRequest,
-	CreateReportRequest,
-	CreateRuleRequest,
 	DashboardLocationPage,
 	DashboardPage,
 	DashboardQuery,
@@ -22,8 +19,6 @@ import type {
 	LoginResponse,
 	PaginatedResponse,
 	PaginationQuery,
-	ReportDto,
-	ReportsQuery,
 	ReportTemplateDto,
 	ReportTemplateListQuery,
 	ReportTemplateSaveRequest,
@@ -31,13 +26,11 @@ import type {
 	ReportTemplateHistoryItemDto,
 	CommunicationMethodDto,
 	RuleActionTypeDto,
-	RuleDto,
 	RuleFormContextDto,
 	RuleTemplateDto,
 	RuleTemplateListQuery,
 	RuleTemplateSaveRequest,
 	RuleTriggerLogDto,
-	RulesQuery,
 	SensorTimeSeriesPoint,
 	TimeRangeQuery,
 	TrafficDataPoint,
@@ -48,8 +41,6 @@ import type {
 	UpdateRelayRequest,
 	UpdateLocationRequest,
 	UpdateLocationOwnerRequest,
-	UpdateReportRequest,
-	UpdateRuleRequest,
 	WaterDataPoint,
 	GatewayDto
 } from './api.dtos';
@@ -143,25 +134,11 @@ const LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT = '/locations/{id}/pe
 const POWER_ENDPOINT = '/power/{id}';
 const RELAY_ENDPOINT = '/relay/{dev_eui}';
 const RELAY_PULSE_ENDPOINT = '/relay/{dev_eui}/pulse';
-const PAYMENTS_PRODUCTS_ENDPOINT = '/payments/products';
-const PAYMENTS_SUBSCRIPTIONS_ENDPOINT = '/payments/subscriptions';
-const PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT = '/payments/subscriptions/state';
-const PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT = '/payments/subscriptions/checkout';
-const PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT = '/payments/subscriptions/portal';
-const REPORTS_ENDPOINT = '/reports';
-const REPORTS_BASE_ENDPOINT = publicEnv.PUBLIC_REPORTS_ENDPOINT ?? REPORTS_ENDPOINT;
-const REPORT_BY_REPORT_ID_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/{report_id}`;
-const RULES_BASE_ENDPOINT = publicEnv.PUBLIC_RULES_ENDPOINT ?? '/rules';
 const RULE_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_RULE_TEMPLATES_ENDPOINT ?? '/rules-new';
 const RULE_TEMPLATE_ACTION_TYPES_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/action-types`;
 const RULE_TEMPLATE_FORM_CONTEXT_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/form-context`;
-const TRIGGERED_RULES_BASE_ENDPOINT =
-	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT ?? `${RULES_BASE_ENDPOINT}/triggered`;
-const TRIGGERED_RULES_COUNT_ENDPOINT =
-	publicEnv.PUBLIC_TRIGGERED_RULES_ENDPOINT_COUNT ?? `${TRIGGERED_RULES_BASE_ENDPOINT}/count`;
-const REPORT_HISTORY_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/history/{dev_eui}`;
-const REPORT_DOWNLOAD_ENDPOINT = `${REPORTS_BASE_ENDPOINT}/download/{dev_eui}/{report_id}/{reportName}`;
-const RULE_BY_ID_ENDPOINT = `${RULES_BASE_ENDPOINT}/{id}`;
+const TRIGGERED_RULES_BASE_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/triggered`;
+const TRIGGERED_RULES_COUNT_ENDPOINT = `${TRIGGERED_RULES_BASE_ENDPOINT}/count`;
 const RULE_TEMPLATE_BY_ID_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}`;
 const RULE_TEMPLATE_HISTORY_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}/history`;
 const REPORT_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_REPORT_TEMPLATES_ENDPOINT ?? '/reports-new';
@@ -1073,24 +1050,8 @@ export class ApiService {
 		);
 	}
 
-	public createRule(payload: CreateRuleRequest): Promise<RuleDto> {
-		return this.request<RuleDto>(RULES_BASE_ENDPOINT, {
-			method: 'POST',
-			body: payload
-		});
-	}
-
-	public getRules(query: RulesQuery = {}): Promise<RuleDto[]> {
-		return this.request<RuleDto[]>(RULES_BASE_ENDPOINT, {
-			method: 'GET',
-			query: {
-				name: query.name
-			}
-		});
-	}
-
-	public getTriggeredRules(): Promise<RuleDto[]> {
-		return this.request<RuleDto[]>(TRIGGERED_RULES_BASE_ENDPOINT, {
+	public getTriggeredRules(): Promise<RuleTemplateDto[]> {
+		return this.request<RuleTemplateDto[]>(TRIGGERED_RULES_BASE_ENDPOINT, {
 			method: 'GET'
 		});
 	}
@@ -1098,25 +1059,6 @@ export class ApiService {
 	public getTriggeredRulesCount(): Promise<TriggeredRulesCountResponse> {
 		return this.request<TriggeredRulesCountResponse>(TRIGGERED_RULES_COUNT_ENDPOINT, {
 			method: 'GET'
-		});
-	}
-
-	public getRule(id: number): Promise<RuleDto> {
-		return this.request<RuleDto>(replacePathParams(RULE_BY_ID_ENDPOINT, { id }), {
-			method: 'GET'
-		});
-	}
-
-	public updateRule(id: number, payload: UpdateRuleRequest): Promise<RuleDto> {
-		return this.request<RuleDto>(replacePathParams(RULE_BY_ID_ENDPOINT, { id }), {
-			method: 'PATCH',
-			body: payload
-		});
-	}
-
-	public deleteRule(ruleGroupId: string): Promise<number> {
-		return this.request<number>(replacePathParams(RULE_BY_ID_ENDPOINT, { id: ruleGroupId }), {
-			method: 'DELETE'
 		});
 	}
 
@@ -1313,111 +1255,10 @@ export class ApiService {
 		);
 	}
 
-	public createReport(payload: CreateReportRequest): Promise<ReportDto> {
-		return this.request<ReportDto>(REPORTS_BASE_ENDPOINT, {
-			method: 'POST',
-			body: payload
-		});
-	}
-
-	public getReports(query: ReportsQuery = {}): Promise<ReportDto[]> {
-		return this.request<ReportDto[]>(REPORTS_BASE_ENDPOINT, {
-			method: 'GET',
-			query: {
-				name: query.name
-			}
-		});
-	}
-
-	public getReportHistory(devEui: string): Promise<PdfFile[]> {
-		return this.request<PdfFile[]>(
-			replacePathParams(REPORT_HISTORY_ENDPOINT, { dev_eui: devEui }),
-			{
-				method: 'GET'
-			}
-		);
-	}
-
-	public getReportDownloadUrl(
-		dev_eui: string,
-		report_id: string,
-		reportName: string
-	): Promise<Record<string, unknown>> {
-		return this.request<Record<string, unknown>>(
-			replacePathParams(REPORT_DOWNLOAD_ENDPOINT, { dev_eui, report_id, reportName }),
-			{
-				method: 'GET'
-			}
-		);
-	}
-
-	public getReport(reportId: string): Promise<ReportDto> {
-		return this.request<ReportDto>(
-			replacePathParams(REPORT_BY_REPORT_ID_ENDPOINT, { report_id: reportId }),
-			{
-				method: 'GET'
-			}
-		);
-	}
-
-	public updateReport(reportId: string, payload: UpdateReportRequest): Promise<ReportDto> {
-		return this.request<ReportDto>(
-			replacePathParams(REPORT_BY_REPORT_ID_ENDPOINT, { report_id: reportId }),
-			{
-				method: 'PATCH',
-				body: payload
-			}
-		);
-	}
-
-	public deleteReport(reportId: string): Promise<number> {
-		return this.request<number>(
-			replacePathParams(REPORT_BY_REPORT_ID_ENDPOINT, { report_id: reportId }),
-			{
-				method: 'DELETE'
-			}
-		);
-	}
-
-	public getPaymentsProducts(): Promise<unknown> {
-		return this.request<unknown>(PAYMENTS_PRODUCTS_ENDPOINT, { method: 'GET' });
-	}
-
-	public getPaymentsSubscriptions(): Promise<unknown> {
-		return this.request<unknown>(PAYMENTS_SUBSCRIPTIONS_ENDPOINT, { method: 'GET' });
-	}
-
-	public getPaymentsSubscriptionState(): Promise<unknown> {
-		return this.request<unknown>(PAYMENTS_SUBSCRIPTION_STATE_ENDPOINT, { method: 'GET' });
-	}
-
-	public createPaymentsCheckoutSession(payload: Record<string, unknown>): Promise<unknown> {
-		return this.request<unknown>(PAYMENTS_SUBSCRIPTIONS_CHECKOUT_ENDPOINT, {
-			method: 'POST',
-			body: payload
-		});
-	}
-
-	public createPaymentsPortalSession(payload: Record<string, unknown>): Promise<unknown> {
-		return this.request<unknown>(PAYMENTS_SUBSCRIPTIONS_PORTAL_ENDPOINT, {
-			method: 'POST',
-			body: payload
-		});
-	}
-
 	public getGateways(): Promise<GatewayDto[]> {
 		return this.request<GatewayDto[]>(GATEWAYS_ENDPOINT, {
 			method: 'GET'
 		});
-	}
-
-	public cancelPaymentsSubscription(subscriptionId: string): Promise<unknown> {
-		return this.request<unknown>(
-			`${PAYMENTS_SUBSCRIPTIONS_ENDPOINT}/${encodeURIComponent(subscriptionId)}`,
-			{
-				method: 'DELETE'
-			}
-		);
 	}
 }
 

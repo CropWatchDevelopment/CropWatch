@@ -1,13 +1,40 @@
 <script lang="ts">
-	import RuleForm from '../RuleForm.svelte';
-	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { AppPage } from '$lib/components/layout';
+	import { CwButton } from '@cropwatchdevelopment/cwui';
+	import { m } from '$lib/paraglide/messages.js';
+	import type { PageProps } from './$types';
+	import RuleTemplateForm from '../RuleTemplateForm.svelte';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: PageProps = $props();
 </script>
 
-<RuleForm
-	mode="create"
-	devices={data.devices}
-	authToken={data.authToken}
-	initialDevEui={data.devEui}
-/>
+<svelte:head>
+	<title>{m.rules_new_create_page_title()}</title>
+</svelte:head>
+
+<AppPage width="lg">
+	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/rules'))}>
+		&larr; {m.action_back()}
+	</CwButton>
+
+	<div class="rules-new-create__header">
+		<h1>{m.rules_new_create_template()}</h1>
+	</div>
+
+	<RuleTemplateForm
+		mode="create"
+		context={data.context}
+		authToken={data.authToken}
+		preselectedDevEui={data.devEui}
+	/>
+</AppPage>
+
+<style>
+	.rules-new-create__header h1 {
+		margin: 0;
+		font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+		font-weight: var(--cw-font-semibold);
+	}
+</style>

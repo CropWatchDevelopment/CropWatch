@@ -1,5 +1,6 @@
 import { ApiService, ApiServiceError, type UpdateLocationOwnerRequest } from '$lib/api/api.service';
 import { m } from '$lib/paraglide/messages.js';
+import { PermissionLevel } from '$lib/constants/permissions';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
@@ -22,7 +23,7 @@ type EditPermissionFormValues = {
 const EMPTY_ADD_VALUES: AddPermissionFormValues = {
 	newUserEmail: '',
 	userId: '',
-	permission_level: 4,
+	permission_level: PermissionLevel.DISABLED,
 	applyToAllDevices: false
 };
 
@@ -149,7 +150,8 @@ export const addPermission: Actions['addPermission'] = async ({
 	const formData = await request.formData();
 	const values: AddPermissionFormValues = {
 		newUserEmail: readString(formData.get('newUserEmail')),
-		permission_level: Number.parseInt(readString(formData.get('permission_level')), 10) || 4,
+		permission_level: Number.parseInt(readString(formData.get('permission_level')), 10) ||
+			PermissionLevel.DISABLED,
 		applyToAllDevices: formData.get('applyToAllDevices') === 'true'
 	};
 
@@ -178,7 +180,7 @@ export const addPermission: Actions['addPermission'] = async ({
 		await apiService.createLocationPermission(
 			locationId,
 			values.newUserEmail,
-			values.permission_level ?? 4,
+			values.permission_level ?? PermissionLevel.DISABLED,
 			values.applyToAllDevices
 		);
 

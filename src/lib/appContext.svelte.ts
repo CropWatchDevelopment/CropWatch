@@ -5,7 +5,7 @@ import type { IDevice } from './interfaces/device.interface';
 import type { IRule } from './interfaces/rule.interface';
 import type { Profile } from './interfaces/profile.interface';
 import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
-import type { RuleDto, TriggeredRulesCountResponse } from './api/api.service';
+import type { RuleTemplateDto, TriggeredRulesCountResponse } from './api/api.service';
 import type { LocationDto } from './api/api.dtos';
 
 const DEVICE_STALE_MINUTES = 10;
@@ -23,7 +23,7 @@ export interface AppContext {
 	deviceStatuses: { online: number; offline: number };
 	totalDeviceCount?: number;
 	rules: IRule[];
-	triggeredRules: RuleDto[];
+	triggeredRules: RuleTemplateDto[];
 	triggeredRulesCount: number;
 	staleDeviceIds: string[];
 	accessToken?: string;

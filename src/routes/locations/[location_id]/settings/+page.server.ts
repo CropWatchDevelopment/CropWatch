@@ -1,4 +1,5 @@
 import { ApiService, type LocationOwnerDto } from '$lib/api/api.service';
+import { PermissionLevel } from '$lib/constants/permissions';
 import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -37,7 +38,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		const owner = location?.cw_location_owners?.find(
 			(owner) =>
 				readUnknownString(owner.user_id) === currentUserId &&
-				readUnknownString(owner.permission_level) === '1'
+				readUnknownString(owner.permission_level) === String(PermissionLevel.ADMIN)
 		);
 		if (!owner) {
 			throw fail(403, {
