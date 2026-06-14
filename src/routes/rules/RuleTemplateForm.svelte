@@ -305,7 +305,7 @@
 				});
 			}
 
-			await goto(resolve('/rules-new'));
+			await goto(resolve('/rules'));
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
@@ -554,7 +554,7 @@
 		<CwSeparator />
 
 		<AppActionRow>
-			<CwButton variant="ghost" onclick={() => goto(resolve('/rules-new'))} disabled={submitting}>
+			<CwButton variant="ghost" onclick={() => goto(resolve('/rules'))} disabled={submitting}>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton

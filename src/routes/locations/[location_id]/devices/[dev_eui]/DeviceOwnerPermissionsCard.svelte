@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { getAppContext } from '$lib/appContext.svelte';
 	import { getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwDropdown, CwSeparator } from '@cropwatchdevelopment/cwui';
 
 	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	const VALID_PERMISSION_LEVELS = new Set([1, 2, 3, 4]);
+	const VALID_PERMISSION_LEVELS = new Set([1, 2, 3, 4, 5]);
 
 	type DeviceOwnerRow = {
 		id: number;
@@ -42,7 +41,6 @@
 
 	let { form, owners }: Props = $props();
 
-	const app = getAppContext();
 	const permissionOptions = getPermissionLevelOptions();
 
 	let ownerSubmittingByKey = $state<Record<string, boolean>>({});
@@ -98,86 +96,84 @@
 			{#each permissionRows as row, index (row.key)}
 				{@const ownerForm = ownerFormFor(row.key)}
 				{#if row.email}
-					{#if !row.email.includes('@cropwatch.io') || app.session?.email.includes('@cropwatch.io')}
-						<div class="permission-row">
-							<form
-								method="POST"
-								action="?/updateDeviceOwnerPermission"
-								class="permission-row__form"
-								use:enhance={({ formData, cancel }) => {
-									if (!isOwnerRowValid(row)) {
-										cancel();
-										return;
+					<div class="permission-row">
+						<form
+							method="POST"
+							action="?/updateDeviceOwnerPermission"
+							class="permission-row__form"
+							use:enhance={({ formData, cancel }) => {
+								if (!isOwnerRowValid(row)) {
+									cancel();
+									return;
+								}
+
+								const key = String(formData.get('ownerKey') ?? row.key);
+								setOwnerSubmitting(key, true);
+
+								return async ({ update }) => {
+									try {
+										await update({ reset: false });
+									} finally {
+										setOwnerSubmitting(key, false);
 									}
+								};
+							}}
+						>
+							<input type="hidden" name="ownerKey" value={row.key} />
+							<input type="hidden" name="targetUserEmail" value={row.email} />
+							<input type="hidden" name="permissionLevel" value={row.permissionLevel} />
 
-									const key = String(formData.get('ownerKey') ?? row.key);
-									setOwnerSubmitting(key, true);
+							<div class="permission-user flex items-center justify-center">
+								<p class="text-xl">{row.name} ({row.email})</p>
+							</div>
 
-									return async ({ update }) => {
-										try {
-											await update({ reset: false });
-										} finally {
-											setOwnerSubmitting(key, false);
+							<div class="permission-edit">
+								<div class="field-stack">
+									<CwDropdown
+										label={m.locations_permission_level()}
+										options={permissionOptions}
+										bind:value={
+											() => row.permissionLevel,
+											(value) => updateOwnerPermissionLevel(row.key, String(value ?? ''))
 										}
-									};
-								}}
-							>
-								<input type="hidden" name="ownerKey" value={row.key} />
-								<input type="hidden" name="targetUserEmail" value={row.email} />
-								<input type="hidden" name="permissionLevel" value={row.permissionLevel} />
-
-								<div class="permission-user flex items-center justify-center">
-									<p class="text-xl">{row.name} ({row.email})</p>
+										error={ownerForm?.fieldErrors?.permissionLevel ||
+											(!isOwnerRowValid(row)
+												? m.devices_choose_valid_permission_level()
+												: undefined)}
+									/>
+									{#if ownerForm?.fieldErrors?.permissionLevel}
+										<p class="field-error">{ownerForm.fieldErrors.permissionLevel}</p>
+									{/if}
 								</div>
 
-								<div class="permission-edit">
-									<div class="field-stack">
-										<CwDropdown
-											label={m.locations_permission_level()}
-											options={permissionOptions}
-											bind:value={
-												() => row.permissionLevel,
-												(value) => updateOwnerPermissionLevel(row.key, String(value ?? ''))
-											}
-											error={ownerForm?.fieldErrors?.permissionLevel ||
-												(!isOwnerRowValid(row)
-													? m.devices_choose_valid_permission_level()
-													: undefined)}
-										/>
-										{#if ownerForm?.fieldErrors?.permissionLevel}
-											<p class="field-error">{ownerForm.fieldErrors.permissionLevel}</p>
-										{/if}
-									</div>
+								<CwButton
+									type="submit"
+									variant="primary"
+									loading={ownerSubmittingByKey[row.key] ?? false}
+									disabled={(ownerSubmittingByKey[row.key] ?? false) || !isOwnerRowValid(row)}
+								>
+									{m.devices_update_permission()}
+								</CwButton>
+							</div>
 
-									<CwButton
-										type="submit"
-										variant="primary"
-										loading={ownerSubmittingByKey[row.key] ?? false}
-										disabled={(ownerSubmittingByKey[row.key] ?? false) || !isOwnerRowValid(row)}
-									>
-										{m.devices_update_permission()}
-									</CwButton>
-								</div>
+							{#if ownerForm?.fieldErrors?.targetUserEmail}
+								<p class="field-error permission-feedback">
+									{ownerForm.fieldErrors.targetUserEmail}
+								</p>
+							{/if}
 
-								{#if ownerForm?.fieldErrors?.targetUserEmail}
-									<p class="field-error permission-feedback">
-										{ownerForm.fieldErrors.targetUserEmail}
-									</p>
-								{/if}
-
-								{#if ownerForm?.message}
-									<p
-										class:feedback-success={ownerForm.success}
-										class="form-feedback permission-feedback"
-									>
-										{ownerForm.message}
-									</p>
-								{/if}
-							</form>
-						</div>
-						{#if index < permissionRows.length - 1}
-							<CwSeparator spacing="0" />
-						{/if}
+							{#if ownerForm?.message}
+								<p
+									class:feedback-success={ownerForm.success}
+									class="form-feedback permission-feedback"
+								>
+									{ownerForm.message}
+								</p>
+							{/if}
+						</form>
+					</div>
+					{#if index < permissionRows.length - 1}
+						<CwSeparator spacing="0" />
 					{/if}
 				{/if}
 			{/each}

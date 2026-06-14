@@ -17,7 +17,7 @@
 	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Sidebar from './Sidebar.svelte';
 	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
-	import type { DeviceStatusSummary, RuleDto } from '$lib/api/api.dtos';
+	import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
 	import type { IJWT } from '$lib/interfaces/jwt.interface';
 	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
@@ -38,7 +38,7 @@
 		profile?: Profile | undefined;
 		overview?: {
 			deviceStatuses: DeviceStatusSummary;
-			triggeredRules: RuleDto[];
+			triggeredRules: RuleTemplateDto[];
 			triggeredRulesCount: number;
 		};
 	}

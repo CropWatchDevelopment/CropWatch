@@ -12,6 +12,9 @@
 	import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
+		attachCwDeviceRefreshVisibility,
+		createCwDeviceRefreshScheduler,
+		normalizeCwUploadIntervalMinutes,
 		CwButton,
 		CwCard,
 		CwDialog,
@@ -21,8 +24,9 @@
 	import { cwResponsiveLineChartLabels } from '$lib/i18n/cwuiLabels';
 	import { appTheme } from '$lib/theme/appTheme.svelte';
 	import { resolveExportTimeZone } from './csvExport';
+	import { canManage, PermissionLevel } from '$lib/constants/permissions';
 	import type { PageProps } from './$types';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 	import DeviceDashboardHeader from './DeviceDashboardHeader.svelte';
 	import {
@@ -87,7 +91,7 @@
 	let locationId = $derived(data.locationId ?? '');
 	let authToken = $derived(data.authToken ?? null);
 	let isRelayDevice = $derived(isRelayTable(data.dataTable));
-	let permissionLevel = $derived(Number(data.permissionLevel) || 4);
+	let permissionLevel = $derived(Number(data.permissionLevel) || PermissionLevel.DISABLED);
 	const serverLatestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
 	let clientLatestData = $state<TelemetryRow | null>(null);
 	let latestData = $derived(clientLatestData ?? serverLatestData);
@@ -101,15 +105,10 @@
 		data.device?.upload_interval ?? data.device?.cw_device_type?.default_upload_interval
 	);
 	// `upload_interval` is a Postgres `numeric` column, so Supabase returns it as
-	// a STRING ("15", "-1", …). Naively doing `("-1" || 10) * 60_000` yields
-	// -60000, and `setInterval` clamps a negative delay to 0 — firing the poll in
-	// a tight loop that freezes the tab. Coerce to a number, reject non-positive
-	// / non-finite values, and never poll faster than once per minute.
-	let refreshIntervalMs = $derived.by(() => {
-		const minutes = Number(upload_interval);
-		const safeMinutes = Number.isFinite(minutes) && minutes > 0 ? minutes : 10;
-		return Math.max(60_000, safeMinutes * 60_000);
-	});
+	// a STRING ("15", "-1", …). normalizeCwUploadIntervalMinutes rejects
+	// non-positive / non-finite values so the refresh scheduler falls back to its
+	// own default instead of scheduling a tight loop.
+	let uploadIntervalMinutes = $derived(normalizeCwUploadIntervalMinutes(upload_interval));
 
 	let requestedHistoricalData = $derived(
 		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
@@ -179,20 +178,35 @@
 		destroyRelayStateManager();
 	});
 
-	// Poll the device for fresh telemetry at its own upload cadence. Without this
-	// the page never refreshes on its own (the relay manager only covers relay
-	// devices). `upload_interval` is in minutes; fall back to 10 when unset.
+	// Refetch the device when its own upload window (last seen +
+	// upload_interval + grace) expires, instead of polling on a fixed interval.
+	// While the device stays stale the scheduler retries with capped exponential
+	// backoff; fresh data re-arms it from the new reading. Pauses while the tab
+	// is hidden and reconciles on return.
 	$effect(() => {
 		if (!authToken || !devEui) return;
-		// Defence-in-depth: never schedule a non-positive interval (see the
-		// `refreshIntervalMs` note above) — `setInterval` would clamp it to 0.
-		if (!Number.isFinite(refreshIntervalMs) || refreshIntervalMs <= 0) return;
+		const intervalMinutes = uploadIntervalMinutes;
 
-		const timer = setInterval(() => {
-			void refreshDisplayedData();
-		}, refreshIntervalMs);
+		const scheduler = createCwDeviceRefreshScheduler({
+			fetcher: async () => {
+				const row = await refreshDisplayedData();
+				return { lastSeenAt: row ? readCreatedAt(row) : null, data: row };
+			}
+		});
 
-		return () => clearInterval(timer);
+		untrack(() => {
+			scheduler.track({
+				id: devEui,
+				lastSeenAt: lastUpdatedAt ?? null,
+				uploadIntervalMinutes: intervalMinutes
+			});
+		});
+
+		const detachVisibility = attachCwDeviceRefreshVisibility(scheduler);
+		return () => {
+			detachVisibility();
+			scheduler.destroy();
+		};
 	});
 
 	function syncRelayStateBaseData(): void {
@@ -374,7 +388,7 @@
 			!isRelayDevice ||
 			!authToken ||
 			!devEui ||
-			permissionLevel > 2 ||
+			!canManage(permissionLevel) ||
 			hasPendingRelayVerification
 		) {
 			return;

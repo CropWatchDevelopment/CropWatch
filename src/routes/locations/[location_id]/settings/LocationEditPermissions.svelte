@@ -10,7 +10,6 @@
 		type CwTableQuery
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { getAppContext } from '$lib/appContext.svelte';
 	import type { LocationOwnerDto } from '$lib/api/api.dtos';
 	import { getPermissionLevelLabel, getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
@@ -23,15 +22,9 @@
 	} from './location-permission-rows';
 
 	let { data }: { data: { locationOwners: LocationOwnerDto[] } } = $props();
-	const app = getAppContext();
-	// Hide CropWatch staff (@cropwatch.io) permission rows from customers so they are
-	// unaware we have access — but keep them visible when a CropWatch user is logged in.
-	const viewerIsCropwatch = $derived(app.session?.email?.includes('@cropwatch.io') ?? false);
-	let permissions = $derived(
-		mapLocationOwnersToPermissionRows(data.locationOwners).filter(
-			(permission) => viewerIsCropwatch || !permission.email.includes('@cropwatch.io')
-		)
-	);
+	// CropWatch staff rows are filtered out server-side (the API omits
+	// @cropwatch.io owners for non-staff requesters), so no client filter here.
+	let permissions = $derived(mapLocationOwnersToPermissionRows(data.locationOwners));
 	let openDeletePermissionDialog = $state(false);
 	let selectedRow = $state<Permission | null>(null);
 	let location_id = $state(page.params.location_id);
@@ -89,12 +82,12 @@
 			{#if col.key === 'permission_level'}
 				{#if editingPermissionId === row.id}
 					<CwDropdown
-						options={getPermissionLevelOptions(m.permission_level_viewer())}
+						options={getPermissionLevelOptions()}
 						bind:value={row.permission_level}
 						placeholder={m.locations_choose_permission_level()}
 					/>
 				{:else}
-					{getPermissionLevelLabel(row.permission_level, m.permission_level_viewer())}
+					{getPermissionLevelLabel(row.permission_level)}
 				{/if}
 			{:else}
 				{defaultValue}

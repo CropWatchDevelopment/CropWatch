@@ -6,11 +6,11 @@ import {
 	TTI_DEVICE_ID_MAX_LENGTH
 } from '$lib/devices/tti-device-id';
 import { m } from '$lib/paraglide/messages.js';
+import { isValidPermissionLevel, PermissionLevel } from '$lib/constants/permissions';
 
 export const DEVICE_NAME_MAX_LENGTH = 120;
 export const DEVICE_GROUP_MAX_LENGTH = 120;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_PERMISSION_LEVELS = new Set([1, 2, 3, 4]);
 
 export type DeviceFormValues = {
 	name: string;
@@ -110,7 +110,10 @@ export function normalizeDeviceOwners(
 			const rawId = owner.id;
 			const id = typeof rawId === 'number' && Number.isFinite(rawId) ? rawId : index + 1;
 			const rawPerm = owner.permission_level;
-			const permissionLevel = typeof rawPerm === 'number' && Number.isFinite(rawPerm) ? rawPerm : 4;
+			const permissionLevel =
+				typeof rawPerm === 'number' && Number.isFinite(rawPerm)
+					? rawPerm
+					: PermissionLevel.DISABLED;
 
 			return {
 				id,
@@ -227,7 +230,7 @@ export function validateDeviceOwnerPermissionValues(values: DeviceOwnerPermissio
 		fieldErrors.targetUserEmail = m.devices_owner_email_invalid();
 	}
 
-	if (!Number.isFinite(permissionLevel) || !VALID_PERMISSION_LEVELS.has(permissionLevel)) {
+	if (!Number.isFinite(permissionLevel) || !isValidPermissionLevel(permissionLevel)) {
 		fieldErrors.permissionLevel = m.devices_choose_valid_permission_level();
 	}
 

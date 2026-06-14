@@ -19,7 +19,6 @@
 
 	const menuItems = $derived([
 		{ id: 'profile', label: m.nav_profile() },
-		{ id: 'billing', label: m.nav_billing() },
 		{ id: 'settings', label: m.nav_settings() },
 		{ id: 'logout', label: m.nav_logout(), separator: true, danger: true }
 	]);
@@ -73,8 +72,6 @@
 					goto(resolve('/account/profile'));
 				} else if (event.id === 'settings') {
 					goto(resolve('/settings'));
-				} else if (event.id === 'billing') {
-					goto(resolve('/account/billing'));
 				}
 			}}
 		/>

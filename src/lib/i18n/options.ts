@@ -1,22 +1,25 @@
 import { m } from '$lib/paraglide/messages.js';
 
-export function getPermissionLevelOptions(viewerLabel?: string) {
+export function getPermissionLevelOptions(userLabel?: string) {
 	return [
 		{ label: m.permission_level_admin(), value: '1' },
 		{ label: m.permission_level_manager(), value: '2' },
-		{ label: viewerLabel ?? m.permission_level_user(), value: '3' },
-		{ label: m.permission_level_disabled(), value: '4' }
+		{ label: userLabel ?? m.permission_level_user(), value: '3' },
+		{ label: m.permission_level_viewer(), value: '4' },
+		{ label: m.permission_level_disabled(), value: '5' }
 	];
 }
 
-export function getPermissionLevelLabel(value: string | number, viewerLabel?: string): string {
+export function getPermissionLevelLabel(value: string | number, userLabel?: string): string {
 	switch (String(value)) {
 		case '1':
 			return m.permission_level_admin();
 		case '2':
 			return m.permission_level_manager();
 		case '3':
-			return viewerLabel ?? m.permission_level_user();
+			return userLabel ?? m.permission_level_user();
+		case '4':
+			return m.permission_level_viewer();
 		default:
 			return m.permission_level_disabled();
 	}
@@ -30,32 +33,6 @@ export function getRuleOperatorOptions() {
 		{ label: m.rule_operator_greater_or_equal(), value: '>=' },
 		{ label: m.rule_operator_less_or_equal(), value: '<=' },
 		{ label: m.rule_operator_not_equal(), value: '!=' }
-	];
-}
-
-export function getRuleNotifierTypeOptions() {
-	return [
-		{ label: m.rule_notifier_email(), value: '1' },
-		{ label: m.rule_notifier_sms(), value: '2' },
-		{ label: m.rule_notifier_push(), value: '3' },
-		{ label: m.rule_notifier_discord(), value: '4' }
-	];
-}
-
-export function getRuleSendMethodOptions() {
-	return [
-		{ label: m.rule_send_email(), value: 'email' },
-		{ label: m.rule_send_sms(), value: 'sms' },
-		{ label: m.rule_send_both(), value: 'both' }
-	];
-}
-
-export function getRuleTemplateActionTypeOptions() {
-	return [
-		{ label: m.rule_notifier_email(), value: 'email' },
-		{ label: m.rule_notifier_sms(), value: 'sms' },
-		{ label: m.rule_notifier_push(), value: 'push' },
-		{ label: m.rule_notifier_discord(), value: 'discord' }
 	];
 }
 

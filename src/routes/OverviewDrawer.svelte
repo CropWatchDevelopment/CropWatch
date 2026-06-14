@@ -48,12 +48,21 @@
 	]);
 	let triggeredRules = $derived(Array.isArray(app?.triggeredRules) ? app.triggeredRules : []);
 	let alerts = $derived<AlertRow[]>(
-		triggeredRules.map((rule) => ({
-			id: String(rule.id),
-			icon: '🔔',
-			name: rule.name,
-			reported: rule.last_triggered ? formatDateTime(rule.last_triggered) : m.common_not_available()
-		}))
+		triggeredRules.map((rule) => {
+			// Triggered templates carry per-device state; show the most recent trigger time.
+			const lastTriggeredAt = rule.assignments
+				.map((assignment) => assignment.state?.lastTriggeredAt)
+				.filter((value): value is string => typeof value === 'string')
+				.sort()
+				.at(-1);
+
+			return {
+				id: String(rule.id),
+				icon: '🔔',
+				name: rule.name,
+				reported: lastTriggeredAt ? formatDateTime(lastTriggeredAt) : m.common_not_available()
+			};
+		})
 	);
 </script>
 

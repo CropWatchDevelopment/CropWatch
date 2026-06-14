@@ -1,4 +1,5 @@
 import { ApiService } from '$lib/api/api.service';
+import { PermissionLevel } from '$lib/constants/permissions';
 import type { LayoutServerLoad } from './$types';
 
 /**
@@ -22,7 +23,7 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			locationId: location_id ?? '',
 			device: null,
 			dataTable: null as string | null,
-			permissionLevel: 4
+			permissionLevel: PermissionLevel.DISABLED
 		};
 	}
 
@@ -39,7 +40,7 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 
 		const owners = Array.isArray(location?.cw_location_owners) ? location.cw_location_owners : [];
 		const currentOwner = userId ? owners.find((o) => o.user_id === userId) : null;
-		const permissionLevel = Number(currentOwner?.permission_level) || 4;
+		const permissionLevel = Number(currentOwner?.permission_level) || PermissionLevel.DISABLED;
 
 		// The API response includes a `data_table` field (string) that identifies
 		// which Supabase table this device stores telemetry in. Fall back to null
@@ -62,7 +63,7 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			locationId: location_id,
 			device: null,
 			dataTable: null as string | null,
-			permissionLevel: 4
+			permissionLevel: PermissionLevel.DISABLED
 		};
 	}
 };

@@ -1,4 +1,5 @@
 import { ApiService } from '$lib/api/api.service';
+import { canManage } from '$lib/constants/permissions';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, fetch, params }) => {
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		? currentLocation.cw_location_owners
 		: [];
 	const currentOwner = userId ? owners.find((o) => o.user_id === userId) : null;
-	const hasSettings = currentOwner != null && Number(currentOwner.permission_level) <= 2;
+	const hasSettings = currentOwner != null && canManage(Number(currentOwner.permission_level));
 
 	return {
 		allLocationDevices,
