@@ -109,7 +109,7 @@
 <AppPage width="full" class="dashboard-page">
 	<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 		<header class="flex-none">
-			<div class="flex w-full flex-row gap-4">
+			<div class="flex w-full flex-row mt-2 md:mt-0 sm:gap-0 md:gap-4">
 				<div
 					class="hidden w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-start md:flex"
 				>
@@ -122,7 +122,7 @@
 				<span class="flex-1"></span>
 				<div
 					id="view-layout-selection-section"
-					class="flex w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
+					class="flex w-full flex-row px-2 gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
 				>
 					<CwButton
 						class="w-full md:w-auto"
