@@ -42,7 +42,10 @@ import type {
 	UpdateLocationRequest,
 	UpdateLocationOwnerRequest,
 	WaterDataPoint,
-	GatewayDto
+	GatewayDto,
+	BillingLicense,
+	BillingProductsResponse,
+	SubscriptionStateResponse
 } from './api.dtos';
 
 type FetchLike = typeof fetch;
@@ -156,6 +159,7 @@ const TRAFFIC_MONTHLY_ENDPOINT = '/traffic/{dev_eui}/monthly';
 const WATER_ENDPOINT = '/water/{dev_eui}';
 const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
 const GATEWAYS_ENDPOINT = '/gateway';
+const PAYMENTS_ENDPOINT = '/payments';
 const DEVICE_LIST_PAGE_SIZE = 1000;
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
@@ -1258,6 +1262,93 @@ export class ApiService {
 	public getGateways(): Promise<GatewayDto[]> {
 		return this.request<GatewayDto[]>(GATEWAYS_ENDPOINT, {
 			method: 'GET'
+		});
+	}
+
+	// --- Billing / Polar subscriptions -------------------------------------
+
+	public getBillingProducts(): Promise<BillingProductsResponse> {
+		return this.request<BillingProductsResponse>(`${PAYMENTS_ENDPOINT}/products`, {
+			method: 'GET'
+		});
+	}
+
+	public getSubscriptionState(): Promise<SubscriptionStateResponse> {
+		return this.request<SubscriptionStateResponse>(
+			`${PAYMENTS_ENDPOINT}/subscriptions/state`,
+			{ method: 'GET' }
+		);
+	}
+
+	public getLicenses(): Promise<BillingLicense[]> {
+		return this.request<BillingLicense[]>(`${PAYMENTS_ENDPOINT}/licenses`, {
+			method: 'GET'
+		});
+	}
+
+	public createBaseCheckout(payload: { discountId?: string | null } = {}): Promise<{
+		checkoutUrl: string;
+	}> {
+		return this.request<{ checkoutUrl: string }>(
+			`${PAYMENTS_ENDPOINT}/subscriptions/base/checkout`,
+			{ method: 'POST', body: payload }
+		);
+	}
+
+	public createDeviceCheckout(payload: { quantity: number }): Promise<{ checkoutUrl: string }> {
+		return this.request<{ checkoutUrl: string }>(
+			`${PAYMENTS_ENDPOINT}/subscriptions/device/checkout`,
+			{ method: 'POST', body: payload }
+		);
+	}
+
+	public changeDeviceSeats(payload: { seats: number }): Promise<{ seats: number }> {
+		return this.request<{ seats: number }>(
+			`${PAYMENTS_ENDPOINT}/subscriptions/device/seats`,
+			{ method: 'PATCH', body: payload }
+		);
+	}
+
+	public assignLicense(licenseId: number, devEui: string): Promise<BillingLicense> {
+		return this.request<BillingLicense>(
+			`${PAYMENTS_ENDPOINT}/licenses/${encodeURIComponent(licenseId)}/assign`,
+			{ method: 'POST', body: { devEui } }
+		);
+	}
+
+	public moveLicense(licenseId: number, devEui: string): Promise<BillingLicense> {
+		return this.request<BillingLicense>(
+			`${PAYMENTS_ENDPOINT}/licenses/${encodeURIComponent(licenseId)}/move`,
+			{ method: 'PATCH', body: { devEui } }
+		);
+	}
+
+	public unassignLicense(licenseId: number): Promise<BillingLicense> {
+		return this.request<BillingLicense>(
+			`${PAYMENTS_ENDPOINT}/licenses/${encodeURIComponent(licenseId)}/unassign`,
+			{ method: 'POST' }
+		);
+	}
+
+	public cancelLicense(licenseId: number): Promise<{ canceled: boolean }> {
+		return this.request<{ canceled: boolean }>(
+			`${PAYMENTS_ENDPOINT}/licenses/${encodeURIComponent(licenseId)}/cancel`,
+			{ method: 'POST' }
+		);
+	}
+
+	public openBillingPortal(): Promise<{ portalUrl: string }> {
+		return this.request<{ portalUrl: string }>(`${PAYMENTS_ENDPOINT}/portal`, {
+			method: 'POST'
+		});
+	}
+
+	public cancelBaseSubscription(payload: { atPeriodEnd?: boolean } = {}): Promise<{
+		status: string;
+	}> {
+		return this.request<{ status: string }>(`${PAYMENTS_ENDPOINT}/subscriptions/base`, {
+			method: 'DELETE',
+			body: payload
 		});
 	}
 }

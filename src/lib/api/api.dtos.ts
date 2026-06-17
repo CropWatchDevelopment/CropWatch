@@ -751,3 +751,53 @@ export interface GatewayDto {
 	updated_at: string | null;
 	cw_gateways_owners?: GatewayOwnerDto[];
 }
+
+// --- Billing / Polar subscriptions ---------------------------------------
+
+export interface BillingLicense {
+	id: number;
+	seatIndex: number;
+	status: string; // 'assigned' | 'unassigned'
+	devEui: string | null;
+	deviceName: string | null;
+}
+
+export interface BaseSubscriptionState {
+	subscriptionId: string | null;
+	status: string | null; // active | trialing | past_due | canceled | null
+	discountId: string | null;
+	currentPeriodEnd: string | null;
+	cancelAtPeriodEnd: boolean;
+}
+
+export interface DeviceSubscriptionState {
+	subscriptionId: string | null;
+	seats: number;
+	assignedCount: number;
+	availableCount: number;
+}
+
+export interface SubscriptionStateResponse {
+	base: BaseSubscriptionState;
+	device: DeviceSubscriptionState;
+	licenses: BillingLicense[];
+}
+
+export interface BillingPrice {
+	amountType: string;
+	priceAmount: number | null;
+	priceCurrency: string | null;
+}
+
+export interface BillingProduct {
+	id: string;
+	name: string;
+	description: string | null;
+	recurringInterval: string | null;
+	prices: BillingPrice[];
+}
+
+export interface BillingProductsResponse {
+	base: BillingProduct | null;
+	device: BillingProduct | null;
+}
