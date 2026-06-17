@@ -10,7 +10,15 @@ export default defineConfig({
 		tailwindcss(),
 		sveltekit(),
 		devtoolsJson(),
-		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' })
+		// outputStructure: 'locale-modules' emits ONE module per locale (~2 files)
+		// instead of the default 'message-modules' (one file per message — ~1,200+).
+		// In vite dev each module is a separate request; per-message output floods
+		// the dev server with thousands of pending requests and can wedge it.
+		paraglideVitePlugin({
+			project: './project.inlang',
+			outdir: './src/lib/paraglide',
+			outputStructure: 'locale-modules'
+		})
 	],
 	test: {
 		expect: { requireAssertions: true },
