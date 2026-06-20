@@ -9,7 +9,7 @@ type GtagArgs = unknown[];
 
 declare global {
 	interface Window {
-		dataLayer?: GtagArgs[];
+		dataLayer?: unknown[];
 		gtag?: (...args: GtagArgs) => void;
 	}
 }
@@ -35,10 +35,13 @@ export function initAnalytics(measurementId: string, options: { userId?: string 
 	document.head.appendChild(script);
 
 	window.dataLayer = window.dataLayer ?? [];
-	// gtag forwards its raw argument list onto the data layer; gtag.js reads each
-	// entry by index/length, so pushing the rest array behaves like `arguments`.
-	window.gtag = function gtag(...args: GtagArgs) {
-		window.dataLayer!.push(args);
+	// gtag.js ONLY processes data-layer entries that are the live `arguments`
+	// object — a real array (e.g. from rest params) is silently ignored, so the
+	// events queue but never send. Push `arguments`, exactly like the canonical
+	// snippet.
+	window.gtag = function gtag() {
+		// eslint-disable-next-line prefer-rest-params
+		window.dataLayer!.push(arguments);
 	};
 	window.gtag('js', new Date());
 	window.gtag('config', measurementId, {
