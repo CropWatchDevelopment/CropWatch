@@ -16,6 +16,7 @@
 	import { page } from '$app/state';
 	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Sidebar from './Sidebar.svelte';
+	import Analytics from '$lib/components/Analytics.svelte';
 	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
 	import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
 	import type { IJWT } from '$lib/interfaces/jwt.interface';
@@ -113,6 +114,8 @@
 
 	<meta name="theme-color" content="#1f283b" media="(prefers-color-scheme: dark)" />
 </svelte:head>
+
+<Analytics />
 
 <CwOfflineOverlay labels={cwOfflineOverlayLabels()} />
 <CwToastContainer />
