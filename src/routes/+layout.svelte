@@ -12,12 +12,14 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwOfflineOverlayLabels } from '$lib/i18n/cwuiLabels';
 
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Sidebar from './Sidebar.svelte';
 	import Analytics from '$lib/components/Analytics.svelte';
-	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
+	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
+	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
+	import { buildLoginPath } from '$lib/utils/auth-redirect';
 	import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
 	import type { IJWT } from '$lib/interfaces/jwt.interface';
 	import type { LayoutProps } from './$types';
@@ -62,6 +64,28 @@
 	syncAppFromPageData();
 	afterNavigate(syncAppFromPageData);
 
+	function onExpired() {
+		if (isAuthRoute) return; // already on login/logout — don't loop
+		Object.assign(app, defaultAppContext); // clear so no stale data flashes during the redirect
+		const loginPath = buildLoginPath({
+			path: resolve('/auth/login'),
+			redirectTo: page.url.pathname + page.url.search,
+			reason: 'expired'
+		});
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- path already resolved above
+		void goto(loginPath);
+	}
+
+	const sessionWatcher = createSessionExpiryWatcher({
+		getExpSeconds: () => app.session?.exp ?? null,
+		onExpired
+	});
+
+	$effect(() => {
+		void app.session?.exp; // track: re-arm whenever the session (and its expiry) changes
+		sessionWatcher.rearm();
+	});
+
 	function handleWindowResize() {
 		document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
 
@@ -78,6 +102,7 @@
 		if (resizeTimer) {
 			clearTimeout(resizeTimer);
 		}
+		sessionWatcher.destroy();
 	});
 
 	function localizedHref(locale: (typeof locales)[number]): string {

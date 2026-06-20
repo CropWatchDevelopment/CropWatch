@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		CwButton,
 		CwCard,
 		CwDataTable,
 		CwDuration,
@@ -185,12 +186,66 @@
 		};
 	});
 
+	type HeatmapMetricKey = 'temperature' | 'humidity' | 'co2';
+
+	interface HeatmapMetric {
+		key: HeatmapMetricKey;
+		label: string;
+		unit: string;
+		colors: [string, string, string];
+		// Returns the cell value, or null to omit the row (rendered as a no-data gap).
+		value: (row: AirRow) => number | null;
+	}
+
+	// Metrics the heatmap can render from the data already loaded. Temperature and
+	// humidity are always reported; CO2 only appears when the device actually sent
+	// readings (see `hasCo2`). Switching metric just re-points the heatmap value —
+	// no re-fetch.
+	let heatmapMetrics: HeatmapMetric[] = $derived.by(() => {
+		const metrics: HeatmapMetric[] = [
+			{
+				key: 'temperature',
+				label: m.rule_subject_temperature(),
+				unit: '°C',
+				colors: ['#0ea5e9', '#84cc16', '#f97316'],
+				value: (row) => row.temperature_c
+			},
+			{
+				key: 'humidity',
+				label: m.rule_subject_humidity(),
+				unit: '%',
+				colors: ['#bae6fd', '#38bdf8', '#1d4ed8'],
+				value: (row) => row.humidity
+			}
+		];
+		if (hasCo2) {
+			metrics.push({
+				key: 'co2',
+				label: m.rule_subject_co2(),
+				unit: 'ppm',
+				colors: ['#84cc16', '#f59e0b', '#dc2626'],
+				// CO2 is sent on only ~1 of 3 uplinks, so most rows carry no reading
+				// (co2 === 0). Omit those so the heatmap shows gaps, not fake-low cells.
+				value: (row) => (row.co2 > 0 ? row.co2 : null)
+			});
+		}
+		return metrics;
+	});
+
+	let selectedMetric = $state<HeatmapMetricKey>('temperature');
+	// Fall back to the first metric when the selection is unavailable (e.g. CO2 was
+	// selected then dropped out of the data). `heatmapMetrics` always has ≥1 entry.
+	let activeMetric = $derived(
+		heatmapMetrics.find((metric) => metric.key === selectedMetric) ?? heatmapMetrics[0]
+	);
+
 	let heatmapSeries = $derived<(CwHeatmapDataPoint & { timestamp: string })[]>(
-		rows.map((row) => ({
-			timestamp: row.created_at,
-			created_at: row.created_at,
-			value: row.temperature_c
-		}))
+		rows.flatMap((row) => {
+			const value = activeMetric.value(row);
+			return value === null
+				? []
+				: [{ timestamp: row.created_at, created_at: row.created_at, value }];
+		})
 	);
 
 	let heatmapDays = $derived.by(() => {
@@ -340,16 +395,27 @@
 	</div>
 
 	{#if !loading && rows.length > 0}
-		<div class="air-wind-row" class:air-wind-row--paired={hasWind}>
-			<CwCard title={m.display_temperature_heatmap()} subtitle={m.display_reading_density()} elevated>
+		<div class="air-wind-row" class:air-wind-row--paired={hasWind} id="HeatMapDiv">
+			<CwCard title={activeMetric.label} subtitle={m.display_reading_density()} elevated>
+				<div class="heatmap-metric-toggle">
+					{#each heatmapMetrics as metric (metric.key)}
+						<CwButton
+							size="sm"
+							variant={activeMetric.key === metric.key ? 'info' : 'secondary'}
+							onclick={() => (selectedMetric = metric.key)}
+						>
+							{metric.label}
+						</CwButton>
+					{/each}
+				</div>
 				<CwHeatmap
 					labels={cwHeatmapLabels()}
 					data={heatmapSeries}
 					days={heatmapDays}
-					unit="°C"
+					unit={activeMetric.unit}
 					title=""
 					rowHeight={18}
-					colors={['#0ea5e9', '#84cc16', '#f97316']}
+					colors={activeMetric.colors}
 				/>
 			</CwCard>
 
@@ -425,6 +491,13 @@
 	}
 	.air-wind-row > :global(*) {
 		min-width: 0;
+	}
+	/* Metric select buttons above the heatmap. */
+	.heatmap-metric-toggle {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
 	}
 	@media (min-width: 48rem) {
 		.air-wind-row--paired {
