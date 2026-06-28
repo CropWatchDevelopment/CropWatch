@@ -30,6 +30,7 @@
 	let ttiName = $derived(data.ttiName ?? '');
 	let location_id = $derived(String(data.location_id ?? ''));
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
+	let supportsSensorCertificates = $derived(data.supportsSensorCertificates ?? false);
 
 	let actionForm = $derived((form ?? null) as FormPayload);
 	let deviceForm = $derived(actionForm?.action === 'updateDevice' ? actionForm : null);
@@ -206,11 +207,13 @@
 		</form>
 	</CwCard>
 
-	<SensorCertificatesCard
-		devEui={data.devEui ?? ''}
-		locationId={location_id}
-		{sensorCertificates}
-	/>
+	{#if supportsSensorCertificates}
+		<SensorCertificatesCard
+			devEui={data.devEui ?? ''}
+			locationId={location_id}
+			{sensorCertificates}
+		/>
+	{/if}
 
 	<DeviceOwnerPermissionsCard owners={data.deviceOwners ?? []} form={actionForm} />
 </div>

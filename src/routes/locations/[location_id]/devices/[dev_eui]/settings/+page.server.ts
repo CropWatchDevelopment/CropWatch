@@ -7,6 +7,7 @@ import type { PageServerLoad } from './$types';
 import {
 	buildLocationOwnerIdentityMap,
 	buildSensorCertificateRows,
+	deviceSupportsSensorCertificate,
 	normalizeDeviceOwners,
 	readDeviceFormValues,
 	readDeviceOwnerPermissionValues,
@@ -31,6 +32,7 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 			ttiName: '',
 			deviceGroups: [] as string[],
 			sensorCertificates: [] as SensorCertificateRow[],
+			supportsSensorCertificates: false,
 			deviceOwners: [] as NormalizedDeviceOwner[]
 		};
 	}
@@ -57,6 +59,7 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 		deviceGroups,
 		locations,
 		sensorCertificates: buildSensorCertificateRows(device),
+		supportsSensorCertificates: deviceSupportsSensorCertificate(device),
 		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities)
 	};
 };
