@@ -48,7 +48,7 @@
 	}
 </script>
 
-<CwButton variant="danger" size="md" disabled={deleting} onclick={() => (open = true)}>
+<CwButton id={`report-delete-${templateId}-open-button`} variant="danger" size="md" disabled={deleting} onclick={() => (open = true)}>
 	<Icon src={TRASH_ICON} alt={m.action_delete()} />
 </CwButton>
 
@@ -57,10 +57,11 @@
 
 	{#snippet actions()}
 		<div class="reports-new-delete-dialog__actions">
-			<CwButton variant="secondary" size="md" disabled={deleting} onclick={() => (open = false)}>
+			<CwButton id={`report-delete-${templateId}-cancel-button`} variant="secondary" size="md" disabled={deleting} onclick={() => (open = false)}>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton
+				id={`report-delete-${templateId}-delete-button`}
 				variant="danger"
 				size="md"
 				loading={deleting}

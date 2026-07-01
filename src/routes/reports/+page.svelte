@@ -168,13 +168,14 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton id="reports-back-button" variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.reports_new_configured_templates()}>
 		{#key tableKey}
 			<CwDataTable
+				id="reports-table"
 				labels={cwDataTableLabels()}
 				{columns}
 				{loadData}
@@ -203,6 +204,7 @@
 				{#snippet rowActions(row: ReportTemplateRow)}
 					<div class="reports-new-page__actions">
 						<CwButton
+							id={`reports-row-${row.id}-edit-button`}
 							variant="secondary"
 							size="md"
 							onclick={() => goto(resolve('/reports/edit/[id]', { id: String(row.id) }))}
@@ -219,7 +221,7 @@
 				{/snippet}
 
 				{#snippet toolbarActions()}
-					<CwButton variant="primary" onclick={() => goto(resolve('/reports/create'))}>
+					<CwButton id="reports-add-button" variant="primary" onclick={() => goto(resolve('/reports/create'))}>
 						<Icon src={ADD_ICON} alt={m.reports_new_create_template()} />
 					</CwButton>
 				{/snippet}

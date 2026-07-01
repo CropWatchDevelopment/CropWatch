@@ -101,7 +101,7 @@
 	}
 </script>
 
-<CwButton variant="secondary" size="md" onclick={() => (open = true)}>
+<CwButton id={`report-history-${templateId}-open-button`} variant="secondary" size="md" onclick={() => (open = true)}>
 	<Icon src={HISTORY_ICON} alt={m.reports_new_view_history()} />
 </CwButton>
 
@@ -120,13 +120,14 @@
 				<li class="report-history__group">
 					<span class="report-history__device">{group.deviceName ?? group.devEui}</span>
 					<ul class="report-history__items">
-						{#each group.items as item (item.id ?? item.name)}
+						{#each group.items as item, itemIndex (item.id ?? item.name)}
 							<li class="report-history__item">
 								<div class="report-history__meta">
 									<span class="report-history__name">{item.name}</span>
 									<span class="report-history__time">{formatTimestamp(item.createdAt)}</span>
 								</div>
 								<CwButton
+									id={`report-history-${templateId}-${group.devEui}-${itemIndex}-download-button`}
 									variant="secondary"
 									size="sm"
 									loading={downloadingKey === `${group.devEui}:${item.name}`}
@@ -145,7 +146,7 @@
 
 	{#snippet actions()}
 		<div class="report-history__actions">
-			<CwButton variant="secondary" size="md" onclick={() => (open = false)}>
+			<CwButton id={`report-history-${templateId}-close-button`} variant="secondary" size="md" onclick={() => (open = false)}>
 				{m.action_close()}
 			</CwButton>
 		</div>

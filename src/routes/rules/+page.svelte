@@ -42,7 +42,7 @@
 		// { key: 'statusLabel', header: m.rules_new_status(), sortable: true },
 		{ key: 'assignmentSummary', header: m.rules_new_assigned_devices() },
 		// { key: 'locationName', header: m.nav_locations(), sortable: true },
-		{ key: 'criteriaSummary', header: m.rules_conditions() },
+		{ key: 'criteriaSummary', header: m.rules_conditions(), align: 'left' },
 		{ key: 'actionSummary', header: m.rules_new_actions() },
 		// { key: 'triggeredCount', header: m.rules_new_triggered_devices(), sortable: true },
 		{ key: 'createdAtLabel', header: m.common_created(), sortable: true }
@@ -178,13 +178,14 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton id="rules-back-button" variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.rules_new_configured_templates()}>
 		{#key tableKey}
 			<CwDataTable
+				id="rules-table"
 				labels={cwDataTableLabels()}
 				{columns}
 				{loadData}
@@ -212,6 +213,10 @@
 							variant="soft"
 							size="sm"
 						/>
+					{:else if col.key === 'criteriaSummary'}
+						<span class="rules-new-page__truncate" title={row.criteriaSummary}>
+							{row.criteriaSummary}
+						</span>
 					{:else}
 						{defaultValue}
 					{/if}
@@ -220,6 +225,7 @@
 				{#snippet rowActions(row: RuleTemplateRow)}
 					<div class="rules-new-page__actions">
 						<CwButton
+							id={`rules-row-${row.id}-edit-button`}
 							variant="secondary"
 							size="md"
 							onclick={() => goto(resolve('/rules/edit/[id]', { id: String(row.id) }))}
@@ -236,7 +242,7 @@
 				{/snippet}
 
 				{#snippet toolbarActions()}
-					<CwButton variant="primary" onclick={() => goto(resolve('/rules/create'))}>
+					<CwButton id="rules-add-button" variant="primary" onclick={() => goto(resolve('/rules/create'))}>
 						<Icon src={ADD_ICON} alt={m.rules_new_create_template()} />
 					</CwButton>
 				{/snippet}
@@ -246,6 +252,14 @@
 </AppPage>
 
 <style>
+	.rules-new-page__truncate {
+		display: block;
+		max-width: 24rem;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
 	.rules-new-page__actions {
 		display: flex;
 		justify-content: flex-end;

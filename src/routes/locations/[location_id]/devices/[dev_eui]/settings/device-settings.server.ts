@@ -40,7 +40,7 @@ export type NormalizedDeviceOwner = {
 };
 
 export type SensorCertificateRow = {
-	key: 'sensor' | 'sensor2';
+	key: 'sensor';
 	label: string;
 	serial: string;
 	product: string;
@@ -131,42 +131,41 @@ export function normalizeDeviceOwners(
 		);
 }
 
-export function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificateRow[] {
-	if (!device) return [];
+// CropWatch air sensors carry two chips: an SHT40 and an SHT43. Only the SHT43 is
+// supported by the Sensirion Libellus calibration-certificate API, and its serial is
+// stored in sensor2_serial. The SHT40 (sensor1_serial) has no individual certificate.
+// This capability is exclusive to CropWatch-manufactured sensors.
+export function deviceSupportsSensorCertificate(device: DeviceDto | null): boolean {
+	return str(device?.cw_device_type?.manufacturer) === 'CropWatch';
+}
 
-	const product = str(device.cw_device_type?.model);
+export function getSht43Serial(device: DeviceDto | null): string {
+	if (!device) return '';
+	return str((device as Record<string, unknown>).sensor2_serial);
+}
+
+export function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificateRow[] {
+	if (!deviceSupportsSensorCertificate(device)) return [];
+
+	const serial = getSht43Serial(device);
+	if (!serial) return [];
+
 	const hasApiToken = str(env.PRIVATE_LIBELLUS_API_TOKEN).length > 0;
 	const hasBaseUrl = str(env.PRIVATE_LIBELLUS_BASE_URL).length > 0;
-	const record = device as Record<string, unknown>;
-	const rows = [
+
+	return [
 		{
 			key: 'sensor' as const,
-			label: m.devices_sensor_one(),
-			serial: str(record.sensor1_serial) || str(record.sensor_serial)
-		},
-		{
-			key: 'sensor2' as const,
-			label: m.devices_sensor_two(),
-			serial: str(record.sensor2_serial)
+			label: m.devices_sensor_sht43_label(),
+			serial,
+			product: str(device?.cw_device_type?.model),
+			downloadDisabledReason: !hasApiToken
+				? m.devices_libellus_api_token_missing()
+				: !hasBaseUrl
+					? m.devices_libellus_base_url_missing()
+					: null
 		}
 	];
-
-	return rows
-		.filter((row) => row.serial.length > 0)
-		.map((row) => ({
-			...row,
-			product,
-			downloadDisabledReason:
-				row.key !== 'sensor'
-					? null
-					: !hasApiToken
-						? m.devices_libellus_api_token_missing()
-						: !hasBaseUrl
-							? m.devices_libellus_base_url_missing()
-							: !product
-								? m.devices_libellus_product_name_missing()
-								: null
-		}));
 }
 
 export function readDeviceFormValues(formData: FormData): DeviceFormValues {

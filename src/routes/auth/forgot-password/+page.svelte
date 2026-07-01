@@ -56,6 +56,7 @@
 			<p class="auth-subtitle">{m.auth_forgot_password_sent_body()}</p>
 
 			<a
+				id="forgot-password-sent-back-to-login-link"
 				class="auth-button-link auth-button-link--primary"
 				href={resolve('/auth/login')}
 				onclick={(event) => navigateWithRedirect(event, '/auth/login')}
@@ -68,6 +69,7 @@
 			<p class="auth-subtitle">{m.auth_forgot_password_subtitle()}</p>
 
 			<form
+				id="forgot-password-form"
 				method="POST"
 				action="?/forgotPassword"
 				class="auth-form"
@@ -104,6 +106,7 @@
 				<label class="field-block">
 					<span class="field-label">{m.auth_email_label()}</span>
 					<CwInput
+						id="forgot-password-email-input"
 						class="auth-input"
 						name="email"
 						type="email"
@@ -114,6 +117,7 @@
 				</label>
 
 				<CwButton
+					id="forgot-password-submit-button"
 					class="auth-primary"
 					type="submit"
 					variant="primary"
@@ -131,6 +135,7 @@
 
 				<div class="action-grid">
 					<a
+						id="forgot-password-back-to-login-link"
 						class="auth-button-link auth-button-link--secondary"
 						href={resolve('/auth/login')}
 						onclick={(event) => navigateWithRedirect(event, '/auth/login')}
@@ -140,6 +145,7 @@
 					</a>
 
 					<a
+						id="forgot-password-create-account-link"
 						class="auth-button-link auth-button-link--secondary"
 						href={resolve('/auth/create-account')}
 						onclick={(event) => navigateWithRedirect(event, '/auth/create-account')}

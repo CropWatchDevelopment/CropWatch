@@ -1602,14 +1602,14 @@
 		color: inherit;
 	}
 
-	[data-theme='dark'] .traffic-display__metric-row {
+	:global([data-theme='dark']) .traffic-display__metric-row {
 		background: color-mix(in srgb, var(--cw-bg-surface-elevated) 80%, var(--cw-info-800) 20%);
 		border-color: color-mix(in srgb, var(--cw-info-400) 20%, var(--cw-border-default));
 		color: var(--cw-text-primary);
 	}
 
-	[data-theme='dark'] .traffic-display__weather-panel,
-	[data-theme='dark'] .traffic-display__calendar-weather-panel {
+	:global([data-theme='dark']) .traffic-display__weather-panel,
+	:global([data-theme='dark']) .traffic-display__calendar-weather-panel {
 		background:
 			radial-gradient(
 				130% 100% at 0% 0%,
@@ -1628,7 +1628,7 @@
 			0 8px 18px color-mix(in srgb, #050a16 36%, transparent);
 	}
 
-	[data-theme='dark'] .traffic-display__calendar-traffic-panel {
+	:global([data-theme='dark']) .traffic-display__calendar-traffic-panel {
 		background:
 			radial-gradient(
 				120% 100% at 100% 0%,
@@ -1647,8 +1647,8 @@
 			0 8px 18px color-mix(in srgb, #050a16 38%, transparent);
 	}
 
-	[data-theme='dark'] .traffic-display__weather-panel :global(.cw-chip),
-	[data-theme='dark'] .traffic-display__calendar-weather-panel :global(.cw-chip) {
+	:global([data-theme='dark']) .traffic-display__weather-panel :global(.cw-chip),
+	:global([data-theme='dark']) .traffic-display__calendar-weather-panel :global(.cw-chip) {
 		box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 6%, transparent);
 	}
 

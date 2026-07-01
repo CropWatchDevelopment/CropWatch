@@ -37,6 +37,7 @@
 <label class="field-block">
 	<span class="field-label">{m.auth_password_label_required()}</span>
 	<CwInput
+		id="create-account-password-input"
 		value={password}
 		oninput={handlePasswordInput}
 		class="auth-input"
@@ -76,6 +77,7 @@
 <label class="field-block">
 	<span class="field-label">{m.auth_confirm_password_label_required()}</span>
 	<CwInput
+		id="create-account-password-confirm-input"
 		value={confirmPassword}
 		oninput={handleConfirmPasswordInput}
 		class="auth-input"

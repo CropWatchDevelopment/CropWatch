@@ -1,22 +1,11 @@
 import { env } from '$env/dynamic/private';
 import { ApiService } from '$lib/api/api.service';
-import type { DeviceDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
+import { deviceSupportsSensorCertificate, getSht43Serial } from '../../device-settings.server';
 import type { RequestHandler } from './$types';
 
 function readString(value: unknown): string {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function getSensorSerial(device: DeviceDto, sensorKey: string): string {
-	const record = device as Record<string, unknown>;
-	return sensorKey === 'sensor2'
-		? readString(record.sensor2_serial)
-		: readString(record.sensor1_serial) || readString(record.sensor_serial);
-}
-
-function getProductName(device: DeviceDto): string {
-	return readString(device.cw_device_type?.model);
 }
 
 function getLibellusBaseUrl(): string {
@@ -31,6 +20,7 @@ async function readErrorMessage(response: Response): Promise<string> {
 		if (contentType.includes('application/json')) {
 			const payload = (await response.json()) as Record<string, unknown>;
 			return (
+				readString(payload.error) ||
 				readString(payload.detail) ||
 				readString(payload.message) ||
 				m.devices_libellus_request_failed()
@@ -54,7 +44,7 @@ export const GET: RequestHandler = async ({ fetch, locals, params, url }) => {
 		return new Response(m.devices_sensor_certificate_requires_login(), { status: 401 });
 	}
 
-	if (!devEui || (sensorKey !== 'sensor' && sensorKey !== 'sensor2')) {
+	if (!devEui || sensorKey !== 'sensor') {
 		return new Response(m.devices_invalid_certificate_target(), { status: 400 });
 	}
 
@@ -73,7 +63,11 @@ export const GET: RequestHandler = async ({ fetch, locals, params, url }) => {
 		return new Response(m.devices_not_found(), { status: 404 });
 	}
 
-	const sensorSerial = getSensorSerial(device, sensorKey);
+	if (!deviceSupportsSensorCertificate(device)) {
+		return new Response(m.devices_sensor_certificate_unsupported_device(), { status: 400 });
+	}
+
+	const sensorSerial = getSht43Serial(device);
 	if (!sensorSerial) {
 		return new Response(m.devices_no_sensor_serial_configured(), { status: 404 });
 	}

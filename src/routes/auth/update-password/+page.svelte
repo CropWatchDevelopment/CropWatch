@@ -41,6 +41,7 @@
 		<p class="auth-subtitle">{m.auth_update_password_subtitle()}</p>
 
 		<form
+			id="update-password-form"
 			method="POST"
 			class="auth-form"
 			use:enhance={() => {
@@ -59,6 +60,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_password_label()}</span>
 				<CwInput
+					id="update-password-input"
 					class="auth-input"
 					name="password"
 					type="password"
@@ -85,6 +87,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_update_password_confirm_label()}</span>
 				<CwInput
+					id="update-password-confirm-input"
 					class="auth-input"
 					name="confirmPassword"
 					type="password"
@@ -102,6 +105,7 @@
 			{/if}
 
 			<CwButton
+				id="update-password-submit-button"
 				type="submit"
 				class="auth-primary"
 				fullWidth
@@ -112,7 +116,7 @@
 			</CwButton>
 		</form>
 
-		<a class="auth-link" href={resolve('/auth/login')}>
+		<a id="update-password-back-to-login-link" class="auth-link" href={resolve('/auth/login')}>
 			<Icon src={BACK_ICON} alt="" class="h-4 w-4" />
 			{m.auth_back_to_login()}
 		</a>

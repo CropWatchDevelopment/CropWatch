@@ -39,6 +39,7 @@
 <div class="settings-page">
 	<CwCard title={m.locations_settings_title()} elevated>
 		<form
+			id="location-update-form"
 			method="POST"
 			action="?/updateLocationName"
 			use:enhance={({ cancel }) => {
@@ -70,6 +71,7 @@
 			}}
 		>
 			<CwInput
+				id="location-update-name-input"
 				name="locationName"
 				type="text"
 				label={m.locations_location_name()}
@@ -79,6 +81,7 @@
 				class="mb-4"
 			/>
 			<CwInput
+				id="location-update-group-input"
 				name="group"
 				type="text"
 				label={m.common_group()}
@@ -86,9 +89,10 @@
 				required
 				bind:value={locationGroup}
 			/>
-			<input type="hidden" name="location_id" value={data.locationId} />
+			<input id="location-update-location-id-input" type="hidden" name="location_id" value={data.locationId} />
 			<div class="permissions-form__actions" style="margin-top: 1rem;">
 				<CwButton
+					id="location-update-save-button"
 					type="submit"
 					variant="primary"
 					loading={submitting}

@@ -92,6 +92,7 @@
 		<p class="auth-subtitle">
 			{m.auth_or_prefix()}
 			<a
+				id="create-account-sign-in-existing-link"
 				class="auth-link auth-link-button"
 				href={resolve('/auth/login')}
 				onclick={(event) => navigateWithRedirect(event, '/auth/login')}
@@ -101,6 +102,7 @@
 		</p>
 
 		<form
+			id="create-account-form"
 			method="POST"
 			class="auth-form"
 			use:enhance={async ({ formData, cancel }) => {
@@ -152,6 +154,7 @@
 				<label class="field-block">
 					<span class="field-label">{m.auth_first_name_label_required()}</span>
 					<CwInput
+						id="create-account-first-name-input"
 						bind:value={firstName}
 						class="auth-input"
 						name="firstName"
@@ -165,6 +168,7 @@
 				<label class="field-block">
 					<span class="field-label">{m.auth_last_name_label_required()}</span>
 					<CwInput
+						id="create-account-last-name-input"
 						bind:value={lastName}
 						class="auth-input"
 						name="lastName"
@@ -179,6 +183,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_email_label_required()}</span>
 				<CwInput
+					id="create-account-email-input"
 					bind:value={email}
 					class="auth-input"
 					name="email"
@@ -199,6 +204,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_company_name_label_required()}</span>
 				<CwInput
+					id="create-account-company-input"
 					bind:value={company}
 					class="auth-input"
 					name="company"
@@ -217,6 +223,7 @@
 			/>
 
 			<CwButton
+				id="create-account-submit-button"
 				class="auth-primary"
 				type="submit"
 				variant="primary"
@@ -230,6 +237,7 @@
 			</CwButton>
 
 			<a
+				id="create-account-sign-in-instead-link"
 				class="auth-button-link auth-button-link--secondary"
 				href={resolve('/auth/login')}
 				onclick={(event) => navigateWithRedirect(event, '/auth/login')}

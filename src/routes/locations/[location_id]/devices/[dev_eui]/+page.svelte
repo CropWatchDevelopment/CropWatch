@@ -443,7 +443,7 @@
 				{m.devices_error_status_detail({ status: deviceErrorStatus })}
 			</p>
 			{#snippet actions()}
-				<CwButton variant="primary" onclick={() => (errorDialogOpen = false)}>
+				<CwButton id="device-error-close-button" variant="primary" onclick={() => (errorDialogOpen = false)}>
 					{m.action_close()}
 				</CwButton>
 			{/snippet}

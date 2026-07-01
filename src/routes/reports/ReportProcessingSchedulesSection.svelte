@@ -21,15 +21,18 @@
 		onAdd,
 		onRemove
 	}: Props = $props();
-
-	let open = $state(schedules.length > 0);
 </script>
 
-<CwExpandPanel title={m.reports_schedule_card_title()} {open}>
+<CwExpandPanel title={m.reports_schedule_card_title()}>
 	<AppFormStack padded>
-		<div class="report-section-toolbar">
-			<p class="report-section-copy">{m.reports_schedule_card_copy()}</p>
-			<CwButton type="button" variant="secondary" onclick={onAdd}>
+		<p class="report-section-copy">{m.reports_schedule_card_description()}</p>
+
+		<AppNotice tone="warning">
+			<p>{m.reports_schedule_card_warning()}</p>
+		</AppNotice>
+
+		<div class="report-section-toolbar report-section-toolbar--end">
+			<CwButton id="report-schedules-add-button" type="button" variant="secondary" onclick={onAdd}>
 				<Icon src={ADD_ICON} class="h-4 w-4" />
 			</CwButton>
 		</div>
@@ -46,23 +49,26 @@
 					<div>
 						<h3>{m.reports_schedule_entry_heading({ index: String(index + 1) })}</h3>
 					</div>
-					<CwButton type="button" variant="danger" size="sm" onclick={() => onRemove(schedule.key)}>
+					<CwButton id={`report-schedules-${index}-remove-button`} type="button" variant="danger" size="sm" onclick={() => onRemove(schedule.key)}>
 						{m.action_remove()}
 					</CwButton>
 				</div>
 
 				<div class="report-field-grid report-field-grid--three">
 					<CwDropdown
+						id={`report-schedules-${index}-day-select`}
 						label={m.reports_schedule_day_of_week()}
 						options={daysOfTheWeek}
 						bind:value={schedule.day_of_week}
 					/>
 					<CwDropdown
+						id={`report-schedules-${index}-rule-type-select`}
 						label={m.reports_schedule_rule_type()}
 						options={ruleTypeOptions}
 						bind:value={schedule.rule_type}
 					/>
 					<CwInput
+						id={`report-schedules-${index}-timezone-input`}
 						label={m.reports_schedule_timezone()}
 						placeholder="UTC, JST, EST, etc..."
 						bind:value={schedule.timezone}
@@ -72,22 +78,24 @@
 				<div class="report-field-grid report-field-grid--two">
 					<label class="report-time-field">
 						<span class="report-time-field__label">{m.reports_schedule_start_time()}</span>
-						<input class="report-time-input" type="time" bind:value={schedule.start_time} />
+						<input id={`report-schedules-${index}-start-time-input`} class="report-time-input" type="time" bind:value={schedule.start_time} />
 					</label>
 					<label class="report-time-field">
 						<span class="report-time-field__label">{m.reports_schedule_end_time()}</span>
-						<input class="report-time-input" type="time" bind:value={schedule.end_time} />
+						<input id={`report-schedules-${index}-end-time-input`} class="report-time-input" type="time" bind:value={schedule.end_time} />
 					</label>
 				</div>
 
 				<div class="report-switch-grid">
 					<CwSwitch
+						id={`report-schedules-${index}-crosses-midnight-switch`}
 						checked={schedule.crosses_midnight}
 						label={m.reports_schedule_crosses_midnight()}
 						description={m.reports_schedule_crosses_midnight_description()}
 						onchange={(checked) => (schedule.crosses_midnight = checked)}
 					/>
 					<CwSwitch
+						id={`report-schedules-${index}-enabled-switch`}
 						checked={schedule.is_enabled}
 						label={m.reports_schedule_is_enabled()}
 						description={m.reports_schedule_is_enabled_description()}
@@ -106,6 +114,10 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: var(--cw-space-3);
+	}
+
+	.report-section-toolbar--end {
+		justify-content: flex-end;
 	}
 
 	.report-section-copy {

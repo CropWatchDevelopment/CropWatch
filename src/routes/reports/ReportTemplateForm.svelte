@@ -279,12 +279,14 @@
 <CwCard title={m.reports_new_step_template()} subtitle={m.reports_new_step_template_subtitle()} elevated>
 	<AppFormStack padded>
 		<CwInput
+			id="report-form-name-input"
 			label={m.common_name()}
 			placeholder={m.reports_create_name_placeholder()}
 			bind:value={fields.name}
 			required
 		/>
 		<CwTextArea
+			id="report-form-description-textarea"
 			label={m.common_description()}
 			placeholder={m.reports_new_description_placeholder()}
 			rows={3}
@@ -293,12 +295,14 @@
 		/>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<CwDropdown
+				id="report-form-data-pull-interval-select"
 				label={m.reports_new_data_pull_interval()}
 				options={dataPullIntervalOptions}
 				bind:value={fields.data_pull_interval}
 			/>
 		</div>
 		<CwSwitch
+			id="report-form-active-switch"
 			label={m.reports_new_active_template()}
 			description={m.reports_new_active_template_description()}
 			bind:checked={fields.is_active}
@@ -318,6 +322,7 @@
 			</AppNotice>
 		{:else}
 			<CwMultiSelect
+				id="report-form-devices-multiselect"
 				showAllSelectedItems={true}
 				label={m.devices_device()}
 				placeholder={m.rules_select_device_placeholder()}
@@ -360,10 +365,11 @@
 	<AppFormStack padded>
 		<CwSeparator />
 		<AppActionRow>
-			<CwButton variant="ghost" onclick={() => goto(resolve('/reports'))} disabled={submitting}>
+			<CwButton id="report-form-cancel-button" variant="ghost" onclick={() => goto(resolve('/reports'))} disabled={submitting}>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton
+				id="report-form-submit-button"
 				variant="primary"
 				onclick={handleSubmit}
 				disabled={!canSubmit || submitting}

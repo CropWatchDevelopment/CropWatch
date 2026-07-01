@@ -1605,6 +1605,77 @@ export type Database = {
           },
         ]
       }
+      profile_preferences: {
+        Row: {
+          area_unit: string | null
+          co2_unit: string | null
+          created_at: string
+          date_format: string | null
+          distance_unit: string | null
+          ec_unit: string | null
+          pressure_unit: string | null
+          rainfall_unit: string | null
+          soil_moisture_unit: string | null
+          temperature_unit: string | null
+          theme: string | null
+          time_format: string | null
+          timezone: string | null
+          updated_at: string
+          user_id: string
+          water_level_unit: string | null
+          weight_unit: string | null
+          wind_speed_unit: string | null
+        }
+        Insert: {
+          area_unit?: string | null
+          co2_unit?: string | null
+          created_at?: string
+          date_format?: string | null
+          distance_unit?: string | null
+          ec_unit?: string | null
+          pressure_unit?: string | null
+          rainfall_unit?: string | null
+          soil_moisture_unit?: string | null
+          temperature_unit?: string | null
+          theme?: string | null
+          time_format?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+          water_level_unit?: string | null
+          weight_unit?: string | null
+          wind_speed_unit?: string | null
+        }
+        Update: {
+          area_unit?: string | null
+          co2_unit?: string | null
+          created_at?: string
+          date_format?: string | null
+          distance_unit?: string | null
+          ec_unit?: string | null
+          pressure_unit?: string | null
+          rainfall_unit?: string | null
+          soil_moisture_unit?: string | null
+          temperature_unit?: string | null
+          theme?: string | null
+          time_format?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+          water_level_unit?: string | null
+          weight_unit?: string | null
+          wind_speed_unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           accepted_agreements: boolean

@@ -20,22 +20,24 @@
 	const toast = useCwToast();
 
 	let { form }: { form: CreateLocationForm } = $props();
+	const initial = (() => form)();
 
 	let submitting = $state(false);
-	let name = $state(form?.name ?? '');
-	let description = $state(form?.description ?? '');
-	let group = $state(form?.group ?? '');
-	let lat = $state(form?.lat ?? '');
-	let long = $state(form?.long ?? '');
+	let name = $state(initial?.name ?? '');
+	let description = $state(initial?.description ?? '');
+	let group = $state(initial?.group ?? '');
+	let lat = $state(initial?.lat ?? '');
+	let long = $state(initial?.long ?? '');
 </script>
 
 <AppPage width="md">
-	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/locations'))}>
+	<CwButton id="location-create-back-button" variant="secondary" size="sm" onclick={() => goto(resolve('/locations'))}>
 		&larr; {m.action_back()}
 	</CwButton>
 
 	<CwCard title={m.locations_create_title()} elevated>
 		<form
+			id="location-create-form"
 			method="POST"
 			use:enhance={() => {
 				submitting = true;
@@ -71,6 +73,7 @@
 				{/if}
 
 				<CwInput
+					id="location-create-name-input"
 					label={m.common_name()}
 					name="name"
 					bind:value={name}
@@ -79,6 +82,7 @@
 				/>
 
 				<CwInput
+					id="location-create-description-input"
 					label={m.common_description()}
 					name="description"
 					bind:value={description}
@@ -86,6 +90,7 @@
 				/>
 
 				<CwInput
+					id="location-create-group-input"
 					label={m.common_group()}
 					name="group"
 					bind:value={group}
@@ -94,12 +99,14 @@
 
 				<div class="grid grid-cols-2 gap-4">
 					<CwInput
+						id="location-create-lat-input"
 						label={m.locations_latitude_optional()}
 						name="lat"
 						bind:value={lat}
 						placeholder={m.locations_latitude_placeholder()}
 					/>
 					<CwInput
+						id="location-create-long-input"
 						label={m.locations_longitude_optional()}
 						name="long"
 						bind:value={long}
@@ -108,10 +115,10 @@
 				</div>
 
 				<AppActionRow>
-					<CwButton type="button" variant="ghost" onclick={() => goto(resolve('/locations'))}>
+					<CwButton id="location-create-cancel-button" type="button" variant="ghost" onclick={() => goto(resolve('/locations'))}>
 						{m.action_cancel()}
 					</CwButton>
-					<CwButton type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>
+					<CwButton id="location-create-submit-button" type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>
 						{m.locations_create_submit()}
 					</CwButton>
 				</AppActionRow>

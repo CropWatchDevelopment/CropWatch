@@ -28,6 +28,7 @@
 
 	<label class="consent-item">
 		<input
+			id="create-account-consent-privacy-checkbox"
 			type="checkbox"
 			bind:checked={agreedPrivacy}
 			disabled={!visitedPrivacy}
@@ -36,6 +37,7 @@
 		<span>
 			{m.auth_agree_to()}
 			<a
+				id="create-account-consent-privacy-link"
 				href="https://www.cropwatch.io/legal/privacy-policy"
 				target="_blank"
 				rel="noopener noreferrer"
@@ -47,6 +49,7 @@
 
 	<label class="consent-item">
 		<input
+			id="create-account-consent-terms-checkbox"
 			type="checkbox"
 			bind:checked={agreedTerms}
 			disabled={!visitedTerms}
@@ -55,6 +58,7 @@
 		<span>
 			{m.auth_agree_to()}
 			<a
+				id="create-account-consent-terms-link"
 				href="https://www.cropwatch.io/legal/terms-of-service"
 				target="_blank"
 				rel="noopener noreferrer"
@@ -65,10 +69,11 @@
 	</label>
 
 	<label class="consent-item">
-		<input type="checkbox" bind:checked={agreedEula} disabled={!visitedEula} class="consent-checkbox" />
+		<input id="create-account-consent-eula-checkbox" type="checkbox" bind:checked={agreedEula} disabled={!visitedEula} class="consent-checkbox" />
 		<span>
 			{m.auth_agree_to()}
 			<a
+				id="create-account-consent-eula-link"
 				href="https://www.cropwatch.io/legal/EULA"
 				target="_blank"
 				rel="noopener noreferrer"

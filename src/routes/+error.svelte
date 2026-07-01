@@ -92,9 +92,9 @@
 		<p class="text-center text-sm opacity-70">{description}</p>
 
 		<div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-			<CwButton variant="primary" onclick={() => goto('/')}>{m.action_go_home()}</CwButton>
-			<CwButton variant="ghost" onclick={() => history.back()}>{m.action_go_back()}</CwButton>
-			<CwButton variant="danger" onclick={resetAndLogin}>{m.error_reset_and_login()}</CwButton>
+			<CwButton id="error-home-button" variant="primary" onclick={() => goto('/')}>{m.action_go_home()}</CwButton>
+			<CwButton id="error-back-button" variant="ghost" onclick={() => history.back()}>{m.action_go_back()}</CwButton>
+			<CwButton id="error-reset-login-button" variant="danger" onclick={resetAndLogin}>{m.error_reset_and_login()}</CwButton>
 		</div>
 	</CwCard>
 </div>

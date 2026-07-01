@@ -30,6 +30,7 @@
 	let ttiName = $derived(data.ttiName ?? '');
 	let location_id = $derived(String(data.location_id ?? ''));
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
+	let supportsSensorCertificates = $derived(data.supportsSensorCertificates ?? false);
 
 	let actionForm = $derived((form ?? null) as FormPayload);
 	let deviceForm = $derived(actionForm?.action === 'updateDevice' ? actionForm : null);
@@ -73,6 +74,7 @@
 
 <div class="device-settings-page">
 	<CwButton
+		id="device-settings-back-button"
 		variant="secondary"
 		size="sm"
 		onclick={() =>
@@ -86,6 +88,7 @@
 	>
 	<CwCard title={m.devices_settings_title()} elevated>
 		<form
+			id="device-settings-form"
 			method="POST"
 			action="?/updateDevice"
 			class="device-form"
@@ -129,6 +132,7 @@
 			<div class="panel-grid">
 				<div class="field-stack">
 					<CwInput
+						id="device-settings-name-input"
 						label={m.devices_device_name_label()}
 						name="name"
 						required
@@ -143,6 +147,7 @@
 
 				<div class="field-stack">
 					<CwInput
+						id="device-settings-group-input"
 						label={m.common_group()}
 						name="group"
 						required={false}
@@ -150,7 +155,7 @@
 						bind:value={deviceGroup}
 						error={deviceGroupError || undefined}
 					/>
-					<input type="hidden" name="group" value={deviceGroupValue} />
+					<input id="device-settings-group-hidden-input" type="hidden" name="group" value={deviceGroupValue} />
 					{#if deviceGroupError}
 						<p class="field-error">{deviceGroupError}</p>
 					{/if}
@@ -158,6 +163,7 @@
 
 				<div class="field-stack">
 					<CwInput
+						id="device-settings-tti-name-input"
 						label={m.devices_tti_device_id_label()}
 						name="tti_name"
 						required={false}
@@ -166,7 +172,7 @@
 						bind:value={ttiName}
 						error={ttiNameError || undefined}
 					/>
-					<input type="hidden" name="tti_name" value={ttiNameValue} />
+					<input id="device-settings-tti-name-hidden-input" type="hidden" name="tti_name" value={ttiNameValue} />
 					{#if ttiNameError}
 						<p class="field-error">{ttiNameError}</p>
 					{/if}
@@ -174,6 +180,7 @@
 
 				<div class="field-stack">
 					<CwDropdown
+						id="device-settings-location-select"
 						label={m.common_location()}
 						name="location_id"
 						options={[
@@ -186,7 +193,7 @@
 						bind:value={location_id}
 						error={locationError || undefined}
 					/>
-					<input type="hidden" name="location_id" bind:value={location_id} />
+					<input id="device-settings-location-hidden-input" type="hidden" name="location_id" bind:value={location_id} />
 					{#if locationError}
 						<p class="field-error">{locationError}</p>
 					{/if}
@@ -195,6 +202,7 @@
 
 			<div class="panel-actions">
 				<CwButton
+					id="device-settings-submit-button"
 					type="submit"
 					variant="primary"
 					loading={deviceSubmitting}
@@ -206,11 +214,13 @@
 		</form>
 	</CwCard>
 
-	<SensorCertificatesCard
-		devEui={data.devEui ?? ''}
-		locationId={location_id}
-		{sensorCertificates}
-	/>
+	{#if supportsSensorCertificates}
+		<SensorCertificatesCard
+			devEui={data.devEui ?? ''}
+			locationId={location_id}
+			{sensorCertificates}
+		/>
+	{/if}
 
 	<DeviceOwnerPermissionsCard owners={data.deviceOwners ?? []} form={actionForm} />
 </div>

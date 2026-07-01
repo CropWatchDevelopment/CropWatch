@@ -7,7 +7,7 @@
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import { canManage, isAdmin } from '$lib/constants/permissions';
-	import { CwButton, CwCard, CwDuration, CwSpinner } from '@cropwatchdevelopment/cwui';
+	import { CwButton, CwCard, CwCopy, CwDuration, CwSpinner } from '@cropwatchdevelopment/cwui';
 	import CsvExportDialog from './dialogs/csvExportDialog.svelte';
 	import CsvTrafficExportDialog from './dialogs/csvTrafficExportDialog.svelte';
 	import type { RangeSelection, TimeRangeOptions } from './device-detail';
@@ -55,7 +55,7 @@
 	}
 </script>
 
-<CwButton variant="secondary" size="sm" disabled={!locationId} onclick={goBack}>
+<CwButton id="device-header-back-button" variant="secondary" size="sm" disabled={!locationId} onclick={goBack}>
 	&larr; {m.action_back()}
 </CwButton>
 
@@ -65,6 +65,7 @@
 	elevated
 >
 	{#snippet actions()}
+		<div>
 		<p class="text-md text-right" style="color: var(--cw-text-muted)">
 			{m.display_last_updated()}:
 			{#if lastUpdatedAt}
@@ -73,6 +74,8 @@
 				<span>{m.common_not_available()}</span>
 			{/if}
 		</p>
+		<p class="text-md text-right" style="color: var(--cw-text-muted)">Dev-Eui: {devEui} <CwCopy value={devEui} /></p>
+		</div>
 	{/snippet}
 
 	<div class="device-header">
@@ -80,6 +83,7 @@
 			{#if !isTrafficDevice}
 				{#each rangeOptions as range (range.value)}
 					<CwButton
+						id={`device-header-range-${range.value}-button`}
 						variant={activeRange === range.value ? 'primary' : 'secondary'}
 						size="sm"
 						disabled={controlsDisabled}
@@ -116,6 +120,7 @@
 
 			{#if isAdmin(permissionLevel)}
 				<CwButton
+					id="device-header-settings-button"
 					variant="secondary"
 					size="md"
 					disabled={!locationId || !devEui}

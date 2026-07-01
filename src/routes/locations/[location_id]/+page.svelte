@@ -182,12 +182,12 @@
 </script>
 
 <AppPage>
-	<CwButton variant="secondary" size="sm" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton id="location-back-button" variant="secondary" size="sm" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.locations_location_title({ name: locationLabel })} elevated>
-		<CwDataTable labels={cwDataTableLabels()}
+		<CwDataTable id="location-table" labels={cwDataTableLabels()}
 			{columns}
 			{loadData}
 			{loading}
@@ -200,6 +200,7 @@
 				<div class="flex flex-wrap gap-2">
 					{#if selectedLocationId}
 						<CwButton
+							id="location-add-device-button"
 							variant="primary"
 							onclick={() =>
 								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/devices/create`)}
@@ -208,6 +209,7 @@
 							{m.devices_add_device()}
 						</CwButton>
 						<CwButton
+							id="location-settings-button"
 							variant="secondary"
 							onclick={() =>
 								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
@@ -234,11 +236,12 @@
 
 			{#snippet rowActions(row: LocationDeviceRow)}
 				<div class="flex flex-row gap-2">
-					<CwButton size="md" variant="info" onclick={() => handleViewDevice(row)}>
+					<CwButton id={`location-row-${row.dev_eui}-view-button`} size="md" variant="info" onclick={() => handleViewDevice(row)}>
 						<Icon src={EYE_ICON} alt={m.action_view()} />
 					</CwButton>
 					{#if data.hasSettings}
 						<CwButton
+							id={`location-row-${row.dev_eui}-settings-button`}
 							size="md"
 							variant="secondary"
 							onclick={() => {

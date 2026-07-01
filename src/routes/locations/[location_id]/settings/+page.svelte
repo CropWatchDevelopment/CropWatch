@@ -17,7 +17,7 @@
 
 <AppPage>
 	<CwButton
-		id="back-to-location-button"
+		id="location-settings-back-button"
 		variant="secondary"
 		size="sm"
 		onclick={() => goto(`/locations/${data.locationId}`)}

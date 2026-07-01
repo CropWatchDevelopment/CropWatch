@@ -114,6 +114,7 @@
 					class="hidden w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-start md:flex"
 				>
 					<CwSearchInput
+						id="dashboard-search"
 						bind:value={searchName}
 						placeholder={m.dashboard_search_placeholder()}
 						class="w-full min-w-0"
@@ -125,6 +126,7 @@
 					class="flex w-full flex-row px-2 gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
 				>
 					<CwButton
+						id="dashboard-table-view-button"
 						class="w-full md:w-auto"
 						size="sm"
 						variant={view === 'table' ? 'info' : 'secondary'}
@@ -134,6 +136,7 @@
 						{m.dashboard_table_view()}
 					</CwButton>
 					<CwButton
+						id="dashboard-cards-view-button"
 						class="w-full md:w-auto"
 						size="sm"
 						variant={view === 'cards' ? 'info' : 'secondary'}
@@ -147,6 +150,7 @@
 							class="hidden items-center justify-end gap-1 border-t border-slate-600/70 pt-2 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-2 md:flex"
 						>
 							<CwButton
+								id="dashboard-grid-layout-button"
 								class="px-2 text-xs"
 								size="sm"
 								variant={cardLayout === 'grid' ? 'info' : 'secondary'}
@@ -155,6 +159,7 @@
 								<Icon src={GRID_VIEW_ICON} alt={m.dashboard_grid_layout()} />
 							</CwButton>
 							<CwButton
+								id="dashboard-masonry-layout-button"
 								class="px-2 text-xs"
 								size="sm"
 								variant={cardLayout === 'masonry' ? 'info' : 'secondary'}

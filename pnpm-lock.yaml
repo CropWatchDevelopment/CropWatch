@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@cropwatchdevelopment/cwui':
-        specifier: 0.1.107
-        version: 0.1.107(svelte@5.56.3(@typescript-eslint/types@8.61.1))
+        specifier: 0.1.110
+        version: 0.1.110(svelte@5.56.3(@typescript-eslint/types@8.61.1))
       '@supabase/supabase-js':
         specifier: ^2.108.2
         version: 2.108.2
@@ -34,15 +34,18 @@ importers:
       '@neoconfetti/svelte':
         specifier: ^2.2.2
         version: 2.2.2(svelte@5.56.3(@typescript-eslint/types@8.61.1))
+      '@opentelemetry/api':
+        specifier: ^1.9.1
+        version: 1.9.1
       '@playwright/test':
         specifier: ^1.61.0
         version: 1.61.0
       '@sveltejs/adapter-vercel':
         specifier: ^6.3.3
-        version: 6.3.3(@sveltejs/kit@2.65.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(rollup@4.62.0)
+        version: 6.3.3(@sveltejs/kit@2.65.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(rollup@4.62.0)
       '@sveltejs/kit':
         specifier: ^2.65.2
-        version: 2.65.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
+        version: 2.65.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.4
         version: 6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
@@ -114,7 +117,7 @@ importers:
         version: 1.0.0(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
       vitest:
         specifier: ^4.1.9
-        version: 4.1.9(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
+        version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
       vitest-browser-svelte:
         specifier: ^2.1.1
         version: 2.1.1(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vitest@4.1.9)
@@ -124,8 +127,8 @@ packages:
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
 
-  '@cropwatchdevelopment/cwui@0.1.107':
-    resolution: {integrity: sha512-09HVLBZxM+Q4NBNfIgLEurWlt4NDnkV/NPwvLP3Bm0xWH+zUIVoC1MpRdn/2EsEAIYoOIz4tHzhVVIbfigsODA==, tarball: https://npm.pkg.github.com/download/@cropwatchdevelopment/cwui/0.1.107/f942b24e41a617c9a85ad5e27c0e9cefa45d7ae9}
+  '@cropwatchdevelopment/cwui@0.1.110':
+    resolution: {integrity: sha512-tH8fRf6yv0eYiKXusZEcB/XdO1QPBYF0E9OOPXq3xYIrhFyA4pDrMQX3SQBqNjx1+rFQX8spCxEeUSbJ81bCqg==, tarball: https://npm.pkg.github.com/download/@cropwatchdevelopment/cwui/0.1.110/365655baf3d097e75a2b7a3539c7c4f1369b7ca9}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -411,6 +414,10 @@ packages:
     resolution: {integrity: sha512-E7xCFVEEm5Ctnj2udTJy1b9oaTvjz1zi1mYdEtE8rB5BVwq6kHisosDS+zdWN5PMfEMjtbsOV9Cl6tsNSAD1sA==}
     peerDependencies:
       svelte: ^3.0.0 || ^4.0.0 || ^5.0.0
+
+  '@opentelemetry/api@1.9.1':
+    resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
+    engines: {node: '>=8.0.0'}
 
   '@playwright/test@1.61.0':
     resolution: {integrity: sha512-cKA5B6lpFEMyMGjxF54QihfYpB4FkEGH+qZhtArDEG+wezQAJY8Pq6C7T1SjWz+FFzt3TbyoXBQYk/0292TdJA==}
@@ -1980,7 +1987,7 @@ snapshots:
 
   '@blazediff/core@1.9.1': {}
 
-  '@cropwatchdevelopment/cwui@0.1.107(svelte@5.56.3(@typescript-eslint/types@8.61.1))':
+  '@cropwatchdevelopment/cwui@0.1.110(svelte@5.56.3(@typescript-eslint/types@8.61.1))':
     dependencies:
       svelte: 5.56.3(@typescript-eslint/types@8.61.1)
 
@@ -2218,6 +2225,8 @@ snapshots:
     dependencies:
       svelte: 5.56.3(@typescript-eslint/types@8.61.1)
 
+  '@opentelemetry/api@1.9.1': {}
+
   '@playwright/test@1.61.0':
     dependencies:
       playwright: 1.61.0
@@ -2373,9 +2382,9 @@ snapshots:
     dependencies:
       acorn: 8.17.0
 
-  '@sveltejs/adapter-vercel@6.3.3(@sveltejs/kit@2.65.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(rollup@4.62.0)':
+  '@sveltejs/adapter-vercel@6.3.3(@sveltejs/kit@2.65.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(rollup@4.62.0)':
     dependencies:
-      '@sveltejs/kit': 2.65.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@sveltejs/kit': 2.65.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
       '@vercel/nft': 1.10.2(rollup@4.62.0)
       esbuild: 0.28.1
     transitivePeerDependencies:
@@ -2383,7 +2392,7 @@ snapshots:
       - rollup
       - supports-color
 
-  '@sveltejs/kit@2.65.2(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))':
+  '@sveltejs/kit@2.65.2(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.3(@typescript-eslint/types@8.61.1))(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)))(svelte@5.56.3(@typescript-eslint/types@8.61.1))(typescript@5.9.3)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.10(acorn@8.17.0)
@@ -2401,6 +2410,7 @@ snapshots:
       svelte: 5.56.3(@typescript-eslint/types@8.61.1)
       vite: 7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)
     optionalDependencies:
+      '@opentelemetry/api': 1.9.1
       typescript: 5.9.3
 
   '@sveltejs/load-config@0.1.1': {}
@@ -2639,7 +2649,7 @@ snapshots:
       '@vitest/mocker': 4.1.9(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
       playwright: 1.61.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.9(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
+      vitest: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -2655,7 +2665,7 @@ snapshots:
       pngjs: 7.0.0
       sirv: 3.0.2
       tinyrainbow: 3.1.0
-      vitest: 4.1.9(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
+      vitest: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
@@ -3517,9 +3527,9 @@ snapshots:
     dependencies:
       '@testing-library/svelte-core': 1.0.0(svelte@5.56.3(@typescript-eslint/types@8.61.1))
       svelte: 5.56.3(@typescript-eslint/types@8.61.1)
-      vitest: 4.1.9(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
+      vitest: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
 
-  vitest@4.1.9(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)):
+  vitest@4.1.9(@opentelemetry/api@1.9.1)(@types/node@22.19.21)(@vitest/browser-playwright@4.1.9)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)):
     dependencies:
       '@vitest/expect': 4.1.9
       '@vitest/mocker': 4.1.9(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))
@@ -3542,6 +3552,7 @@ snapshots:
       vite: 7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@opentelemetry/api': 1.9.1
       '@types/node': 22.19.21
       '@vitest/browser-playwright': 4.1.9(playwright@1.61.0)(vite@7.3.5(@types/node@22.19.21)(jiti@2.7.0)(lightningcss@1.32.0))(vitest@4.1.9)
     transitivePeerDependencies:

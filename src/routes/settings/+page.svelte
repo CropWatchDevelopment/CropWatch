@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { applyAction, enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { AppActionRow, AppFormStack, AppPage } from '$lib/components/layout';
 	import { setLocale } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages.js';
@@ -14,71 +16,34 @@
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 
 	type PreferenceDraft = PageProps['data']['preferences'];
-	type Option = { label: string; value: string };
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 
 	const toast = useCwToast();
+	const initial = (() => data)();
 
-	function getInitialPreferences(): PreferenceDraft {
-		return { ...data.preferences };
-	}
-
-	let preferences = $state(getInitialPreferences());
+	// Seed from the loaded (DB) preferences. The theme picker itself resolves
+	// light/dark/system against its own localStorage; when localStorage is empty
+	// the DB-seeded value wins and the picker persists it, giving cross-device sync.
+	let preferences = $state<PreferenceDraft>({ ...initial.preferences });
+	let saving = $state(false);
 
 	const isDirty = $derived(JSON.stringify(preferences) !== JSON.stringify(data.preferences));
-	const languageLabel = $derived(getOptionLabel(data.options.language, preferences.language));
-	const temperatureLabel = $derived(
-		getOptionLabel(data.options.temperature, preferences.temperatureUnit)
+	const themeLabel = $derived(
+		preferences.theme === 'dark'
+			? m.settings_theme_dark()
+			: preferences.theme === 'light'
+				? m.settings_theme_light()
+				: m.settings_theme_system()
 	);
-	const ecLabel = $derived(getOptionLabel(data.options.ec, preferences.ecUnit));
-	const formatLabel = $derived(
-		`${getOptionLabel(data.options.dateFormat, preferences.dateFormat)} / ${getOptionLabel(data.options.timeFormat, preferences.timeFormat)}`
-	);
-	const spatialLabel = $derived(
-		`${getOptionLabel(data.options.distance, preferences.distanceUnit)} / ${getOptionLabel(data.options.area, preferences.areaUnit)}`
-	);
-	const themeLabel = $derived(getThemeLabel(preferences.theme));
-
-	function getOptionLabel(options: Option[], value: string): string {
-		return options.find((option) => option.value === value)?.label ?? value;
-	}
-
-	function getThemeLabel(theme: PreferenceDraft['theme']): string {
-		if (theme === 'dark') return 'Dark';
-		if (theme === 'light') return 'Light';
-		return 'System';
-	}
 
 	async function resetForm() {
-		const initialPreferences = getInitialPreferences();
-		preferences = { ...initialPreferences };
-
+		preferences = { ...data.preferences };
 		try {
-			await setLocale(initialPreferences.language);
+			await setLocale(preferences.language);
 		} catch (error) {
 			console.error('Failed to reset locale:', error);
 		}
-
-		toast.add({
-			tone: 'info',
-			message: 'Settings returned to the mock defaults.'
-		});
-	}
-
-	function handleSave() {
-		if (!isDirty) {
-			toast.add({
-				tone: 'info',
-				message: 'No mock setting changes to save yet.'
-			});
-			return;
-		}
-
-		toast.add({
-			tone: 'info',
-			message: 'Settings persistence is intentionally deferred until you wire the API service.'
-		});
 	}
 </script>
 
@@ -86,43 +51,58 @@
 	<title>{m.nav_settings()} - CropWatch</title>
 </svelte:head>
 
-<AppPage width="xl" class="settings-page">
-	<form class="settings-grid" onsubmit={(event) => event.preventDefault()}>
+<AppPage width="xl">
+	<form
+		method="POST"
+		action="?/updatePreferences"
+		class="settings-grid"
+		use:enhance={() => {
+			saving = true;
+			return async ({ result }) => {
+				saving = false;
+				await applyAction(result);
+				if (result.type === 'success') {
+					toast.add({ tone: 'success', message: m.settings_saved() });
+					await invalidateAll();
+				} else if (result.type === 'failure' && typeof result.data?.error === 'string') {
+					toast.add({ tone: 'danger', message: result.data.error });
+				}
+			};
+		}}
+	>
+		<!-- Persisted theme lives in a hidden field so the CwThemePicker value is POSTed. -->
+		<input type="hidden" name="theme" value={preferences.theme} />
+
 		<div class="settings-card settings-card--regional">
-			<CwCard
-				title="Regional preferences"
-				subtitle="Control localization, number formatting, and the calendar notation used in reports."
-				elevated
-			>
+			<CwCard title={m.settings_regional_title()} subtitle={m.settings_regional_subtitle()} elevated>
 				<AppFormStack padded>
 					<div class="field-grid field-grid--two">
 						<LanguageSwitcher compact class="mr-3" />
 
 						<CwDropdown
-							label="Date format"
+							id="settings-timezone-select"
+							name="timezone"
+							label={m.settings_timezone_label()}
+							placeholder={m.settings_timezone_placeholder()}
+							options={data.options.timezone}
+							bind:value={preferences.timezone}
+						/>
+
+						<CwDropdown
+							id="settings-date-format-select"
+							name="dateFormat"
+							label={m.settings_date_format_label()}
 							options={data.options.dateFormat}
 							bind:value={preferences.dateFormat}
-							disabled
 						/>
 
 						<CwDropdown
-							label="Time format"
+							id="settings-time-format-select"
+							name="timeFormat"
+							label={m.settings_time_format_label()}
 							options={data.options.timeFormat}
 							bind:value={preferences.timeFormat}
-							disabled
 						/>
-
-						<CwDropdown
-							label="Decimal separator"
-							options={data.options.decimalSeparator}
-							bind:value={preferences.decimalSeparator}
-							disabled
-						/>
-					</div>
-
-					<div class="chip-row">
-						<CwChip label={languageLabel} tone="secondary" variant="outline" />
-						<CwChip label={formatLabel} tone="primary" variant="soft" />
 					</div>
 				</AppFormStack>
 			</CwCard>
@@ -130,14 +110,14 @@
 
 		<div class="settings-card settings-card--appearance">
 			<CwCard
-				title="Appearance and mapping"
-				subtitle="Keep the UI theme and spatial notation aligned with the operators reading the data."
+				title={m.settings_appearance_title()}
+				subtitle={m.settings_appearance_subtitle()}
 				elevated
 			>
 				<AppFormStack padded>
 					<div class="theme-row">
 						<div class="theme-copy">
-							<p class="section-title">Theme mode</p>
+							<p class="section-title">{m.settings_theme_label()}</p>
 							<p class="section-copy">{themeLabel}</p>
 						</div>
 						<CwThemePicker bind:theme={preferences.theme} />
@@ -145,99 +125,99 @@
 
 					<div class="field-grid field-grid--two">
 						<CwDropdown
-							label="Distance"
+							id="settings-distance-select"
+							name="distanceUnit"
+							label={m.settings_distance_label()}
 							options={data.options.distance}
 							bind:value={preferences.distanceUnit}
-							disabled
 						/>
 
 						<CwDropdown
-							label="Area"
+							id="settings-area-select"
+							name="areaUnit"
+							label={m.settings_area_label()}
 							options={data.options.area}
 							bind:value={preferences.areaUnit}
-							disabled
 						/>
-					</div>
-
-					<div class="chip-row">
-						<CwChip label={spatialLabel} tone="info" variant="soft" />
 					</div>
 				</AppFormStack>
 			</CwCard>
 		</div>
 
 		<div class="settings-card settings-card--notation">
-			<CwCard
-				title="Sensor notation"
-				subtitle="Choose the units operators will expect when comparing air, soil, and water measurements."
-				elevated
-			>
+			<CwCard title={m.settings_units_title()} subtitle={m.settings_units_subtitle()} elevated>
 				<AppFormStack padded>
 					<div class="field-grid field-grid--two">
 						<CwDropdown
-							label="Temperature"
+							id="settings-temperature-select"
+							name="temperatureUnit"
+							label={m.settings_temperature_label()}
 							options={data.options.temperature}
 							bind:value={preferences.temperatureUnit}
-							disabled
 						/>
 
 						<CwDropdown
-							label="EC"
+							id="settings-ec-select"
+							name="ecUnit"
+							label={m.settings_ec_label()}
 							options={data.options.ec}
 							bind:value={preferences.ecUnit}
-							disabled
 						/>
 
 						<CwDropdown
-							label="Soil moisture"
-							options={data.options.soilMoisture}
-							bind:value={preferences.soilMoistureUnit}
-							disabled
-						/>
-
-						<CwDropdown
-							label="Pressure"
-							options={data.options.pressure}
-							bind:value={preferences.pressureUnit}
-							disabled
-						/>
-
-						<CwDropdown
-							label="Rainfall"
-							options={data.options.rainfall}
-							bind:value={preferences.rainfallUnit}
-							disabled
-						/>
-
-						<CwDropdown
-							label="Wind speed"
-							options={data.options.windSpeed}
-							bind:value={preferences.windSpeedUnit}
-							disabled
-						/>
-
-						<CwDropdown
-							label="Water depth"
+							id="settings-water-level-select"
+							name="waterDepthUnit"
+							label={m.settings_water_level_label()}
 							options={data.options.waterDepth}
 							bind:value={preferences.waterDepthUnit}
-							disabled
 						/>
 
 						<CwDropdown
-							label="CO2"
+							id="settings-weight-select"
+							name="weightUnit"
+							label={m.settings_weight_label()}
+							options={data.options.weight}
+							bind:value={preferences.weightUnit}
+						/>
+
+						<CwDropdown
+							id="settings-soil-moisture-select"
+							name="soilMoistureUnit"
+							label={m.settings_soil_moisture_label()}
+							options={data.options.soilMoisture}
+							bind:value={preferences.soilMoistureUnit}
+						/>
+
+						<CwDropdown
+							id="settings-pressure-select"
+							name="pressureUnit"
+							label={m.settings_pressure_label()}
+							options={data.options.pressure}
+							bind:value={preferences.pressureUnit}
+						/>
+
+						<CwDropdown
+							id="settings-rainfall-select"
+							name="rainfallUnit"
+							label={m.settings_rainfall_label()}
+							options={data.options.rainfall}
+							bind:value={preferences.rainfallUnit}
+						/>
+
+						<CwDropdown
+							id="settings-wind-speed-select"
+							name="windSpeedUnit"
+							label={m.settings_wind_speed_label()}
+							options={data.options.windSpeed}
+							bind:value={preferences.windSpeedUnit}
+						/>
+
+						<CwDropdown
+							id="settings-co2-select"
+							name="co2Unit"
+							label={m.settings_co2_label()}
 							options={data.options.co2}
 							bind:value={preferences.co2Unit}
-							disabled
-						/>
-					</div>
-
-					<div class="chip-row">
-						<CwChip label={temperatureLabel} tone="primary" variant="soft" />
-						<CwChip label={ecLabel} tone="info" variant="soft" />
-						<CwChip
-							label={getOptionLabel(data.options.soilMoisture, preferences.soilMoistureUnit)}
-							tone="secondary"
-							variant="outline"
 						/>
 					</div>
 				</AppFormStack>
@@ -245,23 +225,28 @@
 		</div>
 
 		<div class="settings-card settings-card--actions">
-			<CwCard
-				title="Preview and actions"
-				subtitle="These controls still operate on the local preview state until the settings API is wired."
-				elevated
-			>
+			<CwCard title={m.settings_actions_title()} elevated>
 				<AppFormStack padded>
 					<div class="chip-row">
 						<CwChip label={themeLabel} tone="secondary" variant="outline" />
-						<CwChip label={spatialLabel} tone="info" variant="soft" />
-						<CwChip label={formatLabel} tone="primary" variant="soft" />
+						{#if preferences.timezone}
+							<CwChip label={preferences.timezone} tone="info" variant="soft" />
+						{/if}
 					</div>
 
 					<AppActionRow>
-						<CwButton type="button" variant="secondary" onclick={resetForm} disabled={!isDirty}>
-							Reset preview
+						<CwButton
+							id="settings-reset-button"
+							type="button"
+							variant="ghost"
+							onclick={resetForm}
+							disabled={!isDirty || saving}
+						>
+							{m.settings_reset()}
 						</CwButton>
-						<CwButton type="button" variant="primary" onclick={handleSave}>Save settings</CwButton>
+						<CwButton id="settings-save-button" type="submit" variant="primary" loading={saving} disabled={!isDirty}>
+							{m.action_save_changes()}
+						</CwButton>
 					</AppActionRow>
 				</AppFormStack>
 			</CwCard>

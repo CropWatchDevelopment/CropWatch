@@ -46,12 +46,12 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton id="gateways-back-button" variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.gateways_your_gateways()}>
-		<CwDataTable labels={cwDataTableLabels()} {columns} {loadData} {loading} rowKey="tableRowKey" class="w-full">
+		<CwDataTable id="gateways-table" labels={cwDataTableLabels()} {columns} {loadData} {loading} rowKey="tableRowKey" class="w-full">
 			{#snippet cell(row: GatewayTableRow, col: CwColumnDef<GatewayTableRow>, defaultValue: string)}
 				{#if col.key === 'is_online'}
 					{#if row.is_online}
