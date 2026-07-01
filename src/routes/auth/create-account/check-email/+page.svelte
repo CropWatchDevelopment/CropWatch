@@ -103,13 +103,17 @@
 				</div>
 			</div>
 			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_not_there()}</p>
-			<a href="mailto:sayaka@cropwatch.io" rel="external" class="w-full text-center text-sm"
-				>{m.auth_check_email_contact_support()}</a
+			<a
+				id="create-account-check-email-contact-support-link"
+				href="mailto:sayaka@cropwatch.io"
+				rel="external"
+				class="w-full text-center text-sm">{m.auth_check_email_contact_support()}</a
 			>
 		</div>
 
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a
+			id="create-account-check-email-sign-in-link"
 			class="auth-button-link auth-button-link--primary"
 			href={redirectPath
 				? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`

@@ -17,6 +17,12 @@ import type {
 	LocationsQuery,
 	LoginRequest,
 	LoginResponse,
+	ProfileDto,
+	UpdateProfileRequest,
+	UpdateEmailRequest,
+	EmailChangeResponse,
+	PreferencesDto,
+	UpdatePreferencesRequest,
 	PaginatedResponse,
 	PaginationQuery,
 	ReportTemplateDto,
@@ -120,6 +126,8 @@ const UNAUTHORIZED_RETRY_DELAY_MS = 600;
 
 const AUTH_ENDPOINT = '/auth';
 const AUTH_USER_PROFILE_ENDPOINT = '/auth/user-profile';
+const AUTH_EMAIL_ENDPOINT = '/auth/email';
+const AUTH_PREFERENCES_ENDPOINT = '/auth/preferences';
 const AIR_ENDPOINT = '/air/{dev_eui}';
 const DEVICES_ENDPOINT = '/devices';
 const DEVICE_TYPES_ENDPOINT = '/devices/device-types';
@@ -484,8 +492,24 @@ export class ApiService {
 		return this.request<Record<string, unknown>>(AUTH_ENDPOINT, { method: 'GET' });
 	}
 
-	public getUserProfile(): Promise<Record<string, unknown>> {
-		return this.request<Record<string, unknown>>(AUTH_USER_PROFILE_ENDPOINT, { method: 'GET' });
+	public getUserProfile(): Promise<ProfileDto> {
+		return this.request<ProfileDto>(AUTH_USER_PROFILE_ENDPOINT, { method: 'GET' });
+	}
+
+	public updateProfile(payload: UpdateProfileRequest): Promise<ProfileDto> {
+		return this.request<ProfileDto>(AUTH_USER_PROFILE_ENDPOINT, { method: 'PATCH', body: payload });
+	}
+
+	public updateEmail(payload: UpdateEmailRequest): Promise<EmailChangeResponse> {
+		return this.request<EmailChangeResponse>(AUTH_EMAIL_ENDPOINT, { method: 'PATCH', body: payload });
+	}
+
+	public getPreferences(): Promise<PreferencesDto> {
+		return this.request<PreferencesDto>(AUTH_PREFERENCES_ENDPOINT, { method: 'GET' });
+	}
+
+	public updatePreferences(payload: UpdatePreferencesRequest): Promise<PreferencesDto> {
+		return this.request<PreferencesDto>(AUTH_PREFERENCES_ENDPOINT, { method: 'PATCH', body: payload });
 	}
 
 	public login(payload: LoginRequest): Promise<LoginResponse> {

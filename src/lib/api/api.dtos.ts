@@ -18,6 +18,80 @@ export interface LoginResponse {
 	[key: string]: unknown;
 }
 
+export interface ProfileDto {
+	id: string;
+	email: string | null;
+	username: string | null;
+	full_name: string | null;
+	website: string | null;
+	employer: string | null;
+	phone_number: string | null;
+	avatar_url?: string | null;
+	[key: string]: unknown;
+}
+
+export interface UpdateProfileRequest {
+	full_name?: string | null;
+	username?: string | null;
+	website?: string | null;
+	employer?: string | null;
+	phone_number?: string | null;
+}
+
+export interface UpdateEmailRequest {
+	email: string;
+}
+
+export interface EmailChangeResponse {
+	pending: boolean;
+	message?: string;
+}
+
+export type ThemePreference = 'light' | 'dark' | 'system';
+export type TemperatureUnit = 'celsius' | 'fahrenheit' | 'kelvin';
+export type WeightUnit = 'kg' | 'lb';
+export type EcUnit = 'ms_cm' | 'ds_cm' | 'us_cm';
+export type WaterLevelUnit = 'cm' | 'mm' | 'inch' | 'foot' | 'meter' | 'yard';
+
+export interface PreferencesDto {
+	user_id: string;
+	theme: ThemePreference | null;
+	temperature_unit: TemperatureUnit | null;
+	weight_unit: WeightUnit | null;
+	ec_unit: EcUnit | null;
+	water_level_unit: WaterLevelUnit | null;
+	timezone: string | null;
+	distance_unit: string | null;
+	area_unit: string | null;
+	soil_moisture_unit: string | null;
+	pressure_unit: string | null;
+	rainfall_unit: string | null;
+	wind_speed_unit: string | null;
+	co2_unit: string | null;
+	date_format: string | null;
+	time_format: string | null;
+	created_at?: string;
+	updated_at?: string;
+}
+
+export interface UpdatePreferencesRequest {
+	theme?: ThemePreference | null;
+	temperature_unit?: TemperatureUnit | null;
+	weight_unit?: WeightUnit | null;
+	ec_unit?: EcUnit | null;
+	water_level_unit?: WaterLevelUnit | null;
+	timezone?: string | null;
+	distance_unit?: string | null;
+	area_unit?: string | null;
+	soil_moisture_unit?: string | null;
+	pressure_unit?: string | null;
+	rainfall_unit?: string | null;
+	wind_speed_unit?: string | null;
+	co2_unit?: string | null;
+	date_format?: string | null;
+	time_format?: string | null;
+}
+
 export type DeviceOwnerDto = CwDeviceOwner;
 
 export type DeviceTypeDto = CwDeviceType;

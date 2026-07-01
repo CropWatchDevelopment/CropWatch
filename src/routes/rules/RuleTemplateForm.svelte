@@ -25,7 +25,6 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
-	import RuleTemplateTest from './RuleTemplateTest.svelte';
 	import {
 		areAlertCriteriaGroupsValid,
 		buildInitialAlertCriteriaGroups,
@@ -377,12 +376,14 @@
 <CwCard title={m.rules_new_step_template()} subtitle={m.rules_new_step_template_subtitle()}>
 	<AppFormStack padded>
 		<CwInput
+			id="rule-form-name-input"
 			label={m.rules_rule_name()}
 			placeholder={m.rules_rule_name_placeholder()}
 			bind:value={ruleName}
 			required
 		/>
 		<CwTextArea
+			id="rule-form-description-textarea"
 			label={m.common_description()}
 			placeholder={m.rules_new_description_placeholder()}
 			rows={3}
@@ -390,6 +391,7 @@
 			bind:value={description}
 		/>
 		<CwSwitch
+			id="rule-form-active-switch"
 			label={m.rules_new_active_rule()}
 			description={m.rules_new_active_rule_description()}
 			bind:checked={isActive}
@@ -406,6 +408,7 @@
 		{:else}
 			<div class="rules-new-form__block" id="device-selection">
 				<CwMultiSelect
+					id="rule-form-devices-multiselect"
 					showAllSelectedItems={true}
 					label={m.devices_device()}
 					placeholder={m.rules_select_device_placeholder()}
@@ -428,13 +431,14 @@
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_condition_number({ count: String(index + 1) })}</span>
 					{#if criteriaGroups.length > 1}
-						<CwButton variant="danger" size="sm" onclick={() => criteriaGroups.splice(index, 1)}>
+						<CwButton id={`rule-form-criteria-${index}-remove-button`} variant="danger" size="sm" onclick={() => criteriaGroups.splice(index, 1)}>
 							{m.action_remove()}
 						</CwButton>
 					{/if}
 				</div>
 
 				<CwDropdown
+					id={`rule-form-criteria-${index}-subject-select`}
 					label={m.rules_data_field()}
 					options={SUBJECT_OPTIONS}
 					bind:value={group.subject}
@@ -455,6 +459,7 @@
 		{/if}
 
 		<CwButton
+			id="rule-form-add-criteria-button"
 			variant="secondary"
 			type="button"
 			onclick={() => {
@@ -474,7 +479,7 @@
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_new_action_number({ count: String(index + 1) })}</span>
 					{#if templateActions.length > 1}
-						<CwButton variant="danger" size="sm" onclick={() => templateActions.splice(index, 1)}>
+						<CwButton id={`rule-form-action-${index}-remove-button`} variant="danger" size="sm" onclick={() => templateActions.splice(index, 1)}>
 							{m.action_remove()}
 						</CwButton>
 					{/if}
@@ -482,6 +487,7 @@
 
 				<div class="rules-new-form__actions-grid">
 					<CwDropdown
+						id={`rule-form-action-${index}-type-select`}
 						label={m.rules_new_action_type()}
 						options={actionTypeOptionsFor(action)}
 						value={String(action.actionType || '')}
@@ -490,6 +496,7 @@
 					/>
 					{#if action.actionTypeName === 'EMail'}
 						<CwInput
+							id={`rule-form-action-${index}-recipient-input`}
 							label={m.rules_recipient()}
 							placeholder={m.rules_recipient_placeholder()}
 							bind:value={action.config.recipient}
@@ -503,6 +510,7 @@
 		{/each}
 
 		<CwButton
+			id="rule-form-add-action-button"
 			variant="secondary"
 			type="button"
 			onclick={() => {
@@ -513,8 +521,6 @@
 		</CwButton>
 	</AppFormStack>
 </CwCard>
-
-<RuleTemplateTest criteria={criteriaForTest} />
 
 <CwCard title={mode === 'edit' ? m.rules_step_4_review_save_title() : m.rules_step_4_title()}>
 	<AppFormStack padded>
@@ -534,12 +540,12 @@
 					<dt>{m.rules_new_actions()}:</dt>
 					<dd>
 						{actionSummary}
-						<CwButton variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
+						<CwButton id="rule-form-advanced-hide-button" variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
 						{showAdvanced ? m.common_hide_details() : m.common_show_details()}
 					</CwButton>
 					</dd>
 					{:else}
-					<CwButton variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
+					<CwButton id="rule-form-advanced-show-button" variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
 						{showAdvanced ? m.common_hide_details() : m.common_show_details()}
 					</CwButton>
 					{/if}
@@ -554,10 +560,11 @@
 		<CwSeparator />
 
 		<AppActionRow>
-			<CwButton variant="ghost" onclick={() => goto(resolve('/rules'))} disabled={submitting}>
+			<CwButton id="rule-form-cancel-button" variant="ghost" onclick={() => goto(resolve('/rules'))} disabled={submitting}>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton
+				id="rule-form-submit-button"
 				variant="primary"
 				onclick={handleSubmit}
 				disabled={!isFormValid || submitting}

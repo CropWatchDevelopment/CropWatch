@@ -55,7 +55,7 @@
 	}
 </script>
 
-<CwButton variant="secondary" size="sm" disabled={!locationId} onclick={goBack}>
+<CwButton id="device-header-back-button" variant="secondary" size="sm" disabled={!locationId} onclick={goBack}>
 	&larr; {m.action_back()}
 </CwButton>
 
@@ -83,6 +83,7 @@
 			{#if !isTrafficDevice}
 				{#each rangeOptions as range (range.value)}
 					<CwButton
+						id={`device-header-range-${range.value}-button`}
 						variant={activeRange === range.value ? 'primary' : 'secondary'}
 						size="sm"
 						disabled={controlsDisabled}
@@ -119,6 +120,7 @@
 
 			{#if isAdmin(permissionLevel)}
 				<CwButton
+					id="device-header-settings-button"
 					variant="secondary"
 					size="md"
 					disabled={!locationId || !devEui}

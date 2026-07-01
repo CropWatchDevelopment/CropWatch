@@ -77,11 +77,13 @@
 	<p>{m.locations_confirm_delete_permission_body({ email: selectedRow?.email ?? '' })}</p>
 	{#snippet actions()}
 		<CwButton
+			id="location-delete-permission-cancel-button"
 			variant="primary"
 			disabled={deleting}
 			onclick={() => (openDeletePermissionDialog = false)}>{m.action_cancel()}</CwButton
 		>
 		<CwButton
+			id="location-delete-permission-confirm-button"
 			variant="danger"
 			loading={deleting}
 			disabled={deleting}

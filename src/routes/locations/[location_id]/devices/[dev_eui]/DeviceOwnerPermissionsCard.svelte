@@ -98,6 +98,7 @@
 				{#if row.email}
 					<div class="permission-row">
 						<form
+							id={`device-owner-permissions-row-${row.key}-form`}
 							method="POST"
 							action="?/updateDeviceOwnerPermission"
 							class="permission-row__form"
@@ -119,9 +120,9 @@
 								};
 							}}
 						>
-							<input type="hidden" name="ownerKey" value={row.key} />
-							<input type="hidden" name="targetUserEmail" value={row.email} />
-							<input type="hidden" name="permissionLevel" value={row.permissionLevel} />
+							<input id={`device-owner-permissions-row-${row.key}-owner-key-input`} type="hidden" name="ownerKey" value={row.key} />
+							<input id={`device-owner-permissions-row-${row.key}-email-input`} type="hidden" name="targetUserEmail" value={row.email} />
+							<input id={`device-owner-permissions-row-${row.key}-permission-level-input`} type="hidden" name="permissionLevel" value={row.permissionLevel} />
 
 							<div class="permission-user flex items-center justify-center">
 								<p class="text-xl">{row.name} ({row.email})</p>
@@ -130,6 +131,7 @@
 							<div class="permission-edit">
 								<div class="field-stack">
 									<CwDropdown
+										id={`device-owner-permissions-row-${row.key}-permission-level-select`}
 										label={m.locations_permission_level()}
 										options={permissionOptions}
 										bind:value={
@@ -147,6 +149,7 @@
 								</div>
 
 								<CwButton
+									id={`device-owner-permissions-row-${row.key}-update-button`}
 									type="submit"
 									variant="primary"
 									loading={ownerSubmittingByKey[row.key] ?? false}

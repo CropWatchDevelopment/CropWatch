@@ -203,7 +203,7 @@
 	};
 </script>
 
-<CwButton onclick={openDialog} {disabled} variant="secondary" size="sm">
+<CwButton id="device-notes-review-open-button" onclick={openDialog} {disabled} variant="secondary" size="sm">
 	<Icon src={NOTE_ICON} alt={m.display_view_notes()} />
 	{m.display_view_notes()}
 </CwButton>
@@ -212,6 +212,7 @@
 	<div class="notes-review-dialog-content">
 		<div class="mb-4 flex flex-row items-center gap-4">
 			<CwSearchInput
+				id="device-notes-review-search"
 				bind:value={search}
 				placeholder={m.display_note_search_placeholder()}
 				class="w-full"
@@ -226,6 +227,7 @@
 				labels={cwDateTimeRangePickerLabels()}
 			/>
 			<CwSwitch
+				id="device-notes-review-show-notes-switch"
 				class="w-full"
 				label={m.display_note_show_only_dates_with_notes()}
 				bind:checked={showOnlyDatesWithNotes}
@@ -266,7 +268,7 @@
 										<p class="notes-review-dialog__note-body">{entry.note}</p>
 									</div>
 
-									<CwButton disabled>Delete</CwButton>
+									<CwButton id={`device-notes-review-row-${entry.id}-delete-button`} disabled>Delete</CwButton>
 								</div>
 							</article>
 						{/each}
@@ -291,7 +293,7 @@
 		</CwCalendarScroll>
 	</div>
 	{#snippet actions()}
-		<CwButton onclick={() => (open = false)} variant="secondary">
+		<CwButton id="device-notes-review-close-button" onclick={() => (open = false)} variant="secondary">
 			{m.action_close()}
 		</CwButton>
 	{/snippet}

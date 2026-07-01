@@ -16,7 +16,7 @@
 </svelte:head>
 
 <AppPage width="lg">
-	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/rules'))}>
+	<CwButton id="rule-edit-back-button" variant="secondary" size="sm" onclick={() => goto(resolve('/rules'))}>
 		&larr; {m.action_back()}
 	</CwButton>
 

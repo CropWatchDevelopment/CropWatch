@@ -25,7 +25,7 @@
 	<AppFormStack padded>
 		<div class="report-section-toolbar">
 			<p class="report-section-copy">{m.reports_create_recipients_copy()}</p>
-			<CwButton type="button" variant="secondary" onclick={onAdd}>
+			<CwButton id="report-recipients-add-button" type="button" variant="secondary" onclick={onAdd}>
 				<Icon src={ADD_ICON} class="h-4 w-4" />
 			</CwButton>
 		</div>
@@ -45,6 +45,7 @@
 					</div>
 					{#if recipients.length > 1}
 						<CwButton
+							id={`report-recipients-${index}-remove-button`}
 							type="button"
 							variant="danger"
 							size="sm"
@@ -57,17 +58,20 @@
 
 				<div class="report-field-grid report-field-grid--three">
 					<CwDropdown
+						id={`report-recipients-${index}-method-select`}
 						label={m.reports_create_communication_method()}
 						options={communicationMethodOptions}
 						bind:value={recipient.communication_method}
 					/>
 					<CwInput
+						id={`report-recipients-${index}-email-input`}
 						label={m.reports_create_email_label()}
 						type="email"
 						placeholder={m.reports_create_email_placeholder()}
 						bind:value={recipient.email}
 					/>
 					<CwInput
+						id={`report-recipients-${index}-name-input`}
 						label={m.common_name()}
 						placeholder={m.reports_create_recipient_name_placeholder()}
 						bind:value={recipient.name}

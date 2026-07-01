@@ -179,7 +179,11 @@ export function createReportTemplateDraftFactory(nextRowKey: (prefix: string) =>
 					end_of_week: firstSchedule.endOfWeek,
 					end_of_month: firstSchedule.endOfMonth,
 					utc_offset: String(firstSchedule.utcOffset ?? 0),
-					is_active: firstSchedule.isActive,
+					// Schedule-level active flag is no longer surfaced in the UI (it was
+					// redundant with the template-level "Active template" toggle, which is
+					// the single pause control). Keep the schedule active; pausing is done
+					// at the template level.
+					is_active: true,
 					key: nextRowKey('cadence')
 				}
 			: createEmptyCadence();

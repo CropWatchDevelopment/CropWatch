@@ -277,15 +277,6 @@
 		border-bottom: 1px solid color-mix(in srgb, var(--cw-border-muted) 65%, transparent);
 	}
 
-	.app-sidebar__mobile-utilities-label {
-		margin: 0;
-		font-size: var(--cw-text-xs);
-		font-weight: var(--cw-font-semibold);
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--cw-text-secondary);
-	}
-
 	.app-sidebar__mobile-utilities-controls {
 		display: flex;
 		align-items: center;

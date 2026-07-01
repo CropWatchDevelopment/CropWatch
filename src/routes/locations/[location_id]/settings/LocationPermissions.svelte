@@ -52,6 +52,7 @@
 		elevated
 	>
 		<form
+			id="location-permissions-form"
 			method="POST"
 			action="?/addPermission"
 			use:enhance={() => {
@@ -78,6 +79,7 @@
 			class="permissions-form"
 		>
 			<CwInput
+				id="location-permissions-email-input"
 				name="newUserEmail"
 				type="email"
 				label={m.auth_email_label()}
@@ -86,6 +88,7 @@
 				bind:value={newUserEmail}
 			/>
 			<CwDropdown
+				id="location-permissions-level-select"
 				name="permission_level"
 				label={m.locations_permission_level()}
 				options={permissions.map((p) => ({
@@ -96,14 +99,16 @@
 			/>
 
 			<CwSwitch
+				id="location-permissions-apply-all-switch"
 				checked={applyToAllDevices}
 				label={m.locations_apply_to_all_devices()}
 				onchange={(checked) => (applyToAllDevices = checked)}
 			/>
-			<input type="hidden" name="applyToAllDevices" value={applyToAllDevices ? 'true' : 'false'} />
+			<input id="location-permissions-apply-all-input" type="hidden" name="applyToAllDevices" value={applyToAllDevices ? 'true' : 'false'} />
 
 			<div class="permissions-form__actions">
 				<CwButton
+					id="location-permissions-add-button"
 					type="submit"
 					variant="primary"
 					loading={submitting}

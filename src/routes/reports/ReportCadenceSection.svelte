@@ -16,18 +16,21 @@
 		<div class="report-entry-card">
 			<div class="report-switch-grid">
 				<CwSwitch
+					id="report-cadence-day-switch"
 					checked={cadence.end_of_day}
 					label={m.reports_create_schedule_day_label()}
 					description={m.reports_create_schedule_day_description()}
 					onchange={(checked) => (cadence.end_of_day = checked)}
 				/>
 				<CwSwitch
+					id="report-cadence-week-switch"
 					checked={cadence.end_of_week}
 					label={m.reports_create_schedule_week_label()}
 					description={m.reports_create_schedule_week_description()}
 					onchange={(checked) => (cadence.end_of_week = checked)}
 				/>
 				<CwSwitch
+					id="report-cadence-month-switch"
 					checked={cadence.end_of_month}
 					label={m.reports_new_cadence_month_label()}
 					description={m.reports_new_cadence_month_description()}
@@ -37,15 +40,10 @@
 
 			<div class="report-field-grid">
 				<CwInput
+					id="report-cadence-utc-offset-input"
 					label={m.reports_new_cadence_utc_offset()}
 					type="numeric"
 					bind:value={cadence.utc_offset}
-				/>
-				<CwSwitch
-					checked={cadence.is_active}
-					label={m.reports_new_cadence_active_label()}
-					description={m.reports_new_cadence_active_description()}
-					onchange={(checked) => (cadence.is_active = checked)}
 				/>
 			</div>
 		</div>

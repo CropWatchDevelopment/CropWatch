@@ -126,6 +126,7 @@
 
 <AppPage width="lg">
 	<CwButton
+		id="device-create-back-button"
 		variant="secondary"
 		size="sm"
 		onclick={() =>
@@ -136,6 +137,7 @@
 
 	<CwCard title={m.devices_create_page_title()} elevated>
 		<form
+			id="device-create-form"
 			method="POST"
 			use:enhance={() => {
 				submitting = true;
@@ -169,11 +171,12 @@
 					</AppNotice>
 				{/if}
 
-				<input type="hidden" name="location_id" value={fields.location_id} />
+				<input id="device-create-location-id-input" type="hidden" name="location_id" value={fields.location_id} />
 
 				<!-- Basic info -->
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwInput
+						id="device-create-dev-eui-input"
 						name="dev_eui"
 						type="devEui"
 						label={m.devices_dev_eui_label()}
@@ -184,6 +187,7 @@
 					/>
 
 					<CwInput
+						id="device-create-name-input"
 						name="name"
 						label={m.devices_device_name_label()}
 						required
@@ -192,6 +196,7 @@
 					/>
 
 					<CwDropdown
+						id="device-create-type-select"
 						name="type"
 						label={m.devices_device_type_label()}
 						required
@@ -201,6 +206,7 @@
 					/>
 
 					<CwInput
+						id="device-create-group-input"
 						name="group"
 						label={m.common_group()}
 						placeholder={m.devices_group_placeholder()}
@@ -208,6 +214,7 @@
 					/>
 
 					<CwInput
+						id="device-create-tti-name-input"
 						name="tti_name"
 						label={m.devices_tti_device_id_label()}
 						maxlength={TTI_DEVICE_ID_MAX_LENGTH}
@@ -215,7 +222,7 @@
 						bind:value={fields.tti_name}
 					/>
 
-					<input type="hidden" name="upload_interval" />
+					<input id="device-create-upload-interval-input" type="hidden" name="upload_interval" />
 				</div>
 
 				<!-- Deployment -->
@@ -224,6 +231,7 @@
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwInput
+						id="device-create-lat-input"
 						name="lat"
 						type="numeric"
 						label={m.locations_latitude_optional()}
@@ -232,6 +240,7 @@
 					/>
 
 					<CwInput
+						id="device-create-long-input"
 						name="long"
 						type="numeric"
 						label={m.locations_longitude_optional()}
@@ -255,6 +264,7 @@
 
 				<AppActionRow>
 					<CwButton
+						id="device-create-cancel-button"
 						type="button"
 						variant="ghost"
 						onclick={() =>
@@ -262,7 +272,7 @@
 					>
 						{m.action_cancel()}
 					</CwButton>
-					<CwButton type="submit" variant="primary" loading={submitting}>
+					<CwButton id="device-create-submit-button" type="submit" variant="primary" loading={submitting}>
 						{m.devices_create_submit()}
 					</CwButton>
 				</AppActionRow>

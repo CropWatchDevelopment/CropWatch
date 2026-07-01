@@ -61,6 +61,7 @@
 		<p class="auth-subtitle">{m.auth_login_subtitle()}</p>
 
 		<form
+			id="login-form"
 			method="POST"
 			class="auth-form"
 			use:enhance={async ({ formData, cancel }) => {
@@ -111,6 +112,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_email_label()}</span>
 				<CwInput
+					id="login-email-input"
 					bind:value={username}
 					class="auth-input"
 					name="email"
@@ -124,6 +126,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_password_label()}</span>
 				<CwInput
+					id="login-password-input"
 					bind:value={password}
 					onchange={() => passwordStrengthCheck(password)}
 					class="auth-input"
@@ -136,6 +139,7 @@
 			</label>
 			<span class="flex flex-row"></span>
 			<CwButton
+				id="login-submit-button"
 				class="auth-primary"
 				type="submit"
 				variant="primary"
@@ -151,6 +155,7 @@
 			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<div class="action-grid">
 				<a
+					id="login-create-account-link"
 					class="auth-button-link auth-button-link--secondary"
 					href={redirectPath
 						? `${resolve('/auth/create-account')}?redirect=${encodeURIComponent(redirectPath)}`
@@ -160,6 +165,7 @@
 				</a>
 
 				<a
+					id="login-forgot-password-link"
 					class="auth-button-link auth-button-link--secondary"
 					href={redirectPath
 						? `${resolve('/auth/forgot-password')}?redirect=${encodeURIComponent(redirectPath)}`

@@ -67,7 +67,7 @@
 </script>
 
 {#key permissionsKey}
-	<CwDataTable labels={cwDataTableLabels()}
+	<CwDataTable id="location-edit-permissions-table" labels={cwDataTableLabels()}
 		{loadData}
 		rowKey="id"
 		rowActionsHeader="Actions"
@@ -82,6 +82,7 @@
 			{#if col.key === 'permission_level'}
 				{#if editingPermissionId === row.id}
 					<CwDropdown
+						id={`location-edit-permissions-row-${row.id}-level-select`}
 						options={getPermissionLevelOptions()}
 						bind:value={row.permission_level}
 						placeholder={m.locations_choose_permission_level()}
@@ -97,12 +98,14 @@
 			<span class="flex flex-row gap-2">
 				{#if editingPermissionId === row.id}
 					<CwButton
+						id={`location-edit-permissions-row-${row.id}-save-button`}
 						variant="primary"
 						onclick={() => {
 							savePermissionLevelUpdate(row);
 						}}>{m.action_save_changes()}</CwButton
 					>
 					<CwButton
+						id={`location-edit-permissions-row-${row.id}-delete-button`}
 						variant="danger"
 						onclick={() => {
 							selectedRow = row;
@@ -110,6 +113,7 @@
 						}}>{m.action_delete()}</CwButton
 					>
 					<CwButton
+						id={`location-edit-permissions-row-${row.id}-cancel-button`}
 						variant="primary"
 						onclick={() => {
 							selectedRow = null;
@@ -118,6 +122,7 @@
 					>
 				{:else}
 					<CwButton
+						id={`location-edit-permissions-row-${row.id}-edit-button`}
 						variant="primary"
 						onclick={() => {
 							editingPermissionId = row.id;

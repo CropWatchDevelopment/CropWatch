@@ -103,6 +103,7 @@
 </script>
 
 <CwButton
+	id="device-csv-traffic-export-open-button"
 	variant="secondary"
 	size="sm"
 	disabled={disabled || !authToken || !devEui}
@@ -121,6 +122,7 @@
 >
 	<div class="csv-export-dialog">
 		<CwInput
+			id="device-csv-traffic-export-year-input"
 			label={m.devices_export_traffic_label_year()}
 			type="numeric"
 			bind:value={selectedYear}
@@ -130,6 +132,7 @@
 		/>
 
 		<CwInput
+			id="device-csv-traffic-export-month-input"
 			label={m.devices_export_traffic_label_month()}
 			type="numeric"
 			bind:value={selectedMonth}
@@ -143,11 +146,11 @@
 		{/if}
 	</div>
 	{#snippet actions()}
-		<CwButton variant="secondary" disabled={exporting} onclick={closeDialog}>
+		<CwButton id="device-csv-traffic-export-cancel-button" variant="secondary" disabled={exporting} onclick={closeDialog}>
 			<Icon src={NO_ICON} alt="" class="h-4 w-4" />
 			{m.action_cancel()}
 		</CwButton>
-		<CwButton variant="primary" loading={exporting} onclick={handleCsvDownload}>
+		<CwButton id="device-csv-traffic-export-download-button" variant="primary" loading={exporting} onclick={handleCsvDownload}>
 			<Icon src={DOWNLOAD_ICON} alt="" class="h-4 w-4" />
 			{m.action_download()} CSV
 		</CwButton>

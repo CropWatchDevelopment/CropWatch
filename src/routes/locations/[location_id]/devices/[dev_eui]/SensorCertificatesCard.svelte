@@ -54,6 +54,7 @@
 				</div>
 
 				<form
+					id="device-certificates-sensor-form"
 					method="GET"
 					action={resolve(
 						'/locations/[location_id]/devices/[dev_eui]/settings/libellus-certificates/[sensor_key]',
@@ -67,6 +68,7 @@
 					class="certificate-download-form"
 				>
 					<CwButton
+						id="device-certificates-sensor-download-button"
 						type="submit"
 						variant="primary"
 						size="sm"
@@ -94,12 +96,13 @@
 			</div>
 
 			<form
+				id="device-certificates-series-form"
 				method="GET"
 				action={seriesCertificateDownloadPath}
 				target="_blank"
 				class="certificate-download-form"
 			>
-				<CwButton type="submit" variant="primary" size="sm">
+				<CwButton id="device-certificates-series-download-button" type="submit" variant="primary" size="sm">
 					<Icon src={DOWNLOAD_ICON} />
 				</CwButton>
 			</form>

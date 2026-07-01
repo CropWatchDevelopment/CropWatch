@@ -2,15 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { buildLogoutPath } from '$lib/utils/auth-redirect';
-	import {
-		CwHeader,
-		CwProfileMenu,
-		CwThemePicker,
-		type CwSideNavMode
-	} from '@cropwatchdevelopment/cwui';
+	import { CwHeader, CwProfileMenu, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
 	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
 	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
 
@@ -51,12 +45,6 @@
 	{/snippet}
 
 	{#snippet actions()}
-		<!-- <div class="app-header__actions-group">
-			<div class="app-header__utility-group">
-				<LanguageSwitcher compact />
-				<CwThemePicker />
-			</div>
-		</div> -->
 		<CwProfileMenu
 			class="app-header__profile-menu"
 			name={profileMenuName}
@@ -121,20 +109,6 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-	}
-
-	.app-header__actions-group,
-	.app-header__utility-group {
-		display: flex;
-		align-items: center;
-		gap: var(--cw-space-2);
-		min-width: 0;
-	}
-
-	@media (max-width: 1023px) {
-		.app-header__utility-group {
-			display: none;
-		}
 	}
 
 	@media (max-width: 639px) {

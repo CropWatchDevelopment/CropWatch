@@ -6,6 +6,8 @@
 	interface Props {
 		children?: Snippet;
 		width?: AppPageWidth;
+		/** Vertical placement when the page content is shorter than the viewport. */
+		align?: 'top' | 'center';
 		class?: string;
 	}
 
@@ -16,10 +18,13 @@
 		full: 'none'
 	};
 
-	let { children, width = 'xl', class: className = '' }: Props = $props();
+	let { children, width = 'xl', align = 'top', class: className = '' }: Props = $props();
 </script>
 
-<section class={`app-page ${className}`} style={`--app-page-max-width:${maxWidthBySize[width]};`}>
+<section
+	class={`app-page ${align === 'center' ? 'app-page--center' : ''} ${className}`}
+	style={`--app-page-max-width:${maxWidthBySize[width]};`}
+>
 	<div class="app-page__shell">
 		{#if children}
 			{@render children()}
@@ -45,6 +50,13 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--cw-space-4);
+	}
+
+	/* Center short content in the viewport; overflow-safe (tall content still
+	   scrolls from the top because the auto margins collapse when space runs out). */
+	.app-page--center .app-page__shell {
+		flex: 0 0 auto;
+		margin-block: auto;
 	}
 
 	@media (min-width: 640px) {
