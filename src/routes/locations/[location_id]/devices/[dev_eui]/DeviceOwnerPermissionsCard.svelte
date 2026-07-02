@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { AppNotice } from '$lib/components/layout';
 	import { getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwDropdown, CwSeparator } from '@cropwatchdevelopment/cwui';
@@ -158,9 +159,6 @@
 												? m.devices_choose_valid_permission_level()
 												: undefined)}
 									/>
-									{#if ownerForm?.fieldErrors?.permissionLevel}
-										<p class="field-error">{ownerForm.fieldErrors.permissionLevel}</p>
-									{/if}
 								</div>
 
 								<CwButton
@@ -175,18 +173,15 @@
 							</div>
 
 							{#if ownerForm?.fieldErrors?.targetUserEmail}
-								<p class="field-error permission-feedback">
-									{ownerForm.fieldErrors.targetUserEmail}
-								</p>
+								<AppNotice tone="danger">
+									<p>{ownerForm.fieldErrors.targetUserEmail}</p>
+								</AppNotice>
 							{/if}
 
 							{#if ownerForm?.message}
-								<p
-									class:feedback-success={ownerForm.success}
-									class="form-feedback permission-feedback"
-								>
-									{ownerForm.message}
-								</p>
+								<AppNotice tone={ownerForm.success ? 'success' : 'danger'}>
+									<p>{ownerForm.message}</p>
+								</AppNotice>
 							{/if}
 						</form>
 					</div>
