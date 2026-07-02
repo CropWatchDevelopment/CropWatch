@@ -20,12 +20,13 @@
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardLocationGroup, DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { formatSensorValue, isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 	import {
-		formatSensorValue,
-		isDisplayableColumn,
-		labelFor,
-		type SensorFormat
-	} from '$lib/sensor-labels';
+		convertSensorValue,
+		formatSensorMeasurement,
+		QUANTITY_BY_FIELD,
+		resolveDisplayUnit
+	} from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
@@ -246,7 +247,7 @@
 		const col = row.device_type.primary_data_v2;
 		if (!col || col === '-') return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
-		return { ...readingProps(def.format, def.unit, row.latest?.primary), icon: def.icon };
+		return { ...readingProps(col, row.latest?.primary), icon: def.icon };
 	}
 
 	function secondaryProps(row: DashboardRow) {
@@ -254,7 +255,7 @@
 		if (!col || col === '' || col === '-')
 			return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
-		return { ...readingProps(def.format, def.unit, row.latest?.secondary), icon: def.icon };
+		return { ...readingProps(col, row.latest?.secondary), icon: def.icon };
 	}
 
 	// A non-empty `error_status` on the device row means the sensor has reported a
@@ -269,16 +270,31 @@
 			.filter(([col, value]) => isDisplayableColumn(col) && value !== null && value !== undefined)
 			.map(([col, value]) => {
 				const def = labelFor(col);
-				return { col, def, formatted: formatSensorValue(value, def.format) };
+				if (QUANTITY_BY_FIELD[col]) {
+					const fm = formatSensorMeasurement(col, value, app.preferences);
+					return { col, def, valueDisplay: fm.valueDisplay, unit: fm.unit };
+				}
+				const v = formatSensorValue(value, def.format);
+				return { col, def, valueDisplay: v.display, unit: def.unit };
 			});
 	}
 
-	function readingProps(format: SensorFormat, unit: string, raw: unknown) {
-		const v = formatSensorValue(raw, format);
-		if (format === 'boolean') {
+	// Convert unit-bearing numeric metrics to the user's preference; booleans and
+	// unmapped columns keep the canonical sensor-labels unit.
+	function readingProps(col: string, raw: unknown) {
+		const def = labelFor(col);
+		const v = formatSensorValue(raw, def.format);
+		if (def.format === 'boolean') {
 			return { value: null, unit: '', label: v.display };
 		}
-		return { value: v.numeric, unit, label: undefined };
+		if (QUANTITY_BY_FIELD[col] && typeof v.numeric === 'number') {
+			return {
+				value: convertSensorValue(col, v.numeric, app.preferences),
+				unit: resolveDisplayUnit(col, app.preferences),
+				label: undefined
+			};
+		}
+		return { value: v.numeric, unit: def.unit, label: undefined };
 	}
 
 	$effect(() => {
@@ -396,13 +412,13 @@
 								<p class="dashboard-cards__details-empty">{m.dashboard_no_data_yet()}</p>
 							{:else}
 								<dl class="dashboard-cards__details-list">
-									{#each detailRows as { col, def, formatted } (col)}
+									{#each detailRows as { col, def, valueDisplay, unit } (col)}
 										{#if def.label() != 'created_at'}
 											<div class="dashboard-cards__details-row">
 												<dt>{def.label()}</dt>
 												<dd>
-													{formatted.display}
-													<small><sup>{def.unit ? ` ${def.unit}` : ''}</sup></small>
+													{valueDisplay}
+													<small><sup>{unit ? ` ${unit}` : ''}</sup></small>
 												</dd>
 											</div>
 										{/if}

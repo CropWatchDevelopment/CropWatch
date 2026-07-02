@@ -6,7 +6,7 @@ import type { IRule } from './interfaces/rule.interface';
 import type { Profile } from './interfaces/profile.interface';
 import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
 import type { RuleTemplateDto, TriggeredRulesCountResponse } from './api/api.service';
-import type { LocationDto } from './api/api.dtos';
+import type { LocationDto, PreferencesDto } from './api/api.dtos';
 
 const DEVICE_STALE_MINUTES = 10;
 const deviceAlarms = createCwAlarmScheduler();
@@ -15,6 +15,7 @@ const app = createAppContext();
 
 export interface AppContext {
 	profile?: Profile;
+	preferences?: PreferencesDto;
 	session: IJWT | null;
 	devices: IDevice[];
 	deviceGroups?: string[];
@@ -35,6 +36,7 @@ export const appContextKey = Symbol('appContext');
 
 export const defaultAppContext: AppContext = {
 	profile: undefined,
+	preferences: undefined,
 	session: null,
 	devices: [],
 	deviceStatuses: { online: 0, offline: 0 },

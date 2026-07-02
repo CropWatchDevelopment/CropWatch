@@ -20,7 +20,7 @@
 	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
 	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
 	import { buildLoginPath } from '$lib/utils/auth-redirect';
-	import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
+	import type { DeviceStatusSummary, PreferencesDto, RuleTemplateDto } from '$lib/api/api.dtos';
 	import type { IJWT } from '$lib/interfaces/jwt.interface';
 	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
@@ -39,6 +39,7 @@
 		session?: IJWT | null;
 		authToken?: string | null;
 		profile?: Profile | undefined;
+		preferences?: PreferencesDto | undefined;
 		overview?: {
 			deviceStatuses: DeviceStatusSummary;
 			triggeredRules: RuleTemplateDto[];
@@ -56,6 +57,7 @@
 		app.session = routeData.session ?? null;
 		app.accessToken = routeData.authToken ?? undefined;
 		app.profile = routeData.profile ?? undefined;
+		app.preferences = routeData.preferences ?? undefined;
 		app.deviceStatuses = routeData.overview?.deviceStatuses ?? { online: 0, offline: 0 };
 		app.triggeredRules = routeData.overview?.triggeredRules ?? [];
 		app.triggeredRulesCount = routeData.overview?.triggeredRulesCount ?? 0;

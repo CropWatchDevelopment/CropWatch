@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { AppPage } from '$lib/components/layout';
 	import { afterNavigate } from '$app/navigation';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { isRelayTable, resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import { readApiErrorMessage } from '$lib/api/api-error';
@@ -54,6 +55,7 @@
 	let { data }: PageProps = $props();
 
 	const toast = useCwToast();
+	const app = getAppContext();
 
 	function handleRelayConfirmationResolved(result: RelayVerificationResult): void {
 		if (result.matched) {
@@ -130,7 +132,7 @@
 			: historicalData
 	);
 	let displayCurrentRecord = $derived(displayLatestData ?? displayHistoricalData[0] ?? null);
-	let chartSeries = $derived(buildSensorChartSeries(displayHistoricalData));
+	let chartSeries = $derived(buildSensorChartSeries(displayHistoricalData, app.preferences));
 	let isTrafficDevice = $derived(data.device?.cw_device_type.name === '[CROPWATCH] Nvidia Jetson');
 	let rangeOptions = $derived(getRangeOptions());
 	let lastUpdatedAt = $derived(readCreatedAt(displayCurrentRecord));

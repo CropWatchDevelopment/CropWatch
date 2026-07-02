@@ -31,8 +31,12 @@
 		cwVpdChartLabels,
 		cwDliCardLabels
 	} from '$lib/i18n/cwuiLabels';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+
+	const app = getAppContext();
 
 	// Shared label set so every CwStatCard renders translated stat rows.
 	const statLabels: CwStatCardLabels = {
@@ -98,12 +102,12 @@
 
 	// ---- Columns ---------------------------------------------------------------
 
-	const columns: CwColumnDef<SoilRow>[] = [
+	let columns = $derived<CwColumnDef<SoilRow>[]>([
 		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
 		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
 		{ key: 'moisture', header: m.rule_subject_soil_moisture(), sortable: true, width: '9rem' },
-		{ key: 'ec', header: 'EC (dS/cm)', sortable: true, width: '9rem' }
-	];
+		{ key: 'ec', header: `EC (${resolveDisplayUnit('ec', app.preferences)})`, sortable: true, width: '9rem' }
+	]);
 
 	// ---- Derived state ---------------------------------------------------------
 
@@ -116,8 +120,13 @@
 		ph: Number(latestData?.ph) || 0
 	});
 
-	let temperatureStats = $derived(computeStats(rows.map((r) => r.temperature_c)));
+	// Stats are computed on converted values so min/avg/max/stdDev are all in the
+	// display unit; the unit label comes from the same resolver.
+	let temperatureStats = $derived(
+		computeStats(rows.map((r) => convertSensorValue('temperature_c', r.temperature_c, app.preferences)))
+	);
 	let soilMoistureStats = $derived(computeStats(rows.map((r) => r.moisture)));
+	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
 
 	// Re-key the table when the underlying row set changes so CwDataTable
 	// re-runs loadData for the new date range instead of showing stale rows.
@@ -192,7 +201,7 @@
 		<CwStatCard
 			title={m.rule_subject_temperature()}
 			stats={temperatureStats}
-			unit="°C"
+			unit={temperatureUnit}
 			accentColor="var(--cw-danger-500)"
 			labels={statLabels}
 		/>
@@ -206,7 +215,10 @@
 		/>
 
 		<CwCard title="EC" subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.ec.toFixed(2)}<span>dS/cm</span></p>
+			{@const ecKpi = formatSensorMeasurement('ec', latest.ec, app.preferences, {
+				maximumFractionDigits: 2
+			})}
+			<p class="kpi-value">{ecKpi.valueDisplay}<span>{ecKpi.unit}</span></p>
 		</CwCard>
 
 		{#if latest.ph > 0}
@@ -254,11 +266,13 @@
 						{#if col.key === 'created_at'}
 							{new Date(row.created_at).toLocaleString()}
 						{:else if col.key === 'temperature_c'}
-							{row.temperature_c.toFixed(2)} °C
+							{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences).display}
 						{:else if col.key === 'moisture'}
-							{row.moisture.toFixed(2)} %
+							{formatSensorMeasurement('moisture', row.moisture, app.preferences).display}
 						{:else if col.key === 'ec'}
-							{row.ec.toFixed(2)} dS/cm
+							{formatSensorMeasurement('ec', row.ec, app.preferences, {
+								maximumFractionDigits: 2
+							}).display}
 						{:else}
 							{defaultValue}
 						{/if}

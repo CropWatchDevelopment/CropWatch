@@ -7,6 +7,7 @@
 	import type { DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatSensorValue, labelFor } from '$lib/sensor-labels';
+	import { formatSensorMeasurement, QUANTITY_BY_FIELD } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 
@@ -21,20 +22,27 @@
 
 	const app = getAppContext();
 
+	// Convert unit-bearing numeric metrics to the user's preference; other columns
+	// (booleans, counts, unmapped fields) keep the canonical sensor-labels rendering.
+	function renderMetric(col: string, value: unknown): string {
+		const def = labelFor(col);
+		if (QUANTITY_BY_FIELD[col]) {
+			return `${def.label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`;
+		}
+		const v = formatSensorValue(value, def.format);
+		return `${def.label()}: ${v.display}${def.unit ? ` ${def.unit}` : ''}`;
+	}
+
 	function renderPrimary(row: DashboardRow): string {
 		const col = row.device_type.primary_data_v2;
 		if (!col || col === '-') return '—';
-		const def = labelFor(col);
-		const v = formatSensorValue(row.latest?.primary, def.format);
-		return `${def.label()}: ${v.display}${def.unit ? ` ${def.unit}` : ''}`;
+		return renderMetric(col, row.latest?.primary);
 	}
 
 	function renderSecondary(row: DashboardRow): string {
 		const col = row.device_type.secondary_data_v2;
 		if (!col || col === '' || col === '-') return '—';
-		const def = labelFor(col);
-		const v = formatSensorValue(row.latest?.secondary, def.format);
-		return `${def.label()}: ${v.display}${def.unit ? ` ${def.unit}` : ''}`;
+		return renderMetric(col, row.latest?.secondary);
 	}
 
 	const columns: CwColumnDef<DashboardRow>[] = [

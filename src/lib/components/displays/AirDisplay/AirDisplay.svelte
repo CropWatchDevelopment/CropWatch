@@ -11,7 +11,8 @@
 		type CwHeatmapDataPoint,
 		type CwStatCardData,
 		type CwTableQuery,
-		type CwTableResult
+		type CwTableResult,
+		type CwWindSpeedUnit
 	} from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
@@ -24,6 +25,10 @@
 	import { parseAirNotesResponse } from './utils/air-notes';
 	import Icon from '$lib/components/Icon.svelte';
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
+
+	const app = getAppContext();
 
 	const HEATMAP_FALLBACK_DAYS = 1;
 	const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -58,12 +63,13 @@
 		if (co2Values.length === 0) {
 			return { min: 0, max: 0, avg: 0, median: 0, stdDev: 0, count: 0, lastReading: 0, trend: 'up' };
 		}
-		const sorted = [...co2Values].sort((a, b) => a - b);
+		// Convert first so every stat is in the display unit.
+		const values = co2Values.map((value) => convertSensorValue('co2', value, app.preferences));
+		const sorted = [...values].sort((a, b) => a - b);
 		const mid = Math.floor(sorted.length / 2);
 		const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-		const mean = co2Values.reduce((sum, value) => sum + value, 0) / co2Values.length;
-		const variance =
-			co2Values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / co2Values.length;
+		const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+		const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
 		// Most-recent row that actually carries CO2 (historicalData is newest-first).
 		const lastWithCo2 = historicalData.find(
 			(row) => Number.isFinite(Number(row.co2)) && Number(row.co2) > 0
@@ -74,8 +80,12 @@
 			avg: mean,
 			median,
 			stdDev: Math.sqrt(variance),
-			count: co2Values.length,
-			lastReading: lastWithCo2 ? Number(lastWithCo2.co2) : sorted[sorted.length - 1],
+			count: values.length,
+			lastReading: convertSensorValue(
+				'co2',
+				lastWithCo2 ? Number(lastWithCo2.co2) : co2Values[co2Values.length - 1],
+				app.preferences
+			),
 			trend: 'up'
 		};
 	});
@@ -91,6 +101,20 @@
 			Number.isFinite(windDirection) &&
 			windSpeed !== null &&
 			Number.isFinite(windSpeed)
+	);
+	// CwWindCompass wants its own unit union ('knots', not 'kt'); the speed we pass
+	// is already converted to that unit.
+	const WIND_COMPASS_UNIT: Record<string, CwWindSpeedUnit> = {
+		m_s: 'm/s',
+		km_h: 'km/h',
+		mph: 'mph',
+		kt: 'knots'
+	};
+	let windCompassUnit = $derived<CwWindSpeedUnit>(
+		WIND_COMPASS_UNIT[app.preferences?.wind_speed_unit ?? 'm_s'] ?? 'm/s'
+	);
+	let windSpeedDisplay = $derived(
+		windSpeed !== null ? convertSensorValue('wind_speed', windSpeed, app.preferences) : null
 	);
 
 	function toAirRows(raw: Record<string, unknown>[]): AirRow[] {
@@ -131,34 +155,34 @@
 	});
 	let tableKey = $derived(`${rowSetKey}:${tableRevision}`);
 
+	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
+	let co2Unit = $derived(resolveDisplayUnit('co2', app.preferences));
 	let latestTemperature: CwStatCardData = $derived.by(() => {
+		// Convert first so every stat (incl. stdDev/range) is in the display unit.
+		const temps = historicalData.map((row) =>
+			convertSensorValue('temperature_c', Number(row.temperature_c) || 0, app.preferences)
+		);
+		if (temps.length === 0) {
+			return { min: 0, max: 0, avg: 0, median: 0, stdDev: 0, count: 0, lastReading: 0, trend: 'up' };
+		}
+		const sorted = [...temps].sort((a, b) => a - b);
+		const mean = temps.reduce((sum, value) => sum + value, 0) / temps.length;
+		const variance = temps.reduce((sum, value) => sum + (value - mean) ** 2, 0) / temps.length;
+		const mid = Math.floor(sorted.length / 2);
+		const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 		return {
-			min: historicalData.reduce(
-				(min, row) => Math.min(min, Number(row.temperature_c) || 0),
-				Infinity
+			min: sorted[0],
+			max: sorted[sorted.length - 1],
+			avg: mean,
+			median,
+			stdDev: Math.sqrt(variance),
+			count: temps.length,
+			// historicalData is newest-first.
+			lastReading: convertSensorValue(
+				'temperature_c',
+				Number(historicalData.at(0)?.temperature_c) || 0,
+				app.preferences
 			),
-			max: historicalData.reduce(
-				(max, row) => Math.max(max, Number(row.temperature_c) || 0),
-				-Infinity
-			),
-			avg:
-				historicalData.reduce((sum, row) => sum + (Number(row.temperature_c) || 0), 0) /
-				historicalData.length,
-			median: (() => {
-				const temps = historicalData
-					.map((row) => Number(row.temperature_c) || 0)
-					.sort((a, b) => a - b);
-				const mid = Math.floor(temps.length / 2);
-				return temps.length % 2 !== 0 ? temps[mid] : (temps[mid - 1] + temps[mid]) / 2;
-			})(),
-			stdDev: (() => {
-				const temps = historicalData.map((row) => Number(row.temperature_c) || 0);
-				const mean = temps.reduce((sum, value) => sum + value, 0) / temps.length;
-				const variance = temps.reduce((sum, value) => sum + (value - mean) ** 2, 0) / temps.length;
-				return Math.sqrt(variance);
-			})(),
-			count: historicalData.length,
-			lastReading: historicalData.length > 0 ? Number(historicalData.at(0)?.temperature_c) || 0 : 0,
 			trend: 'up'
 		};
 	});
@@ -206,9 +230,9 @@
 			{
 				key: 'temperature',
 				label: m.rule_subject_temperature(),
-				unit: '°C',
+				unit: resolveDisplayUnit('temperature_c', app.preferences),
 				colors: ['#0ea5e9', '#84cc16', '#f97316'],
-				value: (row) => row.temperature_c
+				value: (row) => convertSensorValue('temperature_c', row.temperature_c, app.preferences)
 			},
 			{
 				key: 'humidity',
@@ -222,11 +246,11 @@
 			metrics.push({
 				key: 'co2',
 				label: m.rule_subject_co2(),
-				unit: 'ppm',
+				unit: resolveDisplayUnit('co2', app.preferences),
 				colors: ['#84cc16', '#f59e0b', '#dc2626'],
 				// CO2 is sent on only ~1 of 3 uplinks, so most rows carry no reading
 				// (co2 === 0). Omit those so the heatmap shows gaps, not fake-low cells.
-				value: (row) => (row.co2 > 0 ? row.co2 : null)
+				value: (row) => (row.co2 > 0 ? convertSensorValue('co2', row.co2, app.preferences) : null)
 			});
 		}
 		return metrics;
@@ -333,7 +357,7 @@
 		<CwStatCard
 			title={m.display_temperature()}
 			stats={latestTemperature}
-			unit="°C"
+			unit={temperatureUnit}
 			accentColor="var(--cw-danger-500)"
 			labels={{
 				min: m.stat_min(),
@@ -388,7 +412,7 @@
 					clickToCollapse: m.stat_collapse()
 				}}
 				stats={latestCo2}
-				unit="ppm"
+				unit={co2Unit}
 				accentColor="purple"
 			/>
 		{/if}
@@ -422,8 +446,8 @@
 			{#if hasWind}
 				<CwWindCompass
 					direction={windDirection}
-					speed={windSpeed}
-					unit="m/s"
+					speed={windSpeedDisplay}
+					unit={windCompassUnit}
 					labels={cwWindCompassLabels()}
 				/>
 			{/if}
@@ -445,11 +469,11 @@
 							{#if col.key === 'created_at'}
 								{new Date(row.created_at).toLocaleString()}
 							{:else if col.key === 'temperature_c'}
-								{row.temperature_c.toFixed(2)} °C
+								{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences).display}
 							{:else if col.key === 'humidity'}
-								{row.humidity.toFixed(2)} %
+								{formatSensorMeasurement('humidity', row.humidity, app.preferences).display}
 							{:else if col.key === 'co2'}
-								{row.co2} ppm
+								{formatSensorMeasurement('co2', row.co2, app.preferences).display}
 							{:else if col.key === 'alerts'}
 								{#if row.alerts && row.alerts.length > 0}
 									❌

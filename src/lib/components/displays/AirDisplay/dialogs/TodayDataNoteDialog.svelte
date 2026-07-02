@@ -15,6 +15,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { formatSensorValue, isDisplayableColumn, labelFor } from '$lib/sensor-labels';
+	import { formatSensorMeasurement, QUANTITY_BY_FIELD } from '$lib/units';
 	import { AppNotice } from '$lib/components/layout';
 	import type { Note } from '../interfaces/note.interface';
 	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
@@ -86,6 +87,9 @@
 			.slice(0, 4)
 			.map(([col, value]) => {
 				const def = labelFor(col);
+				if (QUANTITY_BY_FIELD[col]) {
+					return `${def.label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`;
+				}
 				const formatted = formatSensorValue(value, def.format);
 				const unit = def.unit ? ` ${def.unit}` : '';
 				return `${def.label()}: ${formatted.display}${unit}`;

@@ -3,6 +3,8 @@ import type { RelayStateSnapshot, RelayVerificationResult } from '$lib/devices/r
 import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
 import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
+import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
+import type { PreferencesDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { SvelteDate } from 'svelte/reactivity';
 import {
@@ -202,7 +204,10 @@ function toChartValue(value: unknown): number | null {
  * telemetry rows — i.e. every data item the sensor reports. Labels and units
  * come from the shared `$lib/sensor-labels` lookup so they match the dashboard.
  */
-export function buildSensorChartSeries(rows: TelemetryRow[]): CwResponsiveLineSeries[] {
+export function buildSensorChartSeries(
+	rows: TelemetryRow[],
+	preferences?: PreferencesDto | null
+): CwResponsiveLineSeries[] {
 	if (rows.length === 0) return [];
 
 	// Discover plottable columns across every row (a column may be null early on).
@@ -234,7 +239,7 @@ export function buildSensorChartSeries(rows: TelemetryRow[]): CwResponsiveLineSe
 			// reading-to-reading line connect.
 			const value = toChartValue(row[column]);
 			if (value === null) continue;
-			data.push({ t: timestamp, v: value });
+			data.push({ t: timestamp, v: convertSensorValue(column, value, preferences) });
 		}
 		data.sort((left, right) => left.t - right.t);
 		if (data.length === 0) return;
@@ -244,7 +249,7 @@ export function buildSensorChartSeries(rows: TelemetryRow[]): CwResponsiveLineSe
 		series.push({
 			id: column,
 			label: labelInfo.label(),
-			unit: labelInfo.unit,
+			unit: resolveDisplayUnit(column, preferences),
 			color,
 			gradient: gradient ?? false,
 			data,

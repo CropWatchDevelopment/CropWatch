@@ -13,11 +13,14 @@
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { formatSensorMeasurement } from '$lib/units';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+
+	const app = getAppContext();
 
 	// ---- Water-specific row shape ----------------------------------------------
 
@@ -63,6 +66,22 @@
 		spo2: Number(latestData?.spo2) || 0
 	});
 
+	const tempKpi = $derived(
+		formatSensorMeasurement('temperature_c', latest.temperature_c, app.preferences, {
+			maximumFractionDigits: 1
+		})
+	);
+	const depthKpi = $derived(
+		formatSensorMeasurement('deapth_cm', latest.depth_cm, app.preferences, {
+			maximumFractionDigits: 1
+		})
+	);
+	const pressureKpi = $derived(
+		formatSensorMeasurement('pressure', latest.pressure, app.preferences, {
+			maximumFractionDigits: 1
+		})
+	);
+
 	// ---- Table loader ----------------------------------------------------------
 
 	let tableLoading = $state(false);
@@ -105,15 +124,15 @@
 	<!-- KPI cards -->
 	<div class="kpi-grid">
 		<CwCard title={m.display_water_temperature()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.temperature_c.toFixed(1)}<span>°C</span></p>
+			<p class="kpi-value">{tempKpi.valueDisplay}<span>{tempKpi.unit}</span></p>
 		</CwCard>
 
 		<CwCard title={m.display_depth()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.depth_cm.toFixed(1)}<span>cm</span></p>
+			<p class="kpi-value">{depthKpi.valueDisplay}<span>{depthKpi.unit}</span></p>
 		</CwCard>
 
 		<CwCard title={m.rule_subject_pressure()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.pressure.toFixed(1)}</p>
+			<p class="kpi-value">{pressureKpi.valueDisplay}<span>{pressureKpi.unit}</span></p>
 		</CwCard>
 
 		<CwCard title={m.rule_subject_spo2()} subtitle={m.display_latest_reading()} elevated>
@@ -128,9 +147,15 @@
 					{#if col.key === 'created_at'}
 						{new Date(row.created_at).toLocaleString()}
 					{:else if col.key === 'temperature_c'}
-						{row.temperature_c.toFixed(2)} °C
+						{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences).display}
 					{:else if col.key === 'depth_cm'}
-						{row.depth_cm.toFixed(1)} cm
+						{formatSensorMeasurement('deapth_cm', row.depth_cm, app.preferences, {
+							maximumFractionDigits: 1
+						}).display}
+					{:else if col.key === 'pressure'}
+						{formatSensorMeasurement('pressure', row.pressure, app.preferences, {
+							maximumFractionDigits: 1
+						}).display}
 					{:else}
 						{defaultValue}
 					{/if}

@@ -63,6 +63,7 @@ async function loadOverviewData(apiServiceInstance: ApiService): Promise<{
 
 export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 	let profile;
+	let preferences;
 	let overview = {
 		deviceStatuses: EMPTY_DEVICE_STATUSES,
 		triggeredRules: [] as RuleTemplateDto[],
@@ -75,8 +76,9 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 			authToken: locals.jwtString
 		});
 
-		const [profileResult, overviewResult] = await Promise.allSettled([
+		const [profileResult, preferencesResult, overviewResult] = await Promise.allSettled([
 			apiServiceInstance.getUserProfile(),
+			apiServiceInstance.getPreferences(),
 			loadOverviewData(apiServiceInstance)
 		]);
 
@@ -84,6 +86,12 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 			profile = profileResult.value;
 		} else {
 			console.error('Failed to fetch authenticated user:', profileResult.reason);
+		}
+
+		if (preferencesResult.status === 'fulfilled') {
+			preferences = preferencesResult.value;
+		} else {
+			console.error('Failed to fetch preferences:', preferencesResult.reason);
 		}
 
 		if (overviewResult.status === 'fulfilled') {
@@ -97,6 +105,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 		session: locals.jwt ?? null,
 		authToken: locals.jwtString ?? null,
 		profile,
+		preferences,
 		overview
 	};
 };
