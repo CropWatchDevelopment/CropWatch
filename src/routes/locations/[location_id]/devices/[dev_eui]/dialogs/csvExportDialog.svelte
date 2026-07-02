@@ -219,8 +219,18 @@
 		{/if}
 	</div>
 	{#snippet actions()}
-		<CwButton id="device-csv-export-cancel-button" variant="secondary" disabled={exporting} onclick={closeDialog}>Cancel</CwButton>
-		<CwButton id="device-csv-export-download-button" variant="primary" loading={exporting} onclick={handleCsvDownload}>
+		<CwButton
+			id="device-csv-export-cancel-button"
+			variant="secondary"
+			disabled={exporting}
+			onclick={closeDialog}>Cancel</CwButton
+		>
+		<CwButton
+			id="device-csv-export-download-button"
+			variant="primary"
+			loading={exporting}
+			onclick={handleCsvDownload}
+		>
 			{m.action_download()} CSV
 		</CwButton>
 	{/snippet}

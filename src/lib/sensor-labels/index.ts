@@ -12,7 +12,12 @@ export interface SensorLabel {
 }
 
 const SENSOR_LABELS: Record<string, SensorLabel> = {
-	temperature_c: { label: () => m.sensor_temperature(), unit: '°C', icon: 'thermo', format: 'number' },
+	temperature_c: {
+		label: () => m.sensor_temperature(),
+		unit: '°C',
+		icon: 'thermo',
+		format: 'number'
+	},
 	humidity: { label: () => m.sensor_humidity(), unit: '%', icon: 'drop', format: 'number' },
 	moisture: { label: () => m.sensor_moisture(), unit: '%', icon: 'drop', format: 'number' },
 	co2: { label: () => m.sensor_co2(), unit: 'ppm', icon: 'co2', format: 'integer' },
@@ -61,7 +66,10 @@ export function formatSensorValue(
 	if (format === 'boolean') {
 		const truthy =
 			value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
-		return { display: truthy ? m.sensor_value_on() : m.sensor_value_off(), numeric: truthy ? 1 : 0 };
+		return {
+			display: truthy ? m.sensor_value_on() : m.sensor_value_off(),
+			numeric: truthy ? 1 : 0
+		};
 	}
 
 	const n = typeof value === 'number' ? value : Number(value);

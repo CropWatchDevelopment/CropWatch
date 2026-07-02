@@ -84,8 +84,16 @@
 	}
 
 	let actionOptions: ActionOption[] = $derived([
-		{ label: `Relay 1 ON for ${onTimeSeconds} seconds`, value: 'ro1_on_timed', isReversable: false },
-		{ label: `Relay 2 ON for ${onTimeSeconds} seconds`, value: 'ro2_on_timed', isReversable: false },
+		{
+			label: `Relay 1 ON for ${onTimeSeconds} seconds`,
+			value: 'ro1_on_timed',
+			isReversable: false
+		},
+		{
+			label: `Relay 2 ON for ${onTimeSeconds} seconds`,
+			value: 'ro2_on_timed',
+			isReversable: false
+		},
 		{
 			label: `Both relays ON for ${onTimeSeconds} seconds`,
 			value: 'both_on_timed',
@@ -175,7 +183,7 @@
 	<input
 		type="checkbox"
 		id="revertOnReset"
-		class="w-5 h-5 disabled:cursor-not-allowed disabled:opacity-50"
+		class="h-5 w-5 disabled:cursor-not-allowed disabled:opacity-50"
 		bind:checked={resultRevertOnReset}
 		disabled={!isReversable}
 	/>

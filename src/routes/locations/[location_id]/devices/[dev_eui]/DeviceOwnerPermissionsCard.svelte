@@ -120,9 +120,24 @@
 								};
 							}}
 						>
-							<input id={`device-owner-permissions-row-${row.key}-owner-key-input`} type="hidden" name="ownerKey" value={row.key} />
-							<input id={`device-owner-permissions-row-${row.key}-email-input`} type="hidden" name="targetUserEmail" value={row.email} />
-							<input id={`device-owner-permissions-row-${row.key}-permission-level-input`} type="hidden" name="permissionLevel" value={row.permissionLevel} />
+							<input
+								id={`device-owner-permissions-row-${row.key}-owner-key-input`}
+								type="hidden"
+								name="ownerKey"
+								value={row.key}
+							/>
+							<input
+								id={`device-owner-permissions-row-${row.key}-email-input`}
+								type="hidden"
+								name="targetUserEmail"
+								value={row.email}
+							/>
+							<input
+								id={`device-owner-permissions-row-${row.key}-permission-level-input`}
+								type="hidden"
+								name="permissionLevel"
+								value={row.permissionLevel}
+							/>
 
 							<div class="permission-user flex items-center justify-center">
 								<p class="text-xl">{row.name} ({row.email})</p>

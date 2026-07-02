@@ -197,7 +197,11 @@
 		const types: number[] = [];
 		for (const devEui of selectedDevEuis) {
 			const deviceType = devices.find((device) => device.dev_eui === devEui)?.type;
-			if (typeof deviceType === 'number' && Number.isFinite(deviceType) && !types.includes(deviceType)) {
+			if (
+				typeof deviceType === 'number' &&
+				Number.isFinite(deviceType) &&
+				!types.includes(deviceType)
+			) {
 				types.push(deviceType);
 			}
 		}
@@ -229,7 +233,12 @@
 
 		try {
 			const api = new ApiService({ authToken });
-			const payload = buildSaveRequest(fields, selectedDevEuis, alertPointsValue, selectedDeviceTypeId);
+			const payload = buildSaveRequest(
+				fields,
+				selectedDevEuis,
+				alertPointsValue,
+				selectedDeviceTypeId
+			);
 
 			if (mode === 'edit' && initial) {
 				await api.updateReportTemplate(initial.id, payload);
@@ -276,7 +285,11 @@
 	</AppNotice>
 {/if}
 
-<CwCard title={m.reports_new_step_template()} subtitle={m.reports_new_step_template_subtitle()} elevated>
+<CwCard
+	title={m.reports_new_step_template()}
+	subtitle={m.reports_new_step_template_subtitle()}
+	elevated
+>
 	<AppFormStack padded>
 		<CwInput
 			id="report-form-name-input"
@@ -365,7 +378,12 @@
 	<AppFormStack padded>
 		<CwSeparator />
 		<AppActionRow>
-			<CwButton id="report-form-cancel-button" variant="ghost" onclick={() => goto(resolve('/reports'))} disabled={submitting}>
+			<CwButton
+				id="report-form-cancel-button"
+				variant="ghost"
+				onclick={() => goto(resolve('/reports'))}
+				disabled={submitting}
+			>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton

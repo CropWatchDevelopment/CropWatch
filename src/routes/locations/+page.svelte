@@ -74,12 +74,19 @@
 </script>
 
 <AppPage>
-	<CwButton id="locations-back-button" variant="secondary" size="sm" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton
+		id="locations-back-button"
+		variant="secondary"
+		size="sm"
+		onclick={() => goto(backHref(page.url, resolve('/')))}
+	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.locations_all_title()} elevated>
-		<CwDataTable id="locations-table" labels={cwDataTableLabels()}
+		<CwDataTable
+			id="locations-table"
+			labels={cwDataTableLabels()}
 			{columns}
 			{loadData}
 			{loading}
@@ -90,13 +97,22 @@
 			rowActionsHeader={m.common_actions()}
 		>
 			{#snippet toolbarActions()}
-				<CwButton id="locations-add-button" variant="primary" onclick={() => goto(resolve('/locations/create'))}>
+				<CwButton
+					id="locations-add-button"
+					variant="primary"
+					onclick={() => goto(resolve('/locations/create'))}
+				>
 					<Icon src={ADD_ICON} alt={m.locations_create_title()} />
 				</CwButton>
 			{/snippet}
 
 			{#snippet rowActions(row: LocationDto)}
-				<CwButton id={`locations-row-${row.location_id}-view-button`} size="md" variant="info" onclick={() => handleViewLocation(row)}>
+				<CwButton
+					id={`locations-row-${row.location_id}-view-button`}
+					size="md"
+					variant="info"
+					onclick={() => handleViewLocation(row)}
+				>
 					<Icon src={EYE_ICON} alt={m.action_view()} />
 				</CwButton>
 			{/snippet}

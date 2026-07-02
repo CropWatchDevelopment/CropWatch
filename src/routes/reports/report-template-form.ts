@@ -7,7 +7,11 @@ import type {
 	ReportTemplateScheduleInput
 } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
-import type { CwAlertPointCondition, CwAlertPointRule, CwAlertPointsValue } from '@cropwatchdevelopment/cwui';
+import type {
+	CwAlertPointCondition,
+	CwAlertPointRule,
+	CwAlertPointsValue
+} from '@cropwatchdevelopment/cwui';
 import {
 	DEFAULT_REPORT_DATA_PULL_INTERVAL,
 	normalizeReportDataPullInterval,
@@ -390,7 +394,12 @@ export function buildValidationIssues(
 		issues.push(m.reports_new_validation_devices_required());
 	}
 
-	if (draft.cadence.is_active && !draft.cadence.end_of_week && !draft.cadence.end_of_day && !draft.cadence.end_of_month) {
+	if (
+		draft.cadence.is_active &&
+		!draft.cadence.end_of_week &&
+		!draft.cadence.end_of_day &&
+		!draft.cadence.end_of_month
+	) {
 		issues.push(m.reports_new_validation_cadence_required());
 	}
 

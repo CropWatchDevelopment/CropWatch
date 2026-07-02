@@ -129,8 +129,7 @@
 		id="device-create-back-button"
 		variant="secondary"
 		size="sm"
-		onclick={() =>
-			goto(resolve('/locations/[location_id]', { location_id: locationId }))}
+		onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 	>
 		&larr; {m.action_back()}
 	</CwButton>
@@ -171,7 +170,12 @@
 					</AppNotice>
 				{/if}
 
-				<input id="device-create-location-id-input" type="hidden" name="location_id" value={fields.location_id} />
+				<input
+					id="device-create-location-id-input"
+					type="hidden"
+					name="location_id"
+					value={fields.location_id}
+				/>
 
 				<!-- Basic info -->
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -267,12 +271,16 @@
 						id="device-create-cancel-button"
 						type="button"
 						variant="ghost"
-						onclick={() =>
-							goto(resolve('/locations/[location_id]', { location_id: locationId }))}
+						onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
 					>
 						{m.action_cancel()}
 					</CwButton>
-					<CwButton id="device-create-submit-button" type="submit" variant="primary" loading={submitting}>
+					<CwButton
+						id="device-create-submit-button"
+						type="submit"
+						variant="primary"
+						loading={submitting}
+					>
 						{m.devices_create_submit()}
 					</CwButton>
 				</AppActionRow>

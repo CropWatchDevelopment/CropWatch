@@ -41,8 +41,7 @@
 
 	const PAGE_SIZE = 20;
 
-	let { filters, cardLayout = 'grid' }: { filters: Filters; cardLayout?: CardLayout } =
-		$props();
+	let { filters, cardLayout = 'grid' }: { filters: Filters; cardLayout?: CardLayout } = $props();
 
 	const app = getAppContext();
 
@@ -434,18 +433,18 @@
 									{/if}
 									<!-- END OF LAST SEEN -->
 								</dl>
-								<span class="w-full flex flex-row gap-1">
-								{#if row.device_type.data_table_v2 === 'cw_air_data'}
-								<TodayDataNoteDialog devEui={row.dev_eui} />
-								{/if}
-								<CwButton
-									variant="secondary"
-									class="w-full"
-									loading={loading}
-									onclick={() => GoToDetails(row)}
-								>
-									Details
-								</CwButton>
+								<span class="flex w-full flex-row gap-1">
+									{#if row.device_type.data_table_v2 === 'cw_air_data'}
+										<TodayDataNoteDialog devEui={row.dev_eui} />
+									{/if}
+									<CwButton
+										variant="secondary"
+										class="w-full"
+										{loading}
+										onclick={() => GoToDetails(row)}
+									>
+										Details
+									</CwButton>
 								</span>
 							{/if}
 						</CwSensorCard>

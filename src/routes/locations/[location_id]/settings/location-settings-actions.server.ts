@@ -150,8 +150,8 @@ export const addPermission: Actions['addPermission'] = async ({
 	const formData = await request.formData();
 	const values: AddPermissionFormValues = {
 		newUserEmail: readString(formData.get('newUserEmail')),
-		permission_level: Number.parseInt(readString(formData.get('permission_level')), 10) ||
-			PermissionLevel.DISABLED,
+		permission_level:
+			Number.parseInt(readString(formData.get('permission_level')), 10) || PermissionLevel.DISABLED,
 		applyToAllDevices: formData.get('applyToAllDevices') === 'true'
 	};
 

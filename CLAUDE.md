@@ -6,16 +6,16 @@ This document is the authoritative reference for how pages, forms, and component
 
 ## Tech stack
 
-| Concern | Tool |
-|---|---|
-| Framework | SvelteKit 2 + Svelte 5 (runes mode) |
-| Language | TypeScript |
-| Styles | Tailwind CSS 4 + design-token CSS vars |
-| UI library | `@cropwatchdevelopment/cwui` (`CwXxx` components) |
-| Layout helpers | `$lib/components/layout` (`AppXxx` components) |
-| i18n | Paraglide — always `import { m } from '$lib/paraglide/messages.js'` |
-| API | `ApiService` from `$lib/api/api.service` |
-| Auth | Supabase JWT; token available as `locals.jwtString` server-side |
+| Concern        | Tool                                                                |
+| -------------- | ------------------------------------------------------------------- |
+| Framework      | SvelteKit 2 + Svelte 5 (runes mode)                                 |
+| Language       | TypeScript                                                          |
+| Styles         | Tailwind CSS 4 + design-token CSS vars                              |
+| UI library     | `@cropwatchdevelopment/cwui` (`CwXxx` components)                   |
+| Layout helpers | `$lib/components/layout` (`AppXxx` components)                      |
+| i18n           | Paraglide — always `import { m } from '$lib/paraglide/messages.js'` |
+| API            | `ApiService` from `$lib/api/api.service`                            |
+| Auth           | Supabase JWT; token available as `locals.jwtString` server-side     |
 
 ---
 
@@ -24,8 +24,9 @@ This document is the authoritative reference for how pages, forms, and component
 Every authenticated app page must use `<AppPage>` as its root. Never use a raw `<div>` container with hard-coded padding instead.
 
 ```svelte
-<AppPage width="lg">     <!-- md | lg | xl | full -->
-  ...page content...
+<AppPage width="lg">
+	<!-- md | lg | xl | full -->
+	...page content...
 </AppPage>
 ```
 
@@ -38,9 +39,10 @@ Every authenticated app page must use `<AppPage>` as its root. Never use a raw `
 Every page that can be reached by navigating "into" something (create, edit, settings, detail) must show a back button as the **first child** of `<AppPage>`, before any cards or content.
 
 **Always use:**
+
 ```svelte
 <CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/target-route'))}>
-  &larr; {m.action_back()}
+	&larr; {m.action_back()}
 </CwButton>
 ```
 
@@ -77,13 +79,13 @@ Use SvelteKit server actions (`export const actions` in `+page.server.ts`) for a
 ```ts
 // +page.server.ts
 export const actions: Actions = {
-  default: async ({ request, locals, fetch }) => {
-    const authToken = locals.jwtString ?? null;
-    if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
+	default: async ({ request, locals, fetch }) => {
+		const authToken = locals.jwtString ?? null;
+		if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
 
-    const formData = await request.formData();
-    // validate, call ApiService, return fail() or { success: true }
-  }
+		const formData = await request.formData();
+		// validate, call ApiService, return fail() or { success: true }
+	}
 };
 ```
 
@@ -95,18 +97,18 @@ When a form has complex dynamic client-side state that cannot be expressed as fl
 
 ```ts
 async function handleSubmit() {
-  if (!isFormValid || submitting) return;
-  submitting = true;
-  try {
-    const api = new ApiService({ authToken: data.authToken });
-    await api.doSomething(payload);
-    toast.add({ tone: 'success', message: m.thing_success() });
-    goto(resolve('/target'));
-  } catch {
-    toast.add({ tone: 'danger', message: m.thing_failed() });
-  } finally {
-    submitting = false;
-  }
+	if (!isFormValid || submitting) return;
+	submitting = true;
+	try {
+		const api = new ApiService({ authToken: data.authToken });
+		await api.doSomething(payload);
+		toast.add({ tone: 'success', message: m.thing_success() });
+		goto(resolve('/target'));
+	} catch {
+		toast.add({ tone: 'danger', message: m.thing_failed() });
+	} finally {
+		submitting = false;
+	}
 }
 ```
 
@@ -153,6 +155,7 @@ Wrap all form fields in `<AppFormStack padded>` inside a `<CwCard>`. Use `<AppAc
 ```
 
 **Rules:**
+
 - `<AppFormStack padded>` — always `padded` on the root stack inside a card; the padding comes from the component, not from the card itself.
 - `<AppActionRow>` — always the last item in a form stack; cancel on the left, primary action on the right.
 - Cancel button uses `variant="ghost"`, primary action uses `variant="primary"`.
@@ -164,16 +167,16 @@ Wrap all form fields in `<AppFormStack padded>` inside a `<CwCard>`. Use `<AppAc
 
 Use `<AppNotice>` from `$lib/components/layout` — never a raw `<p class="form-error">`.
 
-| Situation | Tone |
-|---|---|
-| Server action validation failure | `danger` |
+| Situation                                     | Tone      |
+| --------------------------------------------- | --------- |
+| Server action validation failure              | `danger`  |
 | User needs to fix something before proceeding | `warning` |
-| Informational (e.g., no devices found) | `neutral` |
-| Summary / preview | `info` |
+| Informational (e.g., no devices found)        | `neutral` |
+| Summary / preview                             | `info`    |
 
 ```svelte
 <AppNotice tone="danger">
-  <p>{form.error}</p>
+	<p>{form.error}</p>
 </AppNotice>
 ```
 
@@ -190,8 +193,11 @@ jump to the definition and back for no gain. Inline the expression at the call s
 ```svelte
 <!-- ❌ single-use trivial wrapper -->
 <script>
-  function statusFor(row) { return row.latest ? 'online' : 'loading'; }
+	function statusFor(row) {
+		return row.latest ? 'online' : 'loading';
+	}
 </script>
+
 <CwSensorCard status={statusFor(row)} />
 
 <!-- ✅ inlined -->
@@ -228,7 +234,7 @@ Use `$derived` for computed read-only values:
 
 ```ts
 let isFormValid = $derived(name.trim().length > 0 && email.trim().length > 0);
-let deviceOptions = $derived(data.devices.map(d => ({ label: d.name, value: d.dev_eui })));
+let deviceOptions = $derived(data.devices.map((d) => ({ label: d.name, value: d.dev_eui })));
 ```
 
 Use `$derived.by(() => { ... })` when the computation needs intermediate variables.
@@ -276,11 +282,11 @@ import { ApiServiceError } from '$lib/api/api.service';
 import { readApiErrorMessage } from '$lib/api/api-error';
 
 try {
-  await api.doSomething();
+	await api.doSomething();
 } catch (err) {
-  const payload = err instanceof ApiServiceError ? err.payload : err;
-  const status  = err instanceof ApiServiceError ? err.status  : 500;
-  return fail(status, { error: readApiErrorMessage(payload, m.generic_error()) });
+	const payload = err instanceof ApiServiceError ? err.payload : err;
+	const status = err instanceof ApiServiceError ? err.status : 500;
+	return fail(status, { error: readApiErrorMessage(payload, m.generic_error()) });
 }
 ```
 
@@ -292,25 +298,25 @@ try {
 
 A `+page.server.ts` load function has one of two jobs — pick the right one:
 
-| Page type | Server load job | Client job |
-|---|---|---|
-| **List page** (CwDataTable) | Auth-gate only — return `{}` | `loadData` callback fetches, filters, sorts |
-| **Detail / create / edit page** | Fetch the record(s) the page renders | Bind to `data.*`, submit via action |
+| Page type                       | Server load job                      | Client job                                  |
+| ------------------------------- | ------------------------------------ | ------------------------------------------- |
+| **List page** (CwDataTable)     | Auth-gate only — return `{}`         | `loadData` callback fetches, filters, sorts |
+| **Detail / create / edit page** | Fetch the record(s) the page renders | Bind to `data.*`, submit via action         |
 
 Never pre-fetch list data server-side that the `CwDataTable.loadData` callback will immediately re-fetch client-side. The server work is wasted and the data is thrown away.
 
 ```ts
 // ✅ List page — server does nothing except exist (auth gate is in hooks/layout)
 export const load: PageServerLoad = async () => {
-  return {};
+	return {};
 };
 
 // ✅ Detail page — server fetches the specific record
 export const load: PageServerLoad = async ({ params, locals, fetch }) => {
-  const authToken = locals.jwtString ?? null;
-  if (!authToken) return { record: null };
-  const api = new ApiService({ fetchFn: fetch, authToken });
-  return { record: await api.getRecord(params.id).catch(() => null) };
+	const authToken = locals.jwtString ?? null;
+	if (!authToken) return { record: null };
+	const api = new ApiService({ fetchFn: fetch, authToken });
+	return { record: await api.getRecord(params.id).catch(() => null) };
 };
 ```
 
@@ -403,15 +409,16 @@ The only exception is debug/developer-only messages (`console.error`, comments).
 
 ## Layout component reference
 
-| Component | Purpose |
-|---|---|
-| `<AppPage width="...">` | Full-page wrapper; sets max-width and padding |
-| `<AppFormStack padded>` | Vertical flex stack for form fields; `padded` adds inner spacing |
-| `<AppActionRow>` | Horizontal row for Cancel + Submit buttons, right-aligned |
-| `<AppNotice tone="...">` | Inline feedback box (error, warning, info, success, neutral) |
-| `<AppSection>` | Generic vertical flex section |
+| Component                | Purpose                                                          |
+| ------------------------ | ---------------------------------------------------------------- |
+| `<AppPage width="...">`  | Full-page wrapper; sets max-width and padding                    |
+| `<AppFormStack padded>`  | Vertical flex stack for form fields; `padded` adds inner spacing |
+| `<AppActionRow>`         | Horizontal row for Cancel + Submit buttons, right-aligned        |
+| `<AppNotice tone="...">` | Inline feedback box (error, warning, info, success, neutral)     |
+| `<AppSection>`           | Generic vertical flex section                                    |
 
 Import all from `$lib/components/layout`:
+
 ```ts
 import { AppActionRow, AppFormStack, AppNotice, AppPage, AppSection } from '$lib/components/layout';
 ```
@@ -433,6 +440,7 @@ import { AppActionRow, AppFormStack, AppNotice, AppPage, AppSection } from '$lib
 Pages such as `/reports` and `/rules` that render a `CwDataTable` **must remain vertically scrollable on all devices**. The app shell's `.app-shell__main` is the single scroll container (`overflow: auto`). `AppPage` uses `flex: 1 0 auto` (grow but never shrink) so that tall pages force `.app-shell__main` to scroll rather than compressing the content to fit the viewport.
 
 **Rules:**
+
 - Never change `AppPage`'s flex to `1 1 auto` (shrinkable) — that re-breaks scrolling on every page.
 - Never put `flex-1` or `min-h-0` on a `CwCard` that wraps a data table — it pins the card to viewport height.
 
@@ -457,25 +465,26 @@ The `/` dashboard is a **viewport-fill** page: it fills the full viewport height
 Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolling), the dashboard must override that behaviour with a scoped `:global` style so that `AppPage` and its shell are bounded to viewport height and pass a definite height down the flex chain:
 
 ```svelte
+<AppPage width="full" class="dashboard-page">
+	<div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+		<!-- header (flex-none) + DashboardDeviceTable or DashboardDeviceCards -->
+	</div>
+</AppPage>
+
 <!-- src/routes/+page.svelte -->
 <style>
-  :global(.app-page.dashboard-page),
-  :global(.app-page.dashboard-page .app-page__shell) {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
+	:global(.app-page.dashboard-page),
+	:global(.app-page.dashboard-page .app-page__shell) {
+		flex: 1 1 auto;
+		min-height: 0;
+	}
 </style>
-
-<AppPage width="full" class="dashboard-page">
-  <div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-    <!-- header (flex-none) + DashboardDeviceTable or DashboardDeviceCards -->
-  </div>
-</AppPage>
 ```
 
 **Why this matters — past regression:** Changing `AppPage`'s CSS from `flex: 1 1 auto; min-height: 0` to `flex: 1 0 auto` (no `min-height`) was the correct fix for list-page scrolling, but it silently broke the dashboard because neither the table's internal scroll nor the card view's scroll container received a definite height. The scoped override keeps both modes working without conflict.
 
 **Rules:**
+
 - Never remove the `flex: 1 1 auto; min-height: 0` override from `.app-page.dashboard-page` — doing so will break scrolling in both the table and card views on the dashboard.
 - Never change the global `AppPage` flex back to `flex: 1 1 auto` to "fix" the dashboard — that re-breaks scrolling on every other page.
 - The dashboard's inner wrapper div **must** keep `flex-1 min-h-0 overflow-hidden` so the bounded height is propagated to the child scroll containers.
@@ -485,6 +494,7 @@ Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolli
 ## Checklist for new pages
 
 ### UI
+
 - [ ] Root element is `<AppPage width="...">`
 - [ ] If navigated "into": back button is first child of AppPage, `variant="ghost" size="sm"`
 - [ ] Form fields are wrapped in `<AppFormStack padded>` inside a `<CwCard>`
@@ -495,6 +505,7 @@ Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolli
 - [ ] No raw `<div style="padding: ...">` or hard-coded pixel values outside a `<style>` block
 
 ### Server / data flow
+
 - [ ] `+page.server.ts` uses `PageServerLoad` from `./$types` (not `LayoutServerLoad`)
 - [ ] `ApiService` is always constructed with `{ fetchFn: fetch, authToken }` on the server
 - [ ] List pages return `{}` from `load` — no pre-fetching data the table re-fetches client-side

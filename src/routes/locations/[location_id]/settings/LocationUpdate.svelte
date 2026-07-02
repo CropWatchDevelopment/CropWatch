@@ -25,9 +25,7 @@
 		locationNameValue !== (data.locationName ?? '').trim() ||
 			locationGroupValue !== (data.locationGroup ?? '').trim()
 	);
-	let canSubmitLocation = $derived(
-		!submitting && locationDirty && locationNameValue.length > 0
-	);
+	let canSubmitLocation = $derived(!submitting && locationDirty && locationNameValue.length > 0);
 
 	function getResultMessage(result: ActionResult): string | null {
 		if (result.type !== 'success' && result.type !== 'failure') return null;
@@ -89,7 +87,12 @@
 				required
 				bind:value={locationGroup}
 			/>
-			<input id="location-update-location-id-input" type="hidden" name="location_id" value={data.locationId} />
+			<input
+				id="location-update-location-id-input"
+				type="hidden"
+				name="location_id"
+				value={data.locationId}
+			/>
 			<div class="permissions-form__actions" style="margin-top: 1rem;">
 				<CwButton
 					id="location-update-save-button"

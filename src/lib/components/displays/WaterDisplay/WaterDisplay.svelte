@@ -142,7 +142,14 @@
 
 	{#if !loading && rows.length > 0}
 		<CwCard title={m.display_water_telemetry()} subtitle={m.display_searchable_sortable()} elevated>
-			<CwDataTable labels={cwDataTableLabels()} {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
+			<CwDataTable
+				labels={cwDataTableLabels()}
+				{columns}
+				loadData={loadTableData}
+				loading={tableLoading}
+				rowKey="id"
+				searchable
+			>
 				{#snippet cell(row: WaterRow, col: CwColumnDef<WaterRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
 						{new Date(row.created_at).toLocaleString()}

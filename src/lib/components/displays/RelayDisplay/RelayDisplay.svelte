@@ -464,7 +464,13 @@
 
 	{#if !loading && rows.length > 0}
 		<CwCard title={m.display_relay_history()} subtitle={m.display_state_change_log()} elevated>
-			<CwDataTable labels={cwDataTableLabels()} {columns} loadData={loadTableData} loading={tableLoading} rowKey="id">
+			<CwDataTable
+				labels={cwDataTableLabels()}
+				{columns}
+				loadData={loadTableData}
+				loading={tableLoading}
+				rowKey="id"
+			>
 				{#snippet cell(
 					row: RelayTelemetryRow,
 					col: CwColumnDef<RelayTelemetryRow>,

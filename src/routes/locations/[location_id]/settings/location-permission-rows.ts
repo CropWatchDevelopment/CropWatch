@@ -46,7 +46,8 @@ export function mapLocationOwnersToPermissionRows(
 
 		return {
 			id: owner.id,
-			email: readString(record.email) || readString(record.user_email) || readString(profiles?.email),
+			email:
+				readString(record.email) || readString(record.user_email) || readString(profiles?.email),
 			name:
 				readString(record.name) ||
 				readString(record.full_name) ||

@@ -1,9 +1,5 @@
 import type { Component, SvelteComponent } from 'svelte';
-import type {
-	PendingRelayStates,
-	RelayNumber,
-	RelayTargetState
-} from '$lib/devices/relay-types';
+import type { PendingRelayStates, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 
 /**
  * Common props contract that every device display component must accept.

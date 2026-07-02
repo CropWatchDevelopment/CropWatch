@@ -501,7 +501,10 @@ export class ApiService {
 	}
 
 	public updateEmail(payload: UpdateEmailRequest): Promise<EmailChangeResponse> {
-		return this.request<EmailChangeResponse>(AUTH_EMAIL_ENDPOINT, { method: 'PATCH', body: payload });
+		return this.request<EmailChangeResponse>(AUTH_EMAIL_ENDPOINT, {
+			method: 'PATCH',
+			body: payload
+		});
 	}
 
 	public getPreferences(): Promise<PreferencesDto> {
@@ -509,7 +512,10 @@ export class ApiService {
 	}
 
 	public updatePreferences(payload: UpdatePreferencesRequest): Promise<PreferencesDto> {
-		return this.request<PreferencesDto>(AUTH_PREFERENCES_ENDPOINT, { method: 'PATCH', body: payload });
+		return this.request<PreferencesDto>(AUTH_PREFERENCES_ENDPOINT, {
+			method: 'PATCH',
+			body: payload
+		});
 	}
 
 	public login(payload: LoginRequest): Promise<LoginResponse> {
@@ -1210,13 +1216,10 @@ export class ApiService {
 	public getReportTemplateCommunicationMethods(
 		options: ApiMethodOptions = {}
 	): Promise<CommunicationMethodDto[]> {
-		return this.request<CommunicationMethodDto[]>(
-			REPORT_TEMPLATE_COMMUNICATION_METHODS_ENDPOINT,
-			{
-				method: 'GET',
-				signal: options.signal
-			}
-		);
+		return this.request<CommunicationMethodDto[]>(REPORT_TEMPLATE_COMMUNICATION_METHODS_ENDPOINT, {
+			method: 'GET',
+			signal: options.signal
+		});
 	}
 
 	public getReportFormContext(
@@ -1256,17 +1259,11 @@ export class ApiService {
 		);
 	}
 
-	public deleteReportTemplate(
-		id: number,
-		options: ApiMethodOptions = {}
-	): Promise<{ id: number }> {
-		return this.request<{ id: number }>(
-			replacePathParams(REPORT_TEMPLATE_BY_ID_ENDPOINT, { id }),
-			{
-				method: 'DELETE',
-				signal: options.signal
-			}
-		);
+	public deleteReportTemplate(id: number, options: ApiMethodOptions = {}): Promise<{ id: number }> {
+		return this.request<{ id: number }>(replacePathParams(REPORT_TEMPLATE_BY_ID_ENDPOINT, { id }), {
+			method: 'DELETE',
+			signal: options.signal
+		});
 	}
 
 	public getReportTemplateDownloadUrl(
@@ -1298,10 +1295,9 @@ export class ApiService {
 	}
 
 	public getSubscriptionState(): Promise<SubscriptionStateResponse> {
-		return this.request<SubscriptionStateResponse>(
-			`${PAYMENTS_ENDPOINT}/subscriptions/state`,
-			{ method: 'GET' }
-		);
+		return this.request<SubscriptionStateResponse>(`${PAYMENTS_ENDPOINT}/subscriptions/state`, {
+			method: 'GET'
+		});
 	}
 
 	public getLicenses(): Promise<BillingLicense[]> {
@@ -1327,10 +1323,10 @@ export class ApiService {
 	}
 
 	public changeDeviceSeats(payload: { seats: number }): Promise<{ seats: number }> {
-		return this.request<{ seats: number }>(
-			`${PAYMENTS_ENDPOINT}/subscriptions/device/seats`,
-			{ method: 'PATCH', body: payload }
-		);
+		return this.request<{ seats: number }>(`${PAYMENTS_ENDPOINT}/subscriptions/device/seats`, {
+			method: 'PATCH',
+			body: payload
+		});
 	}
 
 	public assignLicense(licenseId: number, devEui: string): Promise<BillingLicense> {

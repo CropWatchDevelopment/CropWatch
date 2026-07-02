@@ -155,7 +155,12 @@
 						bind:value={deviceGroup}
 						error={deviceGroupError || undefined}
 					/>
-					<input id="device-settings-group-hidden-input" type="hidden" name="group" value={deviceGroupValue} />
+					<input
+						id="device-settings-group-hidden-input"
+						type="hidden"
+						name="group"
+						value={deviceGroupValue}
+					/>
 					{#if deviceGroupError}
 						<p class="field-error">{deviceGroupError}</p>
 					{/if}
@@ -172,7 +177,12 @@
 						bind:value={ttiName}
 						error={ttiNameError || undefined}
 					/>
-					<input id="device-settings-tti-name-hidden-input" type="hidden" name="tti_name" value={ttiNameValue} />
+					<input
+						id="device-settings-tti-name-hidden-input"
+						type="hidden"
+						name="tti_name"
+						value={ttiNameValue}
+					/>
 					{#if ttiNameError}
 						<p class="field-error">{ttiNameError}</p>
 					{/if}
@@ -193,7 +203,12 @@
 						bind:value={location_id}
 						error={locationError || undefined}
 					/>
-					<input id="device-settings-location-hidden-input" type="hidden" name="location_id" bind:value={location_id} />
+					<input
+						id="device-settings-location-hidden-input"
+						type="hidden"
+						name="location_id"
+						bind:value={location_id}
+					/>
 					{#if locationError}
 						<p class="field-error">{locationError}</p>
 					{/if}

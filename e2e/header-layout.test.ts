@@ -47,8 +47,7 @@ async function readHeaderMetrics(page: Page) {
 				return null;
 			}
 
-			const { x, y, top, right, bottom, left, width, height } =
-				element.getBoundingClientRect();
+			const { x, y, top, right, bottom, left, width, height } = element.getBoundingClientRect();
 			return { x, y, top, right, bottom, left, width, height };
 		}
 

@@ -2,7 +2,13 @@
 	import { AppFormStack, AppNotice } from '$lib/components/layout';
 	import Icon from '$lib/components/Icon.svelte';
 	import { m } from '$lib/paraglide/messages.js';
-	import { CwButton, CwDropdown, CwExpandPanel, CwInput, CwSwitch } from '@cropwatchdevelopment/cwui';
+	import {
+		CwButton,
+		CwDropdown,
+		CwExpandPanel,
+		CwInput,
+		CwSwitch
+	} from '@cropwatchdevelopment/cwui';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import type { DataProcessingScheduleDraft, SelectOption } from './report-template-form';
 
@@ -49,7 +55,13 @@
 					<div>
 						<h3>{m.reports_schedule_entry_heading({ index: String(index + 1) })}</h3>
 					</div>
-					<CwButton id={`report-schedules-${index}-remove-button`} type="button" variant="danger" size="sm" onclick={() => onRemove(schedule.key)}>
+					<CwButton
+						id={`report-schedules-${index}-remove-button`}
+						type="button"
+						variant="danger"
+						size="sm"
+						onclick={() => onRemove(schedule.key)}
+					>
 						{m.action_remove()}
 					</CwButton>
 				</div>
@@ -78,11 +90,21 @@
 				<div class="report-field-grid report-field-grid--two">
 					<label class="report-time-field">
 						<span class="report-time-field__label">{m.reports_schedule_start_time()}</span>
-						<input id={`report-schedules-${index}-start-time-input`} class="report-time-input" type="time" bind:value={schedule.start_time} />
+						<input
+							id={`report-schedules-${index}-start-time-input`}
+							class="report-time-input"
+							type="time"
+							bind:value={schedule.start_time}
+						/>
 					</label>
 					<label class="report-time-field">
 						<span class="report-time-field__label">{m.reports_schedule_end_time()}</span>
-						<input id={`report-schedules-${index}-end-time-input`} class="report-time-input" type="time" bind:value={schedule.end_time} />
+						<input
+							id={`report-schedules-${index}-end-time-input`}
+							class="report-time-input"
+							type="time"
+							bind:value={schedule.end_time}
+						/>
 					</label>
 				</div>
 

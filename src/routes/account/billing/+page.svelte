@@ -313,7 +313,12 @@
 </svelte:head>
 
 <AppPage width="lg">
-	<CwButton id="account-billing-back-button" variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
+	<CwButton
+		id="account-billing-back-button"
+		variant="secondary"
+		size="sm"
+		onclick={() => goto(resolve('/'))}
+	>
 		&larr; {m.action_back()}
 	</CwButton>
 
@@ -364,7 +369,12 @@
 					>
 						{m.billing_base_cancel()}
 					</CwButton>
-					<CwButton id="account-billing-base-manage-button" variant="primary" onclick={openPortal} loading={busy}>
+					<CwButton
+						id="account-billing-base-manage-button"
+						variant="primary"
+						onclick={openPortal}
+						loading={busy}
+					>
 						{m.billing_base_manage()}
 					</CwButton>
 				</AppActionRow>
@@ -373,7 +383,12 @@
 					<p>{m.billing_base_none_notice()}</p>
 				</AppNotice>
 				<AppActionRow>
-					<CwButton id="account-billing-base-subscribe-button" variant="primary" onclick={subscribeBase} loading={busy}>
+					<CwButton
+						id="account-billing-base-subscribe-button"
+						variant="primary"
+						onclick={subscribeBase}
+						loading={busy}
+					>
 						{basePriceLabel
 							? `${m.billing_base_subscribe()} — ${basePriceLabel}${m.billing_per_month()}`
 							: m.billing_base_subscribe()}
@@ -429,7 +444,12 @@
 						bind:value={buyQty}
 						min={1}
 					/>
-					<CwButton id="account-billing-buy-devices-button" variant="primary" onclick={buyDevices} loading={busy}>
+					<CwButton
+						id="account-billing-buy-devices-button"
+						variant="primary"
+						onclick={buyDevices}
+						loading={busy}
+					>
 						{m.billing_buy_action()}
 					</CwButton>
 				</div>
@@ -462,7 +482,11 @@
 							{#if license.devEui}
 								{@const href = deviceHref(license.devEui)}
 								{#if href}
-									<a id={`account-billing-license-${license.id}-device-link`} class="license-link" {href}>{license.deviceName ?? license.devEui}</a>
+									<a
+										id={`account-billing-license-${license.id}-device-link`}
+										class="license-link"
+										{href}>{license.deviceName ?? license.devEui}</a
+									>
 								{:else}
 									<span>{license.deviceName ?? license.devEui}</span>
 								{/if}
@@ -481,7 +505,11 @@
 								{@const lname = deviceLocationName(license.devEui)}
 								{@const lhref = locationHref(license.devEui)}
 								{#if lname && lhref}
-									<a id={`account-billing-license-${license.id}-location-link`} class="license-link license-link--muted" href={lhref}>{lname}</a>
+									<a
+										id={`account-billing-license-${license.id}-location-link`}
+										class="license-link license-link--muted"
+										href={lhref}>{lname}</a
+									>
 								{:else if lname}
 									<span class="billing-muted">{lname}</span>
 								{:else}
@@ -538,7 +566,12 @@
 	</CwCard>
 
 	<AppActionRow>
-		<CwButton id="account-billing-portal-button" variant="ghost" onclick={openPortal} disabled={busy}>{m.billing_portal()}</CwButton>
+		<CwButton
+			id="account-billing-portal-button"
+			variant="ghost"
+			onclick={openPortal}
+			disabled={busy}>{m.billing_portal()}</CwButton
+		>
 	</AppActionRow>
 </AppPage>
 
@@ -547,10 +580,20 @@
 		<p>{m.billing_cancel_body()}</p>
 	{/snippet}
 	{#snippet actions()}
-		<CwButton id="account-billing-cancel-subscription-dismiss-button" variant="ghost" onclick={() => (cancelOpen = false)} disabled={busy}>
+		<CwButton
+			id="account-billing-cancel-subscription-dismiss-button"
+			variant="ghost"
+			onclick={() => (cancelOpen = false)}
+			disabled={busy}
+		>
 			{m.action_cancel()}
 		</CwButton>
-		<CwButton id="account-billing-cancel-subscription-confirm-button" variant="danger" onclick={confirmCancel} loading={busy}>
+		<CwButton
+			id="account-billing-cancel-subscription-confirm-button"
+			variant="danger"
+			onclick={confirmCancel}
+			loading={busy}
+		>
 			{m.billing_cancel_confirm()}
 		</CwButton>
 	{/snippet}
@@ -576,7 +619,12 @@
 		{/if}
 	{/snippet}
 	{#snippet actions()}
-		<CwButton id="account-billing-assign-dismiss-button" variant="ghost" onclick={() => (assignOpen = false)} disabled={busy}>
+		<CwButton
+			id="account-billing-assign-dismiss-button"
+			variant="ghost"
+			onclick={() => (assignOpen = false)}
+			disabled={busy}
+		>
 			{m.action_cancel()}
 		</CwButton>
 		<CwButton
@@ -596,10 +644,20 @@
 		<p>{m.billing_seat_cancel_body()}</p>
 	{/snippet}
 	{#snippet actions()}
-		<CwButton id="account-billing-seat-cancel-dismiss-button" variant="ghost" onclick={() => (seatCancelOpen = false)} disabled={busy}>
+		<CwButton
+			id="account-billing-seat-cancel-dismiss-button"
+			variant="ghost"
+			onclick={() => (seatCancelOpen = false)}
+			disabled={busy}
+		>
 			{m.billing_seat_cancel_keep()}
 		</CwButton>
-		<CwButton id="account-billing-seat-cancel-confirm-button" variant="danger" onclick={confirmSeatCancel} loading={busy}>
+		<CwButton
+			id="account-billing-seat-cancel-confirm-button"
+			variant="danger"
+			onclick={confirmSeatCancel}
+			loading={busy}
+		>
 			{m.billing_seat_cancel_confirm()}
 		</CwButton>
 	{/snippet}

@@ -106,7 +106,12 @@
 		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
 		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
 		{ key: 'moisture', header: m.rule_subject_soil_moisture(), sortable: true, width: '9rem' },
-		{ key: 'ec', header: `EC (${resolveDisplayUnit('ec', app.preferences)})`, sortable: true, width: '9rem' }
+		{
+			key: 'ec',
+			header: `EC (${resolveDisplayUnit('ec', app.preferences)})`,
+			sortable: true,
+			width: '9rem'
+		}
 	]);
 
 	// ---- Derived state ---------------------------------------------------------
@@ -123,7 +128,9 @@
 	// Stats are computed on converted values so min/avg/max/stdDev are all in the
 	// display unit; the unit label comes from the same resolver.
 	let temperatureStats = $derived(
-		computeStats(rows.map((r) => convertSensorValue('temperature_c', r.temperature_c, app.preferences)))
+		computeStats(
+			rows.map((r) => convertSensorValue('temperature_c', r.temperature_c, app.preferences))
+		)
 	);
 	let soilMoistureStats = $derived(computeStats(rows.map((r) => r.moisture)));
 	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
@@ -140,7 +147,13 @@
 	// visualization renders in its no-data state for now.
 
 	const airSeries: CwResponsiveLineSeries[] = [
-		{ id: 'co2', label: m.rule_subject_co2(), unit: 'ppm', color: 'var(--cw-primary-500)', data: [] },
+		{
+			id: 'co2',
+			label: m.rule_subject_co2(),
+			unit: 'ppm',
+			color: 'var(--cw-primary-500)',
+			data: []
+		},
 		{
 			id: 'air_temperature',
 			label: m.rule_subject_temperature(),

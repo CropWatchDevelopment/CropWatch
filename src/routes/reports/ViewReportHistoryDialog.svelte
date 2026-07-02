@@ -101,7 +101,12 @@
 	}
 </script>
 
-<CwButton id={`report-history-${templateId}-open-button`} variant="secondary" size="md" onclick={() => (open = true)}>
+<CwButton
+	id={`report-history-${templateId}-open-button`}
+	variant="secondary"
+	size="md"
+	onclick={() => (open = true)}
+>
 	<Icon src={HISTORY_ICON} alt={m.reports_new_view_history()} />
 </CwButton>
 
@@ -146,7 +151,12 @@
 
 	{#snippet actions()}
 		<div class="report-history__actions">
-			<CwButton id={`report-history-${templateId}-close-button`} variant="secondary" size="md" onclick={() => (open = false)}>
+			<CwButton
+				id={`report-history-${templateId}-close-button`}
+				variant="secondary"
+				size="md"
+				onclick={() => (open = false)}
+			>
 				{m.action_close()}
 			</CwButton>
 		</div>

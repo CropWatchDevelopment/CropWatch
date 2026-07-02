@@ -155,10 +155,7 @@
 					await applyAction(result);
 					if (result.type === 'success') {
 						toast.add({ tone: 'info', message: m.profile_email_sent() });
-					} else if (
-						result.type === 'failure' &&
-						typeof result.data?.emailError === 'string'
-					) {
+					} else if (result.type === 'failure' && typeof result.data?.emailError === 'string') {
 						toast.add({ tone: 'danger', message: result.data.emailError });
 					}
 				};

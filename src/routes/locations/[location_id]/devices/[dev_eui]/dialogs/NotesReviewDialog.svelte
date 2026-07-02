@@ -203,7 +203,13 @@
 	};
 </script>
 
-<CwButton id="device-notes-review-open-button" onclick={openDialog} {disabled} variant="secondary" size="sm">
+<CwButton
+	id="device-notes-review-open-button"
+	onclick={openDialog}
+	{disabled}
+	variant="secondary"
+	size="sm"
+>
 	<Icon src={NOTE_ICON} alt={m.display_view_notes()} />
 	{m.display_view_notes()}
 </CwButton>
@@ -268,7 +274,9 @@
 										<p class="notes-review-dialog__note-body">{entry.note}</p>
 									</div>
 
-									<CwButton id={`device-notes-review-row-${entry.id}-delete-button`} disabled>Delete</CwButton>
+									<CwButton id={`device-notes-review-row-${entry.id}-delete-button`} disabled
+										>Delete</CwButton
+									>
 								</div>
 							</article>
 						{/each}
@@ -293,7 +301,11 @@
 		</CwCalendarScroll>
 	</div>
 	{#snippet actions()}
-		<CwButton id="device-notes-review-close-button" onclick={() => (open = false)} variant="secondary">
+		<CwButton
+			id="device-notes-review-close-button"
+			onclick={() => (open = false)}
+			variant="secondary"
+		>
 			{m.action_close()}
 		</CwButton>
 	{/snippet}

@@ -178,7 +178,11 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton id="rules-back-button" variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton
+		id="rules-back-button"
+		variant="secondary"
+		onclick={() => goto(backHref(page.url, resolve('/')))}
+	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
@@ -242,7 +246,11 @@
 				{/snippet}
 
 				{#snippet toolbarActions()}
-					<CwButton id="rules-add-button" variant="primary" onclick={() => goto(resolve('/rules/create'))}>
+					<CwButton
+						id="rules-add-button"
+						variant="primary"
+						onclick={() => goto(resolve('/rules/create'))}
+					>
 						<Icon src={ADD_ICON} alt={m.rules_new_create_template()} />
 					</CwButton>
 				{/snippet}

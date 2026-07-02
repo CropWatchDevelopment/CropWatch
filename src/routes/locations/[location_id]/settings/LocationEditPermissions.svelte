@@ -67,7 +67,9 @@
 </script>
 
 {#key permissionsKey}
-	<CwDataTable id="location-edit-permissions-table" labels={cwDataTableLabels()}
+	<CwDataTable
+		id="location-edit-permissions-table"
+		labels={cwDataTableLabels()}
 		{loadData}
 		rowKey="id"
 		rowActionsHeader="Actions"

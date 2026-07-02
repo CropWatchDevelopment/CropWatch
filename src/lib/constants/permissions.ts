@@ -31,7 +31,5 @@ export function isAdmin(level: number | null | undefined): boolean {
 }
 
 export function isValidPermissionLevel(level: number): boolean {
-	return (
-		Number.isInteger(level) && level >= MIN_PERMISSION_LEVEL && level <= MAX_PERMISSION_LEVEL
-	);
+	return Number.isInteger(level) && level >= MIN_PERMISSION_LEVEL && level <= MAX_PERMISSION_LEVEL;
 }

@@ -61,7 +61,16 @@
 	let hasCo2 = $derived(co2Values.length > 0);
 	let latestCo2: CwStatCardData = $derived.by(() => {
 		if (co2Values.length === 0) {
-			return { min: 0, max: 0, avg: 0, median: 0, stdDev: 0, count: 0, lastReading: 0, trend: 'up' };
+			return {
+				min: 0,
+				max: 0,
+				avg: 0,
+				median: 0,
+				stdDev: 0,
+				count: 0,
+				lastReading: 0,
+				trend: 'up'
+			};
 		}
 		// Convert first so every stat is in the display unit.
 		const values = co2Values.map((value) => convertSensorValue('co2', value, app.preferences));
@@ -163,7 +172,16 @@
 			convertSensorValue('temperature_c', Number(row.temperature_c) || 0, app.preferences)
 		);
 		if (temps.length === 0) {
-			return { min: 0, max: 0, avg: 0, median: 0, stdDev: 0, count: 0, lastReading: 0, trend: 'up' };
+			return {
+				min: 0,
+				max: 0,
+				avg: 0,
+				median: 0,
+				stdDev: 0,
+				count: 0,
+				lastReading: 0,
+				trend: 'up'
+			};
 		}
 		const sorted = [...temps].sort((a, b) => a - b);
 		const mean = temps.reduce((sum, value) => sum + value, 0) / temps.length;
@@ -469,7 +487,8 @@
 							{#if col.key === 'created_at'}
 								{new Date(row.created_at).toLocaleString()}
 							{:else if col.key === 'temperature_c'}
-								{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences).display}
+								{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences)
+									.display}
 							{:else if col.key === 'humidity'}
 								{formatSensorMeasurement('humidity', row.humidity, app.preferences).display}
 							{:else if col.key === 'co2'}

@@ -74,7 +74,11 @@
 		<input type="hidden" name="theme" value={preferences.theme} />
 
 		<div class="settings-card settings-card--regional">
-			<CwCard title={m.settings_regional_title()} subtitle={m.settings_regional_subtitle()} elevated>
+			<CwCard
+				title={m.settings_regional_title()}
+				subtitle={m.settings_regional_subtitle()}
+				elevated
+			>
 				<AppFormStack padded>
 					<div class="field-grid field-grid--two">
 						<LanguageSwitcher compact class="mr-3" />
@@ -244,7 +248,13 @@
 						>
 							{m.settings_reset()}
 						</CwButton>
-						<CwButton id="settings-save-button" type="submit" variant="primary" loading={saving} disabled={!isDirty}>
+						<CwButton
+							id="settings-save-button"
+							type="submit"
+							variant="primary"
+							loading={saving}
+							disabled={!isDirty}
+						>
 							{m.action_save_changes()}
 						</CwButton>
 					</AppActionRow>

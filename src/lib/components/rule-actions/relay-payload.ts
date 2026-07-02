@@ -45,8 +45,7 @@ export function buildTimedRelayPayload(action: ActionValue, seconds: number): st
 	//   0x10 = RO1 ON,  RO2 OFF
 	//   0x01 = RO1 OFF, RO2 ON
 	//   0x11 = RO1 ON,  RO2 ON
-	const relayState =
-		action === 'ro1_on_timed' ? 0x10 : action === 'ro2_on_timed' ? 0x01 : 0x11;
+	const relayState = action === 'ro1_on_timed' ? 0x10 : action === 'ro2_on_timed' ? 0x01 : 0x11;
 
 	const milliseconds = seconds * 1000;
 

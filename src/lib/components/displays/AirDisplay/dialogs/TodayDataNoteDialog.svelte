@@ -79,10 +79,7 @@
 		return Object.entries(row)
 			.filter(
 				([col, value]) =>
-					col !== 'created_at' &&
-					isDisplayableColumn(col) &&
-					value !== null &&
-					value !== undefined
+					col !== 'created_at' && isDisplayableColumn(col) && value !== null && value !== undefined
 			)
 			.slice(0, 4)
 			.map(([col, value]) => {

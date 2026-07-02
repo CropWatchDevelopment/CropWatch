@@ -1327,7 +1327,8 @@
 		{:else if hourlyRows.length === 0}
 			<p class="traffic-display__supporting-copy">{m.traffic_no_data_today()}</p>
 		{:else}
-			<CwDataTable labels={cwDataTableLabels()}
+			<CwDataTable
+				labels={cwDataTableLabels()}
 				columns={hourlyColumns}
 				loadData={loadHourlyData}
 				loading={tableLoading}

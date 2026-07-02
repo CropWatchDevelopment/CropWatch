@@ -109,7 +109,8 @@
 	});
 </script>
 
-<CwDataTable labels={cwDataTableLabels()}
+<CwDataTable
+	labels={cwDataTableLabels()}
 	{columns}
 	{loadData}
 	filters={tableFilters}

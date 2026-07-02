@@ -157,7 +157,6 @@
 			<Header bind:mode />
 
 			<main class="app-shell__main">{@render children()}</main>
-
 		</div>
 	{:else}
 		<main class="app-shell__main app-shell__main--standalone">{@render children()}</main>

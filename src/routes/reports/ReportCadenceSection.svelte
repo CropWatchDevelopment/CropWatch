@@ -11,7 +11,11 @@
 	let { cadence = $bindable() }: Props = $props();
 </script>
 
-<CwCard title={m.reports_create_schedules_title()} subtitle={m.reports_new_cadence_subtitle()} elevated>
+<CwCard
+	title={m.reports_create_schedules_title()}
+	subtitle={m.reports_new_cadence_subtitle()}
+	elevated
+>
 	<AppFormStack padded>
 		<div class="report-entry-card">
 			<div class="report-switch-grid">
