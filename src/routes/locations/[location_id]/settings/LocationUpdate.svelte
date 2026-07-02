@@ -93,7 +93,7 @@
 				name="location_id"
 				value={data.locationId}
 			/>
-			<div class="permissions-form__actions" style="margin-top: 1rem;">
+			<div class="permissions-form__actions mt-4">
 				<CwButton
 					id="location-update-save-button"
 					type="submit"

@@ -15,8 +15,8 @@
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatDateTime } from '$lib/i18n/format';
-	import { formatSensorValue, isDisplayableColumn, labelFor } from '$lib/sensor-labels';
-	import { formatSensorMeasurement, QUANTITY_BY_FIELD } from '$lib/units';
+	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
+	import { formatSensorMeasurement } from '$lib/units';
 	import { AppNotice } from '$lib/components/layout';
 	import type { Note } from '../interfaces/note.interface';
 	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
@@ -83,15 +83,10 @@
 					col !== 'created_at' && isDisplayableColumn(col) && value !== null && value !== undefined
 			)
 			.slice(0, 4)
-			.map(([col, value]) => {
-				const def = labelFor(col);
-				if (QUANTITY_BY_FIELD[col]) {
-					return `${def.label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`;
-				}
-				const formatted = formatSensorValue(value, def.format);
-				const unit = def.unit ? ` ${def.unit}` : '';
-				return `${def.label()}: ${formatted.display}${unit}`;
-			})
+			.map(
+				([col, value]) =>
+					`${labelFor(col).label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`
+			)
 			.join(' · ');
 	}
 
@@ -223,7 +218,6 @@
 			class="rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
 			onkeydown={handleEditorKeydown}
 			placeholder={m.display_enter_note_here()}
-			style="width: 100%; height: 150px; padding: 0.5rem; font-size: 1rem;"
 			bind:value={noteText}
 			maxlength={NOTE_BODY_MAX_LENGTH}
 		></CwTextArea>
@@ -301,6 +295,15 @@
 		background-color: #1e1e1e;
 		color: #ffffff;
 		border: 1px solid #333333;
+	}
+
+	/* Note editor sizing (was an inline style on the CwTextArea). Anchored to
+	   the dialog wrapper so it outweighs CwTextArea's own field styles. */
+	.today-note-dialog :global(.cw-textarea__field) {
+		width: 100%;
+		height: 150px;
+		padding: 0.5rem;
+		font-size: 1rem;
 	}
 
 	:global(.cw-textarea__field:focus) {

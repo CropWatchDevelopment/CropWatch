@@ -54,32 +54,3 @@ export function labelFor(column: string): SensorLabel {
 export function isDisplayableColumn(column: string): boolean {
 	return !HIDDEN_COLUMNS.has(column);
 }
-
-export function formatSensorValue(
-	value: unknown,
-	format: SensorFormat
-): { display: string; numeric: number | null } {
-	if (value === null || value === undefined) {
-		return { display: '—', numeric: null };
-	}
-
-	if (format === 'boolean') {
-		const truthy =
-			value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
-		return {
-			display: truthy ? m.sensor_value_on() : m.sensor_value_off(),
-			numeric: truthy ? 1 : 0
-		};
-	}
-
-	const n = typeof value === 'number' ? value : Number(value);
-	if (!Number.isFinite(n)) {
-		return { display: String(value), numeric: null };
-	}
-
-	if (format === 'integer') {
-		return { display: Math.round(n).toLocaleString(), numeric: n };
-	}
-
-	return { display: n.toLocaleString(undefined, { maximumFractionDigits: 2 }), numeric: n };
-}

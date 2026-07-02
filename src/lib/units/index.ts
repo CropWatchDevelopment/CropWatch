@@ -13,6 +13,7 @@
  */
 import type { PreferencesDto } from '$lib/api/api.dtos';
 import { formatNumber } from '$lib/i18n/format';
+import { m } from '$lib/paraglide/messages.js';
 import { labelFor } from '$lib/sensor-labels';
 
 export type Quantity =
@@ -225,6 +226,10 @@ function defaultFractionDigits(field: string): number {
  * Format a sensor reading in the user's preferred unit.
  * `preferences` is passed explicitly so this works in components, dialogs, and
  * non-component code alike.
+ *
+ * Boolean-format fields (relay states, smoke/vape detection, …) render as the
+ * localised On/Off words with no unit, so callers never need a separate
+ * formatting path for non-numeric sensors.
  */
 export function formatSensorMeasurement(
 	field: string,
@@ -232,6 +237,16 @@ export function formatSensorMeasurement(
 	preferences?: PreferencesDto | null,
 	options?: { maximumFractionDigits?: number; withUnit?: boolean }
 ): FormattedMeasurement {
+	if (labelFor(field).format === 'boolean') {
+		if (value === null || value === undefined) {
+			return { value: null, unit: '', valueDisplay: '—', display: '—' };
+		}
+		const truthy =
+			value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
+		const word = truthy ? m.sensor_value_on() : m.sensor_value_off();
+		return { value: truthy ? 1 : 0, unit: '', valueDisplay: word, display: word };
+	}
+
 	const unit = resolveDisplayUnit(field, preferences);
 
 	if (value === null || value === undefined) {

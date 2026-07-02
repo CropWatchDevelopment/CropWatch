@@ -21,6 +21,7 @@ import type {
 	CwCalendarScrollLabels,
 	CwDateTimeRangePickerLabels,
 	CwCopyLabels,
+	CwStatCardLabels,
 	CwWindCompassLabels
 } from '@cropwatchdevelopment/cwui';
 
@@ -228,6 +229,23 @@ export function cwWindCompassLabels(): CwWindCompassLabels {
 		srWind: (word, direction, cardinal) => m.cwui_wind_sr_wind({ word, direction, cardinal }),
 		srSpeed: (speed) => m.cwui_wind_sr_speed({ speed }),
 		srBeaufort: (force, label) => m.cwui_wind_sr_beaufort({ force, label })
+	};
+}
+
+export function cwStatCardLabels(): CwStatCardLabels {
+	return {
+		min: m.stat_min(),
+		avg: m.stat_avg(),
+		max: m.stat_max(),
+		count: m.stat_count(),
+		median: m.stat_median(),
+		stdDev: m.stat_stdDev(),
+		range: m.stat_range(),
+		aboveAvg: m.stat_aboveAvg(),
+		belowAvg: m.stat_belowAvg(),
+		atAvg: m.stat_atAvg(),
+		clickToExpand: m.stat_expand(),
+		clickToCollapse: m.stat_collapse()
 	};
 }
 

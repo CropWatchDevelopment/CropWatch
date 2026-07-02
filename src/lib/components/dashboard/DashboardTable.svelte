@@ -8,8 +8,8 @@
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatSensorValue, labelFor } from '$lib/sensor-labels';
-	import { formatSensorMeasurement, QUANTITY_BY_FIELD } from '$lib/units';
+	import { labelFor } from '$lib/sensor-labels';
+	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 
@@ -24,15 +24,10 @@
 
 	const app = getAppContext();
 
-	// Convert unit-bearing numeric metrics to the user's preference; other columns
-	// (booleans, counts, unmapped fields) keep the canonical sensor-labels rendering.
+	// Unit-bearing numeric metrics are converted to the user's preference; other
+	// columns (booleans, counts, unmapped fields) keep their canonical rendering.
 	function renderMetric(col: string, value: unknown): string {
-		const def = labelFor(col);
-		if (QUANTITY_BY_FIELD[col]) {
-			return `${def.label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`;
-		}
-		const v = formatSensorValue(value, def.format);
-		return `${def.label()}: ${v.display}${def.unit ? ` ${def.unit}` : ''}`;
+		return `${labelFor(col).label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`;
 	}
 
 	function renderPrimary(row: DashboardRow): string {

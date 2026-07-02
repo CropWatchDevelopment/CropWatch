@@ -20,13 +20,8 @@
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardLocationGroup, DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatSensorValue, isDisplayableColumn, labelFor } from '$lib/sensor-labels';
-	import {
-		convertSensorValue,
-		formatSensorMeasurement,
-		QUANTITY_BY_FIELD,
-		resolveDisplayUnit
-	} from '$lib/units';
+	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
+	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -258,32 +253,19 @@
 		return Object.entries(details)
 			.filter(([col, value]) => isDisplayableColumn(col) && value !== null && value !== undefined)
 			.map(([col, value]) => {
-				const def = labelFor(col);
-				if (QUANTITY_BY_FIELD[col]) {
-					const fm = formatSensorMeasurement(col, value, app.preferences);
-					return { col, def, valueDisplay: fm.valueDisplay, unit: fm.unit };
-				}
-				const v = formatSensorValue(value, def.format);
-				return { col, def, valueDisplay: v.display, unit: def.unit };
+				const fm = formatSensorMeasurement(col, value, app.preferences);
+				return { col, def: labelFor(col), valueDisplay: fm.valueDisplay, unit: fm.unit };
 			});
 	}
 
-	// Convert unit-bearing numeric metrics to the user's preference; booleans and
-	// unmapped columns keep the canonical sensor-labels unit.
+	// Unit-bearing numeric metrics come back converted to the user's preference;
+	// booleans render as an On/Off label, unmapped columns keep their canonical unit.
 	function readingProps(col: string, raw: unknown) {
-		const def = labelFor(col);
-		const v = formatSensorValue(raw, def.format);
-		if (def.format === 'boolean') {
-			return { value: null, unit: '', label: v.display };
+		const fm = formatSensorMeasurement(col, raw, app.preferences);
+		if (labelFor(col).format === 'boolean') {
+			return { value: null, unit: '', label: fm.valueDisplay };
 		}
-		if (QUANTITY_BY_FIELD[col] && typeof v.numeric === 'number') {
-			return {
-				value: convertSensorValue(col, v.numeric, app.preferences),
-				unit: resolveDisplayUnit(col, app.preferences),
-				label: undefined
-			};
-		}
-		return { value: v.numeric, unit: def.unit, label: undefined };
+		return { value: fm.value, unit: fm.unit, label: undefined };
 	}
 
 	$effect(() => {

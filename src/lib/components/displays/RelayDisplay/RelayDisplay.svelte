@@ -15,11 +15,10 @@
 		CwInput,
 		CwSwitch,
 		type CwColumnDef,
-		type CwTableQuery,
-		type CwTableResult,
 		CwExpandPanel
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
+	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
 	import {
 		MAX_RELAY_PULSE_DURATION_SECONDS,
 		MIN_RELAY_PULSE_DURATION_SECONDS
@@ -279,38 +278,29 @@
 		}
 	}
 
-	async function loadTableData(query: CwTableQuery): Promise<CwTableResult<RelayTelemetryRow>> {
-		tableLoading = true;
-		try {
-			let filtered = [...rows];
+	// Relay-specific sort: timestamps compare as dates, relay states as booleans
+	// (`null` = unknown sorts with "off").
+	const loadTableData = createClientTableLoader<RelayTelemetryRow>(() => rows, {
+		sort: (sortRows, column, direction) => {
+			const dir = direction === 'asc' ? 1 : -1;
+			return [...sortRows].sort((a, b) => {
+				if (column === 'created_at') {
+					return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
+				}
 
-			if (query.sort) {
-				const dir = query.sort.direction === 'asc' ? 1 : -1;
-				filtered.sort((a, b) => {
-					if (query.sort!.column === 'created_at') {
-						return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
-					}
+				if (column === 'relay_1') {
+					return ((a.relay_1 === true ? 1 : 0) - (b.relay_1 === true ? 1 : 0)) * dir;
+				}
 
-					if (query.sort!.column === 'relay_1') {
-						return ((a.relay_1 === true ? 1 : 0) - (b.relay_1 === true ? 1 : 0)) * dir;
-					}
+				if (column === 'relay_2') {
+					return ((a.relay_2 === true ? 1 : 0) - (b.relay_2 === true ? 1 : 0)) * dir;
+				}
 
-					if (query.sort!.column === 'relay_2') {
-						return ((a.relay_2 === true ? 1 : 0) - (b.relay_2 === true ? 1 : 0)) * dir;
-					}
-
-					return String(a[query.sort!.column] ?? '').localeCompare(
-						String(b[query.sort!.column] ?? '')
-					);
-				});
-			}
-
-			const start = Math.max(0, (query.page - 1) * query.pageSize);
-			return { rows: filtered.slice(start, start + query.pageSize), total: filtered.length };
-		} finally {
-			tableLoading = false;
-		}
-	}
+				return String(a[column] ?? '').localeCompare(String(b[column] ?? ''));
+			});
+		},
+		onLoadingChange: (value) => (tableLoading = value)
+	});
 </script>
 
 <div class="relay-display">

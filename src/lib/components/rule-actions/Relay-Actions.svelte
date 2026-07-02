@@ -135,6 +135,11 @@
 	});
 	const serializedResult = $derived(JSON.stringify(result, null, 2));
 
+	// `resultJson` is a two-way `$bindable` prop (RuleTemplateForm does
+	// `bind:resultJson={action.config.recipient}`): the parent seeds it with the
+	// saved JSON on edit and receives every recomputation. A bindable prop cannot
+	// itself be declared `$derived`, so pushing the derived serialisation up
+	// through the binding requires this effect.
 	$effect(() => {
 		resultJson = serializedResult;
 	});

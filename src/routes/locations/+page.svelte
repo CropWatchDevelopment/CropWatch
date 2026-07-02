@@ -20,6 +20,7 @@
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { ApiService } from '$lib/api/api.service';
+	import { sortByColumn } from '$lib/utils/sortByColumn';
 
 	let loading = $state(false);
 	let app = getAppContext();
@@ -29,23 +30,6 @@
 		{ key: 'name', header: m.nav_locations(), sortable: true }
 	];
 
-	function sortLocations(
-		rows: LocationDto[],
-		column: string,
-		direction: 'asc' | 'desc'
-	): LocationDto[] {
-		const dir = direction === 'asc' ? 1 : -1;
-		return [...rows].sort((a, b) => {
-			const aVal = (a as unknown as Record<string, unknown>)[column];
-			const bVal = (b as unknown as Record<string, unknown>)[column];
-			if (aVal == null && bVal == null) return 0;
-			if (aVal == null) return dir;
-			if (bVal == null) return -dir;
-			if (column === 'location_id') return (Number(aVal) - Number(bVal)) * dir;
-			return String(aVal).localeCompare(String(bVal)) * dir;
-		});
-	}
-
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<LocationDto>> {
 		const search = query.search?.trim() || '';
 		const api = new ApiService({ authToken: app.accessToken });
@@ -53,7 +37,10 @@
 		let rows = result.data ?? [];
 
 		if (query.sort) {
-			rows = sortLocations(rows, query.sort.column, query.sort.direction);
+			rows = sortByColumn(rows, query.sort.column, query.sort.direction, {
+				nullsLast: true,
+				numericColumns: ['location_id']
+			});
 		}
 
 		const total = rows.length;

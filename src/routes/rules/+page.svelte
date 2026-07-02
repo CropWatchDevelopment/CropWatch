@@ -21,6 +21,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
+	import { sortByColumn } from '$lib/utils/sortByColumn';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import DeleteRuleTemplateDialog from './DeleteRuleTemplateDialog.svelte';
@@ -64,7 +65,7 @@
 			let rows = templates.filter((template) => !deletedIds.has(template.id)).map(toRow);
 
 			if (query.sort) {
-				rows = sortRows(rows, query.sort.column, query.sort.direction);
+				rows = sortByColumn(rows, query.sort.column, query.sort.direction);
 			}
 
 			const total = rows.length;
@@ -151,25 +152,6 @@
 		return remaining > 0
 			? m.rules_new_summary_more({ summary: visible, count: String(remaining) })
 			: visible;
-	}
-
-	function sortRows(
-		rows: RuleTemplateRow[],
-		column: string,
-		direction: 'asc' | 'desc'
-	): RuleTemplateRow[] {
-		const dir = direction === 'asc' ? 1 : -1;
-
-		return [...rows].sort((a, b) => {
-			const left = (a as unknown as Record<string, unknown>)[column];
-			const right = (b as unknown as Record<string, unknown>)[column];
-
-			if (typeof left === 'number' && typeof right === 'number') {
-				return (left - right) * dir;
-			}
-
-			return String(left ?? '').localeCompare(String(right ?? '')) * dir;
-		});
 	}
 </script>
 

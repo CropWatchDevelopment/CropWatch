@@ -5,18 +5,14 @@
   and a sortable data table.
 -->
 <script lang="ts">
-	import {
-		CwCard,
-		CwDataTable,
-		type CwColumnDef,
-		type CwTableQuery,
-		type CwTableResult
-	} from '@cropwatchdevelopment/cwui';
+	import { CwCard, CwDataTable, type CwColumnDef } from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatSensorMeasurement } from '$lib/units';
+	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import '../display-shared.css';
 
 	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
@@ -86,38 +82,12 @@
 
 	let tableLoading = $state(false);
 
-	async function loadTableData(query: CwTableQuery): Promise<CwTableResult<WaterRow>> {
-		tableLoading = true;
-		try {
-			let filtered = [...rows].reverse();
-
-			if (query.search.trim()) {
-				const search = query.search.trim().toLowerCase();
-				filtered = filtered.filter((r) =>
-					[r.created_at, r.temperature_c, r.depth_cm, r.pressure, r.spo2]
-						.map(String)
-						.join(' ')
-						.toLowerCase()
-						.includes(search)
-				);
-			}
-
-			if (query.sort) {
-				const dir = query.sort.direction === 'asc' ? 1 : -1;
-				filtered.sort((a, b) => {
-					const av = a[query.sort!.column as keyof WaterRow];
-					const bv = b[query.sort!.column as keyof WaterRow];
-					if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-					return String(av).localeCompare(String(bv)) * dir;
-				});
-			}
-
-			const start = Math.max(0, (query.page - 1) * query.pageSize);
-			return { rows: filtered.slice(start, start + query.pageSize), total: filtered.length };
-		} finally {
-			tableLoading = false;
-		}
-	}
+	const loadTableData = createClientTableLoader<WaterRow>(() => rows, {
+		reverse: true,
+		searchText: (r) =>
+			[r.created_at, r.temperature_c, r.depth_cm, r.pressure, r.spo2].map(String).join(' '),
+		onLoadingChange: (value) => (tableLoading = value)
+	});
 </script>
 
 <div class="water-display">
@@ -187,16 +157,5 @@
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 		gap: 1rem;
 	}
-	.kpi-value {
-		margin: 0 0 0.75rem;
-		font-size: clamp(1.45rem, 2.1vw, 2rem);
-		font-weight: 700;
-		color: var(--cw-text-primary);
-	}
-	.kpi-value span {
-		margin-left: 0.35rem;
-		font-size: 0.9rem;
-		font-weight: 500;
-		color: var(--cw-text-muted);
-	}
+	/* .kpi-value styles come from ../display-shared.css */
 </style>

@@ -159,7 +159,6 @@
 			class="rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
 			onkeydown={handleEditorKeydown}
 			placeholder={m.display_enter_note_here()}
-			style="width: 100%; height: 150px; padding: 0.5rem; font-size: 1rem;"
 			bind:value={noteText}
 			maxlength={NOTE_BODY_MAX_LENGTH}
 		></CwTextArea>
@@ -218,6 +217,15 @@
 		background-color: #1e1e1e;
 		color: #ffffff;
 		border: 1px solid #333333;
+	}
+
+	/* Note editor sizing (was an inline style on the CwTextArea). Anchored to
+	   the dialog wrapper so it outweighs CwTextArea's own field styles. */
+	.notes-create-dialog :global(.cw-textarea__field) {
+		width: 100%;
+		height: 150px;
+		padding: 0.5rem;
+		font-size: 1rem;
 	}
 
 	:global(.cw-textarea__field:focus) {
