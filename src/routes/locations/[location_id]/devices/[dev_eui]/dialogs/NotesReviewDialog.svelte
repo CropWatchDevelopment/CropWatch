@@ -274,7 +274,7 @@
 									</div>
 
 									<CwButton id={`device-notes-review-row-${entry.id}-delete-button`} disabled
-										>Delete</CwButton
+										>{m.action_delete()}</CwButton
 									>
 								</div>
 							</article>

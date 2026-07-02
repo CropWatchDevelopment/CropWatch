@@ -222,7 +222,7 @@
 			id="device-csv-export-cancel-button"
 			variant="secondary"
 			disabled={exporting}
-			onclick={closeDialog}>Cancel</CwButton
+			onclick={closeDialog}>{m.action_cancel()}</CwButton
 		>
 		<CwButton
 			id="device-csv-export-download-button"

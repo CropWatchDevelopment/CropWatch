@@ -26,7 +26,7 @@
 	let app = getAppContext();
 
 	const columns: CwColumnDef<LocationDto>[] = [
-		{ key: 'location_id', header: 'ID', hideBelow: 'md' },
+		{ key: 'location_id', header: m.common_id(), hideBelow: 'md' },
 		{ key: 'name', header: m.nav_locations(), sortable: true }
 	];
 

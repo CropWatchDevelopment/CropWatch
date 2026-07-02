@@ -99,7 +99,13 @@
 	const columns: CwColumnDef<LocationDeviceRow>[] = [
 		{ key: 'name', header: m.devices_device_name(), sortable: true },
 		{ key: 'status', header: m.devices_status(), sortable: true, width: '8rem' },
-		{ key: 'dev_eui', header: 'DevEUI', sortable: true, width: '14rem', hideBelow: 'sm' }
+		{
+			key: 'dev_eui',
+			header: m.devices_dev_eui_label(),
+			sortable: true,
+			width: '14rem',
+			hideBelow: 'sm'
+		}
 	];
 
 	const locationDevices = $derived.by(() => {
@@ -244,6 +250,8 @@
 					<CwCopy labels={cwCopyLabels()} value={row.dev_eui}>
 						<span>{row.dev_eui}</span>
 					</CwCopy>
+				{:else if col.key === 'status'}
+					{row.status === 'Online' ? m.status_online() : m.status_offline()}
 				{:else}
 					{defaultValue}
 				{/if}

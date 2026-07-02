@@ -82,7 +82,7 @@
 					<CwInput
 						id={`report-schedules-${index}-timezone-input`}
 						label={m.reports_schedule_timezone()}
-						placeholder="UTC, JST, EST, etc..."
+						placeholder={m.reports_schedule_timezone_placeholder()}
 						bind:value={schedule.timezone}
 					/>
 				</div>

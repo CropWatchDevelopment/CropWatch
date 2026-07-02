@@ -270,6 +270,10 @@ export function formatSensorMeasurement(
 // Unit option lists — the single source of truth shared by the settings form
 // (`/settings`) and this conversion layer. Values must match the DB CHECK
 // constraints on `profile_preferences` and the UNIT_SYMBOLS keys above.
+//
+// Each list is exposed as a getter (not a module-level constant) so the
+// Paraglide `m.*()` label calls resolve against the locale of the request /
+// render that consumes them rather than freezing at import time.
 // ---------------------------------------------------------------------------
 
 export interface UnitOption {
@@ -277,118 +281,152 @@ export interface UnitOption {
 	value: string;
 }
 
-export const temperatureUnitOptions: UnitOption[] = [
-	{ label: 'Celsius (°C)', value: 'celsius' },
-	{ label: 'Fahrenheit (°F)', value: 'fahrenheit' },
-	{ label: 'Kelvin (K)', value: 'kelvin' }
-];
+export function getTemperatureUnitOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_celsius(), value: 'celsius' },
+		{ label: m.unit_fahrenheit(), value: 'fahrenheit' },
+		{ label: m.unit_kelvin(), value: 'kelvin' }
+	];
+}
 
-export const weightUnitOptions: UnitOption[] = [
-	{ label: 'Kilograms (kg)', value: 'kg' },
-	{ label: 'Pounds (lb)', value: 'lb' }
-];
+export function getWeightUnitOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_kilograms(), value: 'kg' },
+		{ label: m.unit_pounds(), value: 'lb' }
+	];
+}
 
-export const ecUnitOptions: UnitOption[] = [
-	{ label: 'mS/cm', value: 'ms_cm' },
-	{ label: 'dS/m', value: 'ds_cm' },
-	{ label: 'µS/cm', value: 'us_cm' }
-];
+// EC labels are pure unit symbols — nothing to translate.
+export function getEcUnitOptions(): UnitOption[] {
+	return [
+		{ label: 'mS/cm', value: 'ms_cm' },
+		{ label: 'dS/m', value: 'ds_cm' },
+		{ label: 'µS/cm', value: 'us_cm' }
+	];
+}
 
-export const waterLevelUnitOptions: UnitOption[] = [
-	{ label: 'Millimeters (mm)', value: 'mm' },
-	{ label: 'Centimeters (cm)', value: 'cm' },
-	{ label: 'Inches (in)', value: 'inch' },
-	{ label: 'Feet (ft)', value: 'foot' },
-	{ label: 'Meters (m)', value: 'meter' },
-	{ label: 'Yards (yd)', value: 'yard' }
-];
+export function getWaterLevelUnitOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_millimeters(), value: 'mm' },
+		{ label: m.unit_centimeters(), value: 'cm' },
+		{ label: m.unit_inches(), value: 'inch' },
+		{ label: m.unit_feet(), value: 'foot' },
+		{ label: m.unit_meters(), value: 'meter' },
+		{ label: m.unit_yards(), value: 'yard' }
+	];
+}
 
 // One representative major city per UTC offset (value is the IANA zone).
-export const timezoneOptions: UnitOption[] = [
-	{ label: '(UTC-11:00) Pago Pago', value: 'Pacific/Pago_Pago' },
-	{ label: '(UTC-10:00) Honolulu', value: 'Pacific/Honolulu' },
-	{ label: '(UTC-09:00) Anchorage', value: 'America/Anchorage' },
-	{ label: '(UTC-08:00) Los Angeles', value: 'America/Los_Angeles' },
-	{ label: '(UTC-07:00) Denver', value: 'America/Denver' },
-	{ label: '(UTC-06:00) Mexico City', value: 'America/Mexico_City' },
-	{ label: '(UTC-05:00) New York', value: 'America/New_York' },
-	{ label: '(UTC-04:00) Santiago', value: 'America/Santiago' },
-	{ label: '(UTC-03:00) Sao Paulo', value: 'America/Sao_Paulo' },
-	{ label: '(UTC-01:00) Azores', value: 'Atlantic/Azores' },
-	{ label: '(UTC+00:00) London', value: 'Europe/London' },
-	{ label: '(UTC+01:00) Paris', value: 'Europe/Paris' },
-	{ label: '(UTC+02:00) Cairo', value: 'Africa/Cairo' },
-	{ label: '(UTC+03:00) Moscow', value: 'Europe/Moscow' },
-	{ label: '(UTC+03:30) Tehran', value: 'Asia/Tehran' },
-	{ label: '(UTC+04:00) Dubai', value: 'Asia/Dubai' },
-	{ label: '(UTC+05:00) Karachi', value: 'Asia/Karachi' },
-	{ label: '(UTC+05:30) Mumbai', value: 'Asia/Kolkata' },
-	{ label: '(UTC+05:45) Kathmandu', value: 'Asia/Kathmandu' },
-	{ label: '(UTC+06:00) Dhaka', value: 'Asia/Dhaka' },
-	{ label: '(UTC+07:00) Bangkok', value: 'Asia/Bangkok' },
-	{ label: '(UTC+08:00) Shanghai', value: 'Asia/Shanghai' },
-	{ label: '(UTC+09:00) Tokyo', value: 'Asia/Tokyo' },
-	{ label: '(UTC+09:30) Adelaide', value: 'Australia/Adelaide' },
-	{ label: '(UTC+10:00) Sydney', value: 'Australia/Sydney' },
-	{ label: '(UTC+11:00) Noumea', value: 'Pacific/Noumea' },
-	{ label: '(UTC+12:00) Auckland', value: 'Pacific/Auckland' }
-];
+export function getTimezoneOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_tz_pago_pago(), value: 'Pacific/Pago_Pago' },
+		{ label: m.unit_tz_honolulu(), value: 'Pacific/Honolulu' },
+		{ label: m.unit_tz_anchorage(), value: 'America/Anchorage' },
+		{ label: m.unit_tz_los_angeles(), value: 'America/Los_Angeles' },
+		{ label: m.unit_tz_denver(), value: 'America/Denver' },
+		{ label: m.unit_tz_mexico_city(), value: 'America/Mexico_City' },
+		{ label: m.unit_tz_new_york(), value: 'America/New_York' },
+		{ label: m.unit_tz_santiago(), value: 'America/Santiago' },
+		{ label: m.unit_tz_sao_paulo(), value: 'America/Sao_Paulo' },
+		{ label: m.unit_tz_azores(), value: 'Atlantic/Azores' },
+		{ label: m.unit_tz_london(), value: 'Europe/London' },
+		{ label: m.unit_tz_paris(), value: 'Europe/Paris' },
+		{ label: m.unit_tz_cairo(), value: 'Africa/Cairo' },
+		{ label: m.unit_tz_moscow(), value: 'Europe/Moscow' },
+		{ label: m.unit_tz_tehran(), value: 'Asia/Tehran' },
+		{ label: m.unit_tz_dubai(), value: 'Asia/Dubai' },
+		{ label: m.unit_tz_karachi(), value: 'Asia/Karachi' },
+		{ label: m.unit_tz_mumbai(), value: 'Asia/Kolkata' },
+		{ label: m.unit_tz_kathmandu(), value: 'Asia/Kathmandu' },
+		{ label: m.unit_tz_dhaka(), value: 'Asia/Dhaka' },
+		{ label: m.unit_tz_bangkok(), value: 'Asia/Bangkok' },
+		{ label: m.unit_tz_shanghai(), value: 'Asia/Shanghai' },
+		{ label: m.unit_tz_tokyo(), value: 'Asia/Tokyo' },
+		{ label: m.unit_tz_adelaide(), value: 'Australia/Adelaide' },
+		{ label: m.unit_tz_sydney(), value: 'Australia/Sydney' },
+		{ label: m.unit_tz_noumea(), value: 'Pacific/Noumea' },
+		{ label: m.unit_tz_auckland(), value: 'Pacific/Auckland' }
+	];
+}
 
-export const soilMoistureUnitOptions: UnitOption[] = [
-	{ label: 'VWC (%)', value: 'vwc_percent' },
-	{ label: 'Relative saturation (%)', value: 'relative_percent' },
-	{ label: 'kPa', value: 'kpa' },
-	{ label: 'centibar', value: 'centibar' }
-];
+export function getSoilMoistureUnitOptions(): UnitOption[] {
+	return [
+		{ label: 'VWC (%)', value: 'vwc_percent' },
+		{ label: m.unit_relative_saturation(), value: 'relative_percent' },
+		{ label: 'kPa', value: 'kpa' },
+		{ label: m.unit_centibar(), value: 'centibar' }
+	];
+}
 
-export const rainfallUnitOptions: UnitOption[] = [
-	{ label: 'Millimeters (mm)', value: 'mm' },
-	{ label: 'Centimeters (cm)', value: 'cm' },
-	{ label: 'Inches (in)', value: 'in' }
-];
+export function getRainfallUnitOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_millimeters(), value: 'mm' },
+		{ label: m.unit_centimeters(), value: 'cm' },
+		{ label: m.unit_inches(), value: 'in' }
+	];
+}
 
-export const windSpeedUnitOptions: UnitOption[] = [
-	{ label: 'Meters per second (m/s)', value: 'm_s' },
-	{ label: 'Kilometers per hour (km/h)', value: 'km_h' },
-	{ label: 'Miles per hour (mph)', value: 'mph' },
-	{ label: 'Knots (kt)', value: 'kt' }
-];
+export function getWindSpeedUnitOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_meters_per_second(), value: 'm_s' },
+		{ label: m.unit_kilometers_per_hour(), value: 'km_h' },
+		{ label: m.unit_miles_per_hour(), value: 'mph' },
+		{ label: m.unit_knots(), value: 'kt' }
+	];
+}
 
-export const pressureUnitOptions: UnitOption[] = [
-	{ label: 'hPa', value: 'hpa' },
-	{ label: 'kPa', value: 'kpa' },
-	{ label: 'bar', value: 'bar' },
-	{ label: 'PSI', value: 'psi' }
-];
+// Pressure labels are pure unit symbols — nothing to translate.
+export function getPressureUnitOptions(): UnitOption[] {
+	return [
+		{ label: 'hPa', value: 'hpa' },
+		{ label: 'kPa', value: 'kpa' },
+		{ label: 'bar', value: 'bar' },
+		{ label: 'PSI', value: 'psi' }
+	];
+}
 
-export const co2UnitOptions: UnitOption[] = [
-	{ label: 'PPM', value: 'ppm' },
-	{ label: 'mg/m³', value: 'mg_m3' }
-];
+// CO₂ labels are pure unit symbols — nothing to translate.
+export function getCo2UnitOptions(): UnitOption[] {
+	return [
+		{ label: 'PPM', value: 'ppm' },
+		{ label: 'mg/m³', value: 'mg_m3' }
+	];
+}
 
-export const distanceUnitOptions: UnitOption[] = [
-	{ label: 'Kilometers (km)', value: 'km' },
-	{ label: 'Miles (mi)', value: 'mi' }
-];
+export function getDistanceUnitOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_kilometers(), value: 'km' },
+		{ label: m.unit_miles(), value: 'mi' }
+	];
+}
 
-export const areaUnitOptions: UnitOption[] = [
-	{ label: 'Hectares (ha)', value: 'hectares' },
-	{ label: 'Acres (ac)', value: 'acres' },
-	{ label: 'Square meters (m2)', value: 'square_meters' }
-];
+export function getAreaUnitOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_hectares(), value: 'hectares' },
+		{ label: m.unit_acres(), value: 'acres' },
+		{ label: m.unit_square_meters(), value: 'square_meters' }
+	];
+}
 
-export const dateFormatOptions: UnitOption[] = [
-	{ label: 'YYYY-MM-DD', value: 'yyyy_mm_dd' },
-	{ label: 'DD/MM/YYYY', value: 'dd_mm_yyyy' },
-	{ label: 'MM/DD/YYYY', value: 'mm_dd_yyyy' }
-];
+// Date-format labels are literal pattern notation — nothing to translate.
+export function getDateFormatOptions(): UnitOption[] {
+	return [
+		{ label: 'YYYY-MM-DD', value: 'yyyy_mm_dd' },
+		{ label: 'DD/MM/YYYY', value: 'dd_mm_yyyy' },
+		{ label: 'MM/DD/YYYY', value: 'mm_dd_yyyy' }
+	];
+}
 
-export const timeFormatOptions: UnitOption[] = [
-	{ label: '24-hour', value: '24h' },
-	{ label: '12-hour', value: '12h' }
-];
+export function getTimeFormatOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_time_24h(), value: '24h' },
+		{ label: m.unit_time_12h(), value: '12h' }
+	];
+}
 
-export const decimalSeparatorOptions: UnitOption[] = [
-	{ label: 'Dot (1,234.56)', value: 'dot' },
-	{ label: 'Comma (1.234,56)', value: 'comma' }
-];
+export function getDecimalSeparatorOptions(): UnitOption[] {
+	return [
+		{ label: m.unit_decimal_dot(), value: 'dot' },
+		{ label: m.unit_decimal_comma(), value: 'comma' }
+	];
+}

@@ -401,7 +401,7 @@
 									<!-- Always show Last Seen at the BOTTOM of the details list -->
 									{#if lastSeen}
 										<div class="dashboard-cards__details-row">
-											<dt>Last Seen</dt>
+											<dt>{m.dashboard_column_last_seen()}</dt>
 											<dd>
 												<CwDuration from={lastSeen} class="ml-1 text-xs text-slate-400" />
 											</dd>
@@ -419,7 +419,7 @@
 										{loading}
 										onclick={() => GoToDetails(row)}
 									>
-										Details
+										{m.common_details()}
 									</CwButton>
 								</span>
 							{/if}

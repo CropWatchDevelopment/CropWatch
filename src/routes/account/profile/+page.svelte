@@ -96,14 +96,14 @@
 					label={m.profile_full_name_label()}
 					name="full_name"
 					bind:value={fullName}
-					placeholder="Kevin Smith"
+					placeholder={m.profile_full_name_placeholder()}
 					clearable
 				/>
 				<CwInput
 					label={m.profile_employer_label()}
 					name="employer"
 					bind:value={employer}
-					placeholder="CropWatch LLC"
+					placeholder={m.profile_employer_placeholder()}
 					clearable
 				/>
 

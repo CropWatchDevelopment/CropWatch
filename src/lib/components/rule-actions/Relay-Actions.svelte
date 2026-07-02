@@ -85,24 +85,24 @@
 
 	let actionOptions: ActionOption[] = $derived([
 		{
-			label: `Relay 1 ON for ${onTimeSeconds} seconds`,
+			label: m.rule_action_relay1_on_timed({ seconds: String(onTimeSeconds) }),
 			value: 'ro1_on_timed',
 			isReversable: false
 		},
 		{
-			label: `Relay 2 ON for ${onTimeSeconds} seconds`,
+			label: m.rule_action_relay2_on_timed({ seconds: String(onTimeSeconds) }),
 			value: 'ro2_on_timed',
 			isReversable: false
 		},
 		{
-			label: `Both relays ON for ${onTimeSeconds} seconds`,
+			label: m.rule_action_both_on_timed({ seconds: String(onTimeSeconds) }),
 			value: 'both_on_timed',
 			isReversable: false
 		},
-		{ label: 'Relay 1 permanently ON', value: 'ro1_on_permanent', isReversable: true },
-		{ label: 'Relay 1 permanently OFF', value: 'ro1_off_permanent', isReversable: true },
-		{ label: 'Relay 2 permanently ON', value: 'ro2_on_permanent', isReversable: true },
-		{ label: 'Relay 2 permanently OFF', value: 'ro2_off_permanent', isReversable: true }
+		{ label: m.rule_action_relay1_on_permanent(), value: 'ro1_on_permanent', isReversable: true },
+		{ label: m.rule_action_relay1_off_permanent(), value: 'ro1_off_permanent', isReversable: true },
+		{ label: m.rule_action_relay2_on_permanent(), value: 'ro2_on_permanent', isReversable: true },
+		{ label: m.rule_action_relay2_off_permanent(), value: 'ro2_off_permanent', isReversable: true }
 	]);
 
 	const selectedActionOption = $derived(actionOptions.find((o) => o.value === selectedAction));
@@ -160,23 +160,23 @@
 
 <div class="space-y-4">
 	<CwDropdown
-		label="Device"
-		placeholder="Select device"
+		label={m.devices_device()}
+		placeholder={m.rules_select_device_placeholder()}
 		options={devices}
 		bind:value={selectedDeviceDevEui}
 	/>
 
 	<CwDropdown
-		label="Action"
-		placeholder="Select action"
+		label={m.rule_action_action_label()}
+		placeholder={m.rule_action_action_placeholder()}
 		options={actionOptions}
 		bind:value={selectedAction}
 	/>
 
 	{#if isTimedAction}
 		<CwInput
-			label="On time in seconds"
-			placeholder="Enter time in seconds"
+			label={m.rule_action_on_time_label()}
+			placeholder={m.rule_action_on_time_placeholder()}
 			type="numeric"
 			min="1"
 			max={String(MAX_TIMED_RELAY_SECONDS)}

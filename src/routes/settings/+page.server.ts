@@ -5,22 +5,21 @@ import { readApiErrorMessage } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { getLocale } from '$lib/paraglide/runtime';
 import {
-	temperatureUnitOptions,
-	weightUnitOptions,
-	ecUnitOptions,
-	waterLevelUnitOptions,
-	timezoneOptions,
-	soilMoistureUnitOptions,
-	rainfallUnitOptions,
-	windSpeedUnitOptions,
-	pressureUnitOptions,
-	co2UnitOptions,
-	distanceUnitOptions,
-	areaUnitOptions,
-	dateFormatOptions,
-	timeFormatOptions,
-	decimalSeparatorOptions,
-	type UnitOption
+	getTemperatureUnitOptions,
+	getWeightUnitOptions,
+	getEcUnitOptions,
+	getWaterLevelUnitOptions,
+	getTimezoneOptions,
+	getSoilMoistureUnitOptions,
+	getRainfallUnitOptions,
+	getWindSpeedUnitOptions,
+	getPressureUnitOptions,
+	getCo2UnitOptions,
+	getDistanceUnitOptions,
+	getAreaUnitOptions,
+	getDateFormatOptions,
+	getTimeFormatOptions,
+	getDecimalSeparatorOptions
 } from '$lib/units';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -49,11 +48,6 @@ type PreferenceDraft = {
 	includeUnitsInExports: boolean;
 	highlightAlertThresholds: boolean;
 };
-
-const languageOptions: UnitOption[] = [
-	{ label: 'Japanese', value: 'ja' },
-	{ label: 'English', value: 'en' }
-];
 
 const readString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
@@ -123,22 +117,21 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
 		role: readString(session?.role) || null,
 		preferences,
 		options: {
-			language: languageOptions,
-			temperature: temperatureUnitOptions,
-			weight: weightUnitOptions,
-			ec: ecUnitOptions,
-			waterDepth: waterLevelUnitOptions,
-			timezone: timezoneOptions,
-			soilMoisture: soilMoistureUnitOptions,
-			rainfall: rainfallUnitOptions,
-			windSpeed: windSpeedUnitOptions,
-			pressure: pressureUnitOptions,
-			co2: co2UnitOptions,
-			distance: distanceUnitOptions,
-			area: areaUnitOptions,
-			dateFormat: dateFormatOptions,
-			timeFormat: timeFormatOptions,
-			decimalSeparator: decimalSeparatorOptions
+			temperature: getTemperatureUnitOptions(),
+			weight: getWeightUnitOptions(),
+			ec: getEcUnitOptions(),
+			waterDepth: getWaterLevelUnitOptions(),
+			timezone: getTimezoneOptions(),
+			soilMoisture: getSoilMoistureUnitOptions(),
+			rainfall: getRainfallUnitOptions(),
+			windSpeed: getWindSpeedUnitOptions(),
+			pressure: getPressureUnitOptions(),
+			co2: getCo2UnitOptions(),
+			distance: getDistanceUnitOptions(),
+			area: getAreaUnitOptions(),
+			dateFormat: getDateFormatOptions(),
+			timeFormat: getTimeFormatOptions(),
+			decimalSeparator: getDecimalSeparatorOptions()
 		}
 	};
 };
