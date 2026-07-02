@@ -18,7 +18,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatSensorMeasurement } from '$lib/units';
 
-	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
 	const app = getAppContext();
 

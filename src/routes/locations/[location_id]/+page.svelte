@@ -186,7 +186,7 @@
 		id="location-back-button"
 		variant="secondary"
 		size="sm"
-		onclick={() => goto(backHref(page.url, resolve('/')))}
+		onclick={() => goto(resolve(backHref(page.url, '/') as '/'))}
 	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
@@ -210,7 +210,11 @@
 							id="location-add-device-button"
 							variant="primary"
 							onclick={() =>
-								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/devices/create`)}
+								goto(
+									resolve('/locations/[location_id]/devices/create', {
+										location_id: String(+selectedLocationId)
+									})
+								)}
 						>
 							<Icon src={ADD_ICON} alt="" />
 							{m.devices_add_device()}
@@ -218,7 +222,12 @@
 						<CwButton
 							id="location-settings-button"
 							variant="secondary"
-							onclick={() => goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
+							onclick={() =>
+								goto(
+									resolve('/locations/[location_id]/settings', {
+										location_id: String(+selectedLocationId)
+									})
+								)}
 						>
 							<Icon src={SETTINGS_ICON} alt={m.nav_settings()} />
 						</CwButton>
@@ -258,7 +267,10 @@
 							onclick={() => {
 								if (!selectedLocationId) return;
 								goto(
-									`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}/settings`
+									resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
+										location_id: String(selectedLocationId),
+										dev_eui: row.dev_eui
+									})
 								);
 							}}
 						>

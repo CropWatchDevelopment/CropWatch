@@ -142,17 +142,16 @@ const LOCATIONS_ENDPOINT = '/locations';
 const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
 const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
 const LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT = '/locations/{id}/permission-level';
-const POWER_ENDPOINT = '/power/{id}';
 const RELAY_ENDPOINT = '/relay/{dev_eui}';
 const RELAY_PULSE_ENDPOINT = '/relay/{dev_eui}/pulse';
-const RULE_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_RULE_TEMPLATES_ENDPOINT ?? '/rules-new';
+const RULE_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_RULE_TEMPLATES_ENDPOINT ?? '/rules';
 const RULE_TEMPLATE_ACTION_TYPES_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/action-types`;
 const RULE_TEMPLATE_FORM_CONTEXT_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/form-context`;
 const TRIGGERED_RULES_BASE_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/triggered`;
 const TRIGGERED_RULES_COUNT_ENDPOINT = `${TRIGGERED_RULES_BASE_ENDPOINT}/count`;
 const RULE_TEMPLATE_BY_ID_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}`;
 const RULE_TEMPLATE_HISTORY_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/{id}/history`;
-const REPORT_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_REPORT_TEMPLATES_ENDPOINT ?? '/reports-new';
+const REPORT_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_REPORT_TEMPLATES_ENDPOINT ?? '/reports';
 const REPORT_TEMPLATE_COMMUNICATION_METHODS_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/communication-methods`;
 const REPORT_TEMPLATE_FORM_CONTEXT_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/form-context`;
 const REPORT_TEMPLATE_BY_ID_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/{id}`;
@@ -562,12 +561,6 @@ export class ApiService {
 				end: toIsoIfDate(query.end),
 				timezone: query.timezone
 			}
-		});
-	}
-
-	public getPowerRecord(id: string): Promise<string> {
-		return this.request<string>(replacePathParams(POWER_ENDPOINT, { id }), {
-			method: 'GET'
 		});
 	}
 

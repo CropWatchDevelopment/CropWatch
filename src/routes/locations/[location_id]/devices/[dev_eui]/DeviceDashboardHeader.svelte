@@ -51,7 +51,7 @@
 	// `backTo` was supplied; otherwise fall back to this device's location.
 	// Computed at click time so it never participates in reactive updates.
 	function goBack() {
-		goto(backHref(page.url, resolve('/locations/[location_id]', { location_id: locationId })));
+		goto(resolve(backHref(page.url, `/locations/${locationId}`) as '/'));
 	}
 </script>
 

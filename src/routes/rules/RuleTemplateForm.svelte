@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { SvelteMap } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { ApiService } from '$lib/api/api.service';
@@ -9,7 +10,7 @@
 		RuleTemplateActionDto,
 		RuleTemplateActionInput,
 		RuleTemplateSaveRequest
-	} from '$lib/rules-new/rule-template.types';
+	} from '$lib/rules/rule-template.types';
 	import type { RuleFormContextDto } from '$lib/api/api.dtos';
 	import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
 	import {
@@ -125,7 +126,7 @@
 		...deviceOptionsBase
 	]);
 	let deviceGroups = $derived.by(() => {
-		const seen = new Map<number, string>();
+		const seen = new SvelteMap<number, string>();
 		for (const device of devices ?? []) {
 			if (typeof device.location_id !== 'number' || seen.has(device.location_id)) continue;
 			seen.set(device.location_id, resolveLocationName(device.location_id));

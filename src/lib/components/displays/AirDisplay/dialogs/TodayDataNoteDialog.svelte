@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { SvelteDate } from 'svelte/reactivity';
 	import {
 		CwButton,
 		CwDialog,
@@ -70,7 +71,7 @@
 	}
 
 	function startOfTodayIso(): string {
-		const start = new Date();
+		const start = new SvelteDate();
 		start.setHours(0, 0, 0, 0);
 		return start.toISOString();
 	}

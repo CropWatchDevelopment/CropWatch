@@ -49,7 +49,7 @@
 	<CwButton
 		id="gateways-back-button"
 		variant="secondary"
-		onclick={() => goto(backHref(page.url, resolve('/')))}
+		onclick={() => goto(resolve(backHref(page.url, '/') as '/'))}
 	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>

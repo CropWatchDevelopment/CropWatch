@@ -4,12 +4,8 @@ import type { IJWT } from './interfaces/jwt.interface';
 import type { IDevice } from './interfaces/device.interface';
 import type { IRule } from './interfaces/rule.interface';
 import type { Profile } from './interfaces/profile.interface';
-import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
-import type { RuleTemplateDto, TriggeredRulesCountResponse } from './api/api.service';
+import type { RuleTemplateDto } from './api/api.service';
 import type { LocationDto, PreferencesDto } from './api/api.dtos';
-
-const DEVICE_STALE_MINUTES = 10;
-const deviceAlarms = createCwAlarmScheduler();
 
 const app = createAppContext();
 

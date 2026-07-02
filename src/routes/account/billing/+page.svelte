@@ -83,21 +83,6 @@
 		return id != null ? (locationNames.get(id) ?? null) : null;
 	}
 
-	function deviceHref(devEui: string): string | null {
-		const id = deviceLocationId(devEui);
-		return id != null
-			? resolve('/locations/[location_id]/devices/[dev_eui]', {
-					location_id: String(id),
-					dev_eui: devEui
-				})
-			: null;
-	}
-
-	function locationHref(devEui: string): string | null {
-		const id = deviceLocationId(devEui);
-		return id != null ? resolve('/locations/[location_id]', { location_id: String(id) }) : null;
-	}
-
 	const basePriceLabel = $derived(priceLabel(data.products.base));
 	const devicePriceLabel = $derived(priceLabel(data.products.device));
 	const seatsChanged = $derived(
@@ -480,12 +465,15 @@
 
 						<span class="license-cell">
 							{#if license.devEui}
-								{@const href = deviceHref(license.devEui)}
-								{#if href}
+								{@const deviceLocId = deviceLocationId(license.devEui)}
+								{#if deviceLocId != null}
 									<a
 										id={`account-billing-license-${license.id}-device-link`}
 										class="license-link"
-										{href}>{license.deviceName ?? license.devEui}</a
+										href={resolve('/locations/[location_id]/devices/[dev_eui]', {
+											location_id: String(deviceLocId),
+											dev_eui: license.devEui
+										})}>{license.deviceName ?? license.devEui}</a
 									>
 								{:else}
 									<span>{license.deviceName ?? license.devEui}</span>
@@ -503,12 +491,13 @@
 						<span class="license-cell">
 							{#if license.devEui}
 								{@const lname = deviceLocationName(license.devEui)}
-								{@const lhref = locationHref(license.devEui)}
-								{#if lname && lhref}
+								{@const locId = deviceLocationId(license.devEui)}
+								{#if lname && locId != null}
 									<a
 										id={`account-billing-license-${license.id}-location-link`}
 										class="license-link license-link--muted"
-										href={lhref}>{lname}</a
+										href={resolve('/locations/[location_id]', { location_id: String(locId) })}
+										>{lname}</a
 									>
 								{:else if lname}
 									<span class="billing-muted">{lname}</span>
@@ -576,9 +565,7 @@
 </AppPage>
 
 <CwDialog bind:open={cancelOpen} title={m.billing_cancel_title()}>
-	{#snippet children()}
-		<p>{m.billing_cancel_body()}</p>
-	{/snippet}
+	<p>{m.billing_cancel_body()}</p>
 	{#snippet actions()}
 		<CwButton
 			id="account-billing-cancel-subscription-dismiss-button"
@@ -603,21 +590,19 @@
 	bind:open={assignOpen}
 	title={assignMode === 'assign' ? m.billing_assign_title() : m.billing_move_title()}
 >
-	{#snippet children()}
-		{#if deviceOptions.length === 0}
-			<AppNotice tone="neutral">
-				<p>{m.billing_assign_no_devices()}</p>
-			</AppNotice>
-		{:else}
-			<CwDropdown
-				id="account-billing-assign-device-select"
-				label={m.billing_assign_device_label()}
-				options={deviceOptions}
-				bind:value={selectedDevEui}
-				placeholder={m.billing_assign_device_label()}
-			/>
-		{/if}
-	{/snippet}
+	{#if deviceOptions.length === 0}
+		<AppNotice tone="neutral">
+			<p>{m.billing_assign_no_devices()}</p>
+		</AppNotice>
+	{:else}
+		<CwDropdown
+			id="account-billing-assign-device-select"
+			label={m.billing_assign_device_label()}
+			options={deviceOptions}
+			bind:value={selectedDevEui}
+			placeholder={m.billing_assign_device_label()}
+		/>
+	{/if}
 	{#snippet actions()}
 		<CwButton
 			id="account-billing-assign-dismiss-button"
@@ -640,9 +625,7 @@
 </CwDialog>
 
 <CwDialog bind:open={seatCancelOpen} title={m.billing_seat_cancel_title()}>
-	{#snippet children()}
-		<p>{m.billing_seat_cancel_body()}</p>
-	{/snippet}
+	<p>{m.billing_seat_cancel_body()}</p>
 	{#snippet actions()}
 		<CwButton
 			id="account-billing-seat-cancel-dismiss-button"

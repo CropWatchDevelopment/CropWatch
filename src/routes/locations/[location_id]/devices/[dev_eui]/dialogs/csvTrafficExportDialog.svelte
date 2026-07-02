@@ -63,7 +63,7 @@
 				return;
 			}
 
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getTrafficMonthlyReport(devEui, {
 				year,
 				month,

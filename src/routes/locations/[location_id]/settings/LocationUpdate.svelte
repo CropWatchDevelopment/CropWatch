@@ -13,7 +13,7 @@
 		locationGroup?: string | null;
 	};
 
-	let { data, form }: { data: SettingsPageData; form?: unknown } = $props();
+	let { data }: { data: SettingsPageData } = $props();
 	const toast = useCwToast();
 
 	let submitting = $state(false);

@@ -274,7 +274,7 @@
 		state.fetchError = null;
 
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getDeviceDataWithinRange(devEui, {
 				start: toIsoString(start),
 				end: toIsoString(end),
@@ -302,7 +302,7 @@
 		if (!authToken || !devEui) return null;
 
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getDeviceLatestData(devEui, { signal: options.signal });
 
 			if (isTelemetryRow(result)) {
@@ -335,7 +335,7 @@
 		if (!authToken || !devEui) return null;
 
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getRelayData(devEui, {
 				signal: options.signal,
 				suppressNotFoundError: true
@@ -398,7 +398,7 @@
 
 		try {
 			ensureRelayStateManager();
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 
 			if (typeof durationSeconds === 'number' && Number.isFinite(durationSeconds)) {
 				await api.pulseRelay(devEui, {

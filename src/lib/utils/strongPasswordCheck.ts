@@ -15,7 +15,7 @@ export function isStrongPassword(password: string): IPasswordValidationResult {
 		hasUpperCase: /[A-Z]/.test(password),
 		hasLowerCase: /[a-z]/.test(password),
 		hasNumber: /[0-9]/.test(password),
-		hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password),
+		hasSymbol: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password),
 		isValid: false,
 		errors: []
 	};

@@ -31,7 +31,6 @@
 	} from '$lib/devices/relay-telemetry';
 	import type {
 		PendingRelayState,
-		PendingRelayStates,
 		RelayNumber,
 		RelayTargetState,
 		RelayTelemetryRow

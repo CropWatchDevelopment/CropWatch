@@ -109,7 +109,6 @@
 		}
 
 		const api = new ApiService({
-			fetchFn: fetch,
 			authToken
 		});
 		const rows: CsvRow[] = [];

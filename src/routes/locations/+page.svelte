@@ -78,7 +78,7 @@
 		id="locations-back-button"
 		variant="secondary"
 		size="sm"
-		onclick={() => goto(backHref(page.url, resolve('/')))}
+		onclick={() => goto(resolve(backHref(page.url, '/') as '/'))}
 	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>

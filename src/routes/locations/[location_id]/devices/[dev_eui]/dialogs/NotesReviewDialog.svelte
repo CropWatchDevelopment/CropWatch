@@ -159,7 +159,6 @@
 		loadError = null;
 
 		const api = new ApiService({
-			fetchFn: fetch,
 			authToken
 		});
 

@@ -8,7 +8,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
-	import type { RuleTemplateDto } from '$lib/rules-new/rule-template.types';
+	import type { RuleTemplateDto } from '$lib/rules/rule-template.types';
 	import { getRuleSubjectOptions } from '$lib/i18n/options';
 	import {
 		CwButton,
@@ -181,7 +181,7 @@
 	<CwButton
 		id="rules-back-button"
 		variant="secondary"
-		onclick={() => goto(backHref(page.url, resolve('/')))}
+		onclick={() => goto(resolve(backHref(page.url, '/') as '/'))}
 	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>

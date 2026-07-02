@@ -3,7 +3,6 @@
 		CwButton,
 		CwCard,
 		CwDataTable,
-		CwDuration,
 		CwHeatmap,
 		CwStatCard,
 		CwWindCompass,
@@ -41,9 +40,7 @@
 		{ key: 'alerts', header: m.status_alerts(), width: '3rem' }
 	];
 
-	const ALARM_AFTER_MINUTES = 10.2;
-
-	let { latestData, historicalData, loading, devEui, authToken }: DeviceDisplayProps = $props();
+	let { latestData, historicalData, loading, devEui }: DeviceDisplayProps = $props();
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
 	let tableRevision = $state(0);
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});

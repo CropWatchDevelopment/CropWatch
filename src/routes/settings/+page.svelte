@@ -17,7 +17,7 @@
 
 	type PreferenceDraft = PageProps['data']['preferences'];
 
-	let { data, form }: PageProps = $props();
+	let { data }: PageProps = $props();
 
 	const toast = useCwToast();
 	const initial = (() => data)();

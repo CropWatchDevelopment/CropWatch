@@ -356,7 +356,7 @@ describe('ApiService relay endpoints', () => {
 });
 
 describe('ApiService rule template endpoints', () => {
-	it('lists rule templates through /rules-new with search', async () => {
+	it('lists rule templates through /rules with search', async () => {
 		let requestedUrl = '';
 		let requestedMethod = '';
 
@@ -375,7 +375,7 @@ describe('ApiService rule template endpoints', () => {
 		await api.getRuleTemplates({ search: 'High Temp' });
 
 		expect(requestedMethod).toBe('GET');
-		expect(requestedUrl).toBe('https://example.com/rules-new?search=High+Temp');
+		expect(requestedUrl).toBe('https://example.com/rules?search=High+Temp');
 	});
 
 	it('creates rule templates with the documented save payload', async () => {
@@ -420,7 +420,7 @@ describe('ApiService rule template endpoints', () => {
 		});
 
 		expect(requestedMethod).toBe('POST');
-		expect(requestedUrl).toBe('https://example.com/rules-new');
+		expect(requestedUrl).toBe('https://example.com/rules');
 		expect(JSON.parse(requestedBody)).toEqual({
 			name: 'High temp',
 			description: null,
@@ -464,10 +464,10 @@ describe('ApiService rule template endpoints', () => {
 		await api.getRuleTemplateActionTypes();
 
 		expect(requestedMethod).toBe('GET');
-		expect(requestedUrl).toBe('https://example.com/rules-new/action-types');
+		expect(requestedUrl).toBe('https://example.com/rules/action-types');
 	});
 
-	it('uses /rules-new/{id} for read, update, and delete', async () => {
+	it('uses /rules/{id} for read, update, and delete', async () => {
 		const calls: Array<{ method: string; url: string }> = [];
 
 		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -493,9 +493,9 @@ describe('ApiService rule template endpoints', () => {
 		await api.deleteRuleTemplate(42);
 
 		expect(calls).toEqual([
-			{ method: 'GET', url: 'https://example.com/rules-new/42' },
-			{ method: 'PATCH', url: 'https://example.com/rules-new/42' },
-			{ method: 'DELETE', url: 'https://example.com/rules-new/42' }
+			{ method: 'GET', url: 'https://example.com/rules/42' },
+			{ method: 'PATCH', url: 'https://example.com/rules/42' },
+			{ method: 'DELETE', url: 'https://example.com/rules/42' }
 		]);
 	});
 });
@@ -503,7 +503,7 @@ describe('ApiService rule template endpoints', () => {
 describe('readApiErrorMessage', () => {
 	it('prefers nested API payload messages from ApiServiceError objects', () => {
 		const error = new ApiServiceError(400, 'Bad Request', {
-			url: 'https://example.com/rules-new',
+			url: 'https://example.com/rules',
 			payload: {
 				statusCode: 400,
 				error: 'Bad Request',

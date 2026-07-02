@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { CwDataTable } from '@cropwatchdevelopment/cwui';
 	import type { CwColumnDef, CwTableQuery, CwTableResult } from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
@@ -123,9 +125,13 @@
 		if (row.location?.location_id != null) {
 			// Carry the originating page (and active group filter) so the device
 			// page's back button can return to the filtered dashboard.
-			const params = new URLSearchParams({ backTo: '/' });
+			const params = new SvelteURLSearchParams({ backTo: '/' });
 			if (filters.locationGroup) params.set('filter', filters.locationGroup);
-			goto(`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}`);
+			goto(
+				resolve(
+					`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}` as '/'
+				)
+			);
 		}
 	}}
 />

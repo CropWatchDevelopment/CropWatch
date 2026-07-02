@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { browser } from '$app/environment';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
@@ -102,7 +103,7 @@
 		<p class="text-center text-sm opacity-70">{description}</p>
 
 		<div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-			<CwButton id="error-home-button" variant="primary" onclick={() => goto('/')}
+			<CwButton id="error-home-button" variant="primary" onclick={() => goto(resolve('/'))}
 				>{m.action_go_home()}</CwButton
 			>
 			<CwButton id="error-back-button" variant="ghost" onclick={() => history.back()}

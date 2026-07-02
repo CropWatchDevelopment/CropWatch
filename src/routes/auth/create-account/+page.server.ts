@@ -87,7 +87,7 @@ export const actions: Actions = {
 		// ── Supabase sign-up (anon key — respects RLS) ─────────────
 		const supabase = getSupabaseClient();
 
-		const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+		const { error: signUpError } = await supabase.auth.signUp({
 			email,
 			password,
 			options: {

@@ -578,7 +578,7 @@ export interface CreateReportRequest {
 
 export type UpdateReportRequest = Partial<CreateReportRequest>;
 
-// --- Report templates (reports-new) ---------------------------------------
+// --- Report templates --------------------------------------------------------
 
 export interface ReportTemplateAssignmentDto {
 	id: number;

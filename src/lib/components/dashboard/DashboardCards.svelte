@@ -29,6 +29,8 @@
 	} from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { SvelteMap, SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 	import TodayDataNoteDialog from '$lib/components/displays/AirDisplay/dialogs/TodayDataNoteDialog.svelte';
 
@@ -59,11 +61,6 @@
 	// dev_eui -> latest row | 'loading' | undefined (not requested yet).
 	let detailsByDevEui = $state<Record<string, Record<string, unknown> | 'loading'>>({});
 
-	const thousandFormatter = new Intl.NumberFormat('en', {
-		notation: 'compact',
-		compactDisplay: 'short'
-	});
-
 	function buildQuery(overrides: { skip: number; take: number }) {
 		return {
 			skip: overrides.skip,
@@ -77,7 +74,6 @@
 
 	async function loadPage(opts: { reset?: boolean } = {}) {
 		if (loading) {
-			console.debug('[dashboard] loadPage skipped — already loading');
 			return;
 		}
 		// On a fresh login (new tab) the auth token can still be undefined when
@@ -86,20 +82,14 @@
 		// effect below re-runs once app.accessToken becomes available.
 		if (!app.accessToken) {
 			if (opts.reset) reloading = true;
-			console.debug('[dashboard] loadPage deferred — auth token not ready');
 			return;
 		}
 		loading = true;
 		reloading = !!opts.reset;
 		const skip = opts.reset ? 0 : groups.length;
-		console.debug('[dashboard] loadPage', { reset: !!opts.reset, skip, take: PAGE_SIZE });
 		try {
 			const api = new ApiService({ authToken: app.accessToken });
 			const page = await api.getDashboardLocations(buildQuery({ skip, take: PAGE_SIZE }));
-			console.debug('[dashboard] loadPage result', {
-				returned: page.groups.length,
-				total: page.total
-			});
 			groups = opts.reset ? page.groups : [...groups, ...page.groups];
 			total = page.total;
 			preloadOpenCardDetails(page.groups);
@@ -121,7 +111,7 @@
 			);
 
 			// Patch existing devices in place by dev_eui so card positions don't shift.
-			const newRowsByDevEui = new Map<string, DashboardRow>();
+			const newRowsByDevEui = new SvelteMap<string, DashboardRow>();
 			for (const g of page.groups) for (const d of g.devices) newRowsByDevEui.set(d.dev_eui, d);
 
 			for (const existingGroup of groups) {
@@ -195,7 +185,7 @@
 	function syncRefreshScheduler() {
 		if (!refreshScheduler) return;
 
-		const seen = new Set<string>();
+		const seen = new SvelteSet<string>();
 		for (const group of groups) {
 			for (const row of group.devices) {
 				seen.add(row.dev_eui);
@@ -323,10 +313,14 @@
 		}
 		// Carry the originating page (and active group filter) so the device
 		// page's back button can return to the filtered dashboard.
-		const params = new URLSearchParams({ backTo: '/' });
+		const params = new SvelteURLSearchParams({ backTo: '/' });
 		if (filters.locationGroup) params.set('filter', filters.locationGroup);
 		loading = true;
-		goto(`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}`);
+		goto(
+			resolve(
+				`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}` as '/'
+			)
+		);
 	};
 
 	let removeForegroundListener: (() => void) | null = null;
@@ -375,9 +369,9 @@
 						if (locationId == null) return;
 						// Carry the originating page (+ active group filter) so the location
 						// page's back button returns to the filtered dashboard.
-						const params = new URLSearchParams({ backTo: '/' });
+						const params = new SvelteURLSearchParams({ backTo: '/' });
 						if (filters.locationGroup) params.set('filter', filters.locationGroup);
-						goto(`/locations/${locationId}?${params.toString()}`);
+						goto(resolve(`/locations/${locationId}?${params.toString()}` as '/'));
 					}}
 				>
 					{#each group.devices as row (row.dev_eui)}
@@ -459,11 +453,6 @@
 					size="sm"
 					variant="secondary"
 					onclick={() => {
-						console.debug('[dashboard] load-more clicked', {
-							groups: groups.length,
-							total,
-							loading
-						});
 						loadPage();
 					}}
 				>

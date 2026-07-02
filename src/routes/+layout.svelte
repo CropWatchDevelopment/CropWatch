@@ -14,7 +14,6 @@
 
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Sidebar from './Sidebar.svelte';
 	import Analytics from '$lib/components/Analytics.svelte';
 	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
