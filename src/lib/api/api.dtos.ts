@@ -115,6 +115,8 @@ export interface CreateDeviceRequest extends Partial<CwDevice> {
 	name: string;
 	type?: number | null;
 	location_id?: number | null;
+	/** Unassigned device license consumed by the create (required for non-staff). */
+	license_id?: number;
 	cw_device_owners?: CreateDeviceOwnerRequest[];
 }
 
@@ -826,7 +828,7 @@ export interface GatewayDto {
 	cw_gateways_owners?: GatewayOwnerDto[];
 }
 
-// --- Billing / Polar subscriptions ---------------------------------------
+// --- Billing / Stripe subscriptions --------------------------------------
 
 export interface BillingLicense {
 	id: number;
@@ -838,7 +840,10 @@ export interface BillingLicense {
 
 export interface BaseSubscriptionState {
 	subscriptionId: string | null;
-	status: string | null; // active | trialing | past_due | canceled | null
+	// Stripe subscription status. Commonly active | trialing | past_due |
+	// canceled | null; other Stripe statuses (incomplete, unpaid, paused, …)
+	// may appear and should render as "not subscribed".
+	status: string | null;
 	discountId: string | null;
 	currentPeriodEnd: string | null;
 	cancelAtPeriodEnd: boolean;
@@ -858,13 +863,13 @@ export interface SubscriptionStateResponse {
 }
 
 export interface BillingPrice {
-	amountType: string;
-	priceAmount: number | null;
+	amountType: string; // Stripe billing_scheme: 'per_unit' | 'tiered'
+	priceAmount: number | null; // minor units (JPY is zero-decimal: 15000 = ¥15,000)
 	priceCurrency: string | null;
 }
 
 export interface BillingProduct {
-	id: string;
+	id: string; // Stripe price id (price_...), not the product id
 	name: string;
 	description: string | null;
 	recurringInterval: string | null;

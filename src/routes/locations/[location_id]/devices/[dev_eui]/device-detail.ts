@@ -4,6 +4,7 @@ import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-te
 import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
+import { computeDewPoint } from '$lib/utils/dewPoint';
 import type { PreferencesDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { SvelteDate } from 'svelte/reactivity';
@@ -258,4 +259,43 @@ export function buildSensorChartSeries(
 	});
 
 	return series;
+}
+
+/** Series id for the derived dew point line (also its `initialHidden` key). */
+export const DEW_POINT_SERIES_ID = 'dew_point';
+
+/**
+ * Build the derived dew point series for air devices. Dew point is not a
+ * stored telemetry column — it is computed per row from `temperature_c` +
+ * `humidity`, so `buildSensorChartSeries` never discovers it on its own.
+ * Returns null when no row carries both readings.
+ */
+export function buildDewPointChartSeries(
+	rows: TelemetryRow[],
+	preferences?: PreferencesDto | null
+): CwResponsiveLineSeries | null {
+	const data: CwResponsiveLineDataPoint[] = [];
+	for (const row of rows) {
+		const timestamp = new Date(String(row.created_at)).getTime();
+		if (!Number.isFinite(timestamp)) continue;
+		const temperature = toChartValue(row.temperature_c);
+		const humidity = toChartValue(row.humidity);
+		if (temperature === null || humidity === null) continue;
+		const dewPoint = computeDewPoint(temperature, humidity);
+		if (dewPoint === null) continue;
+		data.push({ t: timestamp, v: convertSensorValue(DEW_POINT_SERIES_ID, dewPoint, preferences) });
+	}
+	data.sort((left, right) => left.t - right.t);
+	if (data.length === 0) return null;
+
+	const { color, gradient } = metricColor(DEW_POINT_SERIES_ID);
+	return {
+		id: DEW_POINT_SERIES_ID,
+		label: labelFor(DEW_POINT_SERIES_ID).label(),
+		unit: resolveDisplayUnit(DEW_POINT_SERIES_ID, preferences),
+		color,
+		gradient: gradient ?? false,
+		data,
+		decimals: 2
+	};
 }

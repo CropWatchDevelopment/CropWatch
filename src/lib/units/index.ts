@@ -34,6 +34,7 @@ export type Quantity =
  */
 export const QUANTITY_BY_FIELD: Record<string, Quantity> = {
 	temperature_c: 'temperature',
+	dew_point: 'temperature',
 	deapth_cm: 'water_level',
 	depth_cm: 'water_level',
 	ec: 'ec',

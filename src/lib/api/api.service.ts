@@ -1279,7 +1279,7 @@ export class ApiService {
 		});
 	}
 
-	// --- Billing / Polar subscriptions -------------------------------------
+	// --- Billing / Stripe subscriptions ------------------------------------
 
 	public getBillingProducts(): Promise<BillingProductsResponse> {
 		return this.request<BillingProductsResponse>(`${PAYMENTS_ENDPOINT}/products`, {
@@ -1299,6 +1299,10 @@ export class ApiService {
 		});
 	}
 
+	/**
+	 * `discountId` is a Stripe promotion code id (promo_...). When omitted, the
+	 * hosted checkout page shows a promotion-code entry field instead.
+	 */
 	public createBaseCheckout(payload: { discountId?: string | null } = {}): Promise<{
 		checkoutUrl: string;
 	}> {

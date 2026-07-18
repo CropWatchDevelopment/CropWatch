@@ -32,7 +32,9 @@
 	import DeviceDashboardHeader from './DeviceDashboardHeader.svelte';
 	import {
 		DEFAULT_RANGE_SELECTION,
+		DEW_POINT_SERIES_ID,
 		MAX_RANGE_RECORDS,
+		buildDewPointChartSeries,
 		buildSensorChartSeries,
 		createEmptyRelaySnapshot,
 		createRouteState,
@@ -132,7 +134,18 @@
 			: historicalData
 	);
 	let displayCurrentRecord = $derived(displayLatestData ?? displayHistoricalData[0] ?? null);
-	let chartSeries = $derived(buildSensorChartSeries(displayHistoricalData, app.preferences));
+	let isAirDevice = $derived(data.dataTable === 'cw_air_data');
+	let chartSeries = $derived.by(() => {
+		const series = buildSensorChartSeries(displayHistoricalData, app.preferences);
+		if (isAirDevice) {
+			const dewPointSeries = buildDewPointChartSeries(displayHistoricalData, app.preferences);
+			if (dewPointSeries) series.push(dewPointSeries);
+		}
+		return series;
+	});
+	// Dew point is opt-in per page view: it mounts hidden and the user shows it
+	// via the chart legend.
+	let chartInitialHidden = $derived(isAirDevice ? [DEW_POINT_SERIES_ID] : []);
 	let isTrafficDevice = $derived(data.device?.cw_device_type.name === '[CROPWATCH] Nvidia Jetson');
 	let rangeOptions = $derived(getRangeOptions());
 	let lastUpdatedAt = $derived(readCreatedAt(displayCurrentRecord));
@@ -481,6 +494,7 @@
 					title={data?.device?.name || devEui.toUpperCase()}
 					subtitle={m.display_time_series()}
 					ranges={[]}
+					initialHidden={chartInitialHidden}
 					theme={appTheme.current}
 					height={480}
 					labels={cwResponsiveLineChartLabels()}

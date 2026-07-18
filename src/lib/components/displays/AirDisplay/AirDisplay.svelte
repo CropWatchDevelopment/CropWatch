@@ -31,19 +31,12 @@
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
+	import { computeDewPoint } from '$lib/utils/dewPoint';
 
 	const app = getAppContext();
 
 	const HEATMAP_FALLBACK_DAYS = 1;
 	const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-
-	const columns: CwColumnDef<AirRow>[] = [
-		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
-		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
-		{ key: 'humidity', header: m.rule_subject_humidity(), sortable: true, width: '9rem' },
-		{ key: 'co2', header: m.rule_subject_co2(), sortable: true, width: '9rem' },
-		{ key: 'alerts', header: m.status_alerts(), width: '3rem' }
-	];
 
 	let { latestData, historicalData, loading, devEui }: DeviceDisplayProps = $props();
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
@@ -61,6 +54,19 @@
 			.filter((value) => Number.isFinite(value) && value > 0)
 	);
 	let hasCo2 = $derived(co2Values.length > 0);
+
+	// The CO2 column follows the same gate as the CO2 stat card: a device that
+	// doesn't carry a CO2 sensor still stores 0 for every row, so "any value
+	// > 0 in the loaded range" is the only reliable presence signal.
+	let columns = $derived<CwColumnDef<AirRow>[]>([
+		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
+		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
+		{ key: 'humidity', header: m.rule_subject_humidity(), sortable: true, width: '9rem' },
+		...(hasCo2
+			? [{ key: 'co2', header: m.rule_subject_co2(), sortable: true, width: '9rem' } as const]
+			: []),
+		{ key: 'alerts', header: m.status_alerts(), width: '3rem' }
+	]);
 
 	// The Air stat cards render even with no history, so keep the pre-existing
 	// all-zero placeholder instead of computeStats' empty object.
@@ -174,6 +180,29 @@
 			trend: 'up'
 		};
 	});
+	let dewPointUnit = $derived(resolveDisplayUnit('dew_point', app.preferences));
+	// Dew point is derived per row from temperature + humidity (no stored
+	// column). Rows missing either reading are skipped, so the stats cover only
+	// rows where it is computable. historicalData is newest-first.
+	let dewPointValues = $derived(
+		historicalData
+			.map((row) =>
+				row.temperature_c == null || row.humidity == null
+					? null
+					: computeDewPoint(Number(row.temperature_c), Number(row.humidity))
+			)
+			.filter((value): value is number => value !== null)
+			.map((value) => convertSensorValue('dew_point', value, app.preferences))
+	);
+	let hasDewPoint = $derived(dewPointValues.length > 0);
+	let latestDewPoint: CwStatCardData = $derived.by(() => {
+		if (dewPointValues.length === 0) return EMPTY_STATS;
+		return {
+			...computeStats(dewPointValues),
+			lastReading: dewPointValues[0],
+			trend: 'up'
+		};
+	});
 	let latestHumidity: CwStatCardData = $derived.by(() => {
 		const hums = historicalData.map((row) => Number(row.humidity) || 0);
 		// Guard: an empty history previously produced NaN/Infinity stats here.
@@ -274,7 +303,9 @@
 				new Date(row.created_at).toLocaleString(),
 				row.temperature_c.toFixed(2),
 				row.humidity.toFixed(2),
-				String(row.co2)
+				// Only searchable when the column is shown — otherwise every row of
+				// a CO2-less device matches a "0" search via its stored 0.
+				...(hasCo2 ? [String(row.co2)] : [])
 			].join(' '),
 		onLoadingChange: (value) => (tableLoading = value)
 	});
@@ -311,6 +342,15 @@
 			accentColor="var(--cw-info-500)"
 			labels={cwStatCardLabels()}
 		/>
+		{#if hasDewPoint}
+			<CwStatCard
+				title={m.sensor_dew_point()}
+				stats={latestDewPoint}
+				unit={dewPointUnit}
+				accentColor="#38bdf8"
+				labels={cwStatCardLabels()}
+			/>
+		{/if}
 		{#if hasCo2}
 			<CwStatCard
 				title="CO₂"

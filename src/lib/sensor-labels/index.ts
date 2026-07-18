@@ -19,6 +19,8 @@ const SENSOR_LABELS: Record<string, SensorLabel> = {
 		format: 'number'
 	},
 	humidity: { label: () => m.sensor_humidity(), unit: '%', icon: 'drop', format: 'number' },
+	// Derived client-side from temperature + humidity — not a stored column.
+	dew_point: { label: () => m.sensor_dew_point(), unit: '°C', icon: 'thermo', format: 'number' },
 	moisture: { label: () => m.sensor_moisture(), unit: '%', icon: 'drop', format: 'number' },
 	co2: { label: () => m.sensor_co2(), unit: 'ppm', icon: 'co2', format: 'integer' },
 	co: { label: () => m.sensor_co(), unit: 'ppm', format: 'integer' },

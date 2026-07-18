@@ -39,6 +39,7 @@
 		report_endpoint?: string;
 		owner_user_id?: string;
 		owner_permission_level?: string;
+		license_id?: string;
 	} | null;
 
 	type CreateDeviceFieldValues = {
@@ -60,6 +61,7 @@
 		report_endpoint: string;
 		owner_user_id: string;
 		owner_permission_level: string;
+		license_id: string;
 	};
 
 	const toast = useCwToast();
@@ -67,6 +69,13 @@
 	let { data, form }: PageProps = $props();
 	let locationId = $derived(data.locationId ?? '');
 	let deviceTypeOptions = $derived(data.deviceTypeOptions ?? []);
+	let licenseOptions = $derived(
+		(data.availableLicenses ?? []).map((license) => ({
+			label: m.billing_license_seat({ seat: license.seatIndex + 1 }),
+			value: String(license.id)
+		}))
+	);
+	let hasAvailableLicense = $derived(licenseOptions.length > 0);
 
 	let submitting = $state(false);
 	let actionForm = $derived((form ?? null) as CreateDeviceForm);
@@ -95,7 +104,8 @@
 			tti_name: fieldValue('tti_name'),
 			report_endpoint: fieldValue('report_endpoint'),
 			owner_user_id: fieldValue('owner_user_id'),
-			owner_permission_level: fieldValue('owner_permission_level', '1')
+			owner_permission_level: fieldValue('owner_permission_level', '1'),
+			license_id: fieldValue('license_id')
 		};
 	}
 
@@ -167,6 +177,34 @@
 				{#if actionForm?.error}
 					<AppNotice tone="danger">
 						<p>{actionForm.error}</p>
+					</AppNotice>
+				{/if}
+
+				<!-- License gate: every new device consumes an unassigned license seat -->
+				{#if hasAvailableLicense}
+					<CwDropdown
+						id="device-create-license-select"
+						name="license_id"
+						label={m.devices_license_label()}
+						required
+						placeholder={m.devices_license_placeholder()}
+						options={licenseOptions}
+						bind:value={fields.license_id}
+					/>
+				{:else}
+					<AppNotice tone="warning" title={m.devices_license_label()}>
+						<p>{m.devices_license_none()}</p>
+						<div>
+							<CwButton
+								id="device-create-go-to-billing-button"
+								type="button"
+								variant="primary"
+								size="sm"
+								onclick={() => goto(resolve('/account/billing'))}
+							>
+								{m.devices_license_go_to_billing()}
+							</CwButton>
+						</div>
 					</AppNotice>
 				{/if}
 
@@ -280,6 +318,7 @@
 						type="submit"
 						variant="primary"
 						loading={submitting}
+						disabled={!hasAvailableLicense}
 					>
 						{m.devices_create_submit()}
 					</CwButton>
