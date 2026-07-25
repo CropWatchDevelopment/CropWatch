@@ -8,6 +8,9 @@ bun.lockb
 # Miscellaneous
 /static/
 
+# Local agent/editor config (not tracked; never format-gated)
+.claude/settings.local.json
+
 # Paraglide (generated)
 src/lib/paraglide
 src/paraglide

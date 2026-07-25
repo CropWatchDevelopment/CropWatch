@@ -23,6 +23,15 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # SvelteKit generates the `$env/static/*` module types from the variables it
+      # can see, so a checkout with no .env typechecks as "has no exported member".
+      # Placeholder values are enough — nothing here validates env at import time.
+      - name: Seed placeholder env
+        run: cp .env.example .env
+
+      # `prepare` runs generate-paraglide + svelte-kit sync as part of install, so
+      # src/lib/paraglide (gitignored, normally a vite-build side effect) exists for
+      # every step below.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         env:
