@@ -674,6 +674,27 @@ export interface ReportTemplateHistoryItemDto {
 	metadata: Record<string, unknown> | null;
 }
 
+export interface ReportRegenerationRequestInput {
+	devEui: string;
+	periodStart: string;
+	periodEnd: string;
+	sourceObjectName: string;
+	timezone?: string;
+	/** Note edits in this save; accumulates onto the pending queue row. */
+	editCount?: number;
+}
+
+export interface ReportRegenerationItemDto {
+	id: number;
+	templateId: number;
+	devEui: string;
+	periodStart: string;
+	periodEnd: string;
+	status: string;
+	requestedAt: string;
+	editCount: number;
+}
+
 export interface ReportTemplateScheduleInput {
 	endOfDay?: boolean;
 	endOfWeek?: boolean;
