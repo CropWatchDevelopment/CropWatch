@@ -9,7 +9,7 @@ import type {
 import type {
 	RuleTemplateCriterionDto,
 	RuleTemplateCriterionInput
-} from '$lib/rules-new/rule-template.types';
+} from '$lib/rules/rule-template.types';
 
 export interface RuleTemplateAlertCriteriaGroup {
 	localId: number;

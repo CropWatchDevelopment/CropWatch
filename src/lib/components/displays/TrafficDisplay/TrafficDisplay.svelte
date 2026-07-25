@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { SvelteMap } from 'svelte/reactivity';
+	import { SvelteDate, SvelteMap } from 'svelte/reactivity';
 	import { page } from '$app/state';
 	import { ApiService } from '$lib/api/api.service';
 	import {
@@ -514,10 +514,10 @@
 	}
 
 	function getDayBounds(date: Date): { start: Date; end: Date } {
-		const start = new Date(date);
+		const start = new SvelteDate(date);
 		start.setHours(0, 0, 0, 0);
 
-		const end = new Date(date);
+		const end = new SvelteDate(date);
 		end.setHours(23, 59, 59, 999);
 
 		return { start, end };
@@ -1011,7 +1011,7 @@
 		calendarError = null;
 
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken: token });
+			const api = new ApiService({ authToken: token });
 			const trafficPromise = api.getTrafficData(deviceKey, {
 				start: start.toISOString(),
 				end: end.toISOString()
@@ -1327,7 +1327,8 @@
 		{:else if hourlyRows.length === 0}
 			<p class="traffic-display__supporting-copy">{m.traffic_no_data_today()}</p>
 		{:else}
-			<CwDataTable labels={cwDataTableLabels()}
+			<CwDataTable
+				labels={cwDataTableLabels()}
 				columns={hourlyColumns}
 				loadData={loadHourlyData}
 				loading={tableLoading}

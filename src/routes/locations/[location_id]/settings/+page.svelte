@@ -7,8 +7,9 @@
 	import LocationPermissions from './LocationPermissions.svelte';
 	import LocationUpdate from './LocationUpdate.svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
-	let { data, form }: PageProps = $props();
+	let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
@@ -20,12 +21,13 @@
 		id="location-settings-back-button"
 		variant="secondary"
 		size="sm"
-		onclick={() => goto(`/locations/${data.locationId}`)}
+		onclick={() =>
+			goto(resolve('/locations/[location_id]', { location_id: String(data.locationId) }))}
 	>
 		&larr; {m.locations_back_to_location()}
 	</CwButton>
 
-	<LocationUpdate {data} {form} />
+	<LocationUpdate {data} />
 	<LocationPermissions {data} />
 	<LocationEditPermissions {data} />
 </AppPage>

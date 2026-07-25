@@ -4,21 +4,16 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { paraglideConfig } from './paraglide.config.js';
 
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit(),
 		devtoolsJson(),
-		// outputStructure: 'locale-modules' emits ONE module per locale (~2 files)
-		// instead of the default 'message-modules' (one file per message — ~1,200+).
-		// In vite dev each module is a separate request; per-message output floods
-		// the dev server with thousands of pending requests and can wedge it.
-		paraglideVitePlugin({
-			project: './project.inlang',
-			outdir: './src/lib/paraglide',
-			outputStructure: 'locale-modules'
-		})
+		// Options (incl. the required outputStructure: 'locale-modules') live in
+		// paraglide.config.js so this and scripts/generate-paraglide.mjs stay in sync.
+		paraglideVitePlugin(paraglideConfig)
 	],
 	test: {
 		expect: { requireAssertions: true },

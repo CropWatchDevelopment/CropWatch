@@ -5,19 +5,18 @@
   and a sortable data table.
 -->
 <script lang="ts">
-	import {
-		CwCard,
-		CwDataTable,
-		type CwColumnDef,
-		type CwTableQuery,
-		type CwTableResult
-	} from '@cropwatchdevelopment/cwui';
+	import { CwCard, CwDataTable, type CwColumnDef } from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { formatSensorMeasurement } from '$lib/units';
+	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import '../display-shared.css';
 
-	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();
+
+	const app = getAppContext();
 
 	// ---- Water-specific row shape ----------------------------------------------
 
@@ -63,57 +62,47 @@
 		spo2: Number(latestData?.spo2) || 0
 	});
 
+	const tempKpi = $derived(
+		formatSensorMeasurement('temperature_c', latest.temperature_c, app.preferences, {
+			maximumFractionDigits: 1
+		})
+	);
+	const depthKpi = $derived(
+		formatSensorMeasurement('deapth_cm', latest.depth_cm, app.preferences, {
+			maximumFractionDigits: 1
+		})
+	);
+	const pressureKpi = $derived(
+		formatSensorMeasurement('pressure', latest.pressure, app.preferences, {
+			maximumFractionDigits: 1
+		})
+	);
+
 	// ---- Table loader ----------------------------------------------------------
 
 	let tableLoading = $state(false);
 
-	async function loadTableData(query: CwTableQuery): Promise<CwTableResult<WaterRow>> {
-		tableLoading = true;
-		try {
-			let filtered = [...rows].reverse();
-
-			if (query.search.trim()) {
-				const search = query.search.trim().toLowerCase();
-				filtered = filtered.filter((r) =>
-					[r.created_at, r.temperature_c, r.depth_cm, r.pressure, r.spo2]
-						.map(String)
-						.join(' ')
-						.toLowerCase()
-						.includes(search)
-				);
-			}
-
-			if (query.sort) {
-				const dir = query.sort.direction === 'asc' ? 1 : -1;
-				filtered.sort((a, b) => {
-					const av = a[query.sort!.column as keyof WaterRow];
-					const bv = b[query.sort!.column as keyof WaterRow];
-					if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-					return String(av).localeCompare(String(bv)) * dir;
-				});
-			}
-
-			const start = Math.max(0, (query.page - 1) * query.pageSize);
-			return { rows: filtered.slice(start, start + query.pageSize), total: filtered.length };
-		} finally {
-			tableLoading = false;
-		}
-	}
+	const loadTableData = createClientTableLoader<WaterRow>(() => rows, {
+		reverse: true,
+		searchText: (r) =>
+			[r.created_at, r.temperature_c, r.depth_cm, r.pressure, r.spo2].map(String).join(' '),
+		onLoadingChange: (value) => (tableLoading = value)
+	});
 </script>
 
 <div class="water-display">
 	<!-- KPI cards -->
 	<div class="kpi-grid">
 		<CwCard title={m.display_water_temperature()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.temperature_c.toFixed(1)}<span>°C</span></p>
+			<p class="kpi-value">{tempKpi.valueDisplay}<span>{tempKpi.unit}</span></p>
 		</CwCard>
 
 		<CwCard title={m.display_depth()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.depth_cm.toFixed(1)}<span>cm</span></p>
+			<p class="kpi-value">{depthKpi.valueDisplay}<span>{depthKpi.unit}</span></p>
 		</CwCard>
 
 		<CwCard title={m.rule_subject_pressure()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.pressure.toFixed(1)}</p>
+			<p class="kpi-value">{pressureKpi.valueDisplay}<span>{pressureKpi.unit}</span></p>
 		</CwCard>
 
 		<CwCard title={m.rule_subject_spo2()} subtitle={m.display_latest_reading()} elevated>
@@ -123,14 +112,27 @@
 
 	{#if !loading && rows.length > 0}
 		<CwCard title={m.display_water_telemetry()} subtitle={m.display_searchable_sortable()} elevated>
-			<CwDataTable labels={cwDataTableLabels()} {columns} loadData={loadTableData} loading={tableLoading} rowKey="id" searchable>
+			<CwDataTable
+				labels={cwDataTableLabels()}
+				{columns}
+				loadData={loadTableData}
+				loading={tableLoading}
+				rowKey="id"
+				searchable
+			>
 				{#snippet cell(row: WaterRow, col: CwColumnDef<WaterRow>, defaultValue: string)}
 					{#if col.key === 'created_at'}
 						{new Date(row.created_at).toLocaleString()}
 					{:else if col.key === 'temperature_c'}
-						{row.temperature_c.toFixed(2)} °C
+						{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences).display}
 					{:else if col.key === 'depth_cm'}
-						{row.depth_cm.toFixed(1)} cm
+						{formatSensorMeasurement('deapth_cm', row.depth_cm, app.preferences, {
+							maximumFractionDigits: 1
+						}).display}
+					{:else if col.key === 'pressure'}
+						{formatSensorMeasurement('pressure', row.pressure, app.preferences, {
+							maximumFractionDigits: 1
+						}).display}
 					{:else}
 						{defaultValue}
 					{/if}
@@ -155,16 +157,5 @@
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 		gap: 1rem;
 	}
-	.kpi-value {
-		margin: 0 0 0.75rem;
-		font-size: clamp(1.45rem, 2.1vw, 2rem);
-		font-weight: 700;
-		color: var(--cw-text-primary);
-	}
-	.kpi-value span {
-		margin-left: 0.35rem;
-		font-size: 0.9rem;
-		font-weight: 500;
-		color: var(--cw-text-muted);
-	}
+	/* .kpi-value styles come from ../display-shared.css */
 </style>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
@@ -14,8 +14,9 @@
 			}
 
 			body {
-				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-					Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+					'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -101,7 +102,19 @@
 			<div class="error-actions">
 				<button
 					class="btn btn-primary"
-					onclick="try{localStorage.clear()}catch(e){}try{sessionStorage.clear()}catch(e){}document.cookie.split(';').forEach(function(c){document.cookie=c.split('=')[0].trim()+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'});window.location.href='/auth/login?reason=error-recovery'"
+					onclick="
+						try {
+							localStorage.clear();
+						} catch (e) {}
+						try {
+							sessionStorage.clear();
+						} catch (e) {}
+						document.cookie.split(';').forEach(function (c) {
+							document.cookie =
+								c.split('=')[0].trim() + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+						});
+						window.location.href = '/auth/login?reason=error-recovery';
+					"
 				>
 					Reset &amp; Sign In
 				</button>

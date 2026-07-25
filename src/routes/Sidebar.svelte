@@ -108,13 +108,15 @@
 			badgeTone: 'secondary',
 			endText: String(app.locations?.length ?? 0)
 		};
-		const groupItems: CwListBoxItem<string>[] = dedupSortedStrings(app.locationGroups).map((group) => ({
-			value: group,
-			label: group,
-			badge: group.toUpperCase().substring(0, 2),
-			badgeTone: 'info' as const
-			// endText: String(group.length ?? 0)
-		}));
+		const groupItems: CwListBoxItem<string>[] = dedupSortedStrings(app.locationGroups).map(
+			(group) => ({
+				value: group,
+				label: group,
+				badge: group.toUpperCase().substring(0, 2),
+				badgeTone: 'info' as const
+				// endText: String(group.length ?? 0)
+			})
+		);
 		return [allItem, ...groupItems];
 	});
 

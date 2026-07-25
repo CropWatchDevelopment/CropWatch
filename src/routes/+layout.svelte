@@ -12,15 +12,14 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwOfflineOverlayLabels } from '$lib/i18n/cwuiLabels';
 
-	import { afterNavigate, goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import OverviewDrawer from './OverviewDrawer.svelte';
 	import Sidebar from './Sidebar.svelte';
 	import Analytics from '$lib/components/Analytics.svelte';
 	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
 	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
 	import { buildLoginPath } from '$lib/utils/auth-redirect';
-	import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
+	import type { DeviceStatusSummary, PreferencesDto, RuleTemplateDto } from '$lib/api/api.dtos';
 	import type { IJWT } from '$lib/interfaces/jwt.interface';
 	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
@@ -39,6 +38,7 @@
 		session?: IJWT | null;
 		authToken?: string | null;
 		profile?: Profile | undefined;
+		preferences?: PreferencesDto | undefined;
 		overview?: {
 			deviceStatuses: DeviceStatusSummary;
 			triggeredRules: RuleTemplateDto[];
@@ -56,13 +56,23 @@
 		app.session = routeData.session ?? null;
 		app.accessToken = routeData.authToken ?? undefined;
 		app.profile = routeData.profile ?? undefined;
+		app.preferences = routeData.preferences ?? undefined;
 		app.deviceStatuses = routeData.overview?.deviceStatuses ?? { online: 0, offline: 0 };
 		app.triggeredRules = routeData.overview?.triggeredRules ?? [];
 		app.triggeredRulesCount = routeData.overview?.triggeredRulesCount ?? 0;
 	}
 
+	// Direct call: seeds the context during SSR and the first client render
+	// (effects never run on the server). $effect.pre: re-syncs whenever
+	// `page.data` changes. It must be `$effect.pre` — not `afterNavigate` —
+	// because pre-effects run BEFORE the incoming page's components mount, while
+	// afterNavigate fires after. With afterNavigate, a page mounting right after
+	// the login redirect saw the stale context (app.accessToken undefined) and
+	// fired its first API calls unauthenticated (401 → dashboard "Retry" state).
+	// $effect.pre also covers invalidate()/invalidateAll() refreshes that change
+	// page.data without a navigation, which afterNavigate never observed.
 	syncAppFromPageData();
-	afterNavigate(syncAppFromPageData);
+	$effect.pre(syncAppFromPageData);
 
 	function onExpired() {
 		if (isAuthRoute) return; // already on login/logout — don't loop
@@ -155,7 +165,6 @@
 			<Header bind:mode />
 
 			<main class="app-shell__main">{@render children()}</main>
-
 		</div>
 	{:else}
 		<main class="app-shell__main app-shell__main--standalone">{@render children()}</main>

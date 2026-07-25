@@ -16,7 +16,12 @@
 </svelte:head>
 
 <AppPage width="lg">
-	<CwButton id="report-edit-back-button" variant="secondary" size="sm" onclick={() => goto(resolve('/reports'))}>
+	<CwButton
+		id="report-edit-back-button"
+		variant="secondary"
+		size="sm"
+		onclick={() => goto(resolve('/reports'))}
+	>
 		&larr; {m.action_back()}
 	</CwButton>
 

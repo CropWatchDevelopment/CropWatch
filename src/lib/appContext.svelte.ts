@@ -4,17 +4,14 @@ import type { IJWT } from './interfaces/jwt.interface';
 import type { IDevice } from './interfaces/device.interface';
 import type { IRule } from './interfaces/rule.interface';
 import type { Profile } from './interfaces/profile.interface';
-import { createCwAlarmScheduler } from '@cropwatchdevelopment/cwui';
-import type { RuleTemplateDto, TriggeredRulesCountResponse } from './api/api.service';
-import type { LocationDto } from './api/api.dtos';
-
-const DEVICE_STALE_MINUTES = 10;
-const deviceAlarms = createCwAlarmScheduler();
+import type { RuleTemplateDto } from './api/api.service';
+import type { LocationDto, PreferencesDto } from './api/api.dtos';
 
 const app = createAppContext();
 
 export interface AppContext {
 	profile?: Profile;
+	preferences?: PreferencesDto;
 	session: IJWT | null;
 	devices: IDevice[];
 	deviceGroups?: string[];
@@ -35,6 +32,7 @@ export const appContextKey = Symbol('appContext');
 
 export const defaultAppContext: AppContext = {
 	profile: undefined,
+	preferences: undefined,
 	session: null,
 	devices: [],
 	deviceStatuses: { online: 0, offline: 0 },
@@ -50,7 +48,6 @@ export const defaultAppContext: AppContext = {
 };
 
 export function createAppContext(initial: Partial<AppContext> = {}): AppContext {
-
 	// Check if context already exists to avoid overwriting it (e.g. during hot reload)
 	try {
 		const existing = getContext<AppContext>(appContextKey);
@@ -61,7 +58,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 				profile: undefined,
 				session: null,
 				devices: [],
-							deviceStatuses: { online: 0, offline: 0 },
+				deviceStatuses: { online: 0, offline: 0 },
 				totalDeviceCount: 0,
 				rules: [],
 				triggeredRules: [],
@@ -80,7 +77,7 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 			profile: undefined,
 			session: null,
 			devices: [],
-					deviceStatuses: { online: 0, offline: 0 },
+			deviceStatuses: { online: 0, offline: 0 },
 			totalDeviceCount: 0,
 			rules: [],
 			triggeredRules: [],

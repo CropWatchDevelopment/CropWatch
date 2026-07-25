@@ -4,10 +4,7 @@
 
 <svelte:head>
 	<title>{m.offline_page_title()}</title>
-	<meta
-		name="description"
-		content={m.offline_page_description()}
-	/>
+	<meta name="description" content={m.offline_page_description()} />
 </svelte:head>
 
 <div class="offline-page">
@@ -15,7 +12,9 @@
 		<p class="offline-eyebrow">{m.offline_eyebrow()}</p>
 		<h1>{m.offline_heading()}</h1>
 		<p>{m.offline_body()}</p>
-		<button id="offline-retry-button" type="button" onclick={() => window.location.reload()}>{m.action_try_again()}</button>
+		<button id="offline-retry-button" type="button" onclick={() => window.location.reload()}
+			>{m.action_try_again()}</button
+		>
 	</section>
 </div>
 

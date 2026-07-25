@@ -96,14 +96,14 @@
 					label={m.profile_full_name_label()}
 					name="full_name"
 					bind:value={fullName}
-					placeholder="Kevin Smith"
+					placeholder={m.profile_full_name_placeholder()}
 					clearable
 				/>
 				<CwInput
 					label={m.profile_employer_label()}
 					name="employer"
 					bind:value={employer}
-					placeholder="CropWatch LLC"
+					placeholder={m.profile_employer_placeholder()}
 					clearable
 				/>
 
@@ -155,10 +155,7 @@
 					await applyAction(result);
 					if (result.type === 'success') {
 						toast.add({ tone: 'info', message: m.profile_email_sent() });
-					} else if (
-						result.type === 'failure' &&
-						typeof result.data?.emailError === 'string'
-					) {
+					} else if (result.type === 'failure' && typeof result.data?.emailError === 'string') {
 						toast.add({ tone: 'danger', message: result.data.emailError });
 					}
 				};

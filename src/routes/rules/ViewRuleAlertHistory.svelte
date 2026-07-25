@@ -95,7 +95,12 @@
 	}
 </script>
 
-<CwButton id={`rule-history-${templateId}-open-button`} variant="secondary" size="md" onclick={openHistory}>
+<CwButton
+	id={`rule-history-${templateId}-open-button`}
+	variant="secondary"
+	size="md"
+	onclick={openHistory}
+>
 	<Icon src={HISTORY_ICON} alt={m.rules_new_view_history()} />
 </CwButton>
 
@@ -134,7 +139,11 @@
 
 				{#if devices.length > 1}
 					<div class="rule-history__filter">
-						<CwDropdown id={`rule-history-${templateId}-device-select`} options={deviceOptions} bind:value={selectedDevice} />
+						<CwDropdown
+							id={`rule-history-${templateId}-device-select`}
+							options={deviceOptions}
+							bind:value={selectedDevice}
+						/>
 					</div>
 				{/if}
 			</div>
@@ -208,7 +217,12 @@
 
 	{#snippet actions()}
 		<div class="rule-history__actions">
-			<CwButton id={`rule-history-${templateId}-close-button`} variant="secondary" size="md" onclick={() => (open = false)}>
+			<CwButton
+				id={`rule-history-${templateId}-close-button`}
+				variant="secondary"
+				size="md"
+				onclick={() => (open = false)}
+			>
 				{m.action_close()}
 			</CwButton>
 		</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SvelteMap } from 'svelte/reactivity';
 	import type { ReportTemplateHistoryItemDto } from '$lib/api/api.dtos';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { ApiService } from '$lib/api/api.service';
@@ -38,7 +39,7 @@
 	};
 
 	let groups = $derived.by<HistoryGroup[]>(() => {
-		const byDevice = new Map<string, HistoryGroup>();
+		const byDevice = new SvelteMap<string, HistoryGroup>();
 		for (const entry of entries) {
 			let group = byDevice.get(entry.devEui);
 			if (!group) {
@@ -101,7 +102,12 @@
 	}
 </script>
 
-<CwButton id={`report-history-${templateId}-open-button`} variant="secondary" size="md" onclick={() => (open = true)}>
+<CwButton
+	id={`report-history-${templateId}-open-button`}
+	variant="secondary"
+	size="md"
+	onclick={() => (open = true)}
+>
 	<Icon src={HISTORY_ICON} alt={m.reports_new_view_history()} />
 </CwButton>
 
@@ -146,7 +152,12 @@
 
 	{#snippet actions()}
 		<div class="report-history__actions">
-			<CwButton id={`report-history-${templateId}-close-button`} variant="secondary" size="md" onclick={() => (open = false)}>
+			<CwButton
+				id={`report-history-${templateId}-close-button`}
+				variant="secondary"
+				size="md"
+				onclick={() => (open = false)}
+			>
 				{m.action_close()}
 			</CwButton>
 		</div>

@@ -9,7 +9,7 @@
 	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
 	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
 	import { applyAction, enhance } from '$app/forms';
-	import { readLoginReason, readRedirectPath } from '$lib/utils/auth-redirect';
+	import { readRedirectPath } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 
@@ -20,23 +20,6 @@
 	let password: string = $state('');
 	const recaptcha = createAuthRecaptcha();
 	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
-	let loginReason = $derived(readLoginReason(page.url.searchParams));
-	let reasonMessage = $derived.by(() => {
-		switch (loginReason) {
-			case 'auth-required':
-				return m.auth_login_reason_auth_required();
-			case 'expired':
-				return m.auth_login_reason_expired();
-			case 'signed-out':
-				return m.auth_login_reason_signed_out();
-			case 'password-reset':
-				return m.auth_login_reason_password_reset();
-			case 'error-recovery':
-				return m.auth_login_reason_error_recovery();
-			default:
-				return null;
-		}
-	});
 
 	function passwordStrengthCheck(value: string) {
 		void isStrongPassword(value);

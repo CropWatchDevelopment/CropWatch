@@ -11,6 +11,7 @@
 	import { CwCard, CwChip } from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
+	import '../display-shared.css';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
@@ -89,12 +90,7 @@
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 		gap: 1rem;
 	}
-	.kpi-value {
-		margin: 0 0 0.75rem;
-		font-size: clamp(1.45rem, 2.1vw, 2rem);
-		font-weight: 700;
-		color: var(--cw-text-primary);
-	}
+	/* .kpi-value styles come from ../display-shared.css */
 	.table-wrapper {
 		overflow-x: auto;
 	}

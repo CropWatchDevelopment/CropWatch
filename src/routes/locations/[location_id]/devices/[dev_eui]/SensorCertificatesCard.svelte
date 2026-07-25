@@ -85,11 +85,7 @@
 		<div class="certificate-item">
 			<div class="certificate-item__meta">
 				<div class="device-form__header">
-					<CwChip
-						label={m.devices_sensor_series_certificate_label()}
-						tone="info"
-						variant="soft"
-					/>
+					<CwChip label={m.devices_sensor_series_certificate_label()} tone="info" variant="soft" />
 				</div>
 
 				<p class="panel-note">{m.devices_sensor_series_certificate_note()}</p>
@@ -102,7 +98,12 @@
 				target="_blank"
 				class="certificate-download-form"
 			>
-				<CwButton id="device-certificates-series-download-button" type="submit" variant="primary" size="sm">
+				<CwButton
+					id="device-certificates-series-download-button"
+					type="submit"
+					variant="primary"
+					size="sm"
+				>
 					<Icon src={DOWNLOAD_ICON} />
 				</CwButton>
 			</form>

@@ -20,6 +20,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
+	import { sortByColumn } from '$lib/utils/sortByColumn';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import DeleteReportTemplateDialog from './DeleteReportTemplateDialog.svelte';
@@ -60,7 +61,7 @@
 			let rows = templates.filter((template) => !deletedIds.has(template.id)).map(toRow);
 
 			if (query.sort) {
-				rows = sortRows(rows, query.sort.column, query.sort.direction);
+				rows = sortByColumn(rows, query.sort.column, query.sort.direction);
 			}
 
 			const total = rows.length;
@@ -142,25 +143,6 @@
 			? m.reports_new_summary_more({ summary: visible, count: String(remaining) })
 			: visible;
 	}
-
-	function sortRows(
-		rows: ReportTemplateRow[],
-		column: string,
-		direction: 'asc' | 'desc'
-	): ReportTemplateRow[] {
-		const dir = direction === 'asc' ? 1 : -1;
-
-		return [...rows].sort((a, b) => {
-			const left = (a as unknown as Record<string, unknown>)[column];
-			const right = (b as unknown as Record<string, unknown>)[column];
-
-			if (typeof left === 'number' && typeof right === 'number') {
-				return (left - right) * dir;
-			}
-
-			return String(left ?? '').localeCompare(String(right ?? '')) * dir;
-		});
-	}
 </script>
 
 <svelte:head>
@@ -168,7 +150,11 @@
 </svelte:head>
 
 <AppPage>
-	<CwButton id="reports-back-button" variant="secondary" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton
+		id="reports-back-button"
+		variant="secondary"
+		onclick={() => goto(resolve(backHref(page.url, '/') as '/'))}
+	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
@@ -221,7 +207,11 @@
 				{/snippet}
 
 				{#snippet toolbarActions()}
-					<CwButton id="reports-add-button" variant="primary" onclick={() => goto(resolve('/reports/create'))}>
+					<CwButton
+						id="reports-add-button"
+						variant="primary"
+						onclick={() => goto(resolve('/reports/create'))}
+					>
 						<Icon src={ADD_ICON} alt={m.reports_new_create_template()} />
 					</CwButton>
 				{/snippet}

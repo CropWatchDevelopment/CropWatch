@@ -4,12 +4,24 @@ import type { UpdatePreferencesRequest } from '$lib/api/api.dtos';
 import { readApiErrorMessage } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { getLocale } from '$lib/paraglide/runtime';
+import {
+	getTemperatureUnitOptions,
+	getWeightUnitOptions,
+	getEcUnitOptions,
+	getWaterLevelUnitOptions,
+	getTimezoneOptions,
+	getSoilMoistureUnitOptions,
+	getRainfallUnitOptions,
+	getWindSpeedUnitOptions,
+	getPressureUnitOptions,
+	getCo2UnitOptions,
+	getDistanceUnitOptions,
+	getAreaUnitOptions,
+	getDateFormatOptions,
+	getTimeFormatOptions,
+	getDecimalSeparatorOptions
+} from '$lib/units';
 import type { Actions, PageServerLoad } from './$types';
-
-type Option = {
-	label: string;
-	value: string;
-};
 
 type SupportedLocale = 'ja' | 'en';
 
@@ -37,129 +49,6 @@ type PreferenceDraft = {
 	highlightAlertThresholds: boolean;
 };
 
-const languageOptions: Option[] = [
-	{ label: 'Japanese', value: 'ja' },
-	{ label: 'English', value: 'en' }
-];
-
-// Persisted (profile_preferences) — value sets must match the DB CHECK constraints.
-const temperatureUnitOptions: Option[] = [
-	{ label: 'Celsius (°C)', value: 'celsius' },
-	{ label: 'Fahrenheit (°F)', value: 'fahrenheit' },
-	{ label: 'Kelvin (K)', value: 'kelvin' }
-];
-
-const weightUnitOptions: Option[] = [
-	{ label: 'Kilograms (kg)', value: 'kg' },
-	{ label: 'Pounds (lb)', value: 'lb' }
-];
-
-const ecUnitOptions: Option[] = [
-	{ label: 'mS/cm', value: 'ms_cm' },
-	{ label: 'dS/cm', value: 'ds_cm' },
-	{ label: 'µS/cm', value: 'us_cm' }
-];
-
-const waterLevelUnitOptions: Option[] = [
-	{ label: 'Millimeters (mm)', value: 'mm' },
-	{ label: 'Centimeters (cm)', value: 'cm' },
-	{ label: 'Inches (in)', value: 'inch' },
-	{ label: 'Feet (ft)', value: 'foot' },
-	{ label: 'Meters (m)', value: 'meter' },
-	{ label: 'Yards (yd)', value: 'yard' }
-];
-
-// One representative major city per UTC offset (value is the IANA zone).
-const timezoneOptions: Option[] = [
-	{ label: '(UTC-11:00) Pago Pago', value: 'Pacific/Pago_Pago' },
-	{ label: '(UTC-10:00) Honolulu', value: 'Pacific/Honolulu' },
-	{ label: '(UTC-09:00) Anchorage', value: 'America/Anchorage' },
-	{ label: '(UTC-08:00) Los Angeles', value: 'America/Los_Angeles' },
-	{ label: '(UTC-07:00) Denver', value: 'America/Denver' },
-	{ label: '(UTC-06:00) Mexico City', value: 'America/Mexico_City' },
-	{ label: '(UTC-05:00) New York', value: 'America/New_York' },
-	{ label: '(UTC-04:00) Santiago', value: 'America/Santiago' },
-	{ label: '(UTC-03:00) Sao Paulo', value: 'America/Sao_Paulo' },
-	{ label: '(UTC-01:00) Azores', value: 'Atlantic/Azores' },
-	{ label: '(UTC+00:00) London', value: 'Europe/London' },
-	{ label: '(UTC+01:00) Paris', value: 'Europe/Paris' },
-	{ label: '(UTC+02:00) Cairo', value: 'Africa/Cairo' },
-	{ label: '(UTC+03:00) Moscow', value: 'Europe/Moscow' },
-	{ label: '(UTC+03:30) Tehran', value: 'Asia/Tehran' },
-	{ label: '(UTC+04:00) Dubai', value: 'Asia/Dubai' },
-	{ label: '(UTC+05:00) Karachi', value: 'Asia/Karachi' },
-	{ label: '(UTC+05:30) Mumbai', value: 'Asia/Kolkata' },
-	{ label: '(UTC+05:45) Kathmandu', value: 'Asia/Kathmandu' },
-	{ label: '(UTC+06:00) Dhaka', value: 'Asia/Dhaka' },
-	{ label: '(UTC+07:00) Bangkok', value: 'Asia/Bangkok' },
-	{ label: '(UTC+08:00) Shanghai', value: 'Asia/Shanghai' },
-	{ label: '(UTC+09:00) Tokyo', value: 'Asia/Tokyo' },
-	{ label: '(UTC+09:30) Adelaide', value: 'Australia/Adelaide' },
-	{ label: '(UTC+10:00) Sydney', value: 'Australia/Sydney' },
-	{ label: '(UTC+11:00) Noumea', value: 'Pacific/Noumea' },
-	{ label: '(UTC+12:00) Auckland', value: 'Pacific/Auckland' }
-];
-
-// Not yet persisted — displayed disabled until backing columns/consumers exist.
-const soilMoistureUnitOptions: Option[] = [
-	{ label: 'VWC (%)', value: 'vwc_percent' },
-	{ label: 'Relative saturation (%)', value: 'relative_percent' },
-	{ label: 'kPa', value: 'kpa' },
-	{ label: 'centibar', value: 'centibar' }
-];
-
-const rainfallUnitOptions: Option[] = [
-	{ label: 'Millimeters (mm)', value: 'mm' },
-	{ label: 'Centimeters (cm)', value: 'cm' },
-	{ label: 'Inches (in)', value: 'in' }
-];
-
-const windSpeedUnitOptions: Option[] = [
-	{ label: 'Meters per second (m/s)', value: 'm_s' },
-	{ label: 'Kilometers per hour (km/h)', value: 'km_h' },
-	{ label: 'Miles per hour (mph)', value: 'mph' },
-	{ label: 'Knots (kt)', value: 'kt' }
-];
-
-const pressureUnitOptions: Option[] = [
-	{ label: 'hPa', value: 'hpa' },
-	{ label: 'kPa', value: 'kpa' },
-	{ label: 'bar', value: 'bar' },
-	{ label: 'PSI', value: 'psi' }
-];
-
-const co2UnitOptions: Option[] = [
-	{ label: 'PPM', value: 'ppm' },
-	{ label: 'mg/m3', value: 'mg_m3' }
-];
-
-const distanceUnitOptions: Option[] = [
-	{ label: 'Kilometers (km)', value: 'km' },
-	{ label: 'Miles (mi)', value: 'mi' }
-];
-
-const areaUnitOptions: Option[] = [
-	{ label: 'Hectares (ha)', value: 'hectares' },
-	{ label: 'Acres (ac)', value: 'acres' },
-	{ label: 'Square meters (m2)', value: 'square_meters' }
-];
-
-const dateFormatOptions: Option[] = [
-	{ label: 'YYYY-MM-DD', value: 'yyyy_mm_dd' },
-	{ label: 'DD/MM/YYYY', value: 'dd_mm_yyyy' },
-	{ label: 'MM/DD/YYYY', value: 'mm_dd_yyyy' }
-];
-
-const timeFormatOptions: Option[] = [
-	{ label: '24-hour', value: '24h' },
-	{ label: '12-hour', value: '12h' }
-];
-
-const decimalSeparatorOptions: Option[] = [
-	{ label: 'Dot (1,234.56)', value: 'dot' },
-	{ label: 'Comma (1.234,56)', value: 'comma' }
-];
-
 const readString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const createDefaultPreferences = (locale: string): PreferenceDraft => ({
@@ -167,8 +56,10 @@ const createDefaultPreferences = (locale: string): PreferenceDraft => ({
 	theme: 'system',
 	temperatureUnit: 'celsius',
 	weightUnit: 'kg',
-	ecUnit: 'us_cm',
-	waterDepthUnit: 'cm',
+	// Defaults match the canonical raw units (mS/cm, mm) so saving the defaults
+	// does not silently rescale existing displays.
+	ecUnit: 'ms_cm',
+	waterDepthUnit: 'mm',
 	timezone: '',
 	soilMoistureUnit: 'vwc_percent',
 	rainfallUnit: 'mm',
@@ -226,22 +117,21 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
 		role: readString(session?.role) || null,
 		preferences,
 		options: {
-			language: languageOptions,
-			temperature: temperatureUnitOptions,
-			weight: weightUnitOptions,
-			ec: ecUnitOptions,
-			waterDepth: waterLevelUnitOptions,
-			timezone: timezoneOptions,
-			soilMoisture: soilMoistureUnitOptions,
-			rainfall: rainfallUnitOptions,
-			windSpeed: windSpeedUnitOptions,
-			pressure: pressureUnitOptions,
-			co2: co2UnitOptions,
-			distance: distanceUnitOptions,
-			area: areaUnitOptions,
-			dateFormat: dateFormatOptions,
-			timeFormat: timeFormatOptions,
-			decimalSeparator: decimalSeparatorOptions
+			temperature: getTemperatureUnitOptions(),
+			weight: getWeightUnitOptions(),
+			ec: getEcUnitOptions(),
+			waterDepth: getWaterLevelUnitOptions(),
+			timezone: getTimezoneOptions(),
+			soilMoisture: getSoilMoistureUnitOptions(),
+			rainfall: getRainfallUnitOptions(),
+			windSpeed: getWindSpeedUnitOptions(),
+			pressure: getPressureUnitOptions(),
+			co2: getCo2UnitOptions(),
+			distance: getDistanceUnitOptions(),
+			area: getAreaUnitOptions(),
+			dateFormat: getDateFormatOptions(),
+			timeFormat: getTimeFormatOptions(),
+			decimalSeparator: getDecimalSeparatorOptions()
 		}
 	};
 };

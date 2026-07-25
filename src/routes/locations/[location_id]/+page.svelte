@@ -99,7 +99,13 @@
 	const columns: CwColumnDef<LocationDeviceRow>[] = [
 		{ key: 'name', header: m.devices_device_name(), sortable: true },
 		{ key: 'status', header: m.devices_status(), sortable: true, width: '8rem' },
-		{ key: 'dev_eui', header: 'DevEUI', sortable: true, width: '14rem', hideBelow: 'sm' }
+		{
+			key: 'dev_eui',
+			header: m.devices_dev_eui_label(),
+			sortable: true,
+			width: '14rem',
+			hideBelow: 'sm'
+		}
 	];
 
 	const locationDevices = $derived.by(() => {
@@ -182,12 +188,19 @@
 </script>
 
 <AppPage>
-	<CwButton id="location-back-button" variant="secondary" size="sm" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton
+		id="location-back-button"
+		variant="secondary"
+		size="sm"
+		onclick={() => goto(resolve(backHref(page.url, '/') as '/'))}
+	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.locations_location_title({ name: locationLabel })} elevated>
-		<CwDataTable id="location-table" labels={cwDataTableLabels()}
+		<CwDataTable
+			id="location-table"
+			labels={cwDataTableLabels()}
 			{columns}
 			{loadData}
 			{loading}
@@ -203,7 +216,11 @@
 							id="location-add-device-button"
 							variant="primary"
 							onclick={() =>
-								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/devices/create`)}
+								goto(
+									resolve('/locations/[location_id]/devices/create', {
+										location_id: String(+selectedLocationId)
+									})
+								)}
 						>
 							<Icon src={ADD_ICON} alt="" />
 							{m.devices_add_device()}
@@ -212,7 +229,11 @@
 							id="location-settings-button"
 							variant="secondary"
 							onclick={() =>
-								goto(`/locations/${encodeURIComponent(+selectedLocationId)}/settings`)}
+								goto(
+									resolve('/locations/[location_id]/settings', {
+										location_id: String(+selectedLocationId)
+									})
+								)}
 						>
 							<Icon src={SETTINGS_ICON} alt={m.nav_settings()} />
 						</CwButton>
@@ -229,6 +250,8 @@
 					<CwCopy labels={cwCopyLabels()} value={row.dev_eui}>
 						<span>{row.dev_eui}</span>
 					</CwCopy>
+				{:else if col.key === 'status'}
+					{row.status === 'Online' ? m.status_online() : m.status_offline()}
 				{:else}
 					{defaultValue}
 				{/if}
@@ -236,7 +259,12 @@
 
 			{#snippet rowActions(row: LocationDeviceRow)}
 				<div class="flex flex-row gap-2">
-					<CwButton id={`location-row-${row.dev_eui}-view-button`} size="md" variant="info" onclick={() => handleViewDevice(row)}>
+					<CwButton
+						id={`location-row-${row.dev_eui}-view-button`}
+						size="md"
+						variant="info"
+						onclick={() => handleViewDevice(row)}
+					>
 						<Icon src={EYE_ICON} alt={m.action_view()} />
 					</CwButton>
 					{#if data.hasSettings}
@@ -247,7 +275,10 @@
 							onclick={() => {
 								if (!selectedLocationId) return;
 								goto(
-									`/locations/${encodeURIComponent(selectedLocationId)}/devices/${encodeURIComponent(row.dev_eui)}/settings`
+									resolve('/locations/[location_id]/devices/[dev_eui]/settings', {
+										location_id: String(selectedLocationId),
+										dev_eui: row.dev_eui
+									})
 								);
 							}}
 						>

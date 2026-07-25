@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+    branches: [develop, master]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # SvelteKit generates the `$env/static/*` module types from the variables it
+      # can see, so a checkout with no .env typechecks as "has no exported member".
+      # Placeholder values are enough — nothing here validates env at import time.
+      - name: Seed placeholder env
+        run: cp .env.example .env
+
+      # `prepare` runs generate-paraglide + svelte-kit sync as part of install, so
+      # src/lib/paraglide (gitignored, normally a vite-build side effect) exists for
+      # every step below.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || github.token }}
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Type check
+        run: pnpm run check
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Unit tests
+        run: pnpm exec vitest --run
+
+      - name: Build
+        run: pnpm run build

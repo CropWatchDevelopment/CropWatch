@@ -8,7 +8,7 @@ import {
 	ensureAlertPointsIncludeReset,
 	hasUnsupportedAlertPointConditions
 } from './rule-template-alert-points';
-import type { RuleTemplateCriterionDto } from '$lib/rules-new/rule-template.types';
+import type { RuleTemplateCriterionDto } from '$lib/rules/rule-template.types';
 
 describe('rule template alert points adapter', () => {
 	it('creates blank alert points with reset included', () => {

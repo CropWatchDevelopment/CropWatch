@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { SvelteMap } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { ApiService } from '$lib/api/api.service';
@@ -133,7 +134,7 @@
 		...deviceOptionsBase
 	]);
 	let deviceGroups = $derived.by(() => {
-		const seen = new Map<number, string>();
+		const seen = new SvelteMap<number, string>();
 		for (const device of devices ?? []) {
 			if (typeof device.location_id !== 'number' || seen.has(device.location_id)) continue;
 			seen.set(device.location_id, resolveLocationName(device.location_id));
@@ -197,7 +198,11 @@
 		const types: number[] = [];
 		for (const devEui of selectedDevEuis) {
 			const deviceType = devices.find((device) => device.dev_eui === devEui)?.type;
-			if (typeof deviceType === 'number' && Number.isFinite(deviceType) && !types.includes(deviceType)) {
+			if (
+				typeof deviceType === 'number' &&
+				Number.isFinite(deviceType) &&
+				!types.includes(deviceType)
+			) {
 				types.push(deviceType);
 			}
 		}
@@ -229,7 +234,12 @@
 
 		try {
 			const api = new ApiService({ authToken });
-			const payload = buildSaveRequest(fields, selectedDevEuis, alertPointsValue, selectedDeviceTypeId);
+			const payload = buildSaveRequest(
+				fields,
+				selectedDevEuis,
+				alertPointsValue,
+				selectedDeviceTypeId
+			);
 
 			if (mode === 'edit' && initial) {
 				await api.updateReportTemplate(initial.id, payload);
@@ -276,7 +286,11 @@
 	</AppNotice>
 {/if}
 
-<CwCard title={m.reports_new_step_template()} subtitle={m.reports_new_step_template_subtitle()} elevated>
+<CwCard
+	title={m.reports_new_step_template()}
+	subtitle={m.reports_new_step_template_subtitle()}
+	elevated
+>
 	<AppFormStack padded>
 		<CwInput
 			id="report-form-name-input"
@@ -365,7 +379,12 @@
 	<AppFormStack padded>
 		<CwSeparator />
 		<AppActionRow>
-			<CwButton id="report-form-cancel-button" variant="ghost" onclick={() => goto(resolve('/reports'))} disabled={submitting}>
+			<CwButton
+				id="report-form-cancel-button"
+				variant="ghost"
+				onclick={() => goto(resolve('/reports'))}
+				disabled={submitting}
+			>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton
