@@ -14,3 +14,9 @@ bun.lockb
 # Paraglide (generated)
 src/lib/paraglide
 src/paraglide
+
+# inlang project (generated) — everything here except settings.json is written by
+# the compiler and is not prettier-clean. Mirrors project.inlang/.gitignore, which
+# prettier does not read: nested ignore files are a git feature, not a prettier one.
+project.inlang/*
+!project.inlang/settings.json
