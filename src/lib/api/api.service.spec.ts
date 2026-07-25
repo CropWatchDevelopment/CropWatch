@@ -355,6 +355,107 @@ describe('ApiService relay endpoints', () => {
 	});
 });
 
+describe('ApiService air note endpoints', () => {
+	it('uses PATCH on /air/notes/{note_id} for note updates', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+		let requestedBody = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			requestedBody = String(init?.body ?? '');
+			return createJsonResponse(null);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.updateAirNote(7, {
+			include_in_report: false,
+			note: 'corrected reading',
+			title: 'Amended'
+		});
+
+		expect(requestedMethod).toBe('PATCH');
+		expect(requestedUrl).toBe('https://example.com/air/notes/7');
+		expect(JSON.parse(requestedBody)).toEqual({
+			include_in_report: false,
+			note: 'corrected reading',
+			title: 'Amended'
+		});
+	});
+
+	it('uses DELETE on /air/notes/{note_id} for note removal', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			return createJsonResponse(null);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.deleteAirNote(7);
+
+		expect(requestedMethod).toBe('DELETE');
+		expect(requestedUrl).toBe('https://example.com/air/notes/7');
+	});
+});
+
+describe('ApiService report regeneration endpoint', () => {
+	it('uses POST on /reports/{id}/regenerate with the documented payload', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+		let requestedBody = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			requestedBody = String(init?.body ?? '');
+			return createJsonResponse({
+				devEui: 'device-123',
+				id: 1,
+				periodEnd: '2026-07-18T23:59:59.999Z',
+				periodStart: '2026-07-12T00:00:00.000Z',
+				requestedAt: '2026-07-25T12:00:00.000Z',
+				status: 'pending',
+				templateId: 42
+			});
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		const result = await api.requestReportRegeneration(42, {
+			devEui: 'device-123',
+			periodEnd: '2026-07-18T23:59:59.999Z',
+			periodStart: '2026-07-12T00:00:00.000Z',
+			sourceObjectName: '2026_07_12-2026_07_18.pdf'
+		});
+
+		expect(requestedMethod).toBe('POST');
+		expect(requestedUrl).toBe('https://example.com/reports/42/regenerate');
+		expect(JSON.parse(requestedBody)).toEqual({
+			devEui: 'device-123',
+			periodEnd: '2026-07-18T23:59:59.999Z',
+			periodStart: '2026-07-12T00:00:00.000Z',
+			sourceObjectName: '2026_07_12-2026_07_18.pdf'
+		});
+		expect(result.status).toBe('pending');
+		expect(result.id).toBe(1);
+	});
+});
+
 describe('ApiService rule template endpoints', () => {
 	it('lists rule templates through /rules with search', async () => {
 		let requestedUrl = '';

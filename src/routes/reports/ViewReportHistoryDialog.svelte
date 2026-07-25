@@ -1,13 +1,18 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { SvelteMap } from 'svelte/reactivity';
-	import type { ReportTemplateHistoryItemDto } from '$lib/api/api.dtos';
+	import type { ReportRegenerationItemDto, ReportTemplateHistoryItemDto } from '$lib/api/api.dtos';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { CwButton, CwChip, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
+	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import HISTORY_ICON from '$lib/images/icons/history.svg';
+	import { isReportPeriodEditable, parseReportPeriod } from './report-period';
 
 	interface Props {
 		templateId: number;
@@ -23,8 +28,22 @@
 	let loading = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let entries = $state<ReportTemplateHistoryItemDto[]>([]);
+	let regenerations = $state<ReportRegenerationItemDto[]>([]);
 	let loadedFor = $state<number | null>(null);
 	let downloadingKey = $state<string | null>(null);
+
+	// Queue periods are stored as timestamptz; report periods are Asia/Tokyo
+	// calendar days, so key the match on the JST date of the period start.
+	const jstDateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' });
+	let regenByPeriod = $derived.by(() => {
+		const byKey = new SvelteMap<string, ReportRegenerationItemDto>();
+		for (const regen of regenerations) {
+			const startDate = new Date(regen.periodStart);
+			if (Number.isNaN(startDate.getTime())) continue;
+			byKey.set(`${regen.devEui}|${jstDateFormatter.format(startDate)}`, regen);
+		}
+		return byKey;
+	});
 
 	$effect(() => {
 		if (open && !loading && loadedFor !== templateId) {
@@ -58,7 +77,15 @@
 		errorMessage = null;
 		try {
 			const api = new ApiService({ authToken: app.accessToken });
-			entries = await api.getReportTemplateHistory(templateId);
+			// The regeneration listing is decoration — a failure there must not
+			// take down the history list itself.
+			const [historyResult, regenResult] = await Promise.allSettled([
+				api.getReportTemplateHistory(templateId),
+				api.getReportRegenerations(templateId)
+			]);
+			if (historyResult.status === 'rejected') throw historyResult.reason;
+			entries = historyResult.value;
+			regenerations = regenResult.status === 'fulfilled' ? regenResult.value : [];
 			loadedFor = templateId;
 		} catch (error) {
 			errorMessage = readApiErrorMessage(error, m.reports_new_history_load_failed());
@@ -88,6 +115,17 @@
 		} finally {
 			downloadingKey = null;
 		}
+	}
+
+	function handleEdit(devEui: string, name: string, start: string, end: string) {
+		open = false;
+		const target = resolve('/reports/edit/[id]/data/[dev_eui]', {
+			id: String(templateId),
+			dev_eui: devEui
+		});
+		const params = new URLSearchParams({ start, end, file: name });
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- path already resolved above
+		void goto(`${target}?${params.toString()}`);
 	}
 
 	const timestampFormatter = new Intl.DateTimeFormat(undefined, {
@@ -127,21 +165,57 @@
 					<span class="report-history__device">{group.deviceName ?? group.devEui}</span>
 					<ul class="report-history__items">
 						{#each group.items as item, itemIndex (item.id ?? item.name)}
+							{@const period = parseReportPeriod(item.name)}
+							{@const editable = period !== null && isReportPeriodEditable(period.end)}
+							{@const regen =
+								period !== null && !period.isUpdated
+									? regenByPeriod.get(`${group.devEui}|${period.start}`)
+									: undefined}
 							<li class="report-history__item">
 								<div class="report-history__meta">
 									<span class="report-history__name">{item.name}</span>
 									<span class="report-history__time">{formatTimestamp(item.createdAt)}</span>
+									{#if regen}
+										<span class="report-history__regen">
+											<CwChip
+												label={m.reports_new_history_regen_badge({ count: regen.editCount })}
+												tone="warning"
+												variant="outline"
+												size="sm"
+											/>
+										</span>
+									{/if}
 								</div>
-								<CwButton
-									id={`report-history-${templateId}-${group.devEui}-${itemIndex}-download-button`}
-									variant="secondary"
-									size="sm"
-									loading={downloadingKey === `${group.devEui}:${item.name}`}
-									disabled={downloadingKey !== null}
-									onclick={() => handleDownload(group.devEui, item.name)}
-								>
-									{m.action_download()}
-								</CwButton>
+								<div class="report-history__item-actions">
+									<!-- Deliberately NOT disabled while a download is in flight — only
+									     period parsability / the retention cutoff gate editing. -->
+									<CwButton
+										id={`report-history-${templateId}-${group.devEui}-${itemIndex}-edit-button`}
+										variant="secondary"
+										size="sm"
+										disabled={!editable}
+										title={period !== null && !editable
+											? m.reports_new_edit_data_too_old()
+											: undefined}
+										onclick={() => {
+											if (period) handleEdit(group.devEui, item.name, period.start, period.end);
+										}}
+									>
+										<Icon src={EDIT_ICON} alt={m.action_edit()} />
+										{m.action_edit()}
+									</CwButton>
+									<CwButton
+										id={`report-history-${templateId}-${group.devEui}-${itemIndex}-download-button`}
+										variant="secondary"
+										size="sm"
+										loading={downloadingKey === `${group.devEui}:${item.name}`}
+										disabled={downloadingKey !== null}
+										onclick={() => handleDownload(group.devEui, item.name)}
+									>
+										<Icon src={DOWNLOAD_ICON} alt={m.action_download()} />
+										{m.action_download()}
+									</CwButton>
+								</div>
 							</li>
 						{/each}
 					</ul>
@@ -213,11 +287,26 @@
 		gap: var(--cw-space-2);
 	}
 
+	/* Card-ish rows: bordered, filled, with a hover lift so each report reads
+	   as a distinct item. The currentColor mixes adapt to light & dark themes. */
 	.report-history__item {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--cw-space-3);
+		padding: var(--cw-space-2) var(--cw-space-3);
+		border: 1px solid var(--cw-color-border, #e5e7eb);
+		border-left: 3px solid var(--cw-color-border, #e5e7eb);
+		border-radius: var(--cw-radius-md, 8px);
+		background: color-mix(in srgb, currentColor 4%, transparent);
+		transition:
+			background-color 0.12s ease,
+			border-color 0.12s ease;
+	}
+
+	.report-history__item:hover {
+		background: color-mix(in srgb, currentColor 9%, transparent);
+		border-left-color: var(--cw-color-primary, #3b82f6);
 	}
 
 	.report-history__meta {
@@ -225,6 +314,16 @@
 		flex-direction: column;
 		gap: 2px;
 		min-width: 0;
+	}
+
+	.report-history__regen {
+		margin-top: 2px;
+	}
+
+	.report-history__item-actions {
+		display: flex;
+		gap: var(--cw-space-2);
+		flex-shrink: 0;
 	}
 
 	.report-history__name {

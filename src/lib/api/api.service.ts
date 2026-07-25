@@ -29,6 +29,8 @@ import type {
 	ReportTemplateListQuery,
 	ReportTemplateSaveRequest,
 	ReportFormContextDto,
+	ReportRegenerationItemDto,
+	ReportRegenerationRequestInput,
 	ReportTemplateHistoryItemDto,
 	CommunicationMethodDto,
 	RuleActionTypeDto,
@@ -156,8 +158,11 @@ const REPORT_TEMPLATE_COMMUNICATION_METHODS_ENDPOINT = `${REPORT_TEMPLATES_ENDPO
 const REPORT_TEMPLATE_FORM_CONTEXT_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/form-context`;
 const REPORT_TEMPLATE_BY_ID_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/{id}`;
 const REPORT_TEMPLATE_HISTORY_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/{id}/history`;
+const REPORT_TEMPLATE_REGENERATE_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/{id}/regenerate`;
+const REPORT_TEMPLATE_REGENERATIONS_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/{id}/regenerations`;
 const REPORT_TEMPLATE_DOWNLOAD_ENDPOINT = `${REPORT_TEMPLATES_ENDPOINT}/download/{dev_eui}/{reportName}`;
 const AIR_NOTES_CREATE_ENDPOINT = publicEnv.PUBLIC_AIR_NOTES_ENDPOINT ?? '/air/notes';
+const AIR_NOTE_BY_ID_ENDPOINT = `${AIR_NOTES_CREATE_ENDPOINT}/{note_id}`;
 const GET_AIR_NOTES_ENDPOINT =
 	publicEnv.PUBLIC_GET_AIR_NOTES_ENDPOINT ?? '/air/notes/{dev_eui}/month/{month}/year/{year}';
 const SOIL_ENDPOINT = '/soil/{dev_eui}';
@@ -1034,6 +1039,32 @@ export class ApiService {
 		});
 	}
 
+	public updateAirNote(
+		noteId: number,
+		payload: {
+			note?: string;
+			title?: string;
+			include_in_report?: boolean;
+		}
+	): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(AIR_NOTE_BY_ID_ENDPOINT, { note_id: noteId }),
+			{
+				method: 'PATCH',
+				body: payload
+			}
+		);
+	}
+
+	public deleteAirNote(noteId: number): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(AIR_NOTE_BY_ID_ENDPOINT, { note_id: noteId }),
+			{
+				method: 'DELETE'
+			}
+		);
+	}
+
 	public getAllAirNotesForMonth(payload: {
 		dev_eui: string;
 		date: Date;
@@ -1202,6 +1233,32 @@ export class ApiService {
 			{
 				method: 'GET',
 				signal: options.signal
+			}
+		);
+	}
+
+	public getReportRegenerations(
+		id: number,
+		options: ApiMethodOptions = {}
+	): Promise<ReportRegenerationItemDto[]> {
+		return this.request<ReportRegenerationItemDto[]>(
+			replacePathParams(REPORT_TEMPLATE_REGENERATIONS_ENDPOINT, { id }),
+			{
+				method: 'GET',
+				signal: options.signal
+			}
+		);
+	}
+
+	public requestReportRegeneration(
+		id: number,
+		payload: ReportRegenerationRequestInput
+	): Promise<ReportRegenerationItemDto> {
+		return this.request<ReportRegenerationItemDto>(
+			replacePathParams(REPORT_TEMPLATE_REGENERATE_ENDPOINT, { id }),
+			{
+				method: 'POST',
+				body: payload
 			}
 		);
 	}
