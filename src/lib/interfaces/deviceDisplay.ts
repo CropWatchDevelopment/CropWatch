@@ -1,9 +1,5 @@
-import type { Component, SvelteComponent } from 'svelte';
-import type {
-	PendingRelayStates,
-	RelayNumber,
-	RelayTargetState
-} from '$lib/devices/relay-types';
+import type { Component } from 'svelte';
+import type { PendingRelayStates, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 
 /**
  * Common props contract that every device display component must accept.
@@ -53,9 +49,5 @@ export interface DeviceDisplayProps {
 
 /**
  * A Svelte component constructor that accepts {@link DeviceDisplayProps}.
- *
- * Uses a permissive type to avoid friction with Svelte's internal component
- * typing across different versions.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DeviceDisplayComponent = Component<DeviceDisplayProps>;

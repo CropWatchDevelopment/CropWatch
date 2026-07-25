@@ -111,13 +111,12 @@
 			>
 		</div>
 
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a
 			id="create-account-check-email-sign-in-link"
 			class="auth-button-link auth-button-link--primary"
-			href={redirectPath
-				? `${resolve('/auth/login')}?redirect=${encodeURIComponent(redirectPath)}`
-				: resolve('/auth/login')}
+			href={resolve(
+				`/auth/login${redirectPath ? `?redirect=${encodeURIComponent(redirectPath)}` : ''}` as '/auth/login'
+			)}
 		>
 			<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
 			{m.auth_go_to_sign_in()}

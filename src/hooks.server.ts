@@ -3,10 +3,9 @@ import { buildLoginPath } from '$lib/utils/auth-redirect';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import type { IJWT } from '$lib/interfaces/jwt.interface';
-import type { Handle, HandleFetch, HandleServerError, RequestEvent } from '@sveltejs/kit';
+import type { Handle, HandleServerError, RequestEvent } from '@sveltejs/kit';
 import { isRedirect, redirect } from '@sveltejs/kit';
 import { jwtDecode } from 'jwt-decode';
-import { env as publicEnv } from '$env/dynamic/public';
 
 const PUBLIC_PATHS = new Set([
 	'/manifest.webmanifest',
@@ -14,7 +13,6 @@ const PUBLIC_PATHS = new Set([
 	'/offline/',
 	'/service-worker.js'
 ]);
-const PUBLIC_API_BASE_URL = publicEnv.PUBLIC_API_BASE_URL ?? '';
 
 function getAuthRedirectTarget(event: RequestEvent): string {
 	return `${event.url.pathname}${event.url.search}`;
@@ -91,7 +89,6 @@ const checkAuthToken = (token: string, event: RequestEvent) => {
 		const now = Math.floor(Date.now() / 1000);
 
 		if (decodedJWT.exp < now) {
-			console.log('JWT token expired, redirecting to login');
 			event.cookies.delete('jwt', { path: '/' });
 			event.locals.jwt = null;
 			event.locals.jwtString = null;
@@ -112,7 +109,6 @@ const checkAuthToken = (token: string, event: RequestEvent) => {
 		return true;
 	} else {
 		if (!bypassAuth) {
-			console.log('No JWT token found, redirecting to login');
 			event.locals.jwt = null;
 			event.locals.jwtString = null;
 
@@ -129,20 +125,6 @@ const checkAuthToken = (token: string, event: RequestEvent) => {
 	return false;
 };
 
-const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
-	if (PUBLIC_API_BASE_URL && request.url.startsWith(PUBLIC_API_BASE_URL)) {
-		const token = event.cookies.get('jwt');
-
-		checkAuthToken(token ?? '', event);
-
-		if (token) {
-			request.headers.set('Authorization', `Bearer ${token}`);
-		}
-	}
-
-	return fetch(request);
-};
-
 const paraglideHandle: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request: localizedRequest, locale }) => {
 		event.request = localizedRequest;
@@ -157,7 +139,7 @@ const paraglideHandle: Handle = ({ event, resolve }) =>
 
 export const handle = sequence(paraglideHandle, originalHandle);
 
-export const handleError: HandleServerError = ({ error, status, message }) => {
+export const handleError: HandleServerError = ({ error, status }) => {
 	console.error('[CropWatch] Unexpected server error:', error);
 
 	return {

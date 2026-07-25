@@ -20,31 +20,15 @@
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { ApiService } from '$lib/api/api.service';
+	import { sortByColumn } from '$lib/utils/sortByColumn';
 
 	let loading = $state(false);
 	let app = getAppContext();
 
 	const columns: CwColumnDef<LocationDto>[] = [
-		{ key: 'location_id', header: 'ID', hideBelow: 'md' },
+		{ key: 'location_id', header: m.common_id(), hideBelow: 'md' },
 		{ key: 'name', header: m.nav_locations(), sortable: true }
 	];
-
-	function sortLocations(
-		rows: LocationDto[],
-		column: string,
-		direction: 'asc' | 'desc'
-	): LocationDto[] {
-		const dir = direction === 'asc' ? 1 : -1;
-		return [...rows].sort((a, b) => {
-			const aVal = (a as unknown as Record<string, unknown>)[column];
-			const bVal = (b as unknown as Record<string, unknown>)[column];
-			if (aVal == null && bVal == null) return 0;
-			if (aVal == null) return dir;
-			if (bVal == null) return -dir;
-			if (column === 'location_id') return (Number(aVal) - Number(bVal)) * dir;
-			return String(aVal).localeCompare(String(bVal)) * dir;
-		});
-	}
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<LocationDto>> {
 		const search = query.search?.trim() || '';
@@ -53,7 +37,10 @@
 		let rows = result.data ?? [];
 
 		if (query.sort) {
-			rows = sortLocations(rows, query.sort.column, query.sort.direction);
+			rows = sortByColumn(rows, query.sort.column, query.sort.direction, {
+				nullsLast: true,
+				numericColumns: ['location_id']
+			});
 		}
 
 		const total = rows.length;
@@ -74,12 +61,19 @@
 </script>
 
 <AppPage>
-	<CwButton id="locations-back-button" variant="secondary" size="sm" onclick={() => goto(backHref(page.url, resolve('/')))}>
+	<CwButton
+		id="locations-back-button"
+		variant="secondary"
+		size="sm"
+		onclick={() => goto(resolve(backHref(page.url, '/') as '/'))}
+	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
 
 	<CwCard title={m.locations_all_title()} elevated>
-		<CwDataTable id="locations-table" labels={cwDataTableLabels()}
+		<CwDataTable
+			id="locations-table"
+			labels={cwDataTableLabels()}
 			{columns}
 			{loadData}
 			{loading}
@@ -90,13 +84,22 @@
 			rowActionsHeader={m.common_actions()}
 		>
 			{#snippet toolbarActions()}
-				<CwButton id="locations-add-button" variant="primary" onclick={() => goto(resolve('/locations/create'))}>
+				<CwButton
+					id="locations-add-button"
+					variant="primary"
+					onclick={() => goto(resolve('/locations/create'))}
+				>
 					<Icon src={ADD_ICON} alt={m.locations_create_title()} />
 				</CwButton>
 			{/snippet}
 
 			{#snippet rowActions(row: LocationDto)}
-				<CwButton id={`locations-row-${row.location_id}-view-button`} size="md" variant="info" onclick={() => handleViewLocation(row)}>
+				<CwButton
+					id={`locations-row-${row.location_id}-view-button`}
+					size="md"
+					variant="info"
+					onclick={() => handleViewLocation(row)}
+				>
 					<Icon src={EYE_ICON} alt={m.action_view()} />
 				</CwButton>
 			{/snippet}

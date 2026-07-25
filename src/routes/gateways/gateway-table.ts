@@ -1,5 +1,6 @@
 import type { CwTableQuery, CwTableResult } from '@cropwatchdevelopment/cwui';
 import type { GatewayDto } from '$lib/api/api.dtos';
+import { sortByColumn } from '$lib/utils/sortByColumn';
 
 export interface GatewayTableRow extends GatewayDto {
 	tableRowKey: string;
@@ -57,38 +58,6 @@ export function filterGatewayRows(rows: GatewayTableRow[], search: string): Gate
 	);
 }
 
-export function sortGatewayRows(
-	rows: GatewayTableRow[],
-	column: string,
-	direction: 'asc' | 'desc'
-): GatewayTableRow[] {
-	const dir = direction === 'asc' ? 1 : -1;
-
-	return [...rows].sort((left, right) => {
-		const leftValue = (left as unknown as Record<string, unknown>)[column];
-		const rightValue = (right as unknown as Record<string, unknown>)[column];
-
-		if (leftValue == null && rightValue == null) return 0;
-		if (leftValue == null) return dir;
-		if (rightValue == null) return -dir;
-
-		if (typeof leftValue === 'boolean' && typeof rightValue === 'boolean') {
-			return (Number(leftValue) - Number(rightValue)) * dir;
-		}
-
-		if (typeof leftValue === 'number' && typeof rightValue === 'number') {
-			return (leftValue - rightValue) * dir;
-		}
-
-		return (
-			getGatewayText(leftValue).localeCompare(getGatewayText(rightValue), undefined, {
-				numeric: true,
-				sensitivity: 'base'
-			}) * dir
-		);
-	});
-}
-
 export function buildGatewayTableResult(
 	gateways: GatewayDto[],
 	query: CwTableQuery
@@ -96,7 +65,10 @@ export function buildGatewayTableResult(
 	let rows = filterGatewayRows(buildGatewayTableRows(gateways), query.search ?? '');
 
 	if (query.sort) {
-		rows = sortGatewayRows(rows, query.sort.column, query.sort.direction);
+		rows = sortByColumn(rows, query.sort.column, query.sort.direction, {
+			nullsLast: true,
+			collator: { numeric: true, sensitivity: 'base' }
+		});
 	}
 
 	const total = rows.length;

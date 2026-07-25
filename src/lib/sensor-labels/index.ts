@@ -12,8 +12,15 @@ export interface SensorLabel {
 }
 
 const SENSOR_LABELS: Record<string, SensorLabel> = {
-	temperature_c: { label: () => m.sensor_temperature(), unit: '°C', icon: 'thermo', format: 'number' },
+	temperature_c: {
+		label: () => m.sensor_temperature(),
+		unit: '°C',
+		icon: 'thermo',
+		format: 'number'
+	},
 	humidity: { label: () => m.sensor_humidity(), unit: '%', icon: 'drop', format: 'number' },
+	// Derived client-side from temperature + humidity — not a stored column.
+	dew_point: { label: () => m.sensor_dew_point(), unit: '°C', icon: 'thermo', format: 'number' },
 	moisture: { label: () => m.sensor_moisture(), unit: '%', icon: 'drop', format: 'number' },
 	co2: { label: () => m.sensor_co2(), unit: 'ppm', icon: 'co2', format: 'integer' },
 	co: { label: () => m.sensor_co(), unit: 'ppm', format: 'integer' },
@@ -48,30 +55,4 @@ export function labelFor(column: string): SensorLabel {
 
 export function isDisplayableColumn(column: string): boolean {
 	return !HIDDEN_COLUMNS.has(column);
-}
-
-export function formatSensorValue(
-	value: unknown,
-	format: SensorFormat
-): { display: string; numeric: number | null } {
-	if (value === null || value === undefined) {
-		return { display: '—', numeric: null };
-	}
-
-	if (format === 'boolean') {
-		const truthy =
-			value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
-		return { display: truthy ? m.sensor_value_on() : m.sensor_value_off(), numeric: truthy ? 1 : 0 };
-	}
-
-	const n = typeof value === 'number' ? value : Number(value);
-	if (!Number.isFinite(n)) {
-		return { display: String(value), numeric: null };
-	}
-
-	if (format === 'integer') {
-		return { display: Math.round(n).toLocaleString(), numeric: n };
-	}
-
-	return { display: n.toLocaleString(undefined, { maximumFractionDigits: 2 }), numeric: n };
 }

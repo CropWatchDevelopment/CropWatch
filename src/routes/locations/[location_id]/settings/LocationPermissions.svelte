@@ -15,7 +15,6 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 
-
 	interface SettingsPageData {
 		locationName: string;
 		[key: string]: unknown;
@@ -47,10 +46,7 @@
 </script>
 
 <div class="settings-page py-4">
-	<CwCard
-		title={m.locations_add_user_permissions_title({ name: data.locationName })}
-		elevated
-	>
+	<CwCard title={m.locations_add_user_permissions_title({ name: data.locationName })} elevated>
 		<form
 			id="location-permissions-form"
 			method="POST"
@@ -104,7 +100,12 @@
 				label={m.locations_apply_to_all_devices()}
 				onchange={(checked) => (applyToAllDevices = checked)}
 			/>
-			<input id="location-permissions-apply-all-input" type="hidden" name="applyToAllDevices" value={applyToAllDevices ? 'true' : 'false'} />
+			<input
+				id="location-permissions-apply-all-input"
+				type="hidden"
+				name="applyToAllDevices"
+				value={applyToAllDevices ? 'true' : 'false'}
+			/>
 
 			<div class="permissions-form__actions">
 				<CwButton

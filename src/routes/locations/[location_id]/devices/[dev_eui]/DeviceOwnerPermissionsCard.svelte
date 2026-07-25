@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { AppNotice } from '$lib/components/layout';
 	import { getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwDropdown, CwSeparator } from '@cropwatchdevelopment/cwui';
@@ -120,9 +121,24 @@
 								};
 							}}
 						>
-							<input id={`device-owner-permissions-row-${row.key}-owner-key-input`} type="hidden" name="ownerKey" value={row.key} />
-							<input id={`device-owner-permissions-row-${row.key}-email-input`} type="hidden" name="targetUserEmail" value={row.email} />
-							<input id={`device-owner-permissions-row-${row.key}-permission-level-input`} type="hidden" name="permissionLevel" value={row.permissionLevel} />
+							<input
+								id={`device-owner-permissions-row-${row.key}-owner-key-input`}
+								type="hidden"
+								name="ownerKey"
+								value={row.key}
+							/>
+							<input
+								id={`device-owner-permissions-row-${row.key}-email-input`}
+								type="hidden"
+								name="targetUserEmail"
+								value={row.email}
+							/>
+							<input
+								id={`device-owner-permissions-row-${row.key}-permission-level-input`}
+								type="hidden"
+								name="permissionLevel"
+								value={row.permissionLevel}
+							/>
 
 							<div class="permission-user flex items-center justify-center">
 								<p class="text-xl">{row.name} ({row.email})</p>
@@ -143,9 +159,6 @@
 												? m.devices_choose_valid_permission_level()
 												: undefined)}
 									/>
-									{#if ownerForm?.fieldErrors?.permissionLevel}
-										<p class="field-error">{ownerForm.fieldErrors.permissionLevel}</p>
-									{/if}
 								</div>
 
 								<CwButton
@@ -160,18 +173,15 @@
 							</div>
 
 							{#if ownerForm?.fieldErrors?.targetUserEmail}
-								<p class="field-error permission-feedback">
-									{ownerForm.fieldErrors.targetUserEmail}
-								</p>
+								<AppNotice tone="danger">
+									<p>{ownerForm.fieldErrors.targetUserEmail}</p>
+								</AppNotice>
 							{/if}
 
 							{#if ownerForm?.message}
-								<p
-									class:feedback-success={ownerForm.success}
-									class="form-feedback permission-feedback"
-								>
-									{ownerForm.message}
-								</p>
+								<AppNotice tone={ownerForm.success ? 'success' : 'danger'}>
+									<p>{ownerForm.message}</p>
+								</AppNotice>
 							{/if}
 						</form>
 					</div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { SvelteMap } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { ApiService } from '$lib/api/api.service';
@@ -9,7 +10,7 @@
 		RuleTemplateActionDto,
 		RuleTemplateActionInput,
 		RuleTemplateSaveRequest
-	} from '$lib/rules-new/rule-template.types';
+	} from '$lib/rules/rule-template.types';
 	import type { RuleFormContextDto } from '$lib/api/api.dtos';
 	import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
 	import {
@@ -59,12 +60,7 @@
 		config: RuleTemplateActionConfig;
 	};
 
-	let {
-		mode,
-		context,
-		authToken = null,
-		preselectedDevEui = null
-	}: Props = $props();
+	let { mode, context, authToken = null, preselectedDevEui = null }: Props = $props();
 
 	let devices = $derived(context.devices);
 	let actions = $derived(context.actionTypes);
@@ -130,7 +126,7 @@
 		...deviceOptionsBase
 	]);
 	let deviceGroups = $derived.by(() => {
-		const seen = new Map<number, string>();
+		const seen = new SvelteMap<number, string>();
 		for (const device of devices ?? []) {
 			if (typeof device.location_id !== 'number' || seen.has(device.location_id)) continue;
 			seen.set(device.location_id, resolveLocationName(device.location_id));
@@ -431,7 +427,12 @@
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_condition_number({ count: String(index + 1) })}</span>
 					{#if criteriaGroups.length > 1}
-						<CwButton id={`rule-form-criteria-${index}-remove-button`} variant="danger" size="sm" onclick={() => criteriaGroups.splice(index, 1)}>
+						<CwButton
+							id={`rule-form-criteria-${index}-remove-button`}
+							variant="danger"
+							size="sm"
+							onclick={() => criteriaGroups.splice(index, 1)}
+						>
 							{m.action_remove()}
 						</CwButton>
 					{/if}
@@ -479,7 +480,12 @@
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_new_action_number({ count: String(index + 1) })}</span>
 					{#if templateActions.length > 1}
-						<CwButton id={`rule-form-action-${index}-remove-button`} variant="danger" size="sm" onclick={() => templateActions.splice(index, 1)}>
+						<CwButton
+							id={`rule-form-action-${index}-remove-button`}
+							variant="danger"
+							size="sm"
+							onclick={() => templateActions.splice(index, 1)}
+						>
 							{m.action_remove()}
 						</CwButton>
 					{/if}
@@ -536,18 +542,27 @@
 					<dt>{m.rules_conditions()}:</dt>
 					<dd>{criteriaSummary}</dd>
 					{#if showAdvanced}
-
-					<dt>{m.rules_new_actions()}:</dt>
-					<dd>
-						{actionSummary}
-						<CwButton id="rule-form-advanced-hide-button" variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
-						{showAdvanced ? m.common_hide_details() : m.common_show_details()}
-					</CwButton>
-					</dd>
+						<dt>{m.rules_new_actions()}:</dt>
+						<dd>
+							{actionSummary}
+							<CwButton
+								id="rule-form-advanced-hide-button"
+								variant="secondary"
+								size="sm"
+								onclick={() => (showAdvanced = !showAdvanced)}
+							>
+								{showAdvanced ? m.common_hide_details() : m.common_show_details()}
+							</CwButton>
+						</dd>
 					{:else}
-					<CwButton id="rule-form-advanced-show-button" variant="secondary" size="sm" onclick={() => showAdvanced = !showAdvanced}>
-						{showAdvanced ? m.common_hide_details() : m.common_show_details()}
-					</CwButton>
+						<CwButton
+							id="rule-form-advanced-show-button"
+							variant="secondary"
+							size="sm"
+							onclick={() => (showAdvanced = !showAdvanced)}
+						>
+							{showAdvanced ? m.common_hide_details() : m.common_show_details()}
+						</CwButton>
 					{/if}
 				</dl>
 			</AppNotice>
@@ -560,7 +575,12 @@
 		<CwSeparator />
 
 		<AppActionRow>
-			<CwButton id="rule-form-cancel-button" variant="ghost" onclick={() => goto(resolve('/rules'))} disabled={submitting}>
+			<CwButton
+				id="rule-form-cancel-button"
+				variant="ghost"
+				onclick={() => goto(resolve('/rules'))}
+				disabled={submitting}
+			>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton

@@ -1,0 +1,19 @@
+/* Shared KPI styles for the device display components (Air/Soil/Water/Power).
+   Loaded globally (plain CSS import from each display's <script>), so only
+   rules that are byte-identical across displays belong here. Layout-variant
+   rules — notably each display's `.kpi-grid` column sizing — stay in the
+   component so variants never fight over one global selector. */
+
+.kpi-value {
+	margin: 0 0 0.75rem;
+	font-size: clamp(1.45rem, 2.1vw, 2rem);
+	font-weight: 700;
+	color: var(--cw-text-primary);
+}
+
+.kpi-value span {
+	margin-left: 0.35rem;
+	font-size: 0.9rem;
+	font-weight: 500;
+	color: var(--cw-text-muted);
+}

@@ -51,11 +51,17 @@
 	// `backTo` was supplied; otherwise fall back to this device's location.
 	// Computed at click time so it never participates in reactive updates.
 	function goBack() {
-		goto(backHref(page.url, resolve('/locations/[location_id]', { location_id: locationId })));
+		goto(resolve(backHref(page.url, `/locations/${locationId}`) as '/'));
 	}
 </script>
 
-<CwButton id="device-header-back-button" variant="secondary" size="sm" disabled={!locationId} onclick={goBack}>
+<CwButton
+	id="device-header-back-button"
+	variant="secondary"
+	size="sm"
+	disabled={!locationId}
+	onclick={goBack}
+>
 	&larr; {m.action_back()}
 </CwButton>
 
@@ -66,15 +72,18 @@
 >
 	{#snippet actions()}
 		<div>
-		<p class="text-md text-right" style="color: var(--cw-text-muted)">
-			{m.display_last_updated()}:
-			{#if lastUpdatedAt}
-				<CwDuration from={lastUpdatedAt} />
-			{:else}
-				<span>{m.common_not_available()}</span>
-			{/if}
-		</p>
-		<p class="text-md text-right" style="color: var(--cw-text-muted)">Dev-Eui: {devEui} <CwCopy value={devEui} /></p>
+			<p class="text-md text-right" style="color: var(--cw-text-muted)">
+				{m.display_last_updated()}:
+				{#if lastUpdatedAt}
+					<CwDuration from={lastUpdatedAt} />
+				{:else}
+					<span>{m.common_not_available()}</span>
+				{/if}
+			</p>
+			<p class="text-md text-right" style="color: var(--cw-text-muted)">
+				Dev-Eui: {devEui}
+				<CwCopy value={devEui} />
+			</p>
 		</div>
 	{/snippet}
 

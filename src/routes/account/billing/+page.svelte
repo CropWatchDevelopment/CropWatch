@@ -21,12 +21,11 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	const initial = (() => data)();
 	const toast = useCwToast();
 
 	let busy = $state(false);
 	let buyQty = $state('1');
-	let desiredSeats = $state(String(initial.state.device.seats));
+	let addQty = $state('1');
 
 	let cancelOpen = $state(false);
 	let assignOpen = $state(false);
@@ -83,26 +82,15 @@
 		return id != null ? (locationNames.get(id) ?? null) : null;
 	}
 
-	function deviceHref(devEui: string): string | null {
-		const id = deviceLocationId(devEui);
-		return id != null
-			? resolve('/locations/[location_id]/devices/[dev_eui]', {
-					location_id: String(id),
-					dev_eui: devEui
-				})
-			: null;
-	}
-
-	function locationHref(devEui: string): string | null {
-		const id = deviceLocationId(devEui);
-		return id != null ? resolve('/locations/[location_id]', { location_id: String(id) }) : null;
-	}
-
 	const basePriceLabel = $derived(priceLabel(data.products.base));
 	const devicePriceLabel = $derived(priceLabel(data.products.device));
-	const seatsChanged = $derived(
-		Number.parseInt(desiredSeats, 10) !== device.seats &&
-			Number.isInteger(Number.parseInt(desiredSeats, 10))
+
+	const addCount = $derived(Number.parseInt(addQty, 10));
+	const addValid = $derived(Number.isInteger(addCount) && addCount >= 1);
+	const addPreview = $derived(addValid ? deviceTotalLabel(addCount) : null);
+	const buyCount = $derived(Number.parseInt(buyQty, 10));
+	const buyPreview = $derived(
+		Number.isInteger(buyCount) && buyCount >= 1 ? deviceTotalLabel(buyCount) : null
 	);
 
 	function minorUnitFactor(currency: string): number {
@@ -123,6 +111,17 @@
 		if (!price || price.priceAmount == null) return null;
 		const currency = price.priceCurrency ?? 'usd';
 		return formatCurrency(price.priceAmount / minorUnitFactor(currency), currency.toUpperCase());
+	}
+
+	/** Monthly cost of `count` device licenses, formatted — for purchase previews. */
+	function deviceTotalLabel(count: number): string | null {
+		const price = data.products.device?.prices?.[0];
+		if (!price || price.priceAmount == null) return null;
+		const currency = price.priceCurrency ?? 'usd';
+		return formatCurrency(
+			(price.priceAmount * count) / minorUnitFactor(currency),
+			currency.toUpperCase()
+		);
 	}
 
 	function baseStatusTone(status: string | null): CwTone {
@@ -165,7 +164,7 @@
 
 	async function refresh() {
 		await invalidateAll();
-		desiredSeats = String(data.state.device.seats);
+		addQty = '1';
 	}
 
 	async function subscribeBase() {
@@ -217,13 +216,12 @@
 		}
 	}
 
-	async function updateSeats() {
-		const seats = Number.parseInt(desiredSeats, 10);
-		if (!Number.isInteger(seats) || seats < 0) return;
+	async function addLicenses() {
+		if (!addValid) return;
 		busy = true;
 		try {
-			await apiClient().changeDeviceSeats({ seats });
-			toast.add({ tone: 'success', message: m.billing_seats_updated() });
+			await apiClient().changeDeviceSeats({ seats: device.seats + addCount });
+			toast.add({ tone: 'success', message: m.billing_add_licenses_success() });
 			await refresh();
 		} catch (err) {
 			showError(err);
@@ -313,7 +311,12 @@
 </svelte:head>
 
 <AppPage width="lg">
-	<CwButton id="account-billing-back-button" variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
+	<CwButton
+		id="account-billing-back-button"
+		variant="secondary"
+		size="sm"
+		onclick={() => goto(resolve('/'))}
+	>
 		&larr; {m.action_back()}
 	</CwButton>
 
@@ -364,7 +367,12 @@
 					>
 						{m.billing_base_cancel()}
 					</CwButton>
-					<CwButton id="account-billing-base-manage-button" variant="primary" onclick={openPortal} loading={busy}>
+					<CwButton
+						id="account-billing-base-manage-button"
+						variant="primary"
+						onclick={openPortal}
+						loading={busy}
+					>
 						{m.billing_base_manage()}
 					</CwButton>
 				</AppActionRow>
@@ -373,7 +381,12 @@
 					<p>{m.billing_base_none_notice()}</p>
 				</AppNotice>
 				<AppActionRow>
-					<CwButton id="account-billing-base-subscribe-button" variant="primary" onclick={subscribeBase} loading={busy}>
+					<CwButton
+						id="account-billing-base-subscribe-button"
+						variant="primary"
+						onclick={subscribeBase}
+						loading={busy}
+					>
 						{basePriceLabel
 							? `${m.billing_base_subscribe()} — ${basePriceLabel}${m.billing_per_month()}`
 							: m.billing_base_subscribe()}
@@ -399,27 +412,28 @@
 			{#if hasDeviceSub}
 				<div class="billing-seats">
 					<CwInput
-						id="account-billing-seats-input"
+						id="account-billing-add-licenses-input"
 						type="numeric"
-						label={m.billing_seats_label()}
-						bind:value={desiredSeats}
-						min={device.assignedCount}
+						label={m.billing_add_licenses_label()}
+						bind:value={addQty}
+						min={1}
 					/>
 					<CwButton
-						id="account-billing-seats-update-button"
+						id="account-billing-add-licenses-button"
 						variant="primary"
-						onclick={updateSeats}
+						onclick={addLicenses}
 						loading={busy}
-						disabled={!seatsChanged}
+						disabled={!addValid}
 					>
-						{m.billing_seats_update()}
+						{m.billing_add_licenses_action()}
 					</CwButton>
 				</div>
-				{#if device.assignedCount > 0}
+				{#if addPreview}
 					<p class="billing-muted">
-						{m.billing_seats_min_note({ assigned: device.assignedCount })}
+						{m.billing_add_licenses_preview({ count: addCount, amount: addPreview })}
 					</p>
 				{/if}
+				<p class="billing-muted">{m.billing_reduce_hint()}</p>
 			{:else}
 				<div class="billing-seats">
 					<CwInput
@@ -429,10 +443,20 @@
 						bind:value={buyQty}
 						min={1}
 					/>
-					<CwButton id="account-billing-buy-devices-button" variant="primary" onclick={buyDevices} loading={busy}>
+					<CwButton
+						id="account-billing-buy-devices-button"
+						variant="primary"
+						onclick={buyDevices}
+						loading={busy}
+					>
 						{m.billing_buy_action()}
 					</CwButton>
 				</div>
+				{#if buyPreview}
+					<p class="billing-muted">
+						{m.billing_buy_preview({ count: buyCount, amount: buyPreview })}
+					</p>
+				{/if}
 			{/if}
 		</div>
 	</CwCard>
@@ -460,9 +484,16 @@
 
 						<span class="license-cell">
 							{#if license.devEui}
-								{@const href = deviceHref(license.devEui)}
-								{#if href}
-									<a id={`account-billing-license-${license.id}-device-link`} class="license-link" {href}>{license.deviceName ?? license.devEui}</a>
+								{@const deviceLocId = deviceLocationId(license.devEui)}
+								{#if deviceLocId != null}
+									<a
+										id={`account-billing-license-${license.id}-device-link`}
+										class="license-link"
+										href={resolve('/locations/[location_id]/devices/[dev_eui]', {
+											location_id: String(deviceLocId),
+											dev_eui: license.devEui
+										})}>{license.deviceName ?? license.devEui}</a
+									>
 								{:else}
 									<span>{license.deviceName ?? license.devEui}</span>
 								{/if}
@@ -479,9 +510,14 @@
 						<span class="license-cell">
 							{#if license.devEui}
 								{@const lname = deviceLocationName(license.devEui)}
-								{@const lhref = locationHref(license.devEui)}
-								{#if lname && lhref}
-									<a id={`account-billing-license-${license.id}-location-link`} class="license-link license-link--muted" href={lhref}>{lname}</a>
+								{@const locId = deviceLocationId(license.devEui)}
+								{#if lname && locId != null}
+									<a
+										id={`account-billing-license-${license.id}-location-link`}
+										class="license-link license-link--muted"
+										href={resolve('/locations/[location_id]', { location_id: String(locId) })}
+										>{lname}</a
+									>
 								{:else if lname}
 									<span class="billing-muted">{lname}</span>
 								{:else}
@@ -538,19 +574,32 @@
 	</CwCard>
 
 	<AppActionRow>
-		<CwButton id="account-billing-portal-button" variant="ghost" onclick={openPortal} disabled={busy}>{m.billing_portal()}</CwButton>
+		<CwButton
+			id="account-billing-portal-button"
+			variant="ghost"
+			onclick={openPortal}
+			disabled={busy}>{m.billing_portal()}</CwButton
+		>
 	</AppActionRow>
 </AppPage>
 
 <CwDialog bind:open={cancelOpen} title={m.billing_cancel_title()}>
-	{#snippet children()}
-		<p>{m.billing_cancel_body()}</p>
-	{/snippet}
+	<p>{m.billing_cancel_body()}</p>
 	{#snippet actions()}
-		<CwButton id="account-billing-cancel-subscription-dismiss-button" variant="ghost" onclick={() => (cancelOpen = false)} disabled={busy}>
+		<CwButton
+			id="account-billing-cancel-subscription-dismiss-button"
+			variant="ghost"
+			onclick={() => (cancelOpen = false)}
+			disabled={busy}
+		>
 			{m.action_cancel()}
 		</CwButton>
-		<CwButton id="account-billing-cancel-subscription-confirm-button" variant="danger" onclick={confirmCancel} loading={busy}>
+		<CwButton
+			id="account-billing-cancel-subscription-confirm-button"
+			variant="danger"
+			onclick={confirmCancel}
+			loading={busy}
+		>
 			{m.billing_cancel_confirm()}
 		</CwButton>
 	{/snippet}
@@ -560,23 +609,26 @@
 	bind:open={assignOpen}
 	title={assignMode === 'assign' ? m.billing_assign_title() : m.billing_move_title()}
 >
-	{#snippet children()}
-		{#if deviceOptions.length === 0}
-			<AppNotice tone="neutral">
-				<p>{m.billing_assign_no_devices()}</p>
-			</AppNotice>
-		{:else}
-			<CwDropdown
-				id="account-billing-assign-device-select"
-				label={m.billing_assign_device_label()}
-				options={deviceOptions}
-				bind:value={selectedDevEui}
-				placeholder={m.billing_assign_device_label()}
-			/>
-		{/if}
-	{/snippet}
+	{#if deviceOptions.length === 0}
+		<AppNotice tone="neutral">
+			<p>{m.billing_assign_no_devices()}</p>
+		</AppNotice>
+	{:else}
+		<CwDropdown
+			id="account-billing-assign-device-select"
+			label={m.billing_assign_device_label()}
+			options={deviceOptions}
+			bind:value={selectedDevEui}
+			placeholder={m.billing_assign_device_label()}
+		/>
+	{/if}
 	{#snippet actions()}
-		<CwButton id="account-billing-assign-dismiss-button" variant="ghost" onclick={() => (assignOpen = false)} disabled={busy}>
+		<CwButton
+			id="account-billing-assign-dismiss-button"
+			variant="ghost"
+			onclick={() => (assignOpen = false)}
+			disabled={busy}
+		>
 			{m.action_cancel()}
 		</CwButton>
 		<CwButton
@@ -592,14 +644,22 @@
 </CwDialog>
 
 <CwDialog bind:open={seatCancelOpen} title={m.billing_seat_cancel_title()}>
-	{#snippet children()}
-		<p>{m.billing_seat_cancel_body()}</p>
-	{/snippet}
+	<p>{m.billing_seat_cancel_body()}</p>
 	{#snippet actions()}
-		<CwButton id="account-billing-seat-cancel-dismiss-button" variant="ghost" onclick={() => (seatCancelOpen = false)} disabled={busy}>
+		<CwButton
+			id="account-billing-seat-cancel-dismiss-button"
+			variant="ghost"
+			onclick={() => (seatCancelOpen = false)}
+			disabled={busy}
+		>
 			{m.billing_seat_cancel_keep()}
 		</CwButton>
-		<CwButton id="account-billing-seat-cancel-confirm-button" variant="danger" onclick={confirmSeatCancel} loading={busy}>
+		<CwButton
+			id="account-billing-seat-cancel-confirm-button"
+			variant="danger"
+			onclick={confirmSeatCancel}
+			loading={busy}
+		>
 			{m.billing_seat_cancel_confirm()}
 		</CwButton>
 	{/snippet}

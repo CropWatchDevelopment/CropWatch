@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { CwButton, CwCard, CwChip, CwDropdown, CwInput } from '@cropwatchdevelopment/cwui';
 	import { resolve } from '$app/paths';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
 	import type { PageProps } from './$types';
 	import './settings-style.css';
@@ -24,11 +25,15 @@
 
 	let { data, form }: PageProps = $props();
 
+	// Capture once — form fields are seeded from the loaded record and then
+	// owned by the user; they must not re-seed reactively (see CLAUDE.md).
+	const initial = (() => data)();
+
 	let deviceSubmitting = $state(false);
-	let deviceName = $derived(data.deviceName ?? '');
-	let deviceGroup = $derived(data.deviceGroup ?? '');
-	let ttiName = $derived(data.ttiName ?? '');
-	let location_id = $derived(String(data.location_id ?? ''));
+	let deviceName = $state(initial.deviceName ?? '');
+	let deviceGroup = $state(initial.deviceGroup ?? '');
+	let ttiName = $state(initial.ttiName ?? '');
+	let location_id = $state(String(initial.location_id ?? ''));
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
 	let supportsSensorCertificates = $derived(data.supportsSensorCertificates ?? false);
 
@@ -72,7 +77,7 @@
 	>
 </svelte:head>
 
-<div class="device-settings-page">
+<AppPage width="lg">
 	<CwButton
 		id="device-settings-back-button"
 		variant="secondary"
@@ -83,15 +88,13 @@
 					location_id,
 					dev_eui: data.devEui
 				})
-			)}
-		class="back-button">&larr; {m.devices_back_to_detail()}</CwButton
+			)}>&larr; {m.devices_back_to_detail()}</CwButton
 	>
 	<CwCard title={m.devices_settings_title()} elevated>
 		<form
 			id="device-settings-form"
 			method="POST"
 			action="?/updateDevice"
-			class="device-form"
 			use:enhance={({ cancel }) => {
 				if (!canSubmitDevice) {
 					cancel();
@@ -108,29 +111,29 @@
 				};
 			}}
 		>
-			<div class="device-form__header">
-				<CwChip
-					label={m.devices_deveui_chip({ devEui: data.devEui?.toUpperCase() ?? 'UNKNOWN' })}
-					tone="info"
-					variant="soft"
-				/>
-				{#if data.deviceGroup}
+			<AppFormStack padded>
+				<div class="flex flex-wrap gap-2">
 					<CwChip
-						label={m.devices_current_group_chip({ group: data.deviceGroup })}
-						tone="secondary"
+						label={m.devices_deveui_chip({ devEui: data.devEui?.toUpperCase() ?? 'UNKNOWN' })}
+						tone="info"
 						variant="soft"
 					/>
+					{#if data.deviceGroup}
+						<CwChip
+							label={m.devices_current_group_chip({ group: data.deviceGroup })}
+							tone="secondary"
+							variant="soft"
+						/>
+					{/if}
+				</div>
+
+				{#if deviceForm?.message}
+					<AppNotice tone={deviceForm.success ? 'success' : 'danger'}>
+						<p>{deviceForm.message}</p>
+					</AppNotice>
 				{/if}
-			</div>
 
-			{#if deviceForm?.message}
-				<p class:feedback-success={deviceForm.success} class="form-feedback">
-					{deviceForm.message}
-				</p>
-			{/if}
-
-			<div class="panel-grid">
-				<div class="field-stack">
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwInput
 						id="device-settings-name-input"
 						label={m.devices_device_name_label()}
@@ -140,77 +143,80 @@
 						bind:value={deviceName}
 						error={deviceNameError || undefined}
 					/>
-					{#if deviceNameError}
-						<p class="field-error">{deviceNameError}</p>
-					{/if}
+
+					<div>
+						<CwInput
+							id="device-settings-group-input"
+							label={m.common_group()}
+							name="group"
+							required={false}
+							maxlength={DEVICE_GROUP_MAX_LENGTH}
+							bind:value={deviceGroup}
+							error={deviceGroupError || undefined}
+						/>
+						<input
+							id="device-settings-group-hidden-input"
+							type="hidden"
+							name="group"
+							value={deviceGroupValue}
+						/>
+					</div>
+
+					<div>
+						<CwInput
+							id="device-settings-tti-name-input"
+							label={m.devices_tti_device_id_label()}
+							name="tti_name"
+							required={false}
+							maxlength={TTI_DEVICE_ID_MAX_LENGTH}
+							placeholder={m.devices_tti_device_id_placeholder()}
+							bind:value={ttiName}
+							error={ttiNameError || undefined}
+						/>
+						<input
+							id="device-settings-tti-name-hidden-input"
+							type="hidden"
+							name="tti_name"
+							value={ttiNameValue}
+						/>
+					</div>
+
+					<div>
+						<CwDropdown
+							id="device-settings-location-select"
+							label={m.common_location()}
+							name="location_id"
+							options={[
+								{ label: m.devices_unassigned_location(), value: '' },
+								...(data.locations ?? []).map((loc) => ({
+									label: loc.name,
+									value: String(loc.location_id)
+								}))
+							]}
+							bind:value={location_id}
+							error={locationError || undefined}
+						/>
+						<input
+							id="device-settings-location-hidden-input"
+							type="hidden"
+							name="location_id"
+							bind:value={location_id}
+						/>
+					</div>
 				</div>
 
-				<div class="field-stack">
-					<CwInput
-						id="device-settings-group-input"
-						label={m.common_group()}
-						name="group"
-						required={false}
-						maxlength={DEVICE_GROUP_MAX_LENGTH}
-						bind:value={deviceGroup}
-						error={deviceGroupError || undefined}
-					/>
-					<input id="device-settings-group-hidden-input" type="hidden" name="group" value={deviceGroupValue} />
-					{#if deviceGroupError}
-						<p class="field-error">{deviceGroupError}</p>
-					{/if}
-				</div>
-
-				<div class="field-stack">
-					<CwInput
-						id="device-settings-tti-name-input"
-						label={m.devices_tti_device_id_label()}
-						name="tti_name"
-						required={false}
-						maxlength={TTI_DEVICE_ID_MAX_LENGTH}
-						placeholder={m.devices_tti_device_id_placeholder()}
-						bind:value={ttiName}
-						error={ttiNameError || undefined}
-					/>
-					<input id="device-settings-tti-name-hidden-input" type="hidden" name="tti_name" value={ttiNameValue} />
-					{#if ttiNameError}
-						<p class="field-error">{ttiNameError}</p>
-					{/if}
-				</div>
-
-				<div class="field-stack">
-					<CwDropdown
-						id="device-settings-location-select"
-						label={m.common_location()}
-						name="location_id"
-						options={[
-							{ label: m.devices_unassigned_location(), value: '' },
-							...(data.locations ?? []).map((loc) => ({
-								label: loc.name,
-								value: String(loc.location_id)
-							}))
-						]}
-						bind:value={location_id}
-						error={locationError || undefined}
-					/>
-					<input id="device-settings-location-hidden-input" type="hidden" name="location_id" bind:value={location_id} />
-					{#if locationError}
-						<p class="field-error">{locationError}</p>
-					{/if}
-				</div>
-			</div>
-
-			<div class="panel-actions">
-				<CwButton
-					id="device-settings-submit-button"
-					type="submit"
-					variant="primary"
-					loading={deviceSubmitting}
-					disabled={!canSubmitDevice}
-				>
-					{m.devices_update_submit()}
-				</CwButton>
-			</div>
+				<AppActionRow>
+					<CwButton
+						id="device-settings-submit-button"
+						type="submit"
+						variant="primary"
+						loading={deviceSubmitting}
+						disabled={!canSubmitDevice}
+					>
+						{m.devices_update_submit()}
+					</CwButton>
+				</AppActionRow>
+			</AppFormStack>
 		</form>
 	</CwCard>
 
@@ -223,4 +229,4 @@
 	{/if}
 
 	<DeviceOwnerPermissionsCard owners={data.deviceOwners ?? []} form={actionForm} />
-</div>
+</AppPage>

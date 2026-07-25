@@ -77,7 +77,7 @@
 		{/each}
 	</div>
 
-	<div class="relative z-2 w-full md:max-w-md auth-content">
+	<div class="auth-content relative z-2 w-full md:max-w-md">
 		{@render children()}
 	</div>
 </section>

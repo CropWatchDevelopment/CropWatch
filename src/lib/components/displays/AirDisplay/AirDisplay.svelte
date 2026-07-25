@@ -3,19 +3,24 @@
 		CwButton,
 		CwCard,
 		CwDataTable,
-		CwDuration,
 		CwHeatmap,
 		CwStatCard,
 		CwWindCompass,
 		type CwColumnDef,
 		type CwHeatmapDataPoint,
 		type CwStatCardData,
-		type CwTableQuery,
-		type CwTableResult
+		type CwWindSpeedUnit
 	} from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
-	import { cwDataTableLabels, cwHeatmapLabels, cwWindCompassLabels } from '$lib/i18n/cwuiLabels';
+	import {
+		cwDataTableLabels,
+		cwHeatmapLabels,
+		cwStatCardLabels,
+		cwWindCompassLabels
+	} from '$lib/i18n/cwuiLabels';
+	import { computeStats } from '$lib/utils/computeStats';
+	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
 	import './AirDisplay.css';
 	import NotesCreateDialog from './dialogs/notes-create-dialog.svelte';
 	import type { AirRow } from './interfaces/AirRow.interface';
@@ -24,21 +29,16 @@
 	import { parseAirNotesResponse } from './utils/air-notes';
 	import Icon from '$lib/components/Icon.svelte';
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
+	import { computeDewPoint } from '$lib/utils/dewPoint';
+
+	const app = getAppContext();
 
 	const HEATMAP_FALLBACK_DAYS = 1;
 	const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
-	const columns: CwColumnDef<AirRow>[] = [
-		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
-		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
-		{ key: 'humidity', header: m.rule_subject_humidity(), sortable: true, width: '9rem' },
-		{ key: 'co2', header: m.rule_subject_co2(), sortable: true, width: '9rem' },
-		{ key: 'alerts', header: m.status_alerts(), width: '3rem' }
-	];
-
-	const ALARM_AFTER_MINUTES = 10.2;
-
-	let { latestData, historicalData, loading, devEui, authToken }: DeviceDisplayProps = $props();
+	let { latestData, historicalData, loading, devEui }: DeviceDisplayProps = $props();
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
 	let tableRevision = $state(0);
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
@@ -54,28 +54,48 @@
 			.filter((value) => Number.isFinite(value) && value > 0)
 	);
 	let hasCo2 = $derived(co2Values.length > 0);
+
+	// The CO2 column follows the same gate as the CO2 stat card: a device that
+	// doesn't carry a CO2 sensor still stores 0 for every row, so "any value
+	// > 0 in the loaded range" is the only reliable presence signal.
+	let columns = $derived<CwColumnDef<AirRow>[]>([
+		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
+		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
+		{ key: 'humidity', header: m.rule_subject_humidity(), sortable: true, width: '9rem' },
+		...(hasCo2
+			? [{ key: 'co2', header: m.rule_subject_co2(), sortable: true, width: '9rem' } as const]
+			: []),
+		{ key: 'alerts', header: m.status_alerts(), width: '3rem' }
+	]);
+
+	// The Air stat cards render even with no history, so keep the pre-existing
+	// all-zero placeholder instead of computeStats' empty object.
+	const EMPTY_STATS: CwStatCardData = {
+		min: 0,
+		max: 0,
+		avg: 0,
+		median: 0,
+		stdDev: 0,
+		count: 0,
+		lastReading: 0,
+		trend: 'up'
+	};
+
 	let latestCo2: CwStatCardData = $derived.by(() => {
-		if (co2Values.length === 0) {
-			return { min: 0, max: 0, avg: 0, median: 0, stdDev: 0, count: 0, lastReading: 0, trend: 'up' };
-		}
-		const sorted = [...co2Values].sort((a, b) => a - b);
-		const mid = Math.floor(sorted.length / 2);
-		const median = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-		const mean = co2Values.reduce((sum, value) => sum + value, 0) / co2Values.length;
-		const variance =
-			co2Values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / co2Values.length;
+		if (co2Values.length === 0) return EMPTY_STATS;
+		// Convert first so every stat is in the display unit.
+		const values = co2Values.map((value) => convertSensorValue('co2', value, app.preferences));
 		// Most-recent row that actually carries CO2 (historicalData is newest-first).
 		const lastWithCo2 = historicalData.find(
 			(row) => Number.isFinite(Number(row.co2)) && Number(row.co2) > 0
 		);
 		return {
-			min: sorted[0],
-			max: sorted[sorted.length - 1],
-			avg: mean,
-			median,
-			stdDev: Math.sqrt(variance),
-			count: co2Values.length,
-			lastReading: lastWithCo2 ? Number(lastWithCo2.co2) : sorted[sorted.length - 1],
+			...computeStats(values),
+			lastReading: convertSensorValue(
+				'co2',
+				lastWithCo2 ? Number(lastWithCo2.co2) : co2Values[co2Values.length - 1],
+				app.preferences
+			),
 			trend: 'up'
 		};
 	});
@@ -91,6 +111,20 @@
 			Number.isFinite(windDirection) &&
 			windSpeed !== null &&
 			Number.isFinite(windSpeed)
+	);
+	// CwWindCompass wants its own unit union ('knots', not 'kt'); the speed we pass
+	// is already converted to that unit.
+	const WIND_COMPASS_UNIT: Record<string, CwWindSpeedUnit> = {
+		m_s: 'm/s',
+		km_h: 'km/h',
+		mph: 'mph',
+		kt: 'knots'
+	};
+	let windCompassUnit = $derived<CwWindSpeedUnit>(
+		WIND_COMPASS_UNIT[app.preferences?.wind_speed_unit ?? 'm_s'] ?? 'm/s'
+	);
+	let windSpeedDisplay = $derived(
+		windSpeed !== null ? convertSensorValue('wind_speed', windSpeed, app.preferences) : null
 	);
 
 	function toAirRows(raw: Record<string, unknown>[]): AirRow[] {
@@ -131,57 +165,52 @@
 	});
 	let tableKey = $derived(`${rowSetKey}:${tableRevision}`);
 
+	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
+	let co2Unit = $derived(resolveDisplayUnit('co2', app.preferences));
 	let latestTemperature: CwStatCardData = $derived.by(() => {
+		// Convert first so every stat (incl. stdDev/range) is in the display unit.
+		const temps = historicalData.map((row) =>
+			convertSensorValue('temperature_c', Number(row.temperature_c) || 0, app.preferences)
+		);
+		if (temps.length === 0) return EMPTY_STATS;
 		return {
-			min: historicalData.reduce(
-				(min, row) => Math.min(min, Number(row.temperature_c) || 0),
-				Infinity
-			),
-			max: historicalData.reduce(
-				(max, row) => Math.max(max, Number(row.temperature_c) || 0),
-				-Infinity
-			),
-			avg:
-				historicalData.reduce((sum, row) => sum + (Number(row.temperature_c) || 0), 0) /
-				historicalData.length,
-			median: (() => {
-				const temps = historicalData
-					.map((row) => Number(row.temperature_c) || 0)
-					.sort((a, b) => a - b);
-				const mid = Math.floor(temps.length / 2);
-				return temps.length % 2 !== 0 ? temps[mid] : (temps[mid - 1] + temps[mid]) / 2;
-			})(),
-			stdDev: (() => {
-				const temps = historicalData.map((row) => Number(row.temperature_c) || 0);
-				const mean = temps.reduce((sum, value) => sum + value, 0) / temps.length;
-				const variance = temps.reduce((sum, value) => sum + (value - mean) ** 2, 0) / temps.length;
-				return Math.sqrt(variance);
-			})(),
-			count: historicalData.length,
-			lastReading: historicalData.length > 0 ? Number(historicalData.at(0)?.temperature_c) || 0 : 0,
+			...computeStats(temps),
+			// historicalData is newest-first.
+			lastReading: temps[0],
+			trend: 'up'
+		};
+	});
+	let dewPointUnit = $derived(resolveDisplayUnit('dew_point', app.preferences));
+	// Dew point is derived per row from temperature + humidity (no stored
+	// column). Rows missing either reading are skipped, so the stats cover only
+	// rows where it is computable. historicalData is newest-first.
+	let dewPointValues = $derived(
+		historicalData
+			.map((row) =>
+				row.temperature_c == null || row.humidity == null
+					? null
+					: computeDewPoint(Number(row.temperature_c), Number(row.humidity))
+			)
+			.filter((value): value is number => value !== null)
+			.map((value) => convertSensorValue('dew_point', value, app.preferences))
+	);
+	let hasDewPoint = $derived(dewPointValues.length > 0);
+	let latestDewPoint: CwStatCardData = $derived.by(() => {
+		if (dewPointValues.length === 0) return EMPTY_STATS;
+		return {
+			...computeStats(dewPointValues),
+			lastReading: dewPointValues[0],
 			trend: 'up'
 		};
 	});
 	let latestHumidity: CwStatCardData = $derived.by(() => {
+		const hums = historicalData.map((row) => Number(row.humidity) || 0);
+		// Guard: an empty history previously produced NaN/Infinity stats here.
+		if (hums.length === 0) return EMPTY_STATS;
 		return {
-			min: historicalData.reduce((min, row) => Math.min(min, Number(row.humidity) || 0), Infinity),
-			max: historicalData.reduce((max, row) => Math.max(max, Number(row.humidity) || 0), -Infinity),
-			avg:
-				historicalData.reduce((sum, row) => sum + (Number(row.humidity) || 0), 0) /
-				historicalData.length,
-			median: (() => {
-				const hums = historicalData.map((row) => Number(row.humidity) || 0).sort((a, b) => a - b);
-				const mid = Math.floor(hums.length / 2);
-				return hums.length % 2 !== 0 ? hums[mid] : (hums[mid - 1] + hums[mid]) / 2;
-			})(),
-			stdDev: (() => {
-				const hums = historicalData.map((row) => Number(row.humidity) || 0);
-				const mean = hums.reduce((sum, value) => sum + value, 0) / hums.length;
-				const variance = hums.reduce((sum, value) => sum + (value - mean) ** 2, 0) / hums.length;
-				return Math.sqrt(variance);
-			})(),
-			count: historicalData.length,
-			lastReading: historicalData.length > 0 ? Number(historicalData.at(0)?.humidity) || 0 : 0,
+			...computeStats(hums),
+			// historicalData is newest-first.
+			lastReading: hums[0],
 			trend: 'up'
 		};
 	});
@@ -206,9 +235,9 @@
 			{
 				key: 'temperature',
 				label: m.rule_subject_temperature(),
-				unit: '°C',
+				unit: resolveDisplayUnit('temperature_c', app.preferences),
 				colors: ['#0ea5e9', '#84cc16', '#f97316'],
-				value: (row) => row.temperature_c
+				value: (row) => convertSensorValue('temperature_c', row.temperature_c, app.preferences)
 			},
 			{
 				key: 'humidity',
@@ -222,11 +251,11 @@
 			metrics.push({
 				key: 'co2',
 				label: m.rule_subject_co2(),
-				unit: 'ppm',
+				unit: resolveDisplayUnit('co2', app.preferences),
 				colors: ['#84cc16', '#f59e0b', '#dc2626'],
 				// CO2 is sent on only ~1 of 3 uplinks, so most rows carry no reading
 				// (co2 === 0). Omit those so the heatmap shows gaps, not fake-low cells.
-				value: (row) => (row.co2 > 0 ? row.co2 : null)
+				value: (row) => (row.co2 > 0 ? convertSensorValue('co2', row.co2, app.preferences) : null)
 			});
 		}
 		return metrics;
@@ -267,50 +296,19 @@
 
 	let tableLoading = $state(false);
 
-	async function loadTableData(query: CwTableQuery): Promise<CwTableResult<AirRow>> {
-		tableLoading = true;
-
-		try {
-			let filtered = [...rows].reverse();
-
-			if (query.search.trim()) {
-				const search = query.search.trim().toLowerCase();
-				filtered = filtered.filter((row) =>
-					[
-						new Date(row.created_at).toLocaleString(),
-						row.temperature_c.toFixed(2),
-						row.humidity.toFixed(2),
-						String(row.co2)
-					]
-						.join(' ')
-						.toLowerCase()
-						.includes(search)
-				);
-			}
-
-			if (query.sort) {
-				const direction = query.sort.direction === 'asc' ? 1 : -1;
-				filtered.sort((a, b) => {
-					const left = a[query.sort!.column as keyof AirRow];
-					const right = b[query.sort!.column as keyof AirRow];
-
-					if (typeof left === 'number' && typeof right === 'number') {
-						return (left - right) * direction;
-					}
-
-					return String(left).localeCompare(String(right)) * direction;
-				});
-			}
-
-			const start = Math.max(0, (query.page - 1) * query.pageSize);
-			return {
-				rows: filtered.slice(start, start + query.pageSize),
-				total: filtered.length
-			};
-		} finally {
-			tableLoading = false;
-		}
-	}
+	const loadTableData = createClientTableLoader<AirRow>(() => rows, {
+		reverse: true,
+		searchText: (row) =>
+			[
+				new Date(row.created_at).toLocaleString(),
+				row.temperature_c.toFixed(2),
+				row.humidity.toFixed(2),
+				// Only searchable when the column is shown — otherwise every row of
+				// a CO2-less device matches a "0" search via its stored 0.
+				...(hasCo2 ? [String(row.co2)] : [])
+			].join(' '),
+		onLoadingChange: (value) => (tableLoading = value)
+	});
 
 	function handleNoteSaved(row: AirRow, note: Note) {
 		const deviceKey = devEui;
@@ -333,62 +331,32 @@
 		<CwStatCard
 			title={m.display_temperature()}
 			stats={latestTemperature}
-			unit="°C"
+			unit={temperatureUnit}
 			accentColor="var(--cw-danger-500)"
-			labels={{
-				min: m.stat_min(),
-				avg: m.stat_avg(),
-				max: m.stat_max(),
-				count: m.stat_count(),
-				median: m.stat_median(),
-				stdDev: m.stat_stdDev(),
-				range: m.stat_range(),
-				aboveAvg: m.stat_aboveAvg(),
-				belowAvg: m.stat_belowAvg(),
-				atAvg: m.stat_atAvg(),
-				clickToExpand: m.stat_expand(),
-				clickToCollapse: m.stat_collapse()
-			}}
+			labels={cwStatCardLabels()}
 		/>
 		<CwStatCard
 			title={m.display_temperature_humidity()}
 			stats={latestHumidity}
 			unit="%"
 			accentColor="var(--cw-info-500)"
-			labels={{
-				min: m.stat_min(),
-				avg: m.stat_avg(),
-				max: m.stat_max(),
-				count: m.stat_count(),
-				median: m.stat_median(),
-				stdDev: m.stat_stdDev(),
-				range: m.stat_range(),
-				aboveAvg: m.stat_aboveAvg(),
-				belowAvg: m.stat_belowAvg(),
-				atAvg: m.stat_atAvg(),
-				clickToExpand: m.stat_expand(),
-				clickToCollapse: m.stat_collapse()
-			}}
+			labels={cwStatCardLabels()}
 		/>
+		{#if hasDewPoint}
+			<CwStatCard
+				title={m.sensor_dew_point()}
+				stats={latestDewPoint}
+				unit={dewPointUnit}
+				accentColor="#38bdf8"
+				labels={cwStatCardLabels()}
+			/>
+		{/if}
 		{#if hasCo2}
 			<CwStatCard
 				title="CO₂"
-				labels={{
-					min: m.stat_min(),
-					avg: m.stat_avg(),
-					max: m.stat_max(),
-					count: m.stat_count(),
-					median: m.stat_median(),
-					stdDev: m.stat_stdDev(),
-					range: m.stat_range(),
-					aboveAvg: m.stat_aboveAvg(),
-					belowAvg: m.stat_belowAvg(),
-					atAvg: m.stat_atAvg(),
-					clickToExpand: m.stat_expand(),
-					clickToCollapse: m.stat_collapse()
-				}}
+				labels={cwStatCardLabels()}
 				stats={latestCo2}
-				unit="ppm"
+				unit={co2Unit}
 				accentColor="purple"
 			/>
 		{/if}
@@ -422,8 +390,8 @@
 			{#if hasWind}
 				<CwWindCompass
 					direction={windDirection}
-					speed={windSpeed}
-					unit="m/s"
+					speed={windSpeedDisplay}
+					unit={windCompassUnit}
 					labels={cwWindCompassLabels()}
 				/>
 			{/if}
@@ -445,11 +413,12 @@
 							{#if col.key === 'created_at'}
 								{new Date(row.created_at).toLocaleString()}
 							{:else if col.key === 'temperature_c'}
-								{row.temperature_c.toFixed(2)} °C
+								{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences)
+									.display}
 							{:else if col.key === 'humidity'}
-								{row.humidity.toFixed(2)} %
+								{formatSensorMeasurement('humidity', row.humidity, app.preferences).display}
 							{:else if col.key === 'co2'}
-								{row.co2} ppm
+								{formatSensorMeasurement('co2', row.co2, app.preferences).display}
 							{:else if col.key === 'alerts'}
 								{#if row.alerts && row.alerts.length > 0}
 									❌

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { AppPage } from '$lib/components/layout';
 	import { afterNavigate } from '$app/navigation';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { isRelayTable, resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import { readApiErrorMessage } from '$lib/api/api-error';
@@ -31,7 +32,9 @@
 	import DeviceDashboardHeader from './DeviceDashboardHeader.svelte';
 	import {
 		DEFAULT_RANGE_SELECTION,
+		DEW_POINT_SERIES_ID,
 		MAX_RANGE_RECORDS,
+		buildDewPointChartSeries,
 		buildSensorChartSeries,
 		createEmptyRelaySnapshot,
 		createRouteState,
@@ -54,6 +57,7 @@
 	let { data }: PageProps = $props();
 
 	const toast = useCwToast();
+	const app = getAppContext();
 
 	function handleRelayConfirmationResolved(result: RelayVerificationResult): void {
 		if (result.matched) {
@@ -130,7 +134,18 @@
 			: historicalData
 	);
 	let displayCurrentRecord = $derived(displayLatestData ?? displayHistoricalData[0] ?? null);
-	let chartSeries = $derived(buildSensorChartSeries(displayHistoricalData));
+	let isAirDevice = $derived(data.dataTable === 'cw_air_data');
+	let chartSeries = $derived.by(() => {
+		const series = buildSensorChartSeries(displayHistoricalData, app.preferences);
+		if (isAirDevice) {
+			const dewPointSeries = buildDewPointChartSeries(displayHistoricalData, app.preferences);
+			if (dewPointSeries) series.push(dewPointSeries);
+		}
+		return series;
+	});
+	// Dew point is opt-in per page view: it mounts hidden and the user shows it
+	// via the chart legend.
+	let chartInitialHidden = $derived(isAirDevice ? [DEW_POINT_SERIES_ID] : []);
 	let isTrafficDevice = $derived(data.device?.cw_device_type.name === '[CROPWATCH] Nvidia Jetson');
 	let rangeOptions = $derived(getRangeOptions());
 	let lastUpdatedAt = $derived(readCreatedAt(displayCurrentRecord));
@@ -272,7 +287,7 @@
 		state.fetchError = null;
 
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getDeviceDataWithinRange(devEui, {
 				start: toIsoString(start),
 				end: toIsoString(end),
@@ -300,7 +315,7 @@
 		if (!authToken || !devEui) return null;
 
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getDeviceLatestData(devEui, { signal: options.signal });
 
 			if (isTelemetryRow(result)) {
@@ -333,7 +348,7 @@
 		if (!authToken || !devEui) return null;
 
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getRelayData(devEui, {
 				signal: options.signal,
 				suppressNotFoundError: true
@@ -396,7 +411,7 @@
 
 		try {
 			ensureRelayStateManager();
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 
 			if (typeof durationSeconds === 'number' && Number.isFinite(durationSeconds)) {
 				await api.pulseRelay(devEui, {
@@ -443,7 +458,11 @@
 				{m.devices_error_status_detail({ status: deviceErrorStatus })}
 			</p>
 			{#snippet actions()}
-				<CwButton id="device-error-close-button" variant="primary" onclick={() => (errorDialogOpen = false)}>
+				<CwButton
+					id="device-error-close-button"
+					variant="primary"
+					onclick={() => (errorDialogOpen = false)}
+				>
 					{m.action_close()}
 				</CwButton>
 			{/snippet}
@@ -475,6 +494,7 @@
 					title={data?.device?.name || devEui.toUpperCase()}
 					subtitle={m.display_time_series()}
 					ranges={[]}
+					initialHidden={chartInitialHidden}
 					theme={appTheme.current}
 					height={480}
 					labels={cwResponsiveLineChartLabels()}

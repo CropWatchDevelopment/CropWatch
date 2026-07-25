@@ -31,7 +31,12 @@
 </script>
 
 <AppPage width="md">
-	<CwButton id="location-create-back-button" variant="secondary" size="sm" onclick={() => goto(resolve('/locations'))}>
+	<CwButton
+		id="location-create-back-button"
+		variant="secondary"
+		size="sm"
+		onclick={() => goto(resolve('/locations'))}
+	>
 		&larr; {m.action_back()}
 	</CwButton>
 
@@ -115,10 +120,21 @@
 				</div>
 
 				<AppActionRow>
-					<CwButton id="location-create-cancel-button" type="button" variant="ghost" onclick={() => goto(resolve('/locations'))}>
+					<CwButton
+						id="location-create-cancel-button"
+						type="button"
+						variant="ghost"
+						onclick={() => goto(resolve('/locations'))}
+					>
 						{m.action_cancel()}
 					</CwButton>
-					<CwButton id="location-create-submit-button" type="submit" variant="primary" loading={submitting} disabled={!name.trim()}>
+					<CwButton
+						id="location-create-submit-button"
+						type="submit"
+						variant="primary"
+						loading={submitting}
+						disabled={!name.trim()}
+					>
 						{m.locations_create_submit()}
 					</CwButton>
 				</AppActionRow>

@@ -10,10 +10,6 @@
 		CwCard,
 		CwDataTable,
 		type CwColumnDef,
-		type CwStatCardData,
-		type CwStatCardLabels,
-		type CwTableQuery,
-		type CwTableResult,
 		CwStatCard,
 		CwResponsiveLineChart,
 		type CwResponsiveLineSeries,
@@ -28,51 +24,19 @@
 		cwDataTableLabels,
 		cwResponsiveLineChartLabels,
 		cwPpfdChartLabels,
+		cwStatCardLabels,
 		cwVpdChartLabels,
 		cwDliCardLabels
 	} from '$lib/i18n/cwuiLabels';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
+	import { computeStats } from '$lib/utils/computeStats';
+	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import '../display-shared.css';
 
-	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();
+	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
-	// Shared label set so every CwStatCard renders translated stat rows.
-	const statLabels: CwStatCardLabels = {
-		min: m.stat_min(),
-		avg: m.stat_avg(),
-		max: m.stat_max(),
-		count: m.stat_count(),
-		median: m.stat_median(),
-		stdDev: m.stat_stdDev(),
-		range: m.stat_range(),
-		aboveAvg: m.stat_aboveAvg(),
-		belowAvg: m.stat_belowAvg(),
-		atAvg: m.stat_atAvg(),
-		clickToExpand: m.stat_expand(),
-		clickToCollapse: m.stat_collapse()
-	};
-
-	function computeStats(values: number[]): CwStatCardData {
-		if (values.length === 0) return {};
-		const sorted = [...values].sort((a, b) => a - b);
-		const count = sorted.length;
-		const min = sorted[0];
-		const max = sorted[count - 1];
-		const avg = sorted.reduce((s, v) => s + v, 0) / count;
-		const median =
-			count % 2 === 1
-				? sorted[Math.floor(count / 2)]
-				: (sorted[count / 2 - 1] + sorted[count / 2]) / 2;
-		const stdDev = Math.sqrt(sorted.reduce((s, v) => s + (v - avg) ** 2, 0) / count);
-		const lastReading = values[values.length - 1];
-		const trend: CwStatCardData['trend'] =
-			values.length >= 2
-				? values[values.length - 1] > values[values.length - 2]
-					? 'up'
-					: values[values.length - 1] < values[values.length - 2]
-						? 'down'
-						: 'stable'
-				: 'stable';
-		return { min, max, avg, median, stdDev, count, lastReading, trend };
-	}
+	const app = getAppContext();
 
 	// ---- Soil-specific row shape -----------------------------------------------
 
@@ -98,12 +62,17 @@
 
 	// ---- Columns ---------------------------------------------------------------
 
-	const columns: CwColumnDef<SoilRow>[] = [
+	let columns = $derived<CwColumnDef<SoilRow>[]>([
 		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
 		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
 		{ key: 'moisture', header: m.rule_subject_soil_moisture(), sortable: true, width: '9rem' },
-		{ key: 'ec', header: 'EC (dS/cm)', sortable: true, width: '9rem' }
-	];
+		{
+			key: 'ec',
+			header: `EC (${resolveDisplayUnit('ec', app.preferences)})`,
+			sortable: true,
+			width: '9rem'
+		}
+	]);
 
 	// ---- Derived state ---------------------------------------------------------
 
@@ -116,8 +85,15 @@
 		ph: Number(latestData?.ph) || 0
 	});
 
-	let temperatureStats = $derived(computeStats(rows.map((r) => r.temperature_c)));
+	// Stats are computed on converted values so min/avg/max/stdDev are all in the
+	// display unit; the unit label comes from the same resolver.
+	let temperatureStats = $derived(
+		computeStats(
+			rows.map((r) => convertSensorValue('temperature_c', r.temperature_c, app.preferences))
+		)
+	);
 	let soilMoistureStats = $derived(computeStats(rows.map((r) => r.moisture)));
+	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
 
 	// Re-key the table when the underlying row set changes so CwDataTable
 	// re-runs loadData for the new date range instead of showing stale rows.
@@ -130,60 +106,41 @@
 	// humidity, and light (PPFD). These are not wired up yet, so every
 	// visualization renders in its no-data state for now.
 
-	const airSeries: CwResponsiveLineSeries[] = [
-		{ id: 'co2', label: m.rule_subject_co2(), unit: 'ppm', color: 'var(--cw-primary-500)', data: [] },
+	// Units follow the same resolvers the (future) converted values will use.
+	let airSeries = $derived<CwResponsiveLineSeries[]>([
+		{
+			id: 'co2',
+			label: m.rule_subject_co2(),
+			unit: resolveDisplayUnit('co2', app.preferences),
+			color: 'var(--cw-primary-500)',
+			data: []
+		},
 		{
 			id: 'air_temperature',
 			label: m.rule_subject_temperature(),
-			unit: '°C',
+			unit: resolveDisplayUnit('temperature_c', app.preferences),
 			color: 'var(--cw-danger-500)',
 			data: []
 		},
 		{
 			id: 'air_humidity',
 			label: m.rule_subject_humidity(),
-			unit: '%',
+			unit: resolveDisplayUnit('humidity', app.preferences),
 			color: 'var(--cw-info-500)',
 			data: []
 		}
-	];
+	]);
 
 	// ---- Table loader ----------------------------------------------------------
 
 	let tableLoading = $state(false);
 
-	async function loadTableData(query: CwTableQuery): Promise<CwTableResult<SoilRow>> {
-		tableLoading = true;
-		try {
-			let filtered = [...rows].reverse();
-
-			if (query.search.trim()) {
-				const search = query.search.trim().toLowerCase();
-				filtered = filtered.filter((r) =>
-					[r.created_at, r.temperature_c, r.moisture, r.ec, r.ph]
-						.map(String)
-						.join(' ')
-						.toLowerCase()
-						.includes(search)
-				);
-			}
-
-			if (query.sort) {
-				const dir = query.sort.direction === 'asc' ? 1 : -1;
-				filtered.sort((a, b) => {
-					const av = a[query.sort!.column as keyof SoilRow];
-					const bv = b[query.sort!.column as keyof SoilRow];
-					if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-					return String(av).localeCompare(String(bv)) * dir;
-				});
-			}
-
-			const start = Math.max(0, (query.page - 1) * query.pageSize);
-			return { rows: filtered.slice(start, start + query.pageSize), total: filtered.length };
-		} finally {
-			tableLoading = false;
-		}
-	}
+	const loadTableData = createClientTableLoader<SoilRow>(() => rows, {
+		reverse: true,
+		searchText: (r) =>
+			[r.created_at, r.temperature_c, r.moisture, r.ec, r.ph].map(String).join(' '),
+		onLoadingChange: (value) => (tableLoading = value)
+	});
 </script>
 
 <div class="soil-display">
@@ -192,9 +149,9 @@
 		<CwStatCard
 			title={m.rule_subject_temperature()}
 			stats={temperatureStats}
-			unit="°C"
+			unit={temperatureUnit}
 			accentColor="var(--cw-danger-500)"
-			labels={statLabels}
+			labels={cwStatCardLabels()}
 		/>
 
 		<CwStatCard
@@ -202,11 +159,14 @@
 			stats={soilMoistureStats}
 			unit="%"
 			accentColor="var(--cw-info-500)"
-			labels={statLabels}
+			labels={cwStatCardLabels()}
 		/>
 
 		<CwCard title="EC" subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.ec.toFixed(2)}<span>dS/cm</span></p>
+			{@const ecKpi = formatSensorMeasurement('ec', latest.ec, app.preferences, {
+				maximumFractionDigits: 2
+			})}
+			<p class="kpi-value">{ecKpi.valueDisplay}<span>{ecKpi.unit}</span></p>
 		</CwCard>
 
 		{#if latest.ph > 0}
@@ -254,11 +214,13 @@
 						{#if col.key === 'created_at'}
 							{new Date(row.created_at).toLocaleString()}
 						{:else if col.key === 'temperature_c'}
-							{row.temperature_c.toFixed(2)} °C
+							{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences).display}
 						{:else if col.key === 'moisture'}
-							{row.moisture.toFixed(2)} %
+							{formatSensorMeasurement('moisture', row.moisture, app.preferences).display}
 						{:else if col.key === 'ec'}
-							{row.ec.toFixed(2)} dS/cm
+							{formatSensorMeasurement('ec', row.ec, app.preferences, {
+								maximumFractionDigits: 2
+							}).display}
 						{:else}
 							{defaultValue}
 						{/if}
@@ -317,16 +279,5 @@
 			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		}
 	}
-	.kpi-value {
-		margin: 0 0 0.75rem;
-		font-size: clamp(1.45rem, 2.1vw, 2rem);
-		font-weight: 700;
-		color: var(--cw-text-primary);
-	}
-	.kpi-value span {
-		margin-left: 0.35rem;
-		font-size: 0.9rem;
-		font-weight: 500;
-		color: var(--cw-text-muted);
-	}
+	/* .kpi-value styles come from ../display-shared.css */
 </style>

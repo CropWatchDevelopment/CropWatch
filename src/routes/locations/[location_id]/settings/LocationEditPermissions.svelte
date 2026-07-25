@@ -67,12 +67,14 @@
 </script>
 
 {#key permissionsKey}
-	<CwDataTable id="location-edit-permissions-table" labels={cwDataTableLabels()}
+	<CwDataTable
+		id="location-edit-permissions-table"
+		labels={cwDataTableLabels()}
 		{loadData}
 		rowKey="id"
-		rowActionsHeader="Actions"
+		rowActionsHeader={m.common_actions()}
 		columns={[
-			{ key: 'id', header: 'ID' },
+			{ key: 'id', header: m.common_id() },
 			{ key: 'email', header: m.auth_email_label() },
 			{ key: 'name', header: m.common_name() },
 			{ key: 'permission_level', header: m.locations_permission_level() }

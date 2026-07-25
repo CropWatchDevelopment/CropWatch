@@ -69,7 +69,13 @@
 	</label>
 
 	<label class="consent-item">
-		<input id="create-account-consent-eula-checkbox" type="checkbox" bind:checked={agreedEula} disabled={!visitedEula} class="consent-checkbox" />
+		<input
+			id="create-account-consent-eula-checkbox"
+			type="checkbox"
+			bind:checked={agreedEula}
+			disabled={!visitedEula}
+			class="consent-checkbox"
+		/>
 		<span>
 			{m.auth_agree_to()}
 			<a

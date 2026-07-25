@@ -63,7 +63,7 @@
 				return;
 			}
 
-			const api = new ApiService({ fetchFn: fetch, authToken });
+			const api = new ApiService({ authToken });
 			const result = await api.getTrafficMonthlyReport(devEui, {
 				year,
 				month,
@@ -146,11 +146,21 @@
 		{/if}
 	</div>
 	{#snippet actions()}
-		<CwButton id="device-csv-traffic-export-cancel-button" variant="secondary" disabled={exporting} onclick={closeDialog}>
+		<CwButton
+			id="device-csv-traffic-export-cancel-button"
+			variant="secondary"
+			disabled={exporting}
+			onclick={closeDialog}
+		>
 			<Icon src={NO_ICON} alt="" class="h-4 w-4" />
 			{m.action_cancel()}
 		</CwButton>
-		<CwButton id="device-csv-traffic-export-download-button" variant="primary" loading={exporting} onclick={handleCsvDownload}>
+		<CwButton
+			id="device-csv-traffic-export-download-button"
+			variant="primary"
+			loading={exporting}
+			onclick={handleCsvDownload}
+		>
 			<Icon src={DOWNLOAD_ICON} alt="" class="h-4 w-4" />
 			{m.action_download()} CSV
 		</CwButton>

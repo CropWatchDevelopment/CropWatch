@@ -12,4 +12,3 @@ export { default as WaterDisplay } from './WaterDisplay/WaterDisplay.svelte';
 export { default as RelayDisplay } from './RelayDisplay/RelayDisplay.svelte';
 export { default as PowerDisplay } from './PowerDisplay/PowerDisplay.svelte';
 export { default as DefaultDisplay } from './DefaultDisplay.svelte';
-    

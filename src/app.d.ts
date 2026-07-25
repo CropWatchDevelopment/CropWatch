@@ -1,6 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { IJWT } from "$lib/interfaces/jwt.interface";
+import type { IJWT } from '$lib/interfaces/jwt.interface';
 
 // for information about these interfaces
 declare global {
@@ -16,4 +16,4 @@ declare global {
 	}
 }
 
-export { };
+export {};

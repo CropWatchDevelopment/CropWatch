@@ -23,7 +23,10 @@ let activeId: string | null = null;
  * idempotent — safe to call from afterNavigate on every navigation. The initial
  * automatic page_view is disabled; callers emit page_view via trackPageView.
  */
-export function initAnalytics(measurementId: string, options: { userId?: string | null } = {}): void {
+export function initAnalytics(
+	measurementId: string,
+	options: { userId?: string | null } = {}
+): void {
 	if (typeof window === 'undefined' || !measurementId || activeId === measurementId) {
 		return;
 	}

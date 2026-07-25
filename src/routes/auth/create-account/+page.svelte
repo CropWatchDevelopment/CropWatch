@@ -16,19 +16,7 @@
 	import CreateAccountPasswordFields from './CreateAccountPasswordFields.svelte';
 	import CreateAccountConsentFields from './CreateAccountConsentFields.svelte';
 
-	interface Props {
-		form: {
-			message?: string;
-			firstName?: string;
-			lastName?: string;
-			email?: string;
-			company?: string;
-		} | null;
-	}
-
 	const toast = useCwToast();
-
-	let { form }: Props = $props();
 
 	let submitting: boolean = $state(false);
 	const recaptcha = createAuthRecaptcha();

@@ -10,13 +10,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import '../login/style.css';
 
-	interface Props {
-		form: { message?: string } | null;
-	}
-
 	const toast = useCwToast();
-
-	let { form }: Props = $props();
 
 	let submitting: boolean = $state(false);
 	let password: string = $state('');

@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { CwDataTable } from '@cropwatchdevelopment/cwui';
 	import type { CwColumnDef, CwTableQuery, CwTableResult } from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatSensorValue, labelFor } from '$lib/sensor-labels';
+	import { labelFor } from '$lib/sensor-labels';
+	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 
@@ -21,20 +24,22 @@
 
 	const app = getAppContext();
 
+	// Unit-bearing numeric metrics are converted to the user's preference; other
+	// columns (booleans, counts, unmapped fields) keep their canonical rendering.
+	function renderMetric(col: string, value: unknown): string {
+		return `${labelFor(col).label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`;
+	}
+
 	function renderPrimary(row: DashboardRow): string {
 		const col = row.device_type.primary_data_v2;
 		if (!col || col === '-') return '—';
-		const def = labelFor(col);
-		const v = formatSensorValue(row.latest?.primary, def.format);
-		return `${def.label()}: ${v.display}${def.unit ? ` ${def.unit}` : ''}`;
+		return renderMetric(col, row.latest?.primary);
 	}
 
 	function renderSecondary(row: DashboardRow): string {
 		const col = row.device_type.secondary_data_v2;
 		if (!col || col === '' || col === '-') return '—';
-		const def = labelFor(col);
-		const v = formatSensorValue(row.latest?.secondary, def.format);
-		return `${def.label()}: ${v.display}${def.unit ? ` ${def.unit}` : ''}`;
+		return renderMetric(col, row.latest?.secondary);
 	}
 
 	const columns: CwColumnDef<DashboardRow>[] = [
@@ -101,7 +106,8 @@
 	});
 </script>
 
-<CwDataTable labels={cwDataTableLabels()}
+<CwDataTable
+	labels={cwDataTableLabels()}
 	{columns}
 	{loadData}
 	filters={tableFilters}
@@ -114,9 +120,13 @@
 		if (row.location?.location_id != null) {
 			// Carry the originating page (and active group filter) so the device
 			// page's back button can return to the filtered dashboard.
-			const params = new URLSearchParams({ backTo: '/' });
+			const params = new SvelteURLSearchParams({ backTo: '/' });
 			if (filters.locationGroup) params.set('filter', filters.locationGroup);
-			goto(`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}`);
+			goto(
+				resolve(
+					`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}` as '/'
+				)
+			);
 		}
 	}}
 />

@@ -20,6 +20,12 @@ type CreateDeviceFormValues = {
 	long: string;
 	installed_at: string;
 	tti_name: string;
+	license_id: string;
+};
+
+type AvailableLicense = {
+	id: number;
+	seatIndex: number;
 };
 
 const readString = (value: FormDataEntryValue | null): string =>
@@ -106,44 +112,54 @@ function readFormValues(formData: FormData, locationId: string): CreateDeviceFor
 		lat: readString(formData.get('lat')),
 		long: readString(formData.get('long')),
 		installed_at: readString(formData.get('installed_at')),
-		tti_name: normalizeTtiDeviceId(readString(formData.get('tti_name')))
+		tti_name: normalizeTtiDeviceId(readString(formData.get('tti_name'))),
+		license_id: readString(formData.get('license_id'))
 	};
 }
 
+// Every new device must consume an unassigned license seat (the TTI device
+// quota paywall). Staff-owned flows that bypass this page are unaffected.
+const toAvailableLicenses = (licenses: { id: number; seatIndex: number; status: string }[]) =>
+	licenses
+		.filter((license) => license.status !== 'assigned')
+		.map(({ id, seatIndex }): AvailableLicense => ({ id, seatIndex }));
+
 export const load: PageServerLoad = async ({ params, fetch, locals }) => {
 	const locationId = String(params.location_id ?? '').trim();
-	let deviceTypeOptions: DeviceTypeOption[] = [];
 
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) {
 		return fail(401, { error: m.auth_not_authenticated() });
 	}
 
-	try {
-		const apiService = new ApiService({
-			fetchFn: fetch,
-			authToken
-		});
+	const apiService = new ApiService({
+		fetchFn: fetch,
+		authToken
+	});
 
-		const response = await apiService.getDeviceTypes();
-		deviceTypeOptions = mapDeviceTypeOptions(response);
+	// Licenses fail closed: if the billing API is unreachable the page shows
+	// the "no available licenses" gate rather than allowing an unpaid create.
+	const [deviceTypeOptions, locationName, availableLicenses] = await Promise.all([
+		apiService
+			.getDeviceTypes()
+			.then(mapDeviceTypeOptions)
+			.catch(() => []),
+		apiService
+			.getLocation(locationId)
+			.then((location) => location.name ?? '')
+			.catch(() => ''),
+		apiService
+			.getLicenses()
+			.then(toAvailableLicenses)
+			.catch(() => [])
+	]);
 
-		const locationResponse = await apiService.getLocation(locationId);
-		const locationName = locationResponse.name ?? '';
-		return {
-			locationId,
-			locationName,
-			deviceTypeOptions
-		};
-	} catch {
-		deviceTypeOptions = [];
-	}
-
-	// return {
-	// 	locationId,
-	// 	locationName,
-	// 	deviceTypeOptions
-	// };
+	return {
+		locationId,
+		locationName,
+		deviceTypeOptions,
+		availableLicenses
+	};
 };
 
 export const actions: Actions = {
@@ -190,6 +206,11 @@ export const actions: Actions = {
 			});
 		}
 
+		const licenseId = readOptionalInteger(values.license_id);
+		if (!licenseId) {
+			return fail(400, { error: m.devices_license_required(), ...values });
+		}
+
 		const payload: CreateDeviceRequest = {
 			dev_eui: normalizedDevEui,
 			type: typeId,
@@ -199,7 +220,8 @@ export const actions: Actions = {
 			lat: readOptionalNumber(values.lat),
 			long: readOptionalNumber(values.long),
 			installed_at: readOptionalText(values.installed_at),
-			tti_name: readOptionalText(values.tti_name)
+			tti_name: readOptionalText(values.tti_name),
+			license_id: licenseId
 		};
 
 		const api = new ApiService({
@@ -207,10 +229,33 @@ export const actions: Actions = {
 			authToken
 		});
 
+		// Re-check the license server-side before touching the TTI quota — the
+		// submitted id must still be an unassigned seat owned by this user.
 		try {
-			// The published docs show create on POST /v1/devices/{dev_eui}.
-			await api.createDevice(normalizedDevEui, payload);
+			const licenses = await api.getLicenses();
+			const license = licenses.find((entry) => entry.id === licenseId);
+			if (!license || license.status === 'assigned') {
+				return fail(400, { error: m.devices_license_unavailable(), ...values });
+			}
+		} catch {
+			return fail(400, { error: m.devices_license_unavailable(), ...values });
+		}
 
+		try {
+			// Create consumes the selected seat atomically (license_id in the payload —
+			// the API validates it and assigns it to the new device).
+			await api.createDevice(normalizedDevEui, payload);
+		} catch (error) {
+			const message = readApiMessage(error, m.devices_create_failed());
+			const status = error instanceof ApiServiceError ? error.status : 500;
+
+			return fail(status, {
+				error: message,
+				...values
+			});
+		}
+
+		try {
 			// The same docs expose follow-up local metadata updates on PATCH /v1/devices/{dev_eui}.
 			await api.updateDevice(normalizedDevEui, {
 				name: values.name,

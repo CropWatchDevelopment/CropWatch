@@ -18,10 +18,12 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const api = new ApiService({ fetchFn: fetch, authToken });
 
 	const [allLocationDevices, currentLocation] = await Promise.all([
-		api.getAllLocationDevices(locationId)
+		api
+			.getAllLocationDevices(locationId)
 			.then((res) => res.data ?? [])
 			.catch(() => []),
-		api.getLocation(locationId)
+		api
+			.getLocation(locationId)
 			.then((location) => location ?? null)
 			.catch(() => null)
 	]);
