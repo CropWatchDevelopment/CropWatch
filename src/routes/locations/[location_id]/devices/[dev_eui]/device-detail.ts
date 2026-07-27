@@ -185,7 +185,8 @@ const CHART_EXCLUDED_COLUMNS = new Set([
 	'updated_at',
 	'location_id',
 	'traffic_hour',
-	'traffic_day'
+	'traffic_day',
+	'line_number'
 ]);
 
 /** Coerce a raw telemetry cell to a plottable number. Booleans map to 0/1. */

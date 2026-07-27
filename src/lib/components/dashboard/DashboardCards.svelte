@@ -21,6 +21,7 @@
 	import type { DashboardLocationGroup, DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
+	import { formatDateTime } from '$lib/i18n/format';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { goto } from '$app/navigation';
@@ -253,6 +254,16 @@
 		return Object.entries(details)
 			.filter(([col, value]) => isDisplayableColumn(col) && value !== null && value !== undefined)
 			.map(([col, value]) => {
+				// traffic_hour is the hourly bucket start timestamp — render it as a
+				// localized date+hour instead of letting the number formatter see NaN.
+				if (col === 'traffic_hour') {
+					const valueDisplay = formatDateTime(
+						String(value),
+						{ month: 'short', day: 'numeric', hour: 'numeric' },
+						String(value)
+					);
+					return { col, def: labelFor(col), valueDisplay, unit: '' };
+				}
 				const fm = formatSensorMeasurement(col, value, app.preferences);
 				return { col, def: labelFor(col), valueDisplay: fm.valueDisplay, unit: fm.unit };
 			});
@@ -260,10 +271,16 @@
 
 	// Unit-bearing numeric metrics come back converted to the user's preference;
 	// booleans render as an On/Off label, unmapped columns keep their canonical unit.
+	// Integer metrics pass their formatted text as the label so the card doesn't
+	// re-format them with its 2-decimal number formatter ("0.00" for counts).
 	function readingProps(col: string, raw: unknown) {
 		const fm = formatSensorMeasurement(col, raw, app.preferences);
-		if (labelFor(col).format === 'boolean') {
+		const format = labelFor(col).format;
+		if (format === 'boolean') {
 			return { value: null, unit: '', label: fm.valueDisplay };
+		}
+		if (format === 'integer' && fm.value !== null && fm.value !== undefined) {
+			return { value: fm.value, unit: fm.unit, label: fm.valueDisplay };
 		}
 		return { value: fm.value, unit: fm.unit, label: undefined };
 	}
@@ -379,6 +396,7 @@
 								row.device_type.default_upload_interval ??
 								60}
 							storageKey={`dashboard:${row.dev_eui}`}
+							detailsHeading={m.common_details()}
 							onExpand={() => loadDetails(row.dev_eui)}
 						>
 							{#if details === undefined || details === 'loading'}
@@ -388,7 +406,7 @@
 							{:else}
 								<dl class="dashboard-cards__details-list">
 									{#each detailRows as { col, def, valueDisplay, unit } (col)}
-										{#if def.label() != 'created_at'}
+										{#if col !== 'created_at'}
 											<div class="dashboard-cards__details-row">
 												<dt>{def.label()}</dt>
 												<dd>
