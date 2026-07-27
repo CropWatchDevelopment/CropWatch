@@ -13,6 +13,7 @@ import type {
 	CwDataTableLabels,
 	CwResponsiveLineChartLabels,
 	CwDonutChartLabels,
+	CwStackedBarChartLabels,
 	CwHeatmapLabels,
 	CwPPFDChartLabels,
 	DliCardLabels,
@@ -88,6 +89,14 @@ export function cwDonutChartLabels(): CwDonutChartLabels {
 		total: m.cwui_donut_total(),
 		ofTotal: (total) => m.cwui_donut_of_total({ total }),
 		segmentLabel: (label, value) => m.cwui_donut_segment({ label, value })
+	};
+}
+
+export function cwStackedBarChartLabels(): CwStackedBarChartLabels {
+	return {
+		ariaLabel: m.cwui_stacked_bar_aria(),
+		total: m.cwui_stacked_bar_total(),
+		barLabel: (label, total) => m.cwui_stacked_bar_bar({ label, total })
 	};
 }
 

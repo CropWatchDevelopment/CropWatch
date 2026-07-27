@@ -2,7 +2,7 @@
 	import { AppPage } from '$lib/components/layout';
 	import { afterNavigate } from '$app/navigation';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { isRelayTable, resolveDisplayComponent } from '$lib/config/deviceTables';
+	import { isRelayTable, isTrafficTable, resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import {
@@ -146,7 +146,7 @@
 	// Dew point is opt-in per page view: it mounts hidden and the user shows it
 	// via the chart legend.
 	let chartInitialHidden = $derived(isAirDevice ? [DEW_POINT_SERIES_ID] : []);
-	let isTrafficDevice = $derived(data.device?.cw_device_type.name === '[CROPWATCH] Nvidia Jetson');
+	let isTrafficDevice = $derived(isTrafficTable(data.dataTable));
 	let rangeOptions = $derived(getRangeOptions());
 	let lastUpdatedAt = $derived(readCreatedAt(displayCurrentRecord));
 	let noDataYet = $derived(
@@ -487,7 +487,10 @@
 			titleName={data?.device?.name || devEui.toUpperCase()}
 		/>
 
-		{#if chartSeries.length > 0}
+		<!-- Traffic devices render their own purpose-built hourly chart inside
+		     TrafficDisplay; the generic per-column time series is unreadable for
+		     hourly accumulator counts. -->
+		{#if chartSeries.length > 0 && !isTrafficDevice}
 			<div class="device-page__chart">
 				<CwResponsiveLineChart
 					series={chartSeries}
