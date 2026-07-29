@@ -58,6 +58,9 @@
 
 	type EditableTemplateAction = Omit<RuleTemplateActionDto, 'config'> & {
 		config: RuleTemplateActionConfig;
+		// LINE actions only: the CwMultiSelect selection ({id,label} shape).
+		// Serialized into config.recipient as {"userIds":[...]} on change.
+		lineRecipients: { id: string; label: string }[];
 	};
 
 	let { mode, context, authToken = null, preselectedDevEui = null }: Props = $props();
@@ -137,6 +140,92 @@
 	});
 
 	let selectedDevEuis = $derived(selectedDevices.map((device) => device.id.trim()).filter(Boolean));
+
+	// Eligible LINE recipients for the currently selected devices. This is the
+	// only mid-form fetch in this file: the options depend on device selection,
+	// which the server-loaded form context cannot know ahead of time. The
+	// serialized-key guard doubles as a debounce (CwMultiSelect commits one
+	// change per click) and the sequence number drops stale responses.
+	let lineRecipientOptionsBase = $state<{ label: string; value: string }[]>([]);
+	const lineRecipientNames = new SvelteMap<string, string>();
+	let lineRecipientFetchKey = '';
+	let lineRecipientFetchSeq = 0;
+
+	$effect(() => {
+		const devEuis = [...selectedDevEuis].sort();
+		const key = devEuis.join(',');
+		if (key === lineRecipientFetchKey) return;
+		lineRecipientFetchKey = key;
+
+		if (devEuis.length === 0 || !authToken) {
+			lineRecipientOptionsBase = [];
+			return;
+		}
+
+		const seq = ++lineRecipientFetchSeq;
+		new ApiService({ authToken })
+			.getLineRecipientCandidates(devEuis)
+			.then((candidates) => {
+				if (seq !== lineRecipientFetchSeq) return;
+				lineRecipientNames.clear();
+				lineRecipientOptionsBase = candidates.map((candidate) => {
+					lineRecipientNames.set(candidate.userId, candidate.displayName);
+					return {
+						value: candidate.userId,
+						label: candidate.lineLinked
+							? candidate.displayName
+							: `${candidate.displayName}（${m.line_recipient_not_linked()}）`
+					};
+				});
+				// Upgrade bare id labels on saved selections now that names are known.
+				for (const action of templateActions) {
+					if (action.actionTypeName !== 'LINE') continue;
+					for (const selection of action.lineRecipients) {
+						const name = lineRecipientNames.get(selection.id);
+						if (name && selection.label === selection.id) selection.label = name;
+					}
+				}
+			})
+			.catch(() => {
+				if (seq === lineRecipientFetchSeq) lineRecipientOptionsBase = [];
+			});
+	});
+
+	// Saved selections must stay visible even when the fetch hasn't landed or
+	// the user lost device access (same guard pattern as deviceOptions above).
+	function lineRecipientOptionsFor(action: EditableTemplateAction) {
+		const missing = action.lineRecipients
+			.filter((selection) => !lineRecipientOptionsBase.some((o) => o.value === selection.id))
+			.map((selection) => ({ value: selection.id, label: selection.label || selection.id }));
+		return [...missing, ...lineRecipientOptionsBase];
+	}
+
+	function setLineRecipients(
+		action: EditableTemplateAction,
+		selection: { id: string; label: string }[]
+	) {
+		action.lineRecipients = selection;
+		action.config.recipient =
+			selection.length > 0 ? JSON.stringify({ userIds: selection.map((item) => item.id) }) : '';
+	}
+
+	function parseLineRecipientIds(recipient: string): string[] {
+		try {
+			const parsed: unknown = JSON.parse(recipient);
+			if (
+				typeof parsed === 'object' &&
+				parsed !== null &&
+				Array.isArray((parsed as { userIds?: unknown }).userIds)
+			) {
+				return ((parsed as { userIds: unknown[] }).userIds ?? []).filter(
+					(id): id is string => typeof id === 'string' && id.length > 0
+				);
+			}
+		} catch {
+			// Legacy sentinel ('linked-users') or free text — force a fresh choice.
+		}
+		return [];
+	}
 	let selectedDeviceTypeId = $derived(resolveSelectedDeviceTypeId());
 	let criteriaForTest = $derived(buildRuleTemplateCriteriaFromAlertGroups(criteriaGroups));
 	let hasUnsupportedCriteria = $derived(hasUnsupportedAlertPointConditions(criteriaGroups));
@@ -147,7 +236,9 @@
 			areAlertCriteriaGroupsValid(criteriaGroups) &&
 			templateActions.every(
 				(action) =>
-					isValidActionTypeId(action.actionType) && action.config.recipient.trim().length > 0
+					isValidActionTypeId(action.actionType) &&
+					action.config.recipient.trim().length > 0 &&
+					(action.actionTypeName !== 'LINE' || action.lineRecipients.length > 0)
 			)
 	);
 	let assignmentSummary = $derived(
@@ -174,7 +265,12 @@
 				action.actionTypeValue ??
 				String(action.actionType);
 			const recipient =
-				action.actionTypeName === 'LINE' ? m.line_rule_action_preview() : action.config.recipient;
+				action.actionTypeName === 'LINE'
+					? action.lineRecipients
+							.map((item) => lineRecipientNames.get(item.id) ?? item.label ?? item.id)
+							.join(', ') ||
+						m.line_recipient_preview_count({ count: String(action.lineRecipients.length) })
+					: action.config.recipient;
 			return `${label}: ${recipient}`;
 		})
 	);
@@ -192,17 +288,24 @@
 			config: {
 				recipient: ''
 			},
+			lineRecipients: [],
 			createdAt: null
 		};
 	}
 
 	function createEditableTemplateAction(action: RuleTemplateActionDto): EditableTemplateAction {
+		const recipient = readActionRecipient(action);
+		const lineRecipients =
+			action.actionTypeName === 'LINE'
+				? parseLineRecipientIds(recipient).map((id) => ({ id, label: id }))
+				: [];
 		return {
 			...action,
 			config: {
 				...readActionConfig(action.config),
-				recipient: readActionRecipient(action)
-			}
+				recipient
+			},
+			lineRecipients
 		};
 	}
 
@@ -348,24 +451,19 @@
 		];
 	}
 
-	// The LINE action needs no per-rule configuration (alerts go to every user
-	// who linked LINE and can view the device). The sentinel keeps the shared
-	// recipient-required validation satisfied; the alert service ignores it.
-	const LINE_RECIPIENT_SENTINEL = 'linked-users';
-
 	function selectActionType(action: EditableTemplateAction, value: string) {
 		const selectedAction = actions.find((entry) => String(entry.id) === value);
 		const parsedActionType = Number(value);
+		const wasLine = action.actionTypeName === 'LINE';
 
 		action.actionType =
 			selectedAction?.id ?? (Number.isInteger(parsedActionType) ? parsedActionType : 0);
 		action.actionTypeName = selectedAction?.name ?? null;
 		action.actionTypeValue = selectedAction?.value ?? null;
 
-		if (action.actionTypeName === 'LINE') {
-			action.config.recipient = LINE_RECIPIENT_SENTINEL;
-		} else if (action.config.recipient === LINE_RECIPIENT_SENTINEL) {
-			action.config.recipient = '';
+		// Switching to or away from LINE always requires a fresh recipient choice.
+		if (action.actionTypeName === 'LINE' || wasLine) {
+			setLineRecipients(action, []);
 		}
 	}
 
@@ -524,9 +622,16 @@
 					{:else if action.actionTypeName === 'LoRaWAN'}
 						<RelayActions devices={deviceOptions} bind:resultJson={action.config.recipient} />
 					{:else if action.actionTypeName === 'LINE'}
-						<AppNotice tone="info">
-							<p>{m.line_rule_action_notice()}</p>
-						</AppNotice>
+						<CwMultiSelect
+							id={`rule-form-action-${index}-line-recipients`}
+							label={m.line_recipient_label()}
+							placeholder={m.line_recipient_placeholder()}
+							options={lineRecipientOptionsFor(action)}
+							value={action.lineRecipients}
+							onchange={(selection) => setLineRecipients(action, selection)}
+							searchable
+							required
+						/>
 					{/if}
 				</div>
 			</div>

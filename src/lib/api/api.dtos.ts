@@ -40,6 +40,12 @@ export interface LineLinkCodeResponse {
 	expiresAt: string;
 }
 
+export interface LineRecipientCandidateDto {
+	userId: string;
+	displayName: string;
+	lineLinked: boolean;
+}
+
 export interface UpdateProfileRequest {
 	full_name?: string | null;
 	username?: string | null;

@@ -17,6 +17,7 @@ import type {
 	LocationsQuery,
 	LineLinkCodeResponse,
 	LineLinkStartResponse,
+	LineRecipientCandidateDto,
 	LoginRequest,
 	LoginResponse,
 	ProfileDto,
@@ -177,6 +178,7 @@ const PAYMENTS_ENDPOINT = '/payments';
 const LINE_LINK_START_ENDPOINT = '/line/link-start';
 const LINE_LINK_CODE_ENDPOINT = '/line/link-code';
 const LINE_LINK_ENDPOINT = '/line/link';
+const LINE_RECIPIENTS_ENDPOINT = '/line/recipients';
 const DEVICE_LIST_PAGE_SIZE = 1000;
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
@@ -522,6 +524,18 @@ export class ApiService {
 
 	public createLineLinkCode(): Promise<LineLinkCodeResponse> {
 		return this.request<LineLinkCodeResponse>(LINE_LINK_CODE_ENDPOINT, { method: 'POST' });
+	}
+
+	public getLineRecipientCandidates(
+		devEuis: string[],
+		options: ApiMethodOptions = {}
+	): Promise<LineRecipientCandidateDto[]> {
+		// buildQueryString has no array support — join explicitly.
+		return this.request<LineRecipientCandidateDto[]>(LINE_RECIPIENTS_ENDPOINT, {
+			method: 'GET',
+			query: { devEuis: devEuis.join(',') },
+			signal: options.signal
+		});
 	}
 
 	public unlinkLine(): Promise<void> {
