@@ -15,6 +15,7 @@ import type {
 	ListOrPaginatedResponse,
 	LocationDto,
 	LocationsQuery,
+	LineLinkCodeResponse,
 	LineLinkStartResponse,
 	LoginRequest,
 	LoginResponse,
@@ -174,6 +175,7 @@ const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
 const GATEWAYS_ENDPOINT = '/gateway';
 const PAYMENTS_ENDPOINT = '/payments';
 const LINE_LINK_START_ENDPOINT = '/line/link-start';
+const LINE_LINK_CODE_ENDPOINT = '/line/link-code';
 const LINE_LINK_ENDPOINT = '/line/link';
 const DEVICE_LIST_PAGE_SIZE = 1000;
 
@@ -516,6 +518,10 @@ export class ApiService {
 
 	public startLineLink(): Promise<LineLinkStartResponse> {
 		return this.request<LineLinkStartResponse>(LINE_LINK_START_ENDPOINT, { method: 'POST' });
+	}
+
+	public createLineLinkCode(): Promise<LineLinkCodeResponse> {
+		return this.request<LineLinkCodeResponse>(LINE_LINK_CODE_ENDPOINT, { method: 'POST' });
 	}
 
 	public unlinkLine(): Promise<void> {

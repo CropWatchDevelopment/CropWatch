@@ -42,6 +42,21 @@ export const actions: Actions = {
 		}
 	},
 
+	lineLinkCode: async ({ locals, fetch }) => {
+		const authToken = locals.jwtString ?? null;
+		if (!authToken) return fail(401, { lineError: m.auth_not_authenticated() });
+
+		const api = new ApiService({ fetchFn: fetch, authToken });
+		try {
+			const { code, expiresAt } = await api.createLineLinkCode();
+			return { lineCode: code, lineCodeExpiresAt: expiresAt };
+		} catch (err) {
+			const payload = err instanceof ApiServiceError ? err.payload : err;
+			const status = err instanceof ApiServiceError ? err.status : 500;
+			return fail(status, { lineError: readApiErrorMessage(payload, m.generic_error()) });
+		}
+	},
+
 	unlinkLine: async ({ locals, fetch }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { lineError: m.auth_not_authenticated() });
