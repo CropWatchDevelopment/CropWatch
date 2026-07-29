@@ -22,6 +22,9 @@
 
 	let savingProfile = $state(false);
 	let savingEmail = $state(false);
+	let unlinkingLine = $state(false);
+
+	const LINE_ADD_FRIEND_URL = 'https://line.me/R/ti/p/@cropwatch';
 
 	function isLikelyWebsite(value: string): boolean {
 		try {
@@ -199,5 +202,61 @@
 				</AppActionRow>
 			</AppFormStack>
 		</form>
+	</CwCard>
+
+	<CwCard title={m.line_card_title()} subtitle={m.line_card_subtitle()} elevated>
+		<AppFormStack padded>
+			{#if form?.lineError}
+				<AppNotice tone="danger">
+					<p>{form.lineError}</p>
+				</AppNotice>
+			{/if}
+
+			{#if data.lineLinked}
+				<AppNotice tone="success">
+					<p>{m.line_linked_notice()}</p>
+				</AppNotice>
+
+				<form
+					method="POST"
+					action="?/unlinkLine"
+					use:enhance={() => {
+						unlinkingLine = true;
+						return async ({ result }) => {
+							unlinkingLine = false;
+							if (result.type === 'success') {
+								toast.add({ tone: 'success', message: m.line_unlinked() });
+								await goto(resolve('/account/profile'), { invalidateAll: true });
+								return;
+							}
+							await applyAction(result);
+							if (result.type === 'failure' && typeof result.data?.lineError === 'string') {
+								toast.add({ tone: 'danger', message: result.data.lineError });
+							}
+						};
+					}}
+				>
+					<AppActionRow>
+						<CwButton type="submit" variant="secondary" loading={unlinkingLine}>
+							{m.line_unlink_action()}
+						</CwButton>
+					</AppActionRow>
+				</form>
+			{:else}
+				<AppNotice tone="info">
+					<p>{m.line_not_linked_notice()}</p>
+				</AppNotice>
+				<p>{m.line_add_friend_instructions()}</p>
+
+				<AppActionRow>
+					<CwButton
+						variant="primary"
+						onclick={() => window.open(LINE_ADD_FRIEND_URL, '_blank', 'noopener')}
+					>
+						{m.line_add_friend_action()}
+					</CwButton>
+				</AppActionRow>
+			{/if}
+		</AppFormStack>
 	</CwCard>
 </AppPage>

@@ -15,6 +15,7 @@ import type {
 	ListOrPaginatedResponse,
 	LocationDto,
 	LocationsQuery,
+	LineLinkStartResponse,
 	LoginRequest,
 	LoginResponse,
 	ProfileDto,
@@ -172,6 +173,8 @@ const WATER_ENDPOINT = '/water/{dev_eui}';
 const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
 const GATEWAYS_ENDPOINT = '/gateway';
 const PAYMENTS_ENDPOINT = '/payments';
+const LINE_LINK_START_ENDPOINT = '/line/link-start';
+const LINE_LINK_ENDPOINT = '/line/link';
 const DEVICE_LIST_PAGE_SIZE = 1000;
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
@@ -509,6 +512,14 @@ export class ApiService {
 			method: 'PATCH',
 			body: payload
 		});
+	}
+
+	public startLineLink(): Promise<LineLinkStartResponse> {
+		return this.request<LineLinkStartResponse>(LINE_LINK_START_ENDPOINT, { method: 'POST' });
+	}
+
+	public unlinkLine(): Promise<void> {
+		return this.request<void>(LINE_LINK_ENDPOINT, { method: 'DELETE' });
 	}
 
 	public getPreferences(): Promise<PreferencesDto> {

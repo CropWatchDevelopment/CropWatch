@@ -547,6 +547,31 @@ describe('ApiService rule template endpoints', () => {
 		});
 	});
 
+	it('uses the LINE link endpoints for link-start and unlink', async () => {
+		const calls: Array<{ method: string; url: string }> = [];
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			calls.push({
+				method: String(init?.method ?? 'GET'),
+				url: String(input)
+			});
+			return createJsonResponse({ nonce: 'nonce-1' });
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await expect(api.startLineLink()).resolves.toEqual({ nonce: 'nonce-1' });
+		await api.unlinkLine();
+
+		expect(calls).toEqual([
+			{ method: 'POST', url: 'https://example.com/line/link-start' },
+			{ method: 'DELETE', url: 'https://example.com/line/link' }
+		]);
+	});
+
 	it('loads rule template action types from the RulesNew action-types endpoint', async () => {
 		let requestedUrl = '';
 		let requestedMethod = '';
