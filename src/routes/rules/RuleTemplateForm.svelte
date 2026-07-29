@@ -174,9 +174,7 @@
 				action.actionTypeValue ??
 				String(action.actionType);
 			const recipient =
-				action.actionTypeName === 'LINE'
-					? m.line_rule_action_preview()
-					: action.config.recipient;
+				action.actionTypeName === 'LINE' ? m.line_rule_action_preview() : action.config.recipient;
 			return `${label}: ${recipient}`;
 		})
 	);

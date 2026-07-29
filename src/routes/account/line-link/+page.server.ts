@@ -22,9 +22,8 @@ export const actions: Actions = {
 		if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
 
 		const formData = await request.formData();
-		const linkToken = typeof formData.get('linkToken') === 'string'
-			? String(formData.get('linkToken')).trim()
-			: '';
+		const linkToken =
+			typeof formData.get('linkToken') === 'string' ? String(formData.get('linkToken')).trim() : '';
 		if (!linkToken) {
 			return fail(400, { error: m.line_link_missing_token() });
 		}
