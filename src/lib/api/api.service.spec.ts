@@ -564,10 +564,12 @@ describe('ApiService rule template endpoints', () => {
 		});
 
 		await expect(api.startLineLink()).resolves.toEqual({ nonce: 'nonce-1' });
+		await api.createLineLinkCode();
 		await api.unlinkLine();
 
 		expect(calls).toEqual([
 			{ method: 'POST', url: 'https://example.com/line/link-start' },
+			{ method: 'POST', url: 'https://example.com/line/link-code' },
 			{ method: 'DELETE', url: 'https://example.com/line/link' }
 		]);
 	});

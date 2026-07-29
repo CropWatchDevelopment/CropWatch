@@ -35,6 +35,11 @@ export interface LineLinkStartResponse {
 	nonce: string;
 }
 
+export interface LineLinkCodeResponse {
+	code: string;
+	expiresAt: string;
+}
+
 export interface UpdateProfileRequest {
 	full_name?: string | null;
 	username?: string | null;

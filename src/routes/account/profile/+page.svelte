@@ -23,6 +23,7 @@
 	let savingProfile = $state(false);
 	let savingEmail = $state(false);
 	let unlinkingLine = $state(false);
+	let requestingLineCode = $state(false);
 
 	const LINE_ADD_FRIEND_URL = 'https://line.me/R/ti/p/@cropwatch';
 
@@ -246,17 +247,52 @@
 				<AppNotice tone="info">
 					<p>{m.line_not_linked_notice()}</p>
 				</AppNotice>
-				<p>{m.line_add_friend_instructions()}</p>
+				<p>{m.line_code_instructions()}</p>
 
-				<AppActionRow>
-					<CwButton
-						variant="primary"
-						onclick={() => window.open(LINE_ADD_FRIEND_URL, '_blank', 'noopener')}
-					>
-						{m.line_add_friend_action()}
-					</CwButton>
-				</AppActionRow>
+				{#if form?.lineCode}
+					<AppNotice tone="success" ariaLive="polite">
+						<p class="line-code">{form.lineCode}</p>
+						<p>{m.line_code_send_hint()}</p>
+					</AppNotice>
+				{/if}
+
+				<form
+					method="POST"
+					action="?/lineLinkCode"
+					use:enhance={() => {
+						requestingLineCode = true;
+						return async ({ result }) => {
+							requestingLineCode = false;
+							await applyAction(result);
+							if (result.type === 'failure' && typeof result.data?.lineError === 'string') {
+								toast.add({ tone: 'danger', message: result.data.lineError });
+							}
+						};
+					}}
+				>
+					<AppActionRow>
+						<CwButton
+							variant="secondary"
+							onclick={() => window.open(LINE_ADD_FRIEND_URL, '_blank', 'noopener')}
+						>
+							{m.line_add_friend_action()}
+						</CwButton>
+						<CwButton type="submit" variant="primary" loading={requestingLineCode}>
+							{form?.lineCode ? m.line_code_refresh_action() : m.line_code_action()}
+						</CwButton>
+					</AppActionRow>
+				</form>
 			{/if}
 		</AppFormStack>
 	</CwCard>
 </AppPage>
+
+<style>
+	.line-code {
+		font-family: monospace;
+		font-size: 2rem;
+		font-weight: 700;
+		letter-spacing: 0.35em;
+		margin: 0;
+	}
+</style>
