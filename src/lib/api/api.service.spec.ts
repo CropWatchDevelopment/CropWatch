@@ -574,6 +574,21 @@ describe('ApiService rule template endpoints', () => {
 		]);
 	});
 
+	it('requests LINE recipient candidates with comma-joined devEuis', async () => {
+		let requestedUrl = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+			requestedUrl = String(input);
+			return createJsonResponse([]);
+		}) as typeof fetch;
+
+		const api = new ApiService({ baseUrl: 'https://example.com', fetchFn });
+
+		await api.getLineRecipientCandidates(['AA11', 'BB22']);
+
+		expect(requestedUrl).toBe('https://example.com/line/recipients?devEuis=AA11%2CBB22');
+	});
+
 	it('loads rule template action types from the RulesNew action-types endpoint', async () => {
 		let requestedUrl = '';
 		let requestedMethod = '';
