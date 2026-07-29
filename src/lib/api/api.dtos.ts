@@ -27,7 +27,12 @@ export interface ProfileDto {
 	employer: string | null;
 	phone_number: string | null;
 	avatar_url?: string | null;
+	line_id?: string | null;
 	[key: string]: unknown;
+}
+
+export interface LineLinkStartResponse {
+	nonce: string;
 }
 
 export interface UpdateProfileRequest {

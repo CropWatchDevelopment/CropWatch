@@ -173,7 +173,11 @@
 				action.actionTypeName ??
 				action.actionTypeValue ??
 				String(action.actionType);
-			return `${label}: ${action.config.recipient}`;
+			const recipient =
+				action.actionTypeName === 'LINE'
+					? m.line_rule_action_preview()
+					: action.config.recipient;
+			return `${label}: ${recipient}`;
 		})
 	);
 	let actionSummary = $derived(actionPreview.join(', '));
@@ -346,6 +350,11 @@
 		];
 	}
 
+	// The LINE action needs no per-rule configuration (alerts go to every user
+	// who linked LINE and can view the device). The sentinel keeps the shared
+	// recipient-required validation satisfied; the alert service ignores it.
+	const LINE_RECIPIENT_SENTINEL = 'linked-users';
+
 	function selectActionType(action: EditableTemplateAction, value: string) {
 		const selectedAction = actions.find((entry) => String(entry.id) === value);
 		const parsedActionType = Number(value);
@@ -354,6 +363,12 @@
 			selectedAction?.id ?? (Number.isInteger(parsedActionType) ? parsedActionType : 0);
 		action.actionTypeName = selectedAction?.name ?? null;
 		action.actionTypeValue = selectedAction?.value ?? null;
+
+		if (action.actionTypeName === 'LINE') {
+			action.config.recipient = LINE_RECIPIENT_SENTINEL;
+		} else if (action.config.recipient === LINE_RECIPIENT_SENTINEL) {
+			action.config.recipient = '';
+		}
 	}
 
 	function isValidActionTypeId(value: number): boolean {
@@ -510,6 +525,10 @@
 						/>
 					{:else if action.actionTypeName === 'LoRaWAN'}
 						<RelayActions devices={deviceOptions} bind:resultJson={action.config.recipient} />
+					{:else if action.actionTypeName === 'LINE'}
+						<AppNotice tone="info">
+							<p>{m.line_rule_action_notice()}</p>
+						</AppNotice>
 					{/if}
 				</div>
 			</div>

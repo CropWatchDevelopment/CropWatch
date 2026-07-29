@@ -12,7 +12,8 @@ export const load: PageServerLoad = async ({ parent }) => {
 	return {
 		profile: profile ?? null,
 		email: readString(profile?.email ?? session?.email) || null,
-		role: readString(session?.role) || null
+		role: readString(session?.role) || null,
+		lineLinked: Boolean(readString(profile?.line_id))
 	};
 };
 
@@ -38,6 +39,21 @@ export const actions: Actions = {
 			const payload = err instanceof ApiServiceError ? err.payload : err;
 			const status = err instanceof ApiServiceError ? err.status : 500;
 			return fail(status, { error: readApiErrorMessage(payload, m.generic_error()), ...fields });
+		}
+	},
+
+	unlinkLine: async ({ locals, fetch }) => {
+		const authToken = locals.jwtString ?? null;
+		if (!authToken) return fail(401, { lineError: m.auth_not_authenticated() });
+
+		const api = new ApiService({ fetchFn: fetch, authToken });
+		try {
+			await api.unlinkLine();
+			return { lineUnlinked: true };
+		} catch (err) {
+			const payload = err instanceof ApiServiceError ? err.payload : err;
+			const status = err instanceof ApiServiceError ? err.status : 500;
+			return fail(status, { lineError: readApiErrorMessage(payload, m.line_unlink_failed()) });
 		}
 	},
 
