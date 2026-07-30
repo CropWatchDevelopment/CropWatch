@@ -24,6 +24,8 @@ import type {
 	UpdateProfileRequest,
 	UpdateEmailRequest,
 	EmailChangeResponse,
+	AcceptLegalRequest,
+	LegalStatusDto,
 	PreferencesDto,
 	UpdatePreferencesRequest,
 	PaginatedResponse,
@@ -133,6 +135,8 @@ const AUTH_ENDPOINT = '/auth';
 const AUTH_USER_PROFILE_ENDPOINT = '/auth/user-profile';
 const AUTH_EMAIL_ENDPOINT = '/auth/email';
 const AUTH_PREFERENCES_ENDPOINT = '/auth/preferences';
+const AUTH_LEGAL_STATUS_ENDPOINT = '/auth/legal-status';
+const AUTH_LEGAL_ACCEPTANCE_ENDPOINT = '/auth/legal-acceptance';
 const AIR_ENDPOINT = '/air/{dev_eui}';
 const DEVICES_ENDPOINT = '/devices';
 const DEVICE_TYPES_ENDPOINT = '/devices/device-types';
@@ -509,6 +513,17 @@ export class ApiService {
 
 	public updateProfile(payload: UpdateProfileRequest): Promise<ProfileDto> {
 		return this.request<ProfileDto>(AUTH_USER_PROFILE_ENDPOINT, { method: 'PATCH', body: payload });
+	}
+
+	public getLegalStatus(): Promise<LegalStatusDto> {
+		return this.request<LegalStatusDto>(AUTH_LEGAL_STATUS_ENDPOINT, { method: 'GET' });
+	}
+
+	public acceptLegalDocuments(payload: AcceptLegalRequest): Promise<LegalStatusDto> {
+		return this.request<LegalStatusDto>(AUTH_LEGAL_ACCEPTANCE_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
 	}
 
 	public updateEmail(payload: UpdateEmailRequest): Promise<EmailChangeResponse> {
