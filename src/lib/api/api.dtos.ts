@@ -79,6 +79,12 @@ export interface AcceptLegalRequest {
 	kinds: LegalDocumentKind[];
 }
 
+export interface WhatsNewStatusDto {
+	current_release: number;
+	seen_release: number | null;
+	show: boolean;
+}
+
 export interface EmailChangeResponse {
 	pending: boolean;
 	message?: string;
