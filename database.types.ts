@@ -1518,6 +1518,30 @@ export type Database = {
 					}
 				];
 			};
+			legal_documents: {
+				Row: {
+					current_version: number;
+					effective_at: string;
+					kind: string;
+					updated_at: string;
+					url: string;
+				};
+				Insert: {
+					current_version?: number;
+					effective_at?: string;
+					kind: string;
+					updated_at?: string;
+					url: string;
+				};
+				Update: {
+					current_version?: number;
+					effective_at?: string;
+					kind?: string;
+					updated_at?: string;
+					url?: string;
+				};
+				Relationships: [];
+			};
 			locations: {
 				Row: {
 					created_at: string | null;
@@ -1593,6 +1617,42 @@ export type Database = {
 					{
 						foreignKeyName: 'permissions_allowed_profile_id_fkey';
 						columns: ['allowed_profile_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					}
+				];
+			};
+			profile_legal_acceptances: {
+				Row: {
+					accepted_at: string;
+					kind: string;
+					user_id: string;
+					version: number;
+				};
+				Insert: {
+					accepted_at?: string;
+					kind: string;
+					user_id: string;
+					version: number;
+				};
+				Update: {
+					accepted_at?: string;
+					kind?: string;
+					user_id?: string;
+					version?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'profile_legal_acceptances_kind_fkey';
+						columns: ['kind'];
+						isOneToOne: false;
+						referencedRelation: 'legal_documents';
+						referencedColumns: ['kind'];
+					},
+					{
+						foreignKeyName: 'profile_legal_acceptances_user_id_fkey';
+						columns: ['user_id'];
 						isOneToOne: false;
 						referencedRelation: 'profiles';
 						referencedColumns: ['id'];

@@ -6,13 +6,19 @@
 		agreedTerms: boolean;
 		agreedEula: boolean;
 		allConsentsGiven: boolean;
+		privacyUrl?: string;
+		termsUrl?: string;
+		eulaUrl?: string;
 	}
 
 	let {
 		agreedPrivacy = $bindable(false),
 		agreedTerms = $bindable(false),
 		agreedEula = $bindable(false),
-		allConsentsGiven
+		allConsentsGiven,
+		privacyUrl = 'https://www.cropwatch.io/legal/privacy-policy',
+		termsUrl = 'https://www.cropwatch.io/legal/terms-of-service',
+		eulaUrl = 'https://www.cropwatch.io/legal/EULA'
 	}: Props = $props();
 
 	// The matching checkbox stays disabled until its policy link has been opened.
@@ -26,6 +32,8 @@
 
 	<p class="consent-note">{m.auth_open_link_first()}</p>
 
+	<!-- eslint-disable svelte/no-navigation-without-resolve -- external legal-document URLs -->
+
 	<label class="consent-item">
 		<input
 			id="create-account-consent-privacy-checkbox"
@@ -38,7 +46,7 @@
 			{m.auth_agree_to()}
 			<a
 				id="create-account-consent-privacy-link"
-				href="https://www.cropwatch.io/legal/privacy-policy"
+				href={privacyUrl}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="auth-link"
@@ -59,11 +67,11 @@
 			{m.auth_agree_to()}
 			<a
 				id="create-account-consent-terms-link"
-				href="https://www.cropwatch.io/legal/terms-of-service"
+				href={termsUrl}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="auth-link"
-				onclick={() => (visitedTerms = true)}>{m.auth_cookie_policy()}</a
+				onclick={() => (visitedTerms = true)}>{m.auth_terms_of_service()}</a
 			>
 		</span>
 	</label>
@@ -80,7 +88,7 @@
 			{m.auth_agree_to()}
 			<a
 				id="create-account-consent-eula-link"
-				href="https://www.cropwatch.io/legal/EULA"
+				href={eulaUrl}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="auth-link"
@@ -88,6 +96,8 @@
 			>
 		</span>
 	</label>
+
+	<!-- eslint-enable svelte/no-navigation-without-resolve -->
 
 	{#if !allConsentsGiven && (agreedPrivacy || agreedTerms || agreedEula)}
 		<p class="consent-hint">{m.auth_all_three_required()}</p>
@@ -141,5 +151,15 @@
 		margin: 0;
 		font-size: 0.82rem;
 		color: rgb(255 200 120);
+	}
+
+	.auth-link {
+		color: rgb(120 180 240);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.auth-link:hover {
+		color: rgb(160 205 255);
 	}
 </style>

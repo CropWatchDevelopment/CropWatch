@@ -1,5 +1,7 @@
+import { redirect } from '@sveltejs/kit';
 import { ApiService } from '$lib/api/api.service';
 import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
+import { withRedirectParam } from '$lib/utils/auth-redirect';
 import type { LayoutServerLoad } from './$types';
 
 const EMPTY_DEVICE_STATUSES: DeviceStatusSummary = { online: 0, offline: 0 };
@@ -61,7 +63,7 @@ async function loadOverviewData(apiServiceInstance: ApiService): Promise<{
 	};
 }
 
-export const load: LayoutServerLoad = async ({ locals, fetch }) => {
+export const load: LayoutServerLoad = async ({ locals, fetch, url, untrack }) => {
 	let profile;
 	let preferences;
 	let overview = {
@@ -70,17 +72,23 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 		triggeredRulesCount: 0
 	};
 
+	// Read untracked so adding `url` does not make this load (and its API
+	// batch) re-run on every client-side navigation.
+	const currentPath = untrack(() => `${url.pathname}${url.search}`);
+
 	if (locals.jwtString) {
 		const apiServiceInstance = new ApiService({
 			fetchFn: fetch,
 			authToken: locals.jwtString
 		});
 
-		const [profileResult, preferencesResult, overviewResult] = await Promise.allSettled([
-			apiServiceInstance.getUserProfile(),
-			apiServiceInstance.getPreferences(),
-			loadOverviewData(apiServiceInstance)
-		]);
+		const [profileResult, preferencesResult, overviewResult, legalResult] =
+			await Promise.allSettled([
+				apiServiceInstance.getUserProfile(),
+				apiServiceInstance.getPreferences(),
+				loadOverviewData(apiServiceInstance),
+				apiServiceInstance.getLegalStatus()
+			]);
 
 		if (profileResult.status === 'fulfilled') {
 			profile = profileResult.value;
@@ -98,6 +106,24 @@ export const load: LayoutServerLoad = async ({ locals, fetch }) => {
 			overview = overviewResult.value;
 		} else {
 			console.error('Failed to fetch overview data:', overviewResult.reason);
+		}
+
+		// Gate on updated legal documents — fail open: only a well-formed,
+		// positive answer redirects, so an unreachable or older API (whose
+		// catch-all serves 200 HTML) can never lock users out. /auth/* is
+		// exempt so the interstitial, login, and logout stay reachable.
+		let needsLegalAcceptance = false;
+		if (legalResult.status === 'fulfilled') {
+			const legalStatus = legalResult.value;
+			if (legalStatus && Array.isArray(legalStatus.documents)) {
+				needsLegalAcceptance = legalStatus.needs_acceptance === true;
+			}
+		} else {
+			console.error('Failed to fetch legal status (fail-open):', legalResult.reason);
+		}
+
+		if (needsLegalAcceptance && !currentPath.startsWith('/auth')) {
+			redirect(303, withRedirectParam('/auth/accept-terms', currentPath));
 		}
 	}
 

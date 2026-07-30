@@ -33,7 +33,11 @@ export function sanitizeRedirectPath(
 		}
 
 		const normalized = `${url.pathname}${url.search}${url.hash}`;
-		if (normalized.startsWith('/auth/login') || normalized.startsWith('/auth/logout')) {
+		if (
+			normalized.startsWith('/auth/login') ||
+			normalized.startsWith('/auth/logout') ||
+			normalized.startsWith('/auth/accept-terms')
+		) {
 			return fallback;
 		}
 

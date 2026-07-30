@@ -58,6 +58,27 @@ export interface UpdateEmailRequest {
 	email: string;
 }
 
+export type LegalDocumentKind = 'privacy_policy' | 'terms_of_service' | 'eula';
+
+export interface LegalDocumentStatusDto {
+	kind: LegalDocumentKind;
+	current_version: number;
+	url: string;
+	effective_at: string;
+	accepted_version: number | null;
+	accepted_at: string | null;
+	needs_acceptance: boolean;
+}
+
+export interface LegalStatusDto {
+	needs_acceptance: boolean;
+	documents: LegalDocumentStatusDto[];
+}
+
+export interface AcceptLegalRequest {
+	kinds: LegalDocumentKind[];
+}
+
 export interface EmailChangeResponse {
 	pending: boolean;
 	message?: string;

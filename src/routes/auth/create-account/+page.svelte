@@ -14,7 +14,7 @@
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import CreateAccountPasswordFields from './CreateAccountPasswordFields.svelte';
-	import CreateAccountConsentFields from './CreateAccountConsentFields.svelte';
+	import LegalConsentFields from '$lib/components/auth/LegalConsentFields.svelte';
 
 	const toast = useCwToast();
 
@@ -203,12 +203,7 @@
 				/>
 			</label>
 
-			<CreateAccountConsentFields
-				bind:agreedPrivacy
-				bind:agreedTerms
-				bind:agreedEula
-				{allConsentsGiven}
-			/>
+			<LegalConsentFields bind:agreedPrivacy bind:agreedTerms bind:agreedEula {allConsentsGiven} />
 
 			<CwButton
 				id="create-account-submit-button"
