@@ -1730,6 +1730,32 @@ export type Database = {
 					}
 				];
 			};
+			profile_whats_new_seen: {
+				Row: {
+					release: number;
+					seen_at: string;
+					user_id: string;
+				};
+				Insert: {
+					release: number;
+					seen_at?: string;
+					user_id: string;
+				};
+				Update: {
+					release?: number;
+					seen_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'profile_whats_new_seen_user_id_fkey';
+						columns: ['user_id'];
+						isOneToOne: true;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			profiles: {
 				Row: {
 					accepted_agreements: boolean;
@@ -2119,6 +2145,24 @@ export type Database = {
 					token_type?: string;
 					updated_at?: string | null;
 					user_id?: string;
+				};
+				Relationships: [];
+			};
+			whats_new: {
+				Row: {
+					current_release: number;
+					key: string;
+					published_at: string | null;
+				};
+				Insert: {
+					current_release?: number;
+					key: string;
+					published_at?: string | null;
+				};
+				Update: {
+					current_release?: number;
+					key?: string;
+					published_at?: string | null;
 				};
 				Relationships: [];
 			};

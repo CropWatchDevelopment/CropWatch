@@ -26,6 +26,7 @@ import type {
 	EmailChangeResponse,
 	AcceptLegalRequest,
 	LegalStatusDto,
+	WhatsNewStatusDto,
 	PreferencesDto,
 	UpdatePreferencesRequest,
 	PaginatedResponse,
@@ -137,6 +138,8 @@ const AUTH_EMAIL_ENDPOINT = '/auth/email';
 const AUTH_PREFERENCES_ENDPOINT = '/auth/preferences';
 const AUTH_LEGAL_STATUS_ENDPOINT = '/auth/legal-status';
 const AUTH_LEGAL_ACCEPTANCE_ENDPOINT = '/auth/legal-acceptance';
+const AUTH_WHATS_NEW_ENDPOINT = '/auth/whats-new';
+const AUTH_WHATS_NEW_SEEN_ENDPOINT = '/auth/whats-new/seen';
 const AIR_ENDPOINT = '/air/{dev_eui}';
 const DEVICES_ENDPOINT = '/devices';
 const DEVICE_TYPES_ENDPOINT = '/devices/device-types';
@@ -524,6 +527,14 @@ export class ApiService {
 			method: 'POST',
 			body: payload
 		});
+	}
+
+	public getWhatsNewStatus(): Promise<WhatsNewStatusDto> {
+		return this.request<WhatsNewStatusDto>(AUTH_WHATS_NEW_ENDPOINT, { method: 'GET' });
+	}
+
+	public markWhatsNewSeen(): Promise<WhatsNewStatusDto> {
+		return this.request<WhatsNewStatusDto>(AUTH_WHATS_NEW_SEEN_ENDPOINT, { method: 'POST' });
 	}
 
 	public updateEmail(payload: UpdateEmailRequest): Promise<EmailChangeResponse> {

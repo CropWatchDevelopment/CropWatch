@@ -16,6 +16,7 @@
 	import { page } from '$app/state';
 	import Sidebar from './Sidebar.svelte';
 	import Analytics from '$lib/components/Analytics.svelte';
+	import WhatsNewDialog from '$lib/components/whats-new/WhatsNewDialog.svelte';
 	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
 	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
 	import { buildLoginPath } from '$lib/utils/auth-redirect';
@@ -165,6 +166,8 @@
 			<Header bind:mode />
 
 			<main class="app-shell__main">{@render children()}</main>
+
+			<WhatsNewDialog />
 		</div>
 	{:else}
 		<main class="app-shell__main app-shell__main--standalone">{@render children()}</main>
