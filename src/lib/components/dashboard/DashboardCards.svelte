@@ -230,14 +230,15 @@
 
 	function primaryProps(row: DashboardRow) {
 		const col = row.device_type.primary_data_v2;
-		if (!col || col === '-') return { value: null, unit: '', label: undefined, icon: undefined };
+		if (!col || col === '-' || !isDisplayableColumn(col))
+			return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
 		return { ...readingProps(col, row.latest?.primary), icon: def.icon };
 	}
 
 	function secondaryProps(row: DashboardRow) {
 		const col = row.device_type.secondary_data_v2;
-		if (!col || col === '' || col === '-')
+		if (!col || col === '' || col === '-' || !isDisplayableColumn(col))
 			return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
 		return { ...readingProps(col, row.latest?.secondary), icon: def.icon };

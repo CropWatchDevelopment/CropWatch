@@ -12,8 +12,8 @@
 
 	let { devEui, historicalData, loading }: DeviceDisplayProps = $props();
 
-	/** Auto-discover column keys from the first data row, excluding metadata fields. */
-	const EXCLUDED_KEYS = new Set(['id', 'dev_eui', 'is_simulated']);
+	/** Auto-discover column keys from the first data row, excluding metadata and battery fields. */
+	const EXCLUDED_KEYS = new Set(['id', 'dev_eui', 'is_simulated', 'battery', 'battery_level']);
 
 	let columns = $derived(
 		historicalData.length > 0

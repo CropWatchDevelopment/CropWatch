@@ -58,7 +58,16 @@ const SENSOR_LABELS: Record<string, SensorLabel> = {
 	traffic_hour: { label: () => m.traffic_hour(), unit: '', format: 'number' }
 };
 
-const HIDDEN_COLUMNS = new Set(['dev_eui', 'id', 'is_simulated', 'last_update', 'line_number']);
+const HIDDEN_COLUMNS = new Set([
+	'dev_eui',
+	'id',
+	'is_simulated',
+	'last_update',
+	'line_number',
+	// Battery telemetry is intentionally hidden from all displays (voltage stays visible).
+	'battery',
+	'battery_level'
+]);
 
 export function labelFor(column: string): SensorLabel {
 	return SENSOR_LABELS[column] ?? { label: () => column, unit: '', format: 'number' };
