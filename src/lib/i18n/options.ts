@@ -48,7 +48,6 @@ export function getRuleSubjectOptions() {
 		{ label: m.rule_subject_wind_speed(), value: 'wind_speed' },
 		{ label: m.rule_subject_wind_direction(), value: 'wind_direction' },
 		{ label: m.rule_subject_rainfall(), value: 'rainfall' },
-		{ label: m.rule_subject_battery_level(), value: 'battery_level' },
 		{ label: m.rule_subject_soil_moisture(), value: 'moisture' },
 		{ label: m.rule_subject_electrical_conductivity(), value: 'ec' },
 		{ label: m.rule_subject_ph(), value: 'ph' },

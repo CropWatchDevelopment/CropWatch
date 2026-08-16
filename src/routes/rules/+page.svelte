@@ -10,6 +10,7 @@
 	import { AppPage } from '$lib/components/layout';
 	import type { RuleTemplateDto } from '$lib/rules/rule-template.types';
 	import { getRuleSubjectOptions } from '$lib/i18n/options';
+	import { labelFor } from '$lib/sensor-labels';
 	import {
 		CwButton,
 		CwCard,
@@ -130,7 +131,7 @@
 			template.criteria.map((criterion) => {
 				const subjectLabel =
 					SUBJECT_OPTIONS.find((option) => option.value === criterion.subject)?.label ??
-					criterion.subject;
+					labelFor(criterion.subject).label();
 				return `${subjectLabel} ${criterion.operator} ${criterion.triggerValue}`;
 			})
 		);

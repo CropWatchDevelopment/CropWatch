@@ -13,6 +13,7 @@
 	} from '$lib/rules/rule-template.types';
 	import type { RuleFormContextDto } from '$lib/api/api.dtos';
 	import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
+	import { labelFor } from '$lib/sensor-labels';
 	import {
 		CwAlertPointsEditor,
 		CwButton,
@@ -253,7 +254,7 @@
 			const operatorLabel =
 				OPERATORS.find((option) => option.value === criterion.operator)?.label ??
 				criterion.operator;
-			return `${label ?? criterion.subject} ${operatorLabel} ${criterion.triggerValue} (${m.rules_reset_value()}: ${criterion.resetValue})`;
+			return `${label ?? labelFor(criterion.subject).label()} ${operatorLabel} ${criterion.triggerValue} (${m.rules_reset_value()}: ${criterion.resetValue})`;
 		})
 	);
 	let criteriaSummary = $derived(criteriaPreview.join(', '));

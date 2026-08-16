@@ -8,7 +8,7 @@
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { labelFor } from '$lib/sensor-labels';
+	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
@@ -32,13 +32,13 @@
 
 	function renderPrimary(row: DashboardRow): string {
 		const col = row.device_type.primary_data_v2;
-		if (!col || col === '-') return '—';
+		if (!col || col === '-' || !isDisplayableColumn(col)) return '—';
 		return renderMetric(col, row.latest?.primary);
 	}
 
 	function renderSecondary(row: DashboardRow): string {
 		const col = row.device_type.secondary_data_v2;
-		if (!col || col === '' || col === '-') return '—';
+		if (!col || col === '' || col === '-' || !isDisplayableColumn(col)) return '—';
 		return renderMetric(col, row.latest?.secondary);
 	}
 
