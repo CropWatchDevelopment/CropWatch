@@ -14,7 +14,6 @@
 	} from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
-	import PushNotificationsCard from './PushNotificationsCard.svelte';
 
 	type PreferenceDraft = PageProps['data']['preferences'];
 
@@ -263,14 +262,6 @@
 			</CwCard>
 		</div>
 	</form>
-
-	<!-- Device-local (permission + FCM token), so deliberately outside the
-	     preferences form and its isDirty/reset logic. -->
-	<div class="settings-grid settings-grid--secondary">
-		<div class="settings-card settings-card--push">
-			<PushNotificationsCard />
-		</div>
-	</div>
 </AppPage>
 
 <style>
@@ -290,13 +281,8 @@
 	}
 
 	.settings-card--notation,
-	.settings-card--actions,
-	.settings-card--push {
+	.settings-card--actions {
 		grid-column: span 12;
-	}
-
-	.settings-grid--secondary {
-		margin-top: 1rem;
 	}
 
 	.field-grid {

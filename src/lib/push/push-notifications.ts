@@ -112,7 +112,22 @@ async function registerPushServiceWorker(): Promise<ServiceWorkerRegistration> {
 	const registration = await navigator.serviceWorker.register(PUSH_SW_URL, {
 		scope: PUSH_SW_SCOPE
 	});
-	await navigator.serviceWorker.ready.catch(() => undefined);
+	// Do NOT await navigator.serviceWorker.ready here: it tracks the worker
+	// controlling THIS page, and the push worker's scope (/push-sw/) matches no
+	// page, so that promise never settles. Wait on this registration's own
+	// worker instead — pushManager.subscribe needs it activated.
+	const worker = registration.installing ?? registration.waiting ?? registration.active;
+	if (worker && worker.state !== 'activated') {
+		await new Promise<void>((resolve) => {
+			const onStateChange = () => {
+				if (worker.state === 'activated' || worker.state === 'redundant') {
+					worker.removeEventListener('statechange', onStateChange);
+					resolve();
+				}
+			};
+			worker.addEventListener('statechange', onStateChange);
+		});
+	}
 	return registration;
 }
 
