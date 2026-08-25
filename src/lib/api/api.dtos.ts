@@ -64,6 +64,18 @@ export interface RegisterPushTokenRequest {
 	deviceLabel?: string | null;
 }
 
+export interface AccountRemovalChallengeDto {
+	question: string;
+	token: string;
+}
+
+export interface RequestAccountRemovalRequest {
+	email: string;
+	message?: string;
+	answer: number;
+	token: string;
+}
+
 export interface UpdateProfileRequest {
 	full_name?: string | null;
 	username?: string | null;

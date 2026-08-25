@@ -20,6 +20,8 @@ import type {
 	LineRecipientCandidateDto,
 	LoginRequest,
 	LoginResponse,
+	AccountRemovalChallengeDto,
+	RequestAccountRemovalRequest,
 	ProfileDto,
 	UpdateProfileRequest,
 	UpdateEmailRequest,
@@ -191,6 +193,8 @@ const LINE_LINK_ENDPOINT = '/line/link';
 const LINE_RECIPIENTS_ENDPOINT = '/line/recipients';
 const PUSH_TOKENS_ENDPOINT = '/push/tokens';
 const PUSH_RECIPIENTS_ENDPOINT = '/push/recipients';
+const ACCOUNT_REMOVAL_CHALLENGE_ENDPOINT = '/account-removal/challenge';
+const ACCOUNT_REMOVAL_REQUEST_ENDPOINT = '/account-removal/request';
 const DEVICE_LIST_PAGE_SIZE = 1000;
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
@@ -597,6 +601,22 @@ export class ApiService {
 			method: 'GET',
 			query: { devEuis: devEuis.join(',') },
 			signal: options.signal
+		});
+	}
+
+	// Public (unauthenticated) endpoints for the account-removal request page.
+	// Call these from the browser, not SSR: the API rate-limits anonymous
+	// callers by client IP, and SSR would pool everyone behind Vercel's egress.
+	public getAccountRemovalChallenge(): Promise<AccountRemovalChallengeDto> {
+		return this.request<AccountRemovalChallengeDto>(ACCOUNT_REMOVAL_CHALLENGE_ENDPOINT, {
+			method: 'GET'
+		});
+	}
+
+	public requestAccountRemoval(payload: RequestAccountRemovalRequest): Promise<void> {
+		return this.request<void>(ACCOUNT_REMOVAL_REQUEST_ENDPOINT, {
+			method: 'POST',
+			body: payload
 		});
 	}
 
