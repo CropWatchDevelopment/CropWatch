@@ -5,6 +5,7 @@
 	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { m } from '$lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwChip, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+	import PushNotificationsCard from './PushNotificationsCard.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -285,6 +286,8 @@
 			{/if}
 		</AppFormStack>
 	</CwCard>
+
+	<PushNotificationsCard />
 </AppPage>
 
 <style>
