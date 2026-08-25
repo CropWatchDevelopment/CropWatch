@@ -35,7 +35,12 @@
 		/>
 	</div>
 
-	<RuleTemplateForm mode="edit" context={data.context} authToken={data.authToken} />
+	<RuleTemplateForm
+		mode="edit"
+		context={data.context}
+		authToken={data.authToken}
+		currentUserId={data.session?.sub ?? null}
+	/>
 </AppPage>
 
 <style>

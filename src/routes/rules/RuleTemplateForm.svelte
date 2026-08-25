@@ -45,6 +45,8 @@
 		context: RuleFormContextDto;
 		authToken?: string | null;
 		preselectedDevEui?: string | null;
+		// Used to preselect the rule creator on the default Push action.
+		currentUserId?: string | null;
 	}
 
 	interface DeviceSelection {
@@ -59,12 +61,19 @@
 
 	type EditableTemplateAction = Omit<RuleTemplateActionDto, 'config'> & {
 		config: RuleTemplateActionConfig;
-		// LINE actions only: the CwMultiSelect selection ({id,label} shape).
-		// Serialized into config.recipient as {"userIds":[...]} on change.
+		// LINE / Push actions only: the CwMultiSelect selection ({id,label}
+		// shape). Serialized into config.recipient as {"userIds":[...]} on change.
 		lineRecipients: { id: string; label: string }[];
+		pushRecipients: { id: string; label: string }[];
 	};
 
-	let { mode, context, authToken = null, preselectedDevEui = null }: Props = $props();
+	let {
+		mode,
+		context,
+		authToken = null,
+		preselectedDevEui = null,
+		currentUserId = null
+	}: Props = $props();
 
 	let devices = $derived(context.devices);
 	let actions = $derived(context.actionTypes);
@@ -97,7 +106,7 @@
 	let templateActions = $state<EditableTemplateAction[]>(
 		initial?.actions.length
 			? initial.actions.map(createEditableTemplateAction)
-			: [createBlankTemplateAction()]
+			: [createDefaultTemplateAction()]
 	);
 
 	let actionTypeOptions = $derived(
@@ -192,6 +201,53 @@
 			});
 	});
 
+	// Eligible push recipients — same fetch pattern as the LINE effect above,
+	// with its own key/seq guard so the two channels never race each other.
+	let pushRecipientOptionsBase = $state<{ label: string; value: string }[]>([]);
+	const pushRecipientNames = new SvelteMap<string, string>();
+	let pushRecipientFetchKey = '';
+	let pushRecipientFetchSeq = 0;
+
+	$effect(() => {
+		const devEuis = [...selectedDevEuis].sort();
+		const key = devEuis.join(',');
+		if (key === pushRecipientFetchKey) return;
+		pushRecipientFetchKey = key;
+
+		if (devEuis.length === 0 || !authToken) {
+			pushRecipientOptionsBase = [];
+			return;
+		}
+
+		const seq = ++pushRecipientFetchSeq;
+		new ApiService({ authToken })
+			.getPushRecipientCandidates(devEuis)
+			.then((candidates) => {
+				if (seq !== pushRecipientFetchSeq) return;
+				pushRecipientNames.clear();
+				pushRecipientOptionsBase = candidates.map((candidate) => {
+					pushRecipientNames.set(candidate.userId, candidate.displayName);
+					return {
+						value: candidate.userId,
+						label: candidate.pushEnabled
+							? candidate.displayName
+							: `${candidate.displayName}（${m.push_recipient_not_enabled()}）`
+					};
+				});
+				// Upgrade bare id labels on saved selections now that names are known.
+				for (const action of templateActions) {
+					if (action.actionTypeName !== 'Push') continue;
+					for (const selection of action.pushRecipients) {
+						const name = pushRecipientNames.get(selection.id);
+						if (name && selection.label === selection.id) selection.label = name;
+					}
+				}
+			})
+			.catch(() => {
+				if (seq === pushRecipientFetchSeq) pushRecipientOptionsBase = [];
+			});
+	});
+
 	// Saved selections must stay visible even when the fetch hasn't landed or
 	// the user lost device access (same guard pattern as deviceOptions above).
 	function lineRecipientOptionsFor(action: EditableTemplateAction) {
@@ -210,7 +266,23 @@
 			selection.length > 0 ? JSON.stringify({ userIds: selection.map((item) => item.id) }) : '';
 	}
 
-	function parseLineRecipientIds(recipient: string): string[] {
+	function pushRecipientOptionsFor(action: EditableTemplateAction) {
+		const missing = action.pushRecipients
+			.filter((selection) => !pushRecipientOptionsBase.some((o) => o.value === selection.id))
+			.map((selection) => ({ value: selection.id, label: selection.label || selection.id }));
+		return [...missing, ...pushRecipientOptionsBase];
+	}
+
+	function setPushRecipients(
+		action: EditableTemplateAction,
+		selection: { id: string; label: string }[]
+	) {
+		action.pushRecipients = selection;
+		action.config.recipient =
+			selection.length > 0 ? JSON.stringify({ userIds: selection.map((item) => item.id) }) : '';
+	}
+
+	function parseRecipientUserIds(recipient: string): string[] {
 		try {
 			const parsed: unknown = JSON.parse(recipient);
 			if (
@@ -239,7 +311,8 @@
 				(action) =>
 					isValidActionTypeId(action.actionType) &&
 					action.config.recipient.trim().length > 0 &&
-					(action.actionTypeName !== 'LINE' || action.lineRecipients.length > 0)
+					(action.actionTypeName !== 'LINE' || action.lineRecipients.length > 0) &&
+					(action.actionTypeName !== 'Push' || action.pushRecipients.length > 0)
 			)
 	);
 	let assignmentSummary = $derived(
@@ -271,7 +344,12 @@
 							.map((item) => lineRecipientNames.get(item.id) ?? item.label ?? item.id)
 							.join(', ') ||
 						m.line_recipient_preview_count({ count: String(action.lineRecipients.length) })
-					: action.config.recipient;
+					: action.actionTypeName === 'Push'
+						? action.pushRecipients
+								.map((item) => pushRecipientNames.get(item.id) ?? item.label ?? item.id)
+								.join(', ') ||
+							m.push_recipient_preview_count({ count: String(action.pushRecipients.length) })
+						: action.config.recipient;
 			return `${label}: ${recipient}`;
 		})
 	);
@@ -290,15 +368,45 @@
 				recipient: ''
 			},
 			lineRecipients: [],
+			pushRecipients: [],
 			createdAt: null
 		};
+	}
+
+	// New rules default to a Push action with the creator preselected. The
+	// bare-id label upgrades once the recipient fetch lands. Falls back to a
+	// blank action while the Push action type doesn't exist yet server-side.
+	function createDefaultTemplateAction(): EditableTemplateAction {
+		if (mode === 'create' && currentUserId) {
+			const pushType = actions.find((entry) => entry.name === 'Push');
+			if (pushType) {
+				return {
+					id: 0,
+					templateId: initial?.id ?? 0,
+					actionType: pushType.id,
+					actionTypeName: pushType.name,
+					actionTypeValue: pushType.value ?? null,
+					config: {
+						recipient: JSON.stringify({ userIds: [currentUserId] })
+					},
+					lineRecipients: [],
+					pushRecipients: [{ id: currentUserId, label: currentUserId }],
+					createdAt: null
+				};
+			}
+		}
+		return createBlankTemplateAction();
 	}
 
 	function createEditableTemplateAction(action: RuleTemplateActionDto): EditableTemplateAction {
 		const recipient = readActionRecipient(action);
 		const lineRecipients =
 			action.actionTypeName === 'LINE'
-				? parseLineRecipientIds(recipient).map((id) => ({ id, label: id }))
+				? parseRecipientUserIds(recipient).map((id) => ({ id, label: id }))
+				: [];
+		const pushRecipients =
+			action.actionTypeName === 'Push'
+				? parseRecipientUserIds(recipient).map((id) => ({ id, label: id }))
 				: [];
 		return {
 			...action,
@@ -306,7 +414,8 @@
 				...readActionConfig(action.config),
 				recipient
 			},
-			lineRecipients
+			lineRecipients,
+			pushRecipients
 		};
 	}
 
@@ -456,15 +565,19 @@
 		const selectedAction = actions.find((entry) => String(entry.id) === value);
 		const parsedActionType = Number(value);
 		const wasLine = action.actionTypeName === 'LINE';
+		const wasPush = action.actionTypeName === 'Push';
 
 		action.actionType =
 			selectedAction?.id ?? (Number.isInteger(parsedActionType) ? parsedActionType : 0);
 		action.actionTypeName = selectedAction?.name ?? null;
 		action.actionTypeValue = selectedAction?.value ?? null;
 
-		// Switching to or away from LINE always requires a fresh recipient choice.
+		// Switching to or away from LINE/Push always requires a fresh recipient choice.
 		if (action.actionTypeName === 'LINE' || wasLine) {
 			setLineRecipients(action, []);
+		}
+		if (action.actionTypeName === 'Push' || wasPush) {
+			setPushRecipients(action, []);
 		}
 	}
 
@@ -630,6 +743,17 @@
 							options={lineRecipientOptionsFor(action)}
 							value={action.lineRecipients}
 							onchange={(selection) => setLineRecipients(action, selection)}
+							searchable
+							required
+						/>
+					{:else if action.actionTypeName === 'Push'}
+						<CwMultiSelect
+							id={`rule-form-action-${index}-push-recipients`}
+							label={m.push_recipient_label()}
+							placeholder={m.push_recipient_placeholder()}
+							options={pushRecipientOptionsFor(action)}
+							value={action.pushRecipients}
+							onchange={(selection) => setPushRecipients(action, selection)}
 							searchable
 							required
 						/>
