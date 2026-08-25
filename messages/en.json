@@ -1485,5 +1485,6 @@
 	"account_removal_success": "Your request has been sent. We will contact you at the address you provided before any data is deleted.",
 	"account_removal_error_answer": "That answer wasn't correct — please try the new question.",
 	"account_removal_error_rate_limited": "Too many attempts. Please wait a minute and try again.",
-	"account_removal_error_generic": "The request could not be sent. Please try again later."
+	"account_removal_error_generic": "The request could not be sent. Please try again later.",
+	"account_removal_retry": "Try again"
 }

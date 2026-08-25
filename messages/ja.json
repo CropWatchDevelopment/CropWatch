@@ -1485,5 +1485,6 @@
 	"account_removal_success": "リクエストを送信しました。データを削除する前に、ご入力いただいたメールアドレスへ確認のご連絡をいたします。",
 	"account_removal_error_answer": "答えが正しくありませんでした。新しい質問でもう一度お試しください。",
 	"account_removal_error_rate_limited": "試行回数が多すぎます。1分ほど待ってからもう一度お試しください。",
-	"account_removal_error_generic": "リクエストを送信できませんでした。しばらくしてからもう一度お試しください。"
+	"account_removal_error_generic": "リクエストを送信できませんでした。しばらくしてからもう一度お試しください。",
+	"account_removal_retry": "再試行"
 }

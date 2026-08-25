@@ -12,9 +12,7 @@ const PUBLIC_PATHS = new Set([
 	'/offline',
 	'/offline/',
 	'/service-worker.js',
-	'/push-sw.js',
-	'/account-removal',
-	'/account-removal/'
+	'/push-sw.js'
 ]);
 
 function getAuthRedirectTarget(event: RequestEvent): string {
