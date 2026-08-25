@@ -31,6 +31,9 @@ import type {
 	UpdatePreferencesRequest,
 	PaginatedResponse,
 	PaginationQuery,
+	PushRecipientCandidateDto,
+	PushTokenDto,
+	RegisterPushTokenRequest,
 	ReportTemplateDto,
 	ReportTemplateListQuery,
 	ReportTemplateSaveRequest,
@@ -186,6 +189,8 @@ const LINE_LINK_START_ENDPOINT = '/line/link-start';
 const LINE_LINK_CODE_ENDPOINT = '/line/link-code';
 const LINE_LINK_ENDPOINT = '/line/link';
 const LINE_RECIPIENTS_ENDPOINT = '/line/recipients';
+const PUSH_TOKENS_ENDPOINT = '/push/tokens';
+const PUSH_RECIPIENTS_ENDPOINT = '/push/recipients';
 const DEVICE_LIST_PAGE_SIZE = 1000;
 
 function toIsoIfDate(value: string | Date | undefined): string | undefined {
@@ -566,6 +571,33 @@ export class ApiService {
 
 	public unlinkLine(): Promise<void> {
 		return this.request<void>(LINE_LINK_ENDPOINT, { method: 'DELETE' });
+	}
+
+	public registerPushToken(payload: RegisterPushTokenRequest): Promise<{ registered: boolean }> {
+		return this.request<{ registered: boolean }>(PUSH_TOKENS_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
+	}
+
+	public unregisterPushToken(token: string): Promise<void> {
+		return this.request<void>(PUSH_TOKENS_ENDPOINT, { method: 'DELETE', query: { token } });
+	}
+
+	public getPushTokens(): Promise<PushTokenDto[]> {
+		return this.request<PushTokenDto[]>(PUSH_TOKENS_ENDPOINT, { method: 'GET' });
+	}
+
+	public getPushRecipientCandidates(
+		devEuis: string[],
+		options: ApiMethodOptions = {}
+	): Promise<PushRecipientCandidateDto[]> {
+		// buildQueryString has no array support — join explicitly.
+		return this.request<PushRecipientCandidateDto[]>(PUSH_RECIPIENTS_ENDPOINT, {
+			method: 'GET',
+			query: { devEuis: devEuis.join(',') },
+			signal: options.signal
+		});
 	}
 
 	public getPreferences(): Promise<PreferencesDto> {

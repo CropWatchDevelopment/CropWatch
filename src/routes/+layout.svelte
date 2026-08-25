@@ -18,6 +18,7 @@
 	import Analytics from '$lib/components/Analytics.svelte';
 	import WhatsNewDialog from '$lib/components/whats-new/WhatsNewDialog.svelte';
 	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
+	import { initForegroundMessages, refreshPushToken } from '$lib/push/push-notifications';
 	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
 	import { buildLoginPath } from '$lib/utils/auth-redirect';
 	import type { DeviceStatusSummary, PreferencesDto, RuleTemplateDto } from '$lib/api/api.dtos';
@@ -28,7 +29,7 @@
 
 	let { children }: LayoutProps = $props();
 
-	createCwToastContext();
+	const toast = createCwToastContext();
 
 	let mode = $state<CwSideNavMode>('open');
 	let isAuthRoute = $derived(page.url.pathname.startsWith('/auth'));
@@ -97,6 +98,33 @@
 		sessionWatcher.rearm();
 	});
 
+	// Push notifications: once per app load, after the first authenticated
+	// token appears. refreshPushToken silently re-registers an already-enrolled
+	// device (FCM tokens rotate; also bumps last_seen_at), and the foreground
+	// listener surfaces pushes as toasts while the app has focus (the service
+	// worker only shows system notifications when no page is focused). Both
+	// no-op on devices that never enrolled. Effects never run during SSR.
+	let pushInitialized = false;
+	let unsubscribeForegroundPush: (() => void) | null = null;
+
+	$effect(() => {
+		const accessToken = app.accessToken;
+		if (!accessToken || pushInitialized) return;
+		pushInitialized = true;
+
+		void refreshPushToken(accessToken);
+		void initForegroundMessages(({ title, body }) => {
+			toast.add({
+				tone: 'warning',
+				message: body ? `${title} — ${body}` : title,
+				duration: 8000,
+				dismissible: true
+			});
+		}).then((unsubscribe) => {
+			unsubscribeForegroundPush = unsubscribe;
+		});
+	});
+
 	function handleWindowResize() {
 		document.querySelector('.cw-sidenav')?.classList.add('cw-sidenav--resizing');
 
@@ -114,6 +142,7 @@
 			clearTimeout(resizeTimer);
 		}
 		sessionWatcher.destroy();
+		unsubscribeForegroundPush?.();
 	});
 
 	function localizedHref(locale: (typeof locales)[number]): string {

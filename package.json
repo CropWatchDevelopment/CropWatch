@@ -58,6 +58,7 @@
 	"dependencies": {
 		"@cropwatchdevelopment/cwui": "0.1.113",
 		"@supabase/supabase-js": "^2.108.2",
+		"firebase": "^12.18.0",
 		"jwt-decode": "^4.0.0"
 	}
 }

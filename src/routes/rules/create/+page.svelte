@@ -33,6 +33,7 @@
 		context={data.context}
 		authToken={data.authToken}
 		preselectedDevEui={data.devEui}
+		currentUserId={data.session?.sub ?? null}
 	/>
 </AppPage>
 

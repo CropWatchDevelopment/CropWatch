@@ -46,6 +46,24 @@ export interface LineRecipientCandidateDto {
 	lineLinked: boolean;
 }
 
+export interface PushRecipientCandidateDto {
+	userId: string;
+	displayName: string;
+	pushEnabled: boolean;
+}
+
+export interface PushTokenDto {
+	token: string;
+	deviceLabel: string | null;
+	createdAt: string | null;
+	lastSeenAt: string | null;
+}
+
+export interface RegisterPushTokenRequest {
+	token: string;
+	deviceLabel?: string | null;
+}
+
 export interface UpdateProfileRequest {
 	full_name?: string | null;
 	username?: string | null;

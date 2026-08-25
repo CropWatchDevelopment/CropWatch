@@ -11,7 +11,8 @@ const PUBLIC_PATHS = new Set([
 	'/manifest.webmanifest',
 	'/offline',
 	'/offline/',
-	'/service-worker.js'
+	'/service-worker.js',
+	'/push-sw.js'
 ]);
 
 function getAuthRedirectTarget(event: RequestEvent): string {
