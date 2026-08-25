@@ -1473,5 +1473,17 @@
 	"unit_tz_adelaide": "(UTC+09:30) アデレード",
 	"unit_tz_sydney": "(UTC+10:00) シドニー",
 	"unit_tz_noumea": "(UTC+11:00) ヌメア",
-	"unit_tz_auckland": "(UTC+12:00) オークランド"
+	"unit_tz_auckland": "(UTC+12:00) オークランド",
+	"account_removal_title": "アカウント削除のリクエスト",
+	"account_removal_subtitle": "CropWatchチームにアカウントとデータの削除を依頼します。すべてのリクエストは担当者が確認します。",
+	"account_removal_intro": "削除したいアカウントのメールアドレスを送信してください。データを削除する前に、メールで本人確認を行います。",
+	"account_removal_email_label": "アカウントのメールアドレス",
+	"account_removal_message_label": "メッセージ（任意）",
+	"account_removal_message_placeholder": "このリクエストについて伝えたいことがあれば入力してください",
+	"account_removal_challenge_label": "確認のための質問：{question} はいくつですか？",
+	"account_removal_submit": "削除リクエストを送信",
+	"account_removal_success": "リクエストを送信しました。データを削除する前に、ご入力いただいたメールアドレスへ確認のご連絡をいたします。",
+	"account_removal_error_answer": "答えが正しくありませんでした。新しい質問でもう一度お試しください。",
+	"account_removal_error_rate_limited": "試行回数が多すぎます。1分ほど待ってからもう一度お試しください。",
+	"account_removal_error_generic": "リクエストを送信できませんでした。しばらくしてからもう一度お試しください。"
 }

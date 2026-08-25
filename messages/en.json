@@ -1473,5 +1473,17 @@
 	"unit_tz_adelaide": "(UTC+09:30) Adelaide",
 	"unit_tz_sydney": "(UTC+10:00) Sydney",
 	"unit_tz_noumea": "(UTC+11:00) Noumea",
-	"unit_tz_auckland": "(UTC+12:00) Auckland"
+	"unit_tz_auckland": "(UTC+12:00) Auckland",
+	"account_removal_title": "Request Account Removal",
+	"account_removal_subtitle": "Ask the CropWatch team to delete your account and its data. A person reviews every request.",
+	"account_removal_intro": "Submit the email address of the account you want removed. We will confirm the request by email before deleting anything.",
+	"account_removal_email_label": "Account email address",
+	"account_removal_message_label": "Message (optional)",
+	"account_removal_message_placeholder": "Anything we should know about this request",
+	"account_removal_challenge_label": "Human check: what is {question}?",
+	"account_removal_submit": "Send removal request",
+	"account_removal_success": "Your request has been sent. We will contact you at the address you provided before any data is deleted.",
+	"account_removal_error_answer": "That answer wasn't correct — please try the new question.",
+	"account_removal_error_rate_limited": "Too many attempts. Please wait a minute and try again.",
+	"account_removal_error_generic": "The request could not be sent. Please try again later."
 }
