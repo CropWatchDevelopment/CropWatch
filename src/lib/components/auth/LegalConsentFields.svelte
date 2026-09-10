@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
+	import { legalDocumentUrl } from '$lib/i18n/legal-urls';
 
 	interface Props {
 		agreedPrivacy: boolean;
@@ -16,9 +17,9 @@
 		agreedTerms = $bindable(false),
 		agreedEula = $bindable(false),
 		allConsentsGiven,
-		privacyUrl = 'https://www.cropwatch.io/legal/privacy-policy',
-		termsUrl = 'https://www.cropwatch.io/legal/terms-of-service',
-		eulaUrl = 'https://www.cropwatch.io/legal/EULA'
+		privacyUrl = legalDocumentUrl('privacy_policy'),
+		termsUrl = legalDocumentUrl('terms_of_service'),
+		eulaUrl = legalDocumentUrl('eula')
 	}: Props = $props();
 
 	// The matching checkbox stays disabled until its policy link has been opened.

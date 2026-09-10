@@ -261,7 +261,7 @@
 	"auth_company_name_placeholder": "Acme Corp",
 	"auth_required_agreements_label": "必須同意事項 *",
 	"auth_agree_to": "",
-	"auth_terms_of_service": "利用規約に同意する",
+	"auth_terms_of_service": "クッキーポリシーに同意する",
 	"auth_privacy_policy": "プライバシーポリシーに同意する",
 	"auth_cookie_policy": "Cookie ポリシーに同意する",
 	"auth_eula": "エンドユーザー使用許諾契約に同意する",
