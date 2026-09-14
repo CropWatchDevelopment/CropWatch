@@ -5,7 +5,10 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter(),
+		// Node 20 has no native WebSocket, which @supabase/realtime-js requires at
+		// client-construction time — server-side `createClient()` throws on it.
+		// Keep this in sync with `engines.node` in package.json.
+		adapter: adapter({ runtime: 'nodejs22.x' }),
 		serviceWorker: {
 			register: false
 		}
