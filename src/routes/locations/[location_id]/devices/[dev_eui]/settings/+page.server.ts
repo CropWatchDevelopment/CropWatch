@@ -18,6 +18,8 @@ import {
 	type SensorCertificateRow
 } from './device-settings.server';
 
+type DeviceLicenseSummary = { id: number; seatIndex: number; manual: boolean };
+
 export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 	const parentData = await parent();
 	const authToken = parentData.authToken ?? null;
@@ -33,20 +35,27 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 			deviceGroups: [] as string[],
 			sensorCertificates: [] as SensorCertificateRow[],
 			supportsSensorCertificates: false,
-			deviceOwners: [] as NormalizedDeviceOwner[]
+			deviceOwners: [] as NormalizedDeviceOwner[],
+			license: null as DeviceLicenseSummary | null
 		};
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
 	const device = parentData.device;
 
-	const [deviceGroups, location, locations] = await Promise.all([
+	const [deviceGroups, location, locations, licenses] = await Promise.all([
 		api.getDeviceGroups().catch(() => []),
 		Number.isFinite(locationId)
 			? api.getLocation(locationId).catch(() => null)
 			: Promise.resolve(null),
-		api.getLocations().catch(() => [])
+		api.getLocations().catch(() => []),
+		api.getLicenses().catch(() => [])
 	]);
+
+	const licenseRow = licenses.find((l) => l.devEui?.toLowerCase() === devEui.toLowerCase());
+	const license: DeviceLicenseSummary | null = licenseRow
+		? { id: licenseRow.id, seatIndex: licenseRow.seatIndex, manual: licenseRow.manual }
+		: null;
 
 	const locationOwnerIdentities = buildLocationOwnerIdentityMap(location);
 
@@ -60,7 +69,8 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 		locations,
 		sensorCertificates: buildSensorCertificateRows(device),
 		supportsSensorCertificates: deviceSupportsSensorCertificate(device),
-		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities)
+		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities),
+		license
 	};
 };
 
@@ -185,6 +195,42 @@ export const actions: Actions = {
 			ownerKey,
 			success: true,
 			message: m.devices_permission_updated_for_email({ email: values.targetUserEmail })
+		};
+	},
+	unassignLicense: async ({ request, locals, fetch }) => {
+		const authToken = locals.jwtString ?? null;
+
+		if (!authToken) {
+			return fail(401, {
+				action: 'unassignLicense',
+				message: m.devices_update_requires_login()
+			});
+		}
+
+		const formData = await request.formData();
+		const licenseId = Number.parseInt(str(formData.get('licenseId')), 10);
+		if (!Number.isInteger(licenseId) || licenseId < 1) {
+			return fail(400, { action: 'unassignLicense', message: m.generic_error() });
+		}
+
+		const api = new ApiService({ fetchFn: fetch, authToken });
+
+		try {
+			await api.unassignLicense(licenseId);
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
+				action: 'unassignLicense',
+				message: readApiErrorMessage(
+					error instanceof ApiServiceError ? error.payload : error,
+					m.generic_error()
+				)
+			});
+		}
+
+		return {
+			action: 'unassignLicense',
+			success: true,
+			message: m.devices_license_unassigned_toast()
 		};
 	}
 };

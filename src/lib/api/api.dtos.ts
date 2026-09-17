@@ -173,6 +173,8 @@ export interface DeviceDto extends CwDevice {
 	cw_device_type: DeviceTypeDto;
 	cw_locations?: Record<string, unknown> | Array<Record<string, unknown>>;
 	cw_device_owners?: DeviceOwnerDto[];
+	/** Device licenses attached to this device (empty array = unlicensed). */
+	device_licenses?: { id: number }[];
 }
 
 export interface CreateDeviceOwnerRequest {
@@ -924,36 +926,86 @@ export interface GatewayDto {
 
 // --- Billing / Stripe subscriptions --------------------------------------
 
+/**
+ * How a customer pays.
+ *  - `stripe`: self-serve subscriptions via Stripe Checkout (default).
+ *  - `manual`: invoiced outside Stripe; seats and reporting are granted by
+ *    CropWatch staff.
+ */
+export type BillingMode = 'stripe' | 'manual';
+
 export interface BillingLicense {
 	id: number;
 	seatIndex: number;
 	status: string; // 'assigned' | 'unassigned'
 	devEui: string | null;
 	deviceName: string | null;
+	/** True when the seat was granted by staff (not backed by a Stripe subscription). */
+	manual: boolean;
 }
 
-export interface BaseSubscriptionState {
+export interface DeviceSubscriptionState {
 	subscriptionId: string | null;
 	// Stripe subscription status. Commonly active | trialing | past_due |
 	// canceled | null; other Stripe statuses (incomplete, unpaid, paused, …)
 	// may appear and should render as "not subscribed".
 	status: string | null;
-	discountId: string | null;
+	seats: number; // paid (or staff-granted) licenses
+	minimumSeats: number; // a device subscription never carries fewer seats
+	assignedCount: number; // licenses currently attached to a device
+	availableCount: number; // seats - assignedCount
 	currentPeriodEnd: string | null;
 	cancelAtPeriodEnd: boolean;
 }
 
-export interface DeviceSubscriptionState {
+export interface ReportingSubscriptionState {
 	subscriptionId: string | null;
-	seats: number;
-	assignedCount: number;
-	availableCount: number;
+	status: string | null;
+	currentPeriodEnd: string | null;
+	cancelAtPeriodEnd: boolean;
+	/** Whether the user may create/edit/regenerate reports right now. */
+	entitled: boolean;
+	/** True when the entitlement was granted by staff rather than Stripe. */
+	manual: boolean;
 }
 
 export interface SubscriptionStateResponse {
-	base: BaseSubscriptionState;
+	billingMode: BillingMode;
 	device: DeviceSubscriptionState;
+	reporting: ReportingSubscriptionState;
 	licenses: BillingLicense[];
+}
+
+/**
+ * Cheap, DB-only entitlement summary for pages that just need to know what
+ * the user may do (e.g. the reports pages). Never calls Stripe.
+ */
+export interface BillingEntitlements {
+	billingMode: BillingMode;
+	isStaff: boolean;
+	seats: number;
+	reporting: boolean;
+}
+
+/** One row of the staff billing overview (`GET /payments/admin/customers`). */
+export interface AdminBillingCustomer {
+	userId: string;
+	email: string | null;
+	fullName: string | null;
+	billingMode: BillingMode;
+	/** Devices this user owns. */
+	deviceCount: number;
+	/** Of those devices, how many carry a license (from any user). */
+	licensedDeviceCount: number;
+	/** Total license rows owned by this user. */
+	seatCount: number;
+	/** License rows granted by staff (NULL subscription id). */
+	manualSeatCount: number;
+	stripeCustomerId: string | null;
+	deviceSubscriptionId: string | null;
+	deviceSeats: number;
+	reportingStatus: string | null;
+	reportingManual: boolean;
 }
 
 export interface BillingPrice {
@@ -971,6 +1023,6 @@ export interface BillingProduct {
 }
 
 export interface BillingProductsResponse {
-	base: BillingProduct | null;
 	device: BillingProduct | null;
+	reporting: BillingProduct | null;
 }

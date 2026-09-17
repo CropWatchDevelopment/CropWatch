@@ -6,8 +6,12 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 	import ReportTemplateForm from '../ReportTemplateForm.svelte';
+	import ReportingUpsellNotice from '../ReportingUpsellNotice.svelte';
 
 	let { data }: PageProps = $props();
+	const reportingLocked = $derived(
+		!!data.entitlements && !data.entitlements.reporting && !data.entitlements.isStaff
+	);
 </script>
 
 <svelte:head>
@@ -28,8 +32,11 @@
 		<h1>{m.reports_new_create_template()}</h1>
 	</div>
 
+	<ReportingUpsellNotice entitlements={data.entitlements} />
+
 	<ReportTemplateForm
 		mode="create"
+		disabled={reportingLocked}
 		context={data.context}
 		authToken={data.authToken}
 		preselectedDevEui={data.devEui}
