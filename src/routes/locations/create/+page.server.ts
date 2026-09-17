@@ -1,4 +1,5 @@
-import { ApiService } from '$lib/api/api.service';
+import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import { readApiErrorMessage } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
@@ -87,8 +88,12 @@ export const actions: Actions = {
 				location_id
 			};
 		} catch (err: unknown) {
-			const message = err instanceof Error ? err.message : m.locations_create_failed();
-			return fail(500, { error: message, ...formValues });
+			const payload = err instanceof ApiServiceError ? err.payload : err;
+			const status = err instanceof ApiServiceError ? err.status : 500;
+			return fail(status, {
+				error: readApiErrorMessage(payload, m.locations_create_failed()),
+				...formValues
+			});
 		}
 	}
 };

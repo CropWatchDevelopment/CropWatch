@@ -10,6 +10,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import SensorCertificatesCard from '../SensorCertificatesCard.svelte';
 	import DeviceOwnerPermissionsCard from '../DeviceOwnerPermissionsCard.svelte';
+	import DeviceLicenseCard from './DeviceLicenseCard.svelte';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
 	const DEVICE_GROUP_MAX_LENGTH = 120;
@@ -219,6 +220,8 @@
 			</AppFormStack>
 		</form>
 	</CwCard>
+
+	<DeviceLicenseCard license={data.license ?? null} form={actionForm} />
 
 	{#if supportsSensorCertificates}
 		<SensorCertificatesCard

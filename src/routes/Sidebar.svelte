@@ -23,6 +23,7 @@
 		return [...new Set(cleaned)].sort((a, b) => a.localeCompare(b));
 	}
 	import { buildLogoutPath } from '$lib/utils/auth-redirect';
+	import { isStaffEmail } from '$lib/utils/is-staff';
 
 	let { mode = $bindable() } = $props();
 
@@ -34,6 +35,8 @@
 		'M3 4.5h6M3 8h6M3 11.5h6M10.5 4.5l1 1 2-2M10.5 8l1 1 2-2M10.5 11.5l1 1 2-2';
 	const REPORTS_ICON_PATH =
 		'M4 2.5h5l3 3V13a1 1 0 01-1 1H4a1 1 0 01-1-1v-9a1 1 0 011-1zM9 2.5V5a1 1 0 001 1h2M5.5 8.5h5M5.5 10.5h5';
+	const ADMIN_ICON_PATH =
+		'M8 1.5l5.5 2v4c0 3.2-2.3 6-5.5 7-3.2-1-5.5-3.8-5.5-7v-4l5.5-2zM5.5 8l1.8 1.8L10.5 6';
 	const GATEWAYS_ICON_PATH =
 		'M3 8.5h10A1.5 1.5 0 0 1 14.5 10v2A1.5 1.5 0 0 1 13 13.5H3A1.5 1.5 0 0 1 1.5 12v-2A1.5 1.5 0 0 1 3 8.5Zm0 2.5h.01M5.5 11h.01M8 11h.01M8 8.5V6M6 4.5a3.2 3.2 0 0 1 4 0M4.5 3a5.5 5.5 0 0 1 7 0';
 	// ── Read active filters from URL search params ──────────────
@@ -75,7 +78,19 @@
 			href: '/gateways',
 			icon: { path: GATEWAYS_ICON_PATH },
 			group: m.nav_group_connectivity_hardware()
-		}
+		},
+		// Staff only (visibility; the API enforces access).
+		...(isStaffEmail(app.session?.email)
+			? [
+					{
+						id: 'admin',
+						label: m.nav_admin(),
+						href: '/admin/billing',
+						icon: { path: ADMIN_ICON_PATH },
+						group: m.nav_group_admin()
+					}
+				]
+			: [])
 	]);
 
 	// ── Groups list (dynamic from API) ──────────────────────────

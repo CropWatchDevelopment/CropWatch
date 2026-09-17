@@ -643,6 +643,91 @@ describe('ApiService rule template endpoints', () => {
 	});
 });
 
+describe('ApiService billing endpoints', () => {
+	it('hits the seat, reporting, entitlement, and admin billing routes with the right verbs', async () => {
+		const calls: { method: string; url: string; body: unknown }[] = [];
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			calls.push({
+				method: String(init?.method ?? 'GET'),
+				url: String(input),
+				body: init?.body ? JSON.parse(String(init.body)) : null
+			});
+			return createJsonResponse({});
+		}) as typeof fetch;
+
+		const api = new ApiService({ baseUrl: 'https://example.com', fetchFn });
+
+		await api.getBillingProducts();
+		await api.getSubscriptionState();
+		await api.getBillingEntitlements();
+		await api.createDeviceCheckout({ quantity: 3 });
+		await api.changeDeviceSeats({ seats: 4 });
+		await api.cancelDeviceSubscription({ atPeriodEnd: true });
+		await api.createReportingCheckout();
+		await api.cancelReportingSubscription({ atPeriodEnd: false });
+		await api.adminListBillingCustomers();
+		await api.adminSetBillingMode('user-1', 'manual');
+		await api.adminSetManualSeats('user-1', 5);
+		await api.adminSetReportingManual('user-1', true);
+
+		expect(calls).toEqual([
+			{ method: 'GET', url: 'https://example.com/payments/products', body: null },
+			{ method: 'GET', url: 'https://example.com/payments/subscriptions/state', body: null },
+			{ method: 'GET', url: 'https://example.com/payments/entitlements', body: null },
+			{
+				method: 'POST',
+				url: 'https://example.com/payments/subscriptions/device/checkout',
+				body: { quantity: 3 }
+			},
+			{
+				method: 'PATCH',
+				url: 'https://example.com/payments/subscriptions/device/seats',
+				body: { seats: 4 }
+			},
+			{
+				method: 'DELETE',
+				url: 'https://example.com/payments/subscriptions/device',
+				body: { atPeriodEnd: true }
+			},
+			{
+				method: 'POST',
+				url: 'https://example.com/payments/subscriptions/reporting/checkout',
+				body: null
+			},
+			{
+				method: 'DELETE',
+				url: 'https://example.com/payments/subscriptions/reporting',
+				body: { atPeriodEnd: false }
+			},
+			{ method: 'GET', url: 'https://example.com/payments/admin/customers', body: null },
+			{
+				method: 'PATCH',
+				url: 'https://example.com/payments/admin/customers/user-1/billing-mode',
+				body: { billingMode: 'manual' }
+			},
+			{
+				method: 'PUT',
+				url: 'https://example.com/payments/admin/customers/user-1/manual-seats',
+				body: { seats: 5 }
+			},
+			{
+				method: 'PATCH',
+				url: 'https://example.com/payments/admin/customers/user-1/reporting',
+				body: { manual: true }
+			}
+		]);
+	});
+
+	it('no longer exposes the removed base-subscription methods', () => {
+		const api = new ApiService({ baseUrl: 'https://example.com' }) as unknown as Record<
+			string,
+			unknown
+		>;
+		expect(api.createBaseCheckout).toBeUndefined();
+		expect(api.cancelBaseSubscription).toBeUndefined();
+	});
+});
+
 describe('readApiErrorMessage', () => {
 	it('prefers nested API payload messages from ApiServiceError objects', () => {
 		const error = new ApiServiceError(400, 'Bad Request', {
