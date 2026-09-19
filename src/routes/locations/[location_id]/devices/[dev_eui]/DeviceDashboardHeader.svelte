@@ -69,10 +69,11 @@
 	title={m.devices_dashboard_card_title({ devEui: titleName })}
 	subtitle={m.devices_dashboard_card_subtitle({ locationName })}
 	elevated
+	class="device-header-card"
 >
 	{#snippet actions()}
-		<div>
-			<p class="text-md text-right" style="color: var(--cw-text-muted)">
+		<div class="device-header__meta">
+			<p class="text-md" style="color: var(--cw-text-muted)">
 				{m.display_last_updated()}:
 				{#if lastUpdatedAt}
 					<CwDuration from={lastUpdatedAt} />
@@ -80,7 +81,7 @@
 					<span>{m.common_not_available()}</span>
 				{/if}
 			</p>
-			<p class="text-md text-right" style="color: var(--cw-text-muted)">
+			<p class="text-md" style="color: var(--cw-text-muted)">
 				Dev-Eui: {devEui}
 				<CwCopy value={devEui} />
 			</p>
@@ -159,6 +160,30 @@
 </CwCard>
 
 <style>
+	/* CwCard's header is a no-wrap row and its actions slot never shrinks, so in a
+	   narrow card the Dev-Eui line squeezes the title into a one-glyph-wide column.
+	   Keyed on the card's own width, not the viewport: from 640px up the sidebar is
+	   in-flow, so the card is still phone-narrow well past the mobile breakpoint. */
+	:global(.cw-card.device-header-card) {
+		container: device-header / inline-size;
+	}
+
+	.device-header__meta {
+		text-align: right;
+	}
+
+	@container device-header (max-width: 36rem) {
+		:global(.cw-card.device-header-card .cw-card__header) {
+			flex-direction: column;
+			align-items: stretch;
+			gap: var(--cw-space-2);
+		}
+
+		.device-header__meta {
+			text-align: left;
+		}
+	}
+
 	.device-header {
 		display: flex;
 		width: 100%;
