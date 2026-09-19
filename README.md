@@ -57,7 +57,7 @@ You can preview the production build with `npm run preview`.
 - [x] [Sensor Rules]()
 - [x] [Sensor Settings]()
 - [ ] [Sensor Compare]()
-- [ ] [Settings Page with notations]()
+- [x] [Settings Page with notations]()
 - [x] [Real-Time Updates]()
 
 # List of Tools & Packages Used:
