@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
+	const entitlementsPromise = api.getBillingEntitlements().catch(() => null);
 	let context: ReportFormContextDto;
 	try {
 		context = await api.getReportFormContext(templateId);
@@ -33,5 +34,5 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		error(404, m.reports_new_report_template_not_found());
 	}
 
-	return { context, authToken };
+	return { context, entitlements: await entitlementsPromise, authToken };
 };

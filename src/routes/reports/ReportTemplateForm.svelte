@@ -44,6 +44,8 @@
 		preselectedDevEui?: string | null;
 		currentUserEmail?: string | null;
 		currentUserName?: string | null;
+		/** Blocks saving (e.g. no reporting entitlement); the API enforces the same rule. */
+		disabled?: boolean;
 	}
 
 	interface DeviceSelection {
@@ -57,7 +59,8 @@
 		authToken = null,
 		preselectedDevEui = null,
 		currentUserEmail = null,
-		currentUserName = null
+		currentUserName = null,
+		disabled = false
 	}: Props = $props();
 
 	let devices = $derived(context.devices);
@@ -230,7 +233,7 @@
 
 	async function handleSubmit() {
 		submitAttempted = true;
-		if (!canSubmit || submitting) return;
+		if (disabled || !canSubmit || submitting) return;
 		submitting = true;
 
 		try {
@@ -395,7 +398,7 @@
 				id="report-form-submit-button"
 				variant="primary"
 				onclick={handleSubmit}
-				disabled={!canSubmit || submitting}
+				disabled={disabled || !canSubmit || submitting}
 				loading={submitting}
 			>
 				{submitting

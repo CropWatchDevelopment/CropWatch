@@ -8,6 +8,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
+	import ReportingUpsellNotice from './ReportingUpsellNotice.svelte';
 	import type { ReportTemplateDto } from '$lib/api/api.dtos';
 	import {
 		CwButton,
@@ -25,6 +26,9 @@
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
 	import DeleteReportTemplateDialog from './DeleteReportTemplateDialog.svelte';
 	import ViewReportHistoryDialog from './ViewReportHistoryDialog.svelte';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	type ReportTemplateRow = ReportTemplateDto & {
 		statusLabel: string;
@@ -157,6 +161,8 @@
 	>
 		&larr; {m.action_back_to_dashboard()}
 	</CwButton>
+
+	<ReportingUpsellNotice entitlements={data.entitlements} />
 
 	<CwCard title={m.reports_new_configured_templates()}>
 		{#key tableKey}

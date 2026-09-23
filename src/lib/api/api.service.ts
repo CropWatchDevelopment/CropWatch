@@ -62,7 +62,10 @@ import type {
 	UpdateLocationOwnerRequest,
 	WaterDataPoint,
 	GatewayDto,
+	AdminBillingCustomer,
+	BillingEntitlements,
 	BillingLicense,
+	BillingMode,
 	BillingProductsResponse,
 	SubscriptionStateResponse
 } from './api.dtos';
@@ -1465,17 +1468,10 @@ export class ApiService {
 		});
 	}
 
-	/**
-	 * `discountId` is a Stripe promotion code id (promo_...). When omitted, the
-	 * hosted checkout page shows a promotion-code entry field instead.
-	 */
-	public createBaseCheckout(payload: { discountId?: string | null } = {}): Promise<{
-		checkoutUrl: string;
-	}> {
-		return this.request<{ checkoutUrl: string }>(
-			`${PAYMENTS_ENDPOINT}/subscriptions/base/checkout`,
-			{ method: 'POST', body: payload }
-		);
+	public getBillingEntitlements(): Promise<BillingEntitlements> {
+		return this.request<BillingEntitlements>(`${PAYMENTS_ENDPOINT}/entitlements`, {
+			method: 'GET'
+		});
 	}
 
 	public createDeviceCheckout(payload: { quantity: number }): Promise<{ checkoutUrl: string }> {
@@ -1526,13 +1522,58 @@ export class ApiService {
 		});
 	}
 
-	public cancelBaseSubscription(payload: { atPeriodEnd?: boolean } = {}): Promise<{
+	public cancelDeviceSubscription(payload: { atPeriodEnd?: boolean } = {}): Promise<{
 		status: string;
 	}> {
-		return this.request<{ status: string }>(`${PAYMENTS_ENDPOINT}/subscriptions/base`, {
+		return this.request<{ status: string }>(`${PAYMENTS_ENDPOINT}/subscriptions/device`, {
 			method: 'DELETE',
 			body: payload
 		});
+	}
+
+	public createReportingCheckout(): Promise<{ checkoutUrl: string }> {
+		return this.request<{ checkoutUrl: string }>(
+			`${PAYMENTS_ENDPOINT}/subscriptions/reporting/checkout`,
+			{ method: 'POST' }
+		);
+	}
+
+	public cancelReportingSubscription(payload: { atPeriodEnd?: boolean } = {}): Promise<{
+		status: string;
+	}> {
+		return this.request<{ status: string }>(`${PAYMENTS_ENDPOINT}/subscriptions/reporting`, {
+			method: 'DELETE',
+			body: payload
+		});
+	}
+
+	// --- Billing administration (staff only; enforced by the API) ---------
+
+	public adminListBillingCustomers(): Promise<AdminBillingCustomer[]> {
+		return this.request<AdminBillingCustomer[]>(`${PAYMENTS_ENDPOINT}/admin/customers`, {
+			method: 'GET'
+		});
+	}
+
+	public adminSetBillingMode(userId: string, billingMode: BillingMode): Promise<unknown> {
+		return this.request<unknown>(
+			`${PAYMENTS_ENDPOINT}/admin/customers/${encodeURIComponent(userId)}/billing-mode`,
+			{ method: 'PATCH', body: { billingMode } }
+		);
+	}
+
+	public adminSetManualSeats(userId: string, seats: number): Promise<unknown> {
+		return this.request<unknown>(
+			`${PAYMENTS_ENDPOINT}/admin/customers/${encodeURIComponent(userId)}/manual-seats`,
+			{ method: 'PUT', body: { seats } }
+		);
+	}
+
+	public adminSetReportingManual(userId: string, manual: boolean): Promise<unknown> {
+		return this.request<unknown>(
+			`${PAYMENTS_ENDPOINT}/admin/customers/${encodeURIComponent(userId)}/reporting`,
+			{ method: 'PATCH', body: { manual } }
+		);
 	}
 }
 

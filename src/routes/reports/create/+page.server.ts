@@ -18,11 +18,21 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 		jwt?.user_metadata?.full_name?.trim() || jwt?.user_metadata?.name?.trim() || null;
 
 	if (!authToken) {
-		return { context: EMPTY_CONTEXT, authToken, devEui, currentUserEmail, currentUserName };
+		return {
+			context: EMPTY_CONTEXT,
+			entitlements: null,
+			authToken,
+			devEui,
+			currentUserEmail,
+			currentUserName
+		};
 	}
 
 	const api = new ApiService({ fetchFn: fetch, authToken });
-	const context = await api.getReportFormContext().catch(() => EMPTY_CONTEXT);
+	const [context, entitlements] = await Promise.all([
+		api.getReportFormContext().catch(() => EMPTY_CONTEXT),
+		api.getBillingEntitlements().catch(() => null)
+	]);
 
-	return { context, authToken, devEui, currentUserEmail, currentUserName };
+	return { context, entitlements, authToken, devEui, currentUserEmail, currentUserName };
 };

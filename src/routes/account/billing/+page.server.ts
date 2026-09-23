@@ -5,14 +5,25 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 const EMPTY_STATE: SubscriptionStateResponse = {
-	base: {
+	billingMode: 'stripe',
+	device: {
 		subscriptionId: null,
 		status: null,
-		discountId: null,
+		seats: 0,
+		minimumSeats: 3,
+		assignedCount: 0,
+		availableCount: 0,
 		currentPeriodEnd: null,
 		cancelAtPeriodEnd: false
 	},
-	device: { subscriptionId: null, seats: 0, assignedCount: 0, availableCount: 0 },
+	reporting: {
+		subscriptionId: null,
+		status: null,
+		currentPeriodEnd: null,
+		cancelAtPeriodEnd: false,
+		entitled: false,
+		manual: false
+	},
 	licenses: []
 };
 
@@ -36,7 +47,9 @@ export const load: PageServerLoad = async ({ fetch, locals, url }) => {
 
 	const state = stateResult.status === 'fulfilled' ? stateResult.value : EMPTY_STATE;
 	const products: BillingProductsResponse =
-		productsResult.status === 'fulfilled' ? productsResult.value : { base: null, device: null };
+		productsResult.status === 'fulfilled'
+			? productsResult.value
+			: { device: null, reporting: null };
 	const devices =
 		devicesResult.status === 'fulfilled'
 			? devicesResult.value.map((d) => ({

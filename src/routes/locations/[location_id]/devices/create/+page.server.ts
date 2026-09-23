@@ -2,7 +2,8 @@ import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import { isValidTtiDeviceId, normalizeTtiDeviceId } from '$lib/devices/tti-device-id';
 import type { CreateDeviceRequest } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
-import { fail, type Actions } from '@sveltejs/kit';
+import { buildLoginPath } from '$lib/utils/auth-redirect';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 type DeviceTypeOption = {
@@ -124,12 +125,15 @@ const toAvailableLicenses = (licenses: { id: number; seatIndex: number; status: 
 		.filter((license) => license.status !== 'assigned')
 		.map(({ id, seatIndex }): AvailableLicense => ({ id, seatIndex }));
 
-export const load: PageServerLoad = async ({ params, fetch, locals }) => {
+export const load: PageServerLoad = async ({ params, fetch, locals, url }) => {
 	const locationId = String(params.location_id ?? '').trim();
 
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) {
-		return fail(401, { error: m.auth_not_authenticated() });
+		throw redirect(
+			303,
+			buildLoginPath({ redirectTo: `${url.pathname}${url.search}`, reason: 'auth-required' })
+		);
 	}
 
 	const apiService = new ApiService({
