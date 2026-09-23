@@ -13,6 +13,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getIntlLocale } from '$lib/i18n/format';
 	import {
 		cwDataTableLabels,
 		cwHeatmapLabels,
@@ -329,6 +330,7 @@
 <div class="air-display">
 	<div class="kpi-grid">
 		<CwStatCard
+			locale={getIntlLocale()}
 			title={m.display_temperature()}
 			stats={latestTemperature}
 			unit={temperatureUnit}
@@ -336,6 +338,7 @@
 			labels={cwStatCardLabels()}
 		/>
 		<CwStatCard
+			locale={getIntlLocale()}
 			title={m.display_temperature_humidity()}
 			stats={latestHumidity}
 			unit="%"
@@ -344,6 +347,7 @@
 		/>
 		{#if hasDewPoint}
 			<CwStatCard
+				locale={getIntlLocale()}
 				title={m.sensor_dew_point()}
 				stats={latestDewPoint}
 				unit={dewPointUnit}
@@ -353,6 +357,7 @@
 		{/if}
 		{#if hasCo2}
 			<CwStatCard
+				locale={getIntlLocale()}
 				title="CO₂"
 				labels={cwStatCardLabels()}
 				stats={latestCo2}
@@ -377,6 +382,7 @@
 					{/each}
 				</div>
 				<CwHeatmap
+					locale={getIntlLocale()}
 					labels={cwHeatmapLabels()}
 					data={heatmapSeries}
 					days={heatmapDays}
@@ -389,6 +395,7 @@
 
 			{#if hasWind}
 				<CwWindCompass
+					locale={getIntlLocale()}
 					direction={windDirection}
 					speed={windSpeedDisplay}
 					unit={windCompassUnit}

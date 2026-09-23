@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@cropwatchdevelopment/cwui':
-        specifier: 0.1.113
-        version: 0.1.113(svelte@5.56.3(@typescript-eslint/types@8.61.1))
+        specifier: 0.1.115
+        version: 0.1.115(svelte@5.56.3(@typescript-eslint/types@8.61.1))
       '@supabase/supabase-js':
         specifier: ^2.108.2
         version: 2.108.2
@@ -115,8 +115,8 @@ packages:
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
 
-  '@cropwatchdevelopment/cwui@0.1.113':
-    resolution: {integrity: sha512-FKAhB5OTb2AK4KhyQVNP3E9ASmcNlxCWKEo6gJ1RAahMWgIGIWxJeLgRDG/dlJQXn7Xd9eBPZLBG/fZ/KgHzlw==}
+  '@cropwatchdevelopment/cwui@0.1.115':
+    resolution: {integrity: sha512-dOwVpYO1HiDUK1u3XWfeyiGs77SmAde5uFaZCTpXS5CjPx8fbaJ8eygzZThRjLwYj56j0ozApYQtoxVIYQZLFw==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2374,7 +2374,7 @@ snapshots:
 
   '@blazediff/core@1.9.1': {}
 
-  '@cropwatchdevelopment/cwui@0.1.113(svelte@5.56.3(@typescript-eslint/types@8.61.1))':
+  '@cropwatchdevelopment/cwui@0.1.115(svelte@5.56.3(@typescript-eslint/types@8.61.1))':
     dependencies:
       svelte: 5.56.3(@typescript-eslint/types@8.61.1)
 

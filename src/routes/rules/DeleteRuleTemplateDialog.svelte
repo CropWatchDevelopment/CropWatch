@@ -51,7 +51,7 @@
 <CwButton
 	id={`rule-delete-${templateId}-open-button`}
 	variant="danger"
-	size="md"
+	size="sm"
 	disabled={deleting}
 	onclick={() => (open = true)}
 >
@@ -90,7 +90,7 @@
 	.rules-new-delete-dialog__actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: var(--cw-space-2);
+		gap: var(--cw-space-1);
 	}
 
 	@media (max-width: 639px) {

@@ -6,6 +6,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwCopyLabels } from '$lib/i18n/cwuiLabels';
 	import { canManage, isAdmin } from '$lib/constants/permissions';
 	import { CwButton, CwCard, CwCopy, CwDuration, CwSpinner } from '@cropwatchdevelopment/cwui';
 	import CsvExportDialog from './dialogs/csvExportDialog.svelte';
@@ -83,7 +84,7 @@
 			</p>
 			<p class="text-md" style="color: var(--cw-text-muted)">
 				Dev-Eui: {devEui}
-				<CwCopy value={devEui} />
+				<CwCopy labels={cwCopyLabels()} value={devEui} />
 			</p>
 		</div>
 	{/snippet}
@@ -210,7 +211,7 @@
 		gap: 0.5rem;
 		margin-top: 0.75rem;
 		padding-top: 0.75rem;
-		border-top: 1px solid var(--cw-border, #e5e7eb);
+		border-top: 1px solid var(--cw-border-muted);
 	}
 
 	.device-header__status-row {

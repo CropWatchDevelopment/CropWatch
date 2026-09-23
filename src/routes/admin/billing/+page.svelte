@@ -4,7 +4,7 @@
 	import { resolve } from '$app/paths';
 	import type { AdminBillingCustomer } from '$lib/api/api.dtos';
 	import { AppNotice, AppPage } from '$lib/components/layout';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
+	import { cwDataTableLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
 	import { sortByColumn } from '$lib/utils/sortByColumn';
 	import {
@@ -16,7 +16,8 @@
 		useCwToast,
 		type CwColumnDef,
 		type CwTableQuery,
-		type CwTableResult
+		type CwTableResult,
+		CW_EMPTY_VALUE
 	} from '@cropwatchdevelopment/cwui';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { PageProps } from './$types';
@@ -66,10 +67,10 @@
 			modeLabel,
 			deviceSubLabel: customer.deviceSubscriptionId
 				? `${customer.deviceSubscriptionId.slice(0, 12)}… · ${customer.deviceSeats}`
-				: '—',
+				: CW_EMPTY_VALUE,
 			reportingLabel: customer.reportingManual
 				? m.admin_billing_mode_manual()
-				: (customer.reportingStatus ?? '—')
+				: (customer.reportingStatus ?? CW_EMPTY_VALUE)
 		};
 	}
 
@@ -196,6 +197,7 @@
 							>
 								<input type="hidden" name="userId" value={row.userId} />
 								<CwInput
+									labels={cwInputLabels()}
 									id={`admin-billing-${row.userId}-seats-input`}
 									type="numeric"
 									name="seats"

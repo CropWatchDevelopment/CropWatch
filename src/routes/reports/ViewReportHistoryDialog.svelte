@@ -143,7 +143,7 @@
 <CwButton
 	id={`report-history-${templateId}-open-button`}
 	variant="secondary"
-	size="md"
+	size="sm"
 	onclick={() => (open = true)}
 >
 	<Icon src={HISTORY_ICON} alt={m.reports_new_view_history()} />
@@ -241,17 +241,17 @@
 <style>
 	.report-history__subtitle {
 		margin: 0 0 var(--cw-space-3);
-		color: var(--cw-color-text-muted, #6b7280);
+		color: var(--cw-text-muted);
 	}
 
 	.report-history__status {
 		margin: var(--cw-space-4) 0;
 		text-align: center;
-		color: var(--cw-color-text-muted, #6b7280);
+		color: var(--cw-text-muted);
 	}
 
 	.report-history__status--error {
-		color: var(--cw-color-danger, #dc2626);
+		color: var(--cw-tone-danger-text);
 	}
 
 	.report-history__list {
@@ -270,7 +270,7 @@
 		flex-direction: column;
 		gap: var(--cw-space-2);
 		padding: var(--cw-space-3);
-		border: 1px solid var(--cw-color-border, #e5e7eb);
+		border: 1px solid var(--cw-border-muted);
 		border-radius: var(--cw-radius-md, 8px);
 	}
 
@@ -295,8 +295,8 @@
 		justify-content: space-between;
 		gap: var(--cw-space-3);
 		padding: var(--cw-space-2) var(--cw-space-3);
-		border: 1px solid var(--cw-color-border, #e5e7eb);
-		border-left: 3px solid var(--cw-color-border, #e5e7eb);
+		border: 1px solid var(--cw-border-muted);
+		border-left: 3px solid var(--cw-border-muted);
 		border-radius: var(--cw-radius-md, 8px);
 		background: color-mix(in srgb, currentColor 4%, transparent);
 		transition:
@@ -306,7 +306,7 @@
 
 	.report-history__item:hover {
 		background: color-mix(in srgb, currentColor 9%, transparent);
-		border-left-color: var(--cw-color-primary, #3b82f6);
+		border-left-color: var(--cw-accent);
 	}
 
 	.report-history__meta {
@@ -333,13 +333,13 @@
 
 	.report-history__time {
 		font-size: 0.875rem;
-		color: var(--cw-color-text-muted, #6b7280);
+		color: var(--cw-text-muted);
 	}
 
 	.report-history__actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: var(--cw-space-2);
+		gap: var(--cw-space-1);
 	}
 
 	@media (max-width: 639px) {

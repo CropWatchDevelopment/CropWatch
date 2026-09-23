@@ -94,7 +94,7 @@
 		align-items: center;
 		gap: var(--cw-space-2);
 		min-width: 0;
-		color: white;
+		color: var(--cw-header-fg);
 	}
 
 	.app-header__brand-mark {

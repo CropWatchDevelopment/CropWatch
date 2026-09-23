@@ -27,6 +27,7 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwMultiSelectLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		areAlertCriteriaGroupsValid,
 		buildInitialAlertCriteriaGroups,
@@ -629,6 +630,7 @@
 		{:else}
 			<div class="rules-new-form__block" id="device-selection">
 				<CwMultiSelect
+					labels={cwMultiSelectLabels()}
 					id="rule-form-devices-multiselect"
 					showAllSelectedItems={true}
 					label={m.devices_device()}
@@ -637,6 +639,7 @@
 					groups={deviceGroups}
 					dropdownHeight="24rem"
 					searchPlaceholder={m.rules_filter_device_placeholder()}
+					noResultsLabel={m.cwui_multi_no_matches()}
 					bind:value={selectedDevices}
 					required
 				/>
@@ -664,6 +667,7 @@
 				</div>
 
 				<CwDropdown
+					labels={cwDropdownLabels()}
 					id={`rule-form-criteria-${index}-subject-select`}
 					label={m.rules_data_field()}
 					options={SUBJECT_OPTIONS}
@@ -718,6 +722,7 @@
 
 				<div class="rules-new-form__actions-grid">
 					<CwDropdown
+						labels={cwDropdownLabels()}
 						id={`rule-form-action-${index}-type-select`}
 						label={m.rules_new_action_type()}
 						options={actionTypeOptionsFor(action)}
@@ -737,6 +742,7 @@
 						<RelayActions devices={deviceOptions} bind:resultJson={action.config.recipient} />
 					{:else if action.actionTypeName === 'LINE'}
 						<CwMultiSelect
+							labels={cwMultiSelectLabels()}
 							id={`rule-form-action-${index}-line-recipients`}
 							label={m.line_recipient_label()}
 							placeholder={m.line_recipient_placeholder()}
@@ -744,10 +750,13 @@
 							value={action.lineRecipients}
 							onchange={(selection) => setLineRecipients(action, selection)}
 							searchable
+							searchPlaceholder={m.cwui_table_search()}
+							noResultsLabel={m.cwui_multi_no_matches()}
 							required
 						/>
 					{:else if action.actionTypeName === 'Push'}
 						<CwMultiSelect
+							labels={cwMultiSelectLabels()}
 							id={`rule-form-action-${index}-push-recipients`}
 							label={m.push_recipient_label()}
 							placeholder={m.push_recipient_placeholder()}
@@ -755,6 +764,8 @@
 							value={action.pushRecipients}
 							onchange={(selection) => setPushRecipients(action, selection)}
 							searchable
+							searchPlaceholder={m.cwui_table_search()}
+							noResultsLabel={m.cwui_multi_no_matches()}
 							required
 						/>
 					{/if}

@@ -214,7 +214,7 @@
 						<CwButton
 							id={`rules-row-${row.id}-edit-button`}
 							variant="secondary"
-							size="md"
+							size="sm"
 							onclick={() => goto(resolve('/rules/edit/[id]', { id: String(row.id) }))}
 						>
 							<Icon src={EDIT_ICON} alt={m.action_edit()} />
@@ -254,6 +254,6 @@
 	.rules-new-page__actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: var(--cw-space-2);
+		gap: var(--cw-space-1);
 	}
 </style>

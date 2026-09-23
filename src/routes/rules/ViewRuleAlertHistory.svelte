@@ -7,6 +7,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { CwButton, CwChip, CwDialog, CwDropdown, CwDuration } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import HISTORY_ICON from '$lib/images/icons/history.svg';
 
 	interface Props {
@@ -98,7 +99,7 @@
 <CwButton
 	id={`rule-history-${templateId}-open-button`}
 	variant="secondary"
-	size="md"
+	size="sm"
 	onclick={openHistory}
 >
 	<Icon src={HISTORY_ICON} alt={m.rules_new_view_history()} />
@@ -140,6 +141,7 @@
 				{#if devices.length > 1}
 					<div class="rule-history__filter">
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id={`rule-history-${templateId}-device-select`}
 							options={deviceOptions}
 							bind:value={selectedDevice}
@@ -287,11 +289,11 @@
 	}
 
 	.rh-card--active {
-		border-left-color: var(--cw-danger-500);
+		border-left-color: var(--cw-status-alarm);
 	}
 
 	.rh-card--resolved {
-		border-left-color: var(--cw-success-500);
+		border-left-color: var(--cw-status-online);
 	}
 
 	.rh-card__head {
@@ -324,16 +326,16 @@
 	}
 
 	.rh-dot--trigger {
-		background: var(--cw-danger-500);
+		background: var(--cw-status-alarm);
 	}
 
 	.rh-dot--reset {
-		background: var(--cw-success-500);
+		background: var(--cw-status-online);
 	}
 
 	.rh-dot--active {
 		background: transparent;
-		border: 2px solid var(--cw-danger-500);
+		border: 2px solid var(--cw-status-alarm);
 	}
 
 	.rh-event__label {
@@ -359,7 +361,7 @@
 		grid-column: 2 / -1;
 		font-weight: var(--cw-font-semibold);
 		font-size: var(--cw-text-sm);
-		color: var(--cw-danger-500);
+		color: var(--cw-tone-danger-text);
 	}
 
 	/* Duration sits on the connector between the two events, indented past the dot. */
@@ -377,14 +379,14 @@
 	}
 
 	.rh-duration--active {
-		border-left-color: var(--cw-danger-300);
-		color: var(--cw-danger-600);
+		border-left-color: var(--cw-tone-danger-border);
+		color: var(--cw-tone-danger-text);
 	}
 
 	.rule-history__actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: var(--cw-space-2);
+		gap: var(--cw-space-1);
 	}
 
 	@media (max-width: 639px) {

@@ -12,6 +12,7 @@
 	import { readRedirectPath } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
 
 	const toast = useCwToast();
 
@@ -109,6 +110,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_password_label()}</span>
 				<CwInput
+					labels={cwInputLabels()}
 					id="login-password-input"
 					bind:value={password}
 					onchange={() => passwordStrengthCheck(password)}

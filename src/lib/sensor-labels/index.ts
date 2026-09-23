@@ -6,8 +6,9 @@ export interface SensorLabel {
 	label: () => string;
 	unit: string;
 	// `thermo` | `drop` | `co2` are named glyphs in CWUI's CwDataIcon; any other
-	// string (e.g. the 📏 emoji) is rendered as-is by the card.
-	icon?: 'thermo' | 'drop' | 'co2' | '📏';
+	// string (e.g. an emoji) is rendered as-is by the card. Traffic emoji match
+	// `metricEmoji` in the traffic display so both views use the same icons.
+	icon?: 'thermo' | 'drop' | 'co2' | (string & {});
 	format: SensorFormat;
 }
 
@@ -43,17 +44,33 @@ const SENSOR_LABELS: Record<string, SensorLabel> = {
 	spo2: { label: () => m.sensor_spo2(), unit: '%', format: 'number' },
 	relay_1: { label: () => m.sensor_relay_1(), unit: '', format: 'boolean' },
 	relay_2: { label: () => m.sensor_relay_2(), unit: '', format: 'boolean' },
-	people_count: { label: () => m.sensor_people_count(), unit: '', format: 'integer' },
-	car_count: { label: () => m.sensor_car_count(), unit: '', format: 'integer' },
-	bicycle_count: { label: () => m.traffic_metric_bicycle_count(), unit: '', format: 'integer' },
-	bus_count: { label: () => m.traffic_metric_bus_count(), unit: '', format: 'integer' },
+	people_count: { label: () => m.sensor_people_count(), unit: '', icon: '🚶', format: 'integer' },
+	car_count: { label: () => m.sensor_car_count(), unit: '', icon: '🚗', format: 'integer' },
+	bicycle_count: {
+		label: () => m.traffic_metric_bicycle_count(),
+		unit: '',
+		icon: '🚲',
+		format: 'integer'
+	},
+	bus_count: { label: () => m.traffic_metric_bus_count(), unit: '', icon: '🚌', format: 'integer' },
 	motorcycle_count: {
 		label: () => m.traffic_metric_motorcycle_count(),
 		unit: '',
+		icon: '🏍️',
 		format: 'integer'
 	},
-	train_count: { label: () => m.traffic_metric_train_count(), unit: '', format: 'integer' },
-	truck_count: { label: () => m.traffic_metric_truck_count(), unit: '', format: 'integer' },
+	train_count: {
+		label: () => m.traffic_metric_train_count(),
+		unit: '',
+		icon: '🚆',
+		format: 'integer'
+	},
+	truck_count: {
+		label: () => m.traffic_metric_truck_count(),
+		unit: '',
+		icon: '🚚',
+		format: 'integer'
+	},
 	// Hourly accumulator bucket start (cw_traffic2) — a timestamp, not a reading.
 	traffic_hour: { label: () => m.traffic_hour(), unit: '', format: 'number' }
 };

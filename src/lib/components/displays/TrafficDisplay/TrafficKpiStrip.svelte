@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CwSpinner } from '@cropwatchdevelopment/cwui';
+	import { CwSpinner, CW_EMPTY_VALUE, formatCwMeasurement } from '@cropwatchdevelopment/cwui';
 	import { formatNumber } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
@@ -58,7 +58,7 @@
 			<p class="traffic-kpis__value">{formatNumber(kpis.peakHourRow.total_traffic)}</p>
 			<p class="traffic-kpis__hint">{formatHour(kpis.peakHourRow.traffic_hour)}</p>
 		{:else}
-			<p class="traffic-kpis__value">--</p>
+			<p class="traffic-kpis__value">{CW_EMPTY_VALUE}</p>
 			<p class="traffic-kpis__hint">{m.traffic_no_traffic_today()}</p>
 		{/if}
 	</div>
@@ -73,7 +73,7 @@
 			</p>
 			<p class="traffic-kpis__hint">{metricLabelText(kpis.topClassKey)}</p>
 		{:else}
-			<p class="traffic-kpis__value">--</p>
+			<p class="traffic-kpis__value">{CW_EMPTY_VALUE}</p>
 			<p class="traffic-kpis__hint">{m.traffic_no_class_data_recorded()}</p>
 		{/if}
 	</div>
@@ -88,11 +88,10 @@
 				<span class="traffic-kpis__emoji" aria-hidden="true"
 					>{weatherEmoji(weather.weatherCode)}</span
 				>
-				{weather.temperatureHighC !== null ? `${Math.round(weather.temperatureHighC)}°` : '--'}
+				{formatCwMeasurement(weather.temperatureHighC, '°', { decimals: 0 })}
 				<span class="traffic-kpis__value-low">
 					{m.traffic_low_temperature({
-						value:
-							weather.temperatureLowC !== null ? `${Math.round(weather.temperatureLowC)}°` : '--'
+						value: formatCwMeasurement(weather.temperatureLowC, '°', { decimals: 0 })
 					})}
 				</span>
 			</p>

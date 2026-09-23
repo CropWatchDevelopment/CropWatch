@@ -24,6 +24,7 @@
 	import { formatDateTime } from '$lib/i18n/format';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwLocationCardLabels, cwSensorCardLabels } from '$lib/i18n/cwuiLabels';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { SvelteMap, SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
@@ -361,8 +362,10 @@
 	{:else}
 		<div class="dashboard-cards__groups dashboard-cards__groups--{cardLayout}">
 			{#each groups as group (group.key)}
+				{@const locationName = group.location?.name ?? m.dashboard_no_location()}
 				<CwLocationCard
-					title={group.location?.name ?? m.dashboard_no_location()}
+					title={locationName}
+					labels={cwLocationCardLabels(locationName)}
 					class="dashboard-cards__location"
 					onNavigate={() => {
 						const locationId = group.location?.location_id;
@@ -381,6 +384,7 @@
 						{@const detailRows = details && details !== 'loading' ? detailEntries(details) : []}
 						{@const lastSeen = row.last_data_updated_at ?? row.latest?.created_at ?? null}
 						<CwSensorCard
+							labels={cwSensorCardLabels()}
 							label={row.name}
 							status={row.latest ? 'online' : 'loading'}
 							hasError={hasDeviceError(row) ? m.dashboard_sensor_error() : null}
@@ -422,7 +426,7 @@
 										<div class="dashboard-cards__details-row">
 											<dt>{m.dashboard_column_last_seen()}</dt>
 											<dd>
-												<CwDuration from={lastSeen} class="ml-1 text-xs text-slate-400" />
+												<CwDuration from={lastSeen} class="ml-1 text-xs text-(--cw-text-muted)" />
 											</dd>
 										</div>
 									{/if}
@@ -569,5 +573,16 @@
 		display: flex;
 		justify-content: center;
 		padding: 1.5rem 0;
+	}
+
+	/* CWUI 0.1.115 truncates location titles to one line; on narrow cards that
+	   hides which location you're looking at. Wrap to two lines instead. */
+	.dashboard-cards__groups :global(.dashboard-cards__location .cw-location-card__title) {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		white-space: normal;
+		overflow-wrap: anywhere;
 	}
 </style>

@@ -69,7 +69,7 @@
 					{#if row.is_online}
 						<Icon src={CHECK_ICON} alt={m.gateways_online()} preserveColor />
 					{:else}
-						<span class="text-red-500">
+						<span class="text-(--cw-status-offline)">
 							<Icon src={NO_ICON} alt={m.gateways_offline()} />
 						</span>
 					{/if}
@@ -77,7 +77,7 @@
 					{#if row.is_public}
 						<Icon src={CHECK_ICON} alt={m.gateways_public()} preserveColor />
 					{:else}
-						<span class="text-red-500">
+						<span class="text-(--cw-text-muted)">
 							<Icon src={NO_ICON} alt={m.gateways_private()} />
 						</span>
 					{/if}

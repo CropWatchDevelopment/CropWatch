@@ -12,6 +12,7 @@
 	} from '$lib/devices/relay-control';
 	import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getIntlLocale } from '$lib/i18n/format';
 	import {
 		attachCwDeviceRefreshVisibility,
 		createCwDeviceRefreshScheduler,
@@ -493,6 +494,7 @@
 		{#if chartSeries.length > 0 && !isTrafficDevice}
 			<div class="device-page__chart">
 				<CwResponsiveLineChart
+					locale={getIntlLocale()}
 					series={chartSeries}
 					title={data?.device?.name || devEui.toUpperCase()}
 					subtitle={m.display_time_series()}
@@ -534,6 +536,11 @@
 		flex-direction: column;
 		gap: 1rem;
 		min-width: 0;
+	}
+
+	/* Back button keeps its natural width in the column. */
+	.device-page > :global(.cw-button) {
+		align-self: flex-start;
 	}
 
 	.device-page__display {

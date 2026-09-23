@@ -198,7 +198,7 @@
 						<CwButton
 							id={`reports-row-${row.id}-edit-button`}
 							variant="secondary"
-							size="md"
+							size="sm"
 							onclick={() => goto(resolve('/reports/edit/[id]', { id: String(row.id) }))}
 						>
 							<Icon src={EDIT_ICON} alt={m.action_edit()} />
@@ -230,6 +230,6 @@
 	.reports-new-page__actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: var(--cw-space-2);
+		gap: var(--cw-space-1);
 	}
 </style>

@@ -4,6 +4,7 @@
 	import { AppActionRow, AppFormStack, AppPage } from '$lib/components/layout';
 	import { setLocale } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwThemePickerLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		CwButton,
 		CwCard,
@@ -84,6 +85,7 @@
 						<LanguageSwitcher compact class="mr-3" />
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-timezone-select"
 							name="timezone"
 							label={m.settings_timezone_label()}
@@ -93,6 +95,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-date-format-select"
 							name="dateFormat"
 							label={m.settings_date_format_label()}
@@ -101,6 +104,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-time-format-select"
 							name="timeFormat"
 							label={m.settings_time_format_label()}
@@ -124,11 +128,12 @@
 							<p class="section-title">{m.settings_theme_label()}</p>
 							<p class="section-copy">{themeLabel}</p>
 						</div>
-						<CwThemePicker bind:theme={preferences.theme} />
+						<CwThemePicker labels={cwThemePickerLabels()} bind:theme={preferences.theme} />
 					</div>
 
 					<div class="field-grid field-grid--two">
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-distance-select"
 							name="distanceUnit"
 							label={m.settings_distance_label()}
@@ -137,6 +142,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-area-select"
 							name="areaUnit"
 							label={m.settings_area_label()}
@@ -153,6 +159,7 @@
 				<AppFormStack padded>
 					<div class="field-grid field-grid--two">
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-temperature-select"
 							name="temperatureUnit"
 							label={m.settings_temperature_label()}
@@ -161,6 +168,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-ec-select"
 							name="ecUnit"
 							label={m.settings_ec_label()}
@@ -169,6 +177,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-water-level-select"
 							name="waterDepthUnit"
 							label={m.settings_water_level_label()}
@@ -177,6 +186,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-weight-select"
 							name="weightUnit"
 							label={m.settings_weight_label()}
@@ -185,6 +195,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-soil-moisture-select"
 							name="soilMoistureUnit"
 							label={m.settings_soil_moisture_label()}
@@ -193,6 +204,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-pressure-select"
 							name="pressureUnit"
 							label={m.settings_pressure_label()}
@@ -201,6 +213,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-rainfall-select"
 							name="rainfallUnit"
 							label={m.settings_rainfall_label()}
@@ -209,6 +222,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-wind-speed-select"
 							name="windSpeedUnit"
 							label={m.settings_wind_speed_label()}
@@ -217,6 +231,7 @@
 						/>
 
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="settings-co2-select"
 							name="co2Unit"
 							label={m.settings_co2_label()}

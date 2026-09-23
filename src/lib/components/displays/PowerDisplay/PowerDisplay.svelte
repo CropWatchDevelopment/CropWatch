@@ -8,7 +8,7 @@
   touching the registry or dispatcher.
 -->
 <script lang="ts">
-	import { CwCard, CwChip } from '@cropwatchdevelopment/cwui';
+	import { CwCard, CwChip, formatCwNumber } from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
 	import '../display-shared.css';
@@ -38,7 +38,9 @@
 		<div class="kpi-grid">
 			{#each numericColumns as col (col)}
 				<CwCard title={col} subtitle={m.display_latest_reading()} elevated>
-					<p class="kpi-value">{Number(latestData[col] ?? 0).toFixed(2)}</p>
+					<p class="kpi-value">
+						{formatCwNumber(latestData[col] as number | null, { decimals: 2 })}
+					</p>
 				</CwCard>
 			{/each}
 		</div>
@@ -103,7 +105,7 @@
 	td {
 		padding: 0.5rem 0.75rem;
 		text-align: left;
-		border-bottom: 1px solid var(--cw-border, #e5e7eb);
+		border-bottom: 1px solid var(--cw-border-muted);
 	}
 	th {
 		font-weight: 600;

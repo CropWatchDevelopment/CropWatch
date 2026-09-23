@@ -2,6 +2,7 @@
 	import { AppFormStack, AppNotice } from '$lib/components/layout';
 	import Icon from '$lib/components/Icon.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import { CwButton, CwCard, CwDropdown, CwInput } from '@cropwatchdevelopment/cwui';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import type { RecipientDraft, SelectOption } from './report-template-form';
@@ -58,6 +59,7 @@
 
 				<div class="report-field-grid report-field-grid--three">
 					<CwDropdown
+						labels={cwDropdownLabels()}
 						id={`report-recipients-${index}-method-select`}
 						label={m.reports_create_communication_method()}
 						options={communicationMethodOptions}

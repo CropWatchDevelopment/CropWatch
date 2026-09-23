@@ -53,6 +53,7 @@
 	.language-switcher__button {
 		border: 0;
 		border-radius: 999px;
+		min-height: var(--cw-hit-target-min);
 		padding: 0.35rem 0.7rem;
 		font: inherit;
 		font-size: 0.82rem;
@@ -71,8 +72,8 @@
 	}
 
 	.language-switcher__button--active {
-		color: var(--cw-bg-base);
-		background: var(--cw-primary-500);
+		color: var(--cw-tone-primary-solid-text);
+		background: var(--cw-tone-primary-solid-bg);
 	}
 
 	.language-switcher--compact .language-switcher__button {

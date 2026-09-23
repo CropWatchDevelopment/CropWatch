@@ -8,6 +8,7 @@
 	import './settings-style.css';
 	import { goto } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import SensorCertificatesCard from '../SensorCertificatesCard.svelte';
 	import DeviceOwnerPermissionsCard from '../DeviceOwnerPermissionsCard.svelte';
 	import DeviceLicenseCard from './DeviceLicenseCard.svelte';
@@ -184,6 +185,7 @@
 
 					<div>
 						<CwDropdown
+							labels={cwDropdownLabels()}
 							id="device-settings-location-select"
 							label={m.common_location()}
 							name="location_id"

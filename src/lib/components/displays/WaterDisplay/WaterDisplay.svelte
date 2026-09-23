@@ -55,11 +55,12 @@
 
 	let rows = $derived(toWaterRows(historicalData));
 
+	// Missing readings stay null so they render as "—" rather than a fake 0.
 	let latest = $derived({
-		temperature_c: Number(latestData?.temperature_c) || 0,
-		depth_cm: Number(latestData?.depth_cm ?? latestData?.deapth_cm) || 0,
-		pressure: Number(latestData?.pressure) || 0,
-		spo2: Number(latestData?.spo2) || 0
+		temperature_c: latestData?.temperature_c ?? null,
+		depth_cm: latestData?.depth_cm ?? latestData?.deapth_cm ?? null,
+		pressure: latestData?.pressure ?? null,
+		spo2: latestData?.spo2 ?? null
 	});
 
 	const tempKpi = $derived(
@@ -106,7 +107,10 @@
 		</CwCard>
 
 		<CwCard title={m.rule_subject_spo2()} subtitle={m.display_latest_reading()} elevated>
-			<p class="kpi-value">{latest.spo2.toFixed(1)}</p>
+			{@const spo2Kpi = formatSensorMeasurement('spo2', latest.spo2, app.preferences, {
+				maximumFractionDigits: 1
+			})}
+			<p class="kpi-value">{spo2Kpi.valueDisplay}<span>{spo2Kpi.unit}</span></p>
 		</CwCard>
 	</div>
 

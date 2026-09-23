@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { AppNotice } from '$lib/components/layout';
-	import { formatDateTime } from '$lib/i18n/format';
+	import { formatDateTime, getIntlLocale } from '$lib/i18n/format';
 	import { appChartPalette } from '$lib/theme/chartPalette';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
@@ -85,6 +85,7 @@
 					<div class="status-card__body">
 						<div class="status-card__chart">
 							<CwDonutChart
+								locale={getIntlLocale()}
 								segments={statusSegments}
 								size={120}
 								thickness={14}

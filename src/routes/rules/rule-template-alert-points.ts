@@ -23,6 +23,7 @@ const ALERT_POINT_COLORS = ['#f7903b', '#42edf0', '#7a8cff', '#e35c8d', '#4fcf7a
 
 export function createRuleTemplateAlertPointsEditorText(): CwAlertPointsEditorText {
 	return {
+		previewLabel: m.cwui_alert_points_preview(),
 		unitFieldLabel: m.reports_create_alert_points_unit_label(),
 		centerFieldLabel: m.reports_create_alert_points_center_label(),
 		nameFieldLabel: m.common_name(),

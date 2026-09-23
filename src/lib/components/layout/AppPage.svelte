@@ -51,6 +51,12 @@
 		gap: var(--cw-space-4);
 	}
 
+	/* A button placed directly in the page column (the back button) keeps its
+	   natural width instead of stretching across the page. */
+	.app-page__shell > :global(.cw-button) {
+		align-self: flex-start;
+	}
+
 	/* Center short content in the viewport; overflow-safe (tall content still
 	   scrolls from the top because the auto margins collapse when space runs out). */
 	.app-page--center .app-page__shell {
@@ -58,9 +64,12 @@
 		margin-block: auto;
 	}
 
+	/* Desktop: keep a thin gutter so content never touches the side nav or the
+	   window edge. Phones stay edge-to-edge. */
 	@media (min-width: 640px) {
 		.app-page {
 			padding-block: var(--cw-space-2);
+			padding-inline: var(--cw-space-3);
 		}
 	}
 </style>

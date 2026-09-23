@@ -4,6 +4,7 @@
  * and cached per coordinates + day range.
  */
 import type { CwTone } from '@cropwatchdevelopment/cwui';
+import { formatCwNumber } from '@cropwatchdevelopment/cwui';
 import { SvelteMap } from 'svelte/reactivity';
 import { m } from '$lib/paraglide/messages.js';
 import { isRecord, readNumber, readString, shiftDayKey, toDayKey } from './traffic-data';
@@ -109,7 +110,7 @@ function buildWeatherDaySummary(
 	const descriptor = describeWeatherCode(weatherCode);
 	const temperatureLabel =
 		temperatureHighC !== null || temperatureLowC !== null
-			? `${temperatureHighC !== null ? temperatureHighC.toFixed(0) : '--'}° / ${temperatureLowC !== null ? temperatureLowC.toFixed(0) : '--'}°C`
+			? `${formatCwNumber(temperatureHighC, { decimals: 0 })}° / ${formatCwNumber(temperatureLowC, { decimals: 0 })}°C`
 			: null;
 
 	const summaryParts = [descriptor.description];

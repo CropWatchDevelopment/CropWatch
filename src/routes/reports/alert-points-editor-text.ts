@@ -4,6 +4,7 @@ import type { CwAlertPointsEditorText } from '@cropwatchdevelopment/cwui';
 
 export function createReportAlertPointsEditorText(): CwAlertPointsEditorText {
 	return {
+		previewLabel: m.cwui_alert_points_preview(),
 		unitFieldLabel: m.reports_create_alert_points_unit_label(),
 		centerFieldLabel: m.reports_create_alert_points_center_label(),
 		nameFieldLabel: m.common_name(),

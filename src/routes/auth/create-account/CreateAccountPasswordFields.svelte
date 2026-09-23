@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CwInput } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import type { IPasswordValidationResult } from '$lib/utils/strongPasswordCheck';
 
 	interface Props {
@@ -37,6 +38,7 @@
 <label class="field-block">
 	<span class="field-label">{m.auth_password_label_required()}</span>
 	<CwInput
+		labels={cwInputLabels()}
 		id="create-account-password-input"
 		value={password}
 		oninput={handlePasswordInput}
@@ -77,6 +79,7 @@
 <label class="field-block">
 	<span class="field-label">{m.auth_confirm_password_label_required()}</span>
 	<CwInput
+		labels={cwInputLabels()}
 		id="create-account-password-confirm-input"
 		value={confirmPassword}
 		oninput={handleConfirmPasswordInput}

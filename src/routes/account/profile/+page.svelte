@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import { CwButton, CwCard, CwChip, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import PushNotificationsCard from './PushNotificationsCard.svelte';
 	import type { PageProps } from './$types';
@@ -91,6 +92,7 @@
 				{/if}
 
 				<CwInput
+					labels={cwInputLabels()}
 					label={m.profile_username_label()}
 					name="username"
 					bind:value={username}
@@ -98,6 +100,7 @@
 					clearable
 				/>
 				<CwInput
+					labels={cwInputLabels()}
 					label={m.profile_full_name_label()}
 					name="full_name"
 					bind:value={fullName}
@@ -105,6 +108,7 @@
 					clearable
 				/>
 				<CwInput
+					labels={cwInputLabels()}
 					label={m.profile_employer_label()}
 					name="employer"
 					bind:value={employer}
@@ -114,6 +118,7 @@
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwInput
+						labels={cwInputLabels()}
 						label={m.profile_website_label()}
 						name="website"
 						bind:value={website}
@@ -122,6 +127,7 @@
 						clearable
 					/>
 					<CwInput
+						labels={cwInputLabels()}
 						label={m.profile_phone_label()}
 						name="phone_number"
 						bind:value={phoneNumber}

@@ -9,7 +9,7 @@
 		type CwTableResult,
 		type CwTableQuery
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
+	import { cwDataTableLabels, cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import type { LocationOwnerDto } from '$lib/api/api.dtos';
 	import { getPermissionLevelLabel, getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
@@ -84,6 +84,7 @@
 			{#if col.key === 'permission_level'}
 				{#if editingPermissionId === row.id}
 					<CwDropdown
+						labels={cwDropdownLabels()}
 						id={`location-edit-permissions-row-${row.id}-level-select`}
 						options={getPermissionLevelOptions()}
 						bind:value={row.permission_level}

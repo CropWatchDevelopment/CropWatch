@@ -8,15 +8,26 @@
  * Call the builder INSIDE the template (e.g. `labels={cwDataTableLabels()}`) so
  * it re-evaluates on locale change, exactly like a bare `m.key()` call.
  */
+import type { Component } from 'svelte';
+import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
 import { m } from '$lib/paraglide/messages.js';
 import type {
+	CwCalendar,
+	CwDropdown,
+	CwInput,
+	CwLocationCard,
+	CwMultiSelect,
+	CwSearchInput,
+	CwSensorCard,
+	CwSideNav,
+	CwThemePicker,
 	CwDataTableLabels,
 	CwResponsiveLineChartLabels,
 	CwDonutChartLabels,
 	CwStackedBarChartLabels,
 	CwHeatmapLabels,
 	CwPPFDChartLabels,
-	DliCardLabels,
+	CwDliCardLabels,
 	CwVPDChartLabels,
 	CwOfflineOverlayLabels,
 	CwCalendarScrollLabels,
@@ -41,8 +52,11 @@ export function cwDataTableLabels(): CwDataTableLabels {
 		refresh: m.cwui_table_refresh(),
 		actions: m.cwui_table_actions(),
 		errorPrefix: (message) => m.cwui_table_error_prefix({ message }),
+		errorTitle: m.cwui_table_error_title(),
 		retry: m.cwui_table_retry(),
 		empty: m.cwui_table_empty(),
+		noResults: (query) => m.cwui_table_no_results({ query }),
+		ungrouped: m.cwui_table_ungrouped(),
 		genericError: m.cwui_table_generic_error(),
 		loadMoreError: m.cwui_table_load_more_error(),
 		groupCount: (count) => m.cwui_table_group_count({ count }),
@@ -77,6 +91,18 @@ export function cwResponsiveLineChartLabels(): CwResponsiveLineChartLabels {
 		dataGap: m.cwui_chart_data_gap(),
 		noSignal: m.cwui_chart_no_signal(),
 		zoomHint: m.cwui_chart_zoom_hint(),
+		statMin: m.cwui_chart_stat_min(),
+		statAvg: m.cwui_chart_stat_avg(),
+		statMax: m.cwui_chart_stat_max(),
+		axisLeftShort: m.cwui_chart_axis_left_short(),
+		axisRightShort: m.cwui_chart_axis_right_short(),
+		axisLeft: m.cwui_chart_axis_left(),
+		axisRight: m.cwui_chart_axis_right(),
+		chart: m.cwui_chart_chart(),
+		seriesSummary: (label, min, avg, max, latest) =>
+			m.cwui_chart_series_summary({ label, min, avg, max, latest }),
+		keyboardHint: m.cwui_chart_keyboard_hint(),
+		loading: m.cwui_chart_loading(),
 		lastSensorTitle: () => m.cwui_chart_last_sensor(),
 		hideSeries: (label) => m.cwui_chart_hide_series({ label }),
 		showSeries: (label) => m.cwui_chart_show_series({ label })
@@ -88,7 +114,8 @@ export function cwDonutChartLabels(): CwDonutChartLabels {
 		ariaLabel: m.cwui_donut_aria(),
 		total: m.cwui_donut_total(),
 		ofTotal: (total) => m.cwui_donut_of_total({ total }),
-		segmentLabel: (label, value) => m.cwui_donut_segment({ label, value })
+		segmentLabel: (label, value) => m.cwui_donut_segment({ label, value }),
+		loading: m.cwui_chart_loading_short()
 	};
 }
 
@@ -96,14 +123,17 @@ export function cwStackedBarChartLabels(): CwStackedBarChartLabels {
 	return {
 		ariaLabel: m.cwui_stacked_bar_aria(),
 		total: m.cwui_stacked_bar_total(),
-		barLabel: (label, total) => m.cwui_stacked_bar_bar({ label, total })
+		barLabel: (label, total) => m.cwui_stacked_bar_bar({ label, total }),
+		loading: m.cwui_chart_loading_short()
 	};
 }
 
 export function cwHeatmapLabels(): CwHeatmapLabels {
 	return {
 		title: m.cwui_heatmap_title(),
-		noData: m.cwui_heatmap_no_data()
+		noData: m.cwui_heatmap_no_data(),
+		loading: m.cwui_heatmap_loading(),
+		summary: ({ title, days, min, max }) => m.cwui_heatmap_summary({ title, days, min, max })
 	};
 }
 
@@ -124,11 +154,15 @@ export function cwPpfdChartLabels(): CwPPFDChartLabels {
 		insideBand: m.cwui_ppfd_inside_band(),
 		deltaBelow: (amount, unit) => m.cwui_ppfd_delta_below({ amount, unit }),
 		deltaAbove: (amount, unit) => m.cwui_ppfd_delta_above({ amount, unit }),
-		updated: (when) => m.cwui_ppfd_updated({ when })
+		updated: (when) => m.cwui_ppfd_updated({ when }),
+		low: m.cwui_ppfd_low(),
+		optimalZone: m.cwui_ppfd_optimal_zone(),
+		high: m.cwui_ppfd_high(),
+		loading: m.cwui_ppfd_loading()
 	};
 }
 
-export function cwDliCardLabels(): DliCardLabels {
+export function cwDliCardLabels(): CwDliCardLabels {
 	return {
 		title: m.cwui_dli_title(),
 		statusVeryLow: m.cwui_dli_status_very_low(),
@@ -165,7 +199,14 @@ export function cwVpdChartLabels(): CwVPDChartLabels {
 		cellAriaLabel: ({ temperatureC, humidity, vpd, unit, zoneLabel, inTarget, isCurrent }) =>
 			m.cwui_vpd_cell({ t: temperatureC, h: humidity, vpd, unit, zone: zoneLabel }) +
 			(inTarget ? m.cwui_vpd_cell_in_target() : '') +
-			(isCurrent ? m.cwui_vpd_cell_current() : '')
+			(isCurrent ? m.cwui_vpd_cell_current() : ''),
+		roomVpd: (temperature, humidity) => m.cwui_vpd_room({ temperature, humidity }),
+		target: m.cwui_vpd_target(),
+		onTarget: m.cwui_vpd_on_target(),
+		offTarget: m.cwui_vpd_off_target(),
+		inTargetBand: m.cwui_vpd_in_target_band(),
+		now: m.cwui_vpd_now(),
+		loading: m.cwui_vpd_loading()
 	};
 }
 
@@ -180,7 +221,8 @@ export function cwOfflineOverlayLabels(): CwOfflineOverlayLabels {
 		helpItemRouter: m.cwui_offline_help_router(),
 		helpItemMobileData: m.cwui_offline_help_mobile(),
 		reconnectedTitle: m.cwui_offline_reconnected_title(),
-		reconnectedSubtitle: m.cwui_offline_reconnected_subtitle()
+		reconnectedSubtitle: m.cwui_offline_reconnected_subtitle(),
+		stillOffline: m.cwui_offline_still_offline()
 	};
 }
 
@@ -209,7 +251,9 @@ export function cwDateTimeRangePickerLabels(): CwDateTimeRangePickerLabels {
 		startTime: m.cwui_dtr_start_time(),
 		endTime: m.cwui_dtr_end_time(),
 		cancel: m.cwui_dtr_cancel(),
-		set: m.cwui_dtr_set()
+		set: m.cwui_dtr_set(),
+		hours: m.cwui_dtr_hours(),
+		minutes: m.cwui_dtr_minutes()
 	};
 }
 
@@ -237,7 +281,8 @@ export function cwWindCompassLabels(): CwWindCompassLabels {
 		beaufortNames,
 		srWind: (word, direction, cardinal) => m.cwui_wind_sr_wind({ word, direction, cardinal }),
 		srSpeed: (speed) => m.cwui_wind_sr_speed({ speed }),
-		srBeaufort: (force, label) => m.cwui_wind_sr_beaufort({ force, label })
+		srBeaufort: (force, label) => m.cwui_wind_sr_beaufort({ force, label }),
+		loading: m.cwui_wind_loading()
 	};
 }
 
@@ -253,8 +298,8 @@ export function cwStatCardLabels(): CwStatCardLabels {
 		aboveAvg: m.stat_aboveAvg(),
 		belowAvg: m.stat_belowAvg(),
 		atAvg: m.stat_atAvg(),
-		clickToExpand: m.stat_expand(),
-		clickToCollapse: m.stat_collapse()
+		showDetails: m.common_show_details(),
+		hideDetails: m.common_hide_details()
 	};
 }
 
@@ -262,6 +307,91 @@ export function cwCopyLabels(): CwCopyLabels {
 	return {
 		copy: m.cwui_copy_copy(),
 		copied: m.cwui_copy_copied(),
-		copiedFeedback: m.cwui_copy_feedback()
+		copiedFeedback: m.cwui_copy_feedback(),
+		failedFeedback: m.cwui_copy_failed()
+	};
+}
+
+// The components below don't export a named labels type, so derive it from props.
+type LabelsOf<C> =
+	C extends Component<infer P, object, string>
+		? NonNullable<(P & { labels?: unknown })['labels']>
+		: never;
+
+export function cwSensorCardLabels(): LabelsOf<typeof CwSensorCard> {
+	return {
+		error: m.cwui_sensor_error(),
+		details: m.common_details(),
+		noDetails: m.cwui_sensor_no_details(),
+		noValue: CW_EMPTY_VALUE,
+		lastSeen: m.cwui_sensor_last_seen(),
+		ago: m.cwui_sensor_ago()
+	};
+}
+
+export function cwLocationCardLabels(name: string): LabelsOf<typeof CwLocationCard> {
+	return {
+		online: m.status_online(),
+		offline: m.status_offline(),
+		warning: m.status_warning(),
+		loading: m.status_loading(),
+		viewLocation: m.cwui_location_view({ name })
+	};
+}
+
+export function cwInputLabels(): LabelsOf<typeof CwInput> {
+	return {
+		clear: m.cwui_input_clear(),
+		showPassword: m.cwui_input_show_password(),
+		hidePassword: m.cwui_input_hide_password(),
+		increase: m.cwui_input_increase(),
+		decrease: m.cwui_input_decrease()
+	};
+}
+
+export function cwDropdownLabels(): LabelsOf<typeof CwDropdown> {
+	return { empty: m.cwui_select_empty() };
+}
+
+export function cwMultiSelectLabels(): LabelsOf<typeof CwMultiSelect> {
+	return {
+		remove: m.cwui_multi_remove({ label: '{label}' }),
+		more: m.cwui_multi_more({ count: '{count}' }),
+		selectAllInGroup: m.cwui_multi_select_all_group({ group: '{group}' }),
+		clearAllInGroup: m.cwui_multi_clear_all_group({ group: '{group}' }),
+		empty: m.cwui_select_empty()
+	};
+}
+
+export function cwSearchInputLabels(): LabelsOf<typeof CwSearchInput> {
+	return {
+		noResults: m.cwui_search_no_results(),
+		error: m.cwui_search_error(),
+		clear: m.cwui_input_clear()
+	};
+}
+
+export function cwThemePickerLabels(): LabelsOf<typeof CwThemePicker> {
+	return {
+		trigger: m.cwui_theme_trigger(),
+		menu: m.cwui_theme_menu(),
+		light: m.cwui_theme_light(),
+		dark: m.cwui_theme_dark(),
+		system: m.cwui_theme_system()
+	};
+}
+
+export function cwSideNavLabels(): LabelsOf<typeof CwSideNav> {
+	return {
+		close: m.cwui_sidenav_close(),
+		collapse: m.cwui_sidenav_collapse(),
+		expand: m.cwui_sidenav_expand()
+	};
+}
+
+export function cwCalendarLabels(): LabelsOf<typeof CwCalendar> {
+	return {
+		previousMonth: m.cwui_cal_previous_month(),
+		nextMonth: m.cwui_cal_next_month()
 	};
 }

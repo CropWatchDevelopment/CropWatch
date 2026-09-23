@@ -12,9 +12,14 @@
 		type CwSingleDateValue,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDateTimeRangePickerLabels } from '$lib/i18n/cwuiLabels';
+	import {
+		cwDateTimeRangePickerLabels,
+		cwDropdownLabels,
+		cwInputLabels
+	} from '$lib/i18n/cwuiLabels';
 	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getIntlLocale } from '$lib/i18n/format';
 	import type { PageProps } from './$types';
 
 	type CreateDeviceForm = {
@@ -183,6 +188,7 @@
 				<!-- License gate: every new device consumes an unassigned license seat -->
 				{#if hasAvailableLicense}
 					<CwDropdown
+						labels={cwDropdownLabels()}
 						id="device-create-license-select"
 						name="license_id"
 						label={m.devices_license_label()}
@@ -238,6 +244,7 @@
 					/>
 
 					<CwDropdown
+						labels={cwDropdownLabels()}
 						id="device-create-type-select"
 						name="type"
 						label={m.devices_device_type_label()}
@@ -273,6 +280,7 @@
 
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<CwInput
+						labels={cwInputLabels()}
 						id="device-create-lat-input"
 						name="lat"
 						type="numeric"
@@ -282,6 +290,7 @@
 					/>
 
 					<CwInput
+						labels={cwInputLabels()}
 						id="device-create-long-input"
 						name="long"
 						type="numeric"
@@ -293,6 +302,7 @@
 					<div>
 						<p class="m-0 mb-1 text-sm font-bold">{m.devices_installed_at_label()}</p>
 						<CwDateTimeRangePicker
+							locale={getIntlLocale()}
 							name="installed_at"
 							mode="single"
 							granularity="day"

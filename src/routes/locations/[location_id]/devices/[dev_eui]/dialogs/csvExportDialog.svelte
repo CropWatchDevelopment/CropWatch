@@ -17,6 +17,7 @@
 		type CsvRow
 	} from '../csvExport';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getIntlLocale } from '$lib/i18n/format';
 
 	interface Props {
 		authToken: string | null;
@@ -200,6 +201,7 @@
 >
 	<div class="csv-export-dialog">
 		<CwDateTimeRangePicker
+			locale={getIntlLocale()}
 			mode="range"
 			granularity="day"
 			includeTime={false}
@@ -254,6 +256,6 @@
 	}
 
 	.csv-export-dialog__error {
-		color: var(--cw-danger, #b91c1c);
+		color: var(--cw-tone-danger-text);
 	}
 </style>

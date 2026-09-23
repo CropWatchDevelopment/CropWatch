@@ -64,19 +64,13 @@ export const TRAFFIC_CLASS_KEYS = [
 ] as const;
 
 /**
- * Categorical palette for traffic classes (light/dark steps of the same
- * hues), indexed by position in TRAFFIC_CLASS_KEYS. Validated for CVD
- * separation and normal-vision distance on the CWUI light/dark surfaces.
- * Matches CwStackedBarChart's default palette so chart and breakdown agree.
+ * Colour for a traffic class, indexed by its slot in TRAFFIC_CLASS_KEYS. Uses
+ * CWUI's theme-aware categorical chart tokens — the same ones
+ * CwStackedBarChart uses by default — so the chart and breakdown always agree
+ * and follow the document theme without a theme argument.
  */
-const TRAFFIC_CLASS_COLORS = {
-	light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'],
-	dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767']
-} as const;
-
-export function trafficClassColor(theme: 'light' | 'dark', classIndex: number): string {
-	const palette = TRAFFIC_CLASS_COLORS[theme];
-	return palette[classIndex % palette.length];
+export function trafficClassColor(classIndex: number): string {
+	return `var(--cw-chart-cat-${(classIndex % 8) + 1})`;
 }
 
 const METADATA_KEYS = new Set([
