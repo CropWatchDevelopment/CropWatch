@@ -17,7 +17,7 @@
 		type CwColumnDef,
 		CwExpandPanel
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
+	import { cwDataTableLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
 	import {
 		MAX_RELAY_PULSE_DURATION_SECONDS,
@@ -410,6 +410,7 @@
 			<p class="relay-timed-on__copy">{m.devices_relay_pulse_description()}</p>
 			<div class="relay-timed-on__controls">
 				<CwInput
+					labels={cwInputLabels()}
 					label={m.devices_relay_pulse_duration_label()}
 					type="numeric"
 					bind:value={timedOnDurationSeconds}
@@ -517,7 +518,7 @@
 	}
 	.relay-feedback__copy {
 		margin: 0;
-		color: var(--cw-text-muted, #475467);
+		color: var(--cw-text-secondary);
 		font-size: 0.9rem;
 	}
 	.relay-feedback__countdown {
@@ -538,10 +539,10 @@
 	.relay-note {
 		margin: 0;
 		padding: 0.75rem 1rem;
-		border: 1px solid var(--cw-border, #d0d5dd);
+		border: 1px solid var(--cw-border-muted);
 		border-radius: 0.75rem;
-		background-color: var(--cw-surface-muted, #f8fafc);
-		color: var(--cw-text-muted, #475467);
+		background-color: var(--cw-bg-subtle);
+		color: var(--cw-text-secondary);
 		font-size: 0.9rem;
 	}
 	.relay-timed-on {
@@ -551,7 +552,7 @@
 	}
 	.relay-timed-on__copy {
 		margin: 0;
-		color: var(--cw-text-muted, #475467);
+		color: var(--cw-text-secondary);
 		font-size: 0.9rem;
 	}
 	.relay-timed-on__controls {

@@ -11,6 +11,7 @@
  * It is the single source of truth for the unit option lists too (the settings
  * form imports them from here) so convert-from ↔ convert-to never drift.
  */
+import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
 import type { PreferencesDto } from '$lib/api/api.dtos';
 import { formatNumber } from '$lib/i18n/format';
 import { m } from '$lib/paraglide/messages.js';
@@ -240,7 +241,7 @@ export function formatSensorMeasurement(
 ): FormattedMeasurement {
 	if (labelFor(field).format === 'boolean') {
 		if (value === null || value === undefined) {
-			return { value: null, unit: '', valueDisplay: '—', display: '—' };
+			return { value: null, unit: '', valueDisplay: CW_EMPTY_VALUE, display: CW_EMPTY_VALUE };
 		}
 		const truthy =
 			value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
@@ -251,7 +252,7 @@ export function formatSensorMeasurement(
 	const unit = resolveDisplayUnit(field, preferences);
 
 	if (value === null || value === undefined) {
-		return { value: null, unit, valueDisplay: '—', display: '—' };
+		return { value: null, unit, valueDisplay: CW_EMPTY_VALUE, display: CW_EMPTY_VALUE };
 	}
 	const n = typeof value === 'number' ? value : Number(value);
 	if (!Number.isFinite(n)) {

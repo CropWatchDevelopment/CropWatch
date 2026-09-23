@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { CwCalendar, CwCard, CwChip } from '@cropwatchdevelopment/cwui';
+	import { CwCalendar, CwCard, CwChip, formatCwMeasurement } from '@cropwatchdevelopment/cwui';
 	import { ApiService } from '$lib/api/api.service';
-	import { formatNumber } from '$lib/i18n/format';
+	import { formatNumber, getIntlLocale } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwCalendarLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		buildDailyTrafficSummaries,
 		formatMeasurement,
@@ -163,6 +164,8 @@
 	</div>
 
 	<CwCalendar
+		locale={getIntlLocale()}
+		labels={cwCalendarLabels()}
 		bind:year={calendarYear}
 		bind:month={calendarMonth}
 		maxDate={new Date()}
@@ -179,16 +182,11 @@
 						<div class="traffic-calendar__weather-panel">
 							<div class="traffic-calendar__weather-topline">
 								<p class="traffic-calendar__weather-temp">
-									{weather.temperatureHighC !== null
-										? `${Math.round(weather.temperatureHighC)}°`
-										: '--'}
+									{formatCwMeasurement(weather.temperatureHighC, '°', { decimals: 0 })}
 								</p>
 								<p class="traffic-calendar__weather-low">
 									{m.traffic_low_temperature({
-										value:
-											weather.temperatureLowC !== null
-												? `${Math.round(weather.temperatureLowC)}°`
-												: '--'
+										value: formatCwMeasurement(weather.temperatureLowC, '°', { decimals: 0 })
 									})}
 								</p>
 							</div>

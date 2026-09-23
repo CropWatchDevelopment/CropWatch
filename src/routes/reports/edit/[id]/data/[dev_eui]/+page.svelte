@@ -360,7 +360,7 @@
 	.report-edit-data__staged {
 		margin-right: auto;
 		align-self: center;
-		color: var(--cw-color-text-muted, #6b7280);
+		color: var(--cw-text-muted);
 		font-size: 0.875rem;
 	}
 </style>

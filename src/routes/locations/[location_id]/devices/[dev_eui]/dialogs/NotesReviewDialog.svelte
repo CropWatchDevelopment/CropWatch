@@ -10,9 +10,13 @@
 		type CwCalendarScrollItem,
 		type CwRangeDateValue
 	} from '@cropwatchdevelopment/cwui';
-	import { cwCalendarScrollLabels, cwDateTimeRangePickerLabels } from '$lib/i18n/cwuiLabels';
+	import {
+		cwCalendarScrollLabels,
+		cwDateTimeRangePickerLabels,
+		cwSearchInputLabels
+	} from '$lib/i18n/cwuiLabels';
 	import NOTE_ICON from '$lib/images/icons/notes_history.svg';
-	import { formatDateTime } from '$lib/i18n/format';
+	import { formatDateTime, getIntlLocale } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
 	import { ApiService } from '$lib/api/api.service';
 	import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
@@ -217,12 +221,14 @@
 	<div class="notes-review-dialog-content">
 		<div class="mb-4 flex flex-row items-center gap-4">
 			<CwSearchInput
+				labels={cwSearchInputLabels()}
 				id="device-notes-review-search"
 				bind:value={search}
 				placeholder={m.display_note_search_placeholder()}
 				class="w-full"
 			/>
 			<CwDateTimeRangePicker
+				locale={getIntlLocale()}
 				class="w-full"
 				mode="range"
 				granularity="month"
@@ -374,6 +380,6 @@
 	.notes-review-dialog__error {
 		font-size: 0.875rem;
 		line-height: 1.5;
-		color: var(--cw-danger, #b91c1c);
+		color: var(--cw-tone-danger-text);
 	}
 </style>

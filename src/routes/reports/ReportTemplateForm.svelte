@@ -20,6 +20,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import type { CwAlertPointsValue } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwMultiSelectLabels } from '$lib/i18n/cwuiLabels';
 	import ReportCadenceSection from './ReportCadenceSection.svelte';
 	import ReportProcessingSchedulesSection from './ReportProcessingSchedulesSection.svelte';
 	import ReportRecipientsSection from './ReportRecipientsSection.svelte';
@@ -309,6 +310,7 @@
 		/>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<CwDropdown
+				labels={cwDropdownLabels()}
 				id="report-form-data-pull-interval-select"
 				label={m.reports_new_data_pull_interval()}
 				options={dataPullIntervalOptions}
@@ -336,6 +338,7 @@
 			</AppNotice>
 		{:else}
 			<CwMultiSelect
+				labels={cwMultiSelectLabels()}
 				id="report-form-devices-multiselect"
 				showAllSelectedItems={true}
 				label={m.devices_device()}
@@ -344,6 +347,7 @@
 				groups={deviceGroups}
 				dropdownHeight="24rem"
 				searchPlaceholder={m.rules_filter_device_placeholder()}
+				noResultsLabel={m.cwui_multi_no_matches()}
 				bind:value={selectedDevices}
 				required
 			/>

@@ -2,6 +2,7 @@
 	import { AppFormStack, AppNotice } from '$lib/components/layout';
 	import Icon from '$lib/components/Icon.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		CwButton,
 		CwDropdown,
@@ -68,12 +69,14 @@
 
 				<div class="report-field-grid report-field-grid--three">
 					<CwDropdown
+						labels={cwDropdownLabels()}
 						id={`report-schedules-${index}-day-select`}
 						label={m.reports_schedule_day_of_week()}
 						options={daysOfTheWeek}
 						bind:value={schedule.day_of_week}
 					/>
 					<CwDropdown
+						labels={cwDropdownLabels()}
 						id={`report-schedules-${index}-rule-type-select`}
 						label={m.reports_schedule_rule_type()}
 						options={ruleTypeOptions}
@@ -194,20 +197,23 @@
 		font-weight: var(--cw-font-medium);
 	}
 
+	/* Native time input sized and coloured like a CWUI control; focus uses the
+	   global CWUI focus ring. */
 	.report-time-input {
 		width: 100%;
-		padding: 0.625rem 0.75rem;
-		border: 1px solid var(--cw-border-muted);
-		border-radius: var(--cw-radius-md);
-		background: var(--cw-bg-surface);
-		color: var(--cw-text-primary);
+		height: var(--cw-control-h-md);
+		padding: 0 var(--cw-control-px-md);
+		border: 1px solid var(--cw-control-border);
+		border-radius: var(--cw-control-radius);
+		background: var(--cw-control-bg);
+		color: var(--cw-control-text);
 		font: inherit;
+		font-size: var(--cw-control-text-md);
+		color-scheme: inherit;
 	}
 
-	.report-time-input:focus {
-		outline: none;
-		border-color: var(--cw-primary-500);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--cw-primary-500) 35%, transparent);
+	.report-time-input:hover {
+		border-color: var(--cw-control-border-hover);
 	}
 
 	@media (max-width: 767px) {

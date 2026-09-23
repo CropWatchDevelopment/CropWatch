@@ -65,7 +65,8 @@
 	const particles = createSceneParticles(PARTICLE_COUNT);
 </script>
 
-<section class="auth-scene p-0 md:p-8">
+<!-- The auth scene is always dark (starfield backdrop), whatever theme the app is set to. -->
+<section class="auth-scene p-0 md:p-8" data-theme="dark">
 	<div class="auth-locale-switcher">
 		<LanguageSwitcher compact />
 	</div>

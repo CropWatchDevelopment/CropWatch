@@ -8,6 +8,7 @@
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { formatCurrency, formatDate } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		CwButton,
 		CwCard,
@@ -412,6 +413,7 @@
 			{#if hasDeviceSub}
 				<div class="billing-seats">
 					<CwInput
+						labels={cwInputLabels()}
 						id="account-billing-add-licenses-input"
 						type="numeric"
 						label={m.billing_add_licenses_label()}
@@ -437,6 +439,7 @@
 			{:else}
 				<div class="billing-seats">
 					<CwInput
+						labels={cwInputLabels()}
 						id="account-billing-buy-quantity-input"
 						type="numeric"
 						label={m.billing_buy_quantity()}
@@ -615,6 +618,7 @@
 		</AppNotice>
 	{:else}
 		<CwDropdown
+			labels={cwDropdownLabels()}
 			id="account-billing-assign-device-select"
 			label={m.billing_assign_device_label()}
 			options={deviceOptions}
@@ -723,7 +727,7 @@
 		font-weight: var(--cw-font-semibold);
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		color: var(--cw-text-tertiary);
+		color: var(--cw-text-muted);
 		border-bottom: 1px solid var(--cw-border-muted);
 	}
 
@@ -749,7 +753,7 @@
 	}
 
 	.license-link {
-		color: var(--cw-text-link, var(--cw-color-primary));
+		color: var(--cw-accent-text);
 		font-weight: var(--cw-font-medium);
 		text-decoration: none;
 	}

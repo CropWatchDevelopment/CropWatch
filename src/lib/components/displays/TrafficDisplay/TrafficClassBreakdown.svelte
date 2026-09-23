@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { formatNumber } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
-	import { appTheme } from '$lib/theme/appTheme.svelte';
 	import {
 		metricEmoji,
 		metricLabelText,
@@ -27,7 +26,7 @@
 					key,
 					value: classTotals[key] ?? 0,
 					share: total > 0 ? ((classTotals[key] ?? 0) / total) * 100 : 0,
-					color: trafficClassColor(appTheme.current, slot >= 0 ? slot : index)
+					color: trafficClassColor(slot >= 0 ? slot : index)
 				};
 			})
 			.sort((left, right) => right.value - left.value)

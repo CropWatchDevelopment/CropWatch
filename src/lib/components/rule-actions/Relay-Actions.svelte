@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CwDropdown, CwInput } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		MAX_TIMED_RELAY_SECONDS,
 		buildRelayPayload,
@@ -160,6 +161,7 @@
 
 <div class="space-y-4">
 	<CwDropdown
+		labels={cwDropdownLabels()}
 		label={m.devices_device()}
 		placeholder={m.rules_select_device_placeholder()}
 		options={devices}
@@ -167,6 +169,7 @@
 	/>
 
 	<CwDropdown
+		labels={cwDropdownLabels()}
 		label={m.rule_action_action_label()}
 		placeholder={m.rule_action_action_placeholder()}
 		options={actionOptions}
@@ -175,6 +178,7 @@
 
 	{#if isTimedAction}
 		<CwInput
+			labels={cwInputLabels()}
 			label={m.rule_action_on_time_label()}
 			placeholder={m.rule_action_on_time_placeholder()}
 			type="numeric"

@@ -237,12 +237,12 @@
 
 	.report-note-dialog__count {
 		font-size: 0.875rem;
-		color: var(--cw-color-text-muted, #6b7280);
+		color: var(--cw-text-muted);
 		text-align: right;
 	}
 
 	.report-note-dialog__empty {
-		color: var(--cw-color-text-muted, #6b7280);
+		color: var(--cw-text-muted);
 	}
 
 	.report-note-dialog__list {
@@ -262,7 +262,7 @@
 		justify-content: space-between;
 		gap: var(--cw-space-3);
 		padding: var(--cw-space-2);
-		border: 1px solid var(--cw-color-border, #e5e7eb);
+		border: 1px solid var(--cw-border-muted);
 		border-radius: var(--cw-radius-md, 8px);
 	}
 

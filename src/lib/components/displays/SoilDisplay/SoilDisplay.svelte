@@ -15,10 +15,11 @@
 		type CwResponsiveLineSeries,
 		CwPPFDChart,
 		CwVPDChart,
-		DliCard
+		CwDliCard
 	} from '@cropwatchdevelopment/cwui';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getIntlLocale } from '$lib/i18n/format';
 	import { appTheme } from '$lib/theme/appTheme.svelte';
 	import {
 		cwDataTableLabels,
@@ -78,11 +79,12 @@
 
 	let rows = $derived(toSoilRows(historicalData));
 
+	// Missing readings stay null so they render as "—" rather than a fake 0.
 	let latest = $derived({
-		temperature_c: Number(latestData?.temperature_c) || 0,
-		moisture: Number(latestData?.moisture) || 0,
-		ec: Number(latestData?.ec) || 0,
-		ph: Number(latestData?.ph) || 0
+		temperature_c: latestData?.temperature_c ?? null,
+		moisture: latestData?.moisture ?? null,
+		ec: latestData?.ec ?? null,
+		ph: latestData?.ph ?? null
 	});
 
 	// Stats are computed on converted values so min/avg/max/stdDev are all in the
@@ -147,6 +149,7 @@
 	<!-- KPI cards -->
 	<div class="kpi-grid">
 		<CwStatCard
+			locale={getIntlLocale()}
 			title={m.rule_subject_temperature()}
 			stats={temperatureStats}
 			unit={temperatureUnit}
@@ -155,6 +158,7 @@
 		/>
 
 		<CwStatCard
+			locale={getIntlLocale()}
 			title={m.rule_subject_soil_moisture()}
 			stats={soilMoistureStats}
 			unit="%"
@@ -169,9 +173,13 @@
 			<p class="kpi-value">{ecKpi.valueDisplay}<span>{ecKpi.unit}</span></p>
 		</CwCard>
 
-		{#if latest.ph > 0}
+		<!-- Not every soil probe measures pH; hide the tile rather than show a blank. -->
+		{#if latest.ph != null}
 			<CwCard title={m.rule_subject_ph()} subtitle={m.display_latest_reading()} elevated>
-				<p class="kpi-value">{latest.ph.toFixed(1)}</p>
+				{@const phKpi = formatSensorMeasurement('ph', latest.ph, app.preferences, {
+					maximumFractionDigits: 1
+				})}
+				<p class="kpi-value">{phKpi.valueDisplay}</p>
 			</CwCard>
 		{/if}
 	</div>
@@ -179,6 +187,7 @@
 	<!-- Combined-sensor visualizations (awaiting data) -->
 	<!-- Full-width time series; the dual charts pair up on desktop, stack on mobile. -->
 	<CwResponsiveLineChart
+		locale={getIntlLocale()}
 		labels={cwResponsiveLineChartLabels()}
 		series={airSeries}
 		title={m.display_air_quality()}
@@ -191,10 +200,22 @@
 	/>
 
 	<div class="chart-pair">
-		<CwVPDChart labels={cwVpdChartLabels()} noData={m.display_awaiting_sensor_data()} />
+		<CwVPDChart
+			locale={getIntlLocale()}
+			labels={cwVpdChartLabels()}
+			noData={m.display_awaiting_sensor_data()}
+		/>
 		<div class="chart-pair__stack">
-			<CwPPFDChart labels={cwPpfdChartLabels()} noData={m.display_awaiting_sensor_data()} />
-			<DliCard labels={cwDliCardLabels()} noData={m.display_awaiting_sensor_data()} />
+			<CwPPFDChart
+				locale={getIntlLocale()}
+				labels={cwPpfdChartLabels()}
+				noData={m.display_awaiting_sensor_data()}
+			/>
+			<CwDliCard
+				locale={getIntlLocale()}
+				labels={cwDliCardLabels()}
+				noData={m.display_awaiting_sensor_data()}
+			/>
 		</div>
 	</div>
 

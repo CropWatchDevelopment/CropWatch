@@ -72,34 +72,34 @@
 			<div class="flex flex-row">
 				<div class="mt-2 w-full flex-col text-center">
 					<Icon src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
-					<span class="text-lg text-gray-400">{m.auth_check_email_you()}</span>
+					<span class="text-lg text-(--cw-text-muted)">{m.auth_check_email_you()}</span>
 				</div>
 				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
 					<Icon src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
-					<span class="text-lg text-gray-400">{m.auth_check_email_check()}</span>
+					<span class="text-lg text-(--cw-text-muted)">{m.auth_check_email_check()}</span>
 				</div>
 				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
 					<Icon src={EMAIL_ICON} alt={m.auth_check_email_email()} class="mx-auto" />
-					<span class="text-lg text-gray-400">{m.auth_check_email_email()}</span>
+					<span class="text-lg text-(--cw-text-muted)">{m.auth_check_email_email()}</span>
 				</div>
 			</div>
 			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_cant_find_it()}</p>
 			<div class="flex flex-row">
 				<div class="mt-2 w-full flex-col text-center">
 					<Icon src={YOU_ICON} alt={m.auth_check_email_you()} class="mx-auto" />
-					<span class="text-lg text-gray-400">{m.auth_check_email_you()}</span>
+					<span class="text-lg text-(--cw-text-muted)">{m.auth_check_email_you()}</span>
 				</div>
 				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
 					<Icon src={EYE_ICON} alt={m.auth_check_email_check()} class="mx-auto" />
-					<span class="text-lg text-gray-400">{m.auth_check_email_check()}</span>
+					<span class="text-lg text-(--cw-text-muted)">{m.auth_check_email_check()}</span>
 				</div>
 				<Icon src={FORWARD_ICON} alt={m.auth_check_email_next()} class="mx-4 my-2" />
 				<div class="mt-2 w-full flex-col text-center">
 					<Icon src={SPAM_ICON} alt={m.auth_check_email_spam()} class="mx-auto" preserveColor />
-					<span class="text-lg text-gray-400">{m.auth_check_email_spam()}</span>
+					<span class="text-lg text-(--cw-text-muted)">{m.auth_check_email_spam()}</span>
 				</div>
 			</div>
 			<p class="my-3 w-full text-center font-bold">{m.auth_check_email_not_there()}</p>

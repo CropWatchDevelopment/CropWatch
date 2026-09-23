@@ -8,6 +8,7 @@
 	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import '../login/style.css';
 
 	const toast = useCwToast();
@@ -54,6 +55,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_password_label()}</span>
 				<CwInput
+					labels={cwInputLabels()}
 					id="update-password-input"
 					class="auth-input"
 					name="password"
@@ -81,6 +83,7 @@
 			<label class="field-block">
 				<span class="field-label">{m.auth_update_password_confirm_label()}</span>
 				<CwInput
+					labels={cwInputLabels()}
 					id="update-password-confirm-input"
 					class="auth-input"
 					name="confirmPassword"

@@ -92,16 +92,4 @@ body {
 	.app-shell__content {
 		min-width: 100%;
 	}
-
-	:global(.cw-sidenav) {
-		position: fixed;
-		inset-block: 0;
-		inset-inline-start: 0;
-		z-index: calc(var(--cw-z-overlay) + 1);
-		height: 100dvh;
-		max-width: calc(
-			100vw - var(--app-shell-padding-inline-start) - var(--app-shell-padding-inline-end)
-		);
-		box-shadow: var(--cw-shadow-lg);
-	}
 }

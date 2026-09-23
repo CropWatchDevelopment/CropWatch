@@ -79,7 +79,7 @@
 				</form>
 			</div>
 
-			<CwSeparator spacing="0" />
+			<CwSeparator inset="0" />
 		{/if}
 
 		<div class="certificate-item">

@@ -3,6 +3,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwSideNavLabels, cwThemePickerLabels } from '$lib/i18n/cwuiLabels';
 	import {
 		CwDuration,
 		CwExpandPanel,
@@ -42,23 +43,33 @@
 	let selectedLocationGroup = $derived(page.url.searchParams.get('locationGroup') ?? '');
 	let dashboardFiltersOpen = $state(false);
 
+	// Highlight the section for the current route (the side nav only tracks
+	// clicks on its own, so a reload or deep link would show nothing selected).
+	function isCurrentSection(href: string): boolean {
+		const path = page.url.pathname;
+		return href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`);
+	}
+
 	const navItems = $derived<CwSideNavItem[]>([
 		{
 			id: 'dashboard',
 			label: m.nav_dashboard(),
 			href: '/',
+			active: isCurrentSection('/'),
 			icon: { path: DASHBOARD_ICON_PATH }
 		},
 		{
 			id: 'locations',
 			label: m.nav_locations(),
 			href: '/locations',
+			active: isCurrentSection('/locations'),
 			icon: { path: LOCATIONS_ICON_PATH }
 		},
 		{
 			id: 'rules',
 			label: m.nav_rules(),
 			href: '/rules',
+			active: isCurrentSection('/rules'),
 			icon: { path: RULES_ICON_PATH },
 			group: m.nav_group_info_management()
 		},
@@ -66,6 +77,7 @@
 			id: 'reports',
 			label: m.nav_reports(),
 			href: '/reports',
+			active: isCurrentSection('/reports'),
 			icon: { path: REPORTS_ICON_PATH },
 			group: m.nav_group_info_management()
 		},
@@ -73,6 +85,7 @@
 			id: 'gateways',
 			label: m.nav_gateways(),
 			href: '/gateways',
+			active: isCurrentSection('/gateways'),
 			icon: { path: GATEWAYS_ICON_PATH },
 			group: m.nav_group_connectivity_hardware()
 		}
@@ -163,7 +176,14 @@
 	}
 </script>
 
-<CwSideNav bind:mode items={navItems} responsive onselect={closeSidebarOnMobile}>
+<CwSideNav
+	labels={cwSideNavLabels()}
+	ariaLabel={m.cwui_sidenav_aria()}
+	bind:mode
+	items={navItems}
+	responsive
+	onselect={closeSidebarOnMobile}
+>
 	{#snippet header()}
 		<div class="app-sidebar__brand">
 			<img src={CROPWATCH_LOGO} alt={m.app_name()} class="app-sidebar__brand-mark" />
@@ -175,7 +195,7 @@
 		<div class="app-sidebar__mobile-utilities lg:hidden">
 			<div class="app-sidebar__mobile-utilities-controls">
 				<LanguageSwitcher compact />
-				<CwThemePicker />
+				<CwThemePicker labels={cwThemePickerLabels()} />
 			</div>
 		</div>
 
@@ -240,7 +260,7 @@
 		flex-direction: row;
 		align-items: center;
 		gap: var(--cw-space-2);
-		color: var(--cw-text-primary);
+		color: var(--cw-header-fg);
 	}
 
 	.app-sidebar__brand-mark {
@@ -251,7 +271,6 @@
 	.app-sidebar__brand-name {
 		font-size: 1.125rem;
 		font-weight: var(--cw-font-semibold);
-		color: white;
 	}
 
 	:global(.cw-sidenav__above-content) {

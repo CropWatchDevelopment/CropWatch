@@ -12,6 +12,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import Icon from '$lib/components/Icon.svelte';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 
@@ -84,6 +85,7 @@
 				bind:value={newUserEmail}
 			/>
 			<CwDropdown
+				labels={cwDropdownLabels()}
 				id="location-permissions-level-select"
 				name="permission_level"
 				label={m.locations_permission_level()}

@@ -6,6 +6,7 @@
 	import { CwButton, CwDialog, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { downloadCsv } from '../csvExport';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import NO_ICON from '$lib/images/icons/no.svg';
 
 	interface Props {
@@ -122,6 +123,7 @@
 >
 	<div class="csv-export-dialog">
 		<CwInput
+			labels={cwInputLabels()}
 			id="device-csv-traffic-export-year-input"
 			label={m.devices_export_traffic_label_year()}
 			type="numeric"
@@ -132,6 +134,7 @@
 		/>
 
 		<CwInput
+			labels={cwInputLabels()}
 			id="device-csv-traffic-export-month-input"
 			label={m.devices_export_traffic_label_month()}
 			type="numeric"
@@ -178,6 +181,6 @@
 		margin: 0;
 		font-size: 0.875rem;
 		line-height: 1.5;
-		color: var(--cw-danger, #b91c1c);
+		color: var(--cw-tone-danger-text);
 	}
 </style>

@@ -3,6 +3,7 @@
 	import { AppNotice } from '$lib/components/layout';
 	import { getPermissionLevelOptions } from '$lib/i18n/options';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import { CwButton, CwCard, CwDropdown, CwSeparator } from '@cropwatchdevelopment/cwui';
 
 	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -147,6 +148,7 @@
 							<div class="permission-edit">
 								<div class="field-stack">
 									<CwDropdown
+										labels={cwDropdownLabels()}
 										id={`device-owner-permissions-row-${row.key}-permission-level-select`}
 										label={m.locations_permission_level()}
 										options={permissionOptions}
@@ -186,7 +188,7 @@
 						</form>
 					</div>
 					{#if index < permissionRows.length - 1}
-						<CwSeparator spacing="0" />
+						<CwSeparator inset="0" />
 					{/if}
 				{/if}
 			{/each}

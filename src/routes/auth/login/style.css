@@ -1,16 +1,3 @@
-:global(.auth-card.cw-card) {
-	width: 100%;
-	border-radius: 1rem;
-	border-color: rgb(65 91 136 / 60%);
-	background: linear-gradient(180deg, rgb(11 27 62 / 95%) 0%, rgb(11 25 58 / 93%) 100%);
-	box-shadow: 0 34px 90px rgb(2 8 24 / 70%);
-	overflow: hidden;
-}
-
-:global(.auth-card .cw-card__body) {
-	padding: 0;
-}
-
 .auth-shell {
 	padding: 1.8rem 1.4rem 1rem;
 }
@@ -38,24 +25,24 @@
 	font-size: 1.5rem;
 	font-weight: 700;
 	letter-spacing: -0.01em;
-	color: rgb(239 245 255);
+	color: var(--cw-text-primary);
 }
 
 .auth-subtitle {
 	margin: 0.45rem 0 1.3rem;
 	text-align: center;
 	font-size: 1rem;
-	color: rgb(158 176 205);
+	color: var(--cw-text-secondary);
 }
 
 .auth-alert {
 	margin: 0 0 1rem;
-	border: 1px solid rgb(251 191 36 / 45%);
-	border-radius: 0.75rem;
-	background: rgb(251 191 36 / 12%);
+	border: 1px solid var(--cw-tone-warning-border);
+	border-radius: var(--cw-radius-lg);
+	background: var(--cw-tone-warning-bg-subtle);
 	padding: 0.6rem 0.8rem;
 	font-size: 0.88rem;
-	color: rgb(255 239 196);
+	color: var(--cw-tone-warning-text);
 }
 
 .auth-form {
@@ -72,78 +59,7 @@
 	font-size: 0.84rem;
 	font-weight: 500;
 	letter-spacing: 0.06em;
-	color: rgb(151 171 201);
-}
-
-:global(.auth-input .cw-input__field) {
-	min-height: 3rem;
-	border-color: rgb(58 84 126 / 80%);
-	border-radius: 0.8rem;
-	background: rgb(23 41 79 / 78%);
-	padding: 0.78rem 0.9rem;
-	font-size: 1.06rem;
-	color: rgb(223 236 255);
-}
-
-:global(.auth-input .cw-input__field::placeholder) {
-	color: rgb(140 162 196);
-}
-
-:global(.auth-input .cw-input__field:focus) {
-	border-color: rgb(86 140 214 / 90%);
-	box-shadow: 0 0 0 2px rgb(70 137 220 / 26%);
-}
-
-:global(.auth-primary.cw-button) {
-	min-height: 3rem;
-	border-radius: 0.8rem;
-	border-color: rgb(83 149 213 / 70%);
-	background: linear-gradient(180deg, #3889cb 0%, #2f74b3 100%);
-	color: rgb(242 248 255);
-	font-size: 1.12rem;
-	font-weight: 500;
-}
-
-:global(.auth-primary.cw-button:hover:not(:disabled)) {
-	border-color: rgb(108 167 228 / 76%);
-	background: linear-gradient(180deg, #4395d8 0%, #347fbe 100%);
-}
-
-.auth-button-link {
-	display: inline-flex;
-	width: 100%;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	box-sizing: border-box;
-	border: 1px solid transparent;
-	text-decoration: none;
-	line-height: 1;
-	transition:
-		background-color 120ms ease,
-		border-color 120ms ease,
-		color 120ms ease,
-		box-shadow 120ms ease;
-}
-
-.auth-button-link:focus-visible {
-	outline: none;
-	box-shadow: 0 0 0 3px rgb(70 137 220 / 26%);
-}
-
-.auth-button-link--primary {
-	min-height: 3rem;
-	border-radius: 0.8rem;
-	border-color: rgb(83 149 213 / 70%);
-	background: linear-gradient(180deg, #3889cb 0%, #2f74b3 100%);
-	color: rgb(242 248 255);
-	font-size: 1.12rem;
-	font-weight: 500;
-}
-
-.auth-button-link--primary:hover {
-	border-color: rgb(108 167 228 / 76%);
-	background: linear-gradient(180deg, #4395d8 0%, #347fbe 100%);
+	color: var(--cw-text-secondary);
 }
 
 .action-grid {
@@ -152,41 +68,61 @@
 	gap: 0.7rem;
 }
 
-:global(.auth-secondary.cw-button) {
-	min-height: 2.48rem;
-	border-radius: 0.75rem;
-	border-color: rgb(72 96 136 / 80%);
-	background: rgb(33 53 90 / 84%);
-	color: rgb(218 229 245);
-	font-size: 1rem;
-	font-weight: 450;
+/* Navigation links styled to match CwButton (md) so they sit flush with the
+   real buttons on the auth cards. Focus uses the global CWUI ring. */
+.auth-button-link {
+	display: inline-flex;
+	width: 100%;
+	min-height: var(--cw-control-h-md);
+	align-items: center;
+	justify-content: center;
+	gap: var(--cw-space-2);
+	box-sizing: border-box;
+	padding: 0 var(--cw-space-4);
+	border: 1px solid transparent;
+	border-radius: var(--cw-control-radius);
+	font-size: var(--cw-control-text-md);
+	font-weight: var(--cw-font-medium);
+	line-height: 1;
+	text-align: center;
+	text-decoration: none;
+	transition:
+		filter var(--cw-duration-fast) var(--cw-ease-default),
+		border-color var(--cw-duration-fast) var(--cw-ease-default),
+		color var(--cw-duration-fast) var(--cw-ease-default);
 }
 
-:global(.auth-secondary.cw-button:hover:not(:disabled)) {
-	border-color: rgb(95 126 174 / 85%);
-	background: rgb(39 62 102 / 88%);
+.auth-button-link--primary {
+	background: var(--cw-button-primary-bg);
+	color: var(--cw-button-primary-text);
+	border-color: var(--cw-button-primary-border);
+	box-shadow: var(--cw-button-primary-shadow);
+}
+
+.auth-button-link--primary:hover {
+	background: var(--cw-button-primary-bg-hover);
+	border-color: var(--cw-button-primary-border-hover);
+	color: var(--cw-button-primary-text-hover);
 }
 
 .auth-button-link--secondary {
-	min-height: 2.48rem;
-	border-radius: 0.75rem;
-	border-color: rgb(72 96 136 / 80%);
-	background: rgb(33 53 90 / 84%);
-	color: rgb(218 229 245);
-	font-size: 1rem;
-	font-weight: 450;
+	background: var(--cw-button-secondary-bg);
+	color: var(--cw-button-secondary-text);
+	border-color: var(--cw-button-secondary-border);
+	box-shadow: var(--cw-button-secondary-shadow);
 }
 
 .auth-button-link--secondary:hover {
-	border-color: rgb(95 126 174 / 85%);
-	background: rgb(39 62 102 / 88%);
+	background: var(--cw-button-secondary-bg-hover);
+	border-color: var(--cw-button-secondary-border-hover);
+	color: var(--cw-button-secondary-text-hover);
 }
 
 .security-copy {
 	margin: 1.25rem 0 0;
 	text-align: center;
 	font-size: 0.84rem;
-	color: rgb(135 155 187);
+	color: var(--cw-text-muted);
 }
 
 @media (max-width: 420px) {

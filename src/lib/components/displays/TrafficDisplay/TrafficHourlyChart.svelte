@@ -34,7 +34,6 @@
 			id: key,
 			label: metricLabel(key),
 			color: trafficClassColor(
-				appTheme.current,
 				TRAFFIC_CLASS_KEYS.indexOf(key as (typeof TRAFFIC_CLASS_KEYS)[number]) >= 0
 					? TRAFFIC_CLASS_KEYS.indexOf(key as (typeof TRAFFIC_CLASS_KEYS)[number])
 					: index

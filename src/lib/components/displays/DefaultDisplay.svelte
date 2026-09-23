@@ -73,7 +73,7 @@
 	td {
 		padding: 0.5rem 0.75rem;
 		text-align: left;
-		border-bottom: 1px solid var(--cw-border, #e5e7eb);
+		border-bottom: 1px solid var(--cw-border-muted);
 	}
 	th {
 		font-weight: 600;

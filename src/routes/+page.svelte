@@ -10,6 +10,7 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { ApiService } from '$lib/api/api.service';
 	import { m } from '$lib/paraglide/messages.js';
+	import { cwSearchInputLabels } from '$lib/i18n/cwuiLabels';
 	import TABLE_ICON from '$lib/images/icons/table.svg';
 	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
 	import GRID_VIEW_ICON from '$lib/images/icons/grid_view.svg';
@@ -114,6 +115,7 @@
 					class="hidden w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-start md:flex"
 				>
 					<CwSearchInput
+						labels={cwSearchInputLabels()}
 						id="dashboard-search"
 						bind:value={searchName}
 						placeholder={m.dashboard_search_placeholder()}
@@ -147,7 +149,7 @@
 					</CwButton>
 					{#if view === 'cards'}
 						<div
-							class="hidden items-center justify-end gap-1 border-t border-slate-600/70 pt-2 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-2 md:flex"
+							class="hidden items-center justify-end gap-1 border-t border-(--cw-border-muted) pt-2 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-2 md:flex"
 						>
 							<CwButton
 								id="dashboard-grid-layout-button"
@@ -181,7 +183,7 @@
 			{/if}
 		{:else}
 			<div class="flex min-h-0 flex-1 items-center justify-center px-6 pb-6">
-				<p class="text-sm text-slate-400">{m.dashboard_loading_view()}</p>
+				<p class="text-sm text-(--cw-text-muted)">{m.dashboard_loading_view()}</p>
 			</div>
 		{/if}
 	</div>

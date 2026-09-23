@@ -151,18 +151,16 @@
 			maxlength={NOTE_TITLE_MAX_LENGTH}
 		></CwInput>
 
-		<div class="notes-create-dialog__field">
-			<p class="notes-create-dialog__label">{m.display_note_body_label()}</p>
-		</div>
 		<CwTextArea
+			label={m.display_note_body_label()}
 			required
-			class="rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+			rows={6}
+			showCount
 			onkeydown={handleEditorKeydown}
 			placeholder={m.display_enter_note_here()}
 			bind:value={noteText}
 			maxlength={NOTE_BODY_MAX_LENGTH}
 		></CwTextArea>
-		<p class="notes-create-dialog__count">{noteText.length}/{NOTE_BODY_MAX_LENGTH}</p>
 		<CwSwitch label={m.display_include_in_report()} bind:checked={includeInReport} />
 	</div>
 
@@ -188,48 +186,5 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-	}
-
-	.notes-create-dialog__field {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.notes-create-dialog__label,
-	.notes-create-dialog__count {
-		margin: 0;
-	}
-
-	.notes-create-dialog__label {
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--cw-text-primary, #111827);
-	}
-
-	.notes-create-dialog__count {
-		font-size: 0.875rem;
-		color: var(--cw-text-muted, #6b7280);
-		text-align: right;
-	}
-
-	:global(.cw-textarea__field) {
-		background-color: #1e1e1e;
-		color: #ffffff;
-		border: 1px solid #333333;
-	}
-
-	/* Note editor sizing (was an inline style on the CwTextArea). Anchored to
-	   the dialog wrapper so it outweighs CwTextArea's own field styles. */
-	.notes-create-dialog :global(.cw-textarea__field) {
-		width: 100%;
-		height: 150px;
-		padding: 0.5rem;
-		font-size: 1rem;
-	}
-
-	:global(.cw-textarea__field:focus) {
-		border-color: #3b82f6;
-		box-shadow: 0 0 0 1px #3b82f6;
 	}
 </style>
