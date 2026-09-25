@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { ApiService } from '$lib/api/api.service';
-import type { DeviceStatusSummary, RuleTemplateDto } from '$lib/api/api.dtos';
+import type { DeviceStatusSummary, MeContextDto, RuleTemplateDto } from '$lib/api/api.dtos';
 import { withRedirectParam } from '$lib/utils/auth-redirect';
 import type { LayoutServerLoad } from './$types';
 
@@ -66,6 +66,7 @@ async function loadOverviewData(apiServiceInstance: ApiService): Promise<{
 export const load: LayoutServerLoad = async ({ locals, fetch, url, untrack }) => {
 	let profile;
 	let preferences;
+	let orgContext: MeContextDto | undefined;
 	let overview = {
 		deviceStatuses: EMPTY_DEVICE_STATUSES,
 		triggeredRules: [] as RuleTemplateDto[],
@@ -82,12 +83,13 @@ export const load: LayoutServerLoad = async ({ locals, fetch, url, untrack }) =>
 			authToken: locals.jwtString
 		});
 
-		const [profileResult, preferencesResult, overviewResult, legalResult] =
+		const [profileResult, preferencesResult, overviewResult, legalResult, orgContextResult] =
 			await Promise.allSettled([
 				apiServiceInstance.getUserProfile(),
 				apiServiceInstance.getPreferences(),
 				loadOverviewData(apiServiceInstance),
-				apiServiceInstance.getLegalStatus()
+				apiServiceInstance.getLegalStatus(),
+				apiServiceInstance.getMeContext()
 			]);
 
 		if (profileResult.status === 'fulfilled') {
@@ -106,6 +108,14 @@ export const load: LayoutServerLoad = async ({ locals, fetch, url, untrack }) =>
 			overview = overviewResult.value;
 		} else {
 			console.error('Failed to fetch overview data:', overviewResult.reason);
+		}
+
+		// Org standing drives capability gating; fail-closed (undefined hides
+		// every org-gated element) and never blocks the page.
+		if (orgContextResult.status === 'fulfilled') {
+			orgContext = orgContextResult.value;
+		} else {
+			console.error('Failed to fetch org context:', orgContextResult.reason);
 		}
 
 		// Gate on updated legal documents — fail open: only a well-formed,
@@ -132,6 +142,7 @@ export const load: LayoutServerLoad = async ({ locals, fetch, url, untrack }) =>
 		authToken: locals.jwtString ?? null,
 		profile,
 		preferences,
+		orgContext,
 		overview
 	};
 };

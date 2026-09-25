@@ -11,11 +11,12 @@
 	import { isStrongPassword, type IPasswordValidationResult } from '$lib/utils/strongPasswordCheck';
 	import { applyAction, enhance } from '$app/forms';
 	import { readRedirectPath } from '$lib/utils/auth-redirect';
-	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { CwButton, CwCard, CwInput, CwRadio, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import CreateAccountPasswordFields from './CreateAccountPasswordFields.svelte';
 	import LegalConsentFields from '$lib/components/auth/LegalConsentFields.svelte';
 
+	let { data } = $props();
 	const toast = useCwToast();
 
 	let submitting: boolean = $state(false);
@@ -28,6 +29,7 @@
 	let password: string = $state('');
 	let confirmPassword: string = $state('');
 
+	let accountType: string = $state('personal');
 	let agreedPrivacy: boolean = $state(false);
 	let agreedTerms: boolean = $state(false);
 	let agreedEula: boolean = $state(false);
@@ -203,6 +205,28 @@
 				/>
 			</label>
 
+			{#if data.companySignupEnabled}
+				<fieldset class="field-block account-type-fields">
+					<legend class="field-label">{m.auth_account_type_label()}</legend>
+					<CwRadio
+						id="create-account-type-personal"
+						name="account_type"
+						value="personal"
+						bind:group={accountType}
+						label={m.auth_account_type_personal()}
+						description={m.auth_account_type_personal_hint()}
+					/>
+					<CwRadio
+						id="create-account-type-company"
+						name="account_type"
+						value="company"
+						bind:group={accountType}
+						label={m.auth_account_type_company()}
+						description={m.auth_account_type_company_hint()}
+					/>
+				</fieldset>
+			{/if}
+
 			<LegalConsentFields bind:agreedPrivacy bind:agreedTerms bind:agreedEula {allConsentsGiven} />
 
 			<CwButton
@@ -263,5 +287,20 @@
 		.name-row {
 			grid-template-columns: 1fr;
 		}
+	}
+
+	.account-type-fields {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-2);
+		margin: 0;
+		padding: 0;
+		border: 0;
+		text-align: start;
+	}
+
+	.account-type-fields legend {
+		padding: 0;
+		margin-bottom: var(--cw-space-1);
 	}
 </style>

@@ -1,8 +1,18 @@
+import { env } from '$env/dynamic/private';
 import { m } from '$lib/paraglide/messages.js';
 import { readRedirectPathFromUrl, withRedirectParam } from '$lib/utils/auth-redirect';
 import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
 import { getSupabaseClient } from '$lib/supabase.server';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ url }) => {
+	// Company self-serve signup is behind ORGS_ENABLED (plan §12 #5), and
+	// invite-link signups are always personal (the invite decides the org).
+	return {
+		companySignupEnabled: env.ORGS_ENABLED === 'true' && !url.searchParams.has('invite')
+	};
+};
 
 function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 	if (typeof value !== 'string') return null;
@@ -87,6 +97,16 @@ export const actions: Actions = {
 		// ── Supabase sign-up (anon key — respects RLS) ─────────────
 		const supabase = getSupabaseClient();
 
+		// The 025 signup trigger reads account_type/company_name to create the
+		// home org. Company signups are honored only while ORGS_ENABLED is on
+		// and never from invite-link signups (they must stay personal).
+		const accountType =
+			env.ORGS_ENABLED === 'true' &&
+			!url.searchParams.has('invite') &&
+			data.get('account_type') === 'company'
+				? 'company'
+				: 'personal';
+
 		const { error: signUpError } = await supabase.auth.signUp({
 			email,
 			password,
@@ -95,6 +115,8 @@ export const actions: Actions = {
 					first_name: firstName,
 					last_name: lastName,
 					company,
+					account_type: accountType,
+					...(accountType === 'company' ? { company_name: company } : {}),
 					agreed_privacy: true,
 					agreed_terms: true,
 					agreed_eula: true

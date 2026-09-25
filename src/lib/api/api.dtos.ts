@@ -1026,3 +1026,92 @@ export interface BillingProductsResponse {
 	device: BillingProduct | null;
 	reporting: BillingProduct | null;
 }
+
+// ---------------------------------------------------------------------------
+// Organizations (PR-B)
+// ---------------------------------------------------------------------------
+
+export type OrgRole = 'owner' | 'manager' | 'member' | 'guest';
+export type OrgType = 'personal' | 'company';
+
+export interface MeOrgDto {
+	id: string;
+	type: OrgType;
+	name: string;
+	role: Exclude<OrgRole, 'guest'>;
+	capabilities: string[];
+}
+
+export interface MeContextDto {
+	orgs_enabled: boolean;
+	is_staff: boolean;
+	suspended: boolean;
+	org: MeOrgDto | null;
+	guest_orgs: { id: string; name: string; expires_at: string | null }[];
+	child_orgs: { id: string; name: string }[];
+}
+
+export interface OrganizationDto {
+	id: string;
+	type: OrgType;
+	name: string;
+	role: OrgRole | 'staff' | null;
+	parent: { id: string; name: string | null } | null;
+	created_at: string;
+}
+
+export interface OrgMemberDto {
+	user_id: string;
+	email: string | null;
+	full_name: string | null;
+	role: OrgRole;
+	status: 'active' | 'suspended';
+	expires_at: string | null;
+	suspended_at: string | null;
+	created_at: string;
+}
+
+export interface OrgLocationGrantDto {
+	location_id: number;
+	default_role: number;
+}
+
+export interface CreateOrgInviteRequest {
+	email: string;
+	role: 'manager' | 'member' | 'guest';
+	location_grants?: OrgLocationGrantDto[];
+	member_expires_at?: string;
+}
+
+export interface OrgInviteDto {
+	id: string;
+	email: string;
+	role: 'manager' | 'member' | 'guest';
+	status: 'pending' | 'accepted' | 'revoked' | 'expired';
+	expires_at: string;
+	created_at: string;
+	member_expires_at: string | null;
+	invited_by: string | null;
+}
+
+export interface InvitePreviewDto {
+	org_name: string | null;
+	role: string;
+	status: string;
+	masked_email: string;
+	invited_by: string | null;
+	expires_at: string;
+}
+
+export interface OrgChildrenDto {
+	children: { id: string; name: string; type: OrgType }[];
+	pending_requests: { id: string; child_org_id: string; status: string; created_at: string }[];
+}
+
+export interface OrgParentRequestDto {
+	id: string;
+	parent_org_id: string;
+	status: string;
+	created_at: string;
+	organizations?: { name: string } | null;
+}
