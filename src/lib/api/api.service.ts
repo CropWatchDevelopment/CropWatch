@@ -67,7 +67,15 @@ import type {
 	BillingLicense,
 	BillingMode,
 	BillingProductsResponse,
-	SubscriptionStateResponse
+	SubscriptionStateResponse,
+	MeContextDto,
+	OrganizationDto,
+	OrgMemberDto,
+	OrgInviteDto,
+	InvitePreviewDto,
+	OrgChildrenDto,
+	OrgParentRequestDto,
+	CreateOrgInviteRequest
 } from './api.dtos';
 
 type FetchLike = typeof fetch;
@@ -162,6 +170,23 @@ const LOCATIONS_ENDPOINT = '/locations';
 const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
 const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
 const LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT = '/locations/{id}/permission-level';
+const ME_CONTEXT_ENDPOINT = '/me/context';
+const ORG_ENDPOINT = '/orgs/{orgId}';
+const ORG_UPGRADE_ENDPOINT = '/orgs/{orgId}/upgrade';
+const ORG_MEMBERS_ENDPOINT = '/orgs/{orgId}/members';
+const ORG_MEMBER_ENDPOINT = '/orgs/{orgId}/members/{userId}';
+const ORG_MEMBER_SUSPEND_ENDPOINT = '/orgs/{orgId}/members/{userId}/suspend';
+const ORG_MEMBER_REINSTATE_ENDPOINT = '/orgs/{orgId}/members/{userId}/reinstate';
+const ORG_INVITES_ENDPOINT = '/orgs/{orgId}/invites';
+const ORG_INVITE_ENDPOINT = '/orgs/{orgId}/invites/{inviteId}';
+const ORG_INVITE_RESEND_ENDPOINT = '/orgs/{orgId}/invites/{inviteId}/resend';
+const ORG_CHILDREN_ENDPOINT = '/orgs/{orgId}/children';
+const ORG_CHILD_ENDPOINT = '/orgs/{orgId}/children/{childId}';
+const ORG_CHILD_REQUESTS_ENDPOINT = '/orgs/{orgId}/children/requests';
+const ORG_PARENT_REQUESTS_ENDPOINT = '/orgs/{orgId}/parent-requests';
+const ORG_PARENT_REQUEST_DECIDE_ENDPOINT = '/orgs/{orgId}/parent-requests/{requestId}/{decision}';
+const INVITE_PREVIEW_ENDPOINT = '/invites/{token}';
+const INVITE_ACCEPT_ENDPOINT = '/invites/{token}/accept';
 const RELAY_ENDPOINT = '/relay/{dev_eui}';
 const RELAY_PULSE_ENDPOINT = '/relay/{dev_eui}/pulse';
 const RULE_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_RULE_TEMPLATES_ENDPOINT ?? '/rules';
@@ -678,6 +703,146 @@ export class ApiService {
 				end: toIsoIfDate(query.end),
 				timezone: query.timezone
 			}
+		});
+	}
+
+	// -----------------------------------------------------------------------
+	// Organizations
+	// -----------------------------------------------------------------------
+
+	public getMeContext(): Promise<MeContextDto> {
+		return this.request<MeContextDto>(ME_CONTEXT_ENDPOINT, { method: 'GET' });
+	}
+
+	public getOrganization(orgId: string): Promise<OrganizationDto> {
+		return this.request<OrganizationDto>(replacePathParams(ORG_ENDPOINT, { orgId }), {
+			method: 'GET'
+		});
+	}
+
+	public renameOrganization(orgId: string, name: string): Promise<{ id: string; name: string }> {
+		return this.request(replacePathParams(ORG_ENDPOINT, { orgId }), {
+			method: 'PATCH',
+			body: { name }
+		});
+	}
+
+	public upgradeOrganization(orgId: string, name: string): Promise<{ id: string; name: string }> {
+		return this.request(replacePathParams(ORG_UPGRADE_ENDPOINT, { orgId }), {
+			method: 'POST',
+			body: { name }
+		});
+	}
+
+	public listOrgMembers(orgId: string): Promise<OrgMemberDto[]> {
+		return this.request<OrgMemberDto[]>(replacePathParams(ORG_MEMBERS_ENDPOINT, { orgId }), {
+			method: 'GET'
+		});
+	}
+
+	public updateOrgMember(
+		orgId: string,
+		userId: string,
+		body: {
+			role?: 'manager' | 'member';
+			location_grants?: { location_id: number; default_role: number }[];
+		}
+	): Promise<unknown> {
+		return this.request(replacePathParams(ORG_MEMBER_ENDPOINT, { orgId, userId }), {
+			method: 'PATCH',
+			body
+		});
+	}
+
+	public suspendOrgMember(orgId: string, userId: string): Promise<unknown> {
+		return this.request(replacePathParams(ORG_MEMBER_SUSPEND_ENDPOINT, { orgId, userId }), {
+			method: 'POST'
+		});
+	}
+
+	public reinstateOrgMember(orgId: string, userId: string): Promise<unknown> {
+		return this.request(replacePathParams(ORG_MEMBER_REINSTATE_ENDPOINT, { orgId, userId }), {
+			method: 'POST'
+		});
+	}
+
+	public removeOrgMember(orgId: string, userId: string): Promise<unknown> {
+		return this.request(replacePathParams(ORG_MEMBER_ENDPOINT, { orgId, userId }), {
+			method: 'DELETE'
+		});
+	}
+
+	public createOrgInvite(orgId: string, body: CreateOrgInviteRequest): Promise<OrgInviteDto> {
+		return this.request<OrgInviteDto>(replacePathParams(ORG_INVITES_ENDPOINT, { orgId }), {
+			method: 'POST',
+			body
+		});
+	}
+
+	public listOrgInvites(orgId: string): Promise<OrgInviteDto[]> {
+		return this.request<OrgInviteDto[]>(replacePathParams(ORG_INVITES_ENDPOINT, { orgId }), {
+			method: 'GET'
+		});
+	}
+
+	public revokeOrgInvite(orgId: string, inviteId: string): Promise<unknown> {
+		return this.request(replacePathParams(ORG_INVITE_ENDPOINT, { orgId, inviteId }), {
+			method: 'DELETE'
+		});
+	}
+
+	public resendOrgInvite(orgId: string, inviteId: string): Promise<unknown> {
+		return this.request(replacePathParams(ORG_INVITE_RESEND_ENDPOINT, { orgId, inviteId }), {
+			method: 'POST'
+		});
+	}
+
+	public previewInvite(token: string): Promise<InvitePreviewDto> {
+		return this.request<InvitePreviewDto>(replacePathParams(INVITE_PREVIEW_ENDPOINT, { token }), {
+			method: 'GET'
+		});
+	}
+
+	public acceptInvite(token: string): Promise<{ org_id: string; role: string }> {
+		return this.request(replacePathParams(INVITE_ACCEPT_ENDPOINT, { token }), {
+			method: 'POST'
+		});
+	}
+
+	public listOrgChildren(orgId: string): Promise<OrgChildrenDto> {
+		return this.request<OrgChildrenDto>(replacePathParams(ORG_CHILDREN_ENDPOINT, { orgId }), {
+			method: 'GET'
+		});
+	}
+
+	public createOrgLinkRequest(orgId: string, childOrgId: string): Promise<unknown> {
+		return this.request(replacePathParams(ORG_CHILD_REQUESTS_ENDPOINT, { orgId }), {
+			method: 'POST',
+			body: { child_org_id: childOrgId }
+		});
+	}
+
+	public listOrgParentRequests(orgId: string): Promise<OrgParentRequestDto[]> {
+		return this.request<OrgParentRequestDto[]>(
+			replacePathParams(ORG_PARENT_REQUESTS_ENDPOINT, { orgId }),
+			{ method: 'GET' }
+		);
+	}
+
+	public decideOrgParentRequest(
+		orgId: string,
+		requestId: string,
+		decision: 'accept' | 'decline'
+	): Promise<unknown> {
+		return this.request(
+			replacePathParams(ORG_PARENT_REQUEST_DECIDE_ENDPOINT, { orgId, requestId, decision }),
+			{ method: 'POST' }
+		);
+	}
+
+	public unlinkOrgChild(orgId: string, childId: string): Promise<unknown> {
+		return this.request(replacePathParams(ORG_CHILD_ENDPOINT, { orgId, childId }), {
+			method: 'DELETE'
 		});
 	}
 

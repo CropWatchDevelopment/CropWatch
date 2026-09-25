@@ -5,13 +5,14 @@ import type { IDevice } from './interfaces/device.interface';
 import type { IRule } from './interfaces/rule.interface';
 import type { Profile } from './interfaces/profile.interface';
 import type { RuleTemplateDto } from './api/api.service';
-import type { LocationDto, PreferencesDto } from './api/api.dtos';
+import type { LocationDto, MeContextDto, PreferencesDto } from './api/api.dtos';
 
 const app = createAppContext();
 
 export interface AppContext {
 	profile?: Profile;
 	preferences?: PreferencesDto;
+	orgContext?: MeContextDto;
 	session: IJWT | null;
 	devices: IDevice[];
 	deviceGroups?: string[];
@@ -33,6 +34,7 @@ export const appContextKey = Symbol('appContext');
 export const defaultAppContext: AppContext = {
 	profile: undefined,
 	preferences: undefined,
+	orgContext: undefined,
 	session: null,
 	devices: [],
 	deviceStatuses: { online: 0, offline: 0 },
