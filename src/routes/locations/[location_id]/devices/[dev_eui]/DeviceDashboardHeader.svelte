@@ -13,6 +13,7 @@
 	import CsvTrafficExportDialog from './dialogs/csvTrafficExportDialog.svelte';
 	import type { RangeSelection, TimeRangeOptions } from './device-detail';
 	import NotesReviewDialog from './dialogs/NotesReviewDialog.svelte';
+	import DeviceGatewaysDialog from './dialogs/DeviceGatewaysDialog.svelte';
 
 	interface Props {
 		activeRange: RangeSelection | null;
@@ -128,6 +129,8 @@
 					/>
 				{/if}
 			{/if}
+
+			<DeviceGatewaysDialog {authToken} {devEui} disabled={controlsDisabled} />
 
 			{#if isAdmin(permissionLevel)}
 				<CwButton
