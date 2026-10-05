@@ -920,8 +920,41 @@ export interface GatewayDto {
 	id: number;
 	is_online: boolean;
 	is_public: boolean;
+	org_id?: string | null;
 	updated_at: string | null;
+	last_seen_at?: string | null;
+	status_checked_at?: string | null;
+	connected_at?: string | null;
+	connected_device_count?: number;
 	cw_gateways_owners?: GatewayOwnerDto[];
+}
+
+/** A device heard by a gateway within the API's connected window. */
+export interface GatewayDeviceDto {
+	dev_eui: string;
+	name: string | null;
+	location_id: number | null;
+	location_name: string | null;
+	rssi: number | null;
+	snr: number | null;
+	last_update: string | null;
+}
+
+export interface GatewayDevicesResponseDto {
+	devices: GatewayDeviceDto[];
+	/** Devices on this gateway that the caller cannot see. */
+	other_device_count: number;
+}
+
+/** A gateway that heard a device. Gateways the caller cannot see are anonymized. */
+export interface DeviceGatewayDto {
+	anonymized: boolean;
+	gateway_id: string | null;
+	gateway_name: string | null;
+	is_online: boolean | null;
+	rssi: number | null;
+	snr: number | null;
+	last_update: string | null;
 }
 
 // --- Billing / Stripe subscriptions --------------------------------------

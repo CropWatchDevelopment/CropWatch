@@ -61,6 +61,8 @@ import type {
 	UpdateLocationRequest,
 	UpdateLocationOwnerRequest,
 	WaterDataPoint,
+	DeviceGatewayDto,
+	GatewayDevicesResponseDto,
 	GatewayDto,
 	AdminBillingCustomer,
 	BillingEntitlements,
@@ -214,6 +216,9 @@ const TRAFFIC_MONTHLY_ENDPOINT = '/traffic/{dev_eui}/monthly';
 const WATER_ENDPOINT = '/water/{dev_eui}';
 const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
 const GATEWAYS_ENDPOINT = '/gateway';
+const GATEWAY_BY_ID_ENDPOINT = `${GATEWAYS_ENDPOINT}/{gateway_id}`;
+const GATEWAY_DEVICES_ENDPOINT = `${GATEWAY_BY_ID_ENDPOINT}/devices`;
+const GATEWAYS_BY_DEVICE_ENDPOINT = `${GATEWAYS_ENDPOINT}/by-device/{dev_eui}`;
 const PAYMENTS_ENDPOINT = '/payments';
 const LINE_LINK_START_ENDPOINT = '/line/link-start';
 const LINE_LINK_CODE_ENDPOINT = '/line/link-code';
@@ -1607,10 +1612,38 @@ export class ApiService {
 		);
 	}
 
-	public getGateways(): Promise<GatewayDto[]> {
+	public getGateways(options: ApiMethodOptions = {}): Promise<GatewayDto[]> {
 		return this.request<GatewayDto[]>(GATEWAYS_ENDPOINT, {
-			method: 'GET'
+			method: 'GET',
+			signal: options.signal
 		});
+	}
+
+	public getGateway(gatewayId: string, options: ApiMethodOptions = {}): Promise<GatewayDto> {
+		return this.request<GatewayDto>(
+			replacePathParams(GATEWAY_BY_ID_ENDPOINT, { gateway_id: gatewayId }),
+			{ method: 'GET', signal: options.signal }
+		);
+	}
+
+	public getGatewayDevices(
+		gatewayId: string,
+		options: ApiMethodOptions = {}
+	): Promise<GatewayDevicesResponseDto> {
+		return this.request<GatewayDevicesResponseDto>(
+			replacePathParams(GATEWAY_DEVICES_ENDPOINT, { gateway_id: gatewayId }),
+			{ method: 'GET', signal: options.signal }
+		);
+	}
+
+	public getDeviceGateways(
+		devEui: string,
+		options: ApiMethodOptions = {}
+	): Promise<DeviceGatewayDto[]> {
+		return this.request<DeviceGatewayDto[]>(
+			replacePathParams(GATEWAYS_BY_DEVICE_ENDPOINT, { dev_eui: devEui }),
+			{ method: 'GET', signal: options.signal }
+		);
 	}
 
 	// --- Billing / Stripe subscriptions ------------------------------------
