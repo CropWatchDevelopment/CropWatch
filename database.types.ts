@@ -328,13 +328,6 @@ export type Database = {
 						isOneToOne: false;
 						referencedRelation: 'cw_devices';
 						referencedColumns: ['dev_eui'];
-					},
-					{
-						foreignKeyName: 'cw_device_gateway_gateway_id_fkey';
-						columns: ['gateway_id'];
-						isOneToOne: false;
-						referencedRelation: 'cw_gateways';
-						referencedColumns: ['gateway_id'];
 					}
 				];
 			};
@@ -671,33 +664,53 @@ export type Database = {
 			};
 			cw_gateways: {
 				Row: {
+					connected_at: string | null;
 					created_at: string;
 					gateway_id: string;
 					gateway_name: string;
 					id: number;
 					is_online: boolean;
 					is_public: boolean;
+					last_seen_at: string | null;
+					org_id: string | null;
+					status_checked_at: string | null;
 					updated_at: string | null;
 				};
 				Insert: {
+					connected_at?: string | null;
 					created_at?: string;
 					gateway_id: string;
 					gateway_name: string;
 					id?: number;
 					is_online: boolean;
 					is_public?: boolean;
+					last_seen_at?: string | null;
+					org_id?: string | null;
+					status_checked_at?: string | null;
 					updated_at?: string | null;
 				};
 				Update: {
+					connected_at?: string | null;
 					created_at?: string;
 					gateway_id?: string;
 					gateway_name?: string;
 					id?: number;
 					is_online?: boolean;
 					is_public?: boolean;
+					last_seen_at?: string | null;
+					org_id?: string | null;
+					status_checked_at?: string | null;
 					updated_at?: string | null;
 				};
-				Relationships: [];
+				Relationships: [
+					{
+						foreignKeyName: 'cw_gateways_org_id_fkey';
+						columns: ['org_id'];
+						isOneToOne: false;
+						referencedRelation: 'organizations';
+						referencedColumns: ['id'];
+					}
+				];
 			};
 			cw_gateways_owners: {
 				Row: {

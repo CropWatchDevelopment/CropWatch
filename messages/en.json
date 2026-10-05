@@ -1686,5 +1686,21 @@
 	"auth_account_type_personal": "Personal",
 	"auth_account_type_company": "Company",
 	"auth_account_type_personal_hint": "For individual use. You can upgrade later.",
-	"auth_account_type_company_hint": "Creates a company organization that you own."
+	"auth_account_type_company_hint": "Creates a company organization that you own.",
+	"gateways_last_seen": "Last seen",
+	"gateways_last_checked": "Last status check",
+	"gateways_connected_devices": "Connected devices",
+	"gateways_back_to_gateways": "Back to gateways",
+	"gateways_not_found": "Gateway not found.",
+	"gateways_device": "Device",
+	"gateways_rssi": "RSSI",
+	"gateways_snr": "SNR",
+	"gateways_last_heard": "Last heard",
+	"gateways_no_devices": "No devices have been heard by this gateway in the last 24 hours.",
+	"gateways_other_devices": "{count} other devices you can't access also use this gateway.",
+	"gateways_other_gateway": "Other gateway",
+	"device_gateways_button": "Connected gateways",
+	"device_gateways_empty": "No gateways have heard this device yet.",
+	"device_gateways_load_failed": "Failed to load connected gateways.",
+	"device_gateways_anonymized_hint": "Gateways you don't have access to are shown as \"Other gateway\"."
 }

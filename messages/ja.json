@@ -1686,5 +1686,21 @@
 	"auth_account_type_personal": "個人",
 	"auth_account_type_company": "法人",
 	"auth_account_type_personal_hint": "個人利用向け。後からアップグレードできます。",
-	"auth_account_type_company_hint": "あなたがオーナーとなる法人組織を作成します。"
+	"auth_account_type_company_hint": "あなたがオーナーとなる法人組織を作成します。",
+	"gateways_last_seen": "最終受信",
+	"gateways_last_checked": "最終ステータス確認",
+	"gateways_connected_devices": "接続デバイス",
+	"gateways_back_to_gateways": "ゲートウェイ一覧に戻る",
+	"gateways_not_found": "ゲートウェイが見つかりません。",
+	"gateways_device": "デバイス",
+	"gateways_rssi": "RSSI",
+	"gateways_snr": "SNR",
+	"gateways_last_heard": "最終受信",
+	"gateways_no_devices": "過去24時間にこのゲートウェイで受信したデバイスはありません。",
+	"gateways_other_devices": "アクセス権のない他のデバイス {count} 台もこのゲートウェイを使用しています。",
+	"gateways_other_gateway": "その他のゲートウェイ",
+	"device_gateways_button": "接続ゲートウェイ",
+	"device_gateways_empty": "このデバイスを受信したゲートウェイはまだありません。",
+	"device_gateways_load_failed": "接続ゲートウェイを読み込めませんでした。",
+	"device_gateways_anonymized_hint": "アクセス権のないゲートウェイは「その他のゲートウェイ」と表示されます。"
 }
