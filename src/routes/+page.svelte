@@ -110,10 +110,11 @@
 <AppPage width="full" class="dashboard-page">
 	<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 		<header class="flex-none">
-			<div class="mt-2 flex w-full flex-row sm:gap-0 md:mt-0 md:gap-4">
-				<div
-					class="hidden w-full flex-row gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-start md:flex"
-				>
+			<!-- Below md the search gets its own full-width row above the view
+			     buttons; from md up it grows to meet them. px-2 matches the cards'
+			     0.5rem side padding so both edges line up with the location cards. -->
+			<div class="mt-2 flex w-full flex-col gap-2 md:mt-0 md:flex-row md:items-center md:gap-4">
+				<div id="dashboard-search-section" class="flex min-w-0 px-2 md:flex-auto md:pr-0">
 					<CwSearchInput
 						labels={cwSearchInputLabels()}
 						id="dashboard-search"
@@ -122,10 +123,9 @@
 						class="w-full min-w-0"
 					/>
 				</div>
-				<span class="flex-1"></span>
 				<div
 					id="view-layout-selection-section"
-					class="flex w-full flex-row gap-2 px-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
+					class="flex w-full flex-row gap-2 px-2 sm:items-center sm:justify-end md:w-auto md:flex-none"
 				>
 					<CwButton
 						id="dashboard-table-view-button"
