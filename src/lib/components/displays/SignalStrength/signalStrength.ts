@@ -47,7 +47,10 @@ const isReading = (value: number | null | undefined): value is number =>
  * that arrived always gets at least 1 bar. When only one metric is present it
  * is graded alone.
  */
-export function signalBars(rssi: number | null | undefined, snr: number | null | undefined): SignalBars {
+export function signalBars(
+	rssi: number | null | undefined,
+	snr: number | null | undefined
+): SignalBars {
 	const grades: SignalBars[] = [];
 	if (isReading(rssi)) grades.push(grade(rssi, RSSI_STEPS));
 	if (isReading(snr)) grades.push(grade(snr, SNR_STEPS));
