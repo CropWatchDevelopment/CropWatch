@@ -20,7 +20,7 @@
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardLocationGroup, DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
+	import { isDisplayableColumn, labelFor, sensorStateIcon } from '$lib/sensor-labels';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
@@ -234,7 +234,10 @@
 		if (!col || col === '-' || !isDisplayableColumn(col))
 			return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
-		return { ...readingProps(col, row.latest?.primary), icon: def.icon };
+		return {
+			...readingProps(col, row.latest?.primary),
+			icon: sensorStateIcon(col, row.latest?.primary) ?? def.icon
+		};
 	}
 
 	function secondaryProps(row: DashboardRow) {
@@ -242,7 +245,10 @@
 		if (!col || col === '' || col === '-' || !isDisplayableColumn(col))
 			return { value: null, unit: '', label: undefined, icon: undefined };
 		const def = labelFor(col);
-		return { ...readingProps(col, row.latest?.secondary), icon: def.icon };
+		return {
+			...readingProps(col, row.latest?.secondary),
+			icon: sensorStateIcon(col, row.latest?.secondary) ?? def.icon
+		};
 	}
 
 	// A non-empty `error_status` on the device row means the sensor has reported a

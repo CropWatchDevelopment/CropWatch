@@ -15,7 +15,7 @@ import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
 import type { PreferencesDto } from '$lib/api/api.dtos';
 import { formatNumber } from '$lib/i18n/format';
 import { m } from '$lib/paraglide/messages.js';
-import { labelFor } from '$lib/sensor-labels';
+import { isOnValue, labelFor } from '$lib/sensor-labels';
 
 export type Quantity =
 	| 'temperature'
@@ -243,8 +243,7 @@ export function formatSensorMeasurement(
 		if (value === null || value === undefined) {
 			return { value: null, unit: '', valueDisplay: CW_EMPTY_VALUE, display: CW_EMPTY_VALUE };
 		}
-		const truthy =
-			value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
+		const truthy = isOnValue(value);
 		const word = truthy ? m.sensor_value_on() : m.sensor_value_off();
 		return { value: truthy ? 1 : 0, unit: '', valueDisplay: word, display: word };
 	}

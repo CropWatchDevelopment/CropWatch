@@ -93,6 +93,22 @@ describe('RelayDisplay', () => {
 		await unmount(component);
 	});
 
+	it('shows each relay state with its icon next to the ON/OFF word', async () => {
+		const component = renderRelayDisplay({
+			latestData: {
+				created_at: '2026-04-05T10:00:00.000Z',
+				id: 'relay-row-icons',
+				relay_1: true,
+				relay_2: false
+			}
+		});
+
+		expect(document.body.textContent).toContain(`🟢 ${m.display_on()}`);
+		expect(document.body.textContent).toContain(`🔴 ${m.display_off()}`);
+
+		await unmount(component);
+	});
+
 	it('shows the optimistic on selection in the manual controls for timed-on confirmations', async () => {
 		const component = renderRelayDisplay({
 			latestData: {

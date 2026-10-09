@@ -8,7 +8,7 @@
 	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
+	import { isDisplayableColumn, labelFor, sensorStateIcon } from '$lib/sensor-labels';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
@@ -27,7 +27,9 @@
 	// Unit-bearing numeric metrics are converted to the user's preference; other
 	// columns (booleans, counts, unmapped fields) keep their canonical rendering.
 	function renderMetric(col: string, value: unknown): string {
-		return `${labelFor(col).label()}: ${formatSensorMeasurement(col, value, app.preferences).display}`;
+		const stateIcon = sensorStateIcon(col, value);
+		const display = formatSensorMeasurement(col, value, app.preferences).display;
+		return `${labelFor(col).label()}: ${stateIcon ? `${stateIcon} ` : ''}${display}`;
 	}
 
 	function renderPrimary(row: DashboardRow): string {

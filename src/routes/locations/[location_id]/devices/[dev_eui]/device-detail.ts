@@ -1,6 +1,7 @@
 import { ApiServiceError } from '$lib/api/api.service';
 import type { RelayStateSnapshot, RelayVerificationResult } from '$lib/devices/relay-control';
 import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
+import { relayStateLabel } from '$lib/devices/relay-labels';
 import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
@@ -140,7 +141,7 @@ export function getRangeBounds(selection: RangeSelection): { start: string; end:
 }
 
 export function getRelayTargetStateLabel(targetState: RelayTargetState): string {
-	return targetState === 'on' ? m.display_on() : m.display_off();
+	return relayStateLabel(targetState === 'on');
 }
 
 export function getVerifiedRelayStateLabel(
@@ -152,7 +153,7 @@ export function getVerifiedRelayStateLabel(
 		return m.display_unknown();
 	}
 
-	return value ? m.display_on() : m.display_off();
+	return relayStateLabel(value);
 }
 
 export function mapRelayApiErrorMessage(error: unknown): string {
