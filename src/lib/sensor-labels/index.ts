@@ -1,3 +1,4 @@
+import { RELAY_STATE_ICONS } from '$lib/devices/relay-labels';
 import { m } from '$lib/paraglide/messages.js';
 
 export type SensorFormat = 'number' | 'integer' | 'boolean';
@@ -9,6 +10,9 @@ export interface SensorLabel {
 	// string (e.g. an emoji) is rendered as-is by the card. Traffic emoji match
 	// `metricEmoji` in the traffic display so both views use the same icons.
 	icon?: 'thermo' | 'drop' | 'co2' | (string & {});
+	// Boolean sensors only: one icon per state, used instead of `icon` (relays:
+	// 🟢/🔴). Deliberately not set on smoke/vape, where "on" means detected.
+	stateIcons?: Readonly<Record<'on' | 'off', string>>;
 	format: SensorFormat;
 }
 
@@ -42,8 +46,18 @@ const SENSOR_LABELS: Record<string, SensorLabel> = {
 	smoke_detected: { label: () => m.sensor_smoke_detected(), unit: '', format: 'boolean' },
 	vape_detected: { label: () => m.sensor_vape_detected(), unit: '', format: 'boolean' },
 	spo2: { label: () => m.sensor_spo2(), unit: '%', format: 'number' },
-	relay_1: { label: () => m.sensor_relay_1(), unit: '', format: 'boolean' },
-	relay_2: { label: () => m.sensor_relay_2(), unit: '', format: 'boolean' },
+	relay_1: {
+		label: () => m.sensor_relay_1(),
+		unit: '',
+		stateIcons: RELAY_STATE_ICONS,
+		format: 'boolean'
+	},
+	relay_2: {
+		label: () => m.sensor_relay_2(),
+		unit: '',
+		stateIcons: RELAY_STATE_ICONS,
+		format: 'boolean'
+	},
 	people_count: { label: () => m.sensor_people_count(), unit: '', icon: '🚶', format: 'integer' },
 	car_count: { label: () => m.sensor_car_count(), unit: '', icon: '🚗', format: 'integer' },
 	bicycle_count: {
@@ -92,4 +106,18 @@ export function labelFor(column: string): SensorLabel {
 
 export function isDisplayableColumn(column: string): boolean {
 	return !HIDDEN_COLUMNS.has(column);
+}
+
+/** How boolean sensor values arrive: true / 1 / 'true' / '1' / 'on' all mean on. */
+export function isOnValue(value: unknown): boolean {
+	return value === true || value === 'true' || value === 1 || value === '1' || value === 'on';
+}
+
+/** The state icon of a boolean reading (relays), or undefined without one or without a value. */
+export function sensorStateIcon(field: string, value: unknown): string | undefined {
+	const icons = labelFor(field).stateIcons;
+	if (!icons || value === null || value === undefined) {
+		return undefined;
+	}
+	return isOnValue(value) ? icons.on : icons.off;
 }

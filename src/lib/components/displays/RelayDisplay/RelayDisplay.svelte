@@ -23,6 +23,7 @@
 		MAX_RELAY_PULSE_DURATION_SECONDS,
 		MIN_RELAY_PULSE_DURATION_SECONDS
 	} from '$lib/devices/relay-control';
+	import { relayStateLabel } from '$lib/devices/relay-labels';
 	import {
 		getRelayState,
 		normalizeRelayTelemetryRow,
@@ -104,7 +105,7 @@
 			return m.display_unknown();
 		}
 
-		return value ? m.display_on() : m.display_off();
+		return relayStateLabel(value);
 	}
 
 	function getRelayStateTone(value: boolean | null): 'danger' | 'secondary' | 'success' {
