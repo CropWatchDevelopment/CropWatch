@@ -177,6 +177,19 @@ export interface DeviceDto extends CwDevice {
 	device_licenses?: { id: number }[];
 }
 
+/**
+ * DELETE /devices/{dev_eui}. `complete: false` means the data purge paused on
+ * the API's per-request time budget and the device still exists — call again.
+ */
+export interface DeleteDeviceResultDto {
+	dev_eui: string;
+	complete: boolean;
+	/** Sensor-data rows removed by this call's batched purge. */
+	purgedRows: number;
+	/** Per-table counts from the final delete (only when complete). */
+	deleted?: Record<string, number>;
+}
+
 export interface CreateDeviceOwnerRequest {
 	user_id: string;
 	permission_level: number;
