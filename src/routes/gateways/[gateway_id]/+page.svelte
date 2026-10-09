@@ -12,6 +12,7 @@
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import { AppNotice, AppPage } from '$lib/components/layout';
+	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
 	import type { GatewayDeviceDto } from '$lib/api/api.dtos';
 	import { cwCopyLabels, cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { formatDateTime } from '$lib/i18n/format';
@@ -30,6 +31,7 @@
 		{ key: 'location_name', header: m.common_location(), sortable: true },
 		{ key: 'rssi', header: m.gateways_rssi(), sortable: true },
 		{ key: 'snr', header: m.gateways_snr(), sortable: true },
+		{ key: 'signal', header: m.gateways_signal(), align: 'center' },
 		{ key: 'last_update', header: m.gateways_last_heard(), sortable: true }
 	];
 
@@ -155,6 +157,8 @@
 							{row.rssi != null ? `${row.rssi} dBm` : m.common_not_available()}
 						{:else if col.key === 'snr'}
 							{row.snr != null ? `${row.snr} dB` : m.common_not_available()}
+						{:else if col.key === 'signal'}
+							<SignalStrength rssi={row.rssi} snr={row.snr} />
 						{:else if col.key === 'last_update'}
 							{formatDateTime(row.last_update ?? '', undefined, m.common_not_available())}
 						{:else}

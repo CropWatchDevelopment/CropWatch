@@ -14,6 +14,7 @@ export const Capability = {
 	LocationCreate: 'location.create',
 	LocationDelete: 'location.delete',
 	DeviceReplace: 'device.replace',
+	DeviceDelete: 'device.delete',
 	GatewayCreate: 'gateway.create'
 } as const;
 

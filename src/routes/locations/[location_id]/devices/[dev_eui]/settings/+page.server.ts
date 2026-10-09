@@ -1,8 +1,9 @@
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import type { DeleteDeviceResultDto } from '$lib/api/api.dtos';
 import { readApiErrorMessage } from '$lib/api/api-error';
 import { normalizeTtiDeviceId } from '$lib/devices/tti-device-id';
 import { m } from '$lib/paraglide/messages.js';
-import { fail, type Actions } from '@sveltejs/kit';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import {
 	buildLocationOwnerIdentityMap,
@@ -17,6 +18,7 @@ import {
 	type NormalizedDeviceOwner,
 	type SensorCertificateRow
 } from './device-settings.server';
+import { checkDeleteConfirmation } from './delete-confirmation';
 
 type DeviceLicenseSummary = { id: number; seatIndex: number; manual: boolean };
 
@@ -36,7 +38,9 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 			sensorCertificates: [] as SensorCertificateRow[],
 			supportsSensorCertificates: false,
 			deviceOwners: [] as NormalizedDeviceOwner[],
-			license: null as DeviceLicenseSummary | null
+			license: null as DeviceLicenseSummary | null,
+			deviceOwnerId: null as string | null,
+			deviceOrgId: null as string | null
 		};
 	}
 
@@ -70,7 +74,10 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 		sensorCertificates: buildSensorCertificateRows(device),
 		supportsSensorCertificates: deviceSupportsSensorCertificate(device),
 		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities),
-		license
+		license,
+		// For the delete card's visibility (mirrors the API's device.delete rule).
+		deviceOwnerId: typeof device?.user_id === 'string' ? device.user_id : null,
+		deviceOrgId: typeof device?.org_id === 'string' ? device.org_id : null
 	};
 };
 
@@ -232,5 +239,65 @@ export const actions: Actions = {
 			success: true,
 			message: m.devices_license_unassigned_toast()
 		};
+	},
+	deleteDevice: async ({ request, locals, fetch, params }) => {
+		const authToken = locals.jwtString ?? null;
+		const devEui = String(params.dev_eui ?? '').trim();
+		const locationId = String(params.location_id ?? '').trim();
+
+		if (!authToken) {
+			return fail(401, {
+				action: 'deleteDevice',
+				message: m.devices_update_requires_login()
+			});
+		}
+
+		if (!devEui) {
+			return fail(400, {
+				action: 'deleteDevice',
+				message: m.devices_invalid_device_id()
+			});
+		}
+
+		// Server-side half of the danger-zone confirmation: the typed DevEUI and
+		// the "I understand" box, so a crafted request cannot skip either.
+		const confirmationIssue = checkDeleteConfirmation(devEui, await request.formData());
+		if (confirmationIssue) {
+			return fail(400, {
+				action: 'deleteDevice',
+				message:
+					confirmationIssue === 'devEuiMismatch'
+						? m.devices_delete_confirm_mismatch()
+						: m.devices_delete_acknowledge_required()
+			});
+		}
+
+		const api = new ApiService({ fetchFn: fetch, authToken });
+
+		let result: DeleteDeviceResultDto;
+		try {
+			result = await api.deleteDevice(devEui);
+		} catch (error) {
+			return fail(error instanceof ApiServiceError ? error.status : 502, {
+				action: 'deleteDevice',
+				message: readApiErrorMessage(
+					error instanceof ApiServiceError ? error.payload : error,
+					m.devices_delete_rejected()
+				)
+			});
+		}
+
+		// The API purges data in time-boxed chunks; the card re-submits until
+		// `complete`, so this failure is the "keep going" signal, not an error.
+		if (!result?.complete) {
+			return fail(409, {
+				action: 'deleteDevice',
+				inProgress: true,
+				purgedRows: result?.purgedRows ?? 0,
+				message: m.devices_delete_in_progress()
+			});
+		}
+
+		redirect(303, `/locations/${encodeURIComponent(locationId)}`);
 	}
 };

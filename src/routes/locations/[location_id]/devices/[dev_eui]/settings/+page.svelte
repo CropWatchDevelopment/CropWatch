@@ -12,6 +12,9 @@
 	import SensorCertificatesCard from '../SensorCertificatesCard.svelte';
 	import DeviceOwnerPermissionsCard from '../DeviceOwnerPermissionsCard.svelte';
 	import DeviceLicenseCard from './DeviceLicenseCard.svelte';
+	import DeviceDangerZone from './DeviceDangerZone.svelte';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { Capability, can } from '$lib/auth/capabilities';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
 	const DEVICE_GROUP_MAX_LENGTH = 120;
@@ -26,6 +29,7 @@
 	} | null;
 
 	let { data, form }: PageProps = $props();
+	const app = getAppContext();
 
 	// Capture once — form fields are seeded from the loaded record and then
 	// owned by the user; they must not re-seed reactively (see CLAUDE.md).
@@ -63,6 +67,17 @@
 			deviceGroupValue !== (data.deviceGroup ?? '').trim() ||
 			ttiNameValue !== (data.ttiName ?? '').trim().toLowerCase() ||
 			location_id !== String(data.location_id ?? '')
+	);
+	// Deleting is owner-only, mirroring the API's device.delete rule: staff,
+	// the device's implicit owner, or the owner of the org the device belongs
+	// to (an org-level capability does not reach devices shared in from other
+	// orgs). UI gating only — the API enforces it either way.
+	let canDeleteDevice = $derived(
+		app.orgContext?.is_staff === true ||
+			(Boolean(app.session?.sub) && app.session?.sub === data.deviceOwnerId) ||
+			(data.deviceOrgId !== null &&
+				app.orgContext?.org?.id === data.deviceOrgId &&
+				can(app.orgContext, Capability.DeviceDelete))
 	);
 	let canSubmitDevice = $derived(
 		!deviceSubmitting &&
@@ -234,4 +249,8 @@
 	{/if}
 
 	<DeviceOwnerPermissionsCard owners={data.deviceOwners ?? []} form={actionForm} />
+
+	{#if canDeleteDevice && data.devEui}
+		<DeviceDangerZone devEui={data.devEui} deviceName={data.deviceName ?? ''} form={actionForm} />
+	{/if}
 </AppPage>

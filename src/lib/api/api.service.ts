@@ -5,6 +5,7 @@ import type {
 	DashboardLocationPage,
 	DashboardPage,
 	DashboardQuery,
+	DeleteDeviceResultDto,
 	DeviceDataWithinRangeQuery,
 	DeviceListQuery,
 	DeviceDto,
@@ -1371,6 +1372,14 @@ export class ApiService {
 				method: 'PATCH',
 				body: payload
 			}
+		);
+	}
+
+	/** Permanently deletes a device and all of its data (owner-only). */
+	public deleteDevice(devEui: string): Promise<DeleteDeviceResultDto> {
+		return this.request<DeleteDeviceResultDto>(
+			replacePathParams(DEVICE_BY_DEV_EUI_ENDPOINT, { dev_eui: devEui }),
+			{ method: 'DELETE' }
 		);
 	}
 
