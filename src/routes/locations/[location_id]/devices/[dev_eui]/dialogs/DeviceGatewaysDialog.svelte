@@ -1,7 +1,10 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { CwButton, CwDialog, CwSpinner, CwStatusDot } from '@cropwatchdevelopment/cwui';
 	import { AppNotice } from '$lib/components/layout';
+	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
+	import { signalBars } from '$lib/components/displays/SignalStrength/signalStrength';
 	import { ApiService } from '$lib/api/api.service';
 	import type { DeviceGatewayDto } from '$lib/api/api.dtos';
 	import { readApiErrorMessage } from '$lib/api/api-error';
@@ -23,6 +26,24 @@
 	let activeRequestId = 0;
 
 	let hasAnonymized = $derived(gateways.some((gateway) => gateway.anonymized));
+
+	// A LoRaWAN uplink is delivered by whichever gateway heard it best, so the
+	// device's link quality is that of its strongest gateway (ties: higher RSSI).
+	let bestGateway = $derived(
+		gateways.reduce<DeviceGatewayDto | null>((best, gateway) => {
+			if (!best) return gateway;
+			const diff = signalBars(gateway.rssi, gateway.snr) - signalBars(best.rssi, best.snr);
+			return diff > 0 || (diff === 0 && (gateway.rssi ?? -Infinity) > (best.rssi ?? -Infinity))
+				? gateway
+				: best;
+		}, null)
+	);
+
+	// Load up front so the button can show the signal bars; reloads on open.
+	$effect(() => {
+		if (!authToken || !devEui) return;
+		untrack(() => void loadGateways());
+	});
 
 	async function loadGateways() {
 		const requestId = ++activeRequestId;
@@ -56,7 +77,10 @@
 	variant="secondary"
 	size="md"
 >
-	{m.device_gateways_button()}
+	{#if bestGateway}
+		<SignalStrength rssi={bestGateway.rssi} snr={bestGateway.snr} />
+	{/if}
+	{m.gateways_signal()}
 </CwButton>
 
 <CwDialog bind:open title={m.device_gateways_button()}>
@@ -95,6 +119,10 @@
 							<div>
 								<dt>{m.gateways_snr()}</dt>
 								<dd>{gateway.snr != null ? `${gateway.snr} dB` : m.common_not_available()}</dd>
+							</div>
+							<div>
+								<dt>{m.gateways_signal()}</dt>
+								<dd><SignalStrength rssi={gateway.rssi} snr={gateway.snr} /></dd>
 							</div>
 							<div>
 								<dt>{m.gateways_last_heard()}</dt>
