@@ -6,7 +6,7 @@ import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
 import { computeDewPoint } from '$lib/utils/dewPoint';
-import type { PreferencesDto } from '$lib/api/api.dtos';
+import type { PreferencesDto, RelayHistoryEntryDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { SvelteDate } from 'svelte/reactivity';
 import {
@@ -25,6 +25,8 @@ export interface TimeRangeOptions {
 
 export interface RouteState {
 	requestedHistoricalData: TelemetryRow[] | null;
+	/** Relay devices: state changes and commands for the active range (null until loaded). */
+	relayHistory: RelayHistoryEntryDto[] | null;
 	activeRange: RangeSelection | null;
 	fetching: boolean;
 	fetchError: string | null;
@@ -33,6 +35,8 @@ export interface RouteState {
 const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
 export const DEFAULT_RANGE_SELECTION: RangeSelection = 'today';
 export const MAX_RANGE_RECORDS = 1500;
+/** Coalesces the triggers (command sent, command settled, new report) into one history read. */
+export const RELAY_HISTORY_REFRESH_DELAY_MS = 500;
 
 export function isTelemetryRow(value: unknown): value is TelemetryRow {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -108,6 +112,7 @@ export function toIsoString(value: Date | string): string {
 export function createRouteState(): RouteState {
 	return {
 		requestedHistoricalData: null,
+		relayHistory: null,
 		activeRange: null,
 		fetching: false,
 		fetchError: null

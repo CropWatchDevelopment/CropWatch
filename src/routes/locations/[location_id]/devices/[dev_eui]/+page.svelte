@@ -6,6 +6,7 @@
 	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import {
+		hasConfirmingRelay,
 		type RelayStateSnapshot,
 		type RelayVerificationResult,
 		RelayStateManager
@@ -35,6 +36,7 @@
 		DEFAULT_RANGE_SELECTION,
 		DEW_POINT_SERIES_ID,
 		MAX_RANGE_RECORDS,
+		RELAY_HISTORY_REFRESH_DELAY_MS,
 		buildDewPointChartSeries,
 		buildSensorChartSeries,
 		createEmptyRelaySnapshot,
@@ -61,24 +63,34 @@
 	const app = getAppContext();
 
 	function handleRelayConfirmationResolved(result: RelayVerificationResult): void {
-		if (result.matched) {
-			toast.add({
-				tone: 'success',
-				message: m.devices_relay_confirmation_changed({
-					relay: String(result.relay),
-					state: getRelayTargetStateLabel(result.targetState)
-				})
-			});
-			return;
-		}
+		scheduleRelayHistoryRefresh();
+		const relay = String(result.relay);
 
-		toast.add({
-			tone: 'warning',
-			message: m.devices_relay_confirmation_mismatch({
-				relay: String(result.relay),
-				state: getVerifiedRelayStateLabel(result.relay, result.row)
-			})
-		});
+		switch (result.outcome) {
+			case 'confirmed':
+				toast.add({
+					tone: 'success',
+					message: m.devices_relay_confirmation_changed({
+						relay,
+						state: getRelayTargetStateLabel(result.targetState)
+					})
+				});
+				return;
+			case 'mismatch':
+				toast.add({
+					tone: 'warning',
+					message: m.devices_relay_confirmation_mismatch({
+						relay,
+						state: getVerifiedRelayStateLabel(result.relay, result.row)
+					})
+				});
+				return;
+			case 'unconfirmed':
+				toast.add({
+					tone: 'warning',
+					message: m.devices_relay_confirmation_unconfirmed({ relay })
+				});
+		}
 	}
 
 	let routeStateByKey = $state<Record<string, RouteState>>({});
@@ -122,6 +134,7 @@
 	let activeRange = $derived(routeStateByKey[routeKey]?.activeRange ?? null);
 	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
 	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
+	let relayHistory = $derived(routeStateByKey[routeKey]?.relayHistory ?? null);
 	let relayStateManager: RelayStateManager | null = null;
 	let relayStateManagerKey = '';
 	let unsubscribeRelayState = () => {};
@@ -237,6 +250,10 @@
 	}
 
 	function destroyRelayStateManager(): void {
+		if (relayHistoryRefreshTimer) {
+			clearTimeout(relayHistoryRefreshTimer);
+			relayHistoryRefreshTimer = null;
+		}
 		unsubscribeRelayState();
 		unsubscribeRelayState = () => {};
 		relayStateManager?.destroy();
@@ -261,18 +278,32 @@
 
 		const manager = new RelayStateManager({
 			fetchLatestData: async (signal) => await fetchRelayData({ signal }),
+			requestStatus: async () => {
+				await new ApiService({ authToken }).requestRelayStatus(devEui);
+			},
 			historicalData,
 			latestData,
 			onVerificationResolved: handleRelayConfirmationResolved
 		});
+		let lastReportAt: string | null = null;
 		unsubscribeRelayState = manager.subscribe((snapshot) => {
 			relayStateSnapshot = snapshot;
+			// A new device report can be a state change for the history.
+			const reportAt = snapshot.latestData?.created_at ?? null;
+			if (lastReportAt !== null && reportAt !== null && reportAt !== lastReportAt) {
+				scheduleRelayHistoryRefresh();
+			}
+			lastReportAt = reportAt ?? lastReportAt;
 		});
 		relayStateManager = manager;
 		relayStateManagerKey = nextManagerKey;
 	}
 
-	let childLoading = $derived(fetching && displayHistoricalData.length === 0);
+	let childLoading = $derived(
+		isRelayDevice
+			? relayHistory === null && !fetchError
+			: fetching && displayHistoricalData.length === 0
+	);
 
 	async function loadHistoricalData(
 		start: Date | string,
@@ -289,21 +320,74 @@
 
 		try {
 			const api = new ApiService({ authToken });
-			const result = await api.getDeviceDataWithinRange(devEui, {
-				start: toIsoString(start),
-				end: toIsoString(end),
-				take: MAX_RANGE_RECORDS
-			});
-
-			state.requestedHistoricalData = normalizeTelemetryRows(result);
+			if (isRelayDevice) {
+				// Relays keep one state row, so their range is the history log instead.
+				state.relayHistory = await api.getRelayHistory(devEui, {
+					start: toIsoString(start),
+					end: toIsoString(end)
+				});
+			} else {
+				// The API answers 404 when the range has no rows (e.g. a new device).
+				const result = await api
+					.getDeviceDataWithinRange(
+						devEui,
+						{
+							start: toIsoString(start),
+							end: toIsoString(end),
+							take: MAX_RANGE_RECORDS
+						},
+						{ suppressNotFoundError: true }
+					)
+					.catch((error) => {
+						if (error instanceof ApiServiceError && error.status === 404) return [];
+						throw error;
+					});
+				state.requestedHistoricalData = normalizeTelemetryRows(result);
+			}
 			state.activeRange = rangeSelection;
-			syncRelayStateBaseData();
 		} catch (error) {
 			console.error('Failed to fetch device data:', error);
-			state.fetchError = m.devices_load_telemetry_failed();
+			state.fetchError = isRelayDevice
+				? m.devices_relay_history_load_failed()
+				: m.devices_load_telemetry_failed();
 			toast.add({ tone: 'danger', message: state.fetchError });
 		} finally {
 			state.fetching = false;
+		}
+	}
+
+	let relayHistoryRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+	/** Re-reads the relay history soon; bursts of triggers collapse into one read. */
+	function scheduleRelayHistoryRefresh(): void {
+		if (!isRelayDevice) return;
+		if (relayHistoryRefreshTimer) clearTimeout(relayHistoryRefreshTimer);
+		relayHistoryRefreshTimer = setTimeout(() => {
+			relayHistoryRefreshTimer = null;
+			void refreshRelayHistory();
+		}, RELAY_HISTORY_REFRESH_DELAY_MS);
+	}
+
+	/**
+	 * Re-reads the active range's history quietly: no loading state, and the
+	 * result is dropped if the user switched range (or a full load started).
+	 */
+	async function refreshRelayHistory(): Promise<void> {
+		const key = routeKey;
+		const state = getRouteState(key);
+		const range = state.activeRange;
+		if (!authToken || !devEui || state.fetching || range === null) return;
+
+		try {
+			const history = await new ApiService({ authToken }).getRelayHistory(
+				devEui,
+				getRangeBounds(range)
+			);
+			if (routeKey === key && state.activeRange === range && !state.fetching) {
+				state.relayHistory = history;
+			}
+		} catch (error) {
+			console.error('Failed to refresh relay history:', error);
 		}
 	}
 
@@ -397,15 +481,12 @@
 		targetState: RelayTargetState,
 		durationSeconds?: number
 	): Promise<void> {
-		const hasPendingRelayVerification =
-			Object.keys(relayStateSnapshot.pendingRelayStates).length > 0;
-
 		if (
 			!isRelayDevice ||
 			!authToken ||
 			!devEui ||
 			!canManage(permissionLevel) ||
-			hasPendingRelayVerification
+			hasConfirmingRelay(relayStateSnapshot.pendingRelayStates)
 		) {
 			return;
 		}
@@ -413,17 +494,17 @@
 		try {
 			ensureRelayStateManager();
 			const api = new ApiService({ authToken });
+			const isPulse = typeof durationSeconds === 'number' && Number.isFinite(durationSeconds);
+			const result = isPulse
+				? await api.pulseRelay(devEui, { durationSeconds, relay })
+				: await api.updateRelay(devEui, { relay, targetState });
 
-			if (typeof durationSeconds === 'number' && Number.isFinite(durationSeconds)) {
-				await api.pulseRelay(devEui, {
-					durationSeconds,
-					relay
-				});
-			} else {
-				await api.updateRelay(devEui, { relay, targetState });
-			}
-
-			relayStateManager?.startVerification(relay, targetState);
+			// The API's send time: only device reports received after it count.
+			scheduleRelayHistoryRefresh();
+			relayStateManager?.startVerification(relay, targetState, {
+				sentAt: typeof result?.requestedAt === 'string' ? result.requestedAt : undefined,
+				durationSeconds: isPulse ? durationSeconds : undefined
+			});
 			toast.add({
 				tone: 'info',
 				message: m.devices_relay_command_queued({ relay: String(relay) })
@@ -490,8 +571,9 @@
 
 		<!-- Traffic devices render their own purpose-built hourly chart inside
 		     TrafficDisplay; the generic per-column time series is unreadable for
-		     hourly accumulator counts. -->
-		{#if chartSeries.length > 0 && !isTrafficDevice}
+		     hourly accumulator counts. Relays have nothing to plot: RelayDisplay
+		     shows their ON/OFF state and history. -->
+		{#if !isTrafficDevice && !isRelayDevice && chartSeries.length > 0}
 			<div class="device-page__chart">
 				<CwResponsiveLineChart
 					locale={getIntlLocale()}
@@ -522,6 +604,7 @@
 					loading={childLoading}
 					{permissionLevel}
 					pendingRelayStates={relayStateSnapshot.pendingRelayStates}
+					relayHistory={relayHistory ?? []}
 					{queueRelayCommand}
 					{authToken}
 				/>

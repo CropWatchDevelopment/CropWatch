@@ -50,6 +50,10 @@
 	// True while a full reload (initial load or filter change) is in flight, as
 	// opposed to a "load more" append. Drives the full-area loading spinner.
 	let reloading = $state(false);
+	// True while the return-to-tab refresh is in flight. Cards whose last-seen
+	// time lapsed in the background show as offline (red) until it lands, so an
+	// overlay tells the user fresh data is on its way.
+	let refreshing = $state(false);
 	// Refetches each device when its own upload window (last seen +
 	// upload_interval + grace) expires, with capped backoff while it stays
 	// stale — replaces the old fixed 10-minute full-page poll.
@@ -101,6 +105,7 @@
 
 	async function refreshLoaded() {
 		if (groups.length === 0) return;
+		refreshing = true;
 		try {
 			const api = new ApiService({ authToken: app.accessToken });
 			const page = await api.getDashboardLocations(
@@ -126,6 +131,8 @@
 			syncRefreshScheduler();
 		} catch (err) {
 			console.error('Failed to refresh dashboard', err);
+		} finally {
+			refreshing = false;
 		}
 	}
 
@@ -358,123 +365,152 @@
 	});
 </script>
 
-<div class="dashboard-cards__scroll">
-	{#if reloading}
-		<div class="dashboard-cards__loading">
-			<CwSpinner size="xl" />
-		</div>
-	{:else if groups.length === 0}
-		<p class="dashboard-cards__empty">{m.dashboard_no_devices()}</p>
-	{:else}
-		<div class="dashboard-cards__groups dashboard-cards__groups--{cardLayout}">
-			{#each groups as group (group.key)}
-				{@const locationName = group.location?.name ?? m.dashboard_no_location()}
-				<CwLocationCard
-					title={locationName}
-					labels={cwLocationCardLabels(locationName)}
-					class="dashboard-cards__location"
-					onNavigate={() => {
-						const locationId = group.location?.location_id;
-						if (locationId == null) return;
-						// Carry the originating page (+ active group filter) so the location
-						// page's back button returns to the filtered dashboard.
-						const params = new SvelteURLSearchParams({ backTo: '/' });
-						if (filters.locationGroup) params.set('filter', filters.locationGroup);
-						goto(resolve(`/locations/${locationId}?${params.toString()}` as '/'));
-					}}
-				>
-					{#each group.devices as row (row.dev_eui)}
-						{@const primary = primaryProps(row)}
-						{@const secondary = secondaryProps(row)}
-						{@const details = detailsByDevEui[row.dev_eui]}
-						{@const detailRows = details && details !== 'loading' ? detailEntries(details) : []}
-						{@const lastSeen = row.last_data_updated_at ?? row.latest?.created_at ?? null}
-						<CwSensorCard
-							labels={cwSensorCardLabels()}
-							label={row.name}
-							status={row.latest ? 'online' : 'loading'}
-							hasError={hasDeviceError(row) ? m.dashboard_sensor_error() : null}
-							primaryValue={primary.value}
-							primaryUnit={primary.unit}
-							primaryLabel={primary.label}
-							primary_icon={primary.icon}
-							secondaryValue={secondary.value}
-							secondaryUnit={secondary.unit}
-							secondaryLabel={secondary.label}
-							secondary_icon={secondary.icon}
-							lastSeenAt={row.last_data_updated_at ?? row.latest?.created_at ?? undefined}
-							expireAfterMinutes={row.upload_interval ??
-								row.device_type.default_upload_interval ??
-								60}
-							storageKey={`dashboard:${row.dev_eui}`}
-							detailsHeading={m.common_details()}
-							onExpand={() => loadDetails(row.dev_eui)}
-						>
-							{#if details === undefined || details === 'loading'}
-								<p class="dashboard-cards__details-loading">{m.dashboard_loading_details()}</p>
-							{:else if detailRows.length === 0}
-								<p class="dashboard-cards__details-empty">{m.dashboard_no_data_yet()}</p>
-							{:else}
-								<dl class="dashboard-cards__details-list">
-									{#each detailRows as { col, def, valueDisplay, unit } (col)}
-										{#if col !== 'created_at'}
+<div class="dashboard-cards">
+	<div class="dashboard-cards__scroll" aria-busy={refreshing}>
+		{#if reloading}
+			<div class="dashboard-cards__loading">
+				<CwSpinner size="xl" />
+			</div>
+		{:else if groups.length === 0}
+			<p class="dashboard-cards__empty">{m.dashboard_no_devices()}</p>
+		{:else}
+			<div class="dashboard-cards__groups dashboard-cards__groups--{cardLayout}">
+				{#each groups as group (group.key)}
+					{@const locationName = group.location?.name ?? m.dashboard_no_location()}
+					<CwLocationCard
+						title={locationName}
+						labels={cwLocationCardLabels(locationName)}
+						class="dashboard-cards__location"
+						onNavigate={() => {
+							const locationId = group.location?.location_id;
+							if (locationId == null) return;
+							// Carry the originating page (+ active group filter) so the location
+							// page's back button returns to the filtered dashboard.
+							const params = new SvelteURLSearchParams({ backTo: '/' });
+							if (filters.locationGroup) params.set('filter', filters.locationGroup);
+							goto(resolve(`/locations/${locationId}?${params.toString()}` as '/'));
+						}}
+					>
+						{#each group.devices as row (row.dev_eui)}
+							{@const primary = primaryProps(row)}
+							{@const secondary = secondaryProps(row)}
+							{@const details = detailsByDevEui[row.dev_eui]}
+							{@const detailRows = details && details !== 'loading' ? detailEntries(details) : []}
+							{@const lastSeen = row.last_data_updated_at ?? row.latest?.created_at ?? null}
+							<CwSensorCard
+								labels={cwSensorCardLabels()}
+								label={row.name}
+								status={row.latest ? 'online' : 'loading'}
+								hasError={hasDeviceError(row) ? m.dashboard_sensor_error() : null}
+								primaryValue={primary.value}
+								primaryUnit={primary.unit}
+								primaryLabel={primary.label}
+								primary_icon={primary.icon}
+								secondaryValue={secondary.value}
+								secondaryUnit={secondary.unit}
+								secondaryLabel={secondary.label}
+								secondary_icon={secondary.icon}
+								lastSeenAt={row.last_data_updated_at ?? row.latest?.created_at ?? undefined}
+								expireAfterMinutes={row.upload_interval ??
+									row.device_type.default_upload_interval ??
+									60}
+								storageKey={`dashboard:${row.dev_eui}`}
+								detailsHeading={m.common_details()}
+								onExpand={() => loadDetails(row.dev_eui)}
+							>
+								{#if details === undefined || details === 'loading'}
+									<p class="dashboard-cards__details-loading">{m.dashboard_loading_details()}</p>
+								{:else if detailRows.length === 0}
+									<p class="dashboard-cards__details-empty">{m.dashboard_no_data_yet()}</p>
+								{:else}
+									<dl class="dashboard-cards__details-list">
+										{#each detailRows as { col, def, valueDisplay, unit } (col)}
+											{#if col !== 'created_at'}
+												<div class="dashboard-cards__details-row">
+													<dt>{def.label()}</dt>
+													<dd>
+														{valueDisplay}
+														<small><sup>{unit ? ` ${unit}` : ''}</sup></small>
+													</dd>
+												</div>
+											{/if}
+										{/each}
+										<!-- Always show Last Seen at the BOTTOM of the details list -->
+										{#if lastSeen}
 											<div class="dashboard-cards__details-row">
-												<dt>{def.label()}</dt>
+												<dt>{m.dashboard_column_last_seen()}</dt>
 												<dd>
-													{valueDisplay}
-													<small><sup>{unit ? ` ${unit}` : ''}</sup></small>
+													<CwDuration from={lastSeen} class="ml-1 text-xs text-(--cw-text-muted)" />
 												</dd>
 											</div>
 										{/if}
-									{/each}
-									<!-- Always show Last Seen at the BOTTOM of the details list -->
-									{#if lastSeen}
-										<div class="dashboard-cards__details-row">
-											<dt>{m.dashboard_column_last_seen()}</dt>
-											<dd>
-												<CwDuration from={lastSeen} class="ml-1 text-xs text-(--cw-text-muted)" />
-											</dd>
-										</div>
-									{/if}
-									<!-- END OF LAST SEEN -->
-								</dl>
-								<span class="flex w-full flex-row gap-1">
-									{#if row.device_type.data_table_v2 === 'cw_air_data'}
-										<TodayDataNoteDialog devEui={row.dev_eui} />
-									{/if}
-									<CwButton
-										variant="secondary"
-										class="w-full"
-										{loading}
-										onclick={() => GoToDetails(row)}
-									>
-										{m.common_details()}
-									</CwButton>
-								</span>
-							{/if}
-						</CwSensorCard>
-					{/each}
-				</CwLocationCard>
-			{/each}
-		</div>
-
-		{#if groups.length < total}
-			<div class="dashboard-cards__pager">
-				<CwButton
-					size="sm"
-					variant="secondary"
-					onclick={() => {
-						loadPage();
-					}}
-				>
-					{loading ? '…' : m.dashboard_load_more()}
-				</CwButton>
+										<!-- END OF LAST SEEN -->
+									</dl>
+									<span class="flex w-full flex-row gap-1">
+										{#if row.device_type.data_table_v2 === 'cw_air_data'}
+											<TodayDataNoteDialog devEui={row.dev_eui} />
+										{/if}
+										<CwButton
+											variant="secondary"
+											class="w-full"
+											{loading}
+											onclick={() => GoToDetails(row)}
+										>
+											{m.common_details()}
+										</CwButton>
+									</span>
+								{/if}
+							</CwSensorCard>
+						{/each}
+					</CwLocationCard>
+				{/each}
 			</div>
+
+			{#if groups.length < total}
+				<div class="dashboard-cards__pager">
+					<CwButton
+						size="sm"
+						variant="secondary"
+						onclick={() => {
+							loadPage();
+						}}
+					>
+						{loading ? '…' : m.dashboard_load_more()}
+					</CwButton>
+				</div>
+			{/if}
 		{/if}
+	</div>
+	{#if refreshing}
+		<div class="dashboard-cards__overlay" role="status">
+			<CwSpinner size="xl" showLabel label={m.dashboard_loading_devices()} />
+		</div>
 	{/if}
 </div>
 
 <style>
+	/* Positioning context so the refresh overlay covers the visible scroll
+	   viewport instead of scrolling away with the cards. */
+	.dashboard-cards {
+		position: relative;
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	.dashboard-cards__overlay {
+		position: absolute;
+		inset: 0;
+		z-index: 10;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: color-mix(in srgb, var(--cw-bg-base, #0f172a) 55%, transparent);
+		backdrop-filter: blur(1px);
+		color: var(--cw-text-muted, #94a3b8);
+	}
+
 	.dashboard-cards__scroll {
 		flex: 1 1 auto;
 		min-height: 0;

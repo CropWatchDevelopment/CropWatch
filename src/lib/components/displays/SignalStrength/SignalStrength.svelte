@@ -46,11 +46,19 @@
 			style:height="{level * 25}%"
 		></span>
 	{/each}
+	{#if bars === 0}
+		<!-- No usable reading (never heard by a gateway): a "no" sign over the empty bars. -->
+		<svg class="signal-strength__none" viewBox="0 0 16 16" aria-hidden="true">
+			<circle cx="8" cy="8" r="6" />
+			<line x1="3.8" y1="3.8" x2="12.2" y2="12.2" />
+		</svg>
+	{/if}
 </span>
 
 <style>
 	/* Sized in em so the icon scales with the surrounding font-size. */
 	.signal-strength {
+		position: relative;
 		display: inline-flex;
 		align-items: flex-end;
 		gap: 0.12em;
@@ -58,6 +66,18 @@
 		height: 1em;
 		vertical-align: -0.1em;
 		--signal-color: var(--cw-text-muted);
+	}
+
+	.signal-strength__none {
+		position: absolute;
+		inset: 0;
+		width: 0.9em;
+		height: 0.9em;
+		margin: auto;
+		fill: none;
+		stroke: var(--cw-danger-500);
+		stroke-width: 2;
+		stroke-linecap: round;
 	}
 
 	.signal-strength--weak {

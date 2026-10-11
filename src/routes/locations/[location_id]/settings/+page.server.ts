@@ -5,6 +5,7 @@ import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {
 	addPermission,
+	deleteLocation,
 	editPermission,
 	readUnknownString,
 	removePermission,
@@ -21,7 +22,8 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 			locationId: Number.isFinite(locationId) ? locationId : null,
 			locationName: '',
 			locationGroup: '',
-			locationOwners: [] as LocationOwnerDto[]
+			locationOwners: [] as LocationOwnerDto[],
+			deletion: null as { deviceCount: number } | null
 		};
 	}
 
@@ -30,7 +32,12 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		authToken
 	});
 
-	const location = await apiService.getLocation(locationId).catch(() => null);
+	// The preflight is owner-only (403/404 otherwise): it decides whether the
+	// danger zone shows at all, and how many devices still block the delete.
+	const [location, deletePreflight] = await Promise.all([
+		apiService.getLocation(locationId).catch(() => null),
+		apiService.getLocationDeletePreflight(locationId).catch(() => null)
+	]);
 	const currentUserId = readUnknownString(locals.jwt?.sub);
 	const locationOwnerId = readUnknownString((location as Record<string, unknown> | null)?.owner_id);
 
@@ -51,7 +58,8 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		locationId,
 		locationName: String(location?.name ?? `Location ${locationId}`),
 		locationGroup: String(location?.group ?? ''),
-		locationOwners: (location?.cw_location_owners ?? []) as LocationOwnerDto[]
+		locationOwners: (location?.cw_location_owners ?? []) as LocationOwnerDto[],
+		deletion: deletePreflight ? { deviceCount: deletePreflight.device_count } : null
 	};
 };
 
@@ -60,5 +68,6 @@ export const actions: Actions = {
 	addPermission,
 	editPermission,
 	updateUserPermissionLevel,
-	removePermission
+	removePermission,
+	deleteLocation
 };

@@ -6,10 +6,15 @@
 	import LocationEditPermissions from './LocationEditPermissions.svelte';
 	import LocationPermissions from './LocationPermissions.svelte';
 	import LocationUpdate from './LocationUpdate.svelte';
+	import LocationDangerZone from './LocationDangerZone.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
+
+	let deleteForm = $derived(
+		(form ?? null) as { action?: string; success?: boolean; message?: string } | null
+	);
 </script>
 
 <svelte:head>
@@ -30,4 +35,13 @@
 	<LocationUpdate {data} />
 	<LocationPermissions {data} />
 	<LocationEditPermissions {data} />
+
+	{#if data.deletion && data.locationId !== null}
+		<LocationDangerZone
+			locationId={data.locationId}
+			locationName={data.locationName}
+			deviceCount={data.deletion.deviceCount}
+			form={deleteForm}
+		/>
+	{/if}
 </AppPage>

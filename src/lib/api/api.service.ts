@@ -6,6 +6,7 @@ import type {
 	DashboardPage,
 	DashboardQuery,
 	DeleteDeviceResultDto,
+	DeleteLocationResultDto,
 	DeviceDataWithinRangeQuery,
 	DeviceListQuery,
 	DeviceDto,
@@ -14,6 +15,7 @@ import type {
 	DeviceStatusSummary,
 	LatestPrimaryDataQuery,
 	ListOrPaginatedResponse,
+	LocationDeletePreflightDto,
 	LocationDto,
 	LocationsQuery,
 	LineLinkCodeResponse,
@@ -58,6 +60,7 @@ import type {
 	TrafficMonthlyReportDto,
 	TriggeredRulesCountResponse,
 	PulseRelayRequest,
+	RelayHistoryEntryDto,
 	UpdateRelayRequest,
 	UpdateLocationRequest,
 	UpdateLocationOwnerRequest,
@@ -78,7 +81,11 @@ import type {
 	InvitePreviewDto,
 	OrgChildrenDto,
 	OrgParentRequestDto,
-	CreateOrgInviteRequest
+	CreateOrgInviteRequest,
+	DeviceSetupLookupRequest,
+	DeviceSetupLookupResult,
+	DeviceSetupRequest,
+	DeviceSetupResult
 } from './api.dtos';
 
 type FetchLike = typeof fetch;
@@ -166,11 +173,14 @@ const DEVICE_BY_DEV_EUI_ENDPOINT = '/devices/{dev_eui}';
 const DEVICE_DATA_ENDPOINT = '/devices/{dev_eui}/data';
 const DEVICE_DATA_WITHIN_RANGE_ENDPOINT = '/devices/{dev_eui}/data-within-range';
 const DEVICE_LATEST_DATA_ENDPOINT = '/devices/{dev_eui}/latest-data';
+const DEVICE_SETUP_ENDPOINT = '/device-setup';
+const DEVICE_SETUP_LOOKUP_ENDPOINT = '/device-setup/lookup';
 const DASHBOARD_DEVICES_ENDPOINT = '/dashboard/devices';
 const DASHBOARD_LOCATIONS_ENDPOINT = '/dashboard/locations';
 const DASHBOARD_DEVICE_LATEST_ENDPOINT = '/dashboard/devices/{dev_eui}/latest';
 const LOCATIONS_ENDPOINT = '/locations';
 const LOCATION_BY_ID_ENDPOINT = '/locations/{id}';
+const LOCATION_DELETE_PREFLIGHT_ENDPOINT = '/locations/{id}/delete-preflight';
 const LOCATION_PERMISSION_ENDPOINT = '/locations/{id}/permission';
 const LOCATION_PERMISSION_UPDATE_PERMISSION_LEVEL_ENDPOINT = '/locations/{id}/permission-level';
 const ME_CONTEXT_ENDPOINT = '/me/context';
@@ -192,6 +202,8 @@ const INVITE_PREVIEW_ENDPOINT = '/invites/{token}';
 const INVITE_ACCEPT_ENDPOINT = '/invites/{token}/accept';
 const RELAY_ENDPOINT = '/relay/{dev_eui}';
 const RELAY_PULSE_ENDPOINT = '/relay/{dev_eui}/pulse';
+const RELAY_STATUS_REQUEST_ENDPOINT = '/relay/{dev_eui}/status-request';
+const RELAY_HISTORY_ENDPOINT = '/relay/{dev_eui}/history';
 const RULE_TEMPLATES_ENDPOINT = publicEnv.PUBLIC_RULE_TEMPLATES_ENDPOINT ?? '/rules';
 const RULE_TEMPLATE_ACTION_TYPES_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/action-types`;
 const RULE_TEMPLATE_FORM_CONTEXT_ENDPOINT = `${RULE_TEMPLATES_ENDPOINT}/form-context`;
@@ -923,6 +935,33 @@ export class ApiService {
 		);
 	}
 
+	/** A relay's state changes and commands for a range, newest first. */
+	public getRelayHistory(
+		devEui: string,
+		query: Pick<TimeRangeQuery, 'start' | 'end'> = {},
+		options: ApiMethodOptions = {}
+	): Promise<RelayHistoryEntryDto[]> {
+		return this.request<RelayHistoryEntryDto[]>(
+			replacePathParams(RELAY_HISTORY_ENDPOINT, { dev_eui: devEui }),
+			{
+				method: 'GET',
+				signal: options.signal,
+				query: {
+					start: toIsoIfDate(query.start),
+					end: toIsoIfDate(query.end)
+				}
+			}
+		);
+	}
+
+	/** Asks a relay device to report its current state now (its confirmation is overdue). */
+	public requestRelayStatus(devEui: string): Promise<Record<string, unknown> | null> {
+		return this.request<Record<string, unknown> | null>(
+			replacePathParams(RELAY_STATUS_REQUEST_ENDPOINT, { dev_eui: devEui }),
+			{ method: 'POST' }
+		);
+	}
+
 	public async getDevicesPage(query: DeviceListQuery = {}): Promise<PaginatedResponse<DeviceDto>> {
 		const payload = await this.request<
 			DeviceDto[] | PaginatedResponse<DeviceDto> | Record<string, unknown>
@@ -1111,8 +1150,17 @@ export class ApiService {
 		);
 	}
 
-	public deleteLocation(id: number | string): Promise<number | Record<string, unknown>> {
-		return this.request<number | Record<string, unknown>>(
+	/** Owner-only: devices still blocking the delete. 403/404 just mean "not the owner". */
+	public getLocationDeletePreflight(id: number | string): Promise<LocationDeletePreflightDto> {
+		return this.request<LocationDeletePreflightDto>(
+			replacePathParams(LOCATION_DELETE_PREFLIGHT_ENDPOINT, { id }),
+			{ method: 'GET', suppressErrorStatuses: [403, 404] }
+		);
+	}
+
+	/** Permanently deletes an empty location (owner-only; 409 while it has devices). */
+	public deleteLocation(id: number | string): Promise<DeleteLocationResultDto> {
+		return this.request<DeleteLocationResultDto>(
 			replacePathParams(LOCATION_BY_ID_ENDPOINT, { id }),
 			{
 				method: 'DELETE'
@@ -1235,6 +1283,26 @@ export class ApiService {
 		);
 	}
 
+	/** Checks a DevEUI before guided setup (ownership, model, keys, network). */
+	public lookupDeviceSetup(
+		payload: DeviceSetupLookupRequest,
+		options: ApiMethodOptions = {}
+	): Promise<DeviceSetupLookupResult> {
+		return this.request<DeviceSetupLookupResult>(DEVICE_SETUP_LOOKUP_ENDPOINT, {
+			method: 'POST',
+			body: payload,
+			signal: options.signal
+		});
+	}
+
+	/** Guided setup: registers on the network, saves the device, uses the license. */
+	public setupDevice(payload: DeviceSetupRequest): Promise<DeviceSetupResult> {
+		return this.request<DeviceSetupResult>(DEVICE_SETUP_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
+	}
+
 	public createDevice(devEui: string, payload: CreateDeviceRequest): Promise<DeviceDto> {
 		return this.request<DeviceDto>(
 			replacePathParams(DEVICE_BY_DEV_EUI_ENDPOINT, { dev_eui: devEui }),
@@ -1247,12 +1315,15 @@ export class ApiService {
 
 	public getDeviceData(
 		devEui: string,
-		query: PaginationQuery = {}
+		query: PaginationQuery = {},
+		options: GetDeviceLatestDataOptions = {}
 	): Promise<ListOrPaginatedResponse<Record<string, unknown>>> {
 		return this.request<ListOrPaginatedResponse<Record<string, unknown>>>(
 			replacePathParams(DEVICE_DATA_ENDPOINT, { dev_eui: devEui }),
 			{
 				method: 'GET',
+				signal: options.signal,
+				suppressErrorStatuses: options.suppressNotFoundError ? [404] : undefined,
 				query: {
 					skip: query.skip,
 					take: query.take
@@ -1263,12 +1334,15 @@ export class ApiService {
 
 	public getDeviceDataWithinRange(
 		devEui: string,
-		query: DeviceDataWithinRangeQuery = {}
+		query: DeviceDataWithinRangeQuery = {},
+		options: GetDeviceLatestDataOptions = {}
 	): Promise<ListOrPaginatedResponse<Record<string, unknown>>> {
 		return this.request<ListOrPaginatedResponse<Record<string, unknown>>>(
 			replacePathParams(DEVICE_DATA_WITHIN_RANGE_ENDPOINT, { dev_eui: devEui }),
 			{
 				method: 'GET',
+				signal: options.signal,
+				suppressErrorStatuses: options.suppressNotFoundError ? [404] : undefined,
 				query: {
 					skip: query.skip,
 					take: query.take,

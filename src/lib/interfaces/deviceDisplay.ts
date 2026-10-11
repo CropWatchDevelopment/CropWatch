@@ -1,4 +1,5 @@
 import type { Component } from 'svelte';
+import type { RelayHistoryEntryDto } from '$lib/api/api.dtos';
 import type { PendingRelayStates, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 
 /**
@@ -32,6 +33,9 @@ export interface DeviceDisplayProps {
 
 	/** Effective permission level for the current user on this device. */
 	permissionLevel: number;
+
+	/** State changes and commands for the selected range, newest first. Relay-only. */
+	relayHistory?: RelayHistoryEntryDto[];
 
 	/** Relay confirmation state keyed by relay number. Relay-only. */
 	pendingRelayStates?: PendingRelayStates;
