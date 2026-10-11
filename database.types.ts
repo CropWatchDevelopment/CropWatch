@@ -582,6 +582,7 @@ export type Database = {
 					sensor_serial: string | null;
 					sensor1_serial: string | null;
 					sensor2_serial: string | null;
+					tti_application_id: string | null;
 					tti_name: string | null;
 					type: number | null;
 					upload_interval: number | null;
@@ -607,6 +608,7 @@ export type Database = {
 					sensor_serial?: string | null;
 					sensor1_serial?: string | null;
 					sensor2_serial?: string | null;
+					tti_application_id?: string | null;
 					tti_name?: string | null;
 					type?: number | null;
 					upload_interval?: number | null;
@@ -632,6 +634,7 @@ export type Database = {
 					sensor_serial?: string | null;
 					sensor1_serial?: string | null;
 					sensor2_serial?: string | null;
+					tti_application_id?: string | null;
 					tti_name?: string | null;
 					type?: number | null;
 					upload_interval?: number | null;
@@ -841,6 +844,7 @@ export type Database = {
 					long: number | null;
 					map_zoom: number | null;
 					name: string;
+					network_region: string;
 					org_id: string | null;
 					owner_id: string | null;
 				};
@@ -853,6 +857,7 @@ export type Database = {
 					long?: number | null;
 					map_zoom?: number | null;
 					name: string;
+					network_region?: string;
 					org_id?: string | null;
 					owner_id?: string | null;
 				};
@@ -865,6 +870,7 @@ export type Database = {
 					long?: number | null;
 					map_zoom?: number | null;
 					name?: string;
+					network_region?: string;
 					org_id?: string | null;
 					owner_id?: string | null;
 				};

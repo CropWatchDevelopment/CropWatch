@@ -1,16 +1,15 @@
 <!--
   RelayDisplay.svelte — Display component for cw_relay_data.
 
-  Renders relay toggle state cards and a history log of state changes.
-  Unlike sensor displays, relays have boolean state columns (relay_1, relay_2)
-  rather than continuous numeric time series.
+  Renders relay toggle state cards and the relay's history: state changes the
+  device reported and commands sent from CropWatch, with whether the device
+  confirmed them (GET /relay/:dev_eui/history, loaded by the device page).
 -->
 <script lang="ts">
 	import {
 		CwButton,
 		CwCard,
 		CwChip,
-		CwDuration,
 		CwDataTable,
 		CwInput,
 		CwSwitch,
@@ -20,21 +19,18 @@
 	import { cwDataTableLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
 	import {
+		hasConfirmingRelay,
 		MAX_RELAY_PULSE_DURATION_SECONDS,
 		MIN_RELAY_PULSE_DURATION_SECONDS
 	} from '$lib/devices/relay-control';
-	import { relayStateLabel } from '$lib/devices/relay-labels';
+	import type { RelayHistoryEntryDto } from '$lib/api/api.dtos';
 	import {
-		getRelayState,
-		normalizeRelayTelemetryRow,
-		normalizeRelayTelemetryRows
-	} from '$lib/devices/relay-telemetry';
-	import type {
-		PendingRelayState,
-		RelayNumber,
-		RelayTargetState,
-		RelayTelemetryRow
-	} from '$lib/devices/relay-types';
+		relayHistoryEventLabel,
+		relayHistoryResult,
+		relayStateLabel
+	} from '$lib/devices/relay-labels';
+	import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
+	import type { PendingRelayState, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
@@ -42,36 +38,47 @@
 
 	let {
 		latestData,
-		historicalData,
 		loading,
 		authToken,
 		permissionLevel,
 		pendingRelayStates = {},
-		queueRelayCommand
+		queueRelayCommand,
+		relayHistory = []
 	}: Pick<
 		DeviceDisplayProps,
 		| 'latestData'
-		| 'historicalData'
 		| 'authToken'
 		| 'loading'
 		| 'pendingRelayStates'
 		| 'permissionLevel'
 		| 'queueRelayCommand'
+		| 'relayHistory'
 	> = $props();
 
 	// ---- Columns ---------------------------------------------------------------
 
 	const DEFAULT_TIMED_ON_DURATION_SECONDS = '60';
 
-	const columns: CwColumnDef<RelayTelemetryRow>[] = [
-		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
-		{ key: 'relay_1', header: m.display_relay_one(), sortable: true, width: '8rem' },
-		{ key: 'relay_2', header: m.display_relay_two(), sortable: true, width: '8rem' }
+	const columns: CwColumnDef<RelayHistoryEntryDto>[] = [
+		{ key: 'at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
+		{ key: 'event', header: m.devices_relay_history_column_event() },
+		{ key: 'relay_1', header: m.display_relay_one(), width: '8rem' },
+		{ key: 'relay_2', header: m.display_relay_two(), width: '8rem' },
+		{ key: 'result', header: m.devices_relay_history_column_result(), width: '9rem' }
 	];
+
+	// A command and the device's answer are ~4 s apart, so show seconds.
+	const HISTORY_TIME_FORMAT: Intl.DateTimeFormatOptions = {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit',
+		second: '2-digit'
+	};
 
 	// ---- Derived state ---------------------------------------------------------
 
-	let rows = $derived(normalizeRelayTelemetryRows(historicalData));
 	let latestRelayRow = $derived(normalizeRelayTelemetryRow(latestData));
 	let latestRelay1 = $derived(getRelayState(latestRelayRow, 1));
 	let latestRelay2 = $derived(getRelayState(latestRelayRow, 2));
@@ -91,6 +98,13 @@
 	let submittingTimedRelayCommands = $state<Partial<Record<RelayNumber, boolean>>>({});
 	let timedOnDurationSeconds = $state(DEFAULT_TIMED_ON_DURATION_SECONDS);
 	let timedOnDurationError = $derived(getTimedOnDurationError());
+	// CwDataTable only reloads on its own query changes: remount it when an
+	// entry appears or a command settles.
+	let historyKey = $derived(
+		relayHistory
+			.map((entry) => `${entry.id}:${entry.kind === 'command' ? entry.outcome : ''}`)
+			.join('|')
+	);
 
 	// ---- Table loader ----------------------------------------------------------
 
@@ -106,6 +120,19 @@
 		}
 
 		return relayStateLabel(value);
+	}
+
+	/**
+	 * The relay state a history row shows: what a state change reported, or
+	 * what the device reported for the relay a command targeted (a status
+	 * request shows both).
+	 */
+	function historyRelayValue(entry: RelayHistoryEntryDto, relay: RelayNumber): boolean | null {
+		if (entry.kind === 'command' && entry.relay !== null && entry.relay !== relay) {
+			return null;
+		}
+
+		return relay === 1 ? entry.relay_1 : entry.relay_2;
 	}
 
 	function getRelayStateTone(value: boolean | null): 'danger' | 'secondary' | 'success' {
@@ -129,8 +156,11 @@
 	}
 
 	function hasLockedRelayOperation(): boolean {
+		// Only while a command is actively being confirmed: once that window
+		// passes, the user can act again (e.g. switch it back) without waiting
+		// for the device's next scheduled report.
 		return (
-			Object.keys(pendingRelayStates).length > 0 ||
+			hasConfirmingRelay(pendingRelayStates) ||
 			Object.keys(submittingRelayCommands).length > 0 ||
 			Object.keys(submittingTimedRelayCommands).length > 0
 		);
@@ -279,30 +309,34 @@
 		}
 	}
 
-	// Relay-specific sort: timestamps compare as dates, relay states as booleans
-	// (`null` = unknown sorts with "off").
-	const loadTableData = createClientTableLoader<RelayTelemetryRow>(() => rows, {
-		sort: (sortRows, column, direction) => {
-			const dir = direction === 'asc' ? 1 : -1;
-			return [...sortRows].sort((a, b) => {
-				if (column === 'created_at') {
-					return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
-				}
-
-				if (column === 'relay_1') {
-					return ((a.relay_1 === true ? 1 : 0) - (b.relay_1 === true ? 1 : 0)) * dir;
-				}
-
-				if (column === 'relay_2') {
-					return ((a.relay_2 === true ? 1 : 0) - (b.relay_2 === true ? 1 : 0)) * dir;
-				}
-
-				return String(a[column] ?? '').localeCompare(String(b[column] ?? ''));
-			});
-		},
+	// `at` is an ISO UTC timestamp, so the default string sort is chronological.
+	const loadHistory = createClientTableLoader<RelayHistoryEntryDto>(() => relayHistory, {
+		searchText: (entry) =>
+			entry.kind === 'command'
+				? [
+						relayHistoryEventLabel(entry),
+						entry.requested_by ?? '',
+						relayHistoryResult(entry.outcome).label
+					].join(' ')
+				: relayHistoryEventLabel(entry),
 		onLoadingChange: (value) => (tableLoading = value)
 	});
 </script>
+
+{#snippet pendingFeedback(pending: PendingRelayState)}
+	<div class="relay-feedback">
+		{#if pending.phase === 'confirming'}
+			<CwChip label={m.devices_relay_confirmation_pending()} tone="warning" variant="soft" />
+			<p class="relay-feedback__copy">{m.devices_relay_waiting_for_confirmation()}</p>
+			{#if pending.statusRequested}
+				<p class="relay-feedback__copy">{m.devices_relay_status_requested()}</p>
+			{/if}
+		{:else}
+			<CwChip label={m.devices_relay_not_confirmed()} tone="warning" variant="soft" />
+			<p class="relay-feedback__copy">{m.devices_relay_awaiting_report()}</p>
+		{/if}
+	</div>
+{/snippet}
 
 <div class="relay-display">
 	<!-- Current relay status -->
@@ -317,18 +351,7 @@
 				/>
 			</div>
 			{#if relayOnePendingState}
-				<div class="relay-feedback">
-					<CwChip label={m.devices_relay_confirmation_pending()} tone="warning" variant="soft" />
-					<p class="relay-feedback__copy">{m.devices_relay_waiting_for_confirmation()}</p>
-					{#if relayOnePendingState.verifyAt}
-						<p class="relay-feedback__countdown">
-							{m.devices_relay_confirmation_checking_again_in()}
-							<span class="relay-feedback__duration">
-								<CwDuration from={relayOnePendingState.verifyAt} countDown={true} />
-							</span>
-						</p>
-					{/if}
-				</div>
+				{@render pendingFeedback(relayOnePendingState)}
 			{:else if latestRelay1 === null}
 				<p class="relay-feedback__copy">{m.devices_relay_state_unknown()}</p>
 			{/if}
@@ -366,18 +389,7 @@
 				/>
 			</div>
 			{#if relayTwoPendingState}
-				<div class="relay-feedback">
-					<CwChip label={m.devices_relay_confirmation_pending()} tone="warning" variant="soft" />
-					<p class="relay-feedback__copy">{m.devices_relay_waiting_for_confirmation()}</p>
-					{#if relayTwoPendingState.verifyAt}
-						<p class="relay-feedback__countdown">
-							{m.devices_relay_confirmation_checking_again_in()}
-							<span class="relay-feedback__duration">
-								<CwDuration from={relayTwoPendingState.verifyAt} countDown={true} />
-							</span>
-						</p>
-					{/if}
-				</div>
+				{@render pendingFeedback(relayTwoPendingState)}
 			{:else if latestRelay2 === null}
 				<p class="relay-feedback__copy">{m.devices_relay_state_unknown()}</p>
 			{/if}
@@ -453,37 +465,63 @@
 		<p class="relay-note">{controlNotice}</p>
 	{/if}
 
-	{#if !loading && rows.length > 0}
-		<CwCard title={m.display_relay_history()} subtitle={m.display_state_change_log()} elevated>
-			<CwDataTable
-				labels={cwDataTableLabels()}
-				{columns}
-				loadData={loadTableData}
-				loading={tableLoading}
-				rowKey="id"
-			>
-				{#snippet cell(
-					row: RelayTelemetryRow,
-					col: CwColumnDef<RelayTelemetryRow>,
-					defaultValue: string
-				)}
-					{#if col.key === 'created_at'}
-						{formatDateTime(row.created_at)}
-					{:else if col.key === 'relay_1' || col.key === 'relay_2'}
-						<CwChip
-							label={getRelayStateLabel(col.key === 'relay_1' ? row.relay_1 : row.relay_2)}
-							tone={getRelayStateTone(col.key === 'relay_1' ? row.relay_1 : row.relay_2)}
-							variant="outline"
-						/>
-					{:else}
-						{defaultValue}
-					{/if}
-				{/snippet}
-			</CwDataTable>
-		</CwCard>
-	{:else if !loading}
-		<CwCard title={m.display_no_data()} elevated>
-			<p>{m.display_no_relay_history()}</p>
+	{#if !loading}
+		<CwCard
+			title={m.display_relay_history()}
+			subtitle={m.devices_relay_history_subtitle()}
+			elevated
+		>
+			{#if relayHistory.length > 0}
+				{#key historyKey}
+					<CwDataTable
+						labels={cwDataTableLabels()}
+						{columns}
+						loadData={loadHistory}
+						loading={tableLoading}
+						rowKey="id"
+					>
+						{#snippet cell(
+							entry: RelayHistoryEntryDto,
+							col: CwColumnDef<RelayHistoryEntryDto>,
+							defaultValue: string
+						)}
+							{#if col.key === 'at'}
+								{formatDateTime(entry.at, HISTORY_TIME_FORMAT)}
+							{:else if col.key === 'event'}
+								<span class="relay-history__event">{relayHistoryEventLabel(entry)}</span>
+								{#if entry.kind === 'command' && entry.requested_by}
+									<span class="relay-history__by">
+										{m.devices_relay_history_requested_by({ name: entry.requested_by })}
+									</span>
+								{/if}
+							{:else if col.key === 'relay_1' || col.key === 'relay_2'}
+								{@const relay = col.key === 'relay_1' ? 1 : 2}
+								{@const value = historyRelayValue(entry, relay)}
+								{#if value === null}
+									<span class="relay-history__none">—</span>
+								{:else}
+									<CwChip
+										label={getRelayStateLabel(value)}
+										tone={getRelayStateTone(value)}
+										variant={entry.kind === 'state_change' && entry.changed_relays.includes(relay)
+											? 'soft'
+											: 'outline'}
+									/>
+								{/if}
+							{:else if col.key === 'result'}
+								{#if entry.kind === 'command'}
+									{@const result = relayHistoryResult(entry.outcome)}
+									<CwChip label={result.label} tone={result.tone} variant="soft" />
+								{/if}
+							{:else}
+								{defaultValue}
+							{/if}
+						{/snippet}
+					</CwDataTable>
+				{/key}
+			{:else}
+				<p class="relay-history__empty">{m.devices_relay_history_empty()}</p>
+			{/if}
 		</CwCard>
 	{/if}
 </div>
@@ -522,15 +560,21 @@
 		color: var(--cw-text-secondary);
 		font-size: 0.9rem;
 	}
-	.relay-feedback__countdown {
-		margin: 0;
-		color: var(--cw-text-secondary, #344054);
-		font-size: 0.85rem;
+	.relay-history__event {
+		display: block;
 	}
-	.relay-feedback__duration {
-		display: inline-block;
-		margin-left: 0.35rem;
-		font-variant-numeric: tabular-nums;
+	.relay-history__by {
+		display: block;
+		color: var(--cw-text-muted);
+		font-size: 0.8rem;
+	}
+	.relay-history__none {
+		color: var(--cw-text-muted);
+	}
+	.relay-history__empty {
+		margin: 0;
+		color: var(--cw-text-secondary);
+		font-size: 0.9rem;
 	}
 	.last-update {
 		font-size: 0.85rem;

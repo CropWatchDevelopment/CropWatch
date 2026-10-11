@@ -353,6 +353,56 @@ describe('ApiService relay endpoints', () => {
 			relay: 2
 		});
 	});
+
+	it('uses GET with the range for relay history', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			return createJsonResponse([]);
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await expect(
+			api.getRelayHistory('device-123', {
+				start: new Date('2026-10-10T00:00:00.000Z'),
+				end: '2026-10-11T00:00:00.000Z'
+			})
+		).resolves.toEqual([]);
+
+		const url = new URL(requestedUrl);
+		expect(requestedMethod).toBe('GET');
+		expect(`${url.origin}${url.pathname}`).toBe('https://example.com/relay/device-123/history');
+		expect(url.searchParams.get('start')).toBe('2026-10-10T00:00:00.000Z');
+		expect(url.searchParams.get('end')).toBe('2026-10-11T00:00:00.000Z');
+	});
+
+	it('uses POST to ask a relay device for a status report', async () => {
+		let requestedUrl = '';
+		let requestedMethod = '';
+
+		const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrl = String(input);
+			requestedMethod = String(init?.method ?? 'GET');
+			return createJsonResponse({ queued: true });
+		}) as typeof fetch;
+
+		const api = new ApiService({
+			baseUrl: 'https://example.com',
+			fetchFn
+		});
+
+		await api.requestRelayStatus('device-123');
+
+		expect(requestedMethod).toBe('POST');
+		expect(requestedUrl).toBe('https://example.com/relay/device-123/status-request');
+	});
 });
 
 describe('ApiService air note endpoints', () => {

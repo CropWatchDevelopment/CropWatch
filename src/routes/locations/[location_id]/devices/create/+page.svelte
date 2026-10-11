@@ -1,339 +1,283 @@
 <script lang="ts">
-	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
-	import { applyAction, enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
+	import { AppPage } from '$lib/components/layout';
+	import { tick } from 'svelte';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import {
-		CwButton,
-		CwCard,
-		CwDateTimeRangePicker,
-		CwDropdown,
-		CwInput,
-		type CwSingleDateValue,
-		useCwToast
-	} from '@cropwatchdevelopment/cwui';
-	import {
-		cwDateTimeRangePickerLabels,
-		cwDropdownLabels,
-		cwInputLabels
-	} from '$lib/i18n/cwuiLabels';
-	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
+	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { m } from '$lib/paraglide/messages.js';
-	import { getIntlLocale } from '$lib/i18n/format';
+	import DetailsStep from './DetailsStep.svelte';
+	import IdentifyStep from './IdentifyStep.svelte';
+	import RegisterProgress from './RegisterProgress.svelte';
+	import ReviewStep from './ReviewStep.svelte';
+	import { DeviceSetupFlow } from './device-setup-flow.svelte';
+	import { regionLabel } from './setup-messages';
 	import type { PageProps } from './$types';
 
-	type CreateDeviceForm = {
-		error?: string;
-		success?: boolean;
-		message?: string;
-		dev_eui?: string;
-		name?: string;
-		type?: string;
-		group?: string;
-		upload_interval?: string;
-		location_id?: string;
-		lat?: string;
-		long?: string;
-		installed_at?: string;
-		battery_changed_at?: string;
-		warranty_start_date?: string;
-		sensor_serial?: string;
-		sensor1_serial?: string;
-		sensor2_serial?: string;
-		tti_name?: string;
-		report_endpoint?: string;
-		owner_user_id?: string;
-		owner_permission_level?: string;
-		license_id?: string;
-	} | null;
+	let { data }: PageProps = $props();
 
-	type CreateDeviceFieldValues = {
-		dev_eui: string;
-		name: string;
-		type: string;
-		group: string;
-		upload_interval: string;
-		location_id: string;
-		lat: string;
-		long: string;
-		installed_at: string;
-		battery_changed_at: string;
-		warranty_start_date: string;
-		sensor_serial: string;
-		sensor1_serial: string;
-		sensor2_serial: string;
-		tti_name: string;
-		report_endpoint: string;
-		owner_user_id: string;
-		owner_permission_level: string;
-		license_id: string;
-	};
+	const app = getAppContext();
+	const locationId = (() => data.locationId)();
+	const flow = new DeviceSetupFlow({
+		getAuthToken: () => app.accessToken ?? null,
+		locationId: Number(locationId),
+		licenses: (() => data.availableLicenses)()
+	});
 
-	const toast = useCwToast();
+	const locationHref = resolve('/locations/[location_id]', { location_id: locationId });
 
-	let { data, form }: PageProps = $props();
-	let locationId = $derived(data.locationId ?? '');
-	let deviceTypeOptions = $derived(data.deviceTypeOptions ?? []);
-	let licenseOptions = $derived(
-		(data.availableLicenses ?? []).map((license) => ({
-			label: m.billing_license_seat({ seat: license.seatIndex + 1 }),
-			value: String(license.id)
-		}))
+	const STEP_ORDER = ['identify', 'details', 'review'] as const;
+	let currentIndex = $derived(
+		flow.step === 'registering' || flow.step === 'done'
+			? STEP_ORDER.length
+			: STEP_ORDER.indexOf(flow.step)
 	);
-	let hasAvailableLicense = $derived(licenseOptions.length > 0);
+	let steps = $derived([
+		m.device_setup_step_identify(),
+		m.device_setup_step_details(),
+		m.device_setup_step_review()
+	]);
 
-	let submitting = $state(false);
-	let actionForm = $derived((form ?? null) as CreateDeviceForm);
+	// Keep the selected license valid whenever the free licenses are reloaded.
+	$effect(() => {
+		flow.syncLicenses(data.availableLicenses);
+	});
 
-	function fieldValue(name: keyof CreateDeviceFieldValues, fallback = ''): string {
-		const value = actionForm?.[name];
-		return typeof value === 'string' ? value : fallback;
-	}
+	// A finished setup used a license: refresh the count.
+	$effect(() => {
+		if (flow.step === 'done') void invalidateAll();
+	});
 
-	function buildFieldValues(): CreateDeviceFieldValues {
-		return {
-			dev_eui: fieldValue('dev_eui'),
-			name: fieldValue('name'),
-			type: fieldValue('type'),
-			group: fieldValue('group'),
-			upload_interval: fieldValue('upload_interval'),
-			location_id: fieldValue('location_id', locationId),
-			lat: fieldValue('lat'),
-			long: fieldValue('long'),
-			installed_at: fieldValue('installed_at'),
-			battery_changed_at: fieldValue('battery_changed_at'),
-			warranty_start_date: fieldValue('warranty_start_date'),
-			sensor_serial: fieldValue('sensor_serial'),
-			sensor1_serial: fieldValue('sensor1_serial'),
-			sensor2_serial: fieldValue('sensor2_serial'),
-			tti_name: fieldValue('tti_name'),
-			report_endpoint: fieldValue('report_endpoint'),
-			owner_user_id: fieldValue('owner_user_id'),
-			owner_permission_level: fieldValue('owner_permission_level', '1'),
-			license_id: fieldValue('license_id')
-		};
-	}
+	// Move focus to the new step's heading so keyboard and screen-reader users
+	// follow the wizard.
+	let previousStep = flow.step;
+	$effect(() => {
+		const step = flow.step;
+		if (step === previousStep) return;
+		previousStep = step;
+		void tick().then(() =>
+			document.querySelector<HTMLElement>('[data-step-heading]')?.focus({ preventScroll: false })
+		);
+	});
 
-	function toSingleDateValue(value: string): CwSingleDateValue | undefined {
-		if (!value) return undefined;
-
-		const [yearRaw, monthRaw, dayRaw] = value.split('-');
-		const year = Number.parseInt(yearRaw ?? '', 10);
-		const month = Number.parseInt(monthRaw ?? '', 10);
-		const day = Number.parseInt(dayRaw ?? '', 10);
-
-		if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-			return undefined;
+	// The chosen license was taken meanwhile: reload the free ones first.
+	async function changeLicense(): Promise<void> {
+		try {
+			await invalidateAll();
+		} finally {
+			flow.go('details');
 		}
-
-		return {
-			date: new Date(year, month - 1, day)
-		};
 	}
 
-	let fields = $state<CreateDeviceFieldValues>(buildFieldValues());
-	let installedAt = $state<CwSingleDateValue | undefined>(toSingleDateValue(fields.installed_at));
+	let addingAnother = $state(false);
+	async function addAnother(): Promise<void> {
+		addingAnother = true;
+		try {
+			await invalidateAll();
+		} finally {
+			addingAnother = false;
+			flow.reset(data.availableLicenses);
+		}
+	}
 </script>
 
 <svelte:head>
-	<title>{m.devices_create_page_title()}</title>
+	<title>{m.device_setup_page_title()}</title>
 </svelte:head>
 
 <AppPage width="lg">
 	<CwButton
-		id="device-create-back-button"
+		id="device-setup-back-button"
 		variant="secondary"
 		size="sm"
-		onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
+		onclick={() => goto(locationHref)}
 	>
 		&larr; {m.action_back()}
 	</CwButton>
 
-	<CwCard title={m.devices_create_page_title()} elevated>
-		<form
-			id="device-create-form"
-			method="POST"
-			use:enhance={() => {
-				submitting = true;
-
-				return async ({ result }) => {
-					submitting = false;
-
-					if (result.type === 'success' && typeof result.data?.dev_eui === 'string') {
-						await goto(
-							resolve('/locations/[location_id]/devices/[dev_eui]', {
-								location_id: locationId,
-								dev_eui: result.data.dev_eui
-							}),
-							{ invalidateAll: true }
-						);
-						return;
-					}
-
-					await applyAction(result);
-
-					if (result.type === 'failure' && typeof result.data?.error === 'string') {
-						toast.add({ tone: 'danger', message: result.data.error });
-					}
-				};
-			}}
-		>
-			<AppFormStack padded>
-				{#if actionForm?.error}
-					<AppNotice tone="danger">
-						<p>{actionForm.error}</p>
-					</AppNotice>
-				{/if}
-
-				<!-- License gate: every new device consumes an unassigned license seat -->
-				{#if hasAvailableLicense}
-					<CwDropdown
-						labels={cwDropdownLabels()}
-						id="device-create-license-select"
-						name="license_id"
-						label={m.devices_license_label()}
-						required
-						placeholder={m.devices_license_placeholder()}
-						options={licenseOptions}
-						bind:value={fields.license_id}
-					/>
+	<div class="flex flex-wrap items-end justify-between gap-4">
+		<div class="flex flex-col gap-1">
+			<h1 class="m-0 text-3xl font-semibold">{m.device_setup_page_title()}</h1>
+			<p class="m-0 text-(--cw-text-muted)">
+				{#if data.locationRegion || flow.currentLookup?.region}
+					{m.device_setup_subtitle({
+						location: data.locationName,
+						region: regionLabel(data.locationRegion ?? flow.currentLookup?.region)
+					})}
 				{:else}
-					<AppNotice tone="warning" title={m.devices_license_label()}>
-						<p>{m.devices_license_none()}</p>
-						<div>
-							<CwButton
-								id="device-create-go-to-billing-button"
-								type="button"
-								variant="primary"
-								size="sm"
-								onclick={() => goto(resolve('/account/billing'))}
-							>
-								{m.devices_license_go_to_billing()}
-							</CwButton>
-						</div>
-					</AppNotice>
+					{data.locationName}
 				{/if}
+			</p>
+		</div>
+		<p class="license-pill m-0">
+			{m.device_setup_licenses_available({ count: data.availableLicenses.length })}
+		</p>
+	</div>
 
-				<input
-					id="device-create-location-id-input"
-					type="hidden"
-					name="location_id"
-					value={fields.location_id}
-				/>
+	<nav aria-label={m.device_setup_progress_label()} class="stepper">
+		<ol>
+			{#each steps as label, index (label)}
+				{@const state =
+					index < currentIndex ? 'done' : index === currentIndex ? 'active' : 'upcoming'}
+				<li
+					class="stepper__item stepper__item--{state}"
+					aria-current={state === 'active' ? 'step' : undefined}
+				>
+					<span class="stepper__dot" aria-hidden="true">
+						{#if state === 'done'}
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="3"
+								stroke-linecap="round"
+								stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg
+							>
+						{:else}
+							{index + 1}
+						{/if}
+					</span>
+					<span>{label}</span>
+				</li>
+			{/each}
+		</ol>
+	</nav>
 
-				<!-- Basic info -->
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<CwInput
-						id="device-create-dev-eui-input"
-						name="dev_eui"
-						type="devEui"
-						label={m.devices_dev_eui_label()}
-						required
-						autocomplete="off"
-						placeholder={m.devices_dev_eui_placeholder()}
-						bind:value={fields.dev_eui}
-					/>
-
-					<CwInput
-						id="device-create-name-input"
-						name="name"
-						label={m.devices_device_name_label()}
-						required
-						placeholder={m.devices_device_name_placeholder()}
-						bind:value={fields.name}
-					/>
-
-					<CwDropdown
-						labels={cwDropdownLabels()}
-						id="device-create-type-select"
-						name="type"
-						label={m.devices_device_type_label()}
-						required
-						placeholder={m.devices_device_type_placeholder()}
-						options={deviceTypeOptions}
-						bind:value={fields.type}
-					/>
-
-					<CwInput
-						id="device-create-group-input"
-						name="group"
-						label={m.common_group()}
-						placeholder={m.devices_group_placeholder()}
-						bind:value={fields.group}
-					/>
-
-					<CwInput
-						id="device-create-tti-name-input"
-						name="tti_name"
-						label={m.devices_tti_device_id_label()}
-						maxlength={TTI_DEVICE_ID_MAX_LENGTH}
-						placeholder={m.devices_tti_device_id_placeholder()}
-						bind:value={fields.tti_name}
-					/>
-
-					<input id="device-create-upload-interval-input" type="hidden" name="upload_interval" />
-				</div>
-
-				<!-- Deployment -->
-				<hr class="border-[var(--cw-border-muted)]" />
-				<h2 class="m-0 text-sm font-bold">{m.devices_deployment_section_title()}</h2>
-
-				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<CwInput
-						labels={cwInputLabels()}
-						id="device-create-lat-input"
-						name="lat"
-						type="numeric"
-						label={m.locations_latitude_optional()}
-						placeholder={m.locations_latitude_placeholder()}
-						bind:value={fields.lat}
-					/>
-
-					<CwInput
-						labels={cwInputLabels()}
-						id="device-create-long-input"
-						name="long"
-						type="numeric"
-						label={m.locations_longitude_optional()}
-						placeholder={m.locations_longitude_placeholder()}
-						bind:value={fields.long}
-					/>
-
-					<div>
-						<p class="m-0 mb-1 text-sm font-bold">{m.devices_installed_at_label()}</p>
-						<CwDateTimeRangePicker
-							locale={getIntlLocale()}
-							name="installed_at"
-							mode="single"
-							granularity="day"
-							maxDate={new Date()}
-							placeholder={m.devices_installed_at_placeholder()}
-							bind:value={installedAt}
-							labels={cwDateTimeRangePickerLabels()}
+	<div class="flex flex-wrap items-start gap-6">
+		<div class="min-w-0 flex-[999_1_34rem]">
+			<CwCard elevated>
+				<div class="setup-card">
+					{#if flow.step === 'identify'}
+						<IdentifyStep
+							{flow}
+							deviceTypeOptions={data.deviceTypeOptions}
+							oncancel={() => goto(locationHref)}
 						/>
-					</div>
+					{:else if flow.step === 'details'}
+						<DetailsStep
+							{flow}
+							licenses={data.availableLicenses}
+							groupSuggestions={data.groupSuggestions}
+							locationLat={data.locationLat}
+							locationLong={data.locationLong}
+						/>
+					{:else if flow.step === 'review'}
+						<ReviewStep
+							{flow}
+							deviceTypeOptions={data.deviceTypeOptions}
+							licenses={data.availableLicenses}
+							locationName={data.locationName}
+							onchangelicense={() => void changeLicense()}
+							onopenlocation={() => goto(locationHref)}
+						/>
+					{:else}
+						<RegisterProgress
+							{flow}
+							locationName={data.locationName}
+							onopen={() =>
+								goto(
+									resolve('/locations/[location_id]/devices/[dev_eui]', {
+										location_id: locationId,
+										dev_eui: flow.result?.dev_eui ?? flow.devEui.value
+									}),
+									{ invalidateAll: true }
+								)}
+							{addingAnother}
+							onaddanother={() => void addAnother()}
+						/>
+					{/if}
 				</div>
+			</CwCard>
+		</div>
 
-				<AppActionRow>
-					<CwButton
-						id="device-create-cancel-button"
-						type="button"
-						variant="ghost"
-						onclick={() => goto(resolve('/locations/[location_id]', { location_id: locationId }))}
-					>
-						{m.action_cancel()}
-					</CwButton>
-					<CwButton
-						id="device-create-submit-button"
-						type="submit"
-						variant="primary"
-						loading={submitting}
-						disabled={!hasAvailableLicense}
-					>
-						{m.devices_create_submit()}
-					</CwButton>
-				</AppActionRow>
-			</AppFormStack>
-		</form>
-	</CwCard>
+		<aside class="flex flex-[1_1_16rem] flex-col gap-4">
+			<section class="side-panel">
+				<h2 class="m-0 text-base font-semibold">{m.device_setup_how_title()}</h2>
+				<ol class="m-0 flex flex-col gap-2 pl-5 text-sm">
+					<li>{m.device_setup_how_1()}</li>
+					<li>{m.device_setup_how_2()}</li>
+					<li>{m.device_setup_how_3()}</li>
+				</ol>
+				<p class="m-0 text-sm text-(--cw-text-muted)">{m.device_setup_how_safe()}</p>
+			</section>
+			<section class="side-panel">
+				<h2 class="m-0 text-base font-semibold">{m.device_setup_where_title()}</h2>
+				<p class="m-0 text-sm text-(--cw-text-muted)">{m.device_setup_where_body()}</p>
+			</section>
+		</aside>
+	</div>
 </AppPage>
+
+<style>
+	.license-pill {
+		padding: var(--cw-space-2) var(--cw-space-4);
+		border: 1px solid var(--cw-border-muted);
+		border-radius: 999px;
+		background: var(--cw-bg-surface);
+		font-size: 0.875rem;
+	}
+
+	.stepper ol {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--cw-space-3) var(--cw-space-6);
+		margin: 0;
+		padding: var(--cw-space-4) var(--cw-space-5);
+		list-style: none;
+		border: 1px solid var(--cw-border-muted);
+		border-radius: var(--cw-radius-lg);
+		background: var(--cw-bg-surface);
+	}
+
+	.stepper__item {
+		display: flex;
+		align-items: center;
+		gap: var(--cw-space-2);
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--cw-text-muted);
+	}
+
+	.stepper__dot {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.75rem;
+		height: 1.75rem;
+		border-radius: 50%;
+		border: 1.5px solid var(--cw-border-default);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+
+	.stepper__item--active {
+		color: var(--cw-text-primary, inherit);
+	}
+
+	.stepper__item--active .stepper__dot {
+		border-color: var(--cw-accent);
+		color: var(--cw-accent);
+	}
+
+	.stepper__item--done .stepper__dot {
+		border-color: var(--cw-accent);
+		background: var(--cw-accent);
+		color: var(--cw-bg-base);
+	}
+
+	.setup-card {
+		padding: var(--cw-space-2);
+	}
+
+	.side-panel {
+		display: flex;
+		flex-direction: column;
+		gap: var(--cw-space-3);
+		padding: var(--cw-space-5);
+		border: 1px solid var(--cw-border-muted);
+		border-radius: var(--cw-radius-lg);
+		background: var(--cw-bg-surface);
+	}
+</style>

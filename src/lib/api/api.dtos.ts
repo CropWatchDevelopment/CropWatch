@@ -190,6 +190,18 @@ export interface DeleteDeviceResultDto {
 	deleted?: Record<string, number>;
 }
 
+/** GET /locations/{id}/delete-preflight — owner-only; 403/404 for everyone else. */
+export interface LocationDeletePreflightDto {
+	location_id: number;
+	/** Devices still in the location; it can only be deleted at 0. */
+	device_count: number;
+}
+
+/** DELETE /locations/{id} — refused with 409 while the location has devices. */
+export interface DeleteLocationResultDto {
+	location_id: number;
+}
+
 export interface CreateDeviceOwnerRequest {
 	user_id: string;
 	permission_level: number;
@@ -366,6 +378,48 @@ export interface UpdateRelayRequest {
 	relay: number;
 	targetState: 'on' | 'off';
 }
+
+export type RelayCommandKind = 'fixed' | 'pulse' | 'status';
+
+/**
+ * Whether the device confirmed a command (same rules as the relay page):
+ * `confirmed` / `mismatch` (reported the old state) / `unconfirmed` (no
+ * report settled it) / `pending` (still within the confirmation window) /
+ * `answered` (a status request the device replied to).
+ */
+export type RelayCommandOutcome = 'answered' | 'confirmed' | 'mismatch' | 'pending' | 'unconfirmed';
+
+/** A device report that changed at least one relay. */
+export interface RelayStateChangeEntryDto {
+	id: string;
+	kind: 'state_change';
+	at: string;
+	relay_1: boolean | null;
+	relay_2: boolean | null;
+	changed_relays: Array<1 | 2>;
+}
+
+/** A command sent from CropWatch and how the device answered it. */
+export interface RelayCommandEntryDto {
+	id: string;
+	kind: 'command';
+	at: string;
+	command: RelayCommandKind;
+	relay: 1 | 2 | null;
+	target_state: 'on' | 'off' | null;
+	duration_seconds: number | null;
+	/** Full name or username of who sent it. */
+	requested_by: string | null;
+	outcome: RelayCommandOutcome;
+	/** When the report that settled it arrived. */
+	settled_at: string | null;
+	/** Relay states in that report. */
+	relay_1: boolean | null;
+	relay_2: boolean | null;
+}
+
+/** GET /relay/:dev_eui/history — newest first. */
+export type RelayHistoryEntryDto = RelayStateChangeEntryDto | RelayCommandEntryDto;
 
 export interface RuleCriteriaDto {
 	id: number;
@@ -1160,4 +1214,103 @@ export interface OrgParentRequestDto {
 	status: string;
 	created_at: string;
 	organizations?: { name: string } | null;
+}
+
+// ---------------------------------------------------------------------------
+// Guided device setup (/v1/device-setup)
+// ---------------------------------------------------------------------------
+
+export type NetworkRegion = 'as1' | 'au1' | 'eu1' | 'nam1';
+
+export interface DeviceSetupLookupRequest {
+	dev_eui: string;
+	location_id: number;
+}
+
+export type DeviceSetupOwnership =
+	| { status: 'available' }
+	| {
+			status: 'yours';
+			device: {
+				dev_eui: string;
+				name: string;
+				location_id: number | null;
+				location_name: string | null;
+			};
+	  }
+	| { status: 'other_account' };
+
+export interface DeviceSetupLookupResult {
+	dev_eui: string;
+	region: NetworkRegion;
+	ownership: DeviceSetupOwnership;
+	model: {
+		device_type_id: number | null;
+		source: 'inventory' | 'prefix' | null;
+		suggested_device_type_ids: number[];
+	};
+	/** Where the join keys come from; 'required' means the user enters them. */
+	keys: 'inventory' | 'network' | 'required';
+	network:
+		| { status: 'registered'; application_id: string }
+		| { status: 'not_registered' }
+		| { status: 'unknown' };
+	supported_device_type_ids: number[];
+}
+
+export interface DeviceSetupRequest extends DeviceSetupLookupRequest {
+	device_type_id: number;
+	name: string;
+	group?: string;
+	installed_at?: string;
+	lat?: number;
+	long?: number;
+	license_id?: number;
+	join_eui?: string;
+	app_key?: string;
+}
+
+export type DeviceSetupStep =
+	| { key: 'availability'; outcome: 'done' }
+	| {
+			key: 'network';
+			outcome: 'created' | 'adopted' | 'existing';
+			application_id: string;
+			region: NetworkRegion;
+	  }
+	| { key: 'saved'; outcome: 'done' | 'existing' }
+	| { key: 'license'; outcome: 'done' | 'existing' | 'skipped' };
+
+export interface DeviceSetupResult {
+	dev_eui: string;
+	location_id: number;
+	name: string;
+	steps: DeviceSetupStep[];
+}
+
+export type DeviceSetupErrorCode =
+	| 'INVALID_DEV_EUI'
+	| 'INVALID_NAME'
+	| 'INVALID_KEYS'
+	| 'KEYS_REQUIRED'
+	| 'KEYS_DO_NOT_MATCH'
+	| 'DEVICE_OWNED_BY_OTHER_ACCOUNT'
+	| 'DEVICE_ALREADY_YOURS'
+	| 'SETUP_IN_PROGRESS'
+	| 'MODEL_NOT_AVAILABLE_IN_REGION'
+	| 'NETWORK_MODEL_MISMATCH'
+	| 'LICENSE_REQUIRED'
+	| 'NETWORK_EUI_CLAIMED_ELSEWHERE'
+	| 'NETWORK_DEVICE_UNVERIFIABLE'
+	| 'NETWORK_UNAVAILABLE'
+	| 'NETWORK_NOT_CONFIGURED'
+	| 'SETUP_FAILED';
+
+/** Error body of the setup endpoints. */
+export interface DeviceSetupErrorPayload {
+	statusCode: number;
+	code: DeviceSetupErrorCode;
+	message: string;
+	reference: string;
+	details?: Record<string, unknown>;
 }

@@ -1,8 +1,9 @@
 import { ApiService, ApiServiceError, type UpdateLocationOwnerRequest } from '$lib/api/api.service';
 import { m } from '$lib/paraglide/messages.js';
 import { PermissionLevel } from '$lib/constants/permissions';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import { checkLocationDeleteConfirmation } from './location-delete-confirmation';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -414,4 +415,71 @@ export const removePermission: Actions['removePermission'] = async ({
 			message: readErrorMessage(error, m.locations_permission_remove_failed())
 		});
 	}
+};
+
+export const deleteLocation: Actions['deleteLocation'] = async ({
+	request,
+	locals,
+	fetch,
+	params
+}) => {
+	const authToken = locals.jwtString ?? null;
+	if (!authToken) {
+		return fail(401, {
+			action: 'deleteLocation',
+			message: m.locations_delete_requires_login()
+		});
+	}
+
+	const locationId = readLocationId(params.location_id);
+	if (locationId === null) {
+		return fail(400, {
+			action: 'deleteLocation',
+			message: m.locations_invalid_location_id()
+		});
+	}
+
+	const formData = await request.formData();
+	const apiService = new ApiService({ fetchFn: fetch, authToken });
+
+	// The typed name is checked against the location's real name, never one
+	// sent by the browser, so a crafted request cannot skip the confirmation.
+	let locationName: string;
+	try {
+		locationName = String((await apiService.getLocation(locationId)).name ?? '');
+	} catch (error) {
+		return fail(error instanceof ApiServiceError ? error.status : 502, {
+			action: 'deleteLocation',
+			message: readErrorMessage(error, m.locations_delete_rejected())
+		});
+	}
+
+	const confirmationIssue = checkLocationDeleteConfirmation(locationName, formData);
+	if (confirmationIssue) {
+		return fail(400, {
+			action: 'deleteLocation',
+			message:
+				confirmationIssue === 'nameMismatch'
+					? m.locations_delete_confirm_mismatch()
+					: m.locations_delete_acknowledge_required()
+		});
+	}
+
+	try {
+		await apiService.deleteLocation(locationId);
+	} catch (error) {
+		// 409: a device is still (or was just moved) in the location.
+		if (error instanceof ApiServiceError && error.status === 409) {
+			return fail(409, {
+				action: 'deleteLocation',
+				message: m.locations_delete_not_empty()
+			});
+		}
+		return fail(error instanceof ApiServiceError ? error.status : 502, {
+			action: 'deleteLocation',
+			message: readErrorMessage(error, m.locations_delete_rejected())
+		});
+	}
+
+	redirect(303, '/locations');
 };

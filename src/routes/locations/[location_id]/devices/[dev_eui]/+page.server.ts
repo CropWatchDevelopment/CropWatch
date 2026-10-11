@@ -41,8 +41,15 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 		take: 144
 	};
 
+	// A newly registered device has no rows yet and the API answers 404 —
+	// render the empty device page instead of letting the 404 become a 500.
 	const [deviceData, latestData] = await Promise.all([
-		api.getDeviceData(params.dev_eui, pagination),
+		api
+			.getDeviceData(params.dev_eui, pagination, { suppressNotFoundError: true })
+			.catch((error) => {
+				if (error instanceof ApiServiceError && error.status === 404) return [];
+				throw error;
+			}),
 		loadLatestDeviceDataOrNull(api, params.dev_eui)
 	]);
 

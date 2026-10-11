@@ -46,11 +46,11 @@ afterEach(() => {
 describe('DeviceDangerZone', () => {
 	it('presents a danger zone and spells out what deleting removes', () => {
 		const component = renderDangerZone();
-		expect(document.body.textContent).toContain(m.devices_danger_zone_title());
+		expect(document.body.textContent).toContain(m.danger_zone_title());
 
 		openDialog();
 		const text = document.body.textContent ?? '';
-		expect(text).toContain(m.devices_delete_irreversible());
+		expect(text).toContain(m.danger_zone_irreversible());
 		expect(text).toContain(m.devices_delete_item_history());
 		expect(text).toContain(m.devices_delete_item_access());
 		expect(text).toContain('Field sensor');

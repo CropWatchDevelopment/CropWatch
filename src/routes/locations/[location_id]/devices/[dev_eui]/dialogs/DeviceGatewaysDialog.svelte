@@ -21,6 +21,8 @@
 
 	let open = $state(false);
 	let loading = $state(false);
+	// Set once a lookup has finished, so "no signal" never flashes while loading.
+	let loaded = $state(false);
 	let loadError = $state<string | null>(null);
 	let gateways = $state<DeviceGatewayDto[]>([]);
 	let activeRequestId = 0;
@@ -60,7 +62,10 @@
 			gateways = [];
 			loadError = readApiErrorMessage(error, m.device_gateways_load_failed());
 		} finally {
-			if (requestId === activeRequestId) loading = false;
+			if (requestId === activeRequestId) {
+				loading = false;
+				loaded = true;
+			}
 		}
 	}
 
@@ -79,6 +84,9 @@
 >
 	{#if bestGateway}
 		<SignalStrength rssi={bestGateway.rssi} snr={bestGateway.snr} />
+	{:else if loaded && !loadError}
+		<!-- Never heard by a gateway: empty bars with the "no signal" sign. -->
+		<SignalStrength />
 	{/if}
 	{m.gateways_signal()}
 </CwButton>
