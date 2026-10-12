@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import type { DeviceSetupLookupResult } from '$lib/api/api.dtos';
+import { parseDeviceQr, type DeviceQrPayload } from '$lib/devices/qr-payload';
 import { DeviceSetupFlow, parseCoordinate, toSetupFailure } from './device-setup-flow.svelte';
 
 const lookupResult = (
@@ -270,5 +271,83 @@ describe('DeviceSetupFlow', () => {
 		expect(flow.licenseId).toBe('15');
 		flow.syncLicenses([]);
 		expect(flow.licenseId).toBe('');
+	});
+});
+
+describe('DeviceSetupFlow with CropWatch labels', () => {
+	const label = (key: string) =>
+		parseDeviceQr(
+			`app:24E124C0002A0001,dev:24E124126E270425,key:${key},type:TH`
+		) as DeviceQrPayload;
+	const KEY = '2B7E151628AED2A6ABF7158809CF4F3C';
+	/** The lookup for the label's DevEUI: Milesight's prefix suggests the wrong model. */
+	const labelLookup = (overrides: Partial<DeviceSetupLookupResult> = {}) =>
+		vi.spyOn(ApiService.prototype, 'lookupDeviceSetup').mockResolvedValue(
+			lookupResult({
+				dev_eui: '24E124126E270425',
+				model: { device_type_id: 1, source: 'prefix', suggested_device_type_ids: [1] },
+				keys: 'required',
+				supported_device_type_ids: [1, 2, 21],
+				...overrides
+			})
+		);
+
+	it('fills every field and keeps the label’s model over a prefix guess', async () => {
+		labelLookup();
+		const flow = newFlow();
+		flow.applyQr(label(KEY));
+		expect(flow.deviceTypeId).toBe('2');
+		await flow.runLookup();
+		expect(flow.deviceTypeId).toBe('2');
+		expect(flow.identifyComplete).toBe(true);
+		expect(flow.buildRequest()).toMatchObject({
+			dev_eui: '24E124126E270425',
+			device_type_id: 2,
+			join_eui: '24E124C0002A0001',
+			app_key: KEY
+		});
+	});
+
+	it('lets CropWatch’s inventory overrule the label’s model', async () => {
+		labelLookup({
+			model: { device_type_id: 21, source: 'inventory', suggested_device_type_ids: [] },
+			keys: 'inventory'
+		});
+		const flow = newFlow();
+		flow.applyQr(label(KEY));
+		await flow.runLookup();
+		expect(flow.deviceTypeId).toBe('21');
+	});
+
+	it('takes a private AppKey from the inventory, and asks for it when it isn’t there', async () => {
+		labelLookup({ keys: 'inventory' });
+		const stocked = newFlow();
+		stocked.applyQr(label('X'.repeat(32)));
+		await stocked.runLookup();
+		expect(stocked.currentLabel?.appKeyMasked).toBe(true);
+		expect(stocked.keysNeeded).toBe(false);
+		expect(stocked.identifyComplete).toBe(true);
+		expect(stocked.buildRequest()).not.toHaveProperty('app_key');
+
+		labelLookup({ keys: 'required' });
+		const missing = newFlow();
+		missing.applyQr(label('X'.repeat(32)));
+		await missing.runLookup();
+		expect(missing.keysNeeded).toBe(true);
+		expect(missing.joinEuiInput).toBe('24E124C0002A0001');
+		expect(missing.appKeyInput).toBe('');
+		expect(missing.identifyComplete).toBe(false);
+		missing.appKeyInput = KEY;
+		expect(missing.identifyComplete).toBe(true);
+	});
+
+	it('forgets the label once another DevEUI is typed', async () => {
+		const flow = newFlow();
+		flow.applyQr(label(KEY));
+		flow.devEuiInput = '00137A10000441DF';
+		expect(flow.currentLabel).toBeNull();
+		vi.spyOn(ApiService.prototype, 'lookupDeviceSetup').mockResolvedValue(lookupResult());
+		await flow.runLookup();
+		expect(flow.deviceTypeId).toBe('10');
 	});
 });

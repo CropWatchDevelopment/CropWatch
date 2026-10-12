@@ -35,6 +35,7 @@
 	});
 
 	let lookup = $derived(flow.currentLookup);
+	let label = $derived(flow.currentLabel);
 	let ownership = $derived(lookup?.ownership ?? null);
 	let lookupError = $derived(flow.devEui.issue ? null : flow.lookupError);
 
@@ -52,6 +53,20 @@
 			default:
 				return null;
 		}
+	});
+
+	// Where the selected model came from: the device's label, or its DevEUI.
+	let modelHint = $derived.by(() => {
+		if (label?.deviceTypeId && String(label.deviceTypeId) === flow.deviceTypeId) {
+			return m.device_setup_model_from_label();
+		}
+		if (lookup?.model.device_type_id && String(lookup.model.device_type_id) === flow.deviceTypeId) {
+			return m.device_setup_model_recognized();
+		}
+		if (label?.typeCode && !label.deviceTypeId) {
+			return m.device_setup_model_label_unknown({ code: label.typeCode });
+		}
+		return undefined;
 	});
 
 	// Suggested models first; models the region can't register are disabled.
@@ -207,10 +222,7 @@
 				required
 				placeholder={m.device_setup_model_placeholder()}
 				options={modelOptions}
-				hint={lookup.model.device_type_id &&
-				String(lookup.model.device_type_id) === flow.deviceTypeId
-					? m.device_setup_model_recognized()
-					: undefined}
+				hint={modelHint}
 				error={!flow.modelSupported
 					? m.device_setup_model_unsupported()
 					: flow.attempted && !flow.deviceTypeId
@@ -262,7 +274,24 @@
 					{#if keyProblem}
 						<AppNotice tone="danger" ariaLive="polite"><p>{keyProblem}</p></AppNotice>
 					{/if}
-					<p class="m-0 text-sm text-(--cw-text-muted)">{m.device_setup_keys_required_body()}</p>
+					{#if label?.appKeyMasked}
+						<!-- The label hides its AppKey and the key inventory doesn't have it. -->
+						<AppNotice tone="warning" title={m.device_setup_keys_masked_title()}>
+							<p>{m.device_setup_keys_masked_body()}</p>
+							<div>
+								<CwButton
+									id="device-setup-keys-masked-support"
+									size="sm"
+									variant="secondary"
+									onclick={() => (window.location.href = supportHref(null, flow.devEui.value))}
+								>
+									{m.device_setup_contact_support()}
+								</CwButton>
+							</div>
+						</AppNotice>
+					{:else}
+						<p class="m-0 text-sm text-(--cw-text-muted)">{m.device_setup_keys_required_body()}</p>
+					{/if}
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 						<CwInput
 							labels={cwInputLabels()}
