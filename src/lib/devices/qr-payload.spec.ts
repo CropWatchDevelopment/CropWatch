@@ -111,4 +111,62 @@ describe('parseDeviceQr', () => {
 		expect(parseDeviceQr('https://cropwatch.io')).toBeNull();
 		expect(parseDeviceQr('')).toBeNull();
 	});
+
+	describe('CropWatch labels', () => {
+		it('reads the keys, the DevEUI and the device type', () => {
+			expect(
+				parseDeviceQr(
+					'app:24E124C0002A0001,dev:24E124126E270425,key:2B7E151628AED2A6ABF7158809CF4F3C,type:TH'
+				)
+			).toEqual({
+				devEui: '24E124126E270425',
+				joinEui: '24E124C0002A0001',
+				appKey: '2B7E151628AED2A6ABF7158809CF4F3C',
+				typeCode: 'TH',
+				deviceTypeId: 2
+			});
+		});
+
+		it('marks an AppKey printed as X’s as kept private', () => {
+			expect(
+				parseDeviceQr(
+					'app:24E124C0002A0001,dev:24E124126E270425,key:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX,type:TH'
+				)
+			).toEqual({
+				devEui: '24E124126E270425',
+				joinEui: '24E124C0002A0001',
+				appKeyMasked: true,
+				typeCode: 'TH',
+				deviceTypeId: 2
+			});
+		});
+
+		it('accepts any case, = and separators inside values', () => {
+			expect(
+				parseDeviceQr('APP = 24 E1 24 C0 00 2A 00 01; Dev=24e124126e270425; Type = th')
+			).toEqual({
+				devEui: '24E124126E270425',
+				joinEui: '24E124C0002A0001',
+				typeCode: 'TH',
+				deviceTypeId: 2
+			});
+		});
+
+		it('keeps a type code this app does not know, without a model', () => {
+			expect(parseDeviceQr('dev:24E124126E270425,type:zz')).toEqual({
+				devEui: '24E124126E270425',
+				typeCode: 'ZZ'
+			});
+		});
+
+		it('ignores fields it does not know', () => {
+			expect(
+				parseDeviceQr('app:24E124C0002A0001,dev:24E124126E270425,fw:1.2.3,LOT 42,type:TH')
+			).toMatchObject({ devEui: '24E124126E270425', joinEui: '24E124C0002A0001', deviceTypeId: 2 });
+		});
+
+		it('never takes the JoinEUI for the DevEUI when the DevEUI is unreadable', () => {
+			expect(parseDeviceQr('app:24E124C0002A0001,dev:24E124126E27042,type:TH')).toBeNull();
+		});
+	});
 });

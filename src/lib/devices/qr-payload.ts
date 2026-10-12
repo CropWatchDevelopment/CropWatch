@@ -5,7 +5,18 @@ export interface DeviceQrPayload {
 	devEui: string;
 	joinEui?: string;
 	appKey?: string;
+	/** The label prints its AppKey as X's: the key comes from CropWatch's key inventory. */
+	appKeyMasked?: boolean;
+	/** The device type code on a CropWatch label (`type:TH`). */
+	typeCode?: string;
+	/** The cw_device_type that code stands for, when this app knows it. */
+	deviceTypeId?: number;
 }
+
+/** Device types by the code CropWatch prints on its labels, as cw_device_type ids. */
+export const CROPWATCH_LABEL_TYPES: ReadonlyMap<string, number> = new Map([
+	['TH', 2] // [CROPWATCH] Air Temperature, Humidity Sensor (CW-air-thvd)
+]);
 
 const HEX16 = /^[0-9A-F]{16}$/;
 const HEX32 = /^[0-9A-F]{32}$/;
@@ -18,7 +29,38 @@ const hex = (value: string | undefined, pattern: RegExp): string | undefined => 
 };
 
 /**
+ * CropWatch's own labels: `app:<JoinEUI>,dev:<DevEUI>,key:<AppKey>,type:<code>`
+ * (names in any case, `:` or `=`). A label that keeps its AppKey private
+ * prints it as X's. Undefined when the text isn't in this format; null when it
+ * is but the DevEUI can't be read — never a guess from its other fields.
+ */
+function parseCropWatchLabel(text: string): DeviceQrPayload | null | undefined {
+	// Parts that aren't `name:value` are skipped, so a field added to the
+	// labels later can't turn a CropWatch label into a misread vendor string.
+	const fields = new Map<string, string>();
+	for (const part of text.split(/[,;\n]/)) {
+		const field = /^\s*([A-Za-z]+)\s*[:=]\s*(.*?)\s*$/.exec(part);
+		if (field) fields.set(field[1].toLowerCase(), field[2]);
+	}
+	if (!fields.has('dev') || !['app', 'key', 'type'].some((name) => fields.has(name))) {
+		return undefined;
+	}
+	const devEui = hex(fields.get('dev'), HEX16);
+	if (!devEui) return null;
+	const typeCode = fields.get('type')?.toUpperCase() || undefined;
+	return {
+		devEui,
+		joinEui: hex(fields.get('app'), HEX16),
+		appKey: hex(fields.get('key'), HEX32),
+		appKeyMasked: /^X+$/.test(stripHex(fields.get('key') ?? '')) || undefined,
+		typeCode,
+		deviceTypeId: typeCode ? CROPWATCH_LABEL_TYPES.get(typeCode) : undefined
+	};
+}
+
+/**
  * Reads the device QR formats we meet in the field:
+ *  - CropWatch labels (see parseCropWatchLabel)
  *  - LoRa Alliance TR005: `LW:D0:<JoinEUI>:<DevEUI>:<ProfileID>[:…]`
  *  - labelled values (RAK, Dragino, Milesight and many OEMs):
  *    `DevEUI:… AppEUI:… AppKey:…`, `EUI=…`, separated by , ; | newline or space
@@ -30,6 +72,9 @@ const hex = (value: string | undefined, pattern: RegExp): string | undefined => 
 export function parseDeviceQr(raw: string): DeviceQrPayload | null {
 	const text = raw.trim();
 	if (!text) return null;
+
+	const cropWatch = parseCropWatchLabel(text);
+	if (cropWatch !== undefined) return cropWatch;
 
 	const tr005 = /^LW:D0:([0-9A-Fa-f]{16}):([0-9A-Fa-f]{16})(?::|$)/i.exec(text);
 	if (tr005) {

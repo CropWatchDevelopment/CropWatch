@@ -108,6 +108,8 @@ export class DeviceSetupFlow {
 	deviceTypeId = $state('');
 	/** The user picked the model themselves; lookups stop overriding it. */
 	modelTouched = $state(false);
+	/** What the last scanned QR code said (see currentLabel). */
+	scannedLabel = $state<DeviceQrPayload | null>(null);
 
 	lookup = $state<DeviceSetupLookupResult | null>(null);
 	lookingUp = $state(false);
@@ -164,6 +166,11 @@ export class DeviceSetupFlow {
 	/** The lookup that belongs to the DevEUI currently typed (not a stale one). */
 	get currentLookup(): DeviceSetupLookupResult | null {
 		return this.lookup && this.lookup.dev_eui === this.devEui.value ? this.lookup : null;
+	}
+
+	/** The scanned label, while its DevEUI is still the one entered. */
+	get currentLabel(): DeviceQrPayload | null {
+		return this.scannedLabel?.devEui === this.devEui.value ? this.scannedLabel : null;
 	}
 
 	get keysNeeded(): boolean {
@@ -227,9 +234,15 @@ export class DeviceSetupFlow {
 			this.joinEuiInput = '';
 			this.appKeyInput = '';
 		}
+		this.scannedLabel = payload;
 		this.devEuiInput = payload.devEui;
 		if (payload.joinEui) this.joinEuiInput = payload.joinEui;
 		if (payload.appKey) this.appKeyInput = payload.appKey;
+		// A CropWatch label names its model; only CropWatch's inventory outranks it.
+		if (payload.deviceTypeId && this.currentLookup?.model.source !== 'inventory') {
+			this.deviceTypeId = String(payload.deviceTypeId);
+			this.modelTouched = false;
+		}
 		// The identify step looks the new DevEUI up as soon as it is complete.
 	}
 
@@ -263,7 +276,7 @@ export class DeviceSetupFlow {
 			if (lookup.model.source === 'inventory' && suggested) {
 				// CropWatch provisioned it: the model on file is authoritative.
 				this.deviceTypeId = String(suggested);
-			} else if (!this.modelTouched) {
+			} else if (!this.modelTouched && !this.currentLabel?.deviceTypeId) {
 				this.deviceTypeId = suggested ? String(suggested) : '';
 			}
 		} catch (error) {
@@ -331,6 +344,7 @@ export class DeviceSetupFlow {
 		this.appKeyInput = '';
 		this.deviceTypeId = '';
 		this.modelTouched = false;
+		this.scannedLabel = null;
 		this.lookup = null;
 		this.lookupError = null;
 		this.keysRequestedByNetwork = false;
