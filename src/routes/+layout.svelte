@@ -106,8 +106,9 @@
 	});
 
 	// Push notifications: once per app load, after the first authenticated
-	// token appears. refreshPushToken silently re-registers an already-enrolled
-	// device (FCM tokens rotate; also bumps last_seen_at), and the foreground
+	// token appears. refreshPushToken re-stamps the signed-in account's existing
+	// subscription on this browser (FCM tokens rotate; also bumps last_seen_at)
+	// and never turns push on for anyone, and the foreground
 	// listener surfaces pushes as toasts while the app has focus (the service
 	// worker only shows system notifications when no page is focused). Both
 	// no-op on devices that never enrolled. Effects never run during SSR.

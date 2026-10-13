@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { SvelteMap } from 'svelte/reactivity';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
 	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { ApiService } from '$lib/api/api.service';
@@ -204,8 +204,10 @@
 
 	// Eligible push recipients — same fetch pattern as the LINE effect above,
 	// with its own key/seq guard so the two channels never race each other.
-	let pushRecipientOptionsBase = $state<{ label: string; value: string }[]>([]);
+	// Users who haven't subscribed to push are listed but can't be selected.
+	let pushRecipientOptionsBase = $state<{ label: string; value: string; disabled: boolean }[]>([]);
 	const pushRecipientNames = new SvelteMap<string, string>();
+	const pushUnsubscribedIds = new SvelteSet<string>();
 	let pushRecipientFetchKey = '';
 	let pushRecipientFetchSeq = 0;
 
@@ -228,16 +230,20 @@
 				pushRecipientNames.clear();
 				pushRecipientOptionsBase = candidates.map((candidate) => {
 					pushRecipientNames.set(candidate.userId, candidate.displayName);
+					// Subscription is per user, so it outlives a device-selection change.
+					if (candidate.pushEnabled) pushUnsubscribedIds.delete(candidate.userId);
+					else pushUnsubscribedIds.add(candidate.userId);
 					return {
 						value: candidate.userId,
 						label: candidate.pushEnabled
 							? candidate.displayName
-							: `${candidate.displayName}（${m.push_recipient_not_enabled()}）`
+							: `${candidate.displayName}（${m.push_recipient_not_enabled()}）`,
+						disabled: !candidate.pushEnabled
 					};
 				});
-				// Upgrade bare id labels on saved selections now that names are known.
 				for (const action of templateActions) {
 					if (action.actionTypeName !== 'Push') continue;
+					// Upgrade bare id labels on saved selections now that names are known.
 					for (const selection of action.pushRecipients) {
 						const name = pushRecipientNames.get(selection.id);
 						if (name && selection.label === selection.id) selection.label = name;
@@ -274,13 +280,36 @@
 		return [...missing, ...pushRecipientOptionsBase];
 	}
 
+	// On a new rule, choosing anyone replaces an unsubscribed creator preselect.
+	// Existing rules keep every saved recipient: only the person themselves
+	// turns their alerts off, and a recipient without a device right now
+	// starts receiving again once one registers.
 	function setPushRecipients(
 		action: EditableTemplateAction,
 		selection: { id: string; label: string }[]
 	) {
-		action.pushRecipients = selection;
+		const kept =
+			mode === 'create' ? selection.filter((item) => !pushUnsubscribedIds.has(item.id)) : selection;
+		action.pushRecipients = kept;
 		action.config.recipient =
-			selection.length > 0 ? JSON.stringify({ userIds: selection.map((item) => item.id) }) : '';
+			kept.length > 0 ? JSON.stringify({ userIds: kept.map((item) => item.id) }) : '';
+	}
+
+	function pushRecipientError(action: EditableTemplateAction): string | undefined {
+		const unsubscribed =
+			mode === 'create'
+				? action.pushRecipients.filter((item) => pushUnsubscribedIds.has(item.id))
+				: [];
+		if (unsubscribed.length > 0) {
+			return m.push_recipient_not_subscribed_error({
+				names: unsubscribed.map((item) => pushRecipientNames.get(item.id) ?? item.label).join(', ')
+			});
+		}
+		// Nobody to choose from until a device is picked.
+		if (action.pushRecipients.length === 0 && selectedDevEuis.length > 0) {
+			return m.push_recipient_required_error();
+		}
+		return undefined;
 	}
 
 	function parseRecipientUserIds(recipient: string): string[] {
@@ -313,7 +342,8 @@
 					isValidActionTypeId(action.actionType) &&
 					action.config.recipient.trim().length > 0 &&
 					(action.actionTypeName !== 'LINE' || action.lineRecipients.length > 0) &&
-					(action.actionTypeName !== 'Push' || action.pushRecipients.length > 0)
+					(action.actionTypeName !== 'Push' ||
+						(action.pushRecipients.length > 0 && pushRecipientError(action) === undefined))
 			)
 	);
 	let assignmentSummary = $derived(
@@ -766,6 +796,7 @@
 							searchable
 							searchPlaceholder={m.cwui_table_search()}
 							noResultsLabel={m.cwui_multi_no_matches()}
+							error={pushRecipientError(action)}
 							required
 						/>
 					{/if}

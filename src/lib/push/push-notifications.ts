@@ -6,6 +6,11 @@
 // registered with the API directly. Firebase is loaded lazily inside the
 // functions (never at module top level) so the SDK stays out of the SSR path
 // and out of every page's initial bundle.
+//
+// One browser token can carry several accounts (a shared office PC). Turning
+// push on, or refreshing it, only ever touches the signed-in account's own
+// subscription, and logging out changes nothing: alerts keep arriving until
+// the person turns them off from their device list.
 import { browser } from '$app/environment';
 import {
 	PUBLIC_FIREBASE_API_KEY,
@@ -16,12 +21,13 @@ import {
 	PUBLIC_FIREBASE_VAPID_KEY
 } from '$env/static/public';
 import { ApiService } from '$lib/api/api.service';
+import { describeDevice, pushDeviceId } from './push-device';
 
 const PUSH_SW_URL = '/push-sw.js';
 const PUSH_SW_SCOPE = '/push-sw/';
 const STORAGE_KEY = 'cw:push-token';
 
-export type PushStatus = 'unsupported' | 'ios-needs-install' | 'denied' | 'enabled' | 'disabled';
+export type PushSupport = 'unsupported' | 'ios-needs-install' | 'denied' | 'supported';
 
 export interface ForegroundPushMessage {
 	title: string;
@@ -61,13 +67,20 @@ export function iosNeedsInstall(): boolean {
 	return isIos && !isStandalone && !isPushSupported();
 }
 
-export function getPushStatus(): PushStatus {
+// Whether this browser can do push at all. Whether it is on for the signed-in
+// account comes from their device list (see getThisDeviceId).
+export function getPushSupport(): PushSupport {
 	if (!browser) return 'unsupported';
 	if (iosNeedsInstall()) return 'ios-needs-install';
 	if (!isPushSupported()) return 'unsupported';
 	if (Notification.permission === 'denied') return 'denied';
-	if (Notification.permission === 'granted' && getStoredToken()) return 'enabled';
-	return 'disabled';
+	return 'supported';
+}
+
+/** This browser's id in the account's device list, or null if it never enrolled. */
+export async function getThisDeviceId(): Promise<string | null> {
+	const token = getStoredToken();
+	return token ? pushDeviceId(token) : null;
 }
 
 export function getStoredToken(): string | null {
@@ -79,13 +92,15 @@ export function getStoredToken(): string | null {
 	}
 }
 
-function setStoredToken(token: string | null): void {
+// Never cleared: the token belongs to the browser, and other accounts on it
+// may still be using it after one turns push off.
+function setStoredToken(token: string): void {
 	try {
-		if (token) localStorage.setItem(STORAGE_KEY, token);
-		else localStorage.removeItem(STORAGE_KEY);
+		localStorage.setItem(STORAGE_KEY, token);
 	} catch {
-		// Private browsing modes can refuse storage — enrollment still works,
-		// the device just re-registers (idempotent upsert) on next load.
+		// Private browsing modes can refuse storage. Push still works, but this
+		// browser can't recognise itself in the device list or follow a token
+		// rotation on later loads.
 	}
 }
 
@@ -131,46 +146,20 @@ async function registerPushServiceWorker(): Promise<ServiceWorkerRegistration> {
 	return registration;
 }
 
-function describeDevice(): string {
-	const ua = navigator.userAgent;
-	const platform = /Android/.test(ua)
-		? 'Android'
-		: /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1)
-			? 'iOS'
-			: /Windows/.test(ua)
-				? 'Windows'
-				: /Macintosh/.test(ua)
-					? 'macOS'
-					: /Linux/.test(ua)
-						? 'Linux'
-						: 'Unknown';
-	const browserName = /Edg\//.test(ua)
-		? 'Edge'
-		: /Chrome\//.test(ua)
-			? 'Chrome'
-			: /Safari\//.test(ua)
-				? 'Safari'
-				: /Firefox\//.test(ua)
-					? 'Firefox'
-					: 'Browser';
-	return `${browserName} on ${platform}`;
-}
-
 /**
- * Full enrollment for this device. Must be called from a user gesture (click)
- * so `Notification.requestPermission()` is allowed to show the prompt (iOS
- * requires it, Chrome strongly prefers it).
- * Returns the resulting status.
+ * Turns push on for the signed-in account on this browser; other accounts
+ * already on it keep theirs. Must be called from a user gesture (click) so
+ * `Notification.requestPermission()` is allowed to show the prompt (iOS
+ * requires it, Chrome strongly prefers it). Resolves false when permission
+ * isn't granted.
  */
-export async function enablePush(authToken: string): Promise<PushStatus> {
-	if (!isPushSupported()) return getPushStatus();
+export async function enablePush(authToken: string): Promise<boolean> {
+	if (!isPushSupported()) return false;
 
 	const registration = await registerPushServiceWorker();
 
 	const permission = await Notification.requestPermission();
-	if (permission !== 'granted') {
-		return permission === 'denied' ? 'denied' : 'disabled';
-	}
+	if (permission !== 'granted') return false;
 
 	const { messaging, messagingModule } = await getMessaging();
 	const token = await messagingModule.getToken(messaging, {
@@ -178,36 +167,28 @@ export async function enablePush(authToken: string): Promise<PushStatus> {
 		serviceWorkerRegistration: registration
 	});
 
-	await new ApiService({ authToken }).registerPushToken({
+	const api = new ApiService({ authToken });
+	const stored = getStoredToken();
+	// Firebase issued this browser a new token since it last checked in: move
+	// the accounts already on it first, or their subscriptions would be left
+	// on a dead token.
+	if (stored && stored !== token) {
+		await api.refreshPushToken({ token, previousToken: stored });
+	}
+	await api.registerPushToken({
 		token,
-		deviceLabel: describeDevice()
+		deviceLabel: describeDevice(navigator.userAgent, navigator.maxTouchPoints)
 	});
 	setStoredToken(token);
-	return 'enabled';
-}
-
-/** Remove this device's enrollment (FCM token + API registration). */
-export async function disablePush(authToken: string): Promise<void> {
-	const stored = getStoredToken();
-
-	try {
-		const { messaging, messagingModule } = await getMessaging();
-		await messagingModule.deleteToken(messaging);
-	} catch {
-		// Token deletion is best-effort; the API row removal below is what stops
-		// sends, and the engine prunes dead FCM tokens on first failed push.
-	}
-
-	if (stored) {
-		await new ApiService({ authToken }).unregisterPushToken(stored).catch(() => undefined);
-	}
-	setStoredToken(null);
+	return true;
 }
 
 /**
- * Silent refresh on app load for already-enrolled devices: FCM tokens rotate,
- * and re-registering the current token bumps `last_seen_at` server-side. No-op
- * unless permission is granted and this device previously enrolled.
+ * Silent refresh on app load. Never turns push on: it only re-stamps the
+ * signed-in account's existing subscription on this browser (`last_seen_at`
+ * and the device name). FCM tokens rotate; when Firebase hands this browser a
+ * new one, every account on it moves along. No-op unless permission is
+ * granted and this browser enrolled before.
  */
 export async function refreshPushToken(authToken: string): Promise<void> {
 	if (!isPushSupported()) return;
@@ -225,9 +206,10 @@ export async function refreshPushToken(authToken: string): Promise<void> {
 		});
 		if (!token) return;
 
-		await new ApiService({ authToken }).registerPushToken({
+		await new ApiService({ authToken }).refreshPushToken({
 			token,
-			deviceLabel: describeDevice()
+			previousToken: token !== stored ? stored : undefined,
+			deviceLabel: describeDevice(navigator.userAgent, navigator.maxTouchPoints)
 		});
 		if (token !== stored) setStoredToken(token);
 	} catch (error) {
