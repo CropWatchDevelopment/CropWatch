@@ -28,10 +28,6 @@
 		terms_of_service: m.legal_doc_terms_of_service,
 		eula: m.legal_doc_eula
 	};
-
-	function documentUrl(kind: LegalDocumentKind): string | undefined {
-		return data.documents.find((doc) => doc.kind === kind)?.url;
-	}
 </script>
 
 <svelte:head>
@@ -95,15 +91,15 @@
 				</AppNotice>
 			{/if}
 
-			<LegalConsentFields
-				bind:agreedPrivacy
-				bind:agreedTerms
-				bind:agreedEula
-				{allConsentsGiven}
-				privacyUrl={documentUrl('privacy_policy')}
-				termsUrl={documentUrl('terms_of_service')}
-				eulaUrl={documentUrl('eula')}
-			/>
+			<!--
+				Policy links are built per UI locale (legalDocumentUrl), exactly like the
+				create-account form, instead of echoing the API's stored `url`. The stored
+				URL is a single host for every user (v1 pointed at .io, v2 at
+				www.cropwatch.co.jp — whose certificate expired and locked 80+ users out
+				of this page), while the live documents are the same on both marketing
+				sites, so the locale-matched canonical host is always the right link.
+			-->
+			<LegalConsentFields bind:agreedPrivacy bind:agreedTerms bind:agreedEula {allConsentsGiven} />
 
 			<CwButton
 				id="accept-terms-submit-button"

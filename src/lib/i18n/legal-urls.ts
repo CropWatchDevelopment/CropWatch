@@ -2,9 +2,12 @@ import type { LegalDocumentKind } from '$lib/api/api.dtos';
 import { getLocale } from '$lib/paraglide/runtime';
 import { getUiLocale } from './format';
 
-// Canonical hosts: cropwatch.io redirects to www, cropwatch.co.jp redirects www away.
+// Canonical hosts (verified 2026-10-13): both marketing sites are apex-canonical —
+// www.cropwatch.io 308s to cropwatch.io and www.cropwatch.co.jp 307s to
+// cropwatch.co.jp. Never link to a www host: www.cropwatch.co.jp is not attached
+// to the Vercel project that serves the site, so its certificate is not renewed.
 const LEGAL_SITE_ORIGIN = {
-	en: 'https://www.cropwatch.io',
+	en: 'https://cropwatch.io',
 	ja: 'https://cropwatch.co.jp'
 } as const;
 
