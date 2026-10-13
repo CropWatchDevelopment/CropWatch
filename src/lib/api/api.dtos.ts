@@ -52,8 +52,10 @@ export interface PushRecipientCandidateDto {
 	pushEnabled: boolean;
 }
 
-export interface PushTokenDto {
-	token: string;
+/** One device the signed-in account receives push alerts on. */
+export interface PushDeviceDto {
+	/** SHA-256 hex of the device's FCM token (see `pushDeviceId`). */
+	id: string;
 	deviceLabel: string | null;
 	createdAt: string | null;
 	lastSeenAt: string | null;
@@ -61,6 +63,13 @@ export interface PushTokenDto {
 
 export interface RegisterPushTokenRequest {
 	token: string;
+	deviceLabel?: string | null;
+}
+
+export interface RefreshPushTokenRequest {
+	token: string;
+	/** The token this browser had before, when Firebase has issued a new one. */
+	previousToken?: string;
 	deviceLabel?: string | null;
 }
 

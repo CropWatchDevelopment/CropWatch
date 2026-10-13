@@ -37,7 +37,8 @@ import type {
 	PaginatedResponse,
 	PaginationQuery,
 	PushRecipientCandidateDto,
-	PushTokenDto,
+	PushDeviceDto,
+	RefreshPushTokenRequest,
 	RegisterPushTokenRequest,
 	ReportTemplateDto,
 	ReportTemplateListQuery,
@@ -238,6 +239,7 @@ const LINE_LINK_CODE_ENDPOINT = '/line/link-code';
 const LINE_LINK_ENDPOINT = '/line/link';
 const LINE_RECIPIENTS_ENDPOINT = '/line/recipients';
 const PUSH_TOKENS_ENDPOINT = '/push/tokens';
+const PUSH_TOKENS_REFRESH_ENDPOINT = '/push/tokens/refresh';
 const PUSH_RECIPIENTS_ENDPOINT = '/push/recipients';
 const ACCOUNT_REMOVAL_CHALLENGE_ENDPOINT = '/account-removal/challenge';
 const ACCOUNT_REMOVAL_REQUEST_ENDPOINT = '/account-removal/request';
@@ -630,12 +632,21 @@ export class ApiService {
 		});
 	}
 
-	public unregisterPushToken(token: string): Promise<void> {
-		return this.request<void>(PUSH_TOKENS_ENDPOINT, { method: 'DELETE', query: { token } });
+	public refreshPushToken(payload: RefreshPushTokenRequest): Promise<{ subscribed: boolean }> {
+		return this.request<{ subscribed: boolean }>(PUSH_TOKENS_REFRESH_ENDPOINT, {
+			method: 'POST',
+			body: payload
+		});
 	}
 
-	public getPushTokens(): Promise<PushTokenDto[]> {
-		return this.request<PushTokenDto[]>(PUSH_TOKENS_ENDPOINT, { method: 'GET' });
+	public getPushDevices(): Promise<PushDeviceDto[]> {
+		return this.request<PushDeviceDto[]>(PUSH_TOKENS_ENDPOINT, { method: 'GET' });
+	}
+
+	public removePushDevice(id: string): Promise<void> {
+		return this.request<void>(`${PUSH_TOKENS_ENDPOINT}/${encodeURIComponent(id)}`, {
+			method: 'DELETE'
+		});
 	}
 
 	public getPushRecipientCandidates(
