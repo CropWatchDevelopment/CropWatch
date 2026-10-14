@@ -2,9 +2,8 @@ import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
 import LocationMap from './LocationMap.svelte';
 
-// A device name is user-editable. Leaflet renders string tooltip content with
-// innerHTML (CVE-2025-69993), so this payload would run if it reached Leaflet
-// as a string.
+// A device name is user-editable. If it ever reached the map as HTML, this
+// payload would run.
 const PAYLOAD = '<img src=x onerror="window.__locationMapXss = true">Pump';
 
 declare global {
@@ -23,7 +22,7 @@ afterEach(() => {
 });
 
 describe('LocationMap', () => {
-	it('shows device names in pin tooltips as plain text, never as HTML', async () => {
+	it('shows device names in pin popups as plain text, never as HTML', async () => {
 		const target = document.createElement('div');
 		target.style.height = '320px';
 		document.body.appendChild(target);
@@ -39,18 +38,19 @@ describe('LocationMap', () => {
 		});
 		flushSync();
 
-		// Leaflet loads lazily; wait for the device pin to be drawn.
+		// MapLibre loads lazily; wait for the device pin to be placed.
 		await expect
-			.poll(() => target.querySelector('path.leaflet-interactive'), { timeout: 5000 })
+			.poll(() => target.querySelector('.location-map__device'), { timeout: 10000 })
 			.not.toBeNull();
-		const pin = target.querySelector('path.leaflet-interactive') as SVGPathElement;
-		pin.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+		const pin = target.querySelector('.location-map__device') as HTMLElement;
+		expect(pin.getAttribute('aria-label')).toBe(PAYLOAD);
+		pin.dispatchEvent(new MouseEvent('mouseenter'));
 
-		await expect.poll(() => target.querySelector('.leaflet-tooltip')).not.toBeNull();
-		const tooltip = target.querySelector('.leaflet-tooltip') as HTMLElement;
+		await expect.poll(() => target.querySelector('.maplibregl-popup-content')).not.toBeNull();
+		const popup = target.querySelector('.maplibregl-popup-content') as HTMLElement;
 
-		expect(tooltip.textContent).toBe(PAYLOAD);
-		expect(tooltip.querySelector('img')).toBeNull();
+		expect(popup.textContent).toBe(PAYLOAD);
+		expect(popup.querySelector('img')).toBeNull();
 		// Give a would-be onerror handler a chance to fire before checking.
 		await new Promise((resolve) => setTimeout(resolve, 100));
 		expect(window.__locationMapXss).toBeUndefined();

@@ -1,8 +1,11 @@
 <script lang="ts">
-	import 'leaflet/dist/leaflet.css';
-	import type { LayerGroup, Map as LeafletMap, Marker } from 'leaflet';
+	import 'maplibre-gl/dist/maplibre-gl.css';
+	import type { Map as MapLibreMap, MapOptions, Marker } from 'maplibre-gl';
+	// MapLibre finds its worker relative to its own file, which breaks once Vite
+	// pre-bundles (dev) or hashes (build) it. Let Vite bundle the worker and
+	// hand MapLibre the resulting URL instead.
+	import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 	import { untrack } from 'svelte';
-	import { plainText } from '$lib/maps/leaflet-content';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { DeviceHealth } from './location-overview';
 
@@ -39,24 +42,35 @@
 
 	let container: HTMLDivElement;
 
-	const HEALTH_TOKEN: Record<DeviceHealth, string> = {
-		online: '--cw-success-400',
-		offline: '--cw-danger-400',
-		never: '--cw-status-loading'
+	// OpenStreetMap raster tiles: free, no key. The attribution is a fixed
+	// string; MapLibre renders it as HTML, so never build it from data.
+	const OSM_STYLE: MapOptions['style'] = {
+		version: 8,
+		sources: {
+			osm: {
+				type: 'raster',
+				tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+				tileSize: 256,
+				maxzoom: 19,
+				attribution:
+					'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}
+		},
+		layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
 	};
-	// Whole-of-Japan view for a picker that has no position yet.
-	const FALLBACK_CENTER: [number, number] = [36.2, 138.25];
+	// Whole-of-Japan view for a picker that has no position yet ([long, lat]).
+	const FALLBACK_CENTER: [number, number] = [138.25, 36.2];
 	const FALLBACK_ZOOM = 5;
 	const DEFAULT_ZOOM = 16;
 	// Below this zoom a newly set position is too small to see, so zoom in to it.
 	const MIN_FOCUS_ZOOM = 13;
 
-	// Leaflet and the map live outside $state: they are imperative handles,
+	// MapLibre and the map live outside $state: they are imperative handles,
 	// and `ready` is what tells the other effects the map exists.
-	let leaflet: typeof import('leaflet') | null = null;
-	let map: LeafletMap | null = null;
+	let maplibre: typeof import('maplibre-gl') | null = null;
+	let map: MapLibreMap | null = null;
 	let marker: Marker | null = null;
-	let pinLayer: LayerGroup | null = null;
+	let deviceMarkers: Marker[] = [];
 	let resizeObserver: ResizeObserver | null = null;
 	let ready = $state(false);
 
@@ -67,37 +81,66 @@
 		onpick?.(round(next.lat), round(next.lng));
 	}
 
+	// Teardrop pin, built from DOM nodes (no HTML strings), tip at the bottom.
+	function createLocationPin(): HTMLElement {
+		const svgNs = 'http://www.w3.org/2000/svg';
+		const element = document.createElement('div');
+		element.className = 'location-map__pin';
+		const svg = document.createElementNS(svgNs, 'svg');
+		svg.setAttribute('viewBox', '0 0 28 36');
+		svg.setAttribute('width', '28');
+		svg.setAttribute('height', '36');
+		svg.setAttribute('aria-hidden', 'true');
+		const drop = document.createElementNS(svgNs, 'path');
+		drop.setAttribute('d', 'M14 35C14 35 2 21.5 2 13.5a12 12 0 1 1 24 0C26 21.5 14 35 14 35Z');
+		drop.setAttribute('class', 'location-map__pin-body');
+		const dot = document.createElementNS(svgNs, 'circle');
+		dot.setAttribute('cx', '14');
+		dot.setAttribute('cy', '13.5');
+		dot.setAttribute('r', '4.5');
+		dot.setAttribute('class', 'location-map__pin-dot');
+		svg.append(drop, dot);
+		element.append(svg);
+		return element;
+	}
+
 	// Built once; later prop changes move the pin instead of rebuilding the map.
 	$effect(() => {
 		let cancelled = false;
 		const initial = untrack(() => ({ lat, long, zoom, editable }));
 
-		// Leaflet touches `window` at import time, so load it only in the browser.
-		import('leaflet').then((L) => {
+		// MapLibre needs WebGL and `window`, so load it only in the browser.
+		import('maplibre-gl').then((lib) => {
 			if (cancelled) return;
-			leaflet = L;
+			maplibre = lib;
+			lib.setWorkerUrl(maplibreWorkerUrl);
 			const hasPosition = initial.lat != null && initial.long != null;
-			map = L.map(container, { scrollWheelZoom: initial.editable }).setView(
-				hasPosition ? [initial.lat!, initial.long!] : FALLBACK_CENTER,
-				hasPosition
+			map = new lib.Map({
+				container,
+				style: OSM_STYLE,
+				center: hasPosition ? [initial.long!, initial.lat!] : FALLBACK_CENTER,
+				zoom: hasPosition
 					? initial.zoom && initial.zoom > 0
 						? initial.zoom
 						: DEFAULT_ZOOM
-					: FALLBACK_ZOOM
+					: FALLBACK_ZOOM,
+				scrollZoom: initial.editable,
+				dragRotate: false,
+				pitchWithRotate: false,
+				attributionControl: { compact: true }
+			});
+			map.touchZoomRotate.disableRotation();
+			map.addControl(
+				new lib.NavigationControl({ showCompass: false, visualizePitch: false }),
+				'top-left'
 			);
-			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				maxZoom: 19,
-				attribution:
-					'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-			}).addTo(map);
 			if (initial.editable) {
-				map.on('click', (event) => pick(event.latlng));
-				map.on('zoomend', () => map && onzoomchange?.(map.getZoom()));
+				map.on('click', (event) => pick(event.lngLat));
+				map.on('zoomend', () => map && onzoomchange?.(Math.round(map.getZoom())));
 			}
-			pinLayer = L.layerGroup().addTo(map);
-			// The card's height settles after Leaflet measures it; re-measure so
-			// tiles cover the whole box instead of leaving a gray band.
-			resizeObserver = new ResizeObserver(() => map?.invalidateSize());
+			// The card's height settles after MapLibre measures it; re-measure so
+			// the canvas always covers the whole box.
+			resizeObserver = new ResizeObserver(() => map?.resize());
 			resizeObserver.observe(container);
 			ready = true;
 		});
@@ -107,45 +150,47 @@
 			resizeObserver?.disconnect();
 			resizeObserver = null;
 			ready = false;
+			for (const deviceMarker of deviceMarkers) deviceMarker.remove();
+			deviceMarkers = [];
+			marker?.remove();
+			marker = null;
 			map?.remove();
 			map = null;
-			marker = null;
-			pinLayer = null;
 		};
 	});
 
 	// Keep the location pin on lat/long, and bring it into view when it was
 	// set from outside the map (typed, pasted, geolocated, centred on devices).
 	$effect(() => {
-		if (!ready || !leaflet || !map) return;
+		if (!ready || !maplibre || !map) return;
 		if (lat == null || long == null) {
 			marker?.remove();
 			marker = null;
 			return;
 		}
-		const position: [number, number] = [lat, long];
+		const position: [number, number] = [long, lat];
 		if (!marker) {
-			marker = leaflet
-				.marker(position, {
-					title: untrack(() => name),
-					draggable: editable,
-					keyboard: editable,
-					icon: leaflet.divIcon({
-						className: 'location-map__pin',
-						html: '<span></span>',
-						iconSize: [28, 28],
-						iconAnchor: [14, 34]
-					})
-				})
+			const element = createLocationPin();
+			// Attributes only: the name is user data.
+			element.setAttribute(
+				'aria-label',
+				untrack(() => name)
+			);
+			element.title = untrack(() => name);
+			marker = new maplibre.Marker({ element, anchor: 'bottom', draggable: editable })
+				.setLngLat(position)
 				.addTo(map);
-			marker.on('dragend', () => marker && pick(marker.getLatLng()));
+			marker.on('dragend', () => marker && pick(marker.getLngLat()));
 		} else {
-			marker.setLatLng(position);
+			marker.setLngLat(position);
 		}
 		untrack(() => {
 			if (!map) return;
 			if (map.getZoom() < MIN_FOCUS_ZOOM) {
-				map.setView(position, zoom && zoom >= MIN_FOCUS_ZOOM ? zoom : DEFAULT_ZOOM);
+				map.jumpTo({
+					center: position,
+					zoom: zoom && zoom >= MIN_FOCUS_ZOOM ? zoom : DEFAULT_ZOOM
+				});
 			} else if (!map.getBounds().contains(position)) {
 				map.panTo(position);
 			}
@@ -154,21 +199,27 @@
 
 	// Device pins redraw on their own so live health updates don't rebuild the map.
 	$effect(() => {
-		if (!ready || !leaflet || !pinLayer) return;
-		const styles = getComputedStyle(document.documentElement);
-		pinLayer.clearLayers();
-		for (const pin of devices) {
-			leaflet
-				.circleMarker([pin.lat, pin.long], {
-					radius: 7,
-					color: styles.getPropertyValue('--cw-gray-900').trim(),
-					weight: 2,
-					fillColor: styles.getPropertyValue(HEALTH_TOKEN[pin.health]).trim(),
-					fillOpacity: 1
-				})
-				.bindTooltip(plainText(pin.name))
-				.addTo(pinLayer);
-		}
+		if (!ready || !maplibre || !map) return;
+		const lib = maplibre;
+		const target = map;
+		for (const deviceMarker of deviceMarkers) deviceMarker.remove();
+		deviceMarkers = devices.map((pin) => {
+			const element = document.createElement('div');
+			element.className = `location-map__device location-map__device--${pin.health}`;
+			element.setAttribute('aria-label', pin.name);
+			// setText, never setHTML: device names are user-editable.
+			const popup = new lib.Popup({
+				closeButton: false,
+				closeOnClick: false,
+				offset: 10,
+				className: 'location-map__popup'
+			}).setText(pin.name);
+			element.addEventListener('mouseenter', () =>
+				popup.setLngLat([pin.long, pin.lat]).addTo(target)
+			);
+			element.addEventListener('mouseleave', () => popup.remove());
+			return new lib.Marker({ element }).setLngLat([pin.long, pin.lat]).addTo(target);
+		});
 	});
 </script>
 
@@ -188,32 +239,53 @@
 		border-radius: var(--cw-radius-lg);
 		border: 1px solid var(--cw-border-muted);
 		overflow: hidden;
-		/* Keep Leaflet's panes under app overlays (menus, dialogs, toasts). */
+		/* Keep the map's own layers under app overlays (menus, dialogs, toasts). */
 		position: relative;
 		z-index: 0;
 	}
 
-	.location-map--editable {
+	.location-map--editable :global(.maplibregl-canvas-container) {
 		cursor: crosshair;
 	}
 
-	:global(.location-map__pin span) {
-		position: relative;
-		display: block;
-		width: 28px;
-		height: 28px;
-		border-radius: 50% 50% 50% 0;
-		transform: rotate(-45deg);
-		background: var(--cw-primary-500);
-		border: 2px solid var(--cw-primary-900);
-		box-shadow: var(--cw-shadow-md);
+	:global(.location-map__pin) {
+		filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.35));
 	}
 
-	:global(.location-map__pin span)::after {
-		content: '';
-		position: absolute;
-		inset: 8px;
+	:global(.location-map__pin-body) {
+		fill: var(--cw-primary-500);
+		stroke: var(--cw-primary-900);
+		stroke-width: 2;
+	}
+
+	:global(.location-map__pin-dot) {
+		fill: var(--cw-primary-900);
+	}
+
+	:global(.location-map__device) {
+		width: 14px;
+		height: 14px;
 		border-radius: 50%;
-		background: var(--cw-primary-900);
+		border: 2px solid var(--cw-gray-900);
+		box-sizing: border-box;
+	}
+
+	:global(.location-map__device--online) {
+		background: var(--cw-success-400);
+	}
+
+	:global(.location-map__device--offline) {
+		background: var(--cw-danger-400);
+	}
+
+	:global(.location-map__device--never) {
+		background: var(--cw-status-loading);
+	}
+
+	:global(.location-map__popup .maplibregl-popup-content) {
+		padding: var(--cw-space-1) var(--cw-space-2);
+		font-size: var(--cw-text-xs);
+		color: var(--cw-gray-900);
+		border-radius: var(--cw-radius-md);
 	}
 </style>
