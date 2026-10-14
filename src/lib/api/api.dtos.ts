@@ -977,9 +977,12 @@ export interface CreateLocationRequest {
 }
 
 export type UpdateLocationRequest = {
-	name: string;
+	name?: string;
 	description?: string | null;
 	group?: string | null;
+	lat?: number | null;
+	long?: number | null;
+	map_zoom?: number | null;
 };
 
 export interface GatewayOwnerDto {

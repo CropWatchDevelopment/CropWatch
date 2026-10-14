@@ -6,6 +6,7 @@
 	import LocationEditPermissions from './LocationEditPermissions.svelte';
 	import LocationPermissions from './LocationPermissions.svelte';
 	import LocationUpdate from './LocationUpdate.svelte';
+	import LocationCoordinates from './LocationCoordinates.svelte';
 	import LocationDangerZone from './LocationDangerZone.svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -33,6 +34,12 @@
 	</CwButton>
 
 	<LocationUpdate {data} />
+	<LocationCoordinates
+		locationName={data.locationName}
+		coordinates={data.coordinates}
+		mapZoom={data.mapZoom}
+		devicePositions={data.devicePositions}
+	/>
 	<LocationPermissions {data} />
 	<LocationEditPermissions {data} />
 

@@ -4,6 +4,7 @@ import { PermissionLevel } from '$lib/constants/permissions';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { checkLocationDeleteConfirmation } from './location-delete-confirmation';
+import { isValidLatitude, isValidLongitude } from './location-coordinates';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -120,6 +121,82 @@ export const updateLocationName: Actions['updateLocationName'] = async ({
 		return fail(error instanceof ApiServiceError ? error.status : 502, {
 			action: 'updateLocationName',
 			message: readErrorMessage(error, m.locations_update_name_failed())
+		});
+	}
+};
+
+export const updateLocationCoordinates: Actions['updateLocationCoordinates'] = async ({
+	request,
+	locals,
+	fetch,
+	params
+}) => {
+	const authToken = locals.jwtString ?? null;
+	if (!authToken) {
+		return fail(401, {
+			action: 'updateLocationCoordinates',
+			message: m.locations_update_name_requires_login()
+		});
+	}
+
+	const locationId = readLocationId(params.location_id);
+	if (locationId === null) {
+		return fail(400, {
+			action: 'updateLocationCoordinates',
+			message: m.locations_invalid_location_id()
+		});
+	}
+
+	const formData = await request.formData();
+	const latText = readString(formData.get('lat'));
+	const longText = readString(formData.get('long'));
+	const zoomText = readString(formData.get('map_zoom'));
+	const values = { lat: latText, long: longText };
+
+	// Both blank clears the coordinates; one without the other is a mistake.
+	const clearing = latText === '' && longText === '';
+	const lat = Number(latText);
+	const long = Number(longText);
+	if (!clearing) {
+		if (latText === '' || !isValidLatitude(lat)) {
+			return fail(400, {
+				action: 'updateLocationCoordinates',
+				message: m.location_coordinates_invalid_latitude(),
+				...values
+			});
+		}
+		if (longText === '' || !isValidLongitude(long)) {
+			return fail(400, {
+				action: 'updateLocationCoordinates',
+				message: m.location_coordinates_invalid_longitude(),
+				...values
+			});
+		}
+	}
+	const zoom = Number.parseInt(zoomText, 10);
+
+	const apiService = new ApiService({ fetchFn: fetch, authToken });
+	try {
+		await apiService.updateLocation(
+			locationId,
+			clearing
+				? { lat: null, long: null }
+				: {
+						lat,
+						long,
+						...(Number.isFinite(zoom) && zoom >= 0 && zoom <= 22 ? { map_zoom: zoom } : {})
+					}
+		);
+		return {
+			action: 'updateLocationCoordinates',
+			success: true,
+			message: clearing ? m.location_coordinates_cleared() : m.location_coordinates_saved()
+		};
+	} catch (error) {
+		return fail(error instanceof ApiServiceError ? error.status : 502, {
+			action: 'updateLocationCoordinates',
+			message: readErrorMessage(error, m.location_coordinates_save_failed()),
+			...values
 		});
 	}
 };

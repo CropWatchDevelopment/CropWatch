@@ -22,7 +22,17 @@ export default defineConfig(
 		rules: {
 			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
 			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
-			'no-undef': 'off'
+			'no-undef': 'off',
+			// Map popups: MapLibre's setHTML() inserts its argument as raw HTML (XSS
+			// with user data such as device names). Use setText() or setDOMContent().
+			'no-restricted-syntax': [
+				'error',
+				{
+					selector: 'CallExpression[callee.property.name="setHTML"]',
+					message:
+						'setHTML() inserts raw HTML (XSS). Use setText() or setDOMContent() with nodes built from text.'
+				}
+			]
 		}
 	},
 	{

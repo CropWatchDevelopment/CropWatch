@@ -20,13 +20,13 @@
 	<AppFormStack padded>
 		<div class="report-entry-card">
 			<div class="report-switch-grid">
-				<CwSwitch
+				<!-- <CwSwitch
 					id="report-cadence-day-switch"
 					checked={cadence.end_of_day}
 					label={m.reports_create_schedule_day_label()}
 					description={m.reports_create_schedule_day_description()}
 					onchange={(checked) => (cadence.end_of_day = checked)}
-				/>
+				/> -->
 				<CwSwitch
 					id="report-cadence-week-switch"
 					checked={cadence.end_of_week}
