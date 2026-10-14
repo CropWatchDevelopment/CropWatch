@@ -1,0 +1,82 @@
+name: Security
+
+# Snyk dependency + code scans. Kept out of the API CI Gate on purpose: a
+# newly published advisory turns this workflow (and the README badges) red
+# without blocking deploys.
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+  schedule:
+    # 06:17 JST daily, so advisories published overnight show up without a push.
+    - cron: '17 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  snyk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # publishes the badge JSON to the `badges` branch
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      SNYK_VERSION: 1.1307.4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check Snyk token
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "::error::Repository secret SNYK_TOKEN is not set."
+            exit 1
+          fi
+
+      # Snyk reads pnpm-lock.yaml directly, so
+      # no install is needed. Exit codes: 0 clean, 1 issues, 2 error.
+      - name: Scan dependencies and code
+        run: |
+          set +e
+          npx --yes "snyk@${SNYK_VERSION}" test --all-projects --dev \
+            --json-file-output=snyk-deps.json > /dev/null
+          echo "DEPS_EXIT=$?" >> "$GITHUB_ENV"
+          npx --yes "snyk@${SNYK_VERSION}" code test \
+            --sarif-file-output=snyk-code.sarif > /dev/null
+          echo "CODE_EXIT=$?" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Summarise results
+        run: |
+          python3 .github/scripts/snyk-summary.py \
+            snyk-deps.json snyk-code.sarif "$DEPS_EXIT" "$CODE_EXIT" snyk-badge.json
+
+      # Only master's result feeds the README badge. The branch holds a single
+      # commit with snyk.json and is force-pushed on each run; vercel.json
+      # disables deployments for it.
+      - name: Publish badge
+        if: always() && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && hashFiles('snyk-badge.json') != ''
+        run: |
+          mkdir -p "$RUNNER_TEMP/badges"
+          cp snyk-badge.json "$RUNNER_TEMP/badges/snyk.json"
+          cd "$RUNNER_TEMP/badges"
+          git init -q -b badges
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add snyk.json
+          git commit -q -m "Update Snyk badge"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" badges
