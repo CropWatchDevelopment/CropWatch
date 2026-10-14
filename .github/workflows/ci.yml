@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   packages: read
+  id-token: write # OIDC auth for the Qlty coverage upload
 
 jobs:
   ci:
@@ -47,7 +48,15 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Unit tests
-        run: pnpm exec vitest --run
+        run: pnpm exec vitest --run --coverage
+
+      # Pull requests from forks get no OIDC token, so they skip the upload.
+      - name: Upload coverage to Qlty
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        uses: qltysh/qlty-action/coverage@v2
+        with:
+          oidc: true
+          files: coverage/lcov.info
 
       - name: Build
         run: pnpm run build
