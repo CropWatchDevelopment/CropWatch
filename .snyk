@@ -25,3 +25,11 @@ ignore:
         expires: 2027-01-14T00:00:00.000Z
         created: 2026-10-14T04:18:54.246Z
 patch: {}
+# Snyk Code skips test code: the e2e harness talks to a local mock server with
+# a fake login and fake reCAPTCHA keys, and the specs use placeholder secrets.
+# Application code under src/ (outside *.spec.ts) is still scanned.
+exclude:
+  global:
+    - scripts/e2e-stack.mjs
+    - e2e/**
+    - '**/*.spec.ts'
