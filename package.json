@@ -26,15 +26,15 @@
 		"@eslint/js": "^9.39.4",
 		"@inlang/paraglide-js": "^2.19.0",
 		"@playwright/test": "^1.61.0",
-		"@sveltejs/adapter-vercel": "^6.3.3",
-		"@sveltejs/kit": "^2.69.1",
+		"@sveltejs/adapter-vercel": "^6.3.4",
+		"@sveltejs/kit": "^2.70.3",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.3.1",
 		"@types/node": "^22.19.21",
-		"@vitest/browser-playwright": "^4.1.9",
+		"@vitest/browser-playwright": "^4.1.11",
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-svelte": "^3.19.0",
+		"eslint-plugin-svelte": "^3.23.1",
 		"globals": "^17.6.0",
 		"playwright": "^1.61.0",
 		"prettier": "^3.8.4",
@@ -55,14 +55,16 @@
 	"pnpm": {
 		"overrides": {
 			"esbuild@<0.28.1": ">=0.28.1",
-			"cookie@<0.7.0": "^0.7.0"
+			"cookie@<0.7.0": "^0.7.0",
+			"@grpc/grpc-js@<1.14.5": "1.14.5",
+			"uri-js": "npm:fast-uri@^3.1.8"
 		}
 	},
 	"dependencies": {
 		"@cropwatchdevelopment/cwui": "0.1.115",
 		"@cropwatchdevelopment/qr-scanner": "0.1.0",
 		"@supabase/supabase-js": "^2.108.2",
-		"firebase": "^12.18.0",
+		"firebase": "^12.19.0",
 		"jwt-decode": "^4.0.0",
 		"maplibre-gl": "6.11.2"
 	}

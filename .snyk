@@ -1,0 +1,27 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  SNYK-JS-DEEPMERGE-19964053:
+    - '@sveltejs/adapter-vercel > *':
+        reason: >-
+          No fixed deepmerge release. Dev/build-only: reached via SvelteKit
+          tooling (adapter-vercel > kit > vite-plugin-svelte), which merges our
+          own config, never user input. Not in the production dependency tree.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-10-14T04:18:47.755Z
+    - '@sveltejs/kit > *':
+        reason: >-
+          No fixed deepmerge release. Dev/build-only: reached via SvelteKit
+          tooling (adapter-vercel > kit > vite-plugin-svelte), which merges our
+          own config, never user input. Not in the production dependency tree.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-10-14T04:18:50.962Z
+    - '@sveltejs/vite-plugin-svelte > *':
+        reason: >-
+          No fixed deepmerge release. Dev/build-only: reached via SvelteKit
+          tooling (adapter-vercel > kit > vite-plugin-svelte), which merges our
+          own config, never user input. Not in the production dependency tree.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-10-14T04:18:54.246Z
+patch: {}
