@@ -38,6 +38,8 @@
 		hasUnsupportedAlertPointConditions
 	} from './rule-template-alert-points';
 	import RelayActions from '$lib/components/rule-actions/Relay-Actions.svelte';
+	import Icon from '$lib/components/Icon.svelte';
+	import ADD_ICON from '$lib/images/icons/add.svg';
 
 	type FormMode = 'create' | 'edit';
 
@@ -48,6 +50,8 @@
 		preselectedDevEui?: string | null;
 		// Used to preselect the rule creator on the default Push action.
 		currentUserId?: string | null;
+		/** Shown on the preselected creator chip until the recipient list loads. */
+		currentUserName?: string | null;
 	}
 
 	interface DeviceSelection {
@@ -73,7 +77,8 @@
 		context,
 		authToken = null,
 		preselectedDevEui = null,
-		currentUserId = null
+		currentUserId = null,
+		currentUserName = null
 	}: Props = $props();
 
 	let devices = $derived(context.devices);
@@ -404,9 +409,10 @@
 		};
 	}
 
-	// New rules default to a Push action with the creator preselected. The
-	// bare-id label upgrades once the recipient fetch lands. Falls back to a
-	// blank action while the Push action type doesn't exist yet server-side.
+	// New rules default to a Push action with the creator preselected, labelled
+	// with their profile name (the recipient list only loads once a device is
+	// chosen). Falls back to a blank action while the Push action type doesn't
+	// exist yet server-side.
 	function createDefaultTemplateAction(): EditableTemplateAction {
 		if (mode === 'create' && currentUserId) {
 			const pushType = actions.find((entry) => entry.name === 'Push');
@@ -421,7 +427,7 @@
 						recipient: JSON.stringify({ userIds: [currentUserId] })
 					},
 					lineRecipients: [],
-					pushRecipients: [{ id: currentUserId, label: currentUserId }],
+					pushRecipients: [{ id: currentUserId, label: currentUserName || currentUserId }],
 					createdAt: null
 				};
 			}
@@ -727,7 +733,8 @@
 				nextCriteriaGroupId += 1;
 			}}
 		>
-			{m.rules_add_another_condition()}
+			<Icon src={ADD_ICON} alt="" />
+			{m.rules_add_condition_for_other_field()}
 		</CwButton>
 	</AppFormStack>
 </CwCard>

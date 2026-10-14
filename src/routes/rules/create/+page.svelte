@@ -34,6 +34,10 @@
 		authToken={data.authToken}
 		preselectedDevEui={data.devEui}
 		currentUserId={data.session?.sub ?? null}
+		currentUserName={data.profile?.full_name ??
+			data.profile?.username ??
+			data.profile?.email ??
+			null}
 	/>
 </AppPage>
 

@@ -33,7 +33,7 @@ export function createRuleTemplateAlertPointsEditorText(): CwAlertPointsEditorTe
 		maxValueFieldLabel: m.reports_create_alert_maximum(),
 		resetFieldLabel: m.rules_reset_value(),
 		colorFieldLabel: m.reports_create_alert_hex_color(),
-		addAlertPointButton: m.rules_add_another_condition(),
+		addAlertPointButton: m.rules_add_threshold_for_field(),
 		removePointButton: m.action_remove(),
 		emptyTitle: m.reports_create_alert_points_empty_title(),
 		emptyDescription: m.reports_create_alert_points_empty_description(),
