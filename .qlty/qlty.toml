@@ -1,0 +1,8 @@
+config_version = "0"
+
+# Generated files: not ours to refactor, so keep them out of Qlty's
+# maintainability and duplication analysis.
+exclude_patterns = [
+    # Supabase types, regenerated with `supabase gen types`
+    "**/database.types.ts",
+]
