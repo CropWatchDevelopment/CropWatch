@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   packages: read
+  id-token: write # OIDC auth for the Qlty coverage upload
 
 jobs:
   ci:
@@ -46,8 +47,19 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
+      # Both vitest projects (client + server) run in one pass, so the v8
+      # provider writes a single merged coverage/lcov.info.
       - name: Unit tests
-        run: pnpm exec vitest --run
+        run: pnpm exec vitest --run --coverage.enabled --coverage.reporter=lcov
+
+      # Forked pull requests get no OIDC token, so the upload can only run for
+      # pushes and same-repo branches.
+      - name: Upload coverage to Qlty
+        if: ${{ github.event.pull_request.head.repo.fork != true }}
+        uses: qltysh/qlty-action/coverage@v2
+        with:
+          oidc: true
+          files: coverage/lcov.info
 
       - name: Build
         run: pnpm run build
