@@ -4,12 +4,14 @@ import { m } from '$lib/paraglide/messages.js';
 import { isStaffEmail } from '$lib/utils/is-staff';
 import { error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { toFiniteNumber } from '../location-overview';
 import {
 	addPermission,
 	deleteLocation,
 	editPermission,
 	readUnknownString,
 	removePermission,
+	updateLocationCoordinates,
 	updateLocationName,
 	updateUserPermissionLevel
 } from './location-settings-actions.server';
@@ -23,6 +25,9 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 			locationId: Number.isFinite(locationId) ? locationId : null,
 			locationName: '',
 			locationGroup: '',
+			coordinates: null as { lat: number; long: number } | null,
+			mapZoom: null as number | null,
+			devicePositions: [] as { lat: number | null; long: number | null }[],
 			locationOwners: [] as LocationOwnerDto[],
 			deletion: null as { deviceCount: number } | null
 		};
@@ -35,9 +40,14 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 
 	// The preflight is owner-only (403/404 otherwise): it decides whether the
 	// danger zone shows at all, and how many devices still block the delete.
-	const [location, deletePreflight] = await Promise.all([
+	const [location, deletePreflight, devices] = await Promise.all([
 		apiService.getLocation(locationId).catch(() => null),
-		apiService.getLocationDeletePreflight(locationId).catch(() => null)
+		apiService.getLocationDeletePreflight(locationId).catch(() => null),
+		// Device positions back the "Centre on my devices" button.
+		apiService
+			.getAllLocationDevices(locationId)
+			.then((res) => res.data ?? [])
+			.catch(() => [])
 	]);
 
 	// The API answers 404 both for a missing location and for one the caller
@@ -67,10 +77,19 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		error(403, { message: m.locations_permission_denied() });
 	}
 
+	const lat = toFiniteNumber(location.lat);
+	const long = toFiniteNumber(location.long);
+
 	return {
 		locationId,
 		locationName: String(location.name ?? `Location ${locationId}`),
 		locationGroup: String(location.group ?? ''),
+		coordinates: lat !== null && long !== null && !(lat === 0 && long === 0) ? { lat, long } : null,
+		mapZoom: toFiniteNumber(location.map_zoom),
+		devicePositions: devices.map((device) => ({
+			lat: toFiniteNumber(device.lat),
+			long: toFiniteNumber(device.long)
+		})),
 		locationOwners: (location.cw_location_owners ?? []) as LocationOwnerDto[],
 		deletion: deletePreflight ? { deviceCount: deletePreflight.device_count } : null
 	};
@@ -78,6 +97,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 
 export const actions: Actions = {
 	updateLocationName,
+	updateLocationCoordinates,
 	addPermission,
 	editPermission,
 	updateUserPermissionLevel,

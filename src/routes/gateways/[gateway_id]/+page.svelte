@@ -133,7 +133,7 @@
 					{loadData}
 					rowKey="dev_eui"
 					searchable
-					pageSize={10}
+					pageSize={50}
 					onRowClick={(row) => {
 						if (row.location_id == null) return;
 						goto(

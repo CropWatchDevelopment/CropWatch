@@ -1,6 +1,7 @@
 import { ApiService } from '$lib/api/api.service';
 import { canManage } from '$lib/constants/permissions';
 import type { PageServerLoad } from './$types';
+import { toFiniteNumber } from './location-overview';
 
 export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const authToken = locals.jwtString ?? null;
@@ -11,6 +12,7 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		return {
 			allLocationDevices: [],
 			currentLocation: null,
+			locationInfo: null,
 			hasSettings: false
 		};
 	}
@@ -36,10 +38,25 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 	const currentOwner = userId ? owners.find((o) => o.user_id === userId) : null;
 	const hasSettings = currentOwner != null && canManage(Number(currentOwner.permission_level));
 
+	// Only the fields the overview renders; the owner list stays on the server.
+	const locationInfo = currentLocation
+		? {
+				location_id: currentLocation.location_id,
+				name: currentLocation.name,
+				created_at: currentLocation.created_at,
+				description:
+					typeof currentLocation.description === 'string' ? currentLocation.description : null,
+				group: typeof currentLocation.group === 'string' ? currentLocation.group : null,
+				lat: toFiniteNumber(currentLocation.lat),
+				long: toFiniteNumber(currentLocation.long),
+				map_zoom: toFiniteNumber(currentLocation.map_zoom)
+			}
+		: null;
+
 	return {
 		allLocationDevices,
 		currentLocation: currentLocation?.name ?? null,
-		location: currentLocation,
+		locationInfo,
 		hasSettings
 	};
 };
