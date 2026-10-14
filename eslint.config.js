@@ -22,7 +22,25 @@ export default defineConfig(
 		rules: {
 			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
 			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
-			'no-undef': 'off'
+			'no-undef': 'off',
+			// Leaflet renders string popup/tooltip content and divIcon `html` with
+			// innerHTML (CVE-2025-69993, no fixed release). User data must reach it
+			// as a DOM node via plainText() from $lib/maps/leaflet-content.
+			'no-restricted-syntax': [
+				'error',
+				{
+					selector:
+						'CallExpression[callee.property.name=/^(bindPopup|bindTooltip|setContent)$/][arguments.length>0]:not([arguments.0.callee.name="plainText"])',
+					message:
+						'Leaflet inserts string content as raw HTML (XSS). Pass plainText(text) from $lib/maps/leaflet-content instead.'
+				},
+				{
+					selector:
+						'CallExpression[callee.property.name="divIcon"] Property[key.name="html"]:not([value.type="Literal"])',
+					message:
+						'Leaflet inserts divIcon html as raw HTML (XSS). Use a fixed string literal, never data.'
+				}
+			]
 		}
 	},
 	{

@@ -2,6 +2,7 @@
 	import 'leaflet/dist/leaflet.css';
 	import type { LayerGroup, Map as LeafletMap, Marker } from 'leaflet';
 	import { untrack } from 'svelte';
+	import { plainText } from '$lib/maps/leaflet-content';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { DeviceHealth } from './location-overview';
 
@@ -165,7 +166,7 @@
 					fillColor: styles.getPropertyValue(HEALTH_TOKEN[pin.health]).trim(),
 					fillOpacity: 1
 				})
-				.bindTooltip(pin.name)
+				.bindTooltip(plainText(pin.name))
 				.addTo(pinLayer);
 		}
 	});
