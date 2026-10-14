@@ -1,0 +1,4 @@
+# Only the config is committed; Qlty writes logs, caches and results here.
+*
+!.gitignore
+!qlty.toml
