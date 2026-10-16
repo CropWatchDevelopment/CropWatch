@@ -1,7 +1,7 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import devtoolsJson from 'vite-plugin-devtools-json';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vitest/config';
+import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { paraglideConfig } from './paraglide.config.js';
@@ -17,6 +17,14 @@ export default defineConfig({
 	],
 	test: {
 		expect: { requireAssertions: true },
+		// Only written when CI passes `--coverage`; lcov.info is what Qlty reads.
+		// Generated output (paraglide, svelte-kit) is excluded because it is
+		// gitignored, so Qlty cannot match those paths against the repository.
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'lcov'],
+			exclude: [...coverageConfigDefaults.exclude, 'src/lib/paraglide/**', '.svelte-kit/**']
+		},
 		projects: [
 			{
 				extends: './vite.config.ts',
