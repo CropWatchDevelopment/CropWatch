@@ -1,5 +1,7 @@
 import type { CwDeviceFreshness } from '@cropwatchdevelopment/cwui';
 
+export { formatRelative } from '$lib/i18n/format';
+
 export type DeviceHealth = 'online' | 'offline' | 'never';
 
 /** Upload cadence assumed when a device row has no usable upload_interval. */
@@ -15,6 +17,11 @@ export interface LocationDeviceRow {
 	temperature: number | null;
 	humidity: number | null;
 	co2: number | null;
+	/**
+	 * Current gateway link (currentSignal). RSSI and SNR are both null when no
+	 * gateway has heard the device; the whole value is null when unknown.
+	 */
+	signal: { rssi: number | null; snr: number | null } | null;
 	lat: number | null;
 	long: number | null;
 }
@@ -109,23 +116,4 @@ export function summarizeHealth(rows: LocationDeviceRow[]): HealthSummary {
 		percentOnline: rows.length === 0 ? 0 : Math.round((online / rows.length) * 100),
 		lastUplink
 	};
-}
-
-/** "3 min ago" / "3 分前" in the active locale; null for missing timestamps. */
-export function formatRelative(iso: string | null, now: number, locale: string): string | null {
-	const ms = iso ? new Date(iso).getTime() : NaN;
-	if (!Number.isFinite(ms)) return null;
-	const seconds = Math.round((ms - now) / 1000);
-	const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
-	const abs = Math.abs(seconds);
-	const text =
-		abs < 60
-			? format.format(seconds, 'second')
-			: abs < 3600
-				? format.format(Math.round(seconds / 60), 'minute')
-				: abs < 86400
-					? format.format(Math.round(seconds / 3600), 'hour')
-					: format.format(Math.round(seconds / 86400), 'day');
-	// The short style abbreviates with a trailing dot ("3 min. ago"); drop it.
-	return text.replace(/(\p{L})\.(?=\s|$)/gu, '$1');
 }

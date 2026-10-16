@@ -85,6 +85,21 @@ describe('DeviceGatewaysDialog signal button', () => {
 		unmount(component);
 	});
 
+	it('rates the link by the gateways that still hear the device', async () => {
+		getDeviceGateways.mockResolvedValue([
+			// Strong, but last heard the device two days before the newest reading.
+			gateway({ gateway_id: 'gw-old', rssi: -80, snr: 9, last_update: '2026-10-07T10:00:00.000Z' }),
+			gateway({ rssi: -116, snr: -4 })
+		]);
+		const component = renderButton();
+
+		await vi.waitFor(() =>
+			expect(signalButton()?.querySelectorAll('.signal-strength__bar--on')).toHaveLength(2)
+		);
+
+		unmount(component);
+	});
+
 	it('shows no icon when the lookup fails, since the signal is unknown', async () => {
 		getDeviceGateways.mockRejectedValue(new Error('network down'));
 		const component = renderButton();

@@ -241,7 +241,16 @@ export interface DevicePrimaryDataDto {
 	co2?: number | null;
 	humidity?: number | null;
 	temperature_c?: number | null;
+	/** Every gateway's latest reading of the device (GET /devices/location/:id only). */
+	gateway_signals?: DeviceGatewaySignalDto[];
 	[key: string]: unknown;
+}
+
+/** One gateway's latest reading of a device, without the gateway's identity. */
+export interface DeviceGatewaySignalDto {
+	rssi: number | null;
+	snr: number | null;
+	last_update: string | null;
 }
 
 export interface DeviceStatusSummary {
