@@ -1335,3 +1335,117 @@ export interface DeviceSetupErrorPayload {
 	reference: string;
 	details?: Record<string, unknown>;
 }
+
+// ── Overview (GET /v1/overview, 033_overview.sql) ──────────────────────────
+
+export type OverviewRange = '24h' | '7d' | '30d';
+
+export type OverviewFeedKind =
+	| 'alert_triggered'
+	| 'alert_resolved'
+	| 'device_offline'
+	| 'device_online'
+	| 'report'
+	| 'data_hour'
+	| 'data_day';
+
+export interface OverviewAttentionGroupDto {
+	/** null = devices without a location. */
+	locationId: number | null;
+	name: string | null;
+	count: number;
+}
+
+export interface OverviewReportDto {
+	devEui: string;
+	deviceName: string | null;
+	locationId: number | null;
+	locationName: string | null;
+	/** `<YYYY_MM_DD>-<YYYY_MM_DD>.pdf` inside the device's report folder. */
+	file: string;
+	createdAt: string;
+}
+
+export interface OverviewFeedItemDto {
+	kind: OverviewFeedKind;
+	at: string;
+	devEui?: string;
+	deviceName?: string | null;
+	/** Items that name a device: its location, for the device link. */
+	locationId?: number | null;
+	locationName?: string | null;
+	ruleName?: string | null;
+	/** alert_resolved: when the episode started. */
+	triggeredAt?: string | null;
+	/** device_*: the last uplink before the device went silent. */
+	lastSeenAt?: string | null;
+	file?: string;
+	reporting?: number;
+	total?: number;
+	uplinks?: number;
+}
+
+/** One of the devices with the most alerts in the range. */
+export interface OverviewAlertDeviceDto {
+	devEui: string;
+	deviceName: string | null;
+	locationId: number | null;
+	locationName: string | null;
+	count: number;
+}
+
+export interface OverviewDto {
+	range: OverviewRange;
+	generatedAt: string;
+	since: string;
+	devices: {
+		total: number;
+		online: number;
+		offline: number;
+		lastDataAt: string | null;
+		locationCount: number;
+	};
+	gateways: { total: number; online: number };
+	alerts: {
+		count: number;
+		previousCount: number;
+		active: number;
+		/** Up to five devices with the most alerts in the range, most first. */
+		topDevices: OverviewAlertDeviceDto[];
+	};
+	reports: { count: number; lastAt: string | null; recent: OverviewReportDto[] };
+	uplinks: { count: number; delivered: number; expected: number };
+	/** The last 24 complete hours, oldest first. */
+	hourly: { hour: string; reporting: number }[];
+	locations: {
+		locationId: number | null;
+		name: string | null;
+		total: number;
+		online: number;
+		alerts: number;
+	}[];
+	/** Devices per cw_device_type.data_table_v2. */
+	types: { dataTable: string; total: number }[];
+	notes: {
+		id: number;
+		devEui: string;
+		deviceName: string | null;
+		locationId: number | null;
+		locationName: string | null;
+		title: string;
+		note: string | null;
+		/** null when a CropWatch staff member wrote it and the viewer is not staff. */
+		author: string | null;
+		authorIsStaff: boolean;
+		createdAt: string;
+	}[];
+	feed: {
+		counts: { alert: number; device: number; report: number; data: number };
+		/** Newest first; up to 20 per group. */
+		items: OverviewFeedItemDto[];
+	};
+	attention: {
+		offline: OverviewAttentionGroupDto[];
+		activeAlerts: OverviewAttentionGroupDto[];
+	};
+}
