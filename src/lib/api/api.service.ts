@@ -86,7 +86,9 @@ import type {
 	DeviceSetupLookupRequest,
 	DeviceSetupLookupResult,
 	DeviceSetupRequest,
-	DeviceSetupResult
+	DeviceSetupResult,
+	OverviewDto,
+	OverviewRange
 } from './api.dtos';
 
 type FetchLike = typeof fetch;
@@ -230,6 +232,7 @@ const TRAFFIC_MONTHLY_ENDPOINT = '/traffic/{dev_eui}/monthly';
 const WATER_ENDPOINT = '/water/{dev_eui}';
 const DEVICE_PERMISSION_LEVEL_ENDPOINT = '/devices/{dev_eui}/permission-level';
 const GATEWAYS_ENDPOINT = '/gateway';
+const OVERVIEW_ENDPOINT = '/overview';
 const GATEWAY_BY_ID_ENDPOINT = `${GATEWAYS_ENDPOINT}/{gateway_id}`;
 const GATEWAY_DEVICES_ENDPOINT = `${GATEWAY_BY_ID_ENDPOINT}/devices`;
 const GATEWAYS_BY_DEVICE_ENDPOINT = `${GATEWAYS_ENDPOINT}/by-device/{dev_eui}`;
@@ -1704,6 +1707,17 @@ export class ApiService {
 				signal: options.signal
 			}
 		);
+	}
+
+	public getOverview(
+		range: OverviewRange = '24h',
+		options: ApiMethodOptions = {}
+	): Promise<OverviewDto> {
+		return this.request<OverviewDto>(OVERVIEW_ENDPOINT, {
+			method: 'GET',
+			query: { range },
+			signal: options.signal
+		});
 	}
 
 	public getGateways(options: ApiMethodOptions = {}): Promise<GatewayDto[]> {

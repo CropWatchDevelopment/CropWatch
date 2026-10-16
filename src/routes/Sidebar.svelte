@@ -29,6 +29,7 @@
 	let { mode = $bindable() } = $props();
 
 	const app = getAppContext();
+	const OVERVIEW_ICON_PATH = 'M1.5 8.5h2.8l1.9-5 3.6 9 1.9-4h2.8';
 	const DASHBOARD_ICON_PATH = 'M2 3h5v4H2V3zm7 0h5v4H9V3zM2 9h5v4H2V9zm7 0h5v4H9V9z';
 	const LOCATIONS_ICON_PATH =
 		'M8 2a6 6 0 100 12A6 6 0 008 2zm0 0c1.5 1.6 2.5 3.7 2.8 6-.3 2.3-1.3 4.4-2.8 6M8 2C6.5 3.6 5.5 5.7 5.2 8c.3 2.3 1.3 4.4 2.8 6M2 8h12M3.5 4.5h9M3.5 11.5h9';
@@ -54,6 +55,13 @@
 	}
 
 	const navItems = $derived<CwSideNavItem[]>([
+		{
+			id: 'overview',
+			label: m.nav_overview(),
+			href: '/overview',
+			active: isCurrentSection('/overview'),
+			icon: { path: OVERVIEW_ICON_PATH }
+		},
 		{
 			id: 'dashboard',
 			label: m.nav_dashboard(),

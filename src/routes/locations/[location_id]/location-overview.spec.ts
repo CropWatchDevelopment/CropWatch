@@ -22,6 +22,7 @@ function row(overrides: Partial<LocationDeviceRow>): LocationDeviceRow {
 		temperature: null,
 		humidity: null,
 		co2: null,
+		signal: null,
 		lat: null,
 		long: null,
 		...overrides

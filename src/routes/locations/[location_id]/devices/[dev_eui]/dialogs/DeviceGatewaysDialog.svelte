@@ -4,7 +4,7 @@
 	import { CwButton, CwDialog, CwSpinner, CwStatusDot } from '@cropwatchdevelopment/cwui';
 	import { AppNotice } from '$lib/components/layout';
 	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
-	import { signalBars } from '$lib/components/displays/SignalStrength/signalStrength';
+	import { currentSignal } from '$lib/components/displays/SignalStrength/signalStrength';
 	import { ApiService } from '$lib/api/api.service';
 	import type { DeviceGatewayDto } from '$lib/api/api.dtos';
 	import { readApiErrorMessage } from '$lib/api/api-error';
@@ -29,17 +29,9 @@
 
 	let hasAnonymized = $derived(gateways.some((gateway) => gateway.anonymized));
 
-	// A LoRaWAN uplink is delivered by whichever gateway heard it best, so the
-	// device's link quality is that of its strongest gateway (ties: higher RSSI).
-	let bestGateway = $derived(
-		gateways.reduce<DeviceGatewayDto | null>((best, gateway) => {
-			if (!best) return gateway;
-			const diff = signalBars(gateway.rssi, gateway.snr) - signalBars(best.rssi, best.snr);
-			return diff > 0 || (diff === 0 && (gateway.rssi ?? -Infinity) > (best.rssi ?? -Infinity))
-				? gateway
-				: best;
-		}, null)
-	);
+	// The device's link quality: its strongest current gateway, the same rule
+	// as the Signal column on the location page.
+	let bestGateway = $derived(currentSignal(gateways));
 
 	// Load up front so the button can show the signal bars; reloads on open.
 	$effect(() => {

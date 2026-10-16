@@ -35,6 +35,11 @@
 	import { getLocale } from '$lib/paraglide/runtime.js';
 	import type { PageProps } from './$types';
 	import LocationMap from './LocationMap.svelte';
+	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
+	import {
+		currentSignal,
+		signalBars
+	} from '$lib/components/displays/SignalStrength/signalStrength';
 	import {
 		classifyHealth,
 		formatRelative,
@@ -178,6 +183,16 @@
 				lastSeenByDevEui[devEui] ?? null,
 				typeof device.last_data_updated_at === 'string' ? device.last_data_updated_at : null
 			);
+			// Missing before the API sends gateway_signals: unknown, not "never heard".
+			const link = Array.isArray(device.gateway_signals)
+				? currentSignal(
+						device.gateway_signals.map((reading) => ({
+							rssi: toFiniteNumber(reading.rssi),
+							snr: toFiniteNumber(reading.snr),
+							last_update: reading.last_update
+						}))
+					)
+				: undefined;
 			return {
 				dev_eui: devEui,
 				name: String(device.name ?? device.dev_eui ?? m.devices_unnamed_device()),
@@ -192,6 +207,7 @@
 				temperature: toFiniteNumber(latest?.temperature_c),
 				humidity: toFiniteNumber(latest?.humidity),
 				co2: toFiniteNumber(latest?.co2),
+				signal: link === undefined ? null : { rssi: link?.rssi ?? null, snr: link?.snr ?? null },
 				lat: toFiniteNumber(device.lat),
 				long: toFiniteNumber(device.long)
 			};
@@ -267,6 +283,13 @@
 			hideBelow: 'sm'
 		},
 		{
+			key: 'signal',
+			header: m.gateways_signal(),
+			sortable: true,
+			width: '6rem',
+			hideBelow: 'sm'
+		},
+		{
 			key: 'dev_eui',
 			header: m.devices_dev_eui_label(),
 			sortable: true,
@@ -289,6 +312,12 @@
 			case 'humidity':
 			case 'co2':
 				return (a[column] ?? -Infinity) - (b[column] ?? -Infinity);
+			case 'signal': {
+				// Unknown first, then by bars (0 = never heard), then by RSSI.
+				const bars = (row: LocationDeviceRow) =>
+					row.signal ? signalBars(row.signal.rssi, row.signal.snr) : -1;
+				return bars(a) - bars(b) || (a.signal?.rssi ?? -Infinity) - (b.signal?.rssi ?? -Infinity);
+			}
 			default:
 				return 0;
 		}
@@ -681,6 +710,13 @@
 					{live.co2 != null ? `${Math.round(live.co2)} ppm` : '—'}
 				{:else if col.key === 'lastSeen'}
 					{formatRelative(live.lastSeen, now, locale) ?? m.location_detail_never()}
+				{:else if col.key === 'signal'}
+					{#if live.signal}
+						<!-- Both null (never heard by a gateway): empty bars with the "no" sign. -->
+						<SignalStrength rssi={live.signal.rssi} snr={live.signal.snr} />
+					{:else}
+						—
+					{/if}
 				{:else if col.key === 'dev_eui'}
 					<CwCopy labels={cwCopyLabels()} value={row.dev_eui}>
 						<span class="mono">{row.dev_eui}</span>
