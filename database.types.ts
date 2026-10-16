@@ -293,6 +293,32 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			cw_device_activity_hourly: {
+				Row: {
+					dev_eui: string;
+					hour: string;
+					uplinks: number;
+				};
+				Insert: {
+					dev_eui: string;
+					hour: string;
+					uplinks: number;
+				};
+				Update: {
+					dev_eui?: string;
+					hour?: string;
+					uplinks?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_device_activity_hourly_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: false;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
+					}
+				];
+			};
 			cw_device_gateway: {
 				Row: {
 					created_at: string;
@@ -448,6 +474,67 @@ export type Database = {
 						isOneToOne: false;
 						referencedRelation: 'cw_rule_templates';
 						referencedColumns: ['id'];
+					}
+				];
+			};
+			cw_device_status: {
+				Row: {
+					changed_at: string;
+					dev_eui: string;
+					is_online: boolean;
+					last_seen_at: string | null;
+				};
+				Insert: {
+					changed_at: string;
+					dev_eui: string;
+					is_online: boolean;
+					last_seen_at?: string | null;
+				};
+				Update: {
+					changed_at?: string;
+					dev_eui?: string;
+					is_online?: boolean;
+					last_seen_at?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_device_status_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: true;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
+					}
+				];
+			};
+			cw_device_status_events: {
+				Row: {
+					dev_eui: string;
+					id: number;
+					is_online: boolean;
+					last_seen_at: string | null;
+					occurred_at: string;
+				};
+				Insert: {
+					dev_eui: string;
+					id?: never;
+					is_online: boolean;
+					last_seen_at?: string | null;
+					occurred_at: string;
+				};
+				Update: {
+					dev_eui?: string;
+					id?: never;
+					is_online?: boolean;
+					last_seen_at?: string | null;
+					occurred_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_device_status_events_dev_eui_fkey';
+						columns: ['dev_eui'];
+						isOneToOne: false;
+						referencedRelation: 'cw_devices';
+						referencedColumns: ['dev_eui'];
 					}
 				];
 			};
@@ -2374,6 +2461,17 @@ export type Database = {
 				Args: { p_converted_by: string; p_name: string; p_org_id: string };
 				Returns: undefined;
 			};
+			cw_device_activity_backfill: { Args: { p_days?: number }; Returns: number };
+			cw_device_activity_recompute: {
+				Args: { p_from: string; p_to: string };
+				Returns: number;
+			};
+			cw_overview: {
+				Args: { p_dev_euis: string[]; p_feed_limit?: number; p_hours?: number };
+				Returns: Json;
+			};
+			cw_overview_prune: { Args: never; Returns: Json };
+			cw_overview_tick: { Args: never; Returns: Json };
 			cw_traffic_daily_totals: {
 				Args: { dev_eui: string; end_ts: string; start_ts: string; tz?: string };
 				Returns: {

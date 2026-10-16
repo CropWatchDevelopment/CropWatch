@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { signalBars, signalQuality } from './signalStrength';
+import { currentSignal, signalBars, signalQuality } from './signalStrength';
 
 describe('signalBars', () => {
 	it('gives full bars for a close, clean link', () => {
@@ -49,5 +49,38 @@ describe('signalQuality', () => {
 		expect(signalQuality(2)).toBe('okay');
 		expect(signalQuality(3)).toBe('strong');
 		expect(signalQuality(4)).toBe('strong');
+	});
+});
+
+describe('currentSignal', () => {
+	const at = (hoursAgo: number) =>
+		new Date(Date.UTC(2026, 9, 15, 12) - hoursAgo * 3_600_000).toISOString();
+
+	it('picks the gateway with the most bars, then the higher RSSI', () => {
+		const weak = { rssi: -119, snr: -12, last_update: at(0) };
+		const strong = { rssi: -95, snr: 7, last_update: at(0.5) };
+		const strongButQuieter = { rssi: -99, snr: 7, last_update: at(0.2) };
+		expect(currentSignal([weak, strongButQuieter, strong])).toBe(strong);
+	});
+
+	it('ignores a gateway that last heard the device over a day before its newest reading', () => {
+		const current = { rssi: -116, snr: -4, last_update: at(0) };
+		const gone = { rssi: -80, snr: 9, last_update: at(25) };
+		expect(currentSignal([gone, current])).toBe(current);
+	});
+
+	it('keeps the last known signal of a device that went silent', () => {
+		const lastHeard = { rssi: -105, snr: 2, last_update: at(24 * 7) };
+		const before = { rssi: -112, snr: 1, last_update: at(24 * 7 + 3) };
+		expect(currentSignal([before, lastHeard])).toBe(lastHeard);
+	});
+
+	it('counts readings without a time', () => {
+		const undated = { rssi: -90, snr: 5 };
+		expect(currentSignal([{ rssi: -117, snr: 0, last_update: at(0) }, undated])).toBe(undated);
+	});
+
+	it('returns null when no gateway heard the device', () => {
+		expect(currentSignal([])).toBeNull();
 	});
 });

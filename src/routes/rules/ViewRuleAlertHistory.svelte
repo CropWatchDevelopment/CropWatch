@@ -8,6 +8,7 @@
 	import { CwButton, CwChip, CwDialog, CwDropdown, CwDuration } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
+	import { formatCwDuration } from '$lib/i18n/format';
 	import HISTORY_ICON from '$lib/images/icons/history.svg';
 
 	interface Props {
@@ -79,20 +80,6 @@
 
 	function formatValue(value: number | null): string | null {
 		return value === null || value === undefined ? null : String(value);
-	}
-
-	// Mirrors CwDuration's compact format so resolved (static) spans match the live
-	// CwDuration shown for ongoing alarms.
-	function formatDuration(ms: number): string {
-		const totalSec = Math.floor(ms / 1000);
-		const totalMin = Math.floor(totalSec / 60);
-		const totalHr = Math.floor(totalMin / 60);
-		const days = Math.floor(totalHr / 24);
-		const pad = (n: number) => n.toString().padStart(2, '0');
-		if (totalSec < 60) return `${totalSec}s`;
-		if (totalMin < 60) return `${totalMin}m ${pad(totalSec % 60)}s`;
-		if (totalHr < 24) return `${totalHr}h ${pad(totalMin % 60)}m`;
-		return `${days}d ${pad(totalHr % 24)}h`;
 	}
 </script>
 
@@ -190,7 +177,7 @@
 									<CwDuration from={entry.triggeredAt} />
 								{/if}
 							{:else if durationMs !== null}
-								{m.rules_new_history_duration_lasted({ duration: formatDuration(durationMs) })}
+								{m.rules_new_history_duration_lasted({ duration: formatCwDuration(durationMs) })}
 							{/if}
 						</p>
 
