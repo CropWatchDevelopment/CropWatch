@@ -8,7 +8,7 @@ const config = {
 		// Node 20 has no native WebSocket, which @supabase/realtime-js requires at
 		// client-construction time — server-side `createClient()` throws on it.
 		// Keep this in sync with `engines.node` in package.json.
-		adapter: adapter({ runtime: 'nodejs22.x' }),
+		adapter: adapter({ runtime: 'nodejs24.x' }),
 		// The service worker is registered by the PWA dock (production builds only).
 		serviceWorker: {
 			register: false
