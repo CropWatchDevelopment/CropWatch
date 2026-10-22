@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { CwButton, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { AppNotice, AppPage } from '$lib/components/layout';
 	import { formatRelative, getIntlLocale } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 	import { reactiveNow } from '$lib/utils/reactive-now.svelte';
 	import type { PageProps } from './$types';
@@ -29,6 +29,7 @@
 	let { data }: PageProps = $props();
 
 	const app = getAppContext();
+	const services = getServices();
 	const toast = useCwToast();
 	const locale = getIntlLocale();
 
@@ -41,9 +42,9 @@
 
 	// Seeded once from the server; see OverviewRanges for the caching rules.
 	const ranges = new OverviewRanges({
-		fetcher: (range) => new ApiService({ authToken: app.accessToken }).getOverview(range),
+		fetcher: (range) => services.overview.getOverview(range),
 		onError: (error) =>
-			toast.add({ tone: 'danger', message: readApiErrorMessage(error, m.overview_load_failed()) }),
+			toast.add({ tone: 'danger', message: apiErrorMessage(error, m.overview_load_failed()) }),
 		initial: (() => data.initialOverview)()
 	});
 
@@ -146,7 +147,7 @@
 	<title>{m.overview_page_title()}</title>
 </svelte:head>
 
-<AppPage width="xl">
+<AppPage>
 	<div class="ov" class:ov--loading={ranges.pending !== null} aria-busy={ranges.pending !== null}>
 		<header class="ov-header">
 			<div class="ov-header__titles">

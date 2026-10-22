@@ -1,4 +1,4 @@
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
+import { ApiError } from '$lib/api/api-error';
 import type { DeviceDto, ReportTemplateDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { error } from '@sveltejs/kit';
@@ -10,7 +10,7 @@ const DATE_PARAM_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 // malformed URL. Mirrors MAX_REGENERATION_PERIOD_DAYS on the API.
 const MAX_PERIOD_DAYS = 62;
 
-export const load: PageServerLoad = async ({ locals, fetch, params, url }) => {
+export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const authToken = locals.jwtString ?? null;
 	const userId = locals.jwt?.sub ?? null;
 	const templateId = Number(params.id);
@@ -50,12 +50,12 @@ export const load: PageServerLoad = async ({ locals, fetch, params, url }) => {
 		error(400, m.reports_new_edit_data_too_old());
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken });
+	const { reports, devices } = locals.services;
 	let template: ReportTemplateDto;
 	try {
-		template = await api.getReportTemplate(templateId);
+		template = await reports.getReportTemplate(templateId);
 	} catch (loadError) {
-		if (loadError instanceof ApiServiceError && loadError.status === 404) {
+		if (loadError instanceof ApiError && loadError.status === 404) {
 			error(404, m.reports_new_report_template_not_found());
 		}
 		console.error('Failed to load report template:', loadError);
@@ -71,9 +71,9 @@ export const load: PageServerLoad = async ({ locals, fetch, params, url }) => {
 	// type has nothing to edit here.
 	let device: DeviceDto;
 	try {
-		device = await api.getDevice(devEui);
+		device = await devices.getDevice(devEui);
 	} catch (loadError) {
-		if (loadError instanceof ApiServiceError && loadError.status === 404) {
+		if (loadError instanceof ApiError && loadError.status === 404) {
 			error(404, m.reports_new_report_template_not_found());
 		}
 		console.error('Failed to load device:', loadError);
@@ -84,7 +84,6 @@ export const load: PageServerLoad = async ({ locals, fetch, params, url }) => {
 	}
 
 	return {
-		authToken,
 		template,
 		devEui,
 		deviceName: assignment.deviceName ?? device.name ?? devEui,

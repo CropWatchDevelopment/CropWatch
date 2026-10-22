@@ -57,7 +57,7 @@
 	<title>{gateway?.gateway_name ?? m.gateways_page_title()}</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="gateway-back-button"
 		variant="secondary"

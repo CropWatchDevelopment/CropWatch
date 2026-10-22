@@ -92,6 +92,14 @@
 		color var(--cw-duration-fast) var(--cw-ease-default);
 }
 
+/* The same look on a <button> (a POST action such as signing out). */
+button.auth-button-link {
+	appearance: none;
+	margin: 0;
+	font-family: inherit;
+	cursor: pointer;
+}
+
 .auth-button-link--primary {
 	background: var(--cw-button-primary-bg);
 	color: var(--cw-button-primary-text);

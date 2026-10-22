@@ -8,27 +8,23 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
+	import { runRecaptchaAction, warmupRecaptcha } from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
 	import { readRedirectPath } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
-
-	interface Props {
-		form: { message?: string; success?: boolean } | null;
-	}
+	import type { PageProps } from './$types';
 
 	const toast = useCwToast();
 
-	let { form }: Props = $props();
+	let { form }: PageProps = $props();
 
 	let submitting: boolean = $state(false);
-	const recaptcha = createAuthRecaptcha();
 	let sent: boolean = $derived(form?.success === true);
 	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 
 	onMount(() => {
-		void recaptcha.warmup();
+		void warmupRecaptcha();
 	});
 
 	function authPath(path: '/auth/login' | '/auth/create-account'): string {
@@ -55,15 +51,17 @@
 			<h1 class="auth-title">{m.auth_check_email_heading()}</h1>
 			<p class="auth-subtitle">{m.auth_forgot_password_sent_body()}</p>
 
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- authPath() resolves the path and adds ?redirect= -->
 			<a
 				id="forgot-password-sent-back-to-login-link"
 				class="auth-button-link auth-button-link--primary"
-				href={resolve('/auth/login')}
+				href={authPath('/auth/login')}
 				onclick={(event) => navigateWithRedirect(event, '/auth/login')}
 			>
 				<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
 				{m.auth_back_to_login()}
 			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		{:else}
 			<h1 class="auth-title">{m.auth_forgot_password()}</h1>
 			<p class="auth-subtitle">{m.auth_forgot_password_subtitle()}</p>
@@ -81,7 +79,7 @@
 					submitting = true;
 
 					try {
-						formData.set('recaptchaToken', await recaptcha.runAction('FORGOT_PASSWORD'));
+						formData.set('recaptchaToken', await runRecaptchaAction('FORGOT_PASSWORD'));
 					} catch (err) {
 						console.error('reCAPTCHA token failed:', err);
 						toast.add({ message: m.auth_security_try_again(), tone: 'danger' });
@@ -133,11 +131,12 @@
 					{/if}
 				</CwButton>
 
+				<!-- eslint-disable svelte/no-navigation-without-resolve -- authPath() resolves the path and adds ?redirect= -->
 				<div class="action-grid">
 					<a
 						id="forgot-password-back-to-login-link"
 						class="auth-button-link auth-button-link--secondary"
-						href={resolve('/auth/login')}
+						href={authPath('/auth/login')}
 						onclick={(event) => navigateWithRedirect(event, '/auth/login')}
 					>
 						<Icon src={BACK_ICON} alt={m.auth_back_to_login()} class="h-4 w-4" />
@@ -147,13 +146,14 @@
 					<a
 						id="forgot-password-create-account-link"
 						class="auth-button-link auth-button-link--secondary"
-						href={resolve('/auth/create-account')}
+						href={authPath('/auth/create-account')}
 						onclick={(event) => navigateWithRedirect(event, '/auth/create-account')}
 					>
 						<Icon src={ADD_PERSON_ICON} alt={m.auth_create_account()} class="h-4 w-4" />
 						{m.auth_create_account()}
 					</a>
 				</div>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			</form>
 		{/if}
 

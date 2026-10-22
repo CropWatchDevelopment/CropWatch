@@ -6,10 +6,9 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
-	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
+	import { runRecaptchaAction, warmupRecaptcha } from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
-	import { readRedirectPath } from '$lib/utils/auth-redirect';
+	import { readLoginReason, readRedirectPath, type LoginReason } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
@@ -19,15 +18,20 @@
 	let loggingIn: boolean = $state(false);
 	let username: string = $state('');
 	let password: string = $state('');
-	const recaptcha = createAuthRecaptcha();
 	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 
-	function passwordStrengthCheck(value: string) {
-		void isStrongPassword(value);
-	}
+	// Why the visitor was sent here (`?reason=`, set by the server hook and the logout action).
+	const REASON_MESSAGES: Record<LoginReason, () => string> = {
+		'auth-required': m.auth_login_reason_auth_required,
+		expired: m.auth_login_reason_expired,
+		'signed-out': m.auth_login_reason_signed_out,
+		'password-reset': m.auth_login_reason_password_reset,
+		'error-recovery': m.auth_login_reason_error_recovery
+	};
+	let loginReason = $derived(readLoginReason(page.url.searchParams));
 
 	onMount(() => {
-		void recaptcha.warmup();
+		void warmupRecaptcha();
 	});
 </script>
 
@@ -44,6 +48,12 @@
 		<h1 class="auth-title">{m.auth_login_heading()}</h1>
 		<p class="auth-subtitle">{m.auth_login_subtitle()}</p>
 
+		{#if loginReason}
+			<p id="login-reason-alert" class="auth-alert" role="status">
+				{REASON_MESSAGES[loginReason]()}
+			</p>
+		{/if}
+
 		<form
 			id="login-form"
 			method="POST"
@@ -57,13 +67,12 @@
 				loggingIn = true;
 
 				try {
-					formData.set('recaptchaToken', await recaptcha.runAction('LOGIN'));
+					formData.set('recaptchaToken', await runRecaptchaAction('LOGIN'));
 				} catch (error) {
 					console.error('reCAPTCHA execution error:', error);
 					toast.add({
 						message: m.auth_security_try_again(),
-						tone: 'danger',
-						duration: 7000
+						tone: 'danger'
 					});
 					loggingIn = false;
 					cancel();
@@ -113,7 +122,6 @@
 					labels={cwInputLabels()}
 					id="login-password-input"
 					bind:value={password}
-					onchange={() => passwordStrengthCheck(password)}
 					class="auth-input"
 					name="password"
 					type="password"

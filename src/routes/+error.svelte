@@ -5,6 +5,7 @@
 	import { browser } from '$app/environment';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { clearAllClientState } from '$lib/utils/client-state';
 
 	const errorMessages: Record<number, { title: string; description: string }> = {
 		400: {
@@ -49,33 +50,26 @@
 		}
 	};
 
+	/**
+	 * The English placeholders `page.error.message` holds when nothing more is
+	 * known: SvelteKit's and the handleError hooks' "Not Found" / "Internal
+	 * Error", SvelteKit's "Error: 404" for an error without a message, and the
+	 * capability gate's "Forbidden". The page explains the status in the user's
+	 * language instead; a message the app gave the error itself is shown.
+	 */
+	const GENERIC_MESSAGE = /^(?:Not Found|Internal Error|Forbidden|Error: \d{3})$/;
+
 	const statusCode = $derived(page.error ? (page.status ?? 500) : 500);
 	const knownError = $derived(errorMessages[statusCode]);
 	const title = $derived(knownError?.title ?? m.error_unexpected_title());
-	const description = $derived(page.error?.message ?? knownError?.description ?? m.error_unknown());
+	const ownMessage = $derived(
+		page.error?.message && !GENERIC_MESSAGE.test(page.error.message) ? page.error.message : null
+	);
+	const description = $derived(ownMessage ?? knownError?.description ?? m.error_unknown());
 
 	function resetAndLogin() {
 		if (!browser) return;
-		try {
-			localStorage.clear();
-		} catch {
-			/* ignore */
-		}
-		try {
-			sessionStorage.clear();
-		} catch {
-			/* ignore */
-		}
-		try {
-			document.cookie.split(';').forEach((c) => {
-				const name = c.split('=')[0].trim();
-				if (name) {
-					document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-				}
-			});
-		} catch {
-			/* ignore */
-		}
+		clearAllClientState();
 		window.location.href = '/auth/login?reason=error-recovery';
 	}
 </script>

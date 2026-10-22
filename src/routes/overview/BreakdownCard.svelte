@@ -85,12 +85,15 @@
 			};
 		}
 		return {
-			rows: overview.types.map((type, index) => ({
-				key: type.dataTable,
-				label: (typeLabel[type.dataTable] ?? m.overview_type_other)(),
-				value: type.total,
-				color: cat(index + 1)
-			})),
+			// Empty types are not shown, so they take no colour either.
+			rows: overview.types
+				.filter((type) => type.total > 0)
+				.map((type, index) => ({
+					key: type.dataTable,
+					label: (typeLabel[type.dataTable] ?? m.overview_type_other)(),
+					value: type.total,
+					color: cat(index + 1)
+				})),
 			center: String(devices.total),
 			centerLabel: m.overview_breakdown_devices_label()
 		};
@@ -98,9 +101,10 @@
 
 	const segments = $derived(donutSegments(chart.rows));
 	const legend = $derived(chart.rows.filter((row) => row.value > 0 || view === 'status'));
+	// Describes what the legend shows, no more.
 	const aria = $derived(
 		m.overview_breakdown_aria({
-			items: chart.rows.map((row) => `${row.label} ${row.value}`).join(', ')
+			items: legend.map((row) => `${row.label} ${row.value}`).join(', ')
 		})
 	);
 </script>

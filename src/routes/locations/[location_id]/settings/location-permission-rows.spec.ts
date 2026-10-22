@@ -55,6 +55,44 @@ describe('mapLocationOwnersToPermissionRows', () => {
 		]);
 	});
 
+	it('reads a level given as text or under level, and defaults to Viewer', () => {
+		const levels = mapLocationOwnersToPermissionRows(
+			[' 1 ', { level: '2' }, { permission_level: ' ' }, null, Number.NaN].map(
+				(permission_level, index) =>
+					({
+						id: index,
+						user_email: 'u@example.com',
+						permission_level
+					}) as unknown as LocationOwnerDto
+			)
+		).map((row) => row.permission_level);
+
+		expect(levels).toEqual(['1', '2', '4', '4', '4']);
+	});
+
+	it('reads the email and name from their other fields, else leaves them blank', () => {
+		const rows = mapLocationOwnersToPermissionRows([
+			{
+				id: 1,
+				user_email: 'user@example.com',
+				full_name: 'Full Name',
+				permission_level: 3
+			} as unknown as LocationOwnerDto,
+			{
+				id: 2,
+				profiles: { display_name: 'Display' },
+				permission_level: 3
+			} as unknown as LocationOwnerDto,
+			{ id: 3, profiles: 'none', permission_level: 3 } as unknown as LocationOwnerDto
+		]);
+
+		expect(rows.map(({ email, name }) => ({ email, name }))).toEqual([
+			{ email: 'user@example.com', name: 'Full Name' },
+			{ email: '', name: 'Display' },
+			{ email: '', name: '' }
+		]);
+	});
+
 	it('returns an empty list when there are no location owners', () => {
 		expect(mapLocationOwnersToPermissionRows(undefined)).toEqual([]);
 	});

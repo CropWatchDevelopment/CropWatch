@@ -135,8 +135,9 @@
 				weather_wind_kmh: dayWeather?.windSpeedKmh ?? null
 			};
 
+			// An hourly row carries every class (0 when none was counted).
 			for (const key of classKeys) {
-				csvRow[key] = readNumber(row[key]) ?? 0;
+				csvRow[key] = row[key];
 			}
 
 			return csvRow;
@@ -196,9 +197,9 @@
 		URL.revokeObjectURL(url);
 	}
 
+	// The button is disabled without rows; downloadCsv still skips an empty
+	// export, as the rows can be gone by the time the weather arrives.
 	async function handleCsvDownload(): Promise<void> {
-		if (hourlyRows.length === 0) return;
-
 		let weather = weatherByDay;
 		if (latitude !== null && longitude !== null) {
 			csvDownloading = true;

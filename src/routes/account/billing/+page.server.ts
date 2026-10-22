@@ -1,4 +1,3 @@
-import { ApiService } from '$lib/api/api.service';
 import type { BillingProductsResponse, SubscriptionStateResponse } from '$lib/api/api.dtos';
 import { buildLoginPath } from '$lib/utils/auth-redirect';
 import { redirect } from '@sveltejs/kit';
@@ -27,22 +26,20 @@ const EMPTY_STATE: SubscriptionStateResponse = {
 	licenses: []
 };
 
-export const load: PageServerLoad = async ({ fetch, locals, url }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) {
-		throw redirect(
+		redirect(
 			303,
 			buildLoginPath({ redirectTo: `${url.pathname}${url.search}`, reason: 'auth-required' })
 		);
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken });
-
 	const [stateResult, productsResult, devicesResult, locationsResult] = await Promise.allSettled([
-		api.getSubscriptionState(),
-		api.getBillingProducts(),
-		api.getAllDevices(),
-		api.getLocations()
+		locals.services.billing.getSubscriptionState(),
+		locals.services.billing.getBillingProducts(),
+		locals.services.devices.getAllDevices(),
+		locals.services.locations.getLocations()
 	]);
 
 	const state = stateResult.status === 'fulfilled' ? stateResult.value : EMPTY_STATE;
@@ -64,11 +61,17 @@ export const load: PageServerLoad = async ({ fetch, locals, url }) => {
 			: [];
 
 	return {
+		// The page does not read it, but page.data merges it over the root
+		// layout's copy, and app.accessToken (what the browser services send)
+		// follows page.data — so billing requests carry this load's token.
 		authToken,
 		state,
 		products,
 		devices,
 		locations,
+		// Without the device list there is nothing to assign a license to; the
+		// page says so instead of saying that no device is free.
+		devicesLoadFailed: devicesResult.status === 'rejected',
 		loadFailed: stateResult.status === 'rejected'
 	};
 };

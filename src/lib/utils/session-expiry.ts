@@ -5,7 +5,7 @@ import { onAppForeground } from './onAppForeground';
  *
  * The server hook (`src/hooks.server.ts`) is the authoritative session guard,
  * but it only runs on a server request/navigation. A user idling on a page — or
- * one that only triggers client-side `ApiService` fetches — never causes a
+ * one that only triggers client-side API requests (`getServices()`) — never causes a
  * navigation, so the hook never fires and the session can expire while the page
  * keeps showing stale data.
  *

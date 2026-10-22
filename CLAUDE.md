@@ -6,16 +6,56 @@ This document is the authoritative reference for how pages, forms, and component
 
 ## Tech stack
 
-| Concern        | Tool                                                                |
-| -------------- | ------------------------------------------------------------------- |
-| Framework      | SvelteKit 2 + Svelte 5 (runes mode)                                 |
-| Language       | TypeScript                                                          |
-| Styles         | Tailwind CSS 4 + design-token CSS vars                              |
-| UI library     | `@cropwatchdevelopment/cwui` (`CwXxx` components)                   |
-| Layout helpers | `$lib/components/layout` (`AppXxx` components)                      |
-| i18n           | Paraglide — always `import { m } from '$lib/paraglide/messages.js'` |
-| API            | `ApiService` from `$lib/api/api.service`                            |
-| Auth           | Supabase JWT; token available as `locals.jwtString` server-side     |
+| Concern        | Tool                                                                  |
+| -------------- | --------------------------------------------------------------------- |
+| Framework      | SvelteKit 2 + Svelte 5 (runes mode)                                   |
+| Language       | TypeScript                                                            |
+| Styles         | Tailwind CSS 4 + design-token CSS vars                                |
+| UI library     | `@cropwatchdevelopment/cwui` (`CwXxx` components)                     |
+| Layout helpers | `$lib/components/layout` (`AppXxx` components)                        |
+| i18n           | Paraglide — always `import { m } from '$lib/paraglide/messages.js'`   |
+| Data access    | Repositories, injected: `locals.services` (server), `getServices()`   |
+| Config         | `$lib/config/public` and `$lib/server/config` — never `$env` direct   |
+| Auth           | Supabase JWT, verified per request; `locals.jwt` / `locals.jwtString` |
+
+---
+
+## Architecture (MVC + dependency injection)
+
+Every read and write of data goes through one path, so it is predictable,
+traceable and mockable:
+
+```
+View (.svelte)  ──calls──▶  Controller  ──calls──▶  Model (repository)  ──▶  HttpClient  ──▶  CropWatch API
+                            +page.server.ts          $lib/api/repositories    FetchHttpClient
+                            *.svelte.ts controller   (interface + Http impl)
+```
+
+| Layer      | Lives in                                                                                               | Rule                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Model      | `$lib/api/repositories/*.repository.ts`, `$lib/api/api.dtos.ts`                                        | One repository per API resource: an interface + `Http…Repository`. Only repositories know URLs. |
+| Controller | `+page.server.ts` / `+layout.server.ts` / `+server.ts`; `*.svelte.ts` classes for complex client state | Validates input, calls repositories, maps results/errors. No markup.                            |
+| View       | `.svelte`                                                                                              | Renders state, forwards user intent. No URLs, no `fetch`, no `new …Repository`.                 |
+
+**Dependency injection.** Nothing constructs its own data access. The
+composition roots build it once and inject it:
+
+- **Server:** `hooks.server.ts` builds request-scoped `locals.services`
+  (`createServerServices`) with the request's `event.fetch` and the session
+  token. Loads, actions and endpoints use `locals.services.<repository>`.
+- **Browser:** the root `+layout.svelte` calls `setServices(createClientServices(…))`.
+  Components call `getServices()` during initialisation.
+- **Plain modules and controllers** take what they need as constructor or
+  function parameters (e.g. `new OverviewRanges({ fetcher })`).
+
+`AppServices` (`$lib/services/app-services.ts`) lists every repository. To add an
+endpoint: add the method to the repository interface and its `Http…` class, add
+a row to `$lib/testing/repository-contract.ts`, and call it through the services.
+
+Never: `fetch(apiUrl)` in a page or component, a hand-built API client,
+`new Http…Repository(...)` outside a composition root, or reading `$env/*`
+outside `$lib/config` / `$lib/server/config`. (A component may still `fetch('?/action')`
+its own page's form action — that calls the page's controller, not the API.)
 
 ---
 
@@ -24,13 +64,10 @@ This document is the authoritative reference for how pages, forms, and component
 Every authenticated app page must use `<AppPage>` as its root. Never use a raw `<div>` container with hard-coded padding instead.
 
 ```svelte
-<AppPage width="lg">
-	<!-- md | lg | xl | full -->
-	...page content...
-</AppPage>
+<AppPage>...page content...</AppPage>
 ```
 
-`AppPage` provides consistent max-width clamping, horizontal padding, and a vertical flex column with `gap-4` between direct children. Do not add extra padding or gap on the shell div inside.
+`AppPage` fills the content column (no max-width), with consistent horizontal padding and a vertical flex column with `gap-4` between direct children. Do not add extra padding or gap on the shell div inside.
 
 ---
 
@@ -46,7 +83,7 @@ Every page that can be reached by navigating "into" something (create, edit, set
 </CwButton>
 ```
 
-- `variant="ghost"` keeps it visually quiet — it is a secondary action.
+- `variant="secondary"` keeps it visually quieter than the page's primary action.
 - `size="sm"` keeps it compact at the top of the page.
 - Use `resolve()` from `$app/paths` for all internal routes so base-path handling is correct.
 
@@ -79,12 +116,21 @@ Use SvelteKit server actions (`export const actions` in `+page.server.ts`) for a
 ```ts
 // +page.server.ts
 export const actions: Actions = {
-	default: async ({ request, locals, fetch }) => {
+	default: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
 
 		const formData = await request.formData();
-		// validate, call ApiService, return fail() or { success: true }
+		// validate, then call a repository:
+		try {
+			await locals.services.locations.updateLocation(id, fields);
+			return { success: true };
+		} catch (err) {
+			return fail(apiErrorStatus(err), {
+				error: apiErrorMessage(err, m.generic_error()),
+				...fields
+			});
+		}
 	}
 };
 ```
@@ -96,12 +142,13 @@ export const actions: Actions = {
 When a form has complex dynamic client-side state that cannot be expressed as flat HTML form fields (e.g., multi-step wizards with dynamic criteria lists), submit directly from the component via a `handleSubmit` async function. The rules create/edit pages are the canonical example.
 
 ```ts
+const { rules } = getServices();
+
 async function handleSubmit() {
 	if (!isFormValid || submitting) return;
 	submitting = true;
 	try {
-		const api = new ApiService({ authToken: data.authToken });
-		await api.doSomething(payload);
+		await rules.createRuleTemplate(payload);
 		toast.add({ tone: 'success', message: m.thing_success() });
 		goto(resolve('/target'));
 	} catch {
@@ -254,41 +301,75 @@ Do not duplicate this data into local state.
 
 ## API calls
 
-### Server-side (in `+page.server.ts`)
+### Server-side (loads, actions, `+server.ts`)
 
 ```ts
-const api = new ApiService({ fetchFn: fetch, authToken });
-const result = await api.getSomething();
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const { gateways } = locals.services;
+	return { gateway: await gateways.getGateway(params.gateway_id).catch(() => null) };
+};
 ```
 
-Always pass `fetchFn: fetch` on the server so SvelteKit's request context is used correctly.
+`locals.services` is already bound to this request's `event.fetch` and session
+token — never construct a client or pass a token yourself.
 
 ### Client-side (in `.svelte` components)
 
 ```ts
-const api = new ApiService({ authToken: data.authToken });
-const result = await api.getSomething();
+const { gateways } = getServices(); // during component initialisation
+
+async function loadData(query: CwTableQuery) {
+	return buildRows(await gateways.getGateways({ signal: query.signal }), query);
+}
 ```
 
-Do not pass `fetchFn` on the client — the global `fetch` is used automatically.
+The services send the current session token on every request (`app.accessToken`
+at call time). Use `app.accessToken` only as a "signed in?" gate, never to pass a
+token around; components do not take an `authToken` prop.
 
 ### Error handling
 
-Use `readApiErrorMessage` from `$lib/api/api-error` to turn any caught API payload into a
-display string. Never copy-paste this logic inline.
+Use the helpers in `$lib/api/api-error`. Never copy-paste extraction logic inline.
 
 ```ts
-import { ApiServiceError } from '$lib/api/api.service';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 
 try {
-	await api.doSomething();
+	await locals.services.organizations.renameOrganization(orgId, name);
 } catch (err) {
-	const payload = err instanceof ApiServiceError ? err.payload : err;
-	const status = err instanceof ApiServiceError ? err.status : 500;
-	return fail(status, { error: readApiErrorMessage(payload, m.generic_error()) });
+	return fail(apiErrorStatus(err), { error: apiErrorMessage(err, m.generic_error()) });
 }
 ```
+
+- `apiErrorStatus(err, fallback = 500)` — the API's status, or `fallback` for any other error.
+- `apiErrorMessage(err, fallback)` — the API's message, else `fallback`. A plain `Error` our own
+  code throws keeps its (localized) message; a built-in error (`TypeError: Failed to fetch`,
+  `SyntaxError`, an abort…) never reaches the user — it gives `fallback`.
+- Never pass a raw caught error to `readApiErrorMessage` (it would show "CropWatch API request
+  failed (500 …)" for an API error without a message).
+- `ApiError` is what every repository throws for a non-2xx response (`status`, `payload: { url, payload }`).
+
+---
+
+## Authentication
+
+- **Session**: the login action (`$lib/server/auth/login-action.ts`) signs in through the
+  CropWatch API and stores the Supabase access token in the httpOnly `jwt` cookie.
+- **Every request** passes `hooks.server.ts`, which verifies that token with Supabase Auth
+  (`locals.services.supabaseAuth.verifyAccessToken` → `auth.getClaims()`: signature against
+  the project's signing keys, or the Auth server for a legacy secret) before any load,
+  action or endpoint runs. Protected routes redirect to login without a valid session; a
+  refused token is deleted. `locals.jwt` holds the **verified** claims, `locals.jwtString`
+  the token. Never decode the cookie yourself or trust unverified claims.
+  (If Supabase Auth is unreachable the session is kept on its decoded claims — the API
+  still verifies every data request — rather than signing everyone out.)
+- **Sign out** is the POST form action at `/auth/logout` (it also ends the Supabase
+  session): a `<form method="POST">`, or `signOut(buildLogoutPath(...))` from
+  `$lib/auth/sign-out` in script. Never a link or `location.href` to `/auth/logout`.
+- **Passwords**: `isStrongPassword` (`$lib/utils/strongPasswordCheck`) is the one policy —
+  the forms show it live and every action that sets a password enforces it.
+- **Redirect targets** from the URL (`?redirect=`, `?next=`) go through
+  `sanitizeRedirectPath` / a same-origin check — never straight into `redirect()`.
 
 ---
 
@@ -312,11 +393,10 @@ export const load: PageServerLoad = async () => {
 };
 
 // ✅ Detail page — server fetches the specific record
-export const load: PageServerLoad = async ({ params, locals, fetch }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) return { record: null };
-	const api = new ApiService({ fetchFn: fetch, authToken });
-	return { record: await api.getRecord(params.id).catch(() => null) };
+	return { record: await locals.services.records.getRecord(params.id).catch(() => null) };
 };
 ```
 
@@ -335,35 +415,40 @@ import type { LayoutServerLoad } from '../$types';
 export const load: LayoutServerLoad = async () => { ... };
 ```
 
-### Rule: always pass `fetchFn: fetch` when constructing ApiService on the server
+### Rule: server code uses `locals.services`, never its own client
 
-Without it the server uses the bare global `fetch` instead of SvelteKit's context-aware
-fetch, losing request deduplication, cookie forwarding, and relative-URL resolution.
+`hooks.server.ts` builds `locals.services` with SvelteKit's request-scoped
+`event.fetch` (cookie forwarding, relative URLs) and the session token, so every
+load, action and endpoint talks to the API the same way.
 
 ```ts
 // ✅ server-side
-const api = new ApiService({ fetchFn: fetch, authToken });
+const { devices } = locals.services;
 
-// ✅ client-side (no fetchFn — global fetch is correct here)
-const api = new ApiService({ authToken: app.accessToken });
+// ✅ client-side
+const { devices } = getServices();
 ```
 
 ### Rule: child pages get `authToken` via `await parent()`, not by re-reading `locals`
 
-The root layout (`+layout.server.ts`) is the single source of auth. Layout files that own a
-route subtree (e.g. the device layout) forward `authToken` explicitly in their return value.
-Page servers under that layout call `await parent()` to receive it.
+The root layout (`+layout.server.ts`) is the single source of auth for page data.
+Layout files that own a route subtree (e.g. the device layout) forward `authToken`
+explicitly in their return value. Page servers under that layout call
+`await parent()` for it and use it as their "signed in?" gate; the data itself
+still comes from `locals.services`.
 
 ```ts
-// ✅ device/+page.server.ts — gets auth from the device layout
-export const load: PageServerLoad = async ({ fetch, params, parent }) => {
+// ✅ device/+page.server.ts — auth gate and device from the device layout
+export const load: PageServerLoad = async ({ locals, params, parent }) => {
   const { authToken, device } = await parent();   // device layout supplies both
+  if (!authToken) return { ... };
+  const latest = await locals.services.telemetry.getDeviceLatestData(params.dev_eui);
   ...
 };
 
 // ✅ server actions always read locals directly (actions don't call parent())
 export const actions: Actions = {
-  default: async ({ request, locals, fetch }) => {
+  default: async ({ request, locals }) => {
     const authToken = locals.jwtString ?? null;
     ...
   }
@@ -383,8 +468,9 @@ const { authToken, device } = await parent();
 
 ### Rule: `authToken` is available on every route via layout inheritance
 
-The root layout returns `authToken` for every route. Client components should read it via
-`app.accessToken` (from `getAppContext()`), not by re-returning it in list-page server loads.
+The root layout returns `authToken` for every route; the root `+layout.svelte`
+mirrors it into `app.accessToken`, and the client services send it. Do not
+re-return it from list-page server loads, and do not pass it to components.
 
 ---
 
@@ -411,7 +497,7 @@ The only exception is debug/developer-only messages (`console.error`, comments).
 
 | Component                | Purpose                                                          |
 | ------------------------ | ---------------------------------------------------------------- |
-| `<AppPage width="...">`  | Full-page wrapper; sets max-width and padding                    |
+| `<AppPage>`              | Full-page wrapper; sets padding and the page column              |
 | `<AppFormStack padded>`  | Vertical flex stack for form fields; `padded` adds inner spacing |
 | `<AppActionRow>`         | Horizontal row for Cancel + Submit buttons, right-aligned        |
 | `<AppNotice tone="...">` | Inline feedback box (error, warning, info, success, neutral)     |
@@ -427,8 +513,10 @@ import { AppActionRow, AppFormStack, AppNotice, AppPage, AppSection } from '$lib
 
 ## File conventions
 
-- `+page.svelte` — UI only; no direct DB/API calls (exception: complex wizard forms)
-- `+page.server.ts` — `load` function + `actions`; always exports typed `PageServerLoad` / `Actions`
+- `+page.svelte` — View: UI only; data comes from `data`, from `getServices()` repositories (list tables, wizards), or from a controller
+- `+page.server.ts` — Controller: `load` function + `actions`; always exports typed `PageServerLoad` / `Actions`; data via `locals.services`
+- `*.svelte.ts` — client controllers (stateful classes with injected dependencies)
+- `$lib/api/repositories/` — Model: the only code that knows API URLs
 - `+layout.svelte` / `+layout.server.ts` — shared shell, loaded once per layout boundary
 - Feature-local sub-components live alongside the page file (e.g., `LocationUpdate.svelte` next to the settings `+page.svelte`)
 - Shared reusable components go in `src/lib/components/`
@@ -465,7 +553,7 @@ The `/` dashboard is a **viewport-fill** page: it fills the full viewport height
 Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolling), the dashboard must override that behaviour with a scoped `:global` style so that `AppPage` and its shell are bounded to viewport height and pass a definite height down the flex chain:
 
 ```svelte
-<AppPage width="full" class="dashboard-page">
+<AppPage class="dashboard-page">
 	<div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 		<!-- header (flex-none) + DashboardDeviceTable or DashboardDeviceCards -->
 	</div>
@@ -491,12 +579,81 @@ Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolli
 
 ---
 
+## Client controllers
+
+When a component's script grows real behaviour — several async operations,
+request ordering, polling, multi-step state — move it into a controller: a
+class in a `*.svelte.ts` file next to the component, holding `$state` and
+methods, with every dependency passed to its constructor. The component
+creates it once and renders its state. Canonical examples: `OverviewRanges`
+(`routes/overview/overview-ranges.svelte.ts`) and `DeviceSetupFlow`
+(`routes/locations/[location_id]/devices/create/device-setup-flow.svelte.ts`);
+also `DeviceDashboard` (device page), `RuleTemplateFormController` (rule wizard),
+`BillingController` (account billing) and `LocationLiveReadings` (location page).
+
+```ts
+// thing-controller.svelte.ts
+export class ThingController {
+	items = $state<ThingDto[]>([]);
+	constructor(private readonly deps: { things: ThingRepository; onError: (msg: string) => void }) {}
+	async load() { ... }
+}
+
+// Thing.svelte
+const controller = new ThingController({ things: getServices().things, onError: (message) => toast.add({ tone: 'danger', message }) });
+```
+
+Pure logic (mapping, formatting, validation) goes in a plain `.ts` module, not a
+class. Keep small one-off handlers inline (see "Don't wrap one-liners used once").
+
+---
+
+## Testing
+
+Every source file under `src/` counts toward coverage (`pnpm test:coverage`):
+a coverage run fails below 90 % statements, branches, functions or lines (the
+thresholds in `vite.config.ts`; CI runs it on every push). Unit tests can
+**never** touch real data: the setup file `$lib/testing/setup.ts` refuses every
+network request a test did not fake, and fails the test.
+
+| Testing a…                   | Use                                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| load / action / `+server.ts` | `testEvent<Parameters<typeof load>[0]>({ locals: testLocals(), params, parent, request: formRequest({...}) })` — stub `locals.services.<repo>.<method>` |
+| component / page             | `renderWithServices(Component, { props, services: createMockServices(), app: { accessToken: 'jwt' } })` in a `*.svelte.spec.ts` (browser)               |
+| repository / HTTP shape      | `createFakeFetch(responder)` with `FetchHttpClient`, or add a row to `repository-contract.ts`                                                           |
+| controller class             | construct it with mocks directly                                                                                                                        |
+
+- Name specs for route modules `page.server.spec.ts`, `page.svelte.spec.ts` (the
+  `+` prefix is reserved by SvelteKit).
+- An unstubbed mock-service call rejects with "…was called but not stubbed".
+- Mock `$app/navigation` with `vi.mock` when a test clicks something that navigates.
+- A component that posts to its own page action (`fetch('?/…')`, `submitPageAction`):
+  `vi.stubGlobal('fetch', createFakeFetch(...).fetch)`, restored with `vi.unstubAllGlobals()`.
+- A node spec whose module imports components (e.g. the display registry) stubs
+  those component modules with `vi.mock`; components are tested in the browser.
+- e2e tests (`pnpm test:e2e`) run against the local mock API in `scripts/e2e-stack.mjs`.
+
+---
+
+## Environments
+
+Development, staging and production are separate env files with the same keys
+(`.env.development`, `.env.staging`, `.env.production`, all gitignored; keys in
+`.env.example`). The Vite mode picks the file: `pnpm dev` (development),
+`pnpm dev:staging`, `pnpm build` (production), `pnpm build:staging`. On Vercel,
+set the values per Vercel environment. `PUBLIC_APP_ENV` names the environment
+explicitly (`readPublicConfig().environment`). Read env only through
+`readPublicConfig()` / `readServerConfig()` (runtime values) and
+`readFirebaseConfig()` (`$lib/config/firebase`, build-time values).
+
+---
+
 ## Checklist for new pages
 
 ### UI
 
-- [ ] Root element is `<AppPage width="...">`
-- [ ] If navigated "into": back button is first child of AppPage, `variant="ghost" size="sm"`
+- [ ] Root element is `<AppPage>`
+- [ ] If navigated "into": back button is first child of AppPage, `variant="secondary" size="sm"`
 - [ ] Form fields are wrapped in `<AppFormStack padded>` inside a `<CwCard>`
 - [ ] Errors use `<AppNotice tone="danger">`, not a raw `<p>`
 - [ ] Submit/cancel use `<AppActionRow>` as the last item in the form stack
@@ -507,9 +664,14 @@ Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolli
 ### Server / data flow
 
 - [ ] `+page.server.ts` uses `PageServerLoad` from `./$types` (not `LayoutServerLoad`)
-- [ ] `ApiService` is always constructed with `{ fetchFn: fetch, authToken }` on the server
+- [ ] Data access goes through `locals.services` (server) / `getServices()` (client) — no `fetch` to the API, no client construction
 - [ ] List pages return `{}` from `load` — no pre-fetching data the table re-fetches client-side
 - [ ] Detail/edit pages fetch only the record(s) they render; reuse parent layout data where available
 - [ ] Child pages under a layout use `await parent()` to get `authToken` and shared data
 - [ ] Server actions use `locals.jwtString` directly (actions cannot call `parent()`)
-- [ ] Error messages use `readApiErrorMessage` from `$lib/api/api-error`, not inline extraction logic
+- [ ] Errors use `apiErrorStatus` / `apiErrorMessage` from `$lib/api/api-error`, not inline extraction logic
+
+### Tests
+
+- [ ] Every new load, action, endpoint, controller and component has a spec (≥ 90 % coverage)
+- [ ] Specs inject mocks (`testLocals`, `createMockServices`, `createFakeFetch`) — never `vi.mock` a repository module and never a real network

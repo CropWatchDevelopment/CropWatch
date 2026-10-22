@@ -1,11 +1,13 @@
 import { sequence } from '@sveltejs/kit/hooks';
-import { buildLoginPath } from '$lib/utils/auth-redirect';
+import { readPublicConfig } from '$lib/config/public';
+import { readServerConfig } from '$lib/server/config';
+import { createServerServices } from '$lib/server/services';
+import { decodeJwtPayload } from '$lib/server/auth/jwt';
+import { buildLoginPath, type LoginReason } from '$lib/utils/auth-redirect';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
 import type { Handle, HandleServerError, RequestEvent } from '@sveltejs/kit';
-import { isRedirect, redirect } from '@sveltejs/kit';
-import { jwtDecode } from 'jwt-decode';
+import { redirect } from '@sveltejs/kit';
 
 const PUBLIC_PATHS = new Set([
 	'/manifest.webmanifest',
@@ -20,9 +22,17 @@ function getAuthRedirectTarget(event: RequestEvent): string {
 }
 
 export const originalHandle: Handle = async ({ event, resolve }) => {
-	const token = event.cookies.get('jwt');
+	// The request's composition root: every load, action and endpoint reads and
+	// writes data through these, authenticated as this request's session.
+	event.locals.config = { public: readPublicConfig(), server: readServerConfig() };
+	event.locals.services = createServerServices({
+		fetch: event.fetch,
+		authToken: () => event.locals.jwtString,
+		config: event.locals.config.public,
+		serverConfig: event.locals.config.server
+	});
 
-	checkAuthToken(token ?? '', event);
+	await authenticate(event);
 
 	const response = await resolve(event);
 
@@ -53,80 +63,44 @@ const ensureHtmlCharset = (response: Response): Response => {
 	});
 };
 
-const checkAuthToken = (token: string, event: RequestEvent) => {
-	const authRoute = event.url.pathname.startsWith('/auth');
-	const publicRoute = PUBLIC_PATHS.has(event.url.pathname);
-	const bypassAuth = authRoute || publicRoute;
+/**
+ * Establishes the request's session from the `jwt` cookie before any load,
+ * action or endpoint runs (the SvelteKit `handle` hook is the one place every
+ * request passes). The token is verified with Supabase Auth — its claims are
+ * never trusted just because they decode — and protected routes redirect to
+ * login without a valid session.
+ */
+async function authenticate(event: RequestEvent): Promise<void> {
+	const bypassAuth = event.url.pathname.startsWith('/auth') || PUBLIC_PATHS.has(event.url.pathname);
+	const token = event.cookies.get('jwt') ?? '';
 
-	if (token) {
-		let decodedJWT: IJWT;
+	event.locals.jwt = null;
+	event.locals.jwtString = null;
 
-		try {
-			decodedJWT = jwtDecode(token) as IJWT;
-		} catch (error) {
-			if (isRedirect(error)) {
-				throw error;
-			}
-
-			if (!bypassAuth) {
-				event.locals.jwt = null;
-				event.locals.jwtString = null;
-
-				throw redirect(
-					303,
-					buildLoginPath({
-						redirectTo: getAuthRedirectTarget(event),
-						reason: 'auth-required'
-					})
-				);
-			}
-
-			return false;
-		}
-
-		event.locals.jwt = decodedJWT;
-		event.locals.jwtString = token;
-
-		const now = Math.floor(Date.now() / 1000);
-
-		if (decodedJWT.exp < now) {
-			event.cookies.delete('jwt', { path: '/' });
-			event.locals.jwt = null;
-			event.locals.jwtString = null;
-
-			if (!bypassAuth) {
-				throw redirect(
-					303,
-					buildLoginPath({
-						redirectTo: getAuthRedirectTarget(event),
-						reason: 'expired'
-					})
-				);
-			}
-
-			return false;
-		}
-
-		return true;
-	} else {
+	const rejectSession = (reason: LoginReason) => {
+		if (token) event.cookies.delete('jwt', { path: '/' });
 		if (!bypassAuth) {
-			event.locals.jwt = null;
-			event.locals.jwtString = null;
-
-			throw redirect(
-				303,
-				buildLoginPath({
-					redirectTo: getAuthRedirectTarget(event),
-					reason: 'auth-required'
-				})
-			);
+			redirect(303, buildLoginPath({ redirectTo: getAuthRedirectTarget(event), reason }));
 		}
-	}
+	};
 
-	return false;
-};
+	if (!token) return rejectSession('auth-required');
 
-const paraglideHandle: Handle = ({ event, resolve }) =>
+	const payload = decodeJwtPayload(token);
+	if (!payload) return rejectSession('auth-required');
+	if (payload.exp < Math.floor(Date.now() / 1000)) return rejectSession('expired');
+
+	const verification = await event.locals.services.supabaseAuth.verifyAccessToken(token);
+	if (verification.status === 'invalid') return rejectSession('auth-required');
+
+	// `unavailable`: Supabase Auth could not be reached. Keep the session on its
+	// decoded claims rather than signing everyone out during an Auth outage — the
+	// CropWatch API still verifies the token on every data request.
+	event.locals.jwt = verification.status === 'valid' ? verification.claims : payload;
+	event.locals.jwtString = token;
+}
+
+export const paraglideHandle: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request: localizedRequest, locale }) => {
 		event.request = localizedRequest;
 

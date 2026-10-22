@@ -86,6 +86,14 @@ describe('newestTimestamp', () => {
 		expect(newestTimestamp(null, '2026-10-14T00:00:00Z')).toBe('2026-10-14T00:00:00Z');
 		expect(newestTimestamp('bad', null)).toBeNull();
 	});
+
+	it('keeps the first timestamp when the second is missing, unparsable or older', () => {
+		expect(newestTimestamp('2026-10-14T00:00:00Z', null)).toBe('2026-10-14T00:00:00Z');
+		expect(newestTimestamp('2026-10-14T00:00:00Z', 'bad')).toBe('2026-10-14T00:00:00Z');
+		expect(newestTimestamp('2026-10-14T00:00:00Z', '2026-04-12T00:00:00Z')).toBe(
+			'2026-10-14T00:00:00Z'
+		);
+	});
 });
 
 describe('summarizeHealth', () => {

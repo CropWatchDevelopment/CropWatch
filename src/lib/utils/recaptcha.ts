@@ -1,4 +1,4 @@
-import { env as publicEnv } from '$env/dynamic/public';
+import { readPublicConfig } from '$lib/config/public';
 
 declare global {
 	interface Window {
@@ -33,11 +33,9 @@ const API_POLL_INTERVAL_MS = 100;
 let status: RecaptchaStatus = 'idle';
 let inflightLoad: Promise<void> | null = null;
 let inflightReady: Promise<void> | null = null;
-let lastError: Error | null = null;
 
 function getPublicSiteKey(): string | null {
-	const key = (publicEnv.PUBLIC_RECAPTCHA_SITE_KEY ?? '').trim();
-	return key.length > 0 ? key : null;
+	return readPublicConfig().recaptchaSiteKey;
 }
 
 function hasUsableEnterpriseApi(): boolean {
@@ -49,9 +47,8 @@ function hasUsableEnterpriseApi(): boolean {
 	);
 }
 
-function setStatus(nextStatus: RecaptchaStatus, error: Error | null = null) {
+function setStatus(nextStatus: RecaptchaStatus) {
 	status = nextStatus;
-	lastError = error;
 }
 
 function toError(error: unknown, fallback: string): Error {
@@ -119,7 +116,7 @@ async function waitForEnterpriseReady(): Promise<void> {
 		throw new Error('reCAPTCHA Enterprise API is unavailable');
 	}
 
-	inflightReady = withTimeout(
+	const ready: Promise<void> = withTimeout(
 		new Promise<void>((resolve, reject) => {
 			try {
 				window.grecaptcha!.enterprise!.ready(() => {
@@ -132,10 +129,12 @@ async function waitForEnterpriseReady(): Promise<void> {
 		READY_TIMEOUT_MS,
 		'reCAPTCHA Enterprise did not become ready in time'
 	).finally(() => {
-		inflightReady = null;
+		// A reset may have started a newer wait meanwhile: leave that one alone.
+		if (inflightReady === ready) inflightReady = null;
 	});
+	inflightReady = ready;
 
-	return inflightReady;
+	return ready;
 }
 
 async function loadRecaptchaScriptElement(siteKey: string): Promise<void> {
@@ -207,9 +206,8 @@ async function waitForEnterpriseApi(): Promise<void> {
 async function ensureRecaptchaReady(): Promise<void> {
 	const siteKey = getPublicSiteKey();
 	if (!siteKey) {
-		const error = new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
-		setStatus('error', error);
-		throw error;
+		setStatus('error');
+		throw new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
 	}
 
 	if (hasUsableEnterpriseApi() && status === 'ready') {
@@ -219,21 +217,25 @@ async function ensureRecaptchaReady(): Promise<void> {
 	if (!inflightLoad) {
 		setStatus('loading');
 
-		inflightLoad = (async () => {
+		const load = (async () => {
 			try {
 				await loadRecaptchaScriptWithRetry(siteKey);
 				await waitForEnterpriseApi();
 				await waitForEnterpriseReady();
 				setStatus('ready');
 			} catch (error) {
-				const normalizedError = toError(error, 'reCAPTCHA failed to initialize');
 				removeRecaptchaArtifacts();
-				setStatus('error', normalizedError);
-				throw normalizedError;
-			} finally {
-				inflightLoad = null;
+				setStatus('error');
+				throw toError(error, 'reCAPTCHA failed to initialize');
 			}
 		})();
+		inflightLoad = load;
+		// Registered before any caller awaits `load`, so it runs first. A reset may
+		// have started a newer load meanwhile: only ever clear this load's handle.
+		const settle = () => {
+			if (inflightLoad === load) inflightLoad = null;
+		};
+		load.then(settle, settle);
 	}
 
 	return inflightLoad;
@@ -254,12 +256,9 @@ function getExecuteFn() {
 	return execute;
 }
 
+/** Where reCAPTCHA is in its lifecycle (diagnostics and tests). */
 export function getRecaptchaStatus(): RecaptchaStatus {
 	return status;
-}
-
-export function getRecaptchaError(): Error | null {
-	return lastError;
 }
 
 export async function warmupRecaptcha(): Promise<boolean> {
@@ -276,9 +275,8 @@ export async function runRecaptchaAction(action: RecaptchaAction): Promise<strin
 
 	const siteKey = getPublicSiteKey();
 	if (!siteKey) {
-		const error = new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
-		setStatus('error', error);
-		throw error;
+		setStatus('error');
+		throw new Error('reCAPTCHA is not configured (missing PUBLIC_RECAPTCHA_SITE_KEY)');
 	}
 
 	try {
@@ -296,24 +294,19 @@ export async function runRecaptchaAction(action: RecaptchaAction): Promise<strin
 		setStatus('ready');
 		return token;
 	} catch (error) {
-		const normalizedError = toError(error, 'reCAPTCHA token generation failed');
 		// A failed or timed-out `execute()` does not mean the loaded script is
 		// broken — it is usually a transient network blip. Keep the script in
 		// place so the next attempt is instant instead of paying for a full
 		// re-download + re-init (8s + 12s timeouts). If the Enterprise API has
 		// genuinely become unusable, `ensureRecaptchaReady()` detects that via
 		// `hasUsableEnterpriseApi()` and reloads it on the next call.
-		lastError = normalizedError;
-		throw normalizedError;
+		throw toError(error, 'reCAPTCHA token generation failed');
 	}
 }
 
+/** Tears reCAPTCHA down (script, badge, API, state) so the next use starts from scratch. */
 export function resetRecaptchaFailureState() {
 	removeRecaptchaArtifacts();
-	delete window.grecaptcha;
+	if (typeof window !== 'undefined') delete window.grecaptcha;
 	resetInternalState();
-}
-
-export function unloadRecaptchaScript() {
-	resetRecaptchaFailureState();
 }

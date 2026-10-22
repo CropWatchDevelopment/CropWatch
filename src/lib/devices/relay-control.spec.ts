@@ -378,3 +378,283 @@ describe('RelayStateManager', () => {
 		manager.destroy();
 	});
 });
+
+describe('RelayStateManager subscriptions and base data', () => {
+	it('sends the snapshot to a subscriber at once and on every change, until it unsubscribes', () => {
+		useClockAtSend();
+		const { manager } = createManager();
+		const listener = vi.fn();
+
+		const unsubscribe = manager.subscribe(listener);
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(listener).toHaveBeenLastCalledWith(manager.getSnapshot());
+
+		manager.startVerification(2, 'off', { sentAt: SENT_AT });
+		expect(listener).toHaveBeenCalledTimes(2);
+		expect(listener.mock.lastCall?.[0].pendingRelayStates[2]).toMatchObject({
+			requestedState: 'off'
+		});
+
+		unsubscribe();
+		manager.startVerification(1, 'on', { sentAt: SENT_AT });
+		expect(listener).toHaveBeenCalledTimes(2);
+
+		manager.destroy();
+	});
+
+	it('merges new base data into the history, keeping the current state it already has', () => {
+		const current = createRelayRow({ id: 'current', created_at: '2026-04-05T10:00:00.000Z' });
+		const manager = new RelayStateManager({
+			fetchLatestData: vi.fn(async () => null),
+			historicalData: [],
+			latestData: current,
+			fetchOnInit: false
+		});
+
+		manager.replaceBaseData({
+			historicalData: [createRelayRow({ id: 'older', created_at: '2026-04-05T09:00:00.000Z' })],
+			latestData: createRelayRow({ id: 'newer', created_at: '2026-04-05T11:00:00.000Z' })
+		});
+
+		const snapshot = manager.getSnapshot();
+		expect(snapshot.historicalData.map((row) => row.id)).toEqual(['newer', 'current', 'older']);
+		expect(snapshot.latestData?.id).toBe('current');
+
+		manager.destroy();
+	});
+
+	it('takes the current state from new base data when it had none', () => {
+		const empty = () =>
+			new RelayStateManager({
+				fetchLatestData: vi.fn(async () => null),
+				historicalData: [],
+				latestData: null,
+				fetchOnInit: false
+			});
+
+		const withLatest = empty();
+		withLatest.replaceBaseData({ historicalData: [], latestData: createRelayRow({ id: 'base' }) });
+		expect(withLatest.getSnapshot().latestData?.id).toBe('base');
+
+		const historyOnly = empty();
+		historyOnly.replaceBaseData({
+			historicalData: [
+				createRelayRow({ id: 'h1', created_at: '2026-04-05T09:00:00.000Z' }),
+				createRelayRow({ id: 'h2', created_at: '2026-04-05T09:30:00.000Z' })
+			],
+			latestData: null
+		});
+		expect(historyOnly.getSnapshot().latestData?.id).toBe('h2');
+
+		const nothing = empty();
+		nothing.replaceBaseData({ historicalData: [{ id: 'no-time' }], latestData: null });
+		expect(nothing.getSnapshot()).toMatchObject({ historicalData: [], latestData: null });
+
+		for (const manager of [withLatest, historyOnly, nothing]) manager.destroy();
+	});
+});
+
+describe('RelayStateManager fetching', () => {
+	it('keeps the state when the device has nothing to report', async () => {
+		const { manager, fetchLatestData, report } = createManager();
+		const before = manager.getSnapshot();
+		report(null as never);
+
+		await expect(manager.refreshLatestData()).resolves.toBeNull();
+		expect(fetchLatestData).toHaveBeenCalledWith(expect.any(AbortSignal));
+		expect(manager.getSnapshot()).toBe(before);
+
+		manager.destroy();
+	});
+
+	it('logs a failed fetch, but not an aborted one', async () => {
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const failure = new Error('Bad Gateway');
+		const aborted = Object.assign(new Error('The operation was aborted'), { name: 'AbortError' });
+		const fetchLatestData = vi
+			.fn<() => Promise<Record<string, unknown> | null>>()
+			.mockRejectedValueOnce(failure)
+			.mockRejectedValueOnce(aborted);
+		const manager = new RelayStateManager({
+			fetchLatestData,
+			historicalData: [],
+			latestData: null,
+			fetchOnInit: false
+		});
+
+		await expect(manager.refreshLatestData()).resolves.toBeNull();
+		expect(consoleError).toHaveBeenCalledWith('[relay-state] fetch failed', { error: failure });
+
+		await expect(manager.refreshLatestData()).resolves.toBeNull();
+		expect(consoleError).toHaveBeenCalledTimes(1);
+
+		manager.destroy();
+	});
+
+	it('aborts the GET in flight and stops refreshing when destroyed (twice is harmless)', async () => {
+		vi.useFakeTimers();
+		let signal: AbortSignal | undefined;
+		let resolveFetch!: (value: Record<string, unknown> | null) => void;
+		const fetchLatestData = vi.fn(
+			(abortSignal?: AbortSignal) =>
+				new Promise<Record<string, unknown> | null>((resolve) => {
+					signal = abortSignal;
+					resolveFetch = resolve;
+				})
+		);
+		const manager = new RelayStateManager({
+			fetchLatestData,
+			historicalData: [],
+			latestData: null
+		});
+		const listener = vi.fn();
+		manager.subscribe(listener);
+		expect(fetchLatestData).toHaveBeenCalledTimes(1);
+
+		manager.destroy();
+		manager.destroy();
+		expect(signal?.aborted).toBe(true);
+
+		resolveFetch(createRelayRow({ id: 'late' }));
+		await vi.advanceTimersByTimeAsync(RELAY_REFRESH_INTERVAL_MS * 2);
+
+		expect(fetchLatestData).toHaveBeenCalledTimes(1);
+		expect(listener).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('RelayStateManager verification edge cases', () => {
+	it('stamps a command with the current time when the API sent none', () => {
+		useClockAtSend();
+		const { manager } = createManager();
+
+		manager.startVerification(1, 'on');
+
+		expect(manager.getSnapshot().pendingRelayStates[1]?.sentAt).toBe(SENT_AT);
+
+		manager.destroy();
+	});
+
+	it('calls it a mismatch when the first report after an unconfirmed command shows the old state', async () => {
+		useClockAtSend();
+		const { manager, onVerificationResolved, report } = createManager();
+
+		manager.startVerification(1, 'on', { sentAt: SENT_AT });
+		await vi.advanceTimersByTimeAsync(RELAY_CONFIRMATION_WINDOW_MS + RELAY_CHECK_INTERVAL_MS);
+		expect(onVerificationResolved).toHaveBeenLastCalledWith(
+			expect.objectContaining({ outcome: 'unconfirmed' })
+		);
+
+		report(createRelayRow({ created_at: '2026-04-05T10:02:00.000Z', id: 'late', relay_1: false }));
+		await manager.refreshLatestData();
+
+		expect(onVerificationResolved).toHaveBeenLastCalledWith({
+			outcome: 'mismatch',
+			relay: 1,
+			row: expect.objectContaining({ id: 'late', relay_1: false }),
+			targetState: 'on'
+		});
+		expect(manager.getSnapshot().pendingRelayStates[1]).toBeUndefined();
+
+		manager.destroy();
+	});
+
+	it('ignores reports from after a pulse ended, and lets a long pulse lapse after the window', async () => {
+		useClockAtSend();
+		const { manager, onVerificationResolved, report } = createManager();
+
+		manager.startVerification(1, 'on', { sentAt: SENT_AT, durationSeconds: 120 });
+		// Reverted already: says nothing about whether the pulse started.
+		report(
+			createRelayRow({ created_at: '2026-04-05T10:02:10.000Z', id: 'reverted', relay_1: false })
+		);
+		await vi.advanceTimersByTimeAsync(RELAY_CONFIRMATION_WINDOW_MS + RELAY_CHECK_INTERVAL_MS);
+
+		expect(onVerificationResolved).toHaveBeenCalledTimes(1);
+		expect(onVerificationResolved).toHaveBeenCalledWith({
+			outcome: 'unconfirmed',
+			relay: 1,
+			row: null,
+			targetState: 'on'
+		});
+		expect(manager.getSnapshot().pendingRelayStates[1]).toMatchObject({ phase: 'awaiting-report' });
+
+		// The relay reverts at 120 s: nothing is left to confirm.
+		await vi.advanceTimersByTimeAsync(120_000 - RELAY_CONFIRMATION_WINDOW_MS);
+		expect(manager.getSnapshot().pendingRelayStates[1]).toBeUndefined();
+		expect(onVerificationResolved).toHaveBeenCalledTimes(1);
+
+		manager.destroy();
+	});
+
+	it('does not ask for a status report that would only arrive after the pulse ended', async () => {
+		useClockAtSend();
+		const requestStatus = vi.fn(async () => {});
+		const { manager, onVerificationResolved } = createManager({ requestStatus });
+
+		manager.startVerification(2, 'on', { sentAt: SENT_AT, durationSeconds: 30 });
+		await vi.advanceTimersByTimeAsync(RELAY_CONFIRMATION_WINDOW_MS);
+
+		expect(requestStatus).not.toHaveBeenCalled();
+		expect(onVerificationResolved).not.toHaveBeenCalled();
+		expect(manager.getSnapshot().pendingRelayStates[2]).toBeUndefined();
+
+		manager.destroy();
+	});
+
+	it('does not reopen a command that was settled while its status request was failing', async () => {
+		useClockAtSend();
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+		let failRequest!: (error: unknown) => void;
+		const requestStatus = vi.fn(
+			() =>
+				new Promise<void>((_, reject) => {
+					failRequest = reject;
+				})
+		);
+		const { manager, onVerificationResolved, report } = createManager({ requestStatus });
+
+		manager.startVerification(1, 'on', { sentAt: SENT_AT });
+		await vi.advanceTimersByTimeAsync(RELAY_STATUS_REQUEST_AFTER_MS + RELAY_CHECK_INTERVAL_MS);
+		expect(requestStatus).toHaveBeenCalledTimes(1);
+
+		report(createRelayRow({ created_at: '2026-04-05T10:00:22.000Z', id: 'answer', relay_1: true }));
+		await vi.advanceTimersByTimeAsync(RELAY_CHECK_INTERVAL_MS);
+		expect(onVerificationResolved).toHaveBeenCalledWith(
+			expect.objectContaining({ outcome: 'confirmed' })
+		);
+
+		failRequest(new Error('timeout'));
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(consoleError).toHaveBeenCalledWith('[relay-state] status request failed', {
+			error: expect.any(Error)
+		});
+		expect(manager.getSnapshot().pendingRelayStates[1]).toBeUndefined();
+
+		manager.destroy();
+	});
+
+	it('settles nothing more once a listener destroyed the manager mid-report', async () => {
+		useClockAtSend();
+		const { manager, onVerificationResolved, report } = createManager();
+		onVerificationResolved.mockImplementation(() => manager.destroy());
+
+		manager.startVerification(1, 'on', { sentAt: SENT_AT });
+		manager.startVerification(2, 'on', { sentAt: SENT_AT });
+		report(
+			createRelayRow({
+				created_at: '2026-04-05T10:00:03.000Z',
+				id: 'both',
+				relay_1: true,
+				relay_2: true
+			})
+		);
+		await vi.advanceTimersByTimeAsync(RELAY_FIRST_CHECK_MS);
+
+		expect(onVerificationResolved).toHaveBeenCalledTimes(1);
+		expect(onVerificationResolved).toHaveBeenCalledWith(
+			expect.objectContaining({ outcome: 'confirmed', relay: 1 })
+		);
+	});
+});

@@ -52,6 +52,50 @@ You can preview the production build with `npm run preview`.
 - [QA](https://app-qa.cropwatch.io)
 - [DEV](http://localhost:5173)
 
+## Configuring an environment
+
+Every environment (development, staging/QA/UAT, production) is the same code
+with a different set of env values: API base URL, Supabase project, Firebase
+project, reCAPTCHA and Libellus keys. `.env.example` lists every key.
+
+| Run                    | Command              | Env files loaded (all gitignored) |
+| ---------------------- | -------------------- | --------------------------------- |
+| local development      | `pnpm dev`           | `.env`, `.env.development`        |
+| local, against staging | `pnpm dev:staging`   | `.env`, `.env.staging`            |
+| production build       | `pnpm build`         | `.env`, `.env.production`         |
+| staging build          | `pnpm build:staging` | `.env`, `.env.staging`            |
+
+On Vercel, set the values per Vercel environment (Production / Preview /
+Development) instead of files. `PUBLIC_APP_ENV` (`development` | `staging` |
+`production`) names the environment explicitly; when it is unset the Vite mode
+decides. The app reads env only through `$lib/config/public` and
+`$lib/server/config`.
+
+# Architecture
+
+Pages are MVC with dependency injection; [CLAUDE.md](./CLAUDE.md) is the full
+reference.
+
+- **Model** — `src/lib/api/repositories`: one repository per API resource (an
+  interface plus an HTTP implementation). Nothing else knows an API URL.
+- **Controller** — `+page.server.ts` / `+layout.server.ts` / `+server.ts`, and
+  `*.svelte.ts` controller classes for complex client state.
+- **View** — `.svelte` components.
+- **DI** — `hooks.server.ts` builds request-scoped `locals.services`; the root
+  layout provides the browser's services through Svelte context
+  (`getServices()`). Tests inject mocks the same way.
+
+# Testing
+
+```sh
+pnpm test:unit        # unit + component tests (watch mode)
+pnpm test:coverage    # one run with coverage (target ≥ 90 %, enforced in CI)
+pnpm test:e2e         # Playwright, against the local mock API in scripts/e2e-stack.mjs
+```
+
+Tests never touch real data: `src/lib/testing/setup.ts` refuses every network
+request a unit test did not fake, and the e2e stack serves its own mock API.
+
 ## Github README PROFILE CATEGORY
 
 - [x] [Dashboard]()
@@ -66,16 +110,13 @@ You can preview the production build with `npm run preview`.
 
 # List of Tools & Packages Used:
 
-- PWA Framework: Svelte, SvelteKit
-- UI Components: @cropwatchdevelopment/cwui, bits-ui, @revolist/svelte-datagrid
-- Styling: Tailwind CSS, @layerstack/tailwind, @tailwindcss/forms, @tailwindcss/typography
-- State Management: @stencil/store
-- Data Visualization: D3.js, ApexCharts
-- Mapping: Leaflet
-- PDF Generation: jspdf, pdfkit, html2canvas
-- Localization: svelte-i18n,
-- Backend & SSR: @supabase/supabase-js, @supabase/ssr
-- Routing & Testing: Vite, Vitest, Playwright, @playwright/test, @testing-library/svelte, @testing-library/jest-dom
+- PWA Framework: Svelte 5, SvelteKit 2 (Vercel adapter)
+- UI Components: @cropwatchdevelopment/cwui, @cropwatchdevelopment/qr-scanner
+- Styling: Tailwind CSS 4
+- Mapping: MapLibre GL JS
+- Localization: Paraglide (inlang)
+- Auth & push: @supabase/supabase-js, Firebase Cloud Messaging
+- Testing: Vitest (node + Playwright browser mode, v8 coverage), Playwright
 - Linting & Formatting: ESLint, Prettier, eslint-plugin-svelte, prettier-plugin-svelte, prettier-plugin-tailwindcss
 - Build Tools: pnpm, TypeScript, Vite
 

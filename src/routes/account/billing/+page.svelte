@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll, replaceState } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
+	import { page } from '$app/state';
+	import { onMount, tick } from 'svelte';
 	import { AppActionRow, AppNotice, AppPage } from '$lib/components/layout';
-	import { ApiService, ApiServiceError } from '$lib/api/api.service';
 	import type { BillingProduct } from '$lib/api/api.dtos';
-	import { readApiErrorMessage } from '$lib/api/api-error';
 	import { formatCurrency, formatDate } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwDropdownLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
+	import { getServices } from '$lib/services/context';
 	import {
 		CwButton,
 		CwCard,
@@ -19,6 +19,7 @@
 		useCwToast,
 		type CwTone
 	} from '@cropwatchdevelopment/cwui';
+	import { BillingController } from './billing-controller.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -26,21 +27,15 @@
 
 	const ACTIVE_STATUSES = ['active', 'trialing', 'past_due'];
 
-	// Seed the purchase quantity once at the minimum (captured, not reactive — see CLAUDE.md).
-	const initialMinimumSeats = (() => data.state.device.minimumSeats)();
-
-	let busy = $state(false);
-	let buyQty = $state(String(initialMinimumSeats));
-	let addQty = $state('1');
-
-	let deviceCancelOpen = $state(false);
-	let reportingCancelOpen = $state(false);
-	let assignOpen = $state(false);
-	let assignMode = $state<'assign' | 'move'>('assign');
-	let activeLicenseId = $state<number | null>(null);
-	let selectedDevEui = $state('');
-	let seatCancelOpen = $state(false);
-	let seatCancelLicenseId = $state<number | null>(null);
+	const controller = new BillingController({
+		billing: getServices().billing,
+		toast,
+		invalidateAll,
+		redirect: (url) => {
+			window.location.href = url;
+		},
+		device: () => data.state.device
+	});
 
 	const device = $derived(data.state.device);
 	const reporting = $derived(data.state.reporting);
@@ -95,12 +90,8 @@
 	const devicePriceLabel = $derived(priceLabel(data.products.device));
 	const reportingPriceLabel = $derived(priceLabel(data.products.reporting));
 
-	const addCount = $derived(Number.parseInt(addQty, 10));
-	const addValid = $derived(Number.isInteger(addCount) && addCount >= 1);
-	const addPreview = $derived(addValid ? deviceTotalLabel(addCount) : null);
-	const buyCount = $derived(Number.parseInt(buyQty, 10));
-	const buyValid = $derived(Number.isInteger(buyCount) && buyCount >= minimumSeats);
-	const buyPreview = $derived(buyValid ? deviceTotalLabel(buyCount) : null);
+	const addPreview = $derived(controller.addValid ? deviceTotalLabel(controller.addCount) : null);
+	const buyPreview = $derived(controller.buyValid ? deviceTotalLabel(controller.buyCount) : null);
 
 	function minorUnitFactor(currency: string): number {
 		try {
@@ -162,163 +153,6 @@
 		}
 	}
 
-	function apiClient(): ApiService {
-		return new ApiService({ authToken: data.authToken });
-	}
-
-	function showError(err: unknown) {
-		const payload = err instanceof ApiServiceError ? err.payload : err;
-		toast.add({ tone: 'danger', message: readApiErrorMessage(payload, m.generic_error()) });
-	}
-
-	async function refresh() {
-		await invalidateAll();
-		addQty = '1';
-	}
-
-	async function openPortal() {
-		busy = true;
-		try {
-			const { portalUrl } = await apiClient().openBillingPortal();
-			window.location.href = portalUrl;
-		} catch (err) {
-			showError(err);
-			busy = false;
-		}
-	}
-
-	async function buyDevices() {
-		if (!buyValid) return;
-		busy = true;
-		try {
-			const { checkoutUrl } = await apiClient().createDeviceCheckout({ quantity: buyCount });
-			window.location.href = checkoutUrl;
-		} catch (err) {
-			showError(err);
-			busy = false;
-		}
-	}
-
-	async function addLicenses() {
-		if (!addValid) return;
-		busy = true;
-		try {
-			await apiClient().changeDeviceSeats({ seats: device.seats + addCount });
-			toast.add({ tone: 'success', message: m.billing_add_licenses_success() });
-			await refresh();
-		} catch (err) {
-			showError(err);
-		} finally {
-			busy = false;
-		}
-	}
-
-	async function confirmDeviceCancel() {
-		busy = true;
-		try {
-			await apiClient().cancelDeviceSubscription({ atPeriodEnd: true });
-			toast.add({ tone: 'success', message: m.billing_device_canceled_toast() });
-			deviceCancelOpen = false;
-			await refresh();
-		} catch (err) {
-			showError(err);
-		} finally {
-			busy = false;
-		}
-	}
-
-	async function subscribeReporting() {
-		busy = true;
-		try {
-			const { checkoutUrl } = await apiClient().createReportingCheckout();
-			window.location.href = checkoutUrl;
-		} catch (err) {
-			showError(err);
-			busy = false;
-		}
-	}
-
-	async function confirmReportingCancel() {
-		busy = true;
-		try {
-			await apiClient().cancelReportingSubscription({ atPeriodEnd: true });
-			toast.add({ tone: 'success', message: m.billing_reporting_canceled_toast() });
-			reportingCancelOpen = false;
-			await refresh();
-		} catch (err) {
-			showError(err);
-		} finally {
-			busy = false;
-		}
-	}
-
-	function openAssign(licenseId: number) {
-		assignMode = 'assign';
-		activeLicenseId = licenseId;
-		selectedDevEui = '';
-		assignOpen = true;
-	}
-
-	function openMove(licenseId: number) {
-		assignMode = 'move';
-		activeLicenseId = licenseId;
-		selectedDevEui = '';
-		assignOpen = true;
-	}
-
-	async function confirmAssign() {
-		if (activeLicenseId == null || !selectedDevEui) return;
-		busy = true;
-		try {
-			if (assignMode === 'assign') {
-				await apiClient().assignLicense(activeLicenseId, selectedDevEui);
-				toast.add({ tone: 'success', message: m.billing_license_assigned() });
-			} else {
-				await apiClient().moveLicense(activeLicenseId, selectedDevEui);
-				toast.add({ tone: 'success', message: m.billing_license_moved() });
-			}
-			assignOpen = false;
-			await refresh();
-		} catch (err) {
-			showError(err);
-		} finally {
-			busy = false;
-		}
-	}
-
-	async function unassign(licenseId: number) {
-		busy = true;
-		try {
-			await apiClient().unassignLicense(licenseId);
-			toast.add({ tone: 'success', message: m.billing_license_unassigned_toast() });
-			await refresh();
-		} catch (err) {
-			showError(err);
-		} finally {
-			busy = false;
-		}
-	}
-
-	function openSeatCancel(licenseId: number) {
-		seatCancelLicenseId = licenseId;
-		seatCancelOpen = true;
-	}
-
-	async function confirmSeatCancel() {
-		if (seatCancelLicenseId == null) return;
-		busy = true;
-		try {
-			await apiClient().cancelLicense(seatCancelLicenseId);
-			toast.add({ tone: 'success', message: m.billing_seat_canceled_toast() });
-			seatCancelOpen = false;
-			await refresh();
-		} catch (err) {
-			showError(err);
-		} finally {
-			busy = false;
-		}
-	}
-
 	onMount(() => {
 		const params = new URLSearchParams(window.location.search);
 		const checkout = params.get('checkout');
@@ -327,7 +161,18 @@
 			invalidateAll();
 		} else if (checkout === 'cancel') {
 			toast.add({ tone: 'secondary', message: m.billing_checkout_canceled() });
+		} else {
+			return;
 		}
+		// Stripe's flag is for one message: drop it from the URL (keeping any other
+		// parameter) so a reload does not repeat it. After a tick: Stripe sends the
+		// buyer back with a full page load, and the router only starts once this has run.
+		const url = new URL(window.location.href);
+		url.searchParams.delete('checkout');
+		void tick().then(() =>
+			// eslint-disable-next-line svelte/no-navigation-without-resolve -- this page's own (resolved) URL
+			replaceState(url, page.state)
+		);
 	});
 </script>
 
@@ -335,7 +180,7 @@
 	<title>{m.billing_title()} - CropWatch</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="account-billing-back-button"
 		variant="secondary"
@@ -399,22 +244,22 @@
 						id="account-billing-add-licenses-input"
 						type="numeric"
 						label={m.billing_add_licenses_label()}
-						bind:value={addQty}
+						bind:value={controller.addQty}
 						min={1}
 					/>
 					<CwButton
 						id="account-billing-add-licenses-button"
 						variant="primary"
-						onclick={addLicenses}
-						loading={busy}
-						disabled={!addValid || device.cancelAtPeriodEnd}
+						onclick={() => controller.addLicenses()}
+						loading={controller.busy}
+						disabled={!controller.addValid || device.cancelAtPeriodEnd}
 					>
 						{m.billing_add_licenses_action()}
 					</CwButton>
 				</div>
 				{#if addPreview}
 					<p class="billing-muted">
-						{m.billing_add_licenses_preview({ count: addCount, amount: addPreview })}
+						{m.billing_add_licenses_preview({ count: controller.addCount, amount: addPreview })}
 					</p>
 				{/if}
 				<p class="billing-muted">{m.billing_reduce_hint()}</p>
@@ -423,8 +268,8 @@
 					<CwButton
 						id="account-billing-device-cancel-button"
 						variant="ghost"
-						onclick={() => (deviceCancelOpen = true)}
-						disabled={busy || device.cancelAtPeriodEnd}
+						onclick={() => (controller.deviceCancelOpen = true)}
+						disabled={controller.busy || device.cancelAtPeriodEnd}
 					>
 						{m.billing_device_cancel()}
 					</CwButton>
@@ -436,15 +281,15 @@
 						id="account-billing-buy-quantity-input"
 						type="numeric"
 						label={m.billing_buy_quantity()}
-						bind:value={buyQty}
+						bind:value={controller.buyQty}
 						min={minimumSeats}
 					/>
 					<CwButton
 						id="account-billing-buy-devices-button"
 						variant="primary"
-						onclick={buyDevices}
-						loading={busy}
-						disabled={!buyValid}
+						onclick={() => controller.buyDevices()}
+						loading={controller.busy}
+						disabled={!controller.buyValid}
 					>
 						{m.billing_buy_action()}
 					</CwButton>
@@ -452,7 +297,7 @@
 				<p class="billing-muted">{m.billing_device_min_notice({ min: minimumSeats })}</p>
 				{#if buyPreview}
 					<p class="billing-muted">
-						{m.billing_buy_preview({ count: buyCount, amount: buyPreview })}
+						{m.billing_buy_preview({ count: controller.buyCount, amount: buyPreview })}
 					</p>
 				{/if}
 			{/if}
@@ -493,8 +338,8 @@
 					<CwButton
 						id="account-billing-reporting-cancel-button"
 						variant="ghost"
-						onclick={() => (reportingCancelOpen = true)}
-						disabled={busy || reporting.cancelAtPeriodEnd}
+						onclick={() => (controller.reportingCancelOpen = true)}
+						disabled={controller.busy || reporting.cancelAtPeriodEnd}
 					>
 						{m.billing_reporting_cancel()}
 					</CwButton>
@@ -508,8 +353,8 @@
 						<CwButton
 							id="account-billing-reporting-subscribe-button"
 							variant="primary"
-							onclick={subscribeReporting}
-							loading={busy}
+							onclick={() => controller.subscribeReporting()}
+							loading={controller.busy}
 						>
 							{reportingPriceLabel
 								? `${m.billing_reporting_subscribe()} — ${reportingPriceLabel}${m.billing_per_month()}`
@@ -579,8 +424,6 @@
 										href={resolve('/locations/[location_id]', { location_id: String(locId) })}
 										>{lname}</a
 									>
-								{:else if lname}
-									<span class="billing-muted">{lname}</span>
 								{:else}
 									<span class="billing-muted">—</span>
 								{/if}
@@ -593,8 +436,8 @@
 									id={`account-billing-license-${license.id}-move-button`}
 									variant="secondary"
 									size="sm"
-									onclick={() => openMove(license.id)}
-									disabled={busy}
+									onclick={() => controller.openMove(license.id)}
+									disabled={controller.busy}
 								>
 									{m.billing_move()}
 								</CwButton>
@@ -602,8 +445,8 @@
 									id={`account-billing-license-${license.id}-unassign-button`}
 									variant="ghost"
 									size="sm"
-									onclick={() => unassign(license.id)}
-									disabled={busy}
+									onclick={() => controller.unassign(license.id)}
+									disabled={controller.busy}
 								>
 									{m.billing_unassign()}
 								</CwButton>
@@ -612,8 +455,8 @@
 									id={`account-billing-license-${license.id}-assign-button`}
 									variant="primary"
 									size="sm"
-									onclick={() => openAssign(license.id)}
-									disabled={busy}
+									onclick={() => controller.openAssign(license.id)}
+									disabled={controller.busy}
 								>
 									{m.billing_assign()}
 								</CwButton>
@@ -622,8 +465,8 @@
 										id={`account-billing-license-${license.id}-seat-cancel-button`}
 										variant="ghost"
 										size="sm"
-										onclick={() => openSeatCancel(license.id)}
-										disabled={busy}
+										onclick={() => controller.openSeatCancel(license.id)}
+										disabled={controller.busy}
 									>
 										{m.billing_seat_cancel()}
 									</CwButton>
@@ -641,51 +484,51 @@
 			<CwButton
 				id="account-billing-portal-button"
 				variant="ghost"
-				onclick={openPortal}
-				disabled={busy}>{m.billing_portal()}</CwButton
+				onclick={() => controller.openPortal()}
+				disabled={controller.busy}>{m.billing_portal()}</CwButton
 			>
 		</AppActionRow>
 	{/if}
 </AppPage>
 
-<CwDialog bind:open={deviceCancelOpen} title={m.billing_device_cancel_title()}>
+<CwDialog bind:open={controller.deviceCancelOpen} title={m.billing_device_cancel_title()}>
 	<p>{m.billing_device_cancel_body()}</p>
 	{#snippet actions()}
 		<CwButton
 			id="account-billing-device-cancel-dismiss-button"
 			variant="ghost"
-			onclick={() => (deviceCancelOpen = false)}
-			disabled={busy}
+			onclick={() => (controller.deviceCancelOpen = false)}
+			disabled={controller.busy}
 		>
 			{m.action_cancel()}
 		</CwButton>
 		<CwButton
 			id="account-billing-device-cancel-confirm-button"
 			variant="danger"
-			onclick={confirmDeviceCancel}
-			loading={busy}
+			onclick={() => controller.confirmDeviceCancel()}
+			loading={controller.busy}
 		>
 			{m.billing_device_cancel_confirm()}
 		</CwButton>
 	{/snippet}
 </CwDialog>
 
-<CwDialog bind:open={reportingCancelOpen} title={m.billing_reporting_cancel_title()}>
+<CwDialog bind:open={controller.reportingCancelOpen} title={m.billing_reporting_cancel_title()}>
 	<p>{m.billing_reporting_cancel_body()}</p>
 	{#snippet actions()}
 		<CwButton
 			id="account-billing-reporting-cancel-dismiss-button"
 			variant="ghost"
-			onclick={() => (reportingCancelOpen = false)}
-			disabled={busy}
+			onclick={() => (controller.reportingCancelOpen = false)}
+			disabled={controller.busy}
 		>
 			{m.action_cancel()}
 		</CwButton>
 		<CwButton
 			id="account-billing-reporting-cancel-confirm-button"
 			variant="danger"
-			onclick={confirmReportingCancel}
-			loading={busy}
+			onclick={() => controller.confirmReportingCancel()}
+			loading={controller.busy}
 		>
 			{m.billing_reporting_cancel_confirm()}
 		</CwButton>
@@ -693,10 +536,14 @@
 </CwDialog>
 
 <CwDialog
-	bind:open={assignOpen}
-	title={assignMode === 'assign' ? m.billing_assign_title() : m.billing_move_title()}
+	bind:open={controller.assignOpen}
+	title={controller.assignMode === 'assign' ? m.billing_assign_title() : m.billing_move_title()}
 >
-	{#if deviceOptions.length === 0}
+	{#if data.devicesLoadFailed}
+		<AppNotice tone="danger">
+			<p>{m.billing_devices_load_error()}</p>
+		</AppNotice>
+	{:else if deviceOptions.length === 0}
 		<AppNotice tone="neutral">
 			<p>{m.billing_assign_no_devices()}</p>
 		</AppNotice>
@@ -706,7 +553,7 @@
 			id="account-billing-assign-device-select"
 			label={m.billing_assign_device_label()}
 			options={deviceOptions}
-			bind:value={selectedDevEui}
+			bind:value={controller.selectedDevEui}
 			placeholder={m.billing_assign_device_label()}
 		/>
 	{/if}
@@ -714,39 +561,39 @@
 		<CwButton
 			id="account-billing-assign-dismiss-button"
 			variant="ghost"
-			onclick={() => (assignOpen = false)}
-			disabled={busy}
+			onclick={() => (controller.assignOpen = false)}
+			disabled={controller.busy}
 		>
 			{m.action_cancel()}
 		</CwButton>
 		<CwButton
 			id="account-billing-assign-confirm-button"
 			variant="primary"
-			onclick={confirmAssign}
-			loading={busy}
-			disabled={!selectedDevEui}
+			onclick={() => controller.confirmAssign()}
+			loading={controller.busy}
+			disabled={!controller.selectedDevEui}
 		>
-			{assignMode === 'assign' ? m.billing_assign() : m.billing_move()}
+			{controller.assignMode === 'assign' ? m.billing_assign() : m.billing_move()}
 		</CwButton>
 	{/snippet}
 </CwDialog>
 
-<CwDialog bind:open={seatCancelOpen} title={m.billing_seat_cancel_title()}>
+<CwDialog bind:open={controller.seatCancelOpen} title={m.billing_seat_cancel_title()}>
 	<p>{m.billing_seat_cancel_body()}</p>
 	{#snippet actions()}
 		<CwButton
 			id="account-billing-seat-cancel-dismiss-button"
 			variant="ghost"
-			onclick={() => (seatCancelOpen = false)}
-			disabled={busy}
+			onclick={() => (controller.seatCancelOpen = false)}
+			disabled={controller.busy}
 		>
 			{m.billing_seat_cancel_keep()}
 		</CwButton>
 		<CwButton
 			id="account-billing-seat-cancel-confirm-button"
 			variant="danger"
-			onclick={confirmSeatCancel}
-			loading={busy}
+			onclick={() => controller.confirmSeatCancel()}
+			loading={controller.busy}
 		>
 			{m.billing_seat_cancel_confirm()}
 		</CwButton>

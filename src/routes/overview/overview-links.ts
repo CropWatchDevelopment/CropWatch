@@ -1,7 +1,7 @@
 import { resolve } from '$app/paths';
 import type { useCwToast } from '@cropwatchdevelopment/cwui';
-import { readApiErrorMessage } from '$lib/api/api-error';
-import { ApiService } from '$lib/api/api.service';
+import { apiErrorMessage } from '$lib/api/api-error';
+import type { ReportRepository } from '$lib/api/repositories/reports.repository';
 import { m } from '$lib/paraglide/messages.js';
 
 /** The device page; null when the device has no location (the route needs one). */
@@ -21,13 +21,13 @@ export function deviceHref(
  * history dialog's flow). Failures are shown as a toast.
  */
 export async function openReport(
-	authToken: string | null | undefined,
+	reports: Pick<ReportRepository, 'getReportTemplateDownloadUrl'>,
 	devEui: string,
 	file: string,
 	toast: ReturnType<typeof useCwToast>
 ): Promise<void> {
 	try {
-		const response = await new ApiService({ authToken }).getReportTemplateDownloadUrl(devEui, file);
+		const response = await reports.getReportTemplateDownloadUrl(devEui, file);
 		if (typeof response.url !== 'string' || !response.url) {
 			toast.add({ tone: 'danger', message: m.reports_new_download_missing_url() });
 			return;
@@ -36,7 +36,7 @@ export async function openReport(
 	} catch (error) {
 		toast.add({
 			tone: 'danger',
-			message: readApiErrorMessage(error, m.reports_new_download_failed())
+			message: apiErrorMessage(error, m.reports_new_download_failed())
 		});
 	}
 }

@@ -40,6 +40,9 @@
 	let deviceGroup = $state(initial.deviceGroup ?? '');
 	let ttiName = $state(initial.ttiName ?? '');
 	let location_id = $state(String(initial.location_id ?? ''));
+	// Where the device is saved. Links follow it, never the unsaved dropdown
+	// choice; null when the device has no location (its links are disabled).
+	let savedLocationId = $derived(String(data.location_id ?? '') || null);
 	let sensorCertificates = $derived(data.sensorCertificates ?? []);
 	let supportsSensorCertificates = $derived(data.supportsSensorCertificates ?? false);
 
@@ -94,15 +97,17 @@
 	>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="device-settings-back-button"
 		variant="secondary"
 		size="sm"
+		disabled={!savedLocationId}
 		onclick={() =>
+			savedLocationId &&
 			goto(
 				resolve('/locations/[location_id]/devices/[dev_eui]', {
-					location_id,
+					location_id: savedLocationId,
 					dev_eui: data.devEui
 				})
 			)}>&larr; {m.devices_back_to_detail()}</CwButton
@@ -161,11 +166,12 @@
 						error={deviceNameError || undefined}
 					/>
 
+					<!-- group, tti_name and location_id are posted once each, by the hidden
+						 inputs, with the normalized value the server should store. -->
 					<div>
 						<CwInput
 							id="device-settings-group-input"
 							label={m.common_group()}
-							name="group"
 							required={false}
 							maxlength={DEVICE_GROUP_MAX_LENGTH}
 							bind:value={deviceGroup}
@@ -183,7 +189,6 @@
 						<CwInput
 							id="device-settings-tti-name-input"
 							label={m.devices_tti_device_id_label()}
-							name="tti_name"
 							required={false}
 							maxlength={TTI_DEVICE_ID_MAX_LENGTH}
 							placeholder={m.devices_tti_device_id_placeholder()}
@@ -203,7 +208,6 @@
 							labels={cwDropdownLabels()}
 							id="device-settings-location-select"
 							label={m.common_location()}
-							name="location_id"
 							options={[
 								{ label: m.devices_unassigned_location(), value: '' },
 								...(data.locations ?? []).map((loc) => ({
@@ -243,7 +247,7 @@
 	{#if supportsSensorCertificates}
 		<SensorCertificatesCard
 			devEui={data.devEui ?? ''}
-			locationId={location_id}
+			locationId={savedLocationId}
 			{sensorCertificates}
 		/>
 	{/if}

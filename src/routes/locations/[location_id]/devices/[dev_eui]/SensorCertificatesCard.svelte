@@ -15,7 +15,8 @@
 
 	interface Props {
 		devEui: string;
-		locationId: string;
+		/** The device's saved location; null when it has none (the download is then disabled). */
+		locationId: string | null;
 		sensorCertificates: SensorCertificateRow[];
 	}
 
@@ -23,6 +24,15 @@
 
 	let sensorOneCertificate = $derived(
 		sensorCertificates.find((target) => target.key === 'sensor') ?? null
+	);
+	// `resolve` throws on an empty param, so the link exists only for a device it can name.
+	let sensorCertificateHref = $derived(
+		sensorOneCertificate && locationId && devEui
+			? resolve(
+					'/locations/[location_id]/devices/[dev_eui]/settings/libellus-certificates/[sensor_key]',
+					{ location_id: locationId, dev_eui: devEui, sensor_key: sensorOneCertificate.key }
+				)
+			: null
 	);
 	const seriesCertificateDownloadPath = asset(
 		'/files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf'
@@ -56,14 +66,7 @@
 				<form
 					id="device-certificates-sensor-form"
 					method="GET"
-					action={resolve(
-						'/locations/[location_id]/devices/[dev_eui]/settings/libellus-certificates/[sensor_key]',
-						{
-							location_id: locationId,
-							dev_eui: devEui,
-							sensor_key: sensorOneCertificate.key
-						}
-					)}
+					action={sensorCertificateHref}
 					target="_blank"
 					class="certificate-download-form"
 				>
@@ -72,7 +75,8 @@
 						type="submit"
 						variant="primary"
 						size="sm"
-						disabled={Boolean(sensorOneCertificate.downloadDisabledReason)}
+						disabled={!sensorCertificateHref ||
+							Boolean(sensorOneCertificate.downloadDisabledReason)}
 					>
 						<Icon src={DOWNLOAD_ICON} />
 					</CwButton>

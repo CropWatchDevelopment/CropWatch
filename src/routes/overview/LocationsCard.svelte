@@ -24,7 +24,8 @@
 	class={className}
 >
 	<ul class="locs">
-		{#each shown as location (location.locationId ?? 'none')}
+		<!-- Devices without a location can come in more than one group: key those by position. -->
+		{#each shown as location, index (location.locationId ?? `none-${index}`)}
 			{@const healthy = location.online === location.total}
 			<li class="loc">
 				<div class="loc__row">

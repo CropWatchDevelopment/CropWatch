@@ -3,6 +3,7 @@ import {
 	buildPermanentRelayPayload,
 	buildRelayPayload,
 	buildTimedRelayPayload,
+	bytesToHex,
 	hexToBase64
 } from './relay-payload';
 
@@ -37,6 +38,20 @@ describe('buildTimedRelayPayload', () => {
 	it('throws on a non-positive latch time', () => {
 		expect(() => buildTimedRelayPayload('ro1_on_timed', 0)).toThrow();
 	});
+
+	it('throws on a latch time that is not a number', () => {
+		expect(() => buildTimedRelayPayload('ro1_on_timed', Number.NaN)).toThrow(
+			'Timed relay payload requires a positive latch time.'
+		);
+	});
+
+	it('accepts the largest 4-byte latch time and rejects anything longer', () => {
+		// 0xffffffff ms is the 4-byte maximum; 4294967.295 s fits, 4294968 s does not.
+		expect(buildTimedRelayPayload('ro1_on_timed', 4294967.295)).toBe('050110FFFFFFFF');
+		expect(() => buildTimedRelayPayload('ro1_on_timed', 4294968)).toThrow(
+			'Timed relay payload exceeds 4-byte latch time limit.'
+		);
+	});
 });
 
 describe('buildPermanentRelayPayload', () => {
@@ -45,6 +60,17 @@ describe('buildPermanentRelayPayload', () => {
 		expect(buildPermanentRelayPayload('ro1_off_permanent')).toBe('030011');
 		expect(buildPermanentRelayPayload('ro2_on_permanent')).toBe('031101');
 		expect(buildPermanentRelayPayload('ro2_off_permanent')).toBe('031100');
+	});
+
+	it('has no permanent payload for a timed action', () => {
+		expect(buildPermanentRelayPayload('ro1_on_timed')).toBe('');
+	});
+});
+
+describe('bytesToHex', () => {
+	it('writes two upper-case hex digits per byte', () => {
+		expect(bytesToHex([0, 10, 255])).toBe('000AFF');
+		expect(bytesToHex([])).toBe('');
 	});
 });
 
@@ -63,5 +89,9 @@ describe('hexToBase64', () => {
 		expect(hexToBase64('05011000003A98')).toBe('BQEQAAA6mA==');
 		expect(hexToBase64('05010100003A98')).toBe('BQEBAAA6mA==');
 		expect(hexToBase64('05011100003A98')).toBe('BQERAAA6mA==');
+	});
+
+	it('encodes an empty payload as an empty string', () => {
+		expect(hexToBase64('')).toBe('');
 	});
 });

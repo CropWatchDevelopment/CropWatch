@@ -18,6 +18,9 @@
 	import Analytics from '$lib/components/Analytics.svelte';
 	import WhatsNewDialog from '$lib/components/whats-new/WhatsNewDialog.svelte';
 	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
+	import { readPublicConfig } from '$lib/config/public';
+	import { createClientServices } from '$lib/services/client';
+	import { setServices } from '$lib/services/context';
 	import { initForegroundMessages, refreshPushToken } from '$lib/push/push-notifications';
 	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
 	import { buildLoginPath } from '$lib/utils/auth-redirect';
@@ -57,6 +60,13 @@
 	const app = $state(createAppContext());
 
 	setAppContext(app);
+	// The browser's composition root: components read and write data through
+	// these (getServices()), always as the current session.
+	const services = createClientServices({
+		config: readPublicConfig(),
+		authToken: () => app.accessToken
+	});
+	setServices(services);
 
 	function syncAppFromPageData() {
 		const routeData = page.data as AppLayoutData;
@@ -120,7 +130,7 @@
 		if (!accessToken || pushInitialized) return;
 		pushInitialized = true;
 
-		void refreshPushToken(accessToken);
+		void refreshPushToken(services.push);
 		void initForegroundMessages(({ title, body }) => {
 			toast.add({
 				tone: 'warning',

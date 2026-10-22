@@ -69,7 +69,7 @@
 		{#if kpis.topClassKey}
 			<p class="traffic-kpis__value">
 				<span class="traffic-kpis__emoji" aria-hidden="true">{metricEmoji(kpis.topClassKey)}</span>
-				{formatNumber(kpis.classTotals[kpis.topClassKey] ?? 0)}
+				{formatNumber(kpis.classTotals[kpis.topClassKey])}
 			</p>
 			<p class="traffic-kpis__hint">{metricLabelText(kpis.topClassKey)}</p>
 		{:else}

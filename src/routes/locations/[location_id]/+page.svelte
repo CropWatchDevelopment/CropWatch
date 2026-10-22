@@ -2,19 +2,14 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
 	import {
-		attachCwDeviceRefreshVisibility,
-		createCwDeviceRefreshScheduler,
 		CwButton,
 		CwCard,
 		CwCopy,
 		CwDataTable,
 		type CwColumnDef,
-		type CwDeviceFreshness,
-		type CwDeviceRefreshScheduler,
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { cwCopyLabels, cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { goto } from '$app/navigation';
@@ -33,8 +28,10 @@
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale } from '$lib/paraglide/runtime.js';
+	import { getServices } from '$lib/services/context';
 	import type { PageProps } from './$types';
 	import LocationMap from './LocationMap.svelte';
+	import { LocationLiveReadings } from './location-live-readings.svelte';
 	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
 	import {
 		currentSignal,
@@ -44,7 +41,6 @@
 		classifyHealth,
 		formatRelative,
 		newestTimestamp,
-		readingTime,
 		summarizeHealth,
 		toFiniteNumber,
 		type DeviceHealth,
@@ -55,105 +51,23 @@
 
 	let { data }: PageProps = $props();
 	let loading = $state(false);
-	let refreshing = $state(false);
 	let healthFilter = $state<HealthFilter>('all');
 	// Ticks so "x minutes ago" and the load-time offline check stay current.
 	let now = $state(Date.now());
 
 	const app = getAppContext();
 	const locale = getLocale();
+	const { dashboard } = getServices();
 
-	// Live freshness and latest reading per device, driven by the refresh
-	// scheduler: each device is refetched when its upload window expires.
-	let freshnessByDevEui = $state<Record<string, CwDeviceFreshness>>({});
-	let lastSeenByDevEui = $state<Record<string, string>>({});
-	let latestByDevEui = $state<Record<string, Record<string, unknown>>>({});
-	let scheduler: CwDeviceRefreshScheduler | null = null;
+	// Live freshness and latest reading per device (see LocationLiveReadings).
+	const live = new LocationLiveReadings({ dashboard, isSignedIn: () => Boolean(app.accessToken) });
 
 	$effect(() => {
 		const timer = setInterval(() => (now = Date.now()), 30_000);
 		return () => clearInterval(timer);
 	});
 
-	$effect(() => {
-		const authToken = app.accessToken;
-		const devices = data.allLocationDevices ?? [];
-		if (!authToken || devices.length === 0) return;
-
-		const api = new ApiService({ authToken });
-		const instance = createCwDeviceRefreshScheduler({
-			defaultIntervalMinutes: 10,
-			fetcher: async (devEui) => {
-				const latest = await api.getDashboardDeviceLatest(devEui);
-				if (!latest) return null;
-				return { lastSeenAt: readingTime(latest), data: latest };
-			},
-			onData: (devEui, result) => {
-				if (typeof result.lastSeenAt === 'string') {
-					lastSeenByDevEui[devEui] = result.lastSeenAt;
-				}
-				if (result.data && typeof result.data === 'object') {
-					latestByDevEui[devEui] = result.data as Record<string, unknown>;
-				}
-			},
-			onStateChange: (devEui, state) => {
-				freshnessByDevEui[devEui] = state;
-			}
-		});
-
-		instance.trackAll(
-			devices.map((device) => ({
-				id: String(device.dev_eui ?? ''),
-				lastSeenAt:
-					typeof device.last_data_updated_at === 'string' ? device.last_data_updated_at : null,
-				uploadIntervalMinutes: toFiniteNumber(device.upload_interval)
-			}))
-		);
-		// The scheduler only fetches devices whose upload window has passed, so
-		// load every device's latest row once for the readings columns.
-		for (const device of devices) void loadLatest(api, instance, String(device.dev_eui ?? ''));
-
-		scheduler = instance;
-		const detachVisibility = attachCwDeviceRefreshVisibility(instance);
-		return () => {
-			detachVisibility();
-			instance.destroy();
-			scheduler = null;
-		};
-	});
-
-	// Reports through reportData rather than refreshNow: the scheduler treats a
-	// refetch that returns the same reading as "no new data" and marks it stale.
-	async function loadLatest(
-		api: ApiService,
-		instance: CwDeviceRefreshScheduler,
-		devEui: string
-	): Promise<void> {
-		const latest = await api.getDashboardDeviceLatest(devEui).catch(() => null);
-		if (!latest) return;
-		latestByDevEui[devEui] = latest;
-		const seenAt = readingTime(latest);
-		if (seenAt) {
-			lastSeenByDevEui[devEui] = seenAt;
-			instance.reportData(devEui, seenAt);
-		}
-	}
-
-	async function refreshAll() {
-		const instance = scheduler;
-		if (!instance || !app.accessToken || refreshing) return;
-		refreshing = true;
-		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			await Promise.all(
-				(data.allLocationDevices ?? []).map((device) =>
-					loadLatest(api, instance, String(device.dev_eui ?? ''))
-				)
-			);
-		} finally {
-			refreshing = false;
-		}
-	}
+	$effect(() => live.start(data.allLocationDevices ?? []));
 
 	const selectedLocationId = $derived(page.params.location_id);
 	const selectedLocationName = $derived((page.url.searchParams.get('location_name') ?? '').trim());
@@ -177,10 +91,10 @@
 	const deviceRows = $derived.by(() =>
 		(data.allLocationDevices ?? []).map((device): LocationDeviceRow => {
 			const devEui = String(device.dev_eui ?? '');
-			const latest = latestByDevEui[devEui];
+			const latest = live.latestByDevEui[devEui];
 			// Never let a fetched reading move last-seen behind what the device row says.
 			const lastSeen = newestTimestamp(
-				lastSeenByDevEui[devEui] ?? null,
+				live.lastSeenByDevEui[devEui] ?? null,
 				typeof device.last_data_updated_at === 'string' ? device.last_data_updated_at : null
 			);
 			// Missing before the API sends gateway_signals: unknown, not "never heard".
@@ -199,7 +113,7 @@
 				group: typeof device.group === 'string' && device.group.trim() ? device.group : null,
 				health: classifyHealth(
 					lastSeen,
-					freshnessByDevEui[devEui],
+					live.freshnessByDevEui[devEui],
 					toFiniteNumber(device.upload_interval),
 					now
 				),
@@ -364,7 +278,7 @@
 	}
 </script>
 
-<AppPage width="xl">
+<AppPage>
 	<div>
 		<CwButton
 			id="location-back-button"
@@ -420,9 +334,9 @@
 			<CwButton
 				id="location-refresh-button"
 				variant="secondary"
-				loading={refreshing}
+				loading={live.refreshing}
 				disabled={summary.total === 0}
-				onclick={refreshAll}
+				onclick={() => live.refreshAll(data.allLocationDevices ?? [])}
 			>
 				<Icon src={REFRESH_ICON} alt="" />
 				{m.location_detail_refresh()}

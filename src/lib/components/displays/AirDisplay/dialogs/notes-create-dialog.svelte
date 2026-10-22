@@ -2,6 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { applyAction, deserialize } from '$app/forms';
 	import type { ActionResult } from '@sveltejs/kit';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import {
 		CwButton,
 		CwDialog,
@@ -36,11 +37,16 @@
 	let saving = $state(false);
 	let formattedCreatedAt = $derived(formatDateTime(row.created_at));
 
+	/** The message an action result carries: its data's, or an error result's own. */
 	function getResultMessage(result: ActionResult): string | null {
-		if (result.type !== 'success' && result.type !== 'failure') return null;
-		const data = result.data;
-		if (!data || typeof data !== 'object') return null;
-		const message = (data as Record<string, unknown>).message;
+		const source =
+			result.type === 'success' || result.type === 'failure'
+				? result.data
+				: result.type === 'error'
+					? result.error
+					: null;
+		if (!source || typeof source !== 'object') return null;
+		const message = (source as Record<string, unknown>).message;
 		return typeof message === 'string' && message.trim().length > 0 ? message.trim() : null;
 	}
 
@@ -74,11 +80,8 @@
 	}
 
 	async function handleSaveNote() {
-		if (saving) return false;
-
 		const trimmedNote = noteText.trim();
 		const trimmedTitle = noteTitle.trim();
-		if (!trimmedNote) return false;
 
 		const formData = new FormData();
 		formData.append('title', trimmedTitle);
@@ -90,36 +93,40 @@
 		saving = true;
 
 		try {
-			const response = await fetch('?/saveDataNote', {
-				method: 'POST',
-				body: formData
-			});
-			const result = deserialize(await response.text());
-			await applyAction(result);
-
-			const message = getResultMessage(result);
-			if (result.type === 'success') {
-				toast.add({
-					tone: 'success',
-					message: message ?? m.devices_save_note_success()
+			let result: ActionResult;
+			try {
+				const response = await fetch('?/saveDataNote', {
+					method: 'POST',
+					body: formData
 				});
-				await onSaved?.(createOptimisticNote(trimmedTitle, trimmedNote, includeInReport));
-				closeDialog();
-				return true;
+				result = deserialize(await response.text());
+				// Follows a redirect; an error result shows the error page.
+				await applyAction(result);
+			} catch (error) {
+				console.error('Failed to save air note:', error);
+				toast.add({
+					tone: 'danger',
+					message: apiErrorMessage(error, m.devices_save_note_failed())
+				});
+				return;
 			}
 
-			toast.add({
-				tone: 'danger',
-				message: message ?? m.devices_save_note_failed()
-			});
-			return false;
-		} catch (error) {
-			console.error('Failed to save air note:', error);
-			toast.add({
-				tone: 'danger',
-				message: error instanceof Error ? error.message : m.devices_save_note_failed()
-			});
-			return false;
+			if (result.type === 'redirect') return;
+
+			const message = getResultMessage(result);
+			if (result.type !== 'success') {
+				toast.add({ tone: 'danger', message: message ?? m.devices_save_note_failed() });
+				return;
+			}
+
+			toast.add({ tone: 'success', message: message ?? m.devices_save_note_success() });
+			try {
+				await onSaved?.(createOptimisticNote(trimmedTitle, trimmedNote, includeInReport));
+			} catch (error) {
+				// The note is saved: a failing follow-up (e.g. a refresh) does not undo that.
+				console.error('Saved the air note, but its follow-up failed:', error);
+			}
+			closeDialog();
 		} finally {
 			saving = false;
 		}

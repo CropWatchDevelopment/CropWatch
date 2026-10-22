@@ -1,3 +1,5 @@
+import { m } from '$lib/paraglide/messages.js';
+
 export interface IPasswordValidationResult {
 	hasMinLength: boolean;
 	hasUpperCase: boolean;
@@ -5,10 +7,15 @@ export interface IPasswordValidationResult {
 	hasNumber: boolean;
 	hasSymbol: boolean;
 	isValid: boolean;
+	/** The unmet requirements, localized (the same wording as the requirement list). */
 	errors: string[];
 }
 
-// Password must be at least 6 characters long, and contain at least one uppercase letter, one lowercase letter, one number, and one symbol.
+/**
+ * The password policy, shared by the forms (live requirement list) and their
+ * server actions (which enforce it): at least 6 characters, with an uppercase
+ * letter, a lowercase letter, a number and a symbol.
+ */
 export function isStrongPassword(password: string): IPasswordValidationResult {
 	const result: IPasswordValidationResult = {
 		hasMinLength: password.length >= 6,
@@ -27,21 +34,11 @@ export function isStrongPassword(password: string): IPasswordValidationResult {
 		result.hasNumber &&
 		result.hasSymbol;
 
-	if (!result.hasMinLength) {
-		result.errors.push('Password must be at least 6 characters long.');
-	}
-	if (!result.hasUpperCase) {
-		result.errors.push('Password must contain at least one uppercase letter.');
-	}
-	if (!result.hasLowerCase) {
-		result.errors.push('Password must contain at least one lowercase letter.');
-	}
-	if (!result.hasNumber) {
-		result.errors.push('Password must contain at least one number.');
-	}
-	if (!result.hasSymbol) {
-		result.errors.push('Password must contain at least one symbol.');
-	}
+	if (!result.hasMinLength) result.errors.push(m.auth_password_requirement_length());
+	if (!result.hasUpperCase) result.errors.push(m.auth_password_requirement_uppercase());
+	if (!result.hasLowerCase) result.errors.push(m.auth_password_requirement_lowercase());
+	if (!result.hasNumber) result.errors.push(m.auth_password_requirement_number());
+	if (!result.hasSymbol) result.errors.push(m.auth_password_requirement_symbol());
 
 	return result;
 }

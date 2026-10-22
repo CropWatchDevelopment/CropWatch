@@ -1,7 +1,6 @@
 import { fail } from '@sveltejs/kit';
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import type { UpdatePreferencesRequest } from '$lib/api/api.dtos';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { getLocale } from '$lib/paraglide/runtime';
 import {
@@ -18,8 +17,7 @@ import {
 	getDistanceUnitOptions,
 	getAreaUnitOptions,
 	getDateFormatOptions,
-	getTimeFormatOptions,
-	getDecimalSeparatorOptions
+	getTimeFormatOptions
 } from '$lib/units';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -42,11 +40,6 @@ type PreferenceDraft = {
 	areaUnit: string;
 	dateFormat: string;
 	timeFormat: string;
-	decimalSeparator: string;
-	compactDashboard: boolean;
-	showDerivedMetrics: boolean;
-	includeUnitsInExports: boolean;
-	highlightAlertThresholds: boolean;
 };
 
 const readString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
@@ -69,15 +62,10 @@ const createDefaultPreferences = (locale: string): PreferenceDraft => ({
 	distanceUnit: 'km',
 	areaUnit: 'hectares',
 	dateFormat: 'yyyy_mm_dd',
-	timeFormat: '24h',
-	decimalSeparator: 'dot',
-	compactDashboard: false,
-	showDerivedMetrics: true,
-	includeUnitsInExports: true,
-	highlightAlertThresholds: true
+	timeFormat: '24h'
 });
 
-export const load: PageServerLoad = async ({ parent, fetch }) => {
+export const load: PageServerLoad = async ({ parent, locals }) => {
 	const { authToken, session } = await parent();
 	const locale = getLocale();
 	const defaults = createDefaultPreferences(locale);
@@ -85,8 +73,7 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
 	let preferences = defaults;
 	if (authToken) {
 		try {
-			const api = new ApiService({ fetchFn: fetch, authToken });
-			const prefs = await api.getPreferences();
+			const prefs = await locals.services.account.getPreferences();
 			preferences = {
 				...defaults,
 				theme: (prefs.theme as PreferenceDraft['theme']) ?? defaults.theme,
@@ -130,14 +117,13 @@ export const load: PageServerLoad = async ({ parent, fetch }) => {
 			distance: getDistanceUnitOptions(),
 			area: getAreaUnitOptions(),
 			dateFormat: getDateFormatOptions(),
-			timeFormat: getTimeFormatOptions(),
-			decimalSeparator: getDecimalSeparatorOptions()
+			timeFormat: getTimeFormatOptions()
 		}
 	};
 };
 
 export const actions: Actions = {
-	updatePreferences: async ({ request, locals, fetch }) => {
+	updatePreferences: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
 
@@ -162,14 +148,11 @@ export const actions: Actions = {
 			time_format: readString(formData.get('timeFormat')) || null
 		} as UpdatePreferencesRequest;
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
 		try {
-			await api.updatePreferences(payload);
+			await locals.services.account.updatePreferences(payload);
 			return { success: true };
 		} catch (err) {
-			const errorPayload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, { error: readApiErrorMessage(errorPayload, m.generic_error()) });
+			return fail(apiErrorStatus(err), { error: apiErrorMessage(err, m.generic_error()) });
 		}
 	}
 };

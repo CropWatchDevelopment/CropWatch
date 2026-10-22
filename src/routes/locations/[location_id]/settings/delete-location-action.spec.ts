@@ -1,6 +1,9 @@
 import { isRedirect } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { m } from '$lib/paraglide/messages.js';
+import { createServerServices } from '$lib/server/services';
+import { testPublicConfig } from '$lib/testing/http';
+import { testServerConfig } from '$lib/testing/server';
 import { deleteLocation } from './location-settings-actions.server';
 
 type ApiCall = { method: string; url: string };
@@ -8,7 +11,7 @@ type ApiCall = { method: string; url: string };
 const json = (body: unknown, status = 200) =>
 	new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
-/** A deleteLocation event against a fake API that knows location 8 as "Greenhouse A". */
+/** A deleteLocation event, with real services over a fake API that knows location 8 as "Greenhouse A". */
 function deleteEvent(form: Record<string, string>, deleteStatus = 200) {
 	const calls: ApiCall[] = [];
 	const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -29,13 +32,22 @@ function deleteEvent(form: Record<string, string>, deleteStatus = 200) {
 				);
 	});
 
+	const services = createServerServices({
+		fetch,
+		authToken: () => 'jwt-token',
+		config: testPublicConfig(),
+		serverConfig: testServerConfig()
+	});
 	const event = {
 		request: new Request('http://localhost/locations/8/settings?/deleteLocation', {
 			method: 'POST',
 			body: new URLSearchParams(form)
 		}),
-		locals: { jwtString: 'jwt-token' },
-		fetch,
+		locals: {
+			jwtString: 'jwt-token',
+			services,
+			config: { public: testPublicConfig(), server: testServerConfig() }
+		},
 		params: { location_id: '8' }
 	};
 	return { event: event as unknown as Parameters<typeof deleteLocation>[0], calls };
@@ -82,6 +94,10 @@ describe('deleteLocation action', () => {
 		expect(isRedirect(thrown)).toBe(true);
 		expect(thrown).toMatchObject({ status: 303, location: '/locations' });
 		expect(deletes(calls)).toHaveLength(1);
+		expect(calls).toEqual([
+			{ method: 'GET', url: 'https://api.cropwatch.test/locations/8' },
+			{ method: 'DELETE', url: 'https://api.cropwatch.test/locations/8' }
+		]);
 	});
 
 	it('explains that devices remain when the API refuses with 409', async () => {

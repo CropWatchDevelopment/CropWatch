@@ -2,13 +2,17 @@
 	import { onMount } from 'svelte';
 	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { m } from '$lib/paraglide/messages.js';
-	import { ApiService, ApiServiceError } from '$lib/api/api.service';
+	import { ApiError } from '$lib/api/api-error';
 	import type { AccountRemovalChallengeDto } from '$lib/api/api.dtos';
+	import { getServices } from '$lib/services/context';
 	import { CwButton, CwCard, CwInput, CwTextArea } from '@cropwatchdevelopment/cwui';
 
 	// Deliberately public and client-driven: anonymous API calls are rate-limited
 	// per client IP, which only works when the browser talks to the API directly
-	// (SSR would pool every visitor behind Vercel's shared egress IPs).
+	// (SSR would pool every visitor behind Vercel's shared egress IPs). These two
+	// endpoints never carry a session token.
+	const { account } = getServices();
+
 	let challenge = $state<AccountRemovalChallengeDto | null>(null);
 	let challengeFailed = $state(false);
 	let email = $state('');
@@ -21,7 +25,7 @@
 	async function loadChallenge(): Promise<void> {
 		challengeFailed = false;
 		try {
-			challenge = await new ApiService({}).getAccountRemovalChallenge();
+			challenge = await account.getAccountRemovalChallenge();
 		} catch {
 			// The human check is mandatory: without a server challenge the form is
 			// not rendered at all (see template) — never a submit path around it.
@@ -49,7 +53,7 @@
 		submitting = true;
 		errorMessage = null;
 		try {
-			await new ApiService({}).requestAccountRemoval({
+			await account.requestAccountRemoval({
 				email: email.trim(),
 				message: message.trim() || undefined,
 				answer: Number.parseInt(answer.trim(), 10),
@@ -57,9 +61,9 @@
 			});
 			submitted = true;
 		} catch (error) {
-			if (error instanceof ApiServiceError && error.status === 400) {
+			if (error instanceof ApiError && error.status === 400) {
 				errorMessage = m.account_removal_error_answer();
-			} else if (error instanceof ApiServiceError && error.status === 429) {
+			} else if (error instanceof ApiError && error.status === 429) {
 				errorMessage = m.account_removal_error_rate_limited();
 			} else {
 				errorMessage = m.account_removal_error_generic();
@@ -76,7 +80,7 @@
 	<title>{m.account_removal_title()} - CropWatch</title>
 </svelte:head>
 
-<AppPage width="md">
+<AppPage>
 	<CwCard title={m.account_removal_title()} subtitle={m.account_removal_subtitle()} elevated>
 		<AppFormStack padded>
 			{#if submitted}

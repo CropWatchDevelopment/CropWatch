@@ -51,7 +51,6 @@ async function readHeaderMetrics(page: Page) {
 			return { x, y, top, right, bottom, left, width, height };
 		}
 
-		const utilityGroup = document.querySelector<HTMLElement>('.app-header__utility-group');
 		const navUtilities = document.querySelector<HTMLElement>('.app-sidebar__mobile-utilities');
 
 		return {
@@ -61,10 +60,6 @@ async function readHeaderMetrics(page: Page) {
 			actions: readRect('.app-header .cw-header__actions'),
 			profileTrigger: readRect('.app-header .cw-profile-menu__trigger'),
 			profileDropdown: readRect('.cw-profile-menu__dropdown'),
-			utilityGroupVisible:
-				!!utilityGroup &&
-				getComputedStyle(utilityGroup).display !== 'none' &&
-				utilityGroup.getBoundingClientRect().width > 0,
 			navUtilitiesVisible:
 				!!navUtilities &&
 				getComputedStyle(navUtilities).display !== 'none' &&
@@ -111,7 +106,6 @@ for (const viewport of [
 			width: initialMetrics.viewportWidth,
 			height: initialMetrics.viewportHeight
 		});
-		expect(initialMetrics.utilityGroupVisible).toBe(false);
 
 		await page.locator('.cw-profile-menu__trigger').click();
 
@@ -152,7 +146,6 @@ for (const viewport of [
 			width: initialMetrics.viewportWidth,
 			height: initialMetrics.viewportHeight
 		});
-		expect(initialMetrics.utilityGroupVisible).toBe(viewport.name === 'desktop');
 
 		await page.locator('.cw-profile-menu__trigger').click();
 

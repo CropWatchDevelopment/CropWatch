@@ -17,13 +17,13 @@
 		type CwDeviceRefreshResult,
 		type CwDeviceRefreshScheduler
 	} from '@cropwatchdevelopment/cwui';
-	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardLocationGroup, DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { isDisplayableColumn, labelFor, sensorStateIcon } from '$lib/sensor-labels';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { cwLocationCardLabels, cwSensorCardLabels } from '$lib/i18n/cwuiLabels';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -43,6 +43,7 @@
 	let { filters, cardLayout = 'grid' }: { filters: Filters; cardLayout?: CardLayout } = $props();
 
 	const app = getAppContext();
+	const { dashboard } = getServices();
 
 	let groups = $state<DashboardLocationGroup[]>([]);
 	let total = $state(0);
@@ -89,8 +90,7 @@
 		reloading = !!opts.reset;
 		const skip = opts.reset ? 0 : groups.length;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const page = await api.getDashboardLocations(buildQuery({ skip, take: PAGE_SIZE }));
+			const page = await dashboard.getDashboardLocations(buildQuery({ skip, take: PAGE_SIZE }));
 			groups = opts.reset ? page.groups : [...groups, ...page.groups];
 			total = page.total;
 			preloadOpenCardDetails(page.groups);
@@ -107,8 +107,7 @@
 		if (groups.length === 0) return;
 		refreshing = true;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const page = await api.getDashboardLocations(
+			const page = await dashboard.getDashboardLocations(
 				buildQuery({ skip: 0, take: Math.max(groups.length, PAGE_SIZE) })
 			);
 
@@ -157,8 +156,7 @@
 	/** Per-device refetch for the scheduler: the latest full data row. */
 	async function fetchLatestForRefresh(devEui: string): Promise<CwDeviceRefreshResult | null> {
 		if (!app.accessToken) return null;
-		const api = new ApiService({ authToken: app.accessToken });
-		const latest = await api.getDashboardDeviceLatest(devEui);
+		const latest = await dashboard.getDashboardDeviceLatest(devEui);
 		if (!latest) return null;
 		const createdAt = typeof latest.created_at === 'string' ? latest.created_at : null;
 		return { lastSeenAt: createdAt, data: latest };
@@ -211,8 +209,7 @@
 		if (detailsByDevEui[devEui] !== undefined) return;
 		detailsByDevEui[devEui] = 'loading';
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const latest = await api.getDashboardDeviceLatest(devEui);
+			const latest = await dashboard.getDashboardDeviceLatest(devEui);
 			detailsByDevEui[devEui] = latest ?? {};
 		} catch (err) {
 			console.error(`Failed to load details for ${devEui}`, err);
@@ -320,7 +317,7 @@
 		});
 	});
 
-	const GoToDetails = (row: DashboardRow) => {
+	const GoToDetails = async (row: DashboardRow) => {
 		if (!row.location?.location_id) {
 			console.warn('Device has no location, cannot go to details', { devEui: row.dev_eui });
 			return;
@@ -330,11 +327,17 @@
 		const params = new SvelteURLSearchParams({ backTo: '/' });
 		if (filters.locationGroup) params.set('filter', filters.locationGroup);
 		loading = true;
-		goto(
-			resolve(
-				`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}` as '/'
-			)
-		);
+		try {
+			await goto(
+				resolve(
+					`/locations/${row.location.location_id}/devices/${row.dev_eui}?${params.toString()}` as '/'
+				)
+			);
+		} finally {
+			// A navigation that fails, or is cancelled or replaced, leaves the
+			// dashboard on screen: it must not stay stuck loading.
+			loading = false;
+		}
 	};
 
 	let removeForegroundListener: (() => void) | null = null;

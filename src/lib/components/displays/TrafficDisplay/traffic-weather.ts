@@ -5,7 +5,6 @@
  */
 import type { CwTone } from '@cropwatchdevelopment/cwui';
 import { formatCwNumber } from '@cropwatchdevelopment/cwui';
-import { SvelteMap } from 'svelte/reactivity';
 import { m } from '$lib/paraglide/messages.js';
 import { isRecord, readNumber, readString, shiftDayKey, toDayKey } from './traffic-data';
 
@@ -165,7 +164,13 @@ function normalizeWeatherPayload(payload: unknown): Record<string, WeatherDaySum
 	return result;
 }
 
-const weatherCache = new SvelteMap<string, Record<string, WeatherDaySummary>>();
+/**
+ * Each range's answer, kept from the moment it is asked for, so asking again
+ * while it is on the way shares that one request. Deliberately not reactive:
+ * callers read it inside effects, and a reactive read would re-run them (and
+ * ask again) whenever another range lands.
+ */
+const weatherCache = new Map<string, Promise<Record<string, WeatherDaySummary>>>();
 
 export async function fetchWeatherByRange(
 	startDate: Date,
@@ -181,6 +186,19 @@ export async function fetchWeatherByRange(
 		return cached;
 	}
 
+	const request = requestWeatherByRange(startDay, endDay, latitude, longitude);
+	weatherCache.set(cacheKey, request);
+	// A failure is not kept: the next call asks again.
+	request.catch(() => weatherCache.delete(cacheKey));
+	return request;
+}
+
+async function requestWeatherByRange(
+	startDay: string,
+	endDay: string,
+	latitude: number,
+	longitude: number
+): Promise<Record<string, WeatherDaySummary>> {
 	const todayKey = toDayKey(new Date());
 	const requests: Promise<Record<string, WeatherDaySummary>>[] = [];
 	const addRequest = (baseUrl: string, requestStart: string, requestEnd: string) => {
@@ -219,6 +237,5 @@ export async function fetchWeatherByRange(
 		Object.assign(merged, weatherResult);
 	}
 
-	weatherCache.set(cacheKey, merged);
 	return merged;
 }

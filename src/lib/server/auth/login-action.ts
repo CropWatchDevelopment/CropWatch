@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Cookies } from '@sveltejs/kit';
-import type { RecaptchaLogContext, RecaptchaVerificationResult } from '$lib/utils/recaptcha.server';
+import type { RecaptchaLogContext, RecaptchaVerificationResult } from '$lib/server/recaptcha';
 import { readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
 
 type LoginApiResponse = {
@@ -129,5 +129,5 @@ export async function handleLoginAction(
 	});
 
 	const redirectPath = readRedirectPathFromUrl(new URL(request.url), '/');
-	throw redirect(303, redirectPath);
+	redirect(303, redirectPath);
 }

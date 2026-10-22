@@ -1,23 +1,20 @@
 import { m } from '$lib/paraglide/messages.js';
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import type { LegalStatusDto } from '$lib/api/api.dtos';
 import { buildLoginPath, readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
-import { fail, redirect, type Actions } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, fetch, url }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const redirectPath = readRedirectPathFromUrl(url, '/');
 
 	if (!locals.jwtString) {
 		redirect(303, buildLoginPath({ redirectTo: redirectPath, reason: 'auth-required' }));
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken: locals.jwtString });
-
 	let status: LegalStatusDto | null = null;
 	try {
-		status = await api.getLegalStatus();
+		status = await locals.services.account.getLegalStatus();
 	} catch (err) {
 		console.error('Failed to fetch legal status for accept-terms:', err);
 	}
@@ -31,7 +28,7 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals, fetch }) => {
+	default: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
 
@@ -44,15 +41,12 @@ export const actions: Actions = {
 			return fail(400, { error: m.auth_must_agree_all_policies() });
 		}
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
 		try {
-			await api.acceptLegalDocuments({
+			await locals.services.account.acceptLegalDocuments({
 				kinds: ['privacy_policy', 'terms_of_service', 'eula']
 			});
 		} catch (err) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, { error: readApiErrorMessage(payload, m.legal_reaccept_failed()) });
+			return fail(apiErrorStatus(err), { error: apiErrorMessage(err, m.legal_reaccept_failed()) });
 		}
 
 		return { success: true };

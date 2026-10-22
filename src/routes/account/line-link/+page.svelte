@@ -14,7 +14,7 @@
 	<title>{m.line_link_confirm_title()} - CropWatch</title>
 </svelte:head>
 
-<AppPage width="md">
+<AppPage>
 	<CwCard title={m.line_link_confirm_title()} subtitle={m.line_link_confirm_subtitle()} elevated>
 		{#if !data.linkToken}
 			<AppFormStack padded>

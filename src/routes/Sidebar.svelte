@@ -23,7 +23,6 @@
 			.filter((v) => v.length > 0);
 		return [...new Set(cleaned)].sort((a, b) => a.localeCompare(b));
 	}
-	import { buildLogoutPath } from '$lib/utils/auth-redirect';
 	import { isStaffEmail } from '$lib/utils/is-staff';
 
 	let { mode = $bindable() } = $props();
@@ -257,17 +256,11 @@
 		<span class="app-sidebar__footer">
 			<div class="app-sidebar__session">
 				{#if app.session?.exp}
+					<!-- Display only: the root layout's session-expiry watcher sends an expired session to sign in. -->
 					<p class="app-sidebar__session-copy">
 						{m.sidebar_current_session_expires()}: <CwDuration
 							from={new Date(app.session.exp * 1000)}
 							countDown={true}
-							alarmAfterMinutes={0.5}
-							alarmCallback={() => {
-								document.location = buildLogoutPath({
-									path: resolve('/auth/logout'),
-									redirectTo: `${page.url.pathname}${page.url.search}`
-								});
-							}}
 						/>
 					</p>
 				{/if}

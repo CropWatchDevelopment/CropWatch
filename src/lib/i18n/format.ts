@@ -75,17 +75,20 @@ export function formatCurrency(value: number, currency: string): string {
 export function formatRelative(iso: string | null, now: number, locale: string): string | null {
 	const ms = iso ? new Date(iso).getTime() : NaN;
 	if (!Number.isFinite(ms)) return null;
-	const seconds = Math.round((ms - now) / 1000);
+	// Round by size so a gap reads the same either side of now (90 s: "2 min ago",
+	// "in 2 min"); Math.round alone rounds halves towards the future.
+	const round = (value: number) => Math.sign(value) * Math.round(Math.abs(value));
+	const seconds = round((ms - now) / 1000);
 	const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
 	const abs = Math.abs(seconds);
 	const text =
 		abs < 60
 			? format.format(seconds, 'second')
 			: abs < 3600
-				? format.format(Math.round(seconds / 60), 'minute')
+				? format.format(round(seconds / 60), 'minute')
 				: abs < 86400
-					? format.format(Math.round(seconds / 3600), 'hour')
-					: format.format(Math.round(seconds / 86400), 'day');
+					? format.format(round(seconds / 3600), 'hour')
+					: format.format(round(seconds / 86400), 'day');
 	// The short style abbreviates with a trailing dot ("3 min. ago"); drop it.
 	return text.replace(/(\p{L})\.(?=\s|$)/gu, '$1');
 }

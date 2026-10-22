@@ -1,8 +1,7 @@
 import { m } from '$lib/paraglide/messages.js';
 import { buildLoginPath, readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
-import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
-import { getSupabaseClient } from '$lib/supabase.server';
-import { fail, type Actions } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
 function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 	if (typeof value !== 'string') return null;
@@ -11,7 +10,7 @@ function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 }
 
 export const actions: Actions = {
-	forgotPassword: async ({ request, url }) => {
+	forgotPassword: async ({ request, url, locals }) => {
 		const data = await request.formData();
 		const redirectPath = readRedirectPathFromUrl(url, '');
 		const email = readNonEmptyString(data.get('email'));
@@ -25,18 +24,21 @@ export const actions: Actions = {
 			return fail(400, { message: m.auth_security_try_again() });
 		}
 
-		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'FORGOT_PASSWORD', 0.5, {
-			route: '/auth/forgot-password',
-			flow: 'forgot-password',
-			userAgent: request.headers.get('user-agent') ?? undefined
-		});
+		const recaptchaResult = await locals.services.recaptcha.verify(
+			recaptchaToken,
+			'FORGOT_PASSWORD',
+			0.5,
+			{
+				route: '/auth/forgot-password',
+				flow: 'forgot-password',
+				userAgent: request.headers.get('user-agent') ?? undefined
+			}
+		);
 		if (!recaptchaResult.success) {
 			return fail(400, { message: m.auth_security_try_again() });
 		}
 
-		const supabase = getSupabaseClient();
-
-		const { error } = await supabase.auth.resetPasswordForEmail(email, {
+		const { error } = await locals.services.supabaseAuth.resetPasswordForEmail(email, {
 			redirectTo: `${url.origin}${buildLoginPath({
 				redirectTo: redirectPath,
 				reason: 'password-reset'

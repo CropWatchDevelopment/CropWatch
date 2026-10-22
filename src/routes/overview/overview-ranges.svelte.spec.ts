@@ -167,4 +167,107 @@ describe('OverviewRanges', () => {
 		expect(ranges.refreshing).toBe(false);
 		expect(ranges.refreshDueAt).toBe(now + OVERVIEW_REFRESH_MS);
 	});
+
+	it("starts on the server copy's range, and has nothing due without one", () => {
+		const seeded = new OverviewRanges({
+			fetcher: vi.fn(),
+			onError: vi.fn(),
+			initial: dto('7d'),
+			clock: () => T0
+		});
+		expect(seeded.range).toBe('7d');
+		expect(seeded.shown).toBe('7d');
+
+		const empty = new OverviewRanges({
+			fetcher: vi.fn(),
+			onError: vi.fn(),
+			initial: null,
+			clock: () => T0
+		});
+		expect(empty.refreshDueAt).toBeNull();
+	});
+
+	it('reads the real clock when none is given', () => {
+		const fetcher = vi.fn(() => new Promise<OverviewDto>(() => {}));
+		const fresh = new OverviewRanges({
+			fetcher,
+			onError: vi.fn(),
+			initial: dto('24h', Date.now())
+		});
+		fresh.refreshIfStale();
+		expect(fetcher).not.toHaveBeenCalled();
+
+		const stale = new OverviewRanges({
+			fetcher,
+			onError: vi.fn(),
+			initial: dto('24h', Date.now() - OVERVIEW_REFRESH_MS)
+		});
+		stale.refreshIfStale();
+		expect(fetcher).toHaveBeenCalledWith('24h');
+	});
+
+	it('does nothing when the selected range is chosen again', () => {
+		const fetcher = vi.fn();
+		const ranges = new OverviewRanges({
+			fetcher,
+			onError: vi.fn(),
+			initial: dto('24h'),
+			clock: () => T0
+		});
+
+		ranges.select('24h');
+
+		expect(fetcher).not.toHaveBeenCalled();
+		expect(ranges.pending).toBeNull();
+	});
+
+	it('does not refresh in the background while a range is loading', () => {
+		let now = T0;
+		const { fetcher } = deferredFetcher();
+		const ranges = new OverviewRanges({
+			fetcher,
+			onError: vi.fn(),
+			initial: dto('24h'),
+			clock: () => now
+		});
+
+		ranges.select('7d');
+		now = T0 + OVERVIEW_REFRESH_MS;
+		ranges.refreshIfStale();
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(ranges.refreshing).toBe(false);
+	});
+
+	it('keeps a newer selection when an older switch fails', async () => {
+		const { fetcher, calls } = deferredFetcher();
+		const onError = vi.fn();
+		const ranges = new OverviewRanges({ fetcher, onError, initial: dto('24h'), clock: () => T0 });
+
+		ranges.select('7d');
+		ranges.select('30d');
+		calls[0].reject(new Error('500'));
+		await tick();
+
+		expect(ranges.range).toBe('30d');
+		expect(ranges.pending).toBe('30d');
+		expect(ranges.current?.range).toBe('24h');
+		expect(onError).toHaveBeenCalledTimes(1);
+	});
+
+	it('stays failed, and reports, when a retry with nothing to show fails', async () => {
+		const { fetcher, calls } = deferredFetcher();
+		const onError = vi.fn();
+		const ranges = new OverviewRanges({ fetcher, onError, initial: null, clock: () => T0 });
+
+		void ranges.load(ranges.range);
+		const error = new Error('offline');
+		calls[0].reject(error);
+		await tick();
+
+		expect(ranges.failed).toBe(true);
+		expect(ranges.current).toBeNull();
+		expect(ranges.pending).toBeNull();
+		expect(onError).toHaveBeenCalledWith(error);
+	});
 });

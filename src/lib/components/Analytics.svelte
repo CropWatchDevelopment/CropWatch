@@ -7,18 +7,18 @@
 	// visible across pages and devices. Set PUBLIC_GA_MEASUREMENT_ID to enable;
 	// disabled automatically in dev so local traffic never reaches the property.
 	import { afterNavigate } from '$app/navigation';
-	import { dev } from '$app/environment';
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
-	import { env } from '$env/dynamic/public';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { initAnalytics, trackPageView, setAnalyticsUser } from '$lib/analytics/gtag';
+	import { readPublicConfig } from '$lib/config/public';
 
 	const app = getAppContext();
 
-	// env is read inside browser-only callbacks (never at module top level) so it
-	// is never touched during SSR/prerender, which $env/dynamic/public forbids.
-	const measurementId = () => (dev ? '' : (env.PUBLIC_GA_MEASUREMENT_ID ?? ''));
+	// Config (env) is read inside browser-only callbacks (never at module top
+	// level) so it is never touched during SSR/prerender, which
+	// $env/dynamic/public forbids. It is always '' on the Vite dev server.
+	const measurementId = () => readPublicConfig().gaMeasurementId;
 
 	// Keep GA's user_id aligned with the session `sub` claim. Re-runs on
 	// login / logout / token refresh; no-ops until initAnalytics has run.

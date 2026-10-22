@@ -2,8 +2,8 @@
 	import { onMount } from 'svelte';
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
-	import { ApiService } from '$lib/api/api.service';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { getServices } from '$lib/services/context';
 
 	// The announcement release this build's content describes. Bump together
 	// with the whats_new_r{N}_* message keys, then activate via the OPS UPDATE
@@ -19,6 +19,7 @@
 	];
 
 	const app = getAppContext();
+	const { account } = getServices();
 
 	let open = $state(false);
 	let seenRecorded = false;
@@ -27,8 +28,7 @@
 		if (!app.accessToken) return;
 
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const status = await api.getWhatsNewStatus();
+			const status = await account.getWhatsNewStatus();
 			// Strict release match: a stale deployment (content behind the flag)
 			// or a premature flag (content ahead) stays silent.
 			open = status.show && status.current_release === WHATS_NEW_CONTENT_RELEASE;
@@ -44,7 +44,7 @@
 		seenRecorded = true;
 		// Fire and forget: if this fails the user simply sees the dialog again
 		// on their next visit.
-		new ApiService({ authToken: app.accessToken })
+		account
 			.markWhatsNewSeen()
 			.catch((error) => console.error('Failed to record whats-new seen:', error));
 	}
