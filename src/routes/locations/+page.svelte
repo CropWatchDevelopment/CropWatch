@@ -10,7 +10,7 @@
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import type { LocationDto } from '$lib/api/api.service';
+	import type { LocationDto } from '$lib/api/api.dtos';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -18,12 +18,11 @@
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
 	import ADD_ICON from '$lib/images/icons/add.svg';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { ApiService } from '$lib/api/api.service';
+	import { getServices } from '$lib/services/context';
 	import { sortByColumn } from '$lib/utils/sortByColumn';
 
 	let loading = $state(false);
-	let app = getAppContext();
+	const { locations } = getServices();
 
 	const columns: CwColumnDef<LocationDto>[] = [
 		{ key: 'location_id', header: m.common_id(), hideBelow: 'md' },
@@ -32,8 +31,7 @@
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<LocationDto>> {
 		const search = query.search?.trim() || '';
-		const api = new ApiService({ authToken: app.accessToken });
-		const result = await api.getAllLocations({ name: search || undefined });
+		const result = await locations.getAllLocations({ name: search || undefined });
 		let rows = result.data ?? [];
 
 		if (query.sort) {

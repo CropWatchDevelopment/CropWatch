@@ -8,8 +8,9 @@
 	import { cwCopyLabels } from '$lib/i18n/cwuiLabels';
 	import { orgRoleLabel, orgTypeLabel } from '$lib/auth/org-labels';
 	import LeaveOrganizationDialog from './LeaveOrganizationDialog.svelte';
+	import type { PageProps } from './$types';
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
 	const app = getAppContext();
 
 	const ctx = $derived(app.orgContext);
@@ -22,7 +23,7 @@
 	<title>{m.organization_page_title()}</title>
 </svelte:head>
 
-<AppPage width="md">
+<AppPage>
 	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
 		&larr; {m.action_back()}
 	</CwButton>

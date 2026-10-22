@@ -1,4 +1,3 @@
-import { ApiService } from '$lib/api/api.service';
 import { PermissionLevel } from '$lib/constants/permissions';
 import type { LayoutServerLoad } from './$types';
 
@@ -27,14 +26,14 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 		};
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken });
+	const { devices, locations } = locals.services;
 
 	try {
 		const locationId = Number.parseInt(location_id, 10);
 		const [device, location] = await Promise.all([
-			api.getDevice(dev_eui),
+			devices.getDevice(dev_eui),
 			Number.isFinite(locationId)
-				? api.getLocation(locationId).catch(() => null)
+				? locations.getLocation(locationId).catch(() => null)
 				: Promise.resolve(null)
 		]);
 
@@ -44,8 +43,9 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 
 		// The API response includes a `data_table` field (string) that identifies
 		// which Supabase table this device stores telemetry in. Fall back to null
-		// so the dispatcher uses DefaultDisplay.
-		const deviceDataTable = device.cw_device_type.data_table_v2;
+		// (also for a device without a device type) so the dispatcher uses
+		// DefaultDisplay.
+		const deviceDataTable = device.cw_device_type?.data_table_v2 ?? null;
 
 		return {
 			authToken,

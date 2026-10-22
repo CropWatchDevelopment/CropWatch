@@ -3,9 +3,7 @@
 	import { page } from '$app/state';
 	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
-	import { getAppContext } from '$lib/appContext.svelte';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
 	import ReportingUpsellNotice from './ReportingUpsellNotice.svelte';
@@ -21,6 +19,7 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { sortByColumn } from '$lib/utils/sortByColumn';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import EDIT_ICON from '$lib/images/icons/edit.svg';
@@ -52,12 +51,11 @@
 	let loading = $state(true);
 	let deletedTemplateIds = $state<number[]>([]);
 	let tableKey = $derived(deletedTemplateIds.join(','));
-	let app = getAppContext();
+	const { reports } = getServices();
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<ReportTemplateRow>> {
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const templates = await api.getReportTemplates(
+			const templates = await reports.getReportTemplates(
 				{ search: query.search?.trim() || undefined },
 				{ signal: query.signal }
 			);
@@ -74,14 +72,13 @@
 
 			return { rows, total };
 		} catch (error) {
-			throw new Error(readApiErrorMessage(error, m.reports_new_load_failed()));
+			throw new Error(apiErrorMessage(error, m.reports_new_load_failed()));
 		} finally {
 			loading = false;
 		}
 	}
 
 	function handleDeleted(templateId: number) {
-		if (deletedTemplateIds.includes(templateId)) return;
 		deletedTemplateIds = [...deletedTemplateIds, templateId];
 	}
 
@@ -105,7 +102,7 @@
 			.filter((name): name is string => !!name && name.trim().length > 0);
 		const unique = [...new Set(names)];
 		if (unique.length === 0) return m.reports_unknown_location();
-		return unique.length === 1 ? unique[0] : unique.join(', ');
+		return unique.join(', ');
 	}
 
 	function summarizeAssignments(template: ReportTemplateDto): string {

@@ -28,8 +28,16 @@
 	// the DB-seeded value wins and the picker persists it, giving cross-device sync.
 	let preferences = $state<PreferenceDraft>({ ...initial.preferences });
 	let saving = $state(false);
+	// The picker applying this device's stored theme on load is not an edit, so
+	// the theme only counts as changed once the user picks one here.
+	let themePicked = $state(false);
 
-	const isDirty = $derived(JSON.stringify(preferences) !== JSON.stringify(data.preferences));
+	const isDirty = $derived(
+		JSON.stringify({
+			...preferences,
+			theme: themePicked ? preferences.theme : data.preferences.theme
+		}) !== JSON.stringify(data.preferences)
+	);
 	const themeLabel = $derived(
 		preferences.theme === 'dark'
 			? m.settings_theme_dark()
@@ -52,7 +60,7 @@
 	<title>{m.nav_settings()} - CropWatch</title>
 </svelte:head>
 
-<AppPage width="xl">
+<AppPage>
 	<form
 		method="POST"
 		action="?/updatePreferences"
@@ -128,7 +136,11 @@
 							<p class="section-title">{m.settings_theme_label()}</p>
 							<p class="section-copy">{themeLabel}</p>
 						</div>
-						<CwThemePicker labels={cwThemePickerLabels()} bind:theme={preferences.theme} />
+						<CwThemePicker
+							labels={cwThemePickerLabels()}
+							bind:theme={preferences.theme}
+							onchange={() => (themePicked = true)}
+						/>
 					</div>
 
 					<div class="field-grid field-grid--two">

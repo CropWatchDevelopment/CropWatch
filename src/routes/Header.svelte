@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { signOut } from '$lib/auth/sign-out';
 	import { m } from '$lib/paraglide/messages.js';
 	import { buildLogoutPath } from '$lib/utils/auth-redirect';
 	import { CwHeader, CwProfileMenu, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
@@ -49,10 +50,12 @@
 			onselect={(event) => {
 				if (event.id === 'logout') {
 					Object.assign(app, defaultAppContext);
-					window.location.href = buildLogoutPath({
-						path: resolve('/auth/logout'),
-						redirectTo: `${page.url.pathname}${page.url.search}`
-					});
+					signOut(
+						buildLogoutPath({
+							path: resolve('/auth/logout'),
+							redirectTo: `${page.url.pathname}${page.url.search}`
+						})
+					);
 				} else if (event.id === 'profile') {
 					goto(resolve('/account/profile'));
 				} else if (event.id === 'organization') {

@@ -1,4 +1,4 @@
-import { ApiService, type LocationOwnerDto } from '$lib/api/api.service';
+import type { LocationOwnerDto } from '$lib/api/api.dtos';
 import { PermissionLevel } from '$lib/constants/permissions';
 import { m } from '$lib/paraglide/messages.js';
 import { isStaffEmail } from '$lib/utils/is-staff';
@@ -16,7 +16,7 @@ import {
 	updateUserPermissionLevel
 } from './location-settings-actions.server';
 
-export const load: PageServerLoad = async ({ locals, fetch, params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
 	const authToken = locals.jwtString ?? null;
 	const locationId = Number.parseInt(params.location_id ?? '', 10);
 
@@ -33,18 +33,15 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		};
 	}
 
-	const apiService = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
+	const { locations } = locals.services;
 
 	// The preflight is owner-only (403/404 otherwise): it decides whether the
 	// danger zone shows at all, and how many devices still block the delete.
 	const [location, deletePreflight, devices] = await Promise.all([
-		apiService.getLocation(locationId).catch(() => null),
-		apiService.getLocationDeletePreflight(locationId).catch(() => null),
+		locations.getLocation(locationId).catch(() => null),
+		locations.getLocationDeletePreflight(locationId).catch(() => null),
 		// Device positions back the "Centre on my devices" button.
-		apiService
+		locals.services.devices
 			.getAllLocationDevices(locationId)
 			.then((res) => res.data ?? [])
 			.catch(() => [])

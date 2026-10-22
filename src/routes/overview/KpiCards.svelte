@@ -25,6 +25,8 @@
 			'30d': m.overview_kpi_delta_30d
 		}[overview.range]({ delta })
 	);
+	// null without a last report, and when its time cannot be read.
+	const lastReport = $derived(formatRelative(overview.reports.lastAt, now, locale));
 	const expected = $derived(
 		overview.uplinks.expected > 0
 			? m.overview_kpi_data_expected({
@@ -115,11 +117,11 @@
 			<div class="kpi__head">{m.overview_kpi_reports()}<OverviewIcon name="report" /></div>
 			<div class="kpi__value">{overview.reports.count}</div>
 			<div class="kpi__sub">
-				{overview.reports.lastAt
-					? m.overview_kpi_reports_last({
-							when: formatRelative(overview.reports.lastAt, now, locale) ?? ''
-						})
-					: m.overview_kpi_reports_none()}
+				{#if lastReport}
+					{m.overview_kpi_reports_last({ when: lastReport })}
+				{:else if !overview.reports.lastAt}
+					{m.overview_kpi_reports_none()}
+				{/if}
 			</div>
 		</div>
 	</CwCard>

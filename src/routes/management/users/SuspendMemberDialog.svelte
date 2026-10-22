@@ -2,6 +2,7 @@
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { OrgMemberDto } from '$lib/api/api.dtos';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { submitPageAction } from '$lib/forms/submit-page-action';
 
 	let { open = $bindable(false), member }: { open?: boolean; member: OrgMemberDto | null } =
@@ -21,6 +22,8 @@
 			} else {
 				toast.add({ tone: 'danger', message: result.error ?? m.generic_error() });
 			}
+		} catch (err) {
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 		} finally {
 			submitting = false;
 		}

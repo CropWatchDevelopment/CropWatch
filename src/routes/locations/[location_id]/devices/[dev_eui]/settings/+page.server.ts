@@ -1,10 +1,9 @@
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
 import type { DeleteDeviceResultDto } from '$lib/api/api.dtos';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { normalizeTtiDeviceId } from '$lib/devices/tti-device-id';
 import { m } from '$lib/paraglide/messages.js';
-import { fail, redirect, type Actions } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 import {
 	buildLocationOwnerIdentityMap,
 	buildSensorCertificateRows,
@@ -22,7 +21,7 @@ import { checkDeleteConfirmation } from './delete-confirmation';
 
 type DeviceLicenseSummary = { id: number; seatIndex: number; manual: boolean };
 
-export const load: PageServerLoad = async ({ fetch, params, parent }) => {
+export const load: PageServerLoad = async ({ locals, params, parent }) => {
 	const parentData = await parent();
 	const authToken = parentData.authToken ?? null;
 	const devEui = String(params.dev_eui ?? '').trim();
@@ -34,7 +33,6 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 			deviceName: '',
 			deviceGroup: '',
 			ttiName: '',
-			deviceGroups: [] as string[],
 			sensorCertificates: [] as SensorCertificateRow[],
 			supportsSensorCertificates: false,
 			deviceOwners: [] as NormalizedDeviceOwner[],
@@ -44,16 +42,15 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 		};
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken });
+	const { services } = locals;
 	const device = parentData.device;
 
-	const [deviceGroups, location, locations, licenses] = await Promise.all([
-		api.getDeviceGroups().catch(() => []),
+	const [location, locations, licenses] = await Promise.all([
 		Number.isFinite(locationId)
-			? api.getLocation(locationId).catch(() => null)
+			? services.locations.getLocation(locationId).catch(() => null)
 			: Promise.resolve(null),
-		api.getLocations().catch(() => []),
-		api.getLicenses().catch(() => [])
+		services.locations.getLocations().catch(() => []),
+		services.billing.getLicenses().catch(() => [])
 	]);
 
 	const licenseRow = licenses.find((l) => l.devEui?.toLowerCase() === devEui.toLowerCase());
@@ -69,9 +66,8 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 		location_id: device?.location_id,
 		deviceGroup: device?.group || '',
 		ttiName: normalizeTtiDeviceId(str(device?.tti_name)),
-		deviceGroups,
 		locations,
-		sensorCertificates: buildSensorCertificateRows(device),
+		sensorCertificates: buildSensorCertificateRows(device, services.libellus.configurationProblem),
 		supportsSensorCertificates: deviceSupportsSensorCertificate(device),
 		deviceOwners: normalizeDeviceOwners(device, locationOwnerIdentities),
 		license,
@@ -82,7 +78,7 @@ export const load: PageServerLoad = async ({ fetch, params, parent }) => {
 };
 
 export const actions: Actions = {
-	updateDevice: async ({ request, locals, fetch, params }) => {
+	updateDevice: async ({ request, locals, params }) => {
 		const authToken = locals.jwtString ?? null;
 		const devEui = String(params.dev_eui ?? '').trim();
 
@@ -112,25 +108,17 @@ export const actions: Actions = {
 			});
 		}
 
-		const api = new ApiService({
-			fetchFn: fetch,
-			authToken
-		});
-
 		try {
-			await api.updateDevice(devEui, {
+			await locals.services.devices.updateDevice(devEui, {
 				name: values.name,
 				group: values.group || null,
 				location_id: values.location_id,
 				tti_name: values.tti_name || null
 			});
 		} catch (error) {
-			return fail(error instanceof ApiServiceError ? error.status : 502, {
+			return fail(apiErrorStatus(error, 502), {
 				action: 'updateDevice',
-				message: readApiErrorMessage(
-					error instanceof ApiServiceError ? error.payload : error,
-					m.devices_settings_update_rejected()
-				),
+				message: apiErrorMessage(error, m.devices_settings_update_rejected()),
 				values,
 				fieldErrors
 			});
@@ -142,7 +130,7 @@ export const actions: Actions = {
 			message: m.devices_settings_updated()
 		};
 	},
-	updateDeviceOwnerPermission: async ({ request, locals, fetch, params }) => {
+	updateDeviceOwnerPermission: async ({ request, locals, params }) => {
 		const authToken = locals.jwtString ?? null;
 		const devEui = String(params.dev_eui ?? '').trim();
 
@@ -174,24 +162,16 @@ export const actions: Actions = {
 			});
 		}
 
-		const api = new ApiService({
-			fetchFn: fetch,
-			authToken
-		});
-
 		try {
-			await api.updateDevicePermissionLevel(devEui, {
+			await locals.services.devices.updateDevicePermissionLevel(devEui, {
 				targetUserEmail: values.targetUserEmail,
 				permissionLevel
 			});
 		} catch (error) {
-			return fail(error instanceof ApiServiceError ? error.status : 502, {
+			return fail(apiErrorStatus(error, 502), {
 				action: 'updateDeviceOwnerPermission',
 				ownerKey,
-				message: readApiErrorMessage(
-					error instanceof ApiServiceError ? error.payload : error,
-					m.devices_permission_update_rejected()
-				),
+				message: apiErrorMessage(error, m.devices_permission_update_rejected()),
 				values,
 				fieldErrors
 			});
@@ -204,7 +184,7 @@ export const actions: Actions = {
 			message: m.devices_permission_updated_for_email({ email: values.targetUserEmail })
 		};
 	},
-	unassignLicense: async ({ request, locals, fetch }) => {
+	unassignLicense: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 
 		if (!authToken) {
@@ -215,22 +195,19 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
-		const licenseId = Number.parseInt(str(formData.get('licenseId')), 10);
-		if (!Number.isInteger(licenseId) || licenseId < 1) {
+		// Digits only: parseInt would read '12abc' (or '12.5') as license 12.
+		const licenseIdText = str(formData.get('licenseId'));
+		const licenseId = /^\d+$/.test(licenseIdText) ? Number(licenseIdText) : Number.NaN;
+		if (!Number.isSafeInteger(licenseId) || licenseId < 1) {
 			return fail(400, { action: 'unassignLicense', message: m.generic_error() });
 		}
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
-
 		try {
-			await api.unassignLicense(licenseId);
+			await locals.services.billing.unassignLicense(licenseId);
 		} catch (error) {
-			return fail(error instanceof ApiServiceError ? error.status : 502, {
+			return fail(apiErrorStatus(error, 502), {
 				action: 'unassignLicense',
-				message: readApiErrorMessage(
-					error instanceof ApiServiceError ? error.payload : error,
-					m.generic_error()
-				)
+				message: apiErrorMessage(error, m.generic_error())
 			});
 		}
 
@@ -240,7 +217,7 @@ export const actions: Actions = {
 			message: m.devices_license_unassigned_toast()
 		};
 	},
-	deleteDevice: async ({ request, locals, fetch, params }) => {
+	deleteDevice: async ({ request, locals, params }) => {
 		const authToken = locals.jwtString ?? null;
 		const devEui = String(params.dev_eui ?? '').trim();
 		const locationId = String(params.location_id ?? '').trim();
@@ -272,18 +249,13 @@ export const actions: Actions = {
 			});
 		}
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
-
 		let result: DeleteDeviceResultDto;
 		try {
-			result = await api.deleteDevice(devEui);
+			result = await locals.services.devices.deleteDevice(devEui);
 		} catch (error) {
-			return fail(error instanceof ApiServiceError ? error.status : 502, {
+			return fail(apiErrorStatus(error, 502), {
 				action: 'deleteDevice',
-				message: readApiErrorMessage(
-					error instanceof ApiServiceError ? error.payload : error,
-					m.devices_delete_rejected()
-				)
+				message: apiErrorMessage(error, m.devices_delete_rejected())
 			});
 		}
 
@@ -298,6 +270,7 @@ export const actions: Actions = {
 			});
 		}
 
-		redirect(303, `/locations/${encodeURIComponent(locationId)}`);
+		// Back to the device's location, or to the list when the URL names none.
+		redirect(303, locationId ? `/locations/${encodeURIComponent(locationId)}` : '/locations');
 	}
 };

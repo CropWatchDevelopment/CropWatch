@@ -17,7 +17,9 @@ declare const popup: { setHTML: (html: string) => void; setText: (text: string) 
 declare const name: string;
 `;
 
-describe('map popup HTML lint rule', () => {
+// The first lint loads the whole ESLint config (typescript-eslint, svelte), which
+// can take several seconds on a busy machine.
+describe('map popup HTML lint rule', { timeout: 30_000 }, () => {
 	it('rejects setHTML, whatever it is given', async () => {
 		expect(await setHtmlErrors(`${PREAMBLE}popup.setHTML(name);`)).toBe(1);
 		expect(await setHtmlErrors(`${PREAMBLE}popup.setHTML(\`<b>\${name}</b>\`);`)).toBe(1);

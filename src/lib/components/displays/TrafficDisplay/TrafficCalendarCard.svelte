@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { CwCalendar, CwCard, CwChip, formatCwMeasurement } from '@cropwatchdevelopment/cwui';
-	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatNumber, getIntlLocale } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwCalendarLabels } from '$lib/i18n/cwuiLabels';
+	import { getServices } from '$lib/services/context';
 	import {
 		buildDailyTrafficSummaries,
 		formatMeasurement,
@@ -20,7 +21,6 @@
 
 	interface Props {
 		devEui: string;
-		authToken: string | null;
 		latitude: number | null;
 		longitude: number | null;
 		/** Anchors the initially shown month (e.g. the device's latest data). */
@@ -28,7 +28,10 @@
 		locationLabel: string;
 	}
 
-	let { devEui, authToken, latitude, longitude, anchorDate, locationLabel }: Props = $props();
+	let { devEui, latitude, longitude, anchorDate, locationLabel }: Props = $props();
+
+	const app = getAppContext();
+	const { telemetry } = getServices();
 
 	// Capture once for the initial month; later device changes re-anchor in the effect below.
 	const initialAnchor = (() => anchorDate)() ?? new Date();
@@ -58,7 +61,7 @@
 
 	async function loadMonth(
 		deviceKey: string,
-		token: string | null,
+		token: string | undefined,
 		year: number,
 		month: number,
 		lat: number | null,
@@ -82,8 +85,7 @@
 		calendarError = null;
 
 		try {
-			const api = new ApiService({ authToken: token });
-			const trafficPromise = api.getTrafficData(deviceKey, {
+			const trafficPromise = telemetry.getTrafficData(deviceKey, {
 				start: start.toISOString(),
 				end: end.toISOString()
 			});
@@ -122,11 +124,18 @@
 			calendarMonth = anchor.getMonth();
 		}
 
-		const key = `${devEui.trim()}:${authToken ?? 'no-token'}:${calendarYear}:${calendarMonth}:${latitude ?? 'na'}:${longitude ?? 'na'}`;
+		const key = `${devEui.trim()}:${app.accessToken ?? 'no-token'}:${calendarYear}:${calendarMonth}:${latitude ?? 'na'}:${longitude ?? 'na'}`;
 		if (key === lastLoadKey) return;
 		lastLoadKey = key;
 
-		void loadMonth(devEui.trim(), authToken, calendarYear, calendarMonth, latitude, longitude);
+		void loadMonth(
+			devEui.trim(),
+			app.accessToken,
+			calendarYear,
+			calendarMonth,
+			latitude,
+			longitude
+		);
 	});
 
 	function handleCalendarMonthChange(year: number, month: number): void {

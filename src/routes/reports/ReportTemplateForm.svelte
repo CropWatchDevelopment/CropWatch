@@ -2,10 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { SvelteMap } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
 	import type { CommunicationMethodDto, ReportFormContextDto } from '$lib/api/api.dtos';
+	import { getServices } from '$lib/services/context';
 	import {
 		CwAlertPointsEditor,
 		CwButton,
@@ -40,7 +40,6 @@
 	interface Props {
 		mode: FormMode;
 		context: ReportFormContextDto;
-		authToken?: string | null;
 		preselectedDevEui?: string | null;
 		currentUserEmail?: string | null;
 		currentUserName?: string | null;
@@ -56,7 +55,6 @@
 	let {
 		mode,
 		context,
-		authToken = null,
 		preselectedDevEui = null,
 		currentUserEmail = null,
 		currentUserName = null,
@@ -70,6 +68,7 @@
 	const initialUserEmail = (() => currentUserEmail ?? '')();
 	const initialUserName = (() => currentUserName ?? '')();
 	const toast = useCwToast();
+	const { reports } = getServices();
 	const alertPointsEditorText = createReportAlertPointsEditorText();
 
 	let rowSequence = 0;
@@ -89,7 +88,6 @@
 		initial ? drafts.buildAlertPointsValueFromTemplate(initial) : createEmptyAlertPointsValue()
 	);
 	let submitting = $state(false);
-	let submitAttempted = $state(false);
 
 	let selectedDevices = $state<DeviceSelection[]>(
 		initial?.assignments.length
@@ -98,6 +96,16 @@
 				? [createDeviceSelection(preselectedDevice)]
 				: []
 	);
+
+	// The validation notice says why Save is disabled. It shows once the user has
+	// edited anything, so an untouched new form does not open with a list of all
+	// it still needs.
+	const formState = () => JSON.stringify([fields, selectedDevices, alertPointsValue]);
+	const initialFormState = formState();
+	let edited = $state(false);
+	$effect(() => {
+		if (!edited && formState() !== initialFormState) edited = true;
+	});
 
 	let communicationMethodOptions = $derived<SelectOption[]>(
 		buildCommunicationMethodOptions(context.communicationMethods)
@@ -232,12 +240,10 @@
 	}
 
 	async function handleSubmit() {
-		submitAttempted = true;
 		if (disabled || !canSubmit || submitting) return;
 		submitting = true;
 
 		try {
-			const api = new ApiService({ authToken });
 			const payload = buildSaveRequest(
 				fields,
 				selectedDevEuis,
@@ -246,7 +252,7 @@
 			);
 
 			if (mode === 'edit' && initial) {
-				await api.updateReportTemplate(initial.id, payload);
+				await reports.updateReportTemplate(initial.id, payload);
 				toast.add({
 					tone: 'success',
 					message: m.reports_new_updated_success({ name: fields.name.trim() }),
@@ -254,7 +260,7 @@
 					dismissible: true
 				});
 			} else {
-				await api.createReportTemplate(payload);
+				await reports.createReportTemplate(payload);
 				toast.add({
 					tone: 'success',
 					message: m.reports_new_created_success({ name: fields.name.trim() }),
@@ -263,11 +269,14 @@
 				});
 			}
 
-			await goto(resolve('/reports'));
+			// The template is saved: a failed navigation must not be reported as a failed save.
+			await goto(resolve('/reports')).catch((error: unknown) => {
+				console.error('Failed to open the reports list after saving:', error);
+			});
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
-				message: readApiErrorMessage(error, m.reports_new_save_failed()),
+				message: apiErrorMessage(error, m.reports_new_save_failed()),
 				duration: 5000,
 				dismissible: true
 			});
@@ -277,7 +286,7 @@
 	}
 </script>
 
-{#if submitAttempted && validationIssues.length > 0}
+{#if edited && validationIssues.length > 0}
 	<AppNotice tone="warning" title={m.reports_create_validation_title()} ariaLive="polite">
 		<div>
 			<p>{m.reports_create_validation_copy()}</p>

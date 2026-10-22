@@ -1,7 +1,8 @@
 import { redirect } from '@sveltejs/kit';
-import { ApiService } from '$lib/api/api.service';
 import type { DeviceStatusSummary, MeContextDto, RuleTemplateDto } from '$lib/api/api.dtos';
+import type { AppServices } from '$lib/services/app-services';
 import { withRedirectParam } from '$lib/utils/auth-redirect';
+import { SESSION_DEPENDENCY } from '$lib/auth/session-renewal';
 import type { LayoutServerLoad } from './$types';
 
 const EMPTY_DEVICE_STATUSES: DeviceStatusSummary = { online: 0, offline: 0 };
@@ -23,16 +24,19 @@ function readTriggeredRulesCount(rawTriggeredRulesCount: unknown): number {
 	return 0;
 }
 
-async function loadOverviewData(apiServiceInstance: ApiService): Promise<{
+async function loadOverviewData({
+	devices,
+	rules
+}: Pick<AppServices, 'devices' | 'rules'>): Promise<{
 	deviceStatuses: DeviceStatusSummary;
 	triggeredRules: RuleTemplateDto[];
 	triggeredRulesCount: number;
 }> {
 	const [deviceStatusesResult, triggeredRulesResult, triggeredRulesCountResult] =
 		await Promise.allSettled([
-			apiServiceInstance.getDeviceStatuses(),
-			apiServiceInstance.getTriggeredRules(),
-			apiServiceInstance.getTriggeredRulesCount()
+			devices.getDeviceStatuses(),
+			rules.getTriggeredRules(),
+			rules.getTriggeredRulesCount()
 		]);
 
 	if (deviceStatusesResult.status === 'rejected') {
@@ -63,7 +67,11 @@ async function loadOverviewData(apiServiceInstance: ApiService): Promise<{
 	};
 }
 
-export const load: LayoutServerLoad = async ({ locals, fetch, url, untrack }) => {
+export const load: LayoutServerLoad = async ({ locals, url, untrack, depends }) => {
+	// The browser re-runs this load shortly before the session runs out; the
+	// server hook refreshes the session on the way in.
+	depends(SESSION_DEPENDENCY);
+
 	let profile;
 	let preferences;
 	let orgContext: MeContextDto | undefined;
@@ -78,18 +86,15 @@ export const load: LayoutServerLoad = async ({ locals, fetch, url, untrack }) =>
 	const currentPath = untrack(() => `${url.pathname}${url.search}`);
 
 	if (locals.jwtString) {
-		const apiServiceInstance = new ApiService({
-			fetchFn: fetch,
-			authToken: locals.jwtString
-		});
+		const { account, devices, organizations, rules } = locals.services;
 
 		const [profileResult, preferencesResult, overviewResult, legalResult, orgContextResult] =
 			await Promise.allSettled([
-				apiServiceInstance.getUserProfile(),
-				apiServiceInstance.getPreferences(),
-				loadOverviewData(apiServiceInstance),
-				apiServiceInstance.getLegalStatus(),
-				apiServiceInstance.getMeContext()
+				account.getUserProfile(),
+				account.getPreferences(),
+				loadOverviewData({ devices, rules }),
+				account.getLegalStatus(),
+				organizations.getMeContext()
 			]);
 
 		if (profileResult.status === 'fulfilled') {

@@ -3,6 +3,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import type { ActionResult } from '@sveltejs/kit';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { PermissionRow } from './location-permission-rows';
 
@@ -61,7 +62,7 @@
 		} catch (error) {
 			console.error('Error deleting permission:', error);
 			toast.add({
-				message: error instanceof Error ? error.message : m.locations_delete_permission_failed(),
+				message: apiErrorMessage(error, m.locations_delete_permission_failed()),
 				tone: 'danger'
 			});
 		} finally {

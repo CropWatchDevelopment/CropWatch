@@ -5,12 +5,13 @@
 	import { CwDataTable } from '@cropwatchdevelopment/cwui';
 	import type { CwColumnDef, CwTableQuery, CwTableResult } from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { ApiService } from '$lib/api/api.service';
 	import type { DashboardRow } from '$lib/api/api.dtos';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { formatDateTime } from '$lib/i18n/format';
 	import { isDisplayableColumn, labelFor, sensorStateIcon } from '$lib/sensor-labels';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 
 	interface Filters {
@@ -23,6 +24,7 @@
 	let { filters }: { filters: Filters } = $props();
 
 	const app = getAppContext();
+	const { dashboard } = getServices();
 
 	// Unit-bearing numeric metrics are converted to the user's preference; other
 	// columns (booleans, counts, unmapped fields) keep their canonical rendering.
@@ -67,16 +69,14 @@
 		{
 			key: 'last_updated',
 			header: m.dashboard_column_last_updated(),
-			cell: (row) =>
-				row.last_data_updated_at ? new Date(row.last_data_updated_at).toLocaleString() : '—',
+			cell: (row) => formatDateTime(row.last_data_updated_at ?? '', undefined, '—'),
 			hideBelow: 'lg'
 		}
 	];
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<DashboardRow>> {
-		const api = new ApiService({ authToken: app.accessToken });
 		const skip = (query.page - 1) * query.pageSize;
-		const page = await api.getDashboardDevices(
+		const page = await dashboard.getDashboardDevices(
 			{
 				skip,
 				take: query.pageSize,

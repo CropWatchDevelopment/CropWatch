@@ -15,7 +15,7 @@
 	<title>{m.rules_new_edit_page_title()}</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="rule-edit-back-button"
 		variant="secondary"
@@ -35,12 +35,7 @@
 		/>
 	</div>
 
-	<RuleTemplateForm
-		mode="edit"
-		context={data.context}
-		authToken={data.authToken}
-		currentUserId={data.session?.sub ?? null}
-	/>
+	<RuleTemplateForm mode="edit" context={data.context} currentUserId={data.session?.sub ?? null} />
 </AppPage>
 
 <style>

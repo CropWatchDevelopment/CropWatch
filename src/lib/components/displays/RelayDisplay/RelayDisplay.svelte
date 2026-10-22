@@ -31,6 +31,7 @@
 	} from '$lib/devices/relay-labels';
 	import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
 	import type { PendingRelayState, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatDateTime } from '$lib/i18n/format';
 	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
 	import { m } from '$lib/paraglide/messages.js';
@@ -39,7 +40,6 @@
 	let {
 		latestData,
 		loading,
-		authToken,
 		permissionLevel,
 		pendingRelayStates = {},
 		queueRelayCommand,
@@ -47,13 +47,15 @@
 	}: Pick<
 		DeviceDisplayProps,
 		| 'latestData'
-		| 'authToken'
 		| 'loading'
 		| 'pendingRelayStates'
 		| 'permissionLevel'
 		| 'queueRelayCommand'
 		| 'relayHistory'
 	> = $props();
+
+	// The controls only work while signed in (`app.accessToken` is the session token).
+	const app = getAppContext();
 
 	// ---- Columns ---------------------------------------------------------------
 
@@ -236,7 +238,7 @@
 		if (
 			relayOperationsLocked ||
 			isRelaySubmittingAny(relay) ||
-			!authToken ||
+			!app.accessToken ||
 			!canManage(permissionLevel) ||
 			!queueRelayCommand
 		) {
@@ -255,7 +257,7 @@
 		if (
 			relayOperationsLocked ||
 			isRelaySubmittingAny(relay) ||
-			!authToken ||
+			!app.accessToken ||
 			!canManage(permissionLevel) ||
 			!queueRelayCommand ||
 			parseTimedOnDurationSeconds() === null
@@ -267,21 +269,19 @@
 		return currentState === true;
 	}
 
+	// The buttons calling these are disabled whenever their action is
+	// (isRelayActionDisabled / isTimedOnActionDisabled), so they don't re-check it.
 	async function handleRelayCommand(
 		relay: RelayNumber,
 		targetState: RelayTargetState
 	): Promise<void> {
-		if (isRelayActionDisabled(relay, targetState) || !queueRelayCommand) {
-			return;
-		}
-
 		submittingRelayCommands = {
 			...submittingRelayCommands,
 			[relay]: targetState
 		};
 
 		try {
-			await queueRelayCommand(relay, targetState);
+			await queueRelayCommand?.(relay, targetState);
 		} finally {
 			const nextSubmittingRelayCommands = { ...submittingRelayCommands };
 			delete nextSubmittingRelayCommands[relay];
@@ -290,10 +290,10 @@
 	}
 
 	async function handleTimedOnCommand(relay: RelayNumber): Promise<void> {
+		// Kept although the button is disabled without a valid duration: a command
+		// without one would switch the relay on indefinitely instead of pulsing it.
 		const durationSeconds = parseTimedOnDurationSeconds();
-		if (durationSeconds === null || isTimedOnActionDisabled(relay) || !queueRelayCommand) {
-			return;
-		}
+		if (durationSeconds === null) return;
 
 		submittingTimedRelayCommands = {
 			...submittingTimedRelayCommands,
@@ -301,7 +301,7 @@
 		};
 
 		try {
-			await queueRelayCommand(relay, 'on', durationSeconds);
+			await queueRelayCommand?.(relay, 'on', durationSeconds);
 		} finally {
 			const nextSubmittingTimedRelayCommands = { ...submittingTimedRelayCommands };
 			delete nextSubmittingTimedRelayCommands[relay];
@@ -310,15 +310,8 @@
 	}
 
 	// `at` is an ISO UTC timestamp, so the default string sort is chronological.
+	// The history table has no search box, so its rows need no search text.
 	const loadHistory = createClientTableLoader<RelayHistoryEntryDto>(() => relayHistory, {
-		searchText: (entry) =>
-			entry.kind === 'command'
-				? [
-						relayHistoryEventLabel(entry),
-						entry.requested_by ?? '',
-						relayHistoryResult(entry.outcome).label
-					].join(' ')
-				: relayHistoryEventLabel(entry),
 		onLoadingChange: (value) => (tableLoading = value)
 	});
 </script>
@@ -431,7 +424,7 @@
 					max={MAX_RELAY_PULSE_DURATION_SECONDS}
 					step={1}
 					error={timedOnDurationError || undefined}
-					disabled={!authToken || !canManage(permissionLevel)}
+					disabled={!app.accessToken || !canManage(permissionLevel)}
 				/>
 				<div class="relay-timed-on__actions">
 					<CwButton
@@ -480,11 +473,7 @@
 						loading={tableLoading}
 						rowKey="id"
 					>
-						{#snippet cell(
-							entry: RelayHistoryEntryDto,
-							col: CwColumnDef<RelayHistoryEntryDto>,
-							defaultValue: string
-						)}
+						{#snippet cell(entry: RelayHistoryEntryDto, col: CwColumnDef<RelayHistoryEntryDto>)}
 							{#if col.key === 'at'}
 								{formatDateTime(entry.at, HISTORY_TIME_FORMAT)}
 							{:else if col.key === 'event'}
@@ -513,8 +502,6 @@
 									{@const result = relayHistoryResult(entry.outcome)}
 									<CwChip label={result.label} tone={result.tone} variant="soft" />
 								{/if}
-							{:else}
-								{defaultValue}
 							{/if}
 						{/snippet}
 					</CwDataTable>

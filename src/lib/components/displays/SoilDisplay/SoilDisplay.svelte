@@ -88,13 +88,18 @@
 	});
 
 	// Stats are computed on converted values so min/avg/max/stdDev are all in the
-	// display unit; the unit label comes from the same resolver.
+	// display unit; the unit label comes from the same resolver. computeStats reads
+	// its input oldest-first (its last value is the latest reading, the trend runs
+	// from the one before), and the history is newest-first.
+	let chronologicalRows = $derived([...rows].reverse());
 	let temperatureStats = $derived(
 		computeStats(
-			rows.map((r) => convertSensorValue('temperature_c', r.temperature_c, app.preferences))
+			chronologicalRows.map((r) =>
+				convertSensorValue('temperature_c', r.temperature_c, app.preferences)
+			)
 		)
 	);
-	let soilMoistureStats = $derived(computeStats(rows.map((r) => r.moisture)));
+	let soilMoistureStats = $derived(computeStats(chronologicalRows.map((r) => r.moisture)));
 	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
 
 	// Re-key the table when the underlying row set changes so CwDataTable
@@ -137,8 +142,8 @@
 
 	let tableLoading = $state(false);
 
+	// Newest first, as the history comes.
 	const loadTableData = createClientTableLoader<SoilRow>(() => rows, {
-		reverse: true,
 		searchText: (r) =>
 			[r.created_at, r.temperature_c, r.moisture, r.ec, r.ph].map(String).join(' '),
 		onLoadingChange: (value) => (tableLoading = value)
@@ -231,7 +236,7 @@
 					rowKey="id"
 					searchable
 				>
-					{#snippet cell(row: SoilRow, col: CwColumnDef<SoilRow>, defaultValue: string)}
+					{#snippet cell(row: SoilRow, col: CwColumnDef<SoilRow>)}
 						{#if col.key === 'created_at'}
 							{new Date(row.created_at).toLocaleString()}
 						{:else if col.key === 'temperature_c'}
@@ -242,8 +247,6 @@
 							{formatSensorMeasurement('ec', row.ec, app.preferences, {
 								maximumFractionDigits: 2
 							}).display}
-						{:else}
-							{defaultValue}
 						{/if}
 					{/snippet}
 				</CwDataTable>

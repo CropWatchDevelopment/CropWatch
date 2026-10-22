@@ -10,7 +10,6 @@
 	import { appTheme } from '$lib/theme/appTheme.svelte';
 	import {
 		metricLabel,
-		readNumber,
 		toHourKey,
 		trafficClassColor,
 		TRAFFIC_CLASS_KEYS,
@@ -54,9 +53,8 @@
 			return {
 				key: hourDate.toISOString(),
 				label: `${String(hour).padStart(2, '0')}`,
-				values: Object.fromEntries(
-					classKeys.map((key) => [key, row ? (readNumber(row[key]) ?? 0) : 0])
-				)
+				// An hourly row carries every class (0 when none was counted).
+				values: Object.fromEntries(classKeys.map((key) => [key, row ? (row[key] as number) : 0]))
 			};
 		})
 	);

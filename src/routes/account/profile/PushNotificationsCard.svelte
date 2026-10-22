@@ -5,13 +5,13 @@
 	// anywhere. Fully client-driven: it lives outside the preferences <form>,
 	// and nothing here is part of the account preferences payload.
 	import { onMount } from 'svelte';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService, ApiServiceError } from '$lib/api/api.service';
+	import { ApiError, apiErrorMessage } from '$lib/api/api-error';
 	import type { PushDeviceDto } from '$lib/api/api.dtos';
 	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatDate, formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { CwButton, CwCard, CwChip, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import {
 		enablePush,
@@ -22,6 +22,9 @@
 
 	const app = getAppContext();
 	const toast = useCwToast();
+	// Requests go out as the current session (app.accessToken), which also
+	// gates every action below.
+	const { push } = getServices();
 
 	// Support and this browser's id are only knowable in the browser
 	// (Notification API, localStorage); render nothing until mounted so SSR
@@ -41,10 +44,9 @@
 	let enabledHere = $derived(devices.some((device) => device.id === thisDeviceId));
 
 	async function loadDevices() {
-		const accessToken = app.accessToken;
-		if (!accessToken) return;
+		if (!app.accessToken) return;
 		try {
-			devices = await new ApiService({ authToken: accessToken }).getPushDevices();
+			devices = await push.getPushDevices();
 			loadFailed = false;
 		} catch (error) {
 			console.error('Loading push devices failed:', error);
@@ -60,12 +62,11 @@
 	});
 
 	async function handleEnable() {
-		const accessToken = app.accessToken;
-		if (!accessToken || busy) return;
+		if (!app.accessToken || busy) return;
 		busy = true;
 
 		try {
-			if (await enablePush(accessToken)) {
+			if (await enablePush(push)) {
 				thisDeviceId = await getThisDeviceId();
 				await loadDevices();
 				toast.add({ tone: 'success', message: m.push_enabled_toast() });
@@ -80,13 +81,12 @@
 	}
 
 	async function handleRemove() {
-		const accessToken = app.accessToken;
-		if (!removal || !accessToken || removing) return;
+		if (!removal || !app.accessToken || removing) return;
 		const { device } = removal;
 		removing = true;
 
 		try {
-			await new ApiService({ authToken: accessToken }).removePushDevice(device.id);
+			await push.removePushDevice(device.id);
 			removalOpen = false;
 			await loadDevices();
 			toast.add({
@@ -97,14 +97,14 @@
 			});
 		} catch (error) {
 			// Already removed from another tab or device: the list was stale.
-			if (error instanceof ApiServiceError && error.status === 404) {
+			if (error instanceof ApiError && error.status === 404) {
 				removalOpen = false;
 				await loadDevices();
 				return;
 			}
 			toast.add({
 				tone: 'danger',
-				message: readApiErrorMessage(error, m.push_device_remove_failed())
+				message: apiErrorMessage(error, m.push_device_remove_failed())
 			});
 		} finally {
 			removing = false;

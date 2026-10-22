@@ -47,4 +47,32 @@ describe('SignalStrength', () => {
 
 		unmount(component);
 	});
+
+	it('names the quality and the readings it has, and takes an extra class', () => {
+		const component = mount(SignalStrength, {
+			target: document.body,
+			props: { rssi: -112, snr: null, class: 'gateway-signal' }
+		});
+		flushSync();
+		const icon = document.querySelector('.signal-strength');
+
+		expect(icon?.classList).toContain('signal-strength--okay');
+		expect(icon?.classList).toContain('gateway-signal');
+		expect(icon?.getAttribute('aria-label')).toBe(
+			`${m.signal_strength_label({ quality: m.signal_quality_okay() })} · ${m.gateways_rssi()} -112 dBm`
+		);
+		expect(icon?.getAttribute('title')).toBe(icon?.getAttribute('aria-label'));
+
+		unmount(component);
+	});
+
+	it('rates a strong link as strong', () => {
+		const component = renderSignal({ rssi: -100, snr: 1.5 });
+
+		expect(document.querySelector('.signal-strength')?.getAttribute('aria-label')).toBe(
+			`${m.signal_strength_label({ quality: m.signal_quality_strong() })} · ${m.gateways_rssi()} -100 dBm · ${m.gateways_snr()} 1.5 dB`
+		);
+
+		unmount(component);
+	});
 });

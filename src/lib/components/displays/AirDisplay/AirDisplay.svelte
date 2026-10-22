@@ -142,20 +142,8 @@
 		}));
 	}
 
-	let historicalDataKey = $derived.by(() => {
-		const firstId = String(historicalData[0]?.id ?? historicalData[0]?.created_at ?? '');
-		const lastId = String(
-			historicalData[historicalData.length - 1]?.id ??
-				historicalData[historicalData.length - 1]?.created_at ??
-				''
-		);
-		return `${historicalData.length}:${firstId}:${lastId}`;
-	});
-	let extraRowsByKey = $state<Record<string, Record<string, unknown>[]>>({});
-	let extraRows = $derived(extraRowsByKey[historicalDataKey] ?? []);
-	let allRawData = $derived([...historicalData, ...extraRows]);
 	let rows = $derived(
-		toAirRows(allRawData).sort(
+		toAirRows(historicalData).sort(
 			(a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
 		)
 	);
@@ -279,9 +267,10 @@
 	);
 
 	let heatmapDays = $derived.by(() => {
+		// An unreadable created_at would make the day count NaN (an empty heatmap).
 		const timestamps = rows
 			.map((row) => new Date(row.created_at).getTime())
-			.filter((timestamp): timestamp is number => timestamp !== null);
+			.filter((timestamp) => !Number.isNaN(timestamp));
 
 		if (timestamps.length === 0) {
 			return HEATMAP_FALLBACK_DAYS;
@@ -415,7 +404,7 @@
 					rowActionsHeader={m.common_actions()}
 					searchable
 				>
-					{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>, defaultValue: string)}
+					{#snippet cell(row: AirRow, col: CwColumnDef<AirRow>)}
 						<div class="text-xl">
 							{#if col.key === 'created_at'}
 								{new Date(row.created_at).toLocaleString()}
@@ -432,8 +421,6 @@
 								{:else}
 									<Icon src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} preserveColor />
 								{/if}
-							{:else}
-								{defaultValue}
 							{/if}
 						</div>
 					{/snippet}

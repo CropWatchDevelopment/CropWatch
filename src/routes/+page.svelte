@@ -8,8 +8,8 @@
 	import DashboardCards, { type CardLayout } from '$lib/components/dashboard/DashboardCards.svelte';
 	import DashboardTable from '$lib/components/dashboard/DashboardTable.svelte';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { ApiService } from '$lib/api/api.service';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { cwSearchInputLabels } from '$lib/i18n/cwuiLabels';
 	import TABLE_ICON from '$lib/images/icons/table.svg';
 	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
@@ -24,6 +24,7 @@
 	const SEARCH_DEBOUNCE_MS = 300;
 
 	const app = getAppContext();
+	const services = getServices();
 
 	let view = $state<DashboardView>('table');
 	let cardLayout = $state<CardLayout>('grid');
@@ -83,8 +84,7 @@
 		const token = app.accessToken;
 		if (!token || sidebarDataLoaded) return;
 		sidebarDataLoaded = true;
-		const api = new ApiService({ authToken: token });
-		api
+		services.locations
 			.getLocationGroups()
 			.then((groups) => {
 				app.locationGroups = groups;
@@ -92,7 +92,7 @@
 			.catch(() => {
 				/* sidebar tolerates an empty list */
 			});
-		api
+		services.locations
 			.getLocations()
 			.then((locations) => {
 				app.locations = locations;
@@ -107,7 +107,7 @@
 	<title>{m.dashboard_page_title()}</title>
 </svelte:head>
 
-<AppPage width="full" class="dashboard-page">
+<AppPage class="dashboard-page">
 	<div class="--cw-bg-base flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 		<header class="flex-none">
 			<!-- Below md the search gets its own full-width row above the view

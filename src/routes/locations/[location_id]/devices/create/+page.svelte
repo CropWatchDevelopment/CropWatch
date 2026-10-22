@@ -3,9 +3,9 @@
 	import { tick } from 'svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
-	import { getAppContext } from '$lib/appContext.svelte';
+	import { CwButton, CwCard, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import DetailsStep from './DetailsStep.svelte';
 	import IdentifyStep from './IdentifyStep.svelte';
 	import RegisterProgress from './RegisterProgress.svelte';
@@ -16,10 +16,11 @@
 
 	let { data }: PageProps = $props();
 
-	const app = getAppContext();
+	const { devices } = getServices();
+	const toast = useCwToast();
 	const locationId = (() => data.locationId)();
 	const flow = new DeviceSetupFlow({
-		getAuthToken: () => app.accessToken ?? null,
+		devices,
 		locationId: Number(locationId),
 		licenses: (() => data.availableLicenses)()
 	});
@@ -45,7 +46,11 @@
 
 	// A finished setup used a license: refresh the count.
 	$effect(() => {
-		if (flow.step === 'done') void invalidateAll();
+		if (flow.step === 'done') {
+			invalidateAll().catch((error: unknown) =>
+				console.error('Failed to reload the available licenses:', error)
+			);
+		}
 	});
 
 	// Move focus to the new step's heading so keyboard and screen-reader users
@@ -60,10 +65,18 @@
 		);
 	});
 
+	/** The free licenses could not be reloaded: the wizard goes on with the list it has. */
+	function licensesNotReloaded(error: unknown): void {
+		console.error('Failed to reload the available licenses:', error);
+		toast.add({ tone: 'warning', message: m.device_setup_licenses_reload_failed() });
+	}
+
 	// The chosen license was taken meanwhile: reload the free ones first.
 	async function changeLicense(): Promise<void> {
 		try {
 			await invalidateAll();
+		} catch (error) {
+			licensesNotReloaded(error);
 		} finally {
 			flow.go('details');
 		}
@@ -74,6 +87,8 @@
 		addingAnother = true;
 		try {
 			await invalidateAll();
+		} catch (error) {
+			licensesNotReloaded(error);
 		} finally {
 			addingAnother = false;
 			flow.reset(data.availableLicenses);
@@ -85,7 +100,7 @@
 	<title>{m.device_setup_page_title()}</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="device-setup-back-button"
 		variant="secondary"

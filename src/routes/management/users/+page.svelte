@@ -1,18 +1,13 @@
 <script lang="ts">
-	import {
-		CwButton,
-		CwDataTable,
-		useCwToast,
-		type CwColumnDef,
-		type CwTableQuery,
-		type CwTableResult
-	} from '@cropwatchdevelopment/cwui';
+	import { CwButton, CwDataTable, useCwToast, type CwColumnDef } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import { AppNotice } from '$lib/components/layout';
 	import { CwCard } from '@cropwatchdevelopment/cwui';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import type { OrgMemberDto } from '$lib/api/api.dtos';
+	import { apiErrorMessage } from '$lib/api/api-error';
+	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
 	import {
 		assignableRoles,
 		canRemove,
@@ -25,8 +20,9 @@
 	import ChangeRoleDialog from './ChangeRoleDialog.svelte';
 	import SuspendMemberDialog from './SuspendMemberDialog.svelte';
 	import RemoveMemberDialog from './RemoveMemberDialog.svelte';
+	import type { PageProps } from './$types';
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
 	const app = getAppContext();
 	const toast = useCwToast();
 
@@ -51,10 +47,14 @@
 	let busyUserId = $state<string | null>(null);
 	let busyInviteId = $state<string | null>(null);
 
-	const loadData = async (query: CwTableQuery): Promise<CwTableResult<OrgMemberDto>> => {
-		void query;
-		return { rows: members, total: members.length };
-	};
+	const statusLabel = (member: OrgMemberDto) =>
+		member.status === 'suspended' ? m.management_status_suspended() : m.management_status_active();
+
+	// Searches, sorts and pages the loaded members; the search matches what each row shows.
+	const loadData = createClientTableLoader(() => members, {
+		searchText: (member) =>
+			[member.full_name, member.email, orgRoleLabel(member.role), statusLabel(member)].join(' ')
+	});
 
 	function openDialog(member: OrgMemberDto, which: 'role' | 'suspend' | 'remove') {
 		selectedMember = member;
@@ -73,6 +73,8 @@
 					? { tone: 'success', message: m.management_reinstated_done() }
 					: { tone: 'danger', message: result.error ?? m.generic_error() }
 			);
+		} catch (err) {
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 		} finally {
 			busyUserId = null;
 		}
@@ -94,6 +96,8 @@
 						}
 					: { tone: 'danger', message: result.error ?? m.generic_error() }
 			);
+		} catch (err) {
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 		} finally {
 			busyInviteId = null;
 		}
@@ -140,9 +144,7 @@
 				{#if col.key === 'role'}
 					{orgRoleLabel(row.role)}
 				{:else if col.key === 'status'}
-					{row.status === 'suspended'
-						? m.management_status_suspended()
-						: m.management_status_active()}
+					{statusLabel(row)}
 				{:else}
 					{defaultValue}
 				{/if}

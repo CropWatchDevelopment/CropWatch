@@ -17,7 +17,6 @@
 
 	interface Props {
 		activeRange: RangeSelection | null;
-		authToken: string | null;
 		controlsDisabled: boolean;
 		devEui: string;
 		exportTimeZone: string;
@@ -34,7 +33,6 @@
 
 	let {
 		activeRange,
-		authToken,
 		controlsDisabled,
 		devEui,
 		exportTimeZone,
@@ -84,7 +82,7 @@
 				{/if}
 			</p>
 			<p class="text-md" style="color: var(--cw-text-muted)">
-				Dev-Eui: {devEui}
+				{m.devices_dashboard_dev_eui({ devEui })}
 				<CwCopy labels={cwCopyLabels()} value={devEui} />
 			</p>
 		</div>
@@ -109,10 +107,9 @@
 
 		<div class="device-header__actions">
 			{#if canManage(permissionLevel)}
-				<NotesReviewDialog {authToken} {devEui} disabled={controlsDisabled} />
+				<NotesReviewDialog {devEui} disabled={controlsDisabled} />
 
 				<CsvExportDialog
-					{authToken}
 					{devEui}
 					{locationName}
 					timeZone={exportTimeZone}
@@ -121,7 +118,6 @@
 
 				{#if isTrafficDevice}
 					<CsvTrafficExportDialog
-						{authToken}
 						{devEui}
 						{locationName}
 						timeZone={exportTimeZone}
@@ -130,7 +126,7 @@
 				{/if}
 			{/if}
 
-			<DeviceGatewaysDialog {authToken} {devEui} disabled={controlsDisabled} />
+			<DeviceGatewaysDialog {devEui} disabled={controlsDisabled} />
 
 			{#if isAdmin(permissionLevel)}
 				<CwButton
@@ -165,7 +161,7 @@
 
 <style>
 	/* CwCard's header is a no-wrap row and its actions slot never shrinks, so in a
-	   narrow card the Dev-Eui line squeezes the title into a one-glyph-wide column.
+	   narrow card the DevEUI line squeezes the title into a one-glyph-wide column.
 	   Keyed on the card's own width, not the viewport: from 640px up the sidebar is
 	   in-flow, so the card is still phone-narrow well past the mobile breakpoint. */
 	:global(.cw-card.device-header-card) {

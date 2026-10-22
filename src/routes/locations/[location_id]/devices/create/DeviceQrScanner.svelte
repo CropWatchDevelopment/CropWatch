@@ -55,10 +55,11 @@
 		problem = null;
 		unrecognizedText = '';
 
+		const stopTracks = () => stream?.getTracks().forEach((track) => track.stop());
 		const stop = () => {
 			stopped = true;
 			if (timer) clearTimeout(timer);
-			stream?.getTracks().forEach((track) => track.stop());
+			stopTracks();
 			element.srcObject = null;
 		};
 
@@ -84,13 +85,17 @@
 						: 'unavailable';
 				return;
 			}
-			if (stopped) return stop();
+			// Closed while the camera was starting. From here on a stopped scanner never
+			// touches the video element: a reopened dialog may already be using it.
+			if (stopped) return stopTracks();
 
 			// Continuous autofocus where the camera supports it (non-standard; ignored elsewhere).
 			const [track] = stream.getVideoTracks();
 			await track
 				?.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] })
 				.catch(() => undefined);
+			// Closed during the autofocus request: stop() has already released the stream.
+			if (stopped) return;
 
 			element.srcObject = stream;
 			await element.play().catch(() => undefined);

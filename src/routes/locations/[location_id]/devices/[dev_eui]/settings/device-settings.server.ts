@@ -1,5 +1,4 @@
-import { env } from '$env/dynamic/private';
-import type { DeviceDto, LocationDto } from '$lib/api/api.service';
+import type { DeviceDto, LocationDto } from '$lib/api/api.dtos';
 import {
 	isValidTtiDeviceId,
 	normalizeTtiDeviceId,
@@ -7,6 +6,7 @@ import {
 } from '$lib/devices/tti-device-id';
 import { m } from '$lib/paraglide/messages.js';
 import { isValidPermissionLevel, PermissionLevel } from '$lib/constants/permissions';
+import type { LibellusConfigurationProblem } from '$lib/server/libellus';
 
 export const DEVICE_NAME_MAX_LENGTH = 120;
 export const DEVICE_GROUP_MAX_LENGTH = 120;
@@ -144,14 +144,18 @@ export function getSht43Serial(device: DeviceDto | null): string {
 	return str((device as Record<string, unknown>).sensor2_serial);
 }
 
-export function buildSensorCertificateRows(device: DeviceDto | null): SensorCertificateRow[] {
+/**
+ * @param libellusProblem - `locals.services.libellus.configurationProblem`: why
+ *   certificate downloads cannot work (shown on the row), or `null`.
+ */
+export function buildSensorCertificateRows(
+	device: DeviceDto | null,
+	libellusProblem: LibellusConfigurationProblem | null
+): SensorCertificateRow[] {
 	if (!deviceSupportsSensorCertificate(device)) return [];
 
 	const serial = getSht43Serial(device);
 	if (!serial) return [];
-
-	const hasApiToken = str(env.PRIVATE_LIBELLUS_API_TOKEN).length > 0;
-	const hasBaseUrl = str(env.PRIVATE_LIBELLUS_BASE_URL).length > 0;
 
 	return [
 		{
@@ -159,11 +163,12 @@ export function buildSensorCertificateRows(device: DeviceDto | null): SensorCert
 			label: m.devices_sensor_sht43_label(),
 			serial,
 			product: str(device?.cw_device_type?.model),
-			downloadDisabledReason: !hasApiToken
-				? m.devices_libellus_api_token_missing()
-				: !hasBaseUrl
-					? m.devices_libellus_base_url_missing()
-					: null
+			downloadDisabledReason:
+				libellusProblem === 'missing-api-token'
+					? m.devices_libellus_api_token_missing()
+					: libellusProblem === 'missing-base-url'
+						? m.devices_libellus_base_url_missing()
+						: null
 		}
 	];
 }

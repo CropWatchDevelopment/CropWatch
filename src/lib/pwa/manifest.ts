@@ -16,6 +16,14 @@ type ManifestShortcut = {
 	icons?: ManifestIcon[];
 };
 
+type ManifestScreenshot = {
+	src: string;
+	sizes: string;
+	type: string;
+	form_factor: 'narrow' | 'wide';
+	label: string;
+};
+
 type WebAppManifest = {
 	id: string;
 	name: string;
@@ -33,6 +41,7 @@ type WebAppManifest = {
 	prefer_related_applications: boolean;
 	icons: ManifestIcon[];
 	shortcuts: ManifestShortcut[];
+	screenshots: ManifestScreenshot[];
 };
 
 function normalizeBasePath(basePath: string): string {
@@ -55,6 +64,28 @@ function withBase(basePath: string, path: string): string {
 
 	return `${normalizeBasePath(basePath)}${path}`;
 }
+
+// Fictional demo data, captured per locale by scripts/capture-pwa-screenshots.mjs.
+const SCREENSHOTS = [
+	{
+		name: 'dashboard-narrow',
+		sizes: '780x1688',
+		form_factor: 'narrow',
+		label: m.manifest_screenshot_dashboard
+	},
+	{
+		name: 'overview-narrow',
+		sizes: '780x1688',
+		form_factor: 'narrow',
+		label: m.manifest_screenshot_overview
+	},
+	{
+		name: 'dashboard-wide',
+		sizes: '1440x900',
+		form_factor: 'wide',
+		label: m.manifest_screenshot_dashboard
+	}
+] as const;
 
 export function buildManifest(basePath = '', locale: 'ja' | 'en' = 'ja'): WebAppManifest {
 	const appRoot = rootPath(basePath);
@@ -129,6 +160,14 @@ export function buildManifest(basePath = '', locale: 'ja' | 'en' = 'ja'): WebApp
 				url: withBase(basePath, '/reports'),
 				icons: [shortcutIcon]
 			}
-		]
+		],
+		// Chrome on Android shows these in its larger install sheet.
+		screenshots: SCREENSHOTS.map(({ name, sizes, form_factor, label }) => ({
+			src: withBase(basePath, `/screenshots/pwa/${resolvedLocale}/${name}.png`),
+			sizes,
+			type: 'image/png',
+			form_factor,
+			label: label({}, { locale: resolvedLocale })
+		}))
 	};
 }

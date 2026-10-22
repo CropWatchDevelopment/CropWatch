@@ -12,15 +12,9 @@
 // subscription, and logging out changes nothing: alerts keep arriving until
 // the person turns them off from their device list.
 import { browser } from '$app/environment';
-import {
-	PUBLIC_FIREBASE_API_KEY,
-	PUBLIC_FIREBASE_APP_ID,
-	PUBLIC_FIREBASE_AUTH_DOMAIN,
-	PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-	PUBLIC_FIREBASE_PROJECT_ID,
-	PUBLIC_FIREBASE_VAPID_KEY
-} from '$env/static/public';
-import { ApiService } from '$lib/api/api.service';
+import { readFirebaseConfig } from '$lib/config/firebase';
+import type { PushRepository } from '$lib/api/repositories/push.repository';
+import { isInstalledApp, isIosDevice } from '$lib/pwa/platform';
 import { describeDevice, pushDeviceId } from './push-device';
 
 const PUSH_SW_URL = '/push-sw.js';
@@ -36,12 +30,8 @@ export interface ForegroundPushMessage {
 }
 
 function isConfigured(): boolean {
-	return Boolean(
-		PUBLIC_FIREBASE_API_KEY &&
-		PUBLIC_FIREBASE_API_KEY !== 'replace-me' &&
-		PUBLIC_FIREBASE_PROJECT_ID &&
-		PUBLIC_FIREBASE_VAPID_KEY
-	);
+	const { apiKey, projectId, vapidKey } = readFirebaseConfig();
+	return Boolean(apiKey && apiKey !== 'replace-me' && projectId && vapidKey);
 }
 
 export function isPushSupported(): boolean {
@@ -59,12 +49,7 @@ export function isPushSupported(): boolean {
 // "unsupported browser" — the settings card words the two states differently.
 export function iosNeedsInstall(): boolean {
 	if (!browser) return false;
-	const isIos =
-		/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-		// iPadOS 13+ reports as Macintosh but has touch support.
-		(navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
-	const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-	return isIos && !isStandalone && !isPushSupported();
+	return isIosDevice(navigator) && !isInstalledApp(window) && !isPushSupported();
 }
 
 // Whether this browser can do push at all. Whether it is on for the signed-in
@@ -110,15 +95,10 @@ async function getMessaging() {
 		import('firebase/messaging')
 	]);
 
+	const { apiKey, authDomain, projectId, messagingSenderId, appId } = readFirebaseConfig();
 	const app = getApps().length
 		? getApp()
-		: initializeApp({
-				apiKey: PUBLIC_FIREBASE_API_KEY,
-				authDomain: PUBLIC_FIREBASE_AUTH_DOMAIN,
-				projectId: PUBLIC_FIREBASE_PROJECT_ID,
-				messagingSenderId: PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-				appId: PUBLIC_FIREBASE_APP_ID
-			});
+		: initializeApp({ apiKey, authDomain, projectId, messagingSenderId, appId });
 
 	return { messaging: messagingModule.getMessaging(app), messagingModule };
 }
@@ -152,8 +132,10 @@ async function registerPushServiceWorker(): Promise<ServiceWorkerRegistration> {
  * `Notification.requestPermission()` is allowed to show the prompt (iOS
  * requires it, Chrome strongly prefers it). Resolves false when permission
  * isn't granted.
+ *
+ * @param push - The browser services' push repository (it sends the current session token).
  */
-export async function enablePush(authToken: string): Promise<boolean> {
+export async function enablePush(push: PushRepository): Promise<boolean> {
 	if (!isPushSupported()) return false;
 
 	const registration = await registerPushServiceWorker();
@@ -163,19 +145,18 @@ export async function enablePush(authToken: string): Promise<boolean> {
 
 	const { messaging, messagingModule } = await getMessaging();
 	const token = await messagingModule.getToken(messaging, {
-		vapidKey: PUBLIC_FIREBASE_VAPID_KEY,
+		vapidKey: readFirebaseConfig().vapidKey,
 		serviceWorkerRegistration: registration
 	});
 
-	const api = new ApiService({ authToken });
 	const stored = getStoredToken();
 	// Firebase issued this browser a new token since it last checked in: move
 	// the accounts already on it first, or their subscriptions would be left
 	// on a dead token.
 	if (stored && stored !== token) {
-		await api.refreshPushToken({ token, previousToken: stored });
+		await push.refreshPushToken({ token, previousToken: stored });
 	}
-	await api.registerPushToken({
+	await push.registerPushToken({
 		token,
 		deviceLabel: describeDevice(navigator.userAgent, navigator.maxTouchPoints)
 	});
@@ -189,8 +170,10 @@ export async function enablePush(authToken: string): Promise<boolean> {
  * and the device name). FCM tokens rotate; when Firebase hands this browser a
  * new one, every account on it moves along. No-op unless permission is
  * granted and this browser enrolled before.
+ *
+ * @param push - The browser services' push repository (it sends the current session token).
  */
-export async function refreshPushToken(authToken: string): Promise<void> {
+export async function refreshPushToken(push: PushRepository): Promise<void> {
 	if (!isPushSupported()) return;
 	if (Notification.permission !== 'granted') return;
 
@@ -201,12 +184,12 @@ export async function refreshPushToken(authToken: string): Promise<void> {
 		const registration = await registerPushServiceWorker();
 		const { messaging, messagingModule } = await getMessaging();
 		const token = await messagingModule.getToken(messaging, {
-			vapidKey: PUBLIC_FIREBASE_VAPID_KEY,
+			vapidKey: readFirebaseConfig().vapidKey,
 			serviceWorkerRegistration: registration
 		});
 		if (!token) return;
 
-		await new ApiService({ authToken }).refreshPushToken({
+		await push.refreshPushToken({
 			token,
 			previousToken: token !== stored ? stored : undefined,
 			deviceLabel: describeDevice(navigator.userAgent, navigator.maxTouchPoints)

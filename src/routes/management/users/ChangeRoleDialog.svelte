@@ -2,6 +2,7 @@
 	import { CwButton, CwDialog, CwDropdown, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { OrgMemberDto, OrgRole } from '$lib/api/api.dtos';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import { orgRoleLabel } from '$lib/auth/org-labels';
 	import { submitPageAction } from '$lib/forms/submit-page-action';
@@ -17,8 +18,16 @@
 	let role = $state('');
 	let submitting = $state(false);
 
+	// Start from the member's current role each time the dialog opens, so a role
+	// chosen and then cancelled never carries over (to this or another member).
+	$effect.pre(() => {
+		if (open) role = member?.role ?? '';
+	});
+
 	const roleOptions = $derived(roles.map((r) => ({ label: orgRoleLabel(r), value: r })));
-	const canSubmit = $derived(Boolean(member) && roles.includes(role as OrgRole));
+	const canSubmit = $derived(
+		Boolean(member) && role !== member?.role && roles.includes(role as OrgRole)
+	);
 
 	async function saveRole() {
 		if (!member || !canSubmit || submitting) return;
@@ -32,6 +41,8 @@
 			} else {
 				toast.add({ tone: 'danger', message: result.error ?? m.generic_error() });
 			}
+		} catch (err) {
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 		} finally {
 			submitting = false;
 		}

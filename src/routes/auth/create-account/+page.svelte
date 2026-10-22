@@ -7,7 +7,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
+	import { runRecaptchaAction, warmupRecaptcha } from '$lib/utils/recaptcha';
 	import { isStrongPassword, type IPasswordValidationResult } from '$lib/utils/strongPasswordCheck';
 	import { applyAction, enhance } from '$app/forms';
 	import { readRedirectPath } from '$lib/utils/auth-redirect';
@@ -15,12 +15,12 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import CreateAccountPasswordFields from './CreateAccountPasswordFields.svelte';
 	import LegalConsentFields from '$lib/components/auth/LegalConsentFields.svelte';
+	import type { PageProps } from './$types';
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
 	const toast = useCwToast();
 
 	let submitting: boolean = $state(false);
-	const recaptcha = createAuthRecaptcha();
 
 	let firstName: string = $state('');
 	let lastName: string = $state('');
@@ -55,7 +55,7 @@
 	);
 
 	onMount(() => {
-		void recaptcha.warmup();
+		void warmupRecaptcha();
 	});
 
 	function authPath(path: '/auth/login'): string {
@@ -81,14 +81,16 @@
 		<h1 class="auth-title">{m.auth_create_account()}</h1>
 		<p class="auth-subtitle">
 			{m.auth_or_prefix()}
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- authPath() resolves the path and adds ?redirect= -->
 			<a
 				id="create-account-sign-in-existing-link"
 				class="auth-link auth-link-button"
-				href={resolve('/auth/login')}
+				href={authPath('/auth/login')}
 				onclick={(event) => navigateWithRedirect(event, '/auth/login')}
 			>
 				{m.auth_sign_in_existing_account()}
 			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</p>
 
 		<form
@@ -103,7 +105,7 @@
 				submitting = true;
 
 				try {
-					formData.set('recaptchaToken', await recaptcha.runAction('REGISTER'));
+					formData.set('recaptchaToken', await runRecaptchaAction('REGISTER'));
 				} catch (error) {
 					console.error('reCAPTCHA execution error:', error);
 					toast.add({
@@ -243,15 +245,17 @@
 				{submitting ? m.auth_creating_account() : m.auth_create_account()}
 			</CwButton>
 
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- authPath() resolves the path and adds ?redirect= -->
 			<a
 				id="create-account-sign-in-instead-link"
 				class="auth-button-link auth-button-link--secondary"
-				href={resolve('/auth/login')}
+				href={authPath('/auth/login')}
 				onclick={(event) => navigateWithRedirect(event, '/auth/login')}
 			>
 				<Icon src={KEY_ICON} alt={m.auth_sign_in()} class="h-4 w-4" />
 				{m.auth_sign_in_instead()}
 			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</form>
 
 		<p class="security-copy">{m.auth_security_copy()}</p>

@@ -3,14 +3,14 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { AppActionRow, AppNotice, AppPage } from '$lib/components/layout';
 	import { parseAirNotesResponse } from '$lib/components/displays/AirDisplay/utils/air-notes';
 	import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
 	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { formatSensorMeasurement } from '$lib/units';
 	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
 	import {
@@ -28,6 +28,7 @@
 	let { data }: PageProps = $props();
 
 	const app = getAppContext();
+	const { telemetry, airNotes, reports } = getServices();
 	const toast = useCwToast();
 
 	const templateId = (() => data.template.id)();
@@ -81,13 +82,17 @@
 		loading = true;
 		loadError = null;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const result = await api.getDeviceDataWithinRange(devEui, {
+			const result = await telemetry.getDeviceDataWithinRange(devEui, {
 				start: periodStartIso,
 				end: periodEndIso,
 				take: MAX_PERIOD_ROWS,
 				timezone: REPORT_TIMEZONE
 			});
+			// An empty body parses to null: that is a failed load, not "no data".
+			if (result == null) {
+				loadError = m.reports_new_edit_data_load_failed();
+				return;
+			}
 			const items = Array.isArray(result)
 				? result
 				: (((result as { data?: unknown }).data as Record<string, unknown>[] | undefined) ?? []);
@@ -100,7 +105,7 @@
 				notes: parseAirNotesResponse(row.cw_air_annotations)
 			}));
 		} catch (error) {
-			loadError = readApiErrorMessage(error, m.reports_new_edit_data_load_failed());
+			loadError = apiErrorMessage(error, m.reports_new_edit_data_load_failed());
 		} finally {
 			loading = false;
 		}
@@ -142,7 +147,6 @@
 		if (submitting || stagedOps.size === 0) return;
 		submitting = true;
 		saveErrors = [];
-		const api = new ApiService({ authToken: app.accessToken });
 		const failures: string[] = [];
 		// Captured before the loop drains stagedOps: reported to the queue so the
 		// history dialog can show how many edits a pending regeneration covers.
@@ -151,7 +155,7 @@
 		for (const op of [...stagedOps.values()]) {
 			try {
 				if (op.kind === 'create') {
-					await api.createAirNote({
+					await airNotes.createAirNote({
 						note: op.note,
 						title: op.title,
 						include_in_report: op.includeInReport,
@@ -159,17 +163,17 @@
 						dev_eui: devEui
 					});
 				} else if (op.kind === 'update' && op.noteId !== undefined) {
-					await api.updateAirNote(op.noteId, {
+					await airNotes.updateAirNote(op.noteId, {
 						note: op.note,
 						title: op.title,
 						include_in_report: op.includeInReport
 					});
 				} else if (op.kind === 'delete' && op.noteId !== undefined) {
-					await api.deleteAirNote(op.noteId);
+					await airNotes.deleteAirNote(op.noteId);
 				}
 				stagedOps.delete(op.key);
 			} catch (error) {
-				failures.push(readApiErrorMessage(error, `${op.kind}: ${op.title || op.note}`));
+				failures.push(apiErrorMessage(error, `${op.kind}: ${op.title || op.note}`));
 			}
 		}
 
@@ -182,7 +186,7 @@
 		}
 
 		try {
-			await api.requestReportRegeneration(templateId, {
+			await reports.requestReportRegeneration(templateId, {
 				devEui,
 				periodStart: periodStartIso,
 				periodEnd: periodEndIso,
@@ -190,9 +194,12 @@
 				editCount
 			});
 			toast.add({ tone: 'success', message: m.reports_new_edit_data_saved() });
-			await goto(resolve('/reports'));
+			// Saved and queued: a failed navigation must not be reported as a failed save.
+			await goto(resolve('/reports')).catch((error: unknown) => {
+				console.error('Failed to open the reports list after saving:', error);
+			});
 		} catch (error) {
-			saveErrors = [readApiErrorMessage(error, m.reports_new_save_failed())];
+			saveErrors = [apiErrorMessage(error, m.reports_new_save_failed())];
 		} finally {
 			submitting = false;
 		}
@@ -205,7 +212,7 @@
 	<title>{m.reports_new_edit_data_title()}</title>
 </svelte:head>
 
-<AppPage width="xl">
+<AppPage>
 	<CwButton
 		id="report-edit-data-back-button"
 		variant="secondary"

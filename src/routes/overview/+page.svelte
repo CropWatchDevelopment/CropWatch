@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { CwButton, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { AppNotice, AppPage } from '$lib/components/layout';
 	import { formatRelative, getIntlLocale } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 	import { reactiveNow } from '$lib/utils/reactive-now.svelte';
 	import type { PageProps } from './$types';
@@ -29,6 +29,7 @@
 	let { data }: PageProps = $props();
 
 	const app = getAppContext();
+	const services = getServices();
 	const toast = useCwToast();
 	const locale = getIntlLocale();
 
@@ -41,9 +42,9 @@
 
 	// Seeded once from the server; see OverviewRanges for the caching rules.
 	const ranges = new OverviewRanges({
-		fetcher: (range) => new ApiService({ authToken: app.accessToken }).getOverview(range),
+		fetcher: (range) => services.overview.getOverview(range),
 		onError: (error) =>
-			toast.add({ tone: 'danger', message: readApiErrorMessage(error, m.overview_load_failed()) }),
+			toast.add({ tone: 'danger', message: apiErrorMessage(error, m.overview_load_failed()) }),
 		initial: (() => data.initialOverview)()
 	});
 
@@ -146,7 +147,7 @@
 	<title>{m.overview_page_title()}</title>
 </svelte:head>
 
-<AppPage width="xl">
+<AppPage>
 	<div class="ov" class:ov--loading={ranges.pending !== null} aria-busy={ranges.pending !== null}>
 		<header class="ov-header">
 			<div class="ov-header__titles">
@@ -164,9 +165,15 @@
 					/>
 				{/if}
 			</div>
-			<div class="ov-header__actions ov-wide-only">
+			<!-- Phones get the range switch under the health card; the dashboard
+			     link stays up here (and at the bottom) at every width. -->
+			<div class="ov-header__actions">
 				{#if overview}
-					<RangeSwitch value={ranges.range} onselect={(next) => ranges.select(next)} />
+					<RangeSwitch
+						class="ov-wide-only"
+						value={ranges.range}
+						onselect={(next) => ranges.select(next)}
+					/>
 				{/if}
 				<a class="ov-button" href={resolve('/')}>
 					{m.overview_open_dashboard()}<OverviewIcon name="arrow" size={16} />
@@ -384,6 +391,17 @@
 	@container overview (width < 640px) {
 		.ov :global(.ov-wide-only) {
 			display: none !important;
+		}
+
+		/* The title on the left, the dashboard link on the right, on one row. */
+		.ov-header {
+			flex-wrap: nowrap;
+			align-items: center;
+		}
+
+		.ov-header__actions .ov-button {
+			flex: none;
+			white-space: nowrap;
 		}
 
 		.ov-header__eyebrow {

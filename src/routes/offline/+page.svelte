@@ -12,9 +12,10 @@
 		<p class="offline-eyebrow">{m.offline_eyebrow()}</p>
 		<h1>{m.offline_heading()}</h1>
 		<p>{m.offline_body()}</p>
-		<button id="offline-retry-button" type="button" onclick={() => window.location.reload()}
-			>{m.action_try_again()}</button
-		>
+		<!-- No JavaScript runs on this page: an empty href opens the current URL (with its
+		     query) again — a real navigation, not a link standing in for a button. -->
+		<!-- svelte-ignore a11y_invalid_attribute -->
+		<a id="offline-retry-button" class="offline-retry" href="">{m.action_try_again()}</a>
 	</section>
 </div>
 
@@ -62,7 +63,8 @@
 		color: rgb(226 232 240 / 0.88);
 	}
 
-	button {
+	.offline-retry {
+		display: inline-block;
 		margin-top: 1.4rem;
 		padding: 0.9rem 1.25rem;
 		border: 0;
@@ -71,10 +73,11 @@
 		font-weight: 700;
 		color: #0f172a;
 		background: linear-gradient(135deg, #86efac, #4ade80);
+		text-decoration: none;
 		cursor: pointer;
 	}
 
-	button:hover {
+	.offline-retry:hover {
 		filter: brightness(1.04);
 	}
 </style>

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import type { RuleTriggerLogDto } from '$lib/api/api.dtos';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
-	import { getAppContext } from '$lib/appContext.svelte';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { AppNotice } from '$lib/components/layout';
 	import Icon from '$lib/components/Icon.svelte';
+	import { getServices } from '$lib/services/context';
 	import { CwButton, CwChip, CwDialog, CwDropdown, CwDuration } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
@@ -18,7 +17,7 @@
 
 	let { templateId, ruleName }: Props = $props();
 
-	const app = getAppContext();
+	const { rules } = getServices();
 
 	let open = $state(false);
 	let loading = $state(false);
@@ -37,11 +36,10 @@
 		errorMessage = null;
 		selectedDevice = '';
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			entries = await api.getRuleTemplateHistory(templateId);
+			entries = await rules.getRuleTemplateHistory(templateId);
 			loadedFor = templateId;
 		} catch (error) {
-			errorMessage = readApiErrorMessage(error, m.rules_new_history_load_failed());
+			errorMessage = apiErrorMessage(error, m.rules_new_history_load_failed());
 		} finally {
 			loading = false;
 		}

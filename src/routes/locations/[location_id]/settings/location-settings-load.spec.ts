@@ -1,6 +1,9 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { m } from '$lib/paraglide/messages.js';
+import { createServerServices } from '$lib/server/services';
+import { testPublicConfig } from '$lib/testing/http';
+import { testServerConfig } from '$lib/testing/server';
 import { load } from './+page.server';
 
 const OWNER_ID = '11111111-1111-4111-8111-111111111111';
@@ -31,8 +34,12 @@ const greenhouse = {
 
 type FakeApi = { locationStatus?: number; preflightStatus?: number };
 
-/** A load event for /locations/8/settings as `jwt`, against a fake API. */
+/** A load event for /locations/8/settings as `jwt`, with real services over a fake API. */
 function loadEvent(jwt: { sub: string; email: string }, api: FakeApi = {}) {
+	return loadEventWithFetch(jwt, api).event;
+}
+
+function loadEventWithFetch(jwt: { sub: string; email: string }, api: FakeApi = {}) {
 	const locationStatus = api.locationStatus ?? 200;
 	const preflightStatus = api.preflightStatus ?? 200;
 	const fetch = vi.fn(async (input: RequestInfo | URL) => {
@@ -50,12 +57,22 @@ function loadEvent(jwt: { sub: string; email: string }, api: FakeApi = {}) {
 		return json({ message: 'unexpected call' }, 404);
 	});
 
-	const event = {
-		locals: { jwtString: 'jwt-token', jwt },
+	const services = createServerServices({
 		fetch,
+		authToken: () => 'jwt-token',
+		config: testPublicConfig(),
+		serverConfig: testServerConfig()
+	});
+	const event = {
+		locals: {
+			jwtString: 'jwt-token',
+			jwt,
+			services,
+			config: { public: testPublicConfig(), server: testServerConfig() }
+		},
 		params: { location_id: '8' }
 	};
-	return event as unknown as Parameters<typeof load>[0];
+	return { event: event as unknown as Parameters<typeof load>[0], fetch };
 }
 
 /** The HTTP status + message a load rejects with, or null when it resolves. */
@@ -113,6 +130,38 @@ describe('location settings load', () => {
 				)
 			)
 		).resolves.toEqual({ status: 403, message: m.locations_permission_denied() });
+	});
+
+	it('asks the API for the location, its delete preflight and its devices, as the session', async () => {
+		const { event, fetch } = loadEventWithFetch({ sub: OWNER_ID, email: 'owner@example.com' });
+
+		await run(event);
+
+		const requests = fetch.mock.calls.map((call) => {
+			const [input, init] = call as unknown as [RequestInfo | URL, RequestInit | undefined];
+			return {
+				url: String(input),
+				method: init?.method,
+				authorization: new Headers(init?.headers).get('Authorization')
+			};
+		});
+		expect(requests).toEqual([
+			{
+				url: 'https://api.cropwatch.test/locations/8',
+				method: 'GET',
+				authorization: 'Bearer jwt-token'
+			},
+			{
+				url: 'https://api.cropwatch.test/locations/8/delete-preflight',
+				method: 'GET',
+				authorization: 'Bearer jwt-token'
+			},
+			{
+				url: 'https://api.cropwatch.test/devices/location/8',
+				method: 'GET',
+				authorization: 'Bearer jwt-token'
+			}
+		]);
 	});
 
 	it('answers 404 when the API cannot find the location, even for staff', async () => {

@@ -3,10 +3,9 @@
 	import { resolve } from '$app/paths';
 	import { SvelteMap } from 'svelte/reactivity';
 	import type { ReportRegenerationItemDto, ReportTemplateHistoryItemDto } from '$lib/api/api.dtos';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
-	import { getAppContext } from '$lib/appContext.svelte';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import Icon from '$lib/components/Icon.svelte';
+	import { getServices } from '$lib/services/context';
 	import { CwButton, CwChip, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
@@ -21,7 +20,7 @@
 
 	let { templateId, reportName }: Props = $props();
 
-	const app = getAppContext();
+	const { reports } = getServices();
 	const toast = useCwToast();
 
 	let open = $state(false);
@@ -45,11 +44,12 @@
 		return byKey;
 	});
 
-	$effect(() => {
-		if (open && !loading && loadedFor !== templateId) {
-			void loadHistory();
-		}
-	});
+	// Loads on opening, not in an effect: after a failed load the dialog waits
+	// to be reopened instead of retrying at once, again and again.
+	function openHistory() {
+		open = true;
+		if (!loading && loadedFor !== templateId) void loadHistory();
+	}
 
 	type HistoryGroup = {
 		devEui: string;
@@ -76,19 +76,18 @@
 		loading = true;
 		errorMessage = null;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
 			// The regeneration listing is decoration — a failure there must not
 			// take down the history list itself.
 			const [historyResult, regenResult] = await Promise.allSettled([
-				api.getReportTemplateHistory(templateId),
-				api.getReportRegenerations(templateId)
+				reports.getReportTemplateHistory(templateId),
+				reports.getReportRegenerations(templateId)
 			]);
 			if (historyResult.status === 'rejected') throw historyResult.reason;
 			entries = historyResult.value;
 			regenerations = regenResult.status === 'fulfilled' ? regenResult.value : [];
 			loadedFor = templateId;
 		} catch (error) {
-			errorMessage = readApiErrorMessage(error, m.reports_new_history_load_failed());
+			errorMessage = apiErrorMessage(error, m.reports_new_history_load_failed());
 		} finally {
 			loading = false;
 		}
@@ -99,8 +98,7 @@
 		if (downloadingKey) return;
 		downloadingKey = key;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const response = await api.getReportTemplateDownloadUrl(devEui, name);
+			const response = await reports.getReportTemplateDownloadUrl(devEui, name);
 			const signedUrl = typeof response.url === 'string' ? response.url : null;
 			if (!signedUrl) {
 				toast.add({ tone: 'danger', message: m.reports_new_download_missing_url() });
@@ -110,7 +108,7 @@
 		} catch (error) {
 			toast.add({
 				tone: 'danger',
-				message: readApiErrorMessage(error, m.reports_new_download_failed())
+				message: apiErrorMessage(error, m.reports_new_download_failed())
 			});
 		} finally {
 			downloadingKey = null;
@@ -144,7 +142,7 @@
 	id={`report-history-${templateId}-open-button`}
 	variant="secondary"
 	size="sm"
-	onclick={() => (open = true)}
+	onclick={openHistory}
 >
 	<Icon src={HISTORY_ICON} alt={m.reports_new_view_history()} />
 </CwButton>

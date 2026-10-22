@@ -53,7 +53,7 @@
 	<title>{m.nav_profile()} - CropWatch</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton variant="secondary" size="sm" onclick={() => goto(resolve('/'))}>
 		&larr; {m.action_back()}
 	</CwButton>

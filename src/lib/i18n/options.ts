@@ -1,3 +1,4 @@
+import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
 import { m } from '$lib/paraglide/messages.js';
 
 export function getPermissionLevelOptions(userLabel?: string) {
@@ -20,8 +21,11 @@ export function getPermissionLevelLabel(value: string | number, userLabel?: stri
 			return userLabel ?? m.permission_level_user();
 		case '4':
 			return m.permission_level_viewer();
-		default:
+		case '5':
 			return m.permission_level_disabled();
+		default:
+			// Not a level: show no level rather than claim the member is disabled.
+			return CW_EMPTY_VALUE;
 	}
 }
 

@@ -418,7 +418,8 @@ export function buildHourlyTrafficRows(
 		bucket.total_traffic += sumTrafficValues(row, classKeys);
 
 		for (const key of classKeys) {
-			bucket[key] = (readNumber(bucket[key]) ?? 0) + (readNumber(row[key]) ?? 0);
+			// Every class starts at 0 when the bucket is made.
+			bucket[key] = (bucket[key] as number) + (readNumber(row[key]) ?? 0);
 		}
 	}
 
@@ -456,7 +457,7 @@ export function buildDailyTrafficSummaries(
 		daily.sampleCount += 1;
 		daily.hourKeys[toHourKey(hourStart)] = true;
 		for (const key of classKeys) {
-			daily.classTotals[key] = (daily.classTotals[key] ?? 0) + (readNumber(row[key]) ?? 0);
+			daily.classTotals[key] += readNumber(row[key]) ?? 0;
 		}
 	}
 
@@ -493,11 +494,11 @@ export function computeTrafficKpis(
 
 	let topClassKey: string | null = null;
 	for (const key of classKeys) {
-		if (topClassKey === null || (classTotals[key] ?? 0) > (classTotals[topClassKey] ?? 0)) {
+		if (topClassKey === null || classTotals[key] > classTotals[topClassKey]) {
 			topClassKey = key;
 		}
 	}
-	if (topClassKey !== null && (classTotals[topClassKey] ?? 0) === 0) {
+	if (topClassKey !== null && classTotals[topClassKey] === 0) {
 		topClassKey = null;
 	}
 

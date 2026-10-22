@@ -14,7 +14,7 @@
 	<title>{m.rules_new_create_page_title()}</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="rule-create-back-button"
 		variant="secondary"
@@ -31,7 +31,6 @@
 	<RuleTemplateForm
 		mode="create"
 		context={data.context}
-		authToken={data.authToken}
 		preselectedDevEui={data.devEui}
 		currentUserId={data.session?.sub ?? null}
 		currentUserName={data.profile?.full_name ??

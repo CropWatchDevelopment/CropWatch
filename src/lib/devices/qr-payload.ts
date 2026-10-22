@@ -28,6 +28,9 @@ const hex = (value: string | undefined, pattern: RegExp): string | undefined => 
 	return pattern.test(cleaned) ? cleaned : undefined;
 };
 
+/** The fields of a CropWatch label. */
+const CROPWATCH_LABEL_FIELDS = ['app', 'dev', 'key', 'type'];
+
 /**
  * CropWatch's own labels: `app:<JoinEUI>,dev:<DevEUI>,key:<AppKey>,type:<code>`
  * (names in any case, `:` or `=`). A label that keeps its AppKey private
@@ -42,7 +45,11 @@ function parseCropWatchLabel(text: string): DeviceQrPayload | null | undefined {
 		const field = /^\s*([A-Za-z]+)\s*[:=]\s*(.*?)\s*$/.exec(part);
 		if (field) fields.set(field[1].toLowerCase(), field[2]);
 	}
-	if (!fields.has('dev') || !['app', 'key', 'type'].some((name) => fields.has(name))) {
+	// Two label fields make it a CropWatch label, with or without `dev:` (so
+	// `app:<JoinEUI>,type:TH` yields no DevEUI rather than its JoinEUI). One
+	// alone — a lone `dev:`, or a vendor string with a `type:` — is left to
+	// the generic readers.
+	if (CROPWATCH_LABEL_FIELDS.filter((name) => fields.has(name)).length < 2) {
 		return undefined;
 	}
 	const devEui = hex(fields.get('dev'), HEX16);

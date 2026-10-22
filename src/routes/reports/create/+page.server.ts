@@ -1,4 +1,3 @@
-import { ApiService } from '$lib/api/api.service';
 import type { ReportFormContextDto } from '$lib/api/api.dtos';
 import type { PageServerLoad } from './$types';
 
@@ -9,7 +8,7 @@ const EMPTY_CONTEXT: ReportFormContextDto = {
 	template: null
 };
 
-export const load: PageServerLoad = async ({ locals, fetch, url }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const authToken = locals.jwtString ?? null;
 	const devEui = url.searchParams.get('dev_eui') ?? null;
 	const jwt = locals.jwt;
@@ -28,10 +27,10 @@ export const load: PageServerLoad = async ({ locals, fetch, url }) => {
 		};
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken });
+	const { reports, billing } = locals.services;
 	const [context, entitlements] = await Promise.all([
-		api.getReportFormContext().catch(() => EMPTY_CONTEXT),
-		api.getBillingEntitlements().catch(() => null)
+		reports.getReportFormContext().catch(() => EMPTY_CONTEXT),
+		billing.getBillingEntitlements().catch(() => null)
 	]);
 
 	return { context, entitlements, authToken, devEui, currentUserEmail, currentUserName };

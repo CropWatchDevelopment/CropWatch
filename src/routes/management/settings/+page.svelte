@@ -6,9 +6,11 @@
 	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
 	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { submitPageAction } from '$lib/forms/submit-page-action';
+	import type { PageProps } from './$types';
 
-	let { data, form } = $props();
+	let { data, form }: PageProps = $props();
 	const app = getAppContext();
 	const toast = useCwToast();
 
@@ -69,6 +71,8 @@
 					? { tone: 'success', message: m.management_link_decided() }
 					: { tone: 'danger', message: result.error ?? m.generic_error() }
 			);
+		} catch (err) {
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 		} finally {
 			busyId = null;
 		}
@@ -84,6 +88,8 @@
 					? { tone: 'success', message: m.management_unlinked() }
 					: { tone: 'danger', message: result.error ?? m.generic_error() }
 			);
+		} catch (err) {
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 		} finally {
 			busyId = null;
 		}

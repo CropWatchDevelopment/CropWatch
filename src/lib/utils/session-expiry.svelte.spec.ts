@@ -140,4 +140,108 @@ describe('createSessionExpiryWatcher', () => {
 
 		watcher.destroy();
 	});
+
+	describe('with renewal', () => {
+		const RENEW_LEAD_MS = 300_000;
+		/** Lets the renewal's promise chain (and the re-arm after it) run. */
+		const settle = async () => {
+			for (let i = 0; i < 5; i++) await Promise.resolve();
+		};
+
+		it('asks for a renewal before expiry and follows the later expiry it brings', async () => {
+			let exp = nowSeconds() + 3_600;
+			const onExpired = vi.fn();
+			const onRenew = vi.fn(async () => {
+				exp += 3_600;
+			});
+			const watcher = createSessionExpiryWatcher({
+				getExpSeconds: () => exp,
+				onExpired,
+				onRenew,
+				renewLeadMs: RENEW_LEAD_MS
+			});
+			watcher.rearm();
+
+			vi.advanceTimersByTime(3_600_000 - RENEW_LEAD_MS - 1);
+			expect(onRenew).not.toHaveBeenCalled();
+			vi.advanceTimersByTime(1);
+			expect(onRenew).toHaveBeenCalledTimes(1);
+			await settle();
+
+			// Past the old expiry: still signed in, next renewal an hour later.
+			vi.advanceTimersByTime(RENEW_LEAD_MS + 10_000);
+			expect(onExpired).not.toHaveBeenCalled();
+			vi.advanceTimersByTime(3_600_000 - 10_000);
+			expect(onRenew).toHaveBeenCalledTimes(2);
+
+			watcher.destroy();
+		});
+
+		it.each([
+			['brings no later expiry', async () => undefined],
+			['fails', async () => Promise.reject(new Error('offline'))]
+		])('still expires on time when the renewal %s', async (_, renewal) => {
+			const exp = nowSeconds() + 3_600;
+			const onExpired = vi.fn();
+			const onRenew = vi.fn(renewal);
+			const watcher = createSessionExpiryWatcher({
+				getExpSeconds: () => exp,
+				onExpired,
+				onRenew,
+				renewLeadMs: RENEW_LEAD_MS,
+				leadTimeMs: 0
+			});
+			watcher.rearm();
+
+			vi.advanceTimersByTime(3_600_000 - RENEW_LEAD_MS);
+			await settle();
+			expect(onRenew).toHaveBeenCalledTimes(1);
+			expect(onExpired).not.toHaveBeenCalled();
+
+			vi.advanceTimersByTime(RENEW_LEAD_MS);
+			expect(onExpired).toHaveBeenCalledTimes(1);
+			expect(onRenew).toHaveBeenCalledTimes(1);
+
+			watcher.destroy();
+		});
+
+		it('renews at once inside the renewal window, once however often it is re-armed', async () => {
+			const onRenew = vi.fn(async () => undefined);
+			const watcher = createSessionExpiryWatcher({
+				getExpSeconds: () => nowSeconds() + 60,
+				onExpired: vi.fn(),
+				onRenew,
+				renewLeadMs: RENEW_LEAD_MS
+			});
+
+			watcher.rearm();
+			watcher.rearm();
+			expect(onRenew).not.toHaveBeenCalled(); // deferred off the synchronous body
+			await settle();
+
+			expect(onRenew).toHaveBeenCalledTimes(1);
+			watcher.destroy();
+		});
+
+		it('stops after destroy(), even with a renewal in flight', async () => {
+			let finishRenewal = () => {};
+			const onExpired = vi.fn();
+			const watcher = createSessionExpiryWatcher({
+				getExpSeconds: () => nowSeconds() + 60,
+				onExpired,
+				onRenew: () => new Promise<void>((resolve) => (finishRenewal = resolve)),
+				renewLeadMs: RENEW_LEAD_MS,
+				leadTimeMs: 0
+			});
+			watcher.rearm();
+			await settle();
+
+			watcher.destroy();
+			finishRenewal();
+			await settle();
+			vi.advanceTimersByTime(120_000);
+
+			expect(onExpired).not.toHaveBeenCalled();
+		});
+	});
 });

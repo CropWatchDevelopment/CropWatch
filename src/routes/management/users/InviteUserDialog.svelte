@@ -2,9 +2,11 @@
 	import { CwButton, CwDialog, CwDropdown, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { OrgRole } from '$lib/api/api.dtos';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { cwDropdownLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
 	import { orgRoleLabel } from '$lib/auth/org-labels';
 	import { submitPageAction } from '$lib/forms/submit-page-action';
+	import { endOfDayInstant } from './invite-expiry';
 
 	let {
 		open = $bindable(false),
@@ -27,11 +29,15 @@
 	async function sendInvite() {
 		if (!canSubmit || submitting) return;
 		submitting = true;
+		const expiresOn = role === 'guest' ? expires.trim() : '';
 		try {
 			const result = await submitPageAction('invite', {
 				email: email.trim(),
 				role,
-				member_expires_at: role === 'guest' ? expires.trim() : ''
+				// The chosen day, and when it ends here: only the browser knows the
+				// inviter's time zone. '' when the day is not a date (the action refuses it).
+				member_expires_on: expiresOn,
+				member_expires_at: endOfDayInstant(expiresOn)
 			});
 			if (result.ok) {
 				toast.add({ tone: 'success', message: m.management_invite_sent() });
@@ -41,6 +47,8 @@
 			} else {
 				toast.add({ tone: 'danger', message: result.error ?? m.generic_error() });
 			}
+		} catch (err) {
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 		} finally {
 			submitting = false;
 		}
@@ -68,7 +76,7 @@
 			<CwInput
 				label={m.management_invite_expiry_label()}
 				labels={cwInputLabels()}
-				name="member_expires_at"
+				name="member_expires_on"
 				bind:value={expires}
 				placeholder="YYYY-MM-DD"
 				hint={m.management_invite_expiry_hint()}

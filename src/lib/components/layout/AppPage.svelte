@@ -1,30 +1,17 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	type AppPageWidth = 'md' | 'lg' | 'xl' | 'full';
-
 	interface Props {
 		children?: Snippet;
-		width?: AppPageWidth;
 		/** Vertical placement when the page content is shorter than the viewport. */
 		align?: 'top' | 'center';
 		class?: string;
 	}
 
-	const maxWidthBySize: Record<AppPageWidth, string> = {
-		md: '48rem',
-		lg: '64rem',
-		xl: '82rem',
-		full: 'none'
-	};
-
-	let { children, width = 'xl', align = 'top', class: className = '' }: Props = $props();
+	let { children, align = 'top', class: className = '' }: Props = $props();
 </script>
 
-<section
-	class={`app-page ${align === 'center' ? 'app-page--center' : ''} ${className}`}
-	style={`--app-page-max-width:${maxWidthBySize[width]};`}
->
+<section class={`app-page ${align === 'center' ? 'app-page--center' : ''} ${className}`}>
 	<div class="app-page__shell">
 		{#if children}
 			{@render children()}

@@ -1,17 +1,18 @@
-import { ApiServiceError, type PaginationQuery, ApiService } from '$lib/api/api.service';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import type { PaginationQuery } from '$lib/api/api.dtos';
+import { ApiError, apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
+import type { TelemetryRepository } from '$lib/api/repositories/telemetry.repository';
 import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 async function loadLatestDeviceDataOrNull(
-	api: ApiService,
+	telemetry: TelemetryRepository,
 	devEui: string
 ): Promise<Record<string, unknown> | null> {
 	try {
-		return await api.getDeviceLatestData(devEui, { suppressNotFoundError: true });
+		return await telemetry.getDeviceLatestData(devEui, { suppressNotFoundError: true });
 	} catch (error) {
-		if (error instanceof ApiServiceError && error.status === 404) {
+		if (error instanceof ApiError && error.status === 404) {
 			return null;
 		}
 
@@ -19,7 +20,7 @@ async function loadLatestDeviceDataOrNull(
 	}
 }
 
-export const load: PageServerLoad = async ({ params, fetch, parent }) => {
+export const load: PageServerLoad = async ({ params, parent, locals }) => {
 	const parentData = await parent();
 	const authToken = parentData.authToken ?? null;
 	const locationId = Number.parseInt(params.location_id, 10);
@@ -31,10 +32,7 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 		};
 	}
 
-	const api = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
+	const { telemetry } = locals.services;
 
 	const pagination: PaginationQuery = {
 		skip: 0,
@@ -44,13 +42,13 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 	// A newly registered device has no rows yet and the API answers 404 —
 	// render the empty device page instead of letting the 404 become a 500.
 	const [deviceData, latestData] = await Promise.all([
-		api
+		telemetry
 			.getDeviceData(params.dev_eui, pagination, { suppressNotFoundError: true })
 			.catch((error) => {
-				if (error instanceof ApiServiceError && error.status === 404) return [];
+				if (error instanceof ApiError && error.status === 404) return [];
 				throw error;
 			}),
-		loadLatestDeviceDataOrNull(api, params.dev_eui)
+		loadLatestDeviceDataOrNull(telemetry, params.dev_eui)
 	]);
 
 	return {
@@ -60,7 +58,7 @@ export const load: PageServerLoad = async ({ params, fetch, parent }) => {
 };
 
 export const actions: Actions = {
-	saveDataNote: async ({ request, fetch, locals }) => {
+	saveDataNote: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		const data = await request.formData();
 		const noteContent = data.get('note')?.toString().trim() ?? '';
@@ -76,13 +74,8 @@ export const actions: Actions = {
 			});
 		}
 
-		const api = new ApiService({
-			fetchFn: fetch,
-			authToken
-		});
-
 		try {
-			await api.createAirNote({
+			await locals.services.airNotes.createAirNote({
 				note: noteContent,
 				title: noteTitle,
 				include_in_report: includeInReport,
@@ -90,10 +83,9 @@ export const actions: Actions = {
 				dev_eui: devEui
 			});
 		} catch (error) {
-			const responsePayload = error instanceof ApiServiceError ? error.payload : error;
-			return fail(error instanceof ApiServiceError ? error.status : 502, {
+			return fail(apiErrorStatus(error, 502), {
 				action: 'saveDataNote',
-				message: readApiErrorMessage(responsePayload, m.devices_save_note_failed())
+				message: apiErrorMessage(error, m.devices_save_note_failed())
 			});
 		}
 

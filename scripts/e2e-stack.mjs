@@ -28,6 +28,21 @@ function createJwt(expirationOffsetSeconds = 60 * 60) {
 	].join('.');
 }
 
+/** The claims of a token this mock issued (signature `test-signature`, not expired), else null. */
+function readMockToken(authorization) {
+	const [header, payload, signature] = String(authorization ?? '')
+		.replace(/^Bearer /, '')
+		.split('.');
+	if (!header || !payload || signature !== 'test-signature') return null;
+
+	try {
+		const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+		return typeof claims.exp === 'number' && claims.exp > Date.now() / 1000 ? claims : null;
+	} catch {
+		return null;
+	}
+}
+
 async function readJsonBody(request) {
 	const chunks = [];
 
@@ -102,6 +117,30 @@ function createMockServer() {
 			return;
 		}
 
+		// Supabase Auth (PUBLIC_SUPABASE_URL points here): the app verifies every
+		// session token (HS256, like the ones issued above) with GET /auth/v1/user.
+		if (request.method === 'GET' && url.pathname === '/auth/v1/user') {
+			const claims = readMockToken(request.headers.authorization);
+			if (!claims) {
+				writeJson(response, 403, { code: 403, error_code: 'bad_jwt', msg: 'invalid JWT' });
+				return;
+			}
+
+			writeJson(response, 200, {
+				id: claims.sub,
+				aud: 'authenticated',
+				role: 'authenticated',
+				email: claims.email
+			});
+			return;
+		}
+
+		if (request.method === 'POST' && url.pathname === '/auth/v1/logout') {
+			response.writeHead(204);
+			response.end();
+			return;
+		}
+
 		if (request.method === 'GET' && url.pathname === '/auth/user-profile') {
 			if (!request.headers.authorization?.startsWith('Bearer ')) {
 				writeJson(response, 401, { message: 'Unauthorized' });
@@ -135,9 +174,14 @@ async function main() {
 		mockServer.listen(MOCK_PORT, '127.0.0.1', resolve);
 	});
 
+	// Supabase's URL and key are build-time ($env/static/public) values.
 	const build = spawn('npm', ['run', 'build'], {
 		stdio: 'inherit',
-		env: process.env
+		env: {
+			...process.env,
+			PUBLIC_SUPABASE_URL: `http://127.0.0.1:${MOCK_PORT}`,
+			PUBLIC_SUPABASE_ANON_KEY: 'playwright-anon-key'
+		}
 	});
 
 	const buildExitCode = await waitForExit(build);

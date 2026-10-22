@@ -2,8 +2,8 @@
 	import { resolve } from '$app/paths';
 	import { useCwToast } from '@cropwatchdevelopment/cwui';
 	import type { OverviewReportDto } from '$lib/api/api.dtos';
-	import { getAppContext } from '$lib/appContext.svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import OverviewIcon from './OverviewIcon.svelte';
 	import OverviewSection from './OverviewSection.svelte';
 	import { feedTimeLabel, formatReportPeriod } from './overview';
@@ -18,7 +18,7 @@
 
 	let { reports, locale, now, class: className = '' }: Props = $props();
 
-	const app = getAppContext();
+	const services = getServices();
 	const toast = useCwToast();
 	let downloading = $state<string | null>(null);
 
@@ -26,7 +26,7 @@
 		if (downloading) return;
 		downloading = `${report.devEui}/${report.file}`;
 		try {
-			await openReport(app.accessToken, report.devEui, report.file, toast);
+			await openReport(services.reports, report.devEui, report.file, toast);
 		} finally {
 			downloading = null;
 		}

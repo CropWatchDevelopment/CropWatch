@@ -18,7 +18,7 @@
 	<title>{m.reports_new_create_page_title()}</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="report-create-back-button"
 		variant="secondary"
@@ -38,7 +38,6 @@
 		mode="create"
 		disabled={reportingLocked}
 		context={data.context}
-		authToken={data.authToken}
 		preselectedDevEui={data.devEui}
 		currentUserEmail={data.currentUserEmail}
 		currentUserName={data.currentUserName}

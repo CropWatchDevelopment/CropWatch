@@ -2,13 +2,12 @@
 	import '../login/style.css';
 	import logo from '$lib/images/cropwatch_static.svg';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
 	import { applyAction, enhance } from '$app/forms';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import { AppNotice } from '$lib/components/layout';
 	import LegalConsentFields from '$lib/components/auth/LegalConsentFields.svelte';
-	import { buildLogoutPath, readRedirectPath } from '$lib/utils/auth-redirect';
+	import { buildLogoutPath } from '$lib/utils/auth-redirect';
 	import type { LegalDocumentKind } from '$lib/api/api.dtos';
 	import type { PageProps } from './$types';
 
@@ -20,7 +19,8 @@
 	let agreedEula = $state(false);
 
 	let allConsentsGiven = $derived(agreedPrivacy && agreedTerms && agreedEula);
-	let redirectPath = $derived(readRedirectPath(page.url.searchParams, '/'));
+	// Sanitized by the load (readRedirectPathFromUrl).
+	let redirectPath = $derived(data.redirectPath);
 	let updatedDocuments = $derived(data.documents.filter((doc) => doc.needs_acceptance));
 
 	const DOC_LABELS: Record<LegalDocumentKind, () => string> = {
@@ -74,7 +74,7 @@
 				return async ({ result }) => {
 					try {
 						if (result.type === 'success') {
-							// eslint-disable-next-line svelte/no-navigation-without-resolve -- path sanitized by readRedirectPath
+							// eslint-disable-next-line svelte/no-navigation-without-resolve -- path sanitized by the load
 							await goto(redirectPath, { invalidateAll: true });
 							return;
 						}
@@ -114,16 +114,17 @@
 				{m.legal_reaccept_submit()}
 			</CwButton>
 
-			<!-- eslint-disable svelte/no-navigation-without-resolve -->
-			<a
+			<!-- Submits the sign-out form below (a POST): forms cannot nest. -->
+			<button
 				id="accept-terms-sign-out-link"
 				class="auth-button-link auth-button-link--secondary"
-				href={buildLogoutPath()}
+				type="submit"
+				form="accept-terms-sign-out-form"
 			>
 				{m.legal_reaccept_sign_out()}
-			</a>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			</button>
 		</form>
+		<form id="accept-terms-sign-out-form" method="POST" action={buildLogoutPath()} hidden></form>
 	</div>
 </CwCard>
 

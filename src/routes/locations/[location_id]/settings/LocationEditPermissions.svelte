@@ -1,10 +1,12 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import {
 		CwButton,
 		CwDataTable,
 		CwDropdown,
+		useCwToast,
 		type CwColumnDef,
 		type CwTableResult,
 		type CwTableQuery
@@ -22,6 +24,7 @@
 	} from './location-permission-rows';
 
 	let { data }: { data: { locationOwners: LocationOwnerDto[] } } = $props();
+	const toast = useCwToast();
 	// CropWatch staff rows are filtered out server-side (the API omits
 	// @cropwatch.io owners for non-staff requesters), so no client filter here.
 	let permissions = $derived(mapLocationOwnersToPermissionRows(data.locationOwners));
@@ -47,22 +50,42 @@
 	};
 
 	const savePermissionLevelUpdate = async (row: Permission) => {
-		const response = await fetch(`?/updateUserPermissionLevel`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded'
-			},
-			body: new URLSearchParams({
-				permission_level: String(row.permission_level),
-				email: String(row.email),
-				location_id: String(location_id)
-			})
-		});
+		try {
+			const response = await fetch(`?/updateUserPermissionLevel`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: new URLSearchParams({
+					permission_level: String(row.permission_level),
+					email: String(row.email),
+					location_id: String(location_id)
+				})
+			});
+			// A refused action still answers HTTP 200: only the result says how it went.
+			const result = deserialize(await response.text());
+			if (result.type === 'success') {
+				await invalidateAll();
+				editingPermissionId = null;
+				return;
+			}
 
-		if (response.ok) {
-			await invalidateAll();
+			await applyAction(result);
+			if (result.type === 'failure') {
+				const message = result.data?.message;
+				toast.add({
+					tone: 'danger',
+					message:
+						typeof message === 'string' && message.trim()
+							? message.trim()
+							: m.locations_user_permission_level_update_failed()
+				});
+			}
+		} catch (error) {
+			console.error('Error updating permission level:', error);
+			toast.add({ tone: 'danger', message: m.locations_user_permission_level_update_failed() });
 		}
-		editingPermissionId = null;
+		// Not saved: the row stays in edit mode, to retry or cancel.
 	};
 </script>
 

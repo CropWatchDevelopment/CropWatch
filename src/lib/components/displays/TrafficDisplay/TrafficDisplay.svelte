@@ -24,8 +24,7 @@
 	} from './traffic-data';
 	import { fetchWeatherByRange, type WeatherDaySummary } from './traffic-weather';
 
-	let { latestData, historicalData, loading, locationName, devEui, authToken }: DeviceDisplayProps =
-		$props();
+	let { latestData, historicalData, loading, locationName, devEui }: DeviceDisplayProps = $props();
 
 	/* ── Device coordinates (route data) ──────────────────────────────── */
 
@@ -188,7 +187,6 @@
 
 	<TrafficCalendarCard
 		{devEui}
-		{authToken}
 		latitude={deviceLatitude}
 		longitude={deviceLongitude}
 		{anchorDate}
