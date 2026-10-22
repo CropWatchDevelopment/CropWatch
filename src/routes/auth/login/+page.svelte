@@ -2,14 +2,15 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import './style.css';
 	import KEY_ICON from '$lib/images/icons/key.svg';
+	import HELP_ICON from '$lib/images/icons/help.svg';
+	import PERSON_ADD_ICON from '$lib/images/icons/person_add.svg';
 	import logo from '$lib/images/cropwatch_static.svg';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { createAuthRecaptcha } from '$lib/auth/auth-recaptcha.svelte';
-	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
+	import { runRecaptchaAction, warmupRecaptcha } from '$lib/utils/recaptcha';
 	import { applyAction, enhance } from '$app/forms';
-	import { readRedirectPath } from '$lib/utils/auth-redirect';
+	import { readLoginReason, readRedirectPath, type LoginReason } from '$lib/utils/auth-redirect';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
@@ -19,15 +20,23 @@
 	let loggingIn: boolean = $state(false);
 	let username: string = $state('');
 	let password: string = $state('');
-	const recaptcha = createAuthRecaptcha();
 	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 
-	function passwordStrengthCheck(value: string) {
-		void isStrongPassword(value);
-	}
+	// Why the visitor was sent here (`?reason=`, set by the server hook and the logout action).
+	// Plain 'auth-required' gets no note: the heading already asks them to sign in.
+	const REASON_MESSAGES: Partial<Record<LoginReason, () => string>> = {
+		expired: m.auth_login_reason_expired,
+		'signed-out': m.auth_login_reason_signed_out,
+		'password-reset': m.auth_login_reason_password_reset,
+		'error-recovery': m.auth_login_reason_error_recovery
+	};
+	let reasonMessage = $derived.by(() => {
+		const reason = readLoginReason(page.url.searchParams);
+		return reason ? REASON_MESSAGES[reason] : undefined;
+	});
 
 	onMount(() => {
-		void recaptcha.warmup();
+		void warmupRecaptcha();
 	});
 </script>
 
@@ -44,6 +53,12 @@
 		<h1 class="auth-title">{m.auth_login_heading()}</h1>
 		<p class="auth-subtitle">{m.auth_login_subtitle()}</p>
 
+		{#if reasonMessage}
+			<p id="login-reason-alert" class="auth-alert" role="status">
+				{reasonMessage()}
+			</p>
+		{/if}
+
 		<form
 			id="login-form"
 			method="POST"
@@ -57,13 +72,12 @@
 				loggingIn = true;
 
 				try {
-					formData.set('recaptchaToken', await recaptcha.runAction('LOGIN'));
+					formData.set('recaptchaToken', await runRecaptchaAction('LOGIN'));
 				} catch (error) {
 					console.error('reCAPTCHA execution error:', error);
 					toast.add({
 						message: m.auth_security_try_again(),
-						tone: 'danger',
-						duration: 7000
+						tone: 'danger'
 					});
 					loggingIn = false;
 					cancel();
@@ -113,7 +127,6 @@
 					labels={cwInputLabels()}
 					id="login-password-input"
 					bind:value={password}
-					onchange={() => passwordStrengthCheck(password)}
 					class="auth-input"
 					name="password"
 					type="password"
@@ -122,7 +135,18 @@
 					autocomplete="current-password"
 				/>
 			</label>
-			<span class="flex flex-row"></span>
+			<!-- eslint-disable svelte/no-navigation-without-resolve -->
+			<a
+				id="login-forgot-password-link"
+				class="auth-text-link auth-text-link--end"
+				href={redirectPath
+					? `${resolve('/auth/forgot-password')}?redirect=${encodeURIComponent(redirectPath)}`
+					: resolve('/auth/forgot-password')}
+			>
+				<Icon src={HELP_ICON} />
+				{m.auth_forgot_password()}
+			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			<CwButton
 				id="login-submit-button"
 				class="auth-primary"
@@ -138,27 +162,16 @@
 			</CwButton>
 
 			<!-- eslint-disable svelte/no-navigation-without-resolve -->
-			<div class="action-grid">
-				<a
-					id="login-create-account-link"
-					class="auth-button-link auth-button-link--secondary"
-					href={redirectPath
-						? `${resolve('/auth/create-account')}?redirect=${encodeURIComponent(redirectPath)}`
-						: resolve('/auth/create-account')}
-				>
-					{m.auth_create_account()}
-				</a>
-
-				<a
-					id="login-forgot-password-link"
-					class="auth-button-link auth-button-link--secondary"
-					href={redirectPath
-						? `${resolve('/auth/forgot-password')}?redirect=${encodeURIComponent(redirectPath)}`
-						: resolve('/auth/forgot-password')}
-				>
-					<span class="text-sm">{m.auth_forgot_password()}</span>
-				</a>
-			</div>
+			<a
+				id="login-create-account-link"
+				class="auth-button-link auth-button-link--secondary"
+				href={redirectPath
+					? `${resolve('/auth/create-account')}?redirect=${encodeURIComponent(redirectPath)}`
+					: resolve('/auth/create-account')}
+			>
+				<Icon src={PERSON_ADD_ICON} />
+				{m.auth_create_account()}
+			</a>
 			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</form>
 

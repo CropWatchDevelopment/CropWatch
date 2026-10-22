@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { getServices } from '$lib/services/context';
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import {
 		CwButton,
@@ -20,7 +21,6 @@
 	import { getIntlLocale } from '$lib/i18n/format';
 
 	interface Props {
-		authToken: string | null;
 		devEui: string;
 		locationName: string;
 		timeZone: string;
@@ -30,9 +30,12 @@
 	const CSV_PAGE_SIZE = 1000;
 	const MAX_EXPORT_PAGES = 100;
 
-	let { authToken, devEui, locationName, timeZone, disabled = false }: Props = $props();
+	let { devEui, locationName, timeZone, disabled = false }: Props = $props();
 
 	const toast = useCwToast();
+	// Exports only with a session: that token is what the services send.
+	const app = getAppContext();
+	const { telemetry } = getServices();
 
 	let open = $state(false);
 	let exporting = $state(false);
@@ -105,18 +108,11 @@
 	}
 
 	async function fetchCsvRows(range: { start: string; end: string }): Promise<CsvRow[]> {
-		if (!authToken || !devEui) {
-			return [];
-		}
-
-		const api = new ApiService({
-			authToken
-		});
 		const rows: CsvRow[] = [];
 		let skip = 0;
 
 		for (let page = 0; page < MAX_EXPORT_PAGES; page += 1) {
-			const result = await api.getDeviceDataWithinRange(devEui, {
+			const result = await telemetry.getDeviceDataWithinRange(devEui, {
 				start: range.start,
 				end: range.end,
 				skip,
@@ -142,7 +138,7 @@
 	}
 
 	async function handleCsvDownload(): Promise<void> {
-		if (!authToken || !devEui || exporting) {
+		if (!app.accessToken || !devEui || exporting) {
 			return;
 		}
 
@@ -185,16 +181,19 @@
 	id="device-csv-export-open-button"
 	variant="secondary"
 	size="sm"
-	disabled={disabled || !authToken || !devEui}
+	disabled={disabled || !app.accessToken || !devEui}
 	onclick={openDialog}
 >
 	<Icon src={DOWNLOAD_ICON} alt="" class="h-4 w-4" />
 	{m.devices_csv_export()}
 </CwButton>
 
+<!-- No way out while an export runs: CwDialog's own × closes it before
+     `onclose` is called, so it is hidden rather than vetoed. -->
 <CwDialog
 	bind:open
 	title={m.devices_export_dialog_title()}
+	hideClose={exporting}
 	closeOnBackdrop={!exporting}
 	closeOnEscape={!exporting}
 	onclose={closeDialog}
@@ -206,7 +205,6 @@
 			granularity="day"
 			includeTime={false}
 			bind:value={csvRange}
-			placeholder={m.devices_export_select_range()}
 			maxDate={new Date()}
 			labels={cwDateTimeRangePickerLabels()}
 		/>

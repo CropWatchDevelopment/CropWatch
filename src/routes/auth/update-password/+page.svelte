@@ -39,8 +39,11 @@
 			id="update-password-form"
 			method="POST"
 			class="auth-form"
-			use:enhance={() => {
-				if (submitting) return;
+			use:enhance={({ cancel }) => {
+				if (submitting) {
+					cancel();
+					return;
+				}
 				submitting = true;
 
 				return async ({ result }) => {

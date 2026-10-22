@@ -19,7 +19,7 @@
 	<title>{m.reports_new_edit_page_title()}</title>
 </svelte:head>
 
-<AppPage width="lg">
+<AppPage>
 	<CwButton
 		id="report-edit-back-button"
 		variant="secondary"
@@ -41,12 +41,7 @@
 
 	<ReportingUpsellNotice entitlements={data.entitlements} />
 
-	<ReportTemplateForm
-		mode="edit"
-		context={data.context}
-		authToken={data.authToken}
-		disabled={reportingLocked}
-	/>
+	<ReportTemplateForm mode="edit" context={data.context} disabled={reportingLocked} />
 </AppPage>
 
 <style>

@@ -1,6 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -18,7 +17,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 };
 
 export const actions: Actions = {
-	updateProfile: async ({ request, locals, fetch }) => {
+	updateProfile: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
 
@@ -31,48 +30,42 @@ export const actions: Actions = {
 			phone_number: readString(formData.get('phone_number'))
 		};
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
 		try {
-			await api.updateProfile(fields);
+			await locals.services.account.updateProfile(fields);
 			return { success: true };
 		} catch (err) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, { error: readApiErrorMessage(payload, m.generic_error()), ...fields });
+			return fail(apiErrorStatus(err), {
+				error: apiErrorMessage(err, m.generic_error()),
+				...fields
+			});
 		}
 	},
 
-	lineLinkCode: async ({ locals, fetch }) => {
+	lineLinkCode: async ({ locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { lineError: m.auth_not_authenticated() });
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
 		try {
-			const { code, expiresAt } = await api.createLineLinkCode();
+			const { code, expiresAt } = await locals.services.line.createLineLinkCode();
 			return { lineCode: code, lineCodeExpiresAt: expiresAt };
 		} catch (err) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, { lineError: readApiErrorMessage(payload, m.generic_error()) });
+			return fail(apiErrorStatus(err), { lineError: apiErrorMessage(err, m.generic_error()) });
 		}
 	},
 
-	unlinkLine: async ({ locals, fetch }) => {
+	unlinkLine: async ({ locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { lineError: m.auth_not_authenticated() });
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
 		try {
-			await api.unlinkLine();
+			await locals.services.line.unlinkLine();
 			return { lineUnlinked: true };
 		} catch (err) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, { lineError: readApiErrorMessage(payload, m.line_unlink_failed()) });
+			return fail(apiErrorStatus(err), { lineError: apiErrorMessage(err, m.line_unlink_failed()) });
 		}
 	},
 
-	updateEmail: async ({ request, locals, fetch }) => {
+	updateEmail: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { emailError: m.auth_not_authenticated() });
 
@@ -82,14 +75,14 @@ export const actions: Actions = {
 			return fail(400, { emailError: m.profile_email_invalid(), email });
 		}
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
 		try {
-			const result = await api.updateEmail({ email });
+			const result = await locals.services.account.updateEmail({ email });
 			return { emailPending: true, emailMessage: result.message ?? null, email };
 		} catch (err) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, { emailError: readApiErrorMessage(payload, m.generic_error()), email });
+			return fail(apiErrorStatus(err), {
+				emailError: apiErrorMessage(err, m.generic_error()),
+				email
+			});
 		}
 	}
 };

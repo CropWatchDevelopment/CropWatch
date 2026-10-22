@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { ApiService, ApiServiceError } from '$lib/api/api.service';
-	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import type { BillingEntitlements } from '$lib/api/api.dtos';
-	import { getAppContext } from '$lib/appContext.svelte';
 	import { AppNotice } from '$lib/components/layout';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import { CwButton, useCwToast } from '@cropwatchdevelopment/cwui';
 
 	interface Props {
@@ -13,7 +12,7 @@
 
 	let { entitlements }: Props = $props();
 
-	const app = getAppContext();
+	const { billing } = getServices();
 	const toast = useCwToast();
 	let busy = $state(false);
 
@@ -23,12 +22,10 @@
 	async function subscribe() {
 		busy = true;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const { checkoutUrl } = await api.createReportingCheckout();
+			const { checkoutUrl } = await billing.createReportingCheckout();
 			window.location.href = checkoutUrl;
 		} catch (err) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			toast.add({ tone: 'danger', message: readApiErrorMessage(payload, m.generic_error()) });
+			toast.add({ tone: 'danger', message: apiErrorMessage(err, m.generic_error()) });
 			busy = false;
 		}
 	}

@@ -12,16 +12,16 @@ list.
 
 ## Where it lives
 
-| Layer             | File                                                                                                             |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Dialog component  | `src/routes/rules/ViewRuleAlertHistory.svelte`                                                                   |
-| Invoked from      | `src/routes/rules/+page.svelte` (row action: `<ViewRuleAlertHistory templateId={row.id} ruleName={row.name} />`) |
-| Frontend API call | `ApiService.getRuleTemplateHistory(id)` in `src/lib/api/api.service.ts`                                          |
-| DTO               | `RuleTriggerLogDto` in `src/lib/api/api.dtos.ts`                                                                 |
-| Backend handler   | `RulesNewService.getHistory()` in `api/src/v1/rules-new/rules-new.service.ts`                                    |
-| Backend DTO       | `api/src/v1/rules-new/dto/rule-trigger-log.dto.ts`                                                               |
-| Source table      | Postgres `cw_rule_trigger_log`                                                                                   |
-| i18n keys         | `rules_new_history_*` and `rules_new_view_history` in `messages/{en,ja}.json`                                    |
+| Layer             | File                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Dialog component  | `src/routes/rules/ViewRuleAlertHistory.svelte`                                                                        |
+| Invoked from      | `src/routes/rules/+page.svelte` (row action: `<ViewRuleAlertHistory templateId={row.id} ruleName={row.name} />`)      |
+| Frontend API call | `getServices().rules.getRuleTemplateHistory(id)` — `RuleRepository` in `src/lib/api/repositories/rules.repository.ts` |
+| DTO               | `RuleTriggerLogDto` in `src/lib/api/api.dtos.ts`                                                                      |
+| Backend handler   | `RulesNewService.getHistory()` in `api/src/v1/rules-new/rules-new.service.ts`                                         |
+| Backend DTO       | `api/src/v1/rules-new/dto/rule-trigger-log.dto.ts`                                                                    |
+| Source table      | Postgres `cw_rule_trigger_log`                                                                                        |
+| i18n keys         | `rules_new_history_*` and `rules_new_view_history` in `messages/{en,ja}.json`                                         |
 
 ## Data model
 

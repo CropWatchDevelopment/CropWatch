@@ -3,18 +3,16 @@
 	import { page } from '$app/state';
 	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
-	import { getAppContext } from '$lib/appContext.svelte';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import Icon from '$lib/components/Icon.svelte';
 	import { AppPage } from '$lib/components/layout';
 	import type { RuleTemplateDto } from '$lib/rules/rule-template.types';
 	import { getRuleSubjectOptions } from '$lib/i18n/options';
+	import { getServices } from '$lib/services/context';
 	import { labelFor } from '$lib/sensor-labels';
 	import {
 		CwButton,
 		CwCard,
-		CwChip,
 		CwDataTable,
 		type CwColumnDef,
 		type CwTableQuery,
@@ -53,12 +51,11 @@
 	let loading = $state(true);
 	let deletedTemplateIds = $state<number[]>([]);
 	let tableKey = $derived(deletedTemplateIds.join(','));
-	let app = getAppContext();
+	const { rules } = getServices();
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleTemplateRow>> {
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const templates = await api.getRuleTemplates(
+			const templates = await rules.getRuleTemplates(
 				{ search: query.search?.trim() || undefined },
 				{ signal: query.signal }
 			);
@@ -75,14 +72,13 @@
 
 			return { rows, total };
 		} catch (error) {
-			throw new Error(readApiErrorMessage(error, m.rules_new_load_failed()));
+			throw new Error(apiErrorMessage(error, m.rules_new_load_failed()));
 		} finally {
 			loading = false;
 		}
 	}
 
 	function handleDeleted(templateId: number) {
-		if (deletedTemplateIds.includes(templateId)) return;
 		deletedTemplateIds = [...deletedTemplateIds, templateId];
 	}
 
@@ -111,7 +107,7 @@
 			.filter((name): name is string => !!name && name.trim().length > 0);
 		const unique = [...new Set(names)];
 		if (unique.length === 0) return m.rules_new_unknown_location();
-		return unique.length === 1 ? unique[0] : unique.join(', ');
+		return unique.join(', ');
 	}
 
 	function summarizeAssignments(template: RuleTemplateDto): string {
@@ -186,21 +182,7 @@
 					col: CwColumnDef<RuleTemplateRow>,
 					defaultValue: string
 				)}
-					{#if col.key === 'statusLabel'}
-						<CwChip
-							label={row.statusLabel}
-							tone={row.isActive ? 'success' : 'warning'}
-							variant="soft"
-							size="sm"
-						/>
-					{:else if col.key === 'triggeredCount'}
-						<CwChip
-							label={String(row.triggeredCount)}
-							tone={row.triggeredCount > 0 ? 'danger' : 'secondary'}
-							variant="soft"
-							size="sm"
-						/>
-					{:else if col.key === 'criteriaSummary'}
+					{#if col.key === 'criteriaSummary'}
 						<span class="rules-new-page__truncate" title={row.criteriaSummary}>
 							{row.criteriaSummary}
 						</span>

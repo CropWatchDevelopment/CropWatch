@@ -1,6 +1,28 @@
 import { flushSync, mount, unmount } from 'svelte';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LocationMap from './LocationMap.svelte';
+
+// A 1×1 transparent PNG, served for every OpenStreetMap tile so the map renders
+// without the network.
+const BLANK_TILE = Uint8Array.from(
+	atob(
+		'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+	),
+	(char) => char.charCodeAt(0)
+);
+
+beforeEach(() => {
+	const guardedFetch = globalThis.fetch;
+	vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
+		const url = input instanceof Request ? input.url : String(input);
+		if (url.startsWith('https://tile.openstreetmap.org/')) {
+			return Promise.resolve(
+				new Response(BLANK_TILE, { status: 200, headers: { 'content-type': 'image/png' } })
+			);
+		}
+		return guardedFetch(input, init);
+	});
+});
 
 // A device name is user-editable. If it ever reached the map as HTML, this
 // payload would run.
@@ -19,6 +41,7 @@ afterEach(() => {
 	component = null;
 	document.body.innerHTML = '';
 	delete window.__locationMapXss;
+	vi.unstubAllGlobals();
 });
 
 describe('LocationMap', () => {

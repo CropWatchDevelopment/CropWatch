@@ -40,6 +40,15 @@ describe('computeStats', () => {
 		});
 	});
 
+	it('reports the latest reading and trend in reading order, not sorted order', () => {
+		const readings = [5, 9, 1];
+
+		const stats = computeStats(readings);
+
+		expect(stats).toMatchObject({ min: 1, max: 9, median: 5, lastReading: 1, trend: 'down' });
+		expect(readings).toEqual([5, 9, 1]);
+	});
+
 	it('returns an empty object (never NaN/Infinity) for empty input', () => {
 		const stats = computeStats([]);
 

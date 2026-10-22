@@ -1,5 +1,4 @@
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
@@ -36,7 +35,7 @@ function readLocationId(payload: unknown): number | null {
 }
 
 export const actions: Actions = {
-	default: async ({ request, locals, fetch }) => {
+	default: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) {
 			return fail(401, { error: m.auth_not_authenticated() });
@@ -70,13 +69,20 @@ export const actions: Actions = {
 			return fail(400, { error: m.locations_longitude_must_be_number(), ...formValues });
 		}
 
-		const api = new ApiService({ fetchFn: fetch, authToken });
+		const { locations } = locals.services;
 
 		try {
-			const createdLocation = await api.createLocation({ name, description, group, lat, long });
+			const createdLocation = await locations.createLocation({
+				name,
+				description,
+				group,
+				lat,
+				long
+			});
 			const location_id = readLocationId(createdLocation);
 
-			if (!location_id) {
+			// 0 is a valid id: only a missing one is missing.
+			if (location_id === null) {
 				return fail(502, {
 					error: m.locations_missing_location_id(),
 					...formValues
@@ -88,10 +94,8 @@ export const actions: Actions = {
 				location_id
 			};
 		} catch (err: unknown) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, {
-				error: readApiErrorMessage(payload, m.locations_create_failed()),
+			return fail(apiErrorStatus(err), {
+				error: apiErrorMessage(err, m.locations_create_failed()),
 				...formValues
 			});
 		}

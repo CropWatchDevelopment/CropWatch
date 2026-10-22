@@ -83,8 +83,8 @@
 
 	let tableLoading = $state(false);
 
+	// Newest first, as the history comes.
 	const loadTableData = createClientTableLoader<WaterRow>(() => rows, {
-		reverse: true,
 		searchText: (r) =>
 			[r.created_at, r.temperature_c, r.depth_cm, r.pressure, r.spo2].map(String).join(' '),
 		onLoadingChange: (value) => (tableLoading = value)

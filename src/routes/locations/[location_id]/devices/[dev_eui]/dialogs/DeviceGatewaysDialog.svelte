@@ -5,19 +5,22 @@
 	import { AppNotice } from '$lib/components/layout';
 	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
 	import { currentSignal } from '$lib/components/displays/SignalStrength/signalStrength';
-	import { ApiService } from '$lib/api/api.service';
 	import type { DeviceGatewayDto } from '$lib/api/api.dtos';
-	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { apiErrorMessage } from '$lib/api/api-error';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 
 	interface Props {
-		authToken: string | null;
 		devEui: string;
 		disabled?: boolean;
 	}
 
-	let { authToken, devEui, disabled = false }: Props = $props();
+	let { devEui, disabled = false }: Props = $props();
+
+	const app = getAppContext();
+	const services = getServices();
 
 	let open = $state(false);
 	let loading = $state(false);
@@ -34,8 +37,9 @@
 	let bestGateway = $derived(currentSignal(gateways));
 
 	// Load up front so the button can show the signal bars; reloads on open.
+	// Only with a session: that token is what the services send.
 	$effect(() => {
-		if (!authToken || !devEui) return;
+		if (!app.accessToken || !devEui) return;
 		untrack(() => void loadGateways());
 	});
 
@@ -45,14 +49,13 @@
 		loadError = null;
 
 		try {
-			const api = new ApiService({ authToken });
-			const result = await api.getDeviceGateways(devEui);
+			const result = await services.gateways.getDeviceGateways(devEui);
 			if (requestId !== activeRequestId) return;
 			gateways = result;
 		} catch (error) {
 			if (requestId !== activeRequestId) return;
 			gateways = [];
-			loadError = readApiErrorMessage(error, m.device_gateways_load_failed());
+			loadError = apiErrorMessage(error, m.device_gateways_load_failed());
 		} finally {
 			if (requestId === activeRequestId) {
 				loading = false;

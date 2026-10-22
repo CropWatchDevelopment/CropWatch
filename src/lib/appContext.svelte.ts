@@ -4,10 +4,7 @@ import type { IJWT } from './interfaces/jwt.interface';
 import type { IDevice } from './interfaces/device.interface';
 import type { IRule } from './interfaces/rule.interface';
 import type { Profile } from './interfaces/profile.interface';
-import type { RuleTemplateDto } from './api/api.service';
-import type { LocationDto, MeContextDto, PreferencesDto } from './api/api.dtos';
-
-const app = createAppContext();
+import type { LocationDto, MeContextDto, PreferencesDto, RuleTemplateDto } from './api/api.dtos';
 
 export interface AppContext {
 	profile?: Profile;
@@ -55,43 +52,26 @@ export function createAppContext(initial: Partial<AppContext> = {}): AppContext 
 		const existing = getContext<AppContext>(appContextKey);
 		if (existing) {
 			return existing;
-		} else {
-			return {
-				profile: undefined,
-				session: null,
-				devices: [],
-				deviceStatuses: { online: 0, offline: 0 },
-				totalDeviceCount: 0,
-				rules: [],
-				triggeredRules: [],
-				triggeredRulesCount: 0,
-				accessToken: undefined,
-				staleDeviceIds: [],
-				locationGroups: [],
-				drawerOpen: false,
-				privacyModeEnabled: false,
-				...initial
-			};
 		}
 	} catch {
 		// No existing context, will create a new one
-		return {
-			profile: undefined,
-			session: null,
-			devices: [],
-			deviceStatuses: { online: 0, offline: 0 },
-			totalDeviceCount: 0,
-			rules: [],
-			triggeredRules: [],
-			triggeredRulesCount: 0,
-			accessToken: undefined,
-			staleDeviceIds: [],
-			locationGroups: [],
-			drawerOpen: false,
-			privacyModeEnabled: false,
-			...initial
-		};
 	}
+	return {
+		profile: undefined,
+		session: null,
+		devices: [],
+		deviceStatuses: { online: 0, offline: 0 },
+		totalDeviceCount: 0,
+		rules: [],
+		triggeredRules: [],
+		triggeredRulesCount: 0,
+		accessToken: undefined,
+		staleDeviceIds: [],
+		locationGroups: [],
+		drawerOpen: false,
+		privacyModeEnabled: false,
+		...initial
+	};
 }
 
 export function setAppContext(context: AppContext) {
@@ -100,8 +80,4 @@ export function setAppContext(context: AppContext) {
 
 export function getAppContext(): AppContext {
 	return getContext(appContextKey);
-}
-
-export function updateAppContext(updates: Partial<AppContext>) {
-	Object.assign(app, updates);
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { getServices } from '$lib/services/context';
 	import type { TrafficMonthlyReportDto } from '$lib/api/api.dtos';
 	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
 	import { CwButton, CwDialog, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
@@ -10,16 +11,18 @@
 	import NO_ICON from '$lib/images/icons/no.svg';
 
 	interface Props {
-		authToken: string | null;
 		devEui: string;
 		locationName: string;
 		timeZone: string;
 		disabled?: boolean;
 	}
 
-	let { authToken, devEui, locationName, timeZone, disabled = false }: Props = $props();
+	let { devEui, locationName, timeZone, disabled = false }: Props = $props();
 
 	const toast = useCwToast();
+	// Exports only with a session: that token is what the services send.
+	const app = getAppContext();
+	const { telemetry } = getServices();
 
 	let open = $state(false);
 	let exporting = $state(false);
@@ -50,7 +53,7 @@
 	}
 
 	async function handleCsvDownload(): Promise<void> {
-		if (!authToken || !devEui || exporting) return;
+		if (!app.accessToken || !devEui || exporting) return;
 
 		exporting = true;
 		exportError = null;
@@ -64,8 +67,7 @@
 				return;
 			}
 
-			const api = new ApiService({ authToken });
-			const result = await api.getTrafficMonthlyReport(devEui, {
+			const result = await telemetry.getTrafficMonthlyReport(devEui, {
 				year,
 				month,
 				timezone: timeZone
@@ -107,16 +109,19 @@
 	id="device-csv-traffic-export-open-button"
 	variant="secondary"
 	size="sm"
-	disabled={disabled || !authToken || !devEui}
+	disabled={disabled || !app.accessToken || !devEui}
 	onclick={openDialog}
 >
 	<Icon src={DOWNLOAD_ICON} alt="" class="h-4 w-4" />
 	{m.devices_export_traffic_button()}
 </CwButton>
 
+<!-- No way out while an export runs: CwDialog's own × closes it before
+     `onclose` is called, so it is hidden rather than vetoed. -->
 <CwDialog
 	bind:open
 	title={m.devices_export_traffic_dialog_title()}
+	hideClose={exporting}
 	closeOnBackdrop={!exporting}
 	closeOnEscape={!exporting}
 	onclose={closeDialog}

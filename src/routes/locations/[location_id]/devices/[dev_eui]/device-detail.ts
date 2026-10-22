@@ -1,4 +1,4 @@
-import { ApiServiceError } from '$lib/api/api.service';
+import { ApiError } from '$lib/api/api-error';
 import type { RelayStateSnapshot, RelayVerificationResult } from '$lib/devices/relay-control';
 import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
 import { relayStateLabel } from '$lib/devices/relay-labels';
@@ -162,7 +162,7 @@ export function getVerifiedRelayStateLabel(
 }
 
 export function mapRelayApiErrorMessage(error: unknown): string {
-	if (!(error instanceof ApiServiceError)) {
+	if (!(error instanceof ApiError)) {
 		return m.devices_relay_command_failed();
 	}
 

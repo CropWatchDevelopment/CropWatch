@@ -33,6 +33,8 @@ const SENSOR_LABELS: Record<string, SensorLabel> = {
 	ec: { label: () => m.sensor_ec(), unit: 'mS/cm', format: 'number' },
 	ph: { label: () => m.sensor_ph(), unit: '', format: 'number' },
 	deapth_cm: { label: () => m.sensor_depth(), unit: 'mm', icon: '📏', format: 'number' },
+	// The same water level under its correct spelling (also millimetres).
+	depth_cm: { label: () => m.sensor_depth(), unit: 'mm', icon: '📏', format: 'number' },
 	battery: { label: () => m.sensor_battery(), unit: '%', format: 'integer' },
 	battery_level: { label: () => m.sensor_battery(), unit: 'V', format: 'number' },
 	voltage: { label: () => m.sensor_voltage(), unit: 'V', format: 'number' },

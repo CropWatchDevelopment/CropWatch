@@ -37,20 +37,19 @@
 
 	interface Props {
 		devices?: DeviceOption[];
-		revertOnReset?: boolean;
-		resultBase64?: string;
 		resultFPort?: number;
 		resultJson?: string;
 	}
 
 	let {
 		devices = [],
-		revertOnReset = $bindable<boolean>(true),
-		resultBase64 = $bindable<string>(),
 		resultFPort = $bindable<number>(),
 		resultJson = $bindable<string>()
 	}: Props = $props();
 
+	// A rule can have several relay actions: each checkbox needs its own id for its label.
+	const uid = $props.id();
+	const revertOnResetId = `${uid}-revert-on-reset`;
 	const initialResult = parseInitialResult(resultJson);
 
 	let selectedDeviceDevEui = $state(initialResult?.devEui ?? '');
@@ -191,12 +190,12 @@
 
 	<input
 		type="checkbox"
-		id="revertOnReset"
+		id={revertOnResetId}
 		class="h-5 w-5 disabled:cursor-not-allowed disabled:opacity-50"
 		bind:checked={resultRevertOnReset}
 		disabled={!isReversable}
 	/>
-	<label for="revertOnReset" class:opacity-50={!isReversable}>
+	<label for={revertOnResetId} class:opacity-50={!isReversable}>
 		{m.rule_action_revert_on_reset()}
 	</label>
 </div>

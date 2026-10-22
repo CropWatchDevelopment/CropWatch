@@ -9,8 +9,14 @@ const config = {
 		// client-construction time — server-side `createClient()` throws on it.
 		// Keep this in sync with `engines.node` in package.json.
 		adapter: adapter({ runtime: 'nodejs22.x' }),
+		// The service worker is registered by the PWA dock (production builds only).
 		serviceWorker: {
 			register: false
+		},
+		// Installed apps stay open for days: check for a new deploy every few
+		// minutes so the dock can offer a reload (`updated` in $app/state).
+		version: {
+			pollInterval: 5 * 60 * 1000
 		}
 	},
 	vitePlugin: {

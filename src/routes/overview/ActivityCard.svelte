@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { useCwToast } from '@cropwatchdevelopment/cwui';
 	import type { OverviewDto, OverviewFeedItemDto } from '$lib/api/api.dtos';
-	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatRelative } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 	import OverviewIcon, { type OverviewIconName } from './OverviewIcon.svelte';
 	import OverviewSection from './OverviewSection.svelte';
 	import {
@@ -33,7 +33,7 @@
 
 	let filter = $state<FeedFilter>('all');
 
-	const app = getAppContext();
+	const { reports } = getServices();
 	const toast = useCwToast();
 	/** The event whose report is being opened. */
 	let opening = $state<string | null>(null);
@@ -42,7 +42,7 @@
 		if (opening) return;
 		opening = key;
 		try {
-			await openReport(app.accessToken, report.devEui, report.file, toast);
+			await openReport(reports, report.devEui, report.file, toast);
 		} finally {
 			opening = null;
 		}

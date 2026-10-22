@@ -424,10 +424,3 @@ export function getTimeFormatOptions(): UnitOption[] {
 		{ label: m.unit_time_12h(), value: '12h' }
 	];
 }
-
-export function getDecimalSeparatorOptions(): UnitOption[] {
-	return [
-		{ label: m.unit_decimal_dot(), value: 'dot' },
-		{ label: m.unit_decimal_comma(), value: 'comma' }
-	];
-}

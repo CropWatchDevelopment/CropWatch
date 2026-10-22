@@ -1,4 +1,5 @@
-import { ApiService, ApiServiceError, type UpdateLocationOwnerRequest } from '$lib/api/api.service';
+import { ApiError, apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
+import type { UpdateLocationOwnerRequest } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { PermissionLevel } from '$lib/constants/permissions';
 import { fail, redirect } from '@sveltejs/kit';
@@ -47,25 +48,6 @@ export const readUnknownString = (value: unknown): string => {
 	return '';
 };
 
-export const readErrorMessage = (error: unknown, fallback: string): string => {
-	if (error instanceof ApiServiceError) {
-		const payload = error.payload;
-		if (payload && typeof payload === 'object') {
-			const record = payload as Record<string, unknown>;
-			const message = record.message;
-			if (Array.isArray(message)) {
-				const combined = message
-					.filter((entry): entry is string => typeof entry === 'string')
-					.join(', ');
-				if (combined.length > 0) return combined;
-			}
-			if (typeof message === 'string' && message.trim().length > 0) return message.trim();
-		}
-	}
-
-	return fallback;
-};
-
 function readLocationId(value: unknown): number | null {
 	const locationId = Number.parseInt(readUnknownString(value), 10);
 	return Number.isFinite(locationId) ? locationId : null;
@@ -74,7 +56,6 @@ function readLocationId(value: unknown): number | null {
 export const updateLocationName: Actions['updateLocationName'] = async ({
 	request,
 	locals,
-	fetch,
 	params
 }) => {
 	const authToken = locals.jwtString ?? null;
@@ -104,13 +85,8 @@ export const updateLocationName: Actions['updateLocationName'] = async ({
 		});
 	}
 
-	const apiService = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
-
 	try {
-		await apiService.updateLocation(locationId, { name: newName, group: newGroup });
+		await locals.services.locations.updateLocation(locationId, { name: newName, group: newGroup });
 
 		return {
 			action: 'updateLocationName',
@@ -118,9 +94,9 @@ export const updateLocationName: Actions['updateLocationName'] = async ({
 			message: m.locations_name_updated()
 		};
 	} catch (error) {
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'updateLocationName',
-			message: readErrorMessage(error, m.locations_update_name_failed())
+			message: apiErrorMessage(error, m.locations_update_name_failed())
 		});
 	}
 };
@@ -128,7 +104,6 @@ export const updateLocationName: Actions['updateLocationName'] = async ({
 export const updateLocationCoordinates: Actions['updateLocationCoordinates'] = async ({
 	request,
 	locals,
-	fetch,
 	params
 }) => {
 	const authToken = locals.jwtString ?? null;
@@ -175,9 +150,8 @@ export const updateLocationCoordinates: Actions['updateLocationCoordinates'] = a
 	}
 	const zoom = Number.parseInt(zoomText, 10);
 
-	const apiService = new ApiService({ fetchFn: fetch, authToken });
 	try {
-		await apiService.updateLocation(
+		await locals.services.locations.updateLocation(
 			locationId,
 			clearing
 				? { lat: null, long: null }
@@ -193,20 +167,15 @@ export const updateLocationCoordinates: Actions['updateLocationCoordinates'] = a
 			message: clearing ? m.location_coordinates_cleared() : m.location_coordinates_saved()
 		};
 	} catch (error) {
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'updateLocationCoordinates',
-			message: readErrorMessage(error, m.location_coordinates_save_failed()),
+			message: apiErrorMessage(error, m.location_coordinates_save_failed()),
 			...values
 		});
 	}
 };
 
-export const addPermission: Actions['addPermission'] = async ({
-	request,
-	locals,
-	fetch,
-	params
-}) => {
+export const addPermission: Actions['addPermission'] = async ({ request, locals, params }) => {
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) {
 		return fail(401, {
@@ -249,13 +218,8 @@ export const addPermission: Actions['addPermission'] = async ({
 		});
 	}
 
-	const apiService = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
-
 	try {
-		await apiService.createLocationPermission(
+		await locals.services.locations.createLocationPermission(
 			locationId,
 			values.newUserEmail,
 			values.permission_level ?? PermissionLevel.DISABLED,
@@ -269,21 +233,16 @@ export const addPermission: Actions['addPermission'] = async ({
 			values: EMPTY_ADD_VALUES
 		};
 	} catch (error) {
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'addPermission',
-			message: readErrorMessage(error, m.locations_permission_create_failed()),
+			message: apiErrorMessage(error, m.locations_permission_create_failed()),
 			values,
 			fieldErrors
 		});
 	}
 };
 
-export const editPermission: Actions['editPermission'] = async ({
-	request,
-	locals,
-	fetch,
-	params
-}) => {
+export const editPermission: Actions['editPermission'] = async ({ request, locals, params }) => {
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) {
 		return fail(401, {
@@ -351,13 +310,8 @@ export const editPermission: Actions['editPermission'] = async ({
 		updateLocationOwnerPayload.id = permissionId;
 	}
 
-	const apiService = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
-
 	try {
-		await apiService.updateLocationPermission(
+		await locals.services.locations.updateLocationPermission(
 			locationId,
 			updateLocationOwnerPayload,
 			values.applyToAllDevices
@@ -370,9 +324,9 @@ export const editPermission: Actions['editPermission'] = async ({
 			values: EMPTY_EDIT_VALUES
 		};
 	} catch (error) {
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'editPermission',
-			message: readErrorMessage(error, m.locations_permission_update_failed()),
+			message: apiErrorMessage(error, m.locations_permission_update_failed()),
 			values,
 			fieldErrors
 		});
@@ -382,7 +336,6 @@ export const editPermission: Actions['editPermission'] = async ({
 export const updateUserPermissionLevel: Actions['updateUserPermissionLevel'] = async ({
 	request,
 	locals,
-	fetch,
 	params
 }) => {
 	const authToken = locals.jwtString ?? null;
@@ -419,13 +372,12 @@ export const updateUserPermissionLevel: Actions['updateUserPermissionLevel'] = a
 		});
 	}
 
-	const apiService = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
-
 	try {
-		await apiService.updateLocationPermissionLevel(locationId, email, +permissionLevel);
+		await locals.services.locations.updateLocationPermissionLevel(
+			locationId,
+			email,
+			+permissionLevel
+		);
 
 		return {
 			action: 'updateUserPermissionLevel',
@@ -433,9 +385,9 @@ export const updateUserPermissionLevel: Actions['updateUserPermissionLevel'] = a
 			message: m.locations_user_permission_level_updated()
 		};
 	} catch (error) {
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'updateUserPermissionLevel',
-			message: readErrorMessage(error, m.locations_user_permission_level_update_failed())
+			message: apiErrorMessage(error, m.locations_user_permission_level_update_failed())
 		});
 	}
 };
@@ -443,7 +395,6 @@ export const updateUserPermissionLevel: Actions['updateUserPermissionLevel'] = a
 export const removePermission: Actions['removePermission'] = async ({
 	request,
 	locals,
-	fetch,
 	params
 }) => {
 	const authToken = locals.jwtString ?? null;
@@ -455,8 +406,8 @@ export const removePermission: Actions['removePermission'] = async ({
 		});
 	}
 
-	const locationId = readUnknownString(params.location_id);
-	if (!locationId) {
+	const locationId = readLocationId(params.location_id);
+	if (locationId === null) {
 		return fail(400, {
 			action: 'removePermission',
 			message: m.locations_invalid_location_id()
@@ -473,13 +424,8 @@ export const removePermission: Actions['removePermission'] = async ({
 		});
 	}
 
-	const apiService = new ApiService({
-		fetchFn: fetch,
-		authToken
-	});
-
 	try {
-		await apiService.deleteLocationPermission(locationId, permissionId);
+		await locals.services.locations.deleteLocationPermission(locationId, permissionId);
 
 		return {
 			action: 'removePermission',
@@ -487,19 +433,14 @@ export const removePermission: Actions['removePermission'] = async ({
 			message: m.locations_permission_removed()
 		};
 	} catch (error) {
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'removePermission',
-			message: readErrorMessage(error, m.locations_permission_remove_failed())
+			message: apiErrorMessage(error, m.locations_permission_remove_failed())
 		});
 	}
 };
 
-export const deleteLocation: Actions['deleteLocation'] = async ({
-	request,
-	locals,
-	fetch,
-	params
-}) => {
+export const deleteLocation: Actions['deleteLocation'] = async ({ request, locals, params }) => {
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) {
 		return fail(401, {
@@ -517,17 +458,17 @@ export const deleteLocation: Actions['deleteLocation'] = async ({
 	}
 
 	const formData = await request.formData();
-	const apiService = new ApiService({ fetchFn: fetch, authToken });
+	const { locations } = locals.services;
 
 	// The typed name is checked against the location's real name, never one
 	// sent by the browser, so a crafted request cannot skip the confirmation.
 	let locationName: string;
 	try {
-		locationName = String((await apiService.getLocation(locationId)).name ?? '');
+		locationName = String((await locations.getLocation(locationId)).name ?? '');
 	} catch (error) {
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'deleteLocation',
-			message: readErrorMessage(error, m.locations_delete_rejected())
+			message: apiErrorMessage(error, m.locations_delete_rejected())
 		});
 	}
 
@@ -543,18 +484,18 @@ export const deleteLocation: Actions['deleteLocation'] = async ({
 	}
 
 	try {
-		await apiService.deleteLocation(locationId);
+		await locations.deleteLocation(locationId);
 	} catch (error) {
 		// 409: a device is still (or was just moved) in the location.
-		if (error instanceof ApiServiceError && error.status === 409) {
+		if (error instanceof ApiError && error.status === 409) {
 			return fail(409, {
 				action: 'deleteLocation',
 				message: m.locations_delete_not_empty()
 			});
 		}
-		return fail(error instanceof ApiServiceError ? error.status : 502, {
+		return fail(apiErrorStatus(error, 502), {
 			action: 'deleteLocation',
-			message: readErrorMessage(error, m.locations_delete_rejected())
+			message: apiErrorMessage(error, m.locations_delete_rejected())
 		});
 	}
 

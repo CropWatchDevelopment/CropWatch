@@ -16,9 +16,12 @@
 	let { data }: { data: SettingsPageData } = $props();
 	const toast = useCwToast();
 
+	// Seeded once from the loaded location, then owned by the user: another
+	// card's reload must not wipe an unsaved edit (CLAUDE.md "Form field state").
+	const initial = (() => data)();
 	let submitting = $state(false);
-	let locationName = $derived(data.locationName ?? '');
-	let locationGroup = $derived(data.locationGroup ?? '');
+	let locationName = $state(initial.locationName ?? '');
+	let locationGroup = $state(initial.locationGroup ?? '');
 	let locationNameValue = $derived(locationName.trim());
 	let locationGroupValue = $derived(locationGroup.trim());
 	let locationDirty = $derived(
@@ -61,6 +64,9 @@
 
 						if (result.type === 'success') {
 							await invalidateAll();
+							// Show what was saved, as the reloaded location has it.
+							locationName = data.locationName ?? '';
+							locationGroup = data.locationGroup ?? '';
 						}
 					} finally {
 						submitting = false;

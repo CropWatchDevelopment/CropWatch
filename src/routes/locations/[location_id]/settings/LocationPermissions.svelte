@@ -80,7 +80,7 @@
 				name="newUserEmail"
 				type="email"
 				label={m.auth_email_label()}
-				placeholder="user@example.com"
+				placeholder={m.locations_permission_email_placeholder()}
 				required
 				bind:value={newUserEmail}
 			/>
@@ -117,7 +117,7 @@
 					loading={submitting}
 					disabled={submitting || !newUserEmail.trim()}
 				>
-					<Icon src={ADD_ICON} alt="create new user" />
+					<Icon src={ADD_ICON} alt={m.locations_add_user_icon_alt()} />
 					{m.locations_add_permission()}
 				</CwButton>
 			</div>

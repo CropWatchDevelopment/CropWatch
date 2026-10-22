@@ -1,6 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -17,7 +16,7 @@ export const load: PageServerLoad = async ({ url, parent }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals, fetch }) => {
+	default: async ({ request, locals }) => {
 		const authToken = locals.jwtString ?? null;
 		if (!authToken) return fail(401, { error: m.auth_not_authenticated() });
 
@@ -30,11 +29,9 @@ export const actions: Actions = {
 
 		let nonce: string;
 		try {
-			({ nonce } = await new ApiService({ fetchFn: fetch, authToken }).startLineLink());
+			({ nonce } = await locals.services.line.startLineLink());
 		} catch (err) {
-			const payload = err instanceof ApiServiceError ? err.payload : err;
-			const status = err instanceof ApiServiceError ? err.status : 500;
-			return fail(status, { error: readApiErrorMessage(payload, m.line_link_error()) });
+			return fail(apiErrorStatus(err), { error: apiErrorMessage(err, m.line_link_error()) });
 		}
 
 		// LINE completes the handshake in its own dialog, then fires the

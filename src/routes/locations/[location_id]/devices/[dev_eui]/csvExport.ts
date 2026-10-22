@@ -114,7 +114,7 @@ export function formatCsvRangeLabel(
 	const safeTimeZone = sanitizeFileName(timeZone.replaceAll('/', '-'));
 
 	if (!startDate || !endDate) {
-		return safeTimeZone || 'custom';
+		return safeTimeZone;
 	}
 
 	return `${formatFileDateTime(startDate, timeZone)}_to_${formatFileDateTime(endDate, timeZone)}_${safeTimeZone}`;
@@ -261,11 +261,9 @@ function formatTimeZoneOffset(offsetMinutes: number): string {
 function normalizeTimestampInput(value: string): string {
 	const trimmed = value.trim();
 	if (!trimmed) return trimmed;
+	// A date alone (YYYY-MM-DD) passes here as well: its "-DD" reads as a zone
+	// suffix, and `new Date` reads a bare ISO date as UTC midnight anyway.
 	if (TIMEZONE_SUFFIX_PATTERN.test(trimmed)) return trimmed;
-
-	if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-		return `${trimmed}T00:00:00.000Z`;
-	}
 
 	const normalized = trimmed.includes('T') ? trimmed : trimmed.replace(' ', 'T');
 	return `${normalized}Z`;

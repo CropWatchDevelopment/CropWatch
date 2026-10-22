@@ -10,11 +10,20 @@
 
 	let { compact = false, class: className = '' }: Props = $props();
 
-	let currentLocale = $derived(getLocale().startsWith('en') ? 'en' : 'ja');
+	// getLocale() is not reactive: track the choice here so the highlight moves
+	// as soon as a language is picked, not only once setLocale reloads the page.
+	let currentLocale = $state<SupportedLocale>(getLocale().startsWith('en') ? 'en' : 'ja');
 
 	async function selectLocale(locale: SupportedLocale): Promise<void> {
 		if (locale === currentLocale) return;
-		await setLocale(locale);
+		const previous = currentLocale;
+		currentLocale = locale;
+		try {
+			await setLocale(locale);
+		} catch (error) {
+			currentLocale = previous;
+			console.error('Failed to change locale:', error);
+		}
 	}
 </script>
 

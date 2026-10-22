@@ -12,15 +12,21 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwOfflineOverlayLabels } from '$lib/i18n/cwuiLabels';
 
-	import { goto } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import Sidebar from './Sidebar.svelte';
 	import Analytics from '$lib/components/Analytics.svelte';
 	import WhatsNewDialog from '$lib/components/whats-new/WhatsNewDialog.svelte';
+	import PwaDock from '$lib/components/pwa/PwaDock.svelte';
 	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
+	import { readPublicConfig } from '$lib/config/public';
+	import { createClientServices } from '$lib/services/client';
+	import { setServices } from '$lib/services/context';
 	import { initForegroundMessages, refreshPushToken } from '$lib/push/push-notifications';
 	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
 	import { buildLoginPath } from '$lib/utils/auth-redirect';
+	import { CLIENT_RENEW_LEAD_MS, SESSION_DEPENDENCY } from '$lib/auth/session-renewal';
+	import { APPLE_SPLASH_LINKS } from '$lib/pwa/apple-splash';
 	import type {
 		DeviceStatusSummary,
 		PreferencesDto,
@@ -57,6 +63,13 @@
 	const app = $state(createAppContext());
 
 	setAppContext(app);
+	// The browser's composition root: components read and write data through
+	// these (getServices()), always as the current session.
+	const services = createClientServices({
+		config: readPublicConfig(),
+		authToken: () => app.accessToken
+	});
+	setServices(services);
 
 	function syncAppFromPageData() {
 		const routeData = page.data as AppLayoutData;
@@ -95,9 +108,15 @@
 		void goto(loginPath);
 	}
 
+	// Shortly before the session runs out, re-run the root layout load: the
+	// server hook renews the session with its refresh token on the way in, and
+	// the new token arrives in page.data. Only when that brings no later expiry
+	// does onExpired send the user to login.
 	const sessionWatcher = createSessionExpiryWatcher({
 		getExpSeconds: () => app.session?.exp ?? null,
-		onExpired
+		onExpired,
+		onRenew: () => invalidate(SESSION_DEPENDENCY),
+		renewLeadMs: CLIENT_RENEW_LEAD_MS
 	});
 
 	$effect(() => {
@@ -120,7 +139,7 @@
 		if (!accessToken || pushInitialized) return;
 		pushInitialized = true;
 
-		void refreshPushToken(accessToken);
+		void refreshPushToken(services.push);
 		void initForegroundMessages(({ title, body }) => {
 			toast.add({
 				tone: 'warning',
@@ -159,7 +178,9 @@
 </script>
 
 <svelte:head>
-	<link rel="manifest" href={resolve('/manifest.webmanifest')} />
+	<!-- With credentials: browsers fetch the manifest without cookies otherwise, so it would
+	     always come back in the default locale instead of the user's language. -->
+	<link rel="manifest" href={resolve('/manifest.webmanifest')} crossorigin="use-credentials" />
 
 	<link rel="icon" href={asset('/icons/favicon.svg')} sizes="any" type="image/svg+xml" />
 
@@ -170,6 +191,9 @@
 	<link rel="shortcut icon" href={asset('/favicon.ico')} />
 
 	<link rel="apple-touch-icon" href={asset('/icons/apple-touch-icon.png')} sizes="180x180" />
+	{#each APPLE_SPLASH_LINKS as splash (splash.path)}
+		<link rel="apple-touch-startup-image" href={asset(splash.path)} media={splash.media} />
+	{/each}
 
 	<meta name="application-name" content="CropWatch" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -190,7 +214,10 @@
 
 <Analytics />
 
-<CwOfflineOverlay labels={cwOfflineOverlayLabels()} />
+{#if !isOfflineRoute}
+	<CwOfflineOverlay labels={cwOfflineOverlayLabels()} />
+	<PwaDock prompts={!isAuthRoute} badgeCount={app.triggeredRulesCount} />
+{/if}
 <CwToastContainer />
 
 <svelte:window onresize={handleWindowResize} />

@@ -46,9 +46,6 @@ export interface DeviceDisplayProps {
 		targetState: RelayTargetState,
 		durationSeconds?: number
 	) => Promise<void>;
-
-	/** JWT auth token forwarded for any client-side API calls. */
-	authToken: string | null;
 }
 
 /**

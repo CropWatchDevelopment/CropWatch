@@ -18,12 +18,13 @@ export type PermissionLevel = (typeof PermissionLevel)[keyof typeof PermissionLe
 export const MIN_PERMISSION_LEVEL: PermissionLevel = PermissionLevel.ADMIN;
 export const MAX_PERMISSION_LEVEL: PermissionLevel = PermissionLevel.DISABLED;
 
+// Only real levels grant anything: 0, negative or fractional values are not access.
 export function canRead(level: number | null | undefined): boolean {
-	return level != null && level < PermissionLevel.DISABLED;
+	return level != null && isValidPermissionLevel(level) && level < PermissionLevel.DISABLED;
 }
 
 export function canManage(level: number | null | undefined): boolean {
-	return level != null && level <= PermissionLevel.MANAGER;
+	return level != null && isValidPermissionLevel(level) && level <= PermissionLevel.MANAGER;
 }
 
 export function isAdmin(level: number | null | undefined): boolean {

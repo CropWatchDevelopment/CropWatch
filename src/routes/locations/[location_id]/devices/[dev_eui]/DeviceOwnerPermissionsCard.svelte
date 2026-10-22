@@ -47,6 +47,8 @@
 
 	let ownerSubmittingByKey = $state<Record<string, boolean>>({});
 	let permissionRows = $derived(createOwnerRows(owners ?? []));
+	// Only owners with an email get a row (the API addresses them by it).
+	let shownRows = $derived(permissionRows.filter((row) => row.email));
 	let actionForm = $derived((form ?? null) as FormPayload);
 
 	function createOwnerRows(sourceOwners: DeviceOwner[]): DeviceOwnerRow[] {
@@ -67,9 +69,12 @@
 		};
 	}
 
+	const isEmailValid = (row: DeviceOwnerRow) => EMAIL_PATTERN.test(row.email);
+	const isLevelValid = (row: DeviceOwnerRow) =>
+		VALID_PERMISSION_LEVELS.has(Number.parseInt(row.permissionLevel, 10));
+
 	function isOwnerRowValid(row: DeviceOwnerRow): boolean {
-		const permissionLevel = Number.parseInt(row.permissionLevel, 10);
-		return EMAIL_PATTERN.test(row.email) && VALID_PERMISSION_LEVELS.has(permissionLevel);
+		return isEmailValid(row) && isLevelValid(row);
 	}
 
 	function updateOwnerPermissionLevel(key: string, permissionLevel: string) {
@@ -95,101 +100,100 @@
 		<p class="text-muted text-xs">{m.devices_no_device_owners()}</p>
 	{:else}
 		<div class="permission-list">
-			{#each permissionRows as row, index (row.key)}
+			{#each shownRows as row, index (row.key)}
 				{@const ownerForm = ownerFormFor(row.key)}
-				{#if row.email}
-					<div class="permission-row">
-						<form
-							id={`device-owner-permissions-row-${row.key}-form`}
-							method="POST"
-							action="?/updateDeviceOwnerPermission"
-							class="permission-row__form"
-							use:enhance={({ formData, cancel }) => {
-								if (!isOwnerRowValid(row)) {
-									cancel();
-									return;
+				{@const emailError =
+					ownerForm?.fieldErrors?.targetUserEmail ||
+					(isEmailValid(row) ? '' : m.devices_owner_email_invalid())}
+				<div class="permission-row">
+					<form
+						id={`device-owner-permissions-row-${row.key}-form`}
+						method="POST"
+						action="?/updateDeviceOwnerPermission"
+						class="permission-row__form"
+						use:enhance={({ formData, cancel }) => {
+							if (!isOwnerRowValid(row)) {
+								cancel();
+								return;
+							}
+
+							const key = String(formData.get('ownerKey') ?? row.key);
+							setOwnerSubmitting(key, true);
+
+							return async ({ update }) => {
+								try {
+									await update({ reset: false });
+								} finally {
+									setOwnerSubmitting(key, false);
 								}
+							};
+						}}
+					>
+						<input
+							id={`device-owner-permissions-row-${row.key}-owner-key-input`}
+							type="hidden"
+							name="ownerKey"
+							value={row.key}
+						/>
+						<input
+							id={`device-owner-permissions-row-${row.key}-email-input`}
+							type="hidden"
+							name="targetUserEmail"
+							value={row.email}
+						/>
+						<input
+							id={`device-owner-permissions-row-${row.key}-permission-level-input`}
+							type="hidden"
+							name="permissionLevel"
+							value={row.permissionLevel}
+						/>
 
-								const key = String(formData.get('ownerKey') ?? row.key);
-								setOwnerSubmitting(key, true);
+						<div class="permission-user flex items-center justify-center">
+							<p class="text-xl">{row.name} ({row.email})</p>
+						</div>
 
-								return async ({ update }) => {
-									try {
-										await update({ reset: false });
-									} finally {
-										setOwnerSubmitting(key, false);
+						<div class="permission-edit">
+							<div class="field-stack">
+								<CwDropdown
+									labels={cwDropdownLabels()}
+									id={`device-owner-permissions-row-${row.key}-permission-level-select`}
+									label={m.locations_permission_level()}
+									options={permissionOptions}
+									bind:value={
+										() => row.permissionLevel,
+										(value) => updateOwnerPermissionLevel(row.key, String(value ?? ''))
 									}
-								};
-							}}
-						>
-							<input
-								id={`device-owner-permissions-row-${row.key}-owner-key-input`}
-								type="hidden"
-								name="ownerKey"
-								value={row.key}
-							/>
-							<input
-								id={`device-owner-permissions-row-${row.key}-email-input`}
-								type="hidden"
-								name="targetUserEmail"
-								value={row.email}
-							/>
-							<input
-								id={`device-owner-permissions-row-${row.key}-permission-level-input`}
-								type="hidden"
-								name="permissionLevel"
-								value={row.permissionLevel}
-							/>
-
-							<div class="permission-user flex items-center justify-center">
-								<p class="text-xl">{row.name} ({row.email})</p>
+									error={ownerForm?.fieldErrors?.permissionLevel ||
+										(isLevelValid(row) ? undefined : m.devices_choose_valid_permission_level())}
+								/>
 							</div>
 
-							<div class="permission-edit">
-								<div class="field-stack">
-									<CwDropdown
-										labels={cwDropdownLabels()}
-										id={`device-owner-permissions-row-${row.key}-permission-level-select`}
-										label={m.locations_permission_level()}
-										options={permissionOptions}
-										bind:value={
-											() => row.permissionLevel,
-											(value) => updateOwnerPermissionLevel(row.key, String(value ?? ''))
-										}
-										error={ownerForm?.fieldErrors?.permissionLevel ||
-											(!isOwnerRowValid(row)
-												? m.devices_choose_valid_permission_level()
-												: undefined)}
-									/>
-								</div>
+							<CwButton
+								id={`device-owner-permissions-row-${row.key}-update-button`}
+								type="submit"
+								variant="primary"
+								loading={ownerSubmittingByKey[row.key] ?? false}
+								disabled={(ownerSubmittingByKey[row.key] ?? false) || !isOwnerRowValid(row)}
+							>
+								{m.devices_update_permission()}
+							</CwButton>
+						</div>
 
-								<CwButton
-									id={`device-owner-permissions-row-${row.key}-update-button`}
-									type="submit"
-									variant="primary"
-									loading={ownerSubmittingByKey[row.key] ?? false}
-									disabled={(ownerSubmittingByKey[row.key] ?? false) || !isOwnerRowValid(row)}
-								>
-									{m.devices_update_permission()}
-								</CwButton>
-							</div>
+						{#if emailError}
+							<AppNotice tone="danger">
+								<p>{emailError}</p>
+							</AppNotice>
+						{/if}
 
-							{#if ownerForm?.fieldErrors?.targetUserEmail}
-								<AppNotice tone="danger">
-									<p>{ownerForm.fieldErrors.targetUserEmail}</p>
-								</AppNotice>
-							{/if}
-
-							{#if ownerForm?.message}
-								<AppNotice tone={ownerForm.success ? 'success' : 'danger'}>
-									<p>{ownerForm.message}</p>
-								</AppNotice>
-							{/if}
-						</form>
-					</div>
-					{#if index < permissionRows.length - 1}
-						<CwSeparator inset="0" />
-					{/if}
+						{#if ownerForm?.message}
+							<AppNotice tone={ownerForm.success ? 'success' : 'danger'}>
+								<p>{ownerForm.message}</p>
+							</AppNotice>
+						{/if}
+					</form>
+				</div>
+				{#if index < shownRows.length - 1}
+					<CwSeparator inset="0" />
 				{/if}
 			{/each}
 		</div>

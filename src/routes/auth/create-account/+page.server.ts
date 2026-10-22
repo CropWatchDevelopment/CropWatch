@@ -1,16 +1,14 @@
-import { env } from '$env/dynamic/private';
 import { m } from '$lib/paraglide/messages.js';
 import { readRedirectPathFromUrl, withRedirectParam } from '$lib/utils/auth-redirect';
-import { verifyRecaptchaToken } from '$lib/utils/recaptcha.server';
-import { getSupabaseClient } from '$lib/supabase.server';
-import { fail, redirect, type Actions } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
 	// Company self-serve signup is behind ORGS_ENABLED (plan §12 #5), and
 	// invite-link signups are always personal (the invite decides the org).
 	return {
-		companySignupEnabled: env.ORGS_ENABLED === 'true' && !url.searchParams.has('invite')
+		companySignupEnabled: locals.config.server.orgsEnabled && !url.searchParams.has('invite')
 	};
 };
 
@@ -21,7 +19,7 @@ function readNonEmptyString(value: FormDataEntryValue | null): string | null {
 }
 
 export const actions: Actions = {
-	default: async ({ request, url }) => {
+	default: async ({ request, url, locals }) => {
 		const data = await request.formData();
 		const redirectPath = readRedirectPathFromUrl(url, '');
 
@@ -68,6 +66,17 @@ export const actions: Actions = {
 			});
 		}
 
+		// The form only enables submit for a strong password; enforce it here too.
+		if (!isStrongPassword(password).isValid) {
+			return fail(400, {
+				message: m.auth_password_too_weak(),
+				firstName,
+				lastName,
+				email,
+				company
+			});
+		}
+
 		if (!agreedPrivacy || !agreedTerms || !agreedEula) {
 			return fail(400, {
 				message: m.auth_must_agree_all_policies(),
@@ -79,11 +88,16 @@ export const actions: Actions = {
 		}
 
 		// ── reCAPTCHA verification ─────────────────────────────────
-		const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'REGISTER', 0.5, {
-			route: '/auth/create-account',
-			flow: 'register',
-			userAgent: request.headers.get('user-agent') ?? undefined
-		});
+		const recaptchaResult = await locals.services.recaptcha.verify(
+			recaptchaToken,
+			'REGISTER',
+			0.5,
+			{
+				route: '/auth/create-account',
+				flow: 'register',
+				userAgent: request.headers.get('user-agent') ?? undefined
+			}
+		);
 		if (!recaptchaResult.success) {
 			return fail(400, {
 				message: m.auth_security_try_again(),
@@ -95,19 +109,18 @@ export const actions: Actions = {
 		}
 
 		// ── Supabase sign-up (anon key — respects RLS) ─────────────
-		const supabase = getSupabaseClient();
 
 		// The 025 signup trigger reads account_type/company_name to create the
 		// home org. Company signups are honored only while ORGS_ENABLED is on
 		// and never from invite-link signups (they must stay personal).
 		const accountType =
-			env.ORGS_ENABLED === 'true' &&
+			locals.config.server.orgsEnabled &&
 			!url.searchParams.has('invite') &&
 			data.get('account_type') === 'company'
 				? 'company'
 				: 'personal';
 
-		const { error: signUpError } = await supabase.auth.signUp({
+		const { error: signUpError } = await locals.services.supabaseAuth.signUp({
 			email,
 			password,
 			options: {
@@ -145,6 +158,6 @@ export const actions: Actions = {
 		}
 
 		// Success – send user to the "check your email" page
-		throw redirect(303, withRedirectParam('/auth/create-account/check-email', redirectPath));
+		redirect(303, withRedirectParam('/auth/create-account/check-email', redirectPath));
 	}
 };

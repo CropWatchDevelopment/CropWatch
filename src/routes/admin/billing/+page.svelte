@@ -117,7 +117,7 @@
 	<title>{m.admin_billing_title()} - CropWatch</title>
 </svelte:head>
 
-<AppPage width="xl">
+<AppPage>
 	<CwButton
 		id="admin-billing-back-button"
 		variant="secondary"

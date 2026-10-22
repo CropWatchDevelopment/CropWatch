@@ -69,6 +69,18 @@ body {
 	padding-bottom: var(--app-shell-padding-block-end);
 }
 
+/* iOS Safari zooms the page in whenever a text field under 16px gets focus, and
+   does not zoom back out. The CWUI fields use 14px, so on iOS (the only browser
+   with -webkit-touch-callout) they get 16px. !important: it has to beat the
+   components' own scoped styles. Android and desktop keep the design size. */
+@supports (-webkit-touch-callout: none) {
+	input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+	select,
+	textarea {
+		font-size: max(1rem, 16px) !important;
+	}
+}
+
 /* This hides the reCAPTCHA badge, do not touch it! */
 .grecaptcha-badge {
 	visibility: hidden !important;

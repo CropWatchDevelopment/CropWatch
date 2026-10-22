@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { OverviewDto } from '$lib/api/api.dtos';
 import {
 	attentionRows,
@@ -227,5 +227,23 @@ describe('attention', () => {
 			'Packing Shed',
 			null
 		]);
+	});
+
+	it('compares two unnamed locations as equal, whichever comes first', () => {
+		// A comparator that answers "after" both ways leaves their order to the
+		// JavaScript engine; equal entries keep the order they came in everywhere.
+		type Place = { name: string | null; total: number; online: number };
+		const sort = vi.spyOn(Array.prototype, 'sort');
+		const first: Place = { name: null, total: 2, online: 2 };
+		const second: Place = { name: null, total: 1, online: 1 };
+		const named: Place = { name: 'Field A', total: 3, online: 3 };
+		try {
+			expect(sortLocations([first, named, second])).toEqual([named, first, second]);
+			const compare = sort.mock.calls[0][0] as (a: Place, b: Place) => number;
+			expect([compare(first, second), compare(second, first)]).toEqual([0, 0]);
+			expect([compare(first, named), compare(named, first)]).toEqual([1, -1]);
+		} finally {
+			sort.mockRestore();
+		}
 	});
 });

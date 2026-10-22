@@ -9,8 +9,9 @@
 	import { CwButton, CwCard, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { orgRoleLabel } from '$lib/auth/org-labels';
 	import type { OrgRole } from '$lib/api/api.dtos';
+	import type { PageProps } from './$types';
 
-	let { data, form } = $props();
+	let { data, form }: PageProps = $props();
 	const toast = useCwToast();
 
 	let submitting = $state(false);

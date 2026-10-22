@@ -74,13 +74,11 @@ async function submitLogin(page: Page) {
 	await submitButton.click();
 }
 
-async function useEnglish(page: Page) {
-	const englishButton = page.getByRole('button', { name: 'English' });
-
-	if (await englishButton.count()) {
-		await englishButton.click();
-	}
-}
+// The app defaults to Japanese; the language cookie makes every page render in
+// English from the first (server) render, with no switch click racing hydration.
+test.beforeEach(async ({ context }) => {
+	await context.addCookies([{ name: 'PARAGLIDE_LOCALE', value: 'en', url: baseUrl }]);
+});
 
 test('login succeeds from the auth route without requiring a refresh after an initial reCAPTCHA load failure', async ({
 	page
@@ -88,11 +86,10 @@ test('login succeeds from the auth route without requiring a refresh after an in
 	await installRecaptchaScriptMock(page, { failFirstLoad: true });
 
 	await page.goto('/auth/login?redirect=%2Fsettings');
-	await useEnglish(page);
 	await submitLogin(page);
 
 	await expect(page).toHaveURL(/\/settings$/);
-	await expect(page.getByText('Regional preferences')).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Regional', exact: true })).toBeVisible();
 });
 
 test('protected routes redirect to login with a reason and return to the original page after sign in', async ({
@@ -101,7 +98,6 @@ test('protected routes redirect to login with a reason and return to the origina
 	await installRecaptchaScriptMock(page);
 
 	await page.goto('/settings');
-	await useEnglish(page);
 
 	await expect(page).toHaveURL(/\/auth\/login\?redirect=%2Fsettings&reason=auth-required$/);
 	await expect(page.locator('.auth-alert')).toContainText('Please sign in to continue.');
@@ -109,13 +105,12 @@ test('protected routes redirect to login with a reason and return to the origina
 	await submitLogin(page);
 
 	await expect(page).toHaveURL(/\/settings$/);
-	await expect(page.getByText('Regional preferences')).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Regional', exact: true })).toBeVisible();
 });
 
 test('expired sessions redirect to login with the expired reason copy', async ({ page }) => {
 	await signIn(page, -60);
 	await page.goto('/settings');
-	await useEnglish(page);
 
 	await expect(page).toHaveURL(/\/auth\/login\?redirect=%2Fsettings&reason=expired$/);
 	await expect(page.locator('.auth-alert')).toContainText(
@@ -127,11 +122,31 @@ test('logout lands on login with the signed-out reason and preserved redirect ta
 	page
 }) => {
 	await signIn(page);
+	// A GET only asks: signing out is the POST behind the button.
 	await page.goto('/auth/logout?redirect=%2Fsettings');
-	await useEnglish(page);
+	await expect(page).toHaveURL(/\/auth\/logout\?redirect=%2Fsettings$/);
+	await page.locator('#logout-submit-button').click();
 
 	await expect(page).toHaveURL(/\/auth\/login\?redirect=%2Fsettings&reason=signed-out$/);
 	await expect(page.locator('.auth-alert')).toContainText('You signed out successfully.');
+	const cookies = await page.context().cookies();
+	expect(cookies.some((cookie) => cookie.name === 'jwt')).toBe(false);
+	// Signing out keeps the language.
+	expect(cookies.find((cookie) => cookie.name === 'PARAGLIDE_LOCALE')?.value).toBe('en');
+});
+
+test('a forged session cookie is refused on the server', async ({ page }) => {
+	await page.context().addCookies([
+		{
+			name: 'jwt',
+			value: createJwt().replace(/test-signature$/, 'forged-signature'),
+			url: baseUrl
+		}
+	]);
+	await page.goto('/settings');
+
+	await expect(page).toHaveURL(/\/auth\/login\?redirect=%2Fsettings&reason=auth-required$/);
+	expect((await page.context().cookies()).some((cookie) => cookie.name === 'jwt')).toBe(false);
 });
 
 test('create-account, forgot-password, and check-email routes preserve the original redirect target', async ({
@@ -140,7 +155,6 @@ test('create-account, forgot-password, and check-email routes preserve the origi
 	await installRecaptchaScriptMock(page);
 
 	await page.goto('/auth/login?redirect=%2Fsettings');
-	await useEnglish(page);
 
 	await page.getByRole('link', { name: /create account/i }).click();
 	await expect(page).toHaveURL(/\/auth\/create-account\?redirect=%2Fsettings$/);

@@ -96,4 +96,51 @@ describe('createClientTableLoader', () => {
 		await load(query());
 		expect(transitions).toEqual([true, false]);
 	});
+
+	it('ends the loading state even when building the page fails', async () => {
+		const transitions: boolean[] = [];
+		const load = createClientTableLoader(() => rows, {
+			sort: () => {
+				throw new Error('bad column');
+			},
+			onLoadingChange: (loading) => transitions.push(loading)
+		});
+
+		await expect(load(query({ sort: { column: 'value', direction: 'asc' } }))).rejects.toThrow(
+			'bad column'
+		);
+		expect(transitions).toEqual([true, false]);
+	});
+
+	it('reads the rows afresh on every query, so a live source stays current', async () => {
+		let source: Row[] = rows.slice(0, 2);
+		const load = createClientTableLoader(() => source);
+		expect((await load(query())).total).toBe(2);
+
+		source = rows;
+
+		expect((await load(query())).total).toBe(4);
+	});
+
+	it('never reorders the source rows', async () => {
+		const source = [...rows];
+		const load = createClientTableLoader(() => source, { reverse: true });
+
+		await load(query({ sort: { column: 'value', direction: 'asc' } }));
+
+		expect(source.map((r) => r.id)).toEqual(['a', 'b', 'c', 'd']);
+	});
+
+	it('treats a blank search as no search and a page before the first as the first', async () => {
+		const load = createClientTableLoader(() => rows, { searchText: (row) => row.id });
+
+		expect((await load(query({ search: '   ' }))).rows).toHaveLength(4);
+		expect((await load(query({ page: 0, pageSize: 2 }))).rows.map((r) => r.id)).toEqual(['a', 'b']);
+	});
+
+	it('returns an empty page past the end, still reporting the total', async () => {
+		const load = createClientTableLoader(() => rows);
+
+		expect(await load(query({ page: 3, pageSize: 3 }))).toEqual({ rows: [], total: 4 });
+	});
 });

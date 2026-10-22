@@ -1,4 +1,3 @@
-import { ApiService } from '$lib/api/api.service';
 import { buildLoginPath } from '$lib/utils/auth-redirect';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -43,37 +42,37 @@ const toAvailableLicenses = (licenses: { id: number; seatIndex: number; status: 
  * Guided device setup. The wizard submits straight to the API (CLAUDE.md:
  * complex wizard forms), so this load only gathers what the steps render.
  */
-export const load: PageServerLoad = async ({ params, fetch, locals, url }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const locationId = String(params.location_id ?? '').trim();
 
 	const authToken = locals.jwtString ?? null;
 	if (!authToken) {
-		throw redirect(
+		redirect(
 			303,
 			buildLoginPath({ redirectTo: `${url.pathname}${url.search}`, reason: 'auth-required' })
 		);
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken });
+	const { billing, devices, locations } = locals.services;
 
 	const [deviceTypeOptions, location, availableLicenses, groupSuggestions] = await Promise.all([
-		api
+		devices
 			.getDeviceTypes()
 			.then(mapDeviceTypeOptions)
 			.catch(() => []),
-		api.getLocation(locationId).catch(() => null),
-		api
+		locations.getLocation(locationId).catch(() => null),
+		billing
 			.getLicenses()
 			.then(toAvailableLicenses)
 			.catch(() => []),
 		// Groups already used at this location, offered as one-tap suggestions
 		// (read-scoped by the API, then narrowed to this location).
-		api
+		devices
 			.getDevices({ take: 1000 })
-			.then((devices) =>
+			.then((allDevices) =>
 				[
 					...new Set(
-						devices
+						allDevices
 							.filter((device) => String(device.location_id ?? '') === locationId)
 							.map((device) => device.group?.trim() ?? '')
 							.filter(Boolean)

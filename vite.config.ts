@@ -23,7 +23,18 @@ export default defineConfig({
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'lcov'],
-			exclude: [...coverageConfigDefaults.exclude, 'src/lib/paraglide/**', '.svelte-kit/**']
+			// Every source file counts, tested or not: an untested file reports 0%
+			// instead of being left out of the total.
+			include: ['src/**/*.{ts,svelte}'],
+			exclude: [
+				...coverageConfigDefaults.exclude,
+				'src/lib/paraglide/**',
+				'.svelte-kit/**',
+				// The test kit is test code, not app code.
+				'src/lib/testing/**'
+			],
+			// The project's floor: a coverage run (CI, `pnpm test:coverage`) fails below it.
+			thresholds: { statements: 90, branches: 90, functions: 90, lines: 90 }
 		},
 		projects: [
 			{
@@ -36,7 +47,8 @@ export default defineConfig({
 						instances: [{ browser: 'chromium', headless: true }]
 					},
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**']
+					exclude: ['src/lib/server/**'],
+					setupFiles: ['./src/lib/testing/setup.ts']
 				}
 			},
 
@@ -46,7 +58,8 @@ export default defineConfig({
 					name: 'server',
 					environment: 'node',
 					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+					setupFiles: ['./src/lib/testing/setup.ts']
 				}
 			}
 		]

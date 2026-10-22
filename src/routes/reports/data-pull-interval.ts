@@ -1,3 +1,5 @@
+import { m } from '$lib/paraglide/messages.js';
+
 export type SelectOption = {
 	disabled?: boolean;
 	label: string;
@@ -6,10 +8,8 @@ export type SelectOption = {
 
 export const DEFAULT_REPORT_DATA_PULL_INTERVAL = '30';
 
-const BASE_REPORT_DATA_PULL_INTERVAL_OPTIONS: ReadonlyArray<SelectOption> = Object.freeze([
-	{ label: '30 minutes', value: '30' },
-	{ label: '1 hour', value: '60' }
-]);
+/** The intervals (in minutes) the form offers: 30 minutes and 1 hour. */
+const BASE_REPORT_DATA_PULL_INTERVALS: ReadonlyArray<number> = [30, 60];
 
 function readPositiveInteger(value: unknown): number | undefined {
 	if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
@@ -32,10 +32,14 @@ function readPositiveInteger(value: unknown): number | undefined {
 function formatIntervalLabel(minutes: number): string {
 	if (minutes % 60 === 0) {
 		const hours = minutes / 60;
-		return hours === 1 ? '1 hour' : `${hours} hours`;
+		return hours === 1
+			? m.reports_data_pull_interval_hours_one()
+			: m.reports_data_pull_interval_hours_other({ count: hours });
 	}
 
-	return `${minutes} minutes`;
+	return minutes === 1
+		? m.reports_data_pull_interval_minutes_one()
+		: m.reports_data_pull_interval_minutes_other({ count: minutes });
 }
 
 export function parseReportDataPullInterval(value: unknown): number | undefined {
@@ -49,25 +53,21 @@ export function normalizeReportDataPullInterval(
 	return String(readPositiveInteger(value) ?? fallback);
 }
 
+/**
+ * The interval options, labelled in the current language (so built on each
+ * call, not at import). A saved interval the form does not offer comes first.
+ */
 export function buildReportDataPullIntervalOptions(
 	currentValue: unknown
 ): ReadonlyArray<SelectOption> {
 	const normalizedValue = readPositiveInteger(currentValue);
+	const intervals =
+		normalizedValue === undefined || BASE_REPORT_DATA_PULL_INTERVALS.includes(normalizedValue)
+			? BASE_REPORT_DATA_PULL_INTERVALS
+			: [normalizedValue, ...BASE_REPORT_DATA_PULL_INTERVALS];
 
-	if (
-		normalizedValue === undefined ||
-		BASE_REPORT_DATA_PULL_INTERVAL_OPTIONS.some(
-			(option) => option.value === String(normalizedValue)
-		)
-	) {
-		return BASE_REPORT_DATA_PULL_INTERVAL_OPTIONS;
-	}
-
-	return [
-		{
-			label: formatIntervalLabel(normalizedValue),
-			value: String(normalizedValue)
-		},
-		...BASE_REPORT_DATA_PULL_INTERVAL_OPTIONS
-	];
+	return intervals.map((minutes) => ({
+		label: formatIntervalLabel(minutes),
+		value: String(minutes)
+	}));
 }

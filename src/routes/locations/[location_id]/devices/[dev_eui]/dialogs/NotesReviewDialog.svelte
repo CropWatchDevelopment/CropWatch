@@ -18,12 +18,12 @@
 	import NOTE_ICON from '$lib/images/icons/notes_history.svg';
 	import { formatDateTime, getIntlLocale } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
-	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
+	import { getServices } from '$lib/services/context';
 	import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
 	import { parseAirNotesResponse } from '$lib/components/displays/AirDisplay/utils/air-notes';
 
 	interface Props {
-		authToken: string | null;
 		devEui: string;
 		disabled?: boolean;
 	}
@@ -32,7 +32,10 @@
 		entries: Note[];
 	}
 
-	let { authToken, devEui, disabled = false }: Props = $props();
+	let { devEui, disabled = false }: Props = $props();
+
+	const app = getAppContext();
+	const { airNotes } = getServices();
 
 	let open = $state(false);
 	let loading = $state(false);
@@ -66,15 +69,12 @@
 		};
 	}
 
+	// The picker's range never ends before it starts (it orders the two picks).
 	function getCalendarRange(value: CwRangeDateValue): { start: Date; end: Date } {
-		let start = new Date(value.start.getFullYear(), value.start.getMonth(), 1);
-		let end = new Date(value.end.getFullYear(), value.end.getMonth() + 1, 0);
-
-		if (start.getTime() > end.getTime()) {
-			[start, end] = [end, start];
-		}
-
-		return { start, end };
+		return {
+			start: new Date(value.start.getFullYear(), value.start.getMonth(), 1),
+			end: new Date(value.end.getFullYear(), value.end.getMonth() + 1, 0)
+		};
 	}
 
 	function getMonthStarts(value: CwRangeDateValue): Date[] {
@@ -152,7 +152,8 @@
 	}
 
 	async function loadNotesData(): Promise<void> {
-		if (!authToken || !devEui) {
+		// Only with a session: that token is what the services send.
+		if (!app.accessToken || !devEui) {
 			notes = [];
 			loadError = null;
 			return;
@@ -162,15 +163,11 @@
 		loading = true;
 		loadError = null;
 
-		const api = new ApiService({
-			authToken
-		});
-
 		try {
 			const monthStarts = getMonthStarts(selectedMonth);
 			const responses = await Promise.all(
 				monthStarts.map((monthStart) =>
-					api.getAllAirNotesForMonth({
+					airNotes.getAllAirNotesForMonth({
 						dev_eui: devEui,
 						date: monthStart
 					})

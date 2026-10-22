@@ -1,11 +1,11 @@
-import { ApiService, ApiServiceError } from '$lib/api/api.service';
-import { readApiErrorMessage } from '$lib/api/api-error';
+import { ApiError, readApiErrorMessage } from '$lib/api/api-error';
 import type {
 	DeviceSetupErrorCode,
 	DeviceSetupLookupResult,
 	DeviceSetupRequest,
 	DeviceSetupResult
 } from '$lib/api/api.dtos';
+import type { DeviceRepository } from '$lib/api/repositories/devices.repository';
 import { checkAppKey, checkEui } from '$lib/devices/eui';
 import type { DeviceQrPayload } from '$lib/devices/qr-payload';
 
@@ -40,12 +40,12 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null;
 
 /**
- * Maps an API error to a SetupFailure. ApiService wraps the response body as
+ * Maps an API error to a SetupFailure. ApiError wraps the response body as
  * `{ url, payload }`, so the setup error (`{ code, message, reference }`) is
  * one level down.
  */
 export function toSetupFailure(error: unknown): SetupFailure {
-	if (!(error instanceof ApiServiceError)) {
+	if (!(error instanceof ApiError)) {
 		return { code: 'UNKNOWN', message: null, reference: null, details: {} };
 	}
 	const wrapper = isRecord(error.payload) ? error.payload : {};
@@ -134,8 +134,8 @@ export class DeviceSetupFlow {
 
 	constructor(
 		private readonly ctx: {
-			/** Read per request so a refreshed session token is always used. */
-			getAuthToken: () => string | null;
+			/** Sends the current session token on every request. */
+			devices: Pick<DeviceRepository, 'lookupDeviceSetup' | 'setupDevice'>;
 			locationId: number;
 			licenses: LicenseOption[];
 		}
@@ -263,8 +263,7 @@ export class DeviceSetupFlow {
 		this.lookupError = null;
 
 		try {
-			const api = new ApiService({ authToken: this.ctx.getAuthToken() });
-			const lookup = await api.lookupDeviceSetup(
+			const lookup = await this.ctx.devices.lookupDeviceSetup(
 				{ dev_eui: devEui.value, location_id: this.ctx.locationId },
 				{ signal: abort.signal }
 			);
@@ -311,8 +310,7 @@ export class DeviceSetupFlow {
 		this.failure = null;
 		this.step = 'registering';
 		try {
-			const api = new ApiService({ authToken: this.ctx.getAuthToken() });
-			this.result = await api.setupDevice(this.buildRequest());
+			this.result = await this.ctx.devices.setupDevice(this.buildRequest());
 			this.step = 'done';
 		} catch (error) {
 			const failure = toSetupFailure(error);

@@ -16,16 +16,15 @@
 	import { backHref } from '$lib/navigation/backTo';
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { ApiService } from '$lib/api/api.service';
-	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { getServices } from '$lib/services/context';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { formatDateTime } from '$lib/i18n/format';
 	import CHECK_ICON from '$lib/images/icons/check_circle.svg';
 	import NO_ICON from '$lib/images/icons/no.svg';
 	import { buildGatewayTableResult, type GatewayTableRow } from './gateway-table';
 
 	let loading = $state(false);
-	let app = getAppContext();
+	const { gateways } = getServices();
 
 	const columns: CwColumnDef<GatewayTableRow>[] = [
 		{ key: 'gateway_name', header: m.gateways_gateway_name(), sortable: true },
@@ -38,12 +37,11 @@
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<GatewayTableRow>> {
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const gateways = await api.getGateways({ signal: query.signal });
+			const rows = await gateways.getGateways({ signal: query.signal });
 
-			return buildGatewayTableResult(gateways, query);
+			return buildGatewayTableResult(rows, query);
 		} catch (error) {
-			throw new Error(readApiErrorMessage(error, m.generic_error()));
+			throw new Error(apiErrorMessage(error, m.generic_error()));
 		}
 	}
 </script>

@@ -11,8 +11,7 @@
 		CwTextArea,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import { ApiService, ApiServiceError } from '$lib/api/api.service';
-	import { readApiErrorMessage } from '$lib/api/api-error';
+	import { apiErrorMessage } from '$lib/api/api-error';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
@@ -23,6 +22,7 @@
 	import NO_ICON from '$lib/images/icons/no.svg';
 	import SAVE_ICON from '$lib/images/icons/save.svg';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
 
 	type Props = {
 		devEui: string;
@@ -37,6 +37,7 @@
 
 	const app = getAppContext();
 	const toast = useCwToast();
+	const { airNotes, telemetry } = getServices();
 
 	let open = $state(false);
 	let loading = $state(false);
@@ -98,13 +99,13 @@
 		loading = true;
 		loadError = null;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			const result = await api.getDeviceDataWithinRange(devEui, {
+			const result = await telemetry.getDeviceDataWithinRange(devEui, {
 				start: startOfTodayIso(),
 				end: new Date().toISOString(),
 				take: TODAY_TAKE_LIMIT
 			});
-			const rows = Array.isArray(result) ? result : result.data;
+			// An answer without a body (null) or without rows means no readings.
+			const rows = Array.isArray(result) ? result : (result?.data ?? []);
 			todayRows = rows.filter(
 				(r): r is Record<string, unknown> =>
 					!!r && typeof (r as Record<string, unknown>).created_at === 'string'
@@ -112,8 +113,7 @@
 			selectedCreatedAt = (todayRows[0]?.created_at as string | undefined) ?? null;
 		} catch (error) {
 			console.error('Failed to load today data:', error);
-			const payload = error instanceof ApiServiceError ? error.payload : error;
-			loadError = readApiErrorMessage(payload, m.devices_save_note_failed());
+			loadError = apiErrorMessage(error, m.display_today_readings_load_failed());
 		} finally {
 			loading = false;
 		}
@@ -126,39 +126,46 @@
 	}
 
 	async function handleSaveNote() {
-		if (saving) return;
 		const trimmedNote = noteText.trim();
 		const trimmedTitle = noteTitle.trim();
 		const createdAt = selectedCreatedAt;
+		// The session can end while the dialog is open.
 		if (!trimmedNote || !createdAt || !app.accessToken) return;
 
 		saving = true;
 		try {
-			const api = new ApiService({ authToken: app.accessToken });
-			await api.createAirNote({
-				note: trimmedNote,
-				title: trimmedTitle,
-				include_in_report: includeInReport,
-				created_at: createdAt,
-				dev_eui: devEui
-			});
+			try {
+				await airNotes.createAirNote({
+					note: trimmedNote,
+					title: trimmedTitle,
+					include_in_report: includeInReport,
+					created_at: createdAt,
+					dev_eui: devEui
+				});
+			} catch (error) {
+				console.error('Failed to save air note:', error);
+				toast.add({
+					tone: 'danger',
+					message: apiErrorMessage(error, m.devices_save_note_failed())
+				});
+				return;
+			}
+
 			toast.add({ tone: 'success', message: m.devices_save_note_success() });
-			await onSaved?.({
-				id: globalThis.crypto?.randomUUID?.() ?? `note-${Date.now()}`,
-				created_at: createdAt,
-				created_by: '',
-				title: trimmedTitle,
-				note: trimmedNote,
-				includeInReport
-			});
+			try {
+				await onSaved?.({
+					id: globalThis.crypto?.randomUUID?.() ?? `note-${Date.now()}`,
+					created_at: createdAt,
+					created_by: '',
+					title: trimmedTitle,
+					note: trimmedNote,
+					includeInReport
+				});
+			} catch (error) {
+				// The note is saved: a failing follow-up (e.g. a refresh) does not undo that.
+				console.error('Saved the air note, but its follow-up failed:', error);
+			}
 			closeDialog();
-		} catch (error) {
-			console.error('Failed to save air note:', error);
-			const payload = error instanceof ApiServiceError ? error.payload : error;
-			toast.add({
-				tone: 'danger',
-				message: readApiErrorMessage(payload, m.devices_save_note_failed())
-			});
 		} finally {
 			saving = false;
 		}
@@ -189,7 +196,8 @@
 				</AppNotice>
 			{:else}
 				<div class="today-note-dialog__radios" role="radiogroup">
-					{#each todayRows as row (row.created_at as string)}
+					<!-- Two readings can share a timestamp, so the position keys them. -->
+					{#each todayRows as row, index (index)}
 						{@const createdAt = row.created_at as string}
 						<CwRadio
 							bind:group={selectedCreatedAt}

@@ -5,21 +5,11 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
-
-	type CreateLocationForm = {
-		error?: string;
-		name?: string;
-		description?: string;
-		group?: string;
-		lat?: string;
-		long?: string;
-		location_id?: number;
-		success?: boolean;
-	} | null;
+	import type { PageProps } from './$types';
 
 	const toast = useCwToast();
 
-	let { form }: { form: CreateLocationForm } = $props();
+	let { form }: PageProps = $props();
 	const initial = (() => form)();
 
 	let submitting = $state(false);
@@ -30,7 +20,7 @@
 	let long = $state(initial?.long ?? '');
 </script>
 
-<AppPage width="md">
+<AppPage>
 	<CwButton
 		id="location-create-back-button"
 		variant="secondary"

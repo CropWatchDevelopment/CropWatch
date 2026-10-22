@@ -278,13 +278,16 @@ export function onlineShare(overview: OverviewDto): number {
 	return overview.devices.total === 0 ? 0 : overview.devices.online / overview.devices.total;
 }
 
-/** Locations with offline devices first (most first), then by name. */
+/** Locations with offline devices first (most first), then by name; unnamed ones last. */
 export function sortLocations<T extends { name: string | null; total: number; online: number }>(
 	locations: readonly T[]
 ): T[] {
 	return [...locations].sort(
 		(a, b) =>
 			b.total - b.online - (a.total - a.online) ||
-			(a.name === null ? 1 : b.name === null ? -1 : a.name.localeCompare(b.name))
+			// Two unnamed locations are equal, so they keep their order.
+			(a.name === null || b.name === null
+				? Number(a.name === null) - Number(b.name === null)
+				: a.name.localeCompare(b.name))
 	);
 }

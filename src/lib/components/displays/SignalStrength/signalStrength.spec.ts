@@ -83,4 +83,10 @@ describe('currentSignal', () => {
 	it('returns null when no gateway heard the device', () => {
 		expect(currentSignal([])).toBeNull();
 	});
+
+	it('keeps the first of equally graded readings that carry no RSSI', () => {
+		const first = { rssi: null, snr: 7, last_update: at(0) };
+		const second = { rssi: null, snr: 8, last_update: at(0) };
+		expect(currentSignal([first, second])).toBe(first);
+	});
 });

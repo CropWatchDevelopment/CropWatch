@@ -1,19 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import { ApiService } from '$lib/api/api.service';
+	import { getAppContext } from '$lib/appContext.svelte';
 	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import type {
-		Json,
-		RuleTemplateActionDto,
-		RuleTemplateActionInput,
-		RuleTemplateSaveRequest
-	} from '$lib/rules/rule-template.types';
 	import type { RuleFormContextDto } from '$lib/api/api.dtos';
-	import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
-	import { labelFor } from '$lib/sensor-labels';
+	import { getServices } from '$lib/services/context';
 	import {
 		CwAlertPointsEditor,
 		CwButton,
@@ -29,24 +20,22 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwDropdownLabels, cwMultiSelectLabels } from '$lib/i18n/cwuiLabels';
 	import {
-		areAlertCriteriaGroupsValid,
-		buildInitialAlertCriteriaGroups,
-		buildRuleTemplateCriteriaFromAlertGroups,
+		applyAlertPointsChange,
 		createBlankAlertCriteriaGroup,
 		createRuleTemplateAlertPointsEditorText,
-		ensureAlertPointsIncludeReset,
-		hasUnsupportedAlertPointConditions
+		describeNotEqualPoints
 	} from './rule-template-alert-points';
+	import {
+		RuleTemplateFormController,
+		type RuleTemplateFormMode
+	} from './rule-template-form.svelte';
 	import RelayActions from '$lib/components/rule-actions/Relay-Actions.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 
-	type FormMode = 'create' | 'edit';
-
 	interface Props {
-		mode: FormMode;
+		mode: RuleTemplateFormMode;
 		context: RuleFormContextDto;
-		authToken?: string | null;
 		preselectedDevEui?: string | null;
 		// Used to preselect the rule creator on the default Push action.
 		currentUserId?: string | null;
@@ -54,581 +43,40 @@
 		currentUserName?: string | null;
 	}
 
-	interface DeviceSelection {
-		id: string;
-		label: string;
-	}
-
-	interface RuleTemplateActionConfig {
-		recipient: string;
-		[key: string]: Json | undefined;
-	}
-
-	type EditableTemplateAction = Omit<RuleTemplateActionDto, 'config'> & {
-		config: RuleTemplateActionConfig;
-		// LINE / Push actions only: the CwMultiSelect selection ({id,label}
-		// shape). Serialized into config.recipient as {"userIds":[...]} on change.
-		lineRecipients: { id: string; label: string }[];
-		pushRecipients: { id: string; label: string }[];
-	};
-
 	let {
 		mode,
 		context,
-		authToken = null,
 		preselectedDevEui = null,
 		currentUserId = null,
 		currentUserName = null
 	}: Props = $props();
 
-	let devices = $derived(context.devices);
-	let actions = $derived(context.actionTypes);
-	let locations = $derived(context.locations);
-	const initial = (() => context.template)();
-	const preselectedDevice = (() => preselectedDevEui)();
-	const toast = useCwToast();
-	const SUBJECT_OPTIONS = getRuleSubjectOptions();
-	const OPERATORS = getRuleOperatorOptions();
+	const app = getAppContext();
+	const { rules, line, push } = getServices();
 	const alertPointsEditorText = createRuleTemplateAlertPointsEditorText();
-
-	let ruleName = $state(initial?.name ?? '');
-	let description = $state(initial?.description ?? '');
-	let isActive = $state(initial?.isActive ?? true);
-	let submitting = $state(false);
-	let showAdvanced = $state(false);
-
-	let selectedDevices = $state<DeviceSelection[]>(
-		initial?.assignments.length
-			? createDeviceSelections(initial.assignments.map((assignment) => assignment.devEui))
-			: preselectedDevice
-				? [createDeviceSelection(preselectedDevice)]
-				: []
-	);
-
-	const initialCriteriaGroups = buildInitialAlertCriteriaGroups(initial?.criteria ?? []);
-	let nextCriteriaGroupId = $state(initialCriteriaGroups.length + 1);
-	let criteriaGroups = $state(initialCriteriaGroups);
-
-	let templateActions = $state<EditableTemplateAction[]>(
-		initial?.actions.length
-			? initial.actions.map(createEditableTemplateAction)
-			: [createDefaultTemplateAction()]
-	);
-
-	let actionTypeOptions = $derived(
-		actions
-			.filter((actionType) => isValidActionTypeId(actionType.id))
-			.map((actionType) => ({
-				label: actionType.name,
-				value: String(actionType.id)
-			}))
-	);
-	interface DeviceOption {
-		label: string;
-		value: string;
-		group?: number;
-	}
-	let deviceOptionsBase = $derived<DeviceOption[]>(
-		(devices ?? []).map((device) => ({
-			label: device.name ? `${device.name} (${device.dev_eui})` : device.dev_eui,
-			value: device.dev_eui,
-			group: typeof device.location_id === 'number' ? device.location_id : undefined
-		}))
-	);
-	let deviceOptions = $derived<DeviceOption[]>([
-		...selectedDevices
-			.filter((device) => !deviceOptionsBase.some((option) => option.value === device.id))
-			.map((device) => ({
-				label: device.label || getDeviceLabel(device.id),
-				value: device.id
-			})),
-		...deviceOptionsBase
-	]);
-	let deviceGroups = $derived.by(() => {
-		const seen = new SvelteMap<number, string>();
-		for (const device of devices ?? []) {
-			if (typeof device.location_id !== 'number' || seen.has(device.location_id)) continue;
-			seen.set(device.location_id, resolveLocationName(device.location_id));
-		}
-		return [...seen.entries()]
-			.map(([value, label]) => ({ value, label }))
-			.sort((a, b) => a.label.localeCompare(b.label));
+	const form = new RuleTemplateFormController({
+		mode: () => mode,
+		context: () => context,
+		preselectedDevEui: (() => preselectedDevEui)(),
+		currentUserId: (() => currentUserId)(),
+		currentUserName: (() => currentUserName)(),
+		rules,
+		line,
+		push,
+		// Only with a session: that token is what the services send.
+		accessToken: () => app.accessToken,
+		toast: useCwToast(),
+		goto
 	});
 
-	let selectedDevEuis = $derived(selectedDevices.map((device) => device.id.trim()).filter(Boolean));
-
-	// Eligible LINE recipients for the currently selected devices. This is the
-	// only mid-form fetch in this file: the options depend on device selection,
-	// which the server-loaded form context cannot know ahead of time. The
-	// serialized-key guard doubles as a debounce (CwMultiSelect commits one
-	// change per click) and the sequence number drops stale responses.
-	let lineRecipientOptionsBase = $state<{ label: string; value: string }[]>([]);
-	const lineRecipientNames = new SvelteMap<string, string>();
-	let lineRecipientFetchKey = '';
-	let lineRecipientFetchSeq = 0;
+	// The recipient options depend on the device selection: refetch when it changes.
+	$effect(() => {
+		form.syncLineRecipients();
+	});
 
 	$effect(() => {
-		const devEuis = [...selectedDevEuis].sort();
-		const key = devEuis.join(',');
-		if (key === lineRecipientFetchKey) return;
-		lineRecipientFetchKey = key;
-
-		if (devEuis.length === 0 || !authToken) {
-			lineRecipientOptionsBase = [];
-			return;
-		}
-
-		const seq = ++lineRecipientFetchSeq;
-		new ApiService({ authToken })
-			.getLineRecipientCandidates(devEuis)
-			.then((candidates) => {
-				if (seq !== lineRecipientFetchSeq) return;
-				lineRecipientNames.clear();
-				lineRecipientOptionsBase = candidates.map((candidate) => {
-					lineRecipientNames.set(candidate.userId, candidate.displayName);
-					return {
-						value: candidate.userId,
-						label: candidate.lineLinked
-							? candidate.displayName
-							: `${candidate.displayName}（${m.line_recipient_not_linked()}）`
-					};
-				});
-				// Upgrade bare id labels on saved selections now that names are known.
-				for (const action of templateActions) {
-					if (action.actionTypeName !== 'LINE') continue;
-					for (const selection of action.lineRecipients) {
-						const name = lineRecipientNames.get(selection.id);
-						if (name && selection.label === selection.id) selection.label = name;
-					}
-				}
-			})
-			.catch(() => {
-				if (seq === lineRecipientFetchSeq) lineRecipientOptionsBase = [];
-			});
+		form.syncPushRecipients();
 	});
-
-	// Eligible push recipients — same fetch pattern as the LINE effect above,
-	// with its own key/seq guard so the two channels never race each other.
-	// Users who haven't subscribed to push are listed but can't be selected.
-	let pushRecipientOptionsBase = $state<{ label: string; value: string; disabled: boolean }[]>([]);
-	const pushRecipientNames = new SvelteMap<string, string>();
-	const pushUnsubscribedIds = new SvelteSet<string>();
-	let pushRecipientFetchKey = '';
-	let pushRecipientFetchSeq = 0;
-
-	$effect(() => {
-		const devEuis = [...selectedDevEuis].sort();
-		const key = devEuis.join(',');
-		if (key === pushRecipientFetchKey) return;
-		pushRecipientFetchKey = key;
-
-		if (devEuis.length === 0 || !authToken) {
-			pushRecipientOptionsBase = [];
-			return;
-		}
-
-		const seq = ++pushRecipientFetchSeq;
-		new ApiService({ authToken })
-			.getPushRecipientCandidates(devEuis)
-			.then((candidates) => {
-				if (seq !== pushRecipientFetchSeq) return;
-				pushRecipientNames.clear();
-				pushRecipientOptionsBase = candidates.map((candidate) => {
-					pushRecipientNames.set(candidate.userId, candidate.displayName);
-					// Subscription is per user, so it outlives a device-selection change.
-					if (candidate.pushEnabled) pushUnsubscribedIds.delete(candidate.userId);
-					else pushUnsubscribedIds.add(candidate.userId);
-					return {
-						value: candidate.userId,
-						label: candidate.pushEnabled
-							? candidate.displayName
-							: `${candidate.displayName}（${m.push_recipient_not_enabled()}）`,
-						disabled: !candidate.pushEnabled
-					};
-				});
-				for (const action of templateActions) {
-					if (action.actionTypeName !== 'Push') continue;
-					// Upgrade bare id labels on saved selections now that names are known.
-					for (const selection of action.pushRecipients) {
-						const name = pushRecipientNames.get(selection.id);
-						if (name && selection.label === selection.id) selection.label = name;
-					}
-				}
-			})
-			.catch(() => {
-				if (seq === pushRecipientFetchSeq) pushRecipientOptionsBase = [];
-			});
-	});
-
-	// Saved selections must stay visible even when the fetch hasn't landed or
-	// the user lost device access (same guard pattern as deviceOptions above).
-	function lineRecipientOptionsFor(action: EditableTemplateAction) {
-		const missing = action.lineRecipients
-			.filter((selection) => !lineRecipientOptionsBase.some((o) => o.value === selection.id))
-			.map((selection) => ({ value: selection.id, label: selection.label || selection.id }));
-		return [...missing, ...lineRecipientOptionsBase];
-	}
-
-	function setLineRecipients(
-		action: EditableTemplateAction,
-		selection: { id: string; label: string }[]
-	) {
-		action.lineRecipients = selection;
-		action.config.recipient =
-			selection.length > 0 ? JSON.stringify({ userIds: selection.map((item) => item.id) }) : '';
-	}
-
-	function pushRecipientOptionsFor(action: EditableTemplateAction) {
-		const missing = action.pushRecipients
-			.filter((selection) => !pushRecipientOptionsBase.some((o) => o.value === selection.id))
-			.map((selection) => ({ value: selection.id, label: selection.label || selection.id }));
-		return [...missing, ...pushRecipientOptionsBase];
-	}
-
-	// On a new rule, choosing anyone replaces an unsubscribed creator preselect.
-	// Existing rules keep every saved recipient: only the person themselves
-	// turns their alerts off, and a recipient without a device right now
-	// starts receiving again once one registers.
-	function setPushRecipients(
-		action: EditableTemplateAction,
-		selection: { id: string; label: string }[]
-	) {
-		const kept =
-			mode === 'create' ? selection.filter((item) => !pushUnsubscribedIds.has(item.id)) : selection;
-		action.pushRecipients = kept;
-		action.config.recipient =
-			kept.length > 0 ? JSON.stringify({ userIds: kept.map((item) => item.id) }) : '';
-	}
-
-	function pushRecipientError(action: EditableTemplateAction): string | undefined {
-		const unsubscribed =
-			mode === 'create'
-				? action.pushRecipients.filter((item) => pushUnsubscribedIds.has(item.id))
-				: [];
-		if (unsubscribed.length > 0) {
-			return m.push_recipient_not_subscribed_error({
-				names: unsubscribed.map((item) => pushRecipientNames.get(item.id) ?? item.label).join(', ')
-			});
-		}
-		// Nobody to choose from until a device is picked.
-		if (action.pushRecipients.length === 0 && selectedDevEuis.length > 0) {
-			return m.push_recipient_required_error();
-		}
-		return undefined;
-	}
-
-	function parseRecipientUserIds(recipient: string): string[] {
-		try {
-			const parsed: unknown = JSON.parse(recipient);
-			if (
-				typeof parsed === 'object' &&
-				parsed !== null &&
-				Array.isArray((parsed as { userIds?: unknown }).userIds)
-			) {
-				return ((parsed as { userIds: unknown[] }).userIds ?? []).filter(
-					(id): id is string => typeof id === 'string' && id.length > 0
-				);
-			}
-		} catch {
-			// Legacy sentinel ('linked-users') or free text — force a fresh choice.
-		}
-		return [];
-	}
-	let selectedDeviceTypeId = $derived(resolveSelectedDeviceTypeId());
-	let criteriaForTest = $derived(buildRuleTemplateCriteriaFromAlertGroups(criteriaGroups));
-	let hasUnsupportedCriteria = $derived(hasUnsupportedAlertPointConditions(criteriaGroups));
-	let isFormValid = $derived(
-		ruleName.trim().length > 0 &&
-			selectedDevEuis.length > 0 &&
-			!hasUnsupportedCriteria &&
-			areAlertCriteriaGroupsValid(criteriaGroups) &&
-			templateActions.every(
-				(action) =>
-					isValidActionTypeId(action.actionType) &&
-					action.config.recipient.trim().length > 0 &&
-					(action.actionTypeName !== 'LINE' || action.lineRecipients.length > 0) &&
-					(action.actionTypeName !== 'Push' ||
-						(action.pushRecipients.length > 0 && pushRecipientError(action) === undefined))
-			)
-	);
-	let assignmentSummary = $derived(
-		selectedDevices
-			.map((device) => device.label || getDeviceLabel(device.id))
-			.filter(Boolean)
-			.join(', ')
-	);
-	let criteriaPreview = $derived(
-		criteriaForTest.map((criterion) => {
-			const label = SUBJECT_OPTIONS.find((option) => option.value === criterion.subject)?.label;
-			const operatorLabel =
-				OPERATORS.find((option) => option.value === criterion.operator)?.label ??
-				criterion.operator;
-			return `${label ?? labelFor(criterion.subject).label()} ${operatorLabel} ${criterion.triggerValue} (${m.rules_reset_value()}: ${criterion.resetValue})`;
-		})
-	);
-	let criteriaSummary = $derived(criteriaPreview.join(', '));
-	let actionPreview = $derived(
-		templateActions.map((action) => {
-			const label =
-				actions.find((entry) => entry.id === action.actionType)?.name ??
-				action.actionTypeName ??
-				action.actionTypeValue ??
-				String(action.actionType);
-			const recipient =
-				action.actionTypeName === 'LINE'
-					? action.lineRecipients
-							.map((item) => lineRecipientNames.get(item.id) ?? item.label ?? item.id)
-							.join(', ') ||
-						m.line_recipient_preview_count({ count: String(action.lineRecipients.length) })
-					: action.actionTypeName === 'Push'
-						? action.pushRecipients
-								.map((item) => pushRecipientNames.get(item.id) ?? item.label ?? item.id)
-								.join(', ') ||
-							m.push_recipient_preview_count({ count: String(action.pushRecipients.length) })
-						: action.config.recipient;
-			return `${label}: ${recipient}`;
-		})
-	);
-	let actionSummary = $derived(actionPreview.join(', '));
-
-	function createBlankTemplateAction(): EditableTemplateAction {
-		const actionType = actions[0];
-
-		return {
-			id: 0,
-			templateId: initial?.id ?? 0,
-			actionType: actionType?.id ?? 0,
-			actionTypeName: actionType?.name ?? null,
-			actionTypeValue: actionType?.value ?? null,
-			config: {
-				recipient: ''
-			},
-			lineRecipients: [],
-			pushRecipients: [],
-			createdAt: null
-		};
-	}
-
-	// New rules default to a Push action with the creator preselected, labelled
-	// with their profile name (the recipient list only loads once a device is
-	// chosen). Falls back to a blank action while the Push action type doesn't
-	// exist yet server-side.
-	function createDefaultTemplateAction(): EditableTemplateAction {
-		if (mode === 'create' && currentUserId) {
-			const pushType = actions.find((entry) => entry.name === 'Push');
-			if (pushType) {
-				return {
-					id: 0,
-					templateId: initial?.id ?? 0,
-					actionType: pushType.id,
-					actionTypeName: pushType.name,
-					actionTypeValue: pushType.value ?? null,
-					config: {
-						recipient: JSON.stringify({ userIds: [currentUserId] })
-					},
-					lineRecipients: [],
-					pushRecipients: [{ id: currentUserId, label: currentUserName || currentUserId }],
-					createdAt: null
-				};
-			}
-		}
-		return createBlankTemplateAction();
-	}
-
-	function createEditableTemplateAction(action: RuleTemplateActionDto): EditableTemplateAction {
-		const recipient = readActionRecipient(action);
-		const lineRecipients =
-			action.actionTypeName === 'LINE'
-				? parseRecipientUserIds(recipient).map((id) => ({ id, label: id }))
-				: [];
-		const pushRecipients =
-			action.actionTypeName === 'Push'
-				? parseRecipientUserIds(recipient).map((id) => ({ id, label: id }))
-				: [];
-		return {
-			...action,
-			config: {
-				...readActionConfig(action.config),
-				recipient
-			},
-			lineRecipients,
-			pushRecipients
-		};
-	}
-
-	function createDeviceSelection(devEui: string): DeviceSelection {
-		return {
-			id: devEui,
-			label: getDeviceLabel(devEui)
-		};
-	}
-
-	function createDeviceSelections(devEuis: string[]): DeviceSelection[] {
-		const seen: string[] = [];
-		return devEuis.flatMap((devEui) => {
-			const id = devEui.trim();
-			if (!id || seen.includes(id)) return [];
-			seen.push(id);
-			return [createDeviceSelection(id)];
-		});
-	}
-
-	function getDeviceLabel(devEui: string): string {
-		const device = devices.find((entry) => entry.dev_eui === devEui);
-		return device?.name ? `${device.name} (${devEui})` : devEui;
-	}
-
-	function resolveLocationName(locationId: number): string {
-		const match = locations.find((loc) => loc.location_id === locationId);
-		const name = typeof match?.name === 'string' ? match.name.trim() : '';
-		return name || m.locations_location_with_id({ id: String(locationId) });
-	}
-
-	function resolveSelectedDeviceTypeId(): number | null {
-		const types: number[] = [];
-		for (const devEui of selectedDevEuis) {
-			const deviceType = devices.find((device) => device.dev_eui === devEui)?.type;
-			if (
-				typeof deviceType === 'number' &&
-				Number.isFinite(deviceType) &&
-				!types.includes(deviceType)
-			) {
-				types.push(deviceType);
-			}
-		}
-
-		return types.length === 1 ? types[0] : null;
-	}
-
-	function buildPayload(): RuleTemplateSaveRequest {
-		return {
-			name: ruleName.trim(),
-			description: description.trim() || null,
-			deviceTypeId: selectedDeviceTypeId,
-			isActive,
-			devEuis: selectedDevEuis,
-			criteria: criteriaForTest,
-			actions: templateActions.map(buildActionPayload)
-		};
-	}
-
-	function buildActionPayload(action: EditableTemplateAction): RuleTemplateActionInput {
-		if (!isValidActionTypeId(action.actionType)) {
-			throw new Error('Action type is required.');
-		}
-
-		return {
-			id: action.id > 0 ? action.id : null,
-			actionType: action.actionType,
-			config: {
-				...action.config,
-				recipient: action.config.recipient.trim()
-			}
-		};
-	}
-
-	async function handleSubmit() {
-		if (!isFormValid || submitting) return;
-		submitting = true;
-
-		try {
-			const api = new ApiService({ authToken });
-
-			if (mode === 'edit' && initial) {
-				await api.updateRuleTemplate(initial.id, buildPayload());
-				toast.add({
-					tone: 'success',
-					message: m.rules_new_updated_success({ name: ruleName.trim() }),
-					duration: 4000,
-					dismissible: true
-				});
-			} else {
-				await api.createRuleTemplate(buildPayload());
-				toast.add({
-					tone: 'success',
-					message: m.rules_new_created_success({ name: ruleName.trim() }),
-					duration: 4000,
-					dismissible: true
-				});
-			}
-
-			await goto(resolve('/rules'));
-		} catch (error) {
-			toast.add({
-				tone: 'danger',
-				message: readApiErrorMessage(error, m.rules_new_save_failed()),
-				duration: 5000,
-				dismissible: true
-			});
-		} finally {
-			submitting = false;
-		}
-	}
-
-	function readActionRecipient(action: RuleTemplateActionDto): string {
-		const config = readActionConfig(action.config);
-		return (
-			readString(config.recipient) ??
-			readString(config.action_recipient) ??
-			readString(config.to) ??
-			''
-		);
-	}
-
-	function readActionConfig(config: Json): Record<string, Json | undefined> {
-		return isRecord(config) ? config : {};
-	}
-
-	function actionTypeOptionsFor(action: EditableTemplateAction) {
-		const selectedValue = String(action.actionType);
-
-		if (
-			!isValidActionTypeId(action.actionType) ||
-			actionTypeOptions.some((option) => option.value === selectedValue)
-		) {
-			return actionTypeOptions;
-		}
-
-		return [
-			{
-				label: action.actionTypeName ?? action.actionTypeValue ?? selectedValue,
-				value: selectedValue
-			},
-			...actionTypeOptions
-		];
-	}
-
-	function selectActionType(action: EditableTemplateAction, value: string) {
-		const selectedAction = actions.find((entry) => String(entry.id) === value);
-		const parsedActionType = Number(value);
-		const wasLine = action.actionTypeName === 'LINE';
-		const wasPush = action.actionTypeName === 'Push';
-
-		action.actionType =
-			selectedAction?.id ?? (Number.isInteger(parsedActionType) ? parsedActionType : 0);
-		action.actionTypeName = selectedAction?.name ?? null;
-		action.actionTypeValue = selectedAction?.value ?? null;
-
-		// Switching to or away from LINE/Push always requires a fresh recipient choice.
-		if (action.actionTypeName === 'LINE' || wasLine) {
-			setLineRecipients(action, []);
-		}
-		if (action.actionTypeName === 'Push' || wasPush) {
-			setPushRecipients(action, []);
-		}
-	}
-
-	function isValidActionTypeId(value: number): boolean {
-		return Number.isInteger(value) && value > 0;
-	}
-
-	function readString(value: Json | undefined): string | null {
-		return typeof value === 'string' && value.trim().length > 0 ? value : null;
-	}
-
-	function isRecord(value: Json): value is Record<string, Json | undefined> {
-		return typeof value === 'object' && value !== null && !Array.isArray(value);
-	}
 </script>
 
 <CwCard title={m.rules_new_step_template()} subtitle={m.rules_new_step_template_subtitle()}>
@@ -637,7 +85,7 @@
 			id="rule-form-name-input"
 			label={m.rules_rule_name()}
 			placeholder={m.rules_rule_name_placeholder()}
-			bind:value={ruleName}
+			bind:value={form.ruleName}
 			required
 		/>
 		<CwTextArea
@@ -646,20 +94,20 @@
 			placeholder={m.rules_new_description_placeholder()}
 			rows={3}
 			resize="vertical"
-			bind:value={description}
+			bind:value={form.description}
 		/>
 		<CwSwitch
 			id="rule-form-active-switch"
 			label={m.rules_new_active_rule()}
 			description={m.rules_new_active_rule_description()}
-			bind:checked={isActive}
+			bind:checked={form.isActive}
 		/>
 	</AppFormStack>
 </CwCard>
 
 <CwCard title={m.rules_new_step_assignments()} subtitle={m.rules_new_step_assignments_subtitle()}>
 	<AppFormStack padded>
-		{#if deviceOptions.length === 0}
+		{#if form.deviceOptions.length === 0}
 			<AppNotice tone="neutral">
 				<p>{m.rules_no_devices_available()}</p>
 			</AppNotice>
@@ -671,12 +119,12 @@
 					showAllSelectedItems={true}
 					label={m.devices_device()}
 					placeholder={m.rules_select_device_placeholder()}
-					options={deviceOptions}
-					groups={deviceGroups}
+					options={form.deviceOptions}
+					groups={form.deviceGroups}
 					dropdownHeight="24rem"
 					searchPlaceholder={m.rules_filter_device_placeholder()}
 					noResultsLabel={m.cwui_multi_no_matches()}
-					bind:value={selectedDevices}
+					bind:value={form.selectedDevices}
 					required
 				/>
 			</div>
@@ -686,16 +134,17 @@
 
 <CwCard title={m.rules_step_3_title()} subtitle={m.rules_step_3_subtitle()}>
 	<AppFormStack padded>
-		{#each criteriaGroups as group, index (group.localId)}
+		{#each form.criteriaGroups as group, index (group.localId)}
+			{@const notEqualNotice = describeNotEqualPoints(group)}
 			<div class="rules-new-form__block">
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_condition_number({ count: String(index + 1) })}</span>
-					{#if criteriaGroups.length > 1}
+					{#if form.criteriaGroups.length > 1}
 						<CwButton
 							id={`rule-form-criteria-${index}-remove-button`}
 							variant="danger"
 							size="sm"
-							onclick={() => criteriaGroups.splice(index, 1)}
+							onclick={() => form.criteriaGroups.splice(index, 1)}
 						>
 							{m.action_remove()}
 						</CwButton>
@@ -706,19 +155,24 @@
 					labels={cwDropdownLabels()}
 					id={`rule-form-criteria-${index}-subject-select`}
 					label={m.rules_data_field()}
-					options={SUBJECT_OPTIONS}
+					options={form.subjectOptions}
 					bind:value={group.subject}
 					required
 				/>
 				<CwAlertPointsEditor
 					bind:value={group.alertPoints}
-					onchange={(value) => (group.alertPoints = ensureAlertPointsIncludeReset(value))}
+					onchange={(value) => applyAlertPointsChange(group, value)}
 					text={alertPointsEditorText}
 				/>
+				{#if notEqualNotice}
+					<AppNotice tone="neutral">
+						<p>{notEqualNotice}</p>
+					</AppNotice>
+				{/if}
 			</div>
 		{/each}
 
-		{#if hasUnsupportedCriteria}
+		{#if form.hasUnsupportedCriteria}
 			<AppNotice tone="warning">
 				<p>{m.rules_new_test_reason_unsupported_operator()}</p>
 			</AppNotice>
@@ -729,8 +183,8 @@
 			variant="secondary"
 			type="button"
 			onclick={() => {
-				criteriaGroups.push(createBlankAlertCriteriaGroup(nextCriteriaGroupId));
-				nextCriteriaGroupId += 1;
+				form.criteriaGroups.push(createBlankAlertCriteriaGroup(form.nextCriteriaGroupId));
+				form.nextCriteriaGroupId += 1;
 			}}
 		>
 			<Icon src={ADD_ICON} alt="" />
@@ -741,16 +195,16 @@
 
 <CwCard title={m.rules_new_step_actions()} subtitle={m.rules_new_step_actions_subtitle()}>
 	<AppFormStack padded>
-		{#each templateActions as action, index (action)}
+		{#each form.templateActions as action, index (action)}
 			<div class="rules-new-form__block">
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_new_action_number({ count: String(index + 1) })}</span>
-					{#if templateActions.length > 1}
+					{#if form.templateActions.length > 1}
 						<CwButton
 							id={`rule-form-action-${index}-remove-button`}
 							variant="danger"
 							size="sm"
-							onclick={() => templateActions.splice(index, 1)}
+							onclick={() => form.templateActions.splice(index, 1)}
 						>
 							{m.action_remove()}
 						</CwButton>
@@ -762,9 +216,9 @@
 						labels={cwDropdownLabels()}
 						id={`rule-form-action-${index}-type-select`}
 						label={m.rules_new_action_type()}
-						options={actionTypeOptionsFor(action)}
+						options={form.actionTypeOptionsFor(action)}
 						value={String(action.actionType || '')}
-						onchange={(value) => selectActionType(action, value)}
+						onchange={(value) => form.selectActionType(action, value)}
 						required
 					/>
 					{#if action.actionTypeName === 'EMail'}
@@ -776,16 +230,16 @@
 							required
 						/>
 					{:else if action.actionTypeName === 'LoRaWAN'}
-						<RelayActions devices={deviceOptions} bind:resultJson={action.config.recipient} />
+						<RelayActions devices={form.deviceOptions} bind:resultJson={action.config.recipient} />
 					{:else if action.actionTypeName === 'LINE'}
 						<CwMultiSelect
 							labels={cwMultiSelectLabels()}
 							id={`rule-form-action-${index}-line-recipients`}
 							label={m.line_recipient_label()}
 							placeholder={m.line_recipient_placeholder()}
-							options={lineRecipientOptionsFor(action)}
+							options={form.lineRecipientOptionsFor(action)}
 							value={action.lineRecipients}
-							onchange={(selection) => setLineRecipients(action, selection)}
+							onchange={(selection) => form.setLineRecipients(action, selection)}
 							searchable
 							searchPlaceholder={m.cwui_table_search()}
 							noResultsLabel={m.cwui_multi_no_matches()}
@@ -797,13 +251,13 @@
 							id={`rule-form-action-${index}-push-recipients`}
 							label={m.push_recipient_label()}
 							placeholder={m.push_recipient_placeholder()}
-							options={pushRecipientOptionsFor(action)}
+							options={form.pushRecipientOptionsFor(action)}
 							value={action.pushRecipients}
-							onchange={(selection) => setPushRecipients(action, selection)}
+							onchange={(selection) => form.setPushRecipients(action, selection)}
 							searchable
 							searchPlaceholder={m.cwui_table_search()}
 							noResultsLabel={m.cwui_multi_no_matches()}
-							error={pushRecipientError(action)}
+							error={form.pushRecipientError(action)}
 							required
 						/>
 					{/if}
@@ -816,7 +270,7 @@
 			variant="secondary"
 			type="button"
 			onclick={() => {
-				templateActions.push(createBlankTemplateAction());
+				form.templateActions.push(form.createBlankTemplateAction());
 			}}
 		>
 			{m.rules_new_add_action()}
@@ -826,28 +280,28 @@
 
 <CwCard title={mode === 'edit' ? m.rules_step_4_review_save_title() : m.rules_step_4_title()}>
 	<AppFormStack padded>
-		{#if isFormValid}
+		{#if form.isFormValid}
 			<AppNotice title={m.rules_rule_summary()} tone="info">
 				<dl class="rules-new-form__summary">
 					<dt>{m.common_name()}:</dt>
-					<dd>{ruleName}</dd>
+					<dd>{form.ruleName}</dd>
 					<dt>{m.rules_new_status()}:</dt>
-					<dd>{isActive ? m.rules_new_active() : m.rules_new_inactive()}</dd>
+					<dd>{form.isActive ? m.rules_new_active() : m.rules_new_inactive()}</dd>
 					<dt>{m.rules_new_assigned_devices()}:</dt>
-					<dd>{assignmentSummary}</dd>
+					<dd>{form.assignmentSummary}</dd>
 					<dt>{m.rules_conditions()}:</dt>
-					<dd>{criteriaSummary}</dd>
-					{#if showAdvanced}
+					<dd>{form.criteriaSummary}</dd>
+					{#if form.showAdvanced}
 						<dt>{m.rules_new_actions()}:</dt>
 						<dd>
-							{actionSummary}
+							{form.actionSummary}
 							<CwButton
 								id="rule-form-advanced-hide-button"
 								variant="secondary"
 								size="sm"
-								onclick={() => (showAdvanced = !showAdvanced)}
+								onclick={() => (form.showAdvanced = !form.showAdvanced)}
 							>
-								{showAdvanced ? m.common_hide_details() : m.common_show_details()}
+								{m.common_hide_details()}
 							</CwButton>
 						</dd>
 					{:else}
@@ -855,9 +309,9 @@
 							id="rule-form-advanced-show-button"
 							variant="secondary"
 							size="sm"
-							onclick={() => (showAdvanced = !showAdvanced)}
+							onclick={() => (form.showAdvanced = !form.showAdvanced)}
 						>
-							{showAdvanced ? m.common_hide_details() : m.common_show_details()}
+							{m.common_show_details()}
 						</CwButton>
 					{/if}
 				</dl>
@@ -875,18 +329,18 @@
 				id="rule-form-cancel-button"
 				variant="ghost"
 				onclick={() => goto(resolve('/rules'))}
-				disabled={submitting}
+				disabled={form.submitting}
 			>
 				{m.action_cancel()}
 			</CwButton>
 			<CwButton
 				id="rule-form-submit-button"
 				variant="primary"
-				onclick={handleSubmit}
-				disabled={!isFormValid || submitting}
-				loading={submitting}
+				onclick={() => form.handleSubmit()}
+				disabled={!form.isFormValid || form.submitting}
+				loading={form.submitting}
 			>
-				{submitting
+				{form.submitting
 					? m.action_saving()
 					: mode === 'edit'
 						? m.action_save_changes()

@@ -1,9 +1,8 @@
-import { ApiService } from '$lib/api/api.service';
-import { canManage } from '$lib/constants/permissions';
+import { canManage, isValidPermissionLevel } from '$lib/constants/permissions';
 import type { PageServerLoad } from './$types';
 import { toFiniteNumber } from './location-overview';
 
-export const load: PageServerLoad = async ({ locals, fetch, params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
 	const authToken = locals.jwtString ?? null;
 	const userId = locals.jwt?.sub ?? null;
 	const locationId = Number.parseInt(params.location_id, 10);
@@ -17,14 +16,14 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		};
 	}
 
-	const api = new ApiService({ fetchFn: fetch, authToken });
+	const { devices, locations } = locals.services;
 
 	const [allLocationDevices, currentLocation] = await Promise.all([
-		api
+		devices
 			.getAllLocationDevices(locationId)
 			.then((res) => res.data ?? [])
 			.catch(() => []),
-		api
+		locations
 			.getLocation(locationId)
 			.then((location) => location ?? null)
 			.catch(() => null)
@@ -36,7 +35,10 @@ export const load: PageServerLoad = async ({ locals, fetch, params }) => {
 		? currentLocation.cw_location_owners
 		: [];
 	const currentOwner = userId ? owners.find((o) => o.user_id === userId) : null;
-	const hasSettings = currentOwner != null && canManage(Number(currentOwner.permission_level));
+	// A missing level is no level: `Number(null)` (or `Number('')`) is 0, which
+	// `canManage` would take for a manager.
+	const level = Number(currentOwner?.permission_level ?? Number.NaN);
+	const hasSettings = isValidPermissionLevel(level) && canManage(level);
 
 	// Only the fields the overview renders; the owner list stays on the server.
 	const locationInfo = currentLocation

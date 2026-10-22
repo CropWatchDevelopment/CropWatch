@@ -2,22 +2,10 @@
 	import { AppPage } from '$lib/components/layout';
 	import { afterNavigate } from '$app/navigation';
 	import { getAppContext } from '$lib/appContext.svelte';
-	import { isRelayTable, isTrafficTable, resolveDisplayComponent } from '$lib/config/deviceTables';
-	import { ApiService, ApiServiceError } from '$lib/api/api.service';
-	import { readApiErrorMessage } from '$lib/api/api-error';
-	import {
-		hasConfirmingRelay,
-		type RelayStateSnapshot,
-		type RelayVerificationResult,
-		RelayStateManager
-	} from '$lib/devices/relay-control';
-	import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
+	import { isTrafficTable, resolveDisplayComponent } from '$lib/config/deviceTables';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getIntlLocale } from '$lib/i18n/format';
 	import {
-		attachCwDeviceRefreshVisibility,
-		createCwDeviceRefreshScheduler,
-		normalizeCwUploadIntervalMinutes,
 		CwButton,
 		CwCard,
 		CwDialog,
@@ -26,133 +14,42 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { cwResponsiveLineChartLabels } from '$lib/i18n/cwuiLabels';
 	import { appTheme } from '$lib/theme/appTheme.svelte';
+	import { getServices } from '$lib/services/context';
 	import { resolveExportTimeZone } from './csvExport';
-	import { canManage, PermissionLevel } from '$lib/constants/permissions';
 	import type { PageProps } from './$types';
-	import { onDestroy, untrack } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { onAppForeground } from '$lib/utils/onAppForeground';
 	import DeviceDashboardHeader from './DeviceDashboardHeader.svelte';
+	import { DeviceDashboard } from './device-dashboard.svelte';
 	import {
-		DEFAULT_RANGE_SELECTION,
 		DEW_POINT_SERIES_ID,
-		MAX_RANGE_RECORDS,
-		RELAY_HISTORY_REFRESH_DELAY_MS,
 		buildDewPointChartSeries,
 		buildSensorChartSeries,
-		createEmptyRelaySnapshot,
-		createRouteState,
-		getRangeBounds,
 		getRangeOptions,
-		getRelayTargetStateLabel,
-		getVerifiedRelayStateLabel,
-		isTelemetryRow,
-		mapRelayApiErrorMessage,
-		normalizeTelemetryRows,
-		readCreatedAt,
-		readLocationName,
-		readRelayTelemetryRow,
-		toIsoString,
-		type RangeSelection,
-		type RouteState,
-		type TelemetryRow
+		readLocationName
 	} from './device-detail';
 
 	let { data }: PageProps = $props();
 
 	const toast = useCwToast();
 	const app = getAppContext();
+	const { relays, telemetry } = getServices();
 
-	function handleRelayConfirmationResolved(result: RelayVerificationResult): void {
-		scheduleRelayHistoryRefresh();
-		const relay = String(result.relay);
+	// History ranges, the latest reading, the refresh scheduler and relay commands.
+	const dashboard = new DeviceDashboard({ data: () => data, relays, telemetry, toast });
 
-		switch (result.outcome) {
-			case 'confirmed':
-				toast.add({
-					tone: 'success',
-					message: m.devices_relay_confirmation_changed({
-						relay,
-						state: getRelayTargetStateLabel(result.targetState)
-					})
-				});
-				return;
-			case 'mismatch':
-				toast.add({
-					tone: 'warning',
-					message: m.devices_relay_confirmation_mismatch({
-						relay,
-						state: getVerifiedRelayStateLabel(result.relay, result.row)
-					})
-				});
-				return;
-			case 'unconfirmed':
-				toast.add({
-					tone: 'warning',
-					message: m.devices_relay_confirmation_unconfirmed({ relay })
-				});
-		}
-	}
-
-	let routeStateByKey = $state<Record<string, RouteState>>({});
-	const initializedRouteKeys: Record<string, true> = {};
-
-	function getRouteState(key: string): RouteState {
-		if (!routeStateByKey[key]) {
-			routeStateByKey[key] = createRouteState();
-		}
-
-		return routeStateByKey[key];
-	}
-
-	let devEui = $derived(data.devEui ?? '');
-	let locationId = $derived(data.locationId ?? '');
-	let authToken = $derived(data.authToken ?? null);
-	let isRelayDevice = $derived(isRelayTable(data.dataTable));
-	let permissionLevel = $derived(Number(data.permissionLevel) || PermissionLevel.DISABLED);
-	const serverLatestData = $derived(isTelemetryRow(data.latestData) ? data.latestData : null);
-	let clientLatestData = $state<TelemetryRow | null>(null);
-	let latestData = $derived(clientLatestData ?? serverLatestData);
 	let locationName = $derived(readLocationName(data.device));
 	let exportTimeZone = $derived(resolveExportTimeZone(data.device));
-	let serverHistoricalData = $derived(normalizeTelemetryRows(data.deviceData));
 	let DisplayComponent = $derived(resolveDisplayComponent(data.dataTable));
-	let controlsDisabled = $derived(!authToken || !devEui);
-	let routeKey = $derived(`${locationId}:${devEui}`);
-	let upload_interval = $derived(
-		data.device?.upload_interval ?? data.device?.cw_device_type?.default_upload_interval
-	);
-	// `upload_interval` is a Postgres `numeric` column, so Supabase returns it as
-	// a STRING ("15", "-1", …). normalizeCwUploadIntervalMinutes rejects
-	// non-positive / non-finite values so the refresh scheduler falls back to its
-	// own default instead of scheduling a tight loop.
-	let uploadIntervalMinutes = $derived(normalizeCwUploadIntervalMinutes(upload_interval));
-
-	let requestedHistoricalData = $derived(
-		routeStateByKey[routeKey]?.requestedHistoricalData ?? null
-	);
-	let historicalData = $derived(requestedHistoricalData ?? serverHistoricalData);
-	let activeRange = $derived(routeStateByKey[routeKey]?.activeRange ?? null);
-	let fetching = $derived(routeStateByKey[routeKey]?.fetching ?? false);
-	let fetchError = $derived(routeStateByKey[routeKey]?.fetchError ?? null);
-	let relayHistory = $derived(routeStateByKey[routeKey]?.relayHistory ?? null);
-	let relayStateManager: RelayStateManager | null = null;
-	let relayStateManagerKey = '';
-	let unsubscribeRelayState = () => {};
-	let relayStateSnapshot = $state<RelayStateSnapshot>(createEmptyRelaySnapshot());
-	let displayLatestData = $derived(
-		isRelayDevice ? (relayStateSnapshot.latestData ?? latestData) : latestData
-	);
-	let displayHistoricalData = $derived(
-		isRelayDevice && relayStateSnapshot.historicalData.length > 0
-			? relayStateSnapshot.historicalData
-			: historicalData
-	);
-	let displayCurrentRecord = $derived(displayLatestData ?? displayHistoricalData[0] ?? null);
+	let controlsDisabled = $derived(!dashboard.authToken || !dashboard.devEui);
 	let isAirDevice = $derived(data.dataTable === 'cw_air_data');
 	let chartSeries = $derived.by(() => {
-		const series = buildSensorChartSeries(displayHistoricalData, app.preferences);
+		const series = buildSensorChartSeries(dashboard.displayHistoricalData, app.preferences);
 		if (isAirDevice) {
-			const dewPointSeries = buildDewPointChartSeries(displayHistoricalData, app.preferences);
+			const dewPointSeries = buildDewPointChartSeries(
+				dashboard.displayHistoricalData,
+				app.preferences
+			);
 			if (dewPointSeries) series.push(dewPointSeries);
 		}
 		return series;
@@ -162,13 +59,12 @@
 	let chartInitialHidden = $derived(isAirDevice ? [DEW_POINT_SERIES_ID] : []);
 	let isTrafficDevice = $derived(isTrafficTable(data.dataTable));
 	let rangeOptions = $derived(getRangeOptions());
-	let lastUpdatedAt = $derived(readCreatedAt(displayCurrentRecord));
 	let noDataYet = $derived(
-		!isRelayDevice &&
-			!fetching &&
-			!fetchError &&
-			!displayLatestData &&
-			displayHistoricalData.length === 0
+		!dashboard.isRelayDevice &&
+			!dashboard.fetching &&
+			!dashboard.fetchError &&
+			!dashboard.displayLatestData &&
+			dashboard.displayHistoricalData.length === 0
 	);
 
 	// A non-empty `error_status` on the device row means the sensor has reported a
@@ -183,353 +79,33 @@
 	// status set. Keyed on `routeKey` so it re-opens when navigating between
 	// devices, but stays closed once the user dismisses it for the current one.
 	$effect(() => {
-		if (deviceErrorStatus && errorDialogRouteKey !== routeKey) {
-			errorDialogRouteKey = routeKey;
+		if (deviceErrorStatus && errorDialogRouteKey !== dashboard.routeKey) {
+			errorDialogRouteKey = dashboard.routeKey;
 			errorDialogOpen = true;
 		}
 	});
 
-	afterNavigate(() => {
-		const key = routeKey;
-		if (isRelayDevice && authToken) {
-			ensureRelayStateManager();
-		} else {
-			destroyRelayStateManager();
-		}
-
-		if (!authToken || !devEui || !key || initializedRouteKeys[key]) return;
-
-		initializedRouteKeys[key] = true;
-		void selectRange(DEFAULT_RANGE_SELECTION);
-	});
+	afterNavigate(() => dashboard.handleNavigation());
 
 	onDestroy(() => {
-		destroyRelayStateManager();
+		dashboard.destroyRelayStateManager();
 	});
 
-	// Refetch the device when its own upload window (last seen +
-	// upload_interval + grace) expires, instead of polling on a fixed interval.
-	// While the device stays stale the scheduler retries with capped exponential
-	// backoff; fresh data re-arms it from the new reading. Pauses while the tab
-	// is hidden and reconciles on return.
-	$effect(() => {
-		if (!authToken || !devEui) return;
-		const intervalMinutes = uploadIntervalMinutes;
-
-		const scheduler = createCwDeviceRefreshScheduler({
-			fetcher: async () => {
-				const row = await refreshDisplayedData();
-				return { lastSeenAt: row ? readCreatedAt(row) : null, data: row };
-			}
-		});
-
-		untrack(() => {
-			scheduler.track({
-				id: devEui,
-				lastSeenAt: lastUpdatedAt ?? null,
-				uploadIntervalMinutes: intervalMinutes
-			});
-		});
-
-		const detachVisibility = attachCwDeviceRefreshVisibility(scheduler);
-		return () => {
-			detachVisibility();
-			scheduler.destroy();
-		};
-	});
-
-	function syncRelayStateBaseData(): void {
-		if (!isRelayDevice || !relayStateManager) {
-			return;
-		}
-
-		relayStateManager.replaceBaseData({
-			historicalData,
-			latestData
-		});
-	}
-
-	function destroyRelayStateManager(): void {
-		if (relayHistoryRefreshTimer) {
-			clearTimeout(relayHistoryRefreshTimer);
-			relayHistoryRefreshTimer = null;
-		}
-		unsubscribeRelayState();
-		unsubscribeRelayState = () => {};
-		relayStateManager?.destroy();
-		relayStateManager = null;
-		relayStateManagerKey = '';
-		relayStateSnapshot = createEmptyRelaySnapshot();
-	}
-
-	function ensureRelayStateManager(): void {
-		if (!isRelayDevice || !authToken || !devEui) {
-			destroyRelayStateManager();
-			return;
-		}
-
-		const nextManagerKey = `${routeKey}:${authToken}`;
-		if (relayStateManager && relayStateManagerKey === nextManagerKey) {
-			syncRelayStateBaseData();
-			return;
-		}
-
-		destroyRelayStateManager();
-
-		const manager = new RelayStateManager({
-			fetchLatestData: async (signal) => await fetchRelayData({ signal }),
-			requestStatus: async () => {
-				await new ApiService({ authToken }).requestRelayStatus(devEui);
-			},
-			historicalData,
-			latestData,
-			onVerificationResolved: handleRelayConfirmationResolved
-		});
-		let lastReportAt: string | null = null;
-		unsubscribeRelayState = manager.subscribe((snapshot) => {
-			relayStateSnapshot = snapshot;
-			// A new device report can be a state change for the history.
-			const reportAt = snapshot.latestData?.created_at ?? null;
-			if (lastReportAt !== null && reportAt !== null && reportAt !== lastReportAt) {
-				scheduleRelayHistoryRefresh();
-			}
-			lastReportAt = reportAt ?? lastReportAt;
-		});
-		relayStateManager = manager;
-		relayStateManagerKey = nextManagerKey;
-	}
+	// Refetch on the device's own upload window (see DeviceDashboard.scheduleRefresh).
+	$effect(() => dashboard.scheduleRefresh());
 
 	let childLoading = $derived(
-		isRelayDevice
-			? relayHistory === null && !fetchError
-			: fetching && displayHistoricalData.length === 0
+		dashboard.isRelayDevice
+			? dashboard.relayHistory === null && !dashboard.fetchError
+			: dashboard.fetching && dashboard.displayHistoricalData.length === 0
 	);
 
-	async function loadHistoricalData(
-		start: Date | string,
-		end: Date | string,
-		rangeSelection: RangeSelection | null
-	): Promise<void> {
-		if (!authToken || !devEui) {
-			return;
-		}
-
-		const state = getRouteState(routeKey);
-		state.fetching = true;
-		state.fetchError = null;
-
-		try {
-			const api = new ApiService({ authToken });
-			if (isRelayDevice) {
-				// Relays keep one state row, so their range is the history log instead.
-				state.relayHistory = await api.getRelayHistory(devEui, {
-					start: toIsoString(start),
-					end: toIsoString(end)
-				});
-			} else {
-				// The API answers 404 when the range has no rows (e.g. a new device).
-				const result = await api
-					.getDeviceDataWithinRange(
-						devEui,
-						{
-							start: toIsoString(start),
-							end: toIsoString(end),
-							take: MAX_RANGE_RECORDS
-						},
-						{ suppressNotFoundError: true }
-					)
-					.catch((error) => {
-						if (error instanceof ApiServiceError && error.status === 404) return [];
-						throw error;
-					});
-				state.requestedHistoricalData = normalizeTelemetryRows(result);
-			}
-			state.activeRange = rangeSelection;
-		} catch (error) {
-			console.error('Failed to fetch device data:', error);
-			state.fetchError = isRelayDevice
-				? m.devices_relay_history_load_failed()
-				: m.devices_load_telemetry_failed();
-			toast.add({ tone: 'danger', message: state.fetchError });
-		} finally {
-			state.fetching = false;
-		}
-	}
-
-	let relayHistoryRefreshTimer: ReturnType<typeof setTimeout> | null = null;
-
-	/** Re-reads the relay history soon; bursts of triggers collapse into one read. */
-	function scheduleRelayHistoryRefresh(): void {
-		if (!isRelayDevice) return;
-		if (relayHistoryRefreshTimer) clearTimeout(relayHistoryRefreshTimer);
-		relayHistoryRefreshTimer = setTimeout(() => {
-			relayHistoryRefreshTimer = null;
-			void refreshRelayHistory();
-		}, RELAY_HISTORY_REFRESH_DELAY_MS);
-	}
-
-	/**
-	 * Re-reads the active range's history quietly: no loading state, and the
-	 * result is dropped if the user switched range (or a full load started).
-	 */
-	async function refreshRelayHistory(): Promise<void> {
-		const key = routeKey;
-		const state = getRouteState(key);
-		const range = state.activeRange;
-		if (!authToken || !devEui || state.fetching || range === null) return;
-
-		try {
-			const history = await new ApiService({ authToken }).getRelayHistory(
-				devEui,
-				getRangeBounds(range)
-			);
-			if (routeKey === key && state.activeRange === range && !state.fetching) {
-				state.relayHistory = history;
-			}
-		} catch (error) {
-			console.error('Failed to refresh relay history:', error);
-		}
-	}
-
-	async function selectRange(selection: RangeSelection): Promise<void> {
-		const { start, end } = getRangeBounds(selection);
-		await loadHistoricalData(start, end, selection);
-	}
-
-	async function fetchLatestData(options: { apply?: boolean; signal?: AbortSignal } = {}) {
-		if (!authToken || !devEui) return null;
-
-		try {
-			const api = new ApiService({ authToken });
-			const result = await api.getDeviceLatestData(devEui, { signal: options.signal });
-
-			if (isTelemetryRow(result)) {
-				if (options.apply !== false) {
-					clientLatestData = result;
-					const resultKey = String(result.id ?? result.created_at ?? '');
-					const state = getRouteState(routeKey);
-					const currentHistory = state.requestedHistoricalData ?? serverHistoricalData;
-					state.requestedHistoricalData = [
-						result,
-						...currentHistory.filter((row) => String(row.id ?? row.created_at ?? '') !== resultKey)
-					];
-					syncRelayStateBaseData();
-				}
-
-				return result;
-			}
-		} catch (err) {
-			if (err instanceof ApiServiceError && err.status === 404) {
-				return null;
-			}
-
-			console.error('Failed to fetch latest air data:', err);
-		}
-
-		return null;
-	}
-
-	async function fetchRelayData(options: { signal?: AbortSignal } = {}) {
-		if (!authToken || !devEui) return null;
-
-		try {
-			const api = new ApiService({ authToken });
-			const result = await api.getRelayData(devEui, {
-				signal: options.signal,
-				suppressNotFoundError: true
-			});
-
-			return readRelayTelemetryRow(result);
-		} catch (err) {
-			if (err instanceof ApiServiceError && err.status === 404) {
-				return null;
-			}
-
-			console.error('Failed to fetch latest relay data:', err);
-		}
-
-		return null;
-	}
-
-	async function refreshRelayDisplayData(): Promise<TelemetryRow | null> {
-		if (!authToken || !devEui) {
-			return null;
-		}
-
-		ensureRelayStateManager();
-		return (await relayStateManager?.refreshLatestData()) ?? null;
-	}
-
-	async function refreshDisplayedData(): Promise<TelemetryRow | null> {
-		return isRelayDevice ? await refreshRelayDisplayData() : await fetchLatestData();
-	}
-
-	// Full pull whenever the user returns to the tab/app. A detail page left in
-	// the background goes stale — the device can look offline purely because the
-	// page sat idle past its upload interval. Refresh the active history range
-	// first, then the latest reading so it prepends onto fresh history.
-	async function refreshOnForeground(): Promise<void> {
-		if (!authToken || !devEui) return;
-		await selectRange(activeRange ?? DEFAULT_RANGE_SELECTION);
-		await refreshDisplayedData();
-	}
-
-	$effect(() => onAppForeground(() => void refreshOnForeground()));
-
-	async function queueRelayCommand(
-		relay: RelayNumber,
-		targetState: RelayTargetState,
-		durationSeconds?: number
-	): Promise<void> {
-		if (
-			!isRelayDevice ||
-			!authToken ||
-			!devEui ||
-			!canManage(permissionLevel) ||
-			hasConfirmingRelay(relayStateSnapshot.pendingRelayStates)
-		) {
-			return;
-		}
-
-		try {
-			ensureRelayStateManager();
-			const api = new ApiService({ authToken });
-			const isPulse = typeof durationSeconds === 'number' && Number.isFinite(durationSeconds);
-			const result = isPulse
-				? await api.pulseRelay(devEui, { durationSeconds, relay })
-				: await api.updateRelay(devEui, { relay, targetState });
-
-			// The API's send time: only device reports received after it count.
-			scheduleRelayHistoryRefresh();
-			relayStateManager?.startVerification(relay, targetState, {
-				sentAt: typeof result?.requestedAt === 'string' ? result.requestedAt : undefined,
-				durationSeconds: isPulse ? durationSeconds : undefined
-			});
-			toast.add({
-				tone: 'info',
-				message: m.devices_relay_command_queued({ relay: String(relay) })
-			});
-		} catch (error) {
-			console.error('[relay-control] command failed', {
-				devEui,
-				durationSeconds,
-				error,
-				relay,
-				targetState
-			});
-
-			const fallback = mapRelayApiErrorMessage(error);
-			toast.add({
-				tone: 'danger',
-				message:
-					error instanceof ApiServiceError ? readApiErrorMessage(error.payload, fallback) : fallback
-			});
-		}
-	}
+	// Full pull whenever the user returns to the tab/app (see refreshOnForeground).
+	$effect(() => onAppForeground(() => void dashboard.refreshOnForeground()));
 </script>
 
 <svelte:head>
-	<title>{m.devices_dashboard_page_title({ devEui: devEui.toUpperCase() })}</title>
+	<title>{m.devices_dashboard_page_title({ devEui: dashboard.devEui.toUpperCase() })}</title>
 </svelte:head>
 
 <AppPage>
@@ -553,32 +129,31 @@
 
 	<div class="device-page">
 		<DeviceDashboardHeader
-			{activeRange}
-			{authToken}
+			activeRange={dashboard.activeRange}
 			{controlsDisabled}
-			{devEui}
+			devEui={dashboard.devEui}
 			{exportTimeZone}
-			{fetching}
+			fetching={dashboard.fetching}
 			{isTrafficDevice}
-			{lastUpdatedAt}
-			{locationId}
+			lastUpdatedAt={dashboard.lastUpdatedAt}
+			locationId={dashboard.locationId}
 			{locationName}
-			onSelectRange={selectRange}
-			{permissionLevel}
+			onSelectRange={dashboard.selectRange}
+			permissionLevel={dashboard.permissionLevel}
 			{rangeOptions}
-			titleName={data?.device?.name || devEui.toUpperCase()}
+			titleName={data?.device?.name || dashboard.devEui.toUpperCase()}
 		/>
 
 		<!-- Traffic devices render their own purpose-built hourly chart inside
 		     TrafficDisplay; the generic per-column time series is unreadable for
 		     hourly accumulator counts. Relays have nothing to plot: RelayDisplay
 		     shows their ON/OFF state and history. -->
-		{#if !isTrafficDevice && !isRelayDevice && chartSeries.length > 0}
+		{#if !isTrafficDevice && !dashboard.isRelayDevice && chartSeries.length > 0}
 			<div class="device-page__chart">
 				<CwResponsiveLineChart
 					locale={getIntlLocale()}
 					series={chartSeries}
-					title={data?.device?.name || devEui.toUpperCase()}
+					title={data?.device?.name || dashboard.devEui.toUpperCase()}
 					subtitle={m.display_time_series()}
 					ranges={[]}
 					initialHidden={chartInitialHidden}
@@ -596,17 +171,16 @@
 		{:else}
 			<div class="device-page__display">
 				<DisplayComponent
-					{devEui}
-					{locationId}
+					devEui={dashboard.devEui}
+					locationId={dashboard.locationId}
 					{locationName}
-					latestData={displayLatestData}
-					historicalData={displayHistoricalData}
+					latestData={dashboard.displayLatestData}
+					historicalData={dashboard.displayHistoricalData}
 					loading={childLoading}
-					{permissionLevel}
-					pendingRelayStates={relayStateSnapshot.pendingRelayStates}
-					relayHistory={relayHistory ?? []}
-					{queueRelayCommand}
-					{authToken}
+					permissionLevel={dashboard.permissionLevel}
+					pendingRelayStates={dashboard.relayStateSnapshot.pendingRelayStates}
+					relayHistory={dashboard.relayHistory ?? []}
+					queueRelayCommand={dashboard.queueRelayCommand}
 				/>
 			</div>
 		{/if}
