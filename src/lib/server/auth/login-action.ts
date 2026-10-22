@@ -2,11 +2,13 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Cookies } from '@sveltejs/kit';
 import type { RecaptchaLogContext, RecaptchaVerificationResult } from '$lib/server/recaptcha';
 import { readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
+import { setSessionCookies } from './session-cookies';
 
 type LoginApiResponse = {
 	message?: string;
 	result?: {
 		accessToken?: string;
+		refreshToken?: string;
 		expires_at_datetime?: string;
 	};
 };
@@ -115,18 +117,14 @@ export async function handleLoginAction(
 		return fail(401, { message: messages.auth_invalid_credentials() });
 	}
 
-	const maxAge = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
-	if (!Number.isFinite(maxAge) || maxAge <= 0) {
+	const stored = setSessionCookies(
+		cookies,
+		{ accessToken, refreshToken: result.result?.refreshToken, expiresAt },
+		secureCookies
+	);
+	if (!stored) {
 		return fail(502, { message: messages.auth_login_failed() });
 	}
-
-	cookies.set('jwt', accessToken, {
-		path: '/',
-		httpOnly: true,
-		secure: secureCookies,
-		sameSite: 'lax',
-		maxAge
-	});
 
 	const redirectPath = readRedirectPathFromUrl(new URL(request.url), '/');
 	redirect(303, redirectPath);

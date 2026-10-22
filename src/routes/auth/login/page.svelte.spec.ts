@@ -162,7 +162,6 @@ describe('login page', () => {
 	});
 
 	it.each([
-		['auth-required', () => m.auth_login_reason_auth_required()],
 		['expired', () => m.auth_login_reason_expired()],
 		['signed-out', () => m.auth_login_reason_signed_out()],
 		['password-reset', () => m.auth_login_reason_password_reset()],
@@ -177,13 +176,16 @@ describe('login page', () => {
 		expect(alert.textContent?.trim()).toBe(message());
 	});
 
-	it.each(['', '?reason=', '?reason=hacked'])('shows no reason for %j', (search) => {
-		runtime.page.url = new URL(`http://localhost/auth/login${search}`);
+	it.each(['', '?reason=', '?reason=hacked', '?redirect=%2Fsettings&reason=auth-required'])(
+		'shows no reason for %j',
+		(search) => {
+			runtime.page.url = new URL(`http://localhost/auth/login${search}`);
 
-		render();
+			render();
 
-		expect(document.querySelector('.auth-alert')).toBeNull();
-	});
+			expect(document.querySelector('.auth-alert')).toBeNull();
+		}
+	);
 
 	it('links to account creation and password reset', () => {
 		render();

@@ -25,23 +25,24 @@ describe('offline page', () => {
 		);
 	});
 
-	it('reloads the page to try again', async () => {
+	it('opens the URL that failed again to try again, without JavaScript', async () => {
 		const navigation = (window as unknown as { navigation: EventTarget }).navigation;
 		const attempts: string[] = [];
 		const onNavigate = (event: Event) => {
-			attempts.push((event as Event & { navigationType: string }).navigationType);
+			attempts.push((event as Event & { destination: { url: string } }).destination.url);
 			event.preventDefault();
 		};
 		navigation.addEventListener('navigate', onNavigate);
 		view = renderWithServices(OfflinePage);
 
 		try {
-			const retry = document.getElementById('offline-retry-button') as HTMLButtonElement;
+			const retry = document.getElementById('offline-retry-button') as HTMLAnchorElement;
 			expect(retry.textContent?.trim()).toBe(m.action_try_again());
+			expect(retry.getAttribute('href')).toBe('');
 
 			retry.click();
 
-			await expect.poll(() => attempts).toEqual(['reload']);
+			await expect.poll(() => attempts).toEqual([location.href.split('#')[0]]);
 		} finally {
 			navigation.removeEventListener('navigate', onNavigate);
 		}

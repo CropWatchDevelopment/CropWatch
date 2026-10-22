@@ -126,6 +126,37 @@ button.auth-button-link {
 	color: var(--cw-button-secondary-text-hover);
 }
 
+/* A plain text link (e.g. "Forgot your password?" under the password field):
+   a secondary path that should not compete with the buttons for a row. */
+.auth-text-link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--cw-space-1);
+	font-size: var(--cw-text-sm);
+	font-weight: var(--cw-font-medium);
+	color: var(--cw-accent-text);
+	text-decoration: none;
+	text-underline-offset: 0.2em;
+}
+
+/* Sized to the link's small text. The `a` outranks the Icon component's own
+   24px size (a utility class like h-4 cannot: Tailwind's layer loses to it). */
+a.auth-text-link .cw-icon {
+	inline-size: 1.125rem;
+	block-size: 1.125rem;
+}
+
+.auth-text-link:hover {
+	text-decoration: underline;
+}
+
+/* Right-aligned and tucked up under the field above it in the form grid. */
+.auth-text-link--end {
+	justify-self: end;
+	margin-top: -0.35rem;
+	margin-bottom: 0.35rem;
+}
+
 .security-copy {
 	margin: 1.25rem 0 0;
 	text-align: center;

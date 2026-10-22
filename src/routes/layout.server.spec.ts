@@ -385,3 +385,13 @@ describe('root layout load', () => {
 		});
 	});
 });
+
+describe('root layout load: session renewal', () => {
+	it('depends on app:session, which the browser invalidates shortly before the session runs out', async () => {
+		const event = testEvent<LoadEvent>({ locals: testLocals({ jwtString: null }) });
+
+		await load(event);
+
+		expect(event.depends).toHaveBeenCalledWith('app:session');
+	});
+});

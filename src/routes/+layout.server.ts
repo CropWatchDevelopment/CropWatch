@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { DeviceStatusSummary, MeContextDto, RuleTemplateDto } from '$lib/api/api.dtos';
 import type { AppServices } from '$lib/services/app-services';
 import { withRedirectParam } from '$lib/utils/auth-redirect';
+import { SESSION_DEPENDENCY } from '$lib/auth/session-renewal';
 import type { LayoutServerLoad } from './$types';
 
 const EMPTY_DEVICE_STATUSES: DeviceStatusSummary = { online: 0, offline: 0 };
@@ -66,7 +67,11 @@ async function loadOverviewData({
 	};
 }
 
-export const load: LayoutServerLoad = async ({ locals, url, untrack }) => {
+export const load: LayoutServerLoad = async ({ locals, url, untrack, depends }) => {
+	// The browser re-runs this load shortly before the session runs out; the
+	// server hook refreshes the session on the way in.
+	depends(SESSION_DEPENDENCY);
+
 	let profile;
 	let preferences;
 	let orgContext: MeContextDto | undefined;

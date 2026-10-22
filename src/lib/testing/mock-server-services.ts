@@ -32,6 +32,7 @@ export function createMockServerServices(): MockServerServices {
 			signUp: unstubbed('supabaseAuth.signUp'),
 			updatePasswordWithRecoveryToken: unstubbed('supabaseAuth.updatePasswordWithRecoveryToken'),
 			verifyAccessToken: unstubbed('supabaseAuth.verifyAccessToken'),
+			refreshSession: unstubbed('supabaseAuth.refreshSession'),
 			signOut: unstubbed('supabaseAuth.signOut')
 		},
 		libellus: {

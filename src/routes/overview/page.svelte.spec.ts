@@ -151,6 +151,8 @@ describe('overview page', () => {
 			m.overview_open_dashboard(),
 			m.overview_open_dashboard()
 		]);
+		// The header link shows at every width (phones too); the one at the bottom on phones only.
+		expect(dashboard[0].closest('.ov-wide-only, .ov-narrow-only')).toBeNull();
 		expect(dashboard[1].classList.contains('ov-narrow-only')).toBe(true);
 	});
 

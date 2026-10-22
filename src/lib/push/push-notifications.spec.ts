@@ -123,12 +123,14 @@ function installBrowser(options: BrowserOptions = {}) {
 		})
 	};
 
-	vi.stubGlobal('navigator', {
+	const fakeNavigator = {
 		userAgent,
 		maxTouchPoints,
 		...(pushApis ? { serviceWorker: { register } } : {})
-	});
+	};
+	vi.stubGlobal('navigator', fakeNavigator);
 	vi.stubGlobal('window', {
+		navigator: fakeNavigator,
 		matchMedia: vi.fn((query: string) => ({
 			matches: query === '(display-mode: standalone)' && standalone
 		})),

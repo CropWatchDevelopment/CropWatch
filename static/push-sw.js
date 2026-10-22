@@ -8,6 +8,10 @@
 // unregistered) offline service worker can still claim `/` later — push
 // delivery and notification clicks do not depend on scope.
 
+// Posted to an open app window to open an alert's page in it. The page side is
+// PwaController (src/lib/pwa/pwa-controller.svelte.ts), which listens for it.
+const NAVIGATE_MESSAGE = 'cw:navigate';
+
 self.addEventListener('push', (event) => {
 	let payload = {};
 	try {
@@ -20,13 +24,19 @@ self.addEventListener('push', (event) => {
 	// payload.notification; a bare object is accepted as a fallback.
 	const data = payload.data ?? payload.notification ?? payload;
 	const title = data.title || 'CropWatch';
+	const url = data.url || '/';
 
 	event.waitUntil(
 		self.registration.showNotification(title, {
 			body: data.body || '',
 			icon: '/icons/icon-192x192.png',
 			badge: '/icons/icon-192x192.png',
-			data: { url: data.url || '/' }
+			// One notification per rule and device: a repeat alert replaces the
+			// previous one (and still sounds) instead of piling up in the tray.
+			// The title carries the rule name and the URL the device.
+			tag: data.tag || `${title}|${url}`,
+			renotify: true,
+			data: { url }
 		})
 	);
 });
@@ -36,14 +46,23 @@ self.addEventListener('notificationclick', (event) => {
 	const url = event.notification.data?.url || '/';
 
 	// client.navigate() only works on pages this worker controls, and the
-	// push-sw scope controls none — so focus a tab already on the target URL,
-	// otherwise open a new one.
+	// push-sw scope controls none. So: focus a window already on the alert's
+	// page; else focus an open app window and ask it to open the page (rather
+	// than stacking a second window); else open a new one.
 	const target = new URL(url, self.location.origin).href;
 	event.waitUntil(
-		self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-			for (const client of clients) {
-				if (client.url === target && 'focus' in client) {
-					return client.focus();
+		self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
+			const onTarget = clients.find((client) => client.url === target);
+			if (onTarget) return onTarget.focus();
+
+			const open = clients.find((client) => client.focused) ?? clients[0];
+			if (open) {
+				try {
+					const focused = await open.focus();
+					focused.postMessage({ type: NAVIGATE_MESSAGE, url: target });
+					return focused;
+				} catch {
+					// The browser would not focus it: fall through to a new window.
 				}
 			}
 			return self.clients.openWindow(target);

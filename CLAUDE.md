@@ -354,7 +354,15 @@ try {
 ## Authentication
 
 - **Session**: the login action (`$lib/server/auth/login-action.ts`) signs in through the
-  CropWatch API and stores the Supabase access token in the httpOnly `jwt` cookie.
+  CropWatch API and stores the Supabase access token in the httpOnly `jwt` cookie (it lives
+  as long as the token) and the refresh token in `jwt_refresh` (30 days, reset on every
+  refresh) — via `setSessionCookies` (`$lib/server/auth/session-cookies`).
+- **Renewal**: `hooks.server.ts` renews the session with the refresh token when the access
+  token is missing or has under 10 minutes left (`refreshIfDue`; a refused refresh token is
+  deleted). The browser keeps up by invalidating `app:session` (the root layout load's
+  dependency) 5 minutes before expiry (`createSessionExpiryWatcher`'s `onRenew`), so the new
+  token reaches `app.accessToken`; only when that brings no later expiry is the user sent to
+  login. Constants: `$lib/auth/session-renewal`.
 - **Every request** passes `hooks.server.ts`, which verifies that token with Supabase Auth
   (`locals.services.supabaseAuth.verifyAccessToken` → `auth.getClaims()`: signature against
   the project's signing keys, or the Auth server for a legacy secret) before any load,
@@ -576,6 +584,30 @@ Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolli
 - Never remove the `flex: 1 1 auto; min-height: 0` override from `.app-page.dashboard-page` — doing so will break scrolling in both the table and card views on the dashboard.
 - Never change the global `AppPage` flex back to `flex: 1 1 auto` to "fix" the dashboard — that re-breaks scrolling on every other page.
 - The dashboard's inner wrapper div **must** keep `flex-1 min-h-0 overflow-hidden` so the bounded height is propagated to the child scroll containers.
+
+---
+
+## Installed app (PWA)
+
+- **Service worker** (`src/service-worker.ts`): registered by `PwaDock` in production builds
+  only (`kit.serviceWorker.register` stays `false`). At install it caches just the offline
+  page and its stylesheets; content-hashed `/_app/immutable/*` files are cached as the app
+  uses them. Never precache SvelteKit's `build`/`files` lists: `static/` holds multi-MB
+  source icons, and every deploy would re-download it all on every phone. Navigations are
+  network-first (with navigation preload) and fall back to the offline page.
+- **Offline page** (`/offline`): server-rendered **without a session** (`SESSIONLESS_PATHS`
+  in `hooks.server.ts`) because the worker caches it, and `csr = false` because it is shown
+  at whatever URL failed — it must work as plain HTML and CSS.
+- **Push** (`static/push-sw.js`, scope `/push-sw/`): tapping an alert focuses an open app
+  window and posts `cw:navigate` to it (`PwaController` opens the page) instead of a new window.
+- **`PwaDock` / `PwaController`** (`$lib/components/pwa`, `$lib/pwa`): install prompt
+  (Chromium), Add to Home Screen hint (iPhone/iPad — push only works there once installed),
+  "new version" notice (`updated` + `kit.version.pollInterval`), app icon badge.
+- **Assets**: the maskable icons (Android's home screen icon and launch screen) and the iOS
+  launch images (screens listed in `src/lib/pwa/apple-splash-screens.json`) are drawn from
+  the SVG logo by `node scripts/generate-pwa-images.mjs` — never upscale a small PNG for them. Manifest screenshots (fictional
+  demo data) — regenerate with `node scripts/capture-pwa-screenshots.mjs` while
+  `node scripts/e2e-stack.mjs` is serving.
 
 ---
 

@@ -1,12 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-// The SvelteKit build manifest the worker precaches (a duplicate on purpose).
-vi.mock('$service-worker', () => ({
-	build: ['/_app/immutable/start.js', '/_app/immutable/app.js'],
-	files: ['/favicon.ico', '/icons/icon-192x192.png', '/_app/immutable/app.js'],
-	prerendered: ['/legal'],
-	version: 'test-1'
-}));
+vi.mock('$service-worker', () => ({ version: 'test-1' }));
 
 const ORIGIN = 'https://app.cropwatch.test';
 const STATIC_CACHE = 'cropwatch-static-test-1';
@@ -50,7 +44,10 @@ async function loadWorker(scriptPath = '/service-worker.js') {
 		location: new URL(scriptPath, ORIGIN),
 		addEventListener: vi.fn((type: string, listener: Listener) => listeners.set(type, listener)),
 		clients: { claim: vi.fn(async () => undefined) },
-		skipWaiting: vi.fn(async () => undefined)
+		skipWaiting: vi.fn(async () => undefined),
+		registration: { navigationPreload: { enable: vi.fn(async () => undefined) } } as {
+			navigationPreload?: { enable: () => Promise<void> };
+		}
 	};
 	const caches = {
 		open: vi.fn(async (name: string) => {
@@ -58,9 +55,16 @@ async function loadWorker(scriptPath = '/service-worker.js') {
 			return stores.get(name)!;
 		}),
 		keys: vi.fn(async () => [...stores.keys()]),
+		match: vi.fn(async (request: WorkerRequest) => {
+			for (const store of stores.values()) {
+				const hit = await store.match(request);
+				if (hit) return hit;
+			}
+			return undefined;
+		}),
 		delete: vi.fn(async (name: string) => stores.delete(name))
 	};
-	const network = vi.fn<(request: WorkerRequest) => Promise<Response>>(
+	const network = vi.fn<(request: WorkerRequest | string) => Promise<Response>>(
 		async () => new Response('from network')
 	);
 
@@ -87,7 +91,12 @@ async function loadWorker(scriptPath = '/service-worker.js') {
 			listener(event);
 		},
 		/** Dispatches a fetch event; resolves to whatever the worker responded with (or `null`). */
-		fetch(init: Partial<WorkerRequest> & { path: string }) {
+		fetch(
+			init: Partial<WorkerRequest> & {
+				path: string;
+				preloadResponse?: Promise<Response | undefined>;
+			}
+		) {
 			const request: WorkerRequest = {
 				url: new URL(init.path, ORIGIN).href,
 				method: init.method ?? 'GET',
@@ -97,6 +106,7 @@ async function loadWorker(scriptPath = '/service-worker.js') {
 			let responded: Promise<Response> | null = null;
 			this.dispatch('fetch', {
 				request,
+				preloadResponse: init.preloadResponse ?? Promise.resolve(undefined),
 				respondWith: (response: Promise<Response>) => (responded = response)
 			});
 			return { request, responded: () => responded };
@@ -121,23 +131,64 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
+/** The offline page as the server renders it (never hydrated: no scripts of its own). */
+const OFFLINE_HTML = `<!doctype html><html><head>
+<link href="./_app/immutable/assets/0.abc.css" rel="stylesheet">
+<link href="/_app/immutable/assets/offline.def.css" rel="stylesheet">
+<link href="./_app/immutable/assets/0.abc.css" rel="stylesheet">
+<link rel="icon" href="./icons/favicon.svg">
+<script src="https://www.googletagmanager.com/gtag/js"></script>
+</head><body><a href="">Try again</a></body></html>`;
+
 describe('service worker lifecycle', () => {
-	it('precaches the build, static files and prerendered pages once each, per version', async () => {
+	it('caches the offline page and the stylesheets it links to, then takes over at once', async () => {
 		const sw = await loadWorker();
+		sw.network.mockResolvedValue(new Response(OFFLINE_HTML));
 
 		await sw.lifecycle('install');
 
+		expect(sw.network).toHaveBeenCalledWith('/offline');
 		const staticCache = await sw.cache(STATIC_CACHE);
 		expect(staticCache.addAll).toHaveBeenCalledWith([
-			'/_app/immutable/start.js',
-			'/_app/immutable/app.js',
-			'/favicon.ico',
-			'/icons/icon-192x192.png',
-			'/legal'
+			'/_app/immutable/assets/0.abc.css',
+			'/_app/immutable/assets/offline.def.css'
 		]);
+		// Shown at whatever URL failed, so page-relative links are made absolute;
+		// the retry link (the current URL) stays as it is.
+		const cached = await staticCache.entries.get(`${ORIGIN}/offline`)?.text();
+		expect(cached).toContain('<link href="/_app/immutable/assets/0.abc.css"');
+		expect(cached).toContain('<link rel="icon" href="/icons/favicon.svg">');
+		expect(cached).not.toContain('"./');
+		expect(cached).toContain('<a href="">Try again</a>');
+		expect(sw.worker.skipWaiting).toHaveBeenCalledTimes(1);
 	});
 
-	it('drops the caches of other versions and takes control of open pages', async () => {
+	it('makes the offline page’s links absolute under its base path', async () => {
+		const sw = await loadWorker('/cropwatch/service-worker.js');
+		sw.network.mockResolvedValue(
+			new Response('<link href="./_app/immutable/assets/0.abc.css" rel="stylesheet">', {
+				headers: { 'content-type': 'text/html; charset=utf-8' }
+			})
+		);
+
+		await sw.lifecycle('install');
+
+		expect(sw.network).toHaveBeenCalledWith('/cropwatch/offline');
+		const staticCache = await sw.cache(STATIC_CACHE);
+		expect(staticCache.addAll).toHaveBeenCalledWith(['/cropwatch/_app/immutable/assets/0.abc.css']);
+		const cached = staticCache.entries.get(`${ORIGIN}/cropwatch/offline`);
+		expect(cached?.headers.get('content-type')).toBe('text/html; charset=utf-8');
+	});
+
+	it('fails to install (and is retried later) when the offline page cannot be fetched', async () => {
+		const sw = await loadWorker();
+		sw.network.mockResolvedValue(new Response('down', { status: 503 }));
+
+		await expect(sw.lifecycle('install')).rejects.toThrow('Offline page answered 503');
+		expect(sw.worker.skipWaiting).not.toHaveBeenCalled();
+	});
+
+	it('drops the caches of other versions, turns on navigation preload and takes control', async () => {
 		const sw = await loadWorker();
 		for (const name of [STATIC_CACHE, RUNTIME_CACHE, 'cropwatch-static-test-0', 'unrelated']) {
 			await sw.caches.open(name);
@@ -147,19 +198,17 @@ describe('service worker lifecycle', () => {
 
 		expect([...sw.stores.keys()]).toEqual([STATIC_CACHE, RUNTIME_CACHE]);
 		expect(sw.caches.delete).toHaveBeenCalledTimes(2);
+		expect(sw.worker.registration.navigationPreload?.enable).toHaveBeenCalledTimes(1);
 		expect(sw.worker.clients.claim).toHaveBeenCalledTimes(1);
 	});
 
-	it('activates a waiting update when the page asks it to', async () => {
+	it('still takes control where navigation preload is not supported', async () => {
 		const sw = await loadWorker();
+		sw.worker.registration.navigationPreload = undefined;
 
-		sw.dispatch('message', { data: { type: 'OTHER' } });
-		sw.dispatch('message', { data: null });
-		sw.dispatch('message', {});
-		expect(sw.worker.skipWaiting).not.toHaveBeenCalled();
+		await sw.lifecycle('activate');
 
-		sw.dispatch('message', { data: { type: 'SKIP_WAITING' } });
-		expect(sw.worker.skipWaiting).toHaveBeenCalledTimes(1);
+		expect(sw.worker.clients.claim).toHaveBeenCalledTimes(1);
 	});
 });
 
@@ -174,47 +223,66 @@ describe('service worker fetch handling', () => {
 		expect(sw.network).not.toHaveBeenCalled();
 	});
 
-	describe('precached files', () => {
-		it('are answered from the static cache', async () => {
+	describe('build output (content-hashed)', () => {
+		it('is answered from any cache without the network', async () => {
 			const sw = await loadWorker();
-			await sw.lifecycle('install');
+			const staticCache = await sw.cache(STATIC_CACHE);
+			staticCache.entries.set(`${ORIGIN}/_app/immutable/entry/start.def.js`, new Response('start'));
 
-			const response = await sw.fetch({ path: '/favicon.ico' }).responded();
+			const response = await sw
+				.fetch({ path: '/_app/immutable/entry/start.def.js', destination: 'script' })
+				.responded();
 
-			await expect(response?.text()).resolves.toBe('precached /favicon.ico');
+			await expect(response?.text()).resolves.toBe('start');
 			expect(sw.network).not.toHaveBeenCalled();
 		});
 
-		it('come from the network when missing, and are cached for next time', async () => {
+		it('comes from the network the first time, and is cached for next time', async () => {
 			const sw = await loadWorker();
-			sw.network.mockResolvedValue(new Response('fresh app.js'));
+			sw.network.mockResolvedValue(new Response('chunk'));
 
-			const { request, responded } = sw.fetch({ path: '/_app/immutable/app.js' });
+			const { request, responded } = sw.fetch({
+				path: '/_app/immutable/chunks/x.js',
+				destination: 'script'
+			});
 			const response = await responded();
 
-			await expect(response?.text()).resolves.toBe('fresh app.js');
+			await expect(response?.text()).resolves.toBe('chunk');
 			expect(sw.network).toHaveBeenCalledWith(request);
-			const staticCache = await sw.cache(STATIC_CACHE);
-			expect(staticCache.put).toHaveBeenCalledWith(request, expect.any(Response));
-			await expect(staticCache.entries.get(request.url)?.text()).resolves.toBe('fresh app.js');
+			const runtimeCache = await sw.cache(RUNTIME_CACHE);
+			await expect(runtimeCache.entries.get(request.url)?.text()).resolves.toBe('chunk');
 		});
 
 		it.each([
 			['a failed response', new Response('missing', { status: 404 })],
 			['a no-store response', new Response('x', { headers: { 'cache-control': 'no-store' } })]
-		])('are not cached from %s', async (_label, networkResponse) => {
+		])('is not cached from %s', async (_label, networkResponse) => {
 			const sw = await loadWorker();
 			sw.network.mockResolvedValue(networkResponse);
 
-			const response = await sw.fetch({ path: '/favicon.ico' }).responded();
+			const response = await sw
+				.fetch({ path: '/_app/immutable/chunks/x.js', destination: 'script' })
+				.responded();
 
 			expect(response).toBe(networkResponse);
-			expect((await sw.cache(STATIC_CACHE)).put).not.toHaveBeenCalled();
+			expect((await sw.cache(RUNTIME_CACHE)).put).not.toHaveBeenCalled();
 		});
 	});
 
 	describe('navigations', () => {
-		it('go to the network first', async () => {
+		it('use the preloaded response when the browser started one', async () => {
+			const sw = await loadWorker();
+			const page = new Response('<html>preloaded</html>');
+
+			const response = await sw
+				.fetch({ path: '/locations', mode: 'navigate', preloadResponse: Promise.resolve(page) })
+				.responded();
+
+			expect(response).toBe(page);
+			expect(sw.network).not.toHaveBeenCalled();
+		});
+
+		it('go to the network otherwise', async () => {
 			const sw = await loadWorker();
 			const page = new Response('<html>locations</html>');
 			sw.network.mockResolvedValue(page);
@@ -224,13 +292,18 @@ describe('service worker fetch handling', () => {
 			expect(response).toBe(page);
 		});
 
-		it('show the cached offline page when the network is down', async () => {
+		it.each([
+			['the network is down', undefined],
+			['the preload failed', () => Promise.reject(new TypeError('Failed to fetch'))]
+		])('show the cached offline page when %s', async (_label, preload) => {
 			const sw = await loadWorker();
 			const staticCache = await sw.cache(STATIC_CACHE);
 			staticCache.entries.set(`${ORIGIN}/offline`, new Response('offline page'));
 			sw.network.mockRejectedValue(new TypeError('Failed to fetch'));
 
-			const response = await sw.fetch({ path: '/locations', mode: 'navigate' }).responded();
+			const response = await sw
+				.fetch({ path: '/locations', mode: 'navigate', preloadResponse: preload?.() })
+				.responded();
 
 			await expect(response?.text()).resolves.toBe('offline page');
 			expect(staticCache.match).toHaveBeenCalledWith('/offline');
@@ -360,6 +433,11 @@ describe('service worker fetch handling', () => {
 		expect(
 			sw.fetch({ path: '/cropwatch/api/devices', destination: 'script' }).responded()
 		).toBeNull();
+		staticCache.entries.set(`${ORIGIN}/cropwatch/_app/immutable/a.js`, new Response('scoped'));
+		const chunk = await sw
+			.fetch({ path: '/cropwatch/_app/immutable/a.js', destination: 'script' })
+			.responded();
+		await expect(chunk?.text()).resolves.toBe('scoped');
 		// Outside the base path, /api/ is just another asset path.
 		const outside = sw.fetch({ path: '/api/devices.js', destination: 'script' }).responded();
 		expect(outside).not.toBeNull();

@@ -165,9 +165,15 @@
 					/>
 				{/if}
 			</div>
-			<div class="ov-header__actions ov-wide-only">
+			<!-- Phones get the range switch under the health card; the dashboard
+			     link stays up here (and at the bottom) at every width. -->
+			<div class="ov-header__actions">
 				{#if overview}
-					<RangeSwitch value={ranges.range} onselect={(next) => ranges.select(next)} />
+					<RangeSwitch
+						class="ov-wide-only"
+						value={ranges.range}
+						onselect={(next) => ranges.select(next)}
+					/>
 				{/if}
 				<a class="ov-button" href={resolve('/')}>
 					{m.overview_open_dashboard()}<OverviewIcon name="arrow" size={16} />
@@ -385,6 +391,17 @@
 	@container overview (width < 640px) {
 		.ov :global(.ov-wide-only) {
 			display: none !important;
+		}
+
+		/* The title on the left, the dashboard link on the right, on one row. */
+		.ov-header {
+			flex-wrap: nowrap;
+			align-items: center;
+		}
+
+		.ov-header__actions .ov-button {
+			flex: none;
+			white-space: nowrap;
 		}
 
 		.ov-header__eyebrow {

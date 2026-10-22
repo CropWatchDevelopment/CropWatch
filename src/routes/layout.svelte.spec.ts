@@ -7,6 +7,7 @@ import type { Profile } from '$lib/interfaces/profile.interface';
 import { m } from '$lib/paraglide/messages.js';
 import { createFakeFetch, jsonResponse } from '$lib/testing/http';
 import { renderWithServices } from '$lib/testing/render';
+import { APPLE_SPLASH_LINKS } from '$lib/pwa/apple-splash';
 import RootLayout from './+layout.svelte';
 
 // --- Boundaries --------------------------------------------------------------
@@ -34,11 +35,16 @@ vi.mock('$app/state', async () => {
 				return store.get('data');
 			},
 			params: {}
-		}
+		},
+		updated: { current: false, check: async () => false }
 	};
 });
 
-const nav = vi.hoisted(() => ({ goto: vi.fn(), afterNavigate: vi.fn() }));
+const nav = vi.hoisted(() => ({
+	goto: vi.fn(),
+	afterNavigate: vi.fn(),
+	invalidate: vi.fn(async () => undefined)
+}));
 vi.mock('$app/navigation', () => nav);
 
 type ForegroundHandler = (message: { title: string; body?: string }) => void;
@@ -54,7 +60,12 @@ vi.mock('$lib/push/push-notifications', () => ({
 }));
 
 const expiry = vi.hoisted(() => ({
-	options: null as null | { getExpSeconds: () => number | null | undefined; onExpired: () => void },
+	options: null as null | {
+		getExpSeconds: () => number | null | undefined;
+		onExpired: () => void;
+		onRenew: () => Promise<unknown>;
+		renewLeadMs: number;
+	},
 	rearm: vi.fn(),
 	destroy: vi.fn()
 }));
@@ -299,6 +310,15 @@ describe('root layout session expiry', () => {
 		expect(app.triggeredRules).toEqual([]);
 	});
 
+	it('renews the session five minutes before it runs out by re-running the root load', async () => {
+		render();
+
+		expect(expiry.options?.renewLeadMs).toBe(5 * 60 * 1000);
+		await expiry.options!.onRenew();
+
+		expect(nav.invalidate).toHaveBeenCalledWith('app:session');
+	});
+
 	it('does nothing on the login and logout pages', () => {
 		setPage('/auth/logout', signedInData());
 		const { app } = render();
@@ -344,6 +364,19 @@ describe('root layout shell', () => {
 		expect(document.querySelector('dialog.cw-dialog')).toBeNull();
 	});
 
+	it('shows the install and update dock everywhere but the offline page', () => {
+		render();
+		expect(document.querySelector('.pwa-dock')).not.toBeNull();
+
+		setPage('/auth/login', {});
+		flushSync();
+		expect(document.querySelector('.pwa-dock')).not.toBeNull();
+
+		setPage('/offline', {});
+		flushSync();
+		expect(document.querySelector('.pwa-dock')).toBeNull();
+	});
+
 	it('switches between the two shells as the route changes', () => {
 		render();
 		expect(sidenav()).not.toBeNull();
@@ -387,9 +420,14 @@ describe('root layout shell', () => {
 		render();
 
 		const head = document.head;
-		expect(head.querySelector('link[rel="manifest"]')?.getAttribute('href')).toBe(
-			'/manifest.webmanifest'
-		);
+		const manifest = head.querySelector('link[rel="manifest"]');
+		expect(manifest?.getAttribute('href')).toBe('/manifest.webmanifest');
+		// Sends the locale cookie, so the manifest comes back in the user's language.
+		expect(manifest?.getAttribute('crossorigin')).toBe('use-credentials');
+		const splash = [...head.querySelectorAll('link[rel="apple-touch-startup-image"]')];
+		expect(splash).toHaveLength(APPLE_SPLASH_LINKS.length);
+		expect(splash[0]?.getAttribute('href')).toBe(APPLE_SPLASH_LINKS[0]?.path);
+		expect(splash[0]?.getAttribute('media')).toBe(APPLE_SPLASH_LINKS[0]?.media);
 		expect(
 			[...head.querySelectorAll('link[rel="icon"]')].map((link) => link.getAttribute('href'))
 		).toEqual(

@@ -14,6 +14,7 @@
 import { browser } from '$app/environment';
 import { readFirebaseConfig } from '$lib/config/firebase';
 import type { PushRepository } from '$lib/api/repositories/push.repository';
+import { isInstalledApp, isIosDevice } from '$lib/pwa/platform';
 import { describeDevice, pushDeviceId } from './push-device';
 
 const PUSH_SW_URL = '/push-sw.js';
@@ -48,12 +49,7 @@ export function isPushSupported(): boolean {
 // "unsupported browser" — the settings card words the two states differently.
 export function iosNeedsInstall(): boolean {
 	if (!browser) return false;
-	const isIos =
-		/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-		// iPadOS 13+ reports as Macintosh but has touch support.
-		(navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
-	const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-	return isIos && !isStandalone && !isPushSupported();
+	return isIosDevice(navigator) && !isInstalledApp(window) && !isPushSupported();
 }
 
 // Whether this browser can do push at all. Whether it is on for the signed-in

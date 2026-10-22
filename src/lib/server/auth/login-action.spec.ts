@@ -90,6 +90,43 @@ describe('handleLoginAction', () => {
 		);
 	});
 
+	it('also stores the refresh token, so the session outlives the access token', async () => {
+		const cookies = createCookiesMock();
+		const fetch = vi.fn(
+			async () =>
+				new Response(
+					JSON.stringify({
+						message: 'Login successful.',
+						result: {
+							accessToken: 'test-jwt',
+							refreshToken: 'test-refresh',
+							expires_at_datetime: new Date(Date.now() + 60_000).toISOString()
+						}
+					}),
+					{ status: 200, headers: { 'content-type': 'application/json' } }
+				)
+		) as typeof globalThis.fetch;
+		const event: LoginActionEvent = {
+			request: createRequest('https://app.cropwatch.test/auth/login', {
+				email: 'operator@cropwatch.test',
+				password: 'CorrectHorseBatteryStaple1!',
+				recaptchaToken: 'login-token'
+			}),
+			cookies,
+			fetch
+		};
+
+		await expect(handleLoginAction(event, createDependencies())).rejects.toMatchObject({
+			status: 303
+		});
+
+		expect(cookies.set).toHaveBeenCalledWith(
+			'jwt_refresh',
+			'test-refresh',
+			expect.objectContaining({ httpOnly: true, secure: true, path: '/' })
+		);
+	});
+
 	it('falls back to the root path when the redirect is unsafe', async () => {
 		const cookies = createCookiesMock();
 		const fetch = vi.fn(

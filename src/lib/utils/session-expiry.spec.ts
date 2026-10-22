@@ -127,6 +127,27 @@ describe('createSessionExpiryWatcher when the user returns to the app', () => {
 		expect(onExpired).toHaveBeenCalledTimes(2);
 	});
 
+	it('asks for a renewal first when the session lapsed in the background', async () => {
+		const browser = fakeBrowser();
+		const exp = nowSeconds() + 3_600;
+		const onExpired = vi.fn();
+		const onRenew = vi.fn(async () => undefined);
+		createSessionExpiryWatcher({ getExpSeconds: () => exp, onExpired, onRenew, leadTimeMs: 0 });
+
+		later(1_000); // not yet in the renewal window
+		browser.returnToApp();
+		expect(onRenew).not.toHaveBeenCalled();
+
+		vi.setSystemTime((exp + 5) * 1000);
+		browser.returnToApp();
+		expect(onRenew).toHaveBeenCalledTimes(1);
+		expect(onExpired).not.toHaveBeenCalled();
+
+		// The renewal brought no later expiry: the watcher re-arms and expires.
+		for (let i = 0; i < 6; i++) await Promise.resolve();
+		expect(onExpired).toHaveBeenCalledTimes(1);
+	});
+
 	it('stops checking once destroyed', () => {
 		const browser = fakeBrowser();
 		const exp = nowSeconds() + 60;

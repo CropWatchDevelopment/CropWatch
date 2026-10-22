@@ -22,14 +22,42 @@ function authAnswer(auth: AuthServer) {
 		: jsonResponse({ code: 403, error_code: 'bad_jwt', msg: 'invalid JWT' }, { status: 403 });
 }
 
-const isAuthRequest = (url: string) => new URL(url).pathname.startsWith('/auth/v1/');
+type RefreshServer = 'renews' | 'refuses' | 'unreachable';
 
-function event(path: string, token?: string, auth: AuthServer = 'accepts') {
-	const fake = createFakeFetch((request) =>
-		isAuthRequest(request.url) ? authAnswer(auth) : jsonResponse({ online: 0, offline: 0 })
-	);
+/** The token Supabase Auth issues when it renews a session. */
+const RENEWED_TOKEN = jwt(3600);
+
+/** The Supabase Auth server's answer to `POST /auth/v1/token?grant_type=refresh_token`. */
+function refreshAnswer(refresh: RefreshServer) {
+	if (refresh === 'unreachable') return Promise.reject(new TypeError('fetch failed'));
+	return refresh === 'renews'
+		? jsonResponse({
+				access_token: RENEWED_TOKEN,
+				refresh_token: 'refresh-2',
+				expires_in: 3600,
+				expires_at: Math.floor(Date.now() / 1000) + 3600
+			})
+		: jsonResponse({ error_code: 'refresh_token_already_used' }, { status: 400 });
+}
+
+const isAuthRequest = (url: string) => new URL(url).pathname.startsWith('/auth/v1/');
+const isRefreshRequest = (url: string) => new URL(url).pathname === '/auth/v1/token';
+
+function event(
+	path: string,
+	token?: string,
+	auth: AuthServer = 'accepts',
+	refresh?: { token: string; server: RefreshServer }
+) {
+	const fake = createFakeFetch((request) => {
+		if (isRefreshRequest(request.url)) return refreshAnswer(refresh!.server);
+		return isAuthRequest(request.url) ? authAnswer(auth) : jsonResponse({ online: 0, offline: 0 });
+	});
 	const cookies = {
-		get: vi.fn((name: string) => (name === 'jwt' ? token : undefined)),
+		get: vi.fn((name: string) =>
+			name === 'jwt' ? token : name === 'jwt_refresh' ? refresh?.token : undefined
+		),
+		set: vi.fn(),
 		delete: vi.fn()
 	};
 	const requestEvent = {
@@ -153,6 +181,103 @@ describe('originalHandle', () => {
 			expect(cookies.delete).toHaveBeenCalledWith('jwt', { path: '/' });
 			expect(requestEvent.locals.jwtString).toBeNull();
 		}
+	});
+
+	describe('session refresh', () => {
+		const refreshRequests = (fake: ReturnType<typeof event>['fake']) =>
+			fake.requests.filter((request) => isRefreshRequest(request.url));
+
+		it('renews an expired session with its refresh token and authenticates as the new one', async () => {
+			const { requestEvent, cookies, fake } = event('/locations', jwt(-60), 'accepts', {
+				token: 'refresh-1',
+				server: 'renews'
+			});
+
+			await originalHandle({ event: requestEvent, resolve: vi.fn(async () => html()) });
+
+			expect(refreshRequests(fake).map((request) => request.body)).toEqual([
+				{ refresh_token: 'refresh-1' }
+			]);
+			expect(cookies.set).toHaveBeenCalledWith('jwt', RENEWED_TOKEN, expect.any(Object));
+			expect(cookies.set).toHaveBeenCalledWith('jwt_refresh', 'refresh-2', expect.any(Object));
+			expect(requestEvent.locals.jwtString).toBe(RENEWED_TOKEN);
+			expect(cookies.delete).not.toHaveBeenCalled();
+		});
+
+		it('renews when the session cookie is gone (it expires with its token)', async () => {
+			const { requestEvent } = event('/', undefined, 'accepts', {
+				token: 'refresh-1',
+				server: 'renews'
+			});
+
+			await originalHandle({ event: requestEvent, resolve: vi.fn(async () => html()) });
+
+			expect(requestEvent.locals.jwtString).toBe(RENEWED_TOKEN);
+		});
+
+		it('renews a token about to run out, and leaves one with time left alone', async () => {
+			const soon = event('/rules', jwt(120), 'accepts', { token: 'r', server: 'renews' });
+			await originalHandle({ event: soon.requestEvent, resolve: vi.fn(async () => html()) });
+			expect(refreshRequests(soon.fake)).toHaveLength(1);
+
+			const token = jwt(3600);
+			const fresh = event('/rules', token, 'accepts', { token: 'r', server: 'renews' });
+			await originalHandle({ event: fresh.requestEvent, resolve: vi.fn(async () => html()) });
+			expect(refreshRequests(fresh.fake)).toHaveLength(0);
+			expect(fresh.requestEvent.locals.jwtString).toBe(token);
+		});
+
+		it('deletes a refresh token Supabase refuses and sends the user to log in', async () => {
+			const { requestEvent, cookies } = event('/locations', jwt(-60), 'accepts', {
+				token: 'refresh-1',
+				server: 'refuses'
+			});
+
+			const redirect = await redirectOf(originalHandle({ event: requestEvent, resolve: vi.fn() }));
+
+			expect(cookies.delete).toHaveBeenCalledWith('jwt_refresh', { path: '/' });
+			expect(cookies.delete).toHaveBeenCalledWith('jwt', { path: '/' });
+			expect(redirect.location).toContain('expired');
+		});
+
+		it('keeps the refresh token while Supabase Auth is unreachable', async () => {
+			vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+			const { requestEvent, cookies } = event('/locations', jwt(-60), 'accepts', {
+				token: 'refresh-1',
+				server: 'unreachable'
+			});
+
+			const redirect = await redirectOf(originalHandle({ event: requestEvent, resolve: vi.fn() }));
+
+			expect(cookies.delete).not.toHaveBeenCalledWith('jwt_refresh', expect.anything());
+			expect(redirect.location).toContain('expired');
+		});
+
+		it('never refreshes for public files', async () => {
+			const { requestEvent, fake } = event('/manifest.webmanifest', jwt(-60), 'accepts', {
+				token: 'refresh-1',
+				server: 'renews'
+			});
+
+			await originalHandle({ event: requestEvent, resolve: vi.fn(async () => html()) });
+
+			expect(refreshRequests(fake)).toHaveLength(0);
+		});
+	});
+
+	it('renders the offline page without a session, whatever the cookies hold', async () => {
+		const { requestEvent, cookies, fake } = event('/offline', jwt(3600), 'accepts', {
+			token: 'refresh-1',
+			server: 'renews'
+		});
+
+		await originalHandle({ event: requestEvent, resolve: vi.fn(async () => html()) });
+
+		expect(requestEvent.locals.jwtString).toBeNull();
+		expect(requestEvent.locals.jwt).toBeNull();
+		expect(fake.requests).toHaveLength(0);
+		expect(cookies.delete).not.toHaveBeenCalled();
+		expect(cookies.set).not.toHaveBeenCalled();
 	});
 
 	it('adds a UTF-8 charset to HTML responses that lack one, and leaves others alone', async () => {

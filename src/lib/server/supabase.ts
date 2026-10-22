@@ -16,6 +16,14 @@ export type AccessTokenVerification =
 	/** It could not be checked right now (Auth unreachable) — says nothing about the token. */
 	| { status: 'unavailable' };
 
+/** The outcome of renewing a session with its refresh token. */
+export type SessionRefresh =
+	| { status: 'refreshed'; accessToken: string; refreshToken: string; expiresAt: Date }
+	/** Already used, revoked (signed out) or unknown: the person has to sign in again. */
+	| { status: 'invalid' }
+	/** Auth could not be reached — the refresh token may still be good. */
+	| { status: 'unavailable' };
+
 /** The Supabase Auth calls the server makes (`locals.services.supabaseAuth`). */
 export interface SupabaseAuthGateway {
 	verifyOtp(
@@ -37,11 +45,27 @@ export interface SupabaseAuthGateway {
 	 */
 	verifyAccessToken(accessToken: string): Promise<AccessTokenVerification>;
 	/**
+	 * Trades a refresh token for a new session. Supabase rotates refresh tokens,
+	 * so the one passed in stops working (after a short reuse window).
+	 */
+	refreshSession(refreshToken: string): Promise<SessionRefresh>;
+	/**
 	 * Ends this session in Supabase Auth (`scope: 'local'`: other devices stay
 	 * signed in). Best effort: a failure is logged, never thrown.
 	 */
 	signOut(accessToken: string): Promise<void>;
 }
+
+/** A refresh blocks the request it runs in; give up on a slow Auth server after this. */
+const REFRESH_TIMEOUT_MS = 5_000;
+
+/** The parts of the Auth server's `POST /token?grant_type=refresh_token` answer used here. */
+type RefreshedSessionBody = {
+	access_token?: string;
+	refresh_token?: string;
+	expires_at?: number;
+	expires_in?: number;
+};
 
 /**
  * A server-side Supabase client using the public anon key: it is subject to
@@ -98,6 +122,46 @@ export function createSupabaseAuthGateway(
 				console.warn('Session token verification failed to run:', error);
 				return { status: 'unavailable' };
 			}
+		},
+		// The token endpoint directly, not auth.refreshSession(): the SDK retries an
+		// unreachable Auth server with backoff for up to 30 s, and this runs inside
+		// the request hook.
+		refreshSession: async (refreshToken) => {
+			let response: Response;
+			try {
+				response = await fetchFn(`${config.url}/auth/v1/token?grant_type=refresh_token`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', apikey: config.anonKey },
+					body: JSON.stringify({ refresh_token: refreshToken }),
+					signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS)
+				});
+			} catch (error) {
+				console.warn('Supabase Auth unreachable; session not refreshed:', error);
+				return { status: 'unavailable' };
+			}
+
+			if (response.status === 429 || response.status >= 500) {
+				console.warn(`Supabase Auth answered ${response.status}; session not refreshed`);
+				return { status: 'unavailable' };
+			}
+			// 400/401/403: used, revoked or unknown refresh token.
+			if (!response.ok) return { status: 'invalid' };
+
+			const session = (await response.json().catch(() => null)) as RefreshedSessionBody | null;
+			const expiresAt =
+				typeof session?.expires_at === 'number'
+					? session.expires_at
+					: Math.floor(Date.now() / 1000) + Number(session?.expires_in);
+			if (!session?.access_token || !session.refresh_token || !Number.isFinite(expiresAt)) {
+				console.warn('Supabase Auth answered a refresh without a session');
+				return { status: 'unavailable' };
+			}
+			return {
+				status: 'refreshed',
+				accessToken: session.access_token,
+				refreshToken: session.refresh_token,
+				expiresAt: new Date(expiresAt * 1000)
+			};
 		},
 		signOut: async (accessToken) => {
 			try {

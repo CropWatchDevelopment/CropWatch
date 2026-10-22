@@ -168,3 +168,77 @@ describe('signOut', () => {
 		expect(warn).toHaveBeenCalledTimes(2);
 	});
 });
+
+describe('refreshSession', () => {
+	const TOKEN_URL = `${SUPABASE.url}/auth/v1/token?grant_type=refresh_token`;
+	const session = (overrides: Record<string, unknown> = {}) => ({
+		access_token: 'access-2',
+		refresh_token: 'refresh-2',
+		token_type: 'bearer',
+		expires_in: 3600,
+		expires_at: nowSeconds() + 3600,
+		...overrides
+	});
+
+	it('trades the refresh token for a new session in one request', async () => {
+		const answer = session();
+		const { gateway, fake } = gatewayOver(() => jsonResponse(answer));
+
+		const result = await gateway.refreshSession('refresh-1');
+
+		expect(result).toEqual({
+			status: 'refreshed',
+			accessToken: 'access-2',
+			refreshToken: 'refresh-2',
+			expiresAt: new Date(answer.expires_at * 1000)
+		});
+		const request = fake.onlyRequest();
+		expect(request.url).toBe(TOKEN_URL);
+		expect(request.method).toBe('POST');
+		expect(request.headers.get('apikey')).toBe(SUPABASE.anonKey);
+		expect(request.body).toEqual({ refresh_token: 'refresh-1' });
+		expect(request.signal).toBeInstanceOf(AbortSignal);
+	});
+
+	it('works out the expiry from expires_in when expires_at is missing', async () => {
+		const { gateway } = gatewayOver(() => jsonResponse(session({ expires_at: undefined })));
+
+		const result = await gateway.refreshSession('refresh-1');
+
+		expect(result).toMatchObject({ status: 'refreshed' });
+		const expiresAt = (result as { expiresAt: Date }).expiresAt.getTime();
+		expect(Math.abs(expiresAt - (Date.now() + 3_600_000))).toBeLessThan(2_000);
+	});
+
+	it.each([400, 401, 403])('reports a refused refresh token (%i) as invalid', async (status) => {
+		const { gateway } = gatewayOver(() =>
+			jsonResponse(
+				{ code: status, error_code: 'refresh_token_already_used', msg: 'Invalid Refresh Token' },
+				{ status }
+			)
+		);
+
+		await expect(gateway.refreshSession('refresh-1')).resolves.toEqual({ status: 'invalid' });
+	});
+
+	it.each([
+		['the network fails', () => Promise.reject(new TypeError('fetch failed'))],
+		['Auth is down', () => jsonResponse({ msg: 'unavailable' }, { status: 503 })],
+		['Auth rate-limits', () => jsonResponse({ msg: 'slow down' }, { status: 429 })],
+		['the answer is not JSON', () => new Response('<html>', { status: 200 })],
+		['the answer has no session', () => jsonResponse(session({ refresh_token: undefined }))],
+		[
+			'the answer has no expiry',
+			() => jsonResponse(session({ expires_at: undefined, expires_in: undefined }))
+		]
+	])(
+		'reports the session as unavailable when %s (the token may still be good)',
+		async (_, answer) => {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+			const { gateway } = gatewayOver(answer);
+
+			await expect(gateway.refreshSession('refresh-1')).resolves.toEqual({ status: 'unavailable' });
+			expect(warn).toHaveBeenCalledTimes(1);
+		}
+	);
+});

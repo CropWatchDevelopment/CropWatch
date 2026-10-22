@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { m } from '$lib/paraglide/messages.js';
@@ -103,8 +104,53 @@ describe('buildManifest', () => {
 					url: '/reports',
 					icons: [shortcutIcon]
 				}
+			],
+			screenshots: [
+				{
+					src: '/screenshots/pwa/en/dashboard-narrow.png',
+					sizes: '780x1688',
+					type: 'image/png',
+					form_factor: 'narrow',
+					label: m.manifest_screenshot_dashboard({}, { locale: 'en' })
+				},
+				{
+					src: '/screenshots/pwa/en/overview-narrow.png',
+					sizes: '780x1688',
+					type: 'image/png',
+					form_factor: 'narrow',
+					label: m.manifest_screenshot_overview({}, { locale: 'en' })
+				},
+				{
+					src: '/screenshots/pwa/en/dashboard-wide.png',
+					sizes: '1440x900',
+					type: 'image/png',
+					form_factor: 'wide',
+					label: m.manifest_screenshot_dashboard({}, { locale: 'en' })
+				}
 			]
 		});
+	});
+
+	it.each(['ja', 'en'] as const)('lists only %s screenshots that exist', (locale) => {
+		const missing = buildManifest('', locale).screenshots.filter(
+			({ src }) => !existsSync(`static${src}`)
+		);
+
+		// Regenerate with scripts/capture-pwa-screenshots.mjs.
+		expect(missing).toEqual([]);
+	});
+
+	it('shows screenshots in the language of the manifest, under the base path', () => {
+		const manifest = buildManifest('/cropwatch', 'ja');
+
+		expect(manifest.screenshots.map((shot) => shot.src)).toEqual([
+			'/cropwatch/screenshots/pwa/ja/dashboard-narrow.png',
+			'/cropwatch/screenshots/pwa/ja/overview-narrow.png',
+			'/cropwatch/screenshots/pwa/ja/dashboard-wide.png'
+		]);
+		expect(manifest.screenshots[0]?.label).toBe(
+			m.manifest_screenshot_dashboard({}, { locale: 'ja' })
+		);
 	});
 
 	it('defaults to a root-scoped Japanese manifest', () => {
