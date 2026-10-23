@@ -1,11 +1,14 @@
 # CropWatch
 
+## Code Cleanliness
+[![Maintainability](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/maintainability.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
+[![Code Coverage](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/coverage.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
 [![CI](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml)
+
+## Code Security
 [![Security](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)
 [![Vulnerabilities](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FCropWatchDevelopment%2FCropWatch%2Fbadges%2Fsnyk.json&logo=snyk)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)
 [![Snyk security](https://snyk.io/test/github/CropWatchDevelopment/CropWatch/badge.svg)](https://snyk.io/test/github/CropWatchDevelopment/CropWatch)
-[![Maintainability](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/maintainability.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
-[![Code Coverage](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/coverage.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
