@@ -66,17 +66,20 @@ jobs:
             snyk-deps.json snyk-code.sarif "$DEPS_EXIT" "$CODE_EXIT" snyk-badge.json
 
       # Only master's result feeds the README badge. The branch holds a single
-      # commit with snyk.json and is force-pushed on each run; vercel.json
-      # disables deployments for it.
+      # commit with snyk.json and is force-pushed on each run. Vercel reads
+      # vercel.json from the commit it is deploying, so the branch carries its
+      # own, which turns deployments off (otherwise every push is a failed
+      # build: the branch has no package.json).
       - name: Publish badge
         if: always() && github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && hashFiles('snyk-badge.json') != ''
         run: |
           mkdir -p "$RUNNER_TEMP/badges"
           cp snyk-badge.json "$RUNNER_TEMP/badges/snyk.json"
+          echo '{ "git": { "deploymentEnabled": false } }' > "$RUNNER_TEMP/badges/vercel.json"
           cd "$RUNNER_TEMP/badges"
           git init -q -b badges
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add snyk.json
+          git add snyk.json vercel.json
           git commit -q -m "Update Snyk badge"
           git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" badges
