@@ -1393,6 +1393,7 @@
 	"reports_new_edit_data_invalid_period": "Invalid report period.",
 	"reports_new_edit_data_not_air": "Notes can only be edited on air-sensor reports.",
 	"reports_new_edit_data_too_old": "Notes can no longer be edited — report data is retained for 24 months and this report's period is more than 23 months old.",
+	"reports_new_edit_data_forbidden": "You don't have permission to edit this report's notes.",
 	"reports_new_edit_data_load_failed": "Unable to load the report's data.",
 	"reports_new_edit_data_no_data": "No data was recorded in this report's period.",
 	"reports_new_edit_data_notes_column": "Notes",

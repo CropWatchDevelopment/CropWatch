@@ -59,6 +59,7 @@ function displayProps(overrides: Partial<DeviceDisplayProps> = {}): DeviceDispla
 		historicalData: HISTORY,
 		loading: false,
 		permissionLevel: 1,
+		canWriteNotes: true,
 		...overrides
 	};
 }
@@ -332,6 +333,21 @@ describe('AirDisplay telemetry table', () => {
 		expect(iconButton(newest, m.display_view_notes())).toBeNull();
 		expect(iconButton(middle, m.display_view_notes())).not.toBeNull();
 		expect(iconButton(oldest, m.display_view_notes())).toBeNull();
+	});
+
+	it('offers no new notes when the API would refuse them (a Viewer), but still shows notes', async () => {
+		for (const canWriteNotes of [false, undefined]) {
+			render({ canWriteNotes });
+
+			await expect.poll(() => tableRows().length).toBe(3);
+			const [newest, middle, oldest] = tableRows();
+			for (const row of [newest, middle, oldest]) {
+				expect(iconButton(row, m.display_add_note())).toBeNull();
+			}
+			expect(iconButton(middle, m.display_view_notes())).not.toBeNull();
+			view?.unmount();
+			view = null;
+		}
 	});
 
 	it('leaves out the CO₂ column for a device without a CO₂ sensor', async () => {

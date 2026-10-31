@@ -450,7 +450,7 @@
 										<!-- END OF LAST SEEN -->
 									</dl>
 									<span class="flex w-full flex-row gap-1">
-										{#if row.device_type.data_table_v2 === 'cw_air_data'}
+										{#if row.device_type.data_table_v2 === 'cw_air_data' && row.can_write_notes}
 											<TodayDataNoteDialog devEui={row.dev_eui} />
 										{/if}
 										<CwButton

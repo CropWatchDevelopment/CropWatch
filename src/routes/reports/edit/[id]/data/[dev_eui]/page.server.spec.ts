@@ -25,7 +25,7 @@ function template(overrides: Partial<ReportTemplateDto> = {}): ReportTemplateDto
 	return {
 		id: 5,
 		name: 'Weekly cold room',
-		assignments: [{ devEui: 'DEV-1', deviceName: 'Cold room sensor' }],
+		assignments: [{ devEui: 'DEV-1', deviceName: 'Cold room sensor', canManage: true }],
 		...overrides
 	} as ReportTemplateDto;
 }
@@ -135,7 +135,9 @@ describe('report data edit load', () => {
 		['the dev EUI when neither has a name', { deviceName: null }, { name: null }, 'DEV-1']
 	])('names the device by %s', async (_label, assignment, deviceOverrides, deviceName) => {
 		const locals = answering({
-			template: template({ assignments: [{ devEui: 'DEV-1', ...assignment }] as never }),
+			template: template({
+				assignments: [{ devEui: 'DEV-1', canManage: true, ...assignment }] as never
+			}),
 			device: device(deviceOverrides as Partial<DeviceDto>)
 		});
 
@@ -242,6 +244,23 @@ describe('report data edit load', () => {
 		await expect(failure(locals)).resolves.toEqual({
 			status: 404,
 			message: m.reports_new_report_template_not_found()
+		});
+		expect(locals.services.devices.getDevice).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		['the API says the caller may not manage the device', { canManage: false }],
+		['the API does not say (an older API)', {}]
+	])('answers 403 when %s, before loading the device', async (_label, access) => {
+		const locals = answering({
+			template: template({
+				assignments: [{ devEui: 'DEV-1', deviceName: 'Cold room sensor', ...access }] as never
+			})
+		});
+
+		await expect(failure(locals)).resolves.toEqual({
+			status: 403,
+			message: m.reports_new_edit_data_forbidden()
 		});
 		expect(locals.services.devices.getDevice).not.toHaveBeenCalled();
 	});

@@ -69,9 +69,10 @@ const timestamp = (value: string) =>
 let services: MockServices;
 let view: ReturnType<typeof renderWithServices> | null = null;
 
-function render() {
+// The user manages every device unless a test says otherwise.
+function render(editableDevEuis = ['DEV-A', 'DEV-B', 'DEV-C']) {
 	view = renderWithServices(ViewReportHistoryDialog, {
-		props: { templateId: 9, reportName: 'Weekly cold room' },
+		props: { templateId: 9, reportName: 'Weekly cold room', editableDevEuis },
 		services,
 		app: { accessToken: 'jwt-token' }
 	});
@@ -270,6 +271,17 @@ describe('ViewReportHistoryDialog', () => {
 		expect(goto).toHaveBeenLastCalledWith(
 			`/reports/edit/9/data/DEV-A?start=${RECENT.start}&end=${RECENT.end}&file=${RECENT_COPY}`
 		);
+	});
+
+	it('offers editing only for the devices the user may manage, but still lists every report', async () => {
+		getHistory().mockResolvedValue([entry(), entry({ id: 'h-2', devEui: 'DEV-B' })]);
+		render(['DEV-B']);
+		openHistory();
+		await vi.waitFor(() => expect(groups()).toHaveLength(2));
+
+		expect(editButton('DEV-A', 0)).toBeNull();
+		expect(editButton('DEV-B', 0)).not.toBeNull();
+		expect(downloadButton('DEV-A', 0)).not.toBeNull();
 	});
 
 	it('cannot edit a report past the editing window, and says why', async () => {

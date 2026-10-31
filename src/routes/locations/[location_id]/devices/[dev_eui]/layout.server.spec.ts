@@ -47,7 +47,8 @@ const noDevice = (authToken: string | null, devEui = 'DEV-1', locationId = '8') 
 	locationId,
 	device: null,
 	dataTable: null,
-	permissionLevel: PermissionLevel.DISABLED
+	permissionLevel: PermissionLevel.DISABLED,
+	canWriteNotes: false
 });
 
 beforeEach(() => {
@@ -72,7 +73,8 @@ describe('device layout load', () => {
 			locationId: '8',
 			device: DEVICE,
 			dataTable: 'cw_soil_data',
-			permissionLevel: PermissionLevel.MANAGER
+			permissionLevel: PermissionLevel.MANAGER,
+			canWriteNotes: false
 		});
 		expect(locals.services.devices.getDevice).toHaveBeenCalledWith('DEV-1');
 		expect(locals.services.locations.getLocation).toHaveBeenCalledWith(8);
@@ -132,6 +134,20 @@ describe('device layout load', () => {
 		expect(console.error).toHaveBeenCalledWith('[layout] Failed to load device DEV-1:', failure);
 	});
 
+	it('offers notes exactly when the API says the caller may write them', async () => {
+		const locals = testLocals();
+		locals.services.locations.getLocation.mockResolvedValue(location([owner(TEST_USER_ID, 4)]));
+
+		for (const [flag, canWriteNotes] of [
+			[true, true],
+			[false, false],
+			[undefined, false]
+		] as const) {
+			locals.services.devices.getDevice.mockResolvedValue({ ...DEVICE, can_write_notes: flag });
+			await expect(run(locals)).resolves.toMatchObject({ canWriteNotes });
+		}
+	});
+
 	it('shows a device without a device type, with the generic display', async () => {
 		const untyped = { dev_eui: 'DEV-1', name: 'Mystery probe' } as DeviceDto;
 		const locals = testLocals();
@@ -144,7 +160,8 @@ describe('device layout load', () => {
 			locationId: '8',
 			device: untyped,
 			dataTable: null,
-			permissionLevel: PermissionLevel.MANAGER
+			permissionLevel: PermissionLevel.MANAGER,
+			canWriteNotes: false
 		});
 		// A device type without a data table is treated the same way.
 		locals.services.devices.getDevice.mockResolvedValue({

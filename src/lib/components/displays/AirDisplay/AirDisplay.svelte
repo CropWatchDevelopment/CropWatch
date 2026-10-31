@@ -39,7 +39,7 @@
 	const HEATMAP_FALLBACK_DAYS = 1;
 	const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
-	let { latestData, historicalData, loading, devEui }: DeviceDisplayProps = $props();
+	let { latestData, historicalData, loading, devEui, canWriteNotes }: DeviceDisplayProps = $props();
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
 	let tableRevision = $state(0);
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
@@ -425,11 +425,13 @@
 						</div>
 					{/snippet}
 					{#snippet rowActions(row: AirRow)}
-						<NotesCreateDialog
-							{row}
-							dev_eui={row.dev_eui || devEui}
-							onSaved={(note) => handleNoteSaved(row, note)}
-						/>
+						{#if canWriteNotes}
+							<NotesCreateDialog
+								{row}
+								dev_eui={row.dev_eui || devEui}
+								onSaved={(note) => handleNoteSaved(row, note)}
+							/>
+						{/if}
 						{#if row.cw_air_annotations && row.cw_air_annotations.length > 0}
 							<NotesViewDialog {row} />
 						{/if}
