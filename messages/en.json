@@ -792,6 +792,8 @@
 	"dashboard_column_temperature": "Temperature (°C)",
 	"dashboard_loading_more_locations_hint": "Loading 10 more locations when you reach the fifth remaining card.",
 	"dashboard_no_alerts_alt": "No alerts",
+	"display_alert_alt": "Alert: {rules}",
+	"display_alert_deleted_rule": "Deleted rule",
 	"dashboard_no_data_yet": "No data yet",
 	"dashboard_no_matching_locations_body": "Adjust the dashboard filters or clear them to load more locations.",
 	"dashboard_no_matching_locations_title": "No devices match these filters",

@@ -29,6 +29,7 @@
 	import NotesViewDialog from './dialogs/notes-view-dialog.svelte';
 	import { parseAirNotesResponse } from './utils/air-notes';
 	import Icon from '$lib/components/Icon.svelte';
+	import ALERT_ICON from '$lib/images/icons/error.svg';
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
@@ -417,7 +418,15 @@
 								{formatSensorMeasurement('co2', row.co2, app.preferences).display}
 							{:else if col.key === 'alerts'}
 								{#if row.alerts && row.alerts.length > 0}
-									❌
+									{@const rules = row.alerts
+										.map((alert) => alert.rule_name ?? m.display_alert_deleted_rule())
+										.join(', ')}
+									<Icon
+										src={ALERT_ICON}
+										alt={m.display_alert_alt({ rules })}
+										title={rules}
+										class="air-alert-icon"
+									/>
 								{:else}
 									<Icon src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} preserveColor />
 								{/if}
@@ -447,6 +456,10 @@
 </div>
 
 <style>
+	:global(.air-alert-icon) {
+		color: var(--cw-danger-400);
+	}
+
 	/* Heatmap with the wind compass beside it. Mobile: stacked vertically.
 	   Tablet/desktop (≥48rem) when wind data exists: side by side. */
 	.air-wind-row {
