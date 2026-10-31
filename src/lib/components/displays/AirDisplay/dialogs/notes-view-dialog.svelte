@@ -3,6 +3,7 @@
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
 	import type { Note } from '../interfaces/note.interface';
+	import { noteAuthor } from '../utils/air-notes';
 	import EYE_ICON from '$lib/images/icons/eye.svg';
 	import { formatDateTime } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
@@ -12,7 +13,7 @@
 
 	function getNoteMeta(note: Note): string {
 		const timestamp = formatDateTime(note.created_at);
-		const author = note.created_by.trim();
+		const author = noteAuthor(note);
 		return author ? `${timestamp} - ${author}` : timestamp;
 	}
 </script>

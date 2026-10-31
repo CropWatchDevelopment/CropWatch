@@ -150,6 +150,12 @@ describe('invite page', () => {
 		]);
 	});
 
+	it('says CropWatch support sent an invitation from staff, without naming them', () => {
+		render({ preview: { ...PREVIEW, invited_by: null, invited_by_staff: true } });
+
+		expect(details()).toContainEqual([m.invite_invited_by(), m.common_staff_author()]);
+	});
+
 	it.each([
 		['missing', null],
 		['already accepted', { ...PREVIEW, status: 'accepted' }],

@@ -1,3 +1,4 @@
+import { m } from '$lib/paraglide/messages.js';
 import type { Note } from '../interfaces/note.interface';
 
 type NotesEnvelope = {
@@ -9,7 +10,8 @@ type NotesEnvelope = {
 type RawAirNote = {
 	id?: string | number;
 	created_at?: string;
-	created_by?: string;
+	created_by?: string | null;
+	created_by_staff?: boolean;
 	title?: string;
 	note?: string;
 	include_in_report?: boolean | string;
@@ -42,6 +44,7 @@ export function parseAirNotesResponse(payload: unknown): Note[] {
 			id: String(note.id ?? fallbackId),
 			created_at: typeof note.created_at === 'string' ? note.created_at : '',
 			created_by: typeof note.created_by === 'string' ? note.created_by : '',
+			createdByStaff: note.created_by_staff === true,
 			title: typeof note.title === 'string' ? note.title : '',
 			note: typeof note.note === 'string' ? note.note : '',
 			includeInReport:
@@ -51,4 +54,9 @@ export function parseAirNotesResponse(payload: unknown): Note[] {
 				note.includeInReport === 'true'
 		};
 	});
+}
+
+/** Who wrote a note as the viewer may see it: customers see staff as CropWatch support. */
+export function noteAuthor(note: Note): string {
+	return note.created_by.trim() || (note.createdByStaff ? m.common_staff_author() : '');
 }

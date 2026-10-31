@@ -91,6 +91,15 @@ describe('NotesViewDialog', () => {
 		expect(second.textContent).toContain(m.display_note_report_excluded());
 	});
 
+	it('names a note by CropWatch staff as CropWatch support', () => {
+		render([note({ created_by: '', createdByStaff: true })]);
+		openDialog();
+
+		expect(articles()[0].querySelector('.notes-view-dialog__meta')?.textContent).toBe(
+			`${formatDateTime('2026-10-21T03:05:00.000Z')} - ${m.common_staff_author()}`
+		);
+	});
+
 	it('shows no notes for a reading without any', () => {
 		render(null);
 		openDialog();
