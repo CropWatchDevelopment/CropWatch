@@ -66,6 +66,11 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	if (!assignment) {
 		error(404, m.reports_new_report_template_not_found());
 	}
+	// Saving writes notes and queues a regeneration: the API allows both only
+	// to someone who may manage the device.
+	if (assignment.canManage !== true) {
+		error(403, m.reports_new_edit_data_forbidden());
+	}
 
 	// Notes only exist for air devices (cw_air_annotations); every other device
 	// type has nothing to edit here.

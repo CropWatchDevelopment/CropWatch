@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseAirNotesResponse } from './air-notes';
+import { m } from '$lib/paraglide/messages.js';
+import { noteAuthor, parseAirNotesResponse } from './air-notes';
 
 /** An API note without its report flag. */
 const BASE = {
@@ -15,6 +16,7 @@ const NOTE = {
 	id: '42',
 	created_at: '2026-10-21T03:00:00.000Z',
 	created_by: 'Kevin',
+	createdByStaff: false,
 	title: 'Irrigation',
 	note: 'Watered the beds',
 	includeInReport: true
@@ -72,6 +74,20 @@ describe('parseAirNotesResponse', () => {
 		).toEqual([true, true, true, true, false, false, false, false]);
 	});
 
+	it('marks a note CropWatch staff wrote (the API leaves its author empty for customers)', () => {
+		const [staffNote, staffAuthorShown] = parseAirNotesResponse([
+			{ ...RAW_NOTE, created_by: null, created_by_staff: true },
+			{ ...RAW_NOTE, created_by: 'kevin@cropwatch.io', created_by_staff: true }
+		]);
+
+		expect(staffNote).toEqual({ ...NOTE, created_by: '', createdByStaff: true });
+		expect(staffAuthorShown).toEqual({
+			...NOTE,
+			created_by: 'kevin@cropwatch.io',
+			createdByStaff: true
+		});
+	});
+
 	it('fills in missing or malformed fields', () => {
 		const [fromText, fromIndex, empty] = parseAirNotesResponse([
 			{ created_at: '2026-10-21T03:00:00.000Z', note: 'Vent opened' },
@@ -84,6 +100,7 @@ describe('parseAirNotesResponse', () => {
 			id: '2026-10-21T03:00:00.000Z-Vent opened',
 			created_at: '2026-10-21T03:00:00.000Z',
 			created_by: '',
+			createdByStaff: false,
 			title: '',
 			note: 'Vent opened',
 			includeInReport: false
@@ -92,6 +109,7 @@ describe('parseAirNotesResponse', () => {
 			id: 'note-1',
 			created_at: '',
 			created_by: '',
+			createdByStaff: false,
 			title: '',
 			note: '   ',
 			includeInReport: false
@@ -100,9 +118,27 @@ describe('parseAirNotesResponse', () => {
 			id: 'note-2',
 			created_at: '',
 			created_by: '',
+			createdByStaff: false,
 			title: '',
 			note: '',
 			includeInReport: false
 		});
+	});
+});
+
+describe('noteAuthor', () => {
+	it('names the author the API sent', () => {
+		expect(noteAuthor({ ...NOTE, created_by: '  Kevin  ' })).toBe('Kevin');
+	});
+
+	it('calls an unnamed staff author CropWatch support', () => {
+		expect(noteAuthor({ ...NOTE, created_by: '', createdByStaff: true })).toBe(
+			m.common_staff_author()
+		);
+	});
+
+	it('is empty without an author', () => {
+		expect(noteAuthor({ ...NOTE, created_by: ' ', createdByStaff: false })).toBe('');
+		expect(noteAuthor({ ...NOTE, created_by: '', createdByStaff: undefined })).toBe('');
 	});
 });

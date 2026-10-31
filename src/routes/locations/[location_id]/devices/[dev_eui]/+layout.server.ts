@@ -22,7 +22,8 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			locationId: location_id ?? '',
 			device: null,
 			dataTable: null as string | null,
-			permissionLevel: PermissionLevel.DISABLED
+			permissionLevel: PermissionLevel.DISABLED,
+			canWriteNotes: false
 		};
 	}
 
@@ -53,7 +54,9 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			locationId: location_id,
 			device,
 			dataTable: deviceDataTable,
-			permissionLevel
+			permissionLevel,
+			// The API's own NoteWrite decision (owner, org role, staff, grant).
+			canWriteNotes: device.can_write_notes === true
 		};
 	} catch (err) {
 		console.error(`[layout] Failed to load device ${dev_eui}:`, err);
@@ -63,7 +66,8 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			locationId: location_id,
 			device: null,
 			dataTable: null as string | null,
-			permissionLevel: PermissionLevel.DISABLED
+			permissionLevel: PermissionLevel.DISABLED,
+			canWriteNotes: false
 		};
 	}
 };

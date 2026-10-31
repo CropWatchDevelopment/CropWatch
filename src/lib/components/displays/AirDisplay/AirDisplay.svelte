@@ -29,6 +29,7 @@
 	import NotesViewDialog from './dialogs/notes-view-dialog.svelte';
 	import { parseAirNotesResponse } from './utils/air-notes';
 	import Icon from '$lib/components/Icon.svelte';
+	import ALERT_ICON from '$lib/images/icons/error.svg';
 	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
@@ -39,7 +40,7 @@
 	const HEATMAP_FALLBACK_DAYS = 1;
 	const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
-	let { latestData, historicalData, loading, devEui }: DeviceDisplayProps = $props();
+	let { latestData, historicalData, loading, devEui, canWriteNotes }: DeviceDisplayProps = $props();
 	let noteOverridesByDevice = $state<Record<string, Record<string, Note[]>>>({});
 	let tableRevision = $state(0);
 	let noteOverrides = $derived(noteOverridesByDevice[devEui] ?? {});
@@ -417,7 +418,15 @@
 								{formatSensorMeasurement('co2', row.co2, app.preferences).display}
 							{:else if col.key === 'alerts'}
 								{#if row.alerts && row.alerts.length > 0}
-									❌
+									{@const rules = row.alerts
+										.map((alert) => alert.rule_name ?? m.display_alert_deleted_rule())
+										.join(', ')}
+									<Icon
+										src={ALERT_ICON}
+										alt={m.display_alert_alt({ rules })}
+										title={rules}
+										class="air-alert-icon"
+									/>
 								{:else}
 									<Icon src={CHECK_CIRCLE_ICON} alt={m.dashboard_no_alerts_alt()} preserveColor />
 								{/if}
@@ -425,11 +434,13 @@
 						</div>
 					{/snippet}
 					{#snippet rowActions(row: AirRow)}
-						<NotesCreateDialog
-							{row}
-							dev_eui={row.dev_eui || devEui}
-							onSaved={(note) => handleNoteSaved(row, note)}
-						/>
+						{#if canWriteNotes}
+							<NotesCreateDialog
+								{row}
+								dev_eui={row.dev_eui || devEui}
+								onSaved={(note) => handleNoteSaved(row, note)}
+							/>
+						{/if}
 						{#if row.cw_air_annotations && row.cw_air_annotations.length > 0}
 							<NotesViewDialog {row} />
 						{/if}
@@ -445,6 +456,10 @@
 </div>
 
 <style>
+	:global(.air-alert-icon) {
+		color: var(--cw-danger-400);
+	}
+
 	/* Heatmap with the wind compass beside it. Mobile: stacked vertically.
 	   Tablet/desktop (≥48rem) when wind data exists: side by side. */
 	.air-wind-row {

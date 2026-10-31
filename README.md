@@ -1,6 +1,7 @@
 # CropWatch
 
 ## Code Cleanliness
+
 [![Maintainability](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/maintainability.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
 
 [![Code Coverage](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/coverage.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
@@ -8,6 +9,7 @@
 [![CI](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml)
 
 ## Code Security
+
 [![Security](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)
 
 [![Vulnerabilities](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FCropWatchDevelopment%2FCropWatch%2Fbadges%2Fsnyk.json&logo=snyk)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)

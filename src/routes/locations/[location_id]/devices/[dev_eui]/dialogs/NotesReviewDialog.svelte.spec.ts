@@ -133,6 +133,25 @@ describe('notes review dialog', () => {
 		expect(text()).toContain(m.display_note_no_search_results());
 	});
 
+	it('shows and finds a note by CropWatch staff as CropWatch support', async () => {
+		// For customers the API sends no author for a staff note, only the flag.
+		getNotes().mockResolvedValue({
+			data: [note(1, 5, 9), note(2, 6, 9, { created_by: null, created_by_staff: true })]
+		});
+		render();
+		open();
+		await vi.waitFor(() => expect(noteTitles()).toHaveLength(2));
+
+		const staffMeta = document.querySelectorAll('.notes-review-dialog__note-meta')[1];
+		expect(staffMeta.textContent).toBe(
+			`${formatDateTime(note(2, 6, 9).created_at, { hour: 'numeric', minute: '2-digit' })} - ${m.common_staff_author()}`
+		);
+		expect(text()).not.toContain('cropwatch.io');
+
+		search(m.common_staff_author().toLowerCase());
+		expect(noteTitles()).toEqual(['Note 2']);
+	});
+
 	it('can show every date of the month, including the ones without notes', async () => {
 		getNotes().mockResolvedValue({ items: [note(1, 5, 9)] });
 		render();

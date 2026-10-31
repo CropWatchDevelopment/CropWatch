@@ -178,6 +178,7 @@
 					historicalData={dashboard.displayHistoricalData}
 					loading={childLoading}
 					permissionLevel={dashboard.permissionLevel}
+					canWriteNotes={data.canWriteNotes}
 					pendingRelayStates={dashboard.relayStateSnapshot.pendingRelayStates}
 					relayHistory={dashboard.relayHistory ?? []}
 					queueRelayCommand={dashboard.queueRelayCommand}

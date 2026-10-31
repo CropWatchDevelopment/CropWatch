@@ -200,7 +200,13 @@
 						>
 							<Icon src={EDIT_ICON} alt={m.action_edit()} />
 						</CwButton>
-						<ViewReportHistoryDialog templateId={row.id} reportName={row.name} />
+						<ViewReportHistoryDialog
+							templateId={row.id}
+							reportName={row.name}
+							editableDevEuis={row.assignments
+								.filter((assignment) => assignment.canManage)
+								.map((assignment) => assignment.devEui)}
+						/>
 						<DeleteReportTemplateDialog
 							templateId={row.id}
 							reportName={row.name}

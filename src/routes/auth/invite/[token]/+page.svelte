@@ -55,10 +55,10 @@
 					<dt>{m.invite_email_label()}</dt>
 					<dd>{data.preview.masked_email}</dd>
 				</div>
-				{#if data.preview.invited_by}
+				{#if data.preview.invited_by || data.preview.invited_by_staff}
 					<div class="invite-details__row">
 						<dt>{m.invite_invited_by()}</dt>
-						<dd>{data.preview.invited_by}</dd>
+						<dd>{data.preview.invited_by ?? m.common_staff_author()}</dd>
 					</div>
 				{/if}
 				<div class="invite-details__row">

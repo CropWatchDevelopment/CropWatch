@@ -21,8 +21,7 @@
 		<ul class="notes">
 			{#each notes as note (note.id)}
 				{@const place = note.locationName ?? note.deviceName}
-				{@const author =
-					note.author ?? (note.authorIsStaff ? m.overview_note_staff_author() : null)}
+				{@const author = note.author ?? (note.authorIsStaff ? m.common_staff_author() : null)}
 				<li class="note">
 					<p class="note__text">
 						<strong class="note__title">{note.title}</strong>{#if note.note}<span class="note__body"

@@ -77,7 +77,7 @@ describe('NotesCard', () => {
 				title: 'Irrigation',
 				body: 'Valve replaced',
 				chip: 'Soil probe',
-				by: `${m.overview_note_staff_author()} · ${ago}`
+				by: `${m.common_staff_author()} · ${ago}`
 			},
 			{ title: 'Irrigation', body: null, chip: null, by: ago },
 			{ title: 'Irrigation', body: 'Valve replaced', chip: 'Field A', by: 'Ada' }
