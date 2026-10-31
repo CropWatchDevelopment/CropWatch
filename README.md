@@ -1,49 +1,20 @@
 # CropWatch
 
-[![CI](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml)
-[![Security](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)
-[![Vulnerabilities](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FCropWatchDevelopment%2FCropWatch%2Fbadges%2Fsnyk.json&logo=snyk)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)
-[![Snyk security](https://snyk.io/test/github/CropWatchDevelopment/CropWatch/badge.svg)](https://snyk.io/test/github/CropWatchDevelopment/CropWatch)
+## Code Cleanliness
+
 [![Maintainability](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/maintainability.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+[![Code Coverage](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch/coverage.svg)](https://qlty.sh/gh/CropWatchDevelopment/projects/CropWatch)
 
-## Creating a project
+[![CI](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/ci.yml)
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Code Security
 
-```sh
-# create a new project
-npx sv create my-app
-```
+[![Security](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml/badge.svg)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)
 
-To recreate this project with the same configuration:
+[![Vulnerabilities](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FCropWatchDevelopment%2FCropWatch%2Fbadges%2Fsnyk.json&logo=snyk)](https://github.com/CropWatchDevelopment/CropWatch/actions/workflows/security.yml)
 
-```sh
-# recreate this project
-pnpm dlx sv create --template demo --types ts --add prettier eslint vitest="usages:unit,component" playwright tailwindcss="plugins:typography,forms" sveltekit-adapter="adapter:vercel" devtools-json mcp="ide:vscode+setup:remote" --install pnpm CropWatch
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
+[![Snyk security](https://snyk.io/test/github/CropWatchDevelopment/CropWatch/badge.svg)](https://snyk.io/test/github/CropWatchDevelopment/CropWatch)
 
 # Environments
 
