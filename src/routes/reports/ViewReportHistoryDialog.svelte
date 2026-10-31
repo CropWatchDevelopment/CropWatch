@@ -16,9 +16,11 @@
 	interface Props {
 		templateId: number;
 		reportName: string;
+		/** Devices whose report notes the user may edit (the API requires managing the device). */
+		editableDevEuis?: string[];
 	}
 
-	let { templateId, reportName }: Props = $props();
+	let { templateId, reportName, editableDevEuis = [] }: Props = $props();
 
 	const { reports } = getServices();
 	const toast = useCwToast();
@@ -187,21 +189,23 @@
 								<div class="report-history__item-actions">
 									<!-- Deliberately NOT disabled while a download is in flight — only
 									     period parsability / the retention cutoff gate editing. -->
-									<CwButton
-										id={`report-history-${templateId}-${group.devEui}-${itemIndex}-edit-button`}
-										variant="secondary"
-										size="sm"
-										disabled={!editable}
-										title={period !== null && !editable
-											? m.reports_new_edit_data_too_old()
-											: undefined}
-										onclick={() => {
-											if (period) handleEdit(group.devEui, item.name, period.start, period.end);
-										}}
-									>
-										<Icon src={EDIT_ICON} alt={m.action_edit()} />
-										{m.action_edit()}
-									</CwButton>
+									{#if editableDevEuis.includes(group.devEui)}
+										<CwButton
+											id={`report-history-${templateId}-${group.devEui}-${itemIndex}-edit-button`}
+											variant="secondary"
+											size="sm"
+											disabled={!editable}
+											title={period !== null && !editable
+												? m.reports_new_edit_data_too_old()
+												: undefined}
+											onclick={() => {
+												if (period) handleEdit(group.devEui, item.name, period.start, period.end);
+											}}
+										>
+											<Icon src={EDIT_ICON} alt={m.action_edit()} />
+											{m.action_edit()}
+										</CwButton>
+									{/if}
 									<CwButton
 										id={`report-history-${templateId}-${group.devEui}-${itemIndex}-download-button`}
 										variant="secondary"

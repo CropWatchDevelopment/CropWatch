@@ -604,11 +604,14 @@ describe('DashboardCards details', () => {
 		);
 	});
 
-	it('offers a note for today on air sensors', async () => {
+	it('offers a note for today on air sensors the user may write notes on', async () => {
 		getLocations().mockResolvedValue(
 			locationsPage([
 				group('loc-8', [
-					row({ device_type: { ...row().device_type, data_table_v2: 'cw_air_data' } })
+					row({
+						device_type: { ...row().device_type, data_table_v2: 'cw_air_data' },
+						can_write_notes: true
+					})
 				])
 			])
 		);
@@ -621,6 +624,33 @@ describe('DashboardCards details', () => {
 		await expect
 			.poll(() => sensorNamed('Greenhouse probe')?.textContent)
 			.toContain(m.display_add_note_today_title());
+	});
+
+	it.each([
+		['the API refuses them (a Viewer)', false],
+		['the API does not say (an older API)', undefined]
+	])('offers no note for today when %s', async (_label, can_write_notes) => {
+		getLocations().mockResolvedValue(
+			locationsPage([
+				group('loc-8', [
+					row({
+						device_type: { ...row().device_type, data_table_v2: 'cw_air_data' },
+						can_write_notes
+					})
+				])
+			])
+		);
+		getLatest().mockResolvedValue({ created_at: ago(MINUTE), temperature_c: 20 });
+		render();
+		await expect.poll(() => sensorNamed('Greenhouse probe')).not.toBeNull();
+
+		expand(sensorNamed('Greenhouse probe'));
+
+		await expect.poll(() => detailRows(sensorNamed('Greenhouse probe')).length).toBeGreaterThan(0);
+		expect(sensorNamed('Greenhouse probe')?.textContent).toContain(m.common_details());
+		expect(sensorNamed('Greenhouse probe')?.textContent).not.toContain(
+			m.display_add_note_today_title()
+		);
 	});
 
 	it('logs a failed lookup and tries again the next time the card opens', async () => {

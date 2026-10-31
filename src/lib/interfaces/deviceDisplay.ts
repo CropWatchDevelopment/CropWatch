@@ -34,6 +34,9 @@ export interface DeviceDisplayProps {
 	/** Effective permission level for the current user on this device. */
 	permissionLevel: number;
 
+	/** Whether the API lets the current user add notes to this device. */
+	canWriteNotes?: boolean;
+
 	/** State changes and commands for the selected range, newest first. Relay-only. */
 	relayHistory?: RelayHistoryEntryDto[];
 

@@ -182,6 +182,8 @@ export interface DeviceDto extends CwDevice {
 	cw_device_type: DeviceTypeDto;
 	cw_locations?: Record<string, unknown> | Array<Record<string, unknown>>;
 	cw_device_owners?: DeviceOwnerDto[];
+	/** The caller may add, edit and delete notes on this device (User level or above). */
+	can_write_notes?: boolean;
 	/** Device licenses attached to this device (empty array = unlicensed). */
 	device_licenses?: { id: number }[];
 }
@@ -338,6 +340,8 @@ export interface DashboardRow {
 	device_type: DashboardDeviceType;
 	location: DashboardLocation | null;
 	latest: DashboardLatest | null;
+	/** The caller may add notes to this device (User level or above). */
+	can_write_notes?: boolean;
 }
 
 export interface DashboardPage {
@@ -751,6 +755,8 @@ export interface ReportTemplateAssignmentDto {
 	deviceName: string | null;
 	locationName: string | null;
 	permissionLevel: number | null;
+	/** The caller may manage this device: edit the report's notes and regenerate it. */
+	canManage?: boolean;
 }
 
 export interface ReportTemplateScheduleDto {
