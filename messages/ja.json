@@ -792,6 +792,8 @@
 	"dashboard_column_temperature": "温度 (°C)",
 	"dashboard_loading_more_locations_hint": "残り 5 枚のカードに達すると、さらに 10 件のロケーションを読み込みます。",
 	"dashboard_no_alerts_alt": "アラートなし",
+	"display_alert_alt": "アラート: {rules}",
+	"display_alert_deleted_rule": "削除されたルール",
 	"dashboard_no_data_yet": "データはまだありません",
 	"dashboard_column_primary": "プライマリ",
 	"dashboard_column_secondary": "セカンダリ",

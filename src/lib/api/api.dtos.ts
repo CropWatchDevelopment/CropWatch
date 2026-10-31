@@ -329,6 +329,15 @@ export interface DashboardLatest {
 	secondary: number | string | boolean | null;
 }
 
+/** A rule alarm a device was in at one of its readings (`alerts` on device data rows). */
+export interface ReadingAlertDto {
+	template_id: number;
+	/** null when the rule has since been deleted. */
+	rule_name: string | null;
+	triggered_at: string;
+	reset_at: string | null;
+}
+
 export interface DashboardRow {
 	dev_eui: string;
 	name: string;

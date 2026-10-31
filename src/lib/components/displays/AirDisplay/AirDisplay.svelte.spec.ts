@@ -35,7 +35,15 @@ const HISTORY: Record<string, unknown>[] = [
 		temperature_c: 21,
 		humidity: 58,
 		co2: 640,
-		alerts: [{ id: 5, name: 'Too humid' }],
+		// As the API attaches it: the alarms the device was in at this reading.
+		alerts: [
+			{
+				template_id: 5,
+				rule_name: 'Too humid',
+				triggered_at: '2026-10-21T01:59:40.000Z',
+				reset_at: null
+			}
+		],
 		cw_air_annotations: [
 			{
 				id: 7,
@@ -313,7 +321,7 @@ describe('AirDisplay telemetry table', () => {
 				formatSensorMeasurement('temperature_c', 21).display,
 				formatSensorMeasurement('humidity', 58).display,
 				formatSensorMeasurement('co2', 640).display,
-				'❌'
+				''
 			],
 			[
 				new Date(OLDEST).toLocaleString(),
@@ -326,6 +334,12 @@ describe('AirDisplay telemetry table', () => {
 		const [newest, middle, oldest] = tableRows();
 		expect(newest.querySelector(`img[alt="${m.dashboard_no_alerts_alt()}"]`)).not.toBeNull();
 		expect(middle.querySelector(`img[alt="${m.dashboard_no_alerts_alt()}"]`)).toBeNull();
+		// The alerting reading shows the alert icon, naming the rule on hover.
+		const alertIcon = middle.querySelector('.air-alert-icon');
+		expect(alertIcon?.getAttribute('aria-label')).toBe(m.display_alert_alt({ rules: 'Too humid' }));
+		expect(alertIcon?.getAttribute('title')).toBe('Too humid');
+		expect(newest.querySelector('.air-alert-icon')).toBeNull();
+		expect(oldest.querySelector('.air-alert-icon')).toBeNull();
 		// Every reading can take a note; only the annotated one can show its notes.
 		for (const row of [newest, middle, oldest]) {
 			expect(iconButton(row, m.display_add_note())).not.toBeNull();
@@ -347,6 +361,33 @@ describe('AirDisplay telemetry table', () => {
 			expect(iconButton(middle, m.display_view_notes())).not.toBeNull();
 			view?.unmount();
 			view = null;
+		}
+	});
+
+	it('marks every reading inside an alarm, naming each rule (a deleted one too)', async () => {
+		const alarm = (template_id: number, rule_name: string | null) => ({
+			template_id,
+			rule_name,
+			triggered_at: OLDEST,
+			reset_at: NEWEST
+		});
+		render({
+			historicalData: [
+				{ ...HISTORY[0], alerts: [alarm(5, 'Too humid')] },
+				{ ...HISTORY[1], alerts: [alarm(5, 'Too humid'), alarm(9, null)] },
+				{ ...HISTORY[2], alerts: [alarm(5, 'Too humid')] }
+			]
+		});
+
+		await expect.poll(() => tableRows().length).toBe(3);
+		const icons = tableRows().map((row) => row.querySelector('.air-alert-icon'));
+		expect(icons.map((icon) => icon?.getAttribute('title'))).toEqual([
+			'Too humid',
+			`Too humid, ${m.display_alert_deleted_rule()}`,
+			'Too humid'
+		]);
+		for (const row of tableRows()) {
+			expect(row.querySelector(`img[alt="${m.dashboard_no_alerts_alt()}"]`)).toBeNull();
 		}
 	});
 
