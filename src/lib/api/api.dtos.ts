@@ -1220,7 +1220,9 @@ export interface InvitePreviewDto {
 	role: string;
 	status: string;
 	masked_email: string;
+	/** null when a CropWatch staff member sent it (see invited_by_staff). */
 	invited_by: string | null;
+	invited_by_staff?: boolean;
 	expires_at: string;
 }
 

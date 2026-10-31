@@ -21,7 +21,10 @@
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { getServices } from '$lib/services/context';
 	import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
-	import { parseAirNotesResponse } from '$lib/components/displays/AirDisplay/utils/air-notes';
+	import {
+		noteAuthor,
+		parseAirNotesResponse
+	} from '$lib/components/displays/AirDisplay/utils/air-notes';
 
 	interface Props {
 		devEui: string;
@@ -140,14 +143,14 @@
 		return (
 			entry.title.toLowerCase().includes(query) ||
 			entry.note.toLowerCase().includes(query) ||
-			entry.created_by.toLowerCase().includes(query) ||
+			noteAuthor(entry).toLowerCase().includes(query) ||
 			formatDateTime(entry.created_at).toLowerCase().includes(query)
 		);
 	}
 
 	function getNoteMeta(entry: Note): string {
 		const timestamp = formatDateTime(entry.created_at, { hour: 'numeric', minute: '2-digit' });
-		const author = entry.created_by.trim();
+		const author = noteAuthor(entry);
 		return author ? `${timestamp} - ${author}` : timestamp;
 	}
 
