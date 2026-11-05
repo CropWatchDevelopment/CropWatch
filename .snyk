@@ -118,6 +118,15 @@ ignore:
           still lists only 3.0.0 as fixed; drop this once it records 2.70.4.
         expires: 2027-01-14T00:00:00.000Z
         created: 2026-11-05T14:58:20.000Z
+  SNYK-JS-GLOB-22112102:
+    - '@sveltejs/adapter-vercel > *':
+        reason: >-
+          Only glob 14.0.2 is fixed, a breaking major that @vercel/nft
+          (13.x) doesn't take. Build-only: adapter-vercel's file tracer globs
+          our own build output, and the flaw needs a caller that cancels a walk
+          with an AbortSignal; nft passes none, so the abort path never runs.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T17:28:56.000Z
 patch: {}
 # Snyk Code skips test code: the e2e harness talks to a local mock server with
 # a fake login and fake reCAPTCHA keys (capture-pwa-screenshots.mjs signs in
