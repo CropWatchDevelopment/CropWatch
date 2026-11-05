@@ -265,7 +265,11 @@ describe('overview page', () => {
 
 describe('overview page health summary', () => {
 	it('is mostly healthy with items to look at when at least 90 % are online', () => {
-		render(overview());
+		// One fixture for both the render and the expectation: each overview()
+		// call stamps lastDataAt from Date.now(), so a second call can land on
+		// the other side of a second boundary ("39 秒前" vs "40 秒前").
+		const data = overview();
+		render(data);
 
 		expect(health()).toEqual({
 			title: m.overview_health_mostly_title_other({ count: 3 }),
@@ -277,7 +281,7 @@ describe('overview page health summary', () => {
 				m.overview_health_alerts_other({ count: 2 }),
 				m.overview_health_gateways_offline_one(),
 				m.overview_health_last_data({
-					when: formatRelative(overview().devices.lastDataAt, reactiveNow.value, LOCALE) ?? ''
+					when: formatRelative(data.devices.lastDataAt, reactiveNow.value, LOCALE) ?? ''
 				})
 			]
 		});
