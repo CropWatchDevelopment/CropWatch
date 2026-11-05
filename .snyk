@@ -24,12 +24,108 @@ ignore:
           own config, never user input. Not in the production dependency tree.
         expires: 2027-01-14T00:00:00.000Z
         created: 2026-10-14T04:18:54.246Z
+  SNYK-JS-MINIMATCH-22111072:
+    - '@eslint/compat > *':
+        reason: >-
+          No fix short of minimatch 11, which none of these tools
+          accept. Dev/build-only: ESLint, typescript-eslint and
+          adapter-vercel's file tracer match our own config and repo
+          globs, never user input. Not in the production bundle.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:56:33.000Z
+    - '@sveltejs/adapter-vercel > *':
+        reason: >-
+          No fix short of minimatch 11, which none of these tools
+          accept. Dev/build-only: ESLint, typescript-eslint and
+          adapter-vercel's file tracer match our own config and repo
+          globs, never user input. Not in the production bundle.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:56:33.000Z
+    - eslint > *:
+        reason: >-
+          No fix short of minimatch 11, which none of these tools
+          accept. Dev/build-only: ESLint, typescript-eslint and
+          adapter-vercel's file tracer match our own config and repo
+          globs, never user input. Not in the production bundle.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:56:33.000Z
+    - eslint-config-prettier > *:
+        reason: >-
+          No fix short of minimatch 11, which none of these tools
+          accept. Dev/build-only: ESLint, typescript-eslint and
+          adapter-vercel's file tracer match our own config and repo
+          globs, never user input. Not in the production bundle.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:56:33.000Z
+    - eslint-plugin-svelte > *:
+        reason: >-
+          No fix short of minimatch 11, which none of these tools
+          accept. Dev/build-only: ESLint, typescript-eslint and
+          adapter-vercel's file tracer match our own config and repo
+          globs, never user input. Not in the production bundle.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:56:33.000Z
+    - typescript-eslint > *:
+        reason: >-
+          No fix short of minimatch 11, which none of these tools
+          accept. Dev/build-only: ESLint, typescript-eslint and
+          adapter-vercel's file tracer match our own config and repo
+          globs, never user input. Not in the production bundle.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:56:33.000Z
+  SNYK-JS-SVELTEJSKIT-21347777:
+    - '@sveltejs/kit':
+        reason: >-
+          Fixed in @sveltejs/kit 2.70.4, which we run: the security
+          backport in sveltejs/kit#17620, released 2026-11-05. Snyk
+          still lists only 3.0.0 as fixed; drop this once it records 2.70.4.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:58:20.000Z
+    - '@sveltejs/adapter-vercel > @sveltejs/kit':
+        reason: >-
+          Fixed in @sveltejs/kit 2.70.4, which we run: the security
+          backport in sveltejs/kit#17620, released 2026-11-05. Snyk
+          still lists only 3.0.0 as fixed; drop this once it records 2.70.4.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:58:20.000Z
+  SNYK-JS-SVELTEJSKIT-21347778:
+    - '@sveltejs/kit':
+        reason: >-
+          Fixed in @sveltejs/kit 2.70.4, which we run: the security
+          backport in sveltejs/kit#17620, released 2026-11-05. Snyk
+          still lists only 3.0.0 as fixed; drop this once it records 2.70.4.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:58:20.000Z
+    - '@sveltejs/adapter-vercel > @sveltejs/kit':
+        reason: >-
+          Fixed in @sveltejs/kit 2.70.4, which we run: the security
+          backport in sveltejs/kit#17620, released 2026-11-05. Snyk
+          still lists only 3.0.0 as fixed; drop this once it records 2.70.4.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:58:20.000Z
+  SNYK-JS-SVELTEJSKIT-21347779:
+    - '@sveltejs/kit':
+        reason: >-
+          Fixed in @sveltejs/kit 2.70.4, which we run: the security
+          backport in sveltejs/kit#17620, released 2026-11-05. Snyk
+          still lists only 3.0.0 as fixed; drop this once it records 2.70.4.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:58:20.000Z
+    - '@sveltejs/adapter-vercel > @sveltejs/kit':
+        reason: >-
+          Fixed in @sveltejs/kit 2.70.4, which we run: the security
+          backport in sveltejs/kit#17620, released 2026-11-05. Snyk
+          still lists only 3.0.0 as fixed; drop this once it records 2.70.4.
+        expires: 2027-01-14T00:00:00.000Z
+        created: 2026-11-05T14:58:20.000Z
 patch: {}
 # Snyk Code skips test code: the e2e harness talks to a local mock server with
-# a fake login and fake reCAPTCHA keys, and the specs use placeholder secrets.
+# a fake login and fake reCAPTCHA keys (capture-pwa-screenshots.mjs signs in
+# with the same fake login), and the specs use placeholder secrets.
 # Application code under src/ (outside *.spec.ts) is still scanned.
 exclude:
   global:
     - scripts/e2e-stack.mjs
     - e2e/**
     - '**/*.spec.ts'
+    - scripts/capture-pwa-screenshots.mjs

@@ -29,13 +29,13 @@
 		"@eslint/js": "^9.39.4",
 		"@inlang/paraglide-js": "^2.19.0",
 		"@playwright/test": "^1.61.0",
-		"@sveltejs/adapter-vercel": "^6.3.4",
-		"@sveltejs/kit": "^2.70.3",
+		"@sveltejs/adapter-vercel": "^6.3.5",
+		"@sveltejs/kit": "^2.70.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.3.1",
 		"@types/node": "^22.19.21",
-		"@vitest/browser-playwright": "^4.1.11",
-		"@vitest/coverage-v8": "4.1.11",
+		"@vitest/browser-playwright": "^4.1.12",
+		"@vitest/coverage-v8": "4.1.12",
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.1",
@@ -50,9 +50,9 @@
 		"tailwindcss": "^4.3.1",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.61.1",
-		"vite": "^7.3.5",
+		"vite": "^7.3.7",
 		"vite-plugin-devtools-json": "^1.0.0",
-		"vitest": "^4.1.11"
+		"vitest": "^4.1.12"
 	},
 	"packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd",
 	"pnpm": {
@@ -60,7 +60,7 @@
 			"esbuild@<0.28.1": ">=0.28.1",
 			"cookie@<0.7.0": "^0.7.0",
 			"@grpc/grpc-js@<1.14.5": "1.14.5",
-			"uri-js": "npm:fast-uri@^3.1.8"
+			"uri-js": "npm:fast-uri@^3.1.9"
 		}
 	},
 	"dependencies": {
