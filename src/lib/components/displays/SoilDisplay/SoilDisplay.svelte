@@ -1,9 +1,10 @@
 <!--
   SoilDisplay.svelte — Display component for cw_soil_data.
 
-  Renders KPI cards for soil metrics (temperature, moisture, EC, pH),
-  a sortable data table, and placeholder visualizations for the
-  forthcoming combined sensor (air quality, light/PPFD, and VPD).
+  Renders KPI cards for the soil metrics (temperature, moisture, EC, pH), the
+  air quality, VPD, PPFD and DLI panels for soil boards that also measure the
+  air and light, and a sortable data table. A reading a probe did not report
+  stays empty ("—"), never 0.
 -->
 <script lang="ts">
 	import {
@@ -30,113 +31,115 @@
 		cwDliCardLabels
 	} from '$lib/i18n/cwuiLabels';
 	import { getAppContext } from '$lib/appContext.svelte';
+	import { labelFor } from '$lib/sensor-labels';
 	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
 	import { computeStats } from '$lib/utils/computeStats';
 	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import {
+		dliToday,
+		fieldSeries,
+		latestReading,
+		SOIL_FIELDS,
+		toSoilRows,
+		type LatestReading,
+		type SoilField,
+		type SoilRow
+	} from './soil-readings';
 	import '../display-shared.css';
 
 	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();
 
 	const app = getAppContext();
 
-	// ---- Soil-specific row shape -----------------------------------------------
+	// ---- Derived state ---------------------------------------------------------
 
-	interface SoilRow {
-		id: string;
-		created_at: string;
-		temperature_c: number;
-		moisture: number;
-		ec: number;
-		ph: number;
-	}
+	let rows = $derived(toSoilRows(historicalData));
+	// computeStats and the charts read oldest-first; the history is newest-first.
+	let chronologicalRows = $derived([...rows].reverse());
+	// Newest value of every field, from the latest row or the newest reading
+	// that carries it (a reading can arrive without some of its frames).
+	let latest = $derived(
+		Object.fromEntries(
+			SOIL_FIELDS.map((field) => [field, latestReading(rows, field, latestData)])
+		) as Record<SoilField, LatestReading | null>
+	);
+	// Air and light fields get table columns only on devices that report them.
+	let reportedExtras = $derived(
+		(['co2', 'air_temperature_c', 'air_humidity', 'ppfd'] as const).filter((field) =>
+			rows.some((row) => row[field] !== null)
+		)
+	);
 
-	function toSoilRows(raw: Record<string, unknown>[]): SoilRow[] {
-		return raw.map((row, i) => ({
-			id: String(row.id ?? `${row.created_at}-${i}`),
-			created_at: String(row.created_at ?? ''),
-			temperature_c: Number(row.temperature_c) || 0,
-			moisture: Number(row.moisture) || 0,
-			ec: Number(row.ec) || 0,
-			ph: Number(row.ph) || 0
-		}));
+	// Stats skip readings without the field, and use the display unit.
+	function statsOf(field: 'temperature_c' | 'moisture') {
+		return computeStats(
+			chronologicalRows.flatMap((row) => {
+				const value = row[field];
+				return value === null ? [] : [convertSensorValue(field, value, app.preferences)];
+			})
+		);
 	}
+	let temperatureStats = $derived(statsOf('temperature_c'));
+	let soilMoistureStats = $derived(statsOf('moisture'));
+	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
 
 	// ---- Columns ---------------------------------------------------------------
 
 	let columns = $derived<CwColumnDef<SoilRow>[]>([
 		{ key: 'created_at', header: m.display_timestamp(), sortable: true, width: '13.5rem' },
-		{ key: 'temperature_c', header: m.rule_subject_temperature(), sortable: true, width: '8rem' },
+		{ key: 'temperature_c', header: m.display_soil_temperature(), sortable: true, width: '9rem' },
 		{ key: 'moisture', header: m.rule_subject_soil_moisture(), sortable: true, width: '9rem' },
 		{
 			key: 'ec',
 			header: `EC (${resolveDisplayUnit('ec', app.preferences)})`,
 			sortable: true,
 			width: '9rem'
-		}
+		},
+		...reportedExtras.map((field) => ({
+			key: field,
+			header: labelFor(field).label(),
+			sortable: true,
+			width: '9rem'
+		}))
 	]);
-
-	// ---- Derived state ---------------------------------------------------------
-
-	let rows = $derived(toSoilRows(historicalData));
-
-	// Missing readings stay null so they render as "—" rather than a fake 0.
-	let latest = $derived({
-		temperature_c: latestData?.temperature_c ?? null,
-		moisture: latestData?.moisture ?? null,
-		ec: latestData?.ec ?? null,
-		ph: latestData?.ph ?? null
-	});
-
-	// Stats are computed on converted values so min/avg/max/stdDev are all in the
-	// display unit; the unit label comes from the same resolver. computeStats reads
-	// its input oldest-first (its last value is the latest reading, the trend runs
-	// from the one before), and the history is newest-first.
-	let chronologicalRows = $derived([...rows].reverse());
-	let temperatureStats = $derived(
-		computeStats(
-			chronologicalRows.map((r) =>
-				convertSensorValue('temperature_c', r.temperature_c, app.preferences)
-			)
-		)
-	);
-	let soilMoistureStats = $derived(computeStats(chronologicalRows.map((r) => r.moisture)));
-	let temperatureUnit = $derived(resolveDisplayUnit('temperature_c', app.preferences));
 
 	// Re-key the table when the underlying row set changes so CwDataTable
 	// re-runs loadData for the new date range instead of showing stale rows.
 	let rowSetKey = $derived(
-		`${rows.length}:${rows[0]?.id ?? ''}:${rows[rows.length - 1]?.id ?? ''}`
+		`${rows.length}:${rows[0]?.id ?? ''}:${rows[rows.length - 1]?.id ?? ''}:${reportedExtras.join(',')}`
 	);
 
-	// ---- Forthcoming combined-sensor placeholders ------------------------------
-	// The big soil sensor will also report air CO₂, air temperature, air
-	// humidity, and light (PPFD). These are not wired up yet, so every
-	// visualization renders in its no-data state for now.
+	// ---- Air, VPD and light ----------------------------------------------------
 
-	// Units follow the same resolvers the (future) converted values will use.
 	let airSeries = $derived<CwResponsiveLineSeries[]>([
 		{
 			id: 'co2',
-			label: m.rule_subject_co2(),
+			label: labelFor('co2').label(),
 			unit: resolveDisplayUnit('co2', app.preferences),
 			color: 'var(--cw-primary-500)',
-			data: []
+			data: fieldSeries(chronologicalRows, 'co2', (value) =>
+				convertSensorValue('co2', value, app.preferences)
+			)
 		},
 		{
 			id: 'air_temperature',
-			label: m.rule_subject_temperature(),
-			unit: resolveDisplayUnit('temperature_c', app.preferences),
+			label: labelFor('air_temperature_c').label(),
+			unit: resolveDisplayUnit('air_temperature_c', app.preferences),
 			color: 'var(--cw-danger-500)',
-			data: []
+			data: fieldSeries(chronologicalRows, 'air_temperature_c', (value) =>
+				convertSensorValue('air_temperature_c', value, app.preferences)
+			)
 		},
 		{
 			id: 'air_humidity',
-			label: m.rule_subject_humidity(),
-			unit: resolveDisplayUnit('humidity', app.preferences),
+			label: labelFor('air_humidity').label(),
+			unit: resolveDisplayUnit('air_humidity', app.preferences),
 			color: 'var(--cw-info-500)',
-			data: []
+			data: fieldSeries(chronologicalRows, 'air_humidity')
 		}
 	]);
+	let hasAirData = $derived(airSeries.some((series) => series.data.length > 0));
+	let dli = $derived(dliToday(fieldSeries(chronologicalRows, 'ppfd')));
 
 	// ---- Table loader ----------------------------------------------------------
 
@@ -145,7 +148,7 @@
 	// Newest first, as the history comes.
 	const loadTableData = createClientTableLoader<SoilRow>(() => rows, {
 		searchText: (r) =>
-			[r.created_at, r.temperature_c, r.moisture, r.ec, r.ph].map(String).join(' '),
+			[r.created_at, ...SOIL_FIELDS.map((field) => r[field] ?? '')].map(String).join(' '),
 		onLoadingChange: (value) => (tableLoading = value)
 	});
 </script>
@@ -155,7 +158,7 @@
 	<div class="kpi-grid">
 		<CwStatCard
 			locale={getIntlLocale()}
-			title={m.rule_subject_temperature()}
+			title={m.display_soil_temperature()}
 			stats={temperatureStats}
 			unit={temperatureUnit}
 			accentColor="var(--cw-danger-500)"
@@ -172,16 +175,16 @@
 		/>
 
 		<CwCard title="EC" subtitle={m.display_latest_reading()} elevated>
-			{@const ecKpi = formatSensorMeasurement('ec', latest.ec, app.preferences, {
+			{@const ecKpi = formatSensorMeasurement('ec', latest.ec?.value ?? null, app.preferences, {
 				maximumFractionDigits: 2
 			})}
 			<p class="kpi-value">{ecKpi.valueDisplay}<span>{ecKpi.unit}</span></p>
 		</CwCard>
 
 		<!-- Not every soil probe measures pH; hide the tile rather than show a blank. -->
-		{#if latest.ph != null}
+		{#if latest.ph}
 			<CwCard title={m.rule_subject_ph()} subtitle={m.display_latest_reading()} elevated>
-				{@const phKpi = formatSensorMeasurement('ph', latest.ph, app.preferences, {
+				{@const phKpi = formatSensorMeasurement('ph', latest.ph.value, app.preferences, {
 					maximumFractionDigits: 1
 				})}
 				<p class="kpi-value">{phKpi.valueDisplay}</p>
@@ -189,7 +192,7 @@
 		{/if}
 	</div>
 
-	<!-- Combined-sensor visualizations (awaiting data) -->
+	<!-- Air and light panels: each shows "awaiting sensor data" only while it has none. -->
 	<!-- Full-width time series; the dual charts pair up on desktop, stack on mobile. -->
 	<CwResponsiveLineChart
 		locale={getIntlLocale()}
@@ -201,25 +204,34 @@
 		showLegendStats={false}
 		theme={appTheme.current}
 		height={360}
-		noData={m.display_awaiting_sensor_data()}
+		noData={hasAirData ? undefined : m.display_awaiting_sensor_data()}
 	/>
 
 	<div class="chart-pair">
 		<CwVPDChart
 			locale={getIntlLocale()}
 			labels={cwVpdChartLabels()}
-			noData={m.display_awaiting_sensor_data()}
+			airTemperatureC={latest.air_temperature_c?.value ?? null}
+			relativeHumidity={latest.air_humidity?.value ?? null}
+			useF={app.preferences?.temperature_unit === 'fahrenheit'}
+			noData={latest.air_temperature_c && latest.air_humidity
+				? false
+				: m.display_awaiting_sensor_data()}
 		/>
 		<div class="chart-pair__stack">
 			<CwPPFDChart
 				locale={getIntlLocale()}
 				labels={cwPpfdChartLabels()}
-				noData={m.display_awaiting_sensor_data()}
+				current={latest.ppfd?.value ?? null}
+				updatedAt={latest.ppfd?.at || undefined}
+				dliToday={dli}
+				noData={latest.ppfd ? undefined : m.display_awaiting_sensor_data()}
 			/>
 			<CwDliCard
 				locale={getIntlLocale()}
 				labels={cwDliCardLabels()}
-				noData={m.display_awaiting_sensor_data()}
+				value={dli}
+				noData={dli === null ? m.display_awaiting_sensor_data() : false}
 			/>
 		</div>
 	</div>
@@ -239,14 +251,8 @@
 					{#snippet cell(row: SoilRow, col: CwColumnDef<SoilRow>)}
 						{#if col.key === 'created_at'}
 							{new Date(row.created_at).toLocaleString()}
-						{:else if col.key === 'temperature_c'}
-							{formatSensorMeasurement('temperature_c', row.temperature_c, app.preferences).display}
-						{:else if col.key === 'moisture'}
-							{formatSensorMeasurement('moisture', row.moisture, app.preferences).display}
-						{:else if col.key === 'ec'}
-							{formatSensorMeasurement('ec', row.ec, app.preferences, {
-								maximumFractionDigits: 2
-							}).display}
+						{:else}
+							{formatSensorMeasurement(col.key, row[col.key as SoilField], app.preferences).display}
 						{/if}
 					{/snippet}
 				</CwDataTable>

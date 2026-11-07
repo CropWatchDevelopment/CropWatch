@@ -1664,6 +1664,7 @@ export type Database = {
 				Row: {
 					air_humidity: number | null;
 					air_temperature_c: number | null;
+					co2: number | null;
 					created_at: string;
 					dev_eui: string;
 					ec: number | null;
@@ -1675,6 +1676,7 @@ export type Database = {
 				Insert: {
 					air_humidity?: number | null;
 					air_temperature_c?: number | null;
+					co2?: number | null;
 					created_at?: string;
 					dev_eui: string;
 					ec?: number | null;
@@ -1686,6 +1688,7 @@ export type Database = {
 				Update: {
 					air_humidity?: number | null;
 					air_temperature_c?: number | null;
+					co2?: number | null;
 					created_at?: string;
 					dev_eui?: string;
 					ec?: number | null;
