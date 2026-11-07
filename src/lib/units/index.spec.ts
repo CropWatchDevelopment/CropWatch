@@ -50,6 +50,7 @@ describe('QUANTITY_BY_FIELD', () => {
 	it('maps the convertible sensor columns to what they measure, leaving soil moisture out', () => {
 		expect(QUANTITY_BY_FIELD).toEqual({
 			temperature_c: 'temperature',
+			air_temperature_c: 'temperature',
 			dew_point: 'temperature',
 			deapth_cm: 'water_level',
 			depth_cm: 'water_level',
@@ -78,6 +79,7 @@ describe('resolveDisplayUnit', () => {
 	it.each([
 		['temperature_c', { temperature_unit: 'fahrenheit' }, '°F'],
 		['temperature_c', { temperature_unit: 'kelvin' }, 'K'],
+		['air_temperature_c', { temperature_unit: 'fahrenheit' }, '°F'],
 		['dew_point', { temperature_unit: 'celsius' }, '°C'],
 		['deapth_cm', { water_level_unit: 'mm' }, 'mm'],
 		['deapth_cm', { water_level_unit: 'cm' }, 'cm'],

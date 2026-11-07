@@ -28,6 +28,16 @@ const SENSOR_LABELS: Record<string, SensorLabel> = {
 	dew_point: { label: () => m.sensor_dew_point(), unit: '°C', icon: 'thermo', format: 'number' },
 	moisture: { label: () => m.sensor_moisture(), unit: '%', icon: 'drop', format: 'number' },
 	co2: { label: () => m.sensor_co2(), unit: 'ppm', icon: 'co2', format: 'integer' },
+	// Soil boards that also measure the air (cw_soil_data): there `temperature_c`
+	// is the soil temperature, so the air readings get their own columns.
+	air_temperature_c: {
+		label: () => m.sensor_air_temperature(),
+		unit: '°C',
+		icon: 'thermo',
+		format: 'number'
+	},
+	air_humidity: { label: () => m.sensor_air_humidity(), unit: '%', icon: 'drop', format: 'number' },
+	ppfd: { label: () => m.sensor_ppfd(), unit: 'µmol/m²/s', format: 'integer' },
 	co: { label: () => m.sensor_co(), unit: 'ppm', format: 'integer' },
 	pressure: { label: () => m.sensor_pressure(), unit: 'hPa', format: 'number' },
 	ec: { label: () => m.sensor_ec(), unit: 'mS/cm', format: 'number' },

@@ -17,6 +17,10 @@ describe('labelFor', () => {
 		['dew_point', m.sensor_dew_point, '°C', 'number', 'thermo'],
 		['moisture', m.sensor_moisture, '%', 'number', 'drop'],
 		['co2', m.sensor_co2, 'ppm', 'integer', 'co2'],
+		// Soil boards with air and light sensors (cw_soil_data).
+		['air_temperature_c', m.sensor_air_temperature, '°C', 'number', 'thermo'],
+		['air_humidity', m.sensor_air_humidity, '%', 'number', 'drop'],
+		['ppfd', m.sensor_ppfd, 'µmol/m²/s', 'integer', undefined],
 		['co', m.sensor_co, 'ppm', 'integer', undefined],
 		['pressure', m.sensor_pressure, 'hPa', 'number', undefined],
 		['ec', m.sensor_ec, 'mS/cm', 'number', undefined],
