@@ -150,6 +150,12 @@ export const REPOSITORY_CONTRACT: RepositoryContractCase[] = [
 	{ repository: 'reports', method: 'deleteReportTemplate', args: [5], expected: { method: 'DELETE', path: '/reports/5' } },
 	{ repository: 'reports', method: 'getReportTemplateDownloadUrl', args: [DEVICE, 'March report.pdf'], expected: { method: 'GET', path: `/reports/download/${DEVICE}/March%20report.pdf` } },
 
+	// crops
+	{ repository: 'crops', method: 'getCrops', args: [], response: [], expected: { method: 'GET', path: '/crops' } },
+	{ repository: 'crops', method: 'getCrop', args: [3], expected: { method: 'GET', path: '/crops/3' } },
+	// AI recommendations
+	{ repository: 'aiRecommendations', method: 'getAiRecommendations', args: [DEVICE], response: [], expected: { method: 'GET', path: `/devices/${DEVICE}/ai-recommendations` } },
+	{ repository: 'aiRecommendations', method: 'getAiRecommendations', args: [DEVICE, { type: 'weekly', limit: 4 }], response: [], expected: { method: 'GET', path: `/devices/${DEVICE}/ai-recommendations?type=weekly&limit=4` } },
 	// overview
 	{ repository: 'overview', method: 'getOverview', args: [], expected: { method: 'GET', path: '/overview?range=24h' } },
 	{ repository: 'overview', method: 'getOverview', args: ['7d'], expected: { method: 'GET', path: '/overview?range=7d' } },

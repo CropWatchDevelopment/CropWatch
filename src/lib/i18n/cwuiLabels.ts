@@ -12,6 +12,7 @@ import type { Component } from 'svelte';
 import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
 import { m } from '$lib/paraglide/messages.js';
 import type {
+	CwAboveBelowChartLabels,
 	CwCalendar,
 	CwDropdown,
 	CwInput,
@@ -27,7 +28,6 @@ import type {
 	CwStackedBarChartLabels,
 	CwHeatmapLabels,
 	CwPPFDChartLabels,
-	CwDliCardLabels,
 	CwVPDChartLabels,
 	CwOfflineOverlayLabels,
 	CwCalendarScrollLabels,
@@ -162,25 +162,34 @@ export function cwPpfdChartLabels(): CwPPFDChartLabels {
 	};
 }
 
-export function cwDliCardLabels(): CwDliCardLabels {
+/** The soil board panel; its status chips reuse the crop targets card's wording. */
+export function cwAboveBelowChartLabels(): CwAboveBelowChartLabels {
 	return {
-		title: m.cwui_dli_title(),
-		statusVeryLow: m.cwui_dli_status_very_low(),
-		statusSlightlyLow: m.cwui_dli_status_slightly_low(),
-		statusLow: m.cwui_dli_status_low(),
-		statusGood: m.cwui_dli_status_good(),
-		statusHigh: m.cwui_dli_status_high(),
-		statusVeryHigh: m.cwui_dli_status_very_high(),
-		statusPrefix: m.cwui_dli_status_prefix(),
-		historyTitle: m.cwui_dli_history_title(),
-		historyListLabel: m.cwui_dli_history_list(),
-		historyCount: (days) => m.cwui_dli_history_count({ days }),
-		targetForCrop: (cropName, range) => m.cwui_dli_target_crop({ crop: cropName, range }),
-		target: (range) => m.cwui_dli_target({ range }),
-		valueAriaLabel: (value, unit, targetText, status) =>
-			m.cwui_dli_value_aria({ value, unit, target: targetText, status }),
-		barAriaLabel: (scaleMax, value, unit, range, status) =>
-			m.cwui_dli_bar_aria({ scaleMax, value, unit, range, status })
+		title: m.cwui_above_below_title(),
+		light: m.cwui_above_below_light(),
+		air: m.cwui_above_below_air(),
+		ground: m.cwui_above_below_ground(),
+		groundLevel: m.cwui_above_below_ground_level(),
+		ppfdNow: m.cwui_above_below_ppfd_now(),
+		ppfdPeak: m.cwui_above_below_ppfd_peak(),
+		dliToday: m.cwui_above_below_dli_today(),
+		dliGoal: (crop) =>
+			crop ? m.cwui_above_below_dli_goal_crop({ crop }) : m.cwui_above_below_dli_goal(),
+		low: m.cwui_above_below_low(),
+		average: m.cwui_above_below_average(),
+		high: m.cwui_above_below_high(),
+		target: (range) => m.cwui_above_below_target({ range }),
+		legend: m.cwui_above_below_legend(),
+		legendNow: m.cwui_above_below_legend_now(),
+		legendAverage: m.cwui_above_below_legend_average(),
+		legendRange: m.cwui_above_below_legend_range(),
+		legendTarget: (crop) =>
+			crop ? m.cwui_above_below_legend_target_crop({ crop }) : m.cwui_above_below_legend_target(),
+		statusTooLow: m.soil_target_status_too_low(),
+		statusLow: m.soil_target_status_low(),
+		statusOptimal: m.soil_target_status_optimal(),
+		statusHigh: m.soil_target_status_high(),
+		statusTooHigh: m.soil_target_status_too_high()
 	};
 }
 

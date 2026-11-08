@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
 import { m } from '$lib/paraglide/messages.js';
 import {
+	cwAboveBelowChartLabels,
 	cwCalendarLabels,
 	cwCalendarScrollLabels,
 	cwCopyLabels,
 	cwDataTableLabels,
 	cwDateTimeRangePickerLabels,
-	cwDliCardLabels,
 	cwDonutChartLabels,
 	cwDropdownLabels,
 	cwHeatmapLabels,
@@ -218,44 +218,49 @@ describe('chart labels', () => {
 		);
 		expect(labels.updated!('10:00')).toBe(m.cwui_ppfd_updated({ when: '10:00' }));
 	});
+});
 
-	it('translates the DLI card', () => {
-		const labels = cwDliCardLabels();
+describe('cwAboveBelowChartLabels', () => {
+	it('translates the soil board panel, with the targets card wording for its chips', () => {
+		const labels = cwAboveBelowChartLabels();
 
 		expect(labels).toEqual({
-			title: m.cwui_dli_title(),
-			statusVeryLow: m.cwui_dli_status_very_low(),
-			statusSlightlyLow: m.cwui_dli_status_slightly_low(),
-			statusLow: m.cwui_dli_status_low(),
-			statusGood: m.cwui_dli_status_good(),
-			statusHigh: m.cwui_dli_status_high(),
-			statusVeryHigh: m.cwui_dli_status_very_high(),
-			statusPrefix: m.cwui_dli_status_prefix(),
-			historyTitle: m.cwui_dli_history_title(),
-			historyListLabel: m.cwui_dli_history_list(),
-			historyCount: fn,
-			targetForCrop: fn,
+			title: m.cwui_above_below_title(),
+			light: m.cwui_above_below_light(),
+			air: m.cwui_above_below_air(),
+			ground: m.cwui_above_below_ground(),
+			groundLevel: m.cwui_above_below_ground_level(),
+			ppfdNow: m.cwui_above_below_ppfd_now(),
+			ppfdPeak: m.cwui_above_below_ppfd_peak(),
+			dliToday: m.cwui_above_below_dli_today(),
+			dliGoal: fn,
+			low: m.cwui_above_below_low(),
+			average: m.cwui_above_below_average(),
+			high: m.cwui_above_below_high(),
 			target: fn,
-			valueAriaLabel: fn,
-			barAriaLabel: fn
+			legend: m.cwui_above_below_legend(),
+			legendNow: m.cwui_above_below_legend_now(),
+			legendAverage: m.cwui_above_below_legend_average(),
+			legendRange: m.cwui_above_below_legend_range(),
+			legendTarget: fn,
+			statusTooLow: m.soil_target_status_too_low(),
+			statusLow: m.soil_target_status_low(),
+			statusOptimal: m.soil_target_status_optimal(),
+			statusHigh: m.soil_target_status_high(),
+			statusTooHigh: m.soil_target_status_too_high()
 		});
-		expect(labels.historyCount!(7)).toBe(m.cwui_dli_history_count({ days: 7 }));
-		expect(labels.targetForCrop!('Basil', '12–17')).toBe(
-			m.cwui_dli_target_crop({ crop: 'Basil', range: '12–17' })
+	});
+
+	it('names the crop in the goal and the legend when there is one', () => {
+		const labels = cwAboveBelowChartLabels();
+
+		expect(labels.dliGoal!('Tomato')).toBe(m.cwui_above_below_dli_goal_crop({ crop: 'Tomato' }));
+		expect(labels.dliGoal!('')).toBe(m.cwui_above_below_dli_goal());
+		expect(labels.legendTarget!('Tomato')).toBe(
+			m.cwui_above_below_legend_target_crop({ crop: 'Tomato' })
 		);
-		expect(labels.target!('12–17')).toBe(m.cwui_dli_target({ range: '12–17' }));
-		expect(labels.valueAriaLabel!('14', 'mol', 'Target 12–17', 'Good')).toBe(
-			m.cwui_dli_value_aria({ value: '14', unit: 'mol', target: 'Target 12–17', status: 'Good' })
-		);
-		expect(labels.barAriaLabel!('40', '14', 'mol', '12–17', 'Good')).toBe(
-			m.cwui_dli_bar_aria({
-				scaleMax: '40',
-				value: '14',
-				unit: 'mol',
-				range: '12–17',
-				status: 'Good'
-			})
-		);
+		expect(labels.legendTarget!('')).toBe(m.cwui_above_below_legend_target());
+		expect(labels.target!('20–25°C')).toBe(m.cwui_above_below_target({ range: '20–25°C' }));
 	});
 });
 

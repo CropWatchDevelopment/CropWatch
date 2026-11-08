@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
 	DLI_MAX_GAP_MS,
+	dailyDli,
 	dliToday,
+	previousDays,
 	fieldSeries,
 	latestReading,
 	readingOrNull,
@@ -163,5 +165,56 @@ describe('dliToday', () => {
 		expect(dliToday([{ t: at(12), v: 600 }], now)).toBe(0);
 		expect(dliToday([{ t: at(12), v: null }], now)).toBeNull();
 		expect(dliToday([], now)).toBeNull();
+	});
+});
+
+describe('dailyDli', () => {
+	const at = (day: number, hours: number, minutes = 0) =>
+		new Date(2026, 10, day, hours, minutes).getTime();
+	/** 500 µmol/m²/s from 10:00 to 11:00 on a day: 1.8 mol/m². */
+	const hourOfLight = (day: number) => [
+		{ t: at(day, 10), v: 500 },
+		{ t: at(day, 10, 30), v: 500 },
+		{ t: at(day, 11), v: 500 }
+	];
+
+	it('totals each local day, oldest first, leaving out days without readings', () => {
+		const points = [...hourOfLight(1), ...hourOfLight(3), { t: at(3, 12), v: null }];
+
+		const days = dailyDli(points, new Date(2026, 10, 1), new Date(2026, 10, 4));
+
+		expect(days.map((day) => day.date)).toEqual(['2026-11-01', '2026-11-03']);
+		expect(days[0].value).toBeCloseTo(1.8, 10);
+		expect(days[1].value).toBeCloseTo(1.8, 10);
+	});
+
+	it('counts a reading at midnight in the day it starts, once', () => {
+		const days = dailyDli(
+			[
+				{ t: at(1, 23, 30), v: 0 },
+				{ t: at(2, 0), v: 0 },
+				{ t: at(2, 0, 30), v: 0 }
+			],
+			new Date(2026, 10, 1),
+			new Date(2026, 10, 3)
+		);
+		expect(days).toEqual([
+			{ date: '2026-11-01', value: 0 },
+			{ date: '2026-11-02', value: 0 }
+		]);
+	});
+
+	it('is empty for a range without days or readings', () => {
+		expect(dailyDli([], new Date(2026, 10, 1), new Date(2026, 10, 8))).toEqual([]);
+		expect(dailyDli(hourOfLight(1), new Date(2026, 10, 2), new Date(2026, 10, 2))).toEqual([]);
+	});
+});
+
+describe('previousDays', () => {
+	it('spans the complete local days before today', () => {
+		expect(previousDays(new Date(2026, 10, 7, 14, 30), 7)).toEqual({
+			start: new Date(2026, 9, 31),
+			end: new Date(2026, 10, 7)
+		});
 	});
 });

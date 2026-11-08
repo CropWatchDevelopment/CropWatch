@@ -188,6 +188,127 @@ export interface DeviceDto extends CwDevice {
 	device_licenses?: { id: number }[];
 }
 
+/** When a crop target applies: daylight only, night only, or at any time. */
+export type CropTargetPeriod = 'all' | 'day' | 'night';
+
+/** GET /crops — a crop a soil sensor can be set to (the picker's options). */
+export interface CropTypeDto {
+	id: number;
+	code: string;
+	name_en: string;
+	name_ja: string;
+	category: string;
+	cultivation: 'greenhouse' | 'open_field' | 'both' | string;
+	sort_order: number;
+}
+
+/**
+ * A crop's growing target for one metric and period: the optimal band
+ * [optimal_min, optimal_max] inside the stress limits [min_value, max_value].
+ * Any bound may be null (no defensible value).
+ */
+export interface CropTargetDto {
+	/** soil_temperature, soil_water_tension, soil_moisture, soil_ec, soil_ec_1to5, soil_ph, air_temperature, air_humidity, co2, ppfd, dli or vpd. */
+	metric: string;
+	period: CropTargetPeriod;
+	unit: string;
+	min_value: number | null;
+	optimal_min: number | null;
+	optimal_max: number | null;
+	max_value: number | null;
+	notes: string | null;
+	sources: string[];
+}
+
+/** GET /crops/{id} — one crop with all of its targets. */
+export interface CropTypeDetailDto extends CropTypeDto {
+	notes: string | null;
+	is_active: boolean;
+	targets: CropTargetDto[];
+}
+
+export type AiReportType = 'daily' | 'weekly';
+
+/** One "what this value means" line per measurement, written by the rules engine. */
+export interface AiRecommendationDetailDto {
+	metric: string;
+	period: CropTargetPeriod;
+	/** 0 ok, 1 close to target, 2 needs attention, 3 outside safe limits; null when not judged. */
+	severity?: number | null;
+	what_ja?: string;
+	what_en?: string;
+	ja: string;
+	en: string;
+}
+
+/** A finding's text in one language, laid out by the app as a table row and an action. */
+export interface AiFindingTextDto {
+	what: string;
+	/** The low or high end (p10/p90), or the day total for DLI; null for a sensor fault. */
+	value: string | null;
+	average: string | null;
+	target: string | null;
+	action_title: string;
+	action: string;
+	/** Set when another action covers this finding (heating lowers night humidity). */
+	note: string | null;
+	/** Weekly reports: on how many days it was off. */
+	days_off: string | null;
+}
+
+/** How to show a finding; written with the report, deterministic. */
+export interface AiFindingDisplayDto {
+	/** low_end_below / peak_above: the low or high end is off while the average is on target. */
+	status: 'below' | 'above' | 'low_end_below' | 'peak_above' | 'invalid' | string;
+	/** Which end `value` is, when an average is shown. */
+	kind: 'low' | 'high' | null;
+	ja: AiFindingTextDto;
+	en: AiFindingTextDto;
+}
+
+/** Something to act on; every number comes from the rules engine, never the model. */
+export interface AiRecommendationFindingDto {
+	metric: string;
+	period: CropTargetPeriod;
+	/** 2 needs attention, 3 outside safe limits. */
+	severity: number;
+	kind: 'target' | 'sensor' | string;
+	action: string;
+	value?: number | null;
+	mean?: number | null;
+	direction?: 'low' | 'high' | null;
+	/** Absent on reports written before the display format. */
+	display?: AiFindingDisplayDto;
+}
+
+/**
+ * GET /devices/{dev_eui}/ai-recommendations — a soil sensor's daily or weekly
+ * growing-environment report from the CropWatch AI worker (Japanese and English).
+ */
+export interface AiRecommendationDto {
+	id: number;
+	dev_eui: string;
+	report_type: AiReportType;
+	/** First local day covered, YYYY-MM-DD. */
+	period_start: string;
+	/** Last local day covered (inclusive), YYYY-MM-DD. */
+	period_end: string;
+	timezone: string;
+	status: 'good' | 'action' | 'insufficient_data' | string;
+	/** 0 ok, 1 close to target, 2 needs attention, 3 outside safe limits. */
+	max_severity: number;
+	headline_ja: string;
+	body_ja: string;
+	headline_en: string;
+	body_en: string;
+	findings: AiRecommendationFindingDto[];
+	details: AiRecommendationDetailDto[];
+	/** llm: phrased by the local model and validated; template: fixed text. */
+	text_source: 'llm' | 'template' | string;
+	created_at: string;
+	updated_at: string;
+}
+
 /**
  * DELETE /devices/{dev_eui}. `complete: false` means the data purge paused on
  * the API's per-request time budget and the device still exists — call again.

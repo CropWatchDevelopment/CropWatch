@@ -1,5 +1,10 @@
 import type { Component } from 'svelte';
-import type { RelayHistoryEntryDto } from '$lib/api/api.dtos';
+import type {
+	AiRecommendationDto,
+	CropTypeDetailDto,
+	RelayHistoryEntryDto
+} from '$lib/api/api.dtos';
+import type { Coordinates } from '$lib/agronomy/solar';
 import type { PendingRelayStates, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 
 /**
@@ -36,6 +41,15 @@ export interface DeviceDisplayProps {
 
 	/** Whether the API lets the current user add notes to this device. */
 	canWriteNotes?: boolean;
+
+	/** The crop a soil sensor is set to, with its growing targets. Soil-only. */
+	crop?: CropTypeDetailDto | null;
+
+	/** The sensor's newest daily report from the CropWatch AI worker. Soil-only. */
+	aiReport?: AiRecommendationDto | null;
+
+	/** The location's latitude/longitude, for sunrise and sunset; null when unset. */
+	coordinates?: Coordinates | null;
 
 	/** State changes and commands for the selected range, newest first. Relay-only. */
 	relayHistory?: RelayHistoryEntryDto[];

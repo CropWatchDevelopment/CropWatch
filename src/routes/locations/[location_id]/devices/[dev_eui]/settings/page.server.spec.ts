@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { BillingLicense, DeviceDto, LocationDto } from '$lib/api/api.dtos';
+import type { BillingLicense, CropTypeDto, DeviceDto, LocationDto } from '$lib/api/api.dtos';
 import { ApiError } from '$lib/api/api-error';
 import type { FetchFn } from '$lib/api/http/fetch-http-client';
 import { m } from '$lib/paraglide/messages.js';
@@ -88,8 +88,31 @@ const nothing = (devEui: string) => ({
 	deviceOwners: [],
 	license: null,
 	deviceOwnerId: null,
-	deviceOrgId: null
+	deviceOrgId: null,
+	crops: null,
+	cropTypeId: null
 });
+
+const CROPS: CropTypeDto[] = [
+	{
+		id: 1,
+		code: 'tomato',
+		name_en: 'Tomato',
+		name_ja: 'トマト',
+		category: 'fruiting_vegetable',
+		cultivation: 'both',
+		sort_order: 10
+	},
+	{
+		id: 3,
+		code: 'cucumber',
+		name_en: 'Cucumber',
+		name_ja: 'キュウリ',
+		category: 'fruiting_vegetable',
+		cultivation: 'both',
+		sort_order: 30
+	}
+];
 
 const apiError = (status: number, message: string) =>
 	new ApiError(status, 'Error', { url: 'https://api.cropwatch.test/x', payload: { message } });
@@ -177,9 +200,13 @@ describe('device settings load', () => {
 			],
 			license: { id: 5, seatIndex: 2, manual: true },
 			deviceOwnerId: 'owner-1',
-			deviceOrgId: 'org-1'
+			deviceOrgId: 'org-1',
+			crops: null,
+			cropTypeId: null
 		});
 		expect(locals.services.locations.getLocation).toHaveBeenCalledWith(8);
+		// Not a soil sensor: no crop list.
+		expect(locals.services.crops.getCrops).not.toHaveBeenCalled();
 		expect(locals.services.locations.getLocations).toHaveBeenCalledWith();
 		expect(locals.services.billing.getLicenses).toHaveBeenCalledWith();
 		// The device itself comes from the layout.
@@ -289,8 +316,36 @@ describe('device settings load', () => {
 			deviceOwners: [],
 			license: { id: 5, seatIndex: 2, manual: true },
 			deviceOwnerId: null,
-			deviceOrgId: null
+			deviceOrgId: null,
+			crops: null,
+			cropTypeId: null
 		});
+	});
+
+	it("offers a soil sensor the crop list, with the sensor's crop", async () => {
+		const locals = stubLoad(testLocals());
+		locals.services.crops.getCrops.mockResolvedValue(CROPS);
+
+		await expect(
+			runLoad(
+				{ authToken: TEST_JWT, device: { ...DEVICE, crop_type_id: 3 }, dataTable: 'cw_soil_data' },
+				locals
+			)
+		).resolves.toMatchObject({ crops: CROPS, cropTypeId: 3 });
+		expect(locals.services.crops.getCrops).toHaveBeenCalledWith();
+
+		await expect(
+			runLoad({ authToken: TEST_JWT, device: DEVICE, dataTable: 'cw_soil_data' }, locals)
+		).resolves.toMatchObject({ crops: CROPS, cropTypeId: null });
+	});
+
+	it('hides the crop field when the crop list cannot be loaded', async () => {
+		const locals = stubLoad(testLocals());
+		locals.services.crops.getCrops.mockRejectedValue(apiError(404, 'Cannot GET /v1/crops'));
+
+		await expect(
+			runLoad({ authToken: TEST_JWT, device: DEVICE, dataTable: 'cw_soil_data' }, locals)
+		).resolves.toMatchObject({ crops: null });
 	});
 
 	it('uses the DevEUI for an unnamed device and ignores owner and org ids that are not strings', async () => {
@@ -377,6 +432,35 @@ describe('updateDevice', () => {
 			message: m.devices_settings_updated()
 		});
 		expect(locals.services.devices.updateDevice).toHaveBeenCalledWith('DEV-1', VALUES);
+	});
+
+	it("saves a soil sensor's crop, and clears it with no crop chosen", async () => {
+		const locals = testLocals();
+		locals.services.devices.updateDevice.mockResolvedValue({});
+
+		await act('updateDevice', locals, { ...FIELDS, crop_type_id: '3' });
+		expect(locals.services.devices.updateDevice).toHaveBeenLastCalledWith('DEV-1', {
+			...VALUES,
+			crop_type_id: 3
+		});
+
+		await act('updateDevice', locals, { ...FIELDS, crop_type_id: '' });
+		expect(locals.services.devices.updateDevice).toHaveBeenLastCalledWith('DEV-1', {
+			...VALUES,
+			crop_type_id: null
+		});
+	});
+
+	it('refuses a crop that is not an id, without saving', async () => {
+		const locals = testLocals();
+
+		const result = await act('updateDevice', locals, { ...FIELDS, crop_type_id: 'tomato' });
+
+		expect(result).toMatchObject({
+			status: 400,
+			data: { fieldErrors: { crop_type_id: m.devices_crop_invalid() } }
+		});
+		expect(locals.services.devices.updateDevice).not.toHaveBeenCalled();
 	});
 
 	it('clears an empty group and TTI device id', async () => {
