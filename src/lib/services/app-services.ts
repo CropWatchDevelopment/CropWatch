@@ -4,6 +4,10 @@ import {
 	type AccountRepository
 } from '$lib/api/repositories/account.repository';
 import {
+	HttpAiRecommendationRepository,
+	type AiRecommendationRepository
+} from '$lib/api/repositories/ai-recommendations.repository';
+import {
 	HttpAirNoteRepository,
 	type AirNoteRepository
 } from '$lib/api/repositories/air-notes.repository';
@@ -15,6 +19,7 @@ import {
 	HttpBillingRepository,
 	type BillingRepository
 } from '$lib/api/repositories/billing.repository';
+import { HttpCropRepository, type CropRepository } from '$lib/api/repositories/crops.repository';
 import {
 	HttpDashboardRepository,
 	type DashboardRepository
@@ -61,9 +66,11 @@ import type { ApiEndpointConfig } from '$lib/config/public';
  */
 export interface AppServices {
 	account: AccountRepository;
+	aiRecommendations: AiRecommendationRepository;
 	airNotes: AirNoteRepository;
 	billing: BillingRepository;
 	billingAdmin: BillingAdminRepository;
+	crops: CropRepository;
 	dashboard: DashboardRepository;
 	devices: DeviceRepository;
 	gateways: GatewayRepository;
@@ -82,9 +89,11 @@ export interface AppServices {
 export function createAppServices(http: HttpClient, endpoints: ApiEndpointConfig): AppServices {
 	return {
 		account: new HttpAccountRepository(http),
+		aiRecommendations: new HttpAiRecommendationRepository(http),
 		airNotes: new HttpAirNoteRepository(http, endpoints),
 		billing: new HttpBillingRepository(http),
 		billingAdmin: new HttpBillingAdminRepository(http),
+		crops: new HttpCropRepository(http),
 		dashboard: new HttpDashboardRepository(http),
 		devices: new HttpDeviceRepository(http, endpoints),
 		gateways: new HttpGatewayRepository(http),

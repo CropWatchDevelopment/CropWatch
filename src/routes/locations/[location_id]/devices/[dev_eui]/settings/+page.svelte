@@ -15,6 +15,8 @@
 	import DeviceDangerZone from './DeviceDangerZone.svelte';
 	import { getAppContext } from '$lib/appContext.svelte';
 	import { Capability, can } from '$lib/auth/capabilities';
+	import { cropDisplayName } from '$lib/agronomy/crop-targets';
+	import { getIntlLocale } from '$lib/i18n/format';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
 	const DEVICE_GROUP_MAX_LENGTH = 120;
@@ -40,6 +42,19 @@
 	let deviceGroup = $state(initial.deviceGroup ?? '');
 	let ttiName = $state(initial.ttiName ?? '');
 	let location_id = $state(String(initial.location_id ?? ''));
+	// '' = no crop. Soil sensors only: `data.crops` is null for other devices.
+	let cropTypeId = $state(initial.cropTypeId === null ? '' : String(initial.cropTypeId ?? ''));
+	let cropOptions = $derived(
+		data.crops
+			? [
+					{ label: m.devices_crop_none(), value: '' },
+					...data.crops.map((crop) => ({
+						label: cropDisplayName(crop, getIntlLocale()),
+						value: String(crop.id)
+					}))
+				]
+			: null
+	);
 	// Where the device is saved. Links follow it, never the unsaved dropdown
 	// choice; null when the device has no location (its links are disabled).
 	let savedLocationId = $derived(String(data.location_id ?? '') || null);
@@ -65,11 +80,13 @@
 	let ttiNameValue = $derived(ttiName.trim().toLowerCase());
 	let ttiNameError = $derived(deviceForm?.fieldErrors?.tti_name ?? '');
 	let locationError = $derived(deviceForm?.fieldErrors?.location_id ?? '');
+	let cropError = $derived(deviceForm?.fieldErrors?.crop_type_id ?? '');
 	let deviceDirty = $derived(
 		deviceNameValue !== (data.deviceName ?? '').trim() ||
 			deviceGroupValue !== (data.deviceGroup ?? '').trim() ||
 			ttiNameValue !== (data.ttiName ?? '').trim().toLowerCase() ||
-			location_id !== String(data.location_id ?? '')
+			location_id !== String(data.location_id ?? '') ||
+			(cropOptions !== null && cropTypeId !== String(data.cropTypeId ?? ''))
 	);
 	// Deleting is owner-only, mirroring the API's device.delete rule: staff,
 	// the device's implicit owner, or the owner of the org the device belongs
@@ -88,7 +105,8 @@
 			!deviceNameError &&
 			!deviceGroupError &&
 			!ttiNameError &&
-			!locationError
+			!locationError &&
+			!cropError
 	);
 </script>
 
@@ -225,6 +243,27 @@
 							bind:value={location_id}
 						/>
 					</div>
+
+					{#if cropOptions}
+						<!-- Soil sensors: the crop sets the targets the readings are judged against. -->
+						<div>
+							<CwDropdown
+								labels={cwDropdownLabels()}
+								id="device-settings-crop-select"
+								label={m.devices_crop_label()}
+								hint={m.devices_crop_hint()}
+								options={cropOptions}
+								bind:value={cropTypeId}
+								error={cropError || undefined}
+							/>
+							<input
+								id="device-settings-crop-hidden-input"
+								type="hidden"
+								name="crop_type_id"
+								value={cropTypeId}
+							/>
+						</div>
+					{/if}
 				</div>
 
 				<AppActionRow>

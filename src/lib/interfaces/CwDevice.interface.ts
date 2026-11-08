@@ -21,6 +21,8 @@ export interface CwDevice {
 	secondary_data?: string | null;
 	group?: string | null;
 	error_status?: string | null;
+	/** Crop a soil sensor monitors (cw_crop_types.id); null = not set. */
+	crop_type_id?: number | null;
 	created_at?: string | null;
 	location_name?: string;
 	has_primary_data?: boolean;

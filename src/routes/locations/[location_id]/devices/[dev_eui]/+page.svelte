@@ -26,8 +26,10 @@
 		buildDewPointChartSeries,
 		buildSensorChartSeries,
 		getRangeOptions,
-		readLocationName
+		readLocationName,
+		withCropTargetLines
 	} from './device-detail';
+	import { cropDisplayName } from '$lib/agronomy/crop-targets';
 
 	let { data }: PageProps = $props();
 
@@ -44,7 +46,12 @@
 	let controlsDisabled = $derived(!dashboard.authToken || !dashboard.devEui);
 	let isAirDevice = $derived(data.dataTable === 'cw_air_data');
 	let chartSeries = $derived.by(() => {
-		const series = buildSensorChartSeries(dashboard.displayHistoricalData, app.preferences);
+		const series = withCropTargetLines(
+			buildSensorChartSeries(dashboard.displayHistoricalData, app.preferences),
+			data.crop,
+			data.crop ? cropDisplayName(data.crop, getIntlLocale()) : '',
+			app.preferences
+		);
 		if (isAirDevice) {
 			const dewPointSeries = buildDewPointChartSeries(
 				dashboard.displayHistoricalData,
@@ -179,6 +186,9 @@
 					loading={childLoading}
 					permissionLevel={dashboard.permissionLevel}
 					canWriteNotes={data.canWriteNotes}
+					crop={data.crop}
+					aiReport={data.aiReport}
+					coordinates={data.locationCoordinates}
 					pendingRelayStates={dashboard.relayStateSnapshot.pendingRelayStates}
 					relayHistory={dashboard.relayHistory ?? []}
 					queueRelayCommand={dashboard.queueRelayCommand}

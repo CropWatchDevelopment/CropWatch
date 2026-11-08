@@ -1,3 +1,4 @@
+import { toCoordinates } from '$lib/agronomy/solar';
 import { PermissionLevel } from '$lib/constants/permissions';
 import type { LayoutServerLoad } from './$types';
 
@@ -23,7 +24,8 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			device: null,
 			dataTable: null as string | null,
 			permissionLevel: PermissionLevel.DISABLED,
-			canWriteNotes: false
+			canWriteNotes: false,
+			locationCoordinates: null
 		};
 	}
 
@@ -56,7 +58,9 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			dataTable: deviceDataTable,
 			permissionLevel,
 			// The API's own NoteWrite decision (owner, org role, staff, grant).
-			canWriteNotes: device.can_write_notes === true
+			canWriteNotes: device.can_write_notes === true,
+			// The location's latitude/longitude (sunrise/sunset for light targets).
+			locationCoordinates: toCoordinates(location?.lat, location?.long)
 		};
 	} catch (err) {
 		console.error(`[layout] Failed to load device ${dev_eui}:`, err);
@@ -67,7 +71,8 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 			device: null,
 			dataTable: null as string | null,
 			permissionLevel: PermissionLevel.DISABLED,
-			canWriteNotes: false
+			canWriteNotes: false,
+			locationCoordinates: null
 		};
 	}
 };

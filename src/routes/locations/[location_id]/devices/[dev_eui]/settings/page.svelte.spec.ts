@@ -1,11 +1,13 @@
 import type { ActionResult } from '@sveltejs/kit';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { MeContextDto } from '$lib/api/api.dtos';
+import type { CropTypeDto, MeContextDto } from '$lib/api/api.dtos';
 import type { AppContext } from '$lib/appContext.svelte';
 import { Capability } from '$lib/auth/capabilities';
 import type { IJWT } from '$lib/interfaces/jwt.interface';
 import { m } from '$lib/paraglide/messages.js';
+import { cropDisplayName } from '$lib/agronomy/crop-targets';
+import { getIntlLocale } from '$lib/i18n/format';
 import { renderWithServices } from '$lib/testing/render';
 import { testEvent, testLocals } from '$lib/testing/server';
 import SettingsPage from './+page.svelte';
@@ -73,10 +75,26 @@ const DATA = {
 		manual: boolean;
 	} | null,
 	deviceOwnerId: 'owner-1' as string | null,
-	deviceOrgId: 'org-1' as string | null
+	deviceOrgId: 'org-1' as string | null,
+	crops: null as CropTypeDto[] | null,
+	cropTypeId: null as number | null
 };
 
 type Data = typeof DATA;
+
+const crop = (id: number, name_en: string, name_ja: string): CropTypeDto => ({
+	id,
+	code: name_en.toLowerCase(),
+	name_en,
+	name_ja,
+	category: 'fruiting_vegetable',
+	cultivation: 'both',
+	sort_order: id * 10
+});
+const CROPS = [crop(1, 'Tomato', 'トマト'), crop(3, 'Cucumber', 'キュウリ')];
+/** A crop's name as the picker shows it (the test locale's language). */
+const cropName = (id: number) =>
+	cropDisplayName(CROPS.find((c) => c.id === id) as CropTypeDto, getIntlLocale());
 type FormPayload = Record<string, unknown> | null;
 
 let view: ReturnType<typeof renderWithServices> | null = null;
@@ -154,6 +172,17 @@ function chooseLocation(label: string) {
 		...document.querySelectorAll<HTMLElement>('#device-settings-form [role="option"]')
 	].find((element) => element.textContent?.trim() === label);
 	if (!option) throw new Error(`No location option "${label}"`);
+	option.click();
+	flushSync();
+}
+
+function chooseCrop(label: string) {
+	byId<HTMLButtonElement>('device-settings-crop-select')?.click();
+	flushSync();
+	const option = [
+		...document.querySelectorAll<HTMLElement>('#device-settings-form [role="option"]')
+	].find((element) => element.textContent?.trim() === label);
+	if (!option) throw new Error(`No crop option "${label}"`);
 	option.click();
 	flushSync();
 }
@@ -256,6 +285,63 @@ describe('device settings page', () => {
 		expect(fieldError('device-settings-group-input')).toBe(
 			m.devices_device_group_length({ max: '120' })
 		);
+		expect(submitButton()?.disabled).toBe(true);
+	});
+
+	it('offers a soil sensor its crop, saved with the device form', () => {
+		render({ crops: CROPS, cropTypeId: 3 });
+
+		expect(byId('device-settings-crop-select')?.textContent?.trim()).toBe(cropName(3));
+		expect(byId('device-settings-crop-hidden-input')?.value).toBe('3');
+		expect(submitButton()?.disabled).toBe(true);
+
+		byId<HTMLButtonElement>('device-settings-crop-select')?.click();
+		flushSync();
+		expect(
+			[...document.querySelectorAll('#device-settings-form [role="option"]')].map((option) =>
+				option.textContent?.trim()
+			)
+		).toEqual([m.devices_crop_none(), cropName(1), cropName(3)]);
+		byId<HTMLButtonElement>('device-settings-crop-select')?.click();
+		flushSync();
+
+		chooseCrop(cropName(1));
+		expect(byId('device-settings-crop-hidden-input')?.value).toBe('1');
+		expect(submitButton()?.disabled).toBe(false);
+
+		chooseCrop(m.devices_crop_none());
+		expect(byId('device-settings-crop-hidden-input')?.value).toBe('');
+		expect(submitButton()?.disabled).toBe(false);
+
+		chooseCrop(cropName(3));
+		expect(submitButton()?.disabled).toBe(true);
+	});
+
+	it('starts a soil sensor without a crop on "No crop"', () => {
+		render({ crops: CROPS, cropTypeId: null });
+
+		expect(byId('device-settings-crop-select')?.textContent?.trim()).toBe(m.devices_crop_none());
+		expect(byId('device-settings-crop-hidden-input')?.value).toBe('');
+	});
+
+	it('shows no crop field for other sensors', () => {
+		render();
+
+		expect(byId('device-settings-crop-select')).toBeNull();
+		expect(byId('device-settings-crop-hidden-input')).toBeNull();
+	});
+
+	it("shows the action's crop error and blocks saving until it is fixed", () => {
+		render(
+			{ crops: CROPS, cropTypeId: 3 },
+			{
+				action: 'updateDevice',
+				fieldErrors: { crop_type_id: m.devices_crop_invalid() }
+			}
+		);
+
+		expect(fieldError('device-settings-crop-select')).toBe(m.devices_crop_invalid());
+		type('device-settings-name-input', 'Renamed');
 		expect(submitButton()?.disabled).toBe(true);
 	});
 

@@ -1,8 +1,10 @@
 import { vi, type Mocked } from 'vitest';
 import { HttpAccountRepository } from '$lib/api/repositories/account.repository';
+import { HttpAiRecommendationRepository } from '$lib/api/repositories/ai-recommendations.repository';
 import { HttpAirNoteRepository } from '$lib/api/repositories/air-notes.repository';
 import { HttpBillingAdminRepository } from '$lib/api/repositories/billing-admin.repository';
 import { HttpBillingRepository } from '$lib/api/repositories/billing.repository';
+import { HttpCropRepository } from '$lib/api/repositories/crops.repository';
 import { HttpDashboardRepository } from '$lib/api/repositories/dashboard.repository';
 import { HttpDeviceRepository } from '$lib/api/repositories/devices.repository';
 import { HttpGatewayRepository } from '$lib/api/repositories/gateways.repository';
@@ -23,9 +25,11 @@ export type MockServices = { [K in keyof AppServices]: Mocked<AppServices[K]> };
 /** The implementation behind each container key — only used to enumerate method names. */
 const REPOSITORY_CLASSES: { [K in keyof AppServices]: { prototype: AppServices[K] } } = {
 	account: HttpAccountRepository,
+	aiRecommendations: HttpAiRecommendationRepository,
 	airNotes: HttpAirNoteRepository,
 	billing: HttpBillingRepository,
 	billingAdmin: HttpBillingAdminRepository,
+	crops: HttpCropRepository,
 	dashboard: HttpDashboardRepository,
 	devices: HttpDeviceRepository,
 	gateways: HttpGatewayRepository,

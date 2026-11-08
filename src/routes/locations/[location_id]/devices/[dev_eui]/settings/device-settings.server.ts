@@ -17,7 +17,19 @@ export type DeviceFormValues = {
 	group: string;
 	location_id: number;
 	tti_name: string;
+	/**
+	 * The soil sensor's crop: an id, null for none. Absent when the form has no
+	 * crop field (not a soil sensor), so the device's crop is left as it is.
+	 */
+	crop_type_id?: number | null;
 };
+
+/** A posted crop id: '' is "no crop", digits an id, anything else NaN (invalid). */
+function readCropTypeId(value: FormDataEntryValue): number | null {
+	const text = readString(value);
+	if (!text) return null;
+	return /^\d+$/.test(text) ? Number(text) : Number.NaN;
+}
 
 export type DeviceOwnerPermissionValues = {
 	ownerKey: string;
@@ -178,7 +190,10 @@ export function readDeviceFormValues(formData: FormData): DeviceFormValues {
 		name: readString(formData.get('name')),
 		group: readString(formData.get('group')),
 		location_id: Number.parseInt(readString(formData.get('location_id')), 10),
-		tti_name: normalizeTtiDeviceId(readString(formData.get('tti_name')))
+		tti_name: normalizeTtiDeviceId(readString(formData.get('tti_name'))),
+		...(formData.has('crop_type_id')
+			? { crop_type_id: readCropTypeId(formData.get('crop_type_id') as FormDataEntryValue) }
+			: {})
 	};
 }
 
@@ -208,6 +223,13 @@ export function validateDeviceFormValues(
 
 	if (!values.location_id) {
 		fieldErrors.location_id = m.devices_location_required();
+	}
+
+	if (
+		typeof values.crop_type_id === 'number' &&
+		!(Number.isSafeInteger(values.crop_type_id) && values.crop_type_id > 0)
+	) {
+		fieldErrors.crop_type_id = m.devices_crop_invalid();
 	}
 
 	return fieldErrors;

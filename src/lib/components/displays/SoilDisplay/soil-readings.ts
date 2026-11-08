@@ -86,28 +86,72 @@ export function fieldSeries(
 export const DLI_MAX_GAP_MS = 60 * 60 * 1000;
 
 /**
- * Daily light integral so far today (mol/m²/day, local day), from PPFD samples
- * in µmol/m²/s: the trapezoid between consecutive readings, skipping gaps over
- * DLI_MAX_GAP_MS so an outage lowers the total instead of inventing light.
- * Null when there is no reading today.
+ * Light (mol/m²) between two instants from PPFD samples in µmol/m²/s: the
+ * trapezoid between consecutive readings, skipping gaps over DLI_MAX_GAP_MS so
+ * an outage lowers the total instead of inventing light. Null when no reading
+ * falls in the window.
  */
+export function dliBetween(
+	ppfdPoints: CwResponsiveLineDataPoint[],
+	from: number,
+	to: number
+): number | null {
+	const inWindow = ppfdPoints.filter(
+		(p): p is { t: number; v: number } => p.v !== null && p.t >= from && p.t <= to
+	);
+	if (inWindow.length === 0) return null;
+
+	let molPerSquareMetre = 0;
+	for (let i = 1; i < inWindow.length; i++) {
+		const gapMs = inWindow[i].t - inWindow[i - 1].t;
+		if (gapMs <= 0 || gapMs > DLI_MAX_GAP_MS) continue;
+		molPerSquareMetre += (((inWindow[i - 1].v + inWindow[i].v) / 2) * (gapMs / 1000)) / 1_000_000;
+	}
+	return molPerSquareMetre;
+}
+
+/** Daily light integral so far today (mol/m²/day, local day); null with no reading today. */
 export function dliToday(
 	ppfdPoints: CwResponsiveLineDataPoint[],
 	now: Date = new Date()
 ): number | null {
 	const startOfDay = new Date(now);
 	startOfDay.setHours(0, 0, 0, 0);
-	const today = ppfdPoints.filter(
-		(p): p is { t: number; v: number } =>
-			p.v !== null && p.t >= startOfDay.getTime() && p.t <= now.getTime()
-	);
-	if (today.length === 0) return null;
+	return dliBetween(ppfdPoints, startOfDay.getTime(), now.getTime());
+}
 
-	let molPerSquareMetre = 0;
-	for (let i = 1; i < today.length; i++) {
-		const gapMs = today[i].t - today[i - 1].t;
-		if (gapMs <= 0 || gapMs > DLI_MAX_GAP_MS) continue;
-		molPerSquareMetre += (((today[i - 1].v + today[i].v) / 2) * (gapMs / 1000)) / 1_000_000;
+/** A local calendar day as YYYY-MM-DD. */
+function localDateKey(day: Date): string {
+	const month = String(day.getMonth() + 1).padStart(2, '0');
+	const date = String(day.getDate()).padStart(2, '0');
+	return `${day.getFullYear()}-${month}-${date}`;
+}
+
+/** The `days` complete local days before `now`'s day: from `start` to `end` (local midnights). */
+export function previousDays(now: Date, days: number): { start: Date; end: Date } {
+	const end = new Date(now);
+	end.setHours(0, 0, 0, 0);
+	const start = new Date(end);
+	start.setDate(start.getDate() - days);
+	return { start, end };
+}
+
+/**
+ * Each local day's DLI from `start` (a local midnight) up to `end`, oldest
+ * first. Days without readings are left out rather than shown as 0.
+ */
+export function dailyDli(
+	ppfdPoints: CwResponsiveLineDataPoint[],
+	start: Date,
+	end: Date
+): { date: string; value: number }[] {
+	const days: { date: string; value: number }[] = [];
+	for (const day = new Date(start); day < end; day.setDate(day.getDate() + 1)) {
+		const next = new Date(day);
+		next.setDate(next.getDate() + 1);
+		// A day ends just before the next midnight, so a midnight reading counts once.
+		const value = dliBetween(ppfdPoints, day.getTime(), next.getTime() - 1);
+		if (value !== null) days.push({ date: localDateKey(day), value });
 	}
-	return molPerSquareMetre;
+	return days;
 }
