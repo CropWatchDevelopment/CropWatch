@@ -48,7 +48,8 @@ const noDevice = (authToken: string | null, devEui = 'DEV-1', locationId = '8') 
 	device: null,
 	dataTable: null,
 	permissionLevel: PermissionLevel.DISABLED,
-	canWriteNotes: false
+	canWriteNotes: false,
+	locationCoordinates: null
 });
 
 beforeEach(() => {
@@ -74,7 +75,8 @@ describe('device layout load', () => {
 			device: DEVICE,
 			dataTable: 'cw_soil_data',
 			permissionLevel: PermissionLevel.MANAGER,
-			canWriteNotes: false
+			canWriteNotes: false,
+			locationCoordinates: null
 		});
 		expect(locals.services.devices.getDevice).toHaveBeenCalledWith('DEV-1');
 		expect(locals.services.locations.getLocation).toHaveBeenCalledWith(8);
@@ -134,6 +136,30 @@ describe('device layout load', () => {
 		expect(console.error).toHaveBeenCalledWith('[layout] Failed to load device DEV-1:', failure);
 	});
 
+	it("passes on the location's latitude and longitude, when it has valid ones", async () => {
+		const locals = testLocals();
+		locals.services.devices.getDevice.mockResolvedValue(DEVICE);
+
+		locals.services.locations.getLocation.mockResolvedValue({
+			...location([]),
+			lat: 35.68,
+			long: 139.69
+		} as unknown as LocationDto);
+		await expect(run(locals)).resolves.toMatchObject({
+			locationCoordinates: { lat: 35.68, long: 139.69 }
+		});
+
+		locals.services.locations.getLocation.mockResolvedValue({
+			...location([]),
+			lat: 35.68,
+			long: null
+		} as unknown as LocationDto);
+		await expect(run(locals)).resolves.toMatchObject({ locationCoordinates: null });
+
+		locals.services.locations.getLocation.mockRejectedValue(new ApiError(403, 'Forbidden', {}));
+		await expect(run(locals)).resolves.toMatchObject({ locationCoordinates: null });
+	});
+
 	it('offers notes exactly when the API says the caller may write them', async () => {
 		const locals = testLocals();
 		locals.services.locations.getLocation.mockResolvedValue(location([owner(TEST_USER_ID, 4)]));
@@ -161,7 +187,8 @@ describe('device layout load', () => {
 			device: untyped,
 			dataTable: null,
 			permissionLevel: PermissionLevel.MANAGER,
-			canWriteNotes: false
+			canWriteNotes: false,
+			locationCoordinates: null
 		});
 		// A device type without a data table is treated the same way.
 		locals.services.devices.getDevice.mockResolvedValue({

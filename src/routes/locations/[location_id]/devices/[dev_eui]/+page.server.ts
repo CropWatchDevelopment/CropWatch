@@ -1,4 +1,4 @@
-import type { PaginationQuery } from '$lib/api/api.dtos';
+import type { AiRecommendationDto, CropTypeDetailDto, PaginationQuery } from '$lib/api/api.dtos';
 import { ApiError, apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import type { TelemetryRepository } from '$lib/api/repositories/telemetry.repository';
 import { m } from '$lib/paraglide/messages.js';
@@ -28,11 +28,18 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 	if (!authToken || !Number.isFinite(locationId)) {
 		return {
 			deviceData: [],
-			latestData: null
+			latestData: null,
+			crop: null as CropTypeDetailDto | null,
+			aiReport: null as AiRecommendationDto | null
 		};
 	}
 
-	const { telemetry } = locals.services;
+	const { aiRecommendations, crops, telemetry } = locals.services;
+	// A soil sensor's crop, for its growing targets; the page works without it.
+	const cropTypeId =
+		parentData.dataTable === 'cw_soil_data' && typeof parentData.device?.crop_type_id === 'number'
+			? parentData.device.crop_type_id
+			: null;
 
 	const pagination: PaginationQuery = {
 		skip: 0,
@@ -41,19 +48,32 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 
 	// A newly registered device has no rows yet and the API answers 404 —
 	// render the empty device page instead of letting the 404 become a 500.
-	const [deviceData, latestData] = await Promise.all([
+	// The AI worker reports only on soil sensors with a crop set; like the crop,
+	// the newest daily report is optional and the page works without it.
+	const [deviceData, latestData, crop, aiReport] = await Promise.all([
 		telemetry
 			.getDeviceData(params.dev_eui, pagination, { suppressNotFoundError: true })
 			.catch((error) => {
 				if (error instanceof ApiError && error.status === 404) return [];
 				throw error;
 			}),
-		loadLatestDeviceDataOrNull(telemetry, params.dev_eui)
+		loadLatestDeviceDataOrNull(telemetry, params.dev_eui),
+		cropTypeId === null
+			? Promise.resolve(null)
+			: crops.getCrop(cropTypeId).catch(() => null as CropTypeDetailDto | null),
+		cropTypeId === null
+			? Promise.resolve(null)
+			: aiRecommendations
+					.getAiRecommendations(params.dev_eui, { type: 'daily', limit: 1 })
+					.then((reports) => reports?.[0] ?? null)
+					.catch(() => null as AiRecommendationDto | null)
 	]);
 
 	return {
 		deviceData: deviceData ?? [],
-		latestData: latestData ?? null
+		latestData: latestData ?? null,
+		crop,
+		aiReport
 	};
 };
 

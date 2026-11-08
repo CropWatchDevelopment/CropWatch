@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { metricColor } from '@cropwatchdevelopment/cwui';
-import type { PreferencesDto } from '$lib/api/api.dtos';
+import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '$lib/api/api.dtos';
 import { ApiError } from '$lib/api/api-error';
 import { relayStateLabel } from '$lib/devices/relay-labels';
 import { m } from '$lib/paraglide/messages.js';
@@ -24,7 +24,8 @@ import {
 	readCreatedAt,
 	readLocationName,
 	readRelayTelemetryRow,
-	toIsoString
+	toIsoString,
+	withCropTargetLines
 } from './device-detail';
 
 const T1 = '2026-10-21T10:00:00.000Z';
@@ -273,5 +274,93 @@ describe('buildDewPointChartSeries', () => {
 	it('is null when no row carries both readings', () => {
 		expect(buildDewPointChartSeries([{ created_at: T1, temperature_c: 20 }])).toBeNull();
 		expect(buildDewPointChartSeries([])).toBeNull();
+	});
+});
+
+describe('withCropTargetLines', () => {
+	const band = (
+		metric: string,
+		period: CropTargetDto['period'],
+		min: number | null,
+		max: number | null
+	) =>
+		({
+			metric,
+			period,
+			unit: '',
+			min_value: null,
+			optimal_min: min,
+			optimal_max: max,
+			max_value: null,
+			notes: null,
+			sources: []
+		}) satisfies CropTargetDto;
+	const crop = {
+		id: 1,
+		code: 'tomato',
+		name_en: 'Tomato',
+		name_ja: 'トマト',
+		category: 'fruiting_vegetable',
+		cultivation: 'both',
+		sort_order: 10,
+		notes: null,
+		is_active: true,
+		targets: [
+			band('soil_moisture', 'all', 19.3, 24.2),
+			band('soil_temperature', 'all', 15, 20),
+			band('soil_ec', 'all', null, 0.6),
+			band('soil_ph', 'all', null, null),
+			band('air_temperature', 'day', 20, 25)
+		]
+	} satisfies CropTypeDetailDto;
+	const series = (id: string) => ({ id, label: id, color: 'red', data: [] });
+
+	it("draws the crop's band on the soil series, in the user's units", () => {
+		const fahrenheit = { temperature_unit: 'fahrenheit' } as PreferencesDto;
+		const [moisture, soilTemperature, ec, ph, air] = withCropTargetLines(
+			[
+				series('moisture'),
+				series('temperature_c'),
+				series('ec'),
+				series('ph'),
+				series('air_temperature_c')
+			],
+			crop,
+			'Tomato',
+			fahrenheit
+		);
+
+		expect(moisture.thresholds).toEqual([
+			{
+				value: 19.3,
+				label: m.soil_target_line_min({ crop: 'Tomato' }),
+				color: 'var(--cw-success-500)'
+			},
+			{
+				value: 24.2,
+				label: m.soil_target_line_max({ crop: 'Tomato' }),
+				color: 'var(--cw-success-500)'
+			}
+		]);
+		expect(soilTemperature.thresholds?.map((line) => line.value)).toEqual([
+			convertSensorValue('temperature_c', 15, fahrenheit),
+			convertSensorValue('temperature_c', 20, fahrenheit)
+		]);
+		// An open end draws one line; a band without ends draws none.
+		expect(ec.thresholds?.map((line) => line.value)).toEqual([0.6]);
+		expect(ph.thresholds).toBeUndefined();
+		// Air targets change between day and night: no line.
+		expect(air.thresholds).toBeUndefined();
+	});
+
+	it('keeps lines a series already has, and leaves the series alone without a crop', () => {
+		const existing = { ...series('moisture'), thresholds: [{ value: 40, label: 'Alarm' }] };
+		expect(withCropTargetLines([existing], crop, 'Tomato')[0].thresholds?.[0]).toEqual({
+			value: 40,
+			label: 'Alarm'
+		});
+		const plain = [series('moisture')];
+		expect(withCropTargetLines(plain, null, '')).toBe(plain);
+		expect(withCropTargetLines(plain, undefined, '')).toBe(plain);
 	});
 });

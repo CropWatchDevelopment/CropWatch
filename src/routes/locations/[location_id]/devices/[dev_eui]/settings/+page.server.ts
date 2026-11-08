@@ -1,4 +1,4 @@
-import type { DeleteDeviceResultDto } from '$lib/api/api.dtos';
+import type { CropTypeDto, DeleteDeviceResultDto } from '$lib/api/api.dtos';
 import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { normalizeTtiDeviceId } from '$lib/devices/tti-device-id';
 import { m } from '$lib/paraglide/messages.js';
@@ -38,19 +38,27 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 			deviceOwners: [] as NormalizedDeviceOwner[],
 			license: null as DeviceLicenseSummary | null,
 			deviceOwnerId: null as string | null,
-			deviceOrgId: null as string | null
+			deviceOrgId: null as string | null,
+			crops: null as CropTypeDto[] | null,
+			cropTypeId: null as number | null
 		};
 	}
 
 	const { services } = locals;
 	const device = parentData.device;
 
-	const [location, locations, licenses] = await Promise.all([
+	// Only soil sensors take a crop. Without the list (the API is older than
+	// the crop feature, or the request failed) the crop field is not shown.
+	const isSoilSensor = parentData.dataTable === 'cw_soil_data';
+	const [location, locations, licenses, crops] = await Promise.all([
 		Number.isFinite(locationId)
 			? services.locations.getLocation(locationId).catch(() => null)
 			: Promise.resolve(null),
 		services.locations.getLocations().catch(() => []),
-		services.billing.getLicenses().catch(() => [])
+		services.billing.getLicenses().catch(() => []),
+		isSoilSensor
+			? services.crops.getCrops().catch(() => null)
+			: Promise.resolve(null as CropTypeDto[] | null)
 	]);
 
 	const licenseRow = licenses.find((l) => l.devEui?.toLowerCase() === devEui.toLowerCase());
@@ -73,7 +81,9 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		license,
 		// For the delete card's visibility (mirrors the API's device.delete rule).
 		deviceOwnerId: typeof device?.user_id === 'string' ? device.user_id : null,
-		deviceOrgId: typeof device?.org_id === 'string' ? device.org_id : null
+		deviceOrgId: typeof device?.org_id === 'string' ? device.org_id : null,
+		crops,
+		cropTypeId: typeof device?.crop_type_id === 'number' ? device.crop_type_id : null
 	};
 };
 
@@ -113,7 +123,8 @@ export const actions: Actions = {
 				name: values.name,
 				group: values.group || null,
 				location_id: values.location_id,
-				tti_name: values.tti_name || null
+				tti_name: values.tti_name || null,
+				...(values.crop_type_id !== undefined ? { crop_type_id: values.crop_type_id } : {})
 			});
 		} catch (error) {
 			return fail(apiErrorStatus(error, 502), {

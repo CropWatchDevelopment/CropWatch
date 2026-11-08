@@ -6,7 +6,7 @@ import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
 import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
 import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
 import { computeDewPoint } from '$lib/utils/dewPoint';
-import type { PreferencesDto, RelayHistoryEntryDto } from '$lib/api/api.dtos';
+import type { CropTypeDetailDto, PreferencesDto, RelayHistoryEntryDto } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { SvelteDate } from 'svelte/reactivity';
 import {
@@ -266,6 +266,49 @@ export function buildSensorChartSeries(
 	});
 
 	return series;
+}
+
+/** Chart series (soil columns) whose crop targets hold all day, by target metric. */
+const CROP_TARGET_SERIES: Record<string, string> = {
+	moisture: 'soil_moisture',
+	temperature_c: 'soil_temperature',
+	ec: 'soil_ec',
+	ph: 'soil_ph'
+};
+
+/**
+ * Adds a soil sensor's crop targets to the chart: the optimal band's lower and
+ * upper ends as lines on the soil moisture, soil temperature, EC and pH series
+ * (in the user's units). Air readings are left alone: their targets change
+ * between day and night, which one line cannot show.
+ */
+export function withCropTargetLines(
+	series: CwResponsiveLineSeries[],
+	crop: CropTypeDetailDto | null | undefined,
+	cropName: string,
+	preferences?: PreferencesDto | null
+): CwResponsiveLineSeries[] {
+	if (!crop) return series;
+	return series.map((line) => {
+		const metric = CROP_TARGET_SERIES[line.id];
+		const target = crop.targets.find((t) => t.metric === metric && t.period === 'all');
+		if (!target) return line;
+		const ends = [
+			{ value: target.optimal_min, label: m.soil_target_line_min({ crop: cropName }) },
+			{ value: target.optimal_max, label: m.soil_target_line_max({ crop: cropName }) }
+		].flatMap(({ value, label }) =>
+			value === null
+				? []
+				: [
+						{
+							value: convertSensorValue(line.id, value, preferences),
+							label,
+							color: 'var(--cw-success-500)'
+						}
+					]
+		);
+		return ends.length > 0 ? { ...line, thresholds: [...(line.thresholds ?? []), ...ends] } : line;
+	});
 }
 
 /** Series id for the derived dew point line (also its `initialHidden` key). */
