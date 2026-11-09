@@ -15,8 +15,8 @@ importers:
   .:
     dependencies:
       '@cropwatchdevelopment/cwui':
-        specifier: 0.1.117
-        version: 0.1.117(svelte@5.56.3(@typescript-eslint/types@8.61.1))
+        specifier: 0.1.118
+        version: 0.1.118(svelte@5.56.3(@typescript-eslint/types@8.61.1))
       '@cropwatchdevelopment/qr-scanner':
         specifier: 0.1.0
         version: 0.1.0
@@ -141,8 +141,8 @@ packages:
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
 
-  '@cropwatchdevelopment/cwui@0.1.117':
-    resolution: {integrity: sha512-EVqM7j20cgK92YH3+OuIcpCT5Lu7B/LBKt5l8z2BtiXDunxLMKJnjJG+SpVUacncwhTEGVVCb7O7o5uonQyFrw==}
+  '@cropwatchdevelopment/cwui@0.1.118':
+    resolution: {integrity: sha512-dk9nBhpMjfeFS4woybSHqgj12vehHmIljNcN2aRGrQfUbLf8mz0l+Jned0P0D22WK83WWj60yNPUZ50u4dQ9Gg==}
     peerDependencies:
       svelte: ^5.0.0
 
@@ -2467,7 +2467,7 @@ snapshots:
 
   '@blazediff/core@1.9.1': {}
 
-  '@cropwatchdevelopment/cwui@0.1.117(svelte@5.56.3(@typescript-eslint/types@8.61.1))':
+  '@cropwatchdevelopment/cwui@0.1.118(svelte@5.56.3(@typescript-eslint/types@8.61.1))':
     dependencies:
       svelte: 5.56.3(@typescript-eslint/types@8.61.1)
 

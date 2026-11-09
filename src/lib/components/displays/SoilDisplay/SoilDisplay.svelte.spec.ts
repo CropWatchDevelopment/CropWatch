@@ -268,10 +268,11 @@ describe('SoilDisplay', () => {
 
 		expect(dliCard).toContain(text.outlookNeeded);
 		expect(dliCard).toContain(text.outlookBehind);
-		// The location has no coordinates: the end of the day is assumed.
-		expect(target.querySelector('.cw-dli-card__outlook-line')?.getAttribute('title')).toBe(
-			text.outlookAssumedHint
-		);
+		// The location has no coordinates: the end of the day is assumed, which a
+		// CwTooltip on the light line says.
+		expect(
+			target.querySelector('.cw-dli-card__outlook-line [role="tooltip"]')?.textContent?.trim()
+		).toBe(text.outlookAssumedHint);
 		// No separate card any more.
 		expect(target.querySelectorAll('.cw-dli-card')).toHaveLength(1);
 		view?.unmount();
