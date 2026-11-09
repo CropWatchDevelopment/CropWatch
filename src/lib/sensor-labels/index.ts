@@ -112,8 +112,22 @@ const HIDDEN_COLUMNS = new Set([
 	'battery_level'
 ]);
 
-export function labelFor(column: string): SensorLabel {
-	return SENSOR_LABELS[column] ?? { label: () => column, unit: '', format: 'number' };
+// Names that depend on the device's data table. On soil boards `temperature_c`
+// and `moisture` are the probe's soil readings, and the board's air readings sit
+// beside them (`air_temperature_c`, `air_humidity`), so a bare "Temperature"
+// would be ambiguous.
+const TABLE_LABELS: Record<string, Record<string, () => string>> = {
+	cw_soil_data: {
+		temperature_c: () => m.display_soil_temperature(),
+		moisture: () => m.rule_subject_soil_moisture()
+	}
+};
+
+/** A column's label, unit and format; pass the device's data table for table-specific names. */
+export function labelFor(column: string, dataTable?: string | null): SensorLabel {
+	const base = SENSOR_LABELS[column] ?? { label: () => column, unit: '', format: 'number' };
+	const label = dataTable ? TABLE_LABELS[dataTable]?.[column] : undefined;
+	return label ? { ...base, label } : base;
 }
 
 export function isDisplayableColumn(column: string): boolean {

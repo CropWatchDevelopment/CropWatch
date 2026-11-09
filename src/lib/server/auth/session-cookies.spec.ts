@@ -1,5 +1,5 @@
 import type { Cookies } from '@sveltejs/kit';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	REFRESH_COOKIE,
 	REFRESH_COOKIE_MAX_AGE_SECONDS,
@@ -12,6 +12,15 @@ const cookieJar = () =>
 const inSeconds = (seconds: number) => new Date(Date.now() + seconds * 1000);
 
 describe('setSessionCookies', () => {
+	// The lifetime is whole seconds rounded down, so a clock that moves between
+	// `inSeconds(3600)` and the cookie being set would give 3599 on a busy machine.
+	beforeEach(() => {
+		vi.useFakeTimers({ now: new Date('2026-11-09T12:00:00Z') });
+	});
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it('stores both tokens httpOnly: the access token for its lifetime, the refresh token for 30 days', () => {
 		const cookies = cookieJar();
 
@@ -25,7 +34,7 @@ describe('setSessionCookies', () => {
 		const options = { path: '/', httpOnly: true, secure: true, sameSite: 'lax' };
 		expect(cookies.set).toHaveBeenCalledWith(SESSION_COOKIE, 'access', {
 			...options,
-			maxAge: expect.closeTo(3600, 0)
+			maxAge: 3600
 		});
 		expect(cookies.set).toHaveBeenCalledWith(REFRESH_COOKIE, 'refresh', {
 			...options,
@@ -46,14 +55,20 @@ describe('setSessionCookies', () => {
 		);
 	});
 
+	// Built inside the test, under the frozen clock: it.each's cases are made when
+	// the file loads, before beforeEach freezes it.
 	it.each([
-		['already expired', inSeconds(-5)],
-		['an invalid date', new Date('nope')]
-	])('stores nothing when the session is %s', (_, expiresAt) => {
+		['already expired', () => inSeconds(-5)],
+		['an invalid date', () => new Date('nope')]
+	])('stores nothing when the session is %s', (_, makeExpiresAt) => {
 		const cookies = cookieJar();
 
 		expect(
-			setSessionCookies(cookies, { accessToken: 'a', refreshToken: 'r', expiresAt }, true)
+			setSessionCookies(
+				cookies,
+				{ accessToken: 'a', refreshToken: 'r', expiresAt: makeExpiresAt() },
+				true
+			)
 		).toBe(false);
 		expect(cookies.set).not.toHaveBeenCalled();
 	});

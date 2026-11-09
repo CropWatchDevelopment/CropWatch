@@ -346,6 +346,12 @@ describe('device settings load', () => {
 		await expect(
 			runLoad({ authToken: TEST_JWT, device: DEVICE, dataTable: 'cw_soil_data' }, locals)
 		).resolves.toMatchObject({ crops: null });
+
+		// An API without the route answers its HTML page with a 200.
+		locals.services.crops.getCrops.mockResolvedValue('<!doctype html><html></html>' as never);
+		await expect(
+			runLoad({ authToken: TEST_JWT, device: DEVICE, dataTable: 'cw_soil_data' }, locals)
+		).resolves.toMatchObject({ crops: null });
 	});
 
 	it('uses the DevEUI for an unnamed device and ignores owner and org ids that are not strings', async () => {
