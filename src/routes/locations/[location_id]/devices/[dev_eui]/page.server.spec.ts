@@ -208,6 +208,22 @@ describe('device page load', () => {
 		).resolves.toMatchObject({ deviceData: ROWS, crop: null });
 	});
 
+	it('ignores an answer that is not a crop or a report list (an API without the routes)', async () => {
+		// Such an API answers its HTML page with a 200 for any route it lacks.
+		const html = '<!doctype html><html></html>';
+		const locals = testLocals();
+		locals.services.telemetry.getDeviceData.mockResolvedValue(ROWS);
+		locals.services.telemetry.getDeviceLatestData.mockResolvedValue(LATEST);
+		locals.services.crops.getCrop.mockResolvedValue(html as never);
+		locals.services.aiRecommendations.getAiRecommendations.mockResolvedValue(html as never);
+
+		await expect(runLoad(locals, TEST_JWT, PARAMS, SOIL_WITH_CROP)).resolves.toMatchObject({
+			deviceData: ROWS,
+			crop: null,
+			aiReport: null
+		});
+	});
+
 	it('looks up no crop or AI report for other sensors, or a soil sensor without a crop', async () => {
 		const locals = testLocals();
 		locals.services.telemetry.getDeviceData.mockResolvedValue(ROWS);

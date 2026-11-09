@@ -50,6 +50,8 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 	// render the empty device page instead of letting the 404 become a 500.
 	// The AI worker reports only on soil sensors with a crop set; like the crop,
 	// the newest daily report is optional and the page works without it.
+	// Both are checked for their shape: an API without these routes answers its
+	// HTML page with a 200, which must not reach the page as a crop or report.
 	const [deviceData, latestData, crop, aiReport] = await Promise.all([
 		telemetry
 			.getDeviceData(params.dev_eui, pagination, { suppressNotFoundError: true })
@@ -60,12 +62,15 @@ export const load: PageServerLoad = async ({ params, parent, locals }) => {
 		loadLatestDeviceDataOrNull(telemetry, params.dev_eui),
 		cropTypeId === null
 			? Promise.resolve(null)
-			: crops.getCrop(cropTypeId).catch(() => null as CropTypeDetailDto | null),
+			: crops
+					.getCrop(cropTypeId)
+					.then((found) => (Array.isArray(found?.targets) ? found : null))
+					.catch(() => null as CropTypeDetailDto | null),
 		cropTypeId === null
 			? Promise.resolve(null)
 			: aiRecommendations
 					.getAiRecommendations(params.dev_eui, { type: 'daily', limit: 1 })
-					.then((reports) => reports?.[0] ?? null)
+					.then((reports) => (Array.isArray(reports) ? (reports[0] ?? null) : null))
 					.catch(() => null as AiRecommendationDto | null)
 	]);
 
