@@ -214,7 +214,8 @@ function toChartValue(value: unknown): number | null {
  */
 export function buildSensorChartSeries(
 	rows: TelemetryRow[],
-	preferences?: PreferencesDto | null
+	preferences?: PreferencesDto | null,
+	dataTable?: string | null
 ): CwResponsiveLineSeries[] {
 	if (rows.length === 0) return [];
 
@@ -252,7 +253,7 @@ export function buildSensorChartSeries(
 		data.sort((left, right) => left.t - right.t);
 		if (data.length === 0) return;
 
-		const labelInfo = labelFor(column);
+		const labelInfo = labelFor(column, dataTable);
 		const { color, gradient } = metricColor(column);
 		series.push({
 			id: column,

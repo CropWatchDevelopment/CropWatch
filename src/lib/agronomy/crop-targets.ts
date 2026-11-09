@@ -22,23 +22,54 @@ export function cropTarget(
 }
 
 /**
- * Where a reading sits: past a stress limit (`too_low` / `too_high`), outside
- * the optimal band (`low` / `high`) or inside it (`optimal`). Null when there
- * is no reading, or nothing to judge it against.
+ * Where a reading sits against its target, on a seven-step scale so that being a little
+ * off reads as a little off: inside the optimal band it is `optimal`; outside it, the
+ * distance past the nearest bound, as a share of that bound, picks the step (up to 10 %
+ * `slightly_*`, up to 25 % `low` / `high`, beyond that `very_*`). Past a stress limit
+ * (min_value / max_value, where the crop takes damage) is always `very_*`. A target with
+ * only stress limits judges only those. Null without a reading or anything to judge it by.
  */
-export type TargetStatus = 'too_low' | 'low' | 'optimal' | 'high' | 'too_high';
+export type TargetStatus =
+	| 'very_low'
+	| 'low'
+	| 'slightly_low'
+	| 'optimal'
+	| 'slightly_high'
+	| 'high'
+	| 'very_high';
+
+/** Largest share past the band that is still `slightly_*`, and still `low` / `high`. */
+export const SLIGHTLY_OFF_SHARE = 0.1;
+export const OFF_SHARE = 0.25;
 
 export function judgeReading(
 	value: number | null | undefined,
 	target: CropTargetDto | null
 ): TargetStatus | null {
 	if (value === null || value === undefined || !Number.isFinite(value) || !target) return null;
-	if (target.min_value !== null && value < target.min_value) return 'too_low';
-	if (target.max_value !== null && value > target.max_value) return 'too_high';
-	if (target.optimal_min !== null && value < target.optimal_min) return 'low';
-	if (target.optimal_max !== null && value > target.optimal_max) return 'high';
-	if (target.optimal_min === null && target.optimal_max === null) return null;
+	if (target.min_value !== null && value < target.min_value) return 'very_low';
+	if (target.max_value !== null && value > target.max_value) return 'very_high';
+	const { optimal_min: low, optimal_max: high } = target;
+	if (low === null && high === null) return null;
+	if (low !== null && value < low) return step('low', (low - value) / shareBase(low, low, high));
+	if (high !== null && value > high)
+		return step('high', (value - high) / shareBase(high, low, high));
 	return 'optimal';
+}
+
+/** A bound of 0 has no share: measure against the band's width instead (or 1). */
+function shareBase(bound: number, low: number | null, high: number | null): number {
+	if (bound !== 0) return Math.abs(bound);
+	return low !== null && high !== null && high > low ? high - low : 1;
+}
+
+// Floating point puts e.g. 26.4 against 24 a hair over 10 %: count the edges as inside.
+const EDGE = 1e-9;
+
+function step(side: 'low' | 'high', share: number): TargetStatus {
+	if (share <= SLIGHTLY_OFF_SHARE + EDGE) return side === 'low' ? 'slightly_low' : 'slightly_high';
+	if (share <= OFF_SHARE + EDGE) return side;
+	return side === 'low' ? 'very_low' : 'very_high';
 }
 
 /** The crop's name in the UI language (Japanese for `ja`, else English). */

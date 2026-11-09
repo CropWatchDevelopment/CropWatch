@@ -47,7 +47,7 @@
 	let isAirDevice = $derived(data.dataTable === 'cw_air_data');
 	let chartSeries = $derived.by(() => {
 		const series = withCropTargetLines(
-			buildSensorChartSeries(dashboard.displayHistoricalData, app.preferences),
+			buildSensorChartSeries(dashboard.displayHistoricalData, app.preferences, data.dataTable),
 			data.crop,
 			data.crop ? cropDisplayName(data.crop, getIntlLocale()) : '',
 			app.preferences

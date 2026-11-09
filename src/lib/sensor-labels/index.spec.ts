@@ -71,6 +71,26 @@ describe('labelFor', () => {
 		}
 	});
 
+	it('names the soil readings on soil boards, so they read apart from the air readings', () => {
+		const soil = (column: string) => labelFor(column, 'cw_soil_data').label();
+		expect(soil('temperature_c')).toBe(m.display_soil_temperature());
+		expect(soil('moisture')).toBe(m.rule_subject_soil_moisture());
+		expect(soil('air_temperature_c')).toBe(m.sensor_air_temperature());
+		expect(soil('air_humidity')).toBe(m.sensor_air_humidity());
+		// Only the name changes: unit, format and icon stay the column's.
+		expect(labelFor('temperature_c', 'cw_soil_data')).toMatchObject({
+			unit: '°C',
+			format: 'number',
+			icon: 'thermo'
+		});
+	});
+
+	it('keeps the plain names on other tables and without a table', () => {
+		expect(labelFor('temperature_c', 'cw_air_data').label()).toBe(m.sensor_temperature());
+		expect(labelFor('temperature_c', null).label()).toBe(m.sensor_temperature());
+		expect(labelFor('moisture').label()).toBe(m.sensor_moisture());
+	});
+
 	it('shows an unknown column under its own name as a plain number', () => {
 		const label = labelFor('soil_salinity');
 

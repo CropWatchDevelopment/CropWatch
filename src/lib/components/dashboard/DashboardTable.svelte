@@ -28,22 +28,23 @@
 
 	// Unit-bearing numeric metrics are converted to the user's preference; other
 	// columns (booleans, counts, unmapped fields) keep their canonical rendering.
-	function renderMetric(col: string, value: unknown): string {
+	function renderMetric(row: DashboardRow, col: string, value: unknown): string {
 		const stateIcon = sensorStateIcon(col, value);
 		const display = formatSensorMeasurement(col, value, app.preferences).display;
-		return `${labelFor(col).label()}: ${stateIcon ? `${stateIcon} ` : ''}${display}`;
+		const label = labelFor(col, row.device_type.data_table_v2).label();
+		return `${label}: ${stateIcon ? `${stateIcon} ` : ''}${display}`;
 	}
 
 	function renderPrimary(row: DashboardRow): string {
 		const col = row.device_type.primary_data_v2;
 		if (!col || col === '-' || !isDisplayableColumn(col)) return '—';
-		return renderMetric(col, row.latest?.primary);
+		return renderMetric(row, col, row.latest?.primary);
 	}
 
 	function renderSecondary(row: DashboardRow): string {
 		const col = row.device_type.secondary_data_v2;
 		if (!col || col === '' || col === '-' || !isDisplayableColumn(col)) return '—';
-		return renderMetric(col, row.latest?.secondary);
+		return renderMetric(row, col, row.latest?.secondary);
 	}
 
 	const columns: CwColumnDef<DashboardRow>[] = [

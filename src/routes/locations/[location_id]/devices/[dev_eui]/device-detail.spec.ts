@@ -214,6 +214,29 @@ describe('buildSensorChartSeries', () => {
 		expect(ec.data).toEqual([{ t: Date.parse(T2), v: 1.5 }]);
 	});
 
+	it('tells soil and air readings apart on a soil board', () => {
+		const series = buildSensorChartSeries(
+			[
+				{
+					created_at: T1,
+					temperature_c: 18,
+					moisture: 40,
+					air_temperature_c: 22,
+					air_humidity: 70
+				}
+			],
+			null,
+			'cw_soil_data'
+		);
+
+		expect(series.map((entry) => entry.label)).toEqual([
+			m.display_soil_temperature(),
+			m.rule_subject_soil_moisture(),
+			m.sensor_air_temperature(),
+			m.sensor_air_humidity()
+		]);
+	});
+
 	it('skips identifiers, time columns, hidden columns and cells without a number', () => {
 		const series = buildSensorChartSeries([
 			{

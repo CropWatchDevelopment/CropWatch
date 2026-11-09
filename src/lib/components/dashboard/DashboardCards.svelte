@@ -262,7 +262,7 @@
 		return typeof row.error_status === 'string' && row.error_status.trim().length > 0;
 	}
 
-	function detailEntries(details: Record<string, unknown>) {
+	function detailEntries(details: Record<string, unknown>, dataTable: string | null | undefined) {
 		return Object.entries(details)
 			.filter(([col, value]) => isDisplayableColumn(col) && value !== null && value !== undefined)
 			.map(([col, value]) => {
@@ -274,10 +274,10 @@
 						{ month: 'short', day: 'numeric', hour: 'numeric' },
 						String(value)
 					);
-					return { col, def: labelFor(col), valueDisplay, unit: '' };
+					return { col, def: labelFor(col, dataTable), valueDisplay, unit: '' };
 				}
 				const fm = formatSensorMeasurement(col, value, app.preferences);
-				return { col, def: labelFor(col), valueDisplay: fm.valueDisplay, unit: fm.unit };
+				return { col, def: labelFor(col, dataTable), valueDisplay: fm.valueDisplay, unit: fm.unit };
 			});
 	}
 
@@ -398,7 +398,10 @@
 							{@const primary = primaryProps(row)}
 							{@const secondary = secondaryProps(row)}
 							{@const details = detailsByDevEui[row.dev_eui]}
-							{@const detailRows = details && details !== 'loading' ? detailEntries(details) : []}
+							{@const detailRows =
+								details && details !== 'loading'
+									? detailEntries(details, row.device_type.data_table_v2)
+									: []}
 							{@const lastSeen = row.last_data_updated_at ?? row.latest?.created_at ?? null}
 							<CwSensorCard
 								labels={cwSensorCardLabels()}
