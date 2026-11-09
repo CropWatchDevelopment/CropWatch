@@ -55,14 +55,20 @@ describe('setSessionCookies', () => {
 		);
 	});
 
+	// Built inside the test, under the frozen clock: it.each's cases are made when
+	// the file loads, before beforeEach freezes it.
 	it.each([
-		['already expired', inSeconds(-5)],
-		['an invalid date', new Date('nope')]
-	])('stores nothing when the session is %s', (_, expiresAt) => {
+		['already expired', () => inSeconds(-5)],
+		['an invalid date', () => new Date('nope')]
+	])('stores nothing when the session is %s', (_, makeExpiresAt) => {
 		const cookies = cookieJar();
 
 		expect(
-			setSessionCookies(cookies, { accessToken: 'a', refreshToken: 'r', expiresAt }, true)
+			setSessionCookies(
+				cookies,
+				{ accessToken: 'a', refreshToken: 'r', expiresAt: makeExpiresAt() },
+				true
+			)
 		).toBe(false);
 		expect(cookies.set).not.toHaveBeenCalled();
 	});
