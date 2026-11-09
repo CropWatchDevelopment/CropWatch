@@ -43,9 +43,9 @@ interface RowSpec {
 	digits: number;
 	daytimeOnly?: boolean;
 	/**
-	 * Shown, never judged, when the crop has no target the sensor can be
-	 * compared with: soil EC falls back to the lab soil test (1:5 extract),
-	 * which an in-soil probe does not read directly.
+	 * Used, and labelled as such, when the crop has no target for the sensor's own
+	 * metric: soil EC falls back to the lab soil test (1:5 extract) band. The probe
+	 * reads bulk EC in the soil, so that judgement is a guide rather than a lab result.
 	 */
 	referenceMetric?: string;
 }
@@ -170,7 +170,7 @@ export function buildCropTargetRows(input: {
 				? formatSensorMeasurement(field, value, preferences, digits).display
 				: `${formatNumber(value, digits)} kPa`,
 			target: isReference ? m.soil_crop_targets_lab_reference({ band }) : band,
-			status: daytimeOnly || isReference ? null : judgeReading(value, target),
+			status: daytimeOnly ? null : judgeReading(value, target),
 			daytimeOnly
 		});
 	}
@@ -180,21 +180,36 @@ export function buildCropTargetRows(input: {
 /** The status chip's text. */
 export function targetStatusLabel(status: TargetStatus): string {
 	switch (status) {
-		case 'too_low':
-			return m.soil_target_status_too_low();
+		case 'very_low':
+			return m.soil_target_level_very_low();
 		case 'low':
-			return m.soil_target_status_low();
+			return m.soil_target_level_low();
+		case 'slightly_low':
+			return m.soil_target_level_slightly_low();
 		case 'optimal':
 			return m.soil_target_status_optimal();
+		case 'slightly_high':
+			return m.soil_target_level_slightly_high();
 		case 'high':
-			return m.soil_target_status_high();
-		case 'too_high':
-			return m.soil_target_status_too_high();
+			return m.soil_target_level_high();
+		case 'very_high':
+			return m.soil_target_level_very_high();
 	}
 }
 
-/** The status chip's tone: in band, outside it, or past a stress limit. */
+/** The status chip's tone: green in band, calm blue a little off, amber off, red far off. */
 export function targetStatusTone(status: TargetStatus): CwTone {
-	if (status === 'optimal') return 'success';
-	return status === 'too_low' || status === 'too_high' ? 'danger' : 'warning';
+	switch (status) {
+		case 'optimal':
+			return 'success';
+		case 'slightly_low':
+		case 'slightly_high':
+			return 'info';
+		case 'low':
+		case 'high':
+			return 'warning';
+		case 'very_low':
+		case 'very_high':
+			return 'danger';
+	}
 }

@@ -83,14 +83,14 @@ describe('buildCropTargetRows', () => {
 			daytimeOnly: false
 		});
 		expect(row.moisture.target).toBe(`${formatNumber(19)}–${formatNumber(24)} %`);
-		expect(row.temperature_c.status).toBe('too_low');
-		// No probe-basis EC band: the lab soil-test band is shown for reference, not judged.
+		expect(row.temperature_c.status).toBe('very_low'); // 12 °C is past the 13 °C stress limit
+		// No probe-basis EC band: the reading is judged against the lab soil-test band, labelled as such.
 		const ec = (value: number) => formatNumber(value, { maximumFractionDigits: 2 });
 		expect(row.ec).toMatchObject({
 			target: m.soil_crop_targets_lab_reference({ band: `${ec(0.2)}–${ec(0.5)} mS/cm` }),
-			status: null
+			status: 'optimal'
 		});
-		expect(row.air_temperature_c.status).toBe('low');
+		expect(row.air_temperature_c.status).toBe('slightly_low'); // 18 against 20: 10 %
 		expect(row.air_humidity).toMatchObject({
 			target: `≥ ${formatNumber(60)} %`,
 			status: 'optimal'
@@ -100,13 +100,13 @@ describe('buildCropTargetRows', () => {
 			target: `${formatNumber(0.5, { maximumFractionDigits: 2 })}–${formatNumber(1, { maximumFractionDigits: 2 })} kPa`,
 			status: 'optimal'
 		});
-		expect(row.co2).toMatchObject({ target: `≤ ${formatNumber(900)} ppm`, status: 'high' });
+		expect(row.co2).toMatchObject({ target: `≤ ${formatNumber(900)} ppm`, status: 'very_high' }); // 33 %
 	});
 
 	it('uses the night targets at night, and only shows the daytime-only ones', () => {
 		const row = keyed(buildCropTargetRows({ crop, period: 'night', readings, vpd: 0.62 }));
 
-		expect(row.air_temperature_c).toMatchObject({ status: 'high', daytimeOnly: false });
+		expect(row.air_temperature_c).toMatchObject({ status: 'high', daytimeOnly: false }); // 18 against 15: 20 %
 		expect(row.air_temperature_c.target).toBe(`${formatNumber(10)}–${formatNumber(15)} °C`);
 		expect(row.co2).toMatchObject({ status: null, daytimeOnly: true });
 		expect(row.vpd).toMatchObject({ status: null, daytimeOnly: true });
@@ -121,7 +121,7 @@ describe('buildCropTargetRows', () => {
 					vpd: null
 				})
 			).air_humidity.status
-		).toBe('too_high');
+		).toBe('very_high');
 		// A day row does not apply at night: without a night or all-day row, no target.
 		const dayOnly = { ...crop, targets: crop.targets.filter((t) => t.period !== 'night') };
 		expect(
@@ -140,30 +140,56 @@ describe('buildCropTargetRows', () => {
 			formatSensorMeasurement('temperature_c', 12, fahrenheit, { maximumFractionDigits: 1 }).display
 		);
 		expect(row.temperature_c.target).toBe(`${formatNumber(59)}–${formatNumber(68)} °F`);
-		expect(row.temperature_c.status).toBe('too_low');
+		expect(row.temperature_c.status).toBe('very_low');
 		expect(row.vpd).toBeUndefined();
 	});
 });
 
 describe('targetStatusLabel / targetStatusTone', () => {
-	it('names and colours every status', () => {
+	it('names and colours every step: green in band, calm a little off, amber off, red far off', () => {
 		expect(
-			(['too_low', 'low', 'optimal', 'high', 'too_high'] as const).map((status) => [
-				targetStatusLabel(status),
-				targetStatusTone(status)
-			])
+			(
+				[
+					'very_low',
+					'low',
+					'slightly_low',
+					'optimal',
+					'slightly_high',
+					'high',
+					'very_high'
+				] as const
+			).map((status) => [targetStatusLabel(status), targetStatusTone(status)])
 		).toEqual([
-			[m.soil_target_status_too_low(), 'danger'],
-			[m.soil_target_status_low(), 'warning'],
+			[m.soil_target_level_very_low(), 'danger'],
+			[m.soil_target_level_low(), 'warning'],
+			[m.soil_target_level_slightly_low(), 'info'],
 			[m.soil_target_status_optimal(), 'success'],
-			[m.soil_target_status_high(), 'warning'],
-			[m.soil_target_status_too_high(), 'danger']
+			[m.soil_target_level_slightly_high(), 'info'],
+			[m.soil_target_level_high(), 'warning'],
+			[m.soil_target_level_very_high(), 'danger']
 		]);
 	});
 });
 
 describe('buildCropTargetRows EC', () => {
 	const ecCrop = (targets: CropTargetDto[]): CropTypeDetailDto => ({ ...crop, targets });
+
+	it('judges the probe reading against the lab band when there is no probe-basis one', () => {
+		const ec = (value: number) => formatNumber(value, { maximumFractionDigits: 2 });
+		const judge = (reading: number) =>
+			buildCropTargetRows({
+				crop: ecCrop([target('soil_ec_1to5', 'all', [null, 0.2, 0.5, null])]),
+				period: 'day',
+				readings: { ec: reading },
+				vpd: null
+			})[0];
+		expect(judge(0.22)).toMatchObject({
+			key: 'ec',
+			target: m.soil_crop_targets_lab_reference({ band: `${ec(0.2)}–${ec(0.5)} mS/cm` }),
+			status: 'optimal'
+		});
+		expect(judge(0.53).status).toBe('slightly_high');
+	});
 
 	it('judges the probe reading against a probe-basis band, ignoring the lab one', () => {
 		const [row] = buildCropTargetRows({

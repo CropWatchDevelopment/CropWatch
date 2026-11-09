@@ -48,7 +48,8 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 	const device = parentData.device;
 
 	// Only soil sensors take a crop. Without the list (the API is older than
-	// the crop feature, or the request failed) the crop field is not shown.
+	// the crop feature and answers its HTML page, or the request failed) the
+	// crop field is not shown.
 	const isSoilSensor = parentData.dataTable === 'cw_soil_data';
 	const [location, locations, licenses, crops] = await Promise.all([
 		Number.isFinite(locationId)
@@ -57,7 +58,10 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		services.locations.getLocations().catch(() => []),
 		services.billing.getLicenses().catch(() => []),
 		isSoilSensor
-			? services.crops.getCrops().catch(() => null)
+			? services.crops
+					.getCrops()
+					.then((list) => (Array.isArray(list) ? list : null))
+					.catch(() => null)
 			: Promise.resolve(null as CropTypeDto[] | null)
 	]);
 

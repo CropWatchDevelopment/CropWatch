@@ -542,11 +542,11 @@ describe('DashboardCards details', () => {
 		await expect.poll(() => detailRows(card()).length).toBe(4);
 		expect(detailRows(card())).toEqual([
 			[
-				labelFor('temperature_c').label(),
+				labelFor('temperature_c', 'cw_soil_data').label(),
 				normalize(`${formatSensorMeasurement('temperature_c', 21.5).valueDisplay} °C`)
 			],
 			[
-				labelFor('moisture').label(),
+				labelFor('moisture', 'cw_soil_data').label(),
 				normalize(`${formatSensorMeasurement('moisture', 40).valueDisplay} %`)
 			],
 			[
@@ -600,7 +600,7 @@ describe('DashboardCards details', () => {
 
 		await expect.poll(() => detailRows(sensorNamed('Greenhouse probe')).length).toBe(1);
 		expect(detailRows(sensorNamed('Greenhouse probe'))[0][0]).toBe(
-			labelFor('temperature_c').label()
+			labelFor('temperature_c', 'cw_soil_data').label()
 		);
 	});
 
@@ -888,8 +888,8 @@ describe('DashboardCards per-device refresh', () => {
 		await expect
 			.poll(() => detailRows(sensorNamed('Greenhouse probe')).map(([label]) => label))
 			.toEqual([
-				labelFor('temperature_c').label(),
-				labelFor('moisture').label(),
+				labelFor('temperature_c', 'cw_soil_data').label(),
+				labelFor('moisture', 'cw_soil_data').label(),
 				m.dashboard_column_last_seen()
 			]);
 	});

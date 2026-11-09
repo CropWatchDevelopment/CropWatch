@@ -268,10 +268,11 @@ describe('SoilDisplay', () => {
 
 		expect(dliCard).toContain(text.outlookNeeded);
 		expect(dliCard).toContain(text.outlookBehind);
-		// The location has no coordinates: the end of the day is assumed.
-		expect(target.querySelector('.cw-dli-card__outlook-line')?.getAttribute('title')).toBe(
-			text.outlookAssumedHint
-		);
+		// The location has no coordinates: the end of the day is assumed, which a
+		// CwTooltip on the light line says.
+		expect(
+			target.querySelector('.cw-dli-card__outlook-line [role="tooltip"]')?.textContent?.trim()
+		).toBe(text.outlookAssumedHint);
 		// No separate card any more.
 		expect(target.querySelectorAll('.cw-dli-card')).toHaveLength(1);
 		view?.unmount();
@@ -478,9 +479,10 @@ describe('SoilDisplay', () => {
 			]);
 			expect(rows).toEqual([
 				[m.rule_subject_soil_moisture(), m.soil_target_status_optimal()],
-				[m.display_soil_temperature(), m.soil_target_status_high()],
+				// 21 °C against 15–20 is 5 % over; 18 °C against 20–25 is 10 % under.
+				[m.display_soil_temperature(), m.soil_target_level_slightly_high()],
 				[m.sensor_ec(), '—'],
-				[m.sensor_air_temperature(), m.soil_target_status_low()],
+				[m.sensor_air_temperature(), m.soil_target_level_slightly_low()],
 				[m.sensor_air_humidity(), m.soil_target_status_optimal()],
 				['VPD', m.soil_target_status_optimal()],
 				[m.sensor_co2(), '—']
@@ -494,7 +496,7 @@ describe('SoilDisplay', () => {
 			const airRow = [...target.querySelectorAll('.crop-targets tbody tr')].find(
 				(row) => row.querySelector('th')?.textContent?.trim() === m.sensor_air_temperature()
 			);
-			expect(airRow?.textContent).toContain(m.soil_target_status_high());
+			expect(airRow?.textContent).toContain(m.soil_target_level_high()); // 18 against 15: 20 %
 			expect(target.querySelector('.crop-targets')?.textContent).toContain(
 				m.soil_crop_targets_daytime_only()
 			);
