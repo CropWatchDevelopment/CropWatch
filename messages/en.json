@@ -1511,7 +1511,7 @@
 	"nav_admin": "Admin",
 	"nav_group_admin": "Administration",
 	"admin_billing_title": "Billing customers",
-	"admin_billing_subtitle": "Every device owner with their licenses, billing mode, and subscriptions. Staff only.",
+	"admin_billing_subtitle": "Every user with their devices, licenses, billing mode, and subscriptions. Staff only.",
 	"admin_billing_col_customer": "Customer",
 	"admin_billing_col_devices": "Devices",
 	"admin_billing_col_licensed": "Licensed",
