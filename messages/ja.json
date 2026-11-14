@@ -1511,7 +1511,7 @@
 	"nav_admin": "管理",
 	"nav_group_admin": "管理者向け",
 	"admin_billing_title": "請求顧客一覧",
-	"admin_billing_subtitle": "すべてのデバイス所有者のライセンス、請求方法、サブスクリプションの一覧です。スタッフ専用。",
+	"admin_billing_subtitle": "すべてのユーザーのデバイス、ライセンス、請求方法、サブスクリプションの一覧です。スタッフ専用。",
 	"admin_billing_col_customer": "顧客",
 	"admin_billing_col_devices": "デバイス数",
 	"admin_billing_col_licensed": "ライセンス付き",
