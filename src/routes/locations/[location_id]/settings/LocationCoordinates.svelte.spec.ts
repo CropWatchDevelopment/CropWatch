@@ -25,7 +25,7 @@ const { invalidateAll, forms, maplibre } = vi.hoisted(() => {
 
 	class FakeMap extends Evented {
 		static last: FakeMap | null = null;
-		options: { center: LngLat; zoom: number; scrollZoom: boolean };
+		options: { center: LngLat; zoom: number; cooperativeGestures: boolean };
 		zoom: number;
 		/** Whether the location pin is inside the visible area. */
 		inView = true;
@@ -169,7 +169,11 @@ describe('LocationCoordinates map', () => {
 		expect(document.body.textContent).toContain(m.location_coordinates_title());
 		expect(position()).toEqual(['31.9147', '131.4232']);
 		expect(zoomField().value).toBe('15');
-		expect(map.options).toMatchObject({ center: [131.4232, 31.9147], zoom: 15, scrollZoom: true });
+		expect(map.options).toMatchObject({
+			center: [131.4232, 31.9147],
+			zoom: 15,
+			cooperativeGestures: true
+		});
 		expect(maplibre.setWorkerUrl).toHaveBeenCalled();
 		expect(map.touchZoomRotate.disableRotation).toHaveBeenCalled();
 		expect(map.addControl).toHaveBeenCalledWith(expect.any(maplibre.NavigationControl), 'top-left');
