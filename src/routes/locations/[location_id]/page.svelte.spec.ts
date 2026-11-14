@@ -19,8 +19,8 @@ const { goto, page } = vi.hoisted(() => ({
 vi.mock('$app/navigation', () => ({ goto }));
 vi.mock('$app/state', () => ({ page }));
 
-// A 1×1 transparent PNG, served for every OpenStreetMap tile so the map renders
-// without the network.
+// A 1×1 transparent PNG, served for every map tile (GSI photo or OpenStreetMap)
+// so the map renders without the network.
 const BLANK_TILE = Uint8Array.from(
 	atob(
 		'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
@@ -186,7 +186,10 @@ beforeEach(() => {
 	const guardedFetch = globalThis.fetch;
 	vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = input instanceof Request ? input.url : String(input);
-		if (url.startsWith('https://tile.openstreetmap.org/')) {
+		if (
+			url.startsWith('https://cyberjapandata.gsi.go.jp/') ||
+			url.startsWith('https://tile.openstreetmap.org/')
+		) {
 			return Promise.resolve(
 				new Response(BLANK_TILE, { status: 200, headers: { 'content-type': 'image/png' } })
 			);

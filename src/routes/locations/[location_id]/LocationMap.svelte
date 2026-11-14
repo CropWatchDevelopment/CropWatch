@@ -1,11 +1,17 @@
 <script lang="ts">
 	import 'maplibre-gl/dist/maplibre-gl.css';
-	import type { Map as MapLibreMap, MapOptions, Marker } from 'maplibre-gl';
+	import type {
+		Map as MapLibreMap,
+		Marker,
+		RasterSourceSpecification,
+		StyleSpecification
+	} from 'maplibre-gl';
 	// MapLibre finds its worker relative to its own file, which breaks once Vite
 	// pre-bundles (dev) or hashes (build) it. Let Vite bundle the worker and
 	// hand MapLibre the resulting URL instead.
 	import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 	import { untrack } from 'svelte';
+	import { CwButton } from '@cropwatchdevelopment/cwui';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { DeviceHealth } from './location-overview';
 
@@ -42,22 +48,39 @@
 
 	let container: HTMLDivElement;
 
-	// OpenStreetMap raster tiles: free, no key. The attribution is a fixed
-	// string; MapLibre renders it as HTML, so never build it from data.
-	const OSM_STYLE: MapOptions['style'] = {
-		version: 8,
-		sources: {
-			osm: {
-				type: 'raster',
-				tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-				tileSize: 256,
-				maxzoom: 19,
-				attribution:
-					'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-			}
+	// Raster basemaps, both free and keyless. Attributions are fixed strings;
+	// MapLibre renders them as HTML, so never build them from data.
+	const BASEMAPS = {
+		// GSI (国土地理院) aerial photos, so fields and paths off the road map can
+		// be picked out. Japan only above zoom 8 (every located site is in Japan);
+		// the "Map" view covers anywhere else. Shown live from GSI's server, its
+		// terms ask only for this credit — no application, commercial use allowed.
+		satellite: {
+			type: 'raster',
+			tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'],
+			tileSize: 256,
+			minzoom: 2,
+			maxzoom: 18,
+			attribution:
+				'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener noreferrer">地理院タイル</a>'
 		},
-		layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
-	};
+		map: {
+			type: 'raster',
+			tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+			tileSize: 256,
+			maxzoom: 19,
+			attribution:
+				'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+		}
+	} satisfies Record<string, RasterSourceSpecification>;
+	type Basemap = keyof typeof BASEMAPS;
+
+	const styleFor = (basemap: Basemap): StyleSpecification => ({
+		version: 8,
+		sources: { [basemap]: BASEMAPS[basemap] },
+		layers: [{ id: basemap, type: 'raster', source: basemap }]
+	});
+
 	// Whole-of-Japan view for a picker that has no position yet ([long, lat]).
 	const FALLBACK_CENTER: [number, number] = [138.25, 36.2];
 	const FALLBACK_ZOOM = 5;
@@ -73,6 +96,13 @@
 	let deviceMarkers: Marker[] = [];
 	let resizeObserver: ResizeObserver | null = null;
 	let ready = $state(false);
+	let basemap = $state<Basemap>('satellite');
+
+	function toggleBasemap() {
+		basemap = basemap === 'satellite' ? 'map' : 'satellite';
+		// Markers are DOM elements, so they stay put while the tiles change.
+		map?.setStyle(styleFor(basemap));
+	}
 
 	// ~10 cm precision; more digits only add noise.
 	const round = (value: number) => Math.round(value * 1e6) / 1e6;
@@ -117,14 +147,22 @@
 			const hasPosition = initial.lat != null && initial.long != null;
 			map = new lib.Map({
 				container,
-				style: OSM_STYLE,
+				style: styleFor(basemap),
 				center: hasPosition ? [initial.long!, initial.lat!] : FALLBACK_CENTER,
 				zoom: hasPosition
 					? initial.zoom && initial.zoom > 0
 						? initial.zoom
 						: DEFAULT_ZOOM
 					: FALLBACK_ZOOM,
-				scrollZoom: initial.editable,
+				// Plain scrolls and one-finger swipes scroll the page past the map:
+				// zoom with Ctrl (⌘ on a Mac) + scroll, move the map with two fingers.
+				// A one-finger tap still picks a position, and the pin still drags.
+				cooperativeGestures: true,
+				locale: {
+					'CooperativeGesturesHandler.WindowsHelpText': m.location_map_gesture_ctrl_scroll(),
+					'CooperativeGesturesHandler.MacHelpText': m.location_map_gesture_cmd_scroll(),
+					'CooperativeGesturesHandler.MobileHelpText': m.location_map_gesture_two_fingers()
+				},
 				dragRotate: false,
 				pitchWithRotate: false,
 				attributionControl: { compact: true }
@@ -224,12 +262,22 @@
 </script>
 
 <div
-	bind:this={container}
 	class="location-map"
 	class:location-map--editable={editable}
 	role="region"
 	aria-label={m.location_detail_map_label({ name })}
-></div>
+>
+	<div bind:this={container} class="location-map__canvas"></div>
+	<CwButton
+		id="location-map-basemap-button"
+		class="location-map__basemap"
+		variant="secondary"
+		size="sm"
+		onclick={toggleBasemap}
+	>
+		{basemap === 'satellite' ? m.location_map_show_map() : m.location_map_show_satellite()}
+	</CwButton>
+</div>
 
 <style>
 	.location-map {
@@ -242,6 +290,18 @@
 		/* Keep the map's own layers under app overlays (menus, dialogs, toasts). */
 		position: relative;
 		z-index: 0;
+	}
+
+	.location-map__canvas {
+		position: absolute;
+		inset: 0;
+	}
+
+	.location-map :global(.location-map__basemap) {
+		position: absolute;
+		top: var(--cw-space-2);
+		right: var(--cw-space-2);
+		z-index: 1;
 	}
 
 	.location-map--editable :global(.maplibregl-canvas-container) {
