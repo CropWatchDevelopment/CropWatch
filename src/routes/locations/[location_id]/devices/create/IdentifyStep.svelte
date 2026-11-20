@@ -341,10 +341,13 @@
 <DeviceQrScanner bind:open={scannerOpen} onresult={(payload) => flow.applyQr(payload)} />
 
 <style>
-	/* Identifiers read better in a monospace face (label stays in the UI font). */
+	/* Identifiers read better in a monospace face (label stays in the UI font),
+	   and always in capitals however they are typed; the flow upper-cases the
+	   value itself before it is looked up or saved. */
 	:global(.hex-input input) {
 		font-family: var(--cw-font-mono);
 		letter-spacing: 0.02em;
+		text-transform: uppercase;
 	}
 
 	:global(.scan-button) {
