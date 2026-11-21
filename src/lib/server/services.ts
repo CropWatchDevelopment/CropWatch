@@ -1,4 +1,5 @@
 import { FetchHttpClient, type FetchFn } from '$lib/api/http/fetch-http-client';
+import { getLocale } from '$lib/paraglide/runtime';
 import { readPublicConfig, type PublicConfig } from '$lib/config/public';
 import { createAppServices, type AppServices } from '$lib/services/app-services';
 import { readServerConfig, type ServerConfig } from './config';
@@ -32,7 +33,13 @@ export function createServerServices({
 	config = readPublicConfig(),
 	serverConfig = readServerConfig()
 }: ServerServicesOptions): ServerServices {
-	const http = new FetchHttpClient({ baseUrl: config.apiBaseUrl, fetch, authToken });
+	// Runs inside `paraglideMiddleware`, so `getLocale` is this request's language.
+	const http = new FetchHttpClient({
+		baseUrl: config.apiBaseUrl,
+		fetch,
+		authToken,
+		locale: getLocale
+	});
 
 	return {
 		...createAppServices(http, config.endpoints),
