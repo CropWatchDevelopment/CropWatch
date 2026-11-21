@@ -141,6 +141,28 @@ describe('FetchHttpClient requests', () => {
 		expect(headers.get('content-type')).toBe('text/plain');
 	});
 
+	it('sends the UI language as Accept-Language, read on every request', async () => {
+		const fake = createFakeFetch();
+		let locale = 'ja';
+		const http = client(fake.fetch, { locale: () => locale });
+
+		await http.request('/a');
+		locale = 'en';
+		await http.request('/b');
+		await http.request('/c', { headers: { 'Accept-Language': 'fr' } });
+
+		expect(fake.requests.map((r) => r.headers.get('accept-language'))).toEqual(['ja', 'en', 'fr']);
+	});
+
+	it('sends no Accept-Language without a locale', async () => {
+		const fake = createFakeFetch();
+
+		await client(fake.fetch).request('/a');
+		await client(fake.fetch, { locale: () => '' }).request('/b');
+
+		expect(fake.requests.map((r) => r.headers.get('accept-language'))).toEqual([null, null]);
+	});
+
 	it('does not call fetch as a method (the native browser fetch would reject that)', async () => {
 		const calls: unknown[] = [];
 		const strictFetch = function (this: unknown) {

@@ -566,6 +566,31 @@ describe('location page device table', () => {
 		await sorted(m.gateways_signal(), ['C3', 'B2', 'D4', 'A1']);
 	});
 
+	it('sorts names naturally: numbers by value first, full-width and circled too', async () => {
+		stubLatestReadings(services);
+		const named = (dev_eui: string, name: string) => ({
+			dev_eui,
+			name,
+			created_at: minutesAgo(9000)
+		});
+		render({
+			allLocationDevices: [
+				named('E1', 'センサー10'),
+				named('E2', '温室'),
+				named('E3', 'センサー２'),
+				named('E4', '⑥ハウス'),
+				named('E5', '1号舎')
+			]
+		});
+		// Unsorted, the table keeps the API's order.
+		await expect.poll(rowOrder).toEqual(['E1', 'E2', 'E3', 'E4', 'E5']);
+
+		sortBy(m.devices_device_name());
+		await expect.poll(rowOrder).toEqual(['E5', 'E4', 'E3', 'E1', 'E2']);
+		sortBy(m.devices_device_name());
+		await expect.poll(rowOrder).toEqual(['E2', 'E1', 'E3', 'E4', 'E5']);
+	});
+
 	it('opens a device in a full page load, and its settings in the app', async () => {
 		stubLatestReadings(services);
 		render({ allLocationDevices: fleet(), hasSettings: true });

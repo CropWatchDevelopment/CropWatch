@@ -19,7 +19,8 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import ADD_ICON from '$lib/images/icons/add.svg';
 	import { getServices } from '$lib/services/context';
-	import { sortByColumn } from '$lib/utils/sortByColumn';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import { naturalSort } from '$lib/utils/natural-sort';
 
 	let loading = $state(false);
 	const { locations } = getServices();
@@ -34,10 +35,11 @@
 		const result = await locations.getAllLocations({ name: search || undefined });
 		let rows = result.data ?? [];
 
+		// Name is the only sortable column.
 		if (query.sort) {
-			rows = sortByColumn(rows, query.sort.column, query.sort.direction, {
-				nullsLast: true,
-				numericColumns: ['location_id']
+			rows = naturalSort(rows, (row) => row.name, {
+				locale: getLocale(),
+				direction: query.sort.direction
 			});
 		}
 

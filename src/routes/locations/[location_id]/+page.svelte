@@ -28,6 +28,7 @@
 	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale } from '$lib/paraglide/runtime.js';
+	import { naturalSort } from '$lib/utils/natural-sort';
 	import { getServices } from '$lib/services/context';
 	import type { PageProps } from './$types';
 	import LocationMap from './LocationMap.svelte';
@@ -214,8 +215,6 @@
 
 	function compareRows(a: LocationDeviceRow, b: LocationDeviceRow, column: string): number {
 		switch (column) {
-			case 'name':
-				return a.name.localeCompare(b.name);
 			case 'dev_eui':
 				return a.dev_eui.localeCompare(b.dev_eui);
 			case 'health':
@@ -251,7 +250,9 @@
 						row.name.toLowerCase().includes(search) || row.dev_eui.toLowerCase().includes(search)
 				);
 			}
-			if (query.sort) {
+			if (query.sort?.column === 'name') {
+				rows = naturalSort(rows, (row) => row.name, { locale, direction: query.sort.direction });
+			} else if (query.sort) {
 				const { column, direction } = query.sort;
 				const factor = direction === 'asc' ? 1 : -1;
 				rows = [...rows].sort((a, b) => compareRows(a, b, column) * factor);

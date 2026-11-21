@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getLocale } from '$lib/paraglide/runtime';
 import { createServerServices } from '$lib/server/services';
 import {
 	createFakeFetch,
@@ -10,8 +11,15 @@ import { createMockServices } from '$lib/testing/mock-services';
 import { createAppServices } from './app-services';
 import { createClientServices } from './client';
 
+// The API sorts names in the UI language, so both composition roots send it.
+vi.mock('$lib/paraglide/runtime', async (importOriginal) => {
+	const runtime = await importOriginal<typeof import('$lib/paraglide/runtime')>();
+	return { ...runtime, getLocale: vi.fn(runtime.getLocale) };
+});
+
 afterEach(() => {
 	vi.unstubAllGlobals();
+	vi.mocked(getLocale).mockReset();
 });
 
 describe('createServerServices', () => {
@@ -32,6 +40,20 @@ describe('createServerServices', () => {
 			[`${TEST_API_BASE_URL}/devices/status`, 'Bearer jwt-1'],
 			[`${TEST_API_BASE_URL}/devices/status`, null]
 		]);
+	});
+
+	it("sends the request's UI language as Accept-Language", async () => {
+		const fake = createFakeFetch(() => jsonResponse([]));
+		const services = createServerServices({
+			fetch: fake.fetch,
+			authToken: () => 'jwt',
+			config: testPublicConfig()
+		});
+
+		vi.mocked(getLocale).mockReturnValue('en');
+		await services.locations.getLocationGroups();
+
+		expect(fake.onlyRequest().headers.get('accept-language')).toBe('en');
 	});
 
 	it('reads the config from the env by default, adding the server-only gateways', () => {
@@ -60,6 +82,19 @@ describe('createClientServices', () => {
 		expect(first.requests).toHaveLength(1);
 		expect(second.requests).toHaveLength(1);
 		expect(second.onlyRequest().headers.get('authorization')).toBe('Bearer jwt');
+	});
+
+	it('sends the current UI language as Accept-Language', async () => {
+		const fake = createFakeFetch(() => jsonResponse([]));
+		vi.stubGlobal('fetch', fake.fetch);
+		const services = createClientServices({ config: testPublicConfig(), authToken: () => 'jwt' });
+
+		vi.mocked(getLocale).mockReturnValue('ja');
+		await services.locations.getLocationGroups();
+		vi.mocked(getLocale).mockReturnValue('en');
+		await services.locations.getLocationGroups();
+
+		expect(fake.requests.map((r) => r.headers.get('accept-language'))).toEqual(['ja', 'en']);
 	});
 
 	it('does not retry a 401 outside the browser', async () => {

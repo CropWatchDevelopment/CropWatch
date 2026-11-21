@@ -147,6 +147,7 @@ describe('IdentifyStep', () => {
 		const input = byId<HTMLInputElement>('device-setup-dev-eui-input');
 		expect(input?.placeholder).toBe('00 13 7A 10 00 04 41 DF');
 		expect(input?.required).toBe(true);
+		expect(getComputedStyle(input!).textTransform).toBe('uppercase');
 		expect(fieldHint('device-setup-dev-eui-input')).toBe(m.device_setup_dev_eui_hint());
 		expect(byId('device-setup-identify-continue')?.disabled).toBe(true);
 		expect(byId('device-setup-model-select')).toBeNull();
@@ -395,6 +396,9 @@ describe('IdentifyStep', () => {
 			'00 00 00 00 00 00 00 00'
 		);
 		expect(fieldHint('device-setup-app-key-input')).toBe(m.device_setup_app_key_hint());
+		for (const id of ['device-setup-join-eui-input', 'device-setup-app-key-input']) {
+			expect(getComputedStyle(byId(id)!).textTransform).toBe('uppercase');
+		}
 
 		byId('device-setup-identify-continue')?.click();
 		flushSync();
