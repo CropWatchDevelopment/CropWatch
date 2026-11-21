@@ -160,69 +160,49 @@
 		</ol>
 	</nav>
 
-	<div class="flex flex-wrap items-start gap-6">
-		<div class="min-w-0 flex-[999_1_34rem]">
-			<CwCard elevated>
-				<div class="setup-card">
-					{#if flow.step === 'identify'}
-						<IdentifyStep
-							{flow}
-							deviceTypeOptions={data.deviceTypeOptions}
-							oncancel={() => goto(locationHref)}
-						/>
-					{:else if flow.step === 'details'}
-						<DetailsStep
-							{flow}
-							licenses={data.availableLicenses}
-							groupSuggestions={data.groupSuggestions}
-							locationLat={data.locationLat}
-							locationLong={data.locationLong}
-						/>
-					{:else if flow.step === 'review'}
-						<ReviewStep
-							{flow}
-							deviceTypeOptions={data.deviceTypeOptions}
-							licenses={data.availableLicenses}
-							locationName={data.locationName}
-							onchangelicense={() => void changeLicense()}
-							onopenlocation={() => goto(locationHref)}
-						/>
-					{:else}
-						<RegisterProgress
-							{flow}
-							locationName={data.locationName}
-							onopen={() =>
-								goto(
-									resolve('/locations/[location_id]/devices/[dev_eui]', {
-										location_id: locationId,
-										dev_eui: flow.result?.dev_eui ?? flow.devEui.value
-									}),
-									{ invalidateAll: true }
-								)}
-							{addingAnother}
-							onaddanother={() => void addAnother()}
-						/>
-					{/if}
-				</div>
-			</CwCard>
+	<CwCard elevated>
+		<div class="setup-card">
+			{#if flow.step === 'identify'}
+				<IdentifyStep
+					{flow}
+					deviceTypeOptions={data.deviceTypeOptions}
+					oncancel={() => goto(locationHref)}
+				/>
+			{:else if flow.step === 'details'}
+				<DetailsStep
+					{flow}
+					licenses={data.availableLicenses}
+					groupSuggestions={data.groupSuggestions}
+					locationLat={data.locationLat}
+					locationLong={data.locationLong}
+				/>
+			{:else if flow.step === 'review'}
+				<ReviewStep
+					{flow}
+					deviceTypeOptions={data.deviceTypeOptions}
+					licenses={data.availableLicenses}
+					locationName={data.locationName}
+					onchangelicense={() => void changeLicense()}
+					onopenlocation={() => goto(locationHref)}
+				/>
+			{:else}
+				<RegisterProgress
+					{flow}
+					locationName={data.locationName}
+					onopen={() =>
+						goto(
+							resolve('/locations/[location_id]/devices/[dev_eui]', {
+								location_id: locationId,
+								dev_eui: flow.result?.dev_eui ?? flow.devEui.value
+							}),
+							{ invalidateAll: true }
+						)}
+					{addingAnother}
+					onaddanother={() => void addAnother()}
+				/>
+			{/if}
 		</div>
-
-		<aside class="flex flex-[1_1_16rem] flex-col gap-4">
-			<section class="side-panel">
-				<h2 class="m-0 text-base font-semibold">{m.device_setup_how_title()}</h2>
-				<ol class="m-0 flex flex-col gap-2 pl-5 text-sm">
-					<li>{m.device_setup_how_1()}</li>
-					<li>{m.device_setup_how_2()}</li>
-					<li>{m.device_setup_how_3()}</li>
-				</ol>
-				<p class="m-0 text-sm text-(--cw-text-muted)">{m.device_setup_how_safe()}</p>
-			</section>
-			<section class="side-panel">
-				<h2 class="m-0 text-base font-semibold">{m.device_setup_where_title()}</h2>
-				<p class="m-0 text-sm text-(--cw-text-muted)">{m.device_setup_where_body()}</p>
-			</section>
-		</aside>
-	</div>
+	</CwCard>
 </AppPage>
 
 <style>
@@ -284,15 +264,5 @@
 
 	.setup-card {
 		padding: var(--cw-space-2);
-	}
-
-	.side-panel {
-		display: flex;
-		flex-direction: column;
-		gap: var(--cw-space-3);
-		padding: var(--cw-space-5);
-		border: 1px solid var(--cw-border-muted);
-		border-radius: var(--cw-radius-lg);
-		background: var(--cw-bg-surface);
 	}
 </style>

@@ -173,17 +173,8 @@ describe('device setup page', () => {
 			{ state: 'upcoming', current: null, dot: '3', label: m.device_setup_step_review() }
 		]);
 		expect(heading()?.textContent?.trim()).toBe(m.device_setup_identify_title());
-		for (const message of [
-			m.device_setup_how_title(),
-			m.device_setup_how_1(),
-			m.device_setup_how_2(),
-			m.device_setup_how_3(),
-			m.device_setup_how_safe(),
-			m.device_setup_where_title(),
-			m.device_setup_where_body()
-		]) {
-			expect(text()).toContain(message);
-		}
+		// Registration and DevEUI help is left to training and kb.cropwatch.io.
+		expect(document.querySelector('aside')).toBeNull();
 	});
 
 	it('names the region the lookup found when the location has none', async () => {
