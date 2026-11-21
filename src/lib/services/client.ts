@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import { FetchHttpClient } from '$lib/api/http/fetch-http-client';
+import { getLocale } from '$lib/paraglide/runtime';
 import type { PublicConfig } from '$lib/config/public';
 import { createAppServices, type AppServices } from './app-services';
 
@@ -20,6 +21,7 @@ export function createClientServices({ config, authToken }: ClientServicesOption
 		baseUrl: config.apiBaseUrl,
 		fetch: (input, init) => globalThis.fetch(input, init),
 		authToken,
+		locale: getLocale,
 		retryUnauthorizedOnce: browser
 	});
 	return createAppServices(http, config.endpoints);

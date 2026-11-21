@@ -239,6 +239,20 @@ describe('Sidebar dashboard filters', () => {
 		]);
 	});
 
+	it('sort the location groups naturally: numbers by value first', async () => {
+		render({ locationGroups: ['ハウス10', '温室', 'ハウス２', '⑥号棟', '1号棟'] });
+
+		await expect.poll(() => filterItems().length).toBe(6);
+		expect(filterItems().map((item) => item.label)).toEqual([
+			m.sidebar_all_location_groups(),
+			'1号棟',
+			'⑥号棟',
+			'ハウス２',
+			'ハウス10',
+			'温室'
+		]);
+	});
+
 	it('show only "all" when the groups are not loaded yet', async () => {
 		render({ locationGroups: undefined, locations: undefined });
 

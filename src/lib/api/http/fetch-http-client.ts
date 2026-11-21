@@ -13,6 +13,8 @@ export interface FetchHttpClientOptions {
 	/** Called as a plain function (never as a method), so the native `fetch` is safe to pass. */
 	fetch: FetchFn;
 	authToken?: AuthTokenSource;
+	/** The UI language, read on every request and sent as `Accept-Language` (the API sorts names in it). */
+	locale?: () => string;
 	/** Hours added to response `created_at` values (default 0, i.e. `+00:00`). */
 	timeZoneOffset?: number;
 	/**
@@ -51,6 +53,7 @@ export class FetchHttpClient implements HttpClient {
 	readonly #baseUrl: string;
 	readonly #fetch: FetchFn;
 	readonly #authToken: AuthTokenSource;
+	readonly #locale: (() => string) | undefined;
 	readonly #timeZoneOffset: number;
 	readonly #maxAttempts: number;
 	readonly #wait: (ms: number) => Promise<void>;
@@ -59,6 +62,7 @@ export class FetchHttpClient implements HttpClient {
 		this.#baseUrl = options.baseUrl;
 		this.#fetch = options.fetch;
 		this.#authToken = options.authToken;
+		this.#locale = options.locale;
 		this.#timeZoneOffset =
 			typeof options.timeZoneOffset === 'number' && Number.isFinite(options.timeZoneOffset)
 				? options.timeZoneOffset
@@ -92,6 +96,11 @@ export class FetchHttpClient implements HttpClient {
 				'Accept',
 				responseType === 'json' ? 'application/json' : 'text/plain, text/html, */*'
 			);
+		}
+
+		const locale = this.#locale?.();
+		if (locale && !resolvedHeaders.has('Accept-Language')) {
+			resolvedHeaders.set('Accept-Language', locale);
 		}
 
 		let serializedBody: string | undefined;

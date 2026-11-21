@@ -108,6 +108,21 @@ describe('locations page', () => {
 		await expect.poll(() => rowNames()[0]).toBe('L');
 	});
 
+	it('sorts names naturally: numbers by value first, full-width and circled too', async () => {
+		const names = ['ハウス10', '温室', 'ハウス２', '⑥ハウス', '1号棟'].map((name, index) =>
+			location(index + 1, name)
+		);
+		services.locations.getAllLocations.mockResolvedValue({ data: names, total: names.length });
+		render();
+		await expect.poll(() => rowNames().length).toBe(5);
+
+		const nameHeader = [...view!.target.querySelectorAll('.cw-data-table__sort-btn')].find(
+			(header) => header.textContent?.includes(m.nav_locations())
+		) as HTMLButtonElement;
+		nameHeader.click();
+		await expect.poll(rowNames).toEqual(['1号棟', '⑥ハウス', 'ハウス２', 'ハウス10', '温室']);
+	});
+
 	it('shows an empty table when the API sends no list', async () => {
 		services.locations.getAllLocations.mockResolvedValue({ total: 0 } as never);
 

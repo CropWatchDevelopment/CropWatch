@@ -21,9 +21,11 @@
 		const cleaned = values
 			.map((v) => (typeof v === 'string' ? v.trim() : ''))
 			.filter((v) => v.length > 0);
-		return [...new Set(cleaned)].sort((a, b) => a.localeCompare(b));
+		return naturalSort([...new Set(cleaned)], (value) => value, { locale: getLocale() });
 	}
 	import { isStaffEmail } from '$lib/utils/is-staff';
+	import { naturalSort } from '$lib/utils/natural-sort';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	let { mode = $bindable() } = $props();
 
