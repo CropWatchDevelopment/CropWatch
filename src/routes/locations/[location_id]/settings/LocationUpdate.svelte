@@ -6,11 +6,19 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import SAVE_ICON from '$lib/images/icons/save.svg';
+	import type { GroupDto } from '$lib/api/api.dtos';
+	import { getServices } from '$lib/services/context';
+	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
+	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
+	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
 
 	type SettingsPageData = {
 		locationId: string | number | null;
 		locationName?: string | null;
 		locationGroup?: string | null;
+		locationGroups?: GroupDto[];
+		locationOrgId?: string | null;
 	};
 
 	let { data }: { data: SettingsPageData } = $props();
@@ -22,6 +30,22 @@
 	let submitting = $state(false);
 	let locationName = $state(initial.locationName ?? '');
 	let locationGroup = $state(initial.locationGroup ?? '');
+	const groups = new GroupsController({
+		kind: 'location',
+		repository: getServices().locationGroups,
+		orgId: initial.locationOrgId,
+		initial: initial.locationGroups,
+		onError: (message) => toast.add({ tone: 'danger', message }),
+		onSuccess: (message) => toast.add({ tone: 'success', message }),
+		onChanged: async () => {
+			// A rename or delete changes what the saved location shows: reload,
+			// and keep an untouched picker on what the API now has saved.
+			const untouched = locationGroup.trim() === (data.locationGroup ?? '').trim();
+			await invalidateAll();
+			groups.reseed(data.locationGroups, data.locationOrgId);
+			if (untouched) locationGroup = data.locationGroup ?? '';
+		}
+	});
 	let locationNameValue = $derived(locationName.trim());
 	let locationGroupValue = $derived(locationGroup.trim());
 	let locationDirty = $derived(
@@ -64,9 +88,11 @@
 
 						if (result.type === 'success') {
 							await invalidateAll();
-							// Show what was saved, as the reloaded location has it.
+							// Show what was saved, as the reloaded location has it (saving a
+							// new name may have created a group, so the list is reloaded too).
 							locationName = data.locationName ?? '';
 							locationGroup = data.locationGroup ?? '';
+							groups.reseed(data.locationGroups, data.locationOrgId);
 						}
 					} finally {
 						submitting = false;
@@ -84,13 +110,10 @@
 				bind:value={locationName}
 				class="mb-4"
 			/>
-			<CwInput
-				id="location-update-group-input"
+			<GroupPicker
+				controller={groups}
+				id="location-update-group-select"
 				name="group"
-				type="text"
-				label={m.common_group()}
-				placeholder={m.locations_enter_group_name()}
-				required
 				bind:value={locationGroup}
 			/>
 			<input
@@ -113,4 +136,7 @@
 			</div>
 		</form>
 	</CwCard>
+	<!-- Outside the form: Enter in a dialog's field must not save the location. -->
+	<AddGroupDialog controller={groups} bind:value={locationGroup} />
+	<ManageGroupsDialog controller={groups} bind:value={locationGroup} />
 </div>

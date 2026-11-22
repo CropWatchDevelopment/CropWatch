@@ -216,6 +216,18 @@ describe('updateLocationName', () => {
 		});
 	});
 
+	it('saves "no group" as null', async () => {
+		const locals = testLocals();
+		locals.services.locations.updateLocation.mockResolvedValue({});
+
+		await act('updateLocationName', locals, { locationName: 'Greenhouse B', group: '' });
+
+		expect(locals.services.locations.updateLocation).toHaveBeenCalledWith(8, {
+			name: 'Greenhouse B',
+			group: null
+		});
+	});
+
 	it('requires a name', async () => {
 		const locals = testLocals();
 

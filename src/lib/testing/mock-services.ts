@@ -8,6 +8,7 @@ import { HttpCropRepository } from '$lib/api/repositories/crops.repository';
 import { HttpDashboardRepository } from '$lib/api/repositories/dashboard.repository';
 import { HttpDeviceRepository } from '$lib/api/repositories/devices.repository';
 import { HttpGatewayRepository } from '$lib/api/repositories/gateways.repository';
+import { HttpGroupRepository } from '$lib/api/repositories/groups.repository';
 import { HttpLineRepository } from '$lib/api/repositories/line.repository';
 import { HttpLocationRepository } from '$lib/api/repositories/locations.repository';
 import { HttpOrganizationRepository } from '$lib/api/repositories/organizations.repository';
@@ -32,9 +33,11 @@ const REPOSITORY_CLASSES: { [K in keyof AppServices]: { prototype: AppServices[K
 	crops: HttpCropRepository,
 	dashboard: HttpDashboardRepository,
 	devices: HttpDeviceRepository,
+	deviceGroups: HttpGroupRepository,
 	gateways: HttpGatewayRepository,
 	line: HttpLineRepository,
 	locations: HttpLocationRepository,
+	locationGroups: HttpGroupRepository,
 	organizations: HttpOrganizationRepository,
 	overview: HttpOverviewRepository,
 	push: HttpPushRepository,

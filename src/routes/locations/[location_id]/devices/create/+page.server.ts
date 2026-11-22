@@ -1,7 +1,7 @@
 import { buildLoginPath } from '$lib/utils/auth-redirect';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { NetworkRegion } from '$lib/api/api.dtos';
+import type { GroupDto, NetworkRegion } from '$lib/api/api.dtos';
 import type { DeviceTypeOption, LicenseOption } from './device-setup-flow.svelte';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -53,35 +53,26 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		);
 	}
 
-	const { billing, devices, locations } = locals.services;
+	const { billing, deviceGroups, devices, locations } = locals.services;
 
-	const [deviceTypeOptions, location, availableLicenses, groupSuggestions] = await Promise.all([
+	const locationRequest = locations.getLocation(locationId).catch(() => null);
+	const [deviceTypeOptions, location, availableLicenses, groups] = await Promise.all([
 		devices
 			.getDeviceTypes()
 			.then(mapDeviceTypeOptions)
 			.catch(() => []),
-		locations.getLocation(locationId).catch(() => null),
+		locationRequest,
 		billing
 			.getLicenses()
 			.then(toAvailableLicenses)
 			.catch(() => []),
-		// Groups already used at this location, offered as one-tap suggestions
-		// (read-scoped by the API, then narrowed to this location).
-		devices
-			.getDevices({ take: 1000 })
-			.then((allDevices) =>
-				[
-					...new Set(
-						allDevices
-							.filter((device) => String(device.location_id ?? '') === locationId)
-							.map((device) => device.group?.trim() ?? '')
-							.filter(Boolean)
-					)
-				]
-					.sort((a, b) => a.localeCompare(b))
-					.slice(0, 8)
-			)
-			.catch(() => [] as string[])
+		// The group picker's choices: the device groups of the location's
+		// organization (the device joins it). Without them it is set up without one.
+		locationRequest.then((loaded) =>
+			loaded?.org_id
+				? deviceGroups.listGroups({ orgId: loaded.org_id }).catch(() => [] as GroupDto[])
+				: ([] as GroupDto[])
+		)
 	]);
 
 	return {
@@ -90,8 +81,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		locationLat: readCoordinate(location?.lat),
 		locationLong: readCoordinate(location?.long),
 		locationRegion: readRegion(location?.network_region),
+		locationOrgId: typeof location?.org_id === 'string' ? location.org_id : null,
 		deviceTypeOptions,
 		availableLicenses,
-		groupSuggestions
+		deviceGroups: groups
 	};
 };

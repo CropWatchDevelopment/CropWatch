@@ -86,7 +86,11 @@ export const updateLocationName: Actions['updateLocationName'] = async ({
 	}
 
 	try {
-		await locals.services.locations.updateLocation(locationId, { name: newName, group: newGroup });
+		// No group is null, not '' (the API would otherwise look for a group named '').
+		await locals.services.locations.updateLocation(locationId, {
+			name: newName,
+			group: newGroup || null
+		});
 
 		return {
 			action: 'updateLocationName',
