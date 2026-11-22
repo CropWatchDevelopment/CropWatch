@@ -452,6 +452,48 @@ export type Database = {
 					}
 				];
 			};
+			cw_device_groups: {
+				Row: {
+					created_at: string;
+					created_by: string | null;
+					id: number;
+					name: string;
+					org_id: string | null;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					created_by?: string | null;
+					id?: number;
+					name: string;
+					org_id?: string | null;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					created_by?: string | null;
+					id?: number;
+					name?: string;
+					org_id?: string | null;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_device_groups_created_by_fkey';
+						columns: ['created_by'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'cw_device_groups_org_id_fkey';
+						columns: ['org_id'];
+						isOneToOne: false;
+						referencedRelation: 'organizations';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			cw_device_owners: {
 				Row: {
 					dev_eui: string;
@@ -751,7 +793,7 @@ export type Database = {
 					crop_type_id: number | null;
 					dev_eui: string;
 					error_status: string | null;
-					group: string | null;
+					group_id: number | null;
 					installed_at: string | null;
 					last_data_updated_at: string | null;
 					lat: number | null;
@@ -778,7 +820,7 @@ export type Database = {
 					crop_type_id?: number | null;
 					dev_eui: string;
 					error_status?: string | null;
-					group?: string | null;
+					group_id?: number | null;
 					installed_at?: string | null;
 					last_data_updated_at?: string | null;
 					lat?: number | null;
@@ -805,7 +847,7 @@ export type Database = {
 					crop_type_id?: number | null;
 					dev_eui?: string;
 					error_status?: string | null;
-					group?: string | null;
+					group_id?: number | null;
 					installed_at?: string | null;
 					last_data_updated_at?: string | null;
 					lat?: number | null;
@@ -832,6 +874,13 @@ export type Database = {
 						columns: ['crop_type_id'];
 						isOneToOne: false;
 						referencedRelation: 'cw_crop_types';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'cw_devices_group_id_fkey';
+						columns: ['group_id'];
+						isOneToOne: false;
+						referencedRelation: 'cw_device_groups';
 						referencedColumns: ['id'];
 					},
 					{
@@ -975,6 +1024,48 @@ export type Database = {
 					}
 				];
 			};
+			cw_location_groups: {
+				Row: {
+					created_at: string;
+					created_by: string | null;
+					id: number;
+					name: string;
+					org_id: string | null;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					created_by?: string | null;
+					id?: number;
+					name: string;
+					org_id?: string | null;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					created_by?: string | null;
+					id?: number;
+					name?: string;
+					org_id?: string | null;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'cw_location_groups_created_by_fkey';
+						columns: ['created_by'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'cw_location_groups_org_id_fkey';
+						columns: ['org_id'];
+						isOneToOne: false;
+						referencedRelation: 'organizations';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			cw_location_owners: {
 				Row: {
 					admin_user_id: string;
@@ -1030,7 +1121,7 @@ export type Database = {
 				Row: {
 					created_at: string;
 					description: string | null;
-					group: string | null;
+					group_id: number | null;
 					lat: number | null;
 					location_id: number;
 					long: number | null;
@@ -1043,7 +1134,7 @@ export type Database = {
 				Insert: {
 					created_at?: string;
 					description?: string | null;
-					group?: string | null;
+					group_id?: number | null;
 					lat?: number | null;
 					location_id?: number;
 					long?: number | null;
@@ -1056,7 +1147,7 @@ export type Database = {
 				Update: {
 					created_at?: string;
 					description?: string | null;
-					group?: string | null;
+					group_id?: number | null;
 					lat?: number | null;
 					location_id?: number;
 					long?: number | null;
@@ -1067,6 +1158,13 @@ export type Database = {
 					owner_id?: string | null;
 				};
 				Relationships: [
+					{
+						foreignKeyName: 'cw_locations_group_id_fkey';
+						columns: ['group_id'];
+						isOneToOne: false;
+						referencedRelation: 'cw_location_groups';
+						referencedColumns: ['id'];
+					},
 					{
 						foreignKeyName: 'cw_locations_org_id_fkey';
 						columns: ['org_id'];

@@ -227,6 +227,21 @@ export interface CropTypeDetailDto extends CropTypeDto {
 	targets: CropTargetDto[];
 }
 
+/**
+ * GET /location-groups, GET /device-groups — a group a location or device can
+ * be put in. Locations and devices have separate pools. Lists hold the groups
+ * the caller created plus those on locations/devices the caller can open (staff:
+ * every group). Locations and devices still send and receive `group` as its name.
+ */
+export interface GroupDto {
+	id: number;
+	name: string;
+	/** The organization the group belongs to (one group per name per org). */
+	org_id: string | null;
+	/** The caller may rename or delete it (its creator, the org's owner/managers, or staff). */
+	can_manage: boolean;
+}
+
 export type AiReportType = 'daily' | 'weekly';
 
 /** One "what this value means" line per measurement, written by the rules engine. */
@@ -1077,13 +1092,15 @@ export interface LocationsQuery {
 export interface LocationDto {
 	created_at: string;
 	description?: Record<string, unknown> | null;
-	group?: Record<string, unknown> | null;
+	group?: string | null;
 	lat?: Record<string, unknown> | null;
 	location_id: number;
 	long?: Record<string, unknown> | null;
 	map_zoom?: Record<string, unknown> | null;
 	name: string;
 	owner_id?: Record<string, unknown> | null;
+	/** The organization the location belongs to. */
+	org_id?: string | null;
 	cw_location_owners?: LocationOwnerDto[];
 	[key: string]: unknown;
 }

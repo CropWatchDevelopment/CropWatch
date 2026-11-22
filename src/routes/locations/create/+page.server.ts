@@ -1,7 +1,25 @@
+import type { GroupDto } from '$lib/api/api.dtos';
 import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
+
+/**
+ * The group picker's choices. A new location goes into the caller's own
+ * organization (the API files it under their org context), so its groups are
+ * that org's. Without them the form still creates the location.
+ */
+export const load: PageServerLoad = async ({ locals, parent }) => {
+	const { orgContext } = await parent();
+	const orgId = orgContext?.org?.id ?? null;
+	return {
+		orgId,
+		locationGroups:
+			locals.jwtString && orgId
+				? await locals.services.locationGroups.listGroups({ orgId }).catch(() => [] as GroupDto[])
+				: ([] as GroupDto[])
+	};
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);

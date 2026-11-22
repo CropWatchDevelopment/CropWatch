@@ -1,4 +1,4 @@
-import type { CropTypeDto, DeleteDeviceResultDto } from '$lib/api/api.dtos';
+import type { CropTypeDto, DeleteDeviceResultDto, GroupDto } from '$lib/api/api.dtos';
 import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
 import { normalizeTtiDeviceId } from '$lib/devices/tti-device-id';
 import { m } from '$lib/paraglide/messages.js';
@@ -32,6 +32,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 			devEui,
 			deviceName: '',
 			deviceGroup: '',
+			deviceGroups: [] as GroupDto[],
 			ttiName: '',
 			sensorCertificates: [] as SensorCertificateRow[],
 			supportsSensorCertificates: false,
@@ -46,12 +47,13 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 
 	const { services } = locals;
 	const device = parentData.device;
+	const deviceOrgId = typeof device?.org_id === 'string' ? device.org_id : null;
 
 	// Only soil sensors take a crop. Without the list (the API is older than
 	// the crop feature and answers its HTML page, or the request failed) the
 	// crop field is not shown.
 	const isSoilSensor = parentData.dataTable === 'cw_soil_data';
-	const [location, locations, licenses, crops] = await Promise.all([
+	const [location, locations, licenses, crops, deviceGroups] = await Promise.all([
 		Number.isFinite(locationId)
 			? services.locations.getLocation(locationId).catch(() => null)
 			: Promise.resolve(null),
@@ -62,7 +64,12 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 					.getCrops()
 					.then((list) => (Array.isArray(list) ? list : null))
 					.catch(() => null)
-			: Promise.resolve(null as CropTypeDto[] | null)
+			: Promise.resolve(null as CropTypeDto[] | null),
+		// The group picker's choices: the groups of the device's organization.
+		// Without them it still keeps the saved group.
+		deviceOrgId
+			? services.deviceGroups.listGroups({ orgId: deviceOrgId }).catch(() => [] as GroupDto[])
+			: Promise.resolve([] as GroupDto[])
 	]);
 
 	const licenseRow = licenses.find((l) => l.devEui?.toLowerCase() === devEui.toLowerCase());
@@ -77,6 +84,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		deviceName: device?.name || devEui.toUpperCase(),
 		location_id: device?.location_id,
 		deviceGroup: device?.group || '',
+		deviceGroups,
 		ttiName: normalizeTtiDeviceId(str(device?.tti_name)),
 		locations,
 		sensorCertificates: buildSensorCertificateRows(device, services.libellus.configurationProblem),
@@ -85,7 +93,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		license,
 		// For the delete card's visibility (mirrors the API's device.delete rule).
 		deviceOwnerId: typeof device?.user_id === 'string' ? device.user_id : null,
-		deviceOrgId: typeof device?.org_id === 'string' ? device.org_id : null,
+		deviceOrgId,
 		crops,
 		cropTypeId: typeof device?.crop_type_id === 'number' ? device.crop_type_id : null
 	};

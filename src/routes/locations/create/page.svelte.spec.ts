@@ -2,6 +2,9 @@ import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ActionResult } from '@sveltejs/kit';
 import { m } from '$lib/paraglide/messages.js';
+import { chooseOption, dropdown } from '$lib/testing/dropdown';
+import { addGroup, renameGroup } from '$lib/testing/groups';
+import { createMockServices } from '$lib/testing/mock-services';
 import { renderWithServices } from '$lib/testing/render';
 import CreateLocationPage from './+page.svelte';
 
@@ -24,9 +27,22 @@ vi.mock('$app/forms', () => ({
 
 let view: ReturnType<typeof renderWithServices> | null = null;
 
-function render(form: Record<string, unknown> | null = null) {
-	view = renderWithServices(CreateLocationPage, { props: { form, data: {} } as never });
-	return view;
+const GROUPS = [
+	{ id: 1, name: 'Farm', org_id: 'org-1', can_manage: true },
+	{ id: 2, name: 'Orchard', org_id: 'org-1', can_manage: false }
+];
+
+function render(
+	form: Record<string, unknown> | null = null,
+	locationGroups = GROUPS,
+	orgId: string | null = 'org-1'
+) {
+	const rendered = renderWithServices(CreateLocationPage, {
+		services: createMockServices(),
+		props: { form, data: { locationGroups, orgId } } as never
+	});
+	view = rendered;
+	return rendered;
 }
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -85,7 +101,7 @@ describe('create location page', () => {
 
 		type('location-create-name-input', 'Barn');
 		type('location-create-description-input', 'North side');
-		type('location-create-group-input', 'Farm');
+		chooseOption('location-create-group-select', 'Farm');
 		type('location-create-lat-input', '31.9');
 		type('location-create-long-input', '131.4');
 
@@ -98,6 +114,60 @@ describe('create location page', () => {
 			long: '131.4'
 		});
 		expect(byId<HTMLFormElement>('location-create-form').method).toBe('post');
+	});
+
+	it('offers the groups to pick from, with no group by default, and keeps the dialogs outside the form', () => {
+		render();
+
+		expect(dropdown('location-create-group-select').value()).toBe('');
+		expect(dropdown('location-create-group-select').options()).toEqual([
+			m.groups_none(),
+			'Farm',
+			'Orchard'
+		]);
+		expect(byId('location-create-group-select-manage')).not.toBeNull();
+		expect(document.querySelector('#location-create-form dialog')).toBeNull();
+	});
+
+	it("adds a group to the caller's organization from the dialog and posts it with the new location", async () => {
+		const page = render();
+		page.services.locationGroups.createGroup.mockResolvedValue({
+			id: 9,
+			name: 'South',
+			org_id: 'org-1',
+			can_manage: true
+		});
+
+		addGroup('location-create-group-select', 'South');
+
+		await vi.waitFor(() => expect(dropdown('location-create-group-select').value()).toBe('South'));
+		expect(page.services.locationGroups.createGroup).toHaveBeenCalledWith('South', 'org-1');
+		expect(new FormData(byId<HTMLFormElement>('location-create-form')).getAll('group')).toEqual([
+			'South'
+		]);
+	});
+
+	it('follows a rename of the chosen group made in the manage dialog', async () => {
+		const page = render();
+		page.services.locationGroups.renameGroup.mockResolvedValue({
+			id: 1,
+			name: 'Fields',
+			org_id: 'org-1',
+			can_manage: true
+		});
+		chooseOption('location-create-group-select', 'Farm');
+
+		renameGroup('location-create-group-select', 'Farm', 'Fields');
+
+		await vi.waitFor(() => expect(dropdown('location-create-group-select').value()).toBe('Fields'));
+		expect(page.services.locationGroups.renameGroup).toHaveBeenCalledWith(1, 'Fields');
+	});
+
+	it('offers no new groups without an organization to put them in', () => {
+		render(null, [], null);
+
+		expect(byId('location-create-group-select-add')).toBeNull();
+		expect(dropdown('location-create-group-select').options()).toEqual([m.groups_none()]);
 	});
 
 	it('shows the error and keeps every field after a failed submit', () => {
@@ -117,11 +187,11 @@ describe('create location page', () => {
 			[
 				'location-create-name-input',
 				'location-create-description-input',
-				'location-create-group-input',
 				'location-create-lat-input',
 				'location-create-long-input'
 			].map((id) => byId<HTMLInputElement>(id).value)
-		).toEqual(['Barn', 'North side', 'Farm', 'north', '131.4']);
+		).toEqual(['Barn', 'North side', 'north', '131.4']);
+		expect(dropdown('location-create-group-select').value()).toBe('Farm');
 	});
 
 	it('opens the new location once it is created', async () => {

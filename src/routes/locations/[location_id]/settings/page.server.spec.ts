@@ -20,6 +20,7 @@ function location(overrides: Partial<LocationDto> = {}): LocationDto {
 		group: 'Farm' as never,
 		created_at: '2026-04-01T00:00:00Z',
 		owner_id: TEST_USER_ID as never,
+		org_id: 'org-1',
 		lat: '31.9147' as never,
 		long: 131.4232 as never,
 		map_zoom: 15 as never,
@@ -27,6 +28,8 @@ function location(overrides: Partial<LocationDto> = {}): LocationDto {
 		...overrides
 	};
 }
+
+const GROUPS = [{ id: 3, name: 'Farm', org_id: 'org-1', can_manage: true }];
 
 function owner(
 	found: LocationDto = location(),
@@ -42,6 +45,7 @@ function owner(
 		data: devices as DevicePrimaryDataDto[],
 		total: devices.length
 	});
+	locals.services.locationGroups.listGroups.mockResolvedValue(GROUPS);
 	return locals;
 }
 
@@ -73,9 +77,13 @@ describe('location settings load (mock services)', () => {
 				{ lat: null, long: null }
 			],
 			locationOwners: [],
-			deletion: { deviceCount: 0 }
+			deletion: { deviceCount: 0 },
+			locationGroups: GROUPS,
+			locationOrgId: 'org-1'
 		});
 		expect(locals.services.locations.getLocation).toHaveBeenCalledWith(8);
+		// The picker lists the groups of the location's organization.
+		expect(locals.services.locationGroups.listGroups).toHaveBeenCalledWith({ orgId: 'org-1' });
 		expect(locals.services.locations.getLocationDeletePreflight).toHaveBeenCalledWith(8);
 		expect(locals.services.devices.getAllLocationDevices).toHaveBeenCalledWith(8);
 	});
@@ -94,6 +102,16 @@ describe('location settings load (mock services)', () => {
 		expect(data.devicePositions).toEqual([]);
 	});
 
+	it('lists no groups and offers no new ones when the location has no organization', async () => {
+		const locals = owner(location({ org_id: null }));
+
+		const data = await run(locals);
+
+		expect(data.locationGroups).toEqual([]);
+		expect(data.locationOrgId).toBeNull();
+		expect(locals.services.locationGroups.listGroups).not.toHaveBeenCalled();
+	});
+
 	it('has no coordinates for 0,0, a missing half, or a zoom that is not a number', async () => {
 		const zeroes = await run(owner(location({ lat: 0 as never, long: '0' as never })));
 		expect(zeroes.coordinates).toBeNull();
@@ -103,13 +121,18 @@ describe('location settings load (mock services)', () => {
 		expect(half.mapZoom).toBeNull();
 	});
 
-	it('still opens when the preflight and the device list fail (not the owner, API down)', async () => {
+	it('still opens when the preflight, device list and group list fail (not the owner, API down)', async () => {
 		const locals = owner(location({ owner_id: null }));
 		locals.jwt = { sub: TEST_USER_ID, email: 'ops@cropwatch.io' } as IJWT;
 		locals.services.locations.getLocationDeletePreflight.mockRejectedValue(new Error('403'));
 		locals.services.devices.getAllLocationDevices.mockRejectedValue(new Error('down'));
+		locals.services.locationGroups.listGroups.mockRejectedValue(new Error('down'));
 
-		await expect(run(locals)).resolves.toMatchObject({ deletion: null, devicePositions: [] });
+		await expect(run(locals)).resolves.toMatchObject({
+			deletion: null,
+			devicePositions: [],
+			locationGroups: []
+		});
 	});
 
 	it('accepts an owner id or an Admin grant given as numbers or strings', async () => {
@@ -146,6 +169,8 @@ describe('location settings load (mock services)', () => {
 		const empty = {
 			locationName: '',
 			locationGroup: '',
+			locationGroups: [],
+			locationOrgId: null,
 			coordinates: null,
 			mapZoom: null,
 			devicePositions: [],

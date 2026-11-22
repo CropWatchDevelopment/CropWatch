@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ApiError } from '$lib/api/api-error';
 import { m } from '$lib/paraglide/messages.js';
 import { formRequest, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
-import { actions } from './+page.server';
+import { actions, load } from './+page.server';
 
 type ActionEvent = Parameters<(typeof actions)['default']>[0];
 
@@ -172,5 +172,41 @@ describe('create location action', () => {
 			data: { error: m.auth_not_authenticated() }
 		});
 		expect(locals.services.locations.createLocation).not.toHaveBeenCalled();
+	});
+});
+
+describe('create location load', () => {
+	const ORG_CONTEXT = { org: { id: 'org-1' } };
+	const run = (locals: TestLocals, parent: Record<string, unknown> = { orgContext: ORG_CONTEXT }) =>
+		load(testEvent<Parameters<typeof load>[0]>({ locals, parent }));
+
+	it("offers the location groups of the caller's own organization, where the location goes", async () => {
+		const locals = testLocals();
+		const groups = [{ id: 1, name: 'Farm', org_id: 'org-1', can_manage: true }];
+		locals.services.locationGroups.listGroups.mockResolvedValue(groups);
+
+		await expect(run(locals)).resolves.toEqual({ orgId: 'org-1', locationGroups: groups });
+		expect(locals.services.locationGroups.listGroups).toHaveBeenCalledWith({ orgId: 'org-1' });
+	});
+
+	it('still opens with no groups when the list fails or there is no session', async () => {
+		const failing = testLocals();
+		failing.services.locationGroups.listGroups.mockRejectedValue(new Error('down'));
+		await expect(run(failing)).resolves.toEqual({ orgId: 'org-1', locationGroups: [] });
+
+		const signedOut = testLocals({ jwtString: null });
+		await expect(run(signedOut)).resolves.toEqual({ orgId: 'org-1', locationGroups: [] });
+		expect(signedOut.services.locationGroups.listGroups).not.toHaveBeenCalled();
+	});
+
+	it('lists no groups without an organization context', async () => {
+		const locals = testLocals();
+
+		await expect(run(locals, {})).resolves.toEqual({ orgId: null, locationGroups: [] });
+		await expect(run(locals, { orgContext: { org: null } })).resolves.toEqual({
+			orgId: null,
+			locationGroups: []
+		});
+		expect(locals.services.locationGroups.listGroups).not.toHaveBeenCalled();
 	});
 });

@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { CwButton, CwCard, CwChip, CwDropdown, CwInput } from '@cropwatchdevelopment/cwui';
+	import {
+		CwButton,
+		CwCard,
+		CwChip,
+		CwDropdown,
+		CwInput,
+		useCwToast
+	} from '@cropwatchdevelopment/cwui';
 	import { resolve } from '$app/paths';
 	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
 	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
 	import type { PageProps } from './$types';
 	import './settings-style.css';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { m } from '$lib/paraglide/messages.js';
 	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
 	import SensorCertificatesCard from '../SensorCertificatesCard.svelte';
@@ -17,9 +24,13 @@
 	import { Capability, can } from '$lib/auth/capabilities';
 	import { cropDisplayName } from '$lib/agronomy/crop-targets';
 	import { getIntlLocale } from '$lib/i18n/format';
+	import { getServices } from '$lib/services/context';
+	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
+	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
+	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
-	const DEVICE_GROUP_MAX_LENGTH = 120;
 
 	type FormPayload = {
 		action?: string;
@@ -40,8 +51,42 @@
 	let deviceSubmitting = $state(false);
 	let deviceName = $state(initial.deviceName ?? '');
 	let deviceGroup = $state(initial.deviceGroup ?? '');
+	const toast = useCwToast();
+	const groups = new GroupsController({
+		kind: 'device',
+		repository: getServices().deviceGroups,
+		orgId: initial.deviceOrgId,
+		initial: initial.deviceGroups,
+		onError: (message) => toast.add({ tone: 'danger', message }),
+		onSuccess: (message) => toast.add({ tone: 'success', message }),
+		onChanged: async () => {
+			// A rename or delete changes what the saved device shows: reload,
+			// and keep an untouched picker on what the API now has saved.
+			const untouched = deviceGroup.trim() === (data.deviceGroup ?? '').trim();
+			await invalidateAll();
+			// The reload brings the device's own org's groups; another org's
+			// list (an unsaved move) already shows the change.
+			if (groups.orgId === (data.deviceOrgId ?? null)) {
+				groups.reseed(data.deviceGroups, data.deviceOrgId);
+			}
+			if (untouched) deviceGroup = data.deviceGroup ?? '';
+		}
+	});
 	let ttiName = $state(initial.ttiName ?? '');
 	let location_id = $state(String(initial.location_id ?? ''));
+	// The org the device will be saved in: its chosen location's (the API
+	// looks the group name up there), else its own when that location has
+	// none. Choosing a location of another org shows that org's groups, so
+	// Add and Manage work there; the picked name is kept (the API finds or
+	// creates the group of that name in the new org on save).
+	let targetOrgId = $derived(
+		(data.locations ?? []).find((loc) => String(loc.location_id) === location_id)?.org_id ??
+			data.deviceOrgId ??
+			null
+	);
+	$effect(() => {
+		void groups.switchOrg(targetOrgId);
+	});
 	// '' = no crop. Soil sensors only: `data.crops` is null for other devices.
 	let cropTypeId = $state(initial.cropTypeId === null ? '' : String(initial.cropTypeId ?? ''));
 	let cropOptions = $derived(
@@ -72,11 +117,7 @@
 				? m.devices_device_name_length({ max: String(DEVICE_NAME_MAX_LENGTH) })
 				: (deviceForm?.fieldErrors?.name ?? '')
 	);
-	let deviceGroupError = $derived(
-		deviceGroupValue.length > DEVICE_GROUP_MAX_LENGTH
-			? m.devices_device_group_length({ max: String(DEVICE_GROUP_MAX_LENGTH) })
-			: (deviceForm?.fieldErrors?.group ?? '')
-	);
+	let deviceGroupError = $derived(deviceForm?.fieldErrors?.group ?? '');
 	let ttiNameValue = $derived(ttiName.trim().toLowerCase());
 	let ttiNameError = $derived(deviceForm?.fieldErrors?.tti_name ?? '');
 	let locationError = $derived(deviceForm?.fieldErrors?.location_id ?? '');
@@ -142,9 +183,13 @@
 				}
 
 				deviceSubmitting = true;
-				return async ({ update }) => {
+				return async ({ result, update }) => {
 					try {
 						await update({ reset: false });
+						// A save may have created a group or moved the device to
+						// another org: show the reloaded list of the org it is in.
+						// A refused save reloads nothing, so the list stays.
+						if (result.type === 'success') groups.reseed(data.deviceGroups, data.deviceOrgId);
 					} finally {
 						deviceSubmitting = false;
 					}
@@ -184,24 +229,15 @@
 						error={deviceNameError || undefined}
 					/>
 
-					<!-- group, tti_name and location_id are posted once each, by the hidden
-						 inputs, with the normalized value the server should store. -->
-					<div>
-						<CwInput
-							id="device-settings-group-input"
-							label={m.common_group()}
-							required={false}
-							maxlength={DEVICE_GROUP_MAX_LENGTH}
-							bind:value={deviceGroup}
-							error={deviceGroupError || undefined}
-						/>
-						<input
-							id="device-settings-group-hidden-input"
-							type="hidden"
-							name="group"
-							value={deviceGroupValue}
-						/>
-					</div>
+					<!-- The picker posts the group's name; tti_name and location_id are posted
+						 once each, by the hidden inputs, with the value the server should store. -->
+					<GroupPicker
+						controller={groups}
+						id="device-settings-group-select"
+						name="group"
+						error={deviceGroupError}
+						bind:value={deviceGroup}
+					/>
 
 					<div>
 						<CwInput
@@ -280,6 +316,9 @@
 			</AppFormStack>
 		</form>
 	</CwCard>
+	<!-- Outside the form: Enter in a dialog's field must not save the device. -->
+	<AddGroupDialog controller={groups} bind:value={deviceGroup} />
+	<ManageGroupsDialog controller={groups} bind:value={deviceGroup} />
 
 	<DeviceLicenseCard license={data.license ?? null} form={actionForm} />
 

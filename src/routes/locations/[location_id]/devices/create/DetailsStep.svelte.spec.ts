@@ -4,6 +4,8 @@ import type { DeviceSetupLookupResult } from '$lib/api/api.dtos';
 import { m } from '$lib/paraglide/messages.js';
 import { createMockServices } from '$lib/testing/mock-services';
 import { renderWithServices } from '$lib/testing/render';
+import { chooseOption, dropdown } from '$lib/testing/dropdown';
+import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
 import DetailsStep from './DetailsStep.svelte';
 import { DeviceSetupFlow, type LicenseOption } from './device-setup-flow.svelte';
 
@@ -45,7 +47,7 @@ function render(
 	flow: DeviceSetupFlow,
 	props: {
 		licenses?: LicenseOption[];
-		groupSuggestions?: string[];
+		groupNames?: string[];
 		locationLat?: number | null;
 		locationLong?: number | null;
 	} = {}
@@ -54,7 +56,19 @@ function render(
 		props: {
 			flow,
 			licenses: props.licenses ?? LICENSES,
-			groupSuggestions: props.groupSuggestions ?? [],
+			groups: new GroupsController({
+				kind: 'device',
+				repository: createMockServices().deviceGroups,
+				orgId: 'org-1',
+				initial: (props.groupNames ?? []).map((name, index) => ({
+					id: index + 1,
+					name,
+					org_id: 'org-1',
+					can_manage: false
+				})),
+				onError: () => {},
+				onSuccess: () => {}
+			}),
 			locationLat: props.locationLat === undefined ? 35.68123 : props.locationLat,
 			locationLong: props.locationLong === undefined ? 139.76712 : props.locationLong
 		}
@@ -96,20 +110,19 @@ describe('DetailsStep', () => {
 		expect(name?.required).toBe(true);
 		expect(name?.maxLength).toBe(120);
 		expect(name?.placeholder).toBe(m.device_setup_name_placeholder());
-		expect(byId<HTMLInputElement>('device-setup-group-input')?.maxLength).toBe(120);
+		expect(dropdown('device-setup-group-select').label()).toBe(m.groups_none());
 		expect(byId('device-setup-installed-at')).not.toBeNull();
 		expect(text()).toContain(m.device_setup_position_title());
 		expect(text()).toContain(`35.6812, 139.7671 · ${m.device_setup_position_hint()}`);
 		expect(byId('device-setup-lat-input')).toBeNull();
-		expect(document.querySelectorAll('.chip-button')).toHaveLength(0);
 	});
 
 	it('binds the name and the group to the flow, and requires a name once the user tried', () => {
 		const flow = detailsFlow();
-		render(flow);
+		render(flow, { groupNames: ['Floor 1'] });
 
 		type('device-setup-name-input', 'FL1 Smoke Detector');
-		type('device-setup-group-input', 'Floor 1');
+		chooseOption('device-setup-group-select', 'Floor 1');
 		expect(flow.name).toBe('FL1 Smoke Detector');
 		expect(flow.group).toBe('Floor 1');
 		expect(fieldError('device-setup-name-input')).toBeNull();
@@ -122,22 +135,25 @@ describe('DetailsStep', () => {
 		expect(fieldError('device-setup-name-input')).toBe(m.device_setup_name_required());
 	});
 
-	it('offers the groups used at this location as one-tap chips', () => {
+	it("offers the caller's device groups, and keeps the flow's group when it is not listed", () => {
 		const flow = detailsFlow();
-		render(flow, { groupSuggestions: ['Floor 1', 'Floor 2'] });
+		flow.group = 'Shed';
+		render(flow, { groupNames: ['Floor 2', 'Floor 1'] });
 
-		const chips = () => [...document.querySelectorAll<HTMLButtonElement>('.chip-button')];
-		expect(chips().map((chip) => chip.textContent?.trim())).toEqual(['Floor 1', 'Floor 2']);
-		expect(chips().map((chip) => chip.getAttribute('aria-pressed'))).toEqual(['false', 'false']);
+		expect(dropdown('device-setup-group-select').label()).toBe('Shed');
+		expect(dropdown('device-setup-group-select').options()).toEqual([
+			m.groups_none(),
+			'Shed',
+			'Floor 1',
+			'Floor 2'
+		]);
 
-		chips()[1].click();
-		flushSync();
-
+		chooseOption('device-setup-group-select', 'Floor 2');
 		expect(flow.group).toBe('Floor 2');
-		expect(byId<HTMLInputElement>('device-setup-group-input')?.value).toBe('Floor 2');
-		expect(chips().map((chip) => chip.getAttribute('aria-pressed'))).toEqual(['false', 'true']);
-		expect(chips()[1].querySelector('.cw-chip')?.classList).toContain('cw-chip--primary');
-		expect(chips()[0].querySelector('.cw-chip')?.classList).toContain('cw-chip--secondary');
+
+		byId('device-setup-group-select-add')?.click();
+		flushSync();
+		expect(view?.target.querySelector('dialog')).toBeNull();
 	});
 
 	it('keeps the install date as a local ISO day', async () => {

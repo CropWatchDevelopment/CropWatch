@@ -5,6 +5,8 @@ import type { DeviceSetupLookupResult, DeviceSetupResult } from '$lib/api/api.dt
 import { m } from '$lib/paraglide/messages.js';
 import { createMockServices, type MockServices } from '$lib/testing/mock-services';
 import { renderWithServices } from '$lib/testing/render';
+import { chooseOption, dropdown } from '$lib/testing/dropdown';
+import { addGroup, deleteGroup, renameGroup } from '$lib/testing/groups';
 import DeviceSetupPage from './+page.svelte';
 import { regionLabel } from './setup-messages';
 
@@ -20,6 +22,7 @@ function pageData(overrides: Record<string, unknown> = {}) {
 		locationLat: 35.6812,
 		locationLong: 139.7671,
 		locationRegion: 'as1' as const,
+		locationOrgId: 'org-1' as string | null,
 		deviceTypeOptions: [
 			{ label: 'Smoke detector', value: '10' },
 			{ label: 'Air sensor', value: '22' }
@@ -28,7 +31,7 @@ function pageData(overrides: Record<string, unknown> = {}) {
 			{ id: 14, seatIndex: 2 },
 			{ id: 15, seatIndex: 3 }
 		],
-		groupSuggestions: ['Floor 1'],
+		deviceGroups: [{ id: 1, name: 'Floor 1', org_id: 'org-1', can_manage: true }],
 		...overrides
 	};
 }
@@ -244,6 +247,82 @@ describe('device setup page', () => {
 		expect(goto).toHaveBeenCalledWith(`/locations/8/devices/${DEV_EUI}`, { invalidateAll: true });
 	});
 
+	it("registers the device in a group added from the details step, in the location's organization", async () => {
+		services.devices.setupDevice.mockResolvedValue(SETUP_RESULT);
+		services.deviceGroups.createGroup.mockResolvedValue({
+			id: 9,
+			name: 'Floor 9',
+			org_id: 'org-1',
+			can_manage: true
+		});
+		render();
+		await identify();
+
+		addGroup('device-setup-group-select', 'Floor 9');
+		await vi.waitFor(() => expect(dropdown('device-setup-group-select').label()).toBe('Floor 9'));
+		expect(services.deviceGroups.createGroup).toHaveBeenCalledWith('Floor 9', 'org-1');
+
+		describeDevice();
+		byId('device-setup-register')?.click();
+		await vi.waitFor(() =>
+			expect(services.devices.setupDevice).toHaveBeenCalledWith(
+				expect.objectContaining({ group: 'Floor 9' })
+			)
+		);
+	});
+
+	it('registers the device under the new name of a group renamed from the details step', async () => {
+		services.devices.setupDevice.mockResolvedValue(SETUP_RESULT);
+		services.deviceGroups.renameGroup.mockResolvedValue({
+			id: 1,
+			name: 'Floor 2',
+			org_id: 'org-1',
+			can_manage: true
+		});
+		render();
+		await identify();
+		chooseOption('device-setup-group-select', 'Floor 1');
+
+		renameGroup('device-setup-group-select', 'Floor 1', 'Floor 2');
+		await vi.waitFor(() => expect(dropdown('device-setup-group-select').label()).toBe('Floor 2'));
+		expect(services.deviceGroups.renameGroup).toHaveBeenCalledWith(1, 'Floor 2');
+
+		describeDevice();
+		byId('device-setup-register')?.click();
+		await vi.waitFor(() =>
+			expect(services.devices.setupDevice).toHaveBeenCalledWith(
+				expect.objectContaining({ group: 'Floor 2' })
+			)
+		);
+	});
+
+	it('registers the device without a group after its group is deleted from the details step', async () => {
+		services.devices.setupDevice.mockResolvedValue(SETUP_RESULT);
+		services.deviceGroups.deleteGroup.mockResolvedValue(undefined);
+		render();
+		await identify();
+		chooseOption('device-setup-group-select', 'Floor 1');
+
+		deleteGroup('device-setup-group-select', 'Floor 1');
+		await vi.waitFor(() =>
+			expect(dropdown('device-setup-group-select').label()).toBe(m.groups_none())
+		);
+		expect(services.deviceGroups.deleteGroup).toHaveBeenCalledWith(1);
+
+		describeDevice();
+		byId('device-setup-register')?.click();
+		await vi.waitFor(() => expect(services.devices.setupDevice).toHaveBeenCalled());
+		expect(services.devices.setupDevice.mock.calls[0][0].group).toBeUndefined();
+	});
+
+	it('offers no new groups when the location has no organization', async () => {
+		render(pageData({ locationOrgId: null }));
+		await identify();
+
+		expect(byId('device-setup-group-select-add')).toBeNull();
+		expect(dropdown('device-setup-group-select').options()).toEqual([m.groups_none(), 'Floor 1']);
+	});
+
 	it('shows the registration in progress with every step done in the stepper', async () => {
 		services.devices.setupDevice.mockReturnValue(new Promise(() => {}));
 		render();
@@ -280,7 +359,7 @@ describe('device setup page', () => {
 		services.devices.setupDevice.mockResolvedValue(SETUP_RESULT);
 		const page = render();
 		await identify();
-		type('device-setup-group-input', 'Floor 1');
+		chooseOption('device-setup-group-select', 'Floor 1');
 		describeDevice();
 		byId('device-setup-register')?.click();
 		await expect.poll(() => byId('device-setup-add-another')).not.toBeNull();
@@ -311,7 +390,7 @@ describe('device setup page', () => {
 
 		// The group carries over; the remaining license is selected.
 		await identify();
-		expect(byId<HTMLInputElement>('device-setup-group-input')?.value).toBe('Floor 1');
+		expect(dropdown('device-setup-group-select').label()).toBe('Floor 1');
 		describeDevice('FL2');
 		expect(text()).toContain(m.device_setup_license_seat({ seat: 4 }));
 	});

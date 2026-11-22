@@ -26,6 +26,7 @@ const greenhouse = {
 	name: 'Greenhouse A',
 	group: 'Farm',
 	owner_id: OWNER_ID,
+	org_id: 'org-1',
 	cw_location_owners: [
 		{ id: 1, location_id: 8, user_id: ADMIN_ID, permission_level: 1 },
 		{ id: 2, location_id: 8, user_id: MANAGER_ID, permission_level: 2 }
@@ -48,6 +49,9 @@ function loadEventWithFetch(jwt: { sub: string; email: string }, api: FakeApi = 
 			return preflightStatus === 200
 				? json({ location_id: 8, device_count: 3 })
 				: json({ statusCode: preflightStatus, message: 'owner only' }, preflightStatus);
+		}
+		if (url.endsWith('/location-groups?org_id=org-1')) {
+			return json([{ id: 3, name: 'Farm', org_id: 'org-1', can_manage: false }]);
 		}
 		if (url.includes('/locations/8')) {
 			return locationStatus === 200
@@ -96,6 +100,8 @@ describe('location settings load', () => {
 			locationId: 8,
 			locationName: 'Greenhouse A',
 			locationGroup: 'Farm',
+			locationGroups: [{ id: 3, name: 'Farm', org_id: 'org-1', can_manage: false }],
+			locationOrgId: 'org-1',
 			deletion: { deviceCount: 3 }
 		});
 	});
@@ -132,7 +138,7 @@ describe('location settings load', () => {
 		).resolves.toEqual({ status: 403, message: m.locations_permission_denied() });
 	});
 
-	it('asks the API for the location, its delete preflight and its devices, as the session', async () => {
+	it('asks the API for the location, its delete preflight, its devices and its org’s groups, as the session', async () => {
 		const { event, fetch } = loadEventWithFetch({ sub: OWNER_ID, email: 'owner@example.com' });
 
 		await run(event);
@@ -158,6 +164,12 @@ describe('location settings load', () => {
 			},
 			{
 				url: 'https://api.cropwatch.test/devices/location/8',
+				method: 'GET',
+				authorization: 'Bearer jwt-token'
+			},
+			{
+				// Only once the location is known: the picker lists its organization's groups.
+				url: 'https://api.cropwatch.test/location-groups?org_id=org-1',
 				method: 'GET',
 				authorization: 'Bearer jwt-token'
 			}

@@ -32,6 +32,7 @@ import {
 	HttpGatewayRepository,
 	type GatewayRepository
 } from '$lib/api/repositories/gateways.repository';
+import { HttpGroupRepository, type GroupRepository } from '$lib/api/repositories/groups.repository';
 import { HttpLineRepository, type LineRepository } from '$lib/api/repositories/line.repository';
 import {
 	HttpLocationRepository,
@@ -73,9 +74,13 @@ export interface AppServices {
 	crops: CropRepository;
 	dashboard: DashboardRepository;
 	devices: DeviceRepository;
+	/** Groups a device can be put in (`/device-groups`). */
+	deviceGroups: GroupRepository;
 	gateways: GatewayRepository;
 	line: LineRepository;
 	locations: LocationRepository;
+	/** Groups a location can be put in (`/location-groups`). */
+	locationGroups: GroupRepository;
 	organizations: OrganizationRepository;
 	overview: OverviewRepository;
 	push: PushRepository;
@@ -96,9 +101,11 @@ export function createAppServices(http: HttpClient, endpoints: ApiEndpointConfig
 		crops: new HttpCropRepository(http),
 		dashboard: new HttpDashboardRepository(http),
 		devices: new HttpDeviceRepository(http, endpoints),
+		deviceGroups: new HttpGroupRepository(http, '/device-groups'),
 		gateways: new HttpGatewayRepository(http),
 		line: new HttpLineRepository(http),
 		locations: new HttpLocationRepository(http),
+		locationGroups: new HttpGroupRepository(http, '/location-groups'),
 		organizations: new HttpOrganizationRepository(http),
 		overview: new HttpOverviewRepository(http),
 		push: new HttpPushRepository(http),

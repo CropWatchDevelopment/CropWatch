@@ -5,11 +5,16 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { m } from '$lib/paraglide/messages.js';
+	import { getServices } from '$lib/services/context';
+	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
+	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
+	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
 	import type { PageProps } from './$types';
 
 	const toast = useCwToast();
 
-	let { form }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 	const initial = (() => form)();
 
 	let submitting = $state(false);
@@ -18,6 +23,14 @@
 	let group = $state(initial?.group ?? '');
 	let lat = $state(initial?.lat ?? '');
 	let long = $state(initial?.long ?? '');
+	const groups = new GroupsController({
+		kind: 'location',
+		repository: getServices().locationGroups,
+		orgId: (() => data.orgId)(),
+		initial: (() => data.locationGroups)(),
+		onError: (message) => toast.add({ tone: 'danger', message }),
+		onSuccess: (message) => toast.add({ tone: 'success', message })
+	});
 </script>
 
 <AppPage>
@@ -84,12 +97,11 @@
 					placeholder={m.locations_optional_description()}
 				/>
 
-				<CwInput
-					id="location-create-group-input"
-					label={m.common_group()}
+				<GroupPicker
+					controller={groups}
+					id="location-create-group-select"
 					name="group"
 					bind:value={group}
-					placeholder={m.locations_optional_group_name()}
 				/>
 
 				<div class="grid grid-cols-2 gap-4">
@@ -131,4 +143,7 @@
 			</AppFormStack>
 		</form>
 	</CwCard>
+	<!-- Outside the form: Enter in a dialog's field must not create the location. -->
+	<AddGroupDialog controller={groups} bind:value={group} />
+	<ManageGroupsDialog controller={groups} bind:value={group} />
 </AppPage>

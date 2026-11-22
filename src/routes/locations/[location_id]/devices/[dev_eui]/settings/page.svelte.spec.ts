@@ -1,14 +1,17 @@
 import type { ActionResult } from '@sveltejs/kit';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CropTypeDto, MeContextDto } from '$lib/api/api.dtos';
+import type { CropTypeDto, GroupDto, MeContextDto } from '$lib/api/api.dtos';
 import type { AppContext } from '$lib/appContext.svelte';
 import { Capability } from '$lib/auth/capabilities';
 import type { IJWT } from '$lib/interfaces/jwt.interface';
 import { m } from '$lib/paraglide/messages.js';
 import { cropDisplayName } from '$lib/agronomy/crop-targets';
 import { getIntlLocale } from '$lib/i18n/format';
+import { createMockServices } from '$lib/testing/mock-services';
 import { renderWithServices } from '$lib/testing/render';
+import { chooseOption, dropdown } from '$lib/testing/dropdown';
+import { addGroup, deleteGroup, renameGroup } from '$lib/testing/groups';
 import { testEvent, testLocals } from '$lib/testing/server';
 import SettingsPage from './+page.svelte';
 import { actions } from './+page.server';
@@ -19,8 +22,11 @@ type AfterSubmit = (input: {
 	update: (options?: { reset?: boolean }) => Promise<void>;
 }) => Promise<void>;
 
-const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));
-vi.mock('$app/navigation', () => ({ goto }));
+const { goto, invalidateAll } = vi.hoisted(() => ({
+	goto: vi.fn(),
+	invalidateAll: vi.fn(async () => {})
+}));
+vi.mock('$app/navigation', () => ({ goto, invalidateAll }));
 
 // `use:enhance` without the network: the mock keeps each form's submit
 // function so a test can run it and hand it the action's result.
@@ -44,11 +50,15 @@ const DATA = {
 	deviceName: 'Air sensor',
 	location_id: 8 as number | undefined,
 	deviceGroup: 'Barn',
+	deviceGroups: [
+		{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true },
+		{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: false }
+	] as GroupDto[] | undefined,
 	ttiName: 'cw-air-01',
 	locations: [
 		{ location_id: 8, name: 'North field' },
 		{ location_id: 9, name: 'South field' }
-	] as Array<{ location_id: number; name: string }> | undefined,
+	] as Array<{ location_id: number; name: string; org_id?: string | null }> | undefined,
 	sensorCertificates: [
 		{
 			key: 'sensor' as const,
@@ -105,7 +115,8 @@ function render(
 	app: Partial<AppContext> = { session: session('owner-1') }
 ) {
 	let data = $state.raw({ ...DATA, ...overrides });
-	view = renderWithServices(SettingsPage, {
+	const rendered = renderWithServices(SettingsPage, {
+		services: createMockServices(),
 		props: {
 			get data() {
 				return data;
@@ -115,8 +126,9 @@ function render(
 		} as never,
 		app
 	});
+	view = rendered;
 	return {
-		...view,
+		...rendered,
 		/** What the save's reload hands the page: freshly loaded data. */
 		setData(next: Data) {
 			data = next;
@@ -204,6 +216,7 @@ afterEach(() => {
 	view?.unmount();
 	view = null;
 	goto.mockReset();
+	invalidateAll.mockReset();
 	forms.clear();
 });
 
@@ -234,11 +247,16 @@ describe('device settings page', () => {
 		render();
 
 		expect(byId('device-settings-name-input')?.value).toBe('Air sensor');
-		expect(byId('device-settings-group-input')?.value).toBe('Barn');
+		expect(dropdown('device-settings-group-select').value()).toBe('Barn');
+		expect(dropdown('device-settings-group-select').options()).toEqual([
+			m.groups_none(),
+			'Barn',
+			'Barn 2'
+		]);
 		expect(byId('device-settings-tti-name-input')?.value).toBe('cw-air-01');
 		expect(byId('device-settings-location-select')?.textContent?.trim()).toBe('North field');
 		expect([
-			byId('device-settings-group-hidden-input')?.value,
+			dropdown('device-settings-group-select').value(),
 			byId('device-settings-tti-name-hidden-input')?.value,
 			byId('device-settings-location-hidden-input')?.value
 		]).toEqual(['Barn', 'cw-air-01', '8']);
@@ -254,10 +272,10 @@ describe('device settings page', () => {
 		type('device-settings-name-input', ' Air sensor ');
 		expect(submitButton()?.disabled).toBe(true);
 
-		type('device-settings-group-input', '  Barn 2 ');
-		expect(byId('device-settings-group-hidden-input')?.value).toBe('Barn 2');
+		chooseOption('device-settings-group-select', 'Barn 2');
+		expect(dropdown('device-settings-group-select').value()).toBe('Barn 2');
 		expect(submitButton()?.disabled).toBe(false);
-		type('device-settings-group-input', 'Barn');
+		chooseOption('device-settings-group-select', 'Barn');
 
 		type('device-settings-tti-name-input', ' CW-AIR-01 ');
 		expect(byId('device-settings-tti-name-hidden-input')?.value).toBe('cw-air-01');
@@ -275,17 +293,358 @@ describe('device settings page', () => {
 		expect(submitButton()?.disabled).toBe(true);
 	});
 
-	it('flags a name or group longer than 120 characters', () => {
-		render({ deviceName: 'n'.repeat(121), deviceGroup: 'g'.repeat(121) });
+	it('flags a name longer than 120 characters', () => {
+		render({ deviceName: 'n'.repeat(121) });
 		type('device-settings-tti-name-input', 'cw-air-02');
 
 		expect(fieldError('device-settings-name-input')).toBe(
 			m.devices_device_name_length({ max: '120' })
 		);
-		expect(fieldError('device-settings-group-input')).toBe(
-			m.devices_device_group_length({ max: '120' })
-		);
 		expect(submitButton()?.disabled).toBe(true);
+	});
+
+	it('keeps a saved group the list does not hold, and renders the group dialogs outside the form', () => {
+		render({ deviceGroup: 'Old shed', deviceGroups: [] });
+
+		expect(dropdown('device-settings-group-select').value()).toBe('Old shed');
+		expect(dropdown('device-settings-group-select').options()).toEqual([
+			m.groups_none(),
+			'Old shed'
+		]);
+		expect(byId('device-settings-group-select-manage')).toBeNull();
+		expect(deviceForm()?.querySelector('dialog')).toBeNull();
+		expect(document.querySelectorAll('dialog.cw-dialog').length).toBeGreaterThanOrEqual(2);
+	});
+
+	it('adds a group in its organization from the dialog, selects it and posts it with the device', async () => {
+		const page = render();
+		page.services.deviceGroups.createGroup.mockResolvedValue({
+			id: 7,
+			name: 'Orchard',
+			org_id: 'org-1',
+			can_manage: true
+		});
+
+		addGroup('device-settings-group-select', 'Orchard');
+
+		await vi.waitFor(() =>
+			expect(dropdown('device-settings-group-select').value()).toBe('Orchard')
+		);
+		expect(page.services.deviceGroups.createGroup).toHaveBeenCalledWith('Orchard', 'org-1');
+		expect(new FormData(deviceForm() as HTMLFormElement).getAll('group')).toEqual(['Orchard']);
+		expect(submitButton()?.disabled).toBe(false);
+	});
+
+	it('follows a rename of the saved group and re-seeds the list from the reload', async () => {
+		const page = render();
+		page.services.deviceGroups.renameGroup.mockResolvedValue({
+			id: 1,
+			name: 'Cellar',
+			org_id: 'org-1',
+			can_manage: true
+		});
+		invalidateAll.mockImplementation(async () =>
+			page.setData({
+				...DATA,
+				deviceGroup: 'Cellar',
+				deviceGroups: [
+					{ id: 1, name: 'Cellar', org_id: 'org-1', can_manage: true },
+					{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: false },
+					{ id: 5, name: 'Loft', org_id: 'org-1', can_manage: true }
+				]
+			})
+		);
+
+		renameGroup('device-settings-group-select', 'Barn', 'Cellar');
+
+		await vi.waitFor(() => expect(dropdown('device-settings-group-select').value()).toBe('Cellar'));
+		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(dropdown('device-settings-group-select').options()).toEqual([
+			m.groups_none(),
+			'Barn 2',
+			'Cellar',
+			'Loft'
+		]);
+		expect(chips()).toContain(m.devices_current_group_chip({ group: 'Cellar' }));
+		// The API already saved the rename: nothing left to save.
+		expect(submitButton()?.disabled).toBe(true);
+	});
+
+	it('shows the device without a group after its group is deleted', async () => {
+		const page = render();
+		page.services.deviceGroups.deleteGroup.mockResolvedValue(undefined);
+		invalidateAll.mockImplementation(async () =>
+			page.setData({
+				...DATA,
+				deviceGroup: '',
+				deviceGroups: [{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: false }]
+			})
+		);
+
+		deleteGroup('device-settings-group-select', 'Barn');
+
+		await vi.waitFor(() => expect(dropdown('device-settings-group-select').value()).toBe(''));
+		expect(dropdown('device-settings-group-select').options()).toEqual([m.groups_none(), 'Barn 2']);
+		expect(submitButton()?.disabled).toBe(true);
+	});
+
+	it('keeps an unsaved group choice when another group is renamed', async () => {
+		const page = render({
+			deviceGroups: [
+				{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true },
+				{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: true }
+			]
+		});
+		page.services.deviceGroups.renameGroup.mockResolvedValue({
+			id: 1,
+			name: 'Cellar',
+			org_id: 'org-1',
+			can_manage: true
+		});
+		invalidateAll.mockImplementation(async () =>
+			page.setData({
+				...DATA,
+				deviceGroup: 'Cellar',
+				deviceGroups: [
+					{ id: 1, name: 'Cellar', org_id: 'org-1', can_manage: true },
+					{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: true }
+				]
+			})
+		);
+		chooseOption('device-settings-group-select', 'Barn 2');
+
+		renameGroup('device-settings-group-select', 'Barn', 'Cellar');
+
+		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalled());
+		flushSync();
+		expect(dropdown('device-settings-group-select').value()).toBe('Barn 2');
+	});
+
+	it('follows a rename of an unsaved group choice', async () => {
+		const managed: GroupDto[] = [
+			{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true },
+			{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: true }
+		];
+		const page = render({ deviceGroups: managed });
+		page.services.deviceGroups.renameGroup.mockResolvedValue({ ...managed[1], name: 'Loft' });
+		invalidateAll.mockImplementation(async () =>
+			page.setData({ ...DATA, deviceGroups: [managed[0], { ...managed[1], name: 'Loft' }] })
+		);
+		chooseOption('device-settings-group-select', 'Barn 2');
+
+		renameGroup('device-settings-group-select', 'Barn 2', 'Loft');
+
+		await vi.waitFor(() => expect(dropdown('device-settings-group-select').value()).toBe('Loft'));
+		expect(dropdown('device-settings-group-select').options()).toEqual([
+			m.groups_none(),
+			'Barn',
+			'Loft'
+		]);
+		expect(submitButton()?.disabled).toBe(false);
+	});
+
+	it('shows what the API has saved after a group change when the choice was untouched', async () => {
+		const managed: GroupDto[] = [
+			{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true },
+			{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: true }
+		];
+		const page = render({ deviceGroups: managed });
+		page.services.deviceGroups.renameGroup.mockResolvedValue({ ...managed[1], name: 'Loft' });
+		// Meanwhile the device was put in another group elsewhere: the reload has it.
+		invalidateAll.mockImplementation(async () =>
+			page.setData({
+				...DATA,
+				deviceGroup: 'Loft',
+				deviceGroups: [managed[0], { ...managed[1], name: 'Loft' }]
+			})
+		);
+
+		renameGroup('device-settings-group-select', 'Barn 2', 'Loft');
+
+		await vi.waitFor(() => expect(dropdown('device-settings-group-select').value()).toBe('Loft'));
+		expect(submitButton()?.disabled).toBe(true);
+	});
+
+	it('lists groups a save created once the page reloads', async () => {
+		const page = render({
+			deviceGroups: [{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: false }]
+		});
+		expect(byId('device-settings-group-select-manage')).toBeNull();
+		type('device-settings-name-input', 'Air sensor 2');
+		const update = vi.fn(async () =>
+			page.setData({
+				...DATA,
+				deviceName: 'Air sensor 2',
+				deviceGroups: [
+					{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true },
+					{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: false }
+				]
+			})
+		);
+
+		await submitDeviceForm().after?.({ result: { type: 'success', status: 200 }, update });
+		flushSync();
+
+		expect(byId('device-settings-group-select-manage')).not.toBeNull();
+		expect(dropdown('device-settings-group-select').options()).toEqual([
+			m.groups_none(),
+			'Barn',
+			'Barn 2'
+		]);
+	});
+
+	describe('in another organization', () => {
+		// North field is in the device's org; South field belongs to another one.
+		const LOCATIONS = [
+			{ location_id: 8, name: 'North field', org_id: 'org-1' },
+			{ location_id: 9, name: 'South field', org_id: 'org-2' }
+		];
+		const ORG_2_GROUPS: GroupDto[] = [
+			{ id: 20, name: 'Orchard', org_id: 'org-2', can_manage: true }
+		];
+
+		it('shows the chosen location’s org groups, adds there, and keeps the picked name', async () => {
+			const page = render({ locations: LOCATIONS });
+			page.services.deviceGroups.listGroups.mockResolvedValue(ORG_2_GROUPS);
+			page.services.deviceGroups.createGroup.mockResolvedValue({
+				id: 21,
+				name: 'Shed',
+				org_id: 'org-2',
+				can_manage: true
+			});
+
+			chooseLocation('South field');
+
+			expect(page.services.deviceGroups.listGroups).toHaveBeenCalledWith({ orgId: 'org-2' });
+			// The picked group stays: the API finds or creates "Barn" in org-2 on save.
+			await vi.waitFor(() =>
+				expect(dropdown('device-settings-group-select').options()).toEqual([
+					m.groups_none(),
+					'Barn',
+					'Orchard'
+				])
+			);
+			expect(dropdown('device-settings-group-select').value()).toBe('Barn');
+
+			addGroup('device-settings-group-select', 'Shed');
+			await vi.waitFor(() => expect(dropdown('device-settings-group-select').value()).toBe('Shed'));
+			expect(page.services.deviceGroups.createGroup).toHaveBeenCalledWith('Shed', 'org-2');
+
+			// Back to the saved location: its own org's groups again.
+			page.services.deviceGroups.listGroups.mockResolvedValue(DATA.deviceGroups ?? []);
+			chooseLocation('North field');
+			expect(page.services.deviceGroups.listGroups).toHaveBeenLastCalledWith({ orgId: 'org-1' });
+		});
+
+		it('adds to the new org once the move is saved', async () => {
+			const page = render({ locations: LOCATIONS });
+			page.services.deviceGroups.listGroups.mockResolvedValue(ORG_2_GROUPS);
+			page.services.deviceGroups.createGroup.mockResolvedValue({
+				id: 21,
+				name: 'Shed',
+				org_id: 'org-2',
+				can_manage: true
+			});
+			chooseLocation('South field');
+			const update = vi.fn(async () =>
+				page.setData({
+					...DATA,
+					locations: LOCATIONS,
+					location_id: 9,
+					deviceOrgId: 'org-2',
+					deviceGroup: 'Barn',
+					deviceGroups: [
+						...ORG_2_GROUPS,
+						{ id: 22, name: 'Barn', org_id: 'org-2', can_manage: true }
+					]
+				})
+			);
+
+			await submitDeviceForm().after?.({ result: { type: 'success', status: 200 }, update });
+			flushSync();
+
+			expect(dropdown('device-settings-group-select').options()).toEqual([
+				m.groups_none(),
+				'Barn',
+				'Orchard'
+			]);
+			addGroup('device-settings-group-select', 'Shed');
+			await vi.waitFor(() =>
+				expect(page.services.deviceGroups.createGroup).toHaveBeenCalledWith('Shed', 'org-2')
+			);
+		});
+	});
+
+	it('takes the saved device’s org from the reload when the location list does not say it', async () => {
+		// South field's org is unknown here: the page learns it from the saved device.
+		const page = render({
+			locations: [
+				{ location_id: 8, name: 'North field', org_id: 'org-1' },
+				{ location_id: 9, name: 'South field' }
+			]
+		});
+		page.services.deviceGroups.createGroup.mockResolvedValue({
+			id: 21,
+			name: 'Shed',
+			org_id: 'org-2',
+			can_manage: true
+		});
+		chooseLocation('South field');
+		const update = vi.fn(async () =>
+			page.setData({
+				...DATA,
+				location_id: 9,
+				deviceOrgId: 'org-2',
+				deviceGroups: [{ id: 22, name: 'Barn', org_id: 'org-2', can_manage: true }]
+			})
+		);
+
+		await submitDeviceForm().after?.({ result: { type: 'success', status: 200 }, update });
+		flushSync();
+
+		// The list is org-2's, as reloaded (a load the effect started for the
+		// same org meanwhile is dropped).
+		expect(dropdown('device-settings-group-select').options()).toEqual([m.groups_none(), 'Barn']);
+		addGroup('device-settings-group-select', 'Shed');
+		await vi.waitFor(() =>
+			expect(page.services.deviceGroups.createGroup).toHaveBeenCalledWith('Shed', 'org-2')
+		);
+	});
+
+	it('keeps a group it added when the save is refused (nothing was reloaded)', async () => {
+		const page = render();
+		page.services.deviceGroups.createGroup.mockResolvedValue({
+			id: 7,
+			name: 'Orchard',
+			org_id: 'org-1',
+			can_manage: true
+		});
+		addGroup('device-settings-group-select', 'Orchard');
+		await vi.waitFor(() =>
+			expect(dropdown('device-settings-group-select').value()).toBe('Orchard')
+		);
+		chooseOption('device-settings-group-select', 'Barn');
+		type('device-settings-name-input', 'Air sensor 2');
+
+		await submitDeviceForm().after?.({
+			result: { type: 'failure', status: 400, data: {} },
+			update: vi.fn(async () => {})
+		});
+		flushSync();
+
+		expect(dropdown('device-settings-group-select').options()).toEqual([
+			m.groups_none(),
+			'Barn',
+			'Barn 2',
+			'Orchard'
+		]);
+	});
+
+	it('offers no new groups without the device organization', () => {
+		render({ deviceOrgId: null });
+
+		expect(byId('device-settings-group-select-add')).toBeNull();
+		expect(dropdown('device-settings-group-select').value()).toBe('Barn');
 	});
 
 	it('offers a soil sensor its crop, saved with the device form', () => {
@@ -422,7 +781,7 @@ describe('device settings page', () => {
 
 	it('posts group, TTI device id and location once each, normalized, which the action saves', async () => {
 		render();
-		type('device-settings-group-input', '  Barn 2 ');
+		chooseOption('device-settings-group-select', 'Barn 2');
 		type('device-settings-tti-name-input', ' CW-AIR-02 ');
 		chooseLocation('South field');
 
@@ -506,7 +865,7 @@ describe('device settings page', () => {
 			m.validation_correct_highlighted_fields()
 		);
 		expect(fieldError('device-settings-name-input')).toBe('Name taken');
-		expect(fieldError('device-settings-group-input')).toBe('Group refused');
+		expect(fieldError('device-settings-group-select')).toBe('Group refused');
 		expect(fieldError('device-settings-tti-name-input')).toBe('TTI id refused');
 		expect(fieldError('device-settings-location-select')).toBe('Location refused');
 
@@ -601,7 +960,7 @@ describe('device settings page', () => {
 		} as unknown as Partial<Data>);
 
 		expect(byId('device-settings-name-input')?.value).toBe('');
-		expect(byId('device-settings-group-input')?.value).toBe('');
+		expect(dropdown('device-settings-group-select').value()).toBe('');
 		expect(byId('device-settings-tti-name-input')?.value).toBe('');
 		expect(chips()).toEqual([m.devices_deveui_chip({ devEui: 'DEV-1' })]);
 		expect(submitButton()?.disabled).toBe(true);
