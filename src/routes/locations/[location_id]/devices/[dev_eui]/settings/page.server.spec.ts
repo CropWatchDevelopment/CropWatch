@@ -82,6 +82,7 @@ const nothing = (devEui: string) => ({
 	devEui,
 	deviceName: '',
 	deviceGroup: '',
+	deviceGroups: [],
 	ttiName: '',
 	sensorCertificates: [],
 	supportsSensorCertificates: false,
@@ -128,11 +129,14 @@ function realLocals(fetch: FetchFn, serverConfig = testServerConfig()): TestLoca
 	return { ...testLocals(), services } as unknown as TestLocals;
 }
 
+const DEVICE_GROUPS = [{ id: 4, name: 'Barn', org_id: 'org-1', can_manage: true }];
+
 function stubLoad(locals: TestLocals) {
-	const { locations, billing } = locals.services;
+	const { locations, billing, deviceGroups } = locals.services;
 	locations.getLocation.mockResolvedValue(LOCATION);
 	locations.getLocations.mockResolvedValue([LOCATION]);
 	billing.getLicenses.mockResolvedValue(LICENSES);
+	deviceGroups.listGroups.mockResolvedValue(DEVICE_GROUPS);
 	return locals;
 }
 
@@ -167,7 +171,7 @@ afterEach(() => {
 });
 
 describe('device settings load', () => {
-	it('builds every settings card from the layout device and the three lookups', async () => {
+	it('builds every settings card from the layout device and the four lookups', async () => {
 		const locals = stubLoad(testLocals());
 
 		await expect(runLoad({ authToken: TEST_JWT, device: DEVICE }, locals)).resolves.toEqual({
@@ -175,6 +179,7 @@ describe('device settings load', () => {
 			deviceName: 'Air sensor',
 			location_id: 8,
 			deviceGroup: 'Barn',
+			deviceGroups: DEVICE_GROUPS,
 			ttiName: 'cw-air-01',
 			locations: [LOCATION],
 			sensorCertificates: [
@@ -211,8 +216,20 @@ describe('device settings load', () => {
 		expect(locals.services.billing.getLicenses).toHaveBeenCalledWith();
 		// The device itself comes from the layout.
 		expect(locals.services.devices.getDevice).not.toHaveBeenCalled();
-		// The page offers no group list, so the device groups are not fetched.
+		// The picker's groups: the device organization's, from /device-groups
+		// (not the old in-use list).
+		expect(locals.services.deviceGroups.listGroups).toHaveBeenCalledWith({ orgId: 'org-1' });
 		expect(locals.services.devices.getDeviceGroups).not.toHaveBeenCalled();
+	});
+
+	it('still opens when the group list cannot be loaded', async () => {
+		const locals = stubLoad(testLocals());
+		locals.services.deviceGroups.listGroups.mockRejectedValue(apiError(500, 'down'));
+
+		await expect(runLoad({ authToken: TEST_JWT, device: DEVICE }, locals)).resolves.toMatchObject({
+			deviceGroup: 'Barn',
+			deviceGroups: []
+		});
 	});
 
 	it("explains a disabled certificate download with Libellus's configuration problem", async () => {
@@ -309,6 +326,8 @@ describe('device settings load', () => {
 			deviceName: 'DEV-1',
 			location_id: undefined,
 			deviceGroup: '',
+			// No device, so no organization to list groups for.
+			deviceGroups: [],
 			ttiName: '',
 			locations: [LOCATION],
 			sensorCertificates: [],
@@ -357,12 +376,15 @@ describe('device settings load', () => {
 	it('uses the DevEUI for an unnamed device and ignores owner and org ids that are not strings', async () => {
 		const unnamed = { ...DEVICE, name: '', group: null, user_id: null, org_id: 7 };
 
-		await expect(runLoad({ authToken: TEST_JWT, device: unnamed })).resolves.toMatchObject({
+		const locals = stubLoad(testLocals());
+		await expect(runLoad({ authToken: TEST_JWT, device: unnamed }, locals)).resolves.toMatchObject({
 			deviceName: 'DEV-1',
 			deviceGroup: '',
+			deviceGroups: [],
 			deviceOwnerId: null,
 			deviceOrgId: null
 		});
+		expect(locals.services.deviceGroups.listGroups).not.toHaveBeenCalled();
 	});
 
 	it('loads nothing without a session or a DevEUI', async () => {
@@ -386,7 +408,7 @@ describe('device settings load', () => {
 		}
 	});
 
-	it('sends its three lookups as the session through the request-scoped services', async () => {
+	it('sends its four lookups as the session through the request-scoped services', async () => {
 		const fake = createFakeFetch(({ path }) => {
 			switch (path) {
 				case '/locations/8':
@@ -395,6 +417,8 @@ describe('device settings load', () => {
 					return jsonResponse([LOCATION]);
 				case '/payments/licenses':
 					return jsonResponse(LICENSES);
+				case '/device-groups?org_id=org-1':
+					return jsonResponse(DEVICE_GROUPS);
 				default:
 					return jsonResponse({ message: 'unexpected' }, { status: 404 });
 			}
@@ -405,13 +429,15 @@ describe('device settings load', () => {
 		).resolves.toMatchObject({
 			locations: [LOCATION],
 			license: { id: 5, seatIndex: 2, manual: true },
-			deviceOwners: [ADA, expect.objectContaining({ name: 'Bob' })]
+			deviceOwners: [ADA, expect.objectContaining({ name: 'Bob' })],
+			deviceGroups: DEVICE_GROUPS
 		});
-		// No GET /devices/groups: the page never used it.
+		// No GET /devices/groups (groups in use): the picker lists /device-groups.
 		expect(fake.requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
 			'GET /locations/8',
 			'GET /locations',
-			'GET /payments/licenses'
+			'GET /payments/licenses',
+			'GET /device-groups?org_id=org-1'
 		]);
 		for (const request of fake.requests) {
 			expect(request.headers.get('Authorization')).toBe(`Bearer ${TEST_JWT}`);

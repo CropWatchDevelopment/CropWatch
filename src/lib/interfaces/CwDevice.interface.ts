@@ -8,6 +8,8 @@ export interface CwDevice {
 	installed_at?: string | null;
 	battery_changed_at?: string | null;
 	user_id?: string | null;
+	/** The organization the device belongs to. */
+	org_id?: string | null;
 	warranty_start_date?: string | null;
 	sensor1_serial?: string | null;
 	sensor2_serial?: string | null;

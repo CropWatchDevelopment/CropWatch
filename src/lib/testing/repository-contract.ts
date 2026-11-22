@@ -150,6 +150,18 @@ export const REPOSITORY_CONTRACT: RepositoryContractCase[] = [
 	{ repository: 'reports', method: 'deleteReportTemplate', args: [5], expected: { method: 'DELETE', path: '/reports/5' } },
 	{ repository: 'reports', method: 'getReportTemplateDownloadUrl', args: [DEVICE, 'March report.pdf'], expected: { method: 'GET', path: `/reports/download/${DEVICE}/March%20report.pdf` } },
 
+	// location groups / device groups (one repository, two base paths)
+	{ repository: 'locationGroups', method: 'listGroups', args: [], response: [], expected: { method: 'GET', path: '/location-groups' } },
+	{ repository: 'locationGroups', method: 'listGroups', args: [{ orgId: '00000000-0000-4000-8000-000000000001' }], response: [], expected: { method: 'GET', path: '/location-groups?org_id=00000000-0000-4000-8000-000000000001' } },
+	{ repository: 'locationGroups', method: 'createGroup', args: ['Barns', '00000000-0000-4000-8000-000000000001'], expected: { method: 'POST', path: '/location-groups', body: { name: 'Barns', org_id: '00000000-0000-4000-8000-000000000001' } } },
+	{ repository: 'locationGroups', method: 'renameGroup', args: [4, 'Sheds'], expected: { method: 'PATCH', path: '/location-groups/4', body: { name: 'Sheds' } } },
+	{ repository: 'locationGroups', method: 'deleteGroup', args: [4], expected: { method: 'DELETE', path: '/location-groups/4' } },
+	{ repository: 'deviceGroups', method: 'listGroups', args: [{ orgId: null }], response: [], expected: { method: 'GET', path: '/device-groups' } },
+	{ repository: 'deviceGroups', method: 'listGroups', args: [{ orgId: '00000000-0000-4000-8000-000000000001' }], response: [], expected: { method: 'GET', path: '/device-groups?org_id=00000000-0000-4000-8000-000000000001' } },
+	{ repository: 'deviceGroups', method: 'createGroup', args: ['Row A', '00000000-0000-4000-8000-000000000001'], expected: { method: 'POST', path: '/device-groups', body: { name: 'Row A', org_id: '00000000-0000-4000-8000-000000000001' } } },
+	{ repository: 'deviceGroups', method: 'renameGroup', args: [9, 'Row B'], expected: { method: 'PATCH', path: '/device-groups/9', body: { name: 'Row B' } } },
+	{ repository: 'deviceGroups', method: 'deleteGroup', args: [9], expected: { method: 'DELETE', path: '/device-groups/9' } },
+
 	// crops
 	{ repository: 'crops', method: 'getCrops', args: [], response: [], expected: { method: 'GET', path: '/crops' } },
 	{ repository: 'crops', method: 'getCrop', args: [3], expected: { method: 'GET', path: '/crops/3' } },

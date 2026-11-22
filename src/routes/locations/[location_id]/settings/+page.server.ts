@@ -1,4 +1,4 @@
-import type { LocationOwnerDto } from '$lib/api/api.dtos';
+import type { GroupDto, LocationOwnerDto } from '$lib/api/api.dtos';
 import { PermissionLevel } from '$lib/constants/permissions';
 import { m } from '$lib/paraglide/messages.js';
 import { isStaffEmail } from '$lib/utils/is-staff';
@@ -25,6 +25,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			locationId: Number.isFinite(locationId) ? locationId : null,
 			locationName: '',
 			locationGroup: '',
+			locationGroups: [] as GroupDto[],
+			locationOrgId: null as string | null,
 			coordinates: null as { lat: number; long: number } | null,
 			mapZoom: null as number | null,
 			devicePositions: [] as { lat: number | null; long: number | null }[],
@@ -34,17 +36,27 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	}
 
 	const { locations } = locals.services;
+	const locationRequest = locations.getLocation(locationId).catch(() => null);
 
 	// The preflight is owner-only (403/404 otherwise): it decides whether the
 	// danger zone shows at all, and how many devices still block the delete.
-	const [location, deletePreflight, devices] = await Promise.all([
-		locations.getLocation(locationId).catch(() => null),
+	const [location, deletePreflight, devices, locationGroups] = await Promise.all([
+		locationRequest,
 		locations.getLocationDeletePreflight(locationId).catch(() => null),
 		// Device positions back the "Centre on my devices" button.
 		locals.services.devices
 			.getAllLocationDevices(locationId)
 			.then((res) => res.data ?? [])
-			.catch(() => [])
+			.catch(() => []),
+		// The group picker's choices: the groups of the location's organization.
+		// Without them it still keeps the saved group.
+		locationRequest.then((loaded) =>
+			loaded?.org_id
+				? locals.services.locationGroups
+						.listGroups({ orgId: loaded.org_id })
+						.catch(() => [] as GroupDto[])
+				: ([] as GroupDto[])
+		)
 	]);
 
 	// The API answers 404 both for a missing location and for one the caller
@@ -81,6 +93,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		locationId,
 		locationName: String(location.name ?? `Location ${locationId}`),
 		locationGroup: String(location.group ?? ''),
+		locationGroups,
+		locationOrgId: typeof location.org_id === 'string' ? location.org_id : null,
 		coordinates: lat !== null && long !== null && !(lat === 0 && long === 0) ? { lat, long } : null,
 		mapZoom: toFiniteNumber(location.map_zoom),
 		devicePositions: devices.map((device) => ({

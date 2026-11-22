@@ -11,18 +11,32 @@
 	import RegisterProgress from './RegisterProgress.svelte';
 	import ReviewStep from './ReviewStep.svelte';
 	import { DeviceSetupFlow } from './device-setup-flow.svelte';
+	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
+	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
 	import { regionLabel } from './setup-messages';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
-	const { devices } = getServices();
+	const { devices, deviceGroups } = getServices();
 	const toast = useCwToast();
 	const locationId = (() => data.locationId)();
 	const flow = new DeviceSetupFlow({
 		devices,
 		locationId: Number(locationId),
 		licenses: (() => data.availableLicenses)()
+	});
+
+	// Lives here, not in the details step: the step remounts on every visit, and a
+	// group added there must still be offered when the user comes back to it.
+	const groups = new GroupsController({
+		kind: 'device',
+		repository: deviceGroups,
+		orgId: (() => data.locationOrgId)(),
+		initial: (() => data.deviceGroups)(),
+		onError: (message) => toast.add({ tone: 'danger', message }),
+		onSuccess: (message) => toast.add({ tone: 'success', message })
 	});
 
 	const locationHref = resolve('/locations/[location_id]', { location_id: locationId });
@@ -172,7 +186,7 @@
 				<DetailsStep
 					{flow}
 					licenses={data.availableLicenses}
-					groupSuggestions={data.groupSuggestions}
+					{groups}
 					locationLat={data.locationLat}
 					locationLong={data.locationLong}
 				/>
@@ -203,6 +217,8 @@
 			{/if}
 		</div>
 	</CwCard>
+	<AddGroupDialog controller={groups} bind:value={flow.group} />
+	<ManageGroupsDialog controller={groups} bind:value={flow.group} />
 </AppPage>
 
 <style>

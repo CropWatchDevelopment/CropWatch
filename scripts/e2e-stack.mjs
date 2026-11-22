@@ -153,11 +153,80 @@ function createMockServer() {
 			return;
 		}
 
+		// Location and device groups (one in-memory list per pool, per run).
+		const groupRoute = /^\/(location|device)-groups(?:\/(\d+))?$/.exec(url.pathname);
+		if (groupRoute) {
+			if (!request.headers.authorization?.startsWith('Bearer ')) {
+				writeJson(response, 401, { message: 'Unauthorized' });
+				return;
+			}
+			handleGroups(request, response, url, groupRoute[1], groupRoute[2]);
+			return;
+		}
+
 		writeJson(response, 404, {
 			message: 'Not Found',
 			path: url.pathname
 		});
 	});
+}
+
+const groupPools = { location: [], device: [] };
+let nextGroupId = 1;
+
+/** GET (optionally ?org_id=), POST (idempotent per org and name), PATCH and DELETE /{kind}-groups. */
+async function handleGroups(request, response, url, kind, rawId) {
+	const pool = groupPools[kind];
+	const id = rawId === undefined ? null : Number(rawId);
+	const index = id === null ? -1 : pool.findIndex((group) => group.id === id);
+
+	if (request.method === 'GET' && id === null) {
+		const orgId = url.searchParams.get('org_id');
+		writeJson(
+			response,
+			200,
+			pool.filter((group) => !orgId || group.org_id === orgId)
+		);
+		return;
+	}
+	if (request.method === 'POST' && id === null) {
+		const body = await readJsonBody(request);
+		const name = String(body?.name ?? '').trim();
+		const orgId = String(body?.org_id ?? '');
+		if (!name || !orgId) {
+			writeJson(response, 400, { message: 'name and org_id are required' });
+			return;
+		}
+		let group = pool.find((existing) => existing.org_id === orgId && existing.name === name);
+		if (!group) {
+			group = { id: nextGroupId++, name, org_id: orgId, can_manage: true };
+			pool.push(group);
+		}
+		writeJson(response, 201, group);
+		return;
+	}
+	if (index === -1) {
+		writeJson(response, 404, { message: 'Group not found' });
+		return;
+	}
+	if (request.method === 'PATCH') {
+		const body = await readJsonBody(request);
+		const name = String(body?.name ?? '').trim();
+		if (pool.some((g) => g.id !== id && g.org_id === pool[index].org_id && g.name === name)) {
+			writeJson(response, 409, { message: 'This organization already has a group with this name' });
+			return;
+		}
+		pool[index] = { ...pool[index], name };
+		writeJson(response, 200, pool[index]);
+		return;
+	}
+	if (request.method === 'DELETE') {
+		pool.splice(index, 1);
+		response.writeHead(204);
+		response.end();
+		return;
+	}
+	writeJson(response, 405, { message: 'Method Not Allowed' });
 }
 
 function waitForExit(child) {

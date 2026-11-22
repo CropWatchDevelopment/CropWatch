@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createServerServices } from '$lib/server/services';
 import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
 import { testEvent, testLocals, testServerConfig, type TestLocals } from '$lib/testing/server';
+import type { GroupDto } from '$lib/api/api.dtos';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];
@@ -18,17 +19,21 @@ function stubbed(
 		deviceTypes?: unknown;
 		location?: unknown;
 		licenses?: unknown;
-		devices?: unknown;
+		groups?: GroupDto[];
 	} = {}
 ) {
 	const locals = testLocals();
-	const { billing, devices, locations } = locals.services;
+	const { billing, deviceGroups, devices, locations } = locals.services;
 	devices.getDeviceTypes.mockResolvedValue((answers.deviceTypes ?? []) as never);
-	locations.getLocation.mockResolvedValue((answers.location ?? { name: 'Greenhouse' }) as never);
+	locations.getLocation.mockResolvedValue(
+		(answers.location ?? { name: 'Greenhouse', org_id: 'org-1' }) as never
+	);
 	billing.getLicenses.mockResolvedValue((answers.licenses ?? []) as never);
-	devices.getDevices.mockResolvedValue((answers.devices ?? []) as never);
+	deviceGroups.listGroups.mockResolvedValue(answers.groups ?? []);
 	return locals;
 }
+
+const FLOOR_1: GroupDto = { id: 4, name: 'Floor 1', org_id: 'org-1', can_manage: true };
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -46,24 +51,27 @@ describe('device setup load', () => {
 		expect(locals.services.devices.getDeviceTypes).not.toHaveBeenCalled();
 		expect(locals.services.locations.getLocation).not.toHaveBeenCalled();
 		expect(locals.services.billing.getLicenses).not.toHaveBeenCalled();
-		expect(locals.services.devices.getDevices).not.toHaveBeenCalled();
+		expect(locals.services.deviceGroups.listGroups).not.toHaveBeenCalled();
 	});
 
-	it('gathers the models, the location, the free licenses and the groups', async () => {
+	it('gathers the models, the location, the free licenses and its organization’s groups', async () => {
 		const locals = stubbed({
 			deviceTypes: [
 				{ id: 2, name: 'CropWatch Air' },
 				{ id: '7', name: 'Soil probe' }
 			],
-			location: { name: 'Greenhouse', lat: 35.6812, long: '139.7671', network_region: 'eu1' },
+			location: {
+				name: 'Greenhouse',
+				lat: 35.6812,
+				long: '139.7671',
+				network_region: 'eu1',
+				org_id: 'org-1'
+			},
 			licenses: [
 				{ id: 1, seatIndex: 0, status: 'assigned', devEui: 'A', deviceName: 'A', manual: false },
 				{ id: 2, seatIndex: 1, status: 'unassigned', devEui: null, deviceName: null, manual: true }
 			],
-			devices: [
-				{ dev_eui: 'A', location_id: 8, group: 'Floor 1' },
-				{ dev_eui: 'B', location_id: 9, group: 'Elsewhere' }
-			]
+			groups: [FLOOR_1]
 		});
 
 		await expect(run(locals)).resolves.toEqual({
@@ -72,15 +80,19 @@ describe('device setup load', () => {
 			locationLat: 35.6812,
 			locationLong: 139.7671,
 			locationRegion: 'eu1',
+			locationOrgId: 'org-1',
 			deviceTypeOptions: [
 				{ label: 'CropWatch Air', value: '2' },
 				{ label: 'Soil probe', value: '7' }
 			],
 			availableLicenses: [{ id: 2, seatIndex: 1 }],
-			groupSuggestions: ['Floor 1']
+			deviceGroups: [FLOOR_1]
 		});
 		expect(locals.services.locations.getLocation).toHaveBeenCalledWith('8');
-		expect(locals.services.devices.getDevices).toHaveBeenCalledWith({ take: 1000 });
+		// The device joins the location's organization, so its groups are offered.
+		expect(locals.services.deviceGroups.listGroups).toHaveBeenCalledWith({ orgId: 'org-1' });
+		// The old in-use scan of every device is gone.
+		expect(locals.services.devices.getDevices).not.toHaveBeenCalled();
 		expect(locals.services.devices.getDeviceTypes).toHaveBeenCalledWith();
 		expect(locals.services.billing.getLicenses).toHaveBeenCalledWith();
 	});
@@ -128,58 +140,31 @@ describe('device setup load', () => {
 		]);
 	});
 
-	it('suggests at most eight distinct, sorted groups used at this location', async () => {
-		const devicesHere = [
-			'Shed',
-			' Barn ',
-			'Barn',
-			'Zone',
-			'Pond',
-			'Gate',
-			'Field',
-			'Dock',
-			'Attic',
-			'Cellar'
-		]
-			.map((group, index) => ({ dev_eui: `D${index}`, location_id: index % 2 ? '8' : 8, group }))
-			.concat([
-				{ dev_eui: 'E1', location_id: 8, group: '   ' },
-				{ dev_eui: 'E2', location_id: 8, group: null },
-				{ dev_eui: 'E3', location_id: 8 },
-				{ dev_eui: 'E4', location_id: 80, group: 'Other site' },
-				{ dev_eui: 'E5', location_id: null, group: 'Unplaced' }
-			] as never[]);
-
-		const data = await run(stubbed({ devices: devicesHere }));
-
-		expect(data?.groupSuggestions).toEqual([
-			'Attic',
-			'Barn',
-			'Cellar',
-			'Dock',
-			'Field',
-			'Gate',
-			'Pond',
-			'Shed'
-		]);
-	});
-
 	it('trims the location id from the URL', async () => {
-		const locals = stubbed({ devices: [{ dev_eui: 'A', location_id: 8, group: 'Floor 1' }] });
+		const locals = stubbed({ groups: [FLOOR_1] });
 
 		const data = await run(locals, ' 8 ');
 
 		expect(locals.services.locations.getLocation).toHaveBeenCalledWith('8');
-		expect(data).toMatchObject({ locationId: '8', groupSuggestions: ['Floor 1'] });
+		expect(data).toMatchObject({ locationId: '8', deviceGroups: [FLOOR_1] });
 	});
 
 	it('reads a missing location id as empty', async () => {
-		const locals = stubbed({ devices: [{ dev_eui: 'A', location_id: null, group: 'Unplaced' }] });
+		const locals = stubbed();
 
 		const data = await load(testEvent<LoadEvent>({ locals, params: {}, url: URL_IN }));
 
 		expect(locals.services.locations.getLocation).toHaveBeenCalledWith('');
-		expect(data).toMatchObject({ locationId: '', groupSuggestions: ['Unplaced'] });
+		expect(data).toMatchObject({ locationId: '', deviceGroups: [] });
+	});
+
+	it('lists no groups when the location has no organization', async () => {
+		const locals = stubbed({ location: { name: 'Greenhouse', org_id: null }, groups: [FLOOR_1] });
+
+		const data = await run(locals);
+
+		expect(data).toMatchObject({ locationOrgId: null, deviceGroups: [] });
+		expect(locals.services.deviceGroups.listGroups).not.toHaveBeenCalled();
 	});
 
 	it('ignores 0,0 placeholders, unreadable coordinates and unknown regions', async () => {
@@ -211,11 +196,11 @@ describe('device setup load', () => {
 
 	it('degrades each read independently when the API fails', async () => {
 		const locals = testLocals();
-		const { billing, devices, locations } = locals.services;
+		const { billing, deviceGroups, devices, locations } = locals.services;
 		devices.getDeviceTypes.mockRejectedValue(new Error('down'));
 		locations.getLocation.mockRejectedValue(new Error('down'));
 		billing.getLicenses.mockRejectedValue(new Error('down'));
-		devices.getDevices.mockRejectedValue(new Error('down'));
+		deviceGroups.listGroups.mockRejectedValue(new Error('down'));
 
 		await expect(run(locals)).resolves.toEqual({
 			locationId: '8',
@@ -223,10 +208,18 @@ describe('device setup load', () => {
 			locationLat: null,
 			locationLong: null,
 			locationRegion: null,
+			locationOrgId: null,
 			deviceTypeOptions: [],
 			availableLicenses: [],
-			groupSuggestions: []
+			deviceGroups: []
 		});
+	});
+
+	it('degrades to no groups when only the group list fails', async () => {
+		const locals = stubbed();
+		locals.services.deviceGroups.listGroups.mockRejectedValue(new Error('down'));
+
+		await expect(run(locals)).resolves.toMatchObject({ locationOrgId: 'org-1', deviceGroups: [] });
 	});
 
 	it('still shows the rest of the page when only the licences fail (no unpaid create)', async () => {
@@ -249,13 +242,19 @@ describe('device setup load over HTTP', () => {
 				return jsonResponse({ data: [{ id: 2, name: 'Air' }], total: 1 });
 			}
 			if (request.path === '/locations/8') {
-				return jsonResponse({ location_id: 8, name: 'Greenhouse', lat: 31.9, long: 131.4 });
+				return jsonResponse({
+					location_id: 8,
+					name: 'Greenhouse',
+					lat: 31.9,
+					long: 131.4,
+					org_id: 'org-1'
+				});
 			}
 			if (request.path === '/payments/licenses') {
 				return jsonResponse([{ id: 3, seatIndex: 0, status: 'unassigned' }]);
 			}
-			if (request.path === '/devices?take=1000') {
-				return jsonResponse([{ dev_eui: 'A', location_id: 8, group: 'Floor 1' }]);
+			if (request.path === '/device-groups?org_id=org-1') {
+				return jsonResponse([FLOOR_1]);
 			}
 			return jsonResponse({ message: 'unexpected' }, { status: 404 });
 		});
@@ -272,11 +271,12 @@ describe('device setup load over HTTP', () => {
 
 		const data = await run(locals);
 
+		// The location is asked first: the group list waits for its organization.
 		expect(fake.requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
-			'GET /devices/device-types',
 			'GET /locations/8',
+			'GET /devices/device-types',
 			'GET /payments/licenses',
-			'GET /devices?take=1000'
+			'GET /device-groups?org_id=org-1'
 		]);
 		expect(new Set(fake.requests.map((r) => r.headers.get('authorization')))).toEqual(
 			new Set(['Bearer jwt-token'])
@@ -287,9 +287,10 @@ describe('device setup load over HTTP', () => {
 			locationLat: 31.9,
 			locationLong: 131.4,
 			locationRegion: null,
+			locationOrgId: 'org-1',
 			deviceTypeOptions: [{ label: 'Air', value: '2' }],
 			availableLicenses: [{ id: 3, seatIndex: 0 }],
-			groupSuggestions: ['Floor 1']
+			deviceGroups: [FLOOR_1]
 		});
 	});
 });

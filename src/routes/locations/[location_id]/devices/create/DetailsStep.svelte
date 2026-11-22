@@ -4,7 +4,6 @@
 	import { goto } from '$app/navigation';
 	import {
 		CwButton,
-		CwChip,
 		CwDateTimeRangePicker,
 		CwDropdown,
 		CwInput,
@@ -18,17 +17,20 @@
 	} from '$lib/i18n/cwuiLabels';
 	import { getIntlLocale } from '$lib/i18n/format';
 	import { m } from '$lib/paraglide/messages.js';
+	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
+	import type { GroupsController } from '$lib/components/groups/groups-controller.svelte';
 	import type { DeviceSetupFlow, LicenseOption } from './device-setup-flow.svelte';
 
 	interface Props {
 		flow: DeviceSetupFlow;
 		licenses: LicenseOption[];
-		groupSuggestions: string[];
+		/** The device groups to pick from (the page renders their dialogs). */
+		groups: GroupsController;
 		locationLat: number | null;
 		locationLong: number | null;
 	}
 
-	let { flow, licenses, groupSuggestions, locationLat, locationLong }: Props = $props();
+	let { flow, licenses, groups, locationLat, locationLong }: Props = $props();
 
 	let licenseOptions = $derived(
 		licenses.map((license) => ({
@@ -88,32 +90,12 @@
 			/>
 		</div>
 
-		<div class="flex flex-col gap-2">
-			<CwInput
-				labels={cwInputLabels()}
-				id="device-setup-group-input"
-				label={m.device_setup_group_label()}
-				maxlength={120}
-				bind:value={flow.group}
-			/>
-			{#if groupSuggestions.length > 0}
-				<div class="flex flex-wrap gap-2">
-					{#each groupSuggestions as suggestion (suggestion)}
-						<button
-							type="button"
-							class="chip-button"
-							aria-pressed={flow.group === suggestion}
-							onclick={() => (flow.group = suggestion)}
-						>
-							<CwChip
-								label={suggestion}
-								tone={flow.group === suggestion ? 'primary' : 'secondary'}
-							/>
-						</button>
-					{/each}
-				</div>
-			{/if}
-		</div>
+		<GroupPicker
+			controller={groups}
+			id="device-setup-group-select"
+			label={m.device_setup_group_label()}
+			bind:value={flow.group}
+		/>
 
 		<div class="flex flex-col gap-1">
 			<CwDateTimeRangePicker
@@ -245,18 +227,5 @@
 		border: 1px solid var(--cw-border-muted);
 		border-radius: var(--cw-radius-lg);
 		background: var(--cw-bg-muted);
-	}
-
-	.chip-button {
-		padding: 0;
-		border: 0;
-		background: none;
-		cursor: pointer;
-		border-radius: 999px;
-	}
-
-	.chip-button:focus-visible {
-		outline: 2px solid var(--cw-accent);
-		outline-offset: 2px;
 	}
 </style>
