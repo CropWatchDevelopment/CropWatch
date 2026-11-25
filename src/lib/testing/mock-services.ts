@@ -9,7 +9,6 @@ import { HttpDashboardRepository } from '#lib/api/repositories/dashboard.reposit
 import { HttpDeviceRepository } from '#lib/api/repositories/devices.repository.ts';
 import { HttpGatewayRepository } from '#lib/api/repositories/gateways.repository.ts';
 import { HttpGroupRepository } from '#lib/api/repositories/groups.repository.ts';
-import { HttpLineRepository } from '#lib/api/repositories/line.repository.ts';
 import { HttpLocationRepository } from '#lib/api/repositories/locations.repository.ts';
 import { HttpOrganizationRepository } from '#lib/api/repositories/organizations.repository.ts';
 import { HttpOverviewRepository } from '#lib/api/repositories/overview.repository.ts';
@@ -35,7 +34,6 @@ const REPOSITORY_CLASSES: { [K in keyof AppServices]: { prototype: AppServices[K
 	devices: HttpDeviceRepository,
 	deviceGroups: HttpGroupRepository,
 	gateways: HttpGatewayRepository,
-	line: HttpLineRepository,
 	locations: HttpLocationRepository,
 	locationGroups: HttpGroupRepository,
 	organizations: HttpOrganizationRepository,

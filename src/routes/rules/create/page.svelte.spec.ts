@@ -50,7 +50,6 @@ const pushChips = () =>
 
 beforeEach(() => {
 	services = createMockServices();
-	services.line.getLineRecipientCandidates.mockResolvedValue([]);
 	services.push.getPushRecipientCandidates.mockResolvedValue([]);
 });
 

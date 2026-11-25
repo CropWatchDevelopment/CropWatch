@@ -577,7 +577,7 @@ describe('ReportTemplateForm — devices', () => {
 });
 
 describe('ReportTemplateForm — recipients and processing schedules', () => {
-	it('offers the active communication methods the API knows', () => {
+	it('offers the active communication methods the API knows, except LINE', () => {
 		render({
 			context: context({
 				communicationMethods: [
@@ -589,7 +589,7 @@ describe('ReportTemplateForm — recipients and processing schedules', () => {
 			})
 		});
 
-		expect(optionsOf('report-recipients-0-method-select')).toEqual(['Email', 'LINE']);
+		expect(optionsOf('report-recipients-0-method-select')).toEqual(['Email']);
 	});
 
 	it('falls back to email and SMS when the API knows no usable method', () => {

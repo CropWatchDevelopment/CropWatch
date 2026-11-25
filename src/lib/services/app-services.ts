@@ -36,7 +36,6 @@ import {
 	HttpGroupRepository,
 	type GroupRepository
 } from '#lib/api/repositories/groups.repository.ts';
-import { HttpLineRepository, type LineRepository } from '#lib/api/repositories/line.repository.ts';
 import {
 	HttpLocationRepository,
 	type LocationRepository
@@ -83,7 +82,6 @@ export interface AppServices {
 	/** Groups a device can be put in (`/device-groups`). */
 	deviceGroups: GroupRepository;
 	gateways: GatewayRepository;
-	line: LineRepository;
 	locations: LocationRepository;
 	/** Groups a location can be put in (`/location-groups`). */
 	locationGroups: GroupRepository;
@@ -109,7 +107,6 @@ export function createAppServices(http: HttpClient, endpoints: ApiEndpointConfig
 		devices: new HttpDeviceRepository(http, endpoints),
 		deviceGroups: new HttpGroupRepository(http, '/device-groups'),
 		gateways: new HttpGatewayRepository(http),
-		line: new HttpLineRepository(http),
 		locations: new HttpLocationRepository(http),
 		locationGroups: new HttpGroupRepository(http, '/location-groups'),
 		organizations: new HttpOrganizationRepository(http),

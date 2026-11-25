@@ -4,7 +4,6 @@ import type { CwToastOptions } from '@cropwatchdevelopment/cwui';
 import { ApiError } from '#lib/api/api-error.ts';
 import type {
 	DeviceDto,
-	LineRecipientCandidateDto,
 	LocationDto,
 	PushRecipientCandidateDto,
 	RuleActionTypeDto,
@@ -107,16 +106,6 @@ function template(overrides: Partial<RuleTemplateDto> = {}): RuleTemplateDto {
 	};
 }
 
-const line = (
-	userId: string,
-	displayName: string,
-	lineLinked = true
-): LineRecipientCandidateDto => ({
-	userId,
-	displayName,
-	lineLinked
-});
-
 const push = (
 	userId: string,
 	displayName: string,
@@ -139,7 +128,6 @@ function setup(overrides: Partial<RuleTemplateFormOptions> = {}) {
 		currentUserId: null,
 		currentUserName: null,
 		rules: services.rules,
-		line: services.line,
 		push: services.push,
 		accessToken: () => 'jwt-token',
 		toast,
@@ -181,8 +169,6 @@ function deferred<T>() {
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 /** The fetched (base) options: what an action without saved recipients is offered. */
-const baseLineOptions = (form: RuleTemplateFormController) =>
-	form.lineRecipientOptionsFor({ lineRecipients: [] } as unknown as EditableTemplateAction);
 const basePushOptions = (form: RuleTemplateFormController) =>
 	form.pushRecipientOptionsFor({ pushRecipients: [] } as unknown as EditableTemplateAction);
 
@@ -207,7 +193,6 @@ describe('RuleTemplateFormController — a new rule', () => {
 				actionTypeName: 'EMail',
 				actionTypeValue: 'email',
 				config: { recipient: '' },
-				lineRecipients: [],
 				pushRecipients: [],
 				createdAt: null
 			}
@@ -226,7 +211,6 @@ describe('RuleTemplateFormController — a new rule', () => {
 				actionTypeName: 'Push',
 				actionTypeValue: 'push',
 				config: { recipient: JSON.stringify({ userIds: ['user-1'] }) },
-				lineRecipients: [],
 				pushRecipients: [{ id: 'user-1', label: 'Ada' }],
 				createdAt: null
 			}
@@ -246,13 +230,14 @@ describe('RuleTemplateFormController — a new rule', () => {
 		expect(form.templateActions[0]).toMatchObject({ actionType: 3, actionTypeValue: null });
 	});
 
-	it('falls back to a blank action while the server has no Push action type', () => {
+	it('falls back to a blank action of the first offered type while the server has no Push action type', () => {
 		const formContext = context({ actionTypes: [LINE, EMAIL] });
 		const { form } = setup({ context: () => formContext, currentUserId: 'user-1' });
 
+		// LINE is listed first, but it is no longer offered.
 		expect(form.templateActions[0]).toMatchObject({
-			actionType: 2,
-			actionTypeName: 'LINE',
+			actionType: 1,
+			actionTypeName: 'EMail',
 			pushRecipients: []
 		});
 	});
@@ -314,7 +299,6 @@ describe('RuleTemplateFormController — editing a rule', () => {
 			{
 				...templateAction(),
 				config: { recipient: 'ops@example.com' },
-				lineRecipients: [],
 				pushRecipients: []
 			}
 		]);
@@ -370,31 +354,20 @@ describe('RuleTemplateFormController — editing a rule', () => {
 		]);
 	});
 
-	it('restores LINE and Push recipients from the saved user ids', () => {
+	it('restores Push recipients from the saved user ids', () => {
+		const recipient = JSON.stringify({ userIds: ['u-1', '', 7, 'u-2'] });
 		const { form } = editSetup({
 			actions: [
-				templateAction({
-					id: 1,
-					actionType: 2,
-					actionTypeName: 'LINE',
-					config: { recipient: JSON.stringify({ userIds: ['u-1', '', 7, 'u-2'] }) }
-				}),
-				templateAction({
-					id: 2,
-					actionType: 3,
-					actionTypeName: 'Push',
-					config: { recipient: JSON.stringify({ userIds: ['u-3'] }) }
-				})
+				templateAction({ id: 1, actionType: 3, actionTypeName: 'Push', config: { recipient } }),
+				templateAction({ id: 2 })
 			]
 		});
 
-		expect(form.templateActions[0].lineRecipients).toEqual([
+		expect(form.templateActions[0].pushRecipients).toEqual([
 			{ id: 'u-1', label: 'u-1' },
 			{ id: 'u-2', label: 'u-2' }
 		]);
-		expect(form.templateActions[0].pushRecipients).toEqual([]);
-		expect(form.templateActions[1].pushRecipients).toEqual([{ id: 'u-3', label: 'u-3' }]);
-		expect(form.templateActions[1].lineRecipients).toEqual([]);
+		expect(form.templateActions[1].pushRecipients).toEqual([]);
 	});
 
 	it.each([
@@ -402,13 +375,26 @@ describe('RuleTemplateFormController — editing a rule', () => {
 		['JSON without user ids', JSON.stringify({ users: ['u-1'] })],
 		['user ids that are not a list', JSON.stringify({ userIds: 'u-1' })],
 		['JSON null', 'null']
-	])('asks for a fresh LINE recipient choice for %s', (_label, recipient) => {
+	])('asks for a fresh Push recipient choice for %s', (_label, recipient) => {
+		const { form } = editSetup({
+			actions: [templateAction({ actionType: 3, actionTypeName: 'Push', config: { recipient } })]
+		});
+
+		expect(form.templateActions[0].pushRecipients).toEqual([]);
+		expect(form.isFormValid).toBe(false);
+	});
+
+	it('keeps a saved LINE action as it is, so saving does not change it', () => {
+		const recipient = JSON.stringify({ userIds: ['u-1'] });
 		const { form } = editSetup({
 			actions: [templateAction({ actionType: 2, actionTypeName: 'LINE', config: { recipient } })]
 		});
 
-		expect(form.templateActions[0].lineRecipients).toEqual([]);
-		expect(form.isFormValid).toBe(false);
+		expect(form.templateActions[0]).toMatchObject({
+			actionTypeName: 'LINE',
+			config: { recipient },
+			pushRecipients: []
+		});
 	});
 
 	it('starts with a blank action, not the creator Push action, when the template has no actions', () => {
@@ -520,212 +506,6 @@ describe('RuleTemplateFormController — devices', () => {
 		];
 
 		expect(form.assignmentSummary).toBe('Freezer A (DEV-A), Custom label, DEV-X');
-	});
-});
-
-describe('RuleTemplateFormController — LINE recipients', () => {
-	it('loads nothing until a device is selected', () => {
-		const { form, services } = setup();
-
-		form.syncLineRecipients();
-
-		expect(services.line.getLineRecipientCandidates).not.toHaveBeenCalled();
-		expect(baseLineOptions(form)).toEqual([]);
-	});
-
-	it('loads nothing without a session', () => {
-		const { form, services } = setup({ accessToken: () => undefined, preselectedDevEui: 'DEV-A' });
-
-		form.syncLineRecipients();
-
-		expect(services.line.getLineRecipientCandidates).not.toHaveBeenCalled();
-	});
-
-	it("loads the selected devices' candidates once per selection", async () => {
-		const { form, services } = setup();
-		services.line.getLineRecipientCandidates.mockResolvedValue([
-			line('u-1', 'Ada'),
-			line('u-2', 'Grace', false)
-		]);
-		form.selectedDevices = [
-			{ id: 'DEV-B', label: '' },
-			{ id: ' DEV-A ', label: '' }
-		];
-
-		form.syncLineRecipients();
-		form.syncLineRecipients();
-
-		expect(services.line.getLineRecipientCandidates).toHaveBeenCalledTimes(1);
-		expect(services.line.getLineRecipientCandidates).toHaveBeenCalledWith(['DEV-A', 'DEV-B']);
-		await vi.waitFor(() =>
-			expect(baseLineOptions(form)).toEqual([
-				{ value: 'u-1', label: 'Ada' },
-				{ value: 'u-2', label: `Grace（${m.line_recipient_not_linked()}）` }
-			])
-		);
-
-		// The same devices in another order are the same selection.
-		form.selectedDevices = [
-			{ id: 'DEV-A', label: '' },
-			{ id: 'DEV-B', label: '' }
-		];
-		form.syncLineRecipients();
-		expect(services.line.getLineRecipientCandidates).toHaveBeenCalledTimes(1);
-	});
-
-	it('keeps saved recipients selectable before the candidates arrive', () => {
-		const { form } = setup();
-		const action = {
-			lineRecipients: [
-				{ id: 'u-9', label: 'Saved person' },
-				{ id: 'u-8', label: '' }
-			]
-		} as unknown as EditableTemplateAction;
-
-		expect(form.lineRecipientOptionsFor(action)).toEqual([
-			{ value: 'u-9', label: 'Saved person' },
-			{ value: 'u-8', label: 'u-8' }
-		]);
-		// Same for push.
-		expect(
-			form.pushRecipientOptionsFor({
-				pushRecipients: [
-					{ id: 'u-7', label: 'Saved push person' },
-					{ id: 'u-6', label: '' }
-				]
-			} as unknown as EditableTemplateAction)
-		).toEqual([
-			{ value: 'u-7', label: 'Saved push person' },
-			{ value: 'u-6', label: 'u-6' }
-		]);
-	});
-
-	it('names saved LINE recipients once the candidates arrive', async () => {
-		const { form, services } = editSetup({
-			actions: [
-				templateAction({
-					id: 1,
-					actionType: 2,
-					actionTypeName: 'LINE',
-					config: { recipient: JSON.stringify({ userIds: ['u-1', 'u-2', 'u-3'] }) }
-				}),
-				templateAction({
-					id: 2,
-					actionType: 3,
-					actionTypeName: 'Push',
-					config: { recipient: JSON.stringify({ userIds: ['u-1'] }) }
-				})
-			]
-		});
-		form.templateActions[0].lineRecipients[1].label = 'Renamed';
-		services.line.getLineRecipientCandidates.mockResolvedValue([
-			line('u-1', 'Ada'),
-			line('u-2', 'Grace')
-		]);
-
-		form.syncLineRecipients();
-
-		await vi.waitFor(() => expect(form.templateActions[0].lineRecipients[0].label).toBe('Ada'));
-		expect(form.templateActions[0].lineRecipients.map((item) => item.label)).toEqual([
-			'Ada',
-			'Renamed',
-			'u-3'
-		]);
-		// Push selections are left to the push lookup.
-		expect(form.templateActions[1].pushRecipients[0].label).toBe('u-1');
-		// The saved, unknown recipient stays selectable.
-		expect(form.lineRecipientOptionsFor(form.templateActions[0])).toEqual([
-			{ value: 'u-3', label: 'u-3' },
-			{ value: 'u-1', label: 'Ada' },
-			{ value: 'u-2', label: 'Grace' }
-		]);
-	});
-
-	it('ignores a response for a selection that has since changed', async () => {
-		const { form, services } = setup();
-		const first = deferred<LineRecipientCandidateDto[]>();
-		const second = deferred<LineRecipientCandidateDto[]>();
-		services.line.getLineRecipientCandidates
-			.mockReturnValueOnce(first.promise)
-			.mockReturnValueOnce(second.promise);
-
-		form.selectedDevices = [{ id: 'DEV-A', label: '' }];
-		form.syncLineRecipients();
-		form.selectedDevices = [{ id: 'DEV-B', label: '' }];
-		form.syncLineRecipients();
-
-		second.resolve([line('u-2', 'Newest')]);
-		await vi.waitFor(() =>
-			expect(baseLineOptions(form)).toEqual([{ value: 'u-2', label: 'Newest' }])
-		);
-
-		first.resolve([line('u-1', 'Stale')]);
-		await settle();
-		expect(baseLineOptions(form)).toEqual([{ value: 'u-2', label: 'Newest' }]);
-
-		// A stale failure is ignored too.
-		const third = deferred<LineRecipientCandidateDto[]>();
-		const fourth = deferred<LineRecipientCandidateDto[]>();
-		services.line.getLineRecipientCandidates
-			.mockReturnValueOnce(third.promise)
-			.mockReturnValueOnce(fourth.promise);
-		form.selectedDevices = [{ id: 'DEV-A', label: '' }];
-		form.syncLineRecipients();
-		form.selectedDevices = [{ id: 'DEV-B', label: '' }];
-		form.syncLineRecipients();
-		fourth.resolve([line('u-4', 'Latest')]);
-		third.reject(new Error('stale failure'));
-		await vi.waitFor(() =>
-			expect(baseLineOptions(form)).toEqual([{ value: 'u-4', label: 'Latest' }])
-		);
-		await settle();
-		expect(baseLineOptions(form)).toEqual([{ value: 'u-4', label: 'Latest' }]);
-	});
-
-	it('offers no candidates when the lookup fails', async () => {
-		const { form, services } = setup();
-		services.line.getLineRecipientCandidates.mockResolvedValueOnce([line('u-1', 'Ada')]);
-		form.selectedDevices = [{ id: 'DEV-A', label: '' }];
-		form.syncLineRecipients();
-		await vi.waitFor(() => expect(baseLineOptions(form)).toHaveLength(1));
-
-		services.line.getLineRecipientCandidates.mockRejectedValueOnce(new Error('down'));
-		form.selectedDevices = [{ id: 'DEV-B', label: '' }];
-		form.syncLineRecipients();
-
-		await vi.waitFor(() => expect(baseLineOptions(form)).toEqual([]));
-	});
-
-	it('clears the candidates when every device is deselected', async () => {
-		const { form, services } = setup();
-		services.line.getLineRecipientCandidates.mockResolvedValue([line('u-1', 'Ada')]);
-		form.selectedDevices = [{ id: 'DEV-A', label: '' }];
-		form.syncLineRecipients();
-		await vi.waitFor(() => expect(baseLineOptions(form)).toHaveLength(1));
-
-		form.selectedDevices = [];
-		form.syncLineRecipients();
-
-		expect(baseLineOptions(form)).toEqual([]);
-		expect(services.line.getLineRecipientCandidates).toHaveBeenCalledTimes(1);
-	});
-
-	it('stores the chosen recipients as user ids', () => {
-		const { form } = setup();
-		const action = form.templateActions[0];
-
-		form.setLineRecipients(action, [
-			{ id: 'u-1', label: 'Ada' },
-			{ id: 'u-2', label: 'Grace' }
-		]);
-		expect(action.lineRecipients).toEqual([
-			{ id: 'u-1', label: 'Ada' },
-			{ id: 'u-2', label: 'Grace' }
-		]);
-		expect(action.config.recipient).toBe(JSON.stringify({ userIds: ['u-1', 'u-2'] }));
-
-		form.setLineRecipients(action, []);
-		expect(action.config.recipient).toBe('');
 	});
 });
 
@@ -880,7 +660,7 @@ describe('RuleTemplateFormController — push recipients', () => {
 		expect(action.config.recipient).toBe('');
 	});
 
-	it('ignores stale and failed lookups like the LINE lookup', async () => {
+	it('ignores stale and failed lookups', async () => {
 		const { form, services } = setup();
 		const first = deferred<PushRecipientCandidateDto[]>();
 		services.push.getPushRecipientCandidates
@@ -930,6 +710,26 @@ describe('RuleTemplateFormController — action types', () => {
 		]);
 	});
 
+	it('no longer offers LINE, but shows a saved LINE action under its own name', () => {
+		const { form } = editSetup({
+			actions: [
+				templateAction({ id: 1 }),
+				templateAction({ id: 2, actionType: 2, actionTypeName: 'LINE' })
+			]
+		});
+		const offered = [
+			{ label: 'EMail', value: '1' },
+			{ label: 'Push', value: '3' },
+			{ label: 'LoRaWAN', value: '4' }
+		];
+
+		expect(form.actionTypeOptionsFor(form.templateActions[0])).toEqual(offered);
+		expect(form.actionTypeOptionsFor(form.templateActions[1])).toEqual([
+			{ label: 'LINE', value: '2' },
+			...offered
+		]);
+	});
+
 	it("keeps a saved action's type selectable when the server no longer lists it", () => {
 		const { form } = editSetup({
 			actions: [
@@ -940,7 +740,6 @@ describe('RuleTemplateFormController — action types', () => {
 		});
 		const base = [
 			{ label: 'EMail', value: '1' },
-			{ label: 'LINE', value: '2' },
 			{ label: 'Push', value: '3' },
 			{ label: 'LoRaWAN', value: '4' }
 		];
@@ -959,36 +758,33 @@ describe('RuleTemplateFormController — action types', () => {
 		});
 	});
 
-	it('switching to LINE asks for LINE recipients', () => {
-		const { form } = setup();
-		const action = form.templateActions[0];
-		action.config.recipient = 'ops@example.com';
-
-		form.selectActionType(action, '2');
-
-		expect(action).toMatchObject({
-			actionType: 2,
-			actionTypeName: 'LINE',
-			actionTypeValue: 'line',
-			lineRecipients: [],
-			config: { recipient: '' }
-		});
-	});
-
-	it('switching away from LINE or Push clears the recipients', () => {
+	it('switching away from Push clears the recipients', () => {
 		const { form } = setup({ currentUserId: 'me' });
 		const action = form.templateActions[0];
 		expect(action.actionTypeName).toBe('Push');
 
-		form.selectActionType(action, '2');
-		expect(action.pushRecipients).toEqual([]);
-		form.setLineRecipients(action, [{ id: 'u-1', label: 'Ada' }]);
-
 		form.selectActionType(action, '1');
+
 		expect(action).toMatchObject({
 			actionType: 1,
 			actionTypeName: 'EMail',
-			lineRecipients: [],
+			pushRecipients: [],
+			config: { recipient: '' }
+		});
+	});
+
+	it('switching a saved LINE action to another type clears its LINE recipients', () => {
+		const recipient = JSON.stringify({ userIds: ['u-1'] });
+		const { form } = editSetup({
+			actions: [templateAction({ actionType: 2, actionTypeName: 'LINE', config: { recipient } })]
+		});
+		const action = form.templateActions[0];
+
+		form.selectActionType(action, '1');
+
+		expect(action).toMatchObject({
+			actionType: 1,
+			actionTypeName: 'EMail',
 			config: { recipient: '' }
 		});
 	});
@@ -1053,12 +849,6 @@ describe('RuleTemplateFormController — validity and summary', () => {
 		[
 			'an action has no recipient',
 			(form: RuleTemplateFormController) => (form.templateActions[0].config.recipient = '  ')
-		],
-		[
-			'a LINE action has no LINE recipients',
-			(form: RuleTemplateFormController) => {
-				form.templateActions[0].actionTypeName = 'LINE';
-			}
 		],
 		[
 			'a Push action has no push recipients',
@@ -1166,13 +956,6 @@ describe('RuleTemplateFormController — validity and summary', () => {
 			actions: [
 				templateAction({ id: 1 }),
 				templateAction({
-					id: 2,
-					actionType: 2,
-					actionTypeName: 'LINE',
-					config: { recipient: JSON.stringify({ userIds: ['u-1', 'u-2'] }) }
-				}),
-				templateAction({ id: 3, actionType: 2, actionTypeName: 'LINE', config: { recipient: '' } }),
-				templateAction({
 					id: 4,
 					actionType: 3,
 					actionTypeName: 'Push',
@@ -1205,8 +988,6 @@ describe('RuleTemplateFormController — validity and summary', () => {
 		expect(form.actionSummary).toBe(
 			[
 				'EMail: ops@example.com',
-				'LINE: u-1, u-2',
-				`LINE: ${m.line_recipient_preview_count({ count: '0' })}`,
 				'Push: u-3',
 				`Push: ${m.push_recipient_preview_count({ count: '0' })}`,
 				'SMS: 555',
@@ -1216,15 +997,9 @@ describe('RuleTemplateFormController — validity and summary', () => {
 		);
 	});
 
-	it('names LINE and push recipients in the summary once known', async () => {
+	it('names push recipients in the summary once known', async () => {
 		const { form, services } = editSetup({
 			actions: [
-				templateAction({
-					id: 2,
-					actionType: 2,
-					actionTypeName: 'LINE',
-					config: { recipient: JSON.stringify({ userIds: ['u-1'] }) }
-				}),
 				templateAction({
 					id: 4,
 					actionType: 3,
@@ -1233,13 +1008,11 @@ describe('RuleTemplateFormController — validity and summary', () => {
 				})
 			]
 		});
-		services.line.getLineRecipientCandidates.mockResolvedValue([line('u-1', 'Ada')]);
 		services.push.getPushRecipientCandidates.mockResolvedValue([push('u-3', 'Grace')]);
 
-		form.syncLineRecipients();
 		form.syncPushRecipients();
 
-		await vi.waitFor(() => expect(form.actionSummary).toBe('LINE: Ada, Push: Grace'));
+		await vi.waitFor(() => expect(form.actionSummary).toBe('Push: Grace'));
 	});
 });
 
@@ -1467,12 +1240,8 @@ describe('RuleTemplateFormController — saving', () => {
 describe('RuleTemplateFormController — reactive wiring', () => {
 	it('refetches the recipients when run in effects and the device selection changes', async () => {
 		const { form, services } = setup({ preselectedDevEui: 'DEV-A' });
-		services.line.getLineRecipientCandidates.mockResolvedValue([]);
 		services.push.getPushRecipientCandidates.mockResolvedValue([]);
 		const cleanup = $effect.root(() => {
-			$effect(() => {
-				form.syncLineRecipients();
-			});
 			$effect(() => {
 				form.syncPushRecipients();
 			});
@@ -1480,18 +1249,15 @@ describe('RuleTemplateFormController — reactive wiring', () => {
 
 		try {
 			flushSync();
-			expect(services.line.getLineRecipientCandidates).toHaveBeenLastCalledWith(['DEV-A']);
 			expect(services.push.getPushRecipientCandidates).toHaveBeenLastCalledWith(['DEV-A']);
 
 			form.selectedDevices.push({ id: 'DEV-B', label: '' });
 			flushSync();
-			expect(services.line.getLineRecipientCandidates).toHaveBeenLastCalledWith(['DEV-A', 'DEV-B']);
 			expect(services.push.getPushRecipientCandidates).toHaveBeenLastCalledWith(['DEV-A', 'DEV-B']);
 
 			// Renaming the rule does not refetch.
 			form.ruleName = 'Cold room';
 			flushSync();
-			expect(services.line.getLineRecipientCandidates).toHaveBeenCalledTimes(2);
 			expect(services.push.getPushRecipientCandidates).toHaveBeenCalledTimes(2);
 		} finally {
 			cleanup();

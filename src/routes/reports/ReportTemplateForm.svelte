@@ -165,7 +165,10 @@
 	let canSubmit = $derived(validationIssues.length === 0);
 
 	function buildCommunicationMethodOptions(methods: CommunicationMethodDto[]): SelectOption[] {
-		const usable = (methods ?? []).filter((method) => method.isActive && method.name);
+		// LINE is no longer offered: its integration is being removed.
+		const usable = (methods ?? []).filter(
+			(method) => method.isActive && method.name && method.name !== 'LINE'
+		);
 		if (usable.length === 0) {
 			return [
 				{ label: m.reports_create_method_email(), value: '1' },

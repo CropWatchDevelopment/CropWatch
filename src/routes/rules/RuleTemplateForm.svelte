@@ -52,7 +52,7 @@
 	}: Props = $props();
 
 	const app = getAppContext();
-	const { rules, line, push } = getServices();
+	const { rules, push } = getServices();
 	const alertPointsEditorText = createRuleTemplateAlertPointsEditorText();
 	const form = new RuleTemplateFormController({
 		mode: () => mode,
@@ -61,7 +61,6 @@
 		currentUserId: (() => currentUserId)(),
 		currentUserName: (() => currentUserName)(),
 		rules,
-		line,
 		push,
 		// Only with a session: that token is what the services send.
 		accessToken: () => app.accessToken,
@@ -70,10 +69,6 @@
 	});
 
 	// The recipient options depend on the device selection: refetch when it changes.
-	$effect(() => {
-		form.syncLineRecipients();
-	});
-
 	$effect(() => {
 		form.syncPushRecipients();
 	});
@@ -231,20 +226,6 @@
 						/>
 					{:else if action.actionTypeName === 'LoRaWAN'}
 						<RelayActions devices={form.deviceOptions} bind:resultJson={action.config.recipient} />
-					{:else if action.actionTypeName === 'LINE'}
-						<CwMultiSelect
-							labels={cwMultiSelectLabels()}
-							id={`rule-form-action-${index}-line-recipients`}
-							label={m.line_recipient_label()}
-							placeholder={m.line_recipient_placeholder()}
-							options={form.lineRecipientOptionsFor(action)}
-							value={action.lineRecipients}
-							onchange={(selection) => form.setLineRecipients(action, selection)}
-							searchable
-							searchPlaceholder={m.cwui_table_search()}
-							noResultsLabel={m.cwui_multi_no_matches()}
-							required
-						/>
 					{:else if action.actionTypeName === 'Push'}
 						<CwMultiSelect
 							labels={cwMultiSelectLabels()}

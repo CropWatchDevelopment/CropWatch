@@ -24,10 +24,6 @@
 
 	let savingProfile = $state(false);
 	let savingEmail = $state(false);
-	let unlinkingLine = $state(false);
-	let requestingLineCode = $state(false);
-
-	const LINE_ADD_FRIEND_URL = 'https://line.me/R/ti/p/@cropwatch';
 
 	function isLikelyWebsite(value: string): boolean {
 		try {
@@ -212,96 +208,5 @@
 		</form>
 	</CwCard>
 
-	<CwCard title={m.line_card_title()} subtitle={m.line_card_subtitle()} elevated>
-		<AppFormStack padded>
-			{#if form?.lineError}
-				<AppNotice tone="danger">
-					<p>{form.lineError}</p>
-				</AppNotice>
-			{/if}
-
-			{#if data.lineLinked}
-				<AppNotice tone="success">
-					<p>{m.line_linked_notice()}</p>
-				</AppNotice>
-
-				<form
-					method="POST"
-					action="?/unlinkLine"
-					use:enhance={() => {
-						unlinkingLine = true;
-						return async ({ result }) => {
-							unlinkingLine = false;
-							if (result.type === 'success') {
-								toast.add({ tone: 'success', message: m.line_unlinked() });
-								await goto(resolve('/account/profile'), { refreshAll: true });
-								return;
-							}
-							await applyAction(result);
-							if (result.type === 'failure' && typeof result.data?.lineError === 'string') {
-								toast.add({ tone: 'danger', message: result.data.lineError });
-							}
-						};
-					}}
-				>
-					<AppActionRow>
-						<CwButton type="submit" variant="secondary" loading={unlinkingLine}>
-							{m.line_unlink_action()}
-						</CwButton>
-					</AppActionRow>
-				</form>
-			{:else}
-				<AppNotice tone="info">
-					<p>{m.line_not_linked_notice()}</p>
-				</AppNotice>
-				<p>{m.line_code_instructions()}</p>
-
-				{#if form?.lineCode}
-					<AppNotice tone="success" ariaLive="polite">
-						<p class="line-code">{form.lineCode}</p>
-						<p>{m.line_code_send_hint()}</p>
-					</AppNotice>
-				{/if}
-
-				<form
-					method="POST"
-					action="?/lineLinkCode"
-					use:enhance={() => {
-						requestingLineCode = true;
-						return async ({ result }) => {
-							requestingLineCode = false;
-							await applyAction(result);
-							if (result.type === 'failure' && typeof result.data?.lineError === 'string') {
-								toast.add({ tone: 'danger', message: result.data.lineError });
-							}
-						};
-					}}
-				>
-					<AppActionRow>
-						<CwButton
-							variant="secondary"
-							onclick={() => window.open(LINE_ADD_FRIEND_URL, '_blank', 'noopener')}
-						>
-							{m.line_add_friend_action()}
-						</CwButton>
-						<CwButton type="submit" variant="primary" loading={requestingLineCode}>
-							{form?.lineCode ? m.line_code_refresh_action() : m.line_code_action()}
-						</CwButton>
-					</AppActionRow>
-				</form>
-			{/if}
-		</AppFormStack>
-	</CwCard>
-
 	<PushNotificationsCard />
 </AppPage>
-
-<style>
-	.line-code {
-		font-family: monospace;
-		font-size: 2rem;
-		font-weight: 700;
-		letter-spacing: 0.35em;
-		margin: 0;
-	}
-</style>

@@ -168,7 +168,6 @@ const revertCheckboxes = () =>
 
 beforeEach(() => {
 	services = createMockServices();
-	services.line.getLineRecipientCandidates.mockResolvedValue([]);
 	services.push.getPushRecipientCandidates.mockResolvedValue([]);
 });
 
@@ -199,7 +198,7 @@ describe('RuleTemplateForm', () => {
 		expect(text()).toContain(m.rules_complete_required_fields());
 		expect(submitButton().disabled).toBe(true);
 		expect(submitButton().textContent?.trim()).toBe(m.rules_create_rule());
-		expect(services.line.getLineRecipientCandidates).not.toHaveBeenCalled();
+		expect(services.push.getPushRecipientCandidates).not.toHaveBeenCalled();
 	});
 
 	it('says when there are no devices to assign', () => {
@@ -231,29 +230,26 @@ describe('RuleTemplateForm', () => {
 		).toEqual(['Freezer A (DEV-A)', 'Relay B (DEV-B)']);
 	});
 
-	it('looks up LINE and push recipients for the chosen devices', async () => {
+	it('looks up push recipients for the chosen devices', async () => {
 		render();
 
 		choose('rule-form-devices-multiselect', 'Freezer A (DEV-A)');
 
 		await vi.waitFor(() =>
-			expect(services.line.getLineRecipientCandidates).toHaveBeenCalledWith(['DEV-A'])
+			expect(services.push.getPushRecipientCandidates).toHaveBeenCalledWith(['DEV-A'])
 		);
-		expect(services.push.getPushRecipientCandidates).toHaveBeenCalledWith(['DEV-A']);
 
 		choose('rule-form-devices-multiselect', 'Relay B (DEV-B)');
 
 		await vi.waitFor(() =>
-			expect(services.line.getLineRecipientCandidates).toHaveBeenLastCalledWith(['DEV-A', 'DEV-B'])
+			expect(services.push.getPushRecipientCandidates).toHaveBeenLastCalledWith(['DEV-A', 'DEV-B'])
 		);
-		expect(services.push.getPushRecipientCandidates).toHaveBeenLastCalledWith(['DEV-A', 'DEV-B']);
 	});
 
 	it('looks nothing up without a session', async () => {
 		render({ preselectedDevEui: 'DEV-A' }, null);
 		await tick();
 
-		expect(services.line.getLineRecipientCandidates).not.toHaveBeenCalled();
 		expect(services.push.getPushRecipientCandidates).not.toHaveBeenCalled();
 	});
 
@@ -432,12 +428,8 @@ describe('RuleTemplateForm', () => {
 		render();
 		expect(byId('rule-form-action-0-recipient-input')).not.toBeNull();
 
-		choose('rule-form-action-0-type-select', 'LINE');
-		expect(byId('rule-form-action-0-recipient-input')).toBeNull();
-		expect(byId('rule-form-action-0-line-recipients')).not.toBeNull();
-
 		choose('rule-form-action-0-type-select', 'Push');
-		expect(byId('rule-form-action-0-line-recipients')).toBeNull();
+		expect(byId('rule-form-action-0-recipient-input')).toBeNull();
 		expect(byId('rule-form-action-0-push-recipients')).not.toBeNull();
 
 		choose('rule-form-action-0-type-select', 'LoRaWAN');
@@ -511,40 +503,15 @@ describe('RuleTemplateForm', () => {
 		expect(byId('rule-form-action-0-recipient-input')).toBeNull();
 	});
 
-	it('sends LINE alerts to the chosen recipients', async () => {
-		services.line.getLineRecipientCandidates.mockResolvedValue([
-			{ userId: 'u-1', displayName: 'Ada', lineLinked: true },
-			{ userId: 'u-2', displayName: 'Grace', lineLinked: false }
-		]);
-		services.rules.updateRuleTemplate.mockResolvedValue(template());
-		render({ mode: 'edit', context: context({ template: template() }) });
-		choose('rule-form-action-0-type-select', 'LINE');
-		expect(submitButton().disabled).toBe(true);
+	it('does not offer LINE as an alert type', () => {
+		render();
 
-		await vi.waitFor(() => {
-			click(byId('rule-form-action-0-line-recipients'));
-			const picker = byId('rule-form-action-0-line-recipients')!.closest('.cw-multiselect')!;
-			expect(
-				[...picker.querySelectorAll('li[role="option"]')].map((option) =>
-					option.textContent?.trim()
-				)
-			).toEqual(['Ada', `Grace（${m.line_recipient_not_linked()}）`]);
-		});
-		choose('rule-form-action-0-line-recipients', 'Ada');
-		expect(submitButton().disabled).toBe(false);
+		click(byId('rule-form-action-0-type-select'));
 
-		click(byId('rule-form-advanced-show-button'));
-		expect(text()).toContain('LINE: Ada');
-		expect(byId('rule-form-advanced-show-button')).toBeNull();
-		click(byId('rule-form-advanced-hide-button'));
-		expect(text()).not.toContain('LINE: Ada');
-
-		click(submitButton());
-
-		await vi.waitFor(() => expect(services.rules.updateRuleTemplate).toHaveBeenCalled());
-		expect(services.rules.updateRuleTemplate.mock.calls[0][1].actions).toEqual([
-			{ id: 31, actionType: 2, config: { recipient: JSON.stringify({ userIds: ['u-1'] }) } }
-		]);
+		const picker = byId('rule-form-action-0-type-select')!.closest('.cw-dropdown')!;
+		expect(
+			[...picker.querySelectorAll('li[role="option"]')].map((option) => option.textContent?.trim())
+		).toEqual(['EMail', 'Push', 'LoRaWAN']);
 	});
 
 	it('preselects the creator for push alerts and explains when they cannot receive them', async () => {

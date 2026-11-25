@@ -30,15 +30,13 @@ const PROFILE = {
 	employer: 'Analytical Engines',
 	website: 'https://ada.example.com',
 	phone_number: '+44 20 7946 0000',
-	email: 'ada@example.com',
-	line_id: null
+	email: 'ada@example.com'
 };
 
 interface DataInit {
 	profile?: Record<string, unknown> | null;
 	email?: string | null;
 	role?: string | null;
-	lineLinked?: boolean;
 }
 
 let view: ReturnType<typeof renderWithServices> | null = null;
@@ -52,8 +50,7 @@ function render(init: DataInit = {}, form: Record<string, unknown> | null = null
 			data: {
 				profile: 'profile' in init ? init.profile : PROFILE,
 				email: 'email' in init ? init.email : 'ada@example.com',
-				role: 'role' in init ? init.role : 'admin',
-				lineLinked: init.lineLinked ?? false
+				role: 'role' in init ? init.role : 'admin'
 			},
 			form
 		} as never,
@@ -313,111 +310,5 @@ describe('profile page: email', () => {
 
 		expect(input('email')?.disabled).toBe(false);
 		expect(formFor('updateEmail')?.textContent).not.toContain(m.profile_email_locked());
-	});
-});
-
-describe('profile page: LINE', () => {
-	it('unlinks a linked LINE account, then reloads', async () => {
-		const { toasts } = render({ lineLinked: true });
-		expect(document.querySelector('.app-notice--success')?.textContent).toContain(
-			m.line_linked_notice()
-		);
-		expect(formFor('lineLinkCode')).toBeNull();
-
-		const { finish } = await submit('unlinkLine');
-		expect(submitButton('unlinkLine')?.disabled).toBe(true);
-		await finish({
-			type: 'success',
-			status: 200,
-			location: location.pathname,
-			data: { lineUnlinked: true }
-		});
-
-		expect(toasts().at(-1)).toMatchObject({ tone: 'success', message: m.line_unlinked() });
-		expect(goto).toHaveBeenCalledWith('/account/profile', { refreshAll: true });
-		expect(forms.applyAction).not.toHaveBeenCalled();
-	});
-
-	it('shows why unlinking failed', async () => {
-		const { toasts } = render({ lineLinked: true });
-		const failure: ActionResult = {
-			type: 'failure',
-			status: 500,
-			location: location.pathname,
-			data: { lineError: 'Unlink failed' }
-		};
-
-		await submit('unlinkLine', failure);
-		expect(forms.applyAction).toHaveBeenCalledWith(failure);
-		expect(toasts().at(-1)).toMatchObject({ tone: 'danger', message: 'Unlink failed' });
-
-		await submit('unlinkLine', {
-			type: 'failure',
-			status: 500,
-			location: location.pathname,
-			data: {}
-		});
-		expect(toasts()).toHaveLength(1);
-		expect(submitButton('unlinkLine')?.disabled).toBe(false);
-	});
-
-	it('offers the LINE friend link and a link code when not linked', async () => {
-		const open = vi.spyOn(window, 'open').mockReturnValue(null);
-		render();
-
-		expect(text()).toContain(m.line_not_linked_notice());
-		expect(text()).toContain(m.line_code_instructions());
-		expect(formFor('unlinkLine')).toBeNull();
-		const friend = [...(formFor('lineLinkCode')?.querySelectorAll('button') ?? [])].find((button) =>
-			button.textContent?.includes(m.line_add_friend_action())
-		);
-		friend?.click();
-		expect(open).toHaveBeenCalledWith('https://line.me/R/ti/p/@cropwatch', '_blank', 'noopener');
-
-		expect(submitButton('lineLinkCode')?.textContent).toContain(m.line_code_action());
-		const result: ActionResult = {
-			type: 'success',
-			status: 200,
-			location: location.pathname,
-			data: { lineCode: '123456', lineCodeExpiresAt: '2026-10-21T00:10:00Z' }
-		};
-		const { finish } = await submit('lineLinkCode');
-		expect(submitButton('lineLinkCode')?.disabled).toBe(true);
-		await finish(result);
-
-		expect(forms.applyAction).toHaveBeenCalledWith(result);
-		expect(submitButton('lineLinkCode')?.disabled).toBe(false);
-	});
-
-	it('shows the link code and offers a new one', () => {
-		render({}, { lineCode: '123456' });
-
-		expect(document.querySelector('.line-code')?.closest('.app-notice--success')).not.toBeNull();
-		expect(document.querySelector('.line-code')?.textContent).toBe('123456');
-		expect(text()).toContain(m.line_code_send_hint());
-		expect(submitButton('lineLinkCode')?.textContent).toContain(m.line_code_refresh_action());
-	});
-
-	it('shows LINE errors', async () => {
-		const { toasts } = render({}, { lineError: 'LINE is down' });
-		expect(
-			[...document.querySelectorAll('.app-notice--danger')].map((el) => el.textContent?.trim())
-		).toContain('LINE is down');
-
-		await submit('lineLinkCode', {
-			type: 'failure',
-			status: 503,
-			location: location.pathname,
-			data: { lineError: 'Still down' }
-		});
-		expect(toasts().at(-1)).toMatchObject({ tone: 'danger', message: 'Still down' });
-
-		await submit('lineLinkCode', {
-			type: 'failure',
-			status: 503,
-			location: location.pathname,
-			data: {}
-		});
-		expect(toasts()).toHaveLength(1);
 	});
 });

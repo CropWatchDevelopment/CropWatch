@@ -1,8 +1,8 @@
 // Web-push (FCM) enrollment for the current browser/device.
 //
 // The flow is deliberately all client-side: permission and the FCM token are
-// properties of THIS browser install, not of the account, so unlike the LINE
-// link there is no server action involved — the token is fetched here and
+// properties of THIS browser install, not of the account, so there is no
+// server action involved — the token is fetched here and
 // registered with the API directly. Firebase is loaded lazily inside the
 // functions (never at module top level) so the SDK stays out of the SSR path
 // and out of every page's initial bundle.
