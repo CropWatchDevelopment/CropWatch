@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
-import type { DeviceStatusSummary, MeContextDto, RuleTemplateDto } from '$lib/api/api.dtos';
-import type { AppServices } from '$lib/services/app-services';
-import { withRedirectParam } from '$lib/utils/auth-redirect';
-import { SESSION_DEPENDENCY } from '$lib/auth/session-renewal';
+import type { DeviceStatusSummary, MeContextDto, RuleTemplateDto } from '#lib/api/api.dtos.ts';
+import type { AppServices } from '#lib/services/app-services.ts';
+import { withRedirectParam } from '#lib/utils/auth-redirect.ts';
+import { SESSION_DEPENDENCY } from '#lib/auth/session-renewal.ts';
 import type { LayoutServerLoad } from './$types';
 
 const EMPTY_DEVICE_STATUSES: DeviceStatusSummary = { online: 0, offline: 0 };

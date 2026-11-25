@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { AppPage } from '$lib/components/layout';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import { afterNavigate } from '$app/navigation';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { isTrafficTable, resolveDisplayComponent } from '$lib/config/deviceTables';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getIntlLocale } from '$lib/i18n/format';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { isTrafficTable, resolveDisplayComponent } from '#lib/config/deviceTables.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getIntlLocale } from '#lib/i18n/format.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -12,13 +12,13 @@
 		CwResponsiveLineChart,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import { cwResponsiveLineChartLabels } from '$lib/i18n/cwuiLabels';
-	import { appTheme } from '$lib/theme/appTheme.svelte';
-	import { getServices } from '$lib/services/context';
+	import { cwResponsiveLineChartLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { appTheme } from '#lib/theme/appTheme.svelte.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import { resolveExportTimeZone } from './csvExport';
 	import type { PageProps } from './$types';
 	import { onDestroy } from 'svelte';
-	import { onAppForeground } from '$lib/utils/onAppForeground';
+	import { onAppForeground } from '#lib/utils/onAppForeground.ts';
 	import DeviceDashboardHeader from './DeviceDashboardHeader.svelte';
 	import { DeviceDashboard } from './device-dashboard.svelte';
 	import {
@@ -29,7 +29,7 @@
 		readLocationName,
 		withCropTargetLines
 	} from './device-detail';
-	import { cropDisplayName } from '$lib/agronomy/crop-targets';
+	import { cropDisplayName } from '#lib/agronomy/crop-targets.ts';
 
 	let { data }: PageProps = $props();
 

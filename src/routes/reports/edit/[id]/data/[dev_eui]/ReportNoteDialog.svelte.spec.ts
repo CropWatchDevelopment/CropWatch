@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ReportNoteDialog from './ReportNoteDialog.svelte';
 import type { DisplayNote, StagedOp } from './staged-notes';
 

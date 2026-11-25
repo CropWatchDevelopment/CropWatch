@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CwSpinner, CW_EMPTY_VALUE, formatCwMeasurement } from '@cropwatchdevelopment/cwui';
-	import { formatNumber } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
+	import { formatNumber } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		formatHour,
 		formatMeasurement,
@@ -85,9 +85,9 @@
 			<p class="traffic-kpis__value traffic-kpis__value--pending"><CwSpinner /></p>
 		{:else if weather}
 			<p class="traffic-kpis__value">
-				<span class="traffic-kpis__emoji" aria-hidden="true"
-					>{weatherEmoji(weather.weatherCode)}</span
-				>
+				<span class="traffic-kpis__emoji" aria-hidden="true">
+					{weatherEmoji(weather.weatherCode)}
+				</span>
 				{formatCwMeasurement(weather.temperatureHighC, '°', { decimals: 0 })}
 				<span class="traffic-kpis__value-low">
 					{m.traffic_low_temperature({

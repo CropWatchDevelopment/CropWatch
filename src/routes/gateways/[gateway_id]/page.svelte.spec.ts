@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { GatewayDeviceDto, GatewayDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { GatewayDeviceDto, GatewayDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import GatewayPage from './+page.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));

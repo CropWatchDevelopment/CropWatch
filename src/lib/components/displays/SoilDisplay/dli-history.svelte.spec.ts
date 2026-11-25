@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import { createMockServices } from '$lib/testing/mock-services';
+import { ApiError } from '#lib/api/api-error.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
 import { DLI_HISTORY_DAYS, DliHistory } from './dli-history.svelte';
 
 /** Local times, so the test holds in any time zone. */

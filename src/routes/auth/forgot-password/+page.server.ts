@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { buildLoginPath, readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
+import { m } from '#lib/paraglide/messages.js';
+import { buildLoginPath, readRedirectPathFromUrl } from '#lib/utils/auth-redirect.ts';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 

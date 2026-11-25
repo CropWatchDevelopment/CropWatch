@@ -1,10 +1,11 @@
-import { env as dynamicPrivateEnv } from '$env/dynamic/private';
+import * as privateEnv from '$app/env/private';
 import {
 	PRIVATE_RECAPTCHA_API_KEY,
 	PRIVATE_RECAPTCHA_PROJECT_ID,
-	PRIVATE_RECAPTCHA_SITE_KEY
-} from '$env/static/private';
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+	PRIVATE_RECAPTCHA_SITE_KEY,
+	PUBLIC_SUPABASE_ANON_KEY,
+	PUBLIC_SUPABASE_URL
+} from '$app/env/private';
 
 export type EnvSource = Readonly<Record<string, string | undefined>>;
 
@@ -39,7 +40,7 @@ export interface ServerConfig {
 	orgsEnabled: boolean;
 }
 
-/** Build-time values (`$env/static/*`); injectable so tests never depend on a real .env. */
+/** Build-time (`static`) values from `src/env.ts`; injectable so tests never depend on a real .env. */
 export interface StaticServerEnv {
 	PUBLIC_SUPABASE_URL: string;
 	PUBLIC_SUPABASE_ANON_KEY: string;
@@ -75,7 +76,7 @@ function resolveRecaptchaLogLevel(processEnv: EnvSource): RecaptchaLogLevel {
  * env on every call, so values are taken at the same moment as before.
  */
 export function readServerConfig(
-	env: EnvSource = dynamicPrivateEnv,
+	env: EnvSource = privateEnv,
 	processEnv: EnvSource = process.env,
 	staticEnv: StaticServerEnv = STATIC_SERVER_ENV
 ): ServerConfig {

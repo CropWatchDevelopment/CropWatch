@@ -1,11 +1,11 @@
 import { isRedirect } from '@sveltejs/kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AdminBillingCustomer } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+import type { AdminBillingCustomer } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	TEST_JWT,
 	TEST_USER_ID,
@@ -14,7 +14,7 @@ import {
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

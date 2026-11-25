@@ -1,6 +1,6 @@
-import { m } from '$lib/paraglide/messages.js';
-import { readRedirectPathFromUrl, withRedirectParam } from '$lib/utils/auth-redirect';
-import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
+import { m } from '#lib/paraglide/messages.js';
+import { readRedirectPathFromUrl, withRedirectParam } from '#lib/utils/auth-redirect.ts';
+import { isStrongPassword } from '#lib/utils/strongPasswordCheck.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatHexPairs } from '$lib/devices/eui';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { formatHexPairs } from '#lib/devices/eui.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import SetupOutcome from './SetupOutcome.svelte';
 import type { SetupFailure } from './device-setup-flow.svelte';
 import { supportHref } from './setup-messages';

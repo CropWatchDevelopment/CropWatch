@@ -1,5 +1,5 @@
-import { cookieName as localeCookieName } from '$lib/paraglide/runtime';
-import { buildLoginPath, readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
+import { cookieName as localeCookieName } from '#lib/paraglide/runtime.js';
+import { buildLoginPath, readRedirectPathFromUrl } from '#lib/utils/auth-redirect.ts';
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

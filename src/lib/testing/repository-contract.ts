@@ -1,4 +1,4 @@
-import type { AppServices } from '$lib/services/app-services';
+import type { AppServices } from '#lib/services/app-services.ts';
 
 /**
  * The wire contract of every repository method: what it must send to the

@@ -1,8 +1,8 @@
 import { formatCwNumber } from '@cropwatchdevelopment/cwui';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import PowerDisplay from './PowerDisplay.svelte';
 
 function displayProps(overrides: Partial<DeviceDisplayProps> = {}): DeviceDisplayProps {

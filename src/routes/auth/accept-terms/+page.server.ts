@@ -1,7 +1,7 @@
-import { m } from '$lib/paraglide/messages.js';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import type { LegalStatusDto } from '$lib/api/api.dtos';
-import { buildLoginPath, readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
+import { m } from '#lib/paraglide/messages.js';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import type { LegalStatusDto } from '#lib/api/api.dtos.ts';
+import { buildLoginPath, readRedirectPathFromUrl } from '#lib/utils/auth-redirect.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

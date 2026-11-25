@@ -1,13 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import type { InvitePreviewDto } from '$lib/api/api.dtos';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
+import type { InvitePreviewDto } from '#lib/api/api.dtos.ts';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	// The preview endpoint is public (throttled server-side); the repository
 	// sends it without a session token.
-	let preview: InvitePreviewDto | null = null;
+	let preview: InvitePreviewDto | null;
 	try {
 		preview = await locals.services.organizations.previewInvite(params.token);
 	} catch {

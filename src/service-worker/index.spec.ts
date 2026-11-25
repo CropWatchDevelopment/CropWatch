@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-vi.mock('$service-worker', () => ({ version: 'test-1' }));
+vi.mock('$app/env', () => ({ version: 'test-1' }));
 
 const ORIGIN = 'https://app.cropwatch.test';
 const STATIC_CACHE = 'cropwatch-static-test-1';
@@ -72,10 +72,7 @@ async function loadWorker(scriptPath = '/service-worker.js') {
 	vi.stubGlobal('caches', caches);
 	vi.stubGlobal('fetch', network);
 	vi.resetModules();
-	// Not a literal for TypeScript: the worker is type-checked on its own (the
-	// generated tsconfig excludes it), and pulling its `no-default-lib` /
-	// `webworker` references into the app program would drop the DOM libs.
-	await import('./service-worker' as string);
+	await import('./index.ts');
 
 	const cache = async (name: string) => (await caches.open(name)) as FakeCache;
 

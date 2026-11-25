@@ -2,11 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { m } from '$lib/paraglide/messages.js';
-	import { AppPage } from '$lib/components/layout';
+	import { m } from '#lib/paraglide/messages.js';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import { CwButton } from '@cropwatchdevelopment/cwui';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { Capability, can } from '$lib/auth/capabilities';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { Capability, can } from '#lib/auth/capabilities.ts';
 
 	let { children } = $props();
 	const app = getAppContext();

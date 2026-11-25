@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import {
 	cwAboveBelowChartLabels,
 	cwCalendarLabels,

@@ -1,9 +1,9 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { DeviceSetupResult, DeviceSetupStep } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { DeviceSetupResult, DeviceSetupStep } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import RegisterProgress from './RegisterProgress.svelte';
 import { DeviceSetupFlow } from './device-setup-flow.svelte';
 import { regionLabel } from './setup-messages';

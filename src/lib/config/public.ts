@@ -1,12 +1,12 @@
-import { dev } from '$app/environment';
-import { env as dynamicPublicEnv } from '$env/dynamic/public';
+import { dev } from '$app/env';
 import { resolveAppEnvironment, type AppEnvironment } from './environment';
+import { publicEnv } from './public-env.ts';
 
 export type PublicEnvSource = Readonly<Record<string, string | undefined>>;
 
 /**
  * API paths that a deployment may override through env. Every other path is a
- * constant next to the repository that calls it (see `$lib/api/repositories`).
+ * constant next to the repository that calls it (see `#lib/api/repositories`).
  */
 export interface ApiEndpointConfig {
 	login: string;
@@ -30,13 +30,13 @@ export interface PublicConfig {
 }
 
 /**
- * Builds the public (browser-safe) configuration from `$env/dynamic/public`.
+ * Builds the public (browser-safe) configuration from the public env (`src/env.ts`).
  *
  * It reads the env each time it is called — callers read config at the same
  * moment they used to read env directly, so nothing is captured at import time.
  */
 export function readPublicConfig(
-	env: PublicEnvSource = dynamicPublicEnv,
+	env: PublicEnvSource = publicEnv,
 	mode: string = import.meta.env.MODE,
 	isDevServer: boolean = dev
 ): PublicConfig {

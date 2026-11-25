@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CwAlertPointsEditorText } from '@cropwatchdevelopment/cwui';
-import { m } from '$lib/paraglide/messages.js';
-import { getLocale, overwriteGetLocale } from '$lib/paraglide/runtime.js';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale, overwriteGetLocale } from '#lib/paraglide/runtime.js';
 import { createReportAlertPointsEditorText } from './alert-points-editor-text';
 
 const text = () => createReportAlertPointsEditorText() as Required<CwAlertPointsEditorText>;

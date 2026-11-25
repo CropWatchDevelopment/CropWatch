@@ -2,9 +2,9 @@
 	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 	import { CwButton } from '@cropwatchdevelopment/cwui';
-	import { AppNotice } from '$lib/components/layout';
-	import { formatHexPairs } from '$lib/devices/eui';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import { formatHexPairs } from '#lib/devices/eui.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { SetupFailure } from './device-setup-flow.svelte';
 	import { supportHref } from './setup-messages';
 

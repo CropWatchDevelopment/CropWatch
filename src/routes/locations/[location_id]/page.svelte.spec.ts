@@ -1,10 +1,10 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DevicePrimaryDataDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { getLocale } from '$lib/paraglide/runtime.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { DevicePrimaryDataDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LocationPage from './+page.svelte';
 import { formatRelative } from './location-overview';
 

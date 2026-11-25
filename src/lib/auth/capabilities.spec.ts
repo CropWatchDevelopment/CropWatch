@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { MeContextDto } from '$lib/api/api.dtos';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
 import { Capability, can, canOn } from './capabilities';
 
 function ctx(overrides: Partial<MeContextDto> = {}): MeContextDto {

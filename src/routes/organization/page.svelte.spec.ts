@@ -1,9 +1,9 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { MeContextDto, OrganizationDto } from '$lib/api/api.dtos';
-import { orgRoleLabel, orgTypeLabel } from '$lib/auth/org-labels';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { MeContextDto, OrganizationDto } from '#lib/api/api.dtos.ts';
+import { orgRoleLabel, orgTypeLabel } from '#lib/auth/org-labels.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import OrganizationPage from './+page.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));

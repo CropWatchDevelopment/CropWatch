@@ -1,21 +1,23 @@
 import { flushSync, type Component } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DeviceDto, RelayHistoryEntryDto } from '$lib/api/api.dtos';
-import { TABLE_REGISTRY } from '$lib/config/deviceTables';
-import { PermissionLevel } from '$lib/constants/permissions';
-import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-import { m } from '$lib/paraglide/messages.js';
-import { labelFor } from '$lib/sensor-labels';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { DeviceDto, RelayHistoryEntryDto } from '#lib/api/api.dtos.ts';
+import { TABLE_REGISTRY } from '#lib/config/deviceTables.ts';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
+import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { labelFor } from '#lib/sensor-labels/index.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import DevicePage from './+page.svelte';
 
 const nav = vi.hoisted(() => ({ goto: vi.fn(), afterNavigate: new Set<() => void>() }));
-vi.mock('$app/navigation', async (importOriginal) => {
+// Not SvelteKit's own module: its client router never finishes loading outside
+// a SvelteKit page. The page tree uses only these three.
+vi.mock('$app/navigation', async () => {
 	const { onMount } = await import('svelte');
 	return {
-		...(await importOriginal<typeof import('$app/navigation')>()),
 		goto: nav.goto,
+		refreshAll: vi.fn(async () => {}),
 		// As in SvelteKit: registered on mount; the router calls it after each navigation.
 		afterNavigate: (callback: () => void) =>
 			onMount(() => {
@@ -290,7 +292,7 @@ describe('device page', () => {
 		byId('device-error-close-button')?.click();
 		await vi.waitFor(() => expect(errorDialogOpen()).toBe(false));
 
-		// New data for the same device (e.g. invalidateAll) keeps it closed…
+		// New data for the same device (e.g. refreshAll) keeps it closed…
 		page.setData(pageData({ device: device({ error_status: 'Sensor fault' }) }));
 		expect(errorDialogOpen()).toBe(false);
 

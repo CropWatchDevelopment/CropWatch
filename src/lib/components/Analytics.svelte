@@ -9,15 +9,15 @@
 	import { afterNavigate } from '$app/navigation';
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { initAnalytics, trackPageView, setAnalyticsUser } from '$lib/analytics/gtag';
-	import { readPublicConfig } from '$lib/config/public';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { initAnalytics, trackPageView, setAnalyticsUser } from '#lib/analytics/gtag.ts';
+	import { readPublicConfig } from '#lib/config/public.ts';
 
 	const app = getAppContext();
 
 	// Config (env) is read inside browser-only callbacks (never at module top
 	// level) so it is never touched during SSR/prerender, which
-	// $env/dynamic/public forbids. It is always '' on the Vite dev server.
+	// the public env forbids. It is always '' on the Vite dev server.
 	const measurementId = () => readPublicConfig().gaMeasurementId;
 
 	// Keep GA's user_id aligned with the session `sub` claim. Re-runs on
@@ -28,8 +28,10 @@
 	});
 
 	// afterNavigate fires on first mount AND every client-side navigation, so one
-	// handler covers the initial page view and all subsequent ones.
-	afterNavigate(async () => {
+	// handler covers the initial page view and all subsequent ones. A shallow
+	// navigation only rewrites the URL (e.g. dropping a one-time flag): no page view.
+	afterNavigate(async ({ shallow }) => {
+		if (shallow) return;
 		const id = measurementId();
 		if (!id) return;
 		initAnalytics(id, { userId: app.session?.sub ?? null });

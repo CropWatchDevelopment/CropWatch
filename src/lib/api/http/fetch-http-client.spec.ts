@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api-error';
 import { FetchHttpClient, UNAUTHORIZED_RETRY_DELAY_MS } from './fetch-http-client';
-import { createFakeFetch, jsonResponse, textResponse, TEST_API_BASE_URL } from '$lib/testing/http';
+import {
+	createFakeFetch,
+	jsonResponse,
+	textResponse,
+	TEST_API_BASE_URL
+} from '#lib/testing/http.ts';
 
 afterEach(() => {
 	vi.restoreAllMocks();

@@ -10,4 +10,4 @@ export type {
 	RuleTemplateListQuery,
 	RuleTemplateSaveRequest,
 	RuleTemplateStateDto
-} from '$lib/api/api.dtos';
+} from '#lib/api/api.dtos.ts';

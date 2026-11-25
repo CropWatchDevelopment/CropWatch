@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+	import LanguageSwitcher from '#lib/components/LanguageSwitcher.svelte';
 
 	let { children } = $props();
 

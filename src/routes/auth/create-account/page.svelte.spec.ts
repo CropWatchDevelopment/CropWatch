@@ -1,9 +1,9 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
-import { getRecaptchaStatus, resetRecaptchaFailureState } from '$lib/utils/recaptcha';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { getRecaptchaStatus, resetRecaptchaFailureState } from '#lib/utils/recaptcha.ts';
 import CreateAccountPage from './+page.svelte';
 
 // Boundaries: the SvelteKit runtime (env, page URL, form enhancement) and
@@ -13,7 +13,7 @@ const runtime = vi.hoisted(() => ({
 	env: { PUBLIC_RECAPTCHA_SITE_KEY: 'test-site-key' },
 	page: { url: new URL('http://localhost/auth/create-account'), params: {}, data: {} }
 }));
-vi.mock('$env/dynamic/public', () => ({ env: runtime.env }));
+vi.mock('#lib/config/public-env.ts', () => ({ publicEnv: runtime.env }));
 vi.mock('$app/state', () => ({ page: runtime.page }));
 
 // `use:enhance` without the network: the mock keeps the form's submit
@@ -331,14 +331,14 @@ describe('create account page', () => {
 
 		const first = await submit();
 		expect(first.formData.get('account_type')).toBe('personal');
-		await first.finish({ type: 'failure', status: 400, data: {} });
+		await first.finish({ type: 'failure', status: 400, location: location.pathname, data: {} });
 
 		byId<HTMLInputElement>('create-account-type-company').click();
 		flushSync();
 		const second = await submit();
 		expect(second.cancel).not.toHaveBeenCalled();
 		expect(second.formData.get('account_type')).toBe('company');
-		await second.finish({ type: 'failure', status: 400, data: {} });
+		await second.finish({ type: 'failure', status: 400, location: location.pathname, data: {} });
 
 		byId<HTMLInputElement>('create-account-type-personal').click();
 		flushSync();
@@ -371,6 +371,7 @@ describe('create account page', () => {
 		const result: ActionResult = {
 			type: 'failure',
 			status: 422,
+			location: location.pathname,
 			data: {
 				message: m.auth_account_exists(),
 				firstName: 'Ada',
@@ -397,6 +398,7 @@ describe('create account page', () => {
 		).finish({
 			type: 'failure',
 			status: 400,
+			location: location.pathname,
 			data: {
 				message: m.auth_all_fields_required(),
 				firstName: null,
@@ -422,8 +424,17 @@ describe('create account page', () => {
 		const { toasts } = render();
 		fillIn();
 
-		await (await submit()).finish({ type: 'failure', status: 400, data: { firstName: 'Bob' } });
-		await (await submit()).finish({ type: 'error', status: 500, error: new Error('boom') });
+		await (
+			await submit()
+		).finish({
+			type: 'failure',
+			status: 400,
+			location: location.pathname,
+			data: { firstName: 'Bob' }
+		});
+		await (
+			await submit()
+		).finish({ type: 'error', status: 500, error: { status: 500, message: 'boom' } });
 
 		expect(toasts()).toEqual([]);
 		expect(forms.applyAction).toHaveBeenCalledTimes(2);

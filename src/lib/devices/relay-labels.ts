@@ -1,7 +1,7 @@
 import type { CwTone } from '@cropwatchdevelopment/cwui';
-import type { RelayCommandOutcome, RelayHistoryEntryDto } from '$lib/api/api.dtos';
-import { formatNumber } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
+import type { RelayCommandOutcome, RelayHistoryEntryDto } from '#lib/api/api.dtos.ts';
+import { formatNumber } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type { RelayTargetState } from './relay-types';
 
 /**

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFakeFetch, jsonResponse, textResponse } from '$lib/testing/http';
+import { createFakeFetch, jsonResponse, textResponse } from '#lib/testing/http.ts';
 import type { RecaptchaServerConfig } from './config';
 import { createRecaptchaVerifier } from './recaptcha';
 

@@ -1,7 +1,7 @@
-import type { CropTypeDto, DeleteDeviceResultDto, GroupDto } from '$lib/api/api.dtos';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import { normalizeTtiDeviceId } from '$lib/devices/tti-device-id';
-import { m } from '$lib/paraglide/messages.js';
+import type { CropTypeDto, DeleteDeviceResultDto, GroupDto } from '#lib/api/api.dtos.ts';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import { normalizeTtiDeviceId } from '#lib/devices/tti-device-id.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import {

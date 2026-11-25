@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { goto, invalidateAll, replaceState } from '$app/navigation';
+	import { goto, refreshAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
-	import { AppActionRow, AppNotice, AppPage } from '$lib/components/layout';
-	import type { BillingProduct } from '$lib/api/api.dtos';
-	import { formatCurrency, formatDate } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import { getServices } from '$lib/services/context';
+	import { AppActionRow, AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import type { BillingProduct } from '#lib/api/api.dtos.ts';
+	import { formatCurrency, formatDate } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -30,7 +30,7 @@
 	const controller = new BillingController({
 		billing: getServices().billing,
 		toast,
-		invalidateAll,
+		refreshAll,
 		redirect: (url) => {
 			window.location.href = url;
 		},
@@ -158,7 +158,7 @@
 		const checkout = params.get('checkout');
 		if (checkout === 'success') {
 			toast.add({ tone: 'success', message: m.billing_checkout_success() });
-			invalidateAll();
+			refreshAll();
 		} else if (checkout === 'cancel') {
 			toast.add({ tone: 'secondary', message: m.billing_checkout_canceled() });
 		} else {
@@ -171,7 +171,7 @@
 		url.searchParams.delete('checkout');
 		void tick().then(() =>
 			// eslint-disable-next-line svelte/no-navigation-without-resolve -- this page's own (resolved) URL
-			replaceState(url, page.state)
+			goto(url, { shallow: true, replace: true, state: page.state })
 		);
 	});
 </script>
@@ -398,8 +398,10 @@
 										href={resolve('/locations/[location_id]/devices/[dev_eui]', {
 											location_id: String(deviceLocId),
 											dev_eui: license.devEui
-										})}>{license.deviceName ?? license.devEui}</a
+										})}
 									>
+										{license.deviceName ?? license.devEui}
+									</a>
 								{:else}
 									<span>{license.deviceName ?? license.devEui}</span>
 								{/if}
@@ -422,8 +424,9 @@
 										id={`account-billing-license-${license.id}-location-link`}
 										class="license-link license-link--muted"
 										href={resolve('/locations/[location_id]', { location_id: String(locId) })}
-										>{lname}</a
 									>
+										{lname}
+									</a>
 								{:else}
 									<span class="billing-muted">—</span>
 								{/if}
@@ -485,8 +488,10 @@
 				id="account-billing-portal-button"
 				variant="ghost"
 				onclick={() => controller.openPortal()}
-				disabled={controller.busy}>{m.billing_portal()}</CwButton
+				disabled={controller.busy}
 			>
+				{m.billing_portal()}
+			</CwButton>
 		</AppActionRow>
 	{/if}
 </AppPage>

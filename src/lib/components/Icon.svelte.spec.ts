@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { renderWithServices } from '$lib/testing/render';
+import { renderWithServices } from '#lib/testing/render.ts';
 import Icon from './Icon.svelte';
 
 // An inline SVG, so neither the mask nor the <img> asks the dev server for a file.

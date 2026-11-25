@@ -1,16 +1,16 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
+import { ApiError } from '#lib/api/api-error.ts';
 import type {
 	BillingEntitlements,
 	ReportTemplateAssignmentDto,
 	ReportTemplateDto,
 	ReportTemplateRecipientDto,
 	ReportTemplateScheduleDto
-} from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+} from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ReportsPage from './+page.svelte';
 
 const nav = vi.hoisted(() => ({ goto: vi.fn(), url: new URL('http://localhost/reports') }));

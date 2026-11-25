@@ -11,13 +11,13 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { AppNotice, AppPage } from '$lib/components/layout';
-	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
-	import type { GatewayDeviceDto } from '$lib/api/api.dtos';
-	import { cwCopyLabels, cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { sortByColumn } from '$lib/utils/sortByColumn';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import SignalStrength from '#lib/components/displays/SignalStrength/SignalStrength.svelte';
+	import type { GatewayDeviceDto } from '#lib/api/api.dtos.ts';
+	import { cwCopyLabels, cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { sortByColumn } from '#lib/utils/sortByColumn.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CwButton, CwDialog, CwInput } from '@cropwatchdevelopment/cwui';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import { GROUP_NAME_MAX_LENGTH, type GroupsController } from './groups-controller.svelte';
 
 	interface Props {

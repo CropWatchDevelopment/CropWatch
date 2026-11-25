@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import { applyAction, deserialize } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { refreshAll } from '$app/navigation';
 	import {
 		CwButton,
 		CwDataTable,
@@ -11,13 +11,13 @@
 		type CwTableResult,
 		type CwTableQuery
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels, cwDropdownLabels } from '$lib/i18n/cwuiLabels';
-	import type { LocationOwnerDto } from '$lib/api/api.dtos';
-	import { getPermissionLevelLabel, getPermissionLevelOptions } from '$lib/i18n/options';
-	import { m } from '$lib/paraglide/messages.js';
+	import { cwDataTableLabels, cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
+	import type { LocationOwnerDto } from '#lib/api/api.dtos.ts';
+	import { getPermissionLevelLabel, getPermissionLevelOptions } from '#lib/i18n/options.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import DeletePermissionDialog from './DeletePermissionDialog.svelte';
 	import { page } from '$app/state';
-	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import EDIT_ICON from '#lib/images/icons/edit.svg';
 	import {
 		mapLocationOwnersToPermissionRows,
 		type PermissionRow as Permission
@@ -65,7 +65,7 @@
 			// A refused action still answers HTTP 200: only the result says how it went.
 			const result = deserialize(await response.text());
 			if (result.type === 'success') {
-				await invalidateAll();
+				await refreshAll();
 				editingPermissionId = null;
 				return;
 			}
@@ -128,24 +128,30 @@
 						variant="primary"
 						onclick={() => {
 							savePermissionLevelUpdate(row);
-						}}>{m.action_save_changes()}</CwButton
+						}}
 					>
+						{m.action_save_changes()}
+					</CwButton>
 					<CwButton
 						id={`location-edit-permissions-row-${row.id}-delete-button`}
 						variant="danger"
 						onclick={() => {
 							selectedRow = row;
 							openDeletePermissionDialog = true;
-						}}>{m.action_delete()}</CwButton
+						}}
 					>
+						{m.action_delete()}
+					</CwButton>
 					<CwButton
 						id={`location-edit-permissions-row-${row.id}-cancel-button`}
 						variant="primary"
 						onclick={() => {
 							selectedRow = null;
 							editingPermissionId = null;
-						}}>{m.action_cancel()}</CwButton
+						}}
 					>
+						{m.action_cancel()}
+					</CwButton>
 				{:else}
 					<CwButton
 						id={`location-edit-permissions-row-${row.id}-edit-button`}

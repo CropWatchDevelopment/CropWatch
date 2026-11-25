@@ -2,10 +2,10 @@
 	import { goto } from '$app/navigation';
 	import { SvelteMap } from 'svelte/reactivity';
 	import { resolve } from '$app/paths';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import type { CommunicationMethodDto, ReportFormContextDto } from '$lib/api/api.dtos';
-	import { getServices } from '$lib/services/context';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { AppActionRow, AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import type { CommunicationMethodDto, ReportFormContextDto } from '#lib/api/api.dtos.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import {
 		CwAlertPointsEditor,
 		CwButton,
@@ -19,8 +19,8 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import type { CwAlertPointsValue } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels, cwMultiSelectLabels } from '$lib/i18n/cwuiLabels';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwMultiSelectLabels } from '#lib/i18n/cwuiLabels.ts';
 	import ReportCadenceSection from './ReportCadenceSection.svelte';
 	import ReportProcessingSchedulesSection from './ReportProcessingSchedulesSection.svelte';
 	import ReportRecipientsSection from './ReportRecipientsSection.svelte';

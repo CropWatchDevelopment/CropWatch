@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { RELAY_STATE_ICONS } from '$lib/devices/relay-labels';
-import { m } from '$lib/paraglide/messages.js';
+import { RELAY_STATE_ICONS } from '#lib/devices/relay-labels.ts';
+import { m } from '#lib/paraglide/messages.js';
 import {
 	isDisplayableColumn,
 	isOnValue,

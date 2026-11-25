@@ -1,8 +1,13 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse, textResponse, type FakeResponder } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import {
+	createFakeFetch,
+	jsonResponse,
+	textResponse,
+	type FakeResponder
+} from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LeaveOrganizationDialog from './LeaveOrganizationDialog.svelte';
 
 const { goto, forms } = vi.hoisted(() => ({
@@ -68,7 +73,7 @@ describe('LeaveOrganizationDialog', () => {
 		const body = vi.mocked(fake.fetch).mock.calls[0]?.[1]?.body;
 		expect(body).toBeInstanceOf(FormData);
 		expect([...(body as FormData).entries()]).toEqual([]);
-		expect(goto).toHaveBeenCalledWith('/', { invalidateAll: true });
+		expect(goto).toHaveBeenCalledWith('/', { refreshAll: true });
 		expect(forms.applyAction).not.toHaveBeenCalled();
 		expect(view.toasts()).toMatchObject([{ tone: 'success', message: m.organization_left() }]);
 		expect(dialog().open).toBe(false);

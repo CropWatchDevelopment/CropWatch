@@ -7,8 +7,8 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		formatDay,
 		formatHour,

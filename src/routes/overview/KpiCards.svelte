@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { CwCard } from '@cropwatchdevelopment/cwui';
-	import type { OverviewDto } from '$lib/api/api.dtos';
-	import { formatRelative } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { OverviewDto } from '#lib/api/api.dtos.ts';
+	import { formatRelative } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import OverviewIcon from './OverviewIcon.svelte';
 	import { formatCompact, formatDelta, formatPercent } from './overview';
 
@@ -77,9 +77,9 @@
 			<div class="kpi__value">{overview.alerts.count}</div>
 			<div class="kpi__sub">
 				{#if overview.alerts.active > 0}
-					<span class="kpi__active"
-						>{`${m.overview_kpi_alerts_active({ count: overview.alerts.active })} · `}</span
-					>
+					<span class="kpi__active">
+						{`${m.overview_kpi_alerts_active({ count: overview.alerts.active })} · `}
+					</span>
 				{/if}{deltaLabel}
 			</div>
 		</div>
@@ -92,9 +92,9 @@
 				<div class="kpi__head">{m.overview_kpi_gateways()}<OverviewIcon name="gateway" /></div>
 				<div class="kpi__split">
 					<span class="kpi__value">{overview.gateways.online}</span>
-					<span class="kpi__of kpi__of--wide"
-						>{m.overview_kpi_gateways_of({ total: overview.gateways.total })}</span
-					>
+					<span class="kpi__of kpi__of--wide">
+						{m.overview_kpi_gateways_of({ total: overview.gateways.total })}
+					</span>
 					<span class="kpi__of kpi__of--narrow">/ {overview.gateways.total}</span>
 				</div>
 				{#if overview.gateways.total === 0}
@@ -131,9 +131,9 @@
 			<div class="kpi__head">{m.overview_kpi_data()}<OverviewIcon name="pulse" /></div>
 			<div class="kpi__value">{formatCompact(overview.uplinks.count, locale)}</div>
 			<div class="kpi__sub">
-				<span class="kpi__unit" class:kpi__unit--before-expected={expected !== null}
-					>{m.overview_kpi_data_unit()}{#if expected}&nbsp;·&nbsp;{/if}</span
-				>{expected ?? ''}
+				<span class="kpi__unit" class:kpi__unit--before-expected={expected !== null}>
+					{m.overview_kpi_data_unit()}{#if expected}&nbsp;·&nbsp;{/if}
+				</span>{expected ?? ''}
 			</div>
 		</div>
 	</CwCard>

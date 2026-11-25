@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { m } from '$lib/paraglide/messages.js';
-	import { legalDocumentUrl } from '$lib/i18n/legal-urls';
+	import { m } from '#lib/paraglide/messages.js';
+	import { legalDocumentUrl } from '#lib/i18n/legal-urls.ts';
 
 	interface Props {
 		agreedPrivacy: boolean;
@@ -51,8 +51,10 @@
 				target="_blank"
 				rel="noopener noreferrer"
 				class="auth-link"
-				onclick={() => (visitedPrivacy = true)}>{m.auth_privacy_policy()}</a
+				onclick={() => (visitedPrivacy = true)}
 			>
+				{m.auth_privacy_policy()}
+			</a>
 		</span>
 	</label>
 
@@ -72,8 +74,10 @@
 				target="_blank"
 				rel="noopener noreferrer"
 				class="auth-link"
-				onclick={() => (visitedTerms = true)}>{m.auth_terms_of_service()}</a
+				onclick={() => (visitedTerms = true)}
 			>
+				{m.auth_terms_of_service()}
+			</a>
 		</span>
 	</label>
 
@@ -93,8 +97,10 @@
 				target="_blank"
 				rel="noopener noreferrer"
 				class="auth-link"
-				onclick={() => (visitedEula = true)}>{m.auth_eula()}</a
+				onclick={() => (visitedEula = true)}
 			>
+				{m.auth_eula()}
+			</a>
 		</span>
 	</label>
 

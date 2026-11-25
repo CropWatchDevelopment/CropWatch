@@ -1,4 +1,4 @@
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { deviceSupportsSensorCertificate, getSht43Serial } from '../../device-settings.server';
 import type { RequestHandler } from './$types';
 

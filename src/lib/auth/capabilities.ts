@@ -1,4 +1,4 @@
-import type { MeContextDto } from '$lib/api/api.dtos';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
 
 /**
  * Org-level capability names served by GET /v1/me/context. Mirrors the API's

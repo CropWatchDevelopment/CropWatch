@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { useCwToast } from '@cropwatchdevelopment/cwui';
-import { ApiError } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
+import { ApiError } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { deviceHref, openReport } from './overview-links';
 
 type Toast = ReturnType<typeof useCwToast>;

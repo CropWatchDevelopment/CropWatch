@@ -2,7 +2,7 @@
 //
 // src/lib/paraglide is gitignored and normally produced as a side effect of the
 // paraglide vite plugin (`pnpm dev` / `pnpm build`). `svelte-check` does not run
-// vite, so without this step every `import { m } from '$lib/paraglide/messages.js'`
+// vite, so without this step every `import { m } from '#lib/paraglide/messages.js'`
 // fails to resolve on a fresh checkout — which is exactly what CI is.
 //
 // Uses the JS API rather than the `paraglide-js compile` CLI: the CLI has no

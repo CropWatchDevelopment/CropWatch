@@ -1,9 +1,9 @@
 import { isRedirect } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { createServerServices } from '$lib/server/services';
-import { testPublicConfig } from '$lib/testing/http';
-import { testServerConfig } from '$lib/testing/server';
+import { m } from '#lib/paraglide/messages.js';
+import { createServerServices } from '#lib/server/services.ts';
+import { testPublicConfig } from '#lib/testing/http.ts';
+import { testServerConfig } from '#lib/testing/server.ts';
 import { deleteLocation } from './location-settings-actions.server';
 
 type ApiCall = { method: string; url: string };

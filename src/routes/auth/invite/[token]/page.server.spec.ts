@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { InvitePreviewDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { InvitePreviewDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

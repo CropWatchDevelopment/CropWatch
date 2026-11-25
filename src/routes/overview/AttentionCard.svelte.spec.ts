@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { OverviewAttentionGroupDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { OverviewAttentionGroupDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import AttentionCard from './AttentionCard.svelte';
 import type { AttentionRow } from './overview';
 

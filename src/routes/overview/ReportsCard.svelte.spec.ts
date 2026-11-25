@@ -1,13 +1,13 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { OverviewReportDto } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
-import type { AppServices } from '$lib/services/app-services';
-import { createClientServices } from '$lib/services/client';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { OverviewReportDto } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
+import type { AppServices } from '#lib/services/app-services.ts';
+import { createClientServices } from '#lib/services/client.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ReportsCard from './ReportsCard.svelte';
 import { formatReportPeriod } from './overview';
 

@@ -1,16 +1,16 @@
 import { isRedirect } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+import { ApiError } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	formRequest,
 	testEvent,
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];
@@ -128,8 +128,10 @@ describe('LINE link action', () => {
 			config: config.public,
 			serverConfig: config.server
 		});
-		const event = testEvent<ActionEvent>({ request: formRequest({ linkToken: 'tok' }) });
-		event.locals = { jwt: null, jwtString: 'jwt-token', services, config };
+		const event = testEvent<ActionEvent>({
+			request: formRequest({ linkToken: 'tok' }),
+			locals: { jwt: null, jwtString: 'jwt-token', services, config }
+		});
 
 		const thrown = await Promise.resolve(actions.default(event)).catch((error: unknown) => error);
 

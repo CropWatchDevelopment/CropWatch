@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { MeContextDto, OrgInviteDto, OrgMemberDto } from '$lib/api/api.dtos';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+import type { MeContextDto, OrgInviteDto, OrgMemberDto } from '#lib/api/api.dtos.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	TEST_JWT,
 	testEvent,
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 import { managementUsersActions } from './management-users-actions.server';
 

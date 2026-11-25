@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwSideNavLabels, cwThemePickerLabels } from '$lib/i18n/cwuiLabels';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import LanguageSwitcher from '#lib/components/LanguageSwitcher.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwSideNavLabels, cwThemePickerLabels } from '#lib/i18n/cwuiLabels.ts';
 	import {
 		CwDuration,
 		CwExpandPanel,
@@ -13,7 +13,7 @@
 		type CwListBoxItem,
 		type CwSideNavItem
 	} from '@cropwatchdevelopment/cwui';
-	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
+	import CROPWATCH_LOGO from '#lib/images/cropwatch_static.svg';
 	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 	function dedupSortedStrings(values: readonly unknown[] | null | undefined): string[] {
@@ -23,9 +23,9 @@
 			.filter((v) => v.length > 0);
 		return naturalSort([...new Set(cleaned)], (value) => value, { locale: getLocale() });
 	}
-	import { isStaffEmail } from '$lib/utils/is-staff';
-	import { naturalSort } from '$lib/utils/natural-sort';
-	import { getLocale } from '$lib/paraglide/runtime';
+	import { isStaffEmail } from '#lib/utils/is-staff.ts';
+	import { naturalSort } from '#lib/utils/natural-sort.ts';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	let { mode = $bindable() } = $props();
 
@@ -186,7 +186,7 @@
 	function applyFilter(key: string, value: string) {
 		closeSidebarOnMobile();
 
-		const params = new URL(page.url);
+		const params = new URL(page.url.href);
 		if (value) {
 			params.searchParams.set(key, value);
 		} else {
@@ -194,9 +194,8 @@
 		}
 		const qs = params.searchParams.toString();
 		goto(resolve((qs ? `/?${qs}` : '/') as '/'), {
-			replaceState: true,
-			keepFocus: true,
-			noScroll: true
+			replace: true,
+			reset: false
 		});
 	}
 </script>

@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
-import type { MeContextDto } from '$lib/api/api.dtos';
-import { can } from '$lib/auth/capabilities';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
+import { can } from '#lib/auth/capabilities.ts';
 
 /**
  * Server-side capability gate for page loads and actions: throws a real 403

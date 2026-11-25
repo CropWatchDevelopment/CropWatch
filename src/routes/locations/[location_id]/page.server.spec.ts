@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { DevicePrimaryDataDto, LocationDto, LocationOwnerDto } from '$lib/api/api.dtos';
-import { TEST_USER_ID, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import type { DevicePrimaryDataDto, LocationDto, LocationOwnerDto } from '#lib/api/api.dtos.ts';
+import { TEST_USER_ID, testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

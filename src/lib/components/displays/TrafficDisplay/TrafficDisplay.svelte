@@ -2,8 +2,8 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { CwCard } from '@cropwatchdevelopment/cwui';
-	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import TrafficCalendarCard from './TrafficCalendarCard.svelte';
 	import TrafficClassBreakdown from './TrafficClassBreakdown.svelte';
 	import TrafficHourlyChart from './TrafficHourlyChart.svelte';

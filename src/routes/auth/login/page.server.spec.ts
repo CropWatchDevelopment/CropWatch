@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { testPublicConfig } from '$lib/testing/http';
-import { formRequest, testEvent, testLocals, testServerConfig } from '$lib/testing/server';
+import { testPublicConfig } from '#lib/testing/http.ts';
+import { formRequest, testEvent, testLocals, testServerConfig } from '#lib/testing/server.ts';
 
 const { handleLoginAction } = vi.hoisted(() => ({
 	handleLoginAction: vi.fn<(...args: unknown[]) => Promise<{ handled: boolean }>>(async () => ({
 		handled: true
 	}))
 }));
-vi.mock('$lib/server/auth/login-action', () => ({ handleLoginAction }));
+vi.mock('#lib/server/auth/login-action.ts', () => ({ handleLoginAction }));
 
 const { actions } = await import('./+page.server');
 

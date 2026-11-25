@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { OverviewRange } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { OverviewRange } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import RangeSwitch from './RangeSwitch.svelte';
 
 let view: ReturnType<typeof renderWithServices> | null = null;

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { describeDevice, pushDeviceId } from './push-device';
 
 const UA = {

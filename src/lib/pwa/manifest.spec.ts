@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { buildManifest } from './manifest';
 
 describe('buildManifest', () => {

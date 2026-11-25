@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { testEvent } from '$lib/testing/server';
+import { testEvent } from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 describe('gateways list load', () => {

@@ -1,21 +1,21 @@
 import { resolve } from '$app/paths';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import type { CwToastApi } from '@cropwatchdevelopment/cwui';
-import { apiErrorMessage } from '$lib/api/api-error';
-import type { RuleFormContextDto } from '$lib/api/api.dtos';
-import type { LineRepository } from '$lib/api/repositories/line.repository';
-import type { PushRepository } from '$lib/api/repositories/push.repository';
-import type { RuleRepository } from '$lib/api/repositories/rules.repository';
-import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage } from '#lib/api/api-error.ts';
+import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
+import type { LineRepository } from '#lib/api/repositories/line.repository.ts';
+import type { PushRepository } from '#lib/api/repositories/push.repository.ts';
+import type { RuleRepository } from '#lib/api/repositories/rules.repository.ts';
+import { getRuleOperatorOptions, getRuleSubjectOptions } from '#lib/i18n/options.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type {
 	Json,
 	RuleTemplateActionDto,
 	RuleTemplateActionInput,
 	RuleTemplateDto,
 	RuleTemplateSaveRequest
-} from '$lib/rules/rule-template.types';
-import { labelFor } from '$lib/sensor-labels';
+} from '#lib/rules/rule-template.types.ts';
+import { labelFor } from '#lib/sensor-labels/index.ts';
 import {
 	areAlertCriteriaGroupsValid,
 	buildInitialAlertCriteriaGroups,

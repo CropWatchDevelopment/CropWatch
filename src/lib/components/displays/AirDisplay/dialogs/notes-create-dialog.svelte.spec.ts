@@ -1,9 +1,9 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse } from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import type { AirRow } from '../interfaces/AirRow.interface';
 import type { Note } from '../interfaces/note.interface';
 import NotesCreateDialog from './notes-create-dialog.svelte';

@@ -1,7 +1,7 @@
-import type { GroupDto, LocationOwnerDto } from '$lib/api/api.dtos';
-import { PermissionLevel } from '$lib/constants/permissions';
-import { m } from '$lib/paraglide/messages.js';
-import { isStaffEmail } from '$lib/utils/is-staff';
+import type { GroupDto, LocationOwnerDto } from '#lib/api/api.dtos.ts';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { isStaffEmail } from '#lib/utils/is-staff.ts';
 import { error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { toFiniteNumber } from '../location-overview';

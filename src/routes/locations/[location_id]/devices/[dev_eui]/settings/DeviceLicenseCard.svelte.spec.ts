@@ -1,8 +1,8 @@
-import type { ActionResult } from '@sveltejs/kit';
+import type { ActionResult } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import DeviceLicenseCard from './DeviceLicenseCard.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
@@ -124,7 +124,7 @@ describe('DeviceLicenseCard with a license', () => {
 		expect(byId('device-license-unassign-confirm-button')?.getAttribute('aria-busy')).toBe('true');
 
 		const update = vi.fn(async () => {});
-		await after({ result: { type: 'success', status: 200 }, update });
+		await after({ result: { type: 'success', status: 200, location: location.pathname }, update });
 		flushSync();
 
 		expect(update).toHaveBeenCalledWith({ reset: false });
@@ -140,9 +140,9 @@ describe('DeviceLicenseCard with a license', () => {
 		const update = vi.fn(async () => {
 			throw new Error('update failed');
 		});
-		await expect(submit()({ result: { type: 'failure', status: 409 }, update })).rejects.toThrow(
-			'update failed'
-		);
+		await expect(
+			submit()({ result: { type: 'failure', status: 409, location: location.pathname }, update })
+		).rejects.toThrow('update failed');
 		flushSync();
 
 		expect(dialog()?.open).toBe(false);

@@ -1,14 +1,14 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { getServices } from '$lib/services/context';
-	import type { TrafficMonthlyReportDto } from '$lib/api/api.dtos';
-	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
+	import Icon from '#lib/components/Icon.svelte';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { getServices } from '#lib/services/context.ts';
+	import type { TrafficMonthlyReportDto } from '#lib/api/api.dtos.ts';
+	import DOWNLOAD_ICON from '#lib/images/icons/download.svg';
 	import { CwButton, CwDialog, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { downloadCsv } from '../csvExport';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import NO_ICON from '$lib/images/icons/no.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import NO_ICON from '#lib/images/icons/no.svg';
 
 	interface Props {
 		devEui: string;

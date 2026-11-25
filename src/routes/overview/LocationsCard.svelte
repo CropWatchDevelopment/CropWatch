@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { OverviewDto } from '$lib/api/api.dtos';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { OverviewDto } from '#lib/api/api.dtos.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import OverviewSection from './OverviewSection.svelte';
 	import { sortLocations } from './overview';
 
@@ -36,8 +36,10 @@
 								class="loc__link"
 								href={resolve('/locations/[location_id]', {
 									location_id: String(location.locationId)
-								})}>{location.name ?? m.dashboard_no_location()}</a
+								})}
 							>
+								{location.name ?? m.dashboard_no_location()}
+							</a>
 						{:else}
 							{m.dashboard_no_location()}
 						{/if}

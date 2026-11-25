@@ -1,8 +1,8 @@
-import type { SubmitFunction } from '@sveltejs/kit';
+import type { SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LineLinkPage from './+page.svelte';
 
 // `use:enhance` without the network: the mock keeps the form's submit function.
@@ -100,7 +100,12 @@ describe('LINE link page', () => {
 			action,
 			formData,
 			formElement: element,
-			result: { type: 'failure', status: 409, data: { error: 'Already linked' } },
+			result: {
+				type: 'failure',
+				status: 409,
+				location: location.pathname,
+				data: { error: 'Already linked' }
+			},
 			update
 		});
 		flushSync();

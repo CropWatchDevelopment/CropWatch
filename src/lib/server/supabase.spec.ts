@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFakeFetch, jsonResponse, type FakeResponder } from '$lib/testing/http';
+import { createFakeFetch, jsonResponse, type FakeResponder } from '#lib/testing/http.ts';
 import { createSupabaseAuthGateway } from './supabase';
 
 // The real Supabase SDK over a fake network: proves the actual verification.

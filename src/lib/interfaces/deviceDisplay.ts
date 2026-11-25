@@ -3,9 +3,13 @@ import type {
 	AiRecommendationDto,
 	CropTypeDetailDto,
 	RelayHistoryEntryDto
-} from '$lib/api/api.dtos';
-import type { Coordinates } from '$lib/agronomy/solar';
-import type { PendingRelayStates, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
+} from '#lib/api/api.dtos.ts';
+import type { Coordinates } from '#lib/agronomy/solar.ts';
+import type {
+	PendingRelayStates,
+	RelayNumber,
+	RelayTargetState
+} from '#lib/devices/relay-types.ts';
 
 /**
  * Common props contract that every device display component must accept.

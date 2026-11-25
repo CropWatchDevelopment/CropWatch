@@ -1,19 +1,18 @@
-import { sequence } from '@sveltejs/kit/hooks';
-import { readPublicConfig } from '$lib/config/public';
-import { readServerConfig } from '$lib/server/config';
-import { createServerServices } from '$lib/server/services';
-import { decodeJwtPayload } from '$lib/server/auth/jwt';
+import { sequence, type Handle, type HandleServerError } from '@sveltejs/kit/hooks';
+import { readPublicConfig } from '#lib/config/public.ts';
+import { readServerConfig } from '#lib/server/config.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { decodeJwtPayload } from '#lib/server/auth/jwt.ts';
 import {
 	REFRESH_COOKIE,
 	SESSION_COOKIE,
 	setSessionCookies
-} from '$lib/server/auth/session-cookies';
-import { SERVER_REFRESH_WINDOW_SECONDS } from '$lib/auth/session-renewal';
-import { buildLoginPath, type LoginReason } from '$lib/utils/auth-redirect';
-import { getTextDirection } from '$lib/paraglide/runtime';
-import { paraglideMiddleware } from '$lib/paraglide/server';
-import type { Handle, HandleServerError, RequestEvent } from '@sveltejs/kit';
-import { redirect } from '@sveltejs/kit';
+} from '#lib/server/auth/session-cookies.ts';
+import { SERVER_REFRESH_WINDOW_SECONDS } from '#lib/auth/session-renewal.ts';
+import { buildLoginPath, type LoginReason } from '#lib/utils/auth-redirect.ts';
+import { getTextDirection } from '#lib/paraglide/runtime.js';
+import { paraglideMiddleware } from '#lib/paraglide/server.js';
+import { redirect, type RequestEvent } from '@sveltejs/kit';
 
 const PUBLIC_PATHS = new Set(['/manifest.webmanifest', '/service-worker.js', '/push-sw.js']);
 
@@ -138,24 +137,24 @@ async function refreshIfDue(event: RequestEvent, token: string): Promise<string>
 	return token;
 }
 
+// The locale comes from the cookie (no `url` strategy), so the request the
+// middleware hands back has the same URL as `event.request`: pass `event` on.
 export const paraglideHandle: Handle = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request: localizedRequest, locale }) => {
-		event.request = localizedRequest;
-
-		return resolve(event, {
+	paraglideMiddleware(event.request, ({ locale }) =>
+		resolve(event, {
 			transformPageChunk: ({ html }) =>
 				html
 					.replace('%paraglide.lang%', locale)
 					.replace('%paraglide.dir%', getTextDirection(locale))
-		});
-	});
+		})
+	);
 
 export const handle = sequence(paraglideHandle, originalHandle);
 
-export const handleError: HandleServerError = ({ error, status }) => {
+// SvelteKit passes every error here. `error(...)` and validation errors are
+// expected and keep their status and message. Framework errors (a 404, …) keep
+// their status and safe message, and anything else becomes 500 'Internal Error'.
+export const handleError: HandleServerError = ({ kind, error }) => {
+	if (kind === 'app' || kind === 'validation') return;
 	console.error('[CropWatch] Unexpected server error:', error);
-
-	return {
-		message: status === 404 ? 'Not Found' : 'Internal Error'
-	};
 };

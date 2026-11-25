@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { backHref } from '$lib/navigation/backTo';
+	import { backHref } from '#lib/navigation/backTo.ts';
 	import { resolve } from '$app/paths';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import Icon from '$lib/components/Icon.svelte';
-	import { AppPage } from '$lib/components/layout';
-	import type { RuleTemplateDto } from '$lib/rules/rule-template.types';
-	import { getRuleSubjectOptions } from '$lib/i18n/options';
-	import { getServices } from '$lib/services/context';
-	import { labelFor } from '$lib/sensor-labels';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import { AppPage } from '#lib/components/layout/index.ts';
+	import type { RuleTemplateDto } from '#lib/rules/rule-template.types.ts';
+	import { getRuleSubjectOptions } from '#lib/i18n/options.ts';
+	import { getServices } from '#lib/services/context.ts';
+	import { labelFor } from '#lib/sensor-labels/index.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -18,11 +18,11 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
-	import { sortByColumn } from '$lib/utils/sortByColumn';
-	import ADD_ICON from '$lib/images/icons/add.svg';
-	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { sortByColumn } from '#lib/utils/sortByColumn.ts';
+	import ADD_ICON from '#lib/images/icons/add.svg';
+	import EDIT_ICON from '#lib/images/icons/edit.svg';
 	import DeleteRuleTemplateDialog from './DeleteRuleTemplateDialog.svelte';
 	import ViewRuleAlertHistory from './ViewRuleAlertHistory.svelte';
 
@@ -72,7 +72,7 @@
 
 			return { rows, total };
 		} catch (error) {
-			throw new Error(apiErrorMessage(error, m.rules_new_load_failed()));
+			throw new Error(apiErrorMessage(error, m.rules_new_load_failed()), { cause: error });
 		} finally {
 			loading = false;
 		}

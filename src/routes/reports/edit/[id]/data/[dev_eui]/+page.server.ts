@@ -1,6 +1,6 @@
-import { ApiError } from '$lib/api/api-error';
-import type { DeviceDto, ReportTemplateDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { DeviceDto, ReportTemplateDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { error } from '@sveltejs/kit';
 import { isReportPeriodEditable, parseReportPeriod } from '../../../../report-period';
 import type { PageServerLoad } from './$types';

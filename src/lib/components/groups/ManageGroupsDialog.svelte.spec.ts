@@ -1,9 +1,9 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { GroupDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { GroupDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ManageGroupsDialog from './ManageGroupsDialog.svelte';
 import { GroupsController, type GroupKind } from './groups-controller.svelte';
 

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { GroupDto } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices } from '$lib/testing/mock-services';
+import type { GroupDto } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices } from '#lib/testing/mock-services.ts';
 import { GROUP_NAME_MAX_LENGTH, GroupsController } from './groups-controller.svelte';
 
 const conflict = () =>

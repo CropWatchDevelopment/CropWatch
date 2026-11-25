@@ -1,6 +1,6 @@
-import type { MeContextDto } from '$lib/api/api.dtos';
-import { Capability, can } from '$lib/auth/capabilities';
-import { m } from '$lib/paraglide/messages.js';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
+import { Capability, can } from '#lib/auth/capabilities.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 export interface ProfileMenuItem {
 	id: 'profile' | 'organization' | 'billing' | 'management' | 'settings' | 'logout';

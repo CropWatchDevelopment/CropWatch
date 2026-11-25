@@ -2,12 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { backHref } from '$lib/navigation/backTo';
-	import Icon from '$lib/components/Icon.svelte';
-	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwCopyLabels } from '$lib/i18n/cwuiLabels';
-	import { canManage, isAdmin } from '$lib/constants/permissions';
+	import { backHref } from '#lib/navigation/backTo.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import SETTINGS_ICON from '#lib/images/icons/settings.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwCopyLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { canManage, isAdmin } from '#lib/constants/permissions.ts';
 	import { CwButton, CwCard, CwCopy, CwDuration, CwSpinner } from '@cropwatchdevelopment/cwui';
 	import CsvExportDialog from './dialogs/csvExportDialog.svelte';
 	import CsvTrafficExportDialog from './dialogs/csvTrafficExportDialog.svelte';

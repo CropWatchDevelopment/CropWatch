@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import { AppPage } from '$lib/components/layout';
+	import Icon from '#lib/components/Icon.svelte';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -9,18 +9,18 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import type { LocationDto } from '$lib/api/api.dtos';
-	import EYE_ICON from '$lib/images/icons/eye.svg';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import type { LocationDto } from '#lib/api/api.dtos.ts';
+	import EYE_ICON from '#lib/images/icons/eye.svg';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { backHref } from '$lib/navigation/backTo';
+	import { backHref } from '#lib/navigation/backTo.ts';
 	import { resolve } from '$app/paths';
-	import { m } from '$lib/paraglide/messages.js';
-	import ADD_ICON from '$lib/images/icons/add.svg';
-	import { getServices } from '$lib/services/context';
-	import { getLocale } from '$lib/paraglide/runtime';
-	import { naturalSort } from '$lib/utils/natural-sort';
+	import { m } from '#lib/paraglide/messages.js';
+	import ADD_ICON from '#lib/images/icons/add.svg';
+	import { getServices } from '#lib/services/context.ts';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { naturalSort } from '#lib/utils/natural-sort.ts';
 
 	let loading = $state(false);
 	const { locations } = getServices();

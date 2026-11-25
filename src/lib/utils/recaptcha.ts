@@ -1,4 +1,4 @@
-import { readPublicConfig } from '$lib/config/public';
+import { readPublicConfig } from '#lib/config/public.ts';
 
 declare global {
 	interface Window {

@@ -1,6 +1,6 @@
 import { createRawSnippet } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { renderWithServices } from '$lib/testing/render';
+import { renderWithServices } from '#lib/testing/render.ts';
 import OverviewSection from './OverviewSection.svelte';
 
 const children = createRawSnippet(() => ({ render: () => '<p class="probe-body">Body</p>' }));

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CwDropdown, CwInput } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
 	import {
 		MAX_TIMED_RELAY_SECONDS,
 		buildRelayPayload,

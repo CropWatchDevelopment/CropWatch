@@ -11,10 +11,10 @@
 // push on, or refreshing it, only ever touches the signed-in account's own
 // subscription, and logging out changes nothing: alerts keep arriving until
 // the person turns them off from their device list.
-import { browser } from '$app/environment';
-import { readFirebaseConfig } from '$lib/config/firebase';
-import type { PushRepository } from '$lib/api/repositories/push.repository';
-import { isInstalledApp, isIosDevice } from '$lib/pwa/platform';
+import { browser } from '$app/env';
+import { readFirebaseConfig } from '#lib/config/firebase.ts';
+import type { PushRepository } from '#lib/api/repositories/push.repository.ts';
+import { isInstalledApp, isIosDevice } from '#lib/pwa/platform.ts';
 import { describeDevice, pushDeviceId } from './push-device';
 
 const PUSH_SW_URL = '/push-sw.js';

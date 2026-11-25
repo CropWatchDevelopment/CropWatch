@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { getLocale, overwriteGetLocale } from '$lib/paraglide/runtime.js';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale, overwriteGetLocale } from '#lib/paraglide/runtime.js';
 import {
 	buildReportDataPullIntervalOptions,
 	DEFAULT_REPORT_DATA_PULL_INTERVAL,

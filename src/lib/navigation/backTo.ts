@@ -16,7 +16,10 @@
  * @param url       The current page URL (`page.url`).
  * @param fallback  App-relative destination to use when no `backTo` is present.
  */
-export function backHref(url: URL, fallback: string): string {
+export function backHref(
+	url: { readonly searchParams: Pick<URLSearchParams, 'get'> },
+	fallback: string
+): string {
 	const backTo = url.searchParams.get('backTo');
 	if (!backTo) return fallback;
 

@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount, type Component, type ComponentProps } from 'svelte';
-import type { AppContext } from '$lib/appContext.svelte';
-import type { AppServices } from '$lib/services/app-services';
+import type { AppContext } from '#lib/appContext.svelte.ts';
+import type { AppServices } from '#lib/services/app-services.ts';
 import { createMockServices, type MockServices } from './mock-services';
 import TestHarness, { type HarnessHandles } from './TestHarness.svelte';
 

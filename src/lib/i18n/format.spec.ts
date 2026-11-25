@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getLocale, type Locale } from '$lib/paraglide/runtime';
+import { getLocale, type Locale } from '#lib/paraglide/runtime.js';
 import {
 	formatCurrency,
 	formatCwDuration,
@@ -13,8 +13,8 @@ import {
 
 // The active Paraglide locale is the base locale (ja) in tests; a test switches
 // it by stubbing getLocale, and afterEach puts the real one back.
-vi.mock('$lib/paraglide/runtime', async (importOriginal) => {
-	const runtime = await importOriginal<typeof import('$lib/paraglide/runtime')>();
+vi.mock('#lib/paraglide/runtime.js', async (importOriginal) => {
+	const runtime = await importOriginal<typeof import('#lib/paraglide/runtime.js')>();
 	return { ...runtime, getLocale: vi.fn(runtime.getLocale) };
 });
 

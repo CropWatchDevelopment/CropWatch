@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { AppNotice } from '$lib/components/layout';
-	import { getPermissionLevelOptions } from '$lib/i18n/options';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import { getPermissionLevelOptions } from '#lib/i18n/options.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
 	import { CwButton, CwCard, CwDropdown, CwSeparator } from '@cropwatchdevelopment/cwui';
 
 	const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

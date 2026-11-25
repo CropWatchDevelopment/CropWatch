@@ -1,5 +1,5 @@
-import { RELAY_STATE_ICONS } from '$lib/devices/relay-labels';
-import { m } from '$lib/paraglide/messages.js';
+import { RELAY_STATE_ICONS } from '#lib/devices/relay-labels.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 export type SensorFormat = 'number' | 'integer' | 'boolean';
 

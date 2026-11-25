@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { AppPage } from '$lib/components/layout';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import { tick } from 'svelte';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, refreshAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { CwButton, CwCard, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
 	import DetailsStep from './DetailsStep.svelte';
 	import IdentifyStep from './IdentifyStep.svelte';
 	import RegisterProgress from './RegisterProgress.svelte';
 	import ReviewStep from './ReviewStep.svelte';
 	import { DeviceSetupFlow } from './device-setup-flow.svelte';
-	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
-	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
-	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
+	import AddGroupDialog from '#lib/components/groups/AddGroupDialog.svelte';
+	import ManageGroupsDialog from '#lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '#lib/components/groups/groups-controller.svelte.ts';
 	import { regionLabel } from './setup-messages';
 	import type { PageProps } from './$types';
 
@@ -61,7 +61,7 @@
 	// A finished setup used a license: refresh the count.
 	$effect(() => {
 		if (flow.step === 'done') {
-			invalidateAll().catch((error: unknown) =>
+			refreshAll().catch((error: unknown) =>
 				console.error('Failed to reload the available licenses:', error)
 			);
 		}
@@ -88,7 +88,7 @@
 	// The chosen license was taken meanwhile: reload the free ones first.
 	async function changeLicense(): Promise<void> {
 		try {
-			await invalidateAll();
+			await refreshAll();
 		} catch (error) {
 			licensesNotReloaded(error);
 		} finally {
@@ -100,7 +100,7 @@
 	async function addAnother(): Promise<void> {
 		addingAnother = true;
 		try {
-			await invalidateAll();
+			await refreshAll();
 		} catch (error) {
 			licensesNotReloaded(error);
 		} finally {
@@ -162,8 +162,10 @@
 								stroke="currentColor"
 								stroke-width="3"
 								stroke-linecap="round"
-								stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg
+								stroke-linejoin="round"
 							>
+								<path d="M20 6 9 17l-5-5"></path>
+							</svg>
 						{:else}
 							{index + 1}
 						{/if}
@@ -209,7 +211,7 @@
 								location_id: locationId,
 								dev_eui: flow.result?.dev_eui ?? flow.devEui.value
 							}),
-							{ invalidateAll: true }
+							{ refreshAll: true }
 						)}
 					{addingAnother}
 					onaddanother={() => void addAnother()}

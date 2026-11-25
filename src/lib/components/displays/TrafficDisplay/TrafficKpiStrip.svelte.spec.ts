@@ -1,8 +1,8 @@
 import { CW_EMPTY_VALUE, formatCwMeasurement } from '@cropwatchdevelopment/cwui';
 import { afterEach, describe, expect, it } from 'vitest';
-import { formatNumber } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { formatNumber } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import {
 	buildHourlyTrafficRows,
 	computeTrafficKpis,

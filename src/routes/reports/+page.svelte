@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { backHref } from '$lib/navigation/backTo';
+	import { backHref } from '#lib/navigation/backTo.ts';
 	import { resolve } from '$app/paths';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import Icon from '$lib/components/Icon.svelte';
-	import { AppPage } from '$lib/components/layout';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import ReportingUpsellNotice from './ReportingUpsellNotice.svelte';
-	import type { ReportTemplateDto } from '$lib/api/api.dtos';
+	import type { ReportTemplateDto } from '#lib/api/api.dtos.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -17,12 +17,12 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import { sortByColumn } from '$lib/utils/sortByColumn';
-	import ADD_ICON from '$lib/images/icons/add.svg';
-	import EDIT_ICON from '$lib/images/icons/edit.svg';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import { sortByColumn } from '#lib/utils/sortByColumn.ts';
+	import ADD_ICON from '#lib/images/icons/add.svg';
+	import EDIT_ICON from '#lib/images/icons/edit.svg';
 	import DeleteReportTemplateDialog from './DeleteReportTemplateDialog.svelte';
 	import ViewReportHistoryDialog from './ViewReportHistoryDialog.svelte';
 	import type { PageProps } from './$types';
@@ -72,7 +72,7 @@
 
 			return { rows, total };
 		} catch (error) {
-			throw new Error(apiErrorMessage(error, m.reports_new_load_failed()));
+			throw new Error(apiErrorMessage(error, m.reports_new_load_failed()), { cause: error });
 		} finally {
 			loading = false;
 		}

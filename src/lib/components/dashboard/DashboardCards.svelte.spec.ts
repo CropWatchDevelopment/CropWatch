@@ -6,13 +6,13 @@ import type {
 	DashboardLocationPage,
 	DashboardRow,
 	PreferencesDto
-} from '$lib/api/api.dtos';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { labelFor } from '$lib/sensor-labels';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
-import { formatSensorMeasurement } from '$lib/units';
+} from '#lib/api/api.dtos.ts';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { labelFor } from '#lib/sensor-labels/index.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { formatSensorMeasurement } from '#lib/units/index.ts';
 import DashboardCards from './DashboardCards.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { RelayCommandEntryDto, RelayStateChangeEntryDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+import type { RelayCommandEntryDto, RelayStateChangeEntryDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { relayHistoryEventLabel, relayHistoryResult, relayStateLabel } from './relay-labels';
 
 function command(overrides: Partial<RelayCommandEntryDto> = {}): RelayCommandEntryDto {

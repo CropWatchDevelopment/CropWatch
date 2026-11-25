@@ -1,14 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { renderWithServices } from '$lib/testing/render';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import Analytics from './Analytics.svelte';
 
 // The Vite dev server, with a measurement id configured anyway.
-const runtime = vi.hoisted(() => ({ afterNavigate: [] as Array<() => Promise<void> | void> }));
-vi.mock('$app/environment', () => ({ browser: true, building: false, version: 'test', dev: true }));
-vi.mock('$env/dynamic/public', () => ({ env: { PUBLIC_GA_MEASUREMENT_ID: 'G-TEST123' } }));
+const runtime = vi.hoisted(() => ({
+	afterNavigate: [] as Array<(navigation: { shallow: boolean }) => Promise<void> | void>
+}));
+vi.mock('$app/env', () => ({ browser: true, building: false, version: 'test', dev: true }));
+vi.mock('#lib/config/public-env.ts', () => ({
+	publicEnv: { PUBLIC_GA_MEASUREMENT_ID: 'G-TEST123' }
+}));
 vi.mock('$app/navigation', () => ({
-	afterNavigate: (callback: () => Promise<void> | void) => runtime.afterNavigate.push(callback)
+	afterNavigate: (callback: (navigation: { shallow: boolean }) => Promise<void> | void) =>
+		runtime.afterNavigate.push(callback)
 }));
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/') } }));
 
@@ -17,7 +22,7 @@ const gtag = vi.hoisted(() => ({
 	trackPageView: vi.fn(),
 	setAnalyticsUser: vi.fn()
 }));
-vi.mock('$lib/analytics/gtag', () => gtag);
+vi.mock('#lib/analytics/gtag.ts', () => gtag);
 
 let view: ReturnType<typeof renderWithServices> | null = null;
 
@@ -32,7 +37,7 @@ describe('Analytics on the dev server', () => {
 			app: { session: { sub: 'user-1', email: 'a@example.com', exp: 4102444800 } as IJWT }
 		});
 
-		for (const callback of runtime.afterNavigate) await callback();
+		for (const callback of runtime.afterNavigate) await callback({ shallow: false });
 
 		expect(runtime.afterNavigate).toHaveLength(1);
 		expect(gtag.initAnalytics).not.toHaveBeenCalled();

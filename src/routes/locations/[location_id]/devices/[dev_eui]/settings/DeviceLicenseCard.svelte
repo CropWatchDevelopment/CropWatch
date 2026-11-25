@@ -2,8 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppActionRow, AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwChip, CwDialog } from '@cropwatchdevelopment/cwui';
 	type DeviceLicenseSummary = { id: number; seatIndex: number; manual: boolean };
 

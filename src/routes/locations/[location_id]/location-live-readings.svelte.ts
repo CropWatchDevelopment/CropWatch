@@ -4,8 +4,8 @@ import {
 	type CwDeviceFreshness,
 	type CwDeviceRefreshScheduler
 } from '@cropwatchdevelopment/cwui';
-import type { DevicePrimaryDataDto } from '$lib/api/api.dtos';
-import type { DashboardRepository } from '$lib/api/repositories/dashboard.repository';
+import type { DevicePrimaryDataDto } from '#lib/api/api.dtos.ts';
+import type { DashboardRepository } from '#lib/api/repositories/dashboard.repository.ts';
 import { readingTime, toFiniteNumber } from './location-overview';
 
 export interface LocationLiveReadingsOptions {

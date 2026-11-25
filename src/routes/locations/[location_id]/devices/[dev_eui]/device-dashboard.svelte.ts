@@ -5,19 +5,19 @@ import {
 	normalizeCwUploadIntervalMinutes,
 	type CwToastApi
 } from '@cropwatchdevelopment/cwui';
-import { ApiError, readApiErrorMessage } from '$lib/api/api-error';
-import type { RelayRepository } from '$lib/api/repositories/relays.repository';
-import type { TelemetryRepository } from '$lib/api/repositories/telemetry.repository';
-import { isRelayTable } from '$lib/config/deviceTables';
-import { canManage, PermissionLevel } from '$lib/constants/permissions';
+import { ApiError, readApiErrorMessage } from '#lib/api/api-error.ts';
+import type { RelayRepository } from '#lib/api/repositories/relays.repository.ts';
+import type { TelemetryRepository } from '#lib/api/repositories/telemetry.repository.ts';
+import { isRelayTable } from '#lib/config/deviceTables.ts';
+import { canManage, PermissionLevel } from '#lib/constants/permissions.ts';
 import {
 	hasConfirmingRelay,
 	type RelayStateSnapshot,
 	type RelayVerificationResult,
 	RelayStateManager
-} from '$lib/devices/relay-control';
-import { type RelayNumber, type RelayTargetState } from '$lib/devices/relay-types';
-import { m } from '$lib/paraglide/messages.js';
+} from '#lib/devices/relay-control.ts';
+import { type RelayNumber, type RelayTargetState } from '#lib/devices/relay-types.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type { PageData } from './$types';
 import {
 	DEFAULT_RANGE_SELECTION,

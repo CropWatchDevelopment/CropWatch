@@ -1,8 +1,8 @@
-import type { ActionResult } from '@sveltejs/kit';
+import type { ActionResult } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import DeviceOwnerPermissionsCard from './DeviceOwnerPermissionsCard.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
@@ -226,7 +226,10 @@ describe('DeviceOwnerPermissionsCard', () => {
 		expect(updateButton(BOB.key)?.getAttribute('aria-busy')).toBeNull();
 
 		const update = vi.fn(async () => {});
-		await after?.({ result: { type: 'success', status: 200 }, update });
+		await after?.({
+			result: { type: 'success', status: 200, location: location.pathname },
+			update
+		});
 		flushSync();
 
 		expect(update).toHaveBeenCalledWith({ reset: false });
@@ -243,9 +246,9 @@ describe('DeviceOwnerPermissionsCard', () => {
 		const update = vi.fn(async () => {
 			throw new Error('update failed');
 		});
-		await expect(after?.({ result: { type: 'failure', status: 400 }, update })).rejects.toThrow(
-			'update failed'
-		);
+		await expect(
+			after?.({ result: { type: 'failure', status: 400, location: location.pathname }, update })
+		).rejects.toThrow('update failed');
 		flushSync();
 
 		expect(updateButton(BOB.key)?.getAttribute('aria-busy')).toBeNull();

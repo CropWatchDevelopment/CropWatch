@@ -1,5 +1,5 @@
-import type { BillingProductsResponse, SubscriptionStateResponse } from '$lib/api/api.dtos';
-import { buildLoginPath } from '$lib/utils/auth-redirect';
+import type { BillingProductsResponse, SubscriptionStateResponse } from '#lib/api/api.dtos.ts';
+import { buildLoginPath } from '#lib/utils/auth-redirect.ts';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 

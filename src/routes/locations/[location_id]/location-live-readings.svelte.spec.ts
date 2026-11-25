@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CwDeviceRefreshOptions, CwDeviceRefreshScheduler } from '@cropwatchdevelopment/cwui';
-import type { DevicePrimaryDataDto } from '$lib/api/api.dtos';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
+import type { DevicePrimaryDataDto } from '#lib/api/api.dtos.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { LocationLiveReadings } from './location-live-readings.svelte';
 
 const SEEN = '2026-10-21T10:00:00.000Z';

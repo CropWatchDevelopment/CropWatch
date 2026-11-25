@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import { AppPage } from '$lib/components/layout';
+	import Icon from '#lib/components/Icon.svelte';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -10,17 +10,17 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { backHref } from '$lib/navigation/backTo';
+	import { backHref } from '#lib/navigation/backTo.ts';
 	import { resolve } from '$app/paths';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { formatDateTime } from '$lib/i18n/format';
-	import CHECK_ICON from '$lib/images/icons/check_circle.svg';
-	import NO_ICON from '$lib/images/icons/no.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import CHECK_ICON from '#lib/images/icons/check_circle.svg';
+	import NO_ICON from '#lib/images/icons/no.svg';
 	import { buildGatewayTableResult, type GatewayTableRow } from './gateway-table';
 
 	let loading = $state(false);
@@ -41,7 +41,7 @@
 
 			return buildGatewayTableResult(rows, query);
 		} catch (error) {
-			throw new Error(apiErrorMessage(error, m.generic_error()));
+			throw new Error(apiErrorMessage(error, m.generic_error()), { cause: error });
 		}
 	}
 </script>

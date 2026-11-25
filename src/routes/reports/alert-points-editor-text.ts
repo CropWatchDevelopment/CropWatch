@@ -1,5 +1,5 @@
-import { getUiLocale } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
+import { getUiLocale } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type { CwAlertPointsEditorText } from '@cropwatchdevelopment/cwui';
 
 export function createReportAlertPointsEditorText(): CwAlertPointsEditorText {

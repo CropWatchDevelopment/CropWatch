@@ -4,7 +4,7 @@
  * Unit tests must never reach a real API, database or third-party service:
  * every `fetch` a test did not fake is refused and fails that test. Fake the
  * HTTP layer with `createFakeFetch` or the repositories with
- * `createMockServices` (see `$lib/testing`).
+ * `createMockServices` (see `#lib/testing`).
  */
 import { afterEach } from 'vitest';
 
@@ -36,3 +36,12 @@ afterEach(() => {
 	const attempts = refused.splice(0);
 	throw new Error(`A test tried to reach the network:\n  ${attempts.join('\n  ')}`);
 });
+
+// In the browser, `$app/env/public` reads its runtime (non-`static`) values from
+// a global that SvelteKit's dev page defines. A browser test has no such page, so
+// give it an empty one: those values read as unset. A spec that needs them mocks
+// `#lib/config/public-env.ts`.
+if (globalThis.window) {
+	const kit = globalThis as { __sveltekit_dev?: { env: Record<string, string> } };
+	kit.__sveltekit_dev ??= { env: {} };
+}

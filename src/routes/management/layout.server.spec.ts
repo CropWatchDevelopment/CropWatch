@@ -1,8 +1,8 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
-import type { MeContextDto } from '$lib/api/api.dtos';
-import { Capability } from '$lib/auth/capabilities';
-import { testEvent } from '$lib/testing/server';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
+import { testEvent } from '#lib/testing/server.ts';
 import { load } from './+layout.server';
 
 type LoadEvent = Parameters<typeof load>[0];

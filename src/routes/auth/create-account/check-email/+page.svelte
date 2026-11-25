@@ -1,18 +1,18 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import '../../login/style.css';
-	import logo from '$lib/images/cropwatch_static.svg';
-	import KEY_ICON from '$lib/images/icons/key.svg';
+	import logo from '#lib/images/cropwatch_static.svg';
+	import KEY_ICON from '#lib/images/icons/key.svg';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { readRedirectPath } from '$lib/utils/auth-redirect';
+	import { readRedirectPath } from '#lib/utils/auth-redirect.ts';
 	import { CwCard } from '@cropwatchdevelopment/cwui';
-	import YOU_ICON from '$lib/images/icons/you.svg';
-	import FORWARD_ICON from '$lib/images/icons/forward.svg';
-	import EYE_ICON from '$lib/images/icons/eye.svg';
-	import EMAIL_ICON from '$lib/images/icons/email.svg';
-	import SPAM_ICON from '$lib/images/icons/spam.svg';
-	import { m } from '$lib/paraglide/messages.js';
+	import YOU_ICON from '#lib/images/icons/you.svg';
+	import FORWARD_ICON from '#lib/images/icons/forward.svg';
+	import EYE_ICON from '#lib/images/icons/eye.svg';
+	import EMAIL_ICON from '#lib/images/icons/email.svg';
+	import SPAM_ICON from '#lib/images/icons/spam.svg';
+	import { m } from '#lib/paraglide/messages.js';
 
 	let redirectPath = $derived(readRedirectPath(page.url.searchParams, ''));
 </script>
@@ -107,8 +107,10 @@
 				id="create-account-check-email-contact-support-link"
 				href="mailto:sayaka@cropwatch.io"
 				rel="external"
-				class="w-full text-center text-sm">{m.auth_check_email_contact_support()}</a
+				class="w-full text-center text-sm"
 			>
+				{m.auth_check_email_contact_support()}
+			</a>
 		</div>
 
 		<a

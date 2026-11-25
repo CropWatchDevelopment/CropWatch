@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { locales, localizeHref } from '$lib/paraglide/runtime';
+	import { locales, localizeHref } from '#lib/paraglide/runtime.js';
 	import './layout.css';
 	import { onDestroy } from 'svelte';
 	import { asset, resolve } from '$app/paths';
@@ -10,33 +10,33 @@
 		CwToastContainer,
 		type CwSideNavMode
 	} from '@cropwatchdevelopment/cwui';
-	import { cwOfflineOverlayLabels } from '$lib/i18n/cwuiLabels';
+	import { cwOfflineOverlayLabels } from '#lib/i18n/cwuiLabels.ts';
 
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import Sidebar from './Sidebar.svelte';
-	import Analytics from '$lib/components/Analytics.svelte';
-	import WhatsNewDialog from '$lib/components/whats-new/WhatsNewDialog.svelte';
-	import PwaDock from '$lib/components/pwa/PwaDock.svelte';
-	import { createAppContext, defaultAppContext, setAppContext } from '$lib/appContext.svelte';
-	import { readPublicConfig } from '$lib/config/public';
-	import { createClientServices } from '$lib/services/client';
-	import { setServices } from '$lib/services/context';
-	import { initForegroundMessages, refreshPushToken } from '$lib/push/push-notifications';
-	import { createSessionExpiryWatcher } from '$lib/utils/session-expiry';
-	import { buildLoginPath } from '$lib/utils/auth-redirect';
-	import { CLIENT_RENEW_LEAD_MS, SESSION_DEPENDENCY } from '$lib/auth/session-renewal';
-	import { APPLE_SPLASH_LINKS } from '$lib/pwa/apple-splash';
+	import Analytics from '#lib/components/Analytics.svelte';
+	import WhatsNewDialog from '#lib/components/whats-new/WhatsNewDialog.svelte';
+	import PwaDock from '#lib/components/pwa/PwaDock.svelte';
+	import { createAppContext, defaultAppContext, setAppContext } from '#lib/appContext.svelte.ts';
+	import { readPublicConfig } from '#lib/config/public.ts';
+	import { createClientServices } from '#lib/services/client.ts';
+	import { setServices } from '#lib/services/context.ts';
+	import { initForegroundMessages, refreshPushToken } from '#lib/push/push-notifications.ts';
+	import { createSessionExpiryWatcher } from '#lib/utils/session-expiry.ts';
+	import { buildLoginPath } from '#lib/utils/auth-redirect.ts';
+	import { CLIENT_RENEW_LEAD_MS, SESSION_DEPENDENCY } from '#lib/auth/session-renewal.ts';
+	import { APPLE_SPLASH_LINKS } from '#lib/pwa/apple-splash.ts';
 	import type {
 		DeviceStatusSummary,
 		PreferencesDto,
 		RuleTemplateDto,
 		MeContextDto
-	} from '$lib/api/api.dtos';
-	import type { IJWT } from '$lib/interfaces/jwt.interface';
+	} from '#lib/api/api.dtos.ts';
+	import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
 	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
-	import type { Profile } from '$lib/interfaces/profile.interface';
+	import type { Profile } from '#lib/interfaces/profile.interface.ts';
 
 	let { children }: LayoutProps = $props();
 
@@ -91,7 +91,7 @@
 	// afterNavigate fires after. With afterNavigate, a page mounting right after
 	// the login redirect saw the stale context (app.accessToken undefined) and
 	// fired its first API calls unauthenticated (401 → dashboard "Retry" state).
-	// $effect.pre also covers invalidate()/invalidateAll() refreshes that change
+	// $effect.pre also covers invalidate()/refreshAll() refreshes that change
 	// page.data without a navigation, which afterNavigate never observed.
 	syncAppFromPageData();
 	$effect.pre(syncAppFromPageData);
@@ -182,15 +182,15 @@
 	     always come back in the default locale instead of the user's language. -->
 	<link rel="manifest" href={resolve('/manifest.webmanifest')} crossorigin="use-credentials" />
 
-	<link rel="icon" href={asset('/icons/favicon.svg')} sizes="any" type="image/svg+xml" />
+	<link rel="icon" href={asset('icons/favicon.svg')} sizes="any" type="image/svg+xml" />
 
-	<link rel="icon" href={asset('/icons/icon-32x32.png')} sizes="32x32" type="image/png" />
+	<link rel="icon" href={asset('icons/icon-32x32.png')} sizes="32x32" type="image/png" />
 
-	<link rel="icon" href={asset('/icons/icon-192x192.png')} sizes="192x192" type="image/png" />
+	<link rel="icon" href={asset('icons/icon-192x192.png')} sizes="192x192" type="image/png" />
 
-	<link rel="shortcut icon" href={asset('/favicon.ico')} />
+	<link rel="shortcut icon" href={asset('favicon.ico')} />
 
-	<link rel="apple-touch-icon" href={asset('/icons/apple-touch-icon.png')} sizes="180x180" />
+	<link rel="apple-touch-icon" href={asset('icons/apple-touch-icon.png')} sizes="180x180" />
 	{#each APPLE_SPLASH_LINKS as splash (splash.path)}
 		<link rel="apple-touch-startup-image" href={asset(splash.path)} media={splash.media} />
 	{/each}

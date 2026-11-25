@@ -2,9 +2,9 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
 	import { CwButton, CwCard, CwChip, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import PushNotificationsCard from './PushNotificationsCard.svelte';
 	import type { PageProps } from './$types';
@@ -74,7 +74,7 @@
 					savingProfile = false;
 					if (result.type === 'success') {
 						toast.add({ tone: 'success', message: m.profile_saved() });
-						await goto(resolve('/account/profile'), { invalidateAll: true });
+						await goto(resolve('/account/profile'), { refreshAll: true });
 						return;
 					}
 					await applyAction(result);
@@ -234,7 +234,7 @@
 							unlinkingLine = false;
 							if (result.type === 'success') {
 								toast.add({ tone: 'success', message: m.line_unlinked() });
-								await goto(resolve('/account/profile'), { invalidateAll: true });
+								await goto(resolve('/account/profile'), { refreshAll: true });
 								return;
 							}
 							await applyAction(result);

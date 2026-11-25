@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import type { CwToastOptions } from '@cropwatchdevelopment/cwui';
-import { ApiError } from '$lib/api/api-error';
+import { ApiError } from '#lib/api/api-error.ts';
 import type {
 	DeviceDto,
 	LineRecipientCandidateDto,
@@ -13,10 +13,10 @@ import type {
 	RuleTemplateAssignmentDto,
 	RuleTemplateCriterionDto,
 	RuleTemplateDto
-} from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { labelFor } from '$lib/sensor-labels';
-import { createMockServices } from '$lib/testing/mock-services';
+} from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { labelFor } from '#lib/sensor-labels/index.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
 import {
 	RuleTemplateFormController,
 	type EditableTemplateAction,

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { AppFormStack } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
+	import { AppFormStack } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
 	import { CwCard, CwInput, CwSwitch } from '@cropwatchdevelopment/cwui';
 	import type { CadenceDraft } from './report-template-form';
 

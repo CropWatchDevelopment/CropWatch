@@ -1,7 +1,7 @@
-import { buildLoginPath } from '$lib/utils/auth-redirect';
+import { buildLoginPath } from '#lib/utils/auth-redirect.ts';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { GroupDto, NetworkRegion } from '$lib/api/api.dtos';
+import type { GroupDto, NetworkRegion } from '#lib/api/api.dtos.ts';
 import type { DeviceTypeOption, LicenseOption } from './device-setup-flow.svelte';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
-import type { FetchFn } from '$lib/api/http/fetch-http-client';
-import type { PublicConfig } from '$lib/config/public';
+import type { FetchFn } from '#lib/api/http/fetch-http-client.ts';
+import type { PublicConfig } from '#lib/config/public.ts';
 
 /**
  * A base URL on the reserved `.test` TLD (RFC 2606): it can never resolve, so a

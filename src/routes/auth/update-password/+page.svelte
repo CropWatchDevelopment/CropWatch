@@ -1,14 +1,14 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import logo from '$lib/images/cropwatch_static.svg';
-	import KEY_ICON from '$lib/images/icons/key.svg';
-	import BACK_ICON from '$lib/images/icons/back.svg';
+	import Icon from '#lib/components/Icon.svelte';
+	import logo from '#lib/images/cropwatch_static.svg';
+	import KEY_ICON from '#lib/images/icons/key.svg';
+	import BACK_ICON from '#lib/images/icons/back.svg';
 	import { resolve } from '$app/paths';
 	import { applyAction, enhance } from '$app/forms';
-	import { isStrongPassword } from '$lib/utils/strongPasswordCheck';
+	import { isStrongPassword } from '#lib/utils/strongPasswordCheck.ts';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
 	import '../login/style.css';
 
 	const toast = useCwToast();

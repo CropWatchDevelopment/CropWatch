@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
-import { testEvent, testLocals, testServerConfig, type TestLocals } from '$lib/testing/server';
-import type { GroupDto } from '$lib/api/api.dtos';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
+import { testEvent, testLocals, testServerConfig, type TestLocals } from '#lib/testing/server.ts';
+import type { GroupDto } from '#lib/api/api.dtos.ts';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

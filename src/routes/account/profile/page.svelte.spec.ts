@@ -1,9 +1,9 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ProfilePage from './+page.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));
@@ -173,11 +173,16 @@ describe('profile page: identity', () => {
 		expect(Object.fromEntries(formData)).toEqual(typed);
 		expect(submitButton('updateProfile')?.disabled).toBe(true);
 
-		await finish({ type: 'success', status: 200, data: { success: true } });
+		await finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
 		expect(submitButton('updateProfile')?.disabled).toBe(false);
 		expect(toasts().at(-1)).toMatchObject({ tone: 'success', message: m.profile_saved() });
-		expect(goto).toHaveBeenCalledWith('/account/profile', { invalidateAll: true });
+		expect(goto).toHaveBeenCalledWith('/account/profile', { refreshAll: true });
 		expect(forms.applyAction).not.toHaveBeenCalled();
 	});
 
@@ -186,6 +191,7 @@ describe('profile page: identity', () => {
 		const failure: ActionResult = {
 			type: 'failure',
 			status: 409,
+			location: location.pathname,
 			data: { error: 'Username taken' }
 		};
 
@@ -195,7 +201,11 @@ describe('profile page: identity', () => {
 		expect(toasts().at(-1)).toMatchObject({ tone: 'danger', message: 'Username taken' });
 		expect(goto).not.toHaveBeenCalled();
 
-		await submit('updateProfile', { type: 'error', status: 500, error: new Error('boom') });
+		await submit('updateProfile', {
+			type: 'error',
+			status: 500,
+			error: { status: 500, message: 'boom' }
+		});
 		expect(toasts()).toHaveLength(1);
 	});
 
@@ -229,6 +239,7 @@ describe('profile page: email', () => {
 		const success: ActionResult = {
 			type: 'success',
 			status: 200,
+			location: location.pathname,
 			data: { emailPending: true, emailMessage: null, email: 'ada@new.example.com' }
 		};
 		const { cancel, finish } = await submit('updateEmail');
@@ -248,11 +259,17 @@ describe('profile page: email', () => {
 		await submit('updateEmail', {
 			type: 'failure',
 			status: 422,
+			location: location.pathname,
 			data: { emailError: 'Address in use' }
 		});
 		expect(toasts().at(-1)).toMatchObject({ tone: 'danger', message: 'Address in use' });
 
-		await submit('updateEmail', { type: 'failure', status: 400, data: {} });
+		await submit('updateEmail', {
+			type: 'failure',
+			status: 400,
+			location: location.pathname,
+			data: {}
+		});
 		expect(toasts()).toHaveLength(1);
 		expect(forms.applyAction).toHaveBeenCalledTimes(2);
 	});
@@ -309,10 +326,15 @@ describe('profile page: LINE', () => {
 
 		const { finish } = await submit('unlinkLine');
 		expect(submitButton('unlinkLine')?.disabled).toBe(true);
-		await finish({ type: 'success', status: 200, data: { lineUnlinked: true } });
+		await finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { lineUnlinked: true }
+		});
 
 		expect(toasts().at(-1)).toMatchObject({ tone: 'success', message: m.line_unlinked() });
-		expect(goto).toHaveBeenCalledWith('/account/profile', { invalidateAll: true });
+		expect(goto).toHaveBeenCalledWith('/account/profile', { refreshAll: true });
 		expect(forms.applyAction).not.toHaveBeenCalled();
 	});
 
@@ -321,6 +343,7 @@ describe('profile page: LINE', () => {
 		const failure: ActionResult = {
 			type: 'failure',
 			status: 500,
+			location: location.pathname,
 			data: { lineError: 'Unlink failed' }
 		};
 
@@ -328,7 +351,12 @@ describe('profile page: LINE', () => {
 		expect(forms.applyAction).toHaveBeenCalledWith(failure);
 		expect(toasts().at(-1)).toMatchObject({ tone: 'danger', message: 'Unlink failed' });
 
-		await submit('unlinkLine', { type: 'failure', status: 500, data: {} });
+		await submit('unlinkLine', {
+			type: 'failure',
+			status: 500,
+			location: location.pathname,
+			data: {}
+		});
 		expect(toasts()).toHaveLength(1);
 		expect(submitButton('unlinkLine')?.disabled).toBe(false);
 	});
@@ -350,6 +378,7 @@ describe('profile page: LINE', () => {
 		const result: ActionResult = {
 			type: 'success',
 			status: 200,
+			location: location.pathname,
 			data: { lineCode: '123456', lineCodeExpiresAt: '2026-10-21T00:10:00Z' }
 		};
 		const { finish } = await submit('lineLinkCode');
@@ -378,11 +407,17 @@ describe('profile page: LINE', () => {
 		await submit('lineLinkCode', {
 			type: 'failure',
 			status: 503,
+			location: location.pathname,
 			data: { lineError: 'Still down' }
 		});
 		expect(toasts().at(-1)).toMatchObject({ tone: 'danger', message: 'Still down' });
 
-		await submit('lineLinkCode', { type: 'failure', status: 503, data: {} });
+		await submit('lineLinkCode', {
+			type: 'failure',
+			status: 503,
+			location: location.pathname,
+			data: {}
+		});
 		expect(toasts()).toHaveLength(1);
 	});
 });

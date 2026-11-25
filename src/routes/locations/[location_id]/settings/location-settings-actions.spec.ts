@@ -1,10 +1,10 @@
 import { isRedirect } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { LocationDto } from '$lib/api/api.dtos';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { formRequest, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { LocationDto } from '#lib/api/api.dtos.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { formRequest, testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import {
 	addPermission,
 	deleteLocation,

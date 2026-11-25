@@ -1,5 +1,5 @@
-import type { LegalDocumentKind } from '$lib/api/api.dtos';
-import { getLocale } from '$lib/paraglide/runtime';
+import type { LegalDocumentKind } from '#lib/api/api.dtos.ts';
+import { getLocale } from '#lib/paraglide/runtime.js';
 import { getUiLocale } from './format';
 
 // Canonical hosts (verified 2026-10-13): both marketing sites are apex-canonical —

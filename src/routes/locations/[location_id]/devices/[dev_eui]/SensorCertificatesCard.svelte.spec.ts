@@ -1,7 +1,7 @@
 import { asset } from '$app/paths';
 import { afterEach, describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import SensorCertificatesCard from './SensorCertificatesCard.svelte';
 
 type Row = {
@@ -118,7 +118,7 @@ describe('SensorCertificatesCard', () => {
 		expect(document.body.textContent).toContain(m.devices_sensor_series_certificate_note());
 		const form = byId<HTMLFormElement>('device-certificates-series-form');
 		expect(form?.getAttribute('action')).toBe(
-			asset('/files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf')
+			asset('files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf')
 		);
 		expect(form?.method).toBe('get');
 		expect(form?.target).toBe('_blank');

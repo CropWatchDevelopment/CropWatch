@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeFetch, jsonResponse } from '$lib/testing/http';
+import { createFakeFetch, jsonResponse } from '#lib/testing/http.ts';
 import { submitPageAction } from './submit-page-action';
 
-const { invalidateAll, forms } = vi.hoisted(() => ({
-	invalidateAll: vi.fn(),
+const { refreshAll, forms } = vi.hoisted(() => ({
+	refreshAll: vi.fn(),
 	// SvelteKit's own deserialize needs a started app for its decoders; the
 	// stand-in parses the plain-JSON ActionResult bodies these tests answer with.
 	forms: { applyAction: vi.fn(), deserialize: vi.fn((text: string) => JSON.parse(text)) }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 vi.mock('$app/forms', () => ({ applyAction: forms.applyAction, deserialize: forms.deserialize }));
 
 /** The page's own action endpoint, answering every POST with `result`. */
@@ -28,12 +28,12 @@ function sentFields(fake: ReturnType<typeof createFakeFetch>) {
 }
 
 beforeEach(() => {
-	invalidateAll.mockResolvedValue(undefined);
+	refreshAll.mockResolvedValue(undefined);
 	forms.applyAction.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	forms.applyAction.mockReset();
 	forms.deserialize.mockClear();
 	vi.unstubAllGlobals();
@@ -78,21 +78,21 @@ describe('submitPageAction', () => {
 
 		await expect(submitPageAction('remove', { user_id: 'user-7' })).resolves.toEqual({ ok: true });
 
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(forms.applyAction).not.toHaveBeenCalled();
 	});
 
 	it('waits for the reload before reporting success', async () => {
 		answer({ type: 'success', status: 200 });
 		let finishReload!: () => void;
-		invalidateAll.mockReturnValue(new Promise<void>((resolve) => (finishReload = resolve)));
+		refreshAll.mockReturnValue(new Promise<void>((resolve) => (finishReload = resolve)));
 
 		let settled = false;
 		const submitted = submitPageAction('remove', { user_id: 'user-7' }).then((outcome) => {
 			settled = true;
 			return outcome;
 		});
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalled());
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalled());
 		await Promise.resolve();
 		expect(settled).toBe(false);
 
@@ -110,7 +110,7 @@ describe('submitPageAction', () => {
 		});
 
 		expect(forms.applyAction).toHaveBeenCalledWith(result);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('returns no message for a failure without a text error', async () => {
@@ -139,7 +139,7 @@ describe('submitPageAction', () => {
 			error: undefined
 		});
 		expect(forms.applyAction).toHaveBeenLastCalledWith(error);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('waits for the result to be applied before returning', async () => {

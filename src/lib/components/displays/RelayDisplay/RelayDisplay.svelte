@@ -16,26 +16,30 @@
 		type CwColumnDef,
 		CwExpandPanel
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import { cwDataTableLabels, cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { createClientTableLoader } from '#lib/utils/clientTableLoader.ts';
 	import {
 		hasConfirmingRelay,
 		MAX_RELAY_PULSE_DURATION_SECONDS,
 		MIN_RELAY_PULSE_DURATION_SECONDS
-	} from '$lib/devices/relay-control';
-	import type { RelayHistoryEntryDto } from '$lib/api/api.dtos';
+	} from '#lib/devices/relay-control.ts';
+	import type { RelayHistoryEntryDto } from '#lib/api/api.dtos.ts';
 	import {
 		relayHistoryEventLabel,
 		relayHistoryResult,
 		relayStateLabel
-	} from '$lib/devices/relay-labels';
-	import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
-	import type { PendingRelayState, RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatDateTime } from '$lib/i18n/format';
-	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-	import { m } from '$lib/paraglide/messages.js';
-	import { canManage } from '$lib/constants/permissions';
+	} from '#lib/devices/relay-labels.ts';
+	import { getRelayState, normalizeRelayTelemetryRow } from '#lib/devices/relay-telemetry.ts';
+	import type {
+		PendingRelayState,
+		RelayNumber,
+		RelayTargetState
+	} from '#lib/devices/relay-types.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { canManage } from '#lib/constants/permissions.ts';
 
 	let {
 		latestData,

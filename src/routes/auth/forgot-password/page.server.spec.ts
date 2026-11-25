@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { formRequest, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import { m } from '#lib/paraglide/messages.js';
+import { formRequest, testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { actions } from './+page.server';
 
 type ActionEvent = Parameters<(typeof actions)['forgotPassword']>[0];

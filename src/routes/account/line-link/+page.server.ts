@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type { Actions, PageServerLoad } from './$types';
 
 const LINE_ACCOUNT_LINK_DIALOG = 'https://access.line.me/dialog/bot/accountLink';
@@ -35,10 +35,12 @@ export const actions: Actions = {
 		}
 
 		// LINE completes the handshake in its own dialog, then fires the
-		// accountLink webhook that binds the accounts server-side.
+		// accountLink webhook that binds the accounts server-side. SvelteKit only
+		// redirects off-site to an allowed origin.
 		redirect(
 			303,
-			`${LINE_ACCOUNT_LINK_DIALOG}?linkToken=${encodeURIComponent(linkToken)}&nonce=${encodeURIComponent(nonce)}`
+			`${LINE_ACCOUNT_LINK_DIALOG}?linkToken=${encodeURIComponent(linkToken)}&nonce=${encodeURIComponent(nonce)}`,
+			{ external: [new URL(LINE_ACCOUNT_LINK_DIALOG).origin] }
 		);
 	}
 };

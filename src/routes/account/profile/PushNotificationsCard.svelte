@@ -5,20 +5,20 @@
 	// anywhere. Fully client-driven: it lives outside the preferences <form>,
 	// and nothing here is part of the account preferences payload.
 	import { onMount } from 'svelte';
-	import { ApiError, apiErrorMessage } from '$lib/api/api-error';
-	import type { PushDeviceDto } from '$lib/api/api.dtos';
-	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatDate, formatDateTime } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
+	import { ApiError, apiErrorMessage } from '#lib/api/api-error.ts';
+	import type { PushDeviceDto } from '#lib/api/api.dtos.ts';
+	import { AppActionRow, AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { formatDate, formatDateTime } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
 	import { CwButton, CwCard, CwChip, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 	import {
 		enablePush,
 		getPushSupport,
 		getThisDeviceId,
 		type PushSupport
-	} from '$lib/push/push-notifications';
+	} from '#lib/push/push-notifications.ts';
 
 	const app = getAppContext();
 	const toast = useCwToast();

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { OverviewDto } from '$lib/api/api.dtos';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { OverviewDto } from '#lib/api/api.dtos.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import OverviewSection from './OverviewSection.svelte';
 	import { donutSegments, DONUT_RADIUS, onlineShare, type DonutRow } from './overview';
 	import { deviceHref } from './overview-links';

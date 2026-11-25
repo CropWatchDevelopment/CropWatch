@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { getServices } from '$lib/services/context';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { getServices } from '#lib/services/context.ts';
 
 	// The announcement release this build's content describes. Bump together
 	// with the whats_new_r{N}_* message keys, then activate via the OPS UPDATE

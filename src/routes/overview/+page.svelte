@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { CwButton, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { AppNotice, AppPage } from '$lib/components/layout';
-	import { formatRelative, getIntlLocale } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import { onAppForeground } from '$lib/utils/onAppForeground';
-	import { reactiveNow } from '$lib/utils/reactive-now.svelte';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import { formatRelative, getIntlLocale } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import { onAppForeground } from '#lib/utils/onAppForeground.ts';
+	import { reactiveNow } from '#lib/utils/reactive-now.svelte.ts';
 	import type { PageProps } from './$types';
 	import ActivityCard from './ActivityCard.svelte';
 	import AttentionCard from './AttentionCard.svelte';

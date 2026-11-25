@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
 

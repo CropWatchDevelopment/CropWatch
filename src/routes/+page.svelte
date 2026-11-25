@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
+	import { browser } from '$app/env';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import Icon from '$lib/components/Icon.svelte';
-	import { AppPage } from '$lib/components/layout';
+	import Icon from '#lib/components/Icon.svelte';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import { CwButton, CwSearchInput } from '@cropwatchdevelopment/cwui';
-	import DashboardCards, { type CardLayout } from '$lib/components/dashboard/DashboardCards.svelte';
-	import DashboardTable from '$lib/components/dashboard/DashboardTable.svelte';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import { cwSearchInputLabels } from '$lib/i18n/cwuiLabels';
-	import TABLE_ICON from '$lib/images/icons/table.svg';
-	import SENSOR_CARDS_ICON from '$lib/images/icons/sensor_cards.svg';
-	import GRID_VIEW_ICON from '$lib/images/icons/grid_view.svg';
-	import MASONRY_VIEW_ICON from '$lib/images/icons/masonary.svg';
+	import DashboardCards, { type CardLayout } from '#lib/components/dashboard/DashboardCards.svelte';
+	import DashboardTable from '#lib/components/dashboard/DashboardTable.svelte';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import { cwSearchInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import TABLE_ICON from '#lib/images/icons/table.svg';
+	import SENSOR_CARDS_ICON from '#lib/images/icons/sensor_cards.svg';
+	import GRID_VIEW_ICON from '#lib/images/icons/grid_view.svg';
+	import MASONRY_VIEW_ICON from '#lib/images/icons/masonary.svg';
 
 	type DashboardView = 'table' | 'cards';
 

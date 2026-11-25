@@ -1,8 +1,9 @@
+import type { AssetPath } from '$app/types';
 import screens from './apple-splash-screens.json';
 
 export interface AppleSplashLink {
-	/** Path of the image under static/. */
-	path: `/${string}`;
+	/** Path of the image under static/, as `asset()` takes it. */
+	path: AssetPath;
 	media: string;
 }
 
@@ -12,12 +13,13 @@ type Orientation = 'portrait' | 'landscape';
 /** The launch image file for a screen, named by its size in device pixels. */
 export function appleSplashPath({ width, height, ratio }: Screen, orientation: Orientation) {
 	const [w, h] = orientation === 'portrait' ? [width, height] : [height, width];
-	return `/splash/apple-splash-${w * ratio}x${h * ratio}.png` as const;
+	return `splash/apple-splash-${w * ratio}x${h * ratio}.png` as const;
 }
 
 function link(screen: Screen, orientation: Orientation): AppleSplashLink {
 	return {
-		path: appleSplashPath(screen, orientation),
+		// apple-splash.spec.ts checks that every one of these files exists in static/.
+		path: appleSplashPath(screen, orientation) as AssetPath,
 		// iOS keeps reporting the portrait device-width/height when rotated.
 		media:
 			`(device-width: ${screen.width}px) and (device-height: ${screen.height}px) and ` +

@@ -10,7 +10,7 @@
  */
 import type { Component } from 'svelte';
 import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import type {
 	CwAboveBelowChartLabels,
 	CwCalendar,

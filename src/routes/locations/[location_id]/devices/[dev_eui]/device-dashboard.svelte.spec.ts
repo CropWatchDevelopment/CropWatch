@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DeviceDto, RelayHistoryEntryDto } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import { PermissionLevel } from '$lib/constants/permissions';
+import type { DeviceDto, RelayHistoryEntryDto } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
 import {
 	RELAY_CHECK_INTERVAL_MS,
 	RELAY_CONFIRMATION_WINDOW_MS,
 	RELAY_FIRST_CHECK_MS,
 	RELAY_STATUS_REQUEST_AFTER_MS
-} from '$lib/devices/relay-control';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
+} from '#lib/devices/relay-control.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { DeviceDashboard, type DeviceDashboardData } from './device-dashboard.svelte';
 import {
 	MAX_RANGE_RECORDS,

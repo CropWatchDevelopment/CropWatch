@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type { Actions, PageServerLoad } from './$types';
 
 const readString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { OverviewDto } from '$lib/api/api.dtos';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { OverviewDto } from '#lib/api/api.dtos.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import OverviewSection from './OverviewSection.svelte';
 
 	interface Props {

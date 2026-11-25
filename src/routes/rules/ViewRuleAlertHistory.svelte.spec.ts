@@ -1,11 +1,11 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { RuleTriggerLogDto } from '$lib/api/api.dtos';
-import { formatCwDuration } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { RuleTriggerLogDto } from '#lib/api/api.dtos.ts';
+import { formatCwDuration } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ViewRuleAlertHistory from './ViewRuleAlertHistory.svelte';
 
 function entry(overrides: Partial<RuleTriggerLogDto> = {}): RuleTriggerLogDto {

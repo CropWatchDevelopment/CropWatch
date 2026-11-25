@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
-import { formRequest, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import { ApiError } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { formRequest, testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

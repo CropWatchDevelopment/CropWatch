@@ -1,4 +1,4 @@
-import type { OrgRole } from '$lib/api/api.dtos';
+import type { OrgRole } from '#lib/api/api.dtos.ts';
 
 /**
  * Pure mirror of the API's member-management rules

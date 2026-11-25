@@ -4,8 +4,8 @@
   decides when `canConfirm` is true and what `onConfirm` submits.
 -->
 <script lang="ts">
-	import { AppNotice } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CwButton, CwCheckbox, CwDialog, CwInput } from '@cropwatchdevelopment/cwui';
 
 	interface IdentityRow {

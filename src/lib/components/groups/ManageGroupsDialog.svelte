@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { CwButton, CwDialog, CwInput } from '@cropwatchdevelopment/cwui';
-	import Icon from '$lib/components/Icon.svelte';
-	import EDIT_ICON from '$lib/images/icons/edit.svg';
-	import TRASH_ICON from '$lib/images/icons/trash.svg';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { GroupDto } from '$lib/api/api.dtos';
+	import Icon from '#lib/components/Icon.svelte';
+	import EDIT_ICON from '#lib/images/icons/edit.svg';
+	import TRASH_ICON from '#lib/images/icons/trash.svg';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { GroupDto } from '#lib/api/api.dtos.ts';
 	import { GROUP_NAME_MAX_LENGTH, type GroupsController } from './groups-controller.svelte';
 
 	interface Props {

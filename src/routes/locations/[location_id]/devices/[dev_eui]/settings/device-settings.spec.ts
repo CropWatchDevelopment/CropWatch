@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { DeviceDto, LocationDto } from '$lib/api/api.dtos';
-import { PermissionLevel } from '$lib/constants/permissions';
-import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
-import { m } from '$lib/paraglide/messages.js';
+import type { DeviceDto, LocationDto } from '#lib/api/api.dtos.ts';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
+import { TTI_DEVICE_ID_MAX_LENGTH } from '#lib/devices/tti-device-id.ts';
+import { m } from '#lib/paraglide/messages.js';
 import {
 	buildLocationOwnerIdentityMap,
 	buildSensorCertificateRows,

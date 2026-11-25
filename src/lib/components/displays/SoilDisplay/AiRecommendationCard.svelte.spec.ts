@@ -4,18 +4,18 @@ import type {
 	AiFindingTextDto,
 	AiRecommendationDto,
 	AiRecommendationFindingDto
-} from '$lib/api/api.dtos';
-import { getLocale } from '$lib/paraglide/runtime';
-import { printElement } from '$lib/utils/print-element';
-import { renderWithServices } from '$lib/testing/render';
+} from '#lib/api/api.dtos.ts';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import { printElement } from '#lib/utils/print-element.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import AiRecommendationCard from './AiRecommendationCard.svelte';
 
 // A real print dialog would block the runner.
-vi.mock('$lib/utils/print-element', () => ({ printElement: vi.fn(() => Promise.resolve()) }));
+vi.mock('#lib/utils/print-element.ts', () => ({ printElement: vi.fn(() => Promise.resolve()) }));
 
 // getLocale keeps its real answer (ja in tests) unless a test switches to English.
-vi.mock('$lib/paraglide/runtime', async (importOriginal) => {
-	const runtime = await importOriginal<typeof import('$lib/paraglide/runtime')>();
+vi.mock('#lib/paraglide/runtime.js', async (importOriginal) => {
+	const runtime = await importOriginal<typeof import('#lib/paraglide/runtime.js')>();
 	return { ...runtime, getLocale: vi.fn(runtime.getLocale) };
 });
 

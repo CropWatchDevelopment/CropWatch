@@ -1,4 +1,4 @@
-import { getLocale } from '$lib/paraglide/runtime';
+import { getLocale } from '#lib/paraglide/runtime.js';
 
 type UiLocale = 'en' | 'ja';
 type DateLike = Date | string | number;

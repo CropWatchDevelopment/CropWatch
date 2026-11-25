@@ -1,16 +1,16 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
+import { ApiError } from '#lib/api/api-error.ts';
 import type {
 	CommunicationMethodDto,
 	DeviceDto,
 	LocationDto,
 	ReportFormContextDto,
 	ReportTemplateDto
-} from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+} from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ReportTemplateForm from './ReportTemplateForm.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn(async () => {}) }));

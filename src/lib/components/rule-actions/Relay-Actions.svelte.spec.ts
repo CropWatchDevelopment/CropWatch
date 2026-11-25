@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import RelayActions from './Relay-Actions.svelte';
 import { buildRelayPayload, hexToBase64, MAX_TIMED_RELAY_SECONDS } from './relay-payload';
 

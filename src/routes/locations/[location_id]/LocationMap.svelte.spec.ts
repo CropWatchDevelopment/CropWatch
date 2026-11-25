@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import LocationMap from './LocationMap.svelte';
 
 // A 1×1 transparent PNG, served for every map tile (GSI photo or OpenStreetMap)

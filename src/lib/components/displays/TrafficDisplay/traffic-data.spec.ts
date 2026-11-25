@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDateTime, formatNumber } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
+import { formatDate, formatDateTime, formatNumber } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
 import {
 	buildDailyTrafficSummaries,
 	buildHourlyTrafficRows,

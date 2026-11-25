@@ -1,20 +1,23 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import '../login/style.css';
-	import logo from '$lib/images/cropwatch_static.svg';
-	import KEY_ICON from '$lib/images/icons/key.svg';
-	import PERSON_ADD_ICON from '$lib/images/icons/person_add.svg';
+	import logo from '#lib/images/cropwatch_static.svg';
+	import KEY_ICON from '#lib/images/icons/key.svg';
+	import PERSON_ADD_ICON from '#lib/images/icons/person_add.svg';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { runRecaptchaAction, warmupRecaptcha } from '$lib/utils/recaptcha';
-	import { isStrongPassword, type IPasswordValidationResult } from '$lib/utils/strongPasswordCheck';
+	import { runRecaptchaAction, warmupRecaptcha } from '#lib/utils/recaptcha.ts';
+	import {
+		isStrongPassword,
+		type IPasswordValidationResult
+	} from '#lib/utils/strongPasswordCheck.ts';
 	import { applyAction, enhance } from '$app/forms';
-	import { readRedirectPath } from '$lib/utils/auth-redirect';
+	import { readRedirectPath } from '#lib/utils/auth-redirect.ts';
 	import { CwButton, CwCard, CwInput, CwRadio, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import CreateAccountPasswordFields from './CreateAccountPasswordFields.svelte';
-	import LegalConsentFields from '$lib/components/auth/LegalConsentFields.svelte';
+	import LegalConsentFields from '#lib/components/auth/LegalConsentFields.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
