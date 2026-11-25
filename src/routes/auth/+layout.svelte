@@ -84,10 +84,14 @@
 </section>
 
 <style>
+	/* The scene fills the page's scroll container (.app-shell__main) and grows with
+	   the form, so a form taller than the screen scrolls. A fixed height (it used to
+	   be min-height: 100vh, and could shrink to it) clipped a tall form top and
+	   bottom: on a phone the create-account consents and button were unreachable. */
 	.auth-scene {
 		position: relative;
 		display: flex;
-		min-height: 100vh;
+		flex: 1 0 auto;
 		align-items: center;
 		justify-content: center;
 		overflow: hidden;
@@ -162,6 +166,8 @@
 		position: relative;
 		z-index: 2;
 		width: min(100%, 35rem);
+		/* viewport-fit=cover: keep the last control clear of the iPhone home indicator. */
+		margin-bottom: env(safe-area-inset-bottom, 0px);
 	}
 
 	.auth-locale-switcher {

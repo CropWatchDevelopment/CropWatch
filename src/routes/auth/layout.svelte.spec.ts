@@ -5,10 +5,8 @@ import AuthLayout from './+layout.svelte';
 
 let view: ReturnType<typeof renderWithServices> | null = null;
 
-function render() {
-	const children = createRawSnippet(() => ({
-		render: () => '<p class="page-child">Sign in here</p>'
-	}));
+function render(page = '<p class="page-child">Sign in here</p>') {
+	const children = createRawSnippet(() => ({ render: () => page }));
 	view = renderWithServices(AuthLayout, { props: { children, data: {}, params: {} } as never });
 	return view;
 }
@@ -40,6 +38,17 @@ function particleStyle(particle: HTMLElement) {
 	);
 }
 
+/** Styles `element` like the app's page scroll container (.app-shell__main): a 600px column. */
+function asAppScrollContainer(element: HTMLElement) {
+	Object.assign(element.style, {
+		display: 'flex',
+		flexDirection: 'column',
+		height: '600px',
+		overflow: 'auto'
+	});
+	return element;
+}
+
 afterEach(() => {
 	view?.unmount();
 	view = null;
@@ -62,6 +71,28 @@ describe('auth layout', () => {
 		const content = document.querySelector('.auth-content');
 		expect(content?.className).toContain('relative z-2 w-full md:max-w-md');
 		expect(content?.querySelector('.page-child')?.textContent).toBe('Sign in here');
+	});
+
+	it('grows with a page taller than the screen, so the page scrolls instead of being cut off', () => {
+		render('<div class="page-child" style="height: 1200px">Create account</div>');
+		const scene = document.querySelector<HTMLElement>('section.auth-scene')!;
+		const scroller = asAppScrollContainer(scene.parentElement!);
+
+		expect(scene.getBoundingClientRect().height).toBeGreaterThanOrEqual(1200);
+		expect(scroller.scrollHeight).toBeGreaterThanOrEqual(1200);
+		// Nothing above the page is cut off either.
+		expect(
+			document.querySelector('.page-child')!.getBoundingClientRect().top
+		).toBeGreaterThanOrEqual(scene.getBoundingClientRect().top);
+	});
+
+	it('fills the screen behind a short page', () => {
+		render();
+		const scene = document.querySelector<HTMLElement>('section.auth-scene')!;
+		const scroller = asAppScrollContainer(scene.parentElement!);
+
+		expect(scene.getBoundingClientRect().height).toBe(600);
+		expect(scroller.scrollHeight).toBe(600);
 	});
 
 	it('offers the compact language switcher', () => {
