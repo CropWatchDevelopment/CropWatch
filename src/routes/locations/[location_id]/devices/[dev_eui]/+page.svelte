@@ -137,6 +137,7 @@
 	<div class="device-page">
 		<DeviceDashboardHeader
 			activeRange={dashboard.activeRange}
+			canWriteNotes={data.canWriteNotes}
 			{controlsDisabled}
 			devEui={dashboard.devEui}
 			{exportTimeZone}
@@ -145,6 +146,7 @@
 			lastUpdatedAt={dashboard.lastUpdatedAt}
 			locationId={dashboard.locationId}
 			{locationName}
+			onNoteDeleted={dashboard.reloadRange}
 			onSelectRange={dashboard.selectRange}
 			permissionLevel={dashboard.permissionLevel}
 			{rangeOptions}

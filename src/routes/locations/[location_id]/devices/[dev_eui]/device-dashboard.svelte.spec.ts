@@ -512,6 +512,25 @@ describe('DeviceDashboard refresh scheduler', () => {
 	});
 });
 
+describe('DeviceDashboard reloadRange', () => {
+	it("re-reads the picked range, or today's before one is picked", async () => {
+		const { dashboard, services } = setup(sensorData());
+		services.telemetry.getDeviceDataWithinRange.mockResolvedValue([]);
+
+		await dashboard.reloadRange();
+		expect(dashboard.activeRange).toBe('today');
+
+		await dashboard.selectRange(72);
+		await dashboard.reloadRange();
+
+		const calls = services.telemetry.getDeviceDataWithinRange.mock.calls;
+		expect(calls).toHaveLength(3);
+		const { start, end } = requestedBounds(calls[2][1]);
+		expect(end - start).toBe(72 * HOUR);
+		expect(dashboard.activeRange).toBe(72);
+	});
+});
+
 describe('DeviceDashboard foreground refresh', () => {
 	it('reloads the active range first, then the latest reading', async () => {
 		const { dashboard, services } = setup(sensorData());

@@ -17,6 +17,8 @@
 
 	interface Props {
 		activeRange: RangeSelection | null;
+		/** The API lets the caller add, edit and delete this device's notes. */
+		canWriteNotes: boolean;
 		controlsDisabled: boolean;
 		devEui: string;
 		exportTimeZone: string;
@@ -25,6 +27,8 @@
 		lastUpdatedAt: string | null;
 		locationId: string;
 		locationName: string;
+		/** A note was deleted from the notes history. */
+		onNoteDeleted: () => unknown;
 		onSelectRange: (selection: RangeSelection) => unknown;
 		permissionLevel: number;
 		rangeOptions: TimeRangeOptions[];
@@ -33,6 +37,7 @@
 
 	let {
 		activeRange,
+		canWriteNotes,
 		controlsDisabled,
 		devEui,
 		exportTimeZone,
@@ -41,6 +46,7 @@
 		lastUpdatedAt,
 		locationId,
 		locationName,
+		onNoteDeleted,
 		onSelectRange,
 		permissionLevel,
 		rangeOptions,
@@ -106,9 +112,17 @@
 		</div>
 
 		<div class="device-header__actions">
-			{#if canManage(permissionLevel)}
-				<NotesReviewDialog {devEui} disabled={controlsDisabled} />
+			<!-- Users (level 3) may write and delete notes too, so they get the history to do it in. -->
+			{#if canManage(permissionLevel) || canWriteNotes}
+				<NotesReviewDialog
+					{devEui}
+					{canWriteNotes}
+					disabled={controlsDisabled}
+					onDeleted={onNoteDeleted}
+				/>
+			{/if}
 
+			{#if canManage(permissionLevel)}
 				<CsvExportDialog
 					{devEui}
 					{locationName}

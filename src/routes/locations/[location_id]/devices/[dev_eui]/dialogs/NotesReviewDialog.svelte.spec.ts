@@ -10,7 +10,12 @@ let services: MockServices;
 let view: ReturnType<typeof renderWithServices> | null = null;
 
 function render(
-	props: Partial<{ devEui: string; disabled: boolean }> = {},
+	props: Partial<{
+		devEui: string;
+		disabled: boolean;
+		canWriteNotes: boolean;
+		onDeleted: () => unknown;
+	}> = {},
 	accessToken: string | null = 'jwt-token'
 ) {
 	view = renderWithServices(NotesReviewDialog, {
@@ -46,6 +51,15 @@ const noteTitles = () =>
 
 function open() {
 	byId('device-notes-review-open-button')?.click();
+	flushSync();
+}
+
+const deleteButton = (id: number) => byId(`device-notes-review-row-${id}-delete-button`);
+const cancelButton = (id: number) => byId(`device-notes-review-row-${id}-delete-cancel-button`);
+const confirmButton = (id: number) => byId(`device-notes-review-row-${id}-delete-confirm-button`);
+
+function click(button: HTMLButtonElement | null) {
+	button?.click();
 	flushSync();
 }
 
@@ -104,8 +118,102 @@ describe('notes review dialog', () => {
 			formatDateTime(note(3, 7, 8).created_at, { hour: 'numeric', minute: '2-digit' })
 		);
 		expect(untitled.textContent).toContain(m.display_note_report_excluded());
-		// Notes cannot be deleted from here yet.
-		expect(byId('device-notes-review-row-1-delete-button')?.disabled).toBe(true);
+		// Without the API's can_write_notes there is nothing to delete with.
+		expect(document.querySelector('[id$="-delete-button"]')).toBeNull();
+	});
+
+	it('deletes a note once the user confirms, and drops its day when it was the last one', async () => {
+		getNotes().mockResolvedValue({ data: [note(1, 5, 9), note(2, 5, 14), note(3, 7, 8)] });
+		services.airNotes.deleteAirNote.mockResolvedValue({ message: 'deleted' });
+		const onDeleted = vi.fn();
+		const { toasts } = render({ canWriteNotes: true, onDeleted });
+		open();
+		await vi.waitFor(() => expect(noteTitles()).toHaveLength(3));
+		expect(deleteButton(1)).not.toBeNull();
+		expect(deleteButton(3)).not.toBeNull();
+
+		click(deleteButton(3));
+		expect(text()).toContain(m.display_note_delete_confirm());
+		expect(deleteButton(3)).toBeNull();
+		await vi.waitFor(() => expect(document.activeElement).toBe(cancelButton(3)));
+		expect(services.airNotes.deleteAirNote).not.toHaveBeenCalled();
+
+		click(confirmButton(3));
+
+		await vi.waitFor(() => expect(noteTitles()).toEqual(['Note 1', 'Note 2']));
+		expect(services.airNotes.deleteAirNote).toHaveBeenCalledExactlyOnceWith(3);
+		expect(dayKeys()).toEqual(['2026-10-05']);
+		expect(text()).not.toContain(m.display_note_delete_confirm());
+		expect(toasts().at(-1)).toMatchObject({ tone: 'success', message: m.display_note_deleted() });
+		expect(onDeleted).toHaveBeenCalledOnce();
+	});
+
+	it('asks again after a cancel, and keeps the day while it still has notes', async () => {
+		getNotes().mockResolvedValue({ data: [note(1, 5, 9), note(2, 5, 14)] });
+		services.airNotes.deleteAirNote.mockResolvedValue(null);
+		render({ canWriteNotes: true });
+		open();
+		await vi.waitFor(() => expect(noteTitles()).toHaveLength(2));
+
+		click(deleteButton(1));
+		click(cancelButton(1));
+		expect(text()).not.toContain(m.display_note_delete_confirm());
+		await vi.waitFor(() => expect(document.activeElement).toBe(deleteButton(1)));
+
+		// Only one note asks at a time.
+		click(deleteButton(1));
+		click(deleteButton(2));
+		expect(confirmButton(1)).toBeNull();
+		expect(deleteButton(1)).not.toBeNull();
+
+		// Reopening the dialog starts without a pending question.
+		click(byId('device-notes-review-close-button'));
+		open();
+		await vi.waitFor(() => expect(deleteButton(2)).not.toBeNull());
+		expect(confirmButton(2)).toBeNull();
+
+		click(deleteButton(2));
+		click(confirmButton(2));
+		await vi.waitFor(() => expect(noteTitles()).toEqual(['Note 1']));
+		expect(dayKeys()).toEqual(['2026-10-05']);
+	});
+
+	it('keeps the note and says so when the delete fails, sending it only once', async () => {
+		getNotes().mockResolvedValue({ data: [note(1, 5, 9), note(2, 6, 9)] });
+		let fail!: (error: unknown) => void;
+		services.airNotes.deleteAirNote.mockReturnValue(
+			new Promise((_, reject) => (fail = reject)) as never
+		);
+		const onDeleted = vi.fn();
+		const { toasts } = render({ canWriteNotes: true, onDeleted });
+		open();
+		await vi.waitFor(() => expect(noteTitles()).toHaveLength(2));
+
+		click(deleteButton(1));
+		click(confirmButton(1));
+		// While it runs nothing else can be pressed: not the note's buttons, not another note's Delete.
+		expect(confirmButton(1)?.disabled).toBe(true);
+		expect(cancelButton(1)?.disabled).toBe(true);
+		expect(deleteButton(2)?.disabled).toBe(true);
+		click(confirmButton(1));
+		expect(services.airNotes.deleteAirNote).toHaveBeenCalledOnce();
+
+		const failure = new TypeError('Failed to fetch');
+		fail(failure);
+
+		await vi.waitFor(() =>
+			expect(toasts().at(-1)).toMatchObject({
+				tone: 'danger',
+				message: m.display_note_delete_failed()
+			})
+		);
+		expect(console.error).toHaveBeenCalledWith('Error deleting note:', failure);
+		expect(noteTitles()).toEqual(['Note 1', 'Note 2']);
+		// The question stays, so the user can try again or cancel.
+		expect(confirmButton(1)?.disabled).toBe(false);
+		expect(cancelButton(1)?.disabled).toBe(false);
+		expect(deleteButton(2)?.disabled).toBe(false);
+		expect(onDeleted).not.toHaveBeenCalled();
 	});
 
 	it('filters the notes by title, text, author or time', async () => {
