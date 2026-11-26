@@ -1,3 +1,4 @@
+import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PermissionLevel } from '#lib/constants/permissions.ts';
 import { m } from '#lib/paraglide/messages.js';
@@ -18,9 +19,11 @@ let view: ReturnType<typeof renderWithServices> | null = null;
 
 function render(overrides: Record<string, unknown> = {}) {
 	const onSelectRange = vi.fn();
+	const onNoteDeleted = vi.fn();
 	view = renderWithServices(DeviceDashboardHeader, {
 		props: {
 			activeRange: 'today' as RangeSelection | null,
+			canWriteNotes: false,
 			controlsDisabled: false,
 			devEui: 'DEV-1',
 			exportTimeZone: 'Asia/Tokyo',
@@ -29,6 +32,7 @@ function render(overrides: Record<string, unknown> = {}) {
 			lastUpdatedAt: null,
 			locationId: '8',
 			locationName: 'North field',
+			onNoteDeleted,
 			onSelectRange,
 			permissionLevel: PermissionLevel.ADMIN,
 			rangeOptions: getRangeOptions(),
@@ -38,7 +42,7 @@ function render(overrides: Record<string, unknown> = {}) {
 		services,
 		app: { accessToken: 'jwt-token' }
 	});
-	return { ...view, onSelectRange };
+	return { ...view, onSelectRange, onNoteDeleted };
 }
 
 const byId = (id: string) => document.getElementById(id) as HTMLButtonElement | null;
@@ -113,6 +117,32 @@ describe('device dashboard header', () => {
 		expect(byId('device-csv-export-open-button')).not.toBeNull();
 	});
 
+	it("offers deleting notes only with the API's can_write_notes, and reports a delete", async () => {
+		services.airNotes.getAllAirNotesForMonth.mockResolvedValue({
+			data: [{ id: 5, created_at: new Date().toISOString(), title: 'Pump', note: 'Checked' }]
+		});
+		services.airNotes.deleteAirNote.mockResolvedValue(null);
+		const openNotes = async () => {
+			byId('device-notes-review-open-button')?.click();
+			flushSync();
+			await vi.waitFor(() => expect(text()).toContain('Checked'));
+		};
+
+		render();
+		await openNotes();
+		expect(byId('device-notes-review-row-5-delete-button')).toBeNull();
+		view?.unmount();
+
+		const { onNoteDeleted } = render({ canWriteNotes: true });
+		await openNotes();
+		byId('device-notes-review-row-5-delete-button')?.click();
+		flushSync();
+		byId('device-notes-review-row-5-delete-confirm-button')?.click();
+
+		await vi.waitFor(() => expect(onNoteDeleted).toHaveBeenCalledOnce());
+		expect(services.airNotes.deleteAirNote).toHaveBeenCalledWith(5);
+	});
+
 	it('shows the notes and exports to managers, and the settings to admins only', () => {
 		render({ permissionLevel: PermissionLevel.MANAGER });
 		expect(byId('device-notes-review-open-button')).not.toBeNull();
@@ -127,6 +157,12 @@ describe('device dashboard header', () => {
 		expect(byId('device-csv-export-open-button')).toBeNull();
 		expect(byId('device-header-settings-button')).toBeNull();
 		expect(byId('device-gateways-open-button')).not.toBeNull();
+		view?.unmount();
+
+		// A User the API lets write notes gets the notes history, where they can delete; no exports.
+		render({ permissionLevel: PermissionLevel.USER, canWriteNotes: true });
+		expect(byId('device-notes-review-open-button')).not.toBeNull();
+		expect(byId('device-csv-export-open-button')).toBeNull();
 	});
 
 	it("opens the device's settings", () => {

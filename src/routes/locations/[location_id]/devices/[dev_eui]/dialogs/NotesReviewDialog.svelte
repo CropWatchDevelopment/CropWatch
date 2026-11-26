@@ -7,9 +7,12 @@
 		CwSwitch,
 		CwSearchInput,
 		CwDateTimeRangePicker,
+		useCwToast,
 		type CwCalendarScrollItem,
 		type CwRangeDateValue
 	} from '@cropwatchdevelopment/cwui';
+	import { tick } from 'svelte';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
 	import {
 		cwCalendarScrollLabels,
 		cwDateTimeRangePickerLabels,
@@ -29,16 +32,28 @@
 	interface Props {
 		devEui: string;
 		disabled?: boolean;
+		/**
+		 * The API lets the caller delete this device's notes (`can_write_notes`).
+		 * Without it there is no Delete button: missing counts as no.
+		 */
+		canWriteNotes?: boolean;
+		/** A note was deleted, so the page can drop it from its own copy of the readings. */
+		onDeleted?: () => unknown;
 	}
 
 	interface DayPlan extends CwCalendarScrollItem {
 		entries: Note[];
 	}
 
-	let { devEui, disabled = false }: Props = $props();
+	let { devEui, disabled = false, canWriteNotes = false, onDeleted }: Props = $props();
 
 	const app = getAppContext();
 	const { airNotes } = getServices();
+	const toast = useCwToast();
+
+	/** The note asking to confirm its delete; one at a time. */
+	let confirmingId = $state<string | null>(null);
+	let deletingId = $state<string | null>(null);
 
 	let open = $state(false);
 	let loading = $state(false);
@@ -201,9 +216,49 @@
 	}
 
 	const openDialog = (): void => {
+		confirmingId = null;
 		open = true;
 		void loadNotesData();
 	};
+
+	/** Focus the element with this id once the note has re-rendered. */
+	async function focusById(id: string): Promise<void> {
+		await tick();
+		document.getElementById(id)?.focus();
+	}
+
+	function askToDelete(entry: Note): void {
+		confirmingId = entry.id;
+		void focusById(`device-notes-review-row-${entry.id}-delete-cancel-button`);
+	}
+
+	function cancelDelete(entry: Note): void {
+		confirmingId = null;
+		void focusById(`device-notes-review-row-${entry.id}-delete-button`);
+	}
+
+	async function deleteNote(entry: Note): Promise<void> {
+		deletingId = entry.id;
+		try {
+			await airNotes.deleteAirNote(Number(entry.id));
+		} catch (error) {
+			console.error('Error deleting note:', error);
+			toast.add({
+				tone: 'danger',
+				message: apiErrorMessage(error, m.display_note_delete_failed())
+			});
+			return;
+		} finally {
+			deletingId = null;
+		}
+
+		confirmingId = null;
+		notes = notes
+			.map((day) => ({ ...day, entries: day.entries.filter((other) => other.id !== entry.id) }))
+			.filter((day) => day.entries.length > 0);
+		toast.add({ tone: 'success', message: m.display_note_deleted() });
+		onDeleted?.();
+	}
 </script>
 
 <CwButton
@@ -279,9 +334,43 @@
 										<p class="notes-review-dialog__note-body">{entry.note}</p>
 									</div>
 
-									<CwButton id={`device-notes-review-row-${entry.id}-delete-button`} disabled>
-										{m.action_delete()}
-									</CwButton>
+									{#if canWriteNotes}
+										{#if confirmingId === entry.id}
+											<div class="notes-review-dialog__confirm" role="alert">
+												<p>{m.display_note_delete_confirm()}</p>
+												<div class="notes-review-dialog__confirm-buttons">
+													<CwButton
+														id={`device-notes-review-row-${entry.id}-delete-cancel-button`}
+														variant="ghost"
+														size="sm"
+														disabled={deletingId === entry.id}
+														onclick={() => cancelDelete(entry)}
+													>
+														{m.action_cancel()}
+													</CwButton>
+													<CwButton
+														id={`device-notes-review-row-${entry.id}-delete-confirm-button`}
+														variant="danger"
+														size="sm"
+														loading={deletingId === entry.id}
+														onclick={() => deleteNote(entry)}
+													>
+														{m.action_delete()}
+													</CwButton>
+												</div>
+											</div>
+										{:else}
+											<CwButton
+												id={`device-notes-review-row-${entry.id}-delete-button`}
+												variant="secondary"
+												size="sm"
+												disabled={deletingId !== null}
+												onclick={() => askToDelete(entry)}
+											>
+												{m.action_delete()}
+											</CwButton>
+										{/if}
+									{/if}
 								</div>
 							</article>
 						{/each}
@@ -381,5 +470,26 @@
 		font-size: 0.875rem;
 		line-height: 1.5;
 		color: var(--cw-tone-danger-text);
+	}
+
+	.notes-review-dialog__confirm {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+	}
+
+	.notes-review-dialog__confirm p {
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--cw-text-primary, #111827);
+	}
+
+	.notes-review-dialog__confirm-buttons {
+		display: flex;
+		gap: 0.5rem;
 	}
 </style>
