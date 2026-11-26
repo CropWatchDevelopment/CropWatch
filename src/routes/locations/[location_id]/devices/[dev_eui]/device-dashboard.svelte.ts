@@ -407,6 +407,9 @@ export class DeviceDashboard {
 		await this.#loadHistoricalData(start, end, selection);
 	};
 
+	/** Re-reads the active range (today's until one is picked), e.g. after a note was deleted. */
+	reloadRange = (): Promise<void> => this.selectRange(this.activeRange ?? DEFAULT_RANGE_SELECTION);
+
 	async #fetchLatestData() {
 		if (!this.authToken || !this.devEui) return null;
 		// The reading is for the device it was asked for: dropped when the page
@@ -484,7 +487,7 @@ export class DeviceDashboard {
 	 */
 	async refreshOnForeground(): Promise<void> {
 		if (!this.authToken || !this.devEui) return;
-		await this.selectRange(this.activeRange ?? DEFAULT_RANGE_SELECTION);
+		await this.reloadRange();
 		await this.#refreshDisplayedData();
 	}
 
