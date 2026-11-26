@@ -4,15 +4,15 @@
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { CwDataTable } from '@cropwatchdevelopment/cwui';
 	import type { CwColumnDef, CwTableQuery, CwTableResult } from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import type { DashboardRow } from '$lib/api/api.dtos';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { isDisplayableColumn, labelFor, sensorStateIcon } from '$lib/sensor-labels';
-	import { formatSensorMeasurement } from '$lib/units';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import { onAppForeground } from '$lib/utils/onAppForeground';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import type { DashboardRow } from '#lib/api/api.dtos.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { isDisplayableColumn, labelFor, sensorStateIcon } from '#lib/sensor-labels/index.ts';
+	import { formatSensorMeasurement } from '#lib/units/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import { onAppForeground } from '#lib/utils/onAppForeground.ts';
 
 	interface Filters {
 		group: string;

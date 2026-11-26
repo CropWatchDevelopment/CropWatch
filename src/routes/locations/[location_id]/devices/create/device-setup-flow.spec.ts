@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { DeviceSetupLookupResult, DeviceSetupResult } from '$lib/api/api.dtos';
-import { parseDeviceQr, type DeviceQrPayload } from '$lib/devices/qr-payload';
-import { createClientServices } from '$lib/services/client';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { DeviceSetupLookupResult, DeviceSetupResult } from '#lib/api/api.dtos.ts';
+import { parseDeviceQr, type DeviceQrPayload } from '#lib/devices/qr-payload.ts';
+import { createClientServices } from '#lib/services/client.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { DeviceSetupFlow, parseCoordinate, toSetupFailure } from './device-setup-flow.svelte';
 
 const lookupResult = (

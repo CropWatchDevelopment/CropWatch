@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import type { RuleFormContextDto } from '$lib/api/api.dtos';
-	import { getServices } from '$lib/services/context';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { AppActionRow, AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import {
 		CwAlertPointsEditor,
 		CwButton,
@@ -17,8 +17,8 @@
 		CwTextArea,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels, cwMultiSelectLabels } from '$lib/i18n/cwuiLabels';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwMultiSelectLabels } from '#lib/i18n/cwuiLabels.ts';
 	import {
 		applyAlertPointsChange,
 		createBlankAlertCriteriaGroup,
@@ -29,9 +29,9 @@
 		RuleTemplateFormController,
 		type RuleTemplateFormMode
 	} from './rule-template-form.svelte';
-	import RelayActions from '$lib/components/rule-actions/Relay-Actions.svelte';
-	import Icon from '$lib/components/Icon.svelte';
-	import ADD_ICON from '$lib/images/icons/add.svg';
+	import RelayActions from '#lib/components/rule-actions/Relay-Actions.svelte';
+	import Icon from '#lib/components/Icon.svelte';
+	import ADD_ICON from '#lib/images/icons/add.svg';
 
 	interface Props {
 		mode: RuleTemplateFormMode;
@@ -52,7 +52,7 @@
 	}: Props = $props();
 
 	const app = getAppContext();
-	const { rules, line, push } = getServices();
+	const { rules, push } = getServices();
 	const alertPointsEditorText = createRuleTemplateAlertPointsEditorText();
 	const form = new RuleTemplateFormController({
 		mode: () => mode,
@@ -61,7 +61,6 @@
 		currentUserId: (() => currentUserId)(),
 		currentUserName: (() => currentUserName)(),
 		rules,
-		line,
 		push,
 		// Only with a session: that token is what the services send.
 		accessToken: () => app.accessToken,
@@ -70,10 +69,6 @@
 	});
 
 	// The recipient options depend on the device selection: refetch when it changes.
-	$effect(() => {
-		form.syncLineRecipients();
-	});
-
 	$effect(() => {
 		form.syncPushRecipients();
 	});
@@ -231,20 +226,6 @@
 						/>
 					{:else if action.actionTypeName === 'LoRaWAN'}
 						<RelayActions devices={form.deviceOptions} bind:resultJson={action.config.recipient} />
-					{:else if action.actionTypeName === 'LINE'}
-						<CwMultiSelect
-							labels={cwMultiSelectLabels()}
-							id={`rule-form-action-${index}-line-recipients`}
-							label={m.line_recipient_label()}
-							placeholder={m.line_recipient_placeholder()}
-							options={form.lineRecipientOptionsFor(action)}
-							value={action.lineRecipients}
-							onchange={(selection) => form.setLineRecipients(action, selection)}
-							searchable
-							searchPlaceholder={m.cwui_table_search()}
-							noResultsLabel={m.cwui_multi_no_matches()}
-							required
-						/>
 					{:else if action.actionTypeName === 'Push'}
 						<CwMultiSelect
 							labels={cwMultiSelectLabels()}

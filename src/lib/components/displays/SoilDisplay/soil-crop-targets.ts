@@ -1,14 +1,14 @@
 import { CW_EMPTY_VALUE, type CwTone } from '@cropwatchdevelopment/cwui';
-import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '$lib/api/api.dtos';
+import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '#lib/api/api.dtos.ts';
 import {
 	cropTarget,
 	judgeReading,
 	type DayPeriod,
 	type TargetStatus
-} from '$lib/agronomy/crop-targets';
-import { formatNumber } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
+} from '#lib/agronomy/crop-targets.ts';
+import { formatNumber } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { formatSensorMeasurement, resolveDisplayUnit } from '#lib/units/index.ts';
 import type { SoilField } from './soil-readings';
 
 /** One line of the crop targets card: the reading now, its target and where it sits. */

@@ -6,8 +6,8 @@ import type {
 	ReportTemplateDto,
 	ReportTemplateRecipientDto,
 	ReportTemplateScheduleDto
-} from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+} from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 import {
 	buildSaveRequest,
 	buildValidationIssues,

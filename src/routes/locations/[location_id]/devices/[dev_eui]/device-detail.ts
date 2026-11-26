@@ -1,13 +1,13 @@
-import { ApiError } from '$lib/api/api-error';
-import type { RelayStateSnapshot, RelayVerificationResult } from '$lib/devices/relay-control';
-import { getRelayState, normalizeRelayTelemetryRow } from '$lib/devices/relay-telemetry';
-import { relayStateLabel } from '$lib/devices/relay-labels';
-import type { RelayNumber, RelayTargetState } from '$lib/devices/relay-types';
-import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
-import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
-import { computeDewPoint } from '$lib/utils/dewPoint';
-import type { CropTypeDetailDto, PreferencesDto, RelayHistoryEntryDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { RelayStateSnapshot, RelayVerificationResult } from '#lib/devices/relay-control.ts';
+import { getRelayState, normalizeRelayTelemetryRow } from '#lib/devices/relay-telemetry.ts';
+import { relayStateLabel } from '#lib/devices/relay-labels.ts';
+import type { RelayNumber, RelayTargetState } from '#lib/devices/relay-types.ts';
+import { isDisplayableColumn, labelFor } from '#lib/sensor-labels/index.ts';
+import { convertSensorValue, resolveDisplayUnit } from '#lib/units/index.ts';
+import { computeDewPoint } from '#lib/utils/dewPoint.ts';
+import type { CropTypeDetailDto, PreferencesDto, RelayHistoryEntryDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { SvelteDate } from 'svelte/reactivity';
 import {
 	metricColor,
@@ -210,7 +210,7 @@ function toChartValue(value: unknown): number | null {
 /**
  * Build one `CwResponsiveLineSeries` per numeric column found in the device's
  * telemetry rows — i.e. every data item the sensor reports. Labels and units
- * come from the shared `$lib/sensor-labels` lookup so they match the dashboard.
+ * come from the shared `#lib/sensor-labels` lookup so they match the dashboard.
  */
 export function buildSensorChartSeries(
 	rows: TelemetryRow[],

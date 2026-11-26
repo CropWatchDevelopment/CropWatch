@@ -3,13 +3,33 @@ import devtoolsJson from 'vite-plugin-devtools-json';
 import tailwindcss from '@tailwindcss/vite';
 import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
+import adapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { paraglideConfig } from './paraglide.config.js';
 
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
-		sveltekit(),
+		sveltekit({
+			preprocess: vitePreprocess(),
+			// Node 20 has no native WebSocket, which @supabase/realtime-js requires at
+			// client-construction time — server-side `createClient()` throws on it.
+			// Keep this in sync with `engines.node` in package.json.
+			adapter: adapter({ runtime: 'nodejs24.x' }),
+			// The service worker is registered by the PWA dock (production builds only).
+			serviceWorker: {
+				register: false
+			},
+			// Installed apps stay open for days: check for a new deploy every few
+			// minutes so the dock can offer a reload (`updated` in $app/state).
+			version: {
+				pollInterval: 5 * 60 * 1000
+			},
+			inspector: {
+				toggleKeyCombo: 'alt-x'
+			}
+		}),
 		devtoolsJson(),
 		// Options (incl. the required outputStructure: 'locale-modules') live in
 		// paraglide.config.js so this and scripts/generate-paraglide.mjs stay in sync.

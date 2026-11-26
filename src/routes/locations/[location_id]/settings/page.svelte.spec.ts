@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LocationOwnerDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { LocationOwnerDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import SettingsPage from './+page.svelte';
 
 const { goto, page } = vi.hoisted(() => ({
@@ -12,7 +12,7 @@ const { goto, page } = vi.hoisted(() => ({
 		data: {}
 	}
 }));
-vi.mock('$app/navigation', () => ({ goto, invalidateAll: vi.fn() }));
+vi.mock('$app/navigation', () => ({ goto, refreshAll: vi.fn() }));
 vi.mock('$app/state', () => ({ page }));
 vi.mock('$app/forms', () => ({
 	applyAction: vi.fn(),

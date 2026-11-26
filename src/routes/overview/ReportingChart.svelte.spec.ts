@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { OverviewDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { OverviewDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ReportingChart from './ReportingChart.svelte';
 
 /** An hour on 15 Oct 2026 in the browser's own time zone, as the API sends it (ISO). */

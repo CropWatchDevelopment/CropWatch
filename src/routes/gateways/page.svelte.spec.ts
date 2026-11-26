@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { GatewayDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { GatewayDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import GatewaysPage from './+page.svelte';
 
 const { goto, appPage } = vi.hoisted(() => ({

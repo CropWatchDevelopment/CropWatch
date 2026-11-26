@@ -12,7 +12,7 @@ import {
 // module injects is captured instead of being connected to the document, and
 // the `window.grecaptcha.enterprise` API the script would define is a stub.
 const runtime = vi.hoisted(() => ({ env: {} as Record<string, string | undefined> }));
-vi.mock('$env/dynamic/public', () => ({ env: runtime.env }));
+vi.mock('#lib/config/public-env.ts', () => ({ publicEnv: runtime.env }));
 
 type EnterpriseApi = NonNullable<NonNullable<Window['grecaptcha']>['enterprise']>;
 

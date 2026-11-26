@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
-import type { OrgChildrenDto, OrganizationDto, OrgParentRequestDto } from '$lib/api/api.dtos';
-import { Capability } from '$lib/auth/capabilities';
-import { requireCapability } from '$lib/server/require-capability';
+import type { OrgChildrenDto, OrganizationDto, OrgParentRequestDto } from '#lib/api/api.dtos.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
+import { requireCapability } from '#lib/server/require-capability.ts';
 import { managementSettingsActions } from './management-settings-actions.server';
 
 export const load: PageServerLoad = async ({ parent, locals }) => {

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import { NAVIGATE_MESSAGE } from '$lib/pwa/pwa-controller.svelte';
+import { NAVIGATE_MESSAGE } from '#lib/pwa/pwa-controller.svelte.ts';
 
 // static/push-sw.js is served as-is (no build step), so it is evaluated here
 // against a fake ServiceWorkerGlobalScope rather than imported.

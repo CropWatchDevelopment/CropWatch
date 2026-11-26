@@ -1,12 +1,12 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LocationOwnerDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { LocationOwnerDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LocationEditPermissions from './LocationEditPermissions.svelte';
 
-const { invalidateAll, page, forms } = vi.hoisted(() => ({
-	invalidateAll: vi.fn(),
+const { refreshAll, page, forms } = vi.hoisted(() => ({
+	refreshAll: vi.fn(),
 	page: {
 		url: new URL('http://localhost/locations/8/settings'),
 		params: { location_id: '8' },
@@ -16,7 +16,7 @@ const { invalidateAll, page, forms } = vi.hoisted(() => ({
 	// stand-in parses the plain-JSON ActionResult bodies these tests answer with.
 	forms: { applyAction: vi.fn(), deserialize: vi.fn((text: string) => JSON.parse(text)) }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 vi.mock('$app/state', () => ({ page }));
 vi.mock('$app/forms', () => ({ applyAction: forms.applyAction, deserialize: forms.deserialize }));
 
@@ -87,7 +87,7 @@ afterEach(() => {
 	view?.unmount();
 	view = null;
 	actionFetch.mockReset();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	forms.applyAction.mockReset();
 	forms.deserialize.mockClear();
 	vi.unstubAllGlobals();
@@ -119,7 +119,7 @@ describe('LocationEditPermissions', () => {
 		chooseLevel(14, m.permission_level_viewer());
 		byId('location-edit-permissions-row-14-save-button')!.click();
 
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalledTimes(1));
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalledTimes(1));
 		const [url, init] = actionFetch.mock.calls[0];
 		expect(url).toBe('?/updateUserPermissionLevel');
 		expect(init?.method).toBe('POST');
@@ -152,7 +152,7 @@ describe('LocationEditPermissions', () => {
 			'permission_level=4&email=bob%40example.com&location_id=8'
 		);
 		expect(forms.applyAction).toHaveBeenCalledWith(result);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(editing(15)).toBe(true);
 	});
 
@@ -199,7 +199,7 @@ describe('LocationEditPermissions', () => {
 			expect.any(SyntaxError)
 		);
 		expect(forms.applyAction).not.toHaveBeenCalled();
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(editing(15)).toBe(true);
 	});
 
@@ -218,7 +218,7 @@ describe('LocationEditPermissions', () => {
 		await vi.waitFor(() => expect(forms.applyAction).toHaveBeenCalledWith(error));
 
 		expect(view.toasts()).toEqual([]);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('cancels editing without saving', async () => {

@@ -1,11 +1,11 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { DeviceSetupLookupResult } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
-import { chooseOption, dropdown } from '$lib/testing/dropdown';
-import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
+import type { DeviceSetupLookupResult } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
+import { GroupsController } from '#lib/components/groups/groups-controller.svelte.ts';
 import DetailsStep from './DetailsStep.svelte';
 import { DeviceSetupFlow, type LicenseOption } from './device-setup-flow.svelte';
 

@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { RuleTriggerLogDto } from '$lib/api/api.dtos';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { AppNotice } from '$lib/components/layout';
-	import Icon from '$lib/components/Icon.svelte';
-	import { getServices } from '$lib/services/context';
+	import type { RuleTriggerLogDto } from '#lib/api/api.dtos.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import { getServices } from '#lib/services/context.ts';
 	import { CwButton, CwChip, CwDialog, CwDropdown, CwDuration } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
-	import { formatCwDuration } from '$lib/i18n/format';
-	import HISTORY_ICON from '$lib/images/icons/history.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { formatCwDuration } from '#lib/i18n/format.ts';
+	import HISTORY_ICON from '#lib/images/icons/history.svg';
 
 	interface Props {
 		templateId: number;

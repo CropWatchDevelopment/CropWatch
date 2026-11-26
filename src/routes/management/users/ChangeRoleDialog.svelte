@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { CwButton, CwDialog, CwDropdown, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { OrgMemberDto, OrgRole } from '$lib/api/api.dtos';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
-	import { orgRoleLabel } from '$lib/auth/org-labels';
-	import { submitPageAction } from '$lib/forms/submit-page-action';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { OrgMemberDto, OrgRole } from '#lib/api/api.dtos.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { orgRoleLabel } from '#lib/auth/org-labels.ts';
+	import { submitPageAction } from '#lib/forms/submit-page-action.ts';
 
 	let {
 		open = $bindable(false),

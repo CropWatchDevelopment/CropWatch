@@ -1,9 +1,9 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
-import { getRecaptchaStatus, resetRecaptchaFailureState } from '$lib/utils/recaptcha';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { getRecaptchaStatus, resetRecaptchaFailureState } from '#lib/utils/recaptcha.ts';
 import ForgotPasswordPage from './+page.svelte';
 
 // Boundaries: the SvelteKit runtime (env, page URL, form enhancement) and
@@ -13,7 +13,7 @@ const runtime = vi.hoisted(() => ({
 	env: { PUBLIC_RECAPTCHA_SITE_KEY: 'test-site-key' },
 	page: { url: new URL('http://localhost/auth/forgot-password'), params: {}, data: {} }
 }));
-vi.mock('$env/dynamic/public', () => ({ env: runtime.env }));
+vi.mock('#lib/config/public-env.ts', () => ({ publicEnv: runtime.env }));
 vi.mock('$app/state', () => ({ page: runtime.page }));
 
 // `use:enhance` without the network: the mock keeps the form's submit
@@ -222,7 +222,12 @@ describe('forgot password page', () => {
 		expect(submitButton().textContent?.trim()).toBe(m.auth_sending());
 		expect(submitButton().querySelector('[role="img"]')).toBeNull();
 
-		const result: ActionResult = { type: 'success', status: 200, data: { success: true } };
+		const result: ActionResult = {
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		};
 		await finish(result);
 
 		expect(forms.applyAction).toHaveBeenCalledWith(result);
@@ -236,6 +241,7 @@ describe('forgot password page', () => {
 		const result: ActionResult = {
 			type: 'failure',
 			status: 500,
+			location: location.pathname,
 			data: { message: m.auth_login_failed() }
 		};
 
@@ -251,8 +257,12 @@ describe('forgot password page', () => {
 	it('only applies a failure without a message, or an unexpected error', async () => {
 		const { toasts } = render();
 
-		await (await submit()).finish({ type: 'failure', status: 400, data: {} });
-		await (await submit()).finish({ type: 'error', status: 500, error: new Error('boom') });
+		await (
+			await submit()
+		).finish({ type: 'failure', status: 400, location: location.pathname, data: {} });
+		await (
+			await submit()
+		).finish({ type: 'error', status: 500, error: { status: 500, message: 'boom' } });
 
 		expect(toasts()).toEqual([]);
 		expect(forms.applyAction).toHaveBeenCalledTimes(2);

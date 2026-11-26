@@ -1,14 +1,14 @@
-import { apiErrorMessage } from '$lib/api/api-error';
-import type { DeviceSubscriptionState } from '$lib/api/api.dtos';
-import type { BillingRepository } from '$lib/api/repositories/billing.repository';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage } from '#lib/api/api-error.ts';
+import type { DeviceSubscriptionState } from '#lib/api/api.dtos.ts';
+import type { BillingRepository } from '#lib/api/repositories/billing.repository.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type { CwToastApi } from '@cropwatchdevelopment/cwui';
 
 export interface BillingControllerDeps {
 	billing: BillingRepository;
 	toast: Pick<CwToastApi, 'add'>;
-	/** Reloads the page data after a change (SvelteKit's `invalidateAll`). */
-	invalidateAll: () => Promise<void>;
+	/** Reloads the page data after a change (SvelteKit's `refreshAll`). */
+	refreshAll: () => Promise<void>;
 	/** Sends the browser to a Stripe page (Checkout or the billing portal), leaving the app. */
 	redirect: (url: string) => void;
 	/** The device subscription in the current page data. */
@@ -64,7 +64,7 @@ export class BillingController {
 	}
 
 	async #refresh(): Promise<void> {
-		await this.#deps.invalidateAll();
+		await this.#deps.refreshAll();
 		this.addQty = '1';
 	}
 

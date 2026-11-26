@@ -1,9 +1,9 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DeviceQrPayload } from '$lib/devices/qr-payload';
-import type { QrWorkerRequest } from '$lib/devices/qr-worker';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { DeviceQrPayload } from '#lib/devices/qr-payload.ts';
+import type { QrWorkerRequest } from '#lib/devices/qr-worker.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import DeviceQrScanner from './DeviceQrScanner.svelte';
 
 const LABEL =

@@ -1,9 +1,9 @@
-import type { GroupDto } from '$lib/api/api.dtos';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import type { GroupRepository } from '$lib/api/repositories/groups.repository';
-import { m } from '$lib/paraglide/messages.js';
-import { getLocale } from '$lib/paraglide/runtime';
-import { naturalSort } from '$lib/utils/natural-sort';
+import type { GroupDto } from '#lib/api/api.dtos.ts';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import type { GroupRepository } from '#lib/api/repositories/groups.repository.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import { naturalSort } from '#lib/utils/natural-sort.ts';
 
 /** The API's limit on a group name (after trimming). */
 export const GROUP_NAME_MAX_LENGTH = 120;

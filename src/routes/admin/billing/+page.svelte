@@ -2,11 +2,11 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { AdminBillingCustomer } from '$lib/api/api.dtos';
-	import { AppNotice, AppPage } from '$lib/components/layout';
-	import { cwDataTableLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
-	import { sortByColumn } from '$lib/utils/sortByColumn';
+	import type { AdminBillingCustomer } from '#lib/api/api.dtos.ts';
+	import { AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import { cwDataTableLabels, cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { sortByColumn } from '#lib/utils/sortByColumn.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -19,7 +19,7 @@
 		type CwTableResult,
 		CW_EMPTY_VALUE
 	} from '@cropwatchdevelopment/cwui';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import type { SubmitFunction } from '$app/forms';
 	import type { PageProps } from './$types';
 
 	type CustomerRow = AdminBillingCustomer & {

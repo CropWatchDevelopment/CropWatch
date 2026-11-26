@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LocationOwnerDto } from '$lib/api/api.dtos';
+import type { LocationOwnerDto } from '#lib/api/api.dtos.ts';
 import { mapLocationOwnersToPermissionRows } from './location-permission-rows';
 
 describe('mapLocationOwnersToPermissionRows', () => {

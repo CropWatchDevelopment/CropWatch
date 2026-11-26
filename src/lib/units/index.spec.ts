@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
-import type { PreferencesDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+import type { PreferencesDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 import {
 	QUANTITY_BY_FIELD,
 	convertSensorValue,

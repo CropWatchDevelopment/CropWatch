@@ -1,7 +1,7 @@
 import { createRawSnippet } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
 import { page as browserPage } from 'vitest/browser';
-import { renderWithServices } from '$lib/testing/render';
+import { renderWithServices } from '#lib/testing/render.ts';
 import AppActionRow from './AppActionRow.svelte';
 
 const PHONE = { width: 414, height: 896 };
@@ -42,7 +42,8 @@ describe('AppActionRow', () => {
 		expect(style.display).toBe('flex');
 		expect(style.flexDirection).toBe('row');
 		expect(style.flexWrap).toBe('wrap');
-		expect(style.justifyContent).toBe('flex-end');
+		// Newer Chromium reports the computed `flex-end` as `flow-end`.
+		expect(['flex-end', 'flow-end']).toContain(style.justifyContent);
 		expect(style.alignItems).toBe('center');
 	});
 

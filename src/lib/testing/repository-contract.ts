@@ -1,4 +1,4 @@
-import type { AppServices } from '$lib/services/app-services';
+import type { AppServices } from '#lib/services/app-services.ts';
 
 /**
  * The wire contract of every repository method: what it must send to the
@@ -40,10 +40,6 @@ export const REPOSITORY_CONTRACT: RepositoryContractCase[] = [
 	{ repository: 'account', method: 'requestAccountRemoval', args: [{ email: 'ada@example.com' }], expected: { method: 'POST', path: '/account-removal/request', body: { email: 'ada@example.com' }, auth: 'none' } },
 
 	// line
-	{ repository: 'line', method: 'startLineLink', args: [], expected: { method: 'POST', path: '/line/link-start' } },
-	{ repository: 'line', method: 'createLineLinkCode', args: [], expected: { method: 'POST', path: '/line/link-code' } },
-	{ repository: 'line', method: 'unlinkLine', args: [], expected: { method: 'DELETE', path: '/line/link' } },
-	{ repository: 'line', method: 'getLineRecipientCandidates', args: [['A', 'B']], expected: { method: 'GET', path: '/line/recipients?devEuis=A%2CB' } },
 
 	// push
 	{ repository: 'push', method: 'registerPushToken', args: [{ token: 't1', device_id: 'd1' }], expected: { method: 'POST', path: '/push/tokens', body: { token: 't1', device_id: 'd1' } } },

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '$lib/api/api.dtos';
-import { formatNumber } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { formatSensorMeasurement } from '$lib/units';
+import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '#lib/api/api.dtos.ts';
+import { formatNumber } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { formatSensorMeasurement } from '#lib/units/index.ts';
 import { buildCropTargetRows, targetStatusLabel, targetStatusTone } from './soil-crop-targets';
 
 function target(

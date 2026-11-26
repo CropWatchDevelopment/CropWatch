@@ -2,7 +2,7 @@
  * Barrel export for device display components.
  *
  * These are typically NOT imported directly — the registry in
- * `$lib/config/deviceTables.ts` uses dynamic `import()` to lazy-load them.
+ * `#lib/config/deviceTables.ts` uses dynamic `import()` to lazy-load them.
  * This index exists for convenience in tests or stories.
  */
 export { default as AirDisplay } from './AirDisplay/AirDisplay.svelte';

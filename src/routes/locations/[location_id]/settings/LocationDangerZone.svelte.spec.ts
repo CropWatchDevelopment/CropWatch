@@ -1,7 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ActionResult } from '@sveltejs/kit';
-import { m } from '$lib/paraglide/messages.js';
+import type { ActionResult } from '$app/forms';
+import { m } from '#lib/paraglide/messages.js';
 import LocationDangerZone from './LocationDangerZone.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
@@ -234,7 +234,10 @@ describe('LocationDangerZone', () => {
 			throw new Error('update failed');
 		});
 		await expect(
-			submit().callback?.({ result: { type: 'failure', status: 409 }, update })
+			submit().callback?.({
+				result: { type: 'failure', status: 409, location: location.pathname },
+				update
+			})
 		).rejects.toThrow('update failed');
 		flushSync();
 

@@ -4,8 +4,8 @@ import type {
 	CwAlertPointsEditorText,
 	CwAlertPointsValue
 } from '@cropwatchdevelopment/cwui';
-import { m } from '$lib/paraglide/messages.js';
-import { getLocale, overwriteGetLocale } from '$lib/paraglide/runtime.js';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale, overwriteGetLocale } from '#lib/paraglide/runtime.js';
 import {
 	applyAlertPointsChange,
 	areAlertCriteriaGroupsValid,
@@ -17,7 +17,7 @@ import {
 	ensureAlertPointsIncludeReset,
 	hasUnsupportedAlertPointConditions
 } from './rule-template-alert-points';
-import type { RuleTemplateCriterionDto } from '$lib/rules/rule-template.types';
+import type { RuleTemplateCriterionDto } from '#lib/rules/rule-template.types.ts';
 
 describe('rule template alert points adapter', () => {
 	it('creates blank alert points with reset included', () => {

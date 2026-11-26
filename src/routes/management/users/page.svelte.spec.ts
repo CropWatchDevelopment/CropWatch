@@ -1,18 +1,18 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MeContextDto, OrgInviteDto, OrgMemberDto } from '$lib/api/api.dtos';
-import { orgRoleLabel } from '$lib/auth/org-labels';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse, type FakeResponder } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
+import type { MeContextDto, OrgInviteDto, OrgMemberDto } from '#lib/api/api.dtos.ts';
+import { orgRoleLabel } from '#lib/auth/org-labels.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse, type FakeResponder } from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import UsersPage from './+page.svelte';
 
-const { invalidateAll, forms } = vi.hoisted(() => ({
-	invalidateAll: vi.fn(),
+const { refreshAll, forms } = vi.hoisted(() => ({
+	refreshAll: vi.fn(),
 	forms: { applyAction: vi.fn(), deserialize: vi.fn((text: string) => JSON.parse(text)) }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 vi.mock('$app/forms', () => ({ applyAction: forms.applyAction, deserialize: forms.deserialize }));
 
 function member(overrides: Partial<OrgMemberDto>): OrgMemberDto {
@@ -173,7 +173,7 @@ afterEach(() => {
 	view?.unmount();
 	view = null;
 	vi.unstubAllGlobals();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	forms.applyAction.mockReset();
 	forms.deserialize.mockClear();
 });
@@ -348,7 +348,7 @@ describe('management users page: members table', () => {
 
 		await vi.waitFor(() => expect(view.toasts()).toHaveLength(1));
 		expect(sent()).toEqual({ action: '?/reinstate', fields: { user_id: 'user-4' } });
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(view.toasts()).toMatchObject([
 			{ tone: 'success', message: m.management_reinstated_done() }
 		]);
@@ -386,7 +386,7 @@ describe('management users page: members table', () => {
 		await vi.waitFor(() => expect(view.toasts()).toHaveLength(1));
 		expect(view.toasts()).toMatchObject([{ tone: 'danger', message: m.generic_error() }]);
 		await vi.waitFor(() => expect(reinstate().getAttribute('aria-busy')).toBeNull());
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('reinstates one person at a time', async () => {
@@ -619,7 +619,7 @@ describe('management users page: invites', () => {
 			{ tone: 'success', message: m.management_invite_resent() },
 			{ tone: 'success', message: m.management_invite_revoked() }
 		]);
-		expect(invalidateAll).toHaveBeenCalledTimes(2);
+		expect(refreshAll).toHaveBeenCalledTimes(2);
 	});
 
 	it("shows the action's error, or the generic one, when an invite action fails", async () => {
@@ -654,7 +654,7 @@ describe('management users page: invites', () => {
 		await vi.waitFor(() => expect(view.toasts()).toHaveLength(1));
 		expect(view.toasts()).toMatchObject([{ tone: 'danger', message: m.generic_error() }]);
 		await vi.waitFor(() => expect(revoke().getAttribute('aria-busy')).toBeNull());
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('handles one invite action at a time', async () => {

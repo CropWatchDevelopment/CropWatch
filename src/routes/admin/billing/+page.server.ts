@@ -1,7 +1,7 @@
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import type { BillingAdminRepository } from '$lib/api/repositories/billing-admin.repository';
-import { m } from '$lib/paraglide/messages.js';
-import { isStaffEmail } from '$lib/utils/is-staff';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import type { BillingAdminRepository } from '#lib/api/repositories/billing-admin.repository.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { isStaffEmail } from '#lib/utils/is-staff.ts';
 import { fail, redirect, type ActionFailure } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

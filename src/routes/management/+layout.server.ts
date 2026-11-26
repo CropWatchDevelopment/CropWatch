@@ -1,6 +1,6 @@
 import type { LayoutServerLoad } from './$types';
-import { Capability } from '$lib/auth/capabilities';
-import { requireCapability } from '$lib/server/require-capability';
+import { Capability } from '#lib/auth/capabilities.ts';
+import { requireCapability } from '#lib/server/require-capability.ts';
 
 export const load: LayoutServerLoad = async ({ parent }) => {
 	const { orgContext } = await parent();

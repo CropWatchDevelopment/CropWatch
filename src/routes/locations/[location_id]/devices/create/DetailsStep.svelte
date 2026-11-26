@@ -9,16 +9,16 @@
 		CwInput,
 		type CwDateValue
 	} from '@cropwatchdevelopment/cwui';
-	import { AppNotice } from '$lib/components/layout';
+	import { AppNotice } from '#lib/components/layout/index.ts';
 	import {
 		cwDateTimeRangePickerLabels,
 		cwDropdownLabels,
 		cwInputLabels
-	} from '$lib/i18n/cwuiLabels';
-	import { getIntlLocale } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
-	import type { GroupsController } from '$lib/components/groups/groups-controller.svelte';
+	} from '#lib/i18n/cwuiLabels.ts';
+	import { getIntlLocale } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import GroupPicker from '#lib/components/groups/GroupPicker.svelte';
+	import type { GroupsController } from '#lib/components/groups/groups-controller.svelte.ts';
 	import type { DeviceSetupFlow, LicenseOption } from './device-setup-flow.svelte';
 
 	interface Props {

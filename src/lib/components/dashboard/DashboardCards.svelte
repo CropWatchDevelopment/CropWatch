@@ -17,19 +17,19 @@
 		type CwDeviceRefreshResult,
 		type CwDeviceRefreshScheduler
 	} from '@cropwatchdevelopment/cwui';
-	import type { DashboardLocationGroup, DashboardRow } from '$lib/api/api.dtos';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { isDisplayableColumn, labelFor, sensorStateIcon } from '$lib/sensor-labels';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { formatSensorMeasurement } from '$lib/units';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import { cwLocationCardLabels, cwSensorCardLabels } from '$lib/i18n/cwuiLabels';
+	import type { DashboardLocationGroup, DashboardRow } from '#lib/api/api.dtos.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { isDisplayableColumn, labelFor, sensorStateIcon } from '#lib/sensor-labels/index.ts';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { formatSensorMeasurement } from '#lib/units/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import { cwLocationCardLabels, cwSensorCardLabels } from '#lib/i18n/cwuiLabels.ts';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { SvelteMap, SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
-	import { onAppForeground } from '$lib/utils/onAppForeground';
-	import TodayDataNoteDialog from '$lib/components/displays/AirDisplay/dialogs/TodayDataNoteDialog.svelte';
+	import { onAppForeground } from '#lib/utils/onAppForeground.ts';
+	import TodayDataNoteDialog from '#lib/components/displays/AirDisplay/dialogs/TodayDataNoteDialog.svelte';
 
 	interface Filters {
 		group: string;

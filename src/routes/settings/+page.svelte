@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import { AppActionRow, AppFormStack, AppPage } from '$lib/components/layout';
-	import { setLocale } from '$lib/paraglide/runtime';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels, cwThemePickerLabels } from '$lib/i18n/cwuiLabels';
+	import { refreshAll } from '$app/navigation';
+	import { AppActionRow, AppFormStack, AppPage } from '#lib/components/layout/index.ts';
+	import { setLocale } from '#lib/paraglide/runtime.js';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels, cwThemePickerLabels } from '#lib/i18n/cwuiLabels.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -14,7 +14,7 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
-	import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+	import LanguageSwitcher from '#lib/components/LanguageSwitcher.svelte';
 
 	type PreferenceDraft = PageProps['data']['preferences'];
 
@@ -72,7 +72,7 @@
 				await applyAction(result);
 				if (result.type === 'success') {
 					toast.add({ tone: 'success', message: m.settings_saved() });
-					await invalidateAll();
+					await refreshAll();
 				} else if (result.type === 'failure' && typeof result.data?.error === 'string') {
 					toast.add({ tone: 'danger', message: result.data.error });
 				}

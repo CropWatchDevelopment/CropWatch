@@ -3,13 +3,13 @@
 		AiFindingDisplayDto,
 		AiFindingTextDto,
 		AiRecommendationDto
-	} from '$lib/api/api.dtos';
-	import { formatDateTime, getUiLocale } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import Icon from '$lib/components/Icon.svelte';
-	import LIGHTBULB_ICON from '$lib/images/icons/lightbulb.svg';
-	import PRINT_ICON from '$lib/images/icons/print.svg';
-	import { printElement } from '$lib/utils/print-element';
+	} from '#lib/api/api.dtos.ts';
+	import { formatDateTime, getUiLocale } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import Icon from '#lib/components/Icon.svelte';
+	import LIGHTBULB_ICON from '#lib/images/icons/lightbulb.svg';
+	import PRINT_ICON from '#lib/images/icons/print.svg';
+	import { printElement } from '#lib/utils/print-element.ts';
 	import { CwButton, CwCard, CwChip, CwExpandPanel, type CwTone } from '@cropwatchdevelopment/cwui';
 
 	interface Props {
@@ -187,8 +187,11 @@
 								<td data-label={m.devices_ai_report_col_recorded()}>
 									<span class="ai-report__recorded">
 										{#if row.text.value}
-											{row.valuePrefix}<strong>{row.text.value}</strong
-											>{#if row.text.average}{averagePrefix}<strong>{row.text.average}</strong>{/if}
+											{row.valuePrefix}<strong>
+												{row.text.value}
+											</strong>{#if row.text.average}{averagePrefix}<strong>
+													{row.text.average}
+												</strong>{/if}
 										{:else}
 											—
 										{/if}
@@ -220,8 +223,9 @@
 
 				{#if onTarget.length > 0}
 					<p class="ai-report__on-target">
-						<strong>{m.devices_ai_report_on_target({ names: onTarget.join(listSeparator) })}</strong
-						>
+						<strong>
+							{m.devices_ai_report_on_target({ names: onTarget.join(listSeparator) })}
+						</strong>
 					</p>
 				{/if}
 

@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { BillingLicense, CropTypeDto, DeviceDto, LocationDto } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import type { FetchFn } from '$lib/api/http/fetch-http-client';
-import { m } from '$lib/paraglide/messages.js';
-import { readServerConfig, type EnvSource } from '$lib/server/config';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+import type { BillingLicense, CropTypeDto, DeviceDto, LocationDto } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { FetchFn } from '#lib/api/http/fetch-http-client.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { readServerConfig, type EnvSource } from '#lib/server/config.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	formRequest,
 	TEST_JWT,
@@ -13,7 +13,7 @@ import {
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

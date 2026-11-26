@@ -1,10 +1,10 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { AccountRemovalChallengeDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { AccountRemovalChallengeDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import RemoveAccountPage from './+page.svelte';
 
 const FIRST_CHECK: AccountRemovalChallengeDto = { question: '3 + 4', token: 'challenge-1' };

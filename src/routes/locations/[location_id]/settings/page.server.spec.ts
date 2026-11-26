@@ -1,9 +1,9 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
-import type { DevicePrimaryDataDto, LocationDto } from '$lib/api/api.dtos';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { TEST_USER_ID, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import type { DevicePrimaryDataDto, LocationDto } from '#lib/api/api.dtos.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { TEST_USER_ID, testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 import * as settingsActions from './location-settings-actions.server';
 

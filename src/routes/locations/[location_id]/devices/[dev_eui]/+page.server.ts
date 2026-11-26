@@ -1,7 +1,7 @@
-import type { AiRecommendationDto, CropTypeDetailDto, PaginationQuery } from '$lib/api/api.dtos';
-import { ApiError, apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import type { TelemetryRepository } from '$lib/api/repositories/telemetry.repository';
-import { m } from '$lib/paraglide/messages.js';
+import type { AiRecommendationDto, CropTypeDetailDto, PaginationQuery } from '#lib/api/api.dtos.ts';
+import { ApiError, apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import type { TelemetryRepository } from '#lib/api/repositories/telemetry.repository.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 

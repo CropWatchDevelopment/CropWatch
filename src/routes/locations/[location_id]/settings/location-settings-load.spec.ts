@@ -1,9 +1,9 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { createServerServices } from '$lib/server/services';
-import { testPublicConfig } from '$lib/testing/http';
-import { testServerConfig } from '$lib/testing/server';
+import { m } from '#lib/paraglide/messages.js';
+import { createServerServices } from '#lib/server/services.ts';
+import { testPublicConfig } from '#lib/testing/http.ts';
+import { testServerConfig } from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 const OWNER_ID = '11111111-1111-4111-8111-111111111111';

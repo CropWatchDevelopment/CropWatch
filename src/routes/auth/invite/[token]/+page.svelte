@@ -3,12 +3,12 @@
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import logo from '$lib/images/cropwatch_static.svg';
-	import { m } from '$lib/paraglide/messages.js';
-	import { AppNotice } from '$lib/components/layout';
+	import logo from '#lib/images/cropwatch_static.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import { AppNotice } from '#lib/components/layout/index.ts';
 	import { CwButton, CwCard, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { orgRoleLabel } from '$lib/auth/org-labels';
-	import type { OrgRole } from '$lib/api/api.dtos';
+	import { orgRoleLabel } from '#lib/auth/org-labels.ts';
+	import type { OrgRole } from '#lib/api/api.dtos.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -83,7 +83,7 @@
 							submitting = false;
 							if (result.type === 'success') {
 								toast.add({ tone: 'success', message: m.invite_accepted() });
-								await goto(resolve('/'), { invalidateAll: true });
+								await goto(resolve('/'), { refreshAll: true });
 								return;
 							}
 							await applyAction(result);

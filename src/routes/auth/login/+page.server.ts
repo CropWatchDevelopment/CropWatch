@@ -1,5 +1,5 @@
-import { m } from '$lib/paraglide/messages.js';
-import { handleLoginAction } from '$lib/server/auth/login-action';
+import { m } from '#lib/paraglide/messages.js';
+import { handleLoginAction } from '#lib/server/auth/login-action.ts';
 import type { Actions } from './$types';
 
 export const actions: Actions = {

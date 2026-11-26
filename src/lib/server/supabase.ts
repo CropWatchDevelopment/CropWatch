@@ -3,7 +3,7 @@ import {
 	isAuthRetryableFetchError,
 	type SupabaseClient
 } from '@supabase/supabase-js';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
 import type { SupabaseConfig } from './config';
 
 type SupabaseAuth = SupabaseClient['auth'];

@@ -1,4 +1,4 @@
-import type { GatewayDevicesResponseDto } from '$lib/api/api.dtos';
+import type { GatewayDevicesResponseDto } from '#lib/api/api.dtos.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, parent, locals }) => {

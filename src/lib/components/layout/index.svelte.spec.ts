@@ -6,7 +6,7 @@ import AppNotice from './AppNotice.svelte';
 import AppPage from './AppPage.svelte';
 import AppSection from './AppSection.svelte';
 
-describe('$lib/components/layout', () => {
+describe('#lib/components/layout/index.ts', () => {
 	it('exports the five layout components by name', () => {
 		expect({ ...layout }).toEqual({ AppActionRow, AppFormStack, AppNotice, AppPage, AppSection });
 	});

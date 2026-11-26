@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import { SvelteDate } from 'svelte/reactivity';
 	import {
 		CwButton,
@@ -11,18 +11,18 @@
 		CwTextArea,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { isDisplayableColumn, labelFor } from '$lib/sensor-labels';
-	import { formatSensorMeasurement } from '$lib/units';
-	import { AppNotice } from '$lib/components/layout';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { isDisplayableColumn, labelFor } from '#lib/sensor-labels/index.ts';
+	import { formatSensorMeasurement } from '#lib/units/index.ts';
+	import { AppNotice } from '#lib/components/layout/index.ts';
 	import type { Note } from '../interfaces/note.interface';
-	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
-	import NO_ICON from '$lib/images/icons/no.svg';
-	import SAVE_ICON from '$lib/images/icons/save.svg';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
+	import ADD_NOTE_ICON from '#lib/images/icons/note_add.svg';
+	import NO_ICON from '#lib/images/icons/no.svg';
+	import SAVE_ICON from '#lib/images/icons/save.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
 
 	type Props = {
 		devEui: string;

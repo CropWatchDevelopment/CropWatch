@@ -1,4 +1,4 @@
-import type { OverviewDto, OverviewRange } from '$lib/api/api.dtos';
+import type { OverviewDto, OverviewRange } from '#lib/api/api.dtos.ts';
 import { needsFetch, OVERVIEW_REFRESH_MS } from './overview';
 
 /**

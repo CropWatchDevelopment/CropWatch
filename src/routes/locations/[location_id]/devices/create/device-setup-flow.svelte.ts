@@ -1,13 +1,13 @@
-import { ApiError, readApiErrorMessage } from '$lib/api/api-error';
+import { ApiError, readApiErrorMessage } from '#lib/api/api-error.ts';
 import type {
 	DeviceSetupErrorCode,
 	DeviceSetupLookupResult,
 	DeviceSetupRequest,
 	DeviceSetupResult
-} from '$lib/api/api.dtos';
-import type { DeviceRepository } from '$lib/api/repositories/devices.repository';
-import { checkAppKey, checkEui } from '$lib/devices/eui';
-import type { DeviceQrPayload } from '$lib/devices/qr-payload';
+} from '#lib/api/api.dtos.ts';
+import type { DeviceRepository } from '#lib/api/repositories/devices.repository.ts';
+import { checkAppKey, checkEui } from '#lib/devices/eui.ts';
+import type { DeviceQrPayload } from '#lib/devices/qr-payload.ts';
 
 export type SetupStep = 'identify' | 'details' | 'review' | 'registering' | 'done';
 

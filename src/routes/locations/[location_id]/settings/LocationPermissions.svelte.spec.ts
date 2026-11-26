@@ -1,17 +1,17 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ActionResult } from '@sveltejs/kit';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { ActionResult } from '$app/forms';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LocationPermissions from './LocationPermissions.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
 
-const { invalidateAll, forms } = vi.hoisted(() => ({
-	invalidateAll: vi.fn(),
+const { refreshAll, forms } = vi.hoisted(() => ({
+	refreshAll: vi.fn(),
 	forms: { submit: null as Submit | null, applyAction: vi.fn() }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 // `use:enhance` hands its submit function to the mock; tests run it the way
 // SvelteKit does on submit, with the action result of their choosing.
 vi.mock('$app/forms', () => ({
@@ -57,7 +57,7 @@ afterEach(() => {
 	view = null;
 	forms.submit = null;
 	forms.applyAction.mockReset();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 });
 
 describe('LocationPermissions', () => {
@@ -115,6 +115,7 @@ describe('LocationPermissions', () => {
 		const result: ActionResult = {
 			type: 'success',
 			status: 200,
+			location: location.pathname,
 			data: { action: 'addPermission', message: ' Permission created ' }
 		};
 		await callback({ result });
@@ -123,7 +124,7 @@ describe('LocationPermissions', () => {
 		expect(forms.applyAction).toHaveBeenCalledWith(result);
 		expect(view.toasts()).toMatchObject([{ tone: 'success', message: 'Permission created' }]);
 		expect(email().value).toBe('');
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(addButton().getAttribute('aria-busy')).toBeNull();
 	});
 
@@ -131,20 +132,29 @@ describe('LocationPermissions', () => {
 		const view = render();
 		typeEmail('ada@example.com');
 
-		await submit()({ result: { type: 'failure', status: 404, data: { message: 'No such user' } } });
+		await submit()({
+			result: {
+				type: 'failure',
+				status: 404,
+				location: location.pathname,
+				data: { message: 'No such user' }
+			}
+		});
 		flushSync();
 
 		expect(view.toasts()).toMatchObject([{ tone: 'danger', message: 'No such user' }]);
 		expect(email().value).toBe('ada@example.com');
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('stays quiet for results without a message', async () => {
 		const view = render();
 		typeEmail('ada@example.com');
 
-		await submit()({ result: { type: 'failure', status: 400, data: { message: 42 } } });
-		await submit()({ result: { type: 'error', error: new Error('boom') } });
+		await submit()({
+			result: { type: 'failure', status: 400, location: location.pathname, data: { message: 42 } }
+		});
+		await submit()({ result: { type: 'error', error: { status: 500, message: 'boom' } } });
 
 		expect(view.toasts()).toEqual([]);
 		expect(forms.applyAction).toHaveBeenCalledTimes(2);
@@ -155,9 +165,9 @@ describe('LocationPermissions', () => {
 		typeEmail('ada@example.com');
 		forms.applyAction.mockRejectedValue(new Error('navigation failed'));
 
-		await expect(submit()({ result: { type: 'success', status: 200 } })).rejects.toThrow(
-			'navigation failed'
-		);
+		await expect(
+			submit()({ result: { type: 'success', status: 200, location: location.pathname } })
+		).rejects.toThrow('navigation failed');
 		flushSync();
 
 		expect(addButton().getAttribute('aria-busy')).toBeNull();

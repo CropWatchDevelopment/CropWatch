@@ -1,8 +1,8 @@
 import { vi, type Mocked } from 'vitest';
-import type { LibellusConfigurationProblem } from '$lib/server/libellus';
-import type { RecaptchaVerifier } from '$lib/server/recaptcha';
-import type { ServerServices } from '$lib/server/services';
-import type { SupabaseAuthGateway } from '$lib/server/supabase';
+import type { LibellusConfigurationProblem } from '#lib/server/libellus.ts';
+import type { RecaptchaVerifier } from '#lib/server/recaptcha.ts';
+import type { ServerServices } from '#lib/server/services.ts';
+import type { SupabaseAuthGateway } from '#lib/server/supabase.ts';
 import { createMockServices, type MockServices } from './mock-services';
 
 export type MockServerServices = MockServices & {

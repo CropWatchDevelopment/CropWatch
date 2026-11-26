@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { refreshAll } from '$app/navigation';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import Icon from '$lib/components/Icon.svelte';
-	import LOCATION_ICON from '$lib/images/icons/location.svg';
-	import DEVICE_ICON from '$lib/images/icons/device.svg';
-	import SAVE_ICON from '$lib/images/icons/save.svg';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppActionRow, AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import LOCATION_ICON from '#lib/images/icons/location.svg';
+	import DEVICE_ICON from '#lib/images/icons/device.svg';
+	import SAVE_ICON from '#lib/images/icons/save.svg';
+	import { m } from '#lib/paraglide/messages.js';
 	import LocationMap from '../LocationMap.svelte';
 	import {
 		centreOf,
@@ -142,7 +142,7 @@
 					}
 					if (result.type === 'success') {
 						notice = null;
-						await invalidateAll();
+						await refreshAll();
 					}
 				} finally {
 					submitting = false;

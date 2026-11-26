@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { noteAuthor, parseAirNotesResponse } from './air-notes';
 
 /** An API note without its report flag. */

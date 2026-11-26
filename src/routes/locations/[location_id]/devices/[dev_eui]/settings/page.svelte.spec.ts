@@ -1,18 +1,18 @@
-import type { ActionResult } from '@sveltejs/kit';
+import type { ActionResult } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CropTypeDto, GroupDto, MeContextDto } from '$lib/api/api.dtos';
-import type { AppContext } from '$lib/appContext.svelte';
-import { Capability } from '$lib/auth/capabilities';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { cropDisplayName } from '$lib/agronomy/crop-targets';
-import { getIntlLocale } from '$lib/i18n/format';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
-import { chooseOption, dropdown } from '$lib/testing/dropdown';
-import { addGroup, deleteGroup, renameGroup } from '$lib/testing/groups';
-import { testEvent, testLocals } from '$lib/testing/server';
+import type { CropTypeDto, GroupDto, MeContextDto } from '#lib/api/api.dtos.ts';
+import type { AppContext } from '#lib/appContext.svelte.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { cropDisplayName } from '#lib/agronomy/crop-targets.ts';
+import { getIntlLocale } from '#lib/i18n/format.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
+import { addGroup, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
+import { testEvent, testLocals } from '#lib/testing/server.ts';
 import SettingsPage from './+page.svelte';
 import { actions } from './+page.server';
 
@@ -22,11 +22,11 @@ type AfterSubmit = (input: {
 	update: (options?: { reset?: boolean }) => Promise<void>;
 }) => Promise<void>;
 
-const { goto, invalidateAll } = vi.hoisted(() => ({
+const { goto, refreshAll } = vi.hoisted(() => ({
 	goto: vi.fn(),
-	invalidateAll: vi.fn(async () => {})
+	refreshAll: vi.fn(async () => {})
 }));
-vi.mock('$app/navigation', () => ({ goto, invalidateAll }));
+vi.mock('$app/navigation', () => ({ goto, refreshAll }));
 
 // `use:enhance` without the network: the mock keeps each form's submit
 // function so a test can run it and hand it the action's result.
@@ -206,8 +206,7 @@ function submitDeviceForm() {
 	if (!form || !submitFn) throw new Error('the device form is not enhanced');
 	const cancel = vi.fn();
 	const after = submitFn({ cancel, formData: new FormData(form), formElement: form }) as
-		| AfterSubmit
-		| undefined;
+		AfterSubmit | undefined;
 	flushSync();
 	return { cancel, after };
 }
@@ -216,7 +215,7 @@ afterEach(() => {
 	view?.unmount();
 	view = null;
 	goto.mockReset();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	forms.clear();
 });
 
@@ -343,7 +342,7 @@ describe('device settings page', () => {
 			org_id: 'org-1',
 			can_manage: true
 		});
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				...DATA,
 				deviceGroup: 'Cellar',
@@ -358,7 +357,7 @@ describe('device settings page', () => {
 		renameGroup('device-settings-group-select', 'Barn', 'Cellar');
 
 		await vi.waitFor(() => expect(dropdown('device-settings-group-select').value()).toBe('Cellar'));
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(dropdown('device-settings-group-select').options()).toEqual([
 			m.groups_none(),
 			'Barn 2',
@@ -373,7 +372,7 @@ describe('device settings page', () => {
 	it('shows the device without a group after its group is deleted', async () => {
 		const page = render();
 		page.services.deviceGroups.deleteGroup.mockResolvedValue(undefined);
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				...DATA,
 				deviceGroup: '',
@@ -401,7 +400,7 @@ describe('device settings page', () => {
 			org_id: 'org-1',
 			can_manage: true
 		});
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				...DATA,
 				deviceGroup: 'Cellar',
@@ -415,7 +414,7 @@ describe('device settings page', () => {
 
 		renameGroup('device-settings-group-select', 'Barn', 'Cellar');
 
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalled());
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalled());
 		flushSync();
 		expect(dropdown('device-settings-group-select').value()).toBe('Barn 2');
 	});
@@ -427,7 +426,7 @@ describe('device settings page', () => {
 		];
 		const page = render({ deviceGroups: managed });
 		page.services.deviceGroups.renameGroup.mockResolvedValue({ ...managed[1], name: 'Loft' });
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({ ...DATA, deviceGroups: [managed[0], { ...managed[1], name: 'Loft' }] })
 		);
 		chooseOption('device-settings-group-select', 'Barn 2');
@@ -451,7 +450,7 @@ describe('device settings page', () => {
 		const page = render({ deviceGroups: managed });
 		page.services.deviceGroups.renameGroup.mockResolvedValue({ ...managed[1], name: 'Loft' });
 		// Meanwhile the device was put in another group elsewhere: the reload has it.
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				...DATA,
 				deviceGroup: 'Loft',
@@ -482,7 +481,10 @@ describe('device settings page', () => {
 			})
 		);
 
-		await submitDeviceForm().after?.({ result: { type: 'success', status: 200 }, update });
+		await submitDeviceForm().after?.({
+			result: { type: 'success', status: 200, location: location.pathname },
+			update
+		});
 		flushSync();
 
 		expect(byId('device-settings-group-select-manage')).not.toBeNull();
@@ -560,7 +562,10 @@ describe('device settings page', () => {
 				})
 			);
 
-			await submitDeviceForm().after?.({ result: { type: 'success', status: 200 }, update });
+			await submitDeviceForm().after?.({
+				result: { type: 'success', status: 200, location: location.pathname },
+				update
+			});
 			flushSync();
 
 			expect(dropdown('device-settings-group-select').options()).toEqual([
@@ -599,7 +604,10 @@ describe('device settings page', () => {
 			})
 		);
 
-		await submitDeviceForm().after?.({ result: { type: 'success', status: 200 }, update });
+		await submitDeviceForm().after?.({
+			result: { type: 'success', status: 200, location: location.pathname },
+			update
+		});
 		flushSync();
 
 		// The list is org-2's, as reloaded (a load the effect started for the
@@ -627,7 +635,7 @@ describe('device settings page', () => {
 		type('device-settings-name-input', 'Air sensor 2');
 
 		await submitDeviceForm().after?.({
-			result: { type: 'failure', status: 400, data: {} },
+			result: { type: 'failure', status: 400, location: location.pathname, data: {} },
 			update: vi.fn(async () => {})
 		});
 		flushSync();
@@ -822,7 +830,10 @@ describe('device settings page', () => {
 		expect(submitButton()?.getAttribute('aria-busy')).toBe('true');
 
 		const update = vi.fn(async () => {});
-		await after?.({ result: { type: 'success', status: 200 }, update });
+		await after?.({
+			result: { type: 'success', status: 200, location: location.pathname },
+			update
+		});
 		flushSync();
 
 		expect(update).toHaveBeenCalledWith({ reset: false });
@@ -838,7 +849,10 @@ describe('device settings page', () => {
 		});
 
 		await expect(
-			submitDeviceForm().after?.({ result: { type: 'failure', status: 400 }, update })
+			submitDeviceForm().after?.({
+				result: { type: 'failure', status: 400, location: location.pathname },
+				update
+			})
 		).rejects.toThrow('update failed');
 		flushSync();
 

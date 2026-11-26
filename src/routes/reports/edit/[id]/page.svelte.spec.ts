@@ -5,10 +5,10 @@ import type {
 	DeviceDto,
 	ReportFormContextDto,
 	ReportTemplateDto
-} from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+} from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import EditReportPage from './+page.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn(async () => {}) }));

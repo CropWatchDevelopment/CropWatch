@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DeviceDto, LocationDto, LocationOwnerDto } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import { PermissionLevel } from '$lib/constants/permissions';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+import type { DeviceDto, LocationDto, LocationOwnerDto } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	TEST_JWT,
 	TEST_USER_ID,
@@ -11,7 +11,7 @@ import {
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { load } from './+layout.server';
 
 type LoadEvent = Parameters<typeof load>[0];

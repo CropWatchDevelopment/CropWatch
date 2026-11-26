@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 export const load: PageServerLoad = async ({ parent, locals }) => {
 	const { authToken, orgContext } = await parent();

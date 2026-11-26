@@ -1,6 +1,6 @@
-import type { HexCheck } from '$lib/devices/eui';
-import type { NetworkRegion } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+import type { HexCheck } from '#lib/devices/eui.ts';
+import type { NetworkRegion } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 /** Field error for a DevEUI / JoinEUI / AppKey input, or undefined when fine. */
 export function hexFieldError(check: HexCheck, show: boolean): string | undefined {

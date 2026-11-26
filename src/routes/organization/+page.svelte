@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { m } from '$lib/paraglide/messages.js';
-	import { AppNotice, AppPage } from '$lib/components/layout';
+	import { m } from '#lib/paraglide/messages.js';
+	import { AppNotice, AppPage } from '#lib/components/layout/index.ts';
 	import { CwButton, CwCard, CwCopy } from '@cropwatchdevelopment/cwui';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { cwCopyLabels } from '$lib/i18n/cwuiLabels';
-	import { orgRoleLabel, orgTypeLabel } from '$lib/auth/org-labels';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { cwCopyLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { orgRoleLabel, orgTypeLabel } from '#lib/auth/org-labels.ts';
 	import LeaveOrganizationDialog from './LeaveOrganizationDialog.svelte';
 	import type { PageProps } from './$types';
 

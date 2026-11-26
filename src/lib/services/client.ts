@@ -1,7 +1,7 @@
-import { browser } from '$app/environment';
-import { FetchHttpClient } from '$lib/api/http/fetch-http-client';
-import { getLocale } from '$lib/paraglide/runtime';
-import type { PublicConfig } from '$lib/config/public';
+import { browser } from '$app/env';
+import { FetchHttpClient } from '#lib/api/http/fetch-http-client.ts';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import type { PublicConfig } from '#lib/config/public.ts';
 import { createAppServices, type AppServices } from './app-services';
 
 export interface ClientServicesOptions {

@@ -1,12 +1,12 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TrafficDataPoint } from '$lib/api/api.dtos';
-import { formatNumber } from '$lib/i18n/format';
-import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse, type RecordedRequest } from '$lib/testing/http';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { TrafficDataPoint } from '#lib/api/api.dtos.ts';
+import { formatNumber } from '#lib/i18n/format.ts';
+import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse, type RecordedRequest } from '#lib/testing/http.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import { getMonthBounds } from './traffic-data';
 import TrafficDisplay from './TrafficDisplay.svelte';
 

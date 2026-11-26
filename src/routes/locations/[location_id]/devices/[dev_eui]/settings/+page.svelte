@@ -9,26 +9,26 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import { resolve } from '$app/paths';
-	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
-	import { TTI_DEVICE_ID_MAX_LENGTH } from '$lib/devices/tti-device-id';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import { TTI_DEVICE_ID_MAX_LENGTH } from '#lib/devices/tti-device-id.ts';
 	import type { PageProps } from './$types';
 	import './settings-style.css';
-	import { goto, invalidateAll } from '$app/navigation';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
+	import { goto, refreshAll } from '$app/navigation';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
 	import SensorCertificatesCard from '../SensorCertificatesCard.svelte';
 	import DeviceOwnerPermissionsCard from '../DeviceOwnerPermissionsCard.svelte';
 	import DeviceLicenseCard from './DeviceLicenseCard.svelte';
 	import DeviceDangerZone from './DeviceDangerZone.svelte';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { Capability, can } from '$lib/auth/capabilities';
-	import { cropDisplayName } from '$lib/agronomy/crop-targets';
-	import { getIntlLocale } from '$lib/i18n/format';
-	import { getServices } from '$lib/services/context';
-	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
-	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
-	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
-	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { Capability, can } from '#lib/auth/capabilities.ts';
+	import { cropDisplayName } from '#lib/agronomy/crop-targets.ts';
+	import { getIntlLocale } from '#lib/i18n/format.ts';
+	import { getServices } from '#lib/services/context.ts';
+	import AddGroupDialog from '#lib/components/groups/AddGroupDialog.svelte';
+	import GroupPicker from '#lib/components/groups/GroupPicker.svelte';
+	import ManageGroupsDialog from '#lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '#lib/components/groups/groups-controller.svelte.ts';
 
 	const DEVICE_NAME_MAX_LENGTH = 120;
 
@@ -63,7 +63,7 @@
 			// A rename or delete changes what the saved device shows: reload,
 			// and keep an untouched picker on what the API now has saved.
 			const untouched = deviceGroup.trim() === (data.deviceGroup ?? '').trim();
-			await invalidateAll();
+			await refreshAll();
 			// The reload brings the device's own org's groups; another org's
 			// list (an unsaved move) already shows the change.
 			if (groups.orgId === (data.deviceOrgId ?? null)) {
@@ -169,8 +169,10 @@
 					location_id: savedLocationId,
 					dev_eui: data.devEui
 				})
-			)}>&larr; {m.devices_back_to_detail()}</CwButton
+			)}
 	>
+		&larr; {m.devices_back_to_detail()}
+	</CwButton>
 	<CwCard title={m.devices_settings_title()} elevated>
 		<form
 			id="device-settings-form"

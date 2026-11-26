@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { applyAction, deserialize } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import type { ActionResult } from '@sveltejs/kit';
+	import { refreshAll } from '$app/navigation';
+	import type { ActionResult } from '$app/forms';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { m } from '$lib/paraglide/messages.js';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { PermissionRow } from './location-permission-rows';
 
 	type DeletePermissionDialogProps = {
@@ -55,7 +55,7 @@
 			}
 
 			if (result.type === 'success') {
-				await invalidateAll();
+				await refreshAll();
 				selectedRow = null;
 				openDeletePermissionDialog = false;
 			}
@@ -81,14 +81,18 @@
 			id="location-delete-permission-cancel-button"
 			variant="primary"
 			disabled={deleting}
-			onclick={() => (openDeletePermissionDialog = false)}>{m.action_cancel()}</CwButton
+			onclick={() => (openDeletePermissionDialog = false)}
 		>
+			{m.action_cancel()}
+		</CwButton>
 		<CwButton
 			id="location-delete-permission-confirm-button"
 			variant="danger"
 			loading={deleting}
 			disabled={deleting}
-			onclick={() => handlePermissionDelete(selectedRow)}>{m.action_delete()}</CwButton
+			onclick={() => handlePermissionDelete(selectedRow)}
 		>
+			{m.action_delete()}
+		</CwButton>
 	{/snippet}
 </CwDialog>

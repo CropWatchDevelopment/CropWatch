@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { GatewayDto } from '$lib/api/api.dtos';
-import { testEvent, testLocals } from '$lib/testing/server';
+import type { GatewayDto } from '#lib/api/api.dtos.ts';
+import { testEvent, testLocals } from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

@@ -6,16 +6,16 @@
  * name is a misnomer — the value is millimetres), EC mS/cm (= dS/m), CO₂ ppm,
  * pressure hPa, rainfall mm, wind m/s, moisture % VWC. This module converts those
  * canonical values into the unit the user picked in `profile_preferences` and
- * formats them (delegating number formatting to `$lib/i18n/format`).
+ * formats them (delegating number formatting to `#lib/i18n/format`).
  *
  * It is the single source of truth for the unit option lists too (the settings
  * form imports them from here) so convert-from ↔ convert-to never drift.
  */
 import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
-import type { PreferencesDto } from '$lib/api/api.dtos';
-import { formatNumber } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { isOnValue, labelFor } from '$lib/sensor-labels';
+import type { PreferencesDto } from '#lib/api/api.dtos.ts';
+import { formatNumber } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { isOnValue, labelFor } from '#lib/sensor-labels/index.ts';
 
 export type Quantity =
 	| 'temperature'

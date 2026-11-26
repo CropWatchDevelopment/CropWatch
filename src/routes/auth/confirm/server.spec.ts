@@ -1,6 +1,6 @@
 import { isRedirect } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import { testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { GET } from './+server';
 
 type Event = Parameters<typeof GET>[0];

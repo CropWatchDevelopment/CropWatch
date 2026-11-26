@@ -1,4 +1,4 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -6,16 +6,16 @@ import type {
 	OrgChildrenDto,
 	OrganizationDto,
 	OrgParentRequestDto
-} from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse, type FakeResponder } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
+} from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse, type FakeResponder } from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import SettingsPage from './+page.svelte';
 
-const { invalidateAll, forms } = vi.hoisted(() => {
+const { refreshAll, forms } = vi.hoisted(() => {
 	const submits = new Map<HTMLFormElement, SubmitFunction>();
 	return {
-		invalidateAll: vi.fn(),
+		refreshAll: vi.fn(),
 		forms: {
 			submits,
 			// `use:enhance` without the network: keep each form's submit function
@@ -36,7 +36,7 @@ const { invalidateAll, forms } = vi.hoisted(() => {
 		}
 	};
 });
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 vi.mock('$app/forms', () => ({
 	enhance: forms.enhance,
 	applyAction: forms.applyAction,
@@ -183,7 +183,7 @@ async function submit(action: string, result?: ActionResult) {
 }
 
 beforeEach(() => {
-	respond = () => jsonResponse({ type: 'success', status: 200 });
+	respond = () => jsonResponse({ type: 'success', status: 200, location: location.pathname });
 	fake = createFakeFetch((request) => respond(request));
 	vi.stubGlobal('fetch', fake.fetch);
 });
@@ -192,7 +192,7 @@ afterEach(() => {
 	view?.unmount();
 	view = null;
 	vi.unstubAllGlobals();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	forms.applyAction.mockClear();
 	forms.deserialize.mockClear();
 });
@@ -224,27 +224,42 @@ describe('management settings page: rename', () => {
 		expect(Object.fromEntries(formData)).toEqual({ name: 'Acme Farms' });
 		expect(submitButton('rename')?.getAttribute('aria-busy')).toBe('true');
 
-		await finish({ type: 'success', status: 200, data: { success: true } });
+		await finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
 		expect(submitButton('rename')?.getAttribute('aria-busy')).toBeNull();
 		expect(toasts()).toMatchObject([{ tone: 'success', message: m.management_rename_saved() }]);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(forms.applyAction).not.toHaveBeenCalled();
 	});
 
 	it("shows why saving failed, and only toasts the action's own error", async () => {
 		const { toasts } = render();
-		const failure: ActionResult = { type: 'failure', status: 409, data: { error: 'Name taken' } };
+		const failure: ActionResult = {
+			type: 'failure',
+			status: 409,
+			location: location.pathname,
+			data: { error: 'Name taken' }
+		};
 
 		await submit('rename', failure);
 		expect(forms.applyAction).toHaveBeenCalledWith(failure);
 		expect(toasts()).toMatchObject([{ tone: 'danger', message: 'Name taken' }]);
 
-		await submit('rename', { type: 'failure', status: 400, data: { error: ['nope'] } });
-		await submit('rename', { type: 'error', status: 500, error: new Error('boom') });
+		await submit('rename', {
+			type: 'failure',
+			status: 400,
+			location: location.pathname,
+			data: { error: ['nope'] }
+		});
+		await submit('rename', { type: 'error', status: 500, error: { status: 500, message: 'boom' } });
 		expect(forms.applyAction).toHaveBeenCalledTimes(3);
 		expect(toasts()).toHaveLength(1);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it("shows the action's error above the rename form", () => {
@@ -293,11 +308,16 @@ describe('management settings page: upgrade', () => {
 		const { formData, finish } = await submit('upgrade');
 		expect(Object.fromEntries(formData)).toEqual({ name: 'Acme Inc' });
 		expect(submitButton('upgrade')?.getAttribute('aria-busy')).toBe('true');
-		await finish({ type: 'success', status: 200, data: { success: true } });
+		await finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
 		expect(submitButton('upgrade')?.getAttribute('aria-busy')).toBeNull();
 		expect(toasts()).toMatchObject([{ tone: 'success', message: m.management_upgraded() }]);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('cannot upgrade while organizations are disabled', () => {
@@ -370,18 +390,24 @@ describe('management settings page: parent link', () => {
 			{ tone: 'success', message: m.management_link_decided() },
 			{ tone: 'success', message: m.management_link_decided() }
 		]);
-		expect(invalidateAll).toHaveBeenCalledTimes(2);
+		expect(refreshAll).toHaveBeenCalledTimes(2);
 	});
 
 	it("shows the action's error, or the generic one, when deciding fails", async () => {
 		const { toasts } = render();
 		const decline = () => buttonIn(rowFor('Holding Co'), m.management_decline());
 
-		respond = () => jsonResponse({ type: 'failure', status: 403, data: { error: 'Not allowed' } });
+		respond = () =>
+			jsonResponse({
+				type: 'failure',
+				status: 403,
+				location: location.pathname,
+				data: { error: 'Not allowed' }
+			});
 		decline().click();
 		await vi.waitFor(() => expect(toasts()).toHaveLength(1));
 		await vi.waitFor(() => expect(decline().disabled).toBe(false));
-		respond = () => jsonResponse({ type: 'failure', status: 500 });
+		respond = () => jsonResponse({ type: 'failure', status: 500, location: location.pathname });
 		decline().click();
 		await vi.waitFor(() => expect(toasts()).toHaveLength(2));
 
@@ -403,7 +429,7 @@ describe('management settings page: parent link', () => {
 		await vi.waitFor(() => expect(toasts()).toHaveLength(1));
 		expect(toasts()).toMatchObject([{ tone: 'danger', message: m.generic_error() }]);
 		await vi.waitFor(() => expect(approve().getAttribute('aria-busy')).toBeNull());
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('cannot approve while organizations are disabled, but can decline', () => {
@@ -450,14 +476,20 @@ describe('management settings page: child organizations', () => {
 		await vi.waitFor(() => expect(toasts()).toHaveLength(1));
 		expect(sent()).toEqual({ action: '?/unlinkChild', fields: { child_id: 'org-2' } });
 		expect(toasts()).toMatchObject([{ tone: 'success', message: m.management_unlinked() }]);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it("shows the action's error, or the generic one, when unlinking fails", async () => {
 		const { toasts } = render();
 		const unlink = () => buttonIn(rowFor('Acme North'), m.management_unlink());
 
-		respond = () => jsonResponse({ type: 'failure', status: 404, data: { error: 'Not linked' } });
+		respond = () =>
+			jsonResponse({
+				type: 'failure',
+				status: 404,
+				location: location.pathname,
+				data: { error: 'Not linked' }
+			});
 		unlink().click();
 		await vi.waitFor(() => expect(toasts()).toHaveLength(1));
 		await vi.waitFor(() => expect(unlink().disabled).toBe(false));
@@ -483,7 +515,7 @@ describe('management settings page: child organizations', () => {
 		await vi.waitFor(() => expect(toasts()).toHaveLength(1));
 		expect(toasts()).toMatchObject([{ tone: 'danger', message: m.generic_error() }]);
 		await vi.waitFor(() => expect(unlink().getAttribute('aria-busy')).toBeNull());
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('handles one link change at a time', async () => {
@@ -499,7 +531,7 @@ describe('management settings page: child organizations', () => {
 		buttonIn(rowFor('Acme South'), m.management_unlink()).click();
 		buttonIn(rowFor('Holding Co'), m.management_decline()).click();
 
-		release(jsonResponse({ type: 'success', status: 200 }));
+		release(jsonResponse({ type: 'success', status: 200, location: location.pathname }));
 		await vi.waitFor(() => expect(toasts()).toHaveLength(1));
 		expect(fake.requests).toHaveLength(1);
 		expect(sent().fields).toEqual({ child_id: 'org-2' });
@@ -524,21 +556,31 @@ describe('management settings page: link request', () => {
 		const { formData, finish } = await submit('linkRequest');
 		expect(Object.fromEntries(formData)).toEqual({ child_org_id: 'org-6' });
 		expect(submitButton('linkRequest')?.getAttribute('aria-busy')).toBe('true');
-		await finish({ type: 'success', status: 200, data: { success: true } });
+		await finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
 		expect(submitButton('linkRequest')?.getAttribute('aria-busy')).toBeNull();
 		expect(toasts()).toMatchObject([
 			{ tone: 'success', message: m.management_link_request_sent() }
 		]);
 		expect(inputIn('linkRequest', 'child_org_id')?.value).toBe('');
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('keeps the typed id when the request fails', async () => {
 		const { toasts } = render();
 		type('linkRequest', 'child_org_id', 'org-6');
 
-		await submit('linkRequest', { type: 'failure', status: 404, data: { error: 'Unknown org' } });
+		await submit('linkRequest', {
+			type: 'failure',
+			status: 404,
+			location: location.pathname,
+			data: { error: 'Unknown org' }
+		});
 
 		expect(toasts()).toMatchObject([{ tone: 'danger', message: 'Unknown org' }]);
 		expect(inputIn('linkRequest', 'child_org_id')?.value).toBe('org-6');

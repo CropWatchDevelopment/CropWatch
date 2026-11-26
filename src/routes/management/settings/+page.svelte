@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { refreshAll } from '$app/navigation';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { submitPageAction } from '$lib/forms/submit-page-action';
+	import { m } from '#lib/paraglide/messages.js';
+	import { AppActionRow, AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { submitPageAction } from '#lib/forms/submit-page-action.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -42,12 +42,12 @@
 	) {
 		return () => {
 			setBusy(true);
-			return async ({ result }: { result: import('@sveltejs/kit').ActionResult }) => {
+			return async ({ result }: { result: import('$app/forms').ActionResult }) => {
 				setBusy(false);
 				if (result.type === 'success') {
 					toast.add({ tone: 'success', message: successMessage() });
 					onSuccess?.();
-					await invalidateAll();
+					await refreshAll();
 					return;
 				}
 				await applyAction(result);

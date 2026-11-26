@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
-import type { PublicConfig } from '$lib/config/public';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import type { ServerConfig } from '$lib/server/config';
+import type { PublicConfig } from '#lib/config/public.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import type { ServerConfig } from '#lib/server/config.ts';
 import { testPublicConfig } from './http';
 import { createMockServerServices, type MockServerServices } from './mock-server-services';
 
@@ -80,7 +80,8 @@ export function formRequest(
 }
 
 export interface TestEventInit {
-	locals?: TestLocals;
+	/** Mock services by default; a spec that drives the real ones passes `App.Locals`. */
+	locals?: TestLocals | App.Locals;
 	params?: Record<string, string>;
 	url?: string | URL;
 	request?: Request;

@@ -1,7 +1,7 @@
 import { createRawSnippet } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import HealthHero from './HealthHero.svelte';
 import type { HealthState } from './overview';
 

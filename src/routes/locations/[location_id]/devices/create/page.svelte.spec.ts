@@ -1,17 +1,17 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { DeviceSetupLookupResult, DeviceSetupResult } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
-import { chooseOption, dropdown } from '$lib/testing/dropdown';
-import { addGroup, deleteGroup, renameGroup } from '$lib/testing/groups';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { DeviceSetupLookupResult, DeviceSetupResult } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
+import { addGroup, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
 import DeviceSetupPage from './+page.svelte';
 import { regionLabel } from './setup-messages';
 
-const { goto, invalidateAll } = vi.hoisted(() => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
-vi.mock('$app/navigation', () => ({ goto, invalidateAll }));
+const { goto, refreshAll } = vi.hoisted(() => ({ goto: vi.fn(), refreshAll: vi.fn() }));
+vi.mock('$app/navigation', () => ({ goto, refreshAll }));
 
 const DEV_EUI = '00137A10000441DF';
 
@@ -79,7 +79,7 @@ function render(initial = pageData()) {
 	});
 	return {
 		...view,
-		/** What `invalidateAll` hands the page: fresh load data. */
+		/** What `refreshAll` hands the page: fresh load data. */
 		setData(next: ReturnType<typeof pageData>) {
 			data = next;
 			flushSync();
@@ -130,14 +130,14 @@ function describeDevice(name = 'FL1 Smoke Detector') {
 beforeEach(() => {
 	services = createMockServices();
 	services.devices.lookupDeviceSetup.mockResolvedValue(lookupResult());
-	invalidateAll.mockResolvedValue(undefined);
+	refreshAll.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
 	view?.unmount();
 	view = null;
 	goto.mockReset();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	vi.restoreAllMocks();
 });
 
@@ -241,10 +241,10 @@ describe('device setup page', () => {
 		});
 		expect(stepper().map(({ state }) => state)).toEqual(['done', 'done', 'done']);
 		// The setup used a license: the count is refreshed.
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalledTimes(1));
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalledTimes(1));
 
 		byId('device-setup-open-device')?.click();
-		expect(goto).toHaveBeenCalledWith(`/locations/8/devices/${DEV_EUI}`, { invalidateAll: true });
+		expect(goto).toHaveBeenCalledWith(`/locations/8/devices/${DEV_EUI}`, { refreshAll: true });
 	});
 
 	it("registers the device in a group added from the details step, in the location's organization", async () => {
@@ -336,7 +336,7 @@ describe('device setup page', () => {
 			m.device_setup_registering_title({ name: 'FL1 Smoke Detector' })
 		);
 		expect(stepper().map(({ state }) => state)).toEqual(['done', 'done', 'done']);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 	});
 
 	it('opens the new device by the DevEUI entered when the API returned none', async () => {
@@ -352,7 +352,7 @@ describe('device setup page', () => {
 
 		byId('device-setup-open-device')?.click();
 
-		expect(goto).toHaveBeenCalledWith(`/locations/8/devices/${DEV_EUI}`, { invalidateAll: true });
+		expect(goto).toHaveBeenCalledWith(`/locations/8/devices/${DEV_EUI}`, { refreshAll: true });
 	});
 
 	it('starts over for another device once the free licenses are reloaded', async () => {
@@ -363,10 +363,10 @@ describe('device setup page', () => {
 		describeDevice();
 		byId('device-setup-register')?.click();
 		await expect.poll(() => byId('device-setup-add-another')).not.toBeNull();
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalledTimes(1));
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalledTimes(1));
 
 		let reloaded!: () => void;
-		invalidateAll.mockImplementation(
+		refreshAll.mockImplementation(
 			() =>
 				new Promise<void>((resolve) => {
 					reloaded = () => {
@@ -409,13 +409,13 @@ describe('device setup page', () => {
 		await expect.poll(() => byId('device-setup-outcome-license')).not.toBeNull();
 		expect(heading()?.textContent?.trim()).toBe(m.device_setup_review_title());
 
-		invalidateAll.mockImplementation(async () => {
+		refreshAll.mockImplementation(async () => {
 			page.setData(pageData({ availableLicenses: [{ id: 15, seatIndex: 3 }] }));
 		});
 		byId('device-setup-outcome-license')?.click();
 
 		await expect.poll(() => heading()?.textContent?.trim()).toBe(m.device_setup_details_title());
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(text()).toContain(m.device_setup_license_summary({ count: 1 }));
 		expect(document.querySelector('.app-notice')).toBeNull();
 
@@ -434,7 +434,7 @@ describe('device setup page', () => {
 		const view = render();
 		await registerWithTakenLicense();
 		const failure = new Error('reload failed');
-		invalidateAll.mockRejectedValue(failure);
+		refreshAll.mockRejectedValue(failure);
 
 		byId('device-setup-outcome-license')?.click();
 
@@ -453,9 +453,9 @@ describe('device setup page', () => {
 		describeDevice();
 		byId('device-setup-register')?.click();
 		await expect.poll(() => byId('device-setup-add-another')).not.toBeNull();
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalledTimes(1));
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalledTimes(1));
 		const failure = new Error('reload failed');
-		invalidateAll.mockRejectedValue(failure);
+		refreshAll.mockRejectedValue(failure);
 
 		byId('device-setup-add-another')?.click();
 
@@ -470,7 +470,7 @@ describe('device setup page', () => {
 	it('only logs a license count that cannot be refreshed after a setup', async () => {
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const failure = new Error('reload failed');
-		invalidateAll.mockRejectedValue(failure);
+		refreshAll.mockRejectedValue(failure);
 		services.devices.setupDevice.mockResolvedValue(SETUP_RESULT);
 		const view = render();
 		await identify();

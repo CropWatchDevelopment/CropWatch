@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CwTableQuery } from '@cropwatchdevelopment/cwui';
-import type { GatewayDto } from '$lib/api/api.dtos';
+import type { GatewayDto } from '#lib/api/api.dtos.ts';
 import { buildGatewayTableResult, buildGatewayTableRows } from './gateway-table';
 
 function createQuery(overrides: Partial<CwTableQuery> = {}): CwTableQuery {

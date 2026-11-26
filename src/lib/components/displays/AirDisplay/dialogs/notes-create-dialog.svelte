@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import { applyAction, deserialize } from '$app/forms';
-	import type { ActionResult } from '@sveltejs/kit';
-	import { apiErrorMessage } from '$lib/api/api-error';
+	import type { ActionResult } from '$app/forms';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
 	import {
 		CwButton,
 		CwDialog,
@@ -13,11 +13,11 @@
 	} from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
 	import type { Note } from '../interfaces/note.interface';
-	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import NO_ICON from '$lib/images/icons/no.svg';
-	import SAVE_ICON from '$lib/images/icons/save.svg';
+	import ADD_NOTE_ICON from '#lib/images/icons/note_add.svg';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import NO_ICON from '#lib/images/icons/no.svg';
+	import SAVE_ICON from '#lib/images/icons/save.svg';
 
 	type NotesCreateDialogProps = {
 		row: AirRow;

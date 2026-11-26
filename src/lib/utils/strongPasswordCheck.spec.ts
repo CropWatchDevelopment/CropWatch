@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { isStrongPassword } from './strongPasswordCheck';
 
 // The unmet requirements, in the user's language (the requirement list's wording).

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import AirDisplay from '$lib/components/displays/AirDisplay/AirDisplay.svelte';
-import DefaultDisplay from '$lib/components/displays/DefaultDisplay.svelte';
-import PowerDisplay from '$lib/components/displays/PowerDisplay/PowerDisplay.svelte';
-import RelayDisplay from '$lib/components/displays/RelayDisplay/RelayDisplay.svelte';
-import SoilDisplay from '$lib/components/displays/SoilDisplay/SoilDisplay.svelte';
-import TrafficDisplay from '$lib/components/displays/TrafficDisplay/TrafficDisplay.svelte';
-import WaterDisplay from '$lib/components/displays/WaterDisplay/WaterDisplay.svelte';
+import AirDisplay from '#lib/components/displays/AirDisplay/AirDisplay.svelte';
+import DefaultDisplay from '#lib/components/displays/DefaultDisplay.svelte';
+import PowerDisplay from '#lib/components/displays/PowerDisplay/PowerDisplay.svelte';
+import RelayDisplay from '#lib/components/displays/RelayDisplay/RelayDisplay.svelte';
+import SoilDisplay from '#lib/components/displays/SoilDisplay/SoilDisplay.svelte';
+import TrafficDisplay from '#lib/components/displays/TrafficDisplay/TrafficDisplay.svelte';
+import WaterDisplay from '#lib/components/displays/WaterDisplay/WaterDisplay.svelte';
 import {
 	KNOWN_TABLES,
 	RELAY_TABLES,
@@ -21,21 +21,21 @@ import {
 // Stand-ins for the component modules: the registry only maps tables to
 // components, so this node spec need not compile every display for the server
 // (the displays themselves are tested in the browser, next to each one).
-vi.mock('$lib/components/displays/AirDisplay/AirDisplay.svelte', () => ({ default: 'AirDisplay' }));
-vi.mock('$lib/components/displays/DefaultDisplay.svelte', () => ({ default: 'DefaultDisplay' }));
-vi.mock('$lib/components/displays/PowerDisplay/PowerDisplay.svelte', () => ({
+vi.mock('#lib/components/displays/AirDisplay/AirDisplay.svelte', () => ({ default: 'AirDisplay' }));
+vi.mock('#lib/components/displays/DefaultDisplay.svelte', () => ({ default: 'DefaultDisplay' }));
+vi.mock('#lib/components/displays/PowerDisplay/PowerDisplay.svelte', () => ({
 	default: 'PowerDisplay'
 }));
-vi.mock('$lib/components/displays/RelayDisplay/RelayDisplay.svelte', () => ({
+vi.mock('#lib/components/displays/RelayDisplay/RelayDisplay.svelte', () => ({
 	default: 'RelayDisplay'
 }));
-vi.mock('$lib/components/displays/SoilDisplay/SoilDisplay.svelte', () => ({
+vi.mock('#lib/components/displays/SoilDisplay/SoilDisplay.svelte', () => ({
 	default: 'SoilDisplay'
 }));
-vi.mock('$lib/components/displays/TrafficDisplay/TrafficDisplay.svelte', () => ({
+vi.mock('#lib/components/displays/TrafficDisplay/TrafficDisplay.svelte', () => ({
 	default: 'TrafficDisplay'
 }));
-vi.mock('$lib/components/displays/WaterDisplay/WaterDisplay.svelte', () => ({
+vi.mock('#lib/components/displays/WaterDisplay/WaterDisplay.svelte', () => ({
 	default: 'WaterDisplay'
 }));
 

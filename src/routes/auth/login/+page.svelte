@@ -1,19 +1,19 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import './style.css';
-	import KEY_ICON from '$lib/images/icons/key.svg';
-	import HELP_ICON from '$lib/images/icons/help.svg';
-	import PERSON_ADD_ICON from '$lib/images/icons/person_add.svg';
-	import logo from '$lib/images/cropwatch_static.svg';
+	import KEY_ICON from '#lib/images/icons/key.svg';
+	import HELP_ICON from '#lib/images/icons/help.svg';
+	import PERSON_ADD_ICON from '#lib/images/icons/person_add.svg';
+	import logo from '#lib/images/cropwatch_static.svg';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { runRecaptchaAction, warmupRecaptcha } from '$lib/utils/recaptcha';
+	import { runRecaptchaAction, warmupRecaptcha } from '#lib/utils/recaptcha.ts';
 	import { applyAction, enhance } from '$app/forms';
-	import { readLoginReason, readRedirectPath, type LoginReason } from '$lib/utils/auth-redirect';
+	import { readLoginReason, readRedirectPath, type LoginReason } from '#lib/utils/auth-redirect.ts';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
 
 	const toast = useCwToast();
 

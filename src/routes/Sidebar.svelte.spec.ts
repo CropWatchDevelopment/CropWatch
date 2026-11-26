@@ -1,10 +1,10 @@
 import { flushSync, tick } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page as browserPage } from 'vitest/browser';
-import type { LocationDto } from '$lib/api/api.dtos';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { LocationDto } from '#lib/api/api.dtos.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import Sidebar from './Sidebar.svelte';
 
 const { goto, appPage } = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ vi.mock('$app/state', () => ({ page: appPage }));
 const DESKTOP = [1280, 800] as const;
 const TABLET = [800, 900] as const;
 const PHONE = [414, 896] as const;
-const GOTO_OPTIONS = { replaceState: true, keepFocus: true, noScroll: true };
+const GOTO_OPTIONS = { replace: true, reset: false };
 
 /**
  * Full page loads and link clicks are recorded and cancelled through the

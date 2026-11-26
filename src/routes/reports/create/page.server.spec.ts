@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { BillingEntitlements, ReportFormContextDto } from '$lib/api/api.dtos';
-import type { FetchFn } from '$lib/api/http/fetch-http-client';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+import type { BillingEntitlements, ReportFormContextDto } from '#lib/api/api.dtos.ts';
+import type { FetchFn } from '#lib/api/http/fetch-http-client.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	TEST_JWT,
 	TEST_USER_ID,
@@ -11,7 +11,7 @@ import {
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Cookies } from '@sveltejs/kit';
-import type { RecaptchaLogContext, RecaptchaVerificationResult } from '$lib/server/recaptcha';
-import { readRedirectPathFromUrl } from '$lib/utils/auth-redirect';
+import type { RecaptchaLogContext, RecaptchaVerificationResult } from '#lib/server/recaptcha.ts';
+import { readRedirectPathFromUrl } from '#lib/utils/auth-redirect.ts';
 import { setSessionCookies } from './session-cookies';
 
 type LoginApiResponse = {

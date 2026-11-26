@@ -1,5 +1,5 @@
 import { applyAction, deserialize } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
+import { refreshAll } from '$app/navigation';
 
 /**
  * Posts a named page action with the given fields and returns whether it
@@ -17,7 +17,7 @@ export async function submitPageAction(
 	const response = await fetch(`?/${action}`, { method: 'POST', body });
 	const result = deserialize(await response.text());
 	if (result.type === 'success') {
-		await invalidateAll();
+		await refreshAll();
 		return { ok: true };
 	}
 	await applyAction(result);

@@ -1,4 +1,4 @@
-import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
+import type { Note } from '#lib/components/displays/AirDisplay/interfaces/note.interface.ts';
 
 /**
  * A note change staged on the report-data edit page. Nothing is written until

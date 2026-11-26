@@ -1,21 +1,21 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ActionResult } from '@sveltejs/kit';
-import { m } from '$lib/paraglide/messages.js';
-import type { GroupDto } from '$lib/api/api.dtos';
-import { chooseOption, dropdown } from '$lib/testing/dropdown';
-import { addGroup, deleteGroup, renameGroup } from '$lib/testing/groups';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { ActionResult } from '$app/forms';
+import { m } from '#lib/paraglide/messages.js';
+import type { GroupDto } from '#lib/api/api.dtos.ts';
+import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
+import { addGroup, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LocationUpdate from './LocationUpdate.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
 
-const { invalidateAll, forms } = vi.hoisted(() => ({
-	invalidateAll: vi.fn(),
+const { refreshAll, forms } = vi.hoisted(() => ({
+	refreshAll: vi.fn(),
 	forms: { submit: null as Submit | null, applyAction: vi.fn() }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 // `use:enhance` hands its submit function to the mock; tests run it the way
 // SvelteKit does on submit, with the action result of their choosing.
 vi.mock('$app/forms', () => ({
@@ -63,7 +63,7 @@ function render(
 	return {
 		...view,
 		services,
-		/** What `invalidateAll` hands the page: freshly loaded data. */
+		/** What `refreshAll` hands the page: freshly loaded data. */
 		setData(next: Data) {
 			data = next;
 			flushSync();
@@ -88,8 +88,7 @@ function submit() {
 	if (!forms.submit) throw new Error('the form is not enhanced');
 	const cancel = vi.fn();
 	const callback = forms.submit({ cancel, formData: new FormData() }) as
-		| ((input: { result: ActionResult }) => Promise<void>)
-		| undefined;
+		((input: { result: ActionResult }) => Promise<void>) | undefined;
 	flushSync();
 	return { cancel, callback };
 }
@@ -99,7 +98,7 @@ afterEach(() => {
 	view = null;
 	forms.submit = null;
 	forms.applyAction.mockReset();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 });
 
 describe('LocationUpdate', () => {
@@ -174,7 +173,7 @@ describe('LocationUpdate', () => {
 			org_id: 'org-1',
 			can_manage: true
 		});
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				locationId: 8,
 				locationName: 'Greenhouse A',
@@ -191,7 +190,7 @@ describe('LocationUpdate', () => {
 		renameGroup(GROUP_SELECT, 'Farm', 'Fields');
 
 		await vi.waitFor(() => expect(group()).toBe('Fields'));
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(dropdown(GROUP_SELECT).options()).toEqual([m.groups_none(), 'Fields', 'North', 'South']);
 		// The API already saved the rename: nothing left to save.
 		expect(saveButton().disabled).toBe(true);
@@ -200,7 +199,7 @@ describe('LocationUpdate', () => {
 	it('shows the location without a group after its group is deleted', async () => {
 		const page = render();
 		page.services.locationGroups.deleteGroup.mockResolvedValue(undefined);
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				locationId: 8,
 				locationName: 'Greenhouse A',
@@ -230,7 +229,7 @@ describe('LocationUpdate', () => {
 			locationOrgId: 'org-1'
 		});
 		page.services.locationGroups.renameGroup.mockResolvedValue({ ...managed[1], name: 'Northern' });
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				locationId: 8,
 				locationName: 'Greenhouse A',
@@ -262,7 +261,7 @@ describe('LocationUpdate', () => {
 		});
 		page.services.locationGroups.renameGroup.mockResolvedValue({ ...managed[1], name: 'Northern' });
 		// Meanwhile the location was moved to another group elsewhere: the reload has it.
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				locationId: 8,
 				locationName: 'Greenhouse A',
@@ -291,7 +290,7 @@ describe('LocationUpdate', () => {
 			locationOrgId: 'org-1'
 		});
 		page.services.locationGroups.renameGroup.mockResolvedValue({ ...managed[0], name: 'Fields' });
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				locationId: 8,
 				locationName: 'Greenhouse A',
@@ -304,7 +303,7 @@ describe('LocationUpdate', () => {
 
 		renameGroup(GROUP_SELECT, 'Farm', 'Fields');
 
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalled());
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalled());
 		flushSync();
 		expect(group()).toBe('North');
 		expect(saveButton().disabled).toBe(false);
@@ -329,6 +328,7 @@ describe('LocationUpdate', () => {
 		const result: ActionResult = {
 			type: 'success',
 			status: 200,
+			location: location.pathname,
 			data: { action: 'updateLocationName', success: true, message: ' Name updated ' }
 		};
 		await callback?.({ result });
@@ -336,7 +336,7 @@ describe('LocationUpdate', () => {
 
 		expect(forms.applyAction).toHaveBeenCalledWith(result);
 		expect(view.toasts()).toMatchObject([{ tone: 'success', message: 'Name updated' }]);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(saveButton().getAttribute('aria-busy')).toBeNull();
 	});
 
@@ -361,7 +361,7 @@ describe('LocationUpdate', () => {
 	it('shows the saved values from the reloaded data once the save succeeded', async () => {
 		const page = render();
 		type('location-update-name-input', '  Greenhouse B ');
-		invalidateAll.mockImplementation(async () =>
+		refreshAll.mockImplementation(async () =>
 			page.setData({
 				locationId: 8,
 				locationName: 'Greenhouse B',
@@ -373,11 +373,16 @@ describe('LocationUpdate', () => {
 		);
 
 		await submit().callback?.({
-			result: { type: 'success', status: 200, data: { message: 'Name updated' } }
+			result: {
+				type: 'success',
+				status: 200,
+				location: location.pathname,
+				data: { message: 'Name updated' }
+			}
 		});
 		flushSync();
 
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(input('location-update-name-input').value).toBe('Greenhouse B');
 		expect(group()).toBe('Farm');
 		expect(dropdown(GROUP_SELECT).options()).toEqual([m.groups_none(), 'Farm', 'North', 'West']);
@@ -389,11 +394,16 @@ describe('LocationUpdate', () => {
 		chooseOption(GROUP_SELECT, 'North');
 
 		await submit().callback?.({
-			result: { type: 'failure', status: 403, data: { message: 'Not allowed' } }
+			result: {
+				type: 'failure',
+				status: 403,
+				location: location.pathname,
+				data: { message: 'Not allowed' }
+			}
 		});
 
 		expect(view.toasts()).toMatchObject([{ tone: 'danger', message: 'Not allowed' }]);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(group()).toBe('North');
 		expect(saveButton().disabled).toBe(false);
 	});
@@ -402,15 +412,21 @@ describe('LocationUpdate', () => {
 		const view = render();
 		chooseOption(GROUP_SELECT, 'North');
 
-		await submit().callback?.({ result: { type: 'failure', status: 400, data: {} } });
+		await submit().callback?.({
+			result: { type: 'failure', status: 400, location: location.pathname, data: {} }
+		});
 		await submit().callback?.({ result: { type: 'redirect', status: 303, location: '/x' } });
-		await submit().callback?.({ result: { type: 'error', error: new Error('boom') } });
+		await submit().callback?.({
+			result: { type: 'error', error: { status: 500, message: 'boom' } }
+		});
 		// Last: a success re-seeds the form from the (here unchanged) data, leaving nothing to save.
-		await submit().callback?.({ result: { type: 'success', status: 200, data: { message: ' ' } } });
+		await submit().callback?.({
+			result: { type: 'success', status: 200, location: location.pathname, data: { message: ' ' } }
+		});
 
 		expect(view.toasts()).toEqual([]);
 		expect(forms.applyAction).toHaveBeenCalledTimes(4);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('can save again after applying a result failed', async () => {
@@ -419,7 +435,9 @@ describe('LocationUpdate', () => {
 		forms.applyAction.mockRejectedValue(new Error('navigation failed'));
 
 		await expect(
-			submit().callback?.({ result: { type: 'success', status: 200, data: {} } })
+			submit().callback?.({
+				result: { type: 'success', status: 200, location: location.pathname, data: {} }
+			})
 		).rejects.toThrow('navigation failed');
 		flushSync();
 

@@ -1,11 +1,11 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MeContextDto } from '$lib/api/api.dtos';
-import { Capability } from '$lib/auth/capabilities';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import type { Profile } from '$lib/interfaces/profile.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import type { Profile } from '#lib/interfaces/profile.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import Header from './Header.svelte';
 
 const { goto, appPage } = vi.hoisted(() => ({

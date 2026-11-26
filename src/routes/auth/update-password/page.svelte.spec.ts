@@ -1,8 +1,8 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import UpdatePasswordPage from './+page.svelte';
 
 // `use:enhance` without the network: the mock keeps the form's submit
@@ -210,6 +210,7 @@ describe('update password page', () => {
 		const result: ActionResult = {
 			type: 'failure',
 			status: 500,
+			location: location.pathname,
 			data: { message: 'Failed to update password. The link may have expired.' }
 		};
 
@@ -226,8 +227,12 @@ describe('update password page', () => {
 		const { toasts } = render();
 		choose('Abc123!');
 
-		await (await submit()).finish({ type: 'failure', status: 400, data: {} });
-		await (await submit()).finish({ type: 'error', status: 500, error: new Error('boom') });
+		await (
+			await submit()
+		).finish({ type: 'failure', status: 400, location: location.pathname, data: {} });
+		await (
+			await submit()
+		).finish({ type: 'error', status: 500, error: { status: 500, message: 'boom' } });
 
 		expect(toasts()).toEqual([]);
 		expect(forms.applyAction).toHaveBeenCalledTimes(2);

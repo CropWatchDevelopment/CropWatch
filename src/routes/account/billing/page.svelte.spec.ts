@@ -1,26 +1,28 @@
 import { flushSync, tick } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
+import { ApiError } from '#lib/api/api-error.ts';
 import type {
 	BillingLicense,
 	BillingProduct,
 	DeviceSubscriptionState,
 	ReportingSubscriptionState,
 	SubscriptionStateResponse
-} from '$lib/api/api.dtos';
-import { formatCurrency, formatDate } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+} from '#lib/api/api.dtos.ts';
+import { formatCurrency, formatDate } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import BillingPage from './+page.svelte';
 
-const { goto, invalidateAll, replaceState, appPage } = vi.hoisted(() => ({
-	goto: vi.fn(),
-	invalidateAll: vi.fn(async () => {}),
-	replaceState: vi.fn(),
+const { goto, refreshAll, appPage } = vi.hoisted(() => ({
+	goto: vi.fn<(url: URL | string, options?: { shallow?: boolean }) => Promise<void>>(),
+	refreshAll: vi.fn(async () => {}),
 	appPage: { state: { shallow: 'kept' } }
 }));
-vi.mock('$app/navigation', () => ({ goto, invalidateAll, replaceState }));
+vi.mock('$app/navigation', () => ({ goto, refreshAll }));
+
+/** The `goto` calls that only replaced the URL (shallow routing). */
+const shallowGotos = () => goto.mock.calls.filter(([, options]) => options?.shallow);
 vi.mock('$app/state', () => ({ page: appPage }));
 
 const PERIOD_END = '2026-11-01T00:00:00.000Z';
@@ -133,9 +135,8 @@ afterEach(() => {
 	document.body.innerHTML = '';
 	history.replaceState(history.state, '', originalHref);
 	goto.mockReset();
-	invalidateAll.mockReset();
-	invalidateAll.mockImplementation(async () => {});
-	replaceState.mockReset();
+	refreshAll.mockReset();
+	refreshAll.mockImplementation(async () => {});
 });
 
 const text = () => document.body.textContent ?? '';
@@ -210,7 +211,7 @@ describe('billing page: device licenses', () => {
 		expect(text()).toContain(m.billing_add_licenses_preview({ count: 2, amount: usd(30) }));
 		click('account-billing-add-licenses-button');
 
-		await expect.poll(() => invalidateAll.mock.calls.length).toBe(1);
+		await expect.poll(() => refreshAll.mock.calls.length).toBe(1);
 		expect(services.billing.changeDeviceSeats).toHaveBeenCalledWith({ seats: 7 });
 		expect(toasts().at(-1)).toMatchObject({
 			tone: 'success',
@@ -289,7 +290,7 @@ describe('billing page: device licenses', () => {
 			tone: 'success',
 			message: m.billing_device_canceled_toast()
 		});
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('offers a purchase from the minimum when there is no subscription', async () => {
@@ -395,7 +396,7 @@ describe('billing page: reporting', () => {
 			tone: 'success',
 			message: m.billing_reporting_canceled_toast()
 		});
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('shows a scheduled reporting cancellation', () => {
@@ -614,7 +615,7 @@ describe('billing page: licenses', () => {
 			tone: 'success',
 			message: m.billing_license_assigned()
 		});
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('moves an assigned license to another device', async () => {
@@ -674,7 +675,7 @@ describe('billing page: licenses', () => {
 			.poll(() => toasts().at(-1))
 			.toMatchObject({ tone: 'success', message: m.billing_license_unassigned_toast() });
 		expect(services.billing.unassignLicense).toHaveBeenCalledWith(11);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('cancels a free seat after confirming, or keeps it', async () => {
@@ -742,9 +743,9 @@ describe('billing page: around the cards', () => {
 
 	/** The URL the page put in place of the current one, if it did. */
 	async function replacedUrl() {
-		await expect.poll(() => replaceState.mock.calls.length).toBe(1);
-		const [url, state] = replaceState.mock.calls[0] as [URL | string, unknown];
-		expect(state).toBe(appPage.state);
+		await expect.poll(() => shallowGotos().length).toBe(1);
+		const [url, options] = shallowGotos()[0];
+		expect(options).toEqual({ shallow: true, replace: true, state: appPage.state });
 		return new URL(url, location.href);
 	}
 
@@ -756,7 +757,7 @@ describe('billing page: around the cards', () => {
 		await expect
 			.poll(() => toasts().at(-1))
 			.toMatchObject({ tone: 'success', message: m.billing_checkout_success() });
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		// Shown once: a reload of the page does not thank the buyer again.
 		const url = await replacedUrl();
 		expect(url.searchParams.has('checkout')).toBe(false);
@@ -773,7 +774,7 @@ describe('billing page: around the cards', () => {
 		await expect
 			.poll(() => toasts().at(-1))
 			.toMatchObject({ tone: 'secondary', message: m.billing_checkout_canceled() });
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		const url = await replacedUrl();
 		expect(url.searchParams.has('checkout')).toBe(false);
 		expect(url.searchParams.get('tab')).toBe('licenses');
@@ -784,8 +785,8 @@ describe('billing page: around the cards', () => {
 		await tick();
 
 		expect(toasts()).toEqual([]);
-		expect(invalidateAll).not.toHaveBeenCalled();
-		expect(replaceState).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
+		expect(shallowGotos()).toEqual([]);
 	});
 
 	it('leaves an unknown checkout outcome alone', async () => {
@@ -795,6 +796,6 @@ describe('billing page: around the cards', () => {
 		await tick();
 
 		expect(toasts()).toEqual([]);
-		expect(replaceState).not.toHaveBeenCalled();
+		expect(shallowGotos()).toEqual([]);
 	});
 });

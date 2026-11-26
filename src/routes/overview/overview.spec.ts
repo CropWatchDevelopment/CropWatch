@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { OverviewDto } from '$lib/api/api.dtos';
+import type { OverviewDto } from '#lib/api/api.dtos.ts';
 import {
 	attentionRows,
 	donutSegments,

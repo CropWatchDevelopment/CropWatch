@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { AppPage } from '$lib/components/layout';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import { CwButton } from '@cropwatchdevelopment/cwui';
 	import type { PageProps } from './$types';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import LocationEditPermissions from './LocationEditPermissions.svelte';
 	import LocationPermissions from './LocationPermissions.svelte';
 	import LocationUpdate from './LocationUpdate.svelte';

@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { CwButton, CwDataTable, useCwToast, type CwColumnDef } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { AppNotice } from '$lib/components/layout';
+	import { m } from '#lib/paraglide/messages.js';
+	import { AppNotice } from '#lib/components/layout/index.ts';
 	import { CwCard } from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import type { OrgMemberDto } from '$lib/api/api.dtos';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import type { OrgMemberDto } from '#lib/api/api.dtos.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { createClientTableLoader } from '#lib/utils/clientTableLoader.ts';
 	import {
 		assignableRoles,
 		canRemove,
 		canSuspend,
 		inviteableRoles
-	} from '$lib/auth/org-member-policy';
-	import { orgRoleLabel } from '$lib/auth/org-labels';
-	import { submitPageAction } from '$lib/forms/submit-page-action';
+	} from '#lib/auth/org-member-policy.ts';
+	import { orgRoleLabel } from '#lib/auth/org-labels.ts';
+	import { submitPageAction } from '#lib/forms/submit-page-action.ts';
 	import InviteUserDialog from './InviteUserDialog.svelte';
 	import ChangeRoleDialog from './ChangeRoleDialog.svelte';
 	import SuspendMemberDialog from './SuspendMemberDialog.svelte';

@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { dev } from '$app/environment';
+	import { dev } from '$app/env';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { updated } from '$app/state';
 	import { CwButton } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { PwaController } from '$lib/pwa/pwa-controller.svelte';
-	import { onAppForeground } from '$lib/utils/onAppForeground';
+	import { m } from '#lib/paraglide/messages.js';
+	import { PwaController } from '#lib/pwa/pwa-controller.svelte.ts';
+	import { onAppForeground } from '#lib/utils/onAppForeground.ts';
 
 	interface Props {
 		/** Offer to install the app. Off on the sign-in pages, where the update notice still shows. */

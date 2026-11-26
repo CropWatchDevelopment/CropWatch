@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '$lib/api/api.dtos';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
+import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '#lib/api/api.dtos.ts';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { convertSensorValue, resolveDisplayUnit } from '#lib/units/index.ts';
 import { buildSoilLight, buildSoilPanel, soilPanelSubtitle } from './soil-panel';
 import { latestReading, SOIL_FIELDS, toSoilRows, type SoilRow } from './soil-readings';
 

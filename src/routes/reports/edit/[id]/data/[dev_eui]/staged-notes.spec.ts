@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { overlayStagedNotes, type StagedOp } from './staged-notes';
-import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
+import type { Note } from '#lib/components/displays/AirDisplay/interfaces/note.interface.ts';
 
 const ROW_AT = '2026-07-15T03:10:00.000+09:00';
 

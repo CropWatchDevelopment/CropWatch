@@ -1,6 +1,6 @@
 import { isRedirect, type RequestEvent } from '@sveltejs/kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFakeFetch, jsonResponse } from '$lib/testing/http';
+import { createFakeFetch, jsonResponse } from '#lib/testing/http.ts';
 import { handleError, originalHandle, paraglideHandle } from './hooks.server';
 
 function encode(value: unknown): string {
@@ -323,16 +323,27 @@ describe('paraglideHandle', () => {
 });
 
 describe('handleError', () => {
-	it('logs the error and returns a generic message', () => {
+	it("logs unexpected and framework errors, keeping SvelteKit's status and message", () => {
 		const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-		const args = { event: {} as RequestEvent, message: '' };
+		const event = {} as RequestEvent;
+		const boom = new Error('boom');
+		const notFound = { status: 404, message: 'Not Found' };
 
-		expect(handleError({ ...args, error: new Error('boom'), status: 500 })).toEqual({
-			message: 'Internal Error'
-		});
-		expect(handleError({ ...args, error: new Error('missing'), status: 404 })).toEqual({
-			message: 'Not Found'
-		});
-		expect(log).toHaveBeenCalledTimes(2);
+		expect(handleError({ event, kind: 'unknown', error: boom })).toBeUndefined();
+		expect(handleError({ event, kind: 'framework', error: notFound })).toBeUndefined();
+		expect(log.mock.calls).toEqual([
+			['[CropWatch] Unexpected server error:', boom],
+			['[CropWatch] Unexpected server error:', notFound]
+		]);
+	});
+
+	it('leaves expected errors alone', () => {
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const event = {} as RequestEvent;
+		const error = { status: 403, message: 'Forbidden' };
+
+		expect(handleError({ event, kind: 'app', error })).toBeUndefined();
+		expect(handleError({ event, kind: 'validation', error, issues: [] })).toBeUndefined();
+		expect(log).not.toHaveBeenCalled();
 	});
 });

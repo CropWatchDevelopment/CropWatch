@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { FetchHttpClient } from '$lib/api/http/fetch-http-client';
-import { createAppServices, type AppServices } from '$lib/services/app-services';
+import { FetchHttpClient } from '#lib/api/http/fetch-http-client.ts';
+import { createAppServices, type AppServices } from '#lib/services/app-services.ts';
 import {
 	createFakeFetch,
 	jsonResponse,
 	testPublicConfig,
 	TEST_API_BASE_URL
-} from '$lib/testing/http';
-import { createMockServices } from '$lib/testing/mock-services';
-import { REPOSITORY_CONTRACT } from '$lib/testing/repository-contract';
+} from '#lib/testing/http.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { REPOSITORY_CONTRACT } from '#lib/testing/repository-contract.ts';
 
 type AnyMethod = (...args: unknown[]) => Promise<unknown>;
 

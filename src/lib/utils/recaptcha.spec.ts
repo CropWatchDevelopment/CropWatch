@@ -19,7 +19,7 @@ const runtime = vi.hoisted(() => {
 	});
 	return { env, reads };
 });
-vi.mock('$env/dynamic/public', () => ({ env: runtime.env }));
+vi.mock('#lib/config/public-env.ts', () => ({ publicEnv: runtime.env }));
 
 describe('reCAPTCHA during SSR', () => {
 	it('reads nothing from the env at import time', () => {

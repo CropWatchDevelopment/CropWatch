@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { OverviewRange } from '$lib/api/api.dtos';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { OverviewRange } from '#lib/api/api.dtos.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import { OVERVIEW_RANGES } from './overview';
 
 	interface Props {

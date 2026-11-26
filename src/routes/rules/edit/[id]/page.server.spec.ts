@@ -1,18 +1,18 @@
 import { isHttpError } from '@sveltejs/kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { RuleFormContextDto, RuleTemplateDto } from '$lib/api/api.dtos';
-import type { FetchFn } from '$lib/api/http/fetch-http-client';
-import { m } from '$lib/paraglide/messages.js';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { RuleFormContextDto, RuleTemplateDto } from '#lib/api/api.dtos.ts';
+import type { FetchFn } from '#lib/api/http/fetch-http-client.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	TEST_JWT,
 	testEvent,
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

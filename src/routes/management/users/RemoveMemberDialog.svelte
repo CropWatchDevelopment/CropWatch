@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import type { OrgMemberDto } from '$lib/api/api.dtos';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { submitPageAction } from '$lib/forms/submit-page-action';
+	import { m } from '#lib/paraglide/messages.js';
+	import type { OrgMemberDto } from '#lib/api/api.dtos.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { submitPageAction } from '#lib/forms/submit-page-action.ts';
 
 	let { open = $bindable(false), member }: { open?: boolean; member: OrgMemberDto | null } =
 		$props();

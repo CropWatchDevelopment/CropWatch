@@ -5,16 +5,24 @@ import type {
 	CropTargetDto,
 	CropTypeDetailDto,
 	PreferencesDto
-} from '$lib/api/api.dtos';
-import { cropDisplayName } from '$lib/agronomy/crop-targets';
-import { dayLightProfile, lightShareSoFar, ppfdTargetForHour } from '$lib/agronomy/light-targets';
-import { formatNumber, getIntlLocale } from '$lib/i18n/format';
-import { createMockServices } from '$lib/testing/mock-services';
-import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
-import { labelFor } from '$lib/sensor-labels';
-import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
+} from '#lib/api/api.dtos.ts';
+import { cropDisplayName } from '#lib/agronomy/crop-targets.ts';
+import {
+	dayLightProfile,
+	lightShareSoFar,
+	ppfdTargetForHour
+} from '#lib/agronomy/light-targets.ts';
+import { formatNumber, getIntlLocale } from '#lib/i18n/format.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { labelFor } from '#lib/sensor-labels/index.ts';
+import {
+	convertSensorValue,
+	formatSensorMeasurement,
+	resolveDisplayUnit
+} from '#lib/units/index.ts';
 import SoilDisplay from './SoilDisplay.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));

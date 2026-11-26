@@ -1,5 +1,5 @@
-import type { TelemetryRepository } from '$lib/api/repositories/telemetry.repository';
-import { normalizePaginatedListResponse } from '$lib/api/http/pagination';
+import type { TelemetryRepository } from '#lib/api/repositories/telemetry.repository.ts';
+import { normalizePaginatedListResponse } from '#lib/api/http/pagination.ts';
 import { dailyDli, fieldSeries, previousDays, toSoilRows } from './soil-readings';
 
 /** Complete days shown in the DLI card's history. */

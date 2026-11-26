@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { DeviceSubscriptionState } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices } from '$lib/testing/mock-services';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { DeviceSubscriptionState } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices } from '#lib/testing/mock-services.ts';
 import { BillingController } from './billing-controller.svelte';
 
 function device(overrides: Partial<DeviceSubscriptionState> = {}): DeviceSubscriptionState {
@@ -28,16 +28,16 @@ const apiError = (message: string, status = 400) =>
 function setup(state: DeviceSubscriptionState = device()) {
 	const { billing } = createMockServices();
 	const toast = { add: vi.fn(() => 'toast-1') };
-	const invalidateAll = vi.fn(async () => {});
+	const refreshAll = vi.fn(async () => {});
 	const redirect = vi.fn();
 	const controller = new BillingController({
 		billing,
 		toast,
-		invalidateAll,
+		refreshAll,
 		redirect,
 		device: () => state
 	});
-	return { controller, billing, toast, invalidateAll, redirect };
+	return { controller, billing, toast, refreshAll, redirect };
 }
 
 /** A promise the test settles by hand, to look at the state mid-request. */
@@ -174,7 +174,7 @@ describe('BillingController Stripe redirects', () => {
 
 describe('BillingController seat changes', () => {
 	it('adds licenses on top of the current seats, then reloads', async () => {
-		const { controller, billing, toast, invalidateAll } = setup(device({ seats: 5 }));
+		const { controller, billing, toast, refreshAll } = setup(device({ seats: 5 }));
 		const request = deferred<{ seats: number }>();
 		billing.changeDeviceSeats.mockReturnValue(request.promise);
 		controller.addQty = '2';
@@ -189,7 +189,7 @@ describe('BillingController seat changes', () => {
 			tone: 'success',
 			message: m.billing_add_licenses_success()
 		});
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(controller.addQty).toBe('1');
 		expect(controller.busy).toBe(false);
 	});
@@ -207,22 +207,22 @@ describe('BillingController seat changes', () => {
 	});
 
 	it('keeps the quantity and skips the reload when adding fails', async () => {
-		const { controller, billing, toast, invalidateAll } = setup();
+		const { controller, billing, toast, refreshAll } = setup();
 		billing.changeDeviceSeats.mockRejectedValue(apiError('Card declined', 402));
 		controller.addQty = '3';
 
 		await controller.addLicenses();
 
 		expect(toast.add).toHaveBeenCalledWith({ tone: 'danger', message: 'Card declined' });
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(controller.addQty).toBe('3');
 		expect(controller.busy).toBe(false);
 	});
 
 	it('reports a failed reload like a failed request', async () => {
-		const { controller, billing, toast, invalidateAll } = setup();
+		const { controller, billing, toast, refreshAll } = setup();
 		billing.changeDeviceSeats.mockResolvedValue({ seats: 6 });
-		invalidateAll.mockRejectedValue(new Error('Reload failed'));
+		refreshAll.mockRejectedValue(new Error('Reload failed'));
 
 		await controller.addLicenses();
 
@@ -234,7 +234,7 @@ describe('BillingController seat changes', () => {
 
 describe('BillingController cancellations', () => {
 	it('cancels the device subscription at the period end and closes the dialog', async () => {
-		const { controller, billing, toast, invalidateAll } = setup();
+		const { controller, billing, toast, refreshAll } = setup();
 		billing.cancelDeviceSubscription.mockResolvedValue({ status: 'active' });
 		controller.deviceCancelOpen = true;
 
@@ -246,7 +246,7 @@ describe('BillingController cancellations', () => {
 			message: m.billing_device_canceled_toast()
 		});
 		expect(controller.deviceCancelOpen).toBe(false);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(controller.busy).toBe(false);
 	});
 
@@ -266,7 +266,7 @@ describe('BillingController cancellations', () => {
 	});
 
 	it('keeps a cancel dialog open when cancelling fails', async () => {
-		const { controller, billing, toast, invalidateAll } = setup();
+		const { controller, billing, toast, refreshAll } = setup();
 		billing.cancelDeviceSubscription.mockRejectedValue(apiError('Already canceled'));
 		billing.cancelReportingSubscription.mockRejectedValue(apiError('Not subscribed'));
 		controller.deviceCancelOpen = true;
@@ -281,7 +281,7 @@ describe('BillingController cancellations', () => {
 			[{ tone: 'danger', message: 'Already canceled' }],
 			[{ tone: 'danger', message: 'Not subscribed' }]
 		]);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(controller.busy).toBe(false);
 	});
 });
@@ -310,7 +310,7 @@ describe('BillingController licenses', () => {
 	});
 
 	it('assigns a license to the chosen device', async () => {
-		const { controller, billing, toast, invalidateAll } = setup();
+		const { controller, billing, toast, refreshAll } = setup();
 		billing.assignLicense.mockResolvedValue({} as never);
 		controller.openAssign(7);
 		controller.selectedDevEui = 'A1';
@@ -324,7 +324,7 @@ describe('BillingController licenses', () => {
 			message: m.billing_license_assigned()
 		});
 		expect(controller.assignOpen).toBe(false);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('moves a license to the chosen device', async () => {
@@ -367,7 +367,7 @@ describe('BillingController licenses', () => {
 	});
 
 	it('unassigns a license, reporting failures', async () => {
-		const { controller, billing, toast, invalidateAll } = setup();
+		const { controller, billing, toast, refreshAll } = setup();
 		billing.unassignLicense.mockResolvedValueOnce({} as never).mockRejectedValueOnce({});
 
 		await controller.unassign(7);
@@ -376,16 +376,16 @@ describe('BillingController licenses', () => {
 			tone: 'success',
 			message: m.billing_license_unassigned_toast()
 		});
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 
 		await controller.unassign(7);
 		expect(toast.add).toHaveBeenLastCalledWith({ tone: 'danger', message: m.generic_error() });
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(controller.busy).toBe(false);
 	});
 
 	it('cancels an unassigned seat after confirming', async () => {
-		const { controller, billing, toast, invalidateAll } = setup();
+		const { controller, billing, toast, refreshAll } = setup();
 		billing.cancelLicense.mockResolvedValue({ canceled: true });
 
 		controller.openSeatCancel(9);
@@ -399,7 +399,7 @@ describe('BillingController licenses', () => {
 			message: m.billing_seat_canceled_toast()
 		});
 		expect(controller.seatCancelOpen).toBe(false);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('needs a seat to cancel, and keeps the dialog open when cancelling fails', async () => {

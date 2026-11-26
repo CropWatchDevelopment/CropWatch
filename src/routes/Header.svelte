@@ -2,12 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { signOut } from '$lib/auth/sign-out';
-	import { m } from '$lib/paraglide/messages.js';
-	import { buildLogoutPath } from '$lib/utils/auth-redirect';
+	import { signOut } from '#lib/auth/sign-out.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { buildLogoutPath } from '#lib/utils/auth-redirect.ts';
 	import { CwHeader, CwProfileMenu, type CwSideNavMode } from '@cropwatchdevelopment/cwui';
-	import CROPWATCH_LOGO from '$lib/images/cropwatch_static.svg';
-	import { defaultAppContext, getAppContext } from '$lib/appContext.svelte';
+	import CROPWATCH_LOGO from '#lib/images/cropwatch_static.svg';
+	import { defaultAppContext, getAppContext } from '#lib/appContext.svelte.ts';
 	import { buildProfileMenuItems } from './header-menu-items';
 
 	let { mode = $bindable<CwSideNavMode>() } = $props();

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import OfflinePage from './+page.svelte';
 
 let view: ReturnType<typeof renderWithServices> | null = null;

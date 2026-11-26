@@ -3,8 +3,8 @@
  *
  * ## How to add a new table type
  *
- * 1. Create a display component in `$lib/components/displays/` that accepts
- *    {@link DeviceDisplayProps} (see `$lib/interfaces/deviceDisplay.ts`).
+ * 1. Create a display component in `#lib/components/displays/` that accepts
+ *    {@link DeviceDisplayProps} (see `#lib/interfaces/deviceDisplay.ts`).
  * 2. Add an entry to {@link TABLE_REGISTRY} below mapping the table name
  *    (as stored in `cw_device_type.data_table`) to the component.
  * 3. Done — the device page dispatcher will automatically pick it up.
@@ -14,14 +14,14 @@
  * simpler and easier to debug.
  */
 
-import AirDisplay from '$lib/components/displays/AirDisplay/AirDisplay.svelte';
-import DefaultDisplay from '$lib/components/displays/DefaultDisplay.svelte';
-import PowerDisplay from '$lib/components/displays/PowerDisplay/PowerDisplay.svelte';
-import RelayDisplay from '$lib/components/displays/RelayDisplay/RelayDisplay.svelte';
-import SoilDisplay from '$lib/components/displays/SoilDisplay/SoilDisplay.svelte';
-import TrafficDisplay from '$lib/components/displays/TrafficDisplay/TrafficDisplay.svelte';
-import WaterDisplay from '$lib/components/displays/WaterDisplay/WaterDisplay.svelte';
-import type { DeviceDisplayComponent } from '$lib/interfaces/deviceDisplay';
+import AirDisplay from '#lib/components/displays/AirDisplay/AirDisplay.svelte';
+import DefaultDisplay from '#lib/components/displays/DefaultDisplay.svelte';
+import PowerDisplay from '#lib/components/displays/PowerDisplay/PowerDisplay.svelte';
+import RelayDisplay from '#lib/components/displays/RelayDisplay/RelayDisplay.svelte';
+import SoilDisplay from '#lib/components/displays/SoilDisplay/SoilDisplay.svelte';
+import TrafficDisplay from '#lib/components/displays/TrafficDisplay/TrafficDisplay.svelte';
+import WaterDisplay from '#lib/components/displays/WaterDisplay/WaterDisplay.svelte';
+import type { DeviceDisplayComponent } from '#lib/interfaces/deviceDisplay.ts';
 
 // ---------------------------------------------------------------------------
 // Registry

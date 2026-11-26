@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { renderWithServices } from '$lib/testing/render';
+import { renderWithServices } from '#lib/testing/render.ts';
 import OverviewIcon, { type OverviewIconName } from './OverviewIcon.svelte';
 
 const NAMES: OverviewIconName[] = [

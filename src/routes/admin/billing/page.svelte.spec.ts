@@ -1,10 +1,10 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { CW_EMPTY_VALUE } from '@cropwatchdevelopment/cwui';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AdminBillingCustomer } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { AdminBillingCustomer } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import AdminBillingPage from './+page.svelte';
 
 const { goto, forms } = vi.hoisted(() => {
@@ -348,7 +348,12 @@ describe('admin billing page: row actions', () => {
 		expect(byId('admin-billing-user-b-mode-button')?.disabled).toBe(true);
 		expect(byId('admin-billing-user-b-seats-button')?.disabled).toBe(true);
 
-		await finish({ type: 'success', status: 200, data: { success: true } });
+		await finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
 		expect(byId('admin-billing-user-a-mode-button')?.getAttribute('aria-busy')).toBeNull();
 		expect(byId('admin-billing-user-b-mode-button')?.disabled).toBe(false);
@@ -363,15 +368,20 @@ describe('admin billing page: row actions', () => {
 		const failure: ActionResult = {
 			type: 'failure',
 			status: 400,
+			location: location.pathname,
 			data: { error: m.admin_billing_seats_invalid() }
 		};
 
 		const first = await submit('admin-billing-user-b-seats-button', failure);
-		await submit('admin-billing-user-b-seats-button', { type: 'failure', status: 403 });
+		await submit('admin-billing-user-b-seats-button', {
+			type: 'failure',
+			status: 403,
+			location: location.pathname
+		});
 		await submit('admin-billing-user-b-seats-button', {
 			type: 'error',
 			status: 500,
-			error: new Error('boom')
+			error: { status: 500, message: 'boom' }
 		});
 
 		expect(forms.applyAction).toHaveBeenCalledTimes(3);

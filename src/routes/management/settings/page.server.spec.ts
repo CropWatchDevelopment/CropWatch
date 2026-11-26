@@ -5,17 +5,17 @@ import type {
 	OrgChildrenDto,
 	OrganizationDto,
 	OrgParentRequestDto
-} from '$lib/api/api.dtos';
-import { Capability } from '$lib/auth/capabilities';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
+} from '#lib/api/api.dtos.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
 import {
 	TEST_JWT,
 	testEvent,
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 import { managementSettingsActions } from './management-settings-actions.server';
 

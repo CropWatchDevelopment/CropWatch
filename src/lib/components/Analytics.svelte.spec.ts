@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { renderWithServices } from '$lib/testing/render';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import Analytics from './Analytics.svelte';
 
 // Boundaries: the SvelteKit runtime (env, dev flag, router, page) and gtag.js,
@@ -9,17 +9,18 @@ import Analytics from './Analytics.svelte';
 // Analytics-dev.svelte.spec.ts: a mocked module's exports are fixed per file.
 const runtime = vi.hoisted(() => ({
 	env: {} as Record<string, string | undefined>,
-	afterNavigate: [] as Array<() => Promise<void> | void>
+	afterNavigate: [] as Array<(navigation: { shallow: boolean }) => Promise<void> | void>
 }));
-vi.mock('$app/environment', () => ({
+vi.mock('$app/env', () => ({
 	browser: true,
 	building: false,
 	version: 'test',
 	dev: false
 }));
-vi.mock('$env/dynamic/public', () => ({ env: runtime.env }));
+vi.mock('#lib/config/public-env.ts', () => ({ publicEnv: runtime.env }));
 vi.mock('$app/navigation', () => ({
-	afterNavigate: (callback: () => Promise<void> | void) => runtime.afterNavigate.push(callback)
+	afterNavigate: (callback: (navigation: { shallow: boolean }) => Promise<void> | void) =>
+		runtime.afterNavigate.push(callback)
 }));
 vi.mock('$app/state', () => ({
 	page: { url: new URL('http://localhost/locations/8?tab=devices') }
@@ -30,7 +31,7 @@ const gtag = vi.hoisted(() => ({
 	trackPageView: vi.fn(),
 	setAnalyticsUser: vi.fn()
 }));
-vi.mock('$lib/analytics/gtag', () => gtag);
+vi.mock('#lib/analytics/gtag.ts', () => gtag);
 
 const session = (sub: string) => ({ sub, email: `${sub}@example.com`, exp: 4102444800 }) as IJWT;
 
@@ -41,8 +42,8 @@ function render(sessionValue: IJWT | null = null) {
 	return view;
 }
 
-async function navigated() {
-	for (const callback of runtime.afterNavigate) await callback();
+async function navigated(shallow = false) {
+	for (const callback of runtime.afterNavigate) await callback({ shallow });
 }
 
 beforeEach(() => {
@@ -89,6 +90,15 @@ describe('Analytics', () => {
 		view!.app.session = null;
 		flushSync();
 		expect(gtag.setAnalyticsUser).toHaveBeenLastCalledWith(null);
+	});
+
+	it('records no page view for a shallow navigation (only the URL changed)', async () => {
+		render(session('user-1'));
+
+		await navigated(true);
+
+		expect(gtag.initAnalytics).not.toHaveBeenCalled();
+		expect(gtag.trackPageView).not.toHaveBeenCalled();
 	});
 
 	it('does nothing without a measurement id', async () => {

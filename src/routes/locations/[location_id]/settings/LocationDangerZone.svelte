@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import DangerZoneCard from '$lib/components/danger-zone/DangerZoneCard.svelte';
-	import DangerZoneDialog from '$lib/components/danger-zone/DangerZoneDialog.svelte';
-	import { m } from '$lib/paraglide/messages.js';
+	import DangerZoneCard from '#lib/components/danger-zone/DangerZoneCard.svelte';
+	import DangerZoneDialog from '#lib/components/danger-zone/DangerZoneDialog.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		ACKNOWLEDGE_FIELD,
 		ACKNOWLEDGE_VALUE,

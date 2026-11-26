@@ -1,15 +1,15 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getLocale, setLocale } from '$lib/paraglide/runtime';
-import { renderWithServices } from '$lib/testing/render';
+import { getLocale, setLocale } from '#lib/paraglide/runtime.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LanguageSwitcher from './LanguageSwitcher.svelte';
 
 // A real setLocale writes the PARAGLIDE_LOCALE cookie and reloads the page,
 // which would take the test runner down with it: stub it at the Paraglide
 // boundary. getLocale keeps its real answer (ja in tests) unless a test
 // overrides it, and afterEach puts the real one back.
-vi.mock('$lib/paraglide/runtime', async (importOriginal) => {
-	const runtime = await importOriginal<typeof import('$lib/paraglide/runtime')>();
+vi.mock('#lib/paraglide/runtime.js', async (importOriginal) => {
+	const runtime = await importOriginal<typeof import('#lib/paraglide/runtime.js')>();
 	return { ...runtime, getLocale: vi.fn(runtime.getLocale), setLocale: vi.fn() };
 });
 

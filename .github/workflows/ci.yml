@@ -24,9 +24,9 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      # SvelteKit generates the `$env/static/*` module types from the variables it
-      # can see, so a checkout with no .env typechecks as "has no exported member".
-      # Placeholder values are enough — nothing here validates env at import time.
+      # SvelteKit requires every variable src/env.ts declares without a schema (the
+      # `static` ones) when it builds or loads the app, so a checkout with no .env
+      # fails. Placeholder values are enough.
       - name: Seed placeholder env
         run: cp .env.example .env
 

@@ -2,15 +2,18 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { SvelteMap } from 'svelte/reactivity';
-	import type { ReportRegenerationItemDto, ReportTemplateHistoryItemDto } from '$lib/api/api.dtos';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import Icon from '$lib/components/Icon.svelte';
-	import { getServices } from '$lib/services/context';
+	import type {
+		ReportRegenerationItemDto,
+		ReportTemplateHistoryItemDto
+	} from '#lib/api/api.dtos.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import { getServices } from '#lib/services/context.ts';
 	import { CwButton, CwChip, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
-	import EDIT_ICON from '$lib/images/icons/edit.svg';
-	import HISTORY_ICON from '$lib/images/icons/history.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import DOWNLOAD_ICON from '#lib/images/icons/download.svg';
+	import EDIT_ICON from '#lib/images/icons/edit.svg';
+	import HISTORY_ICON from '#lib/images/icons/history.svg';
 	import { isReportPeriodEditable, parseReportPeriod } from './report-period';
 
 	interface Props {

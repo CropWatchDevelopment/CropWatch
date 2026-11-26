@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { asset, resolve } from '$app/paths';
-	import Icon from '$lib/components/Icon.svelte';
-	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
-	import { m } from '$lib/paraglide/messages.js';
+	import Icon from '#lib/components/Icon.svelte';
+	import DOWNLOAD_ICON from '#lib/images/icons/download.svg';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CwButton, CwCard, CwChip, CwSeparator } from '@cropwatchdevelopment/cwui';
 
 	type SensorCertificateRow = {
@@ -35,7 +35,7 @@
 			: null
 	);
 	const seriesCertificateDownloadPath = asset(
-		'/files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf'
+		'files/Sensirion_Humidity_Sensors_SHTxx_Calibration_Certification.pdf'
 	);
 </script>
 
