@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { OverviewDto, OverviewRange } from '$lib/api/api.dtos';
+import type { OverviewDto, OverviewRange } from '#lib/api/api.dtos.ts';
 import { OverviewRanges } from './overview-ranges.svelte';
 import { OVERVIEW_REFRESH_MS } from './overview';
 

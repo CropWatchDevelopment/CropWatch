@@ -1,8 +1,8 @@
 import { isRedirect } from '@sveltejs/kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { jsonResponse } from '$lib/testing/http';
-import { formRequest, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import { m } from '#lib/paraglide/messages.js';
+import { jsonResponse } from '#lib/testing/http.ts';
+import { formRequest, testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

@@ -1,12 +1,12 @@
-import type { DeviceDto, LocationDto } from '$lib/api/api.dtos';
+import type { DeviceDto, LocationDto } from '#lib/api/api.dtos.ts';
 import {
 	isValidTtiDeviceId,
 	normalizeTtiDeviceId,
 	TTI_DEVICE_ID_MAX_LENGTH
-} from '$lib/devices/tti-device-id';
-import { m } from '$lib/paraglide/messages.js';
-import { isValidPermissionLevel, PermissionLevel } from '$lib/constants/permissions';
-import type { LibellusConfigurationProblem } from '$lib/server/libellus';
+} from '#lib/devices/tti-device-id.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { isValidPermissionLevel, PermissionLevel } from '#lib/constants/permissions.ts';
+import type { LibellusConfigurationProblem } from '#lib/server/libellus.ts';
 
 export const DEVICE_NAME_MAX_LENGTH = 120;
 export const DEVICE_GROUP_MAX_LENGTH = 120;

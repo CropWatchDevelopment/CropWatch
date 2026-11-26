@@ -99,7 +99,7 @@ describe('PwaController: service worker', () => {
 		const { workers } = startController();
 		await settle();
 
-		expect(workers.register).toHaveBeenCalledWith('/sw.js');
+		expect(workers.register).toHaveBeenCalledWith('/sw.js', { type: 'module' });
 	});
 
 	it('skips registration without a URL (dev) or without service worker support', async () => {

@@ -5,7 +5,7 @@ import {
 	PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
 	PUBLIC_FIREBASE_PROJECT_ID,
 	PUBLIC_FIREBASE_VAPID_KEY
-} from '$env/static/public';
+} from '$app/env/public';
 
 export interface FirebaseConfig {
 	apiKey: string;
@@ -18,7 +18,7 @@ export interface FirebaseConfig {
 
 /**
  * Firebase Cloud Messaging (web push) settings. Unlike `readPublicConfig()`
- * these are build-time values (`$env/static/public`): each environment's build
+ * these are build-time (`static`) values from `src/env.ts`: each environment's build
  * bakes in its own Firebase project.
  */
 export function readFirebaseConfig(): FirebaseConfig {

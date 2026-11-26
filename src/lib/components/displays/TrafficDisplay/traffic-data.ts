@@ -6,8 +6,8 @@
  * therefore keys on `traffic_hour` (falling back to the created_at hour) and
  * sums across line_number rows that share an hour.
  */
-import { formatDate, formatDateTime, formatNumber } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
+import { formatDate, formatDateTime, formatNumber } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 export type TelemetryRow = Record<string, unknown>;
 

@@ -1,4 +1,4 @@
-import type { RuleFormContextDto } from '$lib/api/api.dtos';
+import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
 import type { PageServerLoad } from './$types';
 
 const EMPTY_CONTEXT: RuleFormContextDto = {

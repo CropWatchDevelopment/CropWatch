@@ -1,9 +1,9 @@
 import { fail, type RequestEvent } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import type { CreateOrgInviteRequest } from '$lib/api/api.dtos';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import type { OrganizationRepository } from '$lib/api/repositories/organizations.repository';
-import { m } from '$lib/paraglide/messages.js';
+import type { CreateOrgInviteRequest } from '#lib/api/api.dtos.ts';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import type { OrganizationRepository } from '#lib/api/repositories/organizations.repository.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { readIsoInstant } from './invite-expiry';
 
 /**

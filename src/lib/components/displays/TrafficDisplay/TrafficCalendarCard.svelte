@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { CwCalendar, CwCard, CwChip, formatCwMeasurement } from '@cropwatchdevelopment/cwui';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatNumber, getIntlLocale } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwCalendarLabels } from '$lib/i18n/cwuiLabels';
-	import { getServices } from '$lib/services/context';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { formatNumber, getIntlLocale } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwCalendarLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import {
 		buildDailyTrafficSummaries,
 		formatMeasurement,

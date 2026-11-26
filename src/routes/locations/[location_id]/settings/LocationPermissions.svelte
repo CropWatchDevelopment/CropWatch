@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import type { ActionResult } from '@sveltejs/kit';
+	import { refreshAll } from '$app/navigation';
+	import type { ActionResult } from '$app/forms';
 	import {
 		CwButton,
 		CwCard,
@@ -10,11 +10,11 @@
 		CwSwitch,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import { getPermissionLevelOptions } from '$lib/i18n/options';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
-	import Icon from '$lib/components/Icon.svelte';
-	import ADD_ICON from '$lib/images/icons/add.svg';
+	import { getPermissionLevelOptions } from '#lib/i18n/options.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import ADD_ICON from '#lib/images/icons/add.svg';
 
 	interface SettingsPageData {
 		locationName: string;
@@ -66,7 +66,7 @@
 						}
 						if (result.type === 'success') {
 							newUserEmail = '';
-							await invalidateAll();
+							await refreshAll();
 						}
 					} finally {
 						submitting = false;

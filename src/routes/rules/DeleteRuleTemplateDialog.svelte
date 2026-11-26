@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import Icon from '$lib/components/Icon.svelte';
-	import { getServices } from '$lib/services/context';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import { getServices } from '#lib/services/context.ts';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import TRASH_ICON from '$lib/images/icons/trash.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import TRASH_ICON from '#lib/images/icons/trash.svg';
 
 	interface Props {
 		templateId: number;

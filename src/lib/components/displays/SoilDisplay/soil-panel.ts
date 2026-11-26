@@ -3,11 +3,15 @@ import type {
 	CwAboveBelowMetric,
 	CwAboveBelowTarget
 } from '@cropwatchdevelopment/cwui';
-import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '$lib/api/api.dtos';
-import { cropTarget, type DayPeriod } from '$lib/agronomy/crop-targets';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
+import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '#lib/api/api.dtos.ts';
+import { cropTarget, type DayPeriod } from '#lib/agronomy/crop-targets.ts';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import {
+	convertSensorValue,
+	formatSensorMeasurement,
+	resolveDisplayUnit
+} from '#lib/units/index.ts';
 import { formatBand, hasBounds } from './soil-crop-targets';
 import { fieldSeries, type LatestReading, type SoilField, type SoilRow } from './soil-readings';
 

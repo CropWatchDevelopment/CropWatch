@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { CwButton } from '@cropwatchdevelopment/cwui';
-	import { formatHexPairs } from '$lib/devices/eui';
-	import { formatDate } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
+	import { formatHexPairs } from '#lib/devices/eui.ts';
+	import { formatDate } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import SetupOutcome from './SetupOutcome.svelte';
 	import type {
 		DeviceSetupFlow,
@@ -67,8 +67,10 @@
 				type="button"
 				class="edit"
 				aria-label={m.device_setup_edit_field({ field: m.device_setup_review_device() })}
-				onclick={() => flow.go('details')}>{m.device_setup_edit()}</button
+				onclick={() => flow.go('details')}
 			>
+				{m.device_setup_edit()}
+			</button>
 		</div>
 		<div>
 			<dt>{m.device_setup_review_model()}</dt>
@@ -79,8 +81,10 @@
 				type="button"
 				class="edit"
 				aria-label={m.device_setup_edit_field({ field: m.device_setup_review_model() })}
-				onclick={() => flow.go('identify')}>{m.device_setup_edit()}</button
+				onclick={() => flow.go('identify')}
 			>
+				{m.device_setup_edit()}
+			</button>
 		</div>
 		<div>
 			<dt>{m.device_setup_dev_eui_label()}</dt>
@@ -103,8 +107,10 @@
 				type="button"
 				class="edit"
 				aria-label={m.device_setup_edit_field({ field: m.device_setup_review_location() })}
-				onclick={() => flow.go('details')}>{m.device_setup_edit()}</button
+				onclick={() => flow.go('details')}
 			>
+				{m.device_setup_edit()}
+			</button>
 		</div>
 		{#if flow.installedAt}
 			<div>

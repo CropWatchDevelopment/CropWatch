@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
-	import { ApiError } from '$lib/api/api-error';
-	import type { AccountRemovalChallengeDto } from '$lib/api/api.dtos';
-	import { getServices } from '$lib/services/context';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { ApiError } from '#lib/api/api-error.ts';
+	import type { AccountRemovalChallengeDto } from '#lib/api/api.dtos.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import { CwButton, CwCard, CwInput, CwTextArea } from '@cropwatchdevelopment/cwui';
 
 	// Deliberately public and client-driven: anonymous API calls are rate-limited

@@ -1,6 +1,6 @@
 import { createRawSnippet } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { renderWithServices } from '$lib/testing/render';
+import { renderWithServices } from '#lib/testing/render.ts';
 import AppPage from './AppPage.svelte';
 
 const children = createRawSnippet(() => ({
@@ -73,7 +73,8 @@ describe('AppPage', () => {
 		const { shell } = render({ children: backButton });
 
 		const button = shell.querySelector(':scope > .probe-back') as HTMLElement;
-		expect(getComputedStyle(button).alignSelf).toBe('flex-start');
+		// Newer Chromium reports the computed `flex-start` as `flow-start`.
+		expect(['flex-start', 'flow-start']).toContain(getComputedStyle(button).alignSelf);
 	});
 
 	it('renders an empty shell without children', () => {

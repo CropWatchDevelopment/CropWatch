@@ -1,14 +1,14 @@
 <script lang="ts">
 	import '../login/style.css';
-	import logo from '$lib/images/cropwatch_static.svg';
+	import logo from '#lib/images/cropwatch_static.svg';
 	import { goto } from '$app/navigation';
 	import { applyAction, enhance } from '$app/forms';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { AppNotice } from '$lib/components/layout';
-	import LegalConsentFields from '$lib/components/auth/LegalConsentFields.svelte';
-	import { buildLogoutPath } from '$lib/utils/auth-redirect';
-	import type { LegalDocumentKind } from '$lib/api/api.dtos';
+	import { m } from '#lib/paraglide/messages.js';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import LegalConsentFields from '#lib/components/auth/LegalConsentFields.svelte';
+	import { buildLogoutPath } from '#lib/utils/auth-redirect.ts';
+	import type { LegalDocumentKind } from '#lib/api/api.dtos.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -75,7 +75,7 @@
 					try {
 						if (result.type === 'success') {
 							// eslint-disable-next-line svelte/no-navigation-without-resolve -- path sanitized by the load
-							await goto(redirectPath, { invalidateAll: true });
+							await goto(redirectPath, { refreshAll: true });
 							return;
 						}
 						await applyAction(result);

@@ -6,11 +6,11 @@ import type {
 	PreferencesDto,
 	ProfileDto,
 	RuleTemplateDto
-} from '$lib/api/api.dtos';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
-import { TEST_JWT, testEvent, testLocals, testServerConfig } from '$lib/testing/server';
+} from '#lib/api/api.dtos.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
+import { TEST_JWT, testEvent, testLocals, testServerConfig } from '#lib/testing/server.ts';
 import { load } from './+layout.server';
 
 type LoadEvent = Parameters<typeof load>[0];

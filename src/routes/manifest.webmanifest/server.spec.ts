@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildManifest } from '$lib/pwa/manifest';
-import { getLocale, overwriteGetLocale } from '$lib/paraglide/runtime';
-import { testEvent } from '$lib/testing/server';
+import { buildManifest } from '#lib/pwa/manifest.ts';
+import { getLocale, overwriteGetLocale } from '#lib/paraglide/runtime.js';
+import { testEvent } from '#lib/testing/server.ts';
 import { GET } from './+server';
 
 type GetEvent = Parameters<typeof GET>[0];

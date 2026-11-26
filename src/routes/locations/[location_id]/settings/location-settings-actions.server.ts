@@ -1,7 +1,7 @@
-import { ApiError, apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import type { UpdateLocationOwnerRequest } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { PermissionLevel } from '$lib/constants/permissions';
+import { ApiError, apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import type { UpdateLocationOwnerRequest } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { checkLocationDeleteConfirmation } from './location-delete-confirmation';

@@ -1,9 +1,9 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { overwriteSetLocale, setLocale } from '$lib/paraglide/runtime';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { overwriteSetLocale, setLocale } from '#lib/paraglide/runtime.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import {
 	getAreaUnitOptions,
 	getCo2UnitOptions,
@@ -19,13 +19,13 @@ import {
 	getWaterLevelUnitOptions,
 	getWeightUnitOptions,
 	getWindSpeedUnitOptions
-} from '$lib/units';
+} from '#lib/units/index.ts';
 import SettingsPage from './+page.svelte';
 
-const { invalidateAll, forms } = vi.hoisted(() => {
+const { refreshAll, forms } = vi.hoisted(() => {
 	const submits = new Map<HTMLFormElement, SubmitFunction>();
 	return {
-		invalidateAll: vi.fn(),
+		refreshAll: vi.fn(),
 		forms: {
 			submits,
 			// `use:enhance` without the network: keep the form's submit function so
@@ -45,7 +45,7 @@ const { invalidateAll, forms } = vi.hoisted(() => {
 		}
 	};
 });
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 vi.mock('$app/forms', () => ({ enhance: forms.enhance, applyAction: forms.applyAction }));
 
 // The theme picker keeps its choice here and would override the saved theme.
@@ -196,7 +196,7 @@ afterEach(() => {
 	view = null;
 	overwriteSetLocale(originalSetLocale);
 	changeLocale.mockReset();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	forms.applyAction.mockClear();
 	localStorage.removeItem(THEME_STORAGE_KEY);
 	document.documentElement.removeAttribute('data-theme');
@@ -330,13 +330,18 @@ describe('settings page', () => {
 		expect(saveButton().getAttribute('aria-busy')).toBe('true');
 		expect(resetButton().disabled).toBe(true);
 
-		const success: ActionResult = { type: 'success', status: 200, data: { success: true } };
+		const success: ActionResult = {
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		};
 		await finish(success);
 
 		expect(saveButton().getAttribute('aria-busy')).toBeNull();
 		expect(forms.applyAction).toHaveBeenCalledWith(success);
 		expect(toasts()).toMatchObject([{ tone: 'success', message: m.settings_saved() }]);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 	});
 
 	it('posts every changed field under its form name', async () => {
@@ -357,16 +362,21 @@ describe('settings page', () => {
 	it("shows the action's error, and stays quiet for other results", async () => {
 		const { toasts } = render();
 		choose('settings-pressure-select', OPTIONS.pressure[2].label);
-		const failure: ActionResult = { type: 'failure', status: 400, data: { error: 'Bad unit' } };
+		const failure: ActionResult = {
+			type: 'failure',
+			status: 400,
+			location: location.pathname,
+			data: { error: 'Bad unit' }
+		};
 
 		await submit(failure);
-		await submit({ type: 'failure', status: 400 });
+		await submit({ type: 'failure', status: 400, location: location.pathname });
 		await submit({ type: 'redirect', status: 303, location: '/auth/login' });
 
 		expect(forms.applyAction).toHaveBeenCalledTimes(3);
 		expect(forms.applyAction).toHaveBeenCalledWith(failure);
 		expect(toasts()).toMatchObject([{ tone: 'danger', message: 'Bad unit' }]);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(saveButton().disabled).toBe(false);
 	});
 });

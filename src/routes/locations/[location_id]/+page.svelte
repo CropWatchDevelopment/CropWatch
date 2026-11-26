@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import { AppPage } from '$lib/components/layout';
+	import Icon from '#lib/components/Icon.svelte';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import {
 		CwButton,
 		CwCard,
@@ -10,34 +10,34 @@
 		type CwTableQuery,
 		type CwTableResult
 	} from '@cropwatchdevelopment/cwui';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { cwCopyLabels, cwDataTableLabels } from '$lib/i18n/cwuiLabels';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { cwCopyLabels, cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
 	import { goto } from '$app/navigation';
-	import { backHref } from '$lib/navigation/backTo';
+	import { backHref } from '#lib/navigation/backTo.ts';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import ADD_ICON from '$lib/images/icons/add.svg';
-	import ALERT_ICON from '$lib/images/icons/active_alert.svg';
-	import CHECK_ICON from '$lib/images/icons/check_circle.svg';
-	import DEVICE_ICON from '$lib/images/icons/device.svg';
-	import EYE_ICON from '$lib/images/icons/eye.svg';
-	import HISTORY_ICON from '$lib/images/icons/history.svg';
-	import LOCATION_ICON from '$lib/images/icons/location.svg';
-	import MAP_SEARCH_ICON from '$lib/images/icons/map_search.svg';
-	import REFRESH_ICON from '$lib/images/icons/refresh.svg';
-	import SETTINGS_ICON from '$lib/images/icons/settings.svg';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { naturalSort } from '$lib/utils/natural-sort';
-	import { getServices } from '$lib/services/context';
+	import ADD_ICON from '#lib/images/icons/add.svg';
+	import ALERT_ICON from '#lib/images/icons/active_alert.svg';
+	import CHECK_ICON from '#lib/images/icons/check_circle.svg';
+	import DEVICE_ICON from '#lib/images/icons/device.svg';
+	import EYE_ICON from '#lib/images/icons/eye.svg';
+	import HISTORY_ICON from '#lib/images/icons/history.svg';
+	import LOCATION_ICON from '#lib/images/icons/location.svg';
+	import MAP_SEARCH_ICON from '#lib/images/icons/map_search.svg';
+	import REFRESH_ICON from '#lib/images/icons/refresh.svg';
+	import SETTINGS_ICON from '#lib/images/icons/settings.svg';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { naturalSort } from '#lib/utils/natural-sort.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import type { PageProps } from './$types';
 	import LocationMap from './LocationMap.svelte';
 	import { LocationLiveReadings } from './location-live-readings.svelte';
-	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
+	import SignalStrength from '#lib/components/displays/SignalStrength/SignalStrength.svelte';
 	import {
 		currentSignal,
 		signalBars
-	} from '$lib/components/displays/SignalStrength/signalStrength';
+	} from '#lib/components/displays/SignalStrength/signalStrength.ts';
 	import {
 		classifyHealth,
 		formatRelative,
@@ -321,9 +321,9 @@
 						{coordinates.lat.toFixed(4)}, {coordinates.long.toFixed(4)}
 					</span>
 				{:else}
-					<span class="location-chip location-chip--warning"
-						>{m.location_detail_no_coordinates()}</span
-					>
+					<span class="location-chip location-chip--warning">
+						{m.location_detail_no_coordinates()}
+					</span>
 				{/if}
 				{#if selectedLocationId}
 					<span class="location-chip">{m.location_detail_id({ id: selectedLocationId })}</span>

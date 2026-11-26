@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type { Actions, PageServerLoad } from './$types';
 
 const readString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
@@ -11,8 +11,7 @@ export const load: PageServerLoad = async ({ parent }) => {
 	return {
 		profile: profile ?? null,
 		email: readString(profile?.email ?? session?.email) || null,
-		role: readString(session?.role) || null,
-		lineLinked: Boolean(readString(profile?.line_id))
+		role: readString(session?.role) || null
 	};
 };
 
@@ -38,30 +37,6 @@ export const actions: Actions = {
 				error: apiErrorMessage(err, m.generic_error()),
 				...fields
 			});
-		}
-	},
-
-	lineLinkCode: async ({ locals }) => {
-		const authToken = locals.jwtString ?? null;
-		if (!authToken) return fail(401, { lineError: m.auth_not_authenticated() });
-
-		try {
-			const { code, expiresAt } = await locals.services.line.createLineLinkCode();
-			return { lineCode: code, lineCodeExpiresAt: expiresAt };
-		} catch (err) {
-			return fail(apiErrorStatus(err), { lineError: apiErrorMessage(err, m.generic_error()) });
-		}
-	},
-
-	unlinkLine: async ({ locals }) => {
-		const authToken = locals.jwtString ?? null;
-		if (!authToken) return fail(401, { lineError: m.auth_not_authenticated() });
-
-		try {
-			await locals.services.line.unlinkLine();
-			return { lineUnlinked: true };
-		} catch (err) {
-			return fail(apiErrorStatus(err), { lineError: apiErrorMessage(err, m.line_unlink_failed()) });
 		}
 	},
 

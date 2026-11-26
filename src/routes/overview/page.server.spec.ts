@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { OverviewDto } from '$lib/api/api.dtos';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
-import { testEvent, testLocals, testServerConfig, TEST_JWT } from '$lib/testing/server';
+import type { OverviewDto } from '#lib/api/api.dtos.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
+import { testEvent, testLocals, testServerConfig, TEST_JWT } from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

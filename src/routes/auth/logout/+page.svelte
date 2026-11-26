@@ -1,9 +1,9 @@
 <script lang="ts">
 	import '../login/style.css';
-	import logo from '$lib/images/cropwatch_static.svg';
+	import logo from '#lib/images/cropwatch_static.svg';
 	import { resolve } from '$app/paths';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 </script>
 
 <svelte:head>

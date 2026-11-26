@@ -1,17 +1,17 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import type { PushDeviceDto } from '$lib/api/api.dtos';
-import { formatDate, formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { describeDevice, pushDeviceId } from '$lib/push/push-device';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { PushDeviceDto } from '#lib/api/api.dtos.ts';
+import { formatDate, formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { describeDevice, pushDeviceId } from '#lib/push/push-device.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import PushNotificationsCard from './PushNotificationsCard.svelte';
 
 // The boundary: Firebase configuration and SDK, the Notification API and the
 // service worker registration. localStorage and crypto are the browser's own.
-vi.mock('$env/static/public', () => ({
+vi.mock('$app/env/public', () => ({
 	PUBLIC_FIREBASE_API_KEY: 'test-api-key',
 	PUBLIC_FIREBASE_APP_ID: 'test-app-id',
 	PUBLIC_FIREBASE_AUTH_DOMAIN: 'cropwatch-test.firebaseapp.test',

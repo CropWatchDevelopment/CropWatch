@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { useCwToast } from '@cropwatchdevelopment/cwui';
-	import type { OverviewDto, OverviewFeedItemDto } from '$lib/api/api.dtos';
-	import { formatRelative } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
+	import type { OverviewDto, OverviewFeedItemDto } from '#lib/api/api.dtos.ts';
+	import { formatRelative } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
 	import OverviewIcon, { type OverviewIconName } from './OverviewIcon.svelte';
 	import OverviewSection from './OverviewSection.svelte';
 	import {

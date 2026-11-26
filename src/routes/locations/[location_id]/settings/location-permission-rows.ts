@@ -1,4 +1,4 @@
-import type { LocationOwnerDto } from '$lib/api/api.dtos';
+import type { LocationOwnerDto } from '#lib/api/api.dtos.ts';
 
 export interface PermissionRow {
 	id: number;

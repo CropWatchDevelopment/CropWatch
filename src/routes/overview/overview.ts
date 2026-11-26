@@ -4,7 +4,7 @@ import type {
 	OverviewFeedItemDto,
 	OverviewFeedKind,
 	OverviewRange
-} from '$lib/api/api.dtos';
+} from '#lib/api/api.dtos.ts';
 
 export const OVERVIEW_RANGES: readonly OverviewRange[] = ['24h', '7d', '30d'];
 

@@ -3,16 +3,16 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { AppActionRow, AppNotice, AppPage } from '$lib/components/layout';
-	import { parseAirNotesResponse } from '$lib/components/displays/AirDisplay/utils/air-notes';
-	import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import { formatSensorMeasurement } from '$lib/units';
-	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { AppActionRow, AppNotice, AppPage } from '#lib/components/layout/index.ts';
+	import { parseAirNotesResponse } from '#lib/components/displays/AirDisplay/utils/air-notes.ts';
+	import type { Note } from '#lib/components/displays/AirDisplay/interfaces/note.interface.ts';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import { formatSensorMeasurement } from '#lib/units/index.ts';
+	import { createClientTableLoader } from '#lib/utils/clientTableLoader.ts';
 	import {
 		CwButton,
 		CwCard,

@@ -2,15 +2,15 @@
 	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { CwButton, CwDialog, CwSpinner, CwStatusDot } from '@cropwatchdevelopment/cwui';
-	import { AppNotice } from '$lib/components/layout';
-	import SignalStrength from '$lib/components/displays/SignalStrength/SignalStrength.svelte';
-	import { currentSignal } from '$lib/components/displays/SignalStrength/signalStrength';
-	import type { DeviceGatewayDto } from '$lib/api/api.dtos';
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import SignalStrength from '#lib/components/displays/SignalStrength/SignalStrength.svelte';
+	import { currentSignal } from '#lib/components/displays/SignalStrength/signalStrength.ts';
+	import type { DeviceGatewayDto } from '#lib/api/api.dtos.ts';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
 
 	interface Props {
 		devEui: string;

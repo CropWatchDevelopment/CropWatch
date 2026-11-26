@@ -1,21 +1,20 @@
 import { resolve } from '$app/paths';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import type { CwToastApi } from '@cropwatchdevelopment/cwui';
-import { apiErrorMessage } from '$lib/api/api-error';
-import type { RuleFormContextDto } from '$lib/api/api.dtos';
-import type { LineRepository } from '$lib/api/repositories/line.repository';
-import type { PushRepository } from '$lib/api/repositories/push.repository';
-import type { RuleRepository } from '$lib/api/repositories/rules.repository';
-import { getRuleOperatorOptions, getRuleSubjectOptions } from '$lib/i18n/options';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage } from '#lib/api/api-error.ts';
+import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
+import type { PushRepository } from '#lib/api/repositories/push.repository.ts';
+import type { RuleRepository } from '#lib/api/repositories/rules.repository.ts';
+import { getRuleOperatorOptions, getRuleSubjectOptions } from '#lib/i18n/options.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type {
 	Json,
 	RuleTemplateActionDto,
 	RuleTemplateActionInput,
 	RuleTemplateDto,
 	RuleTemplateSaveRequest
-} from '$lib/rules/rule-template.types';
-import { labelFor } from '$lib/sensor-labels';
+} from '#lib/rules/rule-template.types.ts';
+import { labelFor } from '#lib/sensor-labels/index.ts';
 import {
 	areAlertCriteriaGroupsValid,
 	buildInitialAlertCriteriaGroups,
@@ -38,9 +37,8 @@ interface RuleTemplateActionConfig {
 
 export type EditableTemplateAction = Omit<RuleTemplateActionDto, 'config'> & {
 	config: RuleTemplateActionConfig;
-	// LINE / Push actions only: the CwMultiSelect selection ({id,label}
-	// shape). Serialized into config.recipient as {"userIds":[...]} on change.
-	lineRecipients: { id: string; label: string }[];
+	// Push actions only: the CwMultiSelect selection ({id,label} shape).
+	// Serialized into config.recipient as {"userIds":[...]} on change.
 	pushRecipients: { id: string; label: string }[];
 };
 
@@ -61,7 +59,6 @@ export interface RuleTemplateFormOptions {
 	/** Shown on the preselected creator chip until the recipient list loads. */
 	currentUserName: string | null;
 	rules: Pick<RuleRepository, 'createRuleTemplate' | 'updateRuleTemplate'>;
-	line: Pick<LineRepository, 'getLineRecipientCandidates'>;
 	push: Pick<PushRepository, 'getPushRecipientCandidates'>;
 	/** The session token the services send: the recipient lookups only run with one. */
 	accessToken: () => string | null | undefined;
@@ -73,8 +70,7 @@ export interface RuleTemplateFormOptions {
  * State and behaviour of the rule template wizard (create and edit): the
  * fields, the device / condition / action editors, the recipient lookups
  * that depend on the device selection, and saving. The component renders
- * it and runs {@link syncLineRecipients} / {@link syncPushRecipients} in
- * effects.
+ * it and runs {@link syncPushRecipients} in an effect.
  */
 export class RuleTemplateFormController {
 	readonly #options: RuleTemplateFormOptions;
@@ -100,13 +96,18 @@ export class RuleTemplateFormController {
 
 	templateActions = $state<EditableTemplateAction[]>([]);
 
+	// LINE is no longer offered (its integration is being removed); a saved
+	// LINE action still shows under its own name so it can be changed or removed.
+	readonly #offeredActionTypes = $derived(
+		this.#actions.filter(
+			(actionType) => isValidActionTypeId(actionType.id) && actionType.name !== 'LINE'
+		)
+	);
 	readonly #actionTypeOptions = $derived(
-		this.#actions
-			.filter((actionType) => isValidActionTypeId(actionType.id))
-			.map((actionType) => ({
-				label: actionType.name,
-				value: String(actionType.id)
-			}))
+		this.#offeredActionTypes.map((actionType) => ({
+			label: actionType.name,
+			value: String(actionType.id)
+		}))
 	);
 	readonly #deviceOptionsBase = $derived<DeviceOption[]>(
 		(this.#devices ?? []).map((device) => ({
@@ -139,18 +140,11 @@ export class RuleTemplateFormController {
 		this.selectedDevices.map((device) => device.id.trim()).filter(Boolean)
 	);
 
-	// Eligible LINE recipients for the currently selected devices. This is the
+	// Eligible push recipients for the currently selected devices. This is the
 	// only mid-form fetch in this file: the options depend on device selection,
 	// which the server-loaded form context cannot know ahead of time. The
 	// serialized-key guard doubles as a debounce (CwMultiSelect commits one
 	// change per click) and the sequence number drops stale responses.
-	#lineRecipientOptionsBase = $state<{ label: string; value: string }[]>([]);
-	readonly #lineRecipientNames = new SvelteMap<string, string>();
-	#lineRecipientFetchKey = '';
-	#lineRecipientFetchSeq = 0;
-
-	// Eligible push recipients — same fetch pattern as the LINE one above,
-	// with its own key/seq guard so the two channels never race each other.
 	// Users who haven't subscribed to push are listed but can't be selected.
 	#pushRecipientOptionsBase = $state<{ label: string; value: string; disabled: boolean }[]>([]);
 	readonly #pushRecipientNames = new SvelteMap<string, string>();
@@ -174,7 +168,6 @@ export class RuleTemplateFormController {
 				(action) =>
 					isValidActionTypeId(action.actionType) &&
 					action.config.recipient.trim().length > 0 &&
-					(action.actionTypeName !== 'LINE' || action.lineRecipients.length > 0) &&
 					(action.actionTypeName !== 'Push' ||
 						(action.pushRecipients.length > 0 && this.pushRecipientError(action) === undefined))
 			)
@@ -203,17 +196,12 @@ export class RuleTemplateFormController {
 				action.actionTypeValue ??
 				String(action.actionType);
 			const recipient =
-				action.actionTypeName === 'LINE'
-					? action.lineRecipients
-							.map((item) => this.#lineRecipientNames.get(item.id) ?? item.label ?? item.id)
+				action.actionTypeName === 'Push'
+					? action.pushRecipients
+							.map((item) => this.#pushRecipientNames.get(item.id) ?? item.label ?? item.id)
 							.join(', ') ||
-						m.line_recipient_preview_count({ count: String(action.lineRecipients.length) })
-					: action.actionTypeName === 'Push'
-						? action.pushRecipients
-								.map((item) => this.#pushRecipientNames.get(item.id) ?? item.label ?? item.id)
-								.join(', ') ||
-							m.push_recipient_preview_count({ count: String(action.pushRecipients.length) })
-						: action.config.recipient;
+						m.push_recipient_preview_count({ count: String(action.pushRecipients.length) })
+					: action.config.recipient;
 			return `${label}: ${recipient}`;
 		})
 	);
@@ -250,47 +238,6 @@ export class RuleTemplateFormController {
 	 */
 	#context(): RuleFormContextDto {
 		return this.#options.context();
-	}
-
-	/** Effect body: refetches the eligible LINE recipients when the device selection changes. */
-	syncLineRecipients(): void {
-		const devEuis = [...this.#selectedDevEuis].sort();
-		const key = devEuis.join(',');
-		if (key === this.#lineRecipientFetchKey) return;
-		this.#lineRecipientFetchKey = key;
-
-		if (devEuis.length === 0 || !this.#options.accessToken()) {
-			this.#lineRecipientOptionsBase = [];
-			return;
-		}
-
-		const seq = ++this.#lineRecipientFetchSeq;
-		this.#options.line
-			.getLineRecipientCandidates(devEuis)
-			.then((candidates) => {
-				if (seq !== this.#lineRecipientFetchSeq) return;
-				this.#lineRecipientNames.clear();
-				this.#lineRecipientOptionsBase = candidates.map((candidate) => {
-					this.#lineRecipientNames.set(candidate.userId, candidate.displayName);
-					return {
-						value: candidate.userId,
-						label: candidate.lineLinked
-							? candidate.displayName
-							: `${candidate.displayName}（${m.line_recipient_not_linked()}）`
-					};
-				});
-				// Upgrade bare id labels on saved selections now that names are known.
-				for (const action of this.templateActions) {
-					if (action.actionTypeName !== 'LINE') continue;
-					for (const selection of action.lineRecipients) {
-						const name = this.#lineRecipientNames.get(selection.id);
-						if (name && selection.label === selection.id) selection.label = name;
-					}
-				}
-			})
-			.catch(() => {
-				if (seq === this.#lineRecipientFetchSeq) this.#lineRecipientOptionsBase = [];
-			});
 	}
 
 	/** Effect body: refetches the eligible push recipients when the device selection changes. */
@@ -340,19 +287,6 @@ export class RuleTemplateFormController {
 
 	// Saved selections must stay visible even when the fetch hasn't landed or
 	// the user lost device access (same guard pattern as deviceOptions above).
-	lineRecipientOptionsFor(action: EditableTemplateAction) {
-		const missing = action.lineRecipients
-			.filter((selection) => !this.#lineRecipientOptionsBase.some((o) => o.value === selection.id))
-			.map((selection) => ({ value: selection.id, label: selection.label || selection.id }));
-		return [...missing, ...this.#lineRecipientOptionsBase];
-	}
-
-	setLineRecipients(action: EditableTemplateAction, selection: { id: string; label: string }[]) {
-		action.lineRecipients = selection;
-		action.config.recipient =
-			selection.length > 0 ? JSON.stringify({ userIds: selection.map((item) => item.id) }) : '';
-	}
-
 	pushRecipientOptionsFor(action: EditableTemplateAction) {
 		const missing = action.pushRecipients
 			.filter((selection) => !this.#pushRecipientOptionsBase.some((o) => o.value === selection.id))
@@ -394,7 +328,7 @@ export class RuleTemplateFormController {
 	}
 
 	createBlankTemplateAction(): EditableTemplateAction {
-		const actionType = this.#actions[0];
+		const actionType = this.#offeredActionTypes[0];
 
 		return {
 			id: 0,
@@ -405,7 +339,6 @@ export class RuleTemplateFormController {
 			config: {
 				recipient: ''
 			},
-			lineRecipients: [],
 			pushRecipients: [],
 			createdAt: null
 		};
@@ -429,7 +362,6 @@ export class RuleTemplateFormController {
 					config: {
 						recipient: JSON.stringify({ userIds: [currentUserId] })
 					},
-					lineRecipients: [],
 					pushRecipients: [{ id: currentUserId, label: currentUserName || currentUserId }],
 					createdAt: null
 				};
@@ -563,10 +495,9 @@ export class RuleTemplateFormController {
 		action.actionTypeName = selectedAction?.name ?? null;
 		action.actionTypeValue = selectedAction?.value ?? null;
 
-		// Switching to or away from LINE/Push always requires a fresh recipient choice.
-		if (action.actionTypeName === 'LINE' || wasLine) {
-			this.setLineRecipients(action, []);
-		}
+		// A saved LINE action's recipient list means nothing to the other types.
+		if (wasLine) action.config.recipient = '';
+		// Switching to or away from Push always requires a fresh recipient choice.
 		if (action.actionTypeName === 'Push' || wasPush) {
 			this.setPushRecipients(action, []);
 		}
@@ -593,10 +524,6 @@ function parseRecipientUserIds(recipient: string): string[] {
 
 function createEditableTemplateAction(action: RuleTemplateActionDto): EditableTemplateAction {
 	const recipient = readActionRecipient(action);
-	const lineRecipients =
-		action.actionTypeName === 'LINE'
-			? parseRecipientUserIds(recipient).map((id) => ({ id, label: id }))
-			: [];
 	const pushRecipients =
 		action.actionTypeName === 'Push'
 			? parseRecipientUserIds(recipient).map((id) => ({ id, label: id }))
@@ -607,7 +534,6 @@ function createEditableTemplateAction(action: RuleTemplateActionDto): EditableTe
 			...readActionConfig(action.config),
 			recipient
 		},
-		lineRecipients,
 		pushRecipients
 	};
 }

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { CwButton, CwDropdown } from '@cropwatchdevelopment/cwui';
-	import Icon from '$lib/components/Icon.svelte';
-	import ADD_ICON from '$lib/images/icons/add.svg';
-	import EDIT_ICON from '$lib/images/icons/edit.svg';
-	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
+	import Icon from '#lib/components/Icon.svelte';
+	import ADD_ICON from '#lib/images/icons/add.svg';
+	import EDIT_ICON from '#lib/images/icons/edit.svg';
+	import { cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { GroupsController } from './groups-controller.svelte';
 
 	interface Props {

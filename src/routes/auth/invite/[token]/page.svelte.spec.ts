@@ -1,9 +1,9 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { InvitePreviewDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { InvitePreviewDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import InvitePage from './+page.svelte';
 
 // Boundaries: the SvelteKit runtime (navigation, form enhancement).
@@ -183,10 +183,15 @@ describe('invite page', () => {
 
 		const { finish } = await submit();
 		expect(button(m.invite_accept())?.getAttribute('aria-busy')).toBe('true');
-		await finish({ type: 'success', status: 200, data: { success: true } });
+		await finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
 		expect(toasts()).toMatchObject([{ tone: 'success', message: m.invite_accepted() }]);
-		expect(goto).toHaveBeenCalledWith('/', { invalidateAll: true });
+		expect(goto).toHaveBeenCalledWith('/', { refreshAll: true });
 		expect(forms.applyAction).not.toHaveBeenCalled();
 		expect(button(m.invite_accept())?.getAttribute('aria-busy')).toBeNull();
 	});
@@ -196,6 +201,7 @@ describe('invite page', () => {
 		const result: ActionResult = {
 			type: 'failure',
 			status: 409,
+			location: location.pathname,
 			data: { error: m.invite_conflict() }
 		};
 

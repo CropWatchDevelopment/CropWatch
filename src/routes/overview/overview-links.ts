@@ -1,8 +1,8 @@
 import { resolve } from '$app/paths';
 import type { useCwToast } from '@cropwatchdevelopment/cwui';
-import { apiErrorMessage } from '$lib/api/api-error';
-import type { ReportRepository } from '$lib/api/repositories/reports.repository';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage } from '#lib/api/api-error.ts';
+import type { ReportRepository } from '#lib/api/repositories/reports.repository.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 /** The device page; null when the device has no location (the route needs one). */
 export function deviceHref(

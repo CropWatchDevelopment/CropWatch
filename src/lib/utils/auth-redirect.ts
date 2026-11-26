@@ -48,7 +48,7 @@ export function sanitizeRedirectPath(
 }
 
 export function readRedirectPath(
-	searchParams: URLSearchParams,
+	searchParams: Pick<URLSearchParams, 'get'>,
 	fallback: string = ROOT_PATH
 ): string {
 	return sanitizeRedirectPath(searchParams.get('redirect'), fallback);
@@ -58,7 +58,7 @@ export function readRedirectPathFromUrl(url: URL, fallback: string = ROOT_PATH):
 	return readRedirectPath(url.searchParams, fallback);
 }
 
-export function readLoginReason(searchParams: URLSearchParams): LoginReason | null {
+export function readLoginReason(searchParams: Pick<URLSearchParams, 'get'>): LoginReason | null {
 	const rawReason = searchParams.get('reason');
 	return isLoginReason(rawReason) ? rawReason : null;
 }

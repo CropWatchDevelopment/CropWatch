@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CwButton, CwSpinner } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { DeviceSetupFlow } from './device-setup-flow.svelte';
 	import { regionLabel } from './setup-messages';
 
@@ -86,8 +86,10 @@
 					stroke="currentColor"
 					stroke-width="2.6"
 					stroke-linecap="round"
-					stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg
+					stroke-linejoin="round"
 				>
+					<path d="M20 6 9 17l-5-5"></path>
+				</svg>
 			</span>
 			<h2 class="m-0 text-2xl font-semibold" tabindex="-1" data-step-heading>
 				{m.device_setup_done_title({ name })}
@@ -119,8 +121,9 @@
 							stroke-linejoin="round"
 							role="img"
 							aria-label={m.device_setup_task_done()}
-							><circle cx="12" cy="12" r="10"></circle><path d="m8 12 3 3 5-6"></path></svg
 						>
+							<circle cx="12" cy="12" r="10"></circle><path d="m8 12 3 3 5-6"></path>
+						</svg>
 					{:else if task.state === 'active'}
 						<CwSpinner size="sm" />
 					{:else}

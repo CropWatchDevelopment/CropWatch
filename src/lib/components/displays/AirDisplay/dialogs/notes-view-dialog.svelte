@@ -1,12 +1,12 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
 	import type { AirRow } from '../interfaces/AirRow.interface';
 	import type { Note } from '../interfaces/note.interface';
 	import { noteAuthor } from '../utils/air-notes';
-	import EYE_ICON from '$lib/images/icons/eye.svg';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
+	import EYE_ICON from '#lib/images/icons/eye.svg';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 
 	let { row }: { row: AirRow } = $props();
 	let open = $state(false);

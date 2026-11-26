@@ -11,29 +11,33 @@
 		type CwStatCardData,
 		type CwWindSpeedUnit
 	} from '@cropwatchdevelopment/cwui';
-	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getIntlLocale } from '$lib/i18n/format';
+	import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getIntlLocale } from '#lib/i18n/format.ts';
 	import {
 		cwDataTableLabels,
 		cwHeatmapLabels,
 		cwStatCardLabels,
 		cwWindCompassLabels
-	} from '$lib/i18n/cwuiLabels';
-	import { computeStats } from '$lib/utils/computeStats';
-	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	} from '#lib/i18n/cwuiLabels.ts';
+	import { computeStats } from '#lib/utils/computeStats.ts';
+	import { createClientTableLoader } from '#lib/utils/clientTableLoader.ts';
 	import './AirDisplay.css';
 	import NotesCreateDialog from './dialogs/notes-create-dialog.svelte';
 	import type { AirRow } from './interfaces/AirRow.interface';
 	import type { Note } from './interfaces/note.interface';
 	import NotesViewDialog from './dialogs/notes-view-dialog.svelte';
 	import { parseAirNotesResponse } from './utils/air-notes';
-	import Icon from '$lib/components/Icon.svelte';
-	import ALERT_ICON from '$lib/images/icons/error.svg';
-	import CHECK_CIRCLE_ICON from '$lib/images/icons/check_circle.svg';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
-	import { computeDewPoint } from '$lib/utils/dewPoint';
+	import Icon from '#lib/components/Icon.svelte';
+	import ALERT_ICON from '#lib/images/icons/error.svg';
+	import CHECK_CIRCLE_ICON from '#lib/images/icons/check_circle.svg';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import {
+		convertSensorValue,
+		formatSensorMeasurement,
+		resolveDisplayUnit
+	} from '#lib/units/index.ts';
+	import { computeDewPoint } from '#lib/utils/dewPoint.ts';
 
 	const app = getAppContext();
 

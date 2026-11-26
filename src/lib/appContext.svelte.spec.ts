@@ -9,7 +9,7 @@ import {
 	setAppContext,
 	type AppContext
 } from './appContext.svelte';
-import { renderWithServices } from '$lib/testing/render';
+import { renderWithServices } from '#lib/testing/render.ts';
 
 /** The keys `createAppContext` fills in (no `preferences` / `orgContext`), in order. */
 const CREATED_KEYS = [

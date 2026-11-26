@@ -12,7 +12,7 @@
 	import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 	import { untrack } from 'svelte';
 	import { CwButton } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { DeviceHealth } from './location-overview';
 
 	interface DevicePin {

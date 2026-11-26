@@ -5,7 +5,7 @@
  */
 import type { CwTone } from '@cropwatchdevelopment/cwui';
 import { formatCwNumber } from '@cropwatchdevelopment/cwui';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import { isRecord, readNumber, readString, shiftDayKey, toDayKey } from './traffic-data';
 
 export interface WeatherDaySummary {

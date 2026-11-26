@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { checkAppKey, checkEui } from '$lib/devices/eui';
-import { m } from '$lib/paraglide/messages.js';
+import { checkAppKey, checkEui } from '#lib/devices/eui.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { hexFieldError, regionLabel, supportHref } from './setup-messages';
 
 describe('hexFieldError', () => {

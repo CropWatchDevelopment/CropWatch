@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit';
-import type { UpdatePreferencesRequest } from '$lib/api/api.dtos';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
-import { getLocale } from '$lib/paraglide/runtime';
+import type { UpdatePreferencesRequest } from '#lib/api/api.dtos.ts';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
 import {
 	getTemperatureUnitOptions,
 	getWeightUnitOptions,
@@ -18,7 +18,7 @@ import {
 	getAreaUnitOptions,
 	getDateFormatOptions,
 	getTimeFormatOptions
-} from '$lib/units';
+} from '#lib/units/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 type SupportedLocale = 'ja' | 'en';

@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import type { ActionResult } from '@sveltejs/kit';
+	import { refreshAll } from '$app/navigation';
+	import type { ActionResult } from '$app/forms';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import Icon from '$lib/components/Icon.svelte';
-	import SAVE_ICON from '$lib/images/icons/save.svg';
-	import type { GroupDto } from '$lib/api/api.dtos';
-	import { getServices } from '$lib/services/context';
-	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
-	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
-	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
-	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import Icon from '#lib/components/Icon.svelte';
+	import SAVE_ICON from '#lib/images/icons/save.svg';
+	import type { GroupDto } from '#lib/api/api.dtos.ts';
+	import { getServices } from '#lib/services/context.ts';
+	import AddGroupDialog from '#lib/components/groups/AddGroupDialog.svelte';
+	import GroupPicker from '#lib/components/groups/GroupPicker.svelte';
+	import ManageGroupsDialog from '#lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '#lib/components/groups/groups-controller.svelte.ts';
 
 	type SettingsPageData = {
 		locationId: string | number | null;
@@ -41,7 +41,7 @@
 			// A rename or delete changes what the saved location shows: reload,
 			// and keep an untouched picker on what the API now has saved.
 			const untouched = locationGroup.trim() === (data.locationGroup ?? '').trim();
-			await invalidateAll();
+			await refreshAll();
 			groups.reseed(data.locationGroups, data.locationOrgId);
 			if (untouched) locationGroup = data.locationGroup ?? '';
 		}
@@ -87,7 +87,7 @@
 						}
 
 						if (result.type === 'success') {
-							await invalidateAll();
+							await refreshAll();
 							// Show what was saved, as the reloaded location has it (saving a
 							// new name may have created a group, so the list is reloaded too).
 							locationName = data.locationName ?? '';

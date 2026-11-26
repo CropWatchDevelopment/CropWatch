@@ -5,10 +5,10 @@ import type {
 	DeviceDto,
 	LocationDto,
 	SubscriptionStateResponse
-} from '$lib/api/api.dtos';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig } from '$lib/testing/http';
-import { testEvent, testLocals, testServerConfig, type TestLocals } from '$lib/testing/server';
+} from '#lib/api/api.dtos.ts';
+import { createServerServices } from '#lib/server/services.ts';
+import { createFakeFetch, jsonResponse, testPublicConfig } from '#lib/testing/http.ts';
+import { testEvent, testLocals, testServerConfig, type TestLocals } from '#lib/testing/server.ts';
 import { load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];
@@ -193,8 +193,10 @@ describe('billing load', () => {
 			config: config.public,
 			serverConfig: config.server
 		});
-		const event = testEvent<LoadEvent>({ url: 'http://localhost/account/billing' });
-		event.locals = { jwt: null, jwtString: 'jwt-token', services, config };
+		const event = testEvent<LoadEvent>({
+			url: 'http://localhost/account/billing',
+			locals: { jwt: null, jwtString: 'jwt-token', services, config }
+		});
 
 		await expect(load(event)).resolves.toMatchObject({ state: STATE, loadFailed: false });
 

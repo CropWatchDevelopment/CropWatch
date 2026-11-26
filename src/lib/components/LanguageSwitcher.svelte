@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getLocale, setLocale } from '$lib/paraglide/runtime';
+	import { getLocale, setLocale } from '#lib/paraglide/runtime.js';
 
 	type SupportedLocale = 'ja' | 'en';
 

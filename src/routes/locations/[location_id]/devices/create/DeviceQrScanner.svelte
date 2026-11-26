@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { CwButton, CwDialog } from '@cropwatchdevelopment/cwui';
-	import { AppNotice } from '$lib/components/layout';
-	import { createQrDecoder, type QrDecoder } from '$lib/devices/qr-decode';
-	import { parseDeviceQr, type DeviceQrPayload } from '$lib/devices/qr-payload';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import { createQrDecoder, type QrDecoder } from '#lib/devices/qr-decode.ts';
+	import { parseDeviceQr, type DeviceQrPayload } from '#lib/devices/qr-payload.ts';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		open: boolean;

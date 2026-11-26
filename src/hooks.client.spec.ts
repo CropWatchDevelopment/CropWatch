@@ -29,8 +29,18 @@ function fakeBrowser(cookie = 'jwt=abc; theme=dark;  PARAGLIDE_LOCALE=en') {
 	return browser;
 }
 
-function input(status: number | undefined, error: unknown = new Error('boom')): ErrorInput {
-	return { error, status, message: 'Something broke', event: {} } as unknown as ErrorInput;
+/** An error SvelteKit raised itself (a 404, …), with its status and safe message. */
+function frameworkError(status: number): ErrorInput {
+	return {
+		kind: 'framework',
+		error: { status, message: 'Something broke' },
+		event: {}
+	} as ErrorInput;
+}
+
+/** Something our code (or code it calls) threw. */
+function unknownError(error: unknown = new Error('boom')): ErrorInput {
+	return { kind: 'unknown', error, event: {} } as ErrorInput;
 }
 
 let consoleError: ReturnType<typeof vi.spyOn>;
@@ -45,41 +55,58 @@ afterEach(() => {
 });
 
 describe('client handleError', () => {
-	it.each([400, 403, 404, 503])('logs a %i and passes its message to the error page', (status) => {
+	it.each([400, 403, 404, 503])(
+		'logs a framework %i and leaves its status and message to the error page',
+		(status) => {
+			const browser = fakeBrowser();
+			const input = frameworkError(status);
+
+			expect(handleError(input)).toBeUndefined();
+
+			expect(consoleError).toHaveBeenCalledWith(
+				'[CropWatch] Unexpected client error:',
+				input.error
+			);
+			expect(browser.localStorage.clear).not.toHaveBeenCalled();
+			expect(browser.window.location.href).toBe('http://localhost/locations');
+		}
+	);
+
+	it('leaves an error(...) result alone', () => {
 		const browser = fakeBrowser();
-		const error = new Error('not found');
+		const input = { kind: 'app', error: { status: 403, message: 'No' }, event: {} } as ErrorInput;
 
-		expect(handleError(input(status, error))).toEqual({ message: 'Something broke' });
+		expect(handleError(input)).toBeUndefined();
 
-		expect(consoleError).toHaveBeenCalledWith('[CropWatch] Unexpected client error:', error);
+		expect(consoleError).not.toHaveBeenCalled();
 		expect(browser.localStorage.clear).not.toHaveBeenCalled();
 		expect(browser.window.location.href).toBe('http://localhost/locations');
 	});
 
-	it.each([500, undefined])(
-		'recovers from a %s by clearing all client state and signing in again',
-		(status) => {
-			const browser = fakeBrowser();
-			const error = new Error('crash');
+	it.each([
+		['an unexpected error', () => unknownError(new Error('crash'))],
+		['a framework 500', () => frameworkError(500)]
+	])('recovers from %s by clearing all client state and signing in again', (_label, makeInput) => {
+		const browser = fakeBrowser();
+		const input = makeInput();
 
-			expect(handleError(input(status, error))).toBeUndefined();
+		expect(handleError(input)).toBeUndefined();
 
-			expect(consoleError).toHaveBeenCalledWith('[CropWatch] Unexpected client error:', error);
-			expect(browser.localStorage.clear).toHaveBeenCalledTimes(1);
-			expect(browser.sessionStorage.clear).toHaveBeenCalledTimes(1);
-			expect(browser.cookieWrites).toEqual([
-				`jwt=; ${EXPIRED}`,
-				`theme=; ${EXPIRED}`,
-				`PARAGLIDE_LOCALE=; ${EXPIRED}`
-			]);
-			expect(browser.window.location.href).toBe('/auth/login?reason=error-recovery');
-		}
-	);
+		expect(consoleError).toHaveBeenCalledWith('[CropWatch] Unexpected client error:', input.error);
+		expect(browser.localStorage.clear).toHaveBeenCalledTimes(1);
+		expect(browser.sessionStorage.clear).toHaveBeenCalledTimes(1);
+		expect(browser.cookieWrites).toEqual([
+			`jwt=; ${EXPIRED}`,
+			`theme=; ${EXPIRED}`,
+			`PARAGLIDE_LOCALE=; ${EXPIRED}`
+		]);
+		expect(browser.window.location.href).toBe('/auth/login?reason=error-recovery');
+	});
 
 	it('skips cookie writes when there are no cookies', () => {
 		const browser = fakeBrowser('');
 
-		handleError(input(500));
+		handleError(unknownError());
 
 		expect(browser.cookieWrites).toEqual([]);
 		expect(browser.window.location.href).toBe('/auth/login?reason=error-recovery');
@@ -99,7 +126,7 @@ describe('client handleError', () => {
 			}
 		});
 
-		expect(() => handleError(input(500))).not.toThrow();
+		expect(() => handleError(unknownError())).not.toThrow();
 
 		expect(browser.sessionStorage.clear).toHaveBeenCalledTimes(1);
 		expect(browser.window.location.href).toBe('/auth/login?reason=error-recovery');

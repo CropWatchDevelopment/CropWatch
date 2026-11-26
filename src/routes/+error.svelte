@@ -2,10 +2,10 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { browser } from '$app/environment';
+	import { browser } from '$app/env';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { clearAllClientState } from '$lib/utils/client-state';
+	import { m } from '#lib/paraglide/messages.js';
+	import { clearAllClientState } from '#lib/utils/client-state.ts';
 
 	const errorMessages: Record<number, { title: string; description: string }> = {
 		400: {
@@ -97,15 +97,15 @@
 		<p class="text-center text-sm opacity-70">{description}</p>
 
 		<div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-			<CwButton id="error-home-button" variant="primary" onclick={() => goto(resolve('/'))}
-				>{m.action_go_home()}</CwButton
-			>
-			<CwButton id="error-back-button" variant="ghost" onclick={() => history.back()}
-				>{m.action_go_back()}</CwButton
-			>
-			<CwButton id="error-reset-login-button" variant="danger" onclick={resetAndLogin}
-				>{m.error_reset_and_login()}</CwButton
-			>
+			<CwButton id="error-home-button" variant="primary" onclick={() => goto(resolve('/'))}>
+				{m.action_go_home()}
+			</CwButton>
+			<CwButton id="error-back-button" variant="ghost" onclick={() => history.back()}>
+				{m.action_go_back()}
+			</CwButton>
+			<CwButton id="error-reset-login-button" variant="danger" onclick={resetAndLogin}>
+				{m.error_reset_and_login()}
+			</CwButton>
 		</div>
 	</CwCard>
 </div>

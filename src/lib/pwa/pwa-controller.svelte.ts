@@ -152,7 +152,8 @@ export class PwaController {
 		const workers = this.#window?.navigator.serviceWorker;
 		if (!this.deps.serviceWorkerUrl || !workers) return;
 		try {
-			this.#registration = await workers.register(this.deps.serviceWorkerUrl);
+			// SvelteKit bundles the worker as an ES module.
+			this.#registration = await workers.register(this.deps.serviceWorkerUrl, { type: 'module' });
 		} catch (error) {
 			console.warn('Service worker registration failed:', error);
 		}

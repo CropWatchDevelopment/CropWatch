@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { describeDevice } from './push-device';
 import {
 	enablePush,
@@ -16,7 +16,7 @@ import {
 // The boundary: SvelteKit's environment and env, the Firebase SDK, and the
 // browser APIs (stubbed per test below). Everything else is the real module.
 const environment = vi.hoisted(() => ({ browser: true }));
-vi.mock('$app/environment', () => environment);
+vi.mock('$app/env', () => environment);
 
 const CONFIGURED_ENV = {
 	PUBLIC_FIREBASE_API_KEY: 'test-api-key',
@@ -27,7 +27,7 @@ const CONFIGURED_ENV = {
 	PUBLIC_FIREBASE_VAPID_KEY: 'test-vapid-key'
 };
 const env = vi.hoisted(() => ({}) as Record<string, string>);
-vi.mock('$env/static/public', () => env);
+vi.mock('$app/env/public', () => env);
 
 const firebase = vi.hoisted(() => ({
 	apps: [] as unknown[],

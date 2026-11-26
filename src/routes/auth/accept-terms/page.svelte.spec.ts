@@ -1,10 +1,10 @@
-import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '$app/forms';
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LegalDocumentStatusDto } from '$lib/api/api.dtos';
-import { legalDocumentUrl } from '$lib/i18n/legal-urls';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { LegalDocumentStatusDto } from '#lib/api/api.dtos.ts';
+import { legalDocumentUrl } from '#lib/i18n/legal-urls.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import AcceptTermsPage from './+page.svelte';
 
 // Boundaries: the SvelteKit runtime (page URL, navigation, form enhancement).
@@ -228,9 +228,16 @@ describe('accept terms page', () => {
 		render(DOCUMENTS, null, '/locations/8');
 		agreeToAll();
 
-		await (await submit()).finish({ type: 'success', status: 200, data: { success: true } });
+		await (
+			await submit()
+		).finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
-		expect(runtime.goto).toHaveBeenCalledWith('/locations/8', { invalidateAll: true });
+		expect(runtime.goto).toHaveBeenCalledWith('/locations/8', { refreshAll: true });
 		expect(forms.applyAction).not.toHaveBeenCalled();
 		expect(submitButton().getAttribute('aria-busy')).toBeNull();
 	});
@@ -243,9 +250,16 @@ describe('accept terms page', () => {
 		render(DOCUMENTS, null, '/');
 		agreeToAll();
 
-		await (await submit()).finish({ type: 'success', status: 200, data: { success: true } });
+		await (
+			await submit()
+		).finish({
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { success: true }
+		});
 
-		expect(runtime.goto).toHaveBeenCalledWith('/', { invalidateAll: true });
+		expect(runtime.goto).toHaveBeenCalledWith('/', { refreshAll: true });
 	});
 
 	it('applies a failure and stays on the page', async () => {
@@ -254,6 +268,7 @@ describe('accept terms page', () => {
 		const result: ActionResult = {
 			type: 'failure',
 			status: 502,
+			location: location.pathname,
 			data: { error: m.legal_reaccept_failed() }
 		};
 
@@ -270,9 +285,9 @@ describe('accept terms page', () => {
 		runtime.goto.mockRejectedValueOnce(new Error('navigation failed'));
 
 		const { finish } = await submit();
-		await expect(finish({ type: 'success', status: 200, data: { success: true } })).rejects.toThrow(
-			'navigation failed'
-		);
+		await expect(
+			finish({ type: 'success', status: 200, location: location.pathname, data: { success: true } })
+		).rejects.toThrow('navigation failed');
 		flushSync();
 
 		expect(submitButton().getAttribute('aria-busy')).toBeNull();

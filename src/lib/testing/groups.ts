@@ -1,5 +1,5 @@
 import { flushSync } from 'svelte';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 
 /**
  * Drives the group dialogs a page renders next to its `GroupPicker` (trigger

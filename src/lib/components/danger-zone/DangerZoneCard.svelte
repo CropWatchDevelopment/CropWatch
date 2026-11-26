@@ -5,8 +5,8 @@
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { AppActionRow, AppFormStack, AppNotice } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppActionRow, AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CwButton, CwCard } from '@cropwatchdevelopment/cwui';
 
 	interface Props {

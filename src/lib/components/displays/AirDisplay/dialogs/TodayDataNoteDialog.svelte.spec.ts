@@ -1,12 +1,12 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { labelFor } from '$lib/sensor-labels';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
-import { formatSensorMeasurement } from '$lib/units';
+import { ApiError } from '#lib/api/api-error.ts';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { labelFor } from '#lib/sensor-labels/index.ts';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { formatSensorMeasurement } from '#lib/units/index.ts';
 import type { Note } from '../interfaces/note.interface';
 import TodayDataNoteDialog from './TodayDataNoteDialog.svelte';
 

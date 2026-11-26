@@ -1,6 +1,6 @@
 // Pure helpers for the push device list, kept out of push-notifications.ts
-// (Firebase, $env) so they unit-test in node.
-import { m } from '$lib/paraglide/messages.js';
+// (Firebase, the env) so they unit-test in node.
+import { m } from '#lib/paraglide/messages.js';
 
 const BROWSERS: Array<[RegExp, string]> = [
 	[/Edg\//, 'Edge'],

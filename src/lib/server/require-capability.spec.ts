@@ -1,7 +1,7 @@
 import { isHttpError } from '@sveltejs/kit';
 import { describe, expect, it } from 'vitest';
-import type { MeContextDto } from '$lib/api/api.dtos';
-import { Capability } from '$lib/auth/capabilities';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
 import { requireCapability } from './require-capability';
 
 function ctx(overrides: Partial<MeContextDto> = {}): MeContextDto {
@@ -50,7 +50,7 @@ describe('requireCapability', () => {
 	it('throws a real 403 when the capability is missing', () => {
 		expect(forbidden(() => requireCapability(ctx(), Capability.OrgSettingsManage))).toEqual({
 			status: 403,
-			body: { message: 'Forbidden' }
+			body: { status: 403, message: 'Forbidden' }
 		});
 	});
 
@@ -58,7 +58,7 @@ describe('requireCapability', () => {
 		for (const context of [null, undefined, ctx({ org: null })]) {
 			expect(forbidden(() => requireCapability(context, Capability.OrgManageOpen))).toEqual({
 				status: 403,
-				body: { message: 'Forbidden' }
+				body: { status: 403, message: 'Forbidden' }
 			});
 		}
 	});

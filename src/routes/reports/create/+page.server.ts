@@ -1,4 +1,4 @@
-import type { ReportFormContextDto } from '$lib/api/api.dtos';
+import type { ReportFormContextDto } from '#lib/api/api.dtos.ts';
 import type { PageServerLoad } from './$types';
 
 const EMPTY_CONTEXT: ReportFormContextDto = {

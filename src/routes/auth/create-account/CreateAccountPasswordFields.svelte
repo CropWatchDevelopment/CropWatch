@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { CwInput } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import type { IPasswordValidationResult } from '$lib/utils/strongPasswordCheck';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import type { IPasswordValidationResult } from '#lib/utils/strongPasswordCheck.ts';
 
 	interface Props {
 		confirmPassword: string;

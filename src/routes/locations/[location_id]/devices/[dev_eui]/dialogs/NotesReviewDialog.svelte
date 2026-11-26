@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwDialog,
@@ -14,17 +14,17 @@
 		cwCalendarScrollLabels,
 		cwDateTimeRangePickerLabels,
 		cwSearchInputLabels
-	} from '$lib/i18n/cwuiLabels';
-	import NOTE_ICON from '$lib/images/icons/notes_history.svg';
-	import { formatDateTime, getIntlLocale } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { getServices } from '$lib/services/context';
-	import type { Note } from '$lib/components/displays/AirDisplay/interfaces/note.interface';
+	} from '#lib/i18n/cwuiLabels.ts';
+	import NOTE_ICON from '#lib/images/icons/notes_history.svg';
+	import { formatDateTime, getIntlLocale } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { getServices } from '#lib/services/context.ts';
+	import type { Note } from '#lib/components/displays/AirDisplay/interfaces/note.interface.ts';
 	import {
 		noteAuthor,
 		parseAirNotesResponse
-	} from '$lib/components/displays/AirDisplay/utils/air-notes';
+	} from '#lib/components/displays/AirDisplay/utils/air-notes.ts';
 
 	interface Props {
 		devEui: string;
@@ -279,9 +279,9 @@
 										<p class="notes-review-dialog__note-body">{entry.note}</p>
 									</div>
 
-									<CwButton id={`device-notes-review-row-${entry.id}-delete-button`} disabled
-										>{m.action_delete()}</CwButton
-									>
+									<CwButton id={`device-notes-review-row-${entry.id}-delete-button`} disabled>
+										{m.action_delete()}
+									</CwButton>
 								</div>
 							</article>
 						{/each}

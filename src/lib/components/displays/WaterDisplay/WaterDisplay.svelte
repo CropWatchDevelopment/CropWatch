@@ -6,12 +6,12 @@
 -->
 <script lang="ts">
 	import { CwCard, CwDataTable, type CwColumnDef } from '@cropwatchdevelopment/cwui';
-	import { cwDataTableLabels } from '$lib/i18n/cwuiLabels';
-	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { formatSensorMeasurement } from '$lib/units';
-	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
+	import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { formatSensorMeasurement } from '#lib/units/index.ts';
+	import { createClientTableLoader } from '#lib/utils/clientTableLoader.ts';
 	import '../display-shared.css';
 
 	let { latestData, historicalData, loading }: DeviceDisplayProps = $props();

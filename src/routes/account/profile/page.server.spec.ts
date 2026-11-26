@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from '$lib/api/api-error';
-import { m } from '$lib/paraglide/messages.js';
-import { formRequest, testEvent, testLocals, type TestLocals } from '$lib/testing/server';
+import { ApiError } from '#lib/api/api-error.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { formRequest, testEvent, testLocals, type TestLocals } from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];
@@ -15,28 +15,27 @@ function act(name: keyof typeof actions, locals: TestLocals, fields: Record<stri
 }
 
 describe('profile load', () => {
-	it('derives the email, role and LINE link from the layout data', async () => {
+	it('derives the email and role from the layout data', async () => {
 		const data = await load(
 			testEvent<LoadEvent>({
 				parent: {
-					profile: { email: ' ada@example.com ', line_id: 'U123' },
+					profile: { email: ' ada@example.com ' },
 					session: { email: 'other@example.com', role: ' admin ' }
 				}
 			})
 		);
 
 		expect(data).toEqual({
-			profile: { email: ' ada@example.com ', line_id: 'U123' },
+			profile: { email: ' ada@example.com ' },
 			email: 'ada@example.com',
-			role: 'admin',
-			lineLinked: true
+			role: 'admin'
 		});
 	});
 
 	it('falls back to the session email and nulls when the profile is missing', async () => {
 		const data = await load(testEvent<LoadEvent>({ parent: { session: { email: 'a@b.c' } } }));
 
-		expect(data).toEqual({ profile: null, email: 'a@b.c', role: null, lineLinked: false });
+		expect(data).toEqual({ profile: null, email: 'a@b.c', role: null });
 	});
 });
 
@@ -88,53 +87,6 @@ describe('updateProfile', () => {
 			data: { error: m.auth_not_authenticated() }
 		});
 		expect(locals.services.account.updateProfile).not.toHaveBeenCalled();
-	});
-});
-
-describe('LINE actions', () => {
-	it('creates a link code', async () => {
-		const locals = testLocals();
-		locals.services.line.createLineLinkCode.mockResolvedValue({
-			code: '123456',
-			expiresAt: '2026-10-21T00:10:00Z'
-		});
-
-		await expect(act('lineLinkCode', locals)).resolves.toEqual({
-			lineCode: '123456',
-			lineCodeExpiresAt: '2026-10-21T00:10:00Z'
-		});
-	});
-
-	it('reports a failed link code as lineError', async () => {
-		const locals = testLocals();
-		locals.services.line.createLineLinkCode.mockRejectedValue(apiError(503, 'LINE is down'));
-
-		await expect(act('lineLinkCode', locals)).resolves.toMatchObject({
-			status: 503,
-			data: { lineError: 'LINE is down' }
-		});
-	});
-
-	it('unlinks LINE, with its own fallback message', async () => {
-		const ok = testLocals();
-		ok.services.line.unlinkLine.mockResolvedValue(undefined);
-		await expect(act('unlinkLine', ok)).resolves.toEqual({ lineUnlinked: true });
-
-		const failing = testLocals();
-		failing.services.line.unlinkLine.mockRejectedValue({});
-		await expect(act('unlinkLine', failing)).resolves.toMatchObject({
-			status: 500,
-			data: { lineError: m.line_unlink_failed() }
-		});
-	});
-
-	it('requires a session for both', async () => {
-		for (const name of ['lineLinkCode', 'unlinkLine'] as const) {
-			await expect(act(name, testLocals({ jwtString: null }))).resolves.toMatchObject({
-				status: 401,
-				data: { lineError: m.auth_not_authenticated() }
-			});
-		}
 	});
 });
 

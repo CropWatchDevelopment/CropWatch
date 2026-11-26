@@ -2,10 +2,10 @@
 	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { CwButton, CwDropdown, CwInput, CwSpinner } from '@cropwatchdevelopment/cwui';
-	import { AppNotice } from '$lib/components/layout';
-	import { cwDropdownLabels, cwInputLabels } from '$lib/i18n/cwuiLabels';
-	import { formatHexPairs } from '$lib/devices/eui';
-	import { m } from '$lib/paraglide/messages.js';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import { cwDropdownLabels, cwInputLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { formatHexPairs } from '#lib/devices/eui.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import DeviceQrScanner from './DeviceQrScanner.svelte';
 	import type { DeviceSetupFlow, DeviceTypeOption } from './device-setup-flow.svelte';
 	import { hexFieldError, supportHref } from './setup-messages';
@@ -111,15 +111,16 @@
 				stroke-linecap="round"
 				stroke-linejoin="round"
 				aria-hidden="true"
-				><path
+			>
+				<path
 					d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"
 				></path><rect x="7" y="7" width="4" height="4"></rect><rect
 					x="13"
 					y="13"
 					width="4"
 					height="4"
-				></rect></svg
-			>
+				></rect>
+			</svg>
 			{m.device_setup_scan_qr()}
 		</CwButton>
 
@@ -243,12 +244,14 @@
 						stroke-width="2.2"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg
+						aria-hidden="true"
 					>
-					<span
-						><strong>{m.device_setup_keys_inventory_title()}</strong>
-						{m.device_setup_keys_inventory_body()}</span
-					>
+						<path d="M20 6 9 17l-5-5"></path>
+					</svg>
+					<span>
+						<strong>{m.device_setup_keys_inventory_title()}</strong>
+						{m.device_setup_keys_inventory_body()}
+					</span>
 				</p>
 			{:else if !flow.keysNeeded && lookup.keys === 'network'}
 				<p class="key-status">
@@ -262,12 +265,13 @@
 						stroke-linecap="round"
 						stroke-linejoin="round"
 						aria-hidden="true"
-						><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg
 					>
-					<span
-						><strong>{m.device_setup_keys_network_title()}</strong>
-						{m.device_setup_keys_network_body()}</span
-					>
+						<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path>
+					</svg>
+					<span>
+						<strong>{m.device_setup_keys_network_title()}</strong>
+						{m.device_setup_keys_network_body()}
+					</span>
 				</p>
 			{:else}
 				<div class="flex flex-col gap-4">

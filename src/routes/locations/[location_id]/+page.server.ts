@@ -1,4 +1,4 @@
-import { canManage, isValidPermissionLevel } from '$lib/constants/permissions';
+import { canManage, isValidPermissionLevel } from '#lib/constants/permissions.ts';
 import type { PageServerLoad } from './$types';
 import { toFiniteNumber } from './location-overview';
 

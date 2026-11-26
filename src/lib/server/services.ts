@@ -1,7 +1,7 @@
-import { FetchHttpClient, type FetchFn } from '$lib/api/http/fetch-http-client';
-import { getLocale } from '$lib/paraglide/runtime';
-import { readPublicConfig, type PublicConfig } from '$lib/config/public';
-import { createAppServices, type AppServices } from '$lib/services/app-services';
+import { FetchHttpClient, type FetchFn } from '#lib/api/http/fetch-http-client.ts';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import { readPublicConfig, type PublicConfig } from '#lib/config/public.ts';
+import { createAppServices, type AppServices } from '#lib/services/app-services.ts';
 import { readServerConfig, type ServerConfig } from './config';
 import { createLibellusGateway, type LibellusGateway } from './libellus';
 import { createRecaptchaVerifier, type RecaptchaVerifier } from './recaptcha';

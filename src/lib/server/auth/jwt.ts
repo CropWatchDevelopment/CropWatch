@@ -1,4 +1,4 @@
-import type { IJWT } from '$lib/interfaces/jwt.interface';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
 
 /**
  * The payload of a JWT, **without verifying it** — only for reading `exp`

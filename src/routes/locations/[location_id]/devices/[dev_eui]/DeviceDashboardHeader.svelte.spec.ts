@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PermissionLevel } from '$lib/constants/permissions';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import DeviceDashboardHeader from './DeviceDashboardHeader.svelte';
 import { getRangeOptions, type RangeSelection } from './device-detail';
 

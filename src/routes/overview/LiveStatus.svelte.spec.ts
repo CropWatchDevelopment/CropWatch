@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatCwDuration } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { formatCwDuration } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LiveStatus from './LiveStatus.svelte';
 
 const MINUTE = 60_000;

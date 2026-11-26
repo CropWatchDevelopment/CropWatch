@@ -4,10 +4,10 @@
 		type CwStackedBarBucket,
 		type CwStackedBarCategory
 	} from '@cropwatchdevelopment/cwui';
-	import { formatNumber } from '$lib/i18n/format';
-	import { cwStackedBarChartLabels } from '$lib/i18n/cwuiLabels';
-	import { m } from '$lib/paraglide/messages.js';
-	import { appTheme } from '$lib/theme/appTheme.svelte';
+	import { formatNumber } from '#lib/i18n/format.ts';
+	import { cwStackedBarChartLabels } from '#lib/i18n/cwuiLabels.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { appTheme } from '#lib/theme/appTheme.svelte.ts';
 	import {
 		metricLabel,
 		toHourKey,

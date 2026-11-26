@@ -1,7 +1,7 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ReportProcessingSchedulesSection from './ReportProcessingSchedulesSection.svelte';
 import type { DataProcessingScheduleDraft, SelectOption } from './report-template-form';
 

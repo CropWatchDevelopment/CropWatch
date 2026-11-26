@@ -1,4 +1,4 @@
-import type { ReadingAlertDto } from '$lib/api/api.dtos';
+import type { ReadingAlertDto } from '#lib/api/api.dtos.ts';
 import type { Note } from './note.interface';
 
 export interface AirRow {

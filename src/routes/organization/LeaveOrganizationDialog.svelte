@@ -2,7 +2,7 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CwButton, CwDialog, useCwToast } from '@cropwatchdevelopment/cwui';
 
 	let { open = $bindable(false) } = $props();
@@ -19,7 +19,7 @@
 			if (result.type === 'success') {
 				toast.add({ tone: 'success', message: m.organization_left() });
 				open = false;
-				await goto(resolve('/'), { invalidateAll: true });
+				await goto(resolve('/'), { refreshAll: true });
 				return;
 			}
 			await applyAction(result);

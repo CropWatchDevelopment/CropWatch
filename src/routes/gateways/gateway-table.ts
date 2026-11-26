@@ -1,6 +1,6 @@
 import type { CwTableQuery, CwTableResult } from '@cropwatchdevelopment/cwui';
-import type { GatewayDto } from '$lib/api/api.dtos';
-import { sortByColumn } from '$lib/utils/sortByColumn';
+import type { GatewayDto } from '#lib/api/api.dtos.ts';
+import { sortByColumn } from '#lib/utils/sortByColumn.ts';
 
 export interface GatewayTableRow extends GatewayDto {
 	tableRowKey: string;

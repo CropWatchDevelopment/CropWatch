@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CwDuration, CwTooltip } from '@cropwatchdevelopment/cwui';
-	import { formatCwDuration } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
+	import { formatCwDuration } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		/** When the data on screen was aggregated; the counter runs from here. */

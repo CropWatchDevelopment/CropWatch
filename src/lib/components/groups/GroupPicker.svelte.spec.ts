@@ -1,10 +1,10 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { GroupDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
-import { chooseOption, dropdown } from '$lib/testing/dropdown';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { GroupDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import GroupPicker from './GroupPicker.svelte';
 import { GroupsController } from './groups-controller.svelte';
 

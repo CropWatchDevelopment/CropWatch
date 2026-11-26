@@ -1,20 +1,20 @@
 import { createRawSnippet, flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MeContextDto, PreferencesDto, RuleTemplateDto } from '$lib/api/api.dtos';
-import type { PushRepository } from '$lib/api/repositories/push.repository';
-import type { IJWT } from '$lib/interfaces/jwt.interface';
-import type { Profile } from '$lib/interfaces/profile.interface';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
-import { APPLE_SPLASH_LINKS } from '$lib/pwa/apple-splash';
+import type { MeContextDto, PreferencesDto, RuleTemplateDto } from '#lib/api/api.dtos.ts';
+import type { PushRepository } from '#lib/api/repositories/push.repository.ts';
+import type { IJWT } from '#lib/interfaces/jwt.interface.ts';
+import type { Profile } from '#lib/interfaces/profile.interface.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse } from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { APPLE_SPLASH_LINKS } from '#lib/pwa/apple-splash.ts';
 import RootLayout from './+layout.svelte';
 
 // --- Boundaries --------------------------------------------------------------
 // The browser services are real (the layout is their composition root); only
 // the network under them is faked. Config comes from this env.
-vi.mock('$env/dynamic/public', () => ({
-	env: { PUBLIC_API_BASE_URL: 'https://api.cropwatch.test' }
+vi.mock('#lib/config/public-env.ts', () => ({
+	publicEnv: { PUBLIC_API_BASE_URL: 'https://api.cropwatch.test' }
 }));
 
 /** `page` as SvelteKit provides it: `url` and `data` are reactive. */
@@ -54,7 +54,7 @@ const push = vi.hoisted(() => ({
 	unsubscribe: vi.fn(),
 	onMessage: null as ForegroundHandler | null
 }));
-vi.mock('$lib/push/push-notifications', () => ({
+vi.mock('#lib/push/push-notifications.ts', () => ({
 	refreshPushToken: push.refreshPushToken,
 	initForegroundMessages: push.initForegroundMessages
 }));
@@ -69,7 +69,7 @@ const expiry = vi.hoisted(() => ({
 	rearm: vi.fn(),
 	destroy: vi.fn()
 }));
-vi.mock('$lib/utils/session-expiry', () => ({
+vi.mock('#lib/utils/session-expiry.ts', () => ({
 	createSessionExpiryWatcher: vi.fn((options: NonNullable<typeof expiry.options>) => {
 		expiry.options = options;
 		return { rearm: expiry.rearm, destroy: expiry.destroy };
@@ -177,7 +177,7 @@ describe('root layout app context', () => {
 		expect(app.triggeredRulesCount).toBe(0);
 	});
 
-	it('re-syncs whenever the page data changes (navigation, invalidateAll, login)', () => {
+	it('re-syncs whenever the page data changes (navigation, refreshAll, login)', () => {
 		setPage('/auth/login', {});
 		const { app } = render();
 		expect(app.accessToken).toBeUndefined();
@@ -426,7 +426,7 @@ describe('root layout shell', () => {
 		expect(manifest?.getAttribute('crossorigin')).toBe('use-credentials');
 		const splash = [...head.querySelectorAll('link[rel="apple-touch-startup-image"]')];
 		expect(splash).toHaveLength(APPLE_SPLASH_LINKS.length);
-		expect(splash[0]?.getAttribute('href')).toBe(APPLE_SPLASH_LINKS[0]?.path);
+		expect(splash[0]?.getAttribute('href')).toBe(`/${APPLE_SPLASH_LINKS[0]?.path}`);
 		expect(splash[0]?.getAttribute('media')).toBe(APPLE_SPLASH_LINKS[0]?.media);
 		expect(
 			[...head.querySelectorAll('link[rel="icon"]')].map((link) => link.getAttribute('href'))

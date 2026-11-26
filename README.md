@@ -39,8 +39,8 @@ project, reCAPTCHA and Libellus keys. `.env.example` lists every key.
 On Vercel, set the values per Vercel environment (Production / Preview /
 Development) instead of files. `PUBLIC_APP_ENV` (`development` | `staging` |
 `production`) names the environment explicitly; when it is unset the Vite mode
-decides. The app reads env only through `$lib/config/public` and
-`$lib/server/config`.
+decides. The app reads env only through `#lib/config/public` and
+`#lib/server/config`.
 
 # Architecture
 
@@ -69,19 +69,19 @@ request a unit test did not fake, and the e2e stack serves its own mock API.
 
 ## Github README PROFILE CATEGORY
 
-- [x] [Dashboard]()
-- [x] [Locations]()
-- [x] [Location Details]()
-- [x] [Sensor Details]()
-- [x] [Sensor Rules]()
-- [x] [Sensor Settings]()
-- [ ] [Sensor Compare]()
-- [x] [Settings Page with notations]()
-- [x] [Real-Time Updates]()
+- [x] [Dashboard](<>)
+- [x] [Locations](<>)
+- [x] [Location Details](<>)
+- [x] [Sensor Details](<>)
+- [x] [Sensor Rules](<>)
+- [x] [Sensor Settings](<>)
+- [ ] [Sensor Compare](<>)
+- [x] [Settings Page with notations](<>)
+- [x] [Real-Time Updates](<>)
 
 # List of Tools & Packages Used:
 
-- PWA Framework: Svelte 5, SvelteKit 2 (Vercel adapter)
+- PWA Framework: Svelte 5, SvelteKit 3 (Vercel adapter)
 - UI Components: @cropwatchdevelopment/cwui, @cropwatchdevelopment/qr-scanner
 - Styling: Tailwind CSS 4
 - Mapping: MapLibre GL JS

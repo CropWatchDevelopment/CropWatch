@@ -1,11 +1,11 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ActionResult } from '@sveltejs/kit';
-import { m } from '$lib/paraglide/messages.js';
-import { chooseOption, dropdown } from '$lib/testing/dropdown';
-import { addGroup, renameGroup } from '$lib/testing/groups';
-import { createMockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
+import type { ActionResult } from '$app/forms';
+import { m } from '#lib/paraglide/messages.js';
+import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
+import { addGroup, renameGroup } from '#lib/testing/groups.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import CreateLocationPage from './+page.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
@@ -198,19 +198,25 @@ describe('create location page', () => {
 		const result: ActionResult = {
 			type: 'success',
 			status: 200,
+			location: location.pathname,
 			data: { success: true, location_id: 42 }
 		};
 		render();
 
 		await submitWith(result);
 
-		expect(goto).toHaveBeenCalledWith('/locations/42', { invalidateAll: true });
+		expect(goto).toHaveBeenCalledWith('/locations/42', { refreshAll: true });
 		expect(forms.applyAction).not.toHaveBeenCalled();
 		expect(submitButton().getAttribute('aria-busy')).toBeNull();
 	});
 
 	it('applies a success that carries no usable id instead of navigating', async () => {
-		const result: ActionResult = { type: 'success', status: 200, data: { location_id: '42' } };
+		const result: ActionResult = {
+			type: 'success',
+			status: 200,
+			location: location.pathname,
+			data: { location_id: '42' }
+		};
 		const view = render();
 
 		await submitWith(result);
@@ -224,6 +230,7 @@ describe('create location page', () => {
 		const result: ActionResult = {
 			type: 'failure',
 			status: 409,
+			location: location.pathname,
 			data: { error: 'Name taken', name: 'Barn' }
 		};
 		const view = render();
@@ -237,8 +244,8 @@ describe('create location page', () => {
 	it('only applies a failure without an error text, or an unexpected error', async () => {
 		const view = render();
 
-		await submitWith({ type: 'failure', status: 500, data: {} });
-		await submitWith({ type: 'error', status: 500, error: new Error('boom') });
+		await submitWith({ type: 'failure', status: 500, location: location.pathname, data: {} });
+		await submitWith({ type: 'error', status: 500, error: { status: 500, message: 'boom' } });
 
 		expect(forms.applyAction).toHaveBeenCalledTimes(2);
 		expect(view.toasts()).toEqual([]);

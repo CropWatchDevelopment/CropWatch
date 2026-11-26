@@ -1,15 +1,15 @@
 <script lang="ts">
-	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '$lib/components/layout';
+	import { AppActionRow, AppFormStack, AppNotice, AppPage } from '#lib/components/layout/index.ts';
 	import { CwButton, CwCard, CwInput, useCwToast } from '@cropwatchdevelopment/cwui';
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
-	import AddGroupDialog from '$lib/components/groups/AddGroupDialog.svelte';
-	import GroupPicker from '$lib/components/groups/GroupPicker.svelte';
-	import ManageGroupsDialog from '$lib/components/groups/ManageGroupsDialog.svelte';
-	import { GroupsController } from '$lib/components/groups/groups-controller.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
+	import AddGroupDialog from '#lib/components/groups/AddGroupDialog.svelte';
+	import GroupPicker from '#lib/components/groups/GroupPicker.svelte';
+	import ManageGroupsDialog from '#lib/components/groups/ManageGroupsDialog.svelte';
+	import { GroupsController } from '#lib/components/groups/groups-controller.svelte.ts';
 	import type { PageProps } from './$types';
 
 	const toast = useCwToast();
@@ -59,7 +59,7 @@
 								resolve('/locations/[location_id]', {
 									location_id: String(locationId)
 								}),
-								{ invalidateAll: true }
+								{ refreshAll: true }
 							);
 							return;
 						}

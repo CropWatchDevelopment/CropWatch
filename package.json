@@ -3,6 +3,9 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"imports": {
+		"#lib/*": "./src/lib/*"
+	},
 	"engines": {
 		"node": "24.x"
 	},
@@ -14,7 +17,7 @@
 		"preview": "vite preview",
 		"prepare": "node ./scripts/generate-paraglide.mjs && svelte-kit sync || echo ''",
 		"paraglide": "node ./scripts/generate-paraglide.mjs",
-		"check": "node ./scripts/generate-paraglide.mjs && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check": "node ./scripts/generate-paraglide.mjs && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc -p src/service-worker",
 		"check:watch": "node ./scripts/generate-paraglide.mjs && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"style:audit": "node ./scripts/style-audit.mjs",
 		"lint": "prettier --check . && eslint .",
@@ -25,34 +28,33 @@
 		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
-		"@eslint/compat": "^2.1.0",
-		"@eslint/js": "^9.39.4",
-		"@inlang/paraglide-js": "^2.19.0",
-		"@playwright/test": "^1.61.0",
-		"@sveltejs/adapter-vercel": "^6.3.5",
-		"@sveltejs/kit": "^2.70.4",
-		"@sveltejs/vite-plugin-svelte": "^6.2.4",
-		"@tailwindcss/vite": "^4.3.1",
-		"@types/node": "^22.19.21",
-		"@vitest/browser-playwright": "^4.1.12",
-		"@vitest/coverage-v8": "4.1.12",
-		"eslint": "^9.39.4",
+		"@eslint/js": "^10.0.1",
+		"@inlang/paraglide-js": "^3.2.2",
+		"@playwright/test": "^1.65.1",
+		"@sveltejs/adapter-vercel": "^7.0.5",
+		"@sveltejs/kit": "^3.4.0",
+		"@sveltejs/vite-plugin-svelte": "^7.3.2",
+		"@tailwindcss/vite": "^4.3.5",
+		"@types/node": "^24.19.4",
+		"@vitest/browser-playwright": "^5.1.2",
+		"@vitest/coverage-v8": "5.1.2",
+		"eslint": "^10.15.0",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-svelte": "^3.23.1",
-		"globals": "^17.6.0",
-		"playwright": "^1.61.0",
-		"prettier": "^3.8.4",
-		"prettier-plugin-svelte": "^3.5.2",
-		"prettier-plugin-tailwindcss": "^0.7.4",
-		"supabase": "^2.107.0",
-		"svelte": "^5.56.3",
-		"svelte-check": "^4.6.0",
-		"tailwindcss": "^4.3.1",
-		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.61.1",
-		"vite": "^7.3.7",
-		"vite-plugin-devtools-json": "^1.0.0",
-		"vitest": "^4.1.12"
+		"eslint-plugin-svelte": "^3.24.1",
+		"globals": "^17.14.0",
+		"playwright": "^1.65.1",
+		"prettier": "^3.10.1",
+		"prettier-plugin-svelte": "^4.2.0",
+		"prettier-plugin-tailwindcss": "^0.8.1",
+		"supabase": "^3.4.0",
+		"svelte": "^5.59.1",
+		"svelte-check": "^4.7.8",
+		"tailwindcss": "^4.3.5",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.74.0",
+		"vite": "^8.3.8",
+		"vite-plugin-devtools-json": "^1.1.2",
+		"vitest": "^5.1.2"
 	},
 	"packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd",
 	"pnpm": {
@@ -66,8 +68,8 @@
 	"dependencies": {
 		"@cropwatchdevelopment/cwui": "0.1.118",
 		"@cropwatchdevelopment/qr-scanner": "0.1.0",
-		"@supabase/supabase-js": "^2.108.2",
-		"firebase": "^12.19.0",
-		"maplibre-gl": "6.11.2"
+		"@supabase/supabase-js": "^2.119.2",
+		"firebase": "^13.4.0",
+		"maplibre-gl": "6.19.0"
 	}
 }

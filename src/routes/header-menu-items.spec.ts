@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { MeContextDto, MeOrgDto } from '$lib/api/api.dtos';
-import { Capability } from '$lib/auth/capabilities';
-import { m } from '$lib/paraglide/messages.js';
+import type { MeContextDto, MeOrgDto } from '#lib/api/api.dtos.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { buildProfileMenuItems } from './header-menu-items';
 
 function context(

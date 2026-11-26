@@ -1,4 +1,4 @@
-import type { CropTargetDto, CropTypeDetailDto } from '$lib/api/api.dtos';
+import type { CropTargetDto, CropTypeDetailDto } from '#lib/api/api.dtos.ts';
 
 /**
  * Reading a crop's growing targets: the row that applies now (a day or night
@@ -30,13 +30,7 @@ export function cropTarget(
  * only stress limits judges only those. Null without a reading or anything to judge it by.
  */
 export type TargetStatus =
-	| 'very_low'
-	| 'low'
-	| 'slightly_low'
-	| 'optimal'
-	| 'slightly_high'
-	| 'high'
-	| 'very_high';
+	'very_low' | 'low' | 'slightly_low' | 'optimal' | 'slightly_high' | 'high' | 'very_high';
 
 /** Largest share past the band that is still `slightly_*`, and still `low` / `high`. */
 export const SLIGHTLY_OFF_SHARE = 0.1;

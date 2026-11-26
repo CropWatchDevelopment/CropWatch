@@ -1,6 +1,6 @@
 import { isRedirect } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
-import { testEvent, testLocals, TEST_JWT } from '$lib/testing/server';
+import { testEvent, testLocals, TEST_JWT } from '#lib/testing/server.ts';
 import { actions, load } from './+page.server';
 
 type LoadEvent = Parameters<typeof load>[0];

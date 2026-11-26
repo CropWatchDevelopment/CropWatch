@@ -8,14 +8,15 @@ This document is the authoritative reference for how pages, forms, and component
 
 | Concern        | Tool                                                                  |
 | -------------- | --------------------------------------------------------------------- |
-| Framework      | SvelteKit 2 + Svelte 5 (runes mode)                                   |
+| Framework      | SvelteKit 3 + Svelte 5 (runes mode)                                   |
 | Language       | TypeScript                                                            |
 | Styles         | Tailwind CSS 4 + design-token CSS vars                                |
 | UI library     | `@cropwatchdevelopment/cwui` (`CwXxx` components)                     |
-| Layout helpers | `$lib/components/layout` (`AppXxx` components)                        |
-| i18n           | Paraglide — always `import { m } from '$lib/paraglide/messages.js'`   |
+| Layout helpers | `#lib/components/layout` (`AppXxx` components)                        |
+| i18n           | Paraglide — always `import { m } from '#lib/paraglide/messages.js'`   |
 | Data access    | Repositories, injected: `locals.services` (server), `getServices()`   |
-| Config         | `$lib/config/public` and `$lib/server/config` — never `$env` direct   |
+| Config         | `#lib/config/public` and `#lib/server/config` — never `$app/env/*`    |
+| Imports        | `#lib/…` with the file extension (`.ts`, `.svelte.ts`, `index.ts`)    |
 | Auth           | Supabase JWT, verified per request; `locals.jwt` / `locals.jwtString` |
 
 ---
@@ -27,13 +28,13 @@ traceable and mockable:
 
 ```
 View (.svelte)  ──calls──▶  Controller  ──calls──▶  Model (repository)  ──▶  HttpClient  ──▶  CropWatch API
-                            +page.server.ts          $lib/api/repositories    FetchHttpClient
+                            +page.server.ts          #lib/api/repositories    FetchHttpClient
                             *.svelte.ts controller   (interface + Http impl)
 ```
 
 | Layer      | Lives in                                                                                               | Rule                                                                                            |
 | ---------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Model      | `$lib/api/repositories/*.repository.ts`, `$lib/api/api.dtos.ts`                                        | One repository per API resource: an interface + `Http…Repository`. Only repositories know URLs. |
+| Model      | `#lib/api/repositories/*.repository.ts`, `#lib/api/api.dtos.ts`                                        | One repository per API resource: an interface + `Http…Repository`. Only repositories know URLs. |
 | Controller | `+page.server.ts` / `+layout.server.ts` / `+server.ts`; `*.svelte.ts` classes for complex client state | Validates input, calls repositories, maps results/errors. No markup.                            |
 | View       | `.svelte`                                                                                              | Renders state, forwards user intent. No URLs, no `fetch`, no `new …Repository`.                 |
 
@@ -48,13 +49,13 @@ composition roots build it once and inject it:
 - **Plain modules and controllers** take what they need as constructor or
   function parameters (e.g. `new OverviewRanges({ fetcher })`).
 
-`AppServices` (`$lib/services/app-services.ts`) lists every repository. To add an
+`AppServices` (`#lib/services/app-services.ts`) lists every repository. To add an
 endpoint: add the method to the repository interface and its `Http…` class, add
-a row to `$lib/testing/repository-contract.ts`, and call it through the services.
+a row to `#lib/testing/repository-contract.ts`, and call it through the services.
 
 Never: `fetch(apiUrl)` in a page or component, a hand-built API client,
-`new Http…Repository(...)` outside a composition root, or reading `$env/*`
-outside `$lib/config` / `$lib/server/config`. (A component may still `fetch('?/action')`
+`new Http…Repository(...)` outside a composition root, or reading `$app/env/*`
+outside `#lib/config` / `#lib/server/config`. (A component may still `fetch('?/action')`
 its own page's form action — that calls the page's controller, not the API.)
 
 ---
@@ -102,7 +103,7 @@ Use SvelteKit server actions (`export const actions` in `+page.server.ts`) for a
   return async ({ result }) => {
     submitting = false;
     if (result.type === 'success') {
-      await goto(resolve('/target'), { invalidateAll: true });
+      await goto(resolve('/target'), { refreshAll: true });
       return;
     }
     await applyAction(result);
@@ -212,7 +213,7 @@ Wrap all form fields in `<AppFormStack padded>` inside a `<CwCard>`. Use `<AppAc
 
 ## Error display
 
-Use `<AppNotice>` from `$lib/components/layout` — never a raw `<p class="form-error">`.
+Use `<AppNotice>` from `#lib/components/layout` — never a raw `<p class="form-error">`.
 
 | Situation                                     | Tone      |
 | --------------------------------------------- | --------- |
@@ -288,7 +289,7 @@ Use `$derived.by(() => { ... })` when the computation needs intermediate variabl
 
 ### App-wide state
 
-Access global state (devices, session, profile, etc.) via `getAppContext()` from `$lib/appContext.svelte`:
+Access global state (devices, session, profile, etc.) via `getAppContext()` from `#lib/appContext.svelte.ts`:
 
 ```ts
 const app = getAppContext();
@@ -329,10 +330,10 @@ token around; components do not take an `authToken` prop.
 
 ### Error handling
 
-Use the helpers in `$lib/api/api-error`. Never copy-paste extraction logic inline.
+Use the helpers in `#lib/api/api-error`. Never copy-paste extraction logic inline.
 
 ```ts
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
 
 try {
 	await locals.services.organizations.renameOrganization(orgId, name);
@@ -353,16 +354,16 @@ try {
 
 ## Authentication
 
-- **Session**: the login action (`$lib/server/auth/login-action.ts`) signs in through the
+- **Session**: the login action (`#lib/server/auth/login-action.ts`) signs in through the
   CropWatch API and stores the Supabase access token in the httpOnly `jwt` cookie (it lives
   as long as the token) and the refresh token in `jwt_refresh` (30 days, reset on every
-  refresh) — via `setSessionCookies` (`$lib/server/auth/session-cookies`).
+  refresh) — via `setSessionCookies` (`#lib/server/auth/session-cookies`).
 - **Renewal**: `hooks.server.ts` renews the session with the refresh token when the access
   token is missing or has under 10 minutes left (`refreshIfDue`; a refused refresh token is
   deleted). The browser keeps up by invalidating `app:session` (the root layout load's
   dependency) 5 minutes before expiry (`createSessionExpiryWatcher`'s `onRenew`), so the new
   token reaches `app.accessToken`; only when that brings no later expiry is the user sent to
-  login. Constants: `$lib/auth/session-renewal`.
+  login. Constants: `#lib/auth/session-renewal`.
 - **Every request** passes `hooks.server.ts`, which verifies that token with Supabase Auth
   (`locals.services.supabaseAuth.verifyAccessToken` → `auth.getClaims()`: signature against
   the project's signing keys, or the Auth server for a legacy secret) before any load,
@@ -373,8 +374,8 @@ try {
   still verifies every data request — rather than signing everyone out.)
 - **Sign out** is the POST form action at `/auth/logout` (it also ends the Supabase
   session): a `<form method="POST">`, or `signOut(buildLogoutPath(...))` from
-  `$lib/auth/sign-out` in script. Never a link or `location.href` to `/auth/logout`.
-- **Passwords**: `isStrongPassword` (`$lib/utils/strongPasswordCheck`) is the one policy —
+  `#lib/auth/sign-out` in script. Never a link or `location.href` to `/auth/logout`.
+- **Passwords**: `isStrongPassword` (`#lib/utils/strongPasswordCheck`) is the one policy —
   the forms show it live and every action that sets a password enforces it.
 - **Redirect targets** from the URL (`?redirect=`, `?next=`) go through
   `sanitizeRedirectPath` / a same-origin check — never straight into `redirect()`.
@@ -487,7 +488,7 @@ re-return it from list-page server loads, and do not pass it to components.
 All user-visible strings must use Paraglide message keys. Never hard-code English strings in templates.
 
 ```ts
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 
 // In templates:
 <title>{m.page_title()}</title>
@@ -511,10 +512,16 @@ The only exception is debug/developer-only messages (`console.error`, comments).
 | `<AppNotice tone="...">` | Inline feedback box (error, warning, info, success, neutral)     |
 | `<AppSection>`           | Generic vertical flex section                                    |
 
-Import all from `$lib/components/layout`:
+Import all from `#lib/components/layout`:
 
 ```ts
-import { AppActionRow, AppFormStack, AppNotice, AppPage, AppSection } from '$lib/components/layout';
+import {
+	AppActionRow,
+	AppFormStack,
+	AppNotice,
+	AppPage,
+	AppSection
+} from '#lib/components/layout/index.ts';
 ```
 
 ---
@@ -524,7 +531,7 @@ import { AppActionRow, AppFormStack, AppNotice, AppPage, AppSection } from '$lib
 - `+page.svelte` — View: UI only; data comes from `data`, from `getServices()` repositories (list tables, wizards), or from a controller
 - `+page.server.ts` — Controller: `load` function + `actions`; always exports typed `PageServerLoad` / `Actions`; data via `locals.services`
 - `*.svelte.ts` — client controllers (stateful classes with injected dependencies)
-- `$lib/api/repositories/` — Model: the only code that knows API URLs
+- `#lib/api/repositories/` — Model: the only code that knows API URLs
 - `+layout.svelte` / `+layout.server.ts` — shared shell, loaded once per layout boundary
 - Feature-local sub-components live alongside the page file (e.g., `LocationUpdate.svelte` next to the settings `+page.svelte`)
 - Shared reusable components go in `src/lib/components/`
@@ -589,8 +596,9 @@ Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolli
 
 ## Installed app (PWA)
 
-- **Service worker** (`src/service-worker.ts`): registered by `PwaDock` in production builds
-  only (`kit.serviceWorker.register` stays `false`). At install it caches just the offline
+- **Service worker** (`src/service-worker/index.ts`, its own TypeScript project with WebWorker
+  libs): registered by `PwaDock` (as a module) in production builds only (`serviceWorker.register`
+  stays `false`). At install it caches just the offline
   page and its stylesheets; content-hashed `/_app/immutable/*` files are cached as the app
   uses them. Never precache SvelteKit's `build`/`files` lists: `static/` holds multi-MB
   source icons, and every deploy would re-download it all on every phone. Navigations are
@@ -600,9 +608,9 @@ Because `AppPage` globally uses `flex: 1 0 auto` (required for list-page scrolli
   at whatever URL failed — it must work as plain HTML and CSS.
 - **Push** (`static/push-sw.js`, scope `/push-sw/`): tapping an alert focuses an open app
   window and posts `cw:navigate` to it (`PwaController` opens the page) instead of a new window.
-- **`PwaDock` / `PwaController`** (`$lib/components/pwa`, `$lib/pwa`): install prompt
+- **`PwaDock` / `PwaController`** (`#lib/components/pwa`, `#lib/pwa`): install prompt
   (Chromium), Add to Home Screen hint (iPhone/iPad — push only works there once installed),
-  "new version" notice (`updated` + `kit.version.pollInterval`), app icon badge.
+  "new version" notice (`updated` + `version.pollInterval`), app icon badge.
 - **Assets**: the maskable icons (Android's home screen icon and launch screen) and the iOS
   launch images (screens listed in `src/lib/pwa/apple-splash-screens.json`) are drawn from
   the SVG logo by `node scripts/generate-pwa-images.mjs` — never upscale a small PNG for them. Manifest screenshots (fictional
@@ -645,7 +653,7 @@ class. Keep small one-off handlers inline (see "Don't wrap one-liners used once"
 Every source file under `src/` counts toward coverage (`pnpm test:coverage`):
 a coverage run fails below 90 % statements, branches, functions or lines (the
 thresholds in `vite.config.ts`; CI runs it on every push). Unit tests can
-**never** touch real data: the setup file `$lib/testing/setup.ts` refuses every
+**never** touch real data: the setup file `#lib/testing/setup.ts` refuses every
 network request a test did not fake, and fails the test.
 
 | Testing a…                   | Use                                                                                                                                                     |
@@ -671,12 +679,13 @@ network request a test did not fake, and fails the test.
 
 Development, staging and production are separate env files with the same keys
 (`.env.development`, `.env.staging`, `.env.production`, all gitignored; keys in
-`.env.example`). The Vite mode picks the file: `pnpm dev` (development),
+`.env.example`). Every variable is declared in `src/env.ts` (`defineEnvVars`: `static` ones are
+baked in at build time, the rest are read when the server starts). The Vite mode picks the file: `pnpm dev` (development),
 `pnpm dev:staging`, `pnpm build` (production), `pnpm build:staging`. On Vercel,
 set the values per Vercel environment. `PUBLIC_APP_ENV` names the environment
 explicitly (`readPublicConfig().environment`). Read env only through
 `readPublicConfig()` / `readServerConfig()` (runtime values) and
-`readFirebaseConfig()` (`$lib/config/firebase`, build-time values).
+`readFirebaseConfig()` (`#lib/config/firebase`, build-time values).
 
 ---
 
@@ -701,7 +710,7 @@ explicitly (`readPublicConfig().environment`). Read env only through
 - [ ] Detail/edit pages fetch only the record(s) they render; reuse parent layout data where available
 - [ ] Child pages under a layout use `await parent()` to get `authToken` and shared data
 - [ ] Server actions use `locals.jwtString` directly (actions cannot call `parent()`)
-- [ ] Errors use `apiErrorStatus` / `apiErrorMessage` from `$lib/api/api-error`, not inline extraction logic
+- [ ] Errors use `apiErrorStatus` / `apiErrorMessage` from `#lib/api/api-error`, not inline extraction logic
 
 ### Tests
 

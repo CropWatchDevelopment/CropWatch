@@ -1,19 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getLocale } from '$lib/paraglide/runtime';
-import { createServerServices } from '$lib/server/services';
+import { getLocale } from '#lib/paraglide/runtime.js';
+import { createServerServices } from '#lib/server/services.ts';
 import {
 	createFakeFetch,
 	jsonResponse,
 	testPublicConfig,
 	TEST_API_BASE_URL
-} from '$lib/testing/http';
-import { createMockServices } from '$lib/testing/mock-services';
+} from '#lib/testing/http.ts';
+import { createMockServices } from '#lib/testing/mock-services.ts';
 import { createAppServices } from './app-services';
 import { createClientServices } from './client';
 
 // The API sorts names in the UI language, so both composition roots send it.
-vi.mock('$lib/paraglide/runtime', async (importOriginal) => {
-	const runtime = await importOriginal<typeof import('$lib/paraglide/runtime')>();
+vi.mock('#lib/paraglide/runtime.js', async (importOriginal) => {
+	const runtime = await importOriginal<typeof import('#lib/paraglide/runtime.js')>();
 	return { ...runtime, getLocale: vi.fn(runtime.getLocale) };
 });
 

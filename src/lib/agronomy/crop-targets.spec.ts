@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CropTargetDto, CropTypeDetailDto } from '$lib/api/api.dtos';
+import type { CropTargetDto, CropTypeDetailDto } from '#lib/api/api.dtos.ts';
 import { cropDisplayName, cropTarget, judgeReading, vaporPressureDeficit } from './crop-targets';
 
 function target(overrides: Partial<CropTargetDto>): CropTargetDto {

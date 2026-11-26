@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import {
 		CwButton,
 		CwChip,
@@ -8,9 +8,9 @@
 		CwSwitch,
 		CwTextArea
 	} from '@cropwatchdevelopment/cwui';
-	import { formatDateTime } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
-	import ADD_NOTE_ICON from '$lib/images/icons/note_add.svg';
+	import { formatDateTime } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import ADD_NOTE_ICON from '#lib/images/icons/note_add.svg';
 	import type { DisplayNote, StagedOp } from './staged-notes';
 
 	interface Props {

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { AppPage } from '$lib/components/layout';
+	import { AppPage } from '#lib/components/layout/index.ts';
 	import { CwButton, CwChip } from '@cropwatchdevelopment/cwui';
-	import { m } from '$lib/paraglide/messages.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import type { PageProps } from './$types';
 	import RuleTemplateForm from '../../RuleTemplateForm.svelte';
 

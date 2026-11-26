@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { getServices } from '$lib/services/context';
-	import DOWNLOAD_ICON from '$lib/images/icons/download.svg';
+	import Icon from '#lib/components/Icon.svelte';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { getServices } from '#lib/services/context.ts';
+	import DOWNLOAD_ICON from '#lib/images/icons/download.svg';
 	import {
 		CwButton,
 		CwDateTimeRangePicker,
@@ -10,15 +10,15 @@
 		type CwRangeDateValue,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
-	import { cwDateTimeRangePickerLabels } from '$lib/i18n/cwuiLabels';
+	import { cwDateTimeRangePickerLabels } from '#lib/i18n/cwuiLabels.ts';
 	import {
 		downloadCsv,
 		formatCsvRangeLabel,
 		resolveCsvRequestRange,
 		type CsvRow
 	} from '../csvExport';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getIntlLocale } from '$lib/i18n/format';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getIntlLocale } from '#lib/i18n/format.ts';
 
 	interface Props {
 		devEui: string;
@@ -222,8 +222,10 @@
 			id="device-csv-export-cancel-button"
 			variant="secondary"
 			disabled={exporting}
-			onclick={closeDialog}>{m.action_cancel()}</CwButton
+			onclick={closeDialog}
 		>
+			{m.action_cancel()}
+		</CwButton>
 		<CwButton
 			id="device-csv-export-download-button"
 			variant="primary"

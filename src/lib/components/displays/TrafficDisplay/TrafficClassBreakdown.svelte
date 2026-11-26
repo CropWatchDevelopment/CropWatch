@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { formatNumber } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
+	import { formatNumber } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		metricEmoji,
 		metricLabelText,

@@ -1,9 +1,9 @@
 import { createRawSnippet, flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MeContextDto } from '$lib/api/api.dtos';
-import { Capability } from '$lib/auth/capabilities';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { MeContextDto } from '#lib/api/api.dtos.ts';
+import { Capability } from '#lib/auth/capabilities.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import ManagementLayout from './+layout.svelte';
 
 const nav = vi.hoisted(() => ({

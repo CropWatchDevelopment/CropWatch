@@ -1,13 +1,13 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import RelayDisplay from './RelayDisplay.svelte';
-import { MIN_RELAY_PULSE_DURATION_SECONDS } from '$lib/devices/relay-control';
-import type { PendingRelayStates } from '$lib/devices/relay-types';
-import type { RelayCommandEntryDto, RelayHistoryEntryDto } from '$lib/api/api.dtos';
-import { relayHistoryEventLabel } from '$lib/devices/relay-labels';
+import { MIN_RELAY_PULSE_DURATION_SECONDS } from '#lib/devices/relay-control.ts';
+import type { PendingRelayStates } from '#lib/devices/relay-types.ts';
+import type { RelayCommandEntryDto, RelayHistoryEntryDto } from '#lib/api/api.dtos.ts';
+import { relayHistoryEventLabel } from '#lib/devices/relay-labels.ts';
 
 function renderRelayDisplay(
 	options: {

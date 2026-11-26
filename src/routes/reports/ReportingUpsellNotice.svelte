@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { apiErrorMessage } from '$lib/api/api-error';
-	import type { BillingEntitlements } from '$lib/api/api.dtos';
-	import { AppNotice } from '$lib/components/layout';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
+	import { apiErrorMessage } from '#lib/api/api-error.ts';
+	import type { BillingEntitlements } from '#lib/api/api.dtos.ts';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
 	import { CwButton, useCwToast } from '@cropwatchdevelopment/cwui';
 
 	interface Props {

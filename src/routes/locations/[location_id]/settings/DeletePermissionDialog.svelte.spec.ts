@@ -1,15 +1,15 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import DeletePermissionDialog from './DeletePermissionDialog.svelte';
 import type { PermissionRow } from './location-permission-rows';
 
-const { invalidateAll, forms } = vi.hoisted(() => ({
-	invalidateAll: vi.fn(),
+const { refreshAll, forms } = vi.hoisted(() => ({
+	refreshAll: vi.fn(),
 	forms: { applyAction: vi.fn(), deserialize: vi.fn((text: string) => JSON.parse(text)) }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 vi.mock('$app/forms', () => ({ applyAction: forms.applyAction, deserialize: forms.deserialize }));
 
 const ADA: PermissionRow = { id: 14, email: 'ada@example.com', name: 'Ada', permission_level: '2' };
@@ -47,7 +47,7 @@ afterEach(() => {
 	actionFetch.mockReset();
 	forms.applyAction.mockReset();
 	forms.deserialize.mockClear();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
 });
@@ -89,7 +89,7 @@ describe('DeletePermissionDialog', () => {
 
 		confirmButton().click();
 
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalledTimes(1));
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalledTimes(1));
 		flushSync();
 		expect(actionFetch).toHaveBeenCalledWith('?/removePermission', {
 			method: 'POST',
@@ -114,7 +114,7 @@ describe('DeletePermissionDialog', () => {
 		await vi.waitFor(() => expect(view.toasts()).toHaveLength(1));
 		flushSync();
 		expect(view.toasts()).toMatchObject([{ tone: 'danger', message: 'Not allowed' }]);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(dialog().open).toBe(true);
 		expect(confirmButton().disabled).toBe(false);
 	});
@@ -137,7 +137,7 @@ describe('DeletePermissionDialog', () => {
 
 		expect(view.toasts()).toEqual([]);
 		// Only the success reloads and closes.
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(dialog().open).toBe(false);
 	});
 
@@ -175,7 +175,7 @@ describe('DeletePermissionDialog', () => {
 		confirmButton().dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
 		respond(new Response(JSON.stringify({ type: 'success', status: 200 }), { status: 200 }));
-		await vi.waitFor(() => expect(invalidateAll).toHaveBeenCalled());
+		await vi.waitFor(() => expect(refreshAll).toHaveBeenCalled());
 		expect(actionFetch).toHaveBeenCalledTimes(1);
 	});
 

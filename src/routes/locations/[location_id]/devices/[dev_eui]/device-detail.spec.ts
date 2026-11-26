@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { metricColor } from '@cropwatchdevelopment/cwui';
-import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import { relayStateLabel } from '$lib/devices/relay-labels';
-import { m } from '$lib/paraglide/messages.js';
-import { labelFor } from '$lib/sensor-labels';
-import { convertSensorValue, resolveDisplayUnit } from '$lib/units';
-import { computeDewPoint } from '$lib/utils/dewPoint';
+import type { CropTargetDto, CropTypeDetailDto, PreferencesDto } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import { relayStateLabel } from '#lib/devices/relay-labels.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { labelFor } from '#lib/sensor-labels/index.ts';
+import { convertSensorValue, resolveDisplayUnit } from '#lib/units/index.ts';
+import { computeDewPoint } from '#lib/utils/dewPoint.ts';
 import {
 	DEFAULT_RANGE_SELECTION,
 	DEW_POINT_SERIES_ID,

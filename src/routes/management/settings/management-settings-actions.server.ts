@@ -1,8 +1,8 @@
 import { fail, type RequestEvent } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
-import type { OrganizationRepository } from '$lib/api/repositories/organizations.repository';
-import { m } from '$lib/paraglide/messages.js';
+import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
+import type { OrganizationRepository } from '#lib/api/repositories/organizations.repository.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 /** Same wrapper as the users page: auth, server-resolved org, API errors. */
 async function orgAction(

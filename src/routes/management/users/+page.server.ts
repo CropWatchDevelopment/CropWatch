@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import type { OrgInviteDto, OrgMemberDto } from '$lib/api/api.dtos';
+import type { OrgInviteDto, OrgMemberDto } from '#lib/api/api.dtos.ts';
 import { managementUsersActions } from './management-users-actions.server';
 
 export const load: PageServerLoad = async ({ parent, locals }) => {

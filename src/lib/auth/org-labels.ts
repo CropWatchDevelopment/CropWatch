@@ -1,5 +1,5 @@
-import type { OrgRole, OrgType } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+import type { OrgRole, OrgType } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 
 /** Localized label for an org role (also accepts the API's 'staff'/null). */
 export function orgRoleLabel(role: OrgRole | 'staff' | null | undefined): string {

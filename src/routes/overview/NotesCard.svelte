@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { OverviewDto } from '$lib/api/api.dtos';
-	import { formatRelative } from '$lib/i18n/format';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { OverviewDto } from '#lib/api/api.dtos.ts';
+	import { formatRelative } from '#lib/i18n/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import OverviewSection from './OverviewSection.svelte';
 
 	interface Props {
@@ -24,9 +24,11 @@
 				{@const author = note.author ?? (note.authorIsStaff ? m.common_staff_author() : null)}
 				<li class="note">
 					<p class="note__text">
-						<strong class="note__title">{note.title}</strong>{#if note.note}<span class="note__body"
-								>{note.note}</span
-							>{/if}
+						<strong class="note__title">{note.title}</strong>{#if note.note}<span
+								class="note__body"
+							>
+								{note.note}
+							</span>{/if}
 					</p>
 					<div class="note__meta">
 						{#if place}<span class="note__chip">{place}</span>{/if}

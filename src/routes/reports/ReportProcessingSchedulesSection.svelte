@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { AppFormStack, AppNotice } from '$lib/components/layout';
-	import Icon from '$lib/components/Icon.svelte';
-	import { m } from '$lib/paraglide/messages.js';
-	import { cwDropdownLabels } from '$lib/i18n/cwuiLabels';
+	import { AppFormStack, AppNotice } from '#lib/components/layout/index.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	import { m } from '#lib/paraglide/messages.js';
+	import { cwDropdownLabels } from '#lib/i18n/cwuiLabels.ts';
 	import {
 		CwButton,
 		CwDropdown,
@@ -10,7 +10,7 @@
 		CwInput,
 		CwSwitch
 	} from '@cropwatchdevelopment/cwui';
-	import ADD_ICON from '$lib/images/icons/add.svg';
+	import ADD_ICON from '#lib/images/icons/add.svg';
 	import type { DataProcessingScheduleDraft, SelectOption } from './report-template-form';
 
 	interface Props {

@@ -1,5 +1,5 @@
-import { getUiLocale } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
+import { getUiLocale } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
 import type {
 	CwAlertPointCondition,
 	CwAlertPointRule,
@@ -9,7 +9,7 @@ import type {
 import type {
 	RuleTemplateCriterionDto,
 	RuleTemplateCriterionInput
-} from '$lib/rules/rule-template.types';
+} from '#lib/rules/rule-template.types.ts';
 
 export interface RuleTemplateAlertCriteriaGroup {
 	localId: number;

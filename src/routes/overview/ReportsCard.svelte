@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { useCwToast } from '@cropwatchdevelopment/cwui';
-	import type { OverviewReportDto } from '$lib/api/api.dtos';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getServices } from '$lib/services/context';
+	import type { OverviewReportDto } from '#lib/api/api.dtos.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getServices } from '#lib/services/context.ts';
 	import OverviewIcon from './OverviewIcon.svelte';
 	import OverviewSection from './OverviewSection.svelte';
 	import { feedTimeLabel, formatReportPeriod } from './overview';

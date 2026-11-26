@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DashboardPage, DashboardRow, PreferencesDto } from '$lib/api/api.dtos';
-import { formatDateTime } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { createMockServices, type MockServices } from '$lib/testing/mock-services';
-import { renderWithServices } from '$lib/testing/render';
-import { formatSensorMeasurement } from '$lib/units';
+import type { DashboardPage, DashboardRow, PreferencesDto } from '#lib/api/api.dtos.ts';
+import { formatDateTime } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import { formatSensorMeasurement } from '#lib/units/index.ts';
 import DashboardTable from './DashboardTable.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));

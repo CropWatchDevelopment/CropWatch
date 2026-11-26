@@ -1,7 +1,7 @@
-import type { ActionResult } from '@sveltejs/kit';
+import type { ActionResult } from '$app/forms';
 import { flushSync, mount, unmount, type ComponentProps } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import DeviceDangerZone from './DeviceDangerZone.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
@@ -173,6 +173,7 @@ function submit() {
 const chunk = (purgedRows?: number): ActionResult => ({
 	type: 'failure',
 	status: 409,
+	location: location.pathname,
 	data: { action: 'deleteDevice', inProgress: true, purgedRows }
 });
 
@@ -320,7 +321,12 @@ describe('DeviceDangerZone delete', () => {
 
 		await expect(
 			submit().callback?.({
-				result: { type: 'failure', status: 403, data: { action: 'deleteDevice' } },
+				result: {
+					type: 'failure',
+					status: 403,
+					location: location.pathname,
+					data: { action: 'deleteDevice' }
+				},
 				update
 			})
 		).rejects.toThrow('update failed');

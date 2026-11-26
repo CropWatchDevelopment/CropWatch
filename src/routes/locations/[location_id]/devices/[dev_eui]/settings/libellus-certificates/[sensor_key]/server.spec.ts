@@ -1,17 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DeviceDto } from '$lib/api/api.dtos';
-import { ApiError } from '$lib/api/api-error';
-import type { FetchFn } from '$lib/api/http/fetch-http-client';
-import { m } from '$lib/paraglide/messages.js';
-import { createServerServices } from '$lib/server/services';
-import { createFakeFetch, jsonResponse, testPublicConfig, textResponse } from '$lib/testing/http';
+import type { DeviceDto } from '#lib/api/api.dtos.ts';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { FetchFn } from '#lib/api/http/fetch-http-client.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createServerServices } from '#lib/server/services.ts';
+import {
+	createFakeFetch,
+	jsonResponse,
+	testPublicConfig,
+	textResponse
+} from '#lib/testing/http.ts';
 import {
 	TEST_JWT,
 	testEvent,
 	testLocals,
 	testServerConfig,
 	type TestLocals
-} from '$lib/testing/server';
+} from '#lib/testing/server.ts';
 import { GET } from './+server';
 
 type Event = Parameters<typeof GET>[0];

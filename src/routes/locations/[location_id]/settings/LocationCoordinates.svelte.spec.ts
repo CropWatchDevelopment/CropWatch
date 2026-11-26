@@ -1,14 +1,14 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ActionResult } from '@sveltejs/kit';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { ActionResult } from '$app/forms';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LocationCoordinates from './LocationCoordinates.svelte';
 
 type Submit = (input: Record<string, unknown>) => unknown;
 type LngLat = [number, number];
 
-const { invalidateAll, forms, maplibre } = vi.hoisted(() => {
+const { refreshAll, forms, maplibre } = vi.hoisted(() => {
 	type Handler = (event?: unknown) => void;
 
 	/** Just enough of MapLibre's event API: `on`, plus `fire` for tests. */
@@ -72,7 +72,7 @@ const { invalidateAll, forms, maplibre } = vi.hoisted(() => {
 	}
 
 	return {
-		invalidateAll: vi.fn(),
+		refreshAll: vi.fn(),
 		forms: { submit: null as Submit | null, applyAction: vi.fn() },
 		maplibre: {
 			Map: FakeMap,
@@ -84,7 +84,7 @@ const { invalidateAll, forms, maplibre } = vi.hoisted(() => {
 	};
 });
 vi.mock('maplibre-gl', () => maplibre);
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 // `use:enhance` hands its submit function to the mock; tests run it the way
 // SvelteKit does on submit, with the action result of their choosing.
 vi.mock('$app/forms', () => ({
@@ -142,8 +142,7 @@ function submit() {
 	if (!forms.submit) throw new Error('the form is not enhanced');
 	const cancel = vi.fn();
 	const callback = forms.submit({ cancel, formData: new FormData() }) as
-		| ((input: { result: ActionResult }) => Promise<void>)
-		| undefined;
+		((input: { result: ActionResult }) => Promise<void>) | undefined;
 	flushSync();
 	return { cancel, callback };
 }
@@ -158,7 +157,7 @@ afterEach(() => {
 	view = null;
 	forms.submit = null;
 	forms.applyAction.mockReset();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	vi.restoreAllMocks();
 });
 
@@ -553,6 +552,7 @@ describe('LocationCoordinates saving', () => {
 		const result: ActionResult = {
 			type: 'success',
 			status: 200,
+			location: location.pathname,
 			data: { action: 'updateLocationCoordinates', message: 'Coordinates saved' }
 		};
 		await callback?.({ result });
@@ -560,7 +560,7 @@ describe('LocationCoordinates saving', () => {
 
 		expect(forms.applyAction).toHaveBeenCalledWith(result);
 		expect(view.toasts()).toMatchObject([{ tone: 'success', message: 'Coordinates saved' }]);
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(button('save').getAttribute('aria-busy')).toBeNull();
 	});
 
@@ -574,7 +574,9 @@ describe('LocationCoordinates saving', () => {
 		flushSync();
 		expect(notice()).not.toBeNull();
 
-		await submit().callback?.({ result: { type: 'success', status: 200, data: {} } });
+		await submit().callback?.({
+			result: { type: 'success', status: 200, location: location.pathname, data: {} }
+		});
 		flushSync();
 
 		expect(notice()).toBeNull();
@@ -585,12 +587,17 @@ describe('LocationCoordinates saving', () => {
 		type('lat', '31.95');
 
 		await submit().callback?.({
-			result: { type: 'failure', status: 400, data: { message: 'Invalid latitude' } }
+			result: {
+				type: 'failure',
+				status: 400,
+				location: location.pathname,
+				data: { message: 'Invalid latitude' }
+			}
 		});
 		flushSync();
 
 		expect(view.toasts()).toMatchObject([{ tone: 'danger', message: 'Invalid latitude' }]);
-		expect(invalidateAll).not.toHaveBeenCalled();
+		expect(refreshAll).not.toHaveBeenCalled();
 		expect(position()).toEqual(['31.95', '131.4232']);
 	});
 
@@ -598,11 +605,13 @@ describe('LocationCoordinates saving', () => {
 		const { view } = await renderWithMap();
 		type('lat', '31.95');
 
-		await submit().callback?.({ result: { type: 'failure', status: 400, data: { message: '' } } });
+		await submit().callback?.({
+			result: { type: 'failure', status: 400, location: location.pathname, data: { message: '' } }
+		});
 		await submit().callback?.({ result: { type: 'redirect', status: 303, location: '/x' } });
 		forms.applyAction.mockRejectedValueOnce(new Error('navigation failed'));
 		await expect(
-			submit().callback?.({ result: { type: 'error', error: new Error('boom') } })
+			submit().callback?.({ result: { type: 'error', error: { status: 500, message: 'boom' } } })
 		).rejects.toThrow('navigation failed');
 		flushSync();
 

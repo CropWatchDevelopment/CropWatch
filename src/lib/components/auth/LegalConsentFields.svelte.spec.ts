@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { legalDocumentUrl } from '$lib/i18n/legal-urls';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import { legalDocumentUrl } from '#lib/i18n/legal-urls.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import LegalConsentFields from './LegalConsentFields.svelte';
 
 const CONSENTS = [

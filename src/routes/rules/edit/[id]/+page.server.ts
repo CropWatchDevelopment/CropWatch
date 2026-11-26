@@ -1,6 +1,6 @@
-import { ApiError } from '$lib/api/api-error';
-import type { RuleFormContextDto } from '$lib/api/api.dtos';
-import { m } from '$lib/paraglide/messages.js';
+import { ApiError } from '#lib/api/api-error.ts';
+import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
+import { m } from '#lib/paraglide/messages.js';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 

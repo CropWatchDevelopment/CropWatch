@@ -1,6 +1,6 @@
 import type { CwDeviceFreshness } from '@cropwatchdevelopment/cwui';
 
-export { formatRelative } from '$lib/i18n/format';
+export { formatRelative } from '#lib/i18n/format.ts';
 
 export type DeviceHealth = 'online' | 'offline' | 'never';
 

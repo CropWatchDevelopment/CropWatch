@@ -9,8 +9,8 @@
 -->
 <script lang="ts">
 	import { CwCard, CwChip, formatCwNumber } from '@cropwatchdevelopment/cwui';
-	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-	import { m } from '$lib/paraglide/messages.js';
+	import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+	import { m } from '#lib/paraglide/messages.js';
 	import '../display-shared.css';
 
 	let { devEui, latestData, historicalData, loading }: DeviceDisplayProps = $props();

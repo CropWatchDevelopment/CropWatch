@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 
-import { buildManifest } from '$lib/pwa/manifest';
-import { getLocale } from '$lib/paraglide/runtime';
+import { buildManifest } from '#lib/pwa/manifest.ts';
+import { getLocale } from '#lib/paraglide/runtime.js';
 
 const MANIFEST_ROUTE_SUFFIX = '/manifest.webmanifest';
 

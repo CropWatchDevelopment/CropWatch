@@ -1,17 +1,17 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { OrgRole } from '$lib/api/api.dtos';
-import { orgRoleLabel } from '$lib/auth/org-labels';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse, type FakeResponder } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
+import type { OrgRole } from '#lib/api/api.dtos.ts';
+import { orgRoleLabel } from '#lib/auth/org-labels.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse, type FakeResponder } from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import InviteUserDialog from './InviteUserDialog.svelte';
 
-const { invalidateAll, forms } = vi.hoisted(() => ({
-	invalidateAll: vi.fn(),
+const { refreshAll, forms } = vi.hoisted(() => ({
+	refreshAll: vi.fn(),
 	forms: { applyAction: vi.fn(), deserialize: vi.fn((text: string) => JSON.parse(text)) }
 }));
-vi.mock('$app/navigation', () => ({ invalidateAll }));
+vi.mock('$app/navigation', () => ({ refreshAll }));
 vi.mock('$app/forms', () => ({ applyAction: forms.applyAction, deserialize: forms.deserialize }));
 
 /** The page's own `?/invite` action, answered with an ActionResult body. */
@@ -66,7 +66,7 @@ afterEach(() => {
 	view?.unmount();
 	view = null;
 	vi.unstubAllGlobals();
-	invalidateAll.mockReset();
+	refreshAll.mockReset();
 	forms.applyAction.mockReset();
 	forms.deserialize.mockClear();
 });
@@ -136,7 +136,7 @@ describe('InviteUserDialog', () => {
 			member_expires_on: '',
 			member_expires_at: ''
 		});
-		expect(invalidateAll).toHaveBeenCalledTimes(1);
+		expect(refreshAll).toHaveBeenCalledTimes(1);
 		expect(view.toasts()).toMatchObject([{ tone: 'success', message: m.management_invite_sent() }]);
 		expect(dialog().open).toBe(false);
 		expect(input('email')?.value).toBe('');

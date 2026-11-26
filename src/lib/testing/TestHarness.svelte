@@ -2,11 +2,11 @@
   @component
   Test-only root: provides the contexts the root layout provides in the app
   (services, app context, toasts), then renders the component under test.
-  Use it through `renderWithServices` in `$lib/testing/render`.
+  Use it through `renderWithServices` in `#lib/testing/render`.
 -->
 <script module lang="ts">
 	import type { createCwToastContext } from '@cropwatchdevelopment/cwui';
-	import type { AppContext } from '$lib/appContext.svelte';
+	import type { AppContext } from '#lib/appContext.svelte.ts';
 
 	export interface HarnessHandles {
 		app: AppContext;
@@ -17,9 +17,9 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 	import { createCwToastContext as createToastContext } from '@cropwatchdevelopment/cwui';
-	import { createAppContext, setAppContext } from '$lib/appContext.svelte';
-	import type { AppServices } from '$lib/services/app-services';
-	import { setServices } from '$lib/services/context';
+	import { createAppContext, setAppContext } from '#lib/appContext.svelte.ts';
+	import type { AppServices } from '#lib/services/app-services.ts';
+	import { setServices } from '#lib/services/context.ts';
 
 	interface Props {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- any component under test

@@ -28,39 +28,39 @@
 	} from '@cropwatchdevelopment/cwui';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { AppNotice } from '$lib/components/layout';
-	import { canManage } from '$lib/constants/permissions';
-	import { getServices } from '$lib/services/context';
+	import { AppNotice } from '#lib/components/layout/index.ts';
+	import { canManage } from '#lib/constants/permissions.ts';
+	import { getServices } from '#lib/services/context.ts';
 	import {
 		cropDisplayName,
 		cropTarget,
 		vaporPressureDeficit,
 		type DayPeriod
-	} from '$lib/agronomy/crop-targets';
+	} from '#lib/agronomy/crop-targets.ts';
 	import {
 		dayLightProfile,
 		isDaylight,
 		lightEndsAt,
 		lightShareSoFar,
 		ppfdTargetForHour
-	} from '$lib/agronomy/light-targets';
+	} from '#lib/agronomy/light-targets.ts';
 	import AiRecommendationCard from './AiRecommendationCard.svelte';
 	import { DliHistory } from './dli-history.svelte';
 	import { buildCropTargetRows, targetStatusLabel, targetStatusTone } from './soil-crop-targets';
 	import { buildSoilLight, buildSoilPanel, soilPanelSubtitle } from './soil-panel';
-	import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-	import { m } from '$lib/paraglide/messages.js';
-	import { getIntlLocale } from '$lib/i18n/format';
+	import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getIntlLocale } from '#lib/i18n/format.ts';
 	import {
 		cwAboveBelowChartLabels,
 		cwDataTableLabels,
 		cwPpfdChartLabels,
 		cwVpdChartLabels
-	} from '$lib/i18n/cwuiLabels';
-	import { getAppContext } from '$lib/appContext.svelte';
-	import { labelFor } from '$lib/sensor-labels';
-	import { formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
-	import { createClientTableLoader } from '$lib/utils/clientTableLoader';
+	} from '#lib/i18n/cwuiLabels.ts';
+	import { getAppContext } from '#lib/appContext.svelte.ts';
+	import { labelFor } from '#lib/sensor-labels/index.ts';
+	import { formatSensorMeasurement, resolveDisplayUnit } from '#lib/units/index.ts';
+	import { createClientTableLoader } from '#lib/utils/clientTableLoader.ts';
 	import {
 		dliToday,
 		fieldSeries,

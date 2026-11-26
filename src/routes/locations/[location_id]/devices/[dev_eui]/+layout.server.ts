@@ -1,5 +1,5 @@
-import { toCoordinates } from '$lib/agronomy/solar';
-import { PermissionLevel } from '$lib/constants/permissions';
+import { toCoordinates } from '#lib/agronomy/solar.ts';
+import { PermissionLevel } from '#lib/constants/permissions.ts';
 import type { LayoutServerLoad } from './$types';
 
 /**

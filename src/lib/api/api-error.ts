@@ -27,7 +27,7 @@ export class ApiError extends Error {
  * {@link ApiError} first:
  *
  * ```ts
- * import { apiErrorMessage, apiErrorStatus } from '$lib/api/api-error';
+ * import { apiErrorMessage, apiErrorStatus } from '#lib/api/api-error.ts';
  *
  * try {
  *   await locals.services.devices.updateDevice(devEui, fields);

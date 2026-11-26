@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { OverviewDto } from '$lib/api/api.dtos';
-import { formatRelative } from '$lib/i18n/format';
-import { m } from '$lib/paraglide/messages.js';
-import { renderWithServices } from '$lib/testing/render';
+import type { OverviewDto } from '#lib/api/api.dtos.ts';
+import { formatRelative } from '#lib/i18n/format.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { renderWithServices } from '#lib/testing/render.ts';
 import KpiCards from './KpiCards.svelte';
 
 const NOW = Date.parse('2026-10-15T09:05:00.000Z');

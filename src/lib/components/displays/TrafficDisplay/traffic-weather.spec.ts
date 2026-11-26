@@ -1,7 +1,7 @@
 import { formatCwNumber } from '@cropwatchdevelopment/cwui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse, type RecordedRequest } from '$lib/testing/http';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse, type RecordedRequest } from '#lib/testing/http.ts';
 import { describeWeatherCode, fetchWeatherByRange, weatherEmoji } from './traffic-weather';
 
 const FIELDS =

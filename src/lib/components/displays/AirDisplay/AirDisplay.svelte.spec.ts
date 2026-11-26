@@ -1,14 +1,18 @@
 import { formatCwNumber } from '@cropwatchdevelopment/cwui';
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
-import type { PreferencesDto } from '$lib/api/api.dtos';
-import { getIntlLocale } from '$lib/i18n/format';
-import type { DeviceDisplayProps } from '$lib/interfaces/deviceDisplay';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
-import { convertSensorValue, formatSensorMeasurement, resolveDisplayUnit } from '$lib/units';
-import { computeDewPoint } from '$lib/utils/dewPoint';
+import type { PreferencesDto } from '#lib/api/api.dtos.ts';
+import { getIntlLocale } from '#lib/i18n/format.ts';
+import type { DeviceDisplayProps } from '#lib/interfaces/deviceDisplay.ts';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse } from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
+import {
+	convertSensorValue,
+	formatSensorMeasurement,
+	resolveDisplayUnit
+} from '#lib/units/index.ts';
+import { computeDewPoint } from '#lib/utils/dewPoint.ts';
 import AirDisplay from './AirDisplay.svelte';
 
 const { forms } = vi.hoisted(() => ({

@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { createFakeFetch, jsonResponse } from '$lib/testing/http';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { createFakeFetch, jsonResponse } from '#lib/testing/http.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import {
 	buildHourlyTrafficRows,
 	formatDay,

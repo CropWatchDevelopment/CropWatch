@@ -1,6 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
+import { m } from '#lib/paraglide/messages.js';
 import SignalStrength from './SignalStrength.svelte';
 
 function renderSignal(props: { rssi?: number | null; snr?: number | null }) {

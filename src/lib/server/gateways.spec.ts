@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createFakeFetch, jsonResponse } from '$lib/testing/http';
+import { createFakeFetch, jsonResponse } from '#lib/testing/http.ts';
 import { createLibellusGateway } from './libellus';
 import { createSupabaseAuthGateway } from './supabase';
 

@@ -1,12 +1,12 @@
 import { flushSync } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { m } from '$lib/paraglide/messages.js';
-import { NAVIGATE_MESSAGE } from '$lib/pwa/pwa-controller.svelte';
-import { renderWithServices } from '$lib/testing/render';
+import { m } from '#lib/paraglide/messages.js';
+import { NAVIGATE_MESSAGE } from '#lib/pwa/pwa-controller.svelte.ts';
+import { renderWithServices } from '#lib/testing/render.ts';
 import PwaDock from './PwaDock.svelte';
 
 // A production build: the dock registers the service worker.
-vi.mock('$app/environment', () => ({
+vi.mock('$app/env', () => ({
 	browser: true,
 	dev: false,
 	building: false,
@@ -87,7 +87,9 @@ describe('PwaDock', () => {
 	it('registers the offline service worker in a production build', async () => {
 		render();
 
-		await expect.poll(() => register.mock.calls).toEqual([['/service-worker.js']]);
+		await expect
+			.poll(() => register.mock.calls)
+			.toEqual([['/service-worker.js', { type: 'module' }]]);
 		expect(dock().children).toHaveLength(0);
 	});
 
