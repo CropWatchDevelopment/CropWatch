@@ -11,6 +11,7 @@ import type {
 import { m } from '#lib/paraglide/messages.js';
 import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
+import { formatRuleInstant } from './rule-status.ts';
 import RuleTemplateForm from './RuleTemplateForm.svelte';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn(async () => {}) }));
@@ -342,7 +343,6 @@ describe('RuleTemplateForm', () => {
 			name: 'Cold room',
 			description: null,
 			deviceTypeId: 5,
-			isActive: true,
 			devEuis: ['DEV-A'],
 			criteria: [
 				{ id: 21, subject: 'temperature_c', operator: '>', triggerValue: 8, resetValue: 6 }
@@ -350,6 +350,134 @@ describe('RuleTemplateForm', () => {
 			actions: [{ id: 31, actionType: 1, config: { recipient: 'ops@example.com' } }]
 		});
 		expect(view!.toasts()[0]?.message).toBe(m.rules_new_updated_success({ name: 'Cold room' }));
+	});
+
+	describe('start date, pause date and the rule to start', () => {
+		const START = '2099-03-01T00:30:00.000Z';
+		const PAUSE = '2099-09-01T15:00:00.000Z';
+		const section = () => byId('rule-form-auto-dates')!;
+		const thenSelect = () => byId<HTMLButtonElement>('rule-form-auto-then-select')!;
+
+		it('offers both dates, says which time zone they are in, and waits for a pause date', () => {
+			render();
+
+			expect(section().textContent).toContain(m.rules_auto_section_title());
+			expect(section().textContent).toContain(
+				m.rules_auto_section_hint({ zone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+			);
+			expect(byId('rule-form-auto-start-picker')).not.toBeNull();
+			expect(byId('rule-form-auto-pause-picker')).not.toBeNull();
+			expect(section().textContent).toContain(m.rules_auto_start_hint());
+			expect(section().textContent).toContain(m.rules_auto_pause_hint());
+			// Nothing to clear, nothing to follow yet.
+			expect(byId('rule-form-auto-start-clear-button')).toBeNull();
+			expect(byId('rule-form-auto-pause-clear-button')).toBeNull();
+			expect(thenSelect().disabled).toBe(true);
+			expect(section().textContent).toContain(m.rules_auto_then_needs_pause());
+			expect(section().textContent).not.toContain(m.rules_auto_start_while_active());
+		});
+
+		it('shows a saved plan, in the summary too', () => {
+			render({
+				mode: 'edit',
+				context: context({
+					template: template({
+						isActive: false,
+						autoStartAt: START,
+						autoPauseAt: PAUSE,
+						onAutoPauseStartTemplateId: 12
+					}),
+					ruleOptions: [{ id: 12, name: 'Winter' }]
+				})
+			});
+
+			expect(thenSelect().disabled).toBe(false);
+			expect(thenSelect().textContent).toContain('Winter');
+			expect(section().textContent).toContain(m.rules_auto_then_hint());
+			// The picker's button shows the day only; the full time and zone are under it.
+			expect(section().textContent).toContain(
+				m.rules_auto_start_at_hint({ date: formatRuleInstant(START) })
+			);
+			expect(section().textContent).toContain(
+				m.rules_auto_pause_at_hint({ date: formatRuleInstant(PAUSE) })
+			);
+			expect(section().textContent).not.toContain(m.rules_auto_start_hint());
+			const summary = view!.target.querySelector('.rules-new-form__summary')!.textContent!;
+			expect(summary).toContain(formatRuleInstant(START));
+			expect(summary).toContain(formatRuleInstant(PAUSE));
+			expect(summary).toContain('Winter');
+			// Paused until the start date: nothing to warn about.
+			expect(section().textContent).not.toContain(m.rules_auto_start_while_active());
+		});
+
+		it('warns that a start date does nothing while the rule is set to run', () => {
+			render({
+				mode: 'edit',
+				context: context({ template: template({ isActive: true, autoStartAt: START }) })
+			});
+
+			expect(section().textContent).toContain(m.rules_auto_start_while_active());
+
+			click(byId('rule-form-active-switch'));
+
+			expect(section().textContent).not.toContain(m.rules_auto_start_while_active());
+		});
+
+		it('clears a date with its button, and sends that on save', async () => {
+			services.rules.updateRuleTemplate.mockResolvedValue(template());
+			render({
+				mode: 'edit',
+				context: context({
+					template: template({
+						isActive: false,
+						autoStartAt: START,
+						autoPauseAt: PAUSE,
+						onAutoPauseStartTemplateId: 12
+					}),
+					ruleOptions: [{ id: 12, name: 'Winter' }]
+				})
+			});
+
+			click(byId('rule-form-auto-pause-clear-button'));
+
+			expect(byId('rule-form-auto-pause-clear-button')).toBeNull();
+			expect(byId('rule-form-auto-start-clear-button')).not.toBeNull();
+			expect(thenSelect().disabled).toBe(true);
+
+			click(byId('rule-form-auto-start-clear-button'));
+			click(submitButton());
+
+			await vi.waitFor(() => expect(services.rules.updateRuleTemplate).toHaveBeenCalled());
+			const payload = services.rules.updateRuleTemplate.mock.calls[0][1];
+			expect(payload).toMatchObject({
+				autoStartAt: null,
+				autoPauseAt: null,
+				onAutoPauseStartTemplateId: null
+			});
+			expect(payload).not.toHaveProperty('isActive');
+		});
+
+		it('chooses the rule to start from the list', async () => {
+			services.rules.updateRuleTemplate.mockResolvedValue(template());
+			render({
+				mode: 'edit',
+				context: context({
+					template: template({ autoPauseAt: PAUSE }),
+					ruleOptions: [
+						{ id: 12, name: 'Winter' },
+						{ id: 13, name: 'Spring' }
+					]
+				})
+			});
+
+			choose('rule-form-auto-then-select', 'Spring');
+			click(submitButton());
+
+			await vi.waitFor(() => expect(services.rules.updateRuleTemplate).toHaveBeenCalled());
+			const payload = services.rules.updateRuleTemplate.mock.calls[0][1];
+			expect(payload.onAutoPauseStartTemplateId).toBe(13);
+			expect(payload).not.toHaveProperty('autoPauseAt');
+		});
 	});
 
 	it('goes back to the rules list on cancel', () => {

@@ -33,6 +33,10 @@ export interface RuleRepository {
 		options?: RequestSignalOptions
 	): Promise<RuleTemplateDto>;
 	deleteRuleTemplate(id: number, options?: RequestSignalOptions): Promise<{ id: number }>;
+	/** Starts a paused rule; nothing else about it is rewritten. Already running is fine. */
+	startRule(id: number, options?: RequestSignalOptions): Promise<RuleTemplateDto>;
+	/** Pauses a rule: it stops alerting and its open alarms are closed. Already paused is fine. */
+	pauseRule(id: number, options?: RequestSignalOptions): Promise<RuleTemplateDto>;
 }
 
 export class HttpRuleRepository implements RuleRepository {
@@ -125,6 +129,20 @@ export class HttpRuleRepository implements RuleRepository {
 				method: 'DELETE',
 				signal: options.signal
 			}
+		);
+	}
+
+	public startRule(id: number, options: RequestSignalOptions = {}): Promise<RuleTemplateDto> {
+		return this.#http.request<RuleTemplateDto>(
+			replacePathParams(`${this.#templateByIdEndpoint}/start`, { id }),
+			{ method: 'POST', signal: options.signal }
+		);
+	}
+
+	public pauseRule(id: number, options: RequestSignalOptions = {}): Promise<RuleTemplateDto> {
+		return this.#http.request<RuleTemplateDto>(
+			replacePathParams(`${this.#templateByIdEndpoint}/pause`, { id }),
+			{ method: 'POST', signal: options.signal }
 		);
 	}
 }
