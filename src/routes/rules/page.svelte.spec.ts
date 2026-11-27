@@ -4,6 +4,7 @@ import { ApiError } from '#lib/api/api-error.ts';
 import type {
 	RuleTemplateActionDto,
 	RuleTemplateAssignmentDto,
+	RuleStatusDto,
 	RuleTemplateCriterionDto,
 	RuleTemplateDto
 } from '#lib/api/api.dtos.ts';
@@ -12,6 +13,7 @@ import { labelFor } from '#lib/sensor-labels/index.ts';
 import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import RulesPage from './+page.svelte';
+import { describeRuleStatus } from './rule-status.ts';
 
 const nav = vi.hoisted(() => ({ goto: vi.fn(), url: new URL('http://localhost/rules') }));
 vi.mock('$app/navigation', () => ({ goto: nav.goto }));
@@ -79,11 +81,27 @@ function template(overrides: Partial<RuleTemplateDto> = {}): RuleTemplateDto {
 	};
 }
 
+function status(overrides: Partial<RuleStatusDto> = {}): RuleStatusDto {
+	return {
+		state: 'running',
+		since: '2026-10-01T08:00:00.000Z',
+		reason: null,
+		byUserName: null,
+		byRule: null,
+		autoPauseAt: null,
+		thenStart: null,
+		nextStart: null,
+		...overrides
+	};
+}
+
 let services: MockServices;
 let view: ReturnType<typeof renderWithServices> | null = null;
 
 function render() {
 	view = renderWithServices(RulesPage, { services, app: { accessToken: 'jwt-token' } });
+	// Wide enough for every column; the narrow layouts have their own tests.
+	view.target.style.width = '1300px';
 	return view;
 }
 
@@ -95,6 +113,11 @@ const cells = (row: HTMLTableRowElement) =>
 	[...row.querySelectorAll('td:not(.cw-data-table__td--actions)')].map((td) =>
 		td.textContent?.trim()
 	);
+/** The status icon of a row: its state and the tooltip that explains it. */
+const statusOf = (row: HTMLTableRowElement) => ({
+	state: row.querySelector<HTMLElement>('.rule-status')?.dataset.state,
+	tooltip: row.querySelector('[role="tooltip"]')?.textContent?.trim()
+});
 const groupLabels = () =>
 	[...view!.target.querySelectorAll('.cw-data-table__group-label')].map((label) =>
 		label.textContent?.trim()
@@ -128,6 +151,8 @@ describe('rules page', () => {
 		);
 		expect(cells(rows()[0])).toEqual([
 			'Cold room',
+			// The status cell is an icon; its text is the tooltip.
+			m.rules_status_tip_running(),
 			'Freezer A (DEV-A)',
 			`${m.rule_subject_temperature()} > 8`,
 			'EMail',
@@ -165,6 +190,7 @@ describe('rules page', () => {
 		await vi.waitFor(() => expect(rows()).toHaveLength(1));
 		expect(cells(rows()[0])).toEqual([
 			'Many devices',
+			m.rules_status_tip_running(),
 			m.rules_new_summary_more({ summary: 'Freezer A (DEV-A), DEV-B', count: '1' }),
 			m.rules_new_summary_more({
 				summary: `${labelFor('battery_level').label()} < 3, ${m.rule_subject_humidity()} >= 90`,
@@ -175,7 +201,7 @@ describe('rules page', () => {
 		]);
 		// The full conditions text is kept as the cell's tooltip.
 		expect(rows()[0].querySelector('.rules-new-page__truncate')?.getAttribute('title')).toBe(
-			cells(rows()[0])[2]
+			cells(rows()[0])[3]
 		);
 	});
 
@@ -186,13 +212,188 @@ describe('rules page', () => {
 		render();
 
 		await vi.waitFor(() => expect(rows()).toHaveLength(1));
-		expect(cells(rows()[0]).slice(0, 4)).toEqual([
+		expect(cells(rows()[0]).slice(0, 5)).toEqual([
 			'Empty',
+			m.rules_status_tip_running(),
 			m.rules_new_no_assignments(),
 			m.common_not_available(),
 			m.common_not_available()
 		]);
 		expect(groupLabels()).toEqual([m.rules_new_unknown_location()]);
+	});
+
+	it('shows whether each rule is running, paused or scheduled, and why', async () => {
+		const paused = status({ state: 'paused', reason: 'manual', byUserName: 'Mei' });
+		const scheduled = status({
+			state: 'scheduled',
+			reason: 'auto_pause',
+			nextStart: {
+				at: '2026-12-01T00:00:00.000Z',
+				source: 'chain',
+				byRule: { id: 1, name: 'Summer' }
+			}
+		});
+		const running = status({
+			reason: 'auto_start',
+			autoPauseAt: '2026-12-01T00:00:00.000Z',
+			thenStart: { id: 3, name: 'Winter' }
+		});
+		getTemplates().mockResolvedValue([
+			template({ id: 1, name: 'A summer', status: running }),
+			template({ id: 2, name: 'B paused', isActive: false, status: paused }),
+			template({ id: 3, name: 'C winter', isActive: false, status: scheduled }),
+			// An API from before the status existed.
+			template({ id: 4, name: 'D old API', isActive: false })
+		]);
+		render();
+
+		await vi.waitFor(() => expect(rows()).toHaveLength(4));
+		expect(rows().map(statusOf)).toEqual([
+			{ state: 'running', tooltip: describeRuleStatus(running).tooltip },
+			{ state: 'paused', tooltip: describeRuleStatus(paused).tooltip },
+			{ state: 'scheduled', tooltip: describeRuleStatus(scheduled).tooltip },
+			{ state: 'paused', tooltip: m.rules_status_tip_paused() }
+		]);
+		expect(statusOf(rows()[0]).tooltip).toContain('Winter');
+		expect(statusOf(rows()[1]).tooltip).toContain('Mei');
+		expect(statusOf(rows()[2]).tooltip).toContain('Summer');
+		expect(text()).toContain(m.rules_new_status());
+	});
+
+	it('opens the status tooltip beside the icon in a wide table and below it in the card layout', async () => {
+		getTemplates().mockResolvedValue([template()]);
+		render();
+		await vi.waitFor(() => expect(rows()).toHaveLength(1));
+		const bubble = () => rows()[0].querySelector('[role="tooltip"]')!;
+
+		view!.target.style.width = '1200px';
+		await vi.waitFor(() =>
+			expect(bubble().classList.contains('cw-tooltip__bubble--right')).toBe(true)
+		);
+
+		// Below the table's own phone breakpoint its rows become cards: no room beside.
+		view!.target.style.width = '360px';
+		await vi.waitFor(() =>
+			expect(bubble().classList.contains('cw-tooltip__bubble--bottom')).toBe(true)
+		);
+	});
+
+	it('drops the date column in a narrow table, so the row buttons stay in view, and brings it back when there is room', async () => {
+		getTemplates().mockResolvedValue([template()]);
+		render();
+		await vi.waitFor(() => expect(rows()).toHaveLength(1));
+		const headers = () =>
+			[...view!.target.querySelectorAll('thead th')].map((cell) => cell.textContent?.trim());
+
+		view!.target.style.width = '1300px';
+		await vi.waitFor(() => expect(headers()).toContain(m.common_created()));
+
+		view!.target.style.width = '950px';
+		await vi.waitFor(() => expect(headers()).not.toContain(m.common_created()));
+		// Everything else stays.
+		expect(headers()).toEqual(
+			expect.arrayContaining([m.common_name(), m.rules_new_status(), m.rules_conditions()])
+		);
+
+		view!.target.style.width = '1300px';
+		await vi.waitFor(() => expect(headers()).toContain(m.common_created()));
+	});
+
+	it('sorts by status', async () => {
+		getTemplates().mockResolvedValue([
+			template({ id: 1, name: 'Running rule' }),
+			template({ id: 2, name: 'Paused rule', isActive: false })
+		]);
+		render();
+		await vi.waitFor(() => expect(rows()).toHaveLength(2));
+		const labels = [m.rules_status_running(), m.rules_status_paused()].sort((a, b) =>
+			a.localeCompare(b)
+		);
+		const expected = labels.map((label) =>
+			label === m.rules_status_running() ? 'Running rule' : 'Paused rule'
+		);
+
+		click(
+			[...view!.target.querySelectorAll('button.cw-data-table__sort-btn')].find((button) =>
+				button.textContent?.includes(m.rules_new_status())
+			)
+		);
+
+		await vi.waitFor(() => expect(rows().map((row) => cells(row)[0])).toEqual(expected));
+	});
+
+	it('pauses a rule from its row and shows it at once, without reloading the list', async () => {
+		const paused = status({ state: 'paused', reason: 'manual', byUserName: 'Mei' });
+		getTemplates().mockResolvedValue([
+			template({ id: 1, name: 'Cold room', status: status() }),
+			template({ id: 2, name: 'Warm room', status: status() })
+		]);
+		services.rules.pauseRule.mockResolvedValue(
+			template({ id: 1, name: 'Cold room', isActive: false, status: paused })
+		);
+		render();
+		await vi.waitFor(() => expect(rows()).toHaveLength(2));
+
+		click(document.getElementById('rule-run-1-pause-button'));
+		// Nothing happens before the question is answered.
+		expect(services.rules.pauseRule).not.toHaveBeenCalled();
+		click(document.getElementById('rule-run-1-confirm-pause-button'));
+
+		await vi.waitFor(() =>
+			expect(statusOf(rows()[0])).toEqual({
+				state: 'paused',
+				tooltip: describeRuleStatus(paused).tooltip
+			})
+		);
+		expect(services.rules.pauseRule).toHaveBeenCalledWith(1);
+		expect(statusOf(rows()[1]).state).toBe('running');
+		// The row now offers Start; the other row still offers Pause.
+		expect(document.getElementById('rule-run-1-start-button')).not.toBeNull();
+		expect(document.getElementById('rule-run-1-pause-button')).toBeNull();
+		expect(document.getElementById('rule-run-2-pause-button')).not.toBeNull();
+		expect(getTemplates()).toHaveBeenCalledTimes(1);
+	});
+
+	it('starts a paused rule from its row', async () => {
+		getTemplates().mockResolvedValue([
+			template({ id: 5, isActive: false, status: status({ state: 'paused' }) })
+		]);
+		services.rules.startRule.mockResolvedValue(
+			template({ id: 5, status: status({ reason: 'manual', byUserName: 'Aki' }) })
+		);
+		render();
+		await vi.waitFor(() => expect(rows()).toHaveLength(1));
+		expect(statusOf(rows()[0]).state).toBe('paused');
+
+		click(document.getElementById('rule-run-5-start-button'));
+
+		await vi.waitFor(() => expect(statusOf(rows()[0]).state).toBe('running'));
+		expect(services.rules.startRule).toHaveBeenCalledWith(5);
+		expect(statusOf(rows()[0]).tooltip).toContain('Aki');
+		expect(document.getElementById('rule-run-5-pause-button')).not.toBeNull();
+	});
+
+	it('a reload shows what the API says, not what a row button changed earlier', async () => {
+		getTemplates().mockResolvedValue([template({ id: 5, status: status() })]);
+		services.rules.pauseRule.mockResolvedValue(
+			template({ id: 5, isActive: false, status: status({ state: 'paused' }) })
+		);
+		render();
+		await vi.waitFor(() => expect(rows()).toHaveLength(1));
+		click(document.getElementById('rule-run-5-pause-button'));
+		click(document.getElementById('rule-run-5-confirm-pause-button'));
+		await vi.waitFor(() => expect(statusOf(rows()[0]).state).toBe('paused'));
+
+		// Meanwhile someone else started it again; the next load must show that.
+		const search = view!.target.querySelector<HTMLInputElement>(
+			'.cw-data-table__search-wrapper input'
+		)!;
+		search.value = 'cold';
+		search.dispatchEvent(new Event('input', { bubbles: true }));
+
+		await vi.waitFor(() => expect(getTemplates()).toHaveBeenCalledTimes(2));
+		await vi.waitFor(() => expect(statusOf(rows()[0]).state).toBe('running'));
+		expect(document.getElementById('rule-run-5-pause-button')).not.toBeNull();
 	});
 
 	it('groups each template under the locations of its devices', async () => {

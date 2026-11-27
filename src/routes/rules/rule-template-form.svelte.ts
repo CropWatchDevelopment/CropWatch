@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import type { CwToastApi } from '@cropwatchdevelopment/cwui';
+import type { CwDateValue, CwToastApi } from '@cropwatchdevelopment/cwui';
 import { apiErrorMessage } from '#lib/api/api-error.ts';
 import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
 import type { PushRepository } from '#lib/api/repositories/push.repository.ts';
@@ -22,6 +22,7 @@ import {
 	hasUnsupportedAlertPointConditions,
 	type RuleTemplateAlertCriteriaGroup
 } from './rule-template-alert-points';
+import { browserTimeZone, fromInstant, sameInstant, toInstant } from './rule-auto-dates.ts';
 
 export type RuleTemplateFormMode = 'create' | 'edit';
 
@@ -88,6 +89,60 @@ export class RuleTemplateFormController {
 	isActive = $state(true);
 	submitting = $state(false);
 	showAdvanced = $state(false);
+
+	// One-shot dates (picked in the browser's time zone) and the rule that
+	// starts when this one pauses on its pause date ('' = none).
+	autoStart = $state<CwDateValue | undefined>(undefined);
+	autoPause = $state<CwDateValue | undefined>(undefined);
+	chainRuleId = $state('');
+	readonly timeZone = browserTimeZone();
+	// What the pickers were opened with (set by the constructor): only a date
+	// the user changed is sent.
+	#initialAutoStartAt: string | null = null;
+	#initialAutoPauseAt: string | null = null;
+	#initialChainRuleId = '';
+
+	readonly autoStartAt = $derived(toInstant(this.autoStart));
+	readonly autoPauseAt = $derived(toInstant(this.autoPause));
+	readonly autoStartError = $derived(
+		this.#isNewPastDate(this.autoStartAt, this.#initialAutoStartAt)
+			? m.rules_auto_error_past()
+			: undefined
+	);
+	readonly autoPauseError = $derived(
+		this.#isNewPastDate(this.autoPauseAt, this.#initialAutoPauseAt)
+			? m.rules_auto_error_past()
+			: this.autoPauseAt !== null && sameInstant(this.autoPauseAt, this.autoStartAt)
+				? m.rules_auto_error_same()
+				: undefined
+	);
+	/** Running with a start date ahead of any pause date: the start date would do nothing. */
+	readonly startDateNeedsPause = $derived(
+		this.isActive &&
+			this.autoStartAt !== null &&
+			(this.autoPauseAt === null || Date.parse(this.autoStartAt) < Date.parse(this.autoPauseAt))
+	);
+	readonly chainOptions = $derived.by(() => {
+		const options = (this.#context().ruleOptions ?? [])
+			.filter((rule) => rule.id !== this.#initial?.id)
+			.map((rule) => ({
+				label: rule.name ?? m.rules_auto_then_unknown({ id: String(rule.id) }),
+				value: String(rule.id)
+			}));
+		// A saved choice stays visible even when it is no longer on offer.
+		if (this.chainRuleId && !options.some((option) => option.value === this.chainRuleId)) {
+			options.unshift({
+				label: m.rules_auto_then_unknown({ id: this.chainRuleId }),
+				value: this.chainRuleId
+			});
+		}
+		return [{ label: m.rules_auto_then_none(), value: '' }, ...options];
+	});
+	readonly chainRuleName = $derived(
+		this.chainRuleId && this.autoPauseAt !== null
+			? (this.chainOptions.find((option) => option.value === this.chainRuleId)?.label ?? '')
+			: ''
+	);
 
 	selectedDevices = $state<DeviceSelection[]>([]);
 
@@ -164,6 +219,8 @@ export class RuleTemplateFormController {
 			this.#selectedDevEuis.length > 0 &&
 			!this.hasUnsupportedCriteria &&
 			areAlertCriteriaGroupsValid(this.criteriaGroups) &&
+			this.autoStartError === undefined &&
+			this.autoPauseError === undefined &&
 			this.templateActions.every(
 				(action) =>
 					isValidActionTypeId(action.actionType) &&
@@ -216,6 +273,18 @@ export class RuleTemplateFormController {
 		this.ruleName = initial?.name ?? '';
 		this.description = initial?.description ?? '';
 		this.isActive = initial?.isActive ?? true;
+
+		this.autoStart = fromInstant(initial?.autoStartAt);
+		this.autoPause = fromInstant(initial?.autoPauseAt);
+		this.chainRuleId =
+			typeof initial?.onAutoPauseStartTemplateId === 'number'
+				? String(initial.onAutoPauseStartTemplateId)
+				: '';
+		// Read back through the picker's own precision (minutes), so an untouched
+		// date never counts as changed.
+		this.#initialAutoStartAt = toInstant(this.autoStart);
+		this.#initialAutoPauseAt = toInstant(this.autoPause);
+		this.#initialChainRuleId = this.chainRuleId;
 
 		this.selectedDevices = initial?.assignments.length
 			? this.#createDeviceSelections(initial.assignments.map((assignment) => assignment.devEui))
@@ -414,12 +483,41 @@ export class RuleTemplateFormController {
 		return types.length === 1 ? types[0] : null;
 	}
 
+	/** A date the user set or changed must lie ahead; one they left alone may just have passed. */
+	#isNewPastDate(instant: string | null, initial: string | null): boolean {
+		return instant !== null && !sameInstant(instant, initial) && Date.parse(instant) <= Date.now();
+	}
+
+	/**
+	 * Status, dates and the rule to start: only what the user changed is sent,
+	 * and the API keeps the rest. A form that stayed open while the rule paused
+	 * on its date therefore cannot start it again, or bring a used date back.
+	 */
+	#buildStatusPayload(): Partial<RuleTemplateSaveRequest> {
+		const editing = this.#options.mode() === 'edit' && this.#initial !== null;
+		// Without a pause date there is nothing for the other rule to follow.
+		const chainRuleId = this.autoPauseAt === null ? '' : this.chainRuleId;
+
+		return {
+			...(editing && this.isActive === this.#initial?.isActive ? {} : { isActive: this.isActive }),
+			...(sameInstant(this.autoStartAt, this.#initialAutoStartAt)
+				? {}
+				: { autoStartAt: this.autoStartAt }),
+			...(sameInstant(this.autoPauseAt, this.#initialAutoPauseAt)
+				? {}
+				: { autoPauseAt: this.autoPauseAt }),
+			...(chainRuleId === this.#initialChainRuleId
+				? {}
+				: { onAutoPauseStartTemplateId: chainRuleId ? Number(chainRuleId) : null })
+		};
+	}
+
 	#buildPayload(): RuleTemplateSaveRequest {
 		return {
 			name: this.ruleName.trim(),
 			description: this.description.trim() || null,
 			deviceTypeId: this.#selectedDeviceTypeId,
-			isActive: this.isActive,
+			...this.#buildStatusPayload(),
 			devEuis: this.#selectedDevEuis,
 			criteria: this.#criteriaForTest,
 			actions: this.templateActions.map(buildActionPayload)

@@ -665,6 +665,40 @@ export interface RuleTemplateAssignmentDto {
 	state: RuleTemplateStateDto | null;
 }
 
+/** `scheduled`: paused now, with a start already planned (see `nextStart`). */
+export type RuleRunState = 'running' | 'paused' | 'scheduled';
+
+/** Why a rule last started or paused. */
+export type RuleStatusReason = 'manual' | 'auto_start' | 'auto_pause' | 'chain' | 'rule_action';
+
+/** Another rule; `name` is null when the viewer cannot see that rule. */
+export interface RuleRefDto {
+	id: number;
+	name: string | null;
+}
+
+export interface RuleNextStartDto {
+	at: string;
+	/** `date`: the rule's own start date. `chain`: another rule starts it when that rule pauses on its date. */
+	source: 'date' | 'chain';
+	byRule: RuleRefDto | null;
+}
+
+export interface RuleStatusDto {
+	state: RuleRunState;
+	/** When it last started or paused; the creation time for a rule that never changed. */
+	since: string | null;
+	reason: RuleStatusReason | null;
+	/** Who started or paused it by hand (never a CropWatch staff member for a customer). */
+	byUserName: string | null;
+	byRule: RuleRefDto | null;
+	/** A running rule: when it pauses by itself. */
+	autoPauseAt: string | null;
+	/** The rule that starts after that pause. */
+	thenStart: RuleRefDto | null;
+	nextStart: RuleNextStartDto | null;
+}
+
 export interface RuleTemplateDto {
 	id: number;
 	name: string;
@@ -672,6 +706,12 @@ export interface RuleTemplateDto {
 	deviceTypeId: number | null;
 	isActive: boolean;
 	createdAt: string | null;
+	// The four below come with the start/pause API; an older API leaves them out.
+	autoStartAt?: string | null;
+	autoPauseAt?: string | null;
+	/** The rule that starts when this one pauses on its pause date. */
+	onAutoPauseStartTemplateId?: number | null;
+	status?: RuleStatusDto;
 	assignments: RuleTemplateAssignmentDto[];
 	criteria: RuleTemplateCriterionDto[];
 	actions: RuleTemplateActionDto[];
@@ -707,7 +747,12 @@ export interface RuleTemplateSaveRequest {
 	name: string;
 	description?: string | null;
 	deviceTypeId?: number | null;
+	/** Left out: a new rule runs, an existing rule keeps its status. */
 	isActive?: boolean;
+	/** ISO 8601 with a UTC offset. null clears the date; left out keeps it. */
+	autoStartAt?: string | null;
+	autoPauseAt?: string | null;
+	onAutoPauseStartTemplateId?: number | null;
 	devEuis: string[];
 	criteria: RuleTemplateCriterionInput[];
 	actions: RuleTemplateActionInput[];
@@ -722,6 +767,8 @@ export interface RuleFormContextDto {
 	locations: LocationDto[];
 	actionTypes: RuleActionTypeDto[];
 	template: RuleTemplateDto | null;
+	/** Rules this rule may start after its pause date (absent from an older API). */
+	ruleOptions?: RuleRefDto[];
 }
 
 export interface ReportUserScheduleDto {

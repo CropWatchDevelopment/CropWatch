@@ -14,6 +14,7 @@
 		CwButton,
 		CwCard,
 		CwDataTable,
+		isCwPhoneView,
 		type CwColumnDef,
 		type CwTableQuery,
 		type CwTableResult
@@ -21,9 +22,13 @@
 	import { cwDataTableLabels } from '#lib/i18n/cwuiLabels.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import { sortByColumn } from '#lib/utils/sortByColumn.ts';
+	import { SvelteMap } from 'svelte/reactivity';
 	import ADD_ICON from '#lib/images/icons/add.svg';
 	import EDIT_ICON from '#lib/images/icons/edit.svg';
 	import DeleteRuleTemplateDialog from './DeleteRuleTemplateDialog.svelte';
+	import { describeRuleStatus, ruleStatusOf } from './rule-status.ts';
+	import RuleRunToggle from './RuleRunToggle.svelte';
+	import RuleStatusCell from './RuleStatusCell.svelte';
 	import ViewRuleAlertHistory from './ViewRuleAlertHistory.svelte';
 
 	type RuleTemplateRow = RuleTemplateDto & {
@@ -39,7 +44,7 @@
 	const SUBJECT_OPTIONS = getRuleSubjectOptions();
 	const columns: CwColumnDef<RuleTemplateRow>[] = [
 		{ key: 'name', header: m.common_name(), sortable: true },
-		// { key: 'statusLabel', header: m.rules_new_status(), sortable: true },
+		{ key: 'statusLabel', header: m.rules_new_status(), sortable: true },
 		{ key: 'assignmentSummary', header: m.rules_new_assigned_devices() },
 		// { key: 'locationName', header: m.nav_locations(), sortable: true },
 		{ key: 'criteriaSummary', header: m.rules_conditions(), align: 'left' },
@@ -49,8 +54,21 @@
 	];
 
 	let loading = $state(true);
+	// The table shows its rows as cards below this width (its own breakpoint).
+	let tableWidth = $state(0);
+	// In a narrow table the date is the first column to go: with it, the row's
+	// buttons (start or pause, edit, history, delete) would need a sideways scroll.
+	const NARROW_TABLE_PX = 1040;
+	let visibleColumns = $derived(
+		tableWidth > 0 && tableWidth < NARROW_TABLE_PX
+			? columns.filter((column) => column.key !== 'createdAtLabel')
+			: columns
+	);
 	let deletedTemplateIds = $state<number[]>([]);
 	let tableKey = $derived(deletedTemplateIds.join(','));
+	// Rules started or paused from a row: shown at once, without reloading the
+	// table (which would lose the page and the sort). The next load replaces them.
+	const changedRules = new SvelteMap<number, RuleTemplateDto>();
 	const { rules } = getServices();
 
 	async function loadData(query: CwTableQuery): Promise<CwTableResult<RuleTemplateRow>> {
@@ -59,6 +77,7 @@
 				{ search: query.search?.trim() || undefined },
 				{ signal: query.signal }
 			);
+			changedRules.clear();
 			const deletedIds = new Set(deletedTemplateIds);
 			let rows = templates.filter((template) => !deletedIds.has(template.id)).map(toRow);
 
@@ -89,7 +108,7 @@
 
 		return {
 			...template,
-			statusLabel: template.isActive ? m.rules_new_active() : m.rules_new_inactive(),
+			statusLabel: describeRuleStatus(ruleStatusOf(template)).label,
 			locationName: summarizeLocations(template),
 			assignmentSummary: summarizeAssignments(template),
 			criteriaSummary: summarizeCriteria(template),
@@ -166,71 +185,88 @@
 	</CwButton>
 
 	<CwCard title={m.rules_new_configured_templates()}>
-		{#key tableKey}
-			<CwDataTable
-				id="rules-table"
-				labels={cwDataTableLabels()}
-				{columns}
-				{loadData}
-				{loading}
-				groupBy="locationName"
-				rowActionsHeader={m.common_actions()}
-				rowKey="id"
-			>
-				{#snippet cell(
-					row: RuleTemplateRow,
-					col: CwColumnDef<RuleTemplateRow>,
-					defaultValue: string
-				)}
-					{#if col.key === 'criteriaSummary'}
-						<span class="rules-new-page__truncate" title={row.criteriaSummary}>
-							{row.criteriaSummary}
-						</span>
-					{:else}
-						{defaultValue}
-					{/if}
-				{/snippet}
+		<div bind:clientWidth={tableWidth}>
+			{#key tableKey}
+				<CwDataTable
+					id="rules-table"
+					labels={cwDataTableLabels()}
+					columns={visibleColumns}
+					{loadData}
+					{loading}
+					groupBy="locationName"
+					rowActionsHeader={m.common_actions()}
+					rowKey="id"
+				>
+					{#snippet cell(
+						row: RuleTemplateRow,
+						col: CwColumnDef<RuleTemplateRow>,
+						defaultValue: string
+					)}
+						{#if col.key === 'statusLabel'}
+							<RuleStatusCell
+								status={ruleStatusOf(changedRules.get(row.id) ?? row)}
+								tooltipPosition={isCwPhoneView(tableWidth) ? 'bottom' : 'right'}
+							/>
+						{:else if col.key === 'criteriaSummary'}
+							<span class="rules-new-page__truncate" title={row.criteriaSummary}>
+								{row.criteriaSummary}
+							</span>
+						{:else}
+							{defaultValue}
+						{/if}
+					{/snippet}
 
-				{#snippet rowActions(row: RuleTemplateRow)}
-					<div class="rules-new-page__actions">
+					{#snippet rowActions(row: RuleTemplateRow)}
+						<div class="rules-new-page__actions">
+							<RuleRunToggle
+								templateId={row.id}
+								ruleName={row.name}
+								running={(changedRules.get(row.id) ?? row).isActive}
+								onChanged={(rule) => changedRules.set(rule.id, rule)}
+							/>
+							<CwButton
+								id={`rules-row-${row.id}-edit-button`}
+								variant="secondary"
+								size="sm"
+								onclick={() => goto(resolve('/rules/edit/[id]', { id: String(row.id) }))}
+							>
+								<Icon src={EDIT_ICON} alt={m.action_edit()} />
+							</CwButton>
+							<ViewRuleAlertHistory templateId={row.id} ruleName={row.name} />
+							<DeleteRuleTemplateDialog
+								templateId={row.id}
+								ruleName={row.name}
+								onDeleted={handleDeleted}
+							/>
+						</div>
+					{/snippet}
+
+					{#snippet toolbarActions()}
 						<CwButton
-							id={`rules-row-${row.id}-edit-button`}
-							variant="secondary"
-							size="sm"
-							onclick={() => goto(resolve('/rules/edit/[id]', { id: String(row.id) }))}
+							id="rules-add-button"
+							variant="primary"
+							onclick={() => goto(resolve('/rules/create'))}
 						>
-							<Icon src={EDIT_ICON} alt={m.action_edit()} />
+							<Icon src={ADD_ICON} alt={m.rules_new_create_template()} />
 						</CwButton>
-						<ViewRuleAlertHistory templateId={row.id} ruleName={row.name} />
-						<DeleteRuleTemplateDialog
-							templateId={row.id}
-							ruleName={row.name}
-							onDeleted={handleDeleted}
-						/>
-					</div>
-				{/snippet}
-
-				{#snippet toolbarActions()}
-					<CwButton
-						id="rules-add-button"
-						variant="primary"
-						onclick={() => goto(resolve('/rules/create'))}
-					>
-						<Icon src={ADD_ICON} alt={m.rules_new_create_template()} />
-					</CwButton>
-				{/snippet}
-			</CwDataTable>
-		{/key}
+					{/snippet}
+				</CwDataTable>
+			{/key}
+		</div>
 	</CwCard>
 </AppPage>
 
 <style>
+	/* Up to two lines, so a long condition stays readable without pushing the
+	   row's buttons out of the table. */
 	.rules-new-page__truncate {
-		display: block;
+		display: -webkit-box;
+		min-width: 11rem;
 		max-width: 24rem;
 		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
 	}
 
 	.rules-new-page__actions {
