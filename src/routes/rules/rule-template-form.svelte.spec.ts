@@ -16,6 +16,7 @@ import type {
 import { m } from '#lib/paraglide/messages.js';
 import { labelFor } from '#lib/sensor-labels/index.ts';
 import { createMockServices } from '#lib/testing/mock-services.ts';
+import { fromInstant } from './rule-auto-dates.ts';
 import {
 	RuleTemplateFormController,
 	type EditableTemplateAction,
@@ -1094,7 +1095,7 @@ describe('RuleTemplateFormController — saving', () => {
 			name: 'Colder room',
 			description: 'Keep it cold',
 			deviceTypeId: 5,
-			isActive: false,
+			// The status was not touched, so it is not sent: the API keeps it.
 			devEuis: ['DEV-A', 'DEV-B'],
 			criteria: [
 				{ id: 21, subject: 'temperature_c', operator: '>', triggerValue: 8, resetValue: 6 }
@@ -1262,5 +1263,231 @@ describe('RuleTemplateFormController — reactive wiring', () => {
 		} finally {
 			cleanup();
 		}
+	});
+});
+
+describe('RuleTemplateFormController — status, dates and the rule to start', () => {
+	// Far from "now" on purpose, so the tests do not depend on the clock.
+	const PAST = '2001-01-01T00:00:00.000Z';
+	const START = '2099-03-01T00:30:00.000Z';
+	const PAUSE = '2099-09-01T15:00:00.000Z';
+	const lastSave = (mock: { mock: { calls: unknown[][] } }) =>
+		mock.mock.calls.at(-1)?.at(-1) as Record<string, unknown>;
+
+	it('a new rule sends its status, and no dates or rule to start when none are chosen', async () => {
+		const { form, services } = setup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.createRuleTemplate);
+		expect(payload.isActive).toBe(true);
+		// Fields an older API would refuse stay out unless they are used.
+		expect(payload).not.toHaveProperty('autoStartAt');
+		expect(payload).not.toHaveProperty('autoPauseAt');
+		expect(payload).not.toHaveProperty('onAutoPauseStartTemplateId');
+		expect(form.autoStartAt).toBeNull();
+		expect(form.autoPauseAt).toBeNull();
+	});
+
+	it('a new rule sends the chosen dates as instants, and the rule to start', async () => {
+		const formContext = context({ ruleOptions: [{ id: 12, name: 'Winter' }] });
+		const { form, services } = setup({ context: () => formContext });
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+		form.isActive = false;
+		form.autoStart = fromInstant(START);
+		form.autoPause = fromInstant(PAUSE);
+		form.chainRuleId = '12';
+		flushSync();
+
+		expect(form.isFormValid).toBe(true);
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.createRuleTemplate)).toMatchObject({
+			isActive: false,
+			autoStartAt: START,
+			autoPauseAt: PAUSE,
+			onAutoPauseStartTemplateId: 12
+		});
+		expect(form.chainRuleName).toBe('Winter');
+	});
+
+	it('reads the picker in the browser time zone: date and time of day make one instant', () => {
+		const { form } = setup();
+		form.autoStart = { date: new Date(2099, 2, 1), time: { hours: 9, minutes: 30 } };
+		flushSync();
+
+		expect(form.autoStartAt).toBe(new Date(2099, 2, 1, 9, 30).toISOString());
+		expect(form.timeZone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+	});
+
+	it('an edit sends nothing about status or dates the user left alone', async () => {
+		const { form, services } = editSetup({
+			isActive: true,
+			// Saved with seconds: the picker only knows minutes, and that is not a change.
+			autoStartAt: '2001-01-01T00:00:42.000Z',
+			autoPauseAt: PAUSE,
+			onAutoPauseStartTemplateId: 12
+		});
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+		expect(form.chainRuleId).toBe('12');
+		// A date that has just passed is the scheduler's business, not an error.
+		expect(form.autoStartError).toBeUndefined();
+		expect(form.isFormValid).toBe(true);
+
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.updateRuleTemplate);
+		expect(payload).not.toHaveProperty('isActive');
+		expect(payload).not.toHaveProperty('autoStartAt');
+		expect(payload).not.toHaveProperty('autoPauseAt');
+		expect(payload).not.toHaveProperty('onAutoPauseStartTemplateId');
+	});
+
+	it('an edit sends exactly what changed', async () => {
+		const { form, services } = editSetup({
+			isActive: true,
+			autoStartAt: START,
+			autoPauseAt: PAUSE,
+			onAutoPauseStartTemplateId: 12
+		});
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+
+		form.isActive = false;
+		form.autoStart = undefined;
+		form.chainRuleId = '';
+		flushSync();
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.updateRuleTemplate);
+		expect(payload).toMatchObject({
+			isActive: false,
+			autoStartAt: null,
+			onAutoPauseStartTemplateId: null
+		});
+		expect(payload).not.toHaveProperty('autoPauseAt');
+	});
+
+	it('clearing the pause date also lets go of the rule to start', async () => {
+		const { form, services } = editSetup({ autoPauseAt: PAUSE, onAutoPauseStartTemplateId: 12 });
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+
+		form.autoPause = undefined;
+		flushSync();
+		expect(form.chainRuleName).toBe('');
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.updateRuleTemplate)).toMatchObject({
+			autoPauseAt: null,
+			onAutoPauseStartTemplateId: null
+		});
+	});
+
+	it('a rule to start chosen without a pause date is not sent', async () => {
+		const { form, services } = setup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+		form.chainRuleId = '12';
+		flushSync();
+
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.createRuleTemplate)).not.toHaveProperty(
+			'onAutoPauseStartTemplateId'
+		);
+	});
+
+	it('refuses a newly chosen date in the past, and saves nothing', async () => {
+		const { form, services } = setup();
+		fillIn(form);
+		expect(form.isFormValid).toBe(true);
+
+		form.autoStart = fromInstant(PAST);
+		flushSync();
+		expect(form.autoStartError).toBe(m.rules_auto_error_past());
+		expect(form.isFormValid).toBe(false);
+		await form.handleSubmit();
+		expect(services.rules.createRuleTemplate).not.toHaveBeenCalled();
+
+		form.autoStart = undefined;
+		form.autoPause = fromInstant(PAST);
+		flushSync();
+		expect(form.autoStartError).toBeUndefined();
+		expect(form.autoPauseError).toBe(m.rules_auto_error_past());
+		expect(form.isFormValid).toBe(false);
+	});
+
+	it('refuses a start date and a pause date at the same moment', () => {
+		const { form } = setup();
+		fillIn(form);
+		form.autoStart = fromInstant(START);
+		form.autoPause = fromInstant(START);
+		flushSync();
+
+		expect(form.autoPauseError).toBe(m.rules_auto_error_same());
+		expect(form.autoStartError).toBeUndefined();
+		expect(form.isFormValid).toBe(false);
+
+		form.autoPause = fromInstant(PAUSE);
+		flushSync();
+		expect(form.autoPauseError).toBeUndefined();
+		expect(form.isFormValid).toBe(true);
+	});
+
+	it('warns when a start date cannot do anything because the rule is running', () => {
+		const { form } = setup();
+		expect(form.startDateNeedsPause).toBe(false);
+
+		form.autoStart = fromInstant(START);
+		flushSync();
+		expect(form.startDateNeedsPause).toBe(true);
+
+		// Running until the pause date, which comes after the start date: still nothing to start.
+		form.autoPause = fromInstant(PAUSE);
+		flushSync();
+		expect(form.startDateNeedsPause).toBe(true);
+
+		// Pause first, start again later: the start date has work to do.
+		form.autoStart = fromInstant(PAUSE);
+		form.autoPause = fromInstant(START);
+		flushSync();
+		expect(form.startDateNeedsPause).toBe(false);
+
+		form.autoPause = undefined;
+		form.isActive = false;
+		flushSync();
+		expect(form.startDateNeedsPause).toBe(false);
+	});
+
+	it('offers the rules of the form context, never the rule itself', () => {
+		const formContext = context({
+			template: template({ id: 7 }),
+			ruleOptions: [
+				{ id: 7, name: 'Cold room' },
+				{ id: 12, name: 'Winter' },
+				{ id: 13, name: null }
+			]
+		});
+		const { form } = setup({ mode: () => 'edit', context: () => formContext });
+
+		expect(form.chainOptions).toEqual([
+			{ label: m.rules_auto_then_none(), value: '' },
+			{ label: 'Winter', value: '12' },
+			{ label: m.rules_auto_then_unknown({ id: '13' }), value: '13' }
+		]);
+		expect(form.chainRuleId).toBe('');
+	});
+
+	it('keeps a saved rule to start visible when it is no longer on offer', () => {
+		const { form } = editSetup({ autoPauseAt: PAUSE, onAutoPauseStartTemplateId: 99 });
+
+		// An API without ruleOptions: only "No rule" and the saved one.
+		expect(form.chainOptions).toEqual([
+			{ label: m.rules_auto_then_none(), value: '' },
+			{ label: m.rules_auto_then_unknown({ id: '99' }), value: '99' }
+		]);
+		expect(form.chainRuleName).toBe(m.rules_auto_then_unknown({ id: '99' }));
 	});
 });

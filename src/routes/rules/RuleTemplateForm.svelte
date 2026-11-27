@@ -9,6 +9,7 @@
 		CwAlertPointsEditor,
 		CwButton,
 		CwCard,
+		CwDateTimeRangePicker,
 		CwDropdown,
 		CwInput,
 		CwMultiSelect,
@@ -18,7 +19,13 @@
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import { m } from '#lib/paraglide/messages.js';
-	import { cwDropdownLabels, cwMultiSelectLabels } from '#lib/i18n/cwuiLabels.ts';
+	import {
+		cwDateTimeRangePickerLabels,
+		cwDropdownLabels,
+		cwMultiSelectLabels
+	} from '#lib/i18n/cwuiLabels.ts';
+	import { getIntlLocale } from '#lib/i18n/format.ts';
+	import { formatRuleInstant } from './rule-status.ts';
 	import {
 		applyAlertPointsChange,
 		createBlankAlertCriteriaGroup,
@@ -68,6 +75,9 @@
 		goto
 	});
 
+	// The calendar offers today and later; the time of day is checked by the form.
+	const today = new Date();
+
 	// The recipient options depend on the device selection: refetch when it changes.
 	$effect(() => {
 		form.syncPushRecipients();
@@ -97,6 +107,88 @@
 			description={m.rules_new_active_rule_description()}
 			bind:checked={form.isActive}
 		/>
+
+		<div class="rules-new-form__block" id="rule-form-auto-dates">
+			<div class="rules-new-form__block-header">
+				<span>{m.rules_auto_section_title()}</span>
+			</div>
+			<p class="rules-new-form__hint">{m.rules_auto_section_hint({ zone: form.timeZone })}</p>
+
+			<div class="rules-new-form__dates-grid">
+				<div class="rules-new-form__date">
+					<CwDateTimeRangePicker
+						id="rule-form-auto-start-picker"
+						label={m.rules_auto_start_label()}
+						hint={form.autoStartAt
+							? m.rules_auto_start_at_hint({ date: formatRuleInstant(form.autoStartAt) })
+							: m.rules_auto_start_hint()}
+						error={form.autoStartError}
+						locale={getIntlLocale()}
+						mode="single"
+						includeTime
+						minDate={today}
+						maxDate={null}
+						bind:value={form.autoStart}
+						labels={cwDateTimeRangePickerLabels()}
+					/>
+					{#if form.autoStart}
+						<CwButton
+							id="rule-form-auto-start-clear-button"
+							variant="ghost"
+							size="sm"
+							type="button"
+							onclick={() => (form.autoStart = undefined)}
+						>
+							{m.rules_auto_clear_start()}
+						</CwButton>
+					{/if}
+				</div>
+				<div class="rules-new-form__date">
+					<CwDateTimeRangePicker
+						id="rule-form-auto-pause-picker"
+						label={m.rules_auto_pause_label()}
+						hint={form.autoPauseAt
+							? m.rules_auto_pause_at_hint({ date: formatRuleInstant(form.autoPauseAt) })
+							: m.rules_auto_pause_hint()}
+						error={form.autoPauseError}
+						locale={getIntlLocale()}
+						mode="single"
+						includeTime
+						minDate={today}
+						maxDate={null}
+						bind:value={form.autoPause}
+						labels={cwDateTimeRangePickerLabels()}
+					/>
+					{#if form.autoPause}
+						<CwButton
+							id="rule-form-auto-pause-clear-button"
+							variant="ghost"
+							size="sm"
+							type="button"
+							onclick={() => (form.autoPause = undefined)}
+						>
+							{m.rules_auto_clear_pause()}
+						</CwButton>
+					{/if}
+				</div>
+			</div>
+
+			{#if form.startDateNeedsPause}
+				<AppNotice tone="warning">
+					<p>{m.rules_auto_start_while_active()}</p>
+				</AppNotice>
+			{/if}
+
+			<CwDropdown
+				labels={cwDropdownLabels()}
+				id="rule-form-auto-then-select"
+				label={m.rules_auto_then_label()}
+				hint={form.autoPause ? m.rules_auto_then_hint() : m.rules_auto_then_needs_pause()}
+				options={form.chainOptions}
+				disabled={!form.autoPause}
+				bind:value={form.chainRuleId}
+			/>
+		</div>
 	</AppFormStack>
 </CwCard>
 
@@ -268,6 +360,18 @@
 					<dd>{form.ruleName}</dd>
 					<dt>{m.rules_new_status()}:</dt>
 					<dd>{form.isActive ? m.rules_new_active() : m.rules_new_inactive()}</dd>
+					{#if form.autoStartAt}
+						<dt>{m.rules_auto_start_label()}:</dt>
+						<dd>{formatRuleInstant(form.autoStartAt)}</dd>
+					{/if}
+					{#if form.autoPauseAt}
+						<dt>{m.rules_auto_pause_label()}:</dt>
+						<dd>{formatRuleInstant(form.autoPauseAt)}</dd>
+					{/if}
+					{#if form.chainRuleName}
+						<dt>{m.rules_auto_then_label()}:</dt>
+						<dd>{form.chainRuleName}</dd>
+					{/if}
 					<dt>{m.rules_new_assigned_devices()}:</dt>
 					<dd>{form.assignmentSummary}</dd>
 					<dt>{m.rules_conditions()}:</dt>
@@ -356,6 +460,25 @@
 		gap: var(--cw-space-3);
 	}
 
+	.rules-new-form__hint {
+		margin: 0;
+		font-size: var(--cw-text-sm);
+		color: var(--cw-text-secondary);
+	}
+
+	.rules-new-form__dates-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: var(--cw-space-3);
+	}
+
+	.rules-new-form__date {
+		display: grid;
+		gap: var(--cw-space-1);
+		justify-items: start;
+		min-width: 0;
+	}
+
 	.rules-new-form__summary {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr);
@@ -376,6 +499,10 @@
 	@media (min-width: 640px) {
 		.rules-new-form__actions-grid {
 			grid-template-columns: minmax(10rem, 0.8fr) minmax(0, 1.2fr);
+		}
+
+		.rules-new-form__dates-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 	}
 

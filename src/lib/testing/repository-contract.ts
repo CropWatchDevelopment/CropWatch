@@ -133,6 +133,8 @@ export const REPOSITORY_CONTRACT: RepositoryContractCase[] = [
 	{ repository: 'rules', method: 'createRuleTemplate', args: [{ name: 'Frost' }], expected: { method: 'POST', path: '/rules', body: { name: 'Frost' } } },
 	{ repository: 'rules', method: 'updateRuleTemplate', args: [4, { name: 'Frost' }], expected: { method: 'PATCH', path: '/rules/4', body: { name: 'Frost' } } },
 	{ repository: 'rules', method: 'deleteRuleTemplate', args: [4], expected: { method: 'DELETE', path: '/rules/4' } },
+	{ repository: 'rules', method: 'startRule', args: [4], expected: { method: 'POST', path: '/rules/4/start' } },
+	{ repository: 'rules', method: 'pauseRule', args: [4], expected: { method: 'POST', path: '/rules/4/pause' } },
 
 	// reports
 	{ repository: 'reports', method: 'getReportTemplates', args: [{ search: 'weekly' }], expected: { method: 'GET', path: '/reports?search=weekly' } },
