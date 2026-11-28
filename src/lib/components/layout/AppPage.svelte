@@ -26,6 +26,9 @@
 		flex-direction: column;
 		width: 100%;
 		min-width: 0;
+		/* On every screen size, so the first item (usually the back button) never
+		   touches the header. */
+		padding-top: var(--cw-space-2);
 	}
 
 	.app-page__shell {
@@ -52,7 +55,7 @@
 	}
 
 	/* Desktop: keep a thin gutter so content never touches the side nav or the
-	   window edge. Phones stay edge-to-edge. */
+	   window edge. Phones stay edge-to-edge at the sides. */
 	@media (min-width: 640px) {
 		.app-page {
 			padding-block: var(--cw-space-2);
