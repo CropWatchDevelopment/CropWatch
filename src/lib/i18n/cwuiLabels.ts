@@ -34,6 +34,7 @@ import type {
 	CwDateTimeRangePickerLabels,
 	CwCopyLabels,
 	CwStatCardLabels,
+	CwTimePickerLabels,
 	CwWindCompassLabels
 } from '@cropwatchdevelopment/cwui';
 
@@ -263,6 +264,22 @@ export function cwDateTimeRangePickerLabels(): CwDateTimeRangePickerLabels {
 		set: m.cwui_dtr_set(),
 		hours: m.cwui_dtr_hours(),
 		minutes: m.cwui_dtr_minutes()
+	};
+}
+
+export function cwTimePickerLabels(): CwTimePickerLabels {
+	return {
+		clock24: m.cwui_time_clock24(),
+		group: m.cwui_time_group(),
+		hour: m.cwui_time_hour(),
+		minute: m.cwui_time_minute(),
+		hourInput: m.cwui_time_hour_input(),
+		minuteInput: m.cwui_time_minute_input(),
+		decreaseHour: m.cwui_time_decrease_hour(),
+		increaseHour: m.cwui_time_increase_hour(),
+		decreaseMinute: m.cwui_time_decrease_minute(),
+		increaseMinute: m.cwui_time_increase_minute(),
+		display12: m.cwui_time_display12()
 	};
 }
 

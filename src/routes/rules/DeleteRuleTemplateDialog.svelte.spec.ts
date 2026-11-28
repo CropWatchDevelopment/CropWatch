@@ -38,6 +38,120 @@ afterEach(() => {
 	view = null;
 });
 
+describe('DeleteRuleTemplateDialog: a rule other rules start or pause', () => {
+	const refusal = (dependents: unknown) =>
+		new ApiError(409, 'Conflict', {
+			url: 'https://api.cropwatch.test/rules/7',
+			payload: { message: 'Other rules start or pause this rule.', dependents }
+		});
+	const dependentsList = () => document.getElementById('rule-delete-7-dependents');
+
+	it('is not deleted at once: the dialog lists those rules and asks again', async () => {
+		services.rules.deleteRuleTemplate.mockRejectedValueOnce(
+			refusal([
+				{ id: 3, name: 'Night switch' },
+				{ id: 9, name: null }
+			])
+		);
+		const onDeleted = vi.fn();
+		render(onDeleted);
+		click(openButton());
+		expect(dependentsList()).toBeNull();
+		expect(deleteButton().textContent?.trim()).toBe(m.action_delete());
+
+		click(deleteButton());
+
+		await vi.waitFor(() => expect(dependentsList()).not.toBeNull());
+		expect(services.rules.deleteRuleTemplate).toHaveBeenCalledWith(7, { force: false });
+		expect(
+			[...dependentsList()!.querySelectorAll('li')].map((li) => li.textContent?.trim())
+		).toEqual(['Night switch', m.rules_delete_dependents_hidden({ id: '9' })]);
+		expect(dialog().textContent).toContain(m.rules_delete_dependents_title());
+		expect(dialog().textContent).toContain(m.rules_delete_dependents_hint());
+		// Still open, nothing deleted, and not reported as a failure.
+		expect(dialog().open).toBe(true);
+		expect(onDeleted).not.toHaveBeenCalled();
+		expect(view!.toasts()).toHaveLength(0);
+		expect(deleteButton().textContent?.trim()).toBe(m.rules_delete_anyway());
+		expect(deleteButton().disabled).toBe(false);
+	});
+
+	it('is deleted when the user confirms with "Delete anyway"', async () => {
+		services.rules.deleteRuleTemplate
+			.mockRejectedValueOnce(refusal([{ id: 3, name: 'Night switch' }]))
+			.mockResolvedValueOnce({ id: 7 });
+		const onDeleted = vi.fn();
+		render(onDeleted);
+		click(openButton());
+		click(deleteButton());
+		await vi.waitFor(() => expect(dependentsList()).not.toBeNull());
+
+		click(deleteButton());
+
+		await vi.waitFor(() => expect(onDeleted).toHaveBeenCalledWith(7));
+		expect(services.rules.deleteRuleTemplate).toHaveBeenLastCalledWith(7, { force: true });
+		expect(dialog().open).toBe(false);
+		expect(view!.toasts()[0]).toMatchObject({ tone: 'success' });
+	});
+
+	it('forgets the list when the dialog is opened again', async () => {
+		services.rules.deleteRuleTemplate.mockRejectedValueOnce(
+			refusal([{ id: 3, name: 'Night switch' }])
+		);
+		render();
+		click(openButton());
+		click(deleteButton());
+		await vi.waitFor(() => expect(dependentsList()).not.toBeNull());
+
+		click(cancelButton());
+		click(openButton());
+
+		// A fresh question: the first delete is not forced.
+		expect(dependentsList()).toBeNull();
+		expect(deleteButton().textContent?.trim()).toBe(m.action_delete());
+	});
+
+	it('reports a refusal of the confirmed delete as a failure', async () => {
+		services.rules.deleteRuleTemplate
+			.mockRejectedValueOnce(refusal([{ id: 3, name: 'Night switch' }]))
+			.mockRejectedValueOnce(refusal([{ id: 3, name: 'Night switch' }]));
+		render();
+		click(openButton());
+		click(deleteButton());
+		await vi.waitFor(() => expect(dependentsList()).not.toBeNull());
+
+		click(deleteButton());
+
+		await vi.waitFor(() => expect(view!.toasts()).toHaveLength(1));
+		expect(view!.toasts()[0]).toMatchObject({
+			tone: 'danger',
+			message: 'Other rules start or pause this rule.'
+		});
+		expect(dialog().open).toBe(true);
+	});
+
+	it('treats a conflict without a list like any other failure', async () => {
+		services.rules.deleteRuleTemplate.mockRejectedValueOnce(refusal(undefined));
+		render();
+		click(openButton());
+
+		click(deleteButton());
+
+		await vi.waitFor(() => expect(view!.toasts()).toHaveLength(1));
+		expect(view!.toasts()[0].tone).toBe('danger');
+		expect(dependentsList()).toBeNull();
+	});
+
+	it('wraps its text inside the table cell it lives in', () => {
+		render();
+		view!.target.style.whiteSpace = 'nowrap';
+		click(openButton());
+
+		const question = dialog().querySelector<HTMLElement>('.rules-new-delete-dialog__text')!;
+		expect(getComputedStyle(question).whiteSpace).toBe('normal');
+	});
+});
+
 describe('DeleteRuleTemplateDialog', () => {
 	it('asks for confirmation before deleting anything', () => {
 		render();
@@ -73,7 +187,7 @@ describe('DeleteRuleTemplateDialog', () => {
 		click(deleteButton());
 
 		await vi.waitFor(() => expect(view!.toasts()).toHaveLength(1));
-		expect(services.rules.deleteRuleTemplate).toHaveBeenCalledWith(7);
+		expect(services.rules.deleteRuleTemplate).toHaveBeenCalledWith(7, { force: false });
 		expect(onDeleted).toHaveBeenCalledWith(7);
 		expect(view!.toasts()[0]).toMatchObject({
 			tone: 'success',

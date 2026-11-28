@@ -16,14 +16,25 @@
 		CwSeparator,
 		CwSwitch,
 		CwTextArea,
+		CwTimePicker,
 		useCwToast
 	} from '@cropwatchdevelopment/cwui';
 	import { m } from '#lib/paraglide/messages.js';
 	import {
 		cwDateTimeRangePickerLabels,
 		cwDropdownLabels,
-		cwMultiSelectLabels
+		cwInputLabels,
+		cwMultiSelectLabels,
+		cwTimePickerLabels
 	} from '#lib/i18n/cwuiLabels.ts';
+	import { ruleActionKind, switchesAnotherRule } from './rule-action-types.ts';
+	import {
+		RESEND_REPORTS_MAX,
+		RESEND_REPORTS_MIN,
+		RESEND_TIMES_MAX,
+		RESEND_TIMES_MIN,
+		canBeRepeated
+	} from './rule-resend.ts';
 	import { getIntlLocale } from '#lib/i18n/format.ts';
 	import { formatRuleInstant } from './rule-status.ts';
 	import {
@@ -194,7 +205,11 @@
 
 <CwCard title={m.rules_new_step_assignments()} subtitle={m.rules_new_step_assignments_subtitle()}>
 	<AppFormStack padded>
-		{#if form.deviceOptions.length === 0}
+		{#if form.isDateTime}
+			<AppNotice tone="neutral">
+				<p id="rule-form-date-time-devices-notice">{m.rules_dt_notice_devices()}</p>
+			</AppNotice>
+		{:else if form.deviceOptions.length === 0}
 			<AppNotice tone="neutral">
 				<p>{m.rules_no_devices_available()}</p>
 			</AppNotice>
@@ -242,19 +257,56 @@
 					labels={cwDropdownLabels()}
 					id={`rule-form-criteria-${index}-subject-select`}
 					label={m.rules_data_field()}
-					options={form.subjectOptions}
-					bind:value={group.subject}
+					options={index === 0 ? form.firstSubjectOptions : form.subjectOptions}
+					value={group.subject}
+					onchange={(value) => form.selectSubject(index, value)}
 					required
 				/>
-				<CwAlertPointsEditor
-					bind:value={group.alertPoints}
-					onchange={(value) => applyAlertPointsChange(group, value)}
-					text={alertPointsEditorText}
-				/>
-				{#if notEqualNotice}
-					<AppNotice tone="neutral">
-						<p>{notEqualNotice}</p>
-					</AppNotice>
+				{#if form.isDateTime}
+					<div class="rules-new-form__schedule" id="rule-form-schedule">
+						<CwTimePicker
+							label={m.rules_dt_time_label()}
+							labels={cwTimePickerLabels()}
+							locale={getIntlLocale()}
+							bind:value={form.scheduleTime}
+							required
+						/>
+						<CwDropdown
+							labels={cwDropdownLabels()}
+							id="rule-form-schedule-timezone-select"
+							label={m.rules_dt_timezone_label()}
+							options={form.timezoneOptions}
+							bind:value={form.scheduleTimezone}
+							required
+						/>
+						<!-- Its own row: seven day chips need the width. -->
+						<div class="rules-new-form__schedule-days">
+							<CwMultiSelect
+								labels={cwMultiSelectLabels()}
+								id="rule-form-schedule-days-multiselect"
+								showAllSelectedItems={true}
+								label={m.rules_dt_days_label()}
+								placeholder={m.rules_dt_days_placeholder()}
+								options={form.weekdayOptions}
+								noResultsLabel={m.cwui_multi_no_matches()}
+								error={form.scheduleDaysError}
+								bind:value={form.scheduleDays}
+								required
+							/>
+						</div>
+					</div>
+					<p class="rules-new-form__hint">{m.rules_dt_hint({ zone: form.scheduleTimezone })}</p>
+				{:else}
+					<CwAlertPointsEditor
+						bind:value={group.alertPoints}
+						onchange={(value) => applyAlertPointsChange(group, value)}
+						text={alertPointsEditorText}
+					/>
+					{#if notEqualNotice}
+						<AppNotice tone="neutral">
+							<p>{notEqualNotice}</p>
+						</AppNotice>
+					{/if}
 				{/if}
 			</div>
 		{/each}
@@ -265,24 +317,78 @@
 			</AppNotice>
 		{/if}
 
-		<CwButton
-			id="rule-form-add-criteria-button"
-			variant="secondary"
-			type="button"
-			onclick={() => {
-				form.criteriaGroups.push(createBlankAlertCriteriaGroup(form.nextCriteriaGroupId));
-				form.nextCriteriaGroupId += 1;
-			}}
-		>
-			<Icon src={ADD_ICON} alt="" />
-			{m.rules_add_condition_for_other_field()}
-		</CwButton>
+		<!-- A Date/Time rule has its schedule and nothing else to compare. -->
+		{#if !form.isDateTime}
+			<CwButton
+				id="rule-form-add-criteria-button"
+				variant="secondary"
+				type="button"
+				onclick={() => {
+					form.criteriaGroups.push(createBlankAlertCriteriaGroup(form.nextCriteriaGroupId));
+					form.nextCriteriaGroupId += 1;
+				}}
+			>
+				<Icon src={ADD_ICON} alt="" />
+				{m.rules_add_condition_for_other_field()}
+			</CwButton>
+		{/if}
 	</AppFormStack>
 </CwCard>
 
 <CwCard title={m.rules_new_step_actions()} subtitle={m.rules_new_step_actions_subtitle()}>
 	<AppFormStack padded>
+		{#if form.isDateTime}
+			<AppNotice tone="info">
+				<p id="rule-form-date-time-actions-notice">{m.rules_dt_actions_hint()}</p>
+			</AppNotice>
+		{:else}
+			<div class="rules-new-form__block" id="rule-form-resend">
+				<CwSwitch
+					id="rule-form-resend-switch"
+					label={m.rules_resend_switch()}
+					description={m.rules_resend_switch_description()}
+					bind:checked={form.resendEnabled}
+				/>
+				{#if form.resendEnabled}
+					<div class="rules-new-form__dates-grid">
+						<CwInput
+							labels={cwInputLabels()}
+							id="rule-form-resend-every-input"
+							type="numeric"
+							label={m.rules_resend_every_label()}
+							hint={m.rules_resend_every_hint()}
+							error={form.resendEveryError}
+							min={RESEND_REPORTS_MIN}
+							max={RESEND_REPORTS_MAX}
+							step={1}
+							bind:value={form.resendEvery}
+							required
+						/>
+						<CwInput
+							labels={cwInputLabels()}
+							id="rule-form-resend-max-input"
+							type="numeric"
+							label={m.rules_resend_max_label()}
+							hint={m.rules_resend_max_hint()}
+							error={form.resendMaxError}
+							min={RESEND_TIMES_MIN}
+							max={RESEND_TIMES_MAX}
+							step={1}
+							bind:value={form.resendMax}
+							required
+						/>
+					</div>
+					<p class="rules-new-form__hint" id="rule-form-resend-note">{m.rules_resend_note()}</p>
+					{#if form.resendNothingRepeats}
+						<AppNotice tone="warning">
+							<p id="rule-form-resend-nothing-notice">{m.rules_resend_none_selected()}</p>
+						</AppNotice>
+					{/if}
+				{/if}
+			</div>
+		{/if}
 		{#each form.templateActions as action, index (action)}
+			{@const actionKind = ruleActionKind(action.actionTypeName)}
 			<div class="rules-new-form__block">
 				<div class="rules-new-form__block-header">
 					<span>{m.rules_new_action_number({ count: String(index + 1) })}</span>
@@ -308,7 +414,29 @@
 						onchange={(value) => form.selectActionType(action, value)}
 						required
 					/>
-					{#if action.actionTypeName === 'EMail'}
+					{#if switchesAnotherRule(actionKind)}
+						{#if form.switchTargetOptionsFor(action).length === 0}
+							<AppNotice tone="neutral">
+								<p>{m.rules_switch_no_rules()}</p>
+							</AppNotice>
+						{:else}
+							<CwDropdown
+								labels={cwDropdownLabels()}
+								id={`rule-form-action-${index}-target-select`}
+								label={m.rules_switch_target_label()}
+								placeholder={m.rules_switch_target_placeholder()}
+								hint={m.rules_switch_other_hint()}
+								options={form.switchTargetOptionsFor(action)}
+								value={form.switchTargetValue(action)}
+								onchange={(value) => form.setSwitchTarget(action, value)}
+								required
+							/>
+						{/if}
+					{:else if actionKind === 'deactivate_self'}
+						<AppNotice tone="info">
+							<p>{m.rules_switch_self_hint()}</p>
+						</AppNotice>
+					{:else if action.actionTypeName === 'EMail'}
 						<CwInput
 							id={`rule-form-action-${index}-recipient-input`}
 							label={m.rules_recipient()}
@@ -317,7 +445,11 @@
 							required
 						/>
 					{:else if action.actionTypeName === 'LoRaWAN'}
-						<RelayActions devices={form.deviceOptions} bind:resultJson={action.config.recipient} />
+						<RelayActions
+							devices={form.deviceOptions}
+							revertsOnReset={!form.isDateTime}
+							bind:resultJson={action.config.recipient}
+						/>
 					{:else if action.actionTypeName === 'Push'}
 						<CwMultiSelect
 							labels={cwMultiSelectLabels()}
@@ -335,6 +467,22 @@
 						/>
 					{/if}
 				</div>
+
+				{#if form.resendActive && canBeRepeated(actionKind)}
+					{@const repeatable = form.canRepeat(action)}
+					<CwSwitch
+						id={`rule-form-action-${index}-repeat-switch`}
+						label={m.rules_resend_action_switch()}
+						description={actionKind !== 'relay'
+							? undefined
+							: repeatable
+								? m.rules_resend_action_relay_hint()
+								: m.rules_resend_action_relay_fixed()}
+						checked={form.actionRepeats(action)}
+						disabled={!repeatable}
+						onchange={(checked) => (action.config.repeat = checked)}
+					/>
+				{/if}
 			</div>
 		{/each}
 
@@ -376,6 +524,10 @@
 					<dd>{form.assignmentSummary}</dd>
 					<dt>{m.rules_conditions()}:</dt>
 					<dd>{form.criteriaSummary}</dd>
+					{#if form.resendSummary}
+						<dt>{m.rules_resend_summary_label()}:</dt>
+						<dd id="rule-form-resend-summary">{form.resendSummary}</dd>
+					{/if}
 					{#if form.showAdvanced}
 						<dt>{m.rules_new_actions()}:</dt>
 						<dd>
@@ -466,10 +618,12 @@
 		color: var(--cw-text-secondary);
 	}
 
-	.rules-new-form__dates-grid {
+	.rules-new-form__dates-grid,
+	.rules-new-form__schedule {
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: var(--cw-space-3);
+		align-items: start;
 	}
 
 	.rules-new-form__date {
@@ -503,6 +657,14 @@
 
 		.rules-new-form__dates-grid {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.rules-new-form__schedule {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.rules-new-form__schedule-days {
+			grid-column: 1 / -1;
 		}
 	}
 
