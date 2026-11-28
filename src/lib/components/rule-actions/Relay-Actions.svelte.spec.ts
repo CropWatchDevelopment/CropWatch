@@ -148,6 +148,26 @@ describe('Relay-Actions', () => {
 		}
 	});
 
+	it('on a rule without a reset (Date/Time) it offers no revert, never writes one, and says the relay stays', () => {
+		const saved = expected('ro1_on_permanent', 5, { devEui: 'DEV-R2', revertOnReset: true });
+		const { result } = render(JSON.stringify(saved), { revertsOnReset: false });
+		const hasRevertBox = () =>
+			[...view!.target.querySelectorAll('label')].some(
+				(candidate) => candidate.textContent?.trim() === m.rule_action_revert_on_reset()
+			);
+
+		// A fixed state: no checkbox, a saved "revert" is dropped, and the hint explains it.
+		expect(hasRevertBox()).toBe(false);
+		expect(result().revertOnReset).toBe(false);
+		expect(view!.target.textContent).toContain(m.rule_action_relay_stays());
+
+		// A timed command returns by itself: nothing to explain.
+		choose(m.rule_action_action_label(), m.rule_action_relay1_on_timed({ seconds: '5' }));
+		expect(hasRevertBox()).toBe(false);
+		expect(result().revertOnReset).toBe(false);
+		expect(view!.target.textContent).not.toContain(m.rule_action_relay_stays());
+	});
+
 	it('restores a saved downlink', () => {
 		const saved = expected('ro2_off_permanent', 30, { devEui: 'DEV-R2', revertOnReset: true });
 		const { result } = render(JSON.stringify(saved));
