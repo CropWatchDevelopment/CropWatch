@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import type { CwDateValue, CwToastApi } from '@cropwatchdevelopment/cwui';
+import type { CwDateValue, CwTimeValue, CwToastApi } from '@cropwatchdevelopment/cwui';
 import { apiErrorMessage } from '#lib/api/api-error.ts';
 import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
 import type { PushRepository } from '#lib/api/repositories/push.repository.ts';
@@ -9,11 +9,13 @@ import { getRuleOperatorOptions, getRuleSubjectOptions } from '#lib/i18n/options
 import { m } from '#lib/paraglide/messages.js';
 import type {
 	Json,
+	RuleScheduleInput,
 	RuleTemplateActionDto,
 	RuleTemplateActionInput,
 	RuleTemplateDto,
 	RuleTemplateSaveRequest
 } from '#lib/rules/rule-template.types.ts';
+import { getTimezoneOptions } from '#lib/units/index.ts';
 import { labelFor } from '#lib/sensor-labels/index.ts';
 import {
 	areAlertCriteriaGroupsValid,
@@ -23,6 +25,33 @@ import {
 	type RuleTemplateAlertCriteriaGroup
 } from './rule-template-alert-points';
 import { browserTimeZone, fromInstant, sameInstant, toInstant } from './rule-auto-dates.ts';
+import {
+	actionTypeLabel,
+	allowedOnDateTimeRule,
+	readTargetTemplateId,
+	ruleActionKind,
+	switchesAnotherRule
+} from './rule-action-types.ts';
+import {
+	RESEND_REPORTS_DEFAULT,
+	RESEND_REPORTS_MAX,
+	RESEND_REPORTS_MIN,
+	RESEND_TIMES_DEFAULT,
+	RESEND_TIMES_MAX,
+	RESEND_TIMES_MIN,
+	canBeRepeated,
+	readWholeNumber,
+	relayIsTimedPulse,
+	repeatsByDefault
+} from './rule-resend.ts';
+import {
+	DATE_TIME_SUBJECT,
+	ISO_WEEKDAYS,
+	describeSchedule,
+	formatTimeOfDay,
+	parseTimeOfDay,
+	weekdayLabel
+} from './rule-schedule-text.ts';
 
 export type RuleTemplateFormMode = 'create' | 'edit';
 
@@ -78,6 +107,20 @@ export class RuleTemplateFormController {
 	readonly #initial: RuleTemplateDto | null;
 
 	readonly subjectOptions = getRuleSubjectOptions();
+	/**
+	 * The Data Field choices of the FIRST condition. That is where a rule
+	 * becomes a Date/Time rule: for those who may manage them, while the rule
+	 * is new and has one condition. An existing rule keeps its kind.
+	 */
+	readonly firstSubjectOptions = $derived.by(() => {
+		const dateTime = { label: m.rule_subject_date_time(), value: DATE_TIME_SUBJECT };
+		if (this.#initialIsDateTime) return [dateTime];
+		const offered =
+			this.#options.mode() === 'create' &&
+			this.#context().canManageDateTimeRules === true &&
+			this.criteriaGroups.length === 1;
+		return offered ? [...this.subjectOptions, dateTime] : this.subjectOptions;
+	});
 	readonly #operators = getRuleOperatorOptions();
 
 	readonly #devices = $derived(this.#context().devices);
@@ -149,20 +192,96 @@ export class RuleTemplateFormController {
 	nextCriteriaGroupId = $state(1);
 	criteriaGroups = $state<RuleTemplateAlertCriteriaGroup[]>([]);
 
+	// A Date/Time rule: fires at a time of day on chosen weekdays in a time
+	// zone, instead of on sensor readings. It has no devices and no conditions.
+	readonly #initialIsDateTime: boolean;
+	readonly isDateTime = $derived(this.criteriaGroups[0]?.subject === DATE_TIME_SUBJECT);
+	scheduleTime = $state<CwTimeValue>({ hours: 9, minutes: 0 });
+	scheduleDays = $state<DeviceSelection[]>([]);
+	scheduleTimezone = $state('');
+	readonly weekdayOptions = ISO_WEEKDAYS.map((day) => ({
+		label: weekdayLabel(day),
+		value: String(day)
+	}));
+	readonly timezoneOptions = $derived.by(() => {
+		const options = getTimezoneOptions();
+		// The zone in use stays selectable even when it is not one of the listed cities.
+		return this.scheduleTimezone &&
+			!options.some((option) => option.value === this.scheduleTimezone)
+			? [{ label: this.scheduleTimezone, value: this.scheduleTimezone }, ...options]
+			: options;
+	});
+	readonly schedule = $derived<RuleScheduleInput>({
+		timeOfDay: formatTimeOfDay(this.scheduleTime),
+		daysOfWeek: this.scheduleDays.map((day) => Number(day.id)).sort((a, b) => a - b),
+		timezone: this.scheduleTimezone
+	});
+	readonly scheduleDaysError = $derived(
+		this.isDateTime && this.scheduleDays.length === 0 ? m.rules_dt_days_required() : undefined
+	);
+
 	templateActions = $state<EditableTemplateAction[]>([]);
+
+	// Re-send: while the alarm stays open, the actions marked "send again" go
+	// out again every N reports that still break the alert threshold, at most
+	// M times per alarm. A Date/Time rule has no reports to count.
+	resendEnabled = $state(false);
+	resendEvery = $state(String(RESEND_REPORTS_DEFAULT));
+	resendMax = $state(String(RESEND_TIMES_DEFAULT));
+	// What the rule was loaded with (set by the constructor): only a changed setting is sent.
+	#initialResendAfterReports: number | null = null;
+	#initialResendMax = RESEND_TIMES_DEFAULT;
+	readonly resendActive = $derived(this.resendEnabled && !this.isDateTime);
+	readonly #resendEveryValue = $derived(
+		readWholeNumber(this.resendEvery, RESEND_REPORTS_MIN, RESEND_REPORTS_MAX)
+	);
+	readonly #resendMaxValue = $derived(
+		readWholeNumber(this.resendMax, RESEND_TIMES_MIN, RESEND_TIMES_MAX)
+	);
+	readonly resendEveryError = $derived(
+		this.resendActive && this.#resendEveryValue === null ? m.rules_resend_every_error() : undefined
+	);
+	readonly resendMaxError = $derived(
+		this.resendActive && this.#resendMaxValue === null ? m.rules_resend_max_error() : undefined
+	);
+	/** Switched on, but no action is marked: nothing would be sent again. */
+	readonly resendNothingRepeats = $derived(
+		this.resendActive && !this.templateActions.some((action) => this.actionRepeats(action))
+	);
+	readonly resendSummary = $derived(
+		this.resendActive && this.#resendEveryValue !== null && this.#resendMaxValue !== null
+			? m.rules_resend_summary({
+					reports: String(this.#resendEveryValue),
+					times: String(this.#resendMaxValue)
+				})
+			: ''
+	);
 
 	// LINE is no longer offered (its integration is being removed); a saved
 	// LINE action still shows under its own name so it can be changed or removed.
 	readonly #offeredActionTypes = $derived(
 		this.#actions.filter(
-			(actionType) => isValidActionTypeId(actionType.id) && actionType.name !== 'LINE'
+			(actionType) =>
+				isValidActionTypeId(actionType.id) &&
+				actionType.name !== 'LINE' &&
+				// A Date/Time rule switches rules and relays; it cannot notify yet.
+				(!this.isDateTime || allowedOnDateTimeRule(ruleActionKind(actionType.name)))
 		)
 	);
 	readonly #actionTypeOptions = $derived(
 		this.#offeredActionTypes.map((actionType) => ({
-			label: actionType.name,
+			label: actionTypeLabel(actionType.name),
 			value: String(actionType.id)
 		}))
+	);
+	/** The rules a "… another rule" action may point at (never the rule itself). */
+	readonly #switchTargetOptionsBase = $derived(
+		(this.#context().ruleOptions ?? [])
+			.filter((rule) => rule.id !== this.#initial?.id)
+			.map((rule) => ({
+				label: rule.name ?? m.rules_auto_then_unknown({ id: String(rule.id) }),
+				value: String(rule.id)
+			}))
 	);
 	readonly #deviceOptionsBase = $derived<DeviceOption[]>(
 		(this.#devices ?? []).map((device) => ({
@@ -216,24 +335,25 @@ export class RuleTemplateFormController {
 	);
 	readonly isFormValid = $derived(
 		this.ruleName.trim().length > 0 &&
-			this.#selectedDevEuis.length > 0 &&
-			!this.hasUnsupportedCriteria &&
-			areAlertCriteriaGroupsValid(this.criteriaGroups) &&
+			(this.isDateTime
+				? this.scheduleDays.length > 0 && this.scheduleTimezone.length > 0
+				: this.#selectedDevEuis.length > 0 &&
+					!this.hasUnsupportedCriteria &&
+					areAlertCriteriaGroupsValid(this.criteriaGroups)) &&
 			this.autoStartError === undefined &&
 			this.autoPauseError === undefined &&
-			this.templateActions.every(
-				(action) =>
-					isValidActionTypeId(action.actionType) &&
-					action.config.recipient.trim().length > 0 &&
-					(action.actionTypeName !== 'Push' ||
-						(action.pushRecipients.length > 0 && this.pushRecipientError(action) === undefined))
-			)
+			this.resendEveryError === undefined &&
+			this.resendMaxError === undefined &&
+			this.templateActions.length > 0 &&
+			this.templateActions.every((action) => this.#isActionValid(action))
 	);
 	readonly assignmentSummary = $derived(
-		this.selectedDevices
-			.map((device) => device.label || this.#getDeviceLabel(device.id))
-			.filter(Boolean)
-			.join(', ')
+		this.isDateTime
+			? m.rules_dt_no_devices()
+			: this.selectedDevices
+					.map((device) => device.label || this.#getDeviceLabel(device.id))
+					.filter(Boolean)
+					.join(', ')
 	);
 	readonly #criteriaPreview = $derived(
 		this.#criteriaForTest.map((criterion) => {
@@ -244,22 +364,29 @@ export class RuleTemplateFormController {
 			return `${label ?? labelFor(criterion.subject).label()} ${operatorLabel} ${criterion.triggerValue} (${m.rules_reset_value()}: ${criterion.resetValue})`;
 		})
 	);
-	readonly criteriaSummary = $derived(this.#criteriaPreview.join(', '));
+	readonly criteriaSummary = $derived(
+		this.isDateTime ? describeSchedule(this.schedule) : this.#criteriaPreview.join(', ')
+	);
 	readonly #actionPreview = $derived(
 		this.templateActions.map((action) => {
-			const label =
+			const typeName =
 				this.#actions.find((entry) => entry.id === action.actionType)?.name ??
 				action.actionTypeName ??
 				action.actionTypeValue ??
 				String(action.actionType);
-			const recipient =
-				action.actionTypeName === 'Push'
+			const kind = ruleActionKind(typeName);
+			if (kind === 'deactivate_self') return actionTypeLabel(typeName);
+			const recipient = switchesAnotherRule(kind)
+				? (this.switchTargetOptionsFor(action).find(
+						(option) => option.value === this.switchTargetValue(action)
+					)?.label ?? '')
+				: action.actionTypeName === 'Push'
 					? action.pushRecipients
 							.map((item) => this.#pushRecipientNames.get(item.id) ?? item.label ?? item.id)
 							.join(', ') ||
 						m.push_recipient_preview_count({ count: String(action.pushRecipients.length) })
 					: action.config.recipient;
-			return `${label}: ${recipient}`;
+			return `${actionTypeLabel(typeName)}: ${recipient}`;
 		})
 	);
 	readonly actionSummary = $derived(this.#actionPreview.join(', '));
@@ -293,12 +420,35 @@ export class RuleTemplateFormController {
 				: [];
 
 		const initialCriteriaGroups = buildInitialAlertCriteriaGroups(initial?.criteria ?? []);
+		this.#initialIsDateTime = initial?.triggerKind === 'schedule';
+		// A Date/Time rule has no conditions: its one "condition" is the Date/Time field.
+		if (this.#initialIsDateTime && initialCriteriaGroups[0]) {
+			initialCriteriaGroups[0].subject = DATE_TIME_SUBJECT;
+		}
 		this.nextCriteriaGroupId = initialCriteriaGroups.length + 1;
-		this.criteriaGroups = initialCriteriaGroups;
+		this.criteriaGroups = this.#initialIsDateTime
+			? initialCriteriaGroups.slice(0, 1)
+			: initialCriteriaGroups;
+
+		const savedSchedule = initial?.schedule ?? null;
+		this.scheduleTime = parseTimeOfDay(savedSchedule?.timeOfDay);
+		this.scheduleDays = (savedSchedule?.daysOfWeek ?? [...ISO_WEEKDAYS]).map((day) => ({
+			id: String(day),
+			label: weekdayLabel(day)
+		}));
+		this.scheduleTimezone = savedSchedule?.timezone ?? this.timeZone;
 
 		this.templateActions = initial?.actions.length
 			? initial.actions.map(createEditableTemplateAction)
 			: [this.#createDefaultTemplateAction()];
+
+		this.#initialResendAfterReports =
+			typeof initial?.resendAfterReports === 'number' ? initial.resendAfterReports : null;
+		this.#initialResendMax =
+			typeof initial?.resendMax === 'number' ? initial.resendMax : RESEND_TIMES_DEFAULT;
+		this.resendEnabled = this.#initialResendAfterReports !== null;
+		this.resendEvery = String(this.#initialResendAfterReports ?? RESEND_REPORTS_DEFAULT);
+		this.resendMax = String(this.#initialResendMax);
 	}
 
 	/**
@@ -512,16 +662,136 @@ export class RuleTemplateFormController {
 		};
 	}
 
+	/** Whether a re-send may send this action again: a notification, or a relay's timed pulse. */
+	canRepeat(action: EditableTemplateAction): boolean {
+		const kind = ruleActionKind(action.actionTypeName);
+		return canBeRepeated(kind) && (kind !== 'relay' || relayIsTimedPulse(action.config.recipient));
+	}
+
+	/** An action's "send again" switch: the choice made, else on for notifications and off for relays. */
+	actionRepeats(action: EditableTemplateAction): boolean {
+		if (!this.canRepeat(action)) return false;
+		const chosen = action.config.repeat;
+		return typeof chosen === 'boolean'
+			? chosen
+			: repeatsByDefault(ruleActionKind(action.actionTypeName));
+	}
+
+	/**
+	 * The re-send setting, when the user changed it: like the status, an
+	 * untouched setting is left to the API. A Date/Time rule has none.
+	 */
+	#buildResendPayload(): Partial<RuleTemplateSaveRequest> {
+		if (this.isDateTime) return {};
+		const after = this.resendActive ? this.#resendEveryValue : null;
+		// The cap is only shown, and only checked, while re-send is on.
+		const max = this.resendActive
+			? (this.#resendMaxValue ?? this.#initialResendMax)
+			: this.#initialResendMax;
+
+		return {
+			...(after === this.#initialResendAfterReports ? {} : { resendAfterReports: after }),
+			...(max === this.#initialResendMax ? {} : { resendMax: max })
+		};
+	}
+
+	#buildActionPayload(action: EditableTemplateAction): RuleTemplateActionInput {
+		return {
+			id: action.id > 0 ? action.id : null,
+			actionType: action.actionType,
+			config: {
+				...action.config,
+				recipient: action.config.recipient.trim(),
+				// With re-send on, every action that could be sent again says whether it is.
+				...(this.resendActive && canBeRepeated(ruleActionKind(action.actionTypeName))
+					? { repeat: this.actionRepeats(action) }
+					: {})
+			}
+		};
+	}
+
 	#buildPayload(): RuleTemplateSaveRequest {
 		return {
 			name: this.ruleName.trim(),
 			description: this.description.trim() || null,
-			deviceTypeId: this.#selectedDeviceTypeId,
 			...this.#buildStatusPayload(),
-			devEuis: this.#selectedDevEuis,
-			criteria: this.#criteriaForTest,
-			actions: this.templateActions.map(buildActionPayload)
+			...this.#buildResendPayload(),
+			// A Date/Time rule has a schedule in place of devices and conditions.
+			// `triggerKind` is only sent for it: an older API does not know the field.
+			...(this.isDateTime
+				? {
+						deviceTypeId: null,
+						triggerKind: 'schedule' as const,
+						schedule: this.schedule,
+						devEuis: [],
+						criteria: []
+					}
+				: {
+						deviceTypeId: this.#selectedDeviceTypeId,
+						devEuis: this.#selectedDevEuis,
+						criteria: this.#criteriaForTest
+					}),
+			actions: this.templateActions.map((action) => this.#buildActionPayload(action))
 		};
+	}
+
+	#isActionValid(action: EditableTemplateAction): boolean {
+		if (!isValidActionTypeId(action.actionType)) return false;
+		const kind = ruleActionKind(action.actionTypeName);
+		if (this.isDateTime && !allowedOnDateTimeRule(kind)) return false;
+		if (kind === 'deactivate_self') return true;
+		if (switchesAnotherRule(kind)) return readTargetTemplateId(action.config) !== null;
+		return (
+			action.config.recipient.trim().length > 0 &&
+			(action.actionTypeName !== 'Push' ||
+				(action.pushRecipients.length > 0 && this.pushRecipientError(action) === undefined))
+		);
+	}
+
+	/**
+	 * Chooses the Data Field of a condition. Choosing Date/Time for the first
+	 * one turns the rule into a Date/Time rule: its devices go, and so do the
+	 * actions such a rule cannot run (a blank one takes their place).
+	 */
+	selectSubject(index: number, value: string): void {
+		const group = this.criteriaGroups[index];
+		if (!group) return;
+		group.subject = value;
+		if (index !== 0 || value !== DATE_TIME_SUBJECT) return;
+
+		this.criteriaGroups = [group];
+		this.selectedDevices = [];
+		const kept = this.templateActions.filter((action) =>
+			allowedOnDateTimeRule(ruleActionKind(action.actionTypeName))
+		);
+		this.templateActions = kept.length > 0 ? kept : [this.createBlankTemplateAction()];
+	}
+
+	/** The rules to choose from; a saved target that is no longer on offer stays visible. */
+	switchTargetOptionsFor(action: EditableTemplateAction) {
+		const selected = this.switchTargetValue(action);
+		return selected && !this.#switchTargetOptionsBase.some((option) => option.value === selected)
+			? [
+					{ label: m.rules_auto_then_unknown({ id: selected }), value: selected },
+					...this.#switchTargetOptionsBase
+				]
+			: this.#switchTargetOptionsBase;
+	}
+
+	switchTargetValue(action: EditableTemplateAction): string {
+		const target = readTargetTemplateId(action.config);
+		return target === null ? '' : String(target);
+	}
+
+	setSwitchTarget(action: EditableTemplateAction, value: string): void {
+		const target = Number(value);
+		if (Number.isSafeInteger(target) && target > 0) {
+			action.config.targetTemplateId = target;
+			action.config.recipient = String(target);
+		} else {
+			delete action.config.targetTemplateId;
+			action.config.recipient = '';
+		}
 	}
 
 	async handleSubmit(): Promise<void> {
@@ -575,7 +845,7 @@ export class RuleTemplateFormController {
 
 		return [
 			{
-				label: action.actionTypeName ?? action.actionTypeValue ?? selectedValue,
+				label: actionTypeLabel(action.actionTypeName ?? action.actionTypeValue ?? selectedValue),
 				value: selectedValue
 			},
 			...this.#actionTypeOptions
@@ -587,11 +857,29 @@ export class RuleTemplateFormController {
 		const parsedActionType = Number(value);
 		const wasLine = action.actionTypeName === 'LINE';
 		const wasPush = action.actionTypeName === 'Push';
+		const previousKind = ruleActionKind(action.actionTypeName);
 
 		action.actionType =
 			selectedAction?.id ?? (Number.isInteger(parsedActionType) ? parsedActionType : 0);
 		action.actionTypeName = selectedAction?.name ?? null;
 		action.actionTypeValue = selectedAction?.value ?? null;
+		// "Send again" belongs to the type it was chosen for: the new type starts
+		// from its own default (a relay is not sent again unless switched on).
+		delete action.config.repeat;
+
+		// A rule switch keeps its target while it stays a "… another rule" action;
+		// anything else starts from an empty setting.
+		const kind = ruleActionKind(action.actionTypeName);
+		if (kind === 'deactivate_self') {
+			action.config = { recipient: 'self' };
+		} else if (
+			(switchesAnotherRule(kind) || switchesAnotherRule(previousKind)) &&
+			!(switchesAnotherRule(kind) && switchesAnotherRule(previousKind))
+		) {
+			action.config = { recipient: '' };
+		} else if (previousKind === 'deactivate_self') {
+			action.config = { recipient: '' };
+		}
 
 		// A saved LINE action's recipient list means nothing to the other types.
 		if (wasLine) action.config.recipient = '';
@@ -633,17 +921,6 @@ function createEditableTemplateAction(action: RuleTemplateActionDto): EditableTe
 			recipient
 		},
 		pushRecipients
-	};
-}
-
-function buildActionPayload(action: EditableTemplateAction): RuleTemplateActionInput {
-	return {
-		id: action.id > 0 ? action.id : null,
-		actionType: action.actionType,
-		config: {
-			...action.config,
-			recipient: action.config.recipient.trim()
-		}
 	};
 }
 

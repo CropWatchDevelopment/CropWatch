@@ -39,12 +39,18 @@
 		devices?: DeviceOption[];
 		resultFPort?: number;
 		resultJson?: string;
+		/**
+		 * Whether the rule has a reset to revert on. A Date/Time rule has none: it
+		 * runs at a time and is done, so the relay keeps the state it was given.
+		 */
+		revertsOnReset?: boolean;
 	}
 
 	let {
 		devices = [],
 		resultFPort = $bindable<number>(),
-		resultJson = $bindable<string>()
+		resultJson = $bindable<string>(),
+		revertsOnReset = true
 	}: Props = $props();
 
 	// A rule can have several relay actions: each checkbox needs its own id for its label.
@@ -118,7 +124,7 @@
 	const payloadHex = $derived(buildRelayPayload(selectedAction, safeOnTimeSeconds));
 	const frmPayload = $derived(hexToBase64(payloadHex));
 
-	const effectiveRevertOnReset = $derived(isReversable && resultRevertOnReset);
+	const effectiveRevertOnReset = $derived(revertsOnReset && isReversable && resultRevertOnReset);
 
 	const result = $derived<DownlinkResult>({
 		devEui: selectedDeviceDevEui,
@@ -188,14 +194,18 @@
 		/>
 	{/if}
 
-	<input
-		type="checkbox"
-		id={revertOnResetId}
-		class="h-5 w-5 disabled:cursor-not-allowed disabled:opacity-50"
-		bind:checked={resultRevertOnReset}
-		disabled={!isReversable}
-	/>
-	<label for={revertOnResetId} class:opacity-50={!isReversable}>
-		{m.rule_action_revert_on_reset()}
-	</label>
+	{#if revertsOnReset}
+		<input
+			type="checkbox"
+			id={revertOnResetId}
+			class="h-5 w-5 disabled:cursor-not-allowed disabled:opacity-50"
+			bind:checked={resultRevertOnReset}
+			disabled={!isReversable}
+		/>
+		<label for={revertOnResetId} class:opacity-50={!isReversable}>
+			{m.rule_action_revert_on_reset()}
+		</label>
+	{:else if isReversable}
+		<p class="text-sm opacity-80">{m.rule_action_relay_stays()}</p>
+	{/if}
 </div>

@@ -32,7 +32,14 @@ export interface RuleRepository {
 		payload: RuleTemplateSaveRequest,
 		options?: RequestSignalOptions
 	): Promise<RuleTemplateDto>;
-	deleteRuleTemplate(id: number, options?: RequestSignalOptions): Promise<{ id: number }>;
+	/**
+	 * Deletes a rule. When other rules start or pause it the API refuses (409,
+	 * with `dependents` in the error payload) unless `force` is set.
+	 */
+	deleteRuleTemplate(
+		id: number,
+		options?: RequestSignalOptions & { force?: boolean }
+	): Promise<{ id: number }>;
 	/** Starts a paused rule; nothing else about it is rewritten. Already running is fine. */
 	startRule(id: number, options?: RequestSignalOptions): Promise<RuleTemplateDto>;
 	/** Pauses a rule: it stops alerting and its open alarms are closed. Already paused is fine. */
@@ -121,13 +128,14 @@ export class HttpRuleRepository implements RuleRepository {
 
 	public deleteRuleTemplate(
 		id: number,
-		options: RequestSignalOptions = {}
+		options: RequestSignalOptions & { force?: boolean } = {}
 	): Promise<{ id: number }> {
 		return this.#http.request<{ id: number }>(
 			replacePathParams(this.#templateByIdEndpoint, { id }),
 			{
 				method: 'DELETE',
-				signal: options.signal
+				signal: options.signal,
+				query: options.force ? { force: 'true' } : undefined
 			}
 		);
 	}

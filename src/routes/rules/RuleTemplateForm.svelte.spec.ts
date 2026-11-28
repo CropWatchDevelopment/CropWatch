@@ -11,6 +11,7 @@ import type {
 import { m } from '#lib/paraglide/messages.js';
 import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
+import { describeSchedule } from './rule-schedule-text.ts';
 import { formatRuleInstant } from './rule-status.ts';
 import RuleTemplateForm from './RuleTemplateForm.svelte';
 
@@ -480,6 +481,200 @@ describe('RuleTemplateForm', () => {
 		});
 	});
 
+	describe('Date/Time rules and rule switches', () => {
+		const SWITCH_TYPES: RuleActionTypeDto[] = [
+			...ACTION_TYPES,
+			{ id: 6, name: 'RuleActivate', value: null, createdAt: '' },
+			{ id: 7, name: 'RuleDeactivate', value: null, createdAt: '' },
+			{ id: 8, name: 'RuleDeactivateSelf', value: null, createdAt: '' }
+		];
+		const managerContext = (overrides: Partial<RuleFormContextDto> = {}) =>
+			context({
+				actionTypes: SWITCH_TYPES,
+				ruleOptions: [
+					{ id: 12, name: 'Winter', orgId: 'org-a', triggerKind: 'sensor' },
+					{ id: 13, name: 'Spring', orgId: 'org-a', triggerKind: 'sensor' }
+				],
+				canManageDateTimeRules: true,
+				...overrides
+			});
+		const subjectOptions = () => {
+			click(byId('rule-form-criteria-0-subject-select'));
+			const picker = byId('rule-form-criteria-0-subject-select')!.closest('.cw-dropdown')!;
+			const labels = [...picker.querySelectorAll('li[role="option"]')].map((option) =>
+				option.textContent?.trim()
+			);
+			click(byId('rule-form-criteria-0-subject-select'));
+			return labels;
+		};
+
+		it('offers the Date/Time data field only to those who may manage such rules', () => {
+			render({ context: managerContext() });
+			expect(subjectOptions()).toContain(m.rule_subject_date_time());
+			view!.unmount();
+
+			render({ context: managerContext({ canManageDateTimeRules: false }) });
+			expect(subjectOptions()).not.toContain(m.rule_subject_date_time());
+		});
+
+		it('choosing it replaces devices and conditions with a time, weekdays and a time zone', () => {
+			render({ context: managerContext() });
+			expect(byId('rule-form-schedule')).toBeNull();
+			expect(byId('rule-form-devices-multiselect')).not.toBeNull();
+			expect(byId('rule-form-add-criteria-button')).not.toBeNull();
+
+			choose('rule-form-criteria-0-subject-select', m.rule_subject_date_time());
+
+			const schedule = byId('rule-form-schedule')!;
+			expect(schedule.textContent).toContain(m.rules_dt_time_label());
+			expect(byId('rule-form-schedule-days-multiselect')).not.toBeNull();
+			expect(byId('rule-form-schedule-timezone-select')).not.toBeNull();
+			// Says which zone the time is in, and that DST days are handled.
+			expect(text()).toContain(
+				m.rules_dt_hint({ zone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+			);
+			// No devices, no thresholds, no second condition.
+			expect(byId('rule-form-date-time-devices-notice')?.textContent).toBe(
+				m.rules_dt_notice_devices()
+			);
+			expect(byId('rule-form-devices-multiselect')).toBeNull();
+			expect(byId('rule-form-add-criteria-button')).toBeNull();
+			expect(view!.target.querySelector('.cw-alert-points-editor')).toBeNull();
+			expect(byId('rule-form-date-time-actions-notice')?.textContent).toBe(
+				m.rules_dt_actions_hint()
+			);
+		});
+
+		it('offers a Date/Time rule only the actions it can run', () => {
+			render({ context: managerContext() });
+			choose('rule-form-criteria-0-subject-select', m.rule_subject_date_time());
+
+			click(byId('rule-form-action-0-type-select'));
+			const picker = byId('rule-form-action-0-type-select')!.closest('.cw-dropdown')!;
+			expect(
+				[...picker.querySelectorAll('li[role="option"]')].map((option) =>
+					option.textContent?.trim()
+				)
+			).toEqual([
+				m.rules_action_type_relay(),
+				m.rules_action_type_rule_activate(),
+				m.rules_action_type_rule_deactivate(),
+				m.rules_action_type_rule_deactivate_self()
+			]);
+		});
+
+		it('a Date/Time rule\'s relay has no "revert on reset": the rule never resets', () => {
+			render({ context: managerContext() });
+			// A sensor rule's relay offers it…
+			choose('rule-form-action-0-type-select', m.rules_action_type_relay());
+			expect(revertCheckboxes()).toHaveLength(1);
+
+			// …a Date/Time rule's does not.
+			choose('rule-form-criteria-0-subject-select', m.rule_subject_date_time());
+			choose('rule-form-action-0-type-select', m.rules_action_type_relay());
+			expect(revertCheckboxes()).toHaveLength(0);
+		});
+
+		it('creates a Date/Time rule that switches another rule', async () => {
+			services.rules.createRuleTemplate.mockResolvedValue(template());
+			render({ context: managerContext() });
+			type(byId<HTMLInputElement>('rule-form-name-input')!, 'Every morning');
+			choose('rule-form-criteria-0-subject-select', m.rule_subject_date_time());
+			choose('rule-form-action-0-type-select', m.rules_action_type_rule_activate());
+
+			// The action needs its rule first.
+			expect(submitButton().disabled).toBe(true);
+			expect(text()).toContain(m.rules_switch_other_hint());
+			choose('rule-form-action-0-target-select', 'Winter');
+			expect(submitButton().disabled).toBe(false);
+
+			// The summary shows the schedule in place of devices and conditions.
+			const summary = view!.target.querySelector('.rules-new-form__summary')!.textContent!;
+			expect(summary).toContain(m.rules_dt_no_devices());
+			expect(summary).toContain(m.rules_dt_every_day());
+
+			click(submitButton());
+
+			await vi.waitFor(() => expect(services.rules.createRuleTemplate).toHaveBeenCalled());
+			expect(services.rules.createRuleTemplate.mock.calls[0][0]).toMatchObject({
+				name: 'Every morning',
+				triggerKind: 'schedule',
+				schedule: {
+					timeOfDay: '09:00',
+					daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
+					timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+				},
+				devEuis: [],
+				criteria: [],
+				actions: [{ id: null, actionType: 6, config: { recipient: '12', targetTemplateId: 12 } }]
+			});
+		});
+
+		it('explains "Deactivate THIS rule" instead of asking for a target', () => {
+			render({ context: managerContext() });
+
+			choose('rule-form-action-0-type-select', m.rules_action_type_rule_deactivate_self());
+
+			expect(text()).toContain(m.rules_switch_self_hint());
+			expect(byId('rule-form-action-0-target-select')).toBeNull();
+			expect(byId('rule-form-action-0-recipient-input')).toBeNull();
+		});
+
+		it('says so when there is no other rule to switch', () => {
+			render({ context: managerContext({ ruleOptions: [] }) });
+
+			choose('rule-form-action-0-type-select', m.rules_action_type_rule_deactivate());
+
+			expect(text()).toContain(m.rules_switch_no_rules());
+			expect(byId('rule-form-action-0-target-select')).toBeNull();
+			expect(submitButton().disabled).toBe(true);
+		});
+
+		it('opens a saved Date/Time rule with its schedule, and keeps it a Date/Time rule', () => {
+			const schedule = {
+				timeOfDay: '18:30',
+				daysOfWeek: [6, 7],
+				timezone: 'America/New_York',
+				nextFireAt: '2099-01-03T23:30:00.000Z',
+				lastFiredAt: null
+			};
+			render({
+				mode: 'edit',
+				context: managerContext({
+					template: template({
+						triggerKind: 'schedule',
+						orgId: 'org-a',
+						assignments: [],
+						criteria: [],
+						schedule,
+						actions: [
+							templateAction({
+								actionType: 7,
+								actionTypeName: 'RuleDeactivate',
+								config: { recipient: '13', targetTemplateId: 13 }
+							})
+						]
+					})
+				})
+			});
+
+			expect(byId('rule-form-schedule')).not.toBeNull();
+			expect(byId('rule-form-schedule-timezone-select')?.textContent).toContain(
+				m.unit_tz_new_york()
+			);
+			expect(
+				byId('rule-form-schedule-days-multiselect')?.closest('.cw-multiselect')?.textContent
+			).toContain(m.common_day_saturday());
+			expect(byId('rule-form-action-0-target-select')?.textContent).toContain('Spring');
+			// The only data field on offer is Date/Time.
+			expect(subjectOptions()).toEqual([m.rule_subject_date_time()]);
+			expect(view!.target.querySelector('.rules-new-form__summary')!.textContent).toContain(
+				describeSchedule(schedule)
+			);
+			expect(submitButton().disabled).toBe(false);
+		});
+	});
+
 	it('goes back to the rules list on cancel', () => {
 		render();
 
@@ -556,20 +751,20 @@ describe('RuleTemplateForm', () => {
 		render();
 		expect(byId('rule-form-action-0-recipient-input')).not.toBeNull();
 
-		choose('rule-form-action-0-type-select', 'Push');
+		choose('rule-form-action-0-type-select', m.rules_action_type_push());
 		expect(byId('rule-form-action-0-recipient-input')).toBeNull();
 		expect(byId('rule-form-action-0-push-recipients')).not.toBeNull();
 
-		choose('rule-form-action-0-type-select', 'LoRaWAN');
+		choose('rule-form-action-0-type-select', m.rules_action_type_relay());
 		expect(byId('rule-form-action-0-push-recipients')).toBeNull();
 		expect(revertCheckboxes()).toEqual([expect.any(HTMLInputElement)]);
 	});
 
 	it('gives each relay action its own "revert on reset" checkbox', () => {
 		render();
-		choose('rule-form-action-0-type-select', 'LoRaWAN');
+		choose('rule-form-action-0-type-select', m.rules_action_type_relay());
 		click(byId('rule-form-add-action-button'));
-		choose('rule-form-action-1-type-select', 'LoRaWAN');
+		choose('rule-form-action-1-type-select', m.rules_action_type_relay());
 
 		const [first, second] = revertCheckboxes();
 		expect(first).toBeInstanceOf(HTMLInputElement);
@@ -639,7 +834,11 @@ describe('RuleTemplateForm', () => {
 		const picker = byId('rule-form-action-0-type-select')!.closest('.cw-dropdown')!;
 		expect(
 			[...picker.querySelectorAll('li[role="option"]')].map((option) => option.textContent?.trim())
-		).toEqual(['EMail', 'Push', 'LoRaWAN']);
+		).toEqual([
+			m.rules_action_type_email(),
+			m.rules_action_type_push(),
+			m.rules_action_type_relay()
+		]);
 	});
 
 	it('preselects the creator for push alerts and explains when they cannot receive them', async () => {
@@ -672,7 +871,7 @@ describe('RuleTemplateForm', () => {
 		services.rules.updateRuleTemplate.mockResolvedValue(template());
 		render({ mode: 'edit', context: context({ template: template() }) });
 
-		choose('rule-form-action-0-type-select', 'LoRaWAN');
+		choose('rule-form-action-0-type-select', m.rules_action_type_relay());
 		click(submitButton());
 
 		await vi.waitFor(() => expect(services.rules.updateRuleTemplate).toHaveBeenCalled());
@@ -684,5 +883,165 @@ describe('RuleTemplateForm', () => {
 			onTimeSeconds: 5,
 			downlink: { f_port: 2, priority: 'NORMAL' }
 		});
+	});
+});
+
+describe('RuleTemplateForm: sending again while the alarm continues', () => {
+	const relay = (id: number, action: string) =>
+		templateAction({
+			id,
+			actionType: 4,
+			actionTypeName: 'LoRaWAN',
+			actionTypeValue: 'lorawan',
+			config: { recipient: JSON.stringify({ devEui: 'DEV-B', action, onTimeSeconds: 15 }) }
+		});
+	const repeatSwitch = (index: number) =>
+		byId<HTMLInputElement>(`rule-form-action-${index}-repeat-switch`);
+	const editing = (overrides: Partial<RuleTemplateDto> = {}) =>
+		render({ mode: 'edit', context: context({ template: template(overrides) }) });
+
+	it('shows only the switch until it is on; then the two numbers, the note, and a switch on each action', () => {
+		editing();
+
+		expect(byId<HTMLInputElement>('rule-form-resend-switch')?.checked).toBe(false);
+		expect(text()).toContain(m.rules_resend_switch_description());
+		expect(byId('rule-form-resend-every-input')).toBeNull();
+		expect(byId('rule-form-resend-max-input')).toBeNull();
+		expect(byId('rule-form-resend-note')).toBeNull();
+		expect(repeatSwitch(0)).toBeNull();
+		expect(byId('rule-form-resend-summary')).toBeNull();
+
+		click(byId('rule-form-resend-switch'));
+
+		expect(byId<HTMLInputElement>('rule-form-resend-every-input')?.value).toBe('3');
+		expect(byId<HTMLInputElement>('rule-form-resend-max-input')?.value).toBe('5');
+		expect(text()).toContain(m.rules_resend_every_hint());
+		expect(text()).toContain(m.rules_resend_max_hint());
+		expect(byId('rule-form-resend-note')?.textContent).toBe(m.rules_resend_note());
+		// An e-mail is sent again unless that is switched off.
+		expect(repeatSwitch(0)?.checked).toBe(true);
+		expect(repeatSwitch(0)?.disabled).toBe(false);
+		expect(byId('rule-form-resend-summary')?.textContent).toBe(
+			m.rules_resend_summary({ reports: '3', times: '5' })
+		);
+	});
+
+	it('opens a saved rule with its setting', () => {
+		editing({
+			resendAfterReports: 6,
+			resendMax: 2,
+			actions: [templateAction({ config: { recipient: 'ops@example.com', repeat: false } })]
+		});
+
+		expect(byId<HTMLInputElement>('rule-form-resend-switch')?.checked).toBe(true);
+		expect(byId<HTMLInputElement>('rule-form-resend-every-input')?.value).toBe('6');
+		expect(byId<HTMLInputElement>('rule-form-resend-max-input')?.value).toBe('2');
+		expect(repeatSwitch(0)?.checked).toBe(false);
+		// On, but nothing would be sent again: the form says so.
+		expect(byId('rule-form-resend-nothing-notice')?.textContent).toBe(
+			m.rules_resend_none_selected()
+		);
+	});
+
+	it('saves the numbers and which actions are sent again', async () => {
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+		editing({ actions: [templateAction(), templateAction({ id: 32 })] });
+
+		click(byId('rule-form-resend-switch'));
+		type(byId<HTMLInputElement>('rule-form-resend-every-input')!, '4');
+		type(byId<HTMLInputElement>('rule-form-resend-max-input')!, '9');
+		click(repeatSwitch(1));
+		expect(repeatSwitch(1)?.checked).toBe(false);
+		expect(byId('rule-form-resend-nothing-notice')).toBeNull();
+		expect(byId('rule-form-resend-summary')?.textContent).toBe(
+			m.rules_resend_summary({ reports: '4', times: '9' })
+		);
+
+		click(submitButton());
+
+		await vi.waitFor(() => expect(services.rules.updateRuleTemplate).toHaveBeenCalled());
+		const payload = services.rules.updateRuleTemplate.mock.calls[0][1];
+		expect(payload).toMatchObject({ resendAfterReports: 4, resendMax: 9 });
+		expect(payload.actions.map((action) => action.config)).toEqual([
+			{ recipient: 'ops@example.com', repeat: true },
+			{ recipient: 'ops@example.com', repeat: false }
+		]);
+	});
+
+	it('warns when the last action is switched to "not sent again", and the warning goes when one is back', () => {
+		editing();
+		click(byId('rule-form-resend-switch'));
+		expect(byId('rule-form-resend-nothing-notice')).toBeNull();
+
+		click(repeatSwitch(0));
+		expect(byId('rule-form-resend-nothing-notice')).not.toBeNull();
+
+		click(repeatSwitch(0));
+		expect(byId('rule-form-resend-nothing-notice')).toBeNull();
+	});
+
+	it('says what is wrong with a number outside the limits, and does not save it', () => {
+		editing();
+		click(byId('rule-form-resend-switch'));
+		expect(submitButton().disabled).toBe(false);
+
+		type(byId<HTMLInputElement>('rule-form-resend-every-input')!, '2');
+		expect(text()).toContain(m.rules_resend_every_error());
+		expect(submitButton().disabled).toBe(true);
+
+		type(byId<HTMLInputElement>('rule-form-resend-every-input')!, '3');
+		type(byId<HTMLInputElement>('rule-form-resend-max-input')!, '51');
+		expect(text()).not.toContain(m.rules_resend_every_error());
+		expect(text()).toContain(m.rules_resend_max_error());
+		expect(submitButton().disabled).toBe(true);
+
+		// Switched off, the numbers are gone and the rule can be saved again.
+		click(byId('rule-form-resend-switch'));
+		expect(text()).not.toContain(m.rules_resend_max_error());
+		expect(submitButton().disabled).toBe(false);
+	});
+
+	it('a relay is not sent again unless asked, and a fixed on/off command cannot be', async () => {
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+		editing({ actions: [relay(31, 'ro1_on_timed'), relay(32, 'ro1_on_permanent')] });
+		click(byId('rule-form-resend-switch'));
+
+		expect(repeatSwitch(0)?.checked).toBe(false);
+		expect(repeatSwitch(0)?.disabled).toBe(false);
+		expect(text()).toContain(m.rules_resend_action_relay_hint());
+		expect(repeatSwitch(1)?.checked).toBe(false);
+		expect(repeatSwitch(1)?.disabled).toBe(true);
+		expect(text()).toContain(m.rules_resend_action_relay_fixed());
+		// Neither relay repeats yet.
+		expect(byId('rule-form-resend-nothing-notice')).not.toBeNull();
+
+		click(repeatSwitch(0));
+		expect(byId('rule-form-resend-nothing-notice')).toBeNull();
+		click(submitButton());
+
+		await vi.waitFor(() => expect(services.rules.updateRuleTemplate).toHaveBeenCalled());
+		const { actions } = services.rules.updateRuleTemplate.mock.calls[0][1];
+		expect(actions.map((action) => (action.config as { repeat?: boolean }).repeat)).toEqual([
+			true,
+			false
+		]);
+	});
+
+	it('a Date/Time rule has no re-send setting', () => {
+		render({
+			context: context({
+				actionTypes: [...ACTION_TYPES, { id: 6, name: 'RuleActivate', value: null, createdAt: '' }],
+				ruleOptions: [{ id: 12, name: 'Winter', orgId: 'org-a', triggerKind: 'sensor' }],
+				canManageDateTimeRules: true
+			})
+		});
+		click(byId('rule-form-resend-switch'));
+		expect(byId('rule-form-resend-every-input')).not.toBeNull();
+
+		choose('rule-form-criteria-0-subject-select', m.rule_subject_date_time());
+
+		expect(byId('rule-form-resend')).toBeNull();
+		expect(byId('rule-form-resend-switch')).toBeNull();
+		expect(repeatSwitch(0)).toBeNull();
 	});
 });

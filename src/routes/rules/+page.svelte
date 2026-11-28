@@ -26,7 +26,9 @@
 	import ADD_ICON from '#lib/images/icons/add.svg';
 	import EDIT_ICON from '#lib/images/icons/edit.svg';
 	import DeleteRuleTemplateDialog from './DeleteRuleTemplateDialog.svelte';
-	import { describeRuleStatus, ruleStatusOf } from './rule-status.ts';
+	import { actionTypeLabel } from './rule-action-types.ts';
+	import { describeSchedule } from './rule-schedule-text.ts';
+	import { describeRuleStatus, formatRuleInstant, ruleStatusOf } from './rule-status.ts';
 	import RuleRunToggle from './RuleRunToggle.svelte';
 	import RuleStatusCell from './RuleStatusCell.svelte';
 	import ViewRuleAlertHistory from './ViewRuleAlertHistory.svelte';
@@ -121,6 +123,8 @@
 	}
 
 	function summarizeLocations(template: RuleTemplateDto): string {
+		// A Date/Time rule has no devices, so no location: they get a group of their own.
+		if (template.triggerKind === 'schedule') return m.rules_dt_group();
 		const names = template.assignments
 			.map((assignment) => assignment.locationName)
 			.filter((name): name is string => !!name && name.trim().length > 0);
@@ -130,6 +134,7 @@
 	}
 
 	function summarizeAssignments(template: RuleTemplateDto): string {
+		if (template.triggerKind === 'schedule') return m.rules_dt_no_devices();
 		if (template.assignments.length === 0) return m.rules_new_no_assignments();
 
 		const labels = template.assignments.map((assignment) =>
@@ -140,6 +145,14 @@
 	}
 
 	function summarizeCriteria(template: RuleTemplateDto): string {
+		// A Date/Time rule: when it runs, and (while it runs) the next time.
+		if (template.triggerKind === 'schedule') {
+			if (!template.schedule) return m.common_not_available();
+			const when = describeSchedule(template.schedule);
+			return template.schedule.nextFireAt
+				? `${when} · ${m.rules_dt_next_run({ date: formatRuleInstant(template.schedule.nextFireAt) })}`
+				: when;
+		}
 		if (template.criteria.length === 0) return m.common_not_available();
 
 		return summarizeList(
@@ -156,9 +169,11 @@
 		if (template.actions.length === 0) return m.common_not_available();
 
 		return summarizeList(
-			template.actions.map((action) => {
-				return action.actionTypeName ?? action.actionTypeValue ?? String(action.actionType);
-			})
+			template.actions.map((action) =>
+				actionTypeLabel(
+					action.actionTypeName ?? action.actionTypeValue ?? String(action.actionType)
+				)
+			)
 		);
 	}
 
@@ -257,8 +272,8 @@
 </AppPage>
 
 <style>
-	/* Up to two lines, so a long condition stays readable without pushing the
-	   row's buttons out of the table. */
+	/* Up to two lines, so a long condition (a Date/Time rule's days, time and
+	   next run) stays readable without pushing the row's buttons out of the table. */
 	.rules-new-page__truncate {
 		display: -webkit-box;
 		min-width: 11rem;

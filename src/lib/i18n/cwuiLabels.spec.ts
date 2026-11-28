@@ -23,6 +23,7 @@ import {
 	cwStackedBarChartLabels,
 	cwStatCardLabels,
 	cwThemePickerLabels,
+	cwTimePickerLabels,
 	cwVpdChartLabels,
 	cwWindCompassLabels
 } from './cwuiLabels';
@@ -407,6 +408,22 @@ describe('static label sets', () => {
 		expect(labels.actionsAriaLabel!('2026-10-22')).toBe(
 			m.cwui_cal_actions_aria({ key: '2026-10-22' })
 		);
+	});
+
+	it('translates the time picker', () => {
+		expect(cwTimePickerLabels()).toEqual({
+			clock24: m.cwui_time_clock24(),
+			group: m.cwui_time_group(),
+			hour: m.cwui_time_hour(),
+			minute: m.cwui_time_minute(),
+			hourInput: m.cwui_time_hour_input(),
+			minuteInput: m.cwui_time_minute_input(),
+			decreaseHour: m.cwui_time_decrease_hour(),
+			increaseHour: m.cwui_time_increase_hour(),
+			decreaseMinute: m.cwui_time_decrease_minute(),
+			increaseMinute: m.cwui_time_increase_minute(),
+			display12: m.cwui_time_display12()
+		});
 	});
 
 	it('translates the date-time range picker', () => {

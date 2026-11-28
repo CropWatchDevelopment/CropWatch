@@ -677,6 +677,34 @@ export interface RuleRefDto {
 	name: string | null;
 }
 
+/** `schedule`: a Date/Time rule, run by the clock instead of by sensor readings. */
+export type RuleTriggerKind = 'sensor' | 'schedule';
+
+/** A rule another rule may start or pause, or start after its pause date. */
+export interface RuleOptionDto {
+	id: number;
+	name: string | null;
+	/** The one organization the rule sits in (absent from an older API). */
+	orgId?: string;
+	triggerKind?: RuleTriggerKind;
+}
+
+/** When a Date/Time rule runs: a wall-clock time on chosen weekdays, in a time zone. */
+export interface RuleScheduleInput {
+	/** HH:mm, 24-hour clock, in `timezone`. */
+	timeOfDay: string;
+	/** ISO weekdays: 1 = Monday ... 7 = Sunday. */
+	daysOfWeek: number[];
+	/** IANA name, e.g. Asia/Tokyo. */
+	timezone: string;
+}
+
+export interface RuleScheduleDto extends RuleScheduleInput {
+	/** The next run; null while the rule is paused. */
+	nextFireAt: string | null;
+	lastFiredAt: string | null;
+}
+
 export interface RuleNextStartDto {
 	at: string;
 	/** `date`: the rule's own start date. `chain`: another rule starts it when that rule pauses on its date. */
@@ -712,6 +740,15 @@ export interface RuleTemplateDto {
 	/** The rule that starts when this one pauses on its pause date. */
 	onAutoPauseStartTemplateId?: number | null;
 	status?: RuleStatusDto;
+	// With the Date/Time rules API; absent means a sensor rule.
+	triggerKind?: RuleTriggerKind;
+	orgId?: string | null;
+	schedule?: RuleScheduleDto | null;
+	// With the re-send API. null = the rule alerts once per alarm.
+	/** Send the actions marked `config.repeat` again after this many reports that still break the threshold. */
+	resendAfterReports?: number | null;
+	/** How many times at most per alarm. */
+	resendMax?: number;
 	assignments: RuleTemplateAssignmentDto[];
 	criteria: RuleTemplateCriterionDto[];
 	actions: RuleTemplateActionDto[];
@@ -753,6 +790,14 @@ export interface RuleTemplateSaveRequest {
 	autoStartAt?: string | null;
 	autoPauseAt?: string | null;
 	onAutoPauseStartTemplateId?: number | null;
+	/** Left out: a sensor rule. Fixed once the rule exists. */
+	triggerKind?: RuleTriggerKind;
+	/** A Date/Time rule's schedule (it has no devices and no conditions). */
+	schedule?: RuleScheduleInput;
+	/** Re-send every N reports (3 to 1000); null turns it off; left out keeps it. */
+	resendAfterReports?: number | null;
+	/** At most this many re-sends per alarm (1 to 50); left out keeps it. */
+	resendMax?: number;
 	devEuis: string[];
 	criteria: RuleTemplateCriterionInput[];
 	actions: RuleTemplateActionInput[];
@@ -767,8 +812,10 @@ export interface RuleFormContextDto {
 	locations: LocationDto[];
 	actionTypes: RuleActionTypeDto[];
 	template: RuleTemplateDto | null;
-	/** Rules this rule may start after its pause date (absent from an older API). */
-	ruleOptions?: RuleRefDto[];
+	/** Rules this rule may start or pause (absent from an older API). */
+	ruleOptions?: RuleOptionDto[];
+	/** Owner or manager of an organization, or staff: may create Date/Time rules. */
+	canManageDateTimeRules?: boolean;
 }
 
 export interface ReportUserScheduleDto {

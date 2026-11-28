@@ -13,7 +13,8 @@ import { labelFor } from '#lib/sensor-labels/index.ts';
 import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import RulesPage from './+page.svelte';
-import { describeRuleStatus } from './rule-status.ts';
+import { describeSchedule } from './rule-schedule-text.ts';
+import { describeRuleStatus, formatRuleInstant } from './rule-status.ts';
 
 const nav = vi.hoisted(() => ({ goto: vi.fn(), url: new URL('http://localhost/rules') }));
 vi.mock('$app/navigation', () => ({ goto: nav.goto }));
@@ -155,7 +156,7 @@ describe('rules page', () => {
 			m.rules_status_tip_running(),
 			'Freezer A (DEV-A)',
 			`${m.rule_subject_temperature()} > 8`,
-			'EMail',
+			m.rules_action_type_email(),
 			new Date('2026-10-01T08:00:00.000Z').toLocaleString()
 		]);
 		expect(groupLabels()).toEqual(['North barn']);
@@ -396,6 +397,61 @@ describe('rules page', () => {
 		expect(document.getElementById('rule-run-5-pause-button')).not.toBeNull();
 	});
 
+	it('shows a Date/Time rule with its schedule and next run in place of devices and conditions', async () => {
+		const schedule = {
+			timeOfDay: '18:30',
+			daysOfWeek: [6, 7],
+			timezone: 'America/New_York',
+			nextFireAt: '2099-01-03T23:30:00.000Z',
+			lastFiredAt: null
+		};
+		const dateTime = (overrides: Partial<RuleTemplateDto>) =>
+			template({
+				triggerKind: 'schedule',
+				orgId: 'org-a',
+				assignments: [],
+				criteria: [],
+				createdAt: null,
+				...overrides
+			});
+		getTemplates().mockResolvedValue([
+			dateTime({
+				id: 10,
+				name: 'A evening switch',
+				schedule,
+				actions: [
+					action({ actionTypeName: 'RuleActivate', actionTypeValue: null }),
+					action({ id: 2, actionTypeName: 'RuleDeactivateSelf', actionTypeValue: null })
+				]
+			}),
+			// Paused: there is no next run to show.
+			dateTime({
+				id: 11,
+				name: 'B paused switch',
+				isActive: false,
+				schedule: { ...schedule, nextFireAt: null },
+				actions: [action({ actionTypeName: 'LoRaWAN', actionTypeValue: null })]
+			}),
+			// Its schedule row is missing: listed, so it can be repaired.
+			dateTime({ id: 12, name: 'C broken', schedule: null })
+		]);
+		render();
+
+		await vi.waitFor(() => expect(rows()).toHaveLength(3));
+		expect(groupLabels()).toEqual([m.rules_dt_group()]);
+		expect(cells(rows()[0]).slice(2, 5)).toEqual([
+			m.rules_dt_no_devices(),
+			`${describeSchedule(schedule)} · ${m.rules_dt_next_run({ date: formatRuleInstant(schedule.nextFireAt) })}`,
+			`${m.rules_action_type_rule_activate()}, ${m.rules_action_type_rule_deactivate_self()}`
+		]);
+		expect(cells(rows()[1]).slice(2, 5)).toEqual([
+			m.rules_dt_no_devices(),
+			describeSchedule(schedule),
+			m.rules_action_type_relay()
+		]);
+		expect(cells(rows()[2])[3]).toBe(m.common_not_available());
+	});
+
 	it('groups each template under the locations of its devices', async () => {
 		getTemplates().mockResolvedValue([
 			template({
@@ -553,7 +609,7 @@ describe('rules page', () => {
 		click(document.getElementById('rule-delete-1-delete-button'));
 
 		await vi.waitFor(() => expect(rows().map((row) => cells(row)[0])).toEqual(['Warm room']));
-		expect(services.rules.deleteRuleTemplate).toHaveBeenCalledWith(1);
+		expect(services.rules.deleteRuleTemplate).toHaveBeenCalledWith(1, { force: false });
 		expect(getTemplates()).toHaveBeenCalledTimes(2);
 		await vi.waitFor(() =>
 			expect(view!.toasts().map((toast) => toast.message)).toContain(

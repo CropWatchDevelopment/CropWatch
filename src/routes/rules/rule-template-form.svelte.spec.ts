@@ -17,6 +17,7 @@ import { m } from '#lib/paraglide/messages.js';
 import { labelFor } from '#lib/sensor-labels/index.ts';
 import { createMockServices } from '#lib/testing/mock-services.ts';
 import { fromInstant } from './rule-auto-dates.ts';
+import { DATE_TIME_SUBJECT, describeSchedule } from './rule-schedule-text.ts';
 import {
 	RuleTemplateFormController,
 	type EditableTemplateAction,
@@ -706,8 +707,8 @@ describe('RuleTemplateFormController — action types', () => {
 		const { form } = setup({ context: () => formContext });
 
 		expect(form.actionTypeOptionsFor(form.templateActions[0])).toEqual([
-			{ label: 'EMail', value: '1' },
-			{ label: 'LoRaWAN', value: '4' }
+			{ label: m.rules_action_type_email(), value: '1' },
+			{ label: m.rules_action_type_relay(), value: '4' }
 		]);
 	});
 
@@ -719,9 +720,9 @@ describe('RuleTemplateFormController — action types', () => {
 			]
 		});
 		const offered = [
-			{ label: 'EMail', value: '1' },
-			{ label: 'Push', value: '3' },
-			{ label: 'LoRaWAN', value: '4' }
+			{ label: m.rules_action_type_email(), value: '1' },
+			{ label: m.rules_action_type_push(), value: '3' },
+			{ label: m.rules_action_type_relay(), value: '4' }
 		];
 
 		expect(form.actionTypeOptionsFor(form.templateActions[0])).toEqual(offered);
@@ -740,9 +741,9 @@ describe('RuleTemplateFormController — action types', () => {
 			]
 		});
 		const base = [
-			{ label: 'EMail', value: '1' },
-			{ label: 'Push', value: '3' },
-			{ label: 'LoRaWAN', value: '4' }
+			{ label: m.rules_action_type_email(), value: '1' },
+			{ label: m.rules_action_type_push(), value: '3' },
+			{ label: m.rules_action_type_relay(), value: '4' }
 		];
 
 		expect(form.actionTypeOptionsFor(form.templateActions[0])).toEqual([
@@ -988,9 +989,10 @@ describe('RuleTemplateFormController — validity and summary', () => {
 
 		expect(form.actionSummary).toBe(
 			[
-				'EMail: ops@example.com',
-				'Push: u-3',
-				`Push: ${m.push_recipient_preview_count({ count: '0' })}`,
+				`${m.rules_action_type_email()}: ops@example.com`,
+				`${m.rules_action_type_push()}: u-3`,
+				`${m.rules_action_type_push()}: ${m.push_recipient_preview_count({ count: '0' })}`,
+				// A type this app does not know keeps its database name.
 				'SMS: 555',
 				'fax: 123',
 				'6: '
@@ -1013,7 +1015,7 @@ describe('RuleTemplateFormController — validity and summary', () => {
 
 		form.syncPushRecipients();
 
-		await vi.waitFor(() => expect(form.actionSummary).toBe('Push: Grace'));
+		await vi.waitFor(() => expect(form.actionSummary).toBe(`${m.rules_action_type_push()}: Grace`));
 	});
 });
 
@@ -1489,5 +1491,738 @@ describe('RuleTemplateFormController — status, dates and the rule to start', (
 			{ label: m.rules_auto_then_unknown({ id: '99' }), value: '99' }
 		]);
 		expect(form.chainRuleName).toBe(m.rules_auto_then_unknown({ id: '99' }));
+	});
+});
+
+describe('RuleTemplateFormController — Date/Time rules and rule switches', () => {
+	const RULE_ON: RuleActionTypeDto = { id: 6, name: 'RuleActivate', value: null, createdAt: '' };
+	const RULE_OFF: RuleActionTypeDto = { id: 7, name: 'RuleDeactivate', value: null, createdAt: '' };
+	const RULE_OFF_SELF: RuleActionTypeDto = {
+		id: 8,
+		name: 'RuleDeactivateSelf',
+		value: null,
+		createdAt: ''
+	};
+	const ALL_TYPES = [EMAIL, LINE, PUSH, LORAWAN, RULE_ON, RULE_OFF, RULE_OFF_SELF];
+	const RULES = [
+		{ id: 7, name: 'Cold room', orgId: 'org-a', triggerKind: 'sensor' as const },
+		{ id: 12, name: 'Winter', orgId: 'org-a', triggerKind: 'sensor' as const },
+		{ id: 13, name: null, orgId: 'org-a', triggerKind: 'schedule' as const }
+	];
+	const lastSave = (mock: { mock: { calls: unknown[][] } }) =>
+		mock.mock.calls.at(-1)?.at(-1) as Record<string, unknown>;
+
+	function dateTimeSetup(overrides: Partial<RuleFormContextDto> = {}) {
+		const formContext = context({
+			actionTypes: ALL_TYPES,
+			ruleOptions: RULES,
+			canManageDateTimeRules: true,
+			...overrides
+		});
+		return setup({ context: () => formContext });
+	}
+
+	function editDateTime(templateOverrides: Partial<RuleTemplateDto> = {}) {
+		const formContext = context({
+			actionTypes: ALL_TYPES,
+			ruleOptions: RULES,
+			canManageDateTimeRules: true,
+			template: template({
+				triggerKind: 'schedule',
+				orgId: 'org-a',
+				deviceTypeId: null,
+				assignments: [],
+				criteria: [],
+				schedule: {
+					timeOfDay: '18:30',
+					daysOfWeek: [6, 7],
+					timezone: 'America/New_York',
+					nextFireAt: '2099-01-03T23:30:00.000Z',
+					lastFiredAt: null
+				},
+				actions: [
+					templateAction({
+						id: 41,
+						actionType: 6,
+						actionTypeName: 'RuleActivate',
+						actionTypeValue: null,
+						config: { recipient: '12', targetTemplateId: 12 }
+					})
+				],
+				...templateOverrides
+			})
+		});
+		return setup({ mode: () => 'edit', context: () => formContext });
+	}
+
+	it('offers "Date/Time" as a data field to those who may manage such rules, for a new rule with one condition', () => {
+		const dateTime = { label: m.rule_subject_date_time(), value: DATE_TIME_SUBJECT };
+
+		const allowed = dateTimeSetup().form;
+		expect(allowed.firstSubjectOptions).toEqual([...allowed.subjectOptions, dateTime]);
+		// The other conditions never offer it.
+		expect(allowed.subjectOptions).not.toContainEqual(dateTime);
+
+		const notAllowed = dateTimeSetup({ canManageDateTimeRules: false }).form;
+		expect(notAllowed.firstSubjectOptions).toEqual(notAllowed.subjectOptions);
+		// An API that does not say: no.
+		expect(setup().form.firstSubjectOptions).not.toContainEqual(dateTime);
+
+		// A sensor rule that exists stays a sensor rule.
+		const formContext = context({ canManageDateTimeRules: true, template: template() });
+		const editing = setup({ mode: () => 'edit', context: () => formContext }).form;
+		expect(editing.firstSubjectOptions).not.toContainEqual(dateTime);
+		// And a Date/Time rule stays one.
+		expect(editDateTime().form.firstSubjectOptions).toEqual([dateTime]);
+	});
+
+	it('stops offering it once the rule has a second condition', () => {
+		const { form } = dateTimeSetup();
+		form.criteriaGroups.push({ ...form.criteriaGroups[0], localId: 99 });
+		flushSync();
+
+		expect(form.firstSubjectOptions).toEqual(form.subjectOptions);
+	});
+
+	it('choosing it turns the rule into a Date/Time rule: no devices, one condition, only actions such a rule can run', () => {
+		const { form } = dateTimeSetup();
+		form.selectedDevices = [{ id: 'DEV-A', label: 'Freezer A (DEV-A)' }];
+		form.templateActions.push({
+			...form.createBlankTemplateAction(),
+			actionType: 4,
+			actionTypeName: 'LoRaWAN'
+		});
+		expect(form.isDateTime).toBe(false);
+		expect(form.templateActions.map((action) => action.actionTypeName)).toEqual([
+			'EMail',
+			'LoRaWAN'
+		]);
+
+		form.selectSubject(0, DATE_TIME_SUBJECT);
+		flushSync();
+
+		expect(form.isDateTime).toBe(true);
+		expect(form.selectedDevices).toEqual([]);
+		expect(form.criteriaGroups).toHaveLength(1);
+		// The e-mail action goes; the relay stays.
+		expect(form.templateActions.map((action) => action.actionTypeName)).toEqual(['LoRaWAN']);
+		expect(form.assignmentSummary).toBe(m.rules_dt_no_devices());
+	});
+
+	it('gives a Date/Time rule a blank switch action when none of its actions can stay', () => {
+		const { form } = dateTimeSetup();
+
+		form.selectSubject(0, DATE_TIME_SUBJECT);
+		flushSync();
+
+		// LoRaWAN is the first type on offer for a Date/Time rule in this list.
+		expect(form.templateActions).toHaveLength(1);
+		expect(form.templateActions[0]).toMatchObject({
+			id: 0,
+			actionTypeName: 'LoRaWAN',
+			config: { recipient: '' }
+		});
+		expect(form.actionTypeOptionsFor(form.templateActions[0])).toEqual([
+			{ label: m.rules_action_type_relay(), value: '4' },
+			{ label: m.rules_action_type_rule_activate(), value: '6' },
+			{ label: m.rules_action_type_rule_deactivate(), value: '7' },
+			{ label: m.rules_action_type_rule_deactivate_self(), value: '8' }
+		]);
+	});
+
+	it('choosing a sensor field, or a field of another condition, changes nothing else', () => {
+		const { form } = dateTimeSetup();
+		form.selectedDevices = [{ id: 'DEV-A', label: 'Freezer A (DEV-A)' }];
+
+		form.selectSubject(0, 'humidity');
+		form.selectSubject(5, DATE_TIME_SUBJECT);
+		flushSync();
+
+		expect(form.criteriaGroups[0].subject).toBe('humidity');
+		expect(form.isDateTime).toBe(false);
+		expect(form.selectedDevices).toHaveLength(1);
+		expect(form.templateActions[0].actionTypeName).toBe('EMail');
+	});
+
+	it('starts a new Date/Time rule at 09:00 every day in the browser time zone', () => {
+		const { form } = dateTimeSetup();
+		form.selectSubject(0, DATE_TIME_SUBJECT);
+		flushSync();
+
+		expect(form.schedule).toEqual({
+			timeOfDay: '09:00',
+			daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
+			timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+		});
+		expect(form.weekdayOptions.map((option) => option.value)).toEqual([
+			'1',
+			'2',
+			'3',
+			'4',
+			'5',
+			'6',
+			'7'
+		]);
+		expect(form.weekdayOptions[0].label).toBe(m.common_day_monday());
+		expect(form.criteriaSummary).toBe(describeSchedule(form.schedule));
+	});
+
+	it('keeps the time zone in use selectable even when it is not one of the listed cities', () => {
+		const { form } = dateTimeSetup();
+		form.scheduleTimezone = 'Asia/Tokyo';
+		flushSync();
+		const listed = form.timezoneOptions.length;
+		expect(form.timezoneOptions.some((option) => option.value === 'Asia/Tokyo')).toBe(true);
+
+		form.scheduleTimezone = 'Europe/Berlin';
+		flushSync();
+		expect(form.timezoneOptions).toHaveLength(listed + 1);
+		expect(form.timezoneOptions[0]).toEqual({ label: 'Europe/Berlin', value: 'Europe/Berlin' });
+
+		form.scheduleTimezone = '';
+		flushSync();
+		expect(form.timezoneOptions).toHaveLength(listed);
+	});
+
+	it('is valid with a name, a day, a zone and a complete action; devices are not needed', () => {
+		const { form } = dateTimeSetup();
+		form.selectSubject(0, DATE_TIME_SUBJECT);
+		form.ruleName = 'Every morning';
+		form.selectActionType(form.templateActions[0], '6');
+		flushSync();
+		// The switch action still needs its rule.
+		expect(form.isFormValid).toBe(false);
+
+		form.setSwitchTarget(form.templateActions[0], '12');
+		flushSync();
+		expect(form.isFormValid).toBe(true);
+		expect(form.scheduleDaysError).toBeUndefined();
+
+		form.scheduleDays = [];
+		flushSync();
+		expect(form.isFormValid).toBe(false);
+		expect(form.scheduleDaysError).toBe(m.rules_dt_days_required());
+
+		form.scheduleDays = [{ id: '1', label: 'Monday' }];
+		form.scheduleTimezone = '';
+		flushSync();
+		expect(form.isFormValid).toBe(false);
+
+		form.scheduleTimezone = 'Asia/Tokyo';
+		form.templateActions = [];
+		flushSync();
+		expect(form.isFormValid).toBe(false);
+	});
+
+	it('saves a Date/Time rule with its schedule and without devices or conditions', async () => {
+		const { form, services } = dateTimeSetup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		form.selectSubject(0, DATE_TIME_SUBJECT);
+		form.ruleName = ' Every morning ';
+		form.scheduleTime = { hours: 6, minutes: 5 };
+		form.scheduleDays = [
+			{ id: '5', label: 'Friday' },
+			{ id: '1', label: 'Monday' }
+		];
+		form.scheduleTimezone = 'Asia/Tokyo';
+		form.selectActionType(form.templateActions[0], '7');
+		form.setSwitchTarget(form.templateActions[0], '12');
+		form.templateActions.push(form.createBlankTemplateAction());
+		form.selectActionType(form.templateActions[1], '8');
+		flushSync();
+
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.createRuleTemplate)).toEqual({
+			name: 'Every morning',
+			description: null,
+			isActive: true,
+			deviceTypeId: null,
+			triggerKind: 'schedule',
+			schedule: { timeOfDay: '06:05', daysOfWeek: [1, 5], timezone: 'Asia/Tokyo' },
+			devEuis: [],
+			criteria: [],
+			actions: [
+				{ id: null, actionType: 7, config: { recipient: '12', targetTemplateId: 12 } },
+				{ id: null, actionType: 8, config: { recipient: 'self' } }
+			]
+		});
+	});
+
+	it('does not send a rule kind for a sensor rule: an older API does not know the field', async () => {
+		const { form, services } = dateTimeSetup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.createRuleTemplate);
+		expect(payload).not.toHaveProperty('triggerKind');
+		expect(payload).not.toHaveProperty('schedule');
+		expect(payload.devEuis).toEqual(['DEV-A']);
+	});
+
+	it('opens a saved Date/Time rule with its schedule and its target', async () => {
+		const { form, services } = editDateTime();
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+
+		expect(form.isDateTime).toBe(true);
+		expect(form.criteriaGroups).toHaveLength(1);
+		expect(form.scheduleTime).toEqual({ hours: 18, minutes: 30 });
+		expect(form.scheduleDays.map((day) => day.id)).toEqual(['6', '7']);
+		expect(form.scheduleDays[0].label).toBe(m.common_day_saturday());
+		expect(form.scheduleTimezone).toBe('America/New_York');
+		expect(form.switchTargetValue(form.templateActions[0])).toBe('12');
+		expect(form.isFormValid).toBe(true);
+		expect(form.criteriaSummary).toBe(
+			describeSchedule({ timeOfDay: '18:30', daysOfWeek: [6, 7], timezone: 'America/New_York' })
+		);
+		expect(form.actionSummary).toBe(`${m.rules_action_type_rule_activate()}: Winter`);
+
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.updateRuleTemplate)).toMatchObject({
+			triggerKind: 'schedule',
+			schedule: { timeOfDay: '18:30', daysOfWeek: [6, 7], timezone: 'America/New_York' },
+			devEuis: [],
+			criteria: [],
+			actions: [{ id: 41, actionType: 6, config: { recipient: '12', targetTemplateId: 12 } }]
+		});
+	});
+
+	it('opens a Date/Time rule that lost its schedule with the defaults, so it can be repaired', () => {
+		const { form } = editDateTime({ schedule: null });
+
+		expect(form.isDateTime).toBe(true);
+		expect(form.schedule.timeOfDay).toBe('09:00');
+		expect(form.schedule.daysOfWeek).toHaveLength(7);
+	});
+
+	it('does not accept a notification on a saved Date/Time rule', () => {
+		const { form } = editDateTime({ actions: [templateAction()] });
+
+		expect(form.isFormValid).toBe(false);
+		// It stays visible under its name, so it can be changed or removed.
+		expect(form.actionTypeOptionsFor(form.templateActions[0])[0]).toEqual({
+			label: m.rules_action_type_email(),
+			value: '1'
+		});
+	});
+
+	it('offers the rules of the form context as targets, never the rule itself', () => {
+		const { form } = editDateTime();
+		const action = form.templateActions[0];
+
+		expect(form.switchTargetOptionsFor(action)).toEqual([
+			{ label: 'Winter', value: '12' },
+			{ label: m.rules_auto_then_unknown({ id: '13' }), value: '13' }
+		]);
+
+		// A saved target that is no longer on offer stays visible.
+		form.setSwitchTarget(action, '99');
+		expect(form.switchTargetOptionsFor(action)[0]).toEqual({
+			label: m.rules_auto_then_unknown({ id: '99' }),
+			value: '99'
+		});
+		expect(form.actionSummary).toBe(
+			`${m.rules_action_type_rule_activate()}: ${m.rules_auto_then_unknown({ id: '99' })}`
+		);
+	});
+
+	it('has no targets with an API that sends no rule options', () => {
+		const { form } = setup();
+		expect(form.switchTargetOptionsFor(form.templateActions[0])).toEqual([]);
+	});
+
+	it('sets and clears the target of a switch action', () => {
+		const { form } = dateTimeSetup();
+		const action = form.templateActions[0];
+		form.selectActionType(action, '6');
+
+		form.setSwitchTarget(action, '12');
+		expect(action.config).toEqual({ recipient: '12', targetTemplateId: 12 });
+		expect(form.switchTargetValue(action)).toBe('12');
+
+		for (const nothing of ['', '0', 'abc', '-3', '1.5']) {
+			form.setSwitchTarget(action, '12');
+			form.setSwitchTarget(action, nothing);
+			expect(action.config).toEqual({ recipient: '' });
+			expect(form.switchTargetValue(action)).toBe('');
+		}
+	});
+
+	it('resets the setting when the action changes kind, but keeps the rule between activate and deactivate', () => {
+		const { form } = dateTimeSetup();
+		const action = form.templateActions[0];
+		action.config.recipient = 'ops@example.com';
+
+		// E-mail -> activate another rule: the address means nothing there.
+		form.selectActionType(action, '6');
+		expect(action.config).toEqual({ recipient: '' });
+
+		form.setSwitchTarget(action, '12');
+		form.selectActionType(action, '7');
+		expect(action.config).toEqual({ recipient: '12', targetTemplateId: 12 });
+
+		form.selectActionType(action, '8');
+		expect(action.config).toEqual({ recipient: 'self' });
+
+		// "This rule" -> e-mail: no "self" left behind as an address.
+		form.selectActionType(action, '1');
+		expect(action.config).toEqual({ recipient: '' });
+
+		// Deactivate another rule -> relay: the target goes.
+		form.selectActionType(action, '7');
+		form.setSwitchTarget(action, '12');
+		form.selectActionType(action, '4');
+		expect(action.config).toEqual({ recipient: '' });
+	});
+
+	it('a sensor rule may carry rule switches next to its notifications', async () => {
+		const { form, services } = dateTimeSetup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+		form.templateActions.push(form.createBlankTemplateAction());
+		form.selectActionType(form.templateActions[1], '6');
+		form.templateActions.push(form.createBlankTemplateAction());
+		form.selectActionType(form.templateActions[2], '8');
+		flushSync();
+		expect(form.isFormValid).toBe(false);
+
+		form.setSwitchTarget(form.templateActions[1], '12');
+		flushSync();
+		expect(form.isFormValid).toBe(true);
+		expect(form.actionSummary).toBe(
+			[
+				`${m.rules_action_type_email()}: ${form.templateActions[0].config.recipient}`,
+				`${m.rules_action_type_rule_activate()}: Winter`,
+				m.rules_action_type_rule_deactivate_self()
+			].join(', ')
+		);
+
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.createRuleTemplate).actions).toEqual([
+			{ id: null, actionType: 1, config: { recipient: 'ops@example.com' } },
+			{ id: null, actionType: 6, config: { recipient: '12', targetTemplateId: 12 } },
+			{ id: null, actionType: 8, config: { recipient: 'self' } }
+		]);
+	});
+});
+
+describe('RuleTemplateFormController — sending again while the alarm continues', () => {
+	const RULE_ON: RuleActionTypeDto = { id: 6, name: 'RuleActivate', value: null, createdAt: '' };
+	const TYPES = [EMAIL, LINE, PUSH, LORAWAN, RULE_ON];
+	const TIMED = JSON.stringify({ devEui: 'RELAY', action: 'ro1_on_timed', onTimeSeconds: 15 });
+	const FIXED = JSON.stringify({ devEui: 'RELAY', action: 'ro1_on_permanent' });
+	const lastSave = (mock: { mock: { calls: unknown[][] } }) =>
+		mock.mock.calls.at(-1)?.at(-1) as Record<string, unknown> & {
+			actions: { actionType: number; config: Record<string, unknown> }[];
+		};
+	const relayAction = (id: number, recipient: string, extra: Record<string, unknown> = {}) =>
+		templateAction({
+			id,
+			actionType: 4,
+			actionTypeName: 'LoRaWAN',
+			actionTypeValue: null,
+			config: { recipient, ...extra }
+		});
+
+	function resendSetup(overrides: Partial<RuleFormContextDto> = {}) {
+		const formContext = context({
+			actionTypes: TYPES,
+			ruleOptions: [{ id: 12, name: 'Winter', orgId: 'org-a', triggerKind: 'sensor' }],
+			...overrides
+		});
+		return setup({ context: () => formContext });
+	}
+
+	function editResend(templateOverrides: Partial<RuleTemplateDto> = {}) {
+		const formContext = context({
+			actionTypes: TYPES,
+			template: template({ isActive: true, ...templateOverrides })
+		});
+		return setup({ mode: () => 'edit', context: () => formContext });
+	}
+
+	it('is off for a new rule, and then nothing about it is sent', async () => {
+		const { form, services } = resendSetup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+
+		expect(form.resendEnabled).toBe(false);
+		expect(form.resendActive).toBe(false);
+		expect(form.resendSummary).toBe('');
+		expect(form.resendNothingRepeats).toBe(false);
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.createRuleTemplate);
+		// An older API does not know these fields.
+		expect(payload).not.toHaveProperty('resendAfterReports');
+		expect(payload).not.toHaveProperty('resendMax');
+		expect(payload.actions[0].config).toEqual({ recipient: 'ops@example.com' });
+	});
+
+	it('switched on, it proposes every 3 reports and at most 5 times, and says so in the summary', async () => {
+		const { form, services } = resendSetup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+
+		form.resendEnabled = true;
+		flushSync();
+
+		expect(form.resendEvery).toBe('3');
+		expect(form.resendMax).toBe('5');
+		expect(form.resendEveryError).toBeUndefined();
+		expect(form.resendMaxError).toBeUndefined();
+		expect(form.isFormValid).toBe(true);
+		expect(form.resendSummary).toBe(m.rules_resend_summary({ reports: '3', times: '5' }));
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.createRuleTemplate);
+		expect(payload.resendAfterReports).toBe(3);
+		// The cap is the API's default: not sent.
+		expect(payload).not.toHaveProperty('resendMax');
+	});
+
+	it('sends the numbers the user entered', async () => {
+		const { form, services } = resendSetup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+		form.resendEnabled = true;
+		form.resendEvery = ' 12 ';
+		form.resendMax = '2';
+
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.createRuleTemplate)).toMatchObject({
+			resendAfterReports: 12,
+			resendMax: 2
+		});
+	});
+
+	it.each([
+		['fewer than 3 reports', '2', '5', 'every'],
+		['more than 1000 reports', '1001', '5', 'every'],
+		['half a report', '3.5', '5', 'every'],
+		['no number of reports', '', '5', 'every'],
+		['no re-sends', '3', '0', 'max'],
+		['more than 50 re-sends', '3', '51', 'max'],
+		['a cap that is not a number', '3', 'five', 'max']
+	])('refuses %s, and saves nothing', async (_name, every, max, field) => {
+		const { form, services } = resendSetup();
+		fillIn(form);
+		form.resendEnabled = true;
+		form.resendEvery = every;
+		form.resendMax = max;
+		flushSync();
+
+		expect(form.resendEveryError).toBe(
+			field === 'every' ? m.rules_resend_every_error() : undefined
+		);
+		expect(form.resendMaxError).toBe(field === 'max' ? m.rules_resend_max_error() : undefined);
+		expect(form.isFormValid).toBe(false);
+		expect(form.resendSummary).toBe('');
+		await form.handleSubmit();
+		expect(services.rules.createRuleTemplate).not.toHaveBeenCalled();
+
+		// Switched off again, the numbers no longer matter.
+		form.resendEnabled = false;
+		flushSync();
+		expect(form.resendEveryError).toBeUndefined();
+		expect(form.resendMaxError).toBeUndefined();
+		expect(form.isFormValid).toBe(true);
+	});
+
+	it('marks notifications to be sent again, a relay only when asked, and a rule switch never', async () => {
+		const { form, services } = resendSetup();
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		fillIn(form);
+		const [email] = form.templateActions;
+		const add = (typeId: string, recipient: string) => {
+			const action = form.createBlankTemplateAction();
+			form.templateActions.push(action);
+			const added = form.templateActions.at(-1)!;
+			form.selectActionType(added, typeId);
+			added.config.recipient = recipient;
+			return added;
+		};
+		const timed = add('4', TIMED);
+		const fixed = add('4', FIXED);
+		const other = add('6', '');
+		form.setSwitchTarget(other, '12');
+		form.resendEnabled = true;
+		flushSync();
+
+		expect(form.canRepeat(email)).toBe(true);
+		expect(form.actionRepeats(email)).toBe(true);
+		expect(form.canRepeat(timed)).toBe(true);
+		expect(form.actionRepeats(timed)).toBe(false);
+		// A fixed on/off command is never sent again, whatever the switch says.
+		fixed.config.repeat = true;
+		expect(form.canRepeat(fixed)).toBe(false);
+		expect(form.actionRepeats(fixed)).toBe(false);
+		expect(form.canRepeat(other)).toBe(false);
+		expect(form.actionRepeats(other)).toBe(false);
+
+		await form.handleSubmit();
+
+		expect(lastSave(services.rules.createRuleTemplate).actions).toEqual([
+			{ id: null, actionType: 1, config: { recipient: 'ops@example.com', repeat: true } },
+			{ id: null, actionType: 4, config: { recipient: TIMED, repeat: false } },
+			{ id: null, actionType: 4, config: { recipient: FIXED, repeat: false } },
+			{ id: null, actionType: 6, config: { recipient: '12', targetTemplateId: 12 } }
+		]);
+	});
+
+	it('warns when it is on but no action would be sent again', () => {
+		const { form } = resendSetup();
+		fillIn(form);
+		form.resendEnabled = true;
+		flushSync();
+		expect(form.resendNothingRepeats).toBe(false);
+
+		form.templateActions[0].config.repeat = false;
+		flushSync();
+		expect(form.resendNothingRepeats).toBe(true);
+
+		form.templateActions[0].config.repeat = true;
+		flushSync();
+		expect(form.resendNothingRepeats).toBe(false);
+	});
+
+	it('a choice belongs to the action type it was made for', () => {
+		const { form } = resendSetup();
+		fillIn(form);
+		form.resendEnabled = true;
+		const [action] = form.templateActions;
+		action.config.repeat = false;
+
+		form.selectActionType(action, '4');
+		action.config.recipient = TIMED;
+		// A relay starts from "not sent again", not from the e-mail's choice…
+		expect(action.config).not.toHaveProperty('repeat');
+		expect(form.actionRepeats(action)).toBe(false);
+
+		action.config.repeat = true;
+		expect(form.actionRepeats(action)).toBe(true);
+		form.selectActionType(action, '1');
+		// …and an e-mail from "sent again", not from the relay's.
+		expect(action.config).not.toHaveProperty('repeat');
+		expect(form.actionRepeats(action)).toBe(true);
+	});
+
+	it('opens a saved rule with its setting, and sends nothing about it when it is left alone', async () => {
+		const { form, services } = editResend({
+			resendAfterReports: 6,
+			resendMax: 2,
+			actions: [
+				templateAction({ config: { recipient: 'ops@example.com', repeat: false } }),
+				relayAction(32, TIMED, { repeat: true })
+			]
+		});
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+
+		expect(form.resendEnabled).toBe(true);
+		expect(form.resendEvery).toBe('6');
+		expect(form.resendMax).toBe('2');
+		expect(form.actionRepeats(form.templateActions[0])).toBe(false);
+		expect(form.actionRepeats(form.templateActions[1])).toBe(true);
+		expect(form.resendSummary).toBe(m.rules_resend_summary({ reports: '6', times: '2' }));
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.updateRuleTemplate);
+		// Unchanged: the API keeps the setting, and the counters of open alarms.
+		expect(payload).not.toHaveProperty('resendAfterReports');
+		expect(payload).not.toHaveProperty('resendMax');
+		expect(payload.actions.map((action) => action.config.repeat)).toEqual([false, true]);
+	});
+
+	it('an edit sends exactly the half that changed', async () => {
+		const reports = editResend({ resendAfterReports: 6, resendMax: 2 });
+		reports.services.rules.updateRuleTemplate.mockResolvedValue(template());
+		reports.form.resendEvery = '9';
+		await reports.form.handleSubmit();
+		const first = lastSave(reports.services.rules.updateRuleTemplate);
+		expect(first.resendAfterReports).toBe(9);
+		expect(first).not.toHaveProperty('resendMax');
+
+		const cap = editResend({ resendAfterReports: 6, resendMax: 2 });
+		cap.services.rules.updateRuleTemplate.mockResolvedValue(template());
+		cap.form.resendMax = '7';
+		await cap.form.handleSubmit();
+		const second = lastSave(cap.services.rules.updateRuleTemplate);
+		expect(second.resendMax).toBe(7);
+		expect(second).not.toHaveProperty('resendAfterReports');
+	});
+
+	it('switching it off sends "off", keeps the cap, and leaves the saved choices of the actions alone', async () => {
+		const { form, services } = editResend({
+			resendAfterReports: 6,
+			resendMax: 2,
+			actions: [templateAction({ config: { recipient: 'ops@example.com', repeat: false } })]
+		});
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+
+		form.resendEnabled = false;
+		// Whatever was typed before it was switched off is not sent.
+		form.resendMax = '40';
+		flushSync();
+		expect(form.resendSummary).toBe('');
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.updateRuleTemplate);
+		expect(payload.resendAfterReports).toBeNull();
+		expect(payload).not.toHaveProperty('resendMax');
+		expect(payload.actions[0].config).toEqual({ recipient: 'ops@example.com', repeat: false });
+	});
+
+	it('switching it on for a saved rule sends the setting', async () => {
+		const { form, services } = editResend();
+		services.rules.updateRuleTemplate.mockResolvedValue(template());
+		expect(form.resendEnabled).toBe(false);
+
+		form.resendEnabled = true;
+		form.resendMax = '8';
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.updateRuleTemplate);
+		expect(payload).toMatchObject({ resendAfterReports: 3, resendMax: 8 });
+		expect(payload.actions[0].config).toEqual({ recipient: 'ops@example.com', repeat: true });
+	});
+
+	it('is off for a rule from an API that does not send the setting', () => {
+		const { form } = editResend({ resendAfterReports: undefined, resendMax: undefined });
+
+		expect(form.resendEnabled).toBe(false);
+		expect(form.resendEvery).toBe('3');
+		expect(form.resendMax).toBe('5');
+	});
+
+	it('a Date/Time rule never sends again: it has no reports to count', async () => {
+		const { form, services } = resendSetup({ canManageDateTimeRules: true });
+		services.rules.createRuleTemplate.mockResolvedValue(template());
+		form.ruleName = 'Evening pulse';
+		form.resendEnabled = true;
+		form.resendEvery = '1';
+		form.selectSubject(0, DATE_TIME_SUBJECT);
+		form.selectActionType(form.templateActions[0], '4');
+		form.templateActions[0].config.recipient = TIMED;
+		form.templateActions[0].config.repeat = true;
+		flushSync();
+
+		expect(form.isDateTime).toBe(true);
+		expect(form.resendActive).toBe(false);
+		// The number typed for a sensor rule is not held against it.
+		expect(form.resendEveryError).toBeUndefined();
+		expect(form.resendNothingRepeats).toBe(false);
+		expect(form.resendSummary).toBe('');
+		expect(form.isFormValid).toBe(true);
+		await form.handleSubmit();
+
+		const payload = lastSave(services.rules.createRuleTemplate);
+		expect(payload.triggerKind).toBe('schedule');
+		expect(payload).not.toHaveProperty('resendAfterReports');
+		expect(payload).not.toHaveProperty('resendMax');
 	});
 });
