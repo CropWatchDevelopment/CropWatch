@@ -418,6 +418,7 @@
 	"rules_no_devices_available": "利用可能なデバイスがありません。先にデバイスを追加してください。",
 	"rules_select_device_placeholder": "デバイスを選択...",
 	"rules_filter_device_placeholder": "デバイスまたは場所で絞り込み…",
+	"rules_relay_device_search_placeholder": "デバイス名またはEUIで検索…",
 	"rules_device_preselected": "クエリパラメータからデバイスが事前選択されています。",
 	"rules_step_3_title": "3. アラート条件",
 	"rules_step_3_subtitle": "数値は半角英数字でご入力ください。",

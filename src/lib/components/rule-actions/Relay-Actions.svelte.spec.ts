@@ -65,6 +65,23 @@ function choose(label: string, option: string) {
 	flushSync();
 }
 
+/** Opens the Device dropdown and types `query` into its search field. */
+function searchDevices(query: string) {
+	const trigger = control<HTMLButtonElement>(m.devices_device());
+	trigger.click();
+	flushSync();
+	const root = trigger.closest('.cw-dropdown') as HTMLElement;
+	const search = root.querySelector<HTMLInputElement>('input[role="combobox"]')!;
+	search.value = query;
+	search.dispatchEvent(new Event('input', { bubbles: true }));
+	flushSync();
+	return {
+		search,
+		options: () => [...root.querySelectorAll<HTMLElement>('li[role="option"]')],
+		listText: () => root.querySelector('[role="listbox"]')?.textContent?.trim()
+	};
+}
+
 function typeSeconds(value: string) {
 	const input = control<HTMLInputElement>(m.rule_action_on_time_label());
 	input.value = value;
@@ -272,6 +289,38 @@ describe('Relay-Actions', () => {
 		const { result } = render(undefined, { resultFPort: 10 });
 
 		expect(result().downlink.f_port).toBe(10);
+	});
+
+	it('finds a device by typing part of its name', () => {
+		const { result } = render();
+
+		const { search, options } = searchDevices('fan');
+
+		expect(search.placeholder).toBe(m.rules_relay_device_search_placeholder());
+		expect(options().map((option) => option.textContent?.trim())).toEqual(['Fan relay (DEV-R2)']);
+
+		options()[0].click();
+		flushSync();
+
+		expect(result().devEui).toBe('DEV-R2');
+		expect(control(m.devices_device()).textContent?.trim()).toBe('Fan relay (DEV-R2)');
+	});
+
+	it('finds a device by typing part of its EUI, whatever the case', () => {
+		render();
+
+		const { options } = searchDevices('dev-r1');
+
+		expect(options().map((option) => option.textContent?.trim())).toEqual(['Pump relay (DEV-R1)']);
+	});
+
+	it('says so when no device matches the search', () => {
+		render();
+
+		const { options, listText } = searchDevices('greenhouse');
+
+		expect(options()).toHaveLength(0);
+		expect(listText()).toBe(m.cwui_multi_no_matches());
 	});
 
 	it('offers no devices when none are given', () => {

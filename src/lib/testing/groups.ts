@@ -13,15 +13,30 @@ function typeInto(input: HTMLInputElement, value: string) {
 	flushSync();
 }
 
-function button(id: string): HTMLButtonElement {
-	const element = document.getElementById(id) as HTMLButtonElement | null;
-	if (!element) throw new Error(`No button #${id}`);
-	return element;
+/** The button called `label` inside the picker's box, or null when the picker does not offer it. */
+function pickerButton(pickerId: string, label: string): HTMLButtonElement | null {
+	return (
+		document
+			.getElementById(pickerId)
+			?.closest('.cw-dropdown')
+			?.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`) ?? null
+	);
 }
 
-/** "Add group" under the picker: types `name` and submits the dialog. */
+/** The picker's "Add group" button, or null when it is not offered. */
+export const addGroupButton = (pickerId: string) => pickerButton(pickerId, m.groups_add());
+
+/** The picker's "Manage groups" button, or null when it is not offered. */
+export const manageGroupsButton = (pickerId: string) => pickerButton(pickerId, m.groups_manage());
+
+function press(button: HTMLButtonElement | null, what: string) {
+	if (!button) throw new Error(`No "${what}" button in the group picker`);
+	button.click();
+}
+
+/** "Add group" in the picker: types `name` and submits the dialog. */
 export function addGroup(pickerId: string, name: string) {
-	button(`${pickerId}-add`).click();
+	press(addGroupButton(pickerId), m.groups_add());
 	flushSync();
 	const form = document.querySelector<HTMLFormElement>('form.add-group');
 	if (!form) throw new Error('No add-group dialog');
@@ -40,9 +55,9 @@ function manageRow(name: string): HTMLElement {
 	return row;
 }
 
-/** "Manage groups" under the picker: renames the group `from` to `to`. */
+/** "Manage groups" in the picker: renames the group `from` to `to`. */
 export function renameGroup(pickerId: string, from: string, to: string) {
-	button(`${pickerId}-manage`).click();
+	press(manageGroupsButton(pickerId), m.groups_manage());
 	flushSync();
 	const row = manageRow(from);
 	(
@@ -56,9 +71,9 @@ export function renameGroup(pickerId: string, from: string, to: string) {
 	flushSync();
 }
 
-/** "Manage groups" under the picker: deletes the group `name`, confirming the question. */
+/** "Manage groups" in the picker: deletes the group `name`, confirming the question. */
 export function deleteGroup(pickerId: string, name: string) {
-	button(`${pickerId}-manage`).click();
+	press(manageGroupsButton(pickerId), m.groups_manage());
 	flushSync();
 	const row = manageRow(name);
 	(

@@ -418,6 +418,7 @@
 	"rules_no_devices_available": "No devices available. Please add a device first.",
 	"rules_select_device_placeholder": "Select a device...",
 	"rules_filter_device_placeholder": "Filter by device or location…",
+	"rules_relay_device_search_placeholder": "Search by device name or EUI…",
 	"rules_device_preselected": "Device was pre-selected from the query parameter.",
 	"rules_step_3_title": "3. Alert Criteria",
 	"rules_step_3_subtitle": "Define when this rule should trigger — add one or more conditions",

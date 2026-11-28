@@ -11,7 +11,13 @@ import { getIntlLocale } from '#lib/i18n/format.ts';
 import { createMockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
-import { addGroup, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
+import {
+	addGroup,
+	addGroupButton,
+	deleteGroup,
+	manageGroupsButton,
+	renameGroup
+} from '#lib/testing/groups.ts';
 import { testEvent, testLocals } from '#lib/testing/server.ts';
 import SettingsPage from './+page.svelte';
 import { actions } from './+page.server';
@@ -310,7 +316,7 @@ describe('device settings page', () => {
 			m.groups_none(),
 			'Old shed'
 		]);
-		expect(byId('device-settings-group-select-manage')).toBeNull();
+		expect(manageGroupsButton('device-settings-group-select')).toBeNull();
 		expect(deviceForm()?.querySelector('dialog')).toBeNull();
 		expect(document.querySelectorAll('dialog.cw-dialog').length).toBeGreaterThanOrEqual(2);
 	});
@@ -468,7 +474,7 @@ describe('device settings page', () => {
 		const page = render({
 			deviceGroups: [{ id: 2, name: 'Barn 2', org_id: 'org-1', can_manage: false }]
 		});
-		expect(byId('device-settings-group-select-manage')).toBeNull();
+		expect(manageGroupsButton('device-settings-group-select')).toBeNull();
 		type('device-settings-name-input', 'Air sensor 2');
 		const update = vi.fn(async () =>
 			page.setData({
@@ -487,7 +493,7 @@ describe('device settings page', () => {
 		});
 		flushSync();
 
-		expect(byId('device-settings-group-select-manage')).not.toBeNull();
+		expect(manageGroupsButton('device-settings-group-select')).not.toBeNull();
 		expect(dropdown('device-settings-group-select').options()).toEqual([
 			m.groups_none(),
 			'Barn',
@@ -651,7 +657,7 @@ describe('device settings page', () => {
 	it('offers no new groups without the device organization', () => {
 		render({ deviceOrgId: null });
 
-		expect(byId('device-settings-group-select-add')).toBeNull();
+		expect(addGroupButton('device-settings-group-select')).toBeNull();
 		expect(dropdown('device-settings-group-select').value()).toBe('Barn');
 	});
 

@@ -4,7 +4,7 @@ import type { ActionResult } from '$app/forms';
 import { m } from '#lib/paraglide/messages.js';
 import type { GroupDto } from '#lib/api/api.dtos.ts';
 import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
-import { addGroup, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
+import { addGroup, addGroupButton, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
 import { createMockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import LocationUpdate from './LocationUpdate.svelte';
@@ -161,7 +161,7 @@ describe('LocationUpdate', () => {
 	it('offers no new groups without the location organization', () => {
 		render({ locationId: 8, locationName: 'A', locationGroup: 'Farm', locationGroups: GROUPS });
 
-		expect(document.getElementById(`${GROUP_SELECT}-add`)).toBeNull();
+		expect(addGroupButton(GROUP_SELECT)).toBeNull();
 		expect(group()).toBe('Farm');
 	});
 
