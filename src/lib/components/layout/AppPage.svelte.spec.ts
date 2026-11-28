@@ -77,6 +77,19 @@ describe('AppPage', () => {
 		expect(['flex-start', 'flow-start']).toContain(getComputedStyle(button).alignSelf);
 	});
 
+	it('leaves a small gap above the back button on phones too', () => {
+		// The CWUI tokens are not loaded in specs; give --cw-space-2 its real value.
+		document.documentElement.style.setProperty('--cw-space-2', '0.5rem');
+		try {
+			const { page } = render({ children: backButton });
+
+			expect(window.innerWidth).toBeLessThan(640);
+			expect(getComputedStyle(page).paddingTop).toBe('8px');
+		} finally {
+			document.documentElement.style.removeProperty('--cw-space-2');
+		}
+	});
+
 	it('renders an empty shell without children', () => {
 		const { shell } = render({ children: undefined });
 
