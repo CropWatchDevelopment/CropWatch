@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type {
-	CwAlertPointRule,
-	CwAlertPointsEditorText,
-	CwAlertPointsValue
+import {
+	cwRuleConditionText,
+	type CwAlertPointRule,
+	type CwAlertPointsValue
 } from '@cropwatchdevelopment/cwui';
 import { m } from '#lib/paraglide/messages.js';
 import { getLocale, overwriteGetLocale } from '#lib/paraglide/runtime.js';
@@ -12,7 +12,6 @@ import {
 	buildInitialAlertCriteriaGroups,
 	buildRuleTemplateCriteriaFromAlertGroups,
 	createBlankAlertCriteriaGroup,
-	createRuleTemplateAlertPointsEditorText,
 	describeNotEqualPoints,
 	ensureAlertPointsIncludeReset,
 	hasUnsupportedAlertPointConditions
@@ -106,127 +105,6 @@ describe('rule template alert points adapter', () => {
 
 		expect(groups[0]?.alertPoints.points[0]?.condition).toBe('range');
 		expect(hasUnsupportedAlertPointConditions(groups)).toBe(true);
-	});
-});
-
-describe('createRuleTemplateAlertPointsEditorText', () => {
-	it('labels the editor in the wording of rules', () => {
-		expect(createRuleTemplateAlertPointsEditorText()).toMatchObject({
-			previewLabel: m.cwui_alert_points_preview(),
-			unitFieldLabel: m.reports_create_alert_points_unit_label(),
-			centerFieldLabel: m.reports_create_alert_points_center_label(),
-			nameFieldLabel: m.common_name(),
-			conditionFieldLabel: m.rules_operator(),
-			valueFieldLabel: m.rules_trigger_value(),
-			minValueFieldLabel: m.reports_create_alert_minimum(),
-			maxValueFieldLabel: m.reports_create_alert_maximum(),
-			resetFieldLabel: m.rules_reset_value(),
-			colorFieldLabel: m.reports_create_alert_hex_color(),
-			addAlertPointButton: m.rules_add_threshold_for_field(),
-			removePointButton: m.action_remove(),
-			emptyTitle: m.reports_create_alert_points_empty_title(),
-			emptyDescription: m.reports_create_alert_points_empty_description(),
-			invalidNumberError: m.reports_create_alert_points_invalid_number(),
-			resetNeverHappensError: m.reports_create_alert_points_reset_never_happens_error(),
-			minEqualsMaxWarning: m.reports_create_alert_points_equal_bounds_warning(),
-			unitCelsiusLabel: '°C',
-			unitFahrenheitLabel: '°F',
-			unitKelvinLabel: '°K',
-			conditionEqualsLabel: m.reports_create_alert_points_condition_equals(),
-			conditionRangeLabel: m.reports_create_alert_points_condition_range(),
-			conditionLessThanLabel: m.reports_create_alert_points_condition_less_than(),
-			conditionLessThanOrEqualLabel: m.reports_create_alert_points_condition_less_than_or_equal(),
-			conditionGreaterThanLabel: m.reports_create_alert_points_condition_greater_than(),
-			conditionGreaterThanOrEqualLabel:
-				m.reports_create_alert_points_condition_greater_than_or_equal(),
-			pointDescriptionWaitingForValue: m.reports_create_alert_points_waiting_for_value(),
-			pointDescriptionWaitingForThreshold: m.reports_create_alert_points_waiting_for_threshold(),
-			pointDescriptionRangeMissingBounds: m.reports_create_alert_points_range_missing_bounds(),
-			resetDescriptionWaitingForValue: m.reports_create_alert_points_reset_waiting_for_value()
-		});
-	});
-
-	it('fills in labels, counts and values', () => {
-		const text = createRuleTemplateAlertPointsEditorText() as Required<CwAlertPointsEditorText>;
-
-		expect(text.requiredFieldError('Value')).toBe(
-			m.reports_create_alert_points_required_field({ label: 'Value' })
-		);
-		expect(text.fieldLabelWithUnit('Value', '°C')).toBe(
-			m.reports_create_alert_points_label_with_unit({ label: 'Value', unit: '°C' })
-		);
-		expect(text.invalidPreviewNote(1)).toBe(m.reports_create_alert_points_invalid_preview_single());
-		expect(text.invalidPreviewNote(3)).toBe(
-			m.reports_create_alert_points_invalid_preview_multiple({ count: '3' })
-		);
-		expect(text.overlapPreviewNote(1)).toBe(m.reports_create_alert_points_overlap_preview_single());
-		expect(text.overlapPreviewNote(2)).toBe(
-			m.reports_create_alert_points_overlap_preview_multiple({ count: '2' })
-		);
-		expect(text.resetNeverHappensPreviewNote(1)).toBe(
-			m.reports_create_alert_points_reset_never_happens_preview_single()
-		);
-		expect(text.resetNeverHappensPreviewNote(4)).toBe(
-			m.reports_create_alert_points_reset_never_happens_preview_multiple({ count: '4' })
-		);
-		expect(text.defaultPointName(2)).toBe(m.rules_condition_number({ count: '2' }));
-		expect(text.pointDescriptionEquals('5', '°C')).toBe(
-			m.reports_create_alert_points_description_equals({ value: '5', unit: '°C' })
-		);
-		expect(text.pointDescriptionRange('1', '9', '°C')).toBe(
-			m.reports_create_alert_points_description_range({ min: '1', max: '9', unit: '°C' })
-		);
-		expect(text.pointDescriptionLessThan('5', '°C')).toBe(
-			m.reports_create_alert_points_description_less_than({ value: '5', unit: '°C' })
-		);
-		expect(text.pointDescriptionLessThanOrEqual('5', '°C')).toBe(
-			m.reports_create_alert_points_description_less_than_or_equal({ value: '5', unit: '°C' })
-		);
-		expect(text.pointDescriptionGreaterThan('5', '°C')).toBe(
-			m.reports_create_alert_points_description_greater_than({ value: '5', unit: '°C' })
-		);
-		expect(text.pointDescriptionGreaterThanOrEqual('5', '°C')).toBe(
-			m.reports_create_alert_points_description_greater_than_or_equal({ value: '5', unit: '°C' })
-		);
-		expect(text.resetDescriptionNotEquals('5', '°C')).toBe(
-			m.reports_create_alert_points_reset_description_not_equals({ value: '5', unit: '°C' })
-		);
-		expect(text.resetDescriptionLessThan('5', '°C')).toBe(
-			m.reports_create_alert_points_reset_description_less_than({ value: '5', unit: '°C' })
-		);
-		expect(text.resetDescriptionLessThanOrEqual('5', '°C')).toBe(
-			m.reports_create_alert_points_reset_description_less_than_or_equal({ value: '5', unit: '°C' })
-		);
-		expect(text.resetDescriptionGreaterThan('5', '°C')).toBe(
-			m.reports_create_alert_points_reset_description_greater_than({ value: '5', unit: '°C' })
-		);
-		expect(text.resetDescriptionGreaterThanOrEqual('5', '°C')).toBe(
-			m.reports_create_alert_points_reset_description_greater_than_or_equal({
-				value: '5',
-				unit: '°C'
-			})
-		);
-	});
-
-	it('lists overlapping conditions with the separator of the language', () => {
-		const originalGetLocale = getLocale;
-		const overlapError = (labels: string[]) =>
-			(createRuleTemplateAlertPointsEditorText() as Required<CwAlertPointsEditorText>).overlapError(
-				labels
-			);
-		try {
-			overwriteGetLocale(() => 'ja');
-			expect(overlapError(['A', 'B'])).toBe(
-				m.reports_create_alert_points_overlap_error({ labels: 'A、B' })
-			);
-
-			overwriteGetLocale(() => 'en');
-			expect(overlapError(['A', 'B'])).toBe(
-				m.reports_create_alert_points_overlap_error({ labels: 'A, B' })
-			);
-		} finally {
-			overwriteGetLocale(originalGetLocale);
-		}
 	});
 });
 
@@ -457,7 +335,30 @@ describe('areAlertCriteriaGroupsValid', () => {
 
 	it('accepts complete numeric conditions', () => {
 		expect(areAlertCriteriaGroupsValid([group([{ value: '30', reset: '25' }])])).toBe(true);
-		expect(areAlertCriteriaGroupsValid([group([{ value: '-1.5', reset: '0' }])])).toBe(true);
+		expect(areAlertCriteriaGroupsValid([group([{ value: '-1.5', reset: '-3' }])])).toBe(true);
+		expect(
+			areAlertCriteriaGroupsValid([
+				group([{ condition: 'lessThan', value: '5', reset: '7' }], 'temperature_c'),
+				group([{ value: '80', reset: '75' }], 'humidity')
+			])
+		).toBe(true);
+	});
+
+	it('accepts "too cold or too hot": two limits on one reading that leave room between them', () => {
+		expect(
+			areAlertCriteriaGroupsValid([
+				group([
+					{ id: 'low', condition: 'lessThan', value: '5', reset: '7' },
+					{ id: 'high', condition: 'greaterThan', value: '35', reset: '33' }
+				])
+			])
+		).toBe(true);
+	});
+
+	it('accepts "is exactly", which needs no reset value', () => {
+		expect(
+			areAlertCriteriaGroupsValid([group([{ condition: 'equals', value: '1', reset: '' }])])
+		).toBe(true);
 	});
 
 	it.each([
@@ -468,7 +369,24 @@ describe('areAlertCriteriaGroupsValid', () => {
 		['a trigger value that is not a number', [group([{ value: 'hot', reset: '25' }])]],
 		['a blank reset value', [group([{ value: '30', reset: '' }])]],
 		['no reset value', [group([{ value: '30', reset: undefined }])]],
-		['a reset value that is not a number', [group([{ value: '30', reset: 'cold' }])]]
+		['a reset value that is not a number', [group([{ value: '30', reset: 'cold' }])]],
+		// The commonest mistake: the rule would alert again on every reading.
+		['a reset on the alert side of a "too high" limit', [group([{ value: '30', reset: '35' }])]],
+		[
+			'a reset on the alert side of a "too low" limit',
+			[group([{ condition: 'lessThan', value: '5', reset: '3' }])]
+		],
+		['a reset equal to its limit', [group([{ value: '30', reset: '30' }])]],
+		[
+			'two limits whose alert zones overlap',
+			[
+				group([
+					{ id: 'low', condition: 'lessThan', value: '20', reset: '22' },
+					{ id: 'high', condition: 'greaterThan', value: '10', reset: '8' }
+				])
+			]
+		],
+		['a range, which a rule cannot save', [group([{ condition: 'range', min: '1', max: '2' }])]]
 	])('rejects %s', (_label, groups) => {
 		expect(areAlertCriteriaGroupsValid(groups)).toBe(false);
 	});
@@ -554,18 +472,19 @@ describe('describeNotEqualPoints', () => {
 		group.alertPoints.points[0].name = 'Door';
 		// A point without a name is named by its position, as the editor does.
 		group.alertPoints.points[2].name = '  ';
-		const notice = (separator: string) =>
+		// "Equals" is named as the rule editor shows it, in the language of the UI.
+		const notice = (separator: string, language: 'ja' | 'en') =>
 			m.rules_condition_not_equal_kept({
 				names: `Door${separator}${m.rules_condition_number({ count: '3' })}`,
 				notEqual: m.rule_operator_not_equal(),
-				equals: m.reports_create_alert_points_condition_equals()
+				equals: cwRuleConditionText(language).opEquals
 			});
 		try {
 			overwriteGetLocale(() => 'ja');
-			expect(describeNotEqualPoints(group)).toBe(notice('、'));
+			expect(describeNotEqualPoints(group)).toBe(notice('、', 'ja'));
 
 			overwriteGetLocale(() => 'en');
-			expect(describeNotEqualPoints(group)).toBe(notice(', '));
+			expect(describeNotEqualPoints(group)).toBe(notice(', ', 'en'));
 		} finally {
 			overwriteGetLocale(originalGetLocale);
 		}

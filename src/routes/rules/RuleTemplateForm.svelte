@@ -6,13 +6,13 @@
 	import type { RuleFormContextDto } from '#lib/api/api.dtos.ts';
 	import { getServices } from '#lib/services/context.ts';
 	import {
-		CwAlertPointsEditor,
 		CwButton,
 		CwCard,
 		CwDateTimeRangePicker,
 		CwDropdown,
 		CwInput,
 		CwMultiSelect,
+		CwRuleCondition,
 		CwSeparator,
 		CwSwitch,
 		CwTextArea,
@@ -35,12 +35,13 @@
 		RESEND_TIMES_MIN,
 		canBeRepeated
 	} from './rule-resend.ts';
-	import { getIntlLocale } from '#lib/i18n/format.ts';
+	import { getIntlLocale, getUiLocale } from '#lib/i18n/format.ts';
+	import { ruleResetHelpUrl } from '#lib/i18n/help-urls.ts';
+	import { getRuleSubjectUnit, isTemperatureSubject, ruleSubjectName } from '#lib/i18n/options.ts';
 	import { formatRuleInstant } from './rule-status.ts';
 	import {
 		applyAlertPointsChange,
 		createBlankAlertCriteriaGroup,
-		createRuleTemplateAlertPointsEditorText,
 		describeNotEqualPoints
 	} from './rule-template-alert-points';
 	import {
@@ -71,7 +72,6 @@
 
 	const app = getAppContext();
 	const { rules, push } = getServices();
-	const alertPointsEditorText = createRuleTemplateAlertPointsEditorText();
 	const form = new RuleTemplateFormController({
 		mode: () => mode,
 		context: () => context,
@@ -238,13 +238,19 @@
 	<AppFormStack padded>
 		{#each form.criteriaGroups as group, index (group.localId)}
 			{@const notEqualNotice = describeNotEqualPoints(group)}
-			<div class="rules-new-form__block">
-				<div class="rules-new-form__block-header">
+			{#if index > 0}
+				<div class="rules-new-form__and">
+					<span class="rules-new-form__and-pill">{m.rules_conditions_and()}</span>
+					<span>{m.rules_conditions_and_hint()}</span>
+				</div>
+			{/if}
+			<div class="rules-new-form__block rules-new-form__block--condition">
+				<div class="rules-new-form__block-header rules-new-form__block-header--condition">
 					<span>{m.rules_condition_number({ count: String(index + 1) })}</span>
 					{#if form.criteriaGroups.length > 1}
 						<CwButton
 							id={`rule-form-criteria-${index}-remove-button`}
-							variant="danger"
+							variant="ghost"
 							size="sm"
 							onclick={() => form.criteriaGroups.splice(index, 1)}
 						>
@@ -253,16 +259,20 @@
 					{/if}
 				</div>
 
-				<CwDropdown
-					labels={cwDropdownLabels()}
-					id={`rule-form-criteria-${index}-subject-select`}
-					label={m.rules_data_field()}
-					options={index === 0 ? form.firstSubjectOptions : form.subjectOptions}
-					value={group.subject}
-					onchange={(value) => form.selectSubject(index, value)}
-					required
-				/>
+				{#snippet subjectSelect()}
+					<CwDropdown
+						labels={cwDropdownLabels()}
+						id={`rule-form-criteria-${index}-subject-select`}
+						label={m.rules_data_field()}
+						options={index === 0 ? form.firstSubjectOptions : form.subjectOptions}
+						value={group.subject}
+						onchange={(value) => form.selectSubject(index, value)}
+						required
+					/>
+				{/snippet}
+
 				{#if form.isDateTime}
+					{@render subjectSelect()}
 					<div class="rules-new-form__schedule" id="rule-form-schedule">
 						<CwTimePicker
 							label={m.rules_dt_time_label()}
@@ -297,10 +307,19 @@
 					</div>
 					<p class="rules-new-form__hint">{m.rules_dt_hint({ zone: form.scheduleTimezone })}</p>
 				{:else}
-					<CwAlertPointsEditor
-						bind:value={group.alertPoints}
+					{@const subjectLabel =
+						form.subjectOptions.find((option) => option.value === group.subject)?.label ??
+						group.subject}
+					<CwRuleCondition
+						id={`rule-form-criteria-${index}`}
+						value={group.alertPoints}
 						onchange={(value) => applyAlertPointsChange(group, value)}
-						text={alertPointsEditorText}
+						readingName={ruleSubjectName(subjectLabel)}
+						temperature={isTemperatureSubject(group.subject)}
+						unit={getRuleSubjectUnit(group.subject)}
+						helpHref={ruleResetHelpUrl()}
+						locale={getUiLocale()}
+						reading={subjectSelect}
 					/>
 					{#if notEqualNotice}
 						<AppNotice tone="neutral">
@@ -331,6 +350,9 @@
 				<Icon src={ADD_ICON} alt="" />
 				{m.rules_add_condition_for_other_field()}
 			</CwButton>
+			<p class="rules-new-form__hint rules-new-form__hint--quiet">
+				{m.rules_conditions_all_hint()}
+			</p>
 		{/if}
 	</AppFormStack>
 </CwCard>
@@ -604,6 +626,50 @@
 		gap: var(--cw-space-3);
 		font-size: var(--cw-text-sm);
 		font-weight: var(--cw-font-semibold);
+	}
+
+	/* A condition is one calm panel: the fields, the sentence and the example. */
+	.rules-new-form__block--condition {
+		gap: var(--cw-space-4);
+		padding: var(--cw-space-5);
+		border-radius: var(--cw-card-radius);
+		background: var(--cw-bg-surface-elevated);
+	}
+
+	.rules-new-form__block-header--condition {
+		min-height: var(--cw-control-h-sm);
+		font-size: var(--cw-text-xs);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--cw-text-muted);
+	}
+
+	.rules-new-form__and {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--cw-space-2) var(--cw-space-3);
+		padding: 0 var(--cw-space-5);
+		font-size: var(--cw-text-xs);
+		color: var(--cw-text-muted);
+	}
+
+	.rules-new-form__and-pill {
+		display: inline-flex;
+		align-items: center;
+		height: 1.5rem;
+		padding: 0 0.625rem;
+		font-size: 0.6875rem;
+		font-weight: var(--cw-font-bold);
+		letter-spacing: 0.08em;
+		color: var(--cw-text-inverse);
+		background: var(--cw-accent);
+		border-radius: var(--cw-radius-full);
+	}
+
+	.rules-new-form__hint--quiet {
+		font-size: var(--cw-text-xs);
+		color: var(--cw-text-muted);
 	}
 
 	.rules-new-form__actions-grid {
