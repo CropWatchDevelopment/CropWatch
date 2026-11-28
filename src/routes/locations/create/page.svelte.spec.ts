@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ActionResult } from '$app/forms';
 import { m } from '#lib/paraglide/messages.js';
 import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
-import { addGroup, renameGroup } from '#lib/testing/groups.ts';
+import { addGroup, addGroupButton, manageGroupsButton, renameGroup } from '#lib/testing/groups.ts';
 import { createMockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import CreateLocationPage from './+page.svelte';
@@ -125,7 +125,7 @@ describe('create location page', () => {
 			'Farm',
 			'Orchard'
 		]);
-		expect(byId('location-create-group-select-manage')).not.toBeNull();
+		expect(manageGroupsButton('location-create-group-select')).not.toBeNull();
 		expect(document.querySelector('#location-create-form dialog')).toBeNull();
 	});
 
@@ -166,7 +166,7 @@ describe('create location page', () => {
 	it('offers no new groups without an organization to put them in', () => {
 		render(null, [], null);
 
-		expect(byId('location-create-group-select-add')).toBeNull();
+		expect(addGroupButton('location-create-group-select')).toBeNull();
 		expect(dropdown('location-create-group-select').options()).toEqual([m.groups_none()]);
 	});
 

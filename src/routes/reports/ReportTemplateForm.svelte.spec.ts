@@ -8,6 +8,7 @@ import type {
 	ReportFormContextDto,
 	ReportTemplateDto
 } from '#lib/api/api.dtos.ts';
+import { cwAlertLevelsText } from '@cropwatchdevelopment/cwui';
 import { m } from '#lib/paraglide/messages.js';
 import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
@@ -216,7 +217,7 @@ describe('ReportTemplateForm — a new template', () => {
 		expect(text()).toContain(m.reports_schedule_card_title());
 		expect(text()).toContain(m.reports_create_alerts_title());
 		expect(text()).toContain(m.reports_create_alerts_copy());
-		expect(text()).toContain(m.reports_create_alert_points_empty_title());
+		expect(text()).toContain(cwAlertLevelsText('ja').emptyTitle);
 		expect(text()).toContain(m.reports_create_recipients_title());
 		expect(byId<HTMLInputElement>('report-form-name-input')?.value).toBe('');
 		expect(byId<HTMLTextAreaElement>('report-form-description-textarea')?.value).toBe('');
@@ -331,11 +332,8 @@ describe('ReportTemplateForm — a new template', () => {
 		click(byId('report-cadence-month-switch'));
 		type(byId<HTMLInputElement>('report-cadence-utc-offset-input')!, '9');
 		choose('report-recipients-0-method-select', m.reports_create_method_sms());
-		click(
-			[...view!.target.querySelectorAll('.cw-alert-points button')].find((button) =>
-				button.textContent?.includes(m.reports_create_add_alert())
-			)
-		);
+		click(view!.target.querySelector('.cw-alert-levels__add button'));
+		type(byId<HTMLInputElement>('report-form-alert-levels-0-value')!, '30');
 		click(submitButton());
 
 		await vi.waitFor(() => expect(services.reports.createReportTemplate).toHaveBeenCalled());
@@ -350,10 +348,11 @@ describe('ReportTemplateForm — a new template', () => {
 			alertPoints: [
 				{
 					dataPointKey: 'temperature_c',
-					name: m.reports_create_alert_heading({ index: '1' }),
+					// The level starts with the editor's own name and first colour.
+					name: cwAlertLevelsText('ja').defaultName.replace('{number}', '1'),
 					hexColor: '#3987E5',
-					operator: '=',
-					value: 0
+					operator: '>',
+					value: 30
 				}
 			]
 		});

@@ -66,7 +66,7 @@
 		}
 	},
 	"dependencies": {
-		"@cropwatchdevelopment/cwui": "0.1.118",
+		"@cropwatchdevelopment/cwui": "0.1.121",
 		"@cropwatchdevelopment/qr-scanner": "0.1.0",
 		"@supabase/supabase-js": "^2.119.2",
 		"firebase": "^13.4.0",

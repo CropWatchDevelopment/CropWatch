@@ -59,3 +59,21 @@ export function getRuleSubjectOptions() {
 		{ label: m.rule_subject_spo2(), value: 'spo2' }
 	];
 }
+
+/** The unit shown beside a rule reading's numbers. A reading without an entry has none. */
+const RULE_SUBJECT_UNITS: Record<string, string> = {
+	humidity: '%',
+	co2: 'ppm',
+	co: 'ppm',
+	pressure: 'hPa',
+	lux: 'lx',
+	deapth_cm: 'cm'
+};
+
+/** Temperatures are stored in °C and may be typed in °F; every other reading is stored as typed. */
+export const isTemperatureSubject = (subject: string) => subject === 'temperature_c';
+
+export const getRuleSubjectUnit = (subject: string) => RULE_SUBJECT_UNITS[subject] ?? '';
+
+/** A reading's name without the unit its picker label ends with: "Temperature (°C)" → "Temperature". */
+export const ruleSubjectName = (label: string) => label.replace(/\s*\([^)]*\)\s*$/, '');

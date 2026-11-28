@@ -170,6 +170,9 @@
 		label={m.devices_device()}
 		placeholder={m.rules_select_device_placeholder()}
 		options={devices}
+		searchable
+		searchPlaceholder={m.rules_relay_device_search_placeholder()}
+		noResultsLabel={m.cwui_multi_no_matches()}
 		bind:value={selectedDeviceDevEui}
 	/>
 
