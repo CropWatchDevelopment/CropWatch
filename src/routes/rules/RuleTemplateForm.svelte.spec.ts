@@ -8,6 +8,8 @@ import type {
 	RuleTemplateActionDto,
 	RuleTemplateDto
 } from '#lib/api/api.dtos.ts';
+import { cwRuleConditionText } from '@cropwatchdevelopment/cwui';
+import { ruleResetHelpUrl } from '#lib/i18n/help-urls.ts';
 import { m } from '#lib/paraglide/messages.js';
 import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
@@ -125,13 +127,14 @@ function type(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
 	flushSync();
 }
 
-/** The `<input>` whose label starts with `label` (the alert-point fields add a unit). */
-function inputLabelled(label: string, within: ParentNode = view!.target) {
-	const element = [...within.querySelectorAll('label')].find((candidate) =>
-		candidate.textContent?.trim().startsWith(label)
-	);
-	return document.getElementById(element!.htmlFor) as HTMLInputElement;
-}
+/** The rule editor's own text, in the language the tests run in. */
+const conditionText = cwRuleConditionText('ja');
+
+/** A field of the first condition's limit number `limit`: its alert value, reset value or comparison. */
+const conditionField = <T extends HTMLElement = HTMLInputElement>(
+	field: 'value' | 'reset' | 'condition',
+	limit = 0
+) => byId<T>(`rule-form-criteria-0-${limit}-${field}`);
 
 /** Opens a cwui dropdown / multiselect by its trigger id and clicks the option labelled `label`. */
 function choose(triggerId: string, label: string) {
@@ -145,21 +148,15 @@ function choose(triggerId: string, label: string) {
 	click(option);
 }
 
-/** Types the first condition's trigger and reset values. */
+/** Types the first condition's alert and reset values. */
 function fillCondition(trigger = '8', reset = '6') {
-	type(inputLabelled(m.rules_trigger_value()), trigger);
-	type(inputLabelled(m.rules_reset_value()), reset);
+	type(conditionField('value')!, trigger);
+	type(conditionField('reset')!, reset);
 }
 
-/** Picks the first condition's comparison in the alert-points editor. */
+/** Picks the first condition's comparison ("rises above", "drops below", …). */
 function chooseCondition(label: string) {
-	const trigger = inputLabelled(m.rules_operator());
-	click(trigger);
-	const option = [...trigger.closest('.cw-dropdown')!.querySelectorAll('li[role="option"]')].find(
-		(candidate) => candidate.textContent?.trim() === label
-	);
-	if (!option) throw new Error(`No condition "${label}"`);
-	click(option);
+	choose('rule-form-criteria-0-0-condition', label);
 }
 
 /** The "revert on reset" checkboxes of the relay actions, found through their labels. */
@@ -539,7 +536,7 @@ describe('RuleTemplateForm', () => {
 			);
 			expect(byId('rule-form-devices-multiselect')).toBeNull();
 			expect(byId('rule-form-add-criteria-button')).toBeNull();
-			expect(view!.target.querySelector('.cw-alert-points-editor')).toBeNull();
+			expect(view!.target.querySelector('.cw-rule-condition')).toBeNull();
 			expect(byId('rule-form-date-time-actions-notice')?.textContent).toBe(
 				m.rules_dt_actions_hint()
 			);
@@ -782,7 +779,7 @@ describe('RuleTemplateForm', () => {
 		const notice = m.rules_condition_not_equal_kept({
 			names: m.rules_condition_number({ count: '1' }),
 			notEqual: m.rule_operator_not_equal(),
-			equals: m.reports_create_alert_points_condition_equals()
+			equals: conditionText.opEquals
 		});
 		const summary = () => view!.target.querySelector('.rules-new-form__summary')?.textContent;
 		expect(view!.target.querySelector('.app-notice--neutral')?.textContent?.trim()).toBe(notice);
@@ -796,7 +793,7 @@ describe('RuleTemplateForm', () => {
 		]);
 		await vi.waitFor(() => expect(submitButton().disabled).toBe(false));
 
-		chooseCondition(m.reports_create_alert_points_condition_greater_than());
+		chooseCondition(conditionText.opAbove);
 
 		expect(text()).not.toContain(notice);
 		expect(summary()).toContain(
@@ -882,6 +879,163 @@ describe('RuleTemplateForm', () => {
 			action: 'ro1_on_timed',
 			onTimeSeconds: 5,
 			downlink: { f_port: 2, priority: 'NORMAL' }
+		});
+	});
+
+	describe('the condition editor', () => {
+		const condition = () => view!.target.querySelector<HTMLElement>('.cw-rule-condition')!;
+
+		it('shows a sensor rule its condition editor, with nothing complaining before anything is typed', () => {
+			render();
+
+			expect(condition()).not.toBeNull();
+			expect(conditionField('value')!.value).toBe('');
+			expect(conditionField('reset')!.value).toBe('');
+			expect(condition().querySelectorAll('.cw-input__message--error')).toHaveLength(0);
+			expect(condition().textContent).toContain(conditionText.summaryEmpty);
+		});
+
+		it('suggests a reset on the safe side as the alert value is typed', () => {
+			render();
+
+			type(conditionField('value')!, '30');
+			expect(conditionField('reset')!.value).toBe('28');
+
+			// The other way round, the safe side is the other side.
+			chooseCondition(conditionText.opBelow);
+			expect(conditionField('reset')!.value).toBe('32');
+			expect(condition().querySelector('.cw-rule-example')).not.toBeNull();
+		});
+
+		it('keeps a reset the user typed when the alert value changes', () => {
+			render();
+
+			fillCondition('30', '25');
+			type(conditionField('value')!, '31');
+
+			expect(conditionField('reset')!.value).toBe('25');
+		});
+
+		it('refuses a reset on the alert side, and puts the safe one in on request', async () => {
+			services.rules.createRuleTemplate.mockResolvedValue(template());
+			render({ preselectedDevEui: 'DEV-A' });
+			type(byId<HTMLInputElement>('rule-form-name-input')!, 'Hot room');
+			type(byId<HTMLInputElement>('rule-form-action-0-recipient-input')!, 'ops@example.com');
+
+			fillCondition('30', '35');
+
+			expect(submitButton().disabled).toBe(true);
+			const warning = condition().querySelector('.cw-rule-condition__warning')!;
+			expect(warning.textContent).toContain('35 °C');
+			expect(warning.textContent).toContain('30 °C');
+
+			click(warning.querySelector('button'));
+
+			expect(conditionField('reset')!.value).toBe('28');
+			expect(condition().querySelector('.cw-rule-condition__warning')).toBeNull();
+			expect(submitButton().disabled).toBe(false);
+
+			click(submitButton());
+			await vi.waitFor(() => expect(goto).toHaveBeenCalledWith('/rules'));
+			expect(services.rules.createRuleTemplate.mock.calls[0][0].criteria).toEqual([
+				{ id: null, subject: 'temperature_c', operator: '>', triggerValue: 30, resetValue: 28 }
+			]);
+		});
+
+		it('opens the guide on resets, in the language of the UI, in a new tab', () => {
+			render();
+
+			const help = condition().querySelector<HTMLAnchorElement>('.cw-help__mark')!;
+
+			expect(help.getAttribute('href')).toBe(ruleResetHelpUrl());
+			expect(help.target).toBe('_blank');
+			expect(help.getAttribute('aria-label')).toContain(conditionText.resetHelp);
+		});
+
+		it('shows the unit of a reading that is not a temperature, and stores what is typed', async () => {
+			services.rules.createRuleTemplate.mockResolvedValue(template());
+			render({ preselectedDevEui: 'DEV-A' });
+			type(byId<HTMLInputElement>('rule-form-name-input')!, 'Damp');
+			type(byId<HTMLInputElement>('rule-form-action-0-recipient-input')!, 'ops@example.com');
+
+			// A temperature may be typed in °F; nothing else may.
+			expect(condition().querySelector('.cw-rule-condition__units')).not.toBeNull();
+			choose('rule-form-criteria-0-subject-select', m.rule_subject_humidity());
+			expect(condition().querySelector('.cw-rule-condition__units')).toBeNull();
+			expect(condition().querySelector('.cw-rule-condition__unit')?.textContent).toBe('%');
+
+			// No reset is suggested for it: the user types both.
+			type(conditionField('value')!, '80');
+			expect(conditionField('reset')!.value).toBe('');
+			expect(submitButton().disabled).toBe(true);
+			type(conditionField('reset')!, '75');
+
+			click(submitButton());
+			await vi.waitFor(() => expect(goto).toHaveBeenCalledWith('/rules'));
+			expect(services.rules.createRuleTemplate.mock.calls[0][0].criteria).toEqual([
+				{ id: null, subject: 'humidity', operator: '>', triggerValue: 80, resetValue: 75 }
+			]);
+		});
+
+		it('stores a temperature typed in °F as °C', async () => {
+			services.rules.createRuleTemplate.mockResolvedValue(template());
+			render({ preselectedDevEui: 'DEV-A' });
+			type(byId<HTMLInputElement>('rule-form-name-input')!, 'Hot room');
+			type(byId<HTMLInputElement>('rule-form-action-0-recipient-input')!, 'ops@example.com');
+
+			click(
+				[...condition().querySelectorAll('.cw-rule-condition__unit-button')].find(
+					(button) => button.textContent?.trim() === '°F'
+				)
+			);
+			fillCondition('86', '77');
+
+			click(submitButton());
+			await vi.waitFor(() => expect(goto).toHaveBeenCalledWith('/rules'));
+			expect(services.rules.createRuleTemplate.mock.calls[0][0].criteria).toEqual([
+				{ id: null, subject: 'temperature_c', operator: '>', triggerValue: 30, resetValue: 25 }
+			]);
+		});
+
+		it('adds a second limit to the same reading, for "too cold or too hot"', async () => {
+			services.rules.createRuleTemplate.mockResolvedValue(template());
+			render({ preselectedDevEui: 'DEV-A' });
+			type(byId<HTMLInputElement>('rule-form-name-input')!, 'Cold or hot');
+			type(byId<HTMLInputElement>('rule-form-action-0-recipient-input')!, 'ops@example.com');
+			fillCondition('35', '33');
+
+			click(condition().querySelector('.cw-rule-condition__add button'));
+
+			// The second limit starts on the other side of the first.
+			expect(conditionField<HTMLButtonElement>('condition', 1)!.textContent?.trim()).toBe(
+				conditionText.opBelow
+			);
+			expect(condition().querySelector('.cw-rule-condition__or-pill')?.textContent).toBe(
+				conditionText.orLabel
+			);
+			expect(submitButton().disabled).toBe(true);
+			type(conditionField('value', 1)!, '5');
+			expect(conditionField('reset', 1)!.value).toBe('7');
+
+			click(submitButton());
+			await vi.waitFor(() => expect(goto).toHaveBeenCalledWith('/rules'));
+			expect(services.rules.createRuleTemplate.mock.calls[0][0].criteria).toEqual([
+				{ id: null, subject: 'temperature_c', operator: '>', triggerValue: 35, resetValue: 33 },
+				{ id: null, subject: 'temperature_c', operator: '<', triggerValue: 5, resetValue: 7 }
+			]);
+		});
+
+		it('joins a condition on another reading with AND, and says all must be true', () => {
+			render();
+			expect(view!.target.querySelector('.rules-new-form__and')).toBeNull();
+			expect(text()).toContain(m.rules_conditions_all_hint());
+
+			click(byId('rule-form-add-criteria-button'));
+
+			expect(view!.target.querySelector('.rules-new-form__and')?.textContent).toContain(
+				m.rules_conditions_and()
+			);
+			expect(view!.target.querySelectorAll('.cw-rule-condition')).toHaveLength(2);
 		});
 	});
 });

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DeviceSetupLookupResult } from '#lib/api/api.dtos.ts';
 import { m } from '#lib/paraglide/messages.js';
 import { createMockServices } from '#lib/testing/mock-services.ts';
+import { addGroupButton } from '#lib/testing/groups.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
 import { GroupsController } from '#lib/components/groups/groups-controller.svelte.ts';
@@ -151,7 +152,7 @@ describe('DetailsStep', () => {
 		chooseOption('device-setup-group-select', 'Floor 2');
 		expect(flow.group).toBe('Floor 2');
 
-		byId('device-setup-group-select-add')?.click();
+		addGroupButton('device-setup-group-select')?.click();
 		flushSync();
 		expect(view?.target.querySelector('dialog')).toBeNull();
 	});

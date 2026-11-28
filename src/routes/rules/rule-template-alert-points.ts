@@ -1,10 +1,11 @@
 import { getUiLocale } from '#lib/i18n/format.ts';
 import { m } from '#lib/paraglide/messages.js';
-import type {
-	CwAlertPointCondition,
-	CwAlertPointRule,
-	CwAlertPointsEditorText,
-	CwAlertPointsValue
+import {
+	cwRuleConditionText,
+	isRuleConditionValid,
+	type CwAlertPointCondition,
+	type CwAlertPointRule,
+	type CwAlertPointsValue
 } from '@cropwatchdevelopment/cwui';
 import type {
 	RuleTemplateCriterionDto,
@@ -27,86 +28,6 @@ const NOT_EQUAL_OPERATOR = '!=';
 const DEFAULT_RULE_SUBJECT = 'temperature_c';
 const DEFAULT_ALERT_CENTER = '0';
 const ALERT_POINT_COLORS = ['#f7903b', '#42edf0', '#7a8cff', '#e35c8d', '#4fcf7a', '#ffcf5a'];
-
-export function createRuleTemplateAlertPointsEditorText(): CwAlertPointsEditorText {
-	return {
-		previewLabel: m.cwui_alert_points_preview(),
-		unitFieldLabel: m.reports_create_alert_points_unit_label(),
-		centerFieldLabel: m.reports_create_alert_points_center_label(),
-		nameFieldLabel: m.common_name(),
-		conditionFieldLabel: m.rules_operator(),
-		valueFieldLabel: m.rules_trigger_value(),
-		minValueFieldLabel: m.reports_create_alert_minimum(),
-		maxValueFieldLabel: m.reports_create_alert_maximum(),
-		resetFieldLabel: m.rules_reset_value(),
-		colorFieldLabel: m.reports_create_alert_hex_color(),
-		addAlertPointButton: m.rules_add_threshold_for_field(),
-		removePointButton: m.action_remove(),
-		emptyTitle: m.reports_create_alert_points_empty_title(),
-		emptyDescription: m.reports_create_alert_points_empty_description(),
-		invalidNumberError: m.reports_create_alert_points_invalid_number(),
-		requiredFieldError: (label) => m.reports_create_alert_points_required_field({ label }),
-		fieldLabelWithUnit: (label, unit) =>
-			m.reports_create_alert_points_label_with_unit({ label, unit }),
-		invalidPreviewNote: (count) =>
-			count === 1
-				? m.reports_create_alert_points_invalid_preview_single()
-				: m.reports_create_alert_points_invalid_preview_multiple({ count: String(count) }),
-		overlapPreviewNote: (count) =>
-			count === 1
-				? m.reports_create_alert_points_overlap_preview_single()
-				: m.reports_create_alert_points_overlap_preview_multiple({ count: String(count) }),
-		resetNeverHappensPreviewNote: (count) =>
-			count === 1
-				? m.reports_create_alert_points_reset_never_happens_preview_single()
-				: m.reports_create_alert_points_reset_never_happens_preview_multiple({
-						count: String(count)
-					}),
-		resetNeverHappensError: m.reports_create_alert_points_reset_never_happens_error(),
-		minEqualsMaxWarning: m.reports_create_alert_points_equal_bounds_warning(),
-		defaultPointName: (index) => m.rules_condition_number({ count: String(index) }),
-		unitCelsiusLabel: '°C',
-		unitFahrenheitLabel: '°F',
-		unitKelvinLabel: '°K',
-		conditionEqualsLabel: m.reports_create_alert_points_condition_equals(),
-		conditionRangeLabel: m.reports_create_alert_points_condition_range(),
-		conditionLessThanLabel: m.reports_create_alert_points_condition_less_than(),
-		conditionLessThanOrEqualLabel: m.reports_create_alert_points_condition_less_than_or_equal(),
-		conditionGreaterThanLabel: m.reports_create_alert_points_condition_greater_than(),
-		conditionGreaterThanOrEqualLabel:
-			m.reports_create_alert_points_condition_greater_than_or_equal(),
-		pointDescriptionWaitingForValue: m.reports_create_alert_points_waiting_for_value(),
-		pointDescriptionWaitingForThreshold: m.reports_create_alert_points_waiting_for_threshold(),
-		pointDescriptionRangeMissingBounds: m.reports_create_alert_points_range_missing_bounds(),
-		pointDescriptionEquals: (value, unit) =>
-			m.reports_create_alert_points_description_equals({ value, unit }),
-		pointDescriptionRange: (min, max, unit) =>
-			m.reports_create_alert_points_description_range({ min, max, unit }),
-		pointDescriptionLessThan: (value, unit) =>
-			m.reports_create_alert_points_description_less_than({ value, unit }),
-		pointDescriptionLessThanOrEqual: (value, unit) =>
-			m.reports_create_alert_points_description_less_than_or_equal({ value, unit }),
-		pointDescriptionGreaterThan: (value, unit) =>
-			m.reports_create_alert_points_description_greater_than({ value, unit }),
-		pointDescriptionGreaterThanOrEqual: (value, unit) =>
-			m.reports_create_alert_points_description_greater_than_or_equal({ value, unit }),
-		resetDescriptionWaitingForValue: m.reports_create_alert_points_reset_waiting_for_value(),
-		resetDescriptionNotEquals: (value, unit) =>
-			m.reports_create_alert_points_reset_description_not_equals({ value, unit }),
-		resetDescriptionLessThan: (value, unit) =>
-			m.reports_create_alert_points_reset_description_less_than({ value, unit }),
-		resetDescriptionLessThanOrEqual: (value, unit) =>
-			m.reports_create_alert_points_reset_description_less_than_or_equal({ value, unit }),
-		resetDescriptionGreaterThan: (value, unit) =>
-			m.reports_create_alert_points_reset_description_greater_than({ value, unit }),
-		resetDescriptionGreaterThanOrEqual: (value, unit) =>
-			m.reports_create_alert_points_reset_description_greater_than_or_equal({ value, unit }),
-		overlapError: (labels) =>
-			m.reports_create_alert_points_overlap_error({
-				labels: labels.join(getUiLocale() === 'ja' ? '、' : ', ')
-			})
-	};
-}
 
 export function buildInitialAlertCriteriaGroups(
 	criteria: RuleTemplateCriterionDto[] = []
@@ -193,7 +114,7 @@ export function describeNotEqualPoints(group: RuleTemplateAlertCriteriaGroup): s
 	return m.rules_condition_not_equal_kept({
 		names: names.join(getUiLocale() === 'ja' ? '、' : ', '),
 		notEqual: m.rule_operator_not_equal(),
-		equals: m.reports_create_alert_points_condition_equals()
+		equals: cwRuleConditionText(getUiLocale()).opEquals
 	});
 }
 
@@ -201,14 +122,16 @@ function isKeptNotEqualPoint(group: RuleTemplateAlertCriteriaGroup, point: CwAle
 	return point.condition === 'equals' && (group.notEqualPointIds?.includes(point.id) ?? false);
 }
 
+/**
+ * Whether every condition can be saved: a reading, and limits the rule editor
+ * finds nothing wrong with (complete numbers, each reset on the safe side of
+ * its limit, no two limits that overlap).
+ */
 export function areAlertCriteriaGroupsValid(groups: RuleTemplateAlertCriteriaGroup[]): boolean {
 	return (
 		groups.length > 0 &&
 		groups.every(
-			(group) =>
-				group.subject.trim().length > 0 &&
-				group.alertPoints.points.length > 0 &&
-				group.alertPoints.points.every(isAlertPointValid)
+			(group) => group.subject.trim().length > 0 && isRuleConditionValid(group.alertPoints)
 		)
 	);
 }
@@ -309,16 +232,6 @@ function mapAlertConditionToOperator(condition: CwAlertPointCondition): string {
 
 function readAlertPointTriggerValue(point: CwAlertPointRule): number {
 	return point.condition === 'range' ? readNumberOrZero(point.min) : readNumberOrZero(point.value);
-}
-
-function isAlertPointValid(point: CwAlertPointRule): boolean {
-	if (point.condition === 'range') return false;
-	return isFiniteNumberText(point.value) && isFiniteNumberText(point.reset ?? '');
-}
-
-function isFiniteNumberText(value: string): boolean {
-	if (!value.trim()) return false;
-	return Number.isFinite(Number(value));
 }
 
 function readNumberOrZero(value: string): number {

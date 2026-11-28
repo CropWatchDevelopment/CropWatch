@@ -5,7 +5,10 @@ import {
 	getPermissionLevelLabel,
 	getPermissionLevelOptions,
 	getRuleOperatorOptions,
-	getRuleSubjectOptions
+	getRuleSubjectOptions,
+	getRuleSubjectUnit,
+	isTemperatureSubject,
+	ruleSubjectName
 } from './options';
 
 describe('getPermissionLevelOptions', () => {
@@ -87,5 +90,36 @@ describe('getRuleSubjectOptions', () => {
 			{ label: m.rule_subject_water_depth(), value: 'deapth_cm' },
 			{ label: m.rule_subject_spo2(), value: 'spo2' }
 		]);
+	});
+});
+
+describe('rule reading units', () => {
+	it('knows only temperature as a temperature: it alone may be typed in °F', () => {
+		expect(isTemperatureSubject('temperature_c')).toBe(true);
+		expect(isTemperatureSubject('humidity')).toBe(false);
+		expect(isTemperatureSubject('')).toBe(false);
+	});
+
+	it('gives the unit shown beside the numbers of each reading that has one', () => {
+		expect(getRuleSubjectUnit('humidity')).toBe('%');
+		expect(getRuleSubjectUnit('co2')).toBe('ppm');
+		expect(getRuleSubjectUnit('co')).toBe('ppm');
+		expect(getRuleSubjectUnit('pressure')).toBe('hPa');
+		expect(getRuleSubjectUnit('lux')).toBe('lx');
+		expect(getRuleSubjectUnit('deapth_cm')).toBe('cm');
+	});
+
+	it('gives no unit for a reading without one, or an unknown one', () => {
+		expect(getRuleSubjectUnit('ph')).toBe('');
+		expect(getRuleSubjectUnit('temperature_c')).toBe('');
+		expect(getRuleSubjectUnit('something_new')).toBe('');
+	});
+
+	it('names a reading without the unit its picker label ends with', () => {
+		expect(ruleSubjectName('Temperature (°C)')).toBe('Temperature');
+		expect(ruleSubjectName('温度 (°C)')).toBe('温度');
+		expect(ruleSubjectName('Electrical Conductivity (EC)')).toBe('Electrical Conductivity');
+		expect(ruleSubjectName('pH')).toBe('pH');
+		expect(ruleSubjectName('CO₂ (ppm) ')).toBe('CO₂');
 	});
 });

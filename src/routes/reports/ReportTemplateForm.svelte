@@ -7,7 +7,7 @@
 	import type { CommunicationMethodDto, ReportFormContextDto } from '#lib/api/api.dtos.ts';
 	import { getServices } from '#lib/services/context.ts';
 	import {
-		CwAlertPointsEditor,
+		CwAlertLevels,
 		CwButton,
 		CwCard,
 		CwDropdown,
@@ -20,11 +20,11 @@
 	} from '@cropwatchdevelopment/cwui';
 	import type { CwAlertPointsValue } from '@cropwatchdevelopment/cwui';
 	import { m } from '#lib/paraglide/messages.js';
+	import { getUiLocale } from '#lib/i18n/format.ts';
 	import { cwDropdownLabels, cwMultiSelectLabels } from '#lib/i18n/cwuiLabels.ts';
 	import ReportCadenceSection from './ReportCadenceSection.svelte';
 	import ReportProcessingSchedulesSection from './ReportProcessingSchedulesSection.svelte';
 	import ReportRecipientsSection from './ReportRecipientsSection.svelte';
-	import { createReportAlertPointsEditorText } from './alert-points-editor-text';
 	import { buildReportDataPullIntervalOptions } from './data-pull-interval';
 	import {
 		buildSaveRequest,
@@ -69,7 +69,6 @@
 	const initialUserName = (() => currentUserName ?? '')();
 	const toast = useCwToast();
 	const { reports } = getServices();
-	const alertPointsEditorText = createReportAlertPointsEditorText();
 
 	let rowSequence = 0;
 	function nextRowKey(prefix: string): string {
@@ -383,7 +382,11 @@
 <CwCard title={m.reports_create_alerts_title()} elevated>
 	<AppFormStack padded>
 		<p class="text-[color:var(--cw-text-secondary)]">{m.reports_create_alerts_copy()}</p>
-		<CwAlertPointsEditor bind:value={alertPointsValue} text={alertPointsEditorText} />
+		<CwAlertLevels
+			id="report-form-alert-levels"
+			bind:value={alertPointsValue}
+			locale={getUiLocale()}
+		/>
 	</AppFormStack>
 </CwCard>
 

@@ -6,7 +6,7 @@ import { m } from '#lib/paraglide/messages.js';
 import { createMockServices, type MockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
-import { addGroup, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
+import { addGroup, addGroupButton, deleteGroup, renameGroup } from '#lib/testing/groups.ts';
 import DeviceSetupPage from './+page.svelte';
 import { regionLabel } from './setup-messages';
 
@@ -319,7 +319,7 @@ describe('device setup page', () => {
 		render(pageData({ locationOrgId: null }));
 		await identify();
 
-		expect(byId('device-setup-group-select-add')).toBeNull();
+		expect(addGroupButton('device-setup-group-select')).toBeNull();
 		expect(dropdown('device-setup-group-select').options()).toEqual([m.groups_none(), 'Floor 1']);
 	});
 

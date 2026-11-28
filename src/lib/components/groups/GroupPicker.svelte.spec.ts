@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { GroupDto } from '#lib/api/api.dtos.ts';
 import { m } from '#lib/paraglide/messages.js';
 import { chooseOption, dropdown } from '#lib/testing/dropdown.ts';
+import { addGroupButton, manageGroupsButton } from '#lib/testing/groups.ts';
 import { createMockServices } from '#lib/testing/mock-services.ts';
 import { renderWithServices } from '#lib/testing/render.ts';
 import GroupPicker from './GroupPicker.svelte';
@@ -48,8 +49,6 @@ function render(
 	} as never);
 	return { controller, value: () => value };
 }
-
-const button = (id: string) => document.getElementById(id) as HTMLButtonElement | null;
 
 afterEach(() => {
 	view?.unmount();
@@ -99,19 +98,38 @@ describe('GroupPicker', () => {
 
 	it('opens the add dialog, and the manage dialog only when a group can be managed', () => {
 		const readOnly = render([{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: false }]);
-		expect(button('picker-manage')).toBeNull();
-		button('picker-add')?.click();
+		expect(manageGroupsButton('picker')).toBeNull();
+		addGroupButton('picker')?.click();
 		flushSync();
 		expect(readOnly.controller.addOpen).toBe(true);
-		expect(button('picker-add')?.textContent).toContain(m.groups_add());
 		view?.unmount();
 
 		const managed = render([{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true }]);
-		expect(button('picker-manage')?.textContent).toContain(m.groups_manage());
-		button('picker-manage')?.click();
+		manageGroupsButton('picker')?.click();
 		flushSync();
 		expect(managed.controller.manageOpen).toBe(true);
 		expect(managed.controller.addOpen).toBe(false);
+	});
+
+	it('keeps both buttons inside the dropdown box, named for screen readers, without opening the list', () => {
+		const { controller } = render([{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true }]);
+		const { trigger } = dropdown('picker');
+		const box = trigger.parentElement as HTMLElement;
+
+		const add = addGroupButton('picker') as HTMLButtonElement;
+		const manage = manageGroupsButton('picker') as HTMLButtonElement;
+		expect([box.contains(add), box.contains(manage)]).toEqual([true, true]);
+		expect([add.getAttribute('aria-label'), manage.getAttribute('aria-label')]).toEqual([
+			m.groups_add(),
+			m.groups_manage()
+		]);
+		expect([add.type, manage.type]).toEqual(['button', 'button']);
+
+		add.click();
+		flushSync();
+
+		expect(controller.addOpen).toBe(true);
+		expect(trigger.getAttribute('aria-expanded')).toBe('false');
 	});
 
 	it('offers neither button without the organization, but still the saved choice', () => {
@@ -120,8 +138,8 @@ describe('GroupPicker', () => {
 			value: 'Barn'
 		});
 
-		expect(button('picker-add')).toBeNull();
-		expect(button('picker-manage')).toBeNull();
+		expect(addGroupButton('picker')).toBeNull();
+		expect(manageGroupsButton('picker')).toBeNull();
 		expect(dropdown('picker').label()).toBe('Barn');
 		chooseOption('picker', m.groups_none());
 		expect(value()).toBe('');
@@ -131,7 +149,7 @@ describe('GroupPicker', () => {
 		render([{ id: 1, name: 'Barn', org_id: 'org-1', can_manage: true }], { disabled: true });
 
 		expect(dropdown('picker').trigger.disabled).toBe(true);
-		expect(button('picker-add')?.disabled).toBe(true);
-		expect(button('picker-manage')?.disabled).toBe(true);
+		expect(addGroupButton('picker')?.disabled).toBe(true);
+		expect(manageGroupsButton('picker')?.disabled).toBe(true);
 	});
 });
